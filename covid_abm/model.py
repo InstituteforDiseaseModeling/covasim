@@ -289,7 +289,7 @@ class Sim(ParsObj):
         return self.results
 
     
-    def plot(self, do_save=None, figargs=None, plotargs=None, axisargs=None, as_days=True):
+    def plot(self, do_save=None, fig_args=None, plot_args=None, axis_args=None, as_days=True):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -298,10 +298,10 @@ class Sim(ParsObj):
         do_save : bool or str
             Whether or not to save the figure. If a string, save to that filename.
 
-        figargs : dict
+        fig_args : dict
             Dictionary of kwargs to be passed to pl.figure()
 
-        plotargs : dict
+        plot_args : dict
             Dictionary of kwargs to be passed to pl.plot()
         
         as_days : bool
@@ -313,12 +313,12 @@ class Sim(ParsObj):
 
         '''
 
-        if figargs  is None: figargs  = {'figsize':(26,16)}
-        if plotargs is None: plotargs = {'lw':2, 'alpha':0.7, 'marker':'o'}
-        if axisargs is None: axisargs = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
+        if fig_args  is None: fig_args  = {'figsize':(26,16)}
+        if plot_args is None: plot_args = {'lw':2, 'alpha':0.7, 'marker':'o'}
+        if axis_args is None: axis_args = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
 
-        fig = pl.figure(**figargs)
-        pl.subplots_adjust(**axisargs)
+        fig = pl.figure(**fig_args)
+        pl.subplots_adjust(**axis_args)
 
         res = self.results # Shorten since heavily used
 
@@ -338,7 +338,7 @@ class Sim(ParsObj):
                     y = res[key]*100
                 else:
                     y = res[key]
-                pl.plot(res['t'], y, label=label, **plotargs)
+                pl.plot(res['t'], y, label=label, **plot_args)
             fixaxis()
             pl.ylabel('Count')
             pl.xlabel('Day')
