@@ -1,4 +1,4 @@
-# covid-19-cruise-ship
+# covid_abm
 A model for estimating Covid-19 (novel coronavrius, formerly nCoV-2019) parameters from cruise ship infection data.
 
 ## Requirements
