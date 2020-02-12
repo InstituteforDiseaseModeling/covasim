@@ -6,22 +6,30 @@ Simple example usage for the Covid-19 agent-based model
 import sciris as sc
 import covid_abm
 
-doplot = True
-dosave = False
+do_plot = True
+do_save = False
 
 
 #%% Define the tests
-def test_sim(doplot=False, dosave=False): # If being run via pytest, turn off
+def test_sim(do_plot=False, do_save=False): # If being run via pytest, turn off
+    
+    # Create the simulation
     sim = covid_abm.Sim()
+    
+    # Run the simulation
     sim.run()
-    if doplot:
-        sim.plot(dosave=dosave)
+    
+    # Optionally plot
+    if do_plot:
+        sim.plot(do_save=do_save)
+        
+    return sim
 
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
-    sim = test_sim(dosave=dosave)
+    sim = test_sim(do_plot=do_plot, do_save=do_save)
     sc.toc()
 
 

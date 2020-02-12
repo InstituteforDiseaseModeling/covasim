@@ -8,7 +8,7 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
-from . import parameters
+from . import parameters as cov_pars
 
 # Specify all externally visible things this file defines
 __all__ = ['bt', 'bc', 'rbt', 'mt', 'set_seed', 'fixaxis', 'ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
@@ -136,7 +136,7 @@ class Person(ParsObj):
         self.recovered  = False
         return
 
-    def update(self, t):
+    def update(self, t, counts):
         ''' Update the person's state for the given timestep '''
         
         # Initialize outputs
@@ -159,7 +159,7 @@ class Sim(ParsObj):
     def __init__(self, pars=None):
         if pars is None:
             print('Note: using default parameter values')
-            pars = parameters.make_pars()
+            pars = cov_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
         set_seed(self.pars['seed'])
         self.init_results()
@@ -182,13 +182,11 @@ class Sim(ParsObj):
 
     def init_people(self):
         ''' Create the people '''
-        # TODO age, sex
-        age = 0
-        sex = 0
         self.people = sc.odict() # Dictionary for storing the people
         guests = [0]*self.pars['n_guests']
-        crew = [1]*self.pars['n_crew']
+        crew   = [1]*self.pars['n_crew']
         for is_crew in crew+guests: # Loop over each person
+            age,sex = cov_pars.get_age_sex(is_crew)
             person = Person(self.pars, age=age, sex=sex, crew=is_crew) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
         return
@@ -220,14 +218,14 @@ class Sim(ParsObj):
             self.pars['verbose'] = verbose
         self.update_pars()
         self.init_results()
-        self.init_people() # Actually create the children
+        self.init_people() # Actually create the people
         
         # Main simulation loop
         for i in range(self.npts):
             t = self.ind2day(i)
             if self.pars['verbose']>-1:
                 if sc.approx(t, int(t), eps=0.01):
-                    print(f'  Running {t:0.0f} of {self.pars["end"]}...')
+                    print(f'  Running day {t:0.0f} of {self.pars["n_days"]}...')
             
             # Update each person
             counts = {}
@@ -239,21 +237,21 @@ class Sim(ParsObj):
             
             # Store results
             self.results['t'][i] = self.tvec[i]
-            self.results['n'][i]   = self.n
+            # self.results['n'][i]   = self.n
             # TODO
             
         elapsed = sc.toc(T, output=True)
-        print(f'Run finished for "{self.pars["name"]}" after {elapsed:0.1f} s')
+        print(f'Run finished for after {elapsed:0.1f} s')
         return self.results
 
     
-    def plot(self, dosave=None, figargs=None, plotargs=None, axisargs=None, as_days=True):
+    def plot(self, do_save=None, figargs=None, plotargs=None, axisargs=None, as_days=True):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Parameters
         ----------
-        dosave : bool or str
+        do_save : bool or str
             Whether or not to save the figure. If a string, save to that filename.
 
         figargs : dict
@@ -314,9 +312,9 @@ class Sim(ParsObj):
             pl.title(title, fontweight='bold')
 
         # Ensure the figure actually renders or saves
-        if dosave:
-            if isinstance(dosave, str):
-                filename = dosave # It's a string, assume it's a filename
+        if do_save:
+            if isinstance(do_save, str):
+                filename = do_save # It's a string, assume it's a filename
             else:
                 filename = 'voi_sim.png' # Just give it a default name
             pl.savefig(filename)
