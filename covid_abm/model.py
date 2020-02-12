@@ -84,7 +84,7 @@ class ParsObj(sc.prettyobj):
 
     def __init__(self, pars):
         self.update_pars(pars)
-        self.results_keys = ['t', 'n_susceptible', 'n_exposed', 'n_infected', 'n_diagnosed', 'infections', 'diagnoses', 'tests']
+        self.results_keys = ['t', 'n_susceptible', 'n_exposed', 'n_infectious', 'n_diagnosed', 'infections', 'diagnoses', 'tests']
         return
 
     def __getitem__(self, key):
@@ -118,7 +118,7 @@ class Person(ParsObj):
         if self.crew:
             self.contacts = self.pars['contacts_crew'] # Determine how many contacts they have
         else:
-            self.contacts = self.pars['contacts_guests']
+            self.contacts = self.pars['contacts_guest']
         
         # Define state
         self.on_ship    = True # Whether the person is still on the ship
@@ -127,7 +127,11 @@ class Person(ParsObj):
         self.infectious = False
         self.diagnosed  = False
         self.recovered  = False
-        self.infectious_date = None
+        
+        # Keep track of dates
+        self.date_exposed    = None
+        self.date_infectious = None
+        self.date_diagnosed  = None
         return
 
 
@@ -168,15 +172,24 @@ class Sim(ParsObj):
         return
     
 
-    def init_people(self):
+    def init_people(self, seed_infections=1):
         ''' Create the people '''
         self.people = sc.odict() # Dictionary for storing the people
+        self.off_ship = sc.odict() # For people who've been moved off the ship
         guests = [0]*self.pars['n_guests']
         crew   = [1]*self.pars['n_crew']
         for is_crew in crew+guests: # Loop over each person
             age,sex = cov_pars.get_age_sex(is_crew)
             person = Person(self.pars, age=age, sex=sex, crew=is_crew) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
+        
+        # Create the seed infections
+        for i in range(seed_infections):
+            self.people[i].exposed = True
+            self.people[i].infectious = True
+            self.people[i].date_exposed = 0
+            self.people[i].date_infectious = 0
+        
         return
 
     
@@ -194,9 +207,17 @@ class Sim(ParsObj):
         index = self.day2ind(day)
         self.interventions[index] = intervention
         return
+    
+    
+    def summary_stats(self):
+        keys = ['n_susceptible', 'n_exposed', 'n_infectious']
+        summary = {}
+        for key in keys:
+            summary[key] = self.results[key][-1]
+        return summary
 
 
-    def run(self, verbose=None):
+    def run(self, seed_infections=1, verbose=None):
         ''' Run the simulation '''
         
         T = sc.tic()
@@ -205,44 +226,66 @@ class Sim(ParsObj):
         if verbose is not None:
             self.pars['verbose'] = verbose
         self.init_results()
-        self.init_people() # Actually create the people
+        self.init_people(seed_infections=seed_infections) # Actually create the people
         
         # Main simulation loop
         for t in range(self.npts):
+            
+            # Print progress
             if self.pars['verbose']>-1:
-                print(f'  Running day {t:0.0f} of {self.pars["n_days"]}...')
+                string = f'  Running day {t:0.0f} of {self.pars["n_days"]}...'
+                if self.pars['verbose']>0:
+                    sc.heading(string)
+                else:
+                    print(string)
             
             # Implement intervention (e.g. testing), if any
             if t in self.interventions:
                 self.interventions[t](self)
             
-            # Initialize outputs
-            counts = {}
-            for state_key in self.state_keys:
-                counts[state_key] = 0
-            
             # Update each person
             for person in self.people.values():
                 
                 # If exposed, check if the person becomes infectious
-                if self.exposed:
-                    pass
-                
-                # If infectious, check who if anyone gets infected
-                if self.infectious:
-                    ...
-                
-                # 
+                if person.exposed:
+                    self.results['n_exposed'][t] += 1
+                    if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
+                        person.infectious = True
+                        if self.pars['verbose']>0:
+                            print(f'      Person {person.uid} became infectious!')
+                        
+                # If infectious, check if anyone gets infected
+                if person.infectious:
+                    self.results['n_infectious'][t] += 1 # Count this person as infectious
+                    contact_inds = pl.randint(0, len(self.people), person.contacts)
+                    for contact_ind in contact_inds:
+                        exposure = bt(self.pars['r_contact'])
+                        if exposure:
+                            target_person = self.people[contact_ind]
+                            if not target_person.exposed: # Skip people already exposed
+                                self.results['infections'][t] += 1
+                                target_person.exposed = True
+                                target_person.date_exposed = t
+                                target_person.date_infectious = t + round(pl.normal(person.pars['incub'], person.pars['incub_std']))
+                                if self.pars['verbose']>0:
+                                    print(f'        Person {person.uid} infected person {target_person.uid}!')
             
-            ['t', 'n_susceptible', 'n_exposed', 'n_infected', 'n_diagnosed', 'infections', 'diagnoses', 'tests']
             
-            # Store results
-            self.results['t'][t] = self.tvec[t]
-            # self.results['n'][t]   = self.n
-            # TODO
+            # TODO: ['n_diagnosed', 'infections', 'diagnoses', 'tests']
+            
+            # Store other results
+            self.results['t'][t] = t
+            self.results['n_susceptible'][t] = len(self.people) - self.results['n_exposed'][t]
+            
             
         elapsed = sc.toc(T, output=True)
-        print(f'Run finished after {elapsed:0.1f} s')
+        print(f'\nRun finished after {elapsed:0.1f} s.\n')
+        summary = self.summary_stats()
+        print(f"""Statistics: 
+     {summary['n_susceptible']:5.0f} susceptible 
+     {summary['n_exposed']:5.0f} exposed
+     {summary['n_infectious']:5.0f} infectious
+           """)
         return self.results
 
     
@@ -279,12 +322,6 @@ class Sim(ParsObj):
 
         res = self.results # Shorten since heavily used
 
-        x = res['t'] # Likewise
-        if not as_days:
-            timelabel = 'Timestep'
-        else:
-            timelabel = 'Day'
-
         # Plot everything
         to_plot = sc.odict({ # TODO
             'Population size': sc.odict({'pop_size':'Population size'}),
@@ -301,13 +338,10 @@ class Sim(ParsObj):
                     y = res[key]*100
                 else:
                     y = res[key]
-                pl.plot(x, y, label=label, **plotargs)
+                pl.plot(res['t'], y, label=label, **plotargs)
             fixaxis()
-            if key == 'mcpr':
-                pl.ylabel('Percentage')
-            else:
-                pl.ylabel('Count')
-            pl.xlabel(timelabel)
+            pl.ylabel('Count')
+            pl.xlabel('Day')
             pl.title(title, fontweight='bold')
 
         # Ensure the figure actually renders or saves
