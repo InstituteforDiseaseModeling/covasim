@@ -72,6 +72,7 @@ def fixaxis(useSI=True):
     ''' Fix the plotting '''
     pl.legend() # Add legend
     sc.setylim() # Rescale y to start at 0
+    sc.setxlim()
     return
 
 
@@ -307,7 +308,7 @@ class Sim(ParsObj):
         return self.results
 
     
-    def plot(self, do_save=None, fig_args=None, plot_args=None, axis_args=None, as_days=True, font_size=16):
+    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=16):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -331,9 +332,10 @@ class Sim(ParsObj):
 
         '''
 
-        if fig_args  is None: fig_args  = {'figsize':(26,16)}
-        if plot_args is None: plot_args = {'lw':3, 'alpha':0.7, 'marker':'o'}
-        if axis_args is None: axis_args = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
+        if fig_args     is None: fig_args     = {'figsize':(26,16)}
+        if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7, 'marker':'o'}
+        if scatter_args is None: scatter_args = {'s':150, 'marker':'s'}
+        if axis_args    is None: axis_args    = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
 
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
@@ -361,9 +363,10 @@ class Sim(ParsObj):
                 y = res[key]
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key == 'diagnoses': # TODO: fix up labeling issue
-                    pl.scatter(self.data['day'], self.data['new_infections'], c=this_color, s=100)
+                    pl.scatter(self.data['day'], self.data['new_infections'], c=this_color, **scatter_args)
                 elif key == 'tests': # TODO: fix up labeling issue
-                    pl.scatter(self.data['day'], self.data['new_tests'], c=this_color, s=100)
+                    pl.scatter(self.data['day'], self.data['new_tests'], c=this_color, **scatter_args)
+                    pl.scatter(pl.nan, pl.nan, c=(0,0,0), label='Data', **scatter_args)
             fixaxis()
             pl.ylabel('Count')
             pl.xlabel('Day')
@@ -374,7 +377,7 @@ class Sim(ParsObj):
             if isinstance(do_save, str):
                 filename = do_save # It's a string, assume it's a filename
             else:
-                filename = 'voi_sim.png' # Just give it a default name
+                filename = 'covid_abm_results.png' # Just give it a default name
             pl.savefig(filename)
         else:
             pl.show() # Only show if we're not saving

@@ -5,7 +5,7 @@ Simple script for running the Covid-19 agent-based model
 import covid_abm
 
 do_plot = True
-do_save = False
+do_save = True
 
 sim = covid_abm.Sim()
 sim.run()

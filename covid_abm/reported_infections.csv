@@ -2,7 +2,7 @@ date,day,new_infections,cumulative_infections,new_tests,cumulative_tests
 20-Jan-20,0,,,,
 21-Jan-20,1,,,,
 22-Jan-20,2,,,,
-23-Jan-20,3,1,,,
+23-Jan-20,3,,,,
 24-Jan-20,4,,,,
 25-Jan-20,5,,,,
 26-Jan-20,6,,,,
@@ -12,7 +12,7 @@ date,day,new_infections,cumulative_infections,new_tests,cumulative_tests
 30-Jan-20,10,,,,
 31-Jan-20,11,,,,
 01-Feb-20,12,,,,
-02-Feb-20,13,,,,
+02-Feb-20,13,1,,,
 03-Feb-20,14,,,,
 04-Feb-20,15,,,,
 05-Feb-20,16,10,10,31,31
