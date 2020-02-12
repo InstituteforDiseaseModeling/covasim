@@ -111,8 +111,8 @@ class ParsObj(sc.prettyobj):
     
     def _calculate_derived(self):
         ''' Calculate derived parameters -- used by update_pars '''
-        self.npts = int((self.pars['end'] - self.pars['start'])/self.pars['timestep'] + 1)
-        self.tvec = self.pars['start'] + np.arange(self.npts)*self.pars['timestep']
+        self.npts = int(self.pars['n_days']/self.pars['timestep'] + 1)
+        self.tvec = np.arange(self.npts)*self.pars['timestep']
         return
 
 
@@ -159,7 +159,7 @@ class Sim(ParsObj):
     def __init__(self, pars=None):
         if pars is None:
             print('Note: using default parameter values')
-            pars = parameters.make_par()
+            pars = parameters.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
         set_seed(self.pars['seed'])
         self.init_results()
