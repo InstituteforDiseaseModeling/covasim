@@ -8,32 +8,28 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
-import numba as nb
-from scipy import interpolate as si
-
+from . import parameters
 
 # Specify all externally visible things this file defines
-__all__ = ['bt', 'bc', 'rbt', 'mt', 'set_seed', 'fixaxis', 'ParsObj', 'Person', 'Sim', 'multi_run']
+__all__ = ['bt', 'bc', 'rbt', 'mt', 'set_seed', 'fixaxis', 'ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
 
-# Parameters -- should not need to be modified
-usenumba   = True  # Whether to use Numba or Numpy functions for random number generators
-eps        = 1e-12 # To avoid divide-by-zero errors
-   
-# Decide which numerical function to use
-if usenumba:
+
+
+#%% Define helper functions
+
+# Decide which numerical functions to use
+try:
+    import numba as nb
     func_decorator = nb.njit
     class_decorator = nb.jitclass # Not used currently
-else:
+except:
+    print('Warning: Numba could not be imported, model will run more slowly')
     def func_decorator(*args, **kwargs):
         def wrap(func): return func
         return wrap
     def class_decorator(*args, **kwargs):
         def wrap(cls): return cls
         return wrap
-
-
-
-#%% Define helper functions
 
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
@@ -161,6 +157,9 @@ class Sim(ParsObj):
     '''
 
     def __init__(self, pars=None):
+        if pars is None:
+            print('Note: using default parameter values')
+            pars = parameters.make_par()
         super().__init__(pars) # Initialize and set the parameters as attributes
         set_seed(self.pars['seed'])
         self.init_results()
@@ -180,6 +179,8 @@ class Sim(ParsObj):
     def init_people(self):
         ''' Create the people '''
         # TODO age, sex
+        age = 0
+        sex = 0
         self.people = sc.odict() # Dictionary for storing the people
         for i in range(int(self.pars['n'])): # Loop over each person
             person = Person(self.pars, age=age, sex=sex) # Create the person

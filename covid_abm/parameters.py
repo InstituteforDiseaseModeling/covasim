@@ -3,25 +3,58 @@ Set the parameters for LEMOD-FP.
 '''
 
 import os
-import pylab as pl
-import sciris as sc
+from datetime import datetime
+import pandas as pd
 
 
-#%% Set parameters for the simulation
+__all__ = ['make_pars', 'load_data']
+
 
 def make_pars():
+    ''' Set parameters for the simulation '''
     pars = {}
 
     # Simulation parameters
-    pars['name'] = 'Default' # Name of the simulation
-    pars['n'] = 3720 # Number of people in the simulation
-    pars['start'] = 0 # Start day of the epidemic
-    pars['end'] = 30 # How many days to simulate
+    pars['n_guests'] = 2666 # From https://www.princess.com/news/notices_and_advisories/notices/diamond-princess-update.html
+    pars['n_crew'] = 1045 # Ditto
+    pars['day0'] = datetime(2020, 1, 22) # Start day of the epidemic
+    pars['n_days'] = 30 # How many days to simulate
     pars['timestep'] = 1 # Timestep in days
-    pars['verbose'] = True
     pars['seed'] = 1 # Random seed, if None, don't reset
+    pars['verbose'] = True # Whether or not to display information during the run
     
-    # User-tunable parameters
-    pars['mortality_factor']    = 1.0#*(2**2) # These weird factors are since mortality and fertility scale differently to keep population growth the same
+    # Epidemic parameters
+    pars['r_contact']      = 0.1 # Probability of infection per contact
+    pars['contacts_guest'] = 10  # Number of contacts per guest per day
+    pars['contacts_crew']  = 100 # Number of contacts per crew member per day
+    pars['incub']          = 6.0 # Incubation period, in days
+    pars['incub_std']      = 1.0 # Standard deviation of the serial interval
+    pars['protective_eff'] = 0.9 # Efficacy of protective measures (masks, etc.)
     
     return pars
+
+
+def load_data(filename=None):
+    ''' Load data for comparing to the model output '''
+    
+    # Handle default filename
+    if filename is None:
+        cwd = os.path.abspath(os.path.dirname(__file__))
+        filename = os.path.join(cwd, 'reported_infections.csv')
+    
+    # Load data
+    raw_data = pd.read_csv(filename)
+    
+    # Confirm data integrity
+    cols = ['elapsedd_time', 'day', 'new_confirmed_infections', 'new_tested']
+    for col in cols:
+        assert col in raw_data.columns, f'Column {col} is missing from the loaded data'
+    
+    # Simplify data
+    data = pd.DataFrame()
+    data['day'] = raw_data['elapsed_time']
+    
+    return data
+        
+    
+    

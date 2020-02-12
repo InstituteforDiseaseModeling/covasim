@@ -31,8 +31,6 @@ setup(
     include_package_data=True,
     install_requires=[
         "matplotlib",
-        "scirisweb",
-        "numba",
-        "seaborn>=0.9",
+        "sciris",
     ],
 )
