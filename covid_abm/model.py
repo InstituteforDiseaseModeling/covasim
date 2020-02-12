@@ -307,7 +307,7 @@ class Sim(ParsObj):
         return self.results
 
     
-    def plot(self, do_save=None, fig_args=None, plot_args=None, axis_args=None, as_days=True):
+    def plot(self, do_save=None, fig_args=None, plot_args=None, axis_args=None, as_days=True, font_size=16):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -337,6 +337,7 @@ class Sim(ParsObj):
 
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
+        pl.rcParams['font.size'] = font_size
 
         res = self.results # Shorten since heavily used
 
@@ -356,7 +357,7 @@ class Sim(ParsObj):
         for p,title,keylabels in to_plot.enumitems():
             pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
-                this_color = pl.array(list(colors[i])).transpose()
+                this_color = pl.array(list(colors[i+p])).transpose() # This hideous command stops matplotlib from complaining
                 y = res[key]
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key == 'diagnoses': # TODO: fix up labeling issue
