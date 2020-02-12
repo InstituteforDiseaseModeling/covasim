@@ -6,7 +6,7 @@ Simple example usage for the Covid-19 agent-based model
 import sciris as sc
 import covid_abm
 
-do_plot = True
+do_plot = False
 do_save = False
 
 
@@ -34,4 +34,3 @@ if __name__ == '__main__':
 
 
 print('Done.')
-
