@@ -166,6 +166,10 @@ class Sim(ParsObj):
         self.init_people()
         self.interventions = {}
         return
+    
+    @property
+    def n(self):
+        return len(self.people)
 
 
     def init_results(self):
@@ -182,8 +186,10 @@ class Sim(ParsObj):
         age = 0
         sex = 0
         self.people = sc.odict() # Dictionary for storing the people
-        for i in range(int(self.pars['n'])): # Loop over each person
-            person = Person(self.pars, age=age, sex=sex) # Create the person
+        guests = [0]*self.pars['n_guests']
+        crew = [1]*self.pars['n_crew']
+        for is_crew in crew+guests: # Loop over each person
+            person = Person(self.pars, age=age, sex=sex, crew=is_crew) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
         return
 

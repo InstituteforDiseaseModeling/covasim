@@ -3,11 +3,12 @@ Set the parameters for LEMOD-FP.
 '''
 
 import os
-from datetime import datetime
+import pylab as pl
 import pandas as pd
+from datetime import datetime
 
 
-__all__ = ['make_pars', 'load_data']
+__all__ = ['make_pars', 'get_age_sex', 'load_data']
 
 
 def make_pars():
@@ -32,6 +33,30 @@ def make_pars():
     pars['protective_eff'] = 0.9 # Efficacy of protective measures (masks, etc.)
     
     return pars
+
+
+def get_age_sex(is_crew=False, min_age=18, max_age=95, crew_age=35, crew_std=5, guest_age=68, guest_std=8):
+    '''
+    Define age-sex distributions. Passenger age distribution based on:
+        https://www.nytimes.com/reuters/2020/02/12/world/asia/12reuters-china-health-japan.html
+        
+        "About 80% of the passengers were aged 60 or over [=2130], with 215 in their 80s and 11 in the 90s, 
+        the English-language Japan Times newspaper reported."
+    '''
+    
+    # Define female (0) or male (1) -- evenly distributed
+    sex = pl.randint(2)
+    
+    # Define age distribution for the crew and guests
+    if is_crew:
+        age = pl.normal(crew_age, crew_std)
+    else:
+        age = pl.normal(guest_age, guest_std)
+    
+    # Normalize
+    age = pl.median([min_age, age, max_age])
+        
+    return age, sex
 
 
 def load_data(filename=None):
