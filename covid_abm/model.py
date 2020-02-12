@@ -359,14 +359,14 @@ class Sim(ParsObj):
         for p,title,keylabels in to_plot.enumitems():
             pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
-                this_color = pl.array(list(colors[i+p])).transpose() # This hideous command stops matplotlib from complaining
+                this_color = colors[i+p] # TODO: Fix Matplotlib complaints
                 y = res[key]
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key == 'diagnoses': # TODO: fix up labeling issue
                     pl.scatter(self.data['day'], self.data['new_infections'], c=this_color, **scatter_args)
                 elif key == 'tests': # TODO: fix up labeling issue
                     pl.scatter(self.data['day'], self.data['new_tests'], c=this_color, **scatter_args)
-                    pl.scatter(pl.nan, pl.nan, c=(0,0,0), label='Data', **scatter_args)
+                    pl.scatter(pl.nan, pl.nan, c=[0,0,0], label='Data', **scatter_args)
             fixaxis()
             pl.ylabel('Count')
             pl.xlabel('Day')
@@ -379,8 +379,8 @@ class Sim(ParsObj):
             else:
                 filename = 'covid_abm_results.png' # Just give it a default name
             pl.savefig(filename)
-        else:
-            pl.show() # Only show if we're not saving
+        
+        pl.show()
 
         return fig
     

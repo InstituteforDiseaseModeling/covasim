@@ -15,4 +15,4 @@ The module should then be importable as `import covid_abm`.
 
 ## Usage
 
-There is a test script in [https://github.com/amath-idm/covid-19-cruise-ship/blob/master/tests/example_sim.py](`tests/example_sim.py`).
+Usage is simply `python -i scripts/run_sim.py`. This will create a figure (and, by default, save it to disk). You can modify parameter values, including the random seed, in `covid_abm/parameters.py`. There are various tests in the `tests` folder.
