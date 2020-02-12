@@ -45,14 +45,12 @@ def load_data(filename=None):
     # Load data
     raw_data = pd.read_csv(filename)
     
-    # Confirm data integrity
-    cols = ['elapsedd_time', 'day', 'new_confirmed_infections', 'new_tested']
-    for col in cols:
-        assert col in raw_data.columns, f'Column {col} is missing from the loaded data'
-    
-    # Simplify data
+    # Confirm data integrity and simplify
+    cols = ['day', 'date', 'new_tests', 'new_infections']
     data = pd.DataFrame()
-    data['day'] = raw_data['elapsed_time']
+    for col in cols:
+        assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
+    data = raw_data[cols]
     
     return data
         

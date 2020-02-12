@@ -7,13 +7,13 @@ import sciris as sc
 from covid_abm import parameters as cov_pars
 
 def test_parameters():
-    sc.heading('Testing the parameters')
+    sc.heading('Model parameters')
     pars = cov_pars.make_pars()
     sc.pp(pars)
     return pars
 
 def test_data():
-    sc.heading('Testing data loading')
+    sc.heading('Data loading')
     data = cov_pars.load_data()
     sc.pp(data)
     
