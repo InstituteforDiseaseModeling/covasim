@@ -18,16 +18,15 @@ def make_pars():
     # Simulation parameters
     pars['n_guests'] = 2666 # From https://www.princess.com/news/notices_and_advisories/notices/diamond-princess-update.html
     pars['n_crew']   = 1045 # Ditto
-    pars['day0']     = datetime(2020, 1, 22) # Start day of the epidemic
+    pars['day_0']    = datetime(2020, 1, 22) # Start day of the epidemic
     pars['n_days']   = 30 # How many days to simulate
-    pars['timestep'] = 1 # Timestep in days
     pars['seed']     = 1 # Random seed, if None, don't reset
     pars['verbose']  = True # Whether or not to display information during the run
     
     # Epidemic parameters
     pars['r_contact']      = 0.1 # Probability of infection per contact
-    pars['contacts_guest'] = 10  # Number of contacts per guest per day
-    pars['contacts_crew']  = 10 #100 # Number of contacts per crew member per day
+    pars['contacts_guest'] = 30  # Number of contacts per guest per day
+    pars['contacts_crew']  = 30 #100 # Number of contacts per crew member per day
     pars['incub']          = 6.0 # Incubation period, in days
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval
     pars['protective_eff'] = 0.9 # Efficacy of protective measures (masks, etc.)

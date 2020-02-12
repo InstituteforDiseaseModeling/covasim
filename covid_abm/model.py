@@ -84,8 +84,7 @@ class ParsObj(sc.prettyobj):
 
     def __init__(self, pars):
         self.update_pars(pars)
-        self.state_keys = ['exposed', 'infected', 'diagnosed', 'recovered', 'removed', 'died']
-        self.results_keys = ['t', 'n_susceptible', 'infections', 'diagnoses', 'deaths']
+        self.results_keys = ['t', 'n_susceptible', 'n_exposed', 'n_infected', 'n_diagnosed', 'infections', 'diagnoses', 'tests']
         return
 
     def __getitem__(self, key):
@@ -95,16 +94,12 @@ class ParsObj(sc.prettyobj):
     def __setitem__(self, key, value):
         ''' Ditto '''
         self.pars[key] = value
-        self.update_pars()
         return
 
-    def update_pars(self, pars=None):
+    def update_pars(self, pars):
         ''' Update internal dict with new pars '''
         if not hasattr(self, 'pars'):
-            if pars is None:
-                raise Exception('Must call update_pars either with a pars dict or with existing pars')
-            else:
-                self.pars = pars
+            self.pars = pars
         elif pars is not None:
             self.pars.update(pars)
         return
@@ -115,7 +110,7 @@ class Person(ParsObj):
     Class for a single person.
     '''
     def __init__(self, pars, age=0, sex=0, crew=False):
-        self.update_pars(pars) # Set parameters
+        super().__init__(pars) # Set parameters
         self.uid = str(pl.randint(0,1e9)) # Unique identifier for this person
         self.age = float(age) # Age of the person (in years)
         self.sex = sex # Female (0) or male (1)
@@ -132,23 +127,8 @@ class Person(ParsObj):
         self.infectious = False
         self.diagnosed  = False
         self.recovered  = False
+        self.infectious_date = None
         return
-
-    def update(self):
-        ''' Update the person's state for the given timestep '''
-        
-        # Initialize outputs
-        
-        state = {}
-        for state_key in self.state_keys:
-            state[state_key] = 0
-        
-        dt = self.pars['timestep']
-        n_contacts = np.round(self.contacts*dt)
-
-            
-        return state
-
 
 
 class Sim(ParsObj):
@@ -174,11 +154,11 @@ class Sim(ParsObj):
     
     @property
     def npts(self):
-        return int(self.pars['n_days']/self.pars['timestep'] + 1)
+        return int(self.pars['n_days'] + 1)
 
     @property
     def tvec(self):
-        return np.arange(self.npts)*self.pars['timestep']
+        return np.arange(self.pars['n_days'] + 1)
 
 
     def init_results(self):
@@ -201,12 +181,12 @@ class Sim(ParsObj):
 
     
     def day2ind(self, day):
-        index = int(day/self.pars['timestep'])
+        index = int(day)
         return index
     
     
     def ind2day(self, ind):
-        day = ind*self.pars['timestep']
+        day = ind
         return day
     
     
@@ -224,28 +204,41 @@ class Sim(ParsObj):
         # Reset settings and results
         if verbose is not None:
             self.pars['verbose'] = verbose
-        self.update_pars()
         self.init_results()
         self.init_people() # Actually create the people
         
         # Main simulation loop
-        for i in range(self.npts):
-            t = self.ind2day(i)
+        for t in range(self.npts):
             if self.pars['verbose']>-1:
-                if sc.approx(t, int(t), eps=0.01):
-                    print(f'  Running day {t:0.0f} of {self.pars["n_days"]}...')
+                print(f'  Running day {t:0.0f} of {self.pars["n_days"]}...')
+            
+            # Implement intervention (e.g. testing), if any
+            if t in self.interventions:
+                self.interventions[t](self)
+            
+            # Initialize outputs
+            counts = {}
+            for state_key in self.state_keys:
+                counts[state_key] = 0
             
             # Update each person
-            counts = {}
             for person in self.people.values():
-                person.update(t, counts) # Update and count new cases
+                
+                # If exposed, check if the person becomes infectious
+                if self.exposed:
+                    pass
+                
+                # If infectious, check who if anyone gets infected
+                if self.infectious:
+                    ...
+                
+                # 
             
-            if i in self.interventions:
-                self.interventions[i](self)
+            ['t', 'n_susceptible', 'n_exposed', 'n_infected', 'n_diagnosed', 'infections', 'diagnoses', 'tests']
             
             # Store results
-            self.results['t'][i] = self.tvec[i]
-            # self.results['n'][i]   = self.n
+            self.results['t'][t] = self.tvec[t]
+            # self.results['n'][t]   = self.n
             # TODO
             
         elapsed = sc.toc(T, output=True)
@@ -288,8 +281,6 @@ class Sim(ParsObj):
 
         x = res['t'] # Likewise
         if not as_days:
-            x /= self.pars['timestep']
-            x -= x[0]
             timelabel = 'Timestep'
         else:
             timelabel = 'Day'
