@@ -105,18 +105,8 @@ class ParsObj(sc.prettyobj):
                 self.pars = pars
         elif pars is not None:
             self.pars.update(pars)
-        # self._pars_to_attrs() # Convert parameters to attributes
-        self._calculate_derived() # Calculate derived parameters
         return
     
-    def _calculate_derived(self):
-        ''' Calculate derived parameters -- used by update_pars '''
-        self.npts = int(self.pars['n_days']/self.pars['timestep'] + 1)
-        self.tvec = np.arange(self.npts)*self.pars['timestep']
-        return
-
-
-
 
 class Person(ParsObj):
     '''
@@ -170,6 +160,14 @@ class Sim(ParsObj):
     @property
     def n(self):
         return len(self.people)
+    
+    @property
+    def npts(self):
+        return int(self.pars['n_days']/self.pars['timestep'] + 1)
+
+    @property
+    def tvec(self):
+        return np.arange(self.npts)*self.pars['timestep']
 
 
     def init_results(self):
@@ -241,7 +239,7 @@ class Sim(ParsObj):
             # TODO
             
         elapsed = sc.toc(T, output=True)
-        print(f'Run finished for after {elapsed:0.1f} s')
+        print(f'Run finished after {elapsed:0.1f} s')
         return self.results
 
     
