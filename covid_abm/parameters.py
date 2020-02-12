@@ -27,7 +27,7 @@ def make_pars():
     # Epidemic parameters
     pars['r_contact']      = 0.1 # Probability of infection per contact
     pars['contacts_guest'] = 10  # Number of contacts per guest per day
-    pars['contacts_crew']  = 100 # Number of contacts per crew member per day
+    pars['contacts_crew']  = 10 #100 # Number of contacts per crew member per day
     pars['incub']          = 6.0 # Incubation period, in days
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval
     pars['protective_eff'] = 0.9 # Efficacy of protective measures (masks, etc.)
@@ -35,7 +35,7 @@ def make_pars():
     return pars
 
 
-def get_age_sex(is_crew=False, min_age=18, max_age=95, crew_age=35, crew_std=5, guest_age=68, guest_std=8):
+def get_age_sex(is_crew=False, min_age=18, max_age=99, crew_age=35, crew_std=5, guest_age=68, guest_std=8):
     '''
     Define age-sex distributions. Passenger age distribution based on:
         https://www.nytimes.com/reuters/2020/02/12/world/asia/12reuters-china-health-japan.html

@@ -84,6 +84,8 @@ class ParsObj(sc.prettyobj):
 
     def __init__(self, pars):
         self.update_pars(pars)
+        self.state_keys = ['exposed', 'infected', 'diagnosed', 'recovered', 'removed', 'died']
+        self.results_keys = ['t', 'n_susceptible', 'infections', 'diagnoses', 'deaths']
         return
 
     def __getitem__(self, key):
@@ -118,6 +120,12 @@ class Person(ParsObj):
         self.age = float(age) # Age of the person (in years)
         self.sex = sex # Female (0) or male (1)
         self.crew       = crew # Wehther the person is a crew member
+        if self.crew:
+            self.contacts = self.pars['contacts_crew'] # Determine how many contacts they have
+        else:
+            self.contacts = self.pars['contacts_guests']
+        
+        # Define state
         self.on_ship    = True # Whether the person is still on the ship
         self.alive      = True
         self.exposed    = False
@@ -126,14 +134,17 @@ class Person(ParsObj):
         self.recovered  = False
         return
 
-    def update(self, t, counts):
+    def update(self):
         ''' Update the person's state for the given timestep '''
         
         # Initialize outputs
-        state = None
+        
+        state = {}
+        for state_key in self.state_keys:
+            state[state_key] = 0
         
         dt = self.pars['timestep']
-        # TODO -- write person loop
+        n_contacts = np.round(self.contacts*dt)
 
             
         return state
@@ -171,9 +182,8 @@ class Sim(ParsObj):
 
 
     def init_results(self):
-        resultscols = ['t', 'n_susceptible', 'infections', 'diagnoses', 'deaths']
         self.results = {}
-        for key in resultscols:
+        for key in self.results_keys:
             self.results[key] = np.zeros(int(self.npts))
         return
     
