@@ -24,13 +24,15 @@ def make_pars():
     pars['verbose']  = True # Whether or not to display information during the run
     
     # Epidemic parameters
-    pars['r_contact']      = 0.02 # Probability of infection per contact
-    pars['contacts_guest'] = 20  # Number of contacts per guest per day
-    pars['contacts_crew']  = 20  #100 # Number of contacts per crew member per day
+    pars['r_contact']      = 0.05 # Probability of infection per contact
+    pars['contacts_guest'] = 30  # Number of contacts per guest per day
+    pars['contacts_crew']  = 30  #100 # Number of contacts per crew member per day
     pars['incub']          = 6.0 # Incubation period, in days
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval
     pars['protective_eff'] = 0.9 # Efficacy of protective measures (masks, etc.)
-    pars['sensitivity']    = 0.5 # Sensitivity of the test
+    pars['sensitivity']    = 10 # Test selection sensitivity (# TODO: rename)
+    pars['quarantine']     = 15 # Day on which quarantine took effect
+    pars['quarantine_eff'] = 0.1 # Change in transmissibility
     
     return pars
 

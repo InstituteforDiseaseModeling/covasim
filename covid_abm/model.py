@@ -141,11 +141,12 @@ class Sim(ParsObj):
     number of time points, and the parameters of the simulation.
     '''
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=None, datafile=None):
         if pars is None:
             print('Note: using default parameter values')
             pars = cov_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
+        self.data = cov_pars.load_data(datafile)
         set_seed(self.pars['seed'])
         self.init_results()
         self.init_people()
@@ -203,18 +204,19 @@ class Sim(ParsObj):
         return day
     
     
-    def add_intervention(self, intervention, day):
-        index = self.day2ind(day)
-        self.interventions[index] = intervention
-        return
-    
-    
     def summary_stats(self):
         keys = ['n_susceptible', 'n_exposed', 'n_infectious']
         summary = {}
         for key in keys:
             summary[key] = self.results[key][-1]
         return summary
+    
+    
+    def choose_people(self, n):
+        max_ind = len(self.people)
+        n_samples = min(int(n), max_ind)
+        inds = pl.choice(max_ind, n_samples, replace=False)
+        return inds
 
 
     def run(self, seed_infections=1, verbose=None):
@@ -239,10 +241,6 @@ class Sim(ParsObj):
                 else:
                     print(string)
             
-            # Implement intervention (e.g. testing), if any
-            if t in self.interventions:
-                self.interventions[t](self)
-            
             # Update each person
             for person in self.people.values():
                 
@@ -257,7 +255,7 @@ class Sim(ParsObj):
                 # If infectious, check if anyone gets infected
                 if person.infectious:
                     self.results['n_infectious'][t] += 1 # Count this person as infectious
-                    contact_inds = pl.randint(0, len(self.people), person.contacts)
+                    contact_inds = self.choose_people(n=person.contacts)
                     for contact_ind in contact_inds:
                         exposure = bt(self.pars['r_contact'])
                         if exposure:
@@ -270,14 +268,34 @@ class Sim(ParsObj):
                                 if self.pars['verbose']>0:
                                     print(f'        Person {person.uid} infected person {target_person.uid}!')
             
+            # Implement testing -- TODO: refactor
+            new_tests = self.data['new_tests']
+            if t<len(new_tests): # Don't know how long the data is
+                n_tests = new_tests.iloc[t]
+                if n_tests and not pl.isnan(n_tests): # There are tests this day
+                    self.results['tests'][t] = n_tests
+                    test_inds = self.choose_people(n=n_tests*self.pars['sensitivity'])
+                    uids_to_pop = []
+                    for test_ind in test_inds:
+                        tested_person = self.people[test_ind]
+                        if tested_person.infectious:
+                            self.results['diagnoses'][t] += 1
+                            tested_person.diagnosed = True
+                            uids_to_pop.append(tested_person.uid)
+                            if self.pars['verbose']>0:
+                                        print(f'          Person {person.uid} was diagnosed!')
+                    for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
+                        self.off_ship[uid] = self.people.pop(uid)
             
-            # TODO: ['n_diagnosed', 'infections', 'diagnoses', 'tests']
-            
+            # Implement quarantine
+            if t == self.pars['quarantine']:
+                self.pars['r_contact'] *= self.pars['quarantine_eff']
+                        
             # Store other results
             self.results['t'][t] = t
             self.results['n_susceptible'][t] = len(self.people) - self.results['n_exposed'][t]
             
-            
+        # Tidy up
         elapsed = sc.toc(T, output=True)
         print(f'\nRun finished after {elapsed:0.1f} s.\n')
         summary = self.summary_stats()
@@ -314,7 +332,7 @@ class Sim(ParsObj):
         '''
 
         if fig_args  is None: fig_args  = {'figsize':(26,16)}
-        if plot_args is None: plot_args = {'lw':2, 'alpha':0.7, 'marker':'o'}
+        if plot_args is None: plot_args = {'lw':3, 'alpha':0.7, 'marker':'o'}
         if axis_args is None: axis_args = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
 
         fig = pl.figure(**fig_args)
@@ -323,22 +341,28 @@ class Sim(ParsObj):
         res = self.results # Shorten since heavily used
 
         # Plot everything
+        colors = sc.gridcolors(5)
         to_plot = sc.odict({ # TODO
-            'Population size': sc.odict({'pop_size':'Population size'}),
-            'MCPR': sc.odict({'mcpr':'Modern contraceptive prevalence rate (%)'}),
-            'Births and deaths': sc.odict({'births':'Births', 'deaths':'Deaths'}),
-            'Birth-related mortality': sc.odict({'maternal_deaths':'Cumulative birth-related maternal deaths', 'child_deaths':'Cumulative neonatal deaths'}),
+            'Total counts': sc.odict({'n_susceptible':'Number susceptible', 
+                                    'n_exposed':'Number exposed', 
+                                    'n_infectious':'Number infectious',
+                                    'n_diagnosed':'Number diagnosed',
+                                    }),
+            'Daily counts': sc.odict({'infections':'New infections',
+                                 'tests':'Number of tests',
+                                 'diagnoses':'New diagnoses', 
+                                 }),
             })
         for p,title,keylabels in to_plot.enumitems():
-            pl.subplot(2,2,p+1)
+            pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
-                if label.startswith('Cumulative'):
-                    y = pl.cumsum(res[key])
-                elif key == 'mcpr':
-                    y = res[key]*100
-                else:
-                    y = res[key]
-                pl.plot(res['t'], y, label=label, **plot_args)
+                this_color = pl.array(list(colors[i])).transpose()
+                y = res[key]
+                pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
+                if key == 'diagnoses': # TODO: fix up labeling issue
+                    pl.scatter(self.data['day'], self.data['new_infections'], c=this_color, s=100)
+                elif key == 'tests': # TODO: fix up labeling issue
+                    pl.scatter(self.data['day'], self.data['new_tests'], c=this_color, s=100)
             fixaxis()
             pl.ylabel('Count')
             pl.xlabel('Day')
