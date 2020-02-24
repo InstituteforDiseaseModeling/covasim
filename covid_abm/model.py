@@ -86,7 +86,16 @@ class ParsObj(sc.prettyobj):
 
     def __init__(self, pars):
         self.update_pars(pars)
-        self.results_keys = ['t', 'n_susceptible', 'n_exposed', 'n_infectious', 'n_diagnosed', 'infections', 'diagnoses', 'tests']
+        self.results_keys = ['t',
+                             'n_susceptible', 
+                             'n_exposed', 
+                             'n_infectious', 
+                             'infections', 
+                             'tests', 
+                             'diagnoses', 
+                             'cum_exposed', 
+                             'cum_tested', 
+                             'cum_diagnosed']
         return
 
     def __getitem__(self, key):
@@ -172,6 +181,7 @@ class Sim(ParsObj):
         self.results = {}
         for key in self.results_keys:
             self.results[key] = np.zeros(int(self.npts))
+        self.results['ready'] = False
         return
     
 
@@ -221,7 +231,7 @@ class Sim(ParsObj):
         return inds
 
 
-    def run(self, seed_infections=1, verbose=None):
+    def run(self, seed_infections=1, verbose=None, calc_likelihood=False, do_plot=False, **kwargs):
         ''' Run the simulation '''
         
         T = sc.tic()
@@ -296,8 +306,18 @@ class Sim(ParsObj):
             # Store other results
             self.results['t'][t] = t
             self.results['n_susceptible'][t] = len(self.people) - self.results['n_exposed'][t]
-            
+        
+        # Compute cumulative results
+        self.results['cum_exposed']   = pl.cumsum(self.results['infections'])
+        self.results['cum_tested']    = pl.cumsum(self.results['tests'])
+        self.results['cum_diagnosed'] = pl.cumsum(self.results['diagnoses'])
+        
+        # Comute likelihood
+        if calc_likelihood:
+            self.likelihood()
+        
         # Tidy up
+        self.results['ready'] = True
         elapsed = sc.toc(T, output=True)
         print(f'\nRun finished after {elapsed:0.1f} s.\n')
         summary = self.summary_stats()
@@ -306,6 +326,10 @@ class Sim(ParsObj):
      {summary['n_exposed']:5.0f} exposed
      {summary['n_infectious']:5.0f} infectious
            """)
+         
+        if do_plot:
+            self.plot(**kwargs)
+        
         return self.results
     
     
@@ -316,6 +340,10 @@ class Sim(ParsObj):
         '''
         if self.pars['verbose']:
             print('Calculating likelihood...')
+        
+        if not self.results['ready']:
+            self.run(calc_likelihood=False) # To avoid an infinite loop
+        
         loglike = 0
         for d,datum in enumerate(self.data['new_positives']):
             if not pl.isnan(datum): # Skip days when no tests were performed
@@ -325,6 +353,9 @@ class Sim(ParsObj):
                 loglike += logp
                 if self.pars['verbose']:
                     print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
+        
+        self.results['likelihood'] = loglike
+        
         return loglike
         
 
@@ -370,7 +401,7 @@ class Sim(ParsObj):
             'Total counts': sc.odict({'n_susceptible':'Number susceptible', 
                                     'n_exposed':'Number exposed', 
                                     'n_infectious':'Number infectious',
-                                    'n_diagnosed':'Number diagnosed',
+                                    'cum_diagnosed':'Number diagnosed',
                                     }),
             'Daily counts': sc.odict({'infections':'New infections',
                                  'tests':'Number of tests',
