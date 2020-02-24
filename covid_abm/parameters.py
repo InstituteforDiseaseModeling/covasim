@@ -73,7 +73,7 @@ def load_data(filename=None):
     raw_data = pd.read_csv(filename)
     
     # Confirm data integrity and simplify
-    cols = ['day', 'date', 'new_tests', 'new_infections']
+    cols = ['day', 'date', 'new_tests', 'new_positives']
     data = pd.DataFrame()
     for col in cols:
         assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'

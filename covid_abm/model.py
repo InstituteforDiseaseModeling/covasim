@@ -300,7 +300,7 @@ class Sim(ParsObj):
         elapsed = sc.toc(T, output=True)
         print(f'\nRun finished after {elapsed:0.1f} s.\n')
         summary = self.summary_stats()
-        print(f"""Statistics: 
+        print(f"""Summary: 
      {summary['n_susceptible']:5.0f} susceptible 
      {summary['n_exposed']:5.0f} exposed
      {summary['n_infectious']:5.0f} infectious
@@ -363,7 +363,7 @@ class Sim(ParsObj):
                 y = res[key]
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key == 'diagnoses': # TODO: fix up labeling issue
-                    pl.scatter(self.data['day'], self.data['new_infections'], c=this_color, **scatter_args)
+                    pl.scatter(self.data['day'], self.data['new_positives'], c=this_color, **scatter_args)
                 elif key == 'tests': # TODO: fix up labeling issue
                     pl.scatter(self.data['day'], self.data['new_tests'], c=this_color, **scatter_args)
                     pl.scatter(pl.nan, pl.nan, c=[0,0,0], label='Data', **scatter_args)
