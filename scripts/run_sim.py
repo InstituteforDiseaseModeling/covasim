@@ -9,5 +9,6 @@ do_save = False
 
 sim = covid_abm.Sim()
 sim.run()
+sim.likelihood()
 if do_plot:
     sim.plot(do_save=do_save)

@@ -9,6 +9,7 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 from . import parameters as cov_pars
+from . import poisson_stats as cov_ps
 
 # Specify all externally visible things this file defines
 __all__ = ['bt', 'bc', 'rbt', 'mt', 'set_seed', 'fixaxis', 'ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
@@ -306,6 +307,26 @@ class Sim(ParsObj):
      {summary['n_infectious']:5.0f} infectious
            """)
         return self.results
+    
+    
+    def likelihood(self):
+        '''
+        Compute the log-likelihood of the current simulation based on the number
+        of new diagnoses.
+        '''
+        if self.pars['verbose']:
+            print('Calculating likelihood...')
+        loglike = 0
+        for d,datum in enumerate(self.data['new_positives']):
+            if not pl.isnan(datum): # Skip days when no tests were performed
+                estimate = self.results['diagnoses'][d]
+                p = cov_ps.poisson_test(datum, estimate)
+                logp = pl.log(p)
+                loglike += logp
+                if self.pars['verbose']:
+                    print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
+        return loglike
+        
 
     
     def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=16):
