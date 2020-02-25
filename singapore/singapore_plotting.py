@@ -59,7 +59,8 @@ day = day - first_day + 1
 
 data = data.assign(date=date)
 data = data.assign(day=day)
-# data = data.sort_values('day')
+data = data.sort_values('day')
+data = data.reset_index()
 day_list = sorted(data.day.unique())
 date_list = sorted(data.date.unique())
 data = data.assign(ind=pl.arange(N)) # For indexing later
@@ -83,6 +84,11 @@ for ind,person in datadict.items():
     if person.exposure_source != -1:
         contacts[mapping[person.exposure_source]].append(ind)
 
+# Handle colors
+ages_for_color = data.age.to_numpy()
+for i,person in enumerate(datadict.values()):
+    assert ages_for_color[i] == person.age
+colors = sc.vectocolor(ages_for_color, cmap=sc.parulacolormap())
 
 # Process into days
 plotdata = {}
@@ -96,11 +102,15 @@ for i in range(N):
 #%% Plotting
     
 # Plot settings
-delta = 1.05
-yoff = 0.01
+delta      = 1.05
+yoff       = 0.01
 markersize = 300
-linealpha = 0.1
-dopause = 1 # Whether or not to plot live
+linealpha  = 0.1
+dopause    = 1 # Whether or not to plot live
+pause      = 0.1
+circular   = 0
+jitter     = 0
+jitter_mag = 0.1
 
 # Movie options
 dosave = 1
@@ -110,16 +120,24 @@ movie_filename = 'singapore-covid-19.mp4'
 
 # Configure axes
 arr = pl.arange(N)/N
-x = pl.sin(arr*2*pl.pi)
-y = pl.cos(arr*2*pl.pi)
+if circular:
+    x = pl.sin(arr*2*pl.pi)
+    y = pl.cos(arr*2*pl.pi)
+else:
+    sqrt_n = pl.ceil(pl.sqrt(N))
+    x = ((pl.arange(N)) % sqrt_n) / (sqrt_n/2) - 1 + pl.rand(N)*jitter_mag*jitter
+    y = -((pl.arange(N)) // sqrt_n) / (sqrt_n/2) + 1 + pl.rand(N)*jitter_mag*jitter
+    
+    
 pl.figure(figsize=(18,18))
-ax = pl.axes([0,0.15,0.9,0.8])
+if circular:
+    ax = pl.axes([0,0.15,0.9,0.8])
+else:
+    ax = pl.axes([0,0.0,0.95,0.95])
 pl.xlim([-1,1])
 pl.ylim([-1,1])
 pl.axis('square')
 pl.axis('off')
-ages_for_color = data.age.to_numpy()
-colors = sc.vectocolor(ages_for_color, cmap=sc.parulacolormap())
 
 # Plot color legend
 ax2 = pl.axes([0.86,0.98,0.08,0.88])
@@ -145,19 +163,25 @@ for day in range(1, max_day):
         thisday = plotdata[day]
         for person in thisday:
             n_cases += 1
+            count += 1
             ind = person.ind
             marker = r'$♂️$' if person.sex == 'Male' else r'$♀️$'
             ax.scatter(x[ind], y[ind], s=markersize, c=[colors[ind]], marker=marker)
-            ax.text(x[ind]*delta, y[ind]*delta-yoff, person.Case) 
+            if circular:
+                tx = x[ind]*delta
+                ty = y[ind]*delta-yoff
+            else:
+                tx = x[ind]
+                ty = y[ind] + 3*yoff
+            ax.text(tx, ty, person.Case) 
             these_contacts = contacts[ind]
             for c in these_contacts:
                 this_x = [x[ind], x[c]]
                 this_y = [y[ind], y[c]]
                 ax.plot(this_x, this_y, c='k', alpha=linealpha)
             
-            ax2.text(0, -ind/N*1.10, f'Case {person.Case:2d}, {marker}, age {data.age[ind]:2.0f}', c=colors[ind], fontsize=16)
+            ax2.text(0, -person.Case/N*1.10, f'Case {person.Case:2d}, {marker}, age {data.age[ind]:2.0f}', c=colors[ind], fontsize=16)
     
-    count += n_cases
     ax3.bar(day, count, facecolor='k')
     
     ax.set_title(f'Day {day:2d}, {day_to_date(day, first_day=first_day)}, cases: {n_cases}', fontsize=24)
@@ -166,7 +190,7 @@ for day in range(1, max_day):
         pl.savefig(f'tmp_singapore_{day}.png')
     
     if dopause:
-        pl.pause(0.5)
+        pl.pause(pause)
 
 if dosave:
     print('Saving as movie...')
