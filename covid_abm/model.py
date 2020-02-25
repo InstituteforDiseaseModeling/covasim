@@ -237,8 +237,8 @@ class Sim(ParsObj):
         T = sc.tic()
         
         # Reset settings and results
-        if verbose is not None:
-            self.pars['verbose'] = verbose
+        if verbose is None:
+            verbose = self.pars['verbose']
         self.init_results()
         self.init_people(seed_infections=seed_infections) # Actually create the people
         
@@ -246,9 +246,9 @@ class Sim(ParsObj):
         for t in range(self.npts):
             
             # Print progress
-            if self.pars['verbose']>-1:
+            if verbose>-1:
                 string = f'  Running day {t:0.0f} of {self.pars["n_days"]}...'
-                if self.pars['verbose']>0:
+                if verbose>0:
                     sc.heading(string)
                 else:
                     print(string)
@@ -261,7 +261,7 @@ class Sim(ParsObj):
                     self.results['n_exposed'][t] += 1
                     if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
                         person.infectious = True
-                        if self.pars['verbose']>0:
+                        if verbose>0:
                             print(f'      Person {person.uid} became infectious!')
                         
                 # If infectious, check if anyone gets infected
@@ -277,7 +277,7 @@ class Sim(ParsObj):
                                 target_person.exposed = True
                                 target_person.date_exposed = t
                                 target_person.date_infectious = t + round(pl.normal(person.pars['incub'], person.pars['incub_std']))
-                                if self.pars['verbose']>0:
+                                if verbose>0:
                                     print(f'        Person {person.uid} infected person {target_person.uid}!')
             
             # Implement testing -- TODO: refactor
@@ -294,14 +294,14 @@ class Sim(ParsObj):
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
                             uids_to_pop.append(tested_person.uid)
-                            if self.pars['verbose']>0:
+                            if verbose>0:
                                         print(f'          Person {person.uid} was diagnosed!')
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
                         self.off_ship[uid] = self.people.pop(uid)
             
             # Implement quarantine
             if t == self.pars['quarantine']:
-                self.pars['r_contact'] *= self.pars['quarantine_eff']
+                self.pars['r_contact'] *= self.pars['quarantine_eff'] # TODO: replace with number of contacts instead
                         
             # Store other results
             self.results['t'][t] = t
@@ -333,16 +333,18 @@ class Sim(ParsObj):
         return self.results
     
     
-    def likelihood(self):
+    def likelihood(self, verbose=None):
         '''
         Compute the log-likelihood of the current simulation based on the number
         of new diagnoses.
         '''
-        if self.pars['verbose']:
+        if verbose is None:
+            verbose = self.pars['verbose']
+        if verbose:
             print('Calculating likelihood...')
         
         if not self.results['ready']:
-            self.run(calc_likelihood=False) # To avoid an infinite loop
+            self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
         
         loglike = 0
         for d,datum in enumerate(self.data['new_positives']):
@@ -351,7 +353,7 @@ class Sim(ParsObj):
                 p = cov_ps.poisson_test(datum, estimate)
                 logp = pl.log(p)
                 loglike += logp
-                if self.pars['verbose']:
+                if verbose>1:
                     print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
         
         self.results['likelihood'] = loglike

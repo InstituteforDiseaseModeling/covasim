@@ -32,7 +32,7 @@ def make_pars():
     pars['protective_eff'] = 0.9 # Efficacy of protective measures (masks, etc.)
     pars['sensitivity']    = 10 # Test selection sensitivity (# TODO: rename)
     pars['quarantine']     = 15 # Day on which quarantine took effect
-    pars['quarantine_eff'] = 0.1 # Change in transmissibility
+    pars['quarantine_eff'] = 0.0 # Change in transmissibility
     
     return pars
 
