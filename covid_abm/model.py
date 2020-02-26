@@ -267,7 +267,8 @@ class Sim(ParsObj):
                 # If infectious, check if anyone gets infected
                 if person.infectious:
                     self.results['n_infectious'][t] += 1 # Count this person as infectious
-                    contact_inds = self.choose_people(n=person.contacts)
+                    n = np.random.poisson(person.contacts, 1) # Draw the number of Poisson contacts for this person
+                    contact_inds = self.choose_people(n=n)
                     for contact_ind in contact_inds:
                         exposure = bt(self.pars['r_contact'])
                         if exposure:
@@ -301,7 +302,9 @@ class Sim(ParsObj):
             
             # Implement quarantine
             if t == self.pars['quarantine']:
-                self.pars['r_contact'] *= self.pars['quarantine_eff'] # TODO: replace with number of contacts instead
+                print('Implementing quarantine...')
+                for person in self.people.values():
+                    person.contacts *= self.pars['quarantine_eff'] # TODO: separate factors for crew and guests
                         
             # Store other results
             self.results['t'][t] = t
