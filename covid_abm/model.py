@@ -417,23 +417,14 @@ class Sim(ParsObj):
         for p,title,keylabels in to_plot.enumitems():
             pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
-                this_color1 = pl.array([colors[i+p]], dtype=float)
-                this_color2 = colors[i+p] # TODO: Fix Matplotlib complaints
-                print(this_color1)
-                print(this_color2)
+                this_color = colors[i+p] # TODO: Fix Matplotlib complaints
                 y = res[key]
-                # pl.plot(res['t'], y, label=label, **plot_args, c=this_color1)
+                pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key == 'diagnoses': # TODO: fix up labeling issue
-                    print('OMG')
-                    print(repr(this_color1))
-                    print('OMG2')
-                    print(repr(pl.array([colors[i+p]], dtype=float)))
-                    assert (this_color1 == pl.array([colors[i+p]], dtype=float)).all()
-                    pl.scatter([self.data['day']], [self.data['new_positives']], c=this_color1, **scatter_args)
-                    pl.scatter([self.data['day']], [self.data['new_positives']], c=pl.array([colors[i+p]], dtype=float), **scatter_args)
-                # elif key == 'tests': # TODO: fix up labeling issue
-                #     pl.scatter(self.data['day'], self.data['new_tests'], c=this_color, **scatter_args)
-                #     pl.scatter(-1, -1, c=[(0,0,0)], label='Data', **scatter_args)
+                    pl.scatter(self.data['day'], self.data['new_positives'], c=[this_color], **scatter_args)
+                elif key == 'tests': # TODO: fix up labeling issue
+                    pl.scatter(self.data['day'], self.data['new_tests'], c=[this_color], **scatter_args)
+                    pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             fixaxis()
             pl.ylabel('Count')
             pl.xlabel('Day')
