@@ -6,36 +6,23 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
+import numba as nb # For faster computations
 import pylab as pl
 import sciris as sc
 from . import parameters as cov_pars
 from . import poisson_stats as cov_ps
 
-# Specify all externally visible things this file defines
+# Specify all externally visible functions this file defines
 __all__ = ['bt', 'bc', 'rbt', 'mt', 'set_seed', 'fixaxis', 'ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
 
 
 
 #%% Define helper functions
 
-# Decide which numerical functions to use
-try:
-    import numba as nb
-    func_decorator = nb.njit
-    class_decorator = nb.jitclass # Not used currently
-except:
-    print('Warning: Numba could not be imported, model will run more slowly')
-    def func_decorator(*args, **kwargs):
-        def wrap(func): return func
-        return wrap
-    def class_decorator(*args, **kwargs):
-        def wrap(cls): return cls
-        return wrap
-
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
     
-    @func_decorator
+    @nb.njit
     def set_seed_numba(seed):
         return np.random.seed(seed)
     
@@ -48,22 +35,22 @@ def set_seed(seed=None):
     return
 
 
-@func_decorator((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
+@nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
 def bt(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
-@func_decorator((nb.float64, nb.int64))
+@nb.njit((nb.float64, nb.int64))
 def bc(prob, repeats):
     ''' A binomial count '''
     return np.random.binomial(repeats, prob) # Or (np.random.rand(repeats) < prob).sum()
 
-@func_decorator((nb.float64, nb.int64))
+@nb.njit((nb.float64, nb.int64))
 def rbt(prob, repeats):
     ''' A repeated Bernoulli (binomial) trial '''
     return np.random.binomial(repeats, prob)>0 # Or (np.random.rand(repeats) < prob).any()
 
-@func_decorator((nb.float64[:],))
+@nb.njit((nb.float64[:],))
 def mt(probs):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random())
