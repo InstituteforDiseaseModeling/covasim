@@ -336,7 +336,7 @@ class Sim(ParsObj):
         
 
     
-    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=16, verbose=None):
+    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -365,7 +365,7 @@ class Sim(ParsObj):
             print('Plotting...')
 
         if fig_args     is None: fig_args     = {'figsize':(26,16)}
-        if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7, 'marker':'o'}
+        if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7}
         if scatter_args is None: scatter_args = {'s':150, 'marker':'s'}
         if axis_args    is None: axis_args    = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
 
@@ -379,30 +379,35 @@ class Sim(ParsObj):
         colors = sc.gridcolors(5)
         to_plot = sc.odict({ # TODO
             'Total counts': sc.odict({'n_susceptible':'Number susceptible', 
-                                    'n_exposed':'Number exposed', 
-                                    'n_infectious':'Number infectious',
-                                    'cum_diagnosed':'Number diagnosed',
+                                      'n_exposed':'Number exposed', 
+                                      'n_infectious':'Number infectious',
+                                      'cum_diagnosed':'Number diagnosed',
                                     }),
             'Daily counts': sc.odict({'infections':'New infections',
-                                 'tests':'Number of tests',
-                                 'diagnoses':'New diagnoses', 
-                                 }),
+                                      'tests':'Number of tests',
+                                      'diagnoses':'New diagnoses', 
+                                     }),
             })
+        
+        data_mapping = {
+            'cum_diagnosed': pl.cumsum(self.data['new_positives']),
+            'tests':         self.data['new_tests'],
+            'diagnoses':     self.data['new_positives'],
+            }
+        
         for p,title,keylabels in to_plot.enumitems():
             pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
-                this_color = colors[i+p] # TODO: Fix Matplotlib complaints
+                this_color = colors[i+p]
                 y = res[key]
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
-                if key == 'diagnoses': # TODO: fix up labeling issue
-                    pl.scatter(self.data['day'], self.data['new_positives'], c=[this_color], **scatter_args)
-                elif key == 'tests': # TODO: fix up labeling issue
-                    pl.scatter(self.data['day'], self.data['new_tests'], c=[this_color], **scatter_args)
-                    pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+                if key in data_mapping:
+                    pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
+            pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             cov_ut.fixaxis()
             pl.ylabel('Count')
             pl.xlabel('Day')
-            pl.title(title, fontweight='bold')
+            pl.title(title)
 
         # Ensure the figure actually renders or saves
         if do_save:
