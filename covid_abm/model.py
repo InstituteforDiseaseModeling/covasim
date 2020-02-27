@@ -6,79 +6,14 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
-import numba as nb # For faster computations
 import pylab as pl
 import sciris as sc
+from . import utils as cov_ut
 from . import parameters as cov_pars
 from . import poisson_stats as cov_ps
 
 # Specify all externally visible functions this file defines
-__all__ = ['bt', 'mt', 'set_seed', 'fixaxis', 'ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
-
-
-
-#%% Define helper functions
-
-def set_seed(seed=None):
-    ''' Reset the random seed -- complicated because of Numba '''
-    
-    @nb.njit((nb.int64,))
-    def set_seed_numba(seed):
-        return np.random.seed(seed)
-    
-    def set_seed_regular(seed):
-        return np.random.seed(seed)
-    
-    if seed is not None:
-        set_seed_numba(seed)
-        set_seed_regular(seed)
-    return
-
-
-@nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
-def bt(prob):
-    ''' A simple Bernoulli (binomial) trial '''
-    return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
-
-@nb.njit((nb.float64[:], nb.int64))
-def mt(probs, repeats):
-    ''' A multinomial trial '''
-    return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
-
-
-@nb.njit((nb.float64[:], nb.int64, nb.float64))
-def choose_people(n, max_ind=None, probs=None, overshoot=1.5):
-    '''
-    Choose n people, each with a probability from the distribution probs. Overshoot
-    handles the case where there are repeats
-    
-    choose_people(5, 2) will choose 2 out of 5 people with equal probability.
-    choose_people([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
-    '''
-    if max_ind is not None: # Everyone has the same probability, just a choice problem
-        n_samples = min(int(n), max_ind)
-        inds = pl.choice(max_ind, n_samples, replace=False)
-    else: # Normal use case
-        assert max_ind is None
-        assert probs is not None
-        if len(probs)>=n: # Otherwise, it's everyone
-            print(f'Warning: number of samples requested is greater than the number of people, returning {n}')
-        unique_inds = []
-        while len(unique_inds)<n:
-            raw_inds = list(mt(probs, n*overshoot)) # Return raw indices, with replacement
-            unique_inds.append(raw_inds)
-            unique_inds,order = np.unique(unique_inds, return_index=True)
-            unique_inds = unique_inds[order.argsort()] # Restoer the original order
-        inds = pl.array(unique_inds)[:n]
-    return inds
-
-
-def fixaxis(useSI=True):
-    ''' Make the plotting more consistent -- add a legend and ensure the axes start at 0 '''
-    pl.legend() # Add legend
-    sc.setylim() # Rescale y to start at 0
-    sc.setxlim()
-    return
+__all__ = ['ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
 
 
 
@@ -162,7 +97,7 @@ class Sim(ParsObj):
             pars = cov_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
         self.data = cov_pars.load_data(datafile)
-        set_seed(self.pars['seed'])
+        cov_ut.set_seed(self.pars['seed'])
         self.init_results()
         self.init_people()
         self.interventions = {}
@@ -265,9 +200,9 @@ class Sim(ParsObj):
                 if person.infectious:
                     self.results['n_infectious'][t] += 1 # Count this person as infectious
                     n = np.random.poisson(person.contacts, 1) # Draw the number of Poisson contacts for this person
-                    contact_inds = self.choose_people(probs=len(self.people), n=n)
+                    contact_inds = cov_ut.choose_people(max_ind=len(self.people), n=n)
                     for contact_ind in contact_inds:
-                        exposure = bt(self.pars['r_contact'])
+                        exposure = cov_ut.bt(self.pars['r_contact'])
                         if exposure:
                             target_person = self.people[contact_ind]
                             if not target_person.exposed: # Skip people already exposed
@@ -284,7 +219,7 @@ class Sim(ParsObj):
                 n_tests = new_tests.iloc[t]
                 if n_tests and not pl.isnan(n_tests): # There are tests this day
                     self.results['tests'][t] = n_tests
-                    test_inds = self.choose_people(n=n_tests*self.pars['sensitivity'])
+                    test_inds = cov_ut.choose_people_weighted(n=n_tests*self.pars['sensitivity'])
                     uids_to_pop = []
                     for test_ind in test_inds:
                         tested_person = self.people[test_ind]
@@ -425,7 +360,7 @@ class Sim(ParsObj):
                 elif key == 'tests': # TODO: fix up labeling issue
                     pl.scatter(self.data['day'], self.data['new_tests'], c=[this_color], **scatter_args)
                     pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-            fixaxis()
+            cov_ut.fixaxis()
             pl.ylabel('Count')
             pl.xlabel('Day')
             pl.title(title, fontweight='bold')
