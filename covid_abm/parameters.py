@@ -36,9 +36,9 @@ def make_pars():
     
     # Events
     pars['quarantine']       = 15 # Day on which quarantine took effect
-    pars['quarantine_eff']   = 0.1 # Change in transmissibility due to quarantine, estimated
+    pars['quarantine_eff']   = 0.05 # Change in transmissibility due to quarantine, estimated
     pars['testing_change']   = 22 # Day that testing protocol changed, from https://hopkinsidd.github.io/nCoV-Sandbox/Diamond-Princess.html
-    pars['testing_symptoms'] = 0.3 # Relative change in symptomatic testing after the protocol change
+    pars['testing_symptoms'] = 0.1 # Relative change in symptomatic testing after the protocol change
     
     return pars
 
