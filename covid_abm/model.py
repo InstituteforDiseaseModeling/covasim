@@ -36,7 +36,8 @@ class ParsObj(sc.prettyobj):
                              'recoveries',
                              'cum_exposed', 
                              'cum_tested', 
-                             'cum_diagnosed']
+                             'cum_diagnosed',
+                             'evac_diagnoses',]
         return
 
     def __getitem__(self, key):
@@ -178,6 +179,7 @@ class Sim(ParsObj):
         self.init_results()
         self.init_people(seed_infections=seed_infections) # Actually create the people
         daily_tests = self.data['new_tests'] # Number of tests each day, from the data
+        evacuated = self.data['evacuated'] # Number of people evacuated
         
         # Main simulation loop
         for t in range(self.npts):
@@ -268,18 +270,29 @@ class Sim(ParsObj):
                             
             # Implement quarantine
             if t == self.pars['quarantine']:
-                print('Implementing quarantine...')
+                print(f'Implementing quarantine on day {t}...')
                 for person in self.people.values():
                     person.contacts *= self.pars['quarantine_eff'] # TODO: separate factors for crew and guests
             
             # Implement testing chnage
             if t == self.pars['testing_change']:
-                print('Implementing testing change...')
+                print(f'Implementing testing change on day {t}...')
                 self.pars['symptomatic'] *= self.pars['testing_symptoms'] # Reduce the proportion of symptomatic testing
             
             # Implement evacuations
-            print('Not implemented') # TODO -- American and final evacuations
-                        
+            if t<len(evacuated):
+                print(f'Implementing evacuation on day {t}')
+                n_evacuated = evacuated.iloc[t] # Number of evacuees for this day
+                if n_evacuated and not pl.isnan(n_evacuated): # There are evacuees this day # TODO -- refactor with n_tests
+                    evac_inds = cov_ut.choose_people(max_ind=len(self.people), n=n_evacuated)
+                    uids_to_pop = []
+                    for evac_ind in evac_inds:
+                        evac_person = self.people[evac_ind]
+                        if evac_person.infectious and cov_ut.bt(self.pars['sensitivity']):
+                            self.results['evac_diagnoses'][t] += 1
+                        uids_to_pop.append(evac_person.uid)
+                    for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
+                        self.off_ship[uid] = self.people.pop(uid)
         
         # Compute cumulative results
         self.results['cum_exposed']   = pl.cumsum(self.results['infections'])

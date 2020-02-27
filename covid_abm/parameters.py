@@ -19,7 +19,7 @@ def make_pars():
     pars['n_guests']   = 2666 # From https://www.princess.com/news/notices_and_advisories/notices/diamond-princess-update.html
     pars['n_crew']     = 1045 # Ditto
     pars['day_0']      = datetime(2020, 1, 22) # Start day of the epidemic
-    pars['n_days']     = 31 # How many days to simulate -- 31 days is until 2020-Feb-20
+    pars['n_days']     = 32 # How many days to simulate -- 31 days is until 2020-Feb-20
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = True # Whether or not to display information during the run
     
