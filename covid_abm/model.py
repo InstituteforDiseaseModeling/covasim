@@ -281,9 +281,9 @@ class Sim(ParsObj):
             
             # Implement evacuations
             if t<len(evacuated):
-                print(f'Implementing evacuation on day {t}')
                 n_evacuated = evacuated.iloc[t] # Number of evacuees for this day
                 if n_evacuated and not pl.isnan(n_evacuated): # There are evacuees this day # TODO -- refactor with n_tests
+                    print(f'Implementing evacuation on day {t}')
                     evac_inds = cov_ut.choose_people(max_ind=len(self.people), n=n_evacuated)
                     uids_to_pop = []
                     for evac_ind in evac_inds:
