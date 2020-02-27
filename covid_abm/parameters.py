@@ -16,23 +16,29 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['n_guests'] = 2666 # From https://www.princess.com/news/notices_and_advisories/notices/diamond-princess-update.html
-    pars['n_crew']   = 1045 # Ditto
-    pars['day_0']    = datetime(2020, 1, 22) # Start day of the epidemic
-    pars['n_days']   = 30 # How many days to simulate
-    pars['seed']     = 1 # Random seed, if None, don't reset
-    pars['verbose']  = True # Whether or not to display information during the run
+    pars['n_guests']   = 2666 # From https://www.princess.com/news/notices_and_advisories/notices/diamond-princess-update.html
+    pars['n_crew']     = 1045 # Ditto
+    pars['day_0']      = datetime(2020, 1, 22) # Start day of the epidemic
+    pars['n_days']     = 31 # How many days to simulate -- 31 days is until 2020-Feb-20
+    pars['seed']       = 1 # Random seed, if None, don't reset
+    pars['verbose']    = True # Whether or not to display information during the run
     
     # Epidemic parameters
-    pars['r_contact']      = 0.05 # Probability of infection per contact
-    pars['contacts_guest'] = 30  # Number of contacts per guest per day
-    pars['contacts_crew']  = 30  #100 # Number of contacts per crew member per day
-    pars['incub']          = 6.0 # Incubation period, in days
-    pars['incub_std']      = 1.0 # Standard deviation of the serial interval
-    pars['protective_eff'] = 0.9 # Efficacy of protective measures (masks, etc.)
-    pars['sensitivity']    = 10 # Test selection sensitivity (# TODO: rename)
-    pars['quarantine']     = 15 # Day on which quarantine took effect
-    pars['quarantine_eff'] = 0.0 # Change in transmissibility
+    pars['r_contact']      = 0.05 # Probability of infection per contact, estimated
+    pars['contacts_guest'] = 30 # Number of contacts per guest per day, estimated
+    pars['contacts_crew']  = 30 # Number of contacts per crew member per day
+    pars['incub']          = 4.0 # Incubation period, in days, estimated
+    pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
+    pars['dur']            = 12 # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
+    pars['dur_std']        = 3 # Variance in duration
+    pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
+    pars['symptomatic']    = 10 # Increased probability of testing someone symptomatic, estimated
+    
+    # Events
+    pars['quarantine']       = 15 # Day on which quarantine took effect
+    pars['quarantine_eff']   = 0.1 # Change in transmissibility due to quarantine, estimated
+    pars['testing_change']   = 22 # Day that testing protocol changed, from https://hopkinsidd.github.io/nCoV-Sandbox/Diamond-Princess.html
+    pars['testing_symptoms'] = 0.3 # Relative change in symptomatic testing after the protocol change
     
     return pars
 
@@ -73,7 +79,7 @@ def load_data(filename=None):
     raw_data = pd.read_csv(filename)
     
     # Confirm data integrity and simplify
-    cols = ['day', 'date', 'new_tests', 'new_positives']
+    cols = ['day', 'date', 'new_tests', 'new_positives', 'evacuated', 'evacuated_positives']
     data = pd.DataFrame()
     for col in cols:
         assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'

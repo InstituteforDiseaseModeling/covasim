@@ -13,7 +13,7 @@ from . import parameters as cov_pars
 from . import poisson_stats as cov_ps
 
 # Specify all externally visible functions this file defines
-__all__ = ['bt', 'bc', 'rbt', 'mt', 'set_seed', 'fixaxis', 'ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
+__all__ = ['bt', 'mt', 'set_seed', 'fixaxis', 'ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
 
 
 
@@ -22,7 +22,7 @@ __all__ = ['bt', 'bc', 'rbt', 'mt', 'set_seed', 'fixaxis', 'ParsObj', 'Person', 
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
     
-    @nb.njit
+    @nb.njit((nb.int64,))
     def set_seed_numba(seed):
         return np.random.seed(seed)
     
@@ -40,24 +40,14 @@ def bt(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
-@nb.njit((nb.float64, nb.int64))
-def bc(prob, repeats):
-    ''' A binomial count '''
-    return np.random.binomial(repeats, prob) # Or (np.random.rand(repeats) < prob).sum()
-
-@nb.njit((nb.float64, nb.int64))
-def rbt(prob, repeats):
-    ''' A repeated Bernoulli (binomial) trial '''
-    return np.random.binomial(repeats, prob)>0 # Or (np.random.rand(repeats) < prob).any()
-
-@nb.njit((nb.float64[:],))
-def mt(probs):
+@nb.njit((nb.float64[:], nb.int64))
+def mt(probs, repeats):
     ''' A multinomial trial '''
-    return np.searchsorted(np.cumsum(probs), np.random.random())
+    return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
 def fixaxis(useSI=True):
-    ''' Fix the plotting '''
+    ''' Make the plotting more consistent -- add a legend and ensure the axes start at 0 '''
     pl.legend() # Add legend
     sc.setylim() # Rescale y to start at 0
     sc.setxlim()
