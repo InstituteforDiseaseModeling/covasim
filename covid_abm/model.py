@@ -73,12 +73,13 @@ class Person(ParsObj):
             self.contacts = self.pars['contacts_guest']
         
         # Define state
-        self.on_ship    = True # Whether the person is still on the ship
-        self.alive      = True
-        self.exposed    = False
-        self.infectious = False
-        self.diagnosed  = False
-        self.recovered  = False
+        self.on_ship     = True # Whether the person is still on the ship
+        self.alive       = True
+        self.susceptible = True
+        self.exposed     = False
+        self.infectious  = False
+        self.diagnosed   = False
+        self.recovered   = False
         
         # Keep track of dates
         self.date_exposed    = None
@@ -181,8 +182,6 @@ class Sim(ParsObj):
         # Main simulation loop
         for t in range(self.npts):
             
-            test_probs = {} # Store the probability of each person getting tested
-            
             # Print progress
             if verbose>-1:
                 string = f'  Running day {t:0.0f} of {self.pars["n_days"]}...'
@@ -190,9 +189,16 @@ class Sim(ParsObj):
                     sc.heading(string)
                 else:
                     print(string)
+                    
+            self.results['t'][t] = t
+            test_probs = {} # Store the probability of each person getting tested
             
             # Update each person
             for person in self.people.values():
+                
+                # Count susceptibles
+                if person.susceptible:
+                    self.results['n_susceptible'][t] += 1
                 
                 # Handle testing probability
                 if person.infectious:
@@ -224,8 +230,9 @@ class Sim(ParsObj):
                             exposure = cov_ut.bt(self.pars['r_contact']) # Check for exposure per person
                             if exposure:
                                 target_person = self.people[contact_ind]
-                                if not target_person.exposed: # Skip people already exposed
+                                if target_person.susceptible: # Skip people who are not susceptible
                                     self.results['infections'][t] += 1
+                                    person.susceptible = False
                                     target_person.exposed = True
                                     target_person.date_exposed = t
                                     incub_dist = round(pl.normal(person.pars['incub'], person.pars['incub_std']))
@@ -273,9 +280,6 @@ class Sim(ParsObj):
             # Implement evacuations
             print('Not implemented') # TODO -- American and final evacuations
                         
-            # Store other results
-            self.results['t'][t] = t
-            self.results['n_susceptible'][t] = len(self.people) - self.results['n_exposed'][t]
         
         # Compute cumulative results
         self.results['cum_exposed']   = pl.cumsum(self.results['infections'])

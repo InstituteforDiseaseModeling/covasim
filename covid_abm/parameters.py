@@ -24,7 +24,7 @@ def make_pars():
     pars['verbose']    = True # Whether or not to display information during the run
     
     # Epidemic parameters
-    pars['r_contact']      = 0.05 # Probability of infection per contact, estimated
+    pars['r_contact']      = 0.04 # Probability of infection per contact, estimated
     pars['contacts_guest'] = 30 # Number of contacts per guest per day, estimated
     pars['contacts_crew']  = 30 # Number of contacts per crew member per day
     pars['incub']          = 4.0 # Incubation period, in days, estimated
@@ -36,8 +36,8 @@ def make_pars():
     
     # Events
     pars['quarantine']       = 15 # Day on which quarantine took effect
-    pars['quarantine_eff']   = 0.05 # Change in transmissibility due to quarantine, estimated
-    pars['testing_change']   = 22 # Day that testing protocol changed, from https://hopkinsidd.github.io/nCoV-Sandbox/Diamond-Princess.html
+    pars['quarantine_eff']   = 0.1 # Change in transmissibility due to quarantine, estimated
+    pars['testing_change']   = 23 # Day that testing protocol changed (TODO: double-check), from https://hopkinsidd.github.io/nCoV-Sandbox/Diamond-Princess.html
     pars['testing_symptoms'] = 0.1 # Relative change in symptomatic testing after the protocol change
     
     return pars
