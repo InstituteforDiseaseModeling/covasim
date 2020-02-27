@@ -2,13 +2,13 @@
 Utilities for running the COVID-ABM
 '''
 
-import numpy as np # Needed for a few things not provided by pl
-import numba as nb # For faster computations
-import pylab as pl
-import pandas as pd
-import sciris as sc
+import numba  as nb # For faster computations
+import numpy  as np # For numerics
+import pandas as pd # Used for pd.unique() (better than np.unique())
+import pylab  as pl # Used by fixaxis()
+import sciris as sc # Used by fixaxis()
 
-__all__ = ['bt', 'mt', 'set_seed', 'fixaxis']
+__all__ = ['set_seed', 'bt', 'mt', 'choose_people', 'choose_people_weighted', 'fixaxis']
 
 #%% Define helper functions
 
@@ -46,13 +46,15 @@ def choose_people(max_ind, n):
     
     choose_people(5, 2) will choose 2 out of 5 people with equal probability.
     '''
+    if max_ind < n:
+        raise Exception('Number of samples requested is greater than the number of people')
     n_samples = min(int(n), max_ind)
-    inds = pl.choice(max_ind, n_samples, replace=False)
+    inds = np.random.choice(max_ind, n_samples, replace=False)
     return inds
 
 
 # @nb.njit((nb.float64[:], nb.int64, nb.float64))
-def choose_people_weighted(probs, n, overshoot=1.5):
+def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6):
     '''
     Choose n people, each with a probability from the distribution probs. Overshoot
     handles the case where there are repeats
@@ -62,12 +64,15 @@ def choose_people_weighted(probs, n, overshoot=1.5):
     NB: unfortunately pd.unique() is not supported by Numba, nor is
     np.unique(return_index=True), hence why this function is not jitted.
     '''
-    if len(probs)>=n: # Otherwise, it's everyone
-        print('Warning: number of samples requested is greater than the number of people')
-    unique_inds = pl.array([nb.int64(x) for x in range(0)])
+    probs = np.array(probs, dtype=np.float64)
+    if abs(probs.sum() - 1) > eps:
+        raise Exception('Probabilities should sum to 1')
+    if len(probs) < n: # Otherwise, it's everyone
+        raise Exception('Number of samples requested is greater than the number of people')
+    unique_inds = np.array([], dtype=np.int)
     while len(unique_inds)<n:
-        raw_inds = mt(probs, n*overshoot) # Return raw indices, with replacement
-        mixed_inds = pl.hstack((unique_inds, raw_inds))
+        raw_inds = mt(probs, int(n*overshoot)) # Return raw indices, with replacement
+        mixed_inds = np.hstack((unique_inds, raw_inds))
         unique_inds = pd.unique(mixed_inds) # Or np.unique(mixed_inds, return_index=True) with another step
     inds = unique_inds[:n]
     return inds
