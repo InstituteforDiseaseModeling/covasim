@@ -46,6 +46,33 @@ def mt(probs, repeats):
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
+@nb.njit((nb.float64[:], nb.int64, nb.float64))
+def choose_people(n, max_ind=None, probs=None, overshoot=1.5):
+    '''
+    Choose n people, each with a probability from the distribution probs. Overshoot
+    handles the case where there are repeats
+    
+    choose_people(5, 2) will choose 2 out of 5 people with equal probability.
+    choose_people([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
+    '''
+    if max_ind is not None: # Everyone has the same probability, just a choice problem
+        n_samples = min(int(n), max_ind)
+        inds = pl.choice(max_ind, n_samples, replace=False)
+    else: # Normal use case
+        assert max_ind is None
+        assert probs is not None
+        if len(probs)>=n: # Otherwise, it's everyone
+            print(f'Warning: number of samples requested is greater than the number of people, returning {n}')
+        unique_inds = []
+        while len(unique_inds)<n:
+            raw_inds = list(mt(probs, n*overshoot)) # Return raw indices, with replacement
+            unique_inds.append(raw_inds)
+            unique_inds,order = np.unique(unique_inds, return_index=True)
+            unique_inds = unique_inds[order.argsort()] # Restoer the original order
+        inds = pl.array(unique_inds)[:n]
+    return inds
+
+
 def fixaxis(useSI=True):
     ''' Make the plotting more consistent -- add a legend and ensure the axes start at 0 '''
     pl.legend() # Add legend
@@ -201,13 +228,6 @@ class Sim(ParsObj):
         return summary
     
     
-    def choose_people(self, n):
-        max_ind = len(self.people)
-        n_samples = min(int(n), max_ind)
-        inds = pl.choice(max_ind, n_samples, replace=False)
-        return inds
-
-
     def run(self, seed_infections=1, verbose=None, calc_likelihood=False, do_plot=False, **kwargs):
         ''' Run the simulation '''
         
@@ -245,7 +265,7 @@ class Sim(ParsObj):
                 if person.infectious:
                     self.results['n_infectious'][t] += 1 # Count this person as infectious
                     n = np.random.poisson(person.contacts, 1) # Draw the number of Poisson contacts for this person
-                    contact_inds = self.choose_people(n=n)
+                    contact_inds = self.choose_people(probs=len(self.people), n=n)
                     for contact_ind in contact_inds:
                         exposure = bt(self.pars['r_contact'])
                         if exposure:
