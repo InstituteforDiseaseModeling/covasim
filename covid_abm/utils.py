@@ -8,7 +8,7 @@ import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 
-__all__ = ['set_seed', 'bt', 'mt', 'choose_people', 'choose_people_weighted', 'fixaxis']
+__all__ = ['set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis']
 
 #%% Define helper functions
 
@@ -39,6 +39,13 @@ def mt(probs, repeats):
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
+@nb.njit((nb.int64,))
+def pt(rate):
+    ''' A Poisson trial '''
+    return np.random.poisson(rate, 1)[0]
+
+
+
 @nb.njit((nb.int64, nb.int64))
 def choose_people(max_ind, n):
     '''
@@ -65,6 +72,7 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6):
     np.unique(return_index=True), hence why this function is not jitted.
     '''
     probs = np.array(probs, dtype=np.float64)
+    n = int(n)
     if abs(probs.sum() - 1) > eps:
         raise Exception('Probabilities should sum to 1')
     if len(probs) < n: # Otherwise, it's everyone

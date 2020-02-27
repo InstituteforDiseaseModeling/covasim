@@ -211,15 +211,15 @@ class Sim(ParsObj):
                 # If infectious, check if anyone gets infected
                 if person.infectious:
                     # First, check for recovery
-                    if t >= person.date_recovered: # It's the day they become infectious
+                    if person.date_recovered and t >= person.date_recovered: # It's the day they become infectious
                         person.exposed = False
                         person.infectious = False
                         person.recovered = True
                         self.results['recoveries'][t] += 1
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        n = np.random.poisson(person.contacts, 1) # Draw the number of Poisson contacts for this person
-                        contact_inds = cov_ut.choose_people(max_ind=len(self.people), n=n) # Choose people at random
+                        n_contacts = cov_ut.pt(person.contacts) # Draw the number of Poisson contacts for this person
+                        contact_inds = cov_ut.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
                         for contact_ind in contact_inds:
                             exposure = cov_ut.bt(self.pars['r_contact']) # Check for exposure per person
                             if exposure:
@@ -244,7 +244,7 @@ class Sim(ParsObj):
                 n_tests = daily_tests.iloc[t] # Number of tests for this day
                 if n_tests and not pl.isnan(n_tests): # There are tests this day
                     self.results['tests'][t] = n_tests # Store the number of tests
-                    test_probs = pl.array(test_probs.value())
+                    test_probs = pl.array(list(test_probs.values()))
                     test_probs /= test_probs.sum()
                     test_inds = cov_ut.choose_people_weighted(probs=test_probs, n=n_tests)
                     uids_to_pop = []
