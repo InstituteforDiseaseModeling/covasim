@@ -29,9 +29,11 @@ class ParsObj(sc.prettyobj):
                              'n_susceptible', 
                              'n_exposed', 
                              'n_infectious', 
+                             'n_recovered',
                              'infections', 
                              'tests', 
                              'diagnoses', 
+                             'recoveries',
                              'cum_exposed', 
                              'cum_tested', 
                              'cum_diagnosed']
@@ -82,6 +84,7 @@ class Person(ParsObj):
         self.date_exposed    = None
         self.date_infectious = None
         self.date_diagnosed  = None
+        self.date_recovered  = None
         return
 
 
@@ -173,9 +176,12 @@ class Sim(ParsObj):
             verbose = self.pars['verbose']
         self.init_results()
         self.init_people(seed_infections=seed_infections) # Actually create the people
+        daily_tests = self.data['new_tests'] # Number of tests each day, from the data
         
         # Main simulation loop
         for t in range(self.npts):
+            
+            test_probs = {} # Store the probability of each person getting tested
             
             # Print progress
             if verbose>-1:
@@ -188,6 +194,12 @@ class Sim(ParsObj):
             # Update each person
             for person in self.people.values():
                 
+                # Handle testing probability
+                if person.infectious:
+                    test_probs[person.uid] = self.pars['symptomatic'] # They're infectious: high probability of testing
+                else:
+                    test_probs[person.uid] = 1.0
+                
                 # If exposed, check if the person becomes infectious
                 if person.exposed:
                     self.results['n_exposed'][t] += 1
@@ -198,32 +210,47 @@ class Sim(ParsObj):
                         
                 # If infectious, check if anyone gets infected
                 if person.infectious:
-                    self.results['n_infectious'][t] += 1 # Count this person as infectious
-                    n = np.random.poisson(person.contacts, 1) # Draw the number of Poisson contacts for this person
-                    contact_inds = cov_ut.choose_people(max_ind=len(self.people), n=n)
-                    for contact_ind in contact_inds:
-                        exposure = cov_ut.bt(self.pars['r_contact'])
-                        if exposure:
-                            target_person = self.people[contact_ind]
-                            if not target_person.exposed: # Skip people already exposed
-                                self.results['infections'][t] += 1
-                                target_person.exposed = True
-                                target_person.date_exposed = t
-                                target_person.date_infectious = t + round(pl.normal(person.pars['incub'], person.pars['incub_std']))
-                                if verbose>0:
-                                    print(f'        Person {person.uid} infected person {target_person.uid}!')
+                    # First, check for recovery
+                    if t >= person.date_recovered: # It's the day they become infectious
+                        person.exposed = False
+                        person.infectious = False
+                        person.recovered = True
+                        self.results['recoveries'][t] += 1
+                    else:
+                        self.results['n_infectious'][t] += 1 # Count this person as infectious
+                        n = np.random.poisson(person.contacts, 1) # Draw the number of Poisson contacts for this person
+                        contact_inds = cov_ut.choose_people(max_ind=len(self.people), n=n) # Choose people at random
+                        for contact_ind in contact_inds:
+                            exposure = cov_ut.bt(self.pars['r_contact']) # Check for exposure per person
+                            if exposure:
+                                target_person = self.people[contact_ind]
+                                if not target_person.exposed: # Skip people already exposed
+                                    self.results['infections'][t] += 1
+                                    target_person.exposed = True
+                                    target_person.date_exposed = t
+                                    incub_dist = round(pl.normal(person.pars['incub'], person.pars['incub_std']))
+                                    dur_dist = round(pl.normal(person.pars['dur'], person.pars['dur_std']))
+                                    target_person.date_infectious = t + incub_dist
+                                    target_person.date_recovered = target_person.date_infectious + dur_dist
+                                    if verbose>0:
+                                        print(f'        Person {person.uid} infected person {target_person.uid}!')
+                
+                # Count people who recovered
+                if person.recovered:
+                    self.results['n_recovered'][t] += 1
             
-            # Implement testing -- TODO: refactor
-            new_tests = self.data['new_tests']
-            if t<len(new_tests): # Don't know how long the data is
-                n_tests = new_tests.iloc[t]
+            # Implement testing -- this is outside of the loop over people, but inside the loop over time
+            if t<len(daily_tests): # Don't know how long the data is, ensure we don't go past the end
+                n_tests = daily_tests.iloc[t] # Number of tests for this day
                 if n_tests and not pl.isnan(n_tests): # There are tests this day
-                    self.results['tests'][t] = n_tests
-                    test_inds = cov_ut.choose_people_weighted(n=n_tests*self.pars['sensitivity'])
+                    self.results['tests'][t] = n_tests # Store the number of tests
+                    test_probs = pl.array(test_probs.value())
+                    test_probs /= test_probs.sum()
+                    test_inds = cov_ut.choose_people_weighted(probs=test_probs, n=n_tests)
                     uids_to_pop = []
                     for test_ind in test_inds:
                         tested_person = self.people[test_ind]
-                        if tested_person.infectious:
+                        if tested_person.infectious and cov_ut.bt(self.pars['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
                             uids_to_pop.append(tested_person.uid)
@@ -231,12 +258,20 @@ class Sim(ParsObj):
                                         print(f'          Person {person.uid} was diagnosed!')
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
                         self.off_ship[uid] = self.people.pop(uid)
-            
+                            
             # Implement quarantine
             if t == self.pars['quarantine']:
                 print('Implementing quarantine...')
                 for person in self.people.values():
                     person.contacts *= self.pars['quarantine_eff'] # TODO: separate factors for crew and guests
+            
+            # Implement testing chnage
+            if t == self.pars['testing_change']:
+                print('Implementing testing change...')
+                self.pars['symptomatic'] *= self.pars['testing_symptoms'] # Reduce the proportion of symptomatic testing
+            
+            # Implement evacuations
+            print('Not implemented') # TODO -- American and final evacuations
                         
             # Store other results
             self.results['t'][t] = t
