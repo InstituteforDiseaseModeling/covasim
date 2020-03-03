@@ -24,7 +24,7 @@ def make_pars():
     pars['verbose']    = True # Whether or not to display information during the run
     
     # Epidemic parameters
-    pars['r_contact']      = 0.04 # Probability of infection per contact, estimated
+    pars['r_contact']      = 0.05 # Probability of infection per contact, estimated
     pars['contacts_guest'] = 30 # Number of contacts per guest per day, estimated
     pars['contacts_crew']  = 30 # Number of contacts per crew member per day
     pars['incub']          = 4.0 # Incubation period, in days, estimated
