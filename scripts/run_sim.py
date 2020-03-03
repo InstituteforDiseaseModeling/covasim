@@ -9,7 +9,7 @@ do_save = 0
 verbose = 0
 
 sim = covid_abm.Sim()
-sim.set_seed(24309)
+sim.set_seed(3)
 sim.run(verbose=verbose)
 sim.likelihood()
 if do_plot:
