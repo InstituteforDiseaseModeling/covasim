@@ -22,9 +22,11 @@ def set_seed(seed=None):
     def set_seed_regular(seed):
         return np.random.seed(seed)
     
-    if seed is not None:
-        set_seed_numba(seed)
-        set_seed_regular(seed)
+    set_seed_regular(seed)
+    if seed is None: # Numba can't accept a None seed, so use our just-reinitialized Numpy stream to generate one
+        seed = np.random.randint(1e9)
+    set_seed_numba(seed)
+    
     return
 
 
