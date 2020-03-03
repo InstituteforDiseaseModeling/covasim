@@ -347,8 +347,6 @@ class Sim(ParsObj):
         '''
         if verbose is None:
             verbose = self['verbose']
-        if verbose:
-            print('Calculating likelihood...')
         
         if not self.results['ready']:
             self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
@@ -364,6 +362,9 @@ class Sim(ParsObj):
                     print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
         
         self.results['likelihood'] = loglike
+        
+        if verbose:
+            print(f'Likelihood: {loglike}')
         
         return loglike
         
@@ -437,6 +438,7 @@ class Sim(ParsObj):
                 if key in data_mapping:
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+            pl.grid(True)
             cov_ut.fixaxis()
             pl.ylabel('Count')
             pl.xlabel('Day')

@@ -32,13 +32,13 @@ def make_pars():
     pars['dur']            = 12 # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
     pars['dur_std']        = 3 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
-    pars['symptomatic']    = 10 # Increased probability of testing someone symptomatic, estimated
+    pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
     
     # Events
     pars['quarantine']       = 15  # Day on which quarantine took effect
-    pars['quarantine_eff']   = 0.10 # Change in transmissibility for guests due to quarantine, estimated
-    # pars['quarantine_eff_g'] = 0.05 # Change in transmissibility for guests due to quarantine, estimated
-    # pars['quarantine_eff_c'] = 0.15 # Change in transmissibility for crew due to quarantine, estimated
+    # pars['quarantine_eff']   = 0.10 # Change in transmissibility for guests due to quarantine, estimated
+    pars['quarantine_eff_g'] = 0.10 # Change in transmissibility for guests due to quarantine, estimated
+    pars['quarantine_eff_c'] = 0.15 # Change in transmissibility for crew due to quarantine, estimated
     pars['testing_change']   = 23  # Day that testing protocol changed (TODO: double-check), from https://hopkinsidd.github.io/nCoV-Sandbox/Diamond-Princess.html
     pars['testing_symptoms'] = 0.1 # Relative change in symptomatic testing after the protocol change
     pars['evac_positives']   = 1  # If people who test positive are removed from the ship (Boolean)

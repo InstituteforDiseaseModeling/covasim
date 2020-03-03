@@ -93,5 +93,5 @@ def fixaxis(useSI=True):
     pl.legend() # Add legend
     sc.setylim() # Rescale y to start at 0
     sc.setxlim()
-    sc.boxoff() # Turn off top and right lines
+    # sc.boxoff() # Turn off top and right lines
     return
