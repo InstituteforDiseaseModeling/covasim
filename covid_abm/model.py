@@ -75,17 +75,16 @@ class Person(ParsObj):
     '''
     def __init__(self, pars, age=0, sex=0, crew=False):
         super().__init__(pars) # Set parameters
-        self.uid = str(pl.randint(0,1e9)) # Unique identifier for this person
-        self.age = float(age) # Age of the person (in years)
-        self.sex = sex # Female (0) or male (1)
-        self.crew       = crew # Wehther the person is a crew member
+        self.uid  = str(pl.randint(0,1e9)) # Unique identifier for this person
+        self.age  = float(age) # Age of the person (in years)
+        self.sex  = sex # Female (0) or male (1)
+        self.crew = crew # Wehther the person is a crew member
         if self.crew:
             self.contacts = self['contacts_crew'] # Determine how many contacts they have
         else:
             self.contacts = self['contacts_guest']
         
         # Define state
-        self.on_ship     = True # Whether the person is still on the ship
         self.alive       = True
         self.susceptible = True
         self.exposed     = False
@@ -275,7 +274,8 @@ class Sim(ParsObj):
                         if tested_person.infectious and cov_ut.bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
-                            uids_to_pop.append(tested_person.uid)
+                            if self['evac_positives']:
+                                uids_to_pop.append(tested_person.uid)
                             if verbose>0:
                                         print(f'          Person {person.uid} was diagnosed!')
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
@@ -285,7 +285,14 @@ class Sim(ParsObj):
             if t == self['quarantine']:
                 print(f'Implementing quarantine on day {t}...')
                 for person in self.people.values():
-                    person.contacts *= self['quarantine_eff'] # TODO: separate factors for crew and guests
+                    if 'quarantine_eff' in self.pars.keys():
+                        quarantine_eff = self['quarantine_eff'] # Both
+                    else:
+                        if person.crew:
+                            quarantine_eff = self['quarantine_eff_c'] # Crew
+                        else:
+                            quarantine_eff = self['quarantine_eff_g'] # Guests
+                    person.contacts *= quarantine_eff
             
             # Implement testing chnage
             if t == self['testing_change']:
