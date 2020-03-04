@@ -5,11 +5,49 @@ Tests of the utilies for the model.
 #%% Imports and settings
 import pytest
 import numpy as np
+import numba as nb
 import sciris as sc
 import covid_abm
 
 
 #%% Define the tests
+
+def test_rand():
+    
+    default_seed = 1
+    
+    @nb.njit
+    def numba_rand():
+        return np.random.rand()
+    
+    # Check that two consecutive numbers don't match
+    covid_abm.set_seed(default_seed)
+    a = np.random.rand()
+    b = np.random.rand()
+    v = numba_rand()
+    w = numba_rand()
+    assert a != b 
+    assert v != w
+    
+    # Check that after resetting the seed, they do
+    covid_abm.set_seed(default_seed)
+    c = np.random.rand()
+    x = numba_rand()
+    assert a == c 
+    assert v == x
+    
+    # Check that resetting with no argument, they don't again
+    covid_abm.set_seed() 
+    d = np.random.rand()
+    y = numba_rand()
+    covid_abm.set_seed()
+    e = np.random.rand()
+    z = numba_rand()
+    assert d != e 
+    assert y != z
+    
+    return
+
 
 def test_poisson():
     sc.heading('Poisson distribution')
@@ -66,9 +104,12 @@ def test_choose_people_weighted():
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
+    
+    test_rand()
     test_poisson()
     test_choose_people()
     test_choose_people_weighted()
+    
     print('\n'*2)
     sc.toc()
     print('Done.')
