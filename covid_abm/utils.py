@@ -14,19 +14,19 @@ __all__ = ['set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighte
 
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
-    
+
     @nb.njit((nb.int64,))
     def set_seed_numba(seed):
         return np.random.seed(seed)
-    
+
     def set_seed_regular(seed):
         return np.random.seed(seed)
-    
+
     set_seed_regular(seed)
     if seed is None: # Numba can't accept a None seed, so use our just-reinitialized Numpy stream to generate one
         seed = np.random.randint(1e9)
     set_seed_numba(seed)
-    
+
     return
 
 
@@ -52,7 +52,7 @@ def pt(rate):
 def choose_people(max_ind, n):
     '''
     Choose n people.
-    
+
     choose_people(5, 2) will choose 2 out of 5 people with equal probability.
     '''
     if max_ind < n:
@@ -67,9 +67,9 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6):
     '''
     Choose n people, each with a probability from the distribution probs. Overshoot
     handles the case where there are repeats
-    
+
     choose_people([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
-    
+
     NB: unfortunately pd.unique() is not supported by Numba, nor is
     np.unique(return_index=True), hence why this function is not jitted.
     '''
