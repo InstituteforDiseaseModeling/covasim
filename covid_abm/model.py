@@ -56,7 +56,7 @@ class ParsObj(sc.prettyobj):
         elif pars is not None:
             self.pars.update(pars)
         return
-    
+
 
 class Person(ParsObj):
     '''
@@ -72,7 +72,7 @@ class Person(ParsObj):
             self.contacts = self.pars['contacts_crew'] # Determine how many contacts they have
         else:
             self.contacts = self.pars['contacts_guest']
-        
+
         # Define state
         self.on_ship     = True # Whether the person is still on the ship
         self.alive       = True
@@ -81,7 +81,7 @@ class Person(ParsObj):
         self.infectious  = False
         self.diagnosed   = False
         self.recovered   = False
-        
+
         # Keep track of dates
         self.date_exposed    = None
         self.date_infectious = None
@@ -107,11 +107,11 @@ class Sim(ParsObj):
         self.init_people()
         self.interventions = {}
         return
-    
+
     @property
     def n(self):
         return len(self.people)
-    
+
     @property
     def npts(self):
         return int(self.pars['n_days'] + 1)
@@ -127,7 +127,7 @@ class Sim(ParsObj):
             self.results[key] = np.zeros(int(self.npts))
         self.results['ready'] = False
         return
-    
+
 
     def init_people(self, seed_infections=1):
         ''' Create the people '''
@@ -139,40 +139,40 @@ class Sim(ParsObj):
             age,sex = cov_pars.get_age_sex(is_crew)
             person = Person(self.pars, age=age, sex=sex, crew=is_crew) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
-        
+
         # Create the seed infections
         for i in range(seed_infections):
             self.people[i].exposed = True
             self.people[i].infectious = True
             self.people[i].date_exposed = 0
             self.people[i].date_infectious = 0
-        
+
         return
 
-    
+
     def day2ind(self, day):
         index = int(day)
         return index
-    
-    
+
+
     def ind2day(self, ind):
         day = ind
         return day
-    
-    
+
+
     def summary_stats(self):
         keys = ['n_susceptible', 'n_exposed', 'n_infectious']
         summary = {}
         for key in keys:
             summary[key] = self.results[key][-1]
         return summary
-    
-    
+
+
     def run(self, seed_infections=1, verbose=None, calc_likelihood=False, do_plot=False, **kwargs):
         ''' Run the simulation '''
-        
+
         T = sc.tic()
-        
+
         # Reset settings and results
         if verbose is None:
             verbose = self.pars['verbose']
@@ -180,10 +180,10 @@ class Sim(ParsObj):
         self.init_people(seed_infections=seed_infections) # Actually create the people
         daily_tests = self.data['new_tests'] # Number of tests each day, from the data
         evacuated = self.data['evacuated'] # Number of people evacuated
-        
+
         # Main simulation loop
         for t in range(self.npts):
-            
+
             # Print progress
             if verbose>-1:
                 string = f'  Running day {t:0.0f} of {self.pars["n_days"]}...'
@@ -191,23 +191,23 @@ class Sim(ParsObj):
                     sc.heading(string)
                 else:
                     print(string)
-                    
+
             self.results['t'][t] = t
             test_probs = {} # Store the probability of each person getting tested
-            
+
             # Update each person
             for person in self.people.values():
-                
+
                 # Count susceptibles
                 if person.susceptible:
                     self.results['n_susceptible'][t] += 1
-                
+
                 # Handle testing probability
                 if person.infectious:
                     test_probs[person.uid] = self.pars['symptomatic'] # They're infectious: high probability of testing
                 else:
                     test_probs[person.uid] = 1.0
-                
+
                 # If exposed, check if the person becomes infectious
                 if person.exposed:
                     self.results['n_exposed'][t] += 1
@@ -215,7 +215,7 @@ class Sim(ParsObj):
                         person.infectious = True
                         if verbose>0:
                             print(f'      Person {person.uid} became infectious!')
-                        
+
                 # If infectious, check if anyone gets infected
                 if person.infectious:
                     # First, check for recovery
@@ -234,7 +234,7 @@ class Sim(ParsObj):
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     self.results['infections'][t] += 1
-                                    person.susceptible = False
+                                    target_person.susceptible = False
                                     target_person.exposed = True
                                     target_person.date_exposed = t
                                     incub_dist = round(pl.normal(person.pars['incub'], person.pars['incub_std']))
@@ -243,11 +243,11 @@ class Sim(ParsObj):
                                     target_person.date_recovered = target_person.date_infectious + dur_dist
                                     if verbose>0:
                                         print(f'        Person {person.uid} infected person {target_person.uid}!')
-                
+
                 # Count people who recovered
                 if person.recovered:
                     self.results['n_recovered'][t] += 1
-            
+
             # Implement testing -- this is outside of the loop over people, but inside the loop over time
             if t<len(daily_tests): # Don't know how long the data is, ensure we don't go past the end
                 n_tests = daily_tests.iloc[t] # Number of tests for this day
@@ -267,18 +267,18 @@ class Sim(ParsObj):
                                         print(f'          Person {person.uid} was diagnosed!')
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
                         self.off_ship[uid] = self.people.pop(uid)
-                            
+
             # Implement quarantine
             if t == self.pars['quarantine']:
                 print(f'Implementing quarantine on day {t}...')
                 for person in self.people.values():
                     person.contacts *= self.pars['quarantine_eff'] # TODO: separate factors for crew and guests
-            
+
             # Implement testing chnage
             if t == self.pars['testing_change']:
                 print(f'Implementing testing change on day {t}...')
                 self.pars['symptomatic'] *= self.pars['testing_symptoms'] # Reduce the proportion of symptomatic testing
-            
+
             # Implement evacuations
             if t<len(evacuated):
                 n_evacuated = evacuated.iloc[t] # Number of evacuees for this day
@@ -293,16 +293,16 @@ class Sim(ParsObj):
                         uids_to_pop.append(evac_person.uid)
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
                         self.off_ship[uid] = self.people.pop(uid)
-        
+
         # Compute cumulative results
         self.results['cum_exposed']   = pl.cumsum(self.results['infections'])
         self.results['cum_tested']    = pl.cumsum(self.results['tests'])
         self.results['cum_diagnosed'] = pl.cumsum(self.results['diagnoses'])
-        
+
         # Comute likelihood
         if calc_likelihood:
             self.likelihood()
-        
+
         # Tidy up
         self.results['ready'] = True
         elapsed = sc.toc(T, output=True)
@@ -313,13 +313,13 @@ class Sim(ParsObj):
      {summary['n_exposed']:5.0f} exposed
      {summary['n_infectious']:5.0f} infectious
            """)
-         
+
         if do_plot:
             self.plot(**kwargs)
-        
+
         return self.results
-    
-    
+
+
     def likelihood(self, verbose=None):
         '''
         Compute the log-likelihood of the current simulation based on the number
@@ -329,10 +329,10 @@ class Sim(ParsObj):
             verbose = self.pars['verbose']
         if verbose:
             print('Calculating likelihood...')
-        
+
         if not self.results['ready']:
             self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
-        
+
         loglike = 0
         for d,datum in enumerate(self.data['new_positives']):
             if not pl.isnan(datum): # Skip days when no tests were performed
@@ -342,13 +342,13 @@ class Sim(ParsObj):
                 loglike += logp
                 if verbose>1:
                     print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
-        
-        self.results['likelihood'] = loglike
-        
-        return loglike
-        
 
-    
+        self.results['likelihood'] = loglike
+
+        return loglike
+
+
+
     def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
@@ -363,7 +363,7 @@ class Sim(ParsObj):
 
         plot_args : dict
             Dictionary of kwargs to be passed to pl.plot()
-        
+
         as_days : bool
             Whether to plot the x-axis as days or time points
 
@@ -371,7 +371,7 @@ class Sim(ParsObj):
         -------
         Figure handle
         '''
-        
+
         if verbose is None:
             verbose = self.pars['verbose']
         if verbose:
@@ -401,13 +401,13 @@ class Sim(ParsObj):
                                       'diagnoses':'New diagnoses', 
                                      }),
             })
-        
+
         data_mapping = {
             'cum_diagnosed': pl.cumsum(self.data['new_positives']),
             'tests':         self.data['new_tests'],
             'diagnoses':     self.data['new_positives'],
             }
-        
+
         for p,title,keylabels in to_plot.enumitems():
             pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
@@ -429,12 +429,12 @@ class Sim(ParsObj):
             else:
                 filename = 'covid_abm_results.png' # Just give it a default name
             pl.savefig(filename)
-        
+
         pl.show()
 
         return fig
-    
-    
+
+
     def plot_people(self):
         ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
         raise NotImplementedError
@@ -446,7 +446,7 @@ def single_run(sim):
 
 
 def multi_run(orig_sim, n=4, verbose=None):
-    
+
     # Copy the simulations
     sims = []
     for i in range(n):
@@ -454,20 +454,20 @@ def multi_run(orig_sim, n=4, verbose=None):
         new_sim.pars['seed'] += i # Reset the seed, otherwise no point!
         new_sim.pars['n'] = int(new_sim.pars['n']/n) # Reduce the population size accordingly
         sims.append(new_sim)
-        
+
     finished_sims = sc.parallelize(single_run, iterarg=sims)
-    
+
     output_sim = sc.dcp(finished_sims[0])
     output_sim.pars['parallelized'] = n # Store how this was parallelized
     output_sim.pars['n'] *= n # Restore this since used in later calculations -- a bit hacky, it's true
-    
+
     for sim in finished_sims[1:]: # Skip the first one
         output_sim.people.update(sim.people)
         for key,val in sim.results.items():
             if key != 't':
                 output_sim.results[key] += sim.results[key]
-    
+
     return output_sim
-    
-    
-    
+
+
+
