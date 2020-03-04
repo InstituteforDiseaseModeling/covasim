@@ -30,19 +30,19 @@ def test_parsobj():
 
 
 def test_sim(do_plot=False, do_save=False): # If being run via pytest, turn off
-    
+
     # Create the simulation
     sim = covid_abm.Sim()
-    
+
     # Run the simulation
     sim.run()
-    
+
     # Optionally plot
     if do_plot:
         sim.plot(do_save=do_save)
-        
+
     return sim
-    
+
 
 #%% Run as a script
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ import pylab as pl
 import sciris as sc
 import covid_abm
 
-r_vec     = pl.linspace(0.01, 0.10, 10)
+r_vec = pl.linspace(0.01, 0.10, 10)
 i_vec = pl.arange(2, 11)
 n_r = len(r_vec)
 n_incub = len(i_vec)
@@ -36,10 +36,10 @@ for i,r in enumerate(r_vec):
 tmp_results = sc.parallelize(run_sim, iterarg=arglist)
 for tmp in tmp_results:
     results[tmp.i,tmp.j] = tmp.loglike
-     
+
 
 sc.toc()
-        
+
 #%% Plotting
 pl.figure(figsize=(12,8))
 delta_r = (r_vec[1] - r_vec[0])/2
@@ -59,5 +59,5 @@ pl.scatter(indices[0], indices[1], marker='*', s=100, c='black', label='MLE')
 pl.legend()
 pl.savefig('log-likelihood-example.png')
 
-        
+
 print('Done.')

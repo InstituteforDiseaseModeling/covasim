@@ -246,7 +246,7 @@ class Sim(ParsObj):
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     self.results['infections'][t] += 1
-                                    person.susceptible = False
+                                    target_person.susceptible = False
                                     target_person.exposed = True
                                     target_person.date_exposed = t
                                     incub_dist = round(pl.normal(person.pars['incub'], person.pars['incub_std']))
