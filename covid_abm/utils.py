@@ -88,10 +88,12 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6):
     return inds
 
 
-def fixaxis(useSI=True):
+def fixaxis(sim, useSI=True, boxoff=False):
     ''' Make the plotting more consistent -- add a legend and ensure the axes start at 0 '''
+    delta = 0.5
     pl.legend() # Add legend
     sc.setylim() # Rescale y to start at 0
-    sc.setxlim()
-    # sc.boxoff() # Turn off top and right lines
+    pl.xlim((0, sim['n_days']+delta))
+    if boxoff:
+        sc.boxoff() # Turn off top and right lines
     return

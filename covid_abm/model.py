@@ -439,9 +439,9 @@ class Sim(ParsObj):
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(True)
-            cov_ut.fixaxis()
+            cov_ut.fixaxis(self)
             pl.ylabel('Count')
-            pl.xlabel('Day')
+            pl.xlabel('Days since index case')
             pl.title(title)
 
         # Ensure the figure actually renders or saves
