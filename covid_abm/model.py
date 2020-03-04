@@ -46,11 +46,22 @@ class ParsObj(sc.prettyobj):
 
     def __setitem__(self, key, value):
         ''' Ditto '''
-        self.pars[key] = value
+        if key in self.pars:
+            self.pars[key] = value
+        else:
+            suggestion = sc.suggest(key, self.pars.keys())
+            if suggestion:
+                errormsg = f'Key {key} not found; did you mean "{suggestion}"?'
+            else:
+                all_keys = '\n'.join(list(self.pars.keys()))
+                errormsg = f'Key {key} not found; available keys:\n{all_keys}'
+            raise KeyError(errormsg)
         return
 
     def update_pars(self, pars):
         ''' Update internal dict with new pars '''
+        if not isinstance(pars, dict):
+            raise TypeError(f'The pars object must be a dict; you supplied a {type(pars)}')
         if not hasattr(self, 'pars'):
             self.pars = pars
         elif pars is not None:
@@ -64,17 +75,16 @@ class Person(ParsObj):
     '''
     def __init__(self, pars, age=0, sex=0, crew=False):
         super().__init__(pars) # Set parameters
-        self.uid = str(pl.randint(0,1e9)) # Unique identifier for this person
-        self.age = float(age) # Age of the person (in years)
-        self.sex = sex # Female (0) or male (1)
-        self.crew       = crew # Wehther the person is a crew member
+        self.uid  = str(pl.randint(0,1e9)) # Unique identifier for this person
+        self.age  = float(age) # Age of the person (in years)
+        self.sex  = sex # Female (0) or male (1)
+        self.crew = crew # Wehther the person is a crew member
         if self.crew:
-            self.contacts = self.pars['contacts_crew'] # Determine how many contacts they have
+            self.contacts = self['contacts_crew'] # Determine how many contacts they have
         else:
-            self.contacts = self.pars['contacts_guest']
+            self.contacts = self['contacts_guest']
         
         # Define state
-        self.on_ship     = True # Whether the person is still on the ship
         self.alive       = True
         self.susceptible = True
         self.exposed     = False
@@ -102,26 +112,37 @@ class Sim(ParsObj):
             pars = cov_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
         self.data = cov_pars.load_data(datafile)
-        cov_ut.set_seed(self.pars['seed'])
+        self.set_seed(self['seed'])
         self.init_results()
         self.init_people()
         self.interventions = {}
         return
     
+    def set_seed(self, seed=None, reset=False):
+        ''' Set the seed for the random number stream '''
+        if reset:
+            seed = self['seed']
+        cov_ut.set_seed(seed)
+        return
+    
     @property
     def n(self):
+        ''' Count the number of people '''
         return len(self.people)
     
     @property
     def npts(self):
-        return int(self.pars['n_days'] + 1)
+        ''' Count the number of time points '''
+        return int(self['n_days'] + 1)
 
     @property
     def tvec(self):
-        return np.arange(self.pars['n_days'] + 1)
+        ''' Create a time vector '''
+        return np.arange(self['n_days'] + 1)
 
 
     def init_results(self):
+        ''' Initialize results '''
         self.results = {}
         for key in self.results_keys:
             self.results[key] = np.zeros(int(self.npts))
@@ -133,8 +154,8 @@ class Sim(ParsObj):
         ''' Create the people '''
         self.people = sc.odict() # Dictionary for storing the people
         self.off_ship = sc.odict() # For people who've been moved off the ship
-        guests = [0]*self.pars['n_guests']
-        crew   = [1]*self.pars['n_crew']
+        guests = [0]*self['n_guests']
+        crew   = [1]*self['n_crew']
         for is_crew in crew+guests: # Loop over each person
             age,sex = cov_pars.get_age_sex(is_crew)
             person = Person(self.pars, age=age, sex=sex, crew=is_crew) # Create the person
@@ -150,17 +171,8 @@ class Sim(ParsObj):
         return
 
     
-    def day2ind(self, day):
-        index = int(day)
-        return index
-    
-    
-    def ind2day(self, ind):
-        day = ind
-        return day
-    
-    
     def summary_stats(self):
+        ''' Compute the summary statistics to display at the end of a run '''
         keys = ['n_susceptible', 'n_exposed', 'n_infectious']
         summary = {}
         for key in keys:
@@ -175,7 +187,7 @@ class Sim(ParsObj):
         
         # Reset settings and results
         if verbose is None:
-            verbose = self.pars['verbose']
+            verbose = self['verbose']
         self.init_results()
         self.init_people(seed_infections=seed_infections) # Actually create the people
         daily_tests = self.data['new_tests'] # Number of tests each day, from the data
@@ -204,7 +216,7 @@ class Sim(ParsObj):
                 
                 # Handle testing probability
                 if person.infectious:
-                    test_probs[person.uid] = self.pars['symptomatic'] # They're infectious: high probability of testing
+                    test_probs[person.uid] = self['symptomatic'] # They're infectious: high probability of testing
                 else:
                     test_probs[person.uid] = 1.0
                 
@@ -229,7 +241,7 @@ class Sim(ParsObj):
                         n_contacts = cov_ut.pt(person.contacts) # Draw the number of Poisson contacts for this person
                         contact_inds = cov_ut.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
                         for contact_ind in contact_inds:
-                            exposure = cov_ut.bt(self.pars['r_contact']) # Check for exposure per person
+                            exposure = cov_ut.bt(self['r_contact']) # Check for exposure per person
                             if exposure:
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
@@ -259,25 +271,33 @@ class Sim(ParsObj):
                     uids_to_pop = []
                     for test_ind in test_inds:
                         tested_person = self.people[test_ind]
-                        if tested_person.infectious and cov_ut.bt(self.pars['sensitivity']): # Person was tested and is true-positive
+                        if tested_person.infectious and cov_ut.bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
-                            uids_to_pop.append(tested_person.uid)
+                            if self['evac_positives']:
+                                uids_to_pop.append(tested_person.uid)
                             if verbose>0:
                                         print(f'          Person {person.uid} was diagnosed!')
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
                         self.off_ship[uid] = self.people.pop(uid)
                             
             # Implement quarantine
-            if t == self.pars['quarantine']:
+            if t == self['quarantine']:
                 print(f'Implementing quarantine on day {t}...')
                 for person in self.people.values():
-                    person.contacts *= self.pars['quarantine_eff'] # TODO: separate factors for crew and guests
+                    if 'quarantine_eff' in self.pars.keys():
+                        quarantine_eff = self['quarantine_eff'] # Both
+                    else:
+                        if person.crew:
+                            quarantine_eff = self['quarantine_eff_c'] # Crew
+                        else:
+                            quarantine_eff = self['quarantine_eff_g'] # Guests
+                    person.contacts *= quarantine_eff
             
             # Implement testing chnage
-            if t == self.pars['testing_change']:
+            if t == self['testing_change']:
                 print(f'Implementing testing change on day {t}...')
-                self.pars['symptomatic'] *= self.pars['testing_symptoms'] # Reduce the proportion of symptomatic testing
+                self['symptomatic'] *= self['testing_symptoms'] # Reduce the proportion of symptomatic testing
             
             # Implement evacuations
             if t<len(evacuated):
@@ -288,7 +308,7 @@ class Sim(ParsObj):
                     uids_to_pop = []
                     for evac_ind in evac_inds:
                         evac_person = self.people[evac_ind]
-                        if evac_person.infectious and cov_ut.bt(self.pars['sensitivity']):
+                        if evac_person.infectious and cov_ut.bt(self['sensitivity']):
                             self.results['evac_diagnoses'][t] += 1
                         uids_to_pop.append(evac_person.uid)
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
@@ -326,9 +346,7 @@ class Sim(ParsObj):
         of new diagnoses.
         '''
         if verbose is None:
-            verbose = self.pars['verbose']
-        if verbose:
-            print('Calculating likelihood...')
+            verbose = self['verbose']
         
         if not self.results['ready']:
             self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
@@ -344,6 +362,9 @@ class Sim(ParsObj):
                     print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
         
         self.results['likelihood'] = loglike
+        
+        if verbose:
+            print(f'Likelihood: {loglike}')
         
         return loglike
         
@@ -373,7 +394,7 @@ class Sim(ParsObj):
         '''
         
         if verbose is None:
-            verbose = self.pars['verbose']
+            verbose = self['verbose']
         if verbose:
             print('Plotting...')
 
@@ -417,9 +438,10 @@ class Sim(ParsObj):
                 if key in data_mapping:
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-            cov_ut.fixaxis()
+            pl.grid(True)
+            cov_ut.fixaxis(self)
             pl.ylabel('Count')
-            pl.xlabel('Day')
+            pl.xlabel('Days since index case')
             pl.title(title)
 
         # Ensure the figure actually renders or saves
@@ -441,11 +463,13 @@ class Sim(ParsObj):
 
 
 def single_run(sim):
+    ''' Convenience function to perform a single simulation run '''
     sim.run()
     return sim
 
 
 def multi_run(orig_sim, n=4, verbose=None):
+    ''' Ditto, for multiple runs '''
     
     # Copy the simulations
     sims = []

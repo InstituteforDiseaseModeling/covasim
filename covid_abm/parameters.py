@@ -24,7 +24,7 @@ def make_pars():
     pars['verbose']    = True # Whether or not to display information during the run
     
     # Epidemic parameters
-    pars['r_contact']      = 0.04 # Probability of infection per contact, estimated
+    pars['r_contact']      = 0.05 # Probability of infection per contact, estimated
     pars['contacts_guest'] = 30 # Number of contacts per guest per day, estimated
     pars['contacts_crew']  = 30 # Number of contacts per crew member per day
     pars['incub']          = 4.0 # Incubation period, in days, estimated
@@ -32,13 +32,16 @@ def make_pars():
     pars['dur']            = 12 # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
     pars['dur_std']        = 3 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
-    pars['symptomatic']    = 10 # Increased probability of testing someone symptomatic, estimated
+    pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
     
     # Events
-    pars['quarantine']       = 15 # Day on which quarantine took effect
-    pars['quarantine_eff']   = 0.1 # Change in transmissibility due to quarantine, estimated
-    pars['testing_change']   = 23 # Day that testing protocol changed (TODO: double-check), from https://hopkinsidd.github.io/nCoV-Sandbox/Diamond-Princess.html
+    pars['quarantine']       = 15  # Day on which quarantine took effect
+    pars['quarantine_eff']   = 0.10 # Change in transmissibility for guests due to quarantine, estimated
+    # pars['quarantine_eff_g'] = 0.10 # Change in transmissibility for guests due to quarantine, estimated
+    # pars['quarantine_eff_c'] = 0.15 # Change in transmissibility for crew due to quarantine, estimated
+    pars['testing_change']   = 23  # Day that testing protocol changed (TODO: double-check), from https://hopkinsidd.github.io/nCoV-Sandbox/Diamond-Princess.html
     pars['testing_symptoms'] = 0.1 # Relative change in symptomatic testing after the protocol change
+    pars['evac_positives']   = 1  # If people who test positive are removed from the ship (Boolean)
     
     return pars
 
@@ -70,16 +73,18 @@ def get_age_sex(is_crew=False, min_age=18, max_age=99, crew_age=35, crew_std=5, 
 def load_data(filename=None):
     ''' Load data for comparing to the model output '''
     
+    default_datafile = 'reported_infections.xlsx'
+    
     # Handle default filename
     if filename is None:
         cwd = os.path.abspath(os.path.dirname(__file__))
-        filename = os.path.join(cwd, 'reported_infections.csv')
+        filename = os.path.join(cwd, default_datafile)
     
     # Load data
-    raw_data = pd.read_csv(filename)
+    raw_data = pd.read_excel(filename)
     
     # Confirm data integrity and simplify
-    cols = ['day', 'date', 'new_tests', 'new_positives', 'evacuated', 'evacuated_positives']
+    cols = ['day', 'date', 'new_tests', 'new_positives', 'confirmed_crew', 'confirmed_guests', 'evacuated', 'evacuated_positives']
     data = pd.DataFrame()
     for col in cols:
         assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
