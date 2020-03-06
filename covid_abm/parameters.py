@@ -1,5 +1,5 @@
 '''
-Set the parameters for LEMOD-FP.
+Set the parameters for COVID-ABM.
 '''
 
 import os
