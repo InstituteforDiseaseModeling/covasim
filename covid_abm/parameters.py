@@ -21,7 +21,7 @@ def make_pars():
     pars['day_0']      = datetime(2020, 1, 22) # Start day of the epidemic
     pars['n_days']     = 32 # How many days to simulate -- 31 days is until 2020-Feb-20
     pars['seed']       = 1 # Random seed, if None, don't reset
-    pars['verbose']    = True # Whether or not to display information during the run
+    pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
     # Epidemic parameters
     pars['r_contact']      = 0.05 # Probability of infection per contact, estimated

@@ -108,7 +108,6 @@ class Sim(ParsObj):
 
     def __init__(self, pars=None, datafile=None):
         if pars is None:
-            print('Note: using default parameter values')
             pars = cov_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
         self.data = cov_pars.load_data(datafile)
@@ -197,9 +196,9 @@ class Sim(ParsObj):
         for t in range(self.npts):
 
             # Print progress
-            if verbose>-1:
+            if verbose>=1:
                 string = f'  Running day {t:0.0f} of {self.pars["n_days"]}...'
-                if verbose>0:
+                if verbose>=2:
                     sc.heading(string)
                 else:
                     print(string)
@@ -225,7 +224,7 @@ class Sim(ParsObj):
                     self.results['n_exposed'][t] += 1
                     if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
                         person.infectious = True
-                        if verbose>0:
+                        if verbose>=2:
                             print(f'      Person {person.uid} became infectious!')
 
                 # If infectious, check if anyone gets infected
@@ -253,7 +252,7 @@ class Sim(ParsObj):
                                     dur_dist = round(pl.normal(person.pars['dur'], person.pars['dur_std']))
                                     target_person.date_infectious = t + incub_dist
                                     target_person.date_recovered = target_person.date_infectious + dur_dist
-                                    if verbose>0:
+                                    if verbose>=2:
                                         print(f'        Person {person.uid} infected person {target_person.uid}!')
 
                 # Count people who recovered
@@ -276,14 +275,15 @@ class Sim(ParsObj):
                             tested_person.diagnosed = True
                             if self['evac_positives']:
                                 uids_to_pop.append(tested_person.uid)
-                            if verbose>0:
+                            if verbose>=2:
                                         print(f'          Person {person.uid} was diagnosed!')
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
                         self.off_ship[uid] = self.people.pop(uid)
 
             # Implement quarantine
             if t == self['quarantine']:
-                print(f'Implementing quarantine on day {t}...')
+                if verbose>=1:
+                    print(f'Implementing quarantine on day {t}...')
                 for person in self.people.values():
                     if 'quarantine_eff' in self.pars.keys():
                         quarantine_eff = self['quarantine_eff'] # Both
@@ -296,14 +296,16 @@ class Sim(ParsObj):
 
             # Implement testing change
             if t == self['testing_change']:
-                print(f'Implementing testing change on day {t}...')
+                if verbose>=1:
+                    print(f'Implementing testing change on day {t}...')
                 self['symptomatic'] *= self['testing_symptoms'] # Reduce the proportion of symptomatic testing
 
             # Implement evacuations
             if t<len(evacuated):
                 n_evacuated = evacuated.iloc[t] # Number of evacuees for this day
                 if n_evacuated and not pl.isnan(n_evacuated): # There are evacuees this day # TODO -- refactor with n_tests
-                    print(f'Implementing evacuation on day {t}')
+                    if verbose>=1:
+                        print(f'Implementing evacuation on day {t}')
                     evac_inds = cov_ut.choose_people(max_ind=len(self.people), n=n_evacuated)
                     uids_to_pop = []
                     for evac_ind in evac_inds:
@@ -326,13 +328,14 @@ class Sim(ParsObj):
         # Tidy up
         self.results['ready'] = True
         elapsed = sc.toc(T, output=True)
-        print(f'\nRun finished after {elapsed:0.1f} s.\n')
-        summary = self.summary_stats()
-        print(f"""Summary: 
+        if verbose>=1:
+            print(f'\nRun finished after {elapsed:0.1f} s.\n')
+            summary = self.summary_stats()
+            print(f"""Summary: 
      {summary['n_susceptible']:5.0f} susceptible 
      {summary['n_exposed']:5.0f} exposed
      {summary['n_infectious']:5.0f} infectious
-           """)
+               """)
 
         if do_plot:
             self.plot(**kwargs)
@@ -358,12 +361,12 @@ class Sim(ParsObj):
                 p = cov_ps.poisson_test(datum, estimate)
                 logp = pl.log(p)
                 loglike += logp
-                if verbose>1:
+                if verbose>=2:
                     print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
 
         self.results['likelihood'] = loglike
 
-        if verbose:
+        if verbose>=1:
             print(f'Likelihood: {loglike}')
 
         return loglike
