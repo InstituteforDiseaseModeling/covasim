@@ -35,7 +35,7 @@ def test_sim(do_plot=False, do_save=False): # If being run via pytest, turn off
     sim = covid_abm.Sim()
 
     # Run the simulation
-    sim.run()
+    sim.run(verbose=1)
 
     # Optionally plot
     if do_plot:
@@ -47,8 +47,8 @@ def test_sim(do_plot=False, do_save=False): # If being run via pytest, turn off
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
-    parsobj = test_parsobj()
-    # sim     = test_sim(do_plot=do_plot, do_save=do_save)
+    # parsobj = test_parsobj()
+    sim     = test_sim(do_plot=do_plot, do_save=do_save)
     sc.toc()
 
 
