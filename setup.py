@@ -21,7 +21,7 @@ CLASSIFIERS = [
 setup(
     name="covid_abm",
     version=version,
-    author="Cliff Kerr, Caitlin Bever, Daniel Klein",
+    author="Cliff Kerr, Daniel Klein",
     author_email="ckerr@idmod.org",
     description="Covid-19 Diamond Princess cruise ship infection model",
     keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess"],
@@ -30,7 +30,10 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "matplotlib",
-        "sciris",
+        "matplotlib>=2.2.2",
+        "numpy>=1.10.1",
+        "scipy>=1.2.0",
+        "sciris>=0.15.6",
+		"parestlib>=0.3",
     ],
 )
