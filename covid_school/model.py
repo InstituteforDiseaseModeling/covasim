@@ -148,7 +148,7 @@ class Sim(ParsObj):
         ''' Create the people '''
         self.people = sc.odict() # Dictionary for storing the people
         for p in range(self['n']): # Loop over each person
-            age,sex = cov_pars.get_age_sex(is_crew)
+            age,sex = cov_pars.get_age_sex()
             person = Person(self.pars, age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
@@ -181,7 +181,7 @@ class Sim(ParsObj):
             verbose = self['verbose']
         self.init_results()
         self.init_people(seed_infections=seed_infections) # Actually create the people
-        daily_tests = 0 # Number of tests each day, from the data # TODO: fix
+        daily_tests = [] # Number of tests each day, from the data # TODO: fix
 
         # Main simulation loop
         for t in range(self.npts):
@@ -228,7 +228,7 @@ class Sim(ParsObj):
                         self.results['recoveries'][t] += 1
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        n_contacts = cov_ut.pt(person.contacts) # Draw the number of Poisson contacts for this person
+                        n_contacts = cov_ut.pt(person['contacts']) # Draw the number of Poisson contacts for this person
                         contact_inds = cov_ut.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
                         for contact_ind in contact_inds:
                             exposure = cov_ut.bt(self['r_contact']) # Check for exposure per person
@@ -258,7 +258,6 @@ class Sim(ParsObj):
                     test_probs = pl.array(list(test_probs.values()))
                     test_probs /= test_probs.sum()
                     test_inds = cov_ut.choose_people_weighted(probs=test_probs, n=n_tests)
-                    uids_to_pop = []
                     for test_ind in test_inds:
                         tested_person = self.people[test_ind]
                         if tested_person.infectious and cov_ut.bt(self['sensitivity']): # Person was tested and is true-positive
@@ -279,7 +278,7 @@ class Sim(ParsObj):
                             quarantine_eff = self['quarantine_eff_c'] # Crew
                         else:
                             quarantine_eff = self['quarantine_eff_g'] # Guests
-                    person.contacts *= quarantine_eff
+                    person['contacts'] *= quarantine_eff
 
 
         # Compute cumulative results
@@ -406,7 +405,7 @@ class Sim(ParsObj):
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 # if key in data_mapping:
                 #     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
-            pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+            # pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(True)
             cov_ut.fixaxis(self)
             pl.ylabel('Count')

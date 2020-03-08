@@ -6,7 +6,7 @@ import pylab as pl
 from datetime import datetime
 
 
-__all__ = ['make_pars', 'get_age_sex', 'load_data']
+__all__ = ['make_pars', 'get_age_sex']
 
 
 def make_pars():
@@ -22,7 +22,7 @@ def make_pars():
 
     # Epidemic parameters
     pars['r_contact']      = 0.05 # Probability of infection per contact, estimated
-    pars['contacts'] = 30 # Number of contacts per guest per day, estimated
+    pars['contacts']       = 30 # Number of contacts per guest per day, estimated
     pars['incub']          = 4.0 # Incubation period, in days, estimated
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
     pars['dur']            = 12 # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737

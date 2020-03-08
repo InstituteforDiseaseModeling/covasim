@@ -11,6 +11,5 @@ verbose = 0
 sim = covid_school.Sim()
 sim.set_seed(5) # 4 ok, 5 ok, 6 good
 sim.run(verbose=verbose)
-sim.likelihood()
 if do_plot:
     sim.plot(do_save=do_save)
