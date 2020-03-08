@@ -33,7 +33,7 @@ def make_pars():
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
 
     # Events
-    pars['quarantine']       = 15  # Day on which quarantine took effect
+    pars['quarantine']       = 0  # Day on which quarantine took effect
     pars['quarantine_eff']   = 1.00 # Change in transmissibility due to quarantine, estimated
 
     return pars
