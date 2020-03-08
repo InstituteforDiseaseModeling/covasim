@@ -144,7 +144,7 @@ class Sim(ParsObj):
         return
 
 
-    def init_people(self, seed_infections=1):
+    def init_people(self):
         ''' Create the people '''
         self.people = sc.odict() # Dictionary for storing the people
         for p in range(self['n']): # Loop over each person
@@ -153,7 +153,8 @@ class Sim(ParsObj):
             self.people[person.uid] = person # Save them to the dictionary
 
         # Create the seed infections
-        for i in range(seed_infections):
+        for i in range(self['n_infected']):
+            self.people[i].susceptible = False
             self.people[i].exposed = True
             self.people[i].infectious = True
             self.people[i].date_exposed = 0
@@ -169,9 +170,20 @@ class Sim(ParsObj):
         for key in keys:
             summary[key] = self.results[key][-1]
         return summary
+    
+    
+    def infect_person(self, target_person, t, infectious=False):
+        target_person.susceptible = False
+        target_person.exposed = True
+        target_person.date_exposed = t
+        incub_dist = round(pl.normal(target_person.pars['incub'], target_person.pars['incub_std']))
+        dur_dist = round(pl.normal(target_person.pars['dur'], target_person.pars['dur_std']))
+        target_person.date_infectious = t + incub_dist
+        target_person.date_recovered = target_person.date_infectious + dur_dist
+        return target_person
 
 
-    def run(self, seed_infections=1, verbose=None, calc_likelihood=False, do_plot=False, **kwargs):
+    def run(self, verbose=None, calc_likelihood=False, do_plot=False, **kwargs):
         ''' Run the simulation '''
 
         T = sc.tic()
@@ -180,7 +192,7 @@ class Sim(ParsObj):
         if verbose is None:
             verbose = self['verbose']
         self.init_results()
-        self.init_people(seed_infections=seed_infections) # Actually create the people
+        self.init_people() # Actually create the people
         daily_tests = [] # Number of tests each day, from the data # TODO: fix
 
         # Main simulation loop
@@ -236,13 +248,7 @@ class Sim(ParsObj):
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     self.results['infections'][t] += 1
-                                    target_person.susceptible = False
-                                    target_person.exposed = True
-                                    target_person.date_exposed = t
-                                    incub_dist = round(pl.normal(person.pars['incub'], person.pars['incub_std']))
-                                    dur_dist = round(pl.normal(person.pars['dur'], person.pars['dur_std']))
-                                    target_person.date_infectious = t + incub_dist
-                                    target_person.date_recovered = target_person.date_infectious + dur_dist
+                                    self.infect_person(target_person, t)
                                     if verbose>=2:
                                         print(f'        Person {person.uid} infected person {target_person.uid}!')
 
@@ -270,9 +276,7 @@ class Sim(ParsObj):
             if t == self['quarantine']:
                 if verbose>=1:
                     print(f'Implementing quarantine on day {t}...')
-                # for person in self.people.values():
                 self['contacts'] *= self['quarantine_eff']
-                    # print(person['contacts'])
 
 
         # Compute cumulative results

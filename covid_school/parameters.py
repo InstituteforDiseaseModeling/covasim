@@ -14,8 +14,8 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['n']          = 1000 # Estimate
-    pars['n_infected'] = 10 # Asked for 1000 in Seattle's population
+    pars['n']          = 5000 # Estimate
+    pars['n_infected'] = 100 # Asked for 1000 in Seattle's population
     pars['day_0']      = datetime(2020, 3, 9) # Start day of the epidemic
     pars['n_days']     = 21 # How many days to simulate -- 31 days is until 2020-Feb-20
     pars['seed']       = 1 # Random seed, if None, don't reset
@@ -23,18 +23,18 @@ def make_pars():
     pars['scale']      = 100 # Factor by which to scale results
 
     # Epidemic parameters
-    pars['r_contact']      = 0.05 # Probability of infection per contact, estimated
-    pars['contacts']       = 30 # Number of contacts per guest per day, estimated
-    pars['incub']          = 4.0 # Incubation period, in days, estimated
+    pars['r_contact']      = 2.5/(10*20) # Probability of infection per contact, estimated
+    pars['contacts']       = 20 # Number of contacts per guest per day, estimated
+    pars['incub']          = 5.0 # Incubation period, in days, estimated
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
-    pars['dur']            = 12 # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
+    pars['dur']            = 10 # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
     pars['dur_std']        = 3 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
 
     # Events
     pars['quarantine']       = 15  # Day on which quarantine took effect
-    pars['quarantine_eff']   = 0.80 # Change in transmissibility due to quarantine, estimated
+    pars['quarantine_eff']   = 1.00 # Change in transmissibility due to quarantine, estimated
 
     return pars
 

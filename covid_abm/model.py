@@ -162,6 +162,7 @@ class Sim(ParsObj):
 
         # Create the seed infections
         for i in range(seed_infections):
+            self.people[i].susceptible = False
             self.people[i].exposed = True
             self.people[i].infectious = True
             self.people[i].date_exposed = 0
@@ -248,8 +249,8 @@ class Sim(ParsObj):
                                     target_person.susceptible = False
                                     target_person.exposed = True
                                     target_person.date_exposed = t
-                                    incub_dist = round(pl.normal(person.pars['incub'], person.pars['incub_std']))
-                                    dur_dist = round(pl.normal(person.pars['dur'], person.pars['dur_std']))
+                                    incub_dist = round(pl.normal(target_person.pars['incub'], target_person.pars['incub_std']))
+                                    dur_dist = round(pl.normal(target_person.pars['dur'], target_person.pars['dur_std']))
                                     target_person.date_infectious = t + incub_dist
                                     target_person.date_recovered = target_person.date_infectious + dur_dist
                                     if verbose>=2:
