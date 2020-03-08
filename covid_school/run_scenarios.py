@@ -7,7 +7,7 @@ import sciris as sc
 import covid_school
 from covid_abm import utils as cov_ut
 
-do_save = 0
+do_save = 1
 verbose = 0
 n = 6
 xmin = 9
@@ -31,19 +31,21 @@ high = allres.max(axis=1)*orig_sim['scale']
 
 scenarios = {
     'del50': 'Closure in 1 week, 50% reduction', 
-    # 'im50': 'Immediate closure, 50% reduction', 
+    'im50': 'Immediate closure, 50% reduction', 
     # 'im16': 'Immediate closure, 16% reduction',
     # 'im95': 'Immediate closure, 95% reduction',
 }
 
-for key,name in scenarios.items():
+for scenkey,scenname in scenarios.items():
     
     scen_sim = covid_school.Sim()
-    if key == 'del50':
+    if scenkey == 'del50':
         scen_sim['quarantine'] = 7
         scen_sim['quarantine_eff'] = 0.5
-    
-    
+    elif scenkey == 'im50':
+        scen_sim['quarantine'] = 0
+        scen_sim['quarantine_eff'] = 0.5
+        
     scen_sims = covid_school.multi_run(scen_sim, n=n)
     
     scenres = pl.zeros((npts, n))
@@ -72,7 +74,7 @@ for key,name in scenarios.items():
     pl.fill_between(tvec, low, high, **fill_args)
     pl.fill_between(tvec, scen_low, scen_high, **fill_args)
     pl.plot(tvec, best, label='Business as usual', **plot_args)
-    pl.plot(tvec, scen_best, label=name, **plot_args)
+    pl.plot(tvec, scen_best, label=scenname, **plot_args)
     
     pl.grid(True)
     cov_ut.fixaxis(sim)
