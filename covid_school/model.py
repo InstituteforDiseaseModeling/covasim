@@ -154,6 +154,7 @@ class Sim(ParsObj):
 
         # Create the seed infections
         for i in range(self['n_infected']):
+            self.results['infections'][0] += 1
             self.people[i].susceptible = False
             self.people[i].exposed = True
             self.people[i].infectious = True
@@ -441,23 +442,13 @@ def multi_run(orig_sim, n=4, verbose=None):
     sims = []
     for i in range(n):
         new_sim = sc.dcp(orig_sim)
-        new_sim.pars['seed'] += i # Reset the seed, otherwise no point!
-        new_sim.pars['n'] = int(new_sim.pars['n']/n) # Reduce the population size accordingly
+        new_sim['seed'] += i # Reset the seed, otherwise no point!
+        new_sim.set_seed(new_sim['seed'])
         sims.append(new_sim)
 
     finished_sims = sc.parallelize(single_run, iterarg=sims)
 
-    output_sim = sc.dcp(finished_sims[0])
-    output_sim.pars['parallelized'] = n # Store how this was parallelized
-    output_sim.pars['n'] *= n # Restore this since used in later calculations -- a bit hacky, it's true
-
-    for sim in finished_sims[1:]: # Skip the first one
-        output_sim.people.update(sim.people)
-        for key,val in sim.results.items():
-            if key != 't':
-                output_sim.results[key] += sim.results[key]
-
-    return output_sim
+    return finished_sims
 
 
 
