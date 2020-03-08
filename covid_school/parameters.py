@@ -14,11 +14,13 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['n']   = 2666 # From https://www.princess.com/news/notices_and_advisories/notices/diamond-princess-update.html
+    pars['n']          = 1000 # Estimate
+    pars['n_infected'] = 10 # Asked for 1000 in Seattle's population
     pars['day_0']      = datetime(2020, 3, 9) # Start day of the epidemic
     pars['n_days']     = 21 # How many days to simulate -- 31 days is until 2020-Feb-20
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
+    pars['scale']      = 100 # Factor by which to scale results
 
     # Epidemic parameters
     pars['r_contact']      = 0.05 # Probability of infection per contact, estimated

@@ -270,15 +270,9 @@ class Sim(ParsObj):
             if t == self['quarantine']:
                 if verbose>=1:
                     print(f'Implementing quarantine on day {t}...')
-                for person in self.people.values():
-                    if 'quarantine_eff' in self.pars.keys():
-                        quarantine_eff = self['quarantine_eff'] # Both
-                    else:
-                        if person.crew:
-                            quarantine_eff = self['quarantine_eff_c'] # Crew
-                        else:
-                            quarantine_eff = self['quarantine_eff_g'] # Guests
-                    person['contacts'] *= quarantine_eff
+                # for person in self.people.values():
+                self['contacts'] *= self['quarantine_eff']
+                    # print(person['contacts'])
 
 
         # Compute cumulative results
