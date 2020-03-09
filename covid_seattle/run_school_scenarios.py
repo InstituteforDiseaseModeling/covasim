@@ -4,7 +4,7 @@ Simple script for running the Covid-19 agent-based model
 
 import pylab as pl
 import sciris as sc
-import covid_school
+import covid_seattle
 from covid_abm import utils as cov_ut
 
 do_save = 1
@@ -15,8 +15,8 @@ xmax = 31
 noise = 0.2
 key = 'cum_exposed'
 
-orig_sim = covid_school.Sim()
-finished_sims = covid_school.multi_run(orig_sim, n=n, noise=noise)
+orig_sim = covid_seattle.Sim()
+finished_sims = covid_seattle.multi_run(orig_sim, n=n, noise=noise)
 
 res0 = finished_sims[0].results
 npts = len(res0[key])
@@ -43,7 +43,7 @@ final['baseline'] = sc.objdict({'best':sc.dcp(best), 'low':sc.dcp(low), 'high':s
 
 for scenkey,scenname in scenarios.items():
     
-    scen_sim = covid_school.Sim()
+    scen_sim = covid_seattle.Sim()
     if scenkey == 'del50':
         scen_sim['quarantine'] = 7
         scen_sim['quarantine_eff'] = 0.5
@@ -62,7 +62,7 @@ for scenkey,scenname in scenarios.items():
         scen_sim['quarantine_eff'] = 0.50
     
         
-    scen_sims = covid_school.multi_run(scen_sim, n=n, noise=noise)
+    scen_sims = covid_seattle.multi_run(scen_sim, n=n, noise=noise)
     
     scenres = pl.zeros((npts, n))
     for s,sim in enumerate(scen_sims):
@@ -102,11 +102,11 @@ for scenkey,scenname in scenarios.items():
     sc.commaticks(axis='y')
     
     if do_save:
-        pl.savefig(f'school_closure_{scenkey}.png')
+        pl.savefig(f'seattle_closure_{scenkey}.png')
 
 
 #%% Print statistics
 for k in ['baseline'] + list(scenarios.keys()):
     print(f'{k}: {final[k].best[-1]:0.0f}')
 
-sc.saveobj('school-results.obj', final)
+sc.saveobj('seattle-school-results.obj', final)
