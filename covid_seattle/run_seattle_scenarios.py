@@ -13,9 +13,11 @@ n = 4
 xmin = 0
 xmax = 56
 noise = 0.2
+seed = 1
 reskeys = ['cum_exposed', 'cum_deaths']
 
 orig_sim = covid_seattle.Sim()
+orig_sim.set_seed(seed)
 finished_sims = covid_seattle.multi_run(orig_sim, n=n, noise=noise)
 
 res0 = finished_sims[0].results
@@ -38,9 +40,13 @@ for key in reskeys:
     high[key] = both[key].max(axis=1)*orig_sim['scale']
 
 scenarios = {
-    'cfr2':  '2% case fatality rate', 
-    'cfr1':  '1% case fatality rate', 
-    'cfr05': '0.5% case fatality rate', 
+    # 'cfr2':  '2% case fatality rate', 
+    # 'cfr1':  '1% case fatality rate', 
+    # 'cfr05': '0.5% case fatality rate', 
+    'im': '8-week closure, effective immediately, assuming 50% reduction in contacts', 
+    # 'im16': 'Immediate closure, 16% reduction',
+    # 'im95': 'Immediate closure, 95% reduction',
+    'short': '2-week closure, effective immediately, assuming 50% reduction in contacts',
 }
 
 final = sc.objdict()
@@ -49,22 +55,23 @@ final['baseline'] = sc.objdict({'best':sc.dcp(best), 'low':sc.dcp(low), 'high':s
 for scenkey,scenname in scenarios.items():
     
     scen_sim = covid_seattle.Sim()
-    if scenkey == 'cfr2':
-        scen_sim['cfr'] = 0.02
-    elif scenkey == 'cfr1':
-        scen_sim['cfr'] = 0.01
-    elif scenkey == 'cfr05':
-        scen_sim['cfr'] = 0.005
+    # if scenkey == 'cfr2':
+    #     scen_sim['cfr'] = 0.02
+    # elif scenkey == 'cfr1':
+    #     scen_sim['cfr'] = 0.01
+    # elif scenkey == 'cfr05':
+    #     scen_sim['cfr'] = 0.005
     # elif scenkey == 'im16':
     #     scen_sim['quarantine'] = 0
     #     scen_sim['quarantine_eff'] = 0.84
-    # elif scenkey == 'im95':
-    #     scen_sim['quarantine'] = 0
-    #     scen_sim['quarantine_eff'] = 0.05
-    # elif scenkey == 'short':
-    #     scen_sim['quarantine'] = 0
-    #     scen_sim['unquarantine'] = 7
-    #     scen_sim['quarantine_eff'] = 0.50
+    
+    if scenkey == 'im':
+        scen_sim['quarantine'] = 0
+        scen_sim['quarantine_eff'] = 0.50
+    elif scenkey == 'short':
+        scen_sim['quarantine'] = 0
+        scen_sim['unquarantine'] = 14
+        scen_sim['quarantine_eff'] = 0.50
     
         
     scen_sims = covid_seattle.multi_run(scen_sim, n=n, noise=noise)
@@ -103,9 +110,9 @@ for scenkey,scenname in scenarios.items():
     for k,key in enumerate(reskeys):
         pl.subplot(2,1,k+1)
         
-        # pl.fill_between(tvec, low[key], high[key], **fill_args)
+        pl.fill_between(tvec, low[key], high[key], **fill_args)
         pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
-        # pl.plot(tvec, best[key], label='Business as usual', **plot_args)
+        pl.plot(tvec, best[key], label='Business as usual', **plot_args)
         pl.plot(tvec, scen_best[key], label=scenname, **plot_args)
         
         pl.grid(True)
@@ -120,7 +127,7 @@ for scenkey,scenname in scenarios.items():
         sc.commaticks(axis='y')
     
     if do_save:
-        pl.savefig(f'seattle_projections_{scenkey}.png')
+        pl.savefig(f'seattle_projections_v2_{scenkey}.png')
 
 
 #%% Print statistics
@@ -128,4 +135,4 @@ for k in ['baseline'] + list(scenarios.keys()):
     for key in reskeys:
         print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')
 
-sc.saveobj('seattle-projection-results.obj', final)
+sc.saveobj('seattle-projection-results_v2.obj', final)

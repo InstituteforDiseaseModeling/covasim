@@ -14,10 +14,10 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['n']          = 8000 # Estimate
+    pars['n']          = int(1.0*8000) # Estimate
     pars['n_infected'] = 10 # Asked for 1000 in Seattle's population
     pars['day_0']      = datetime(2020, 3, 9) # Start day of the epidemic
-    pars['n_days']     = 56 # How many days to simulate -- 8 weeks
+    pars['n_days']     = int(1.0*56) # How many days to simulate -- 8 weeks
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['scale']      = 100 # Factor by which to scale results
