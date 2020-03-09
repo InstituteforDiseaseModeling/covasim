@@ -278,6 +278,11 @@ class Sim(ParsObj):
                 if verbose>=1:
                     print(f'Implementing quarantine on day {t}...')
                 self['contacts'] *= self['quarantine_eff']
+            
+            if t == self['unquarantine']:
+                if verbose>=1:
+                    print(f'Implementing unquarantine on day {t}...')
+                self['contacts'] /= self['quarantine_eff']
 
 
         # Compute cumulative results
@@ -435,7 +440,7 @@ def single_run(sim):
     return sim
 
 
-def multi_run(orig_sim, n=4, verbose=None):
+def multi_run(orig_sim, n=4, noise=0.0, verbose=None):
     ''' Ditto, for multiple runs '''
 
     # Copy the simulations
@@ -444,6 +449,7 @@ def multi_run(orig_sim, n=4, verbose=None):
         new_sim = sc.dcp(orig_sim)
         new_sim['seed'] += i # Reset the seed, otherwise no point!
         new_sim.set_seed(new_sim['seed'])
+        new_sim['r_contact'] *= 1+noise*pl.randn()
         sims.append(new_sim)
 
     finished_sims = sc.parallelize(single_run, iterarg=sims)

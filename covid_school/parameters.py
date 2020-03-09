@@ -17,7 +17,7 @@ def make_pars():
     pars['n']          = 10000 # Estimate
     pars['n_infected'] = 100 # Asked for 1000 in Seattle's population
     pars['day_0']      = datetime(2020, 3, 9) # Start day of the epidemic
-    pars['n_days']     = 24 # How many days to simulate -- 31 days is until 2020-Feb-20
+    pars['n_days']     = 22 # How many days to simulate -- 31 days is until 2020-Feb-20
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['scale']      = 10 # Factor by which to scale results
@@ -34,6 +34,7 @@ def make_pars():
 
     # Events
     pars['quarantine']       = 0  # Day on which quarantine took effect
+    pars['unquarantine']     = 50  # Day on which quarantine took effect
     pars['quarantine_eff']   = 1.00 # Change in transmissibility due to quarantine, estimated
 
     return pars

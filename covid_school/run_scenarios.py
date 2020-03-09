@@ -12,10 +12,11 @@ verbose = 0
 n = 6
 xmin = 9
 xmax = 31
+noise = 0.2
 key = 'cum_exposed'
 
 orig_sim = covid_school.Sim()
-finished_sims = covid_school.multi_run(orig_sim, n=n)
+finished_sims = covid_school.multi_run(orig_sim, n=n, noise=noise)
 
 res0 = finished_sims[0].results
 npts = len(res0[key])
@@ -30,11 +31,15 @@ low = allres.min(axis=1)*orig_sim['scale']
 high = allres.max(axis=1)*orig_sim['scale']
 
 scenarios = {
-    'del50': 'Closure in 1 week, 50% reduction', 
-    'im50': 'Immediate closure, 50% reduction', 
+    # 'del50': 'Closure in 1 week, 50% reduction', 
+    # 'im50': 'Immediate closure, 50% reduction', 
     # 'im16': 'Immediate closure, 16% reduction',
     # 'im95': 'Immediate closure, 95% reduction',
+    'short': 'One-week closure, 50% reduction',
 }
+
+final = sc.objdict()
+final['baseline'] = sc.objdict({'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
 
 for scenkey,scenname in scenarios.items():
     
@@ -45,8 +50,19 @@ for scenkey,scenname in scenarios.items():
     elif scenkey == 'im50':
         scen_sim['quarantine'] = 0
         scen_sim['quarantine_eff'] = 0.5
+    elif scenkey == 'im16':
+        scen_sim['quarantine'] = 0
+        scen_sim['quarantine_eff'] = 0.84
+    elif scenkey == 'im95':
+        scen_sim['quarantine'] = 0
+        scen_sim['quarantine_eff'] = 0.05
+    elif scenkey == 'short':
+        scen_sim['quarantine'] = 0
+        scen_sim['unquarantine'] = 7
+        scen_sim['quarantine_eff'] = 0.50
+    
         
-    scen_sims = covid_school.multi_run(scen_sim, n=n)
+    scen_sims = covid_school.multi_run(scen_sim, n=n, noise=noise)
     
     scenres = pl.zeros((npts, n))
     for s,sim in enumerate(scen_sims):
@@ -55,6 +71,8 @@ for scenkey,scenname in scenarios.items():
     scen_best = scenres.mean(axis=1)*orig_sim['scale']
     scen_low = scenres.min(axis=1)*orig_sim['scale']
     scen_high = scenres.max(axis=1)*orig_sim['scale']
+    
+    final[scenkey] = sc.objdict({'best':sc.dcp(scen_best), 'low':sc.dcp(scen_low), 'high':sc.dcp(scen_high)})
 
 
     #%% Plotting
@@ -70,7 +88,6 @@ for scenkey,scenname in scenarios.items():
     pl.subplots_adjust(**axis_args)
     pl.rcParams['font.size'] = font_size
     
-    
     pl.fill_between(tvec, low, high, **fill_args)
     pl.fill_between(tvec, scen_low, scen_high, **fill_args)
     pl.plot(tvec, best, label='Business as usual', **plot_args)
@@ -85,4 +102,11 @@ for scenkey,scenname in scenarios.items():
     sc.commaticks(axis='y')
     
     if do_save:
-        pl.savefig(f'school_closure_{key}.png')
+        pl.savefig(f'school_closure_{scenkey}.png')
+
+
+#%% Print statistics
+for k in ['baseline'] + list(scenarios.keys()):
+    print(f'{k}: {final[k].best[-1]:0.0f}')
+
+sc.saveobj('school-results.obj', final)
