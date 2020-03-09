@@ -9,8 +9,7 @@ do_save = 0
 verbose = 1
 
 sim = covid_seattle.Sim()
-sim.set_seed(5) # 4 ok, 5 ok, 6 good
-sim['n_days'] = 8*7
+sim.set_seed(1) # 4 ok, 5 ok, 6 good
 sim.run(verbose=verbose)
 if do_plot:
     sim.plot(do_save=do_save)
