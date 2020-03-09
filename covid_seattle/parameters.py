@@ -14,7 +14,7 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['n']          = 20000 # Estimate
+    pars['n']          = 8000 # Estimate
     pars['n_infected'] = 10 # Asked for 1000 in Seattle's population
     pars['day_0']      = datetime(2020, 3, 9) # Start day of the epidemic
     pars['n_days']     = 56 # How many days to simulate -- 8 weeks
@@ -31,10 +31,14 @@ def make_pars():
     pars['dur_std']        = 3 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
+    pars['cfr']            = 0.02 # Case fatality rate
+    pars['timetodie']      = 22 # Days until death
+    pars['timetodie_std']  = 2 # STD
+    
 
     # Events
-    pars['quarantine']       = 0  # Day on which quarantine took effect
-    pars['unquarantine']     = -1  # Day on which quarantine took effect
+    pars['quarantine']       = -1  # Day on which quarantine took effect
+    pars['unquarantine']     = -1  # Day on which unquarantine took effect
     pars['quarantine_eff']   = 1.00 # Change in transmissibility due to quarantine, estimated
 
     return pars

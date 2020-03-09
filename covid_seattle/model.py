@@ -9,7 +9,6 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 from covid_abm import utils as cov_ut
-from covid_abm import poisson_stats as cov_ps
 from . import parameters as cov_pars
 
 
@@ -35,9 +34,11 @@ class ParsObj(sc.prettyobj):
                              'tests', 
                              'diagnoses', 
                              'recoveries',
+                             'deaths',
                              'cum_exposed', 
                              'cum_tested', 
-                             'cum_diagnosed',]
+                             'cum_diagnosed',
+                             'cum_deaths',]
         return
 
     def __getitem__(self, key):
@@ -86,12 +87,14 @@ class Person(ParsObj):
         self.infectious  = False
         self.diagnosed   = False
         self.recovered   = False
+        self.dead        = False
 
         # Keep track of dates
         self.date_exposed    = None
         self.date_infectious = None
         self.date_diagnosed  = None
         self.date_recovered  = None
+        self.date_died       = None
         return
 
 
@@ -166,7 +169,7 @@ class Sim(ParsObj):
 
     def summary_stats(self):
         ''' Compute the summary statistics to display at the end of a run '''
-        keys = ['n_susceptible', 'n_exposed', 'n_infectious']
+        keys = ['n_susceptible', 'cum_exposed', 'n_infectious', 'cum_deaths']
         summary = {}
         for key in keys:
             summary[key] = self.results[key][-1]
@@ -178,9 +181,16 @@ class Sim(ParsObj):
         target_person.exposed = True
         target_person.date_exposed = t
         incub_dist = round(pl.normal(target_person.pars['incub'], target_person.pars['incub_std']))
-        dur_dist = round(pl.normal(target_person.pars['dur'], target_person.pars['dur_std']))
         target_person.date_infectious = t + incub_dist
-        target_person.date_recovered = target_person.date_infectious + dur_dist
+        
+        # Program them to either die or recover
+        if cov_ut.bt(target_person.pars['cfr']):
+            death_dist = round(pl.normal(target_person.pars['timetodie'], target_person.pars['timetodie_std']))
+            target_person.date_died = t + death_dist
+        else:
+            dur_dist = round(pl.normal(target_person.pars['dur'], target_person.pars['dur_std']))
+            target_person.date_recovered = target_person.date_infectious + dur_dist
+        
         return target_person
 
 
@@ -233,6 +243,15 @@ class Sim(ParsObj):
 
                 # If infectious, check if anyone gets infected
                 if person.infectious:
+                    
+                    # Check for death
+                    if person.date_died and t >= person.date_died:
+                        person.exposed = False
+                        person.infectious = False
+                        person.recovered = False
+                        person.died = True
+                        self.results['deaths'][t] += 1
+                    
                     # First, check for recovery
                     if person.date_recovered and t >= person.date_recovered: # It's the day they become infectious
                         person.exposed = False
@@ -289,6 +308,7 @@ class Sim(ParsObj):
         self.results['cum_exposed']   = pl.cumsum(self.results['infections'])
         self.results['cum_tested']    = pl.cumsum(self.results['tests'])
         self.results['cum_diagnosed'] = pl.cumsum(self.results['diagnoses'])
+        self.results['cum_deaths']    = pl.cumsum(self.results['deaths'])
 
         # Compute likelihood
         # if calc_likelihood:
@@ -302,8 +322,9 @@ class Sim(ParsObj):
             summary = self.summary_stats()
             print(f"""Summary: 
      {summary['n_susceptible']:5.0f} susceptible 
-     {summary['n_exposed']:5.0f} exposed
      {summary['n_infectious']:5.0f} infectious
+     {summary['cum_exposed']:5.0f} exposed
+     {summary['cum_deaths']:5.0f} deaths
                """)
 
         if do_plot:
@@ -388,10 +409,12 @@ class Sim(ParsObj):
                                       'n_exposed':'Number exposed', 
                                       'n_infectious':'Number infectious',
                                       'cum_diagnosed':'Number diagnosed',
+                                      'cum_deaths':'Number of deaths',
                                     }),
             'Daily counts': sc.odict({'infections':'New infections',
                                       'tests':'Number of tests',
                                       'diagnoses':'New diagnoses', 
+                                      'deaths':'New deaths', 
                                      }),
             })
 
