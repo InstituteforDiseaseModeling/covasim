@@ -213,7 +213,7 @@ class Sim(ParsObj):
         daily_tests = [] # Number of tests each day, from the data # TODO: fix
 
         # Main simulation loop
-        for t in range(self.npts):
+        for t in range(1,self.npts):
 
             # Print progress
             if verbose>=1:
@@ -300,7 +300,7 @@ class Sim(ParsObj):
 
             # Implement quarantine
             if t == self['quarantine']:
-                if verbose>=1:
+                if verbose>=1 or True:
                     print(f'Implementing quarantine on day {t}...')
                 self['contacts'] *= self['quarantine_eff']
 
