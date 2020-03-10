@@ -15,14 +15,13 @@ pars = make_pars()
 
 sc.tic()
 
-
 do_save = 1
 verbose = 0
-n = 6
+n = 12
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0*0.2 # Turn off noise
-seed = 23489
+seed = 1
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
 sc.heading('Baseline run')
@@ -187,8 +186,8 @@ for k in list(scenarios.keys()):
         print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')
 
 if do_save:
-    pl.savefig('seattle-covid-projections_2020mar10c.png', dpi=200)
-    sc.saveobj('seattle-projection-results_v4c.obj', final)
+    pl.savefig('seattle-covid-projections_2020mar10e.png', dpi=200)
+    sc.saveobj('seattle-projection-results_v4e.obj', final)
 
 sc.toc()
 pl.show()
