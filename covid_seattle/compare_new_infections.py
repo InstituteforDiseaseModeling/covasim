@@ -1,10 +1,16 @@
+''' Compare distributions of 1) new infections and 2) epi parameters between COVID-ABM and transGenEpi '''
+
+## Imports
 import scipy.stats as sps
 import pylab as pl
 import numpy as np
 from covid_abm import utils as cov_ut
 
+## Fixed parameters
 nSamples = 10000
 DPY = 365.
+
+## Function defintions
 
 def compare_new_infections():
     mult_vec = [1, 10/20., 1/20.]
@@ -14,7 +20,7 @@ def compare_new_infections():
     for i, mult in enumerate(mult_vec):
         ax = ax_vec[i]
 
-        ## COVID-ABM - binomial model with n=20, p=2.5/200
+        ## COVID-ABM - binomial model with n ~ poisson(20), p=2.5/200
         contacts = 20
         r_contact = 2.5/200
         contacts_mult = int(20 * mult)
@@ -22,12 +28,8 @@ def compare_new_infections():
         for sample in range(nSamples):
             N = np.random.poisson(contacts_mult)
             pvec[sample] = np.random.binomial(n=N, p=r_contact)
-        #d = sps.binom(n=contacts_mult, p=r_contact)
-        K = range(5)
-        #p = d.pmf(K)
-        y,b = np.histogram(pvec, bins=K)
+        y,b = np.histogram(pvec, bins=range(5))
         y = y / y.sum()
-        print(y)
         ax.bar(b[:-1], y, width, color='b', label='COVID-ABM')
 
         ## transGenEpi - heterogeneous beta ~ positiveNormal(mu=106/365, sigma=260/365)
@@ -56,14 +58,15 @@ def compare_new_infections():
 
     pl.tight_layout(rect=[0, 0.03, 1, 0.95])
     fig.suptitle('Transmissions per infectious individual per day')
-
     pl.savefig('Compare_NewInfections.png')
+
 
 def sample_config(config, samp=10000):
     ret = np.zeros(samp)
     for sample in range(samp):
         ret[sample] = cov_ut.sample(config)
     return ret
+
 
 def compare_epi():
     fig,ax_vec = pl.subplots(1,2,figsize=(12,6), sharey=True)
@@ -91,7 +94,7 @@ def compare_epi():
     covid = np.ceil(sample_config(covidabm, samp=nSamples)) # Due to timestep
 
     ax = ax_vec[0]
-    ax.hist([covid, tge], bins = range(10), normed=True,
+    ax.hist([covid, tge], bins = range(10), density=True,
          color = ['b', 'r'], label=['COVID-ABM', 'transGenEpi'], align='left')
 
     ax.set_xlabel('Days')
@@ -122,7 +125,7 @@ def compare_epi():
     covid = np.ceil(sample_config(covidabm)) # Due to timestep
 
     ax = ax_vec[1]
-    ax.hist([covid, tge], bins = range(20), normed=True,
+    ax.hist([covid, tge], bins = range(20), density=True,
          color = ['b', 'r'], label=['COVID-ABM', 'transGenEpi'], align='left')
 
     ax.set_xlabel('Days')
@@ -132,7 +135,6 @@ def compare_epi():
     pl.savefig('Compare_Epi.png')
 
 
+## Call the functions
 compare_new_infections()
 compare_epi()
-
-pl.show()
