@@ -146,6 +146,10 @@ class Sim(ParsObj):
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
+    
+    def get_person(self, ind):
+        ''' Return a person based on their ID '''
+        return self.people[self.uids[ind]]
 
 
     def init_people(self, verbose=None):
@@ -156,19 +160,19 @@ class Sim(ParsObj):
         if verbose>=2:
             print('Creating {self["n"]} people...')
         
-        self.people = {} # sc.odict() # Dictionary for storing the people -- use plain dict since faster
+        self.people = {} # Dictionary for storing the people -- use plain dict since faster
         for p in range(self['n']): # Loop over each person
             age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
         
+        # Store all the UIDs as a list
         self.uids = list(self.people.keys())
 
         # Create the seed infections
         for i in range(self['n_infected']):
             self.results['infections'][0] += 1
-            key = self.uids[i]
-            person = self.people[key]
+            person = self.get_person(i)
             person.susceptible = False
             person.exposed = True
             person.infectious = True
@@ -283,7 +287,7 @@ class Sim(ParsObj):
                         for contact_ind in contact_inds:
                             exposure = cov_ut.bt(self['r_contact']) # Check for exposure per person
                             if exposure:
-                                target_person = self.people[self.uids[contact_ind]]
+                                target_person = self.get_person(contact_ind)
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     self.results['infections'][t] += 1
                                     self.infect_person(source_person=person, target_person=target_person, t=t)
@@ -348,8 +352,8 @@ class Sim(ParsObj):
         if do_plot:
             self.plot(**kwargs)
         
-        # Convert to an odict
-        self.people = sc.odict({str(uid):person for uid,person in self.people.items()})
+        # Convert to an odict to allow e.g. sim.people[25] later
+        self.people = sc.odict(self.people)
 
         return self.results
 
