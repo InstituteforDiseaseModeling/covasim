@@ -18,7 +18,7 @@ n = 16
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0.2
-seed = 2
+seed = 3
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
 orig_sim = covid_seattle.Sim()
