@@ -138,14 +138,13 @@ for key, data in final.items():
         #pl.gca().set_xticks(pl.arange(xmin,xmax+1, 5))
 
         if key == 'cum_exposed':
-            pl.ylim([0,40000])
+            pl.ylim([0,30000])
             pl.title('Cumulative infections')
+            pl.ylabel('Count')
         elif key == 'n_exposed':
+            pl.ylim([0,20000])
             pl.title('Latent + Infectious')
             pl.legend()
-
-        plt.ylabel('Count')
-
 
         pl.xlabel('Date')
 
