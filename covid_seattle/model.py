@@ -156,7 +156,7 @@ class Sim(ParsObj):
         if verbose>=2:
             print('Creating {self["n"]} people...')
         
-        self.people = sc.odict() # Dictionary for storing the people
+        self.people = {} # sc.odict() # Dictionary for storing the people -- use plain dict since faster
         for p in range(self['n']): # Loop over each person
             age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex) # Create the person
@@ -166,8 +166,8 @@ class Sim(ParsObj):
 
         # Create the seed infections
         for i in range(self['n_infected']):
-            key = self.uids[i]
             self.results['infections'][0] += 1
+            key = self.uids[i]
             person = self.people[key]
             person.susceptible = False
             person.exposed = True
@@ -243,7 +243,7 @@ class Sim(ParsObj):
                 # Count susceptibles
                 if person.susceptible:
                     self.results['n_susceptible'][t] += 1
-                    break # Don't bother with the rest of the loop
+                    # break # Don't bother with the rest of the loop
 
                 # Handle testing probability
                 if person.infectious:
@@ -283,7 +283,7 @@ class Sim(ParsObj):
                         for contact_ind in contact_inds:
                             exposure = cov_ut.bt(self['r_contact']) # Check for exposure per person
                             if exposure:
-                                target_person = self.people[contact_ind]
+                                target_person = self.people[self.uids[contact_ind]]
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     self.results['infections'][t] += 1
                                     self.infect_person(source_person=person, target_person=target_person, t=t)
