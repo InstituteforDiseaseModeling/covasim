@@ -48,8 +48,8 @@ def pt(rate):
 
 
 
-@nb.njit((nb.int64, nb.int64, nb.boolean))
-def choose_people(max_ind, n, tostring=True):
+@nb.njit((nb.int64, nb.int64))
+def choose_people(max_ind, n):
     '''
     Choose n people.
 
@@ -59,18 +59,11 @@ def choose_people(max_ind, n, tostring=True):
         raise Exception('Number of samples requested is greater than the number of people')
     n_samples = min(int(n), max_ind)
     inds = np.random.choice(max_ind, n_samples, replace=False)
-    if tostring:
-        strinds = []
-        for ind in inds:
-            strinds.append(str(ind))
-        output = strinds
-    else:
-        output = inds
-    return output
+    return inds
 
 
 # @nb.njit((nb.float64[:], nb.int64, nb.float64))
-def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, tostring=True):
+def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6):
     '''
     Choose n people, each with a probability from the distribution probs. Overshoot
     handles the case where there are repeats
@@ -92,16 +85,7 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, tostring=True):
         mixed_inds = np.hstack((unique_inds, raw_inds))
         unique_inds = pd.unique(mixed_inds) # Or np.unique(mixed_inds, return_index=True) with another step
     inds = unique_inds[:n]
-    
-    if tostring:
-        strinds = []
-        for ind in inds:
-            strinds.append(str(ind))
-        output = strinds
-    else:
-        output = inds
-        
-    return output
+    return inds
 
 
 def fixaxis(sim, useSI=True, boxoff=False):

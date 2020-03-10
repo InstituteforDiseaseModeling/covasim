@@ -76,7 +76,7 @@ class Person(ParsObj):
     '''
     def __init__(self, pars, age=0, sex=0):
         super().__init__(pars) # Set parameters
-        self.uid  = str(pl.randint(0,1e9)) # Unique identifier for this person
+        self.uid  = pl.randint(0,1e9) # Unique identifier for this person
         self.age  = float(age) # Age of the person (in years)
         self.sex  = sex # Female (0) or male (1)
 
@@ -350,7 +350,8 @@ class Sim(ParsObj):
         if do_plot:
             self.plot(**kwargs)
         
-        self.people = sc.odict(self.people)
+        # Convert to an odict
+        self.people = sc.odict({str(uid):person for uid,person in self.people.items()})
 
         return self.results
 
