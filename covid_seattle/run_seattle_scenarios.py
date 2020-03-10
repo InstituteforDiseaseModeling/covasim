@@ -14,7 +14,7 @@ pars = make_pars()
 
 do_save = 1
 verbose = 0
-n = 1
+n = 16
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0.2
@@ -54,7 +54,7 @@ final = sc.objdict()
 final['Baseline'] = sc.objdict({'scenname': 'Business as ususal', 'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
 
 
-fig_args     = {'figsize':(20,18)}
+fig_args     = {'figsize':(20,14)}
 plot_args    = {'lw':3, 'alpha':0.7}
 scatter_args = {'s':150, 'marker':'s'}
 axis_args    = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
