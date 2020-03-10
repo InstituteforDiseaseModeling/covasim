@@ -138,14 +138,13 @@ for key, data in final.items():
         #pl.gca().set_xticks(pl.arange(xmin,xmax+1, 5))
 
         if key == 'cum_exposed':
-            #print(key)
-            #print(xmin, xmax, pars['n_days'], xmin+pars['n_days']-7*1)
-            #pl.xlim([xmin, xmin+pars['n_days']-7*1])
             pl.ylim([0,40000])
-            pl.ylabel('Cumulative infections')
-        elif key == 'cum_deaths':
-            pl.ylabel('Cumulative deaths')
+            pl.title('Cumulative infections')
+        elif key == 'n_exposed':
+            pl.title('Latent + Infectious')
             pl.legend()
+
+        plt.ylabel('Count')
 
 
         pl.xlabel('Date')
