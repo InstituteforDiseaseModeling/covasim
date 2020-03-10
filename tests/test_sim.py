@@ -6,9 +6,10 @@ Simple example usage for the Covid-19 agent-based model
 import pytest
 import sciris as sc
 import covid_abm
+import covid_seattle
 
-do_plot = 0
-do_save = 0
+doplot = 0
+dosave = 0
 
 
 #%% Define the tests
@@ -29,7 +30,7 @@ def test_parsobj():
     return parsobj
 
 
-def test_sim(do_plot=False, do_save=False): # If being run via pytest, turn off
+def test_sim(doplot=False, dosave=False): # If being run via pytest, turn off
 
     # Create the simulation
     sim = covid_abm.Sim()
@@ -38,17 +39,33 @@ def test_sim(do_plot=False, do_save=False): # If being run via pytest, turn off
     sim.run(verbose=1)
 
     # Optionally plot
-    if do_plot:
-        sim.plot(do_save=do_save)
+    if doplot:
+        sim.plot(dosave=dosave)
 
     return sim
+
+
+def test_trans_tree(doplot=False, dosave=False): # If being run via pytest, turn off
+
+    # Create the simulation
+    sim = covid_seattle.Sim()
+
+    # Run the simulation
+    sim.run(verbose=1)
+
+    # Optionally plot
+    if doplot:
+        sim.plot(dosave=dosave)
+
+    return sim.results['transtree']
 
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
     # parsobj = test_parsobj()
-    sim     = test_sim(do_plot=do_plot, do_save=do_save)
+    # sim     = test_sim(doplot=doplot, dosave=dosave)
+    trans_tree = test_trans_tree(doplot=doplot)
     sc.toc()
 
 

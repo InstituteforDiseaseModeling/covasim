@@ -143,6 +143,7 @@ class Sim(ParsObj):
         self.results = {}
         for key in self.results_keys:
             self.results[key] = np.zeros(int(self.npts))
+        self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
 
@@ -182,7 +183,11 @@ class Sim(ParsObj):
         return summary
     
     
-    def infect_person(self, target_person, t, infectious=False):
+    def infect_person(self, source_person, target_person, t, infectious=False):
+        '''
+        Infect target_person. source_person is used only for constructing the
+        transmission tree.
+        '''
         target_person.susceptible = False
         target_person.exposed = True
         target_person.date_exposed = t
@@ -196,6 +201,8 @@ class Sim(ParsObj):
         else:
             dur_dist = round(pl.normal(target_person.pars['dur'], target_person.pars['dur_std']))
             target_person.date_recovered = target_person.date_infectious + dur_dist
+        
+        self.results['transtree'][target_person.uid] = {'from':source_person.uid, 'date':t}
         
         return target_person
 
@@ -274,7 +281,7 @@ class Sim(ParsObj):
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     self.results['infections'][t] += 1
-                                    self.infect_person(target_person, t)
+                                    self.infect_person(source_person=person, target_person=target_person, t=t)
                                     if verbose>=2:
                                         print(f'        Person {person.uid} infected person {target_person.uid}!')
 
