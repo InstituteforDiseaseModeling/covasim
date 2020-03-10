@@ -26,14 +26,6 @@ def make_pars():
     pars['r_contact']      = 2.9/(10*20) # Probability of infection per contact, estimated
     pars['contacts']       = 20 # Number of contacts per guest per day, estimated
 
-    pars['beta'] = {
-        'type': 'positiveNormal',
-        'params': {
-            'mu': 106,
-            'sigma': 260
-        }
-    }
-
     pars['incub'] = {
         'type': 'positiveNormal',
         'params': {
