@@ -14,11 +14,11 @@ pars = make_pars()
 
 do_save = 1
 verbose = 0
-n = 1
+n = 16
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0.2
-seed = 1
+seed = 2
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
 orig_sim = covid_seattle.Sim()
@@ -67,6 +67,7 @@ pl.rcParams['font.size'] = font_size
 for scenkey,scenname in scenarios.items():
 
     scen_sim = covid_seattle.Sim()
+    scen_sim.set_seed(seed)
     if scenkey == '25':
         scen_sim['quarantine'] = 17
         scen_sim['quarantine_eff'] = 0.75
@@ -136,17 +137,18 @@ for key, data in final.items():
         #pl.xlim([xmin, xmax])
         #pl.gca()._xticks(pl.arange(xmin,xmax+1, 5))
 
-        pl.grid(True)
         if key == 'cum_exposed':
-            pl.ylim([0,30000])
-            pl.title('Cumulative infections')
-            pl.ylabel('Count')
-        elif key == 'n_exposed':
-            pl.ylim([0,20000])
-            pl.title('Latent + Infectious')
+            sc.setylim()
+            pl.title('Cumulative infections', fontweight='bold')
             pl.legend()
-
-        pl.xlabel('Date')
+            
+        elif key == 'n_exposed':
+            sc.setylim()
+            pl.title('Latent + Infectious', fontweight='bold')
+            
+        pl.grid(True)
+        pl.xlabel('Date', fontweight='bold')
+        pl.ylabel('Count', fontweight='bold')
         pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
 
 
