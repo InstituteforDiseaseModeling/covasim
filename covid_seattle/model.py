@@ -156,20 +156,24 @@ class Sim(ParsObj):
         if verbose>=2:
             print('Creating {self["n"]} people...')
         
-        self.people = sc.odict() # Dictionary for storing the people
+        self.people = {} # sc.odict() # Dictionary for storing the people
         for p in range(self['n']): # Loop over each person
             age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
+        
+        self.uids = list(self.people.keys())
 
         # Create the seed infections
         for i in range(self['n_infected']):
+            key = self.uids[i]
             self.results['infections'][0] += 1
-            self.people[i].susceptible = False
-            self.people[i].exposed = True
-            self.people[i].infectious = True
-            self.people[i].date_exposed = 0
-            self.people[i].date_infectious = 0
+            person = self.people[key]
+            person.susceptible = False
+            person.exposed = True
+            person.infectious = True
+            person.date_exposed = 0
+            person.date_infectious = 0
 
         return
 
@@ -218,6 +222,8 @@ class Sim(ParsObj):
         self.init_results()
         self.init_people() # Actually create the people
         daily_tests = [] # Number of tests each day, from the data # TODO: fix
+        
+        uids_to_update = self.people.keys()
 
         # Main simulation loop
         for t in range(self.npts):
@@ -239,6 +245,7 @@ class Sim(ParsObj):
                 # Count susceptibles
                 if person.susceptible:
                     self.results['n_susceptible'][t] += 1
+                    break # Don't bother with the rest of the loop
 
                 # Handle testing probability
                 if person.infectious:
@@ -342,6 +349,8 @@ class Sim(ParsObj):
 
         if do_plot:
             self.plot(**kwargs)
+        
+        self.people = sc.odict(self.people)
 
         return self.results
 
