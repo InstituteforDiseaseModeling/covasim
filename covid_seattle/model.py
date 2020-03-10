@@ -147,11 +147,17 @@ class Sim(ParsObj):
         return
 
 
-    def init_people(self):
+    def init_people(self, verbose=None):
         ''' Create the people '''
+        if verbose is None:
+            verbose = self['verbose']
+        
+        if verbose>=2:
+            print('Creating {self["n"]} people...')
+        
         self.people = sc.odict() # Dictionary for storing the people
         for p in range(self['n']): # Loop over each person
-            age,sex = cov_pars.get_age_sex()
+            age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
