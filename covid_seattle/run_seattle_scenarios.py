@@ -19,7 +19,7 @@ verbose = 0
 n = 10
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
-noise = 0.2
+noise = 0*0.2 # Turn off noise
 seed = 1
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
