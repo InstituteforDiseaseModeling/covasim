@@ -21,6 +21,7 @@ def make_pars():
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['scale']      = 100 # Factor by which to scale results
+    pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
     pars['r_contact']      = 2.5/(10*20) # Probability of infection per contact, estimated
@@ -44,13 +45,20 @@ def make_pars():
     return pars
 
 
-def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=20):
+def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, use_data=True):
     '''
     Define age-sex distributions.
     '''
-    sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
-    age = pl.normal(age_mean, age_std) # Define age distribution for the crew and guests
-    age = pl.median([min_age, age, max_age]) # Normalize
+    if use_data:
+        try:
+            import synthpops as sp
+        except ImportError as E:
+            raise ImportError(f'Could not load synthpops; set sim["usepopdata"] = False or install ({str(E)})')
+        age, sex = sp.get_seattle_age_sex()
+    else:
+        sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
+        age = pl.normal(age_mean, age_std) # Define age distribution for the crew and guests
+        age = pl.median([min_age, age, max_age]) # Normalize
     return age, sex
 
 
