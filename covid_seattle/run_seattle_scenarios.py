@@ -8,6 +8,8 @@ import sciris as sc
 import covid_seattle
 from parameters import make_pars
 
+sc.heading('Setting up...')
+
 
 pars = make_pars()
 
@@ -22,6 +24,8 @@ xmax = xmin + pars['n_days']
 noise = 0*0.2 # Turn off noise
 seed = 1
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
+
+sc.heading('Baseline run')
 
 orig_sim = covid_seattle.Sim()
 orig_sim.set_seed(seed)
@@ -80,8 +84,11 @@ for scenkey,scenname in scenarios.items():
         scen_sim['quarantine'] = 17
         scen_sim['quarantine_eff'] = 0.25
 
+    sc.heading(f'Multirun for {scenkey}')
 
     scen_sims = covid_seattle.multi_run(scen_sim, n=n, noise=noise)
+
+    sc.heading(f'Processing {scenkey}')
 
     scenboth = {}
     for key in reskeys:
@@ -101,13 +108,15 @@ for scenkey,scenname in scenarios.items():
 
     final[scenkey] = sc.objdict({'scenname': scenname, 'best':sc.dcp(scen_best), 'low':sc.dcp(scen_low), 'high':sc.dcp(scen_high)})
 
+sc.heading('Plotting')
+
 for key, data in final.items():
     print(key)
     scenname = data['scenname']
 
     #%% Plotting
 
-    #fig = pl.figure(**fig_args)
+
     #pl.subplots_adjust(**axis_args)
     #pl.rcParams['font.size'] = font_size
 
@@ -178,8 +187,8 @@ for k in list(scenarios.keys()):
         print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')
 
 if do_save:
-    pl.savefig('seattle-covid-projections_2020mar10.png', dpi=200)
-    sc.saveobj('seattle-projection-results_v4.obj', final)
+    pl.savefig('seattle-covid-projections_2020mar10b.png', dpi=200)
+    sc.saveobj('seattle-projection-results_v4b.obj', final)
 
 sc.toc()
 pl.show()
