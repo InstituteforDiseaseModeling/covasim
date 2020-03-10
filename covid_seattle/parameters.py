@@ -24,8 +24,8 @@ def make_pars():
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['r_contact']      = 2.05/(8*20) # Updated to match Mike's distributions
-    pars['contacts']       = 20 # Number of contacts per guest per day, estimated
+    pars['r_contact']      = 2.0/(8*10) # Updated to match Mike's distributions
+    pars['contacts']       = 10 # Number of contacts per person per day, estimated
     pars['incub']          = 4.0 # Using Mike's Snohomish number
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
     pars['dur']            = 8 # Using Mike's Snohomish number
