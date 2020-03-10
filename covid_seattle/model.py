@@ -151,10 +151,10 @@ class Sim(ParsObj):
         ''' Create the people '''
         if verbose is None:
             verbose = self['verbose']
-        
+
         if verbose>=2:
             print('Creating {self["n"]} people...')
-        
+
         self.people = sc.odict() # Dictionary for storing the people
         for p in range(self['n']): # Loop over each person
             age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
@@ -180,15 +180,15 @@ class Sim(ParsObj):
         for key in keys:
             summary[key] = self.results[key][-1]
         return summary
-    
-    
+
+
     def infect_person(self, target_person, t, infectious=False):
         target_person.susceptible = False
         target_person.exposed = True
         target_person.date_exposed = t
         incub_dist = round(pl.normal(target_person.pars['incub'], target_person.pars['incub_std']))
         target_person.date_infectious = t + incub_dist
-        
+
         # Program them to either die or recover
         if cov_ut.bt(target_person.pars['cfr']):
             death_dist = round(pl.normal(target_person.pars['timetodie'], target_person.pars['timetodie_std']))
@@ -196,7 +196,7 @@ class Sim(ParsObj):
         else:
             dur_dist = round(pl.normal(target_person.pars['dur'], target_person.pars['dur_std']))
             target_person.date_recovered = target_person.date_infectious + dur_dist
-        
+
         return target_person
 
 
@@ -249,7 +249,7 @@ class Sim(ParsObj):
 
                 # If infectious, check if anyone gets infected
                 if person.infectious:
-                    
+
                     # Check for death
                     if person.date_died and t >= person.date_died:
                         person.exposed = False
@@ -257,7 +257,7 @@ class Sim(ParsObj):
                         person.recovered = False
                         person.died = True
                         self.results['deaths'][t] += 1
-                    
+
                     # First, check for recovery
                     if person.date_recovered and t >= person.date_recovered: # It's the day they become infectious
                         person.exposed = False
@@ -303,7 +303,7 @@ class Sim(ParsObj):
                 if verbose>=1:
                     print(f'Implementing quarantine on day {t}...')
                 self['contacts'] *= self['quarantine_eff']
-            
+
             if t == self['unquarantine']:
                 if verbose>=1:
                     print(f'Implementing unquarantine on day {t}...')
