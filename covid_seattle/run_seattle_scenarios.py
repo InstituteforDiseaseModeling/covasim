@@ -14,11 +14,11 @@ pars = make_pars()
 
 do_save = 1
 verbose = 0
-n = 16
+n = 1
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0.2
-seed = 3
+seed = 1
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
 orig_sim = covid_seattle.Sim()
@@ -40,7 +40,7 @@ best = {}
 low = {}
 high = {}
 for key in reskeys:
-    best[key] = both[key].mean(axis=1)*orig_sim['scale']
+    best[key] = pl.median(both[key], axis=1)*orig_sim['scale']
     low[key] = both[key].min(axis=1)*orig_sim['scale']
     high[key] = both[key].max(axis=1)*orig_sim['scale']
 
@@ -91,7 +91,7 @@ for scenkey,scenname in scenarios.items():
     scen_low = {}
     scen_high = {}
     for key in reskeys:
-        scen_best[key] = scenboth[key].mean(axis=1)*orig_sim['scale']
+        scen_best[key] = pl.median(scenboth[key], axis=1)*orig_sim['scale']
         scen_low[key] = scenboth[key].min(axis=1)*orig_sim['scale']
         scen_high[key] = scenboth[key].max(axis=1)*orig_sim['scale']
 
@@ -144,7 +144,7 @@ for key, data in final.items():
             
         elif key == 'n_exposed':
             sc.setylim()
-            pl.title('Latent + Infectious', fontweight='bold')
+            pl.title('Active infections', fontweight='bold')
             
         pl.grid(True)
         pl.xlabel('Date', fontweight='bold')

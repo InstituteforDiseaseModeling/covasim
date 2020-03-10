@@ -13,7 +13,7 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['scale']      = 50 # Factor by which to scale results ## 100
+    pars['scale']      = 100 # Factor by which to scale results ## 100
 
     pars['n']          = int(0.4 * 3e6 // pars['scale']) # Number ultimately susceptible to CoV
     pars['n_infected'] = 200 // pars['scale'] # Asked for 1000 in Seattle's population # 550
