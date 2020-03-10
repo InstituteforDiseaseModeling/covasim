@@ -22,12 +22,13 @@ def compare_new_infections():
 
         ## COVID-ABM - binomial model with n ~ poisson(20), p=2.5/200
         contacts = 20
-        r_contact = 2.5/200
+        r_contact = 2.9/200
         contacts_mult = int(20 * mult)
         pvec = np.zeros(nSamples)
         for sample in range(nSamples):
             N = np.random.poisson(contacts_mult)
             pvec[sample] = np.random.binomial(n=N, p=r_contact)
+        print(f'COVID-ABM mean transmissions per step: {pvec.mean()}')
         y,b = np.histogram(pvec, bins=range(5))
         y = y / y.sum()
         ax.bar(b[:-1], y, width, color='b', label='COVID-ABM')
@@ -46,6 +47,7 @@ def compare_new_infections():
             beta = cov_ut.sample(beta_config)
             pvec[sample] = 1-pl.exp(-beta * mult / DPY)
         mu = pvec.mean()
+        print(f'transGenEpi mean transmissions per step: {mu}')
         ax.bar([width,1+width], [1-mu,mu], width, color='r', label='transGenEpi')
 
         ax.set_xlabel('Transmissions')

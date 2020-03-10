@@ -23,7 +23,7 @@ def make_pars():
     pars['scale']      = 100 # Factor by which to scale results
 
     # Epidemic parameters
-    pars['r_contact']      = 2.5/(10*20) # Probability of infection per contact, estimated
+    pars['r_contact']      = 2.9/(10*20) # Probability of infection per contact, estimated
     pars['contacts']       = 20 # Number of contacts per guest per day, estimated
 
     pars['beta'] = {
@@ -66,6 +66,7 @@ def make_pars():
 
 def make_pars_orig():
     pars = make_pars()
+    pars['r_contact']      = 2.9/(10*20) # Probability of infection per contact, estimated
 
     pars['incub'] = {
         'type': 'normal',
