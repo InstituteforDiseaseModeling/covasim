@@ -243,7 +243,7 @@ class Sim(ParsObj):
                 # Count susceptibles
                 if person.susceptible:
                     self.results['n_susceptible'][t] += 1
-                    # break # Don't bother with the rest of the loop
+                    continue # Don't bother with the rest of the loop
 
                 # Handle testing probability
                 if person.infectious:
