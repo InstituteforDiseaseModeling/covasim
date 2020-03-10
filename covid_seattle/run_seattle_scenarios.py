@@ -6,16 +6,19 @@ import pylab as pl
 import datetime as dt
 import sciris as sc
 import covid_seattle
-from parameters import make_pars
 
 sc.heading('Setting up...')
 
 
-pars = make_pars()
+pars = covid_seattle.make_pars() # TODO: should be gotten from a sim
 
 sc.tic()
 
-do_save = 1
+# Whether or not to run!
+do_run = 0
+
+# Other options
+do_save = 0
 verbose = 0
 n = 12
 xmin = pars['day_0']
@@ -24,30 +27,36 @@ noise = 0*0.2 # Turn off noise
 seed = 1
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
-sc.heading('Baseline run')
+fn_fig = 'seattle-covid-projections_2020mar10e.png'
+fn_obj = 'seattle-projection-results_v4e.obj'
 
-orig_sim = covid_seattle.Sim()
-orig_sim.set_seed(seed)
-finished_sims = covid_seattle.multi_run(orig_sim, n=n, noise=noise)
+# Don't need this if we're not running
+if do_run:
 
-res0 = finished_sims[0].results
-npts = len(res0[reskeys[0]])
-tvec = xmin+res0['t']
-
-both = {}
-for key in reskeys:
-    both[key] = pl.zeros((npts, n))
-for key in reskeys:
-    for s,sim in enumerate(finished_sims):
-        both[key][:,s] = sim.results[key]
-
-best = {}
-low = {}
-high = {}
-for key in reskeys:
-    best[key] = pl.median(both[key], axis=1)*orig_sim['scale']
-    low[key] = both[key].min(axis=1)*orig_sim['scale']
-    high[key] = both[key].max(axis=1)*orig_sim['scale']
+    sc.heading('Baseline run')
+    
+    orig_sim = covid_seattle.Sim()
+    orig_sim.set_seed(seed)
+    finished_sims = covid_seattle.multi_run(orig_sim, n=n, noise=noise)
+    
+    res0 = finished_sims[0].results
+    npts = len(res0[reskeys[0]])
+    tvec = xmin+res0['t']
+    
+    both = {}
+    for key in reskeys:
+        both[key] = pl.zeros((npts, n))
+    for key in reskeys:
+        for s,sim in enumerate(finished_sims):
+            both[key][:,s] = sim.results[key]
+    
+    best = {}
+    low = {}
+    high = {}
+    for key in reskeys:
+        best[key] = pl.median(both[key], axis=1)*orig_sim['scale']
+        low[key] = both[key].min(axis=1)*orig_sim['scale']
+        high[key] = both[key].max(axis=1)*orig_sim['scale']
 
 scenarios = {
     '25': 'Assuming 25% reduction in contacts',
@@ -55,9 +64,55 @@ scenarios = {
     '75': 'Assuming 75% reduction in contacts',
 }
 
-final = sc.objdict()
-final['Baseline'] = sc.objdict({'scenname': 'Business as ususal', 'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
+# If we're rerunning...
+if do_run:
 
+    final = sc.objdict()
+    final['Baseline'] = sc.objdict({'scenname': 'Business as ususal', 'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
+    
+    for scenkey,scenname in scenarios.items():
+    
+        scen_sim = covid_seattle.Sim()
+        scen_sim.set_seed(seed)
+        if scenkey == '25':
+            scen_sim['quarantine'] = 17
+            scen_sim['quarantine_eff'] = 0.75
+        elif scenkey == '50':
+            scen_sim['quarantine'] = 17
+            scen_sim['quarantine_eff'] = 0.50
+        elif scenkey == '75':
+            scen_sim['quarantine'] = 17
+            scen_sim['quarantine_eff'] = 0.25
+    
+        sc.heading(f'Multirun for {scenkey}')
+    
+        scen_sims = covid_seattle.multi_run(scen_sim, n=n, noise=noise)
+    
+        sc.heading(f'Processing {scenkey}')
+    
+        scenboth = {}
+        for key in reskeys:
+            scenboth[key] = pl.zeros((npts, n))
+            for s,sim in enumerate(scen_sims):
+                scenboth[key][:,s] = sim.results[key]
+    
+        scen_best = {}
+        scen_low = {}
+        scen_high = {}
+        for key in reskeys:
+            scen_best[key] = pl.median(scenboth[key], axis=1)*orig_sim['scale']
+            scen_low[key] = scenboth[key].min(axis=1)*orig_sim['scale']
+            scen_high[key] = scenboth[key].max(axis=1)*orig_sim['scale']
+    
+    
+    
+        final[scenkey] = sc.objdict({'scenname': scenname, 'best':sc.dcp(scen_best), 'low':sc.dcp(scen_low), 'high':sc.dcp(scen_high)})
+
+# Don't run
+else:
+    final = sc.loadobj(fn_obj)
+
+sc.heading('Plotting')
 
 fig_args     = {'figsize':(16,12)}
 plot_args    = {'lw':3, 'alpha':0.7}
@@ -69,45 +124,8 @@ fig = pl.figure(**fig_args)
 pl.subplots_adjust(**axis_args)
 pl.rcParams['font.size'] = font_size
 
-for scenkey,scenname in scenarios.items():
-
-    scen_sim = covid_seattle.Sim()
-    scen_sim.set_seed(seed)
-    if scenkey == '25':
-        scen_sim['quarantine'] = 17
-        scen_sim['quarantine_eff'] = 0.75
-    elif scenkey == '50':
-        scen_sim['quarantine'] = 17
-        scen_sim['quarantine_eff'] = 0.50
-    elif scenkey == '75':
-        scen_sim['quarantine'] = 17
-        scen_sim['quarantine_eff'] = 0.25
-
-    sc.heading(f'Multirun for {scenkey}')
-
-    scen_sims = covid_seattle.multi_run(scen_sim, n=n, noise=noise)
-
-    sc.heading(f'Processing {scenkey}')
-
-    scenboth = {}
-    for key in reskeys:
-        scenboth[key] = pl.zeros((npts, n))
-        for s,sim in enumerate(scen_sims):
-            scenboth[key][:,s] = sim.results[key]
-
-    scen_best = {}
-    scen_low = {}
-    scen_high = {}
-    for key in reskeys:
-        scen_best[key] = pl.median(scenboth[key], axis=1)*orig_sim['scale']
-        scen_low[key] = scenboth[key].min(axis=1)*orig_sim['scale']
-        scen_high[key] = scenboth[key].max(axis=1)*orig_sim['scale']
-
-
-
-    final[scenkey] = sc.objdict({'scenname': scenname, 'best':sc.dcp(scen_best), 'low':sc.dcp(scen_low), 'high':sc.dcp(scen_high)})
-
-sc.heading('Plotting')
+# Create the tvec based on the results
+tvec = xmin+pl.arange(len(final['Baseline']['best'][reskeys[0]]))
 
 for key, data in final.items():
     print(key)
@@ -186,8 +204,8 @@ for k in list(scenarios.keys()):
         print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')
 
 if do_save:
-    pl.savefig('seattle-covid-projections_2020mar10e.png', dpi=200)
-    sc.saveobj('seattle-projection-results_v4e.obj', final)
+    pl.savefig(fn_fig, dpi=200)
+    sc.saveobj(fn_obj, final)
 
 sc.toc()
 pl.show()
