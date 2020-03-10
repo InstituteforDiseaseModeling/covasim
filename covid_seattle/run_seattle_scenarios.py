@@ -20,7 +20,7 @@ xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0.2
 seed = 1
-reskeys = ['cum_exposed', 'n_exposed', 'n_infectious']#, 'cum_deaths']
+reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
 orig_sim = covid_seattle.Sim()
 orig_sim.set_seed(seed)
@@ -141,7 +141,7 @@ for key, data in final.items():
             #print(key)
             #print(xmin, xmax, pars['n_days'], xmin+pars['n_days']-7*1)
             #pl.xlim([xmin, xmin+pars['n_days']-7*1])
-            pl.ylim([0,35000])
+            pl.ylim([0,40000])
             pl.ylabel('Cumulative infections')
         elif key == 'cum_deaths':
             pl.ylabel('Cumulative deaths')
