@@ -6,7 +6,6 @@ import pylab as pl
 import datetime as dt
 import sciris as sc
 import covid_seattle
-from covid_abm import utils as cov_ut
 from parameters import make_pars
 
 
@@ -15,7 +14,7 @@ pars = make_pars()
 
 do_save = 1
 verbose = 0
-n = 8
+n = 1
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0.2
@@ -55,7 +54,7 @@ final = sc.objdict()
 final['Baseline'] = sc.objdict({'scenname': 'Business as ususal', 'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
 
 
-fig_args     = {'figsize':(20,12)}
+fig_args     = {'figsize':(20,18)}
 plot_args    = {'lw':3, 'alpha':0.7}
 scatter_args = {'s':150, 'marker':'s'}
 axis_args    = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
@@ -110,7 +109,7 @@ for key, data in final.items():
     #pl.rcParams['font.size'] = font_size
 
     for k,key in enumerate(reskeys):
-        pl.subplot(1,len(reskeys),k+1)
+        pl.subplot(len(reskeys),1,k+1)
 
         #pl.fill_between(tvec, low[key], high[key], **fill_args)
         ###pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
@@ -122,7 +121,7 @@ for key, data in final.items():
         pl.plot(tvec, data['best'][key], label=scenname, **plot_args)
 
         '''
-        pl.grid(True)
+        
         cov_ut.fixaxis(sim)
         if k == 0:
             pl.ylabel('Cumulative infections')
@@ -135,8 +134,9 @@ for key, data in final.items():
         #    print('DEATHS', xmax, pars['n_days'])
         #    xmax = pars['n_days']
         #pl.xlim([xmin, xmax])
-        #pl.gca().set_xticks(pl.arange(xmin,xmax+1, 5))
+        #pl.gca()._xticks(pl.arange(xmin,xmax+1, 5))
 
+        pl.grid(True)
         if key == 'cum_exposed':
             pl.ylim([0,30000])
             pl.title('Cumulative infections')
@@ -147,6 +147,8 @@ for key, data in final.items():
             pl.legend()
 
         pl.xlabel('Date')
+        pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
+
 
         xt = pl.gca().get_xticks()
         print(xt)
