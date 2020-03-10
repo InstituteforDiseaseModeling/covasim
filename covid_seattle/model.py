@@ -76,7 +76,7 @@ class Person(ParsObj):
     '''
     def __init__(self, pars, age=0, sex=0):
         super().__init__(pars) # Set parameters
-        self.uid  = pl.randint(0,1e9) # Unique identifier for this person
+        self.uid  = str(sc.uuid()) # Unique identifier for this person
         self.age  = float(age) # Age of the person (in years)
         self.sex  = sex # Female (0) or male (1)
 
@@ -156,7 +156,7 @@ class Sim(ParsObj):
         if verbose>=2:
             print('Creating {self["n"]} people...')
         
-        self.people = {} # sc.odict() # Dictionary for storing the people
+        self.people = sc.odict() # Dictionary for storing the people
         for p in range(self['n']): # Loop over each person
             age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex) # Create the person
@@ -223,8 +223,6 @@ class Sim(ParsObj):
         self.init_people() # Actually create the people
         daily_tests = [] # Number of tests each day, from the data # TODO: fix
         
-        uids_to_update = self.people.keys()
-
         # Main simulation loop
         for t in range(self.npts):
 
