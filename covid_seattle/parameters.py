@@ -24,12 +24,12 @@ def make_pars():
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['r_contact']      = 2.1/(12*20) # Updated to match Mike's distributions
+    pars['r_contact']      = 2.1/(8*20) # Updated to match Mike's distributions
     pars['contacts']       = 20 # Number of contacts per guest per day, estimated
     pars['incub']          = 4.0 # Using Mike's Snohomish number
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
-    pars['dur']            = 12 # Using Mike's Snohomish number
-    pars['dur_std']        = 3 # Variance in duration
+    pars['dur']            = 8 # Using Mike's Snohomish number
+    pars['dur_std']        = 2 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
     pars['cfr']            = 0.02 # Case fatality rate

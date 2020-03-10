@@ -16,7 +16,7 @@ sc.tic()
 
 do_save = 1
 verbose = 0
-n = 10
+n = 6
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0*0.2 # Turn off noise
@@ -59,7 +59,7 @@ final['Baseline'] = sc.objdict({'scenname': 'Business as ususal', 'best':sc.dcp(
 fig_args     = {'figsize':(16,12)}
 plot_args    = {'lw':3, 'alpha':0.7}
 scatter_args = {'s':150, 'marker':'s'}
-axis_args    = {'left':0.07, 'bottom':0.1, 'right':0.95, 'top':0.95, 'wspace':0.2, 'hspace':0.25}
+axis_args    = {'left':0.10, 'bottom':0.1, 'right':0.95, 'top':0.95, 'wspace':0.2, 'hspace':0.25}
 fill_args    = {'alpha': 0.3}
 font_size = 18
 fig = pl.figure(**fig_args)
