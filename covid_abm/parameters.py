@@ -28,17 +28,17 @@ def make_pars():
     pars['contacts_guest'] = 30 # Number of contacts per guest per day, estimated
     pars['contacts_crew']  = 30 # Number of contacts per crew member per day
     pars['incub'] = {
-        'type': 'gaussian',
+        'type': 'normal',
         'params': {
-            'mean':          4.0, # Incubation period, in days, estimated
-            'std':           1.0  # Standard deviation of the serial interval, estimated
+            'mu':          4.0, # Incubation period, in days, estimated
+            'sigma':       1.0  # Standard deviation of the serial interval, estimated
         }
     }
     pars['dur'] = {
-        'type': 'gaussian',
+        'type': 'normal',
         'params': {
-            'mean':          12, # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
-            'std':           3 # Variance in duration
+            'mu':          12, # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
+            'sigma':       3 # Variance in duration
         }
     }
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
