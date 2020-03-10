@@ -24,7 +24,7 @@ def make_pars():
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['r_contact']      = 1.7/(10*20) # Updated to match Mike's distributions
+    pars['r_contact']      = 2.0/(12*20) # Updated to match Mike's distributions
     pars['contacts']       = 20 # Number of contacts per guest per day, estimated
     pars['incub']          = 4.0 # Using Mike's Snohomish number
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
@@ -35,7 +35,6 @@ def make_pars():
     pars['cfr']            = 0.02 # Case fatality rate
     pars['timetodie']      = 22 # Days until death
     pars['timetodie_std']  = 2 # STD
-
 
     # Events
     pars['quarantine']       = -1  # Day on which quarantine took effect
