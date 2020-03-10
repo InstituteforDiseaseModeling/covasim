@@ -6,7 +6,7 @@ import pylab as pl
 from datetime import datetime
 
 
-__all__ = ['make_pars', 'get_age_sex']
+__all__ = ['make_pars', 'make_pars_orig', 'get_age_sex']
 
 
 def make_pars():
@@ -25,22 +25,63 @@ def make_pars():
     # Epidemic parameters
     pars['r_contact']      = 2.5/(10*20) # Probability of infection per contact, estimated
     pars['contacts']       = 20 # Number of contacts per guest per day, estimated
-    pars['incub']          = 5.0 # Incubation period, in days, estimated
-    pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
-    pars['dur']            = 10 # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
-    pars['dur_std']        = 3 # Variance in duration
+
+    pars['beta'] = {
+        'type': 'positiveNormal',
+        'params': {
+            'mu': 106,
+            'sigma': 260
+        }
+    }
+
+    pars['incub'] = {
+        'type': 'positiveNormal',
+        'params': {
+            'mu':          365*0.011,
+            'sigma':       365*0.0027
+        }
+    }
+
+    pars['dur'] = {
+        'type': 'positiveNormal',
+        'params': {
+            'mu':          365*0.0219,
+            'sigma':       365*0.0055
+        }
+    }
+
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
     pars['cfr']            = 0.02 # Case fatality rate
     pars['timetodie']      = 22 # Days until death
     pars['timetodie_std']  = 2 # STD
-    
+
 
     # Events
     pars['quarantine']       = -1  # Day on which quarantine took effect
     pars['unquarantine']     = -1  # Day on which unquarantine took effect
     pars['quarantine_eff']   = 1.00 # Change in transmissibility due to quarantine, estimated
 
+    return pars
+
+def make_pars_orig():
+    pars = make_pars()
+
+    pars['incub'] = {
+        'type': 'normal',
+        'params': {
+            'mu':          5.0, # Incubation period, in days, estimated
+            'sigma':       1.0  # Standard deviation of the serial interval, estimated
+        }
+    }
+
+    pars['dur'] = {
+        'type': 'normal',
+        'params': {
+            'mu':          10, # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
+            'sigma':       3 # Variance in duration
+        }
+    }
     return pars
 
 
