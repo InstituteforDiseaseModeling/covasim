@@ -206,10 +206,10 @@
                 <b-tab title="Simple scenario mode">
                   <div class="controls">
                     <b>Simulation parameters</b><br>
-                      <div v-for="par in simple_pars">
+                      <div v-for="par in pars">
                       <br>
                       {{par.name}}: <input class="par_edit" v-model="par.best">
-                      <b-form-input id="slider" v-model="par.best" type="range" min="0" max="1" step="0.01"></b-form-input>
+<!--                      <b-form-input id="slider" v-model="par.best" type="range" min="0" max="1" step="0.01"></b-form-input>-->
                     </div>
                   </div>
                 </b-tab>
@@ -254,16 +254,13 @@
 
     data() {
       return {
-        value: 0.5,
         version: 'Version information unavailable',
         pars: {},
-        simple_pars: {},
         status: 'Not running',
         session_list: [],
         session_id: '',
         ui_mode: 'none',
         no_graphs_text: '<i>Click "Run" to display graphs</i>',
-        sweep_par: 'p_track',
         }
       },
 
@@ -308,7 +305,7 @@
           sciris.rpc('plot_sim', [vm.session_id]) // , vm.base_pars, vm.pars.microarray])  // WARNING, hard-coded to the microarray parameters!
             .then(function (response) {
               document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
-              mpld3.draw_figure('graphs', response.data);
+              mpld3.draw_figure('graphs', response.data.pars);
               vm.status = 'Not running'
               vm.get_sessions()
             })

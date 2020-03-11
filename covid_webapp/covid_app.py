@@ -26,7 +26,21 @@ app.sessions = sc.odict() # For storing user data
 def get_defaults():
     ''' Get parameter defaults '''
 
-    pars = cs.make_pars()
+    pars = {}
+    pars['scale']          = {'best':1,    'name':'Scaling factor'}
+    pars['n']              = {'best':10000,'name':'Population size'}
+    pars['n_infected']     = {'best':100,  'name':'Seed infections'}
+    pars['n_days']         = {'best':45,   'name':'Duration (days)'}
+    pars['seed']           = {'best':1,    'name':'Random seed'}
+    pars['r_contact']      = {'best':0.025,'name':'Infectiousness (beta)'}
+    pars['contacts']       = {'best':10,   'name':'Number of contacts'}
+    pars['incub']          = {'best':4.0,  'name':'Incubation period'}
+    pars['dur']            = {'best':8.0,  'name':'Infection duration'}
+    pars['cfr']            = {'best':0.02, 'name':'Case fatality rate'}
+    pars['timetodie']      = {'best':22.0, 'name':'Days until death'}
+    pars['quarantine']     = {'best':-1,   'name':'Intervention start'}
+    pars['unquarantine']   = {'best':-1,   'name':'Intervention end'}
+    pars['quarantine_eff'] = {'best':1.00, 'name':'Intervention effectiveness'}
 
     output = {'pars': pars}
     return output
@@ -53,18 +67,20 @@ def get_sessions(session_id=None):
 
 
 @app.register_RPC()
-def plot_sim(session_id, base_pars=None, pars=None, verbose=True):
+def plot_sim(session_id, pars=None, verbose=True):
     ''' Create, run, and plot everything '''
+
+    if pars is None:
+        print('Pars is None; using defaults')
+        pars = {}
 
     # Fix up things that JavaScript mangles
     session_id = str(session_id)
-    # base_pars = sc.odict(base_pars)
-    # pars = sc.odict(pars)
 
-    sim_pars = sc.odict()
-    # sim_pars['verbose'] = verbose # Control verbosity here
-    # for key,entry in base_pars.items() + pars.items():
-    #     sim_pars[key] = float(entry['best'])
+    sim_pars = {}
+    sim_pars['verbose'] = verbose # Control verbosity here
+    for key,entry in pars.items():
+        sim_pars[key] = float(entry['best'])
 
     # Handle sessions
     try:
@@ -72,7 +88,8 @@ def plot_sim(session_id, base_pars=None, pars=None, verbose=True):
         # sim.update_pars(pars=sim_pars)
         print(f'Loaded sim session {session_id}')
     except Exception as E:
-        sim = cs.Sim()#(pars=sim_pars)
+        sim = cs.Sim()
+        # sim.update_pars(pars=sim_pars)
         app.sessions[session_id].sim = sim
         print(f'Added sim session {session_id} ({str(E)})')
 
