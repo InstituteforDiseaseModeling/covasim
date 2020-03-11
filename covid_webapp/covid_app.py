@@ -65,10 +65,11 @@ def get_sessions(session_id=None):
             session_list.append(session_id)
             app.sessions[str(session_id)] = sc.objdict()
             print(f'Created session {session_id}')
-        output = {'session_id':session_id, 'session_list':session_list}
+        output = {'session_id':session_id, 'session_list':session_list, 'err':''}
     except Exception as E:
-        print(f'Session retrieval failed! ({str(E)})')
-        output = {'session_id':1, 'session_list':[1]}
+        err = f'Session retrieval failed! ({str(E)})'
+        print(err)
+        output = {'session_id':1, 'session_list':[1], 'err':err}
     return output
 
 
@@ -76,15 +77,22 @@ def get_sessions(session_id=None):
 def plot_sim(session_id, sim_pars=None, epi_pars=None, verbose=True):
     ''' Create, run, and plot everything '''
 
-    # Fix up things that JavaScript mangles
-    session_id = str(session_id)
+    err = ''
 
-    sim_pars = sc.odict(sim_pars)
-    epi_pars = sc.odict(epi_pars)
-    pars = {}
-    pars['verbose'] = verbose # Control verbosity here
-    for key,entry in sim_pars.items() + epi_pars.items():
-        pars[key] = float(entry['best'])
+    try:
+        # Fix up things that JavaScript mangles
+        session_id = str(session_id)
+
+        sim_pars = sc.odict(sim_pars)
+        epi_pars = sc.odict(epi_pars)
+        pars = {}
+        pars['verbose'] = verbose # Control verbosity here
+        for key,entry in sim_pars.items() + epi_pars.items():
+            pars[key] = float(entry['best'])
+    except Exception as E:
+        err1 = f'Parameter conversion failed! {str(E)}'
+        print(err1)
+        err += err1
 
     # Handle sessions
     try:
@@ -98,7 +106,9 @@ def plot_sim(session_id, sim_pars=None, epi_pars=None, verbose=True):
             app.sessions[session_id].sim = sim
             print(f'Added sim session {session_id} ({str(E)})')
         except Exception as E2:
-            print(f'Sim creation failed!  ({str(E2)})')
+            err2 = f'Sim creation failed! ({str(E2)})'
+            print(err2)
+            err += err2
 
     if verbose:
         print('Input parameters:')
@@ -108,7 +118,9 @@ def plot_sim(session_id, sim_pars=None, epi_pars=None, verbose=True):
     try:
         sim.run(do_plot=False)
     except Exception as E:
-            print(f'Sim run failed!  ({str(E)})')
+        err3 = f'Sim run failed! ({str(E)})'
+        print(err3)
+        err += err3
 
     # Plotting
     try:
@@ -119,10 +131,12 @@ def plot_sim(session_id, sim_pars=None, epi_pars=None, verbose=True):
         mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=12, fmt='.4r')) # Add data cursor
         graphjson = sw.mpld3ify(fig, jsonify=False)  # Convert to dict
     except Exception as E:
-            print(f'Plotting failed!  ({str(E)})')
-            graphjson = {}
+        err4 = f'Plotting failed!  ({str(E)})'
+        print(err4)
+        err += err4
+        graphjson ={}# {'err':err}
 
-    return graphjson  # Return the JSON representation of the Matplotlib figure
+    return {'graph':graphjson, 'err':err}  # Return the JSON representation of the Matplotlib figure
 
 
 

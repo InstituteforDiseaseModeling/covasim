@@ -144,6 +144,11 @@
       text-align: center;
     }
 
+    .errorbox {
+      background-color: #ffcaa2;
+      padding: 15px;
+    }
+
     /* Tooltip container */
     .mytooltip {
       position: relative;
@@ -245,6 +250,16 @@
       </button>
     </div>
 
+    <br>
+
+    <div v-if="err" class="errorbox">
+      <br>
+      We are extremely sorry, but you have encountered an error:<br><br>
+      {{ err }}<br><br>
+      Please try to fix the problem and rerun.
+    </div>
+
+
   </div>
 
   <!-- Show the actual graph -->
@@ -268,6 +283,7 @@
                 session_id: '',
                 ui_mode: 'none',
                 no_graphs_text: '<i>Click "Run" to display graphs</i>',
+                err: '',
             }
         },
 
@@ -299,6 +315,9 @@
                     .then(function (response) {
                         vm.session_id = response.data.session_id
                         vm.session_list = response.data.session_list
+                        if (vm.err === '') {
+                            vm.err = response.data.err
+                        }
                     })
             },
 
@@ -312,8 +331,13 @@
                     sciris.rpc('plot_sim', [vm.session_id, vm.sim_pars, vm.epi_pars])  // WARNING, hard-coded to the microarray parameters!
                         .then(function (response) {
                             document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
-                            mpld3.draw_figure('graphs', response.data);
+                            try {
+                                mpld3.draw_figure('graphs', response.data.graph);
+                            } catch (e) {
+                                vm.err = 'Plotting failed'
+                            }
                             vm.status = 'Not running'
+                            vm.err = response.data.err
                             vm.get_sessions()
                         })
                 }
