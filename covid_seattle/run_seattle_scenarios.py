@@ -18,7 +18,7 @@ sc.tic()
 do_run = 0
 
 # Other options
-do_save = 0
+do_save = 1
 verbose = 0
 n = 12
 xmin = pars['day_0']
@@ -27,7 +27,7 @@ noise = 0*0.2 # Turn off noise
 seed = 1
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
-fn_fig = 'seattle-covid-projections_2020mar10e.png'
+fn_fig = 'seattle-covid-projections_2020mar10e_v2.png'
 fn_obj = 'seattle-projection-results_v4e.obj'
 
 # Don't need this if we're not running
@@ -59,9 +59,9 @@ if do_run:
         high[key] = both[key].max(axis=1)*orig_sim['scale']
 
 scenarios = {
-    '25': 'Assuming 25% reduction in contacts',
-    '50': 'Assuming 50% reduction in contacts',
-    '75': 'Assuming 75% reduction in contacts',
+    '25': '25% contact reduction',
+    '50': '50% contact reduction',
+    '75': '75% contact reduction',
 }
 
 # If we're rerunning...
@@ -129,7 +129,11 @@ tvec = xmin+pl.arange(len(final['Baseline']['best'][reskeys[0]]))
 
 for key, data in final.items():
     print(key)
-    scenname = data['scenname']
+    if key in scenarios:
+        scenname = scenarios[key]
+    else:
+        scenname = data['scenname']
+    
 
     #%% Plotting
 
@@ -164,17 +168,22 @@ for key, data in final.items():
         #    xmax = pars['n_days']
         #pl.xlim([xmin, xmax])
         #pl.gca()._xticks(pl.arange(xmin,xmax+1, 5))
+        
+        interv_col = [0.5, 0.2, 0.4]
 
         if key == 'cum_exposed':
             sc.setylim()
             pl.title('Cumulative infections', fontweight='bold')
             pl.legend()
+            pl.text(xmin+16.5, 12000, 'Intervention', color=interv_col, fontstyle='italic')
             
         elif key == 'n_exposed':
             sc.setylim()
             pl.title('Active infections', fontweight='bold')
             
         pl.grid(True)
+        
+        pl.plot([xmin+16]*2, pl.ylim(), '--', lw=2, c=interv_col) # Plot intervention
         pl.xlabel('Date', fontweight='bold')
         pl.ylabel('Count', fontweight='bold')
         pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
@@ -204,8 +213,9 @@ for k in list(scenarios.keys()):
         print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')
 
 if do_save:
-    pl.savefig(fn_fig, dpi=200)
-    sc.saveobj(fn_obj, final)
+    pl.savefig(fn_fig, dpi=100)
+    if do_run: # Don't resave loaded data
+        sc.saveobj(fn_obj, final)
 
 sc.toc()
 pl.show()
