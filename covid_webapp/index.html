@@ -302,7 +302,7 @@
 
         // Run a a single sim
         if (vm.ui_mode === 'simple') {
-          sciris.rpc('plot_sim', [vm.session_id]) // , vm.base_pars, vm.pars.microarray])  // WARNING, hard-coded to the microarray parameters!
+          sciris.rpc('plot_sim', [vm.session_id, vm.pars])  // WARNING, hard-coded to the microarray parameters!
             .then(function (response) {
               document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
               mpld3.draw_figure('graphs', response.data);

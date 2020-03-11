@@ -161,7 +161,7 @@ class Sim(ParsObj):
             print('Creating {self["n"]} people...')
 
         self.people = {} # Dictionary for storing the people -- use plain dict since faster
-        for p in range(self['n']): # Loop over each person
+        for p in range(int(self['n'])): # Loop over each person
             age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
@@ -170,7 +170,7 @@ class Sim(ParsObj):
         self.uids = list(self.people.keys())
 
         # Create the seed infections
-        for i in range(self['n_infected']):
+        for i in range(int(self['n_infected'])):
             self.results['infections'][0] += 1
             person = self.get_person(i)
             person.susceptible = False
