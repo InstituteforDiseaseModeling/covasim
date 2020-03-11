@@ -15,12 +15,12 @@ pars = covid_seattle.make_pars() # TODO: should be gotten from a sim
 sc.tic()
 
 # Whether or not to run!
-do_run = 0
+do_run = 1
 
 # Other options
-do_save = 1
+do_save = 0
 verbose = 0
-n = 12
+n = 6
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0*0.2 # Turn off noise
