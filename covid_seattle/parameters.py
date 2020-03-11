@@ -3,7 +3,6 @@ Set the parameters for COVID-ABM.
 '''
 
 import pylab as pl
-from datetime import datetime
 
 
 __all__ = ['make_pars', 'get_age_sex']
@@ -14,29 +13,28 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['scale']      = 1 # Factor by which to scale results
+    pars['scale']      = 25 # Factor by which to scale results ## 100
 
-    pars['n']          = 10000 // pars['scale'] # Number ultimately susceptible to CoV
-    pars['n_infected'] = 1 // pars['scale'] # Asked for 1000 in Seattle's population
-    pars['day_0']      = datetime(2020, 1, 15) # Start day of the epidemic
-    pars['n_days']     = (datetime(2020, 3, 9)-pars['day_0']).days # How many days to simulate Apr/30
+    pars['n']          = int(0.4 * 3e6 // pars['scale']) # Number ultimately susceptible to CoV
+    pars['n_infected'] = 100 // pars['scale'] # Asked for 1000 in Seattle's population # 550
+    pars['day_0']      = 53 #datetime(2020, 2, 10) # Start day of the epidemic 3/5
+    pars['n_days']     = 45 # 75 #(datetime(2020, 4, 28)-pars['day_0']).days # How many days to simulate Apr/30 # 54
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['r_contact']      = 2.9/(10*20) # Updated to match Mike's distributions
-    pars['contacts']       = 20 # Number of contacts per guest per day, estimated
+    pars['r_contact']      = 2.0/(8*10) # Updated to match Mike's distributions
+    pars['contacts']       = 10 # Number of contacts per person per day, estimated
     pars['incub']          = 4.0 # Using Mike's Snohomish number
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
-    pars['dur']            = 12 # Using Mike's Snohomish number
-    pars['dur_std']        = 3 # Variance in duration
+    pars['dur']            = 8 # Using Mike's Snohomish number
+    pars['dur_std']        = 2 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
     pars['cfr']            = 0.02 # Case fatality rate
     pars['timetodie']      = 22 # Days until death
     pars['timetodie_std']  = 2 # STD
-
 
     # Events
     pars['quarantine']       = -1  # Day on which quarantine took effect
