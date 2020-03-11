@@ -20,7 +20,7 @@ do_run = 1
 # Other options
 do_save = 0
 verbose = 0
-n = 6
+n = 12
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 0*0.2 # Turn off noise
@@ -34,22 +34,22 @@ fn_obj = 'seattle-projection-results_v4e.obj'
 if do_run:
 
     sc.heading('Baseline run')
-    
+
     orig_sim = covid_seattle.Sim()
     orig_sim.set_seed(seed)
     finished_sims = covid_seattle.multi_run(orig_sim, n=n, noise=noise)
-    
+
     res0 = finished_sims[0].results
     npts = len(res0[reskeys[0]])
     tvec = xmin+res0['t']
-    
+
     both = {}
     for key in reskeys:
         both[key] = pl.zeros((npts, n))
     for key in reskeys:
         for s,sim in enumerate(finished_sims):
             both[key][:,s] = sim.results[key]
-    
+
     best = {}
     low = {}
     high = {}
@@ -69,9 +69,9 @@ if do_run:
 
     final = sc.objdict()
     final['Baseline'] = sc.objdict({'scenname': 'Business as ususal', 'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
-    
+
     for scenkey,scenname in scenarios.items():
-    
+
         scen_sim = covid_seattle.Sim()
         scen_sim.set_seed(seed)
         if scenkey == '25':
@@ -83,19 +83,19 @@ if do_run:
         elif scenkey == '75':
             scen_sim['quarantine'] = 17
             scen_sim['quarantine_eff'] = 0.25
-    
+
         sc.heading(f'Multirun for {scenkey}')
-    
+
         scen_sims = covid_seattle.multi_run(scen_sim, n=n, noise=noise)
-    
+
         sc.heading(f'Processing {scenkey}')
-    
+
         scenboth = {}
         for key in reskeys:
             scenboth[key] = pl.zeros((npts, n))
             for s,sim in enumerate(scen_sims):
                 scenboth[key][:,s] = sim.results[key]
-    
+
         scen_best = {}
         scen_low = {}
         scen_high = {}
@@ -103,9 +103,9 @@ if do_run:
             scen_best[key] = pl.median(scenboth[key], axis=1)*orig_sim['scale']
             scen_low[key] = scenboth[key].min(axis=1)*orig_sim['scale']
             scen_high[key] = scenboth[key].max(axis=1)*orig_sim['scale']
-    
-    
-    
+
+
+
         final[scenkey] = sc.objdict({'scenname': scenname, 'best':sc.dcp(scen_best), 'low':sc.dcp(scen_low), 'high':sc.dcp(scen_high)})
 
 # Don't run
@@ -133,7 +133,7 @@ for key, data in final.items():
         scenname = scenarios[key]
     else:
         scenname = data['scenname']
-    
+
 
     #%% Plotting
 
@@ -154,7 +154,7 @@ for key, data in final.items():
         pl.plot(tvec, data['best'][key], label=scenname, **plot_args)
 
         '''
-        
+
         cov_ut.fixaxis(sim)
         if k == 0:
             pl.ylabel('Cumulative infections')
@@ -168,7 +168,7 @@ for key, data in final.items():
         #    xmax = pars['n_days']
         #pl.xlim([xmin, xmax])
         #pl.gca()._xticks(pl.arange(xmin,xmax+1, 5))
-        
+
         interv_col = [0.5, 0.2, 0.4]
 
         if key == 'cum_exposed':
@@ -176,13 +176,13 @@ for key, data in final.items():
             pl.title('Cumulative infections', fontweight='bold')
             pl.legend()
             pl.text(xmin+16.5, 12000, 'Intervention', color=interv_col, fontstyle='italic')
-            
+
         elif key == 'n_exposed':
             sc.setylim()
             pl.title('Active infections', fontweight='bold')
-            
+
         pl.grid(True)
-        
+
         pl.plot([xmin+16]*2, pl.ylim(), '--', lw=2, c=interv_col) # Plot intervention
         pl.xlabel('Date', fontweight='bold')
         pl.ylabel('Count', fontweight='bold')
