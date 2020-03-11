@@ -29,7 +29,7 @@ def get_defaults():
     sim_pars = {}
     sim_pars['scale']          = {'best':1,    'name':'Scaling factor'}
     sim_pars['n']              = {'best':10000,'name':'Population size'}
-    sim_pars['n_infected']     = {'best':100,  'name':'Seed infections'}
+    sim_pars['n_infected']     = {'best':10,   'name':'Seed infections'}
     sim_pars['n_days']         = {'best':45,   'name':'Duration (days)'}
     sim_pars['seed']           = {'best':1,    'name':'Random seed'}
     sim_pars['intervene']      = {'best':-1,   'name':'Intervention start'}

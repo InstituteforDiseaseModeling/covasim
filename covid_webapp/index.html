@@ -9,11 +9,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/> <!-- Was  -->
-  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/> <!-- Was  -->
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver"></script> <!-- Was  -->
-  <script src="https://unpkg.com/vue@latest/dist/vue.js"></script> <!-- Was  -->
-  <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script> <!-- Was  -->
+  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver"></script>
+  <script src="https://unpkg.com/vue@latest/dist/vue.js"></script>
+  <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Muli">
 
   <!-- Customization -->
   <title>COVID-ABM</title>
@@ -29,11 +30,12 @@
       text-align: left;
       display: flex;
       flex-direction: row;
-      background: rgb(204,204,204);
-      background: linear-gradient(270deg, rgba(204,204,204,0.5) 0%, rgba(100,150,222,0.5) 35%, rgba(223,250,255,0.5) 100%);
+      background: rgb(204,104,104);
+      background: linear-gradient(270deg, rgba(204,204,204,0.5) 0%, rgba(200,100,100,0.5) 35%, rgba(223,250,255,0.5) 100%);
       min-width: 1600px;
       min-height: 600px;
       height: 100vh !important;
+      font-family: 'Muli', sans-serif;
     }
 
     .header_container {
@@ -66,7 +68,7 @@
 
     .mode_controls {
       background-color: #fff;
-      border: solid 5px #888;
+      border: solid 5px #666;
       padding: 10px;
       font-size: 12px;
     }
@@ -94,7 +96,7 @@
       background-color: #fff;
       padding: 20px;
       margin: 5px;
-      border: solid 3px #ddd;
+      border: solid 2px #666;
       overflow-y: auto;
     }
 
@@ -107,15 +109,20 @@
     }
 
     .green {
-      background-color: #33bb55;
-      border-color: #33bb55;
+      background-color: #00995a;
+      border-color: #00995a;
+    }
+
+    .blueish {
+      background-color: #307799;
+      border-color: #307799;
     }
 
     .graphs {
       width: 45vw;
       overflow-x: auto;
       overflow-y: auto;
-      border: solid 3px #ddd;
+      border: solid 2px #666;
       margin-left: 20px;
       background-color: #fff;
       text-align: center;
@@ -233,7 +240,7 @@
         {{status}}
       </button>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <button class="btn btn-primary" type="button" @click="resetpars">
+      <button class="btn btn-primary blueish" type="button" @click="resetpars">
         Reset
       </button>
     </div>
