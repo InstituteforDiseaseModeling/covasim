@@ -37,9 +37,9 @@ def make_pars():
     pars['timetodie_std']  = 2 # STD
 
     # Events
-    pars['quarantine']       = -1  # Day on which quarantine took effect
-    pars['unquarantine']     = -1  # Day on which unquarantine took effect
-    pars['quarantine_eff']   = 1.00 # Change in transmissibility due to quarantine, estimated
+    pars['intervene']        = -1  # Day on which intervention took effect
+    pars['unintervene']      = -1  # Day on which intervention stopped
+    pars['intervention_eff'] = 0.0 # Change in transmissibility due to intervention
 
     return pars
 

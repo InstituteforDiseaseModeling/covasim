@@ -26,23 +26,25 @@ app.sessions = sc.odict() # For storing user data
 def get_defaults():
     ''' Get parameter defaults '''
 
-    pars = {}
-    pars['scale']          = {'best':1,    'name':'Scaling factor'}
-    pars['n']              = {'best':10000,'name':'Population size'}
-    pars['n_infected']     = {'best':100,  'name':'Seed infections'}
-    pars['n_days']         = {'best':45,   'name':'Duration (days)'}
-    pars['seed']           = {'best':1,    'name':'Random seed'}
-    pars['r_contact']      = {'best':0.025,'name':'Infectiousness (beta)'}
-    pars['contacts']       = {'best':10,   'name':'Number of contacts'}
-    pars['incub']          = {'best':4.0,  'name':'Incubation period'}
-    pars['dur']            = {'best':8.0,  'name':'Infection duration'}
-    pars['cfr']            = {'best':0.02, 'name':'Case fatality rate'}
-    pars['timetodie']      = {'best':22.0, 'name':'Days until death'}
-    pars['quarantine']     = {'best':-1,   'name':'Intervention start'}
-    pars['unquarantine']   = {'best':-1,   'name':'Intervention end'}
-    pars['quarantine_eff'] = {'best':1.00, 'name':'Intervention effectiveness'}
+    sim_pars = {}
+    sim_pars['scale']          = {'best':1,    'name':'Scaling factor'}
+    sim_pars['n']              = {'best':10000,'name':'Population size'}
+    sim_pars['n_infected']     = {'best':100,  'name':'Seed infections'}
+    sim_pars['n_days']         = {'best':45,   'name':'Duration (days)'}
+    sim_pars['seed']           = {'best':1,    'name':'Random seed'}
+    sim_pars['intervene']      = {'best':-1,   'name':'Intervention start'}
+    sim_pars['unintervene']    = {'best':-1,   'name':'Intervention end'}
+    sim_pars['intervention_eff'] = {'best':0.0, 'name':'Intervention effectiveness'}
 
-    output = {'pars': pars}
+    epi_pars = {}
+    epi_pars['r_contact']      = {'best':0.025,'name':'Infectiousness (beta)'}
+    epi_pars['contacts']       = {'best':10,   'name':'Number of contacts'}
+    epi_pars['incub']          = {'best':4.0,  'name':'Incubation period'}
+    epi_pars['dur']            = {'best':8.0,  'name':'Infection duration'}
+    epi_pars['cfr']            = {'best':0.02, 'name':'Case fatality rate'}
+    epi_pars['timetodie']      = {'best':22.0, 'name':'Days until death'}
+
+    output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
     return output
 
 
@@ -67,35 +69,33 @@ def get_sessions(session_id=None):
 
 
 @app.register_RPC()
-def plot_sim(session_id, pars=None, verbose=True):
+def plot_sim(session_id, sim_pars=None, epi_pars=None, verbose=True):
     ''' Create, run, and plot everything '''
-
-    if pars is None:
-        print('Pars is None; using defaults')
-        pars = {}
 
     # Fix up things that JavaScript mangles
     session_id = str(session_id)
 
-    sim_pars = {}
-    sim_pars['verbose'] = verbose # Control verbosity here
-    for key,entry in pars.items():
-        sim_pars[key] = float(entry['best'])
+    sim_pars = sc.odict(sim_pars)
+    epi_pars = sc.odict(epi_pars)
+    pars = {}
+    pars['verbose'] = verbose # Control verbosity here
+    for key,entry in sim_pars.items() + epi_pars.items():
+        pars[key] = float(entry['best'])
 
     # Handle sessions
     try:
         sim = app.sessions[session_id]['sim']
-        sim.update_pars(pars=sim_pars)
+        sim.update_pars(pars=pars)
         print(f'Loaded sim session {session_id}')
     except Exception as E:
         sim = cs.Sim()
-        sim.update_pars(pars=sim_pars)
+        sim.update_pars(pars=pars)
         app.sessions[session_id].sim = sim
         print(f'Added sim session {session_id} ({str(E)})')
 
     if verbose:
         print('Input parameters:')
-        print(sim_pars)
+        print(pars)
 
     # Core algorithm
     sim.run(do_plot=False)

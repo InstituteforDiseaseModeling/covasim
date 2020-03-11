@@ -9,11 +9,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-  <link type="text/css" rel="stylesheet" href="assets/bootstrap.min.css"/> <!-- Was https://unpkg.com/bootstrap/dist/css/bootstrap.min.css -->
-  <link type="text/css" rel="stylesheet" href="assets/bootstrap-vue.css"/> <!-- Was https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css -->
-  <script src="assets/polyfill.min.js"></script> <!-- Was https://polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver -->
-  <script src="assets/vue.js"></script> <!-- Was https://unpkg.com/vue@latest/dist/vue.js -->
-  <script src="assets/bootstrap-vue.js"></script> <!-- Was https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js -->
+  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/> <!-- Was  -->
+  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/> <!-- Was  -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver"></script> <!-- Was  -->
+  <script src="https://unpkg.com/vue@latest/dist/vue.js"></script> <!-- Was  -->
+  <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script> <!-- Was  -->
 
   <!-- Customization -->
   <title>COVID-ABM</title>
@@ -24,104 +24,104 @@
 
   <!-- Define styles -->
   <style>
-  .app {
-    padding: 20px;
-    text-align: left;
-    display: flex;
-    flex-direction: row;
-    background: rgb(204,204,204);
-    background: linear-gradient(270deg, rgba(204,204,204,0.5) 0%, rgba(100,150,222,0.5) 35%, rgba(223,250,255,0.5) 100%);
-    min-width: 1600px;
-    min-height: 600px;
-    height: 100vh !important;
-  }
+    .app {
+      padding: 20px;
+      text-align: left;
+      display: flex;
+      flex-direction: row;
+      background: rgb(204,204,204);
+      background: linear-gradient(270deg, rgba(204,204,204,0.5) 0%, rgba(100,150,222,0.5) 35%, rgba(223,250,255,0.5) 100%);
+      min-width: 1600px;
+      min-height: 600px;
+      height: 100vh !important;
+    }
 
-  .header_container {
-    display: flex;
-    flex-direction: row;
-    justify-content: left;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
+    .header_container {
+      display: flex;
+      flex-direction: row;
+      justify-content: left;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
 
-  .app_session {
-    text-align: left;
-    font-size: 0.8em;
-    line-height:2.5;
-    width:120px;
-  }
+    .app_session {
+      text-align: left;
+      font-size: 0.8em;
+      line-height:2.5;
+      width:120px;
+    }
 
-  .app_info {
-    text-align: left;
-    font-size: 0.8em;
-    line-height:2.5;
-    width:140px;
-  }
+    .app_info {
+      text-align: left;
+      font-size: 0.8em;
+      line-height:2.5;
+      width:140px;
+    }
 
-  .app_header {
-    text-align: center;
-    width:100%;
-    /*margin-left:-120px;*/
-  }
+    .app_header {
+      text-align: center;
+      width:100%;
+      /*margin-left:-120px;*/
+    }
 
-  .mode_controls {
-    background-color: #fff;
-    border: solid 1px #000;
-    padding: 10px;
-    font-size: 12px;
-  }
+    .mode_controls {
+      background-color: #fff;
+      border: solid 5px #888;
+      padding: 10px;
+      font-size: 12px;
+    }
 
-  .mastercontainer {
-    width: 50vw;
-    position: relative;
-  }
+    .mastercontainer {
+      width: 50vw;
+      position: relative;
+    }
 
-  .par_panel_parent {
-    display: flex;
-    flex-direction: row;
-    justify-content: left;
-    width: 100%;
-  }
+    .par_panel_parent {
+      display: flex;
+      flex-direction: row;
+      justify-content: left;
+      width: 100%;
+    }
 
-  .container {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    height: 65vh;
-  }
+    .container {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      height: 65vh;
+    }
 
-  .controls {
-    background-color: #fff;
-    padding: 20px;
-    margin: 5px;
-    border: solid 1px #000;
-    overflow-y: auto;
-  }
+    .controls {
+      background-color: #fff;
+      padding: 20px;
+      margin: 5px;
+      border: solid 3px #ddd;
+      overflow-y: auto;
+    }
 
-  .par_edit {
-    width: 50px;
-  }
+    .par_edit {
+      width: 50px;
+    }
 
-  .bottom_buttons {
-    text-align: center;
-  }
+    .bottom_buttons {
+      text-align: center;
+    }
 
-  .green {
-    background-color: #33bb55;
-    border-color: #33bb55;
-  }
+    .green {
+      background-color: #33bb55;
+      border-color: #33bb55;
+    }
 
-  .graphs {
-    width: 45vw;
-    overflow-x: auto;
-    overflow-y: auto;
-    border: solid 1px #000;
-    margin-left: 20px;
-    background-color: #fff;
-    text-align: center;
-  }
+    .graphs {
+      width: 45vw;
+      overflow-x: auto;
+      overflow-y: auto;
+      border: solid 3px #ddd;
+      margin-left: 20px;
+      background-color: #fff;
+      text-align: center;
+    }
 
-  /* Tooltip container */
+    /* Tooltip container */
     .mytooltip {
       position: relative;
       display: inline-block;
@@ -153,178 +153,179 @@
 
 <!-- BODY -->
 <body>
-  <div id="app" class="app">
+<div id="app" class="app">
 
-    <!-- Header -->
-    <div>
+  <!-- Header -->
+  <div>
 
-      <div class="header_container">
+    <div class="header_container">
 
-        <div class="app_session">
-          Session: <select v-model="session_id" style="background-color: #fff"><option v-for="session in session_list" v-bind:value="session">{{ session }}</option></select>
-        </div>
-
-        <div class="app_header">
-          <h1 style="color: #000; font-size: 3.5em">COVID-ABM</h1> <!-- 007bff -->
-          <p style="font-size: 0.8em;"><i>Coronavirus (COVID-19) agent-based model</i></p>
-        </div>
-
-        <div class="app_info">
-          &copy; 2020 <a href="http://idmod.org">IDM</a><br>
-          v{{ version }}
-        </div>
-        
+      <div class="app_session">
+        Session: <select v-model="session_id" style="background-color: #fff"><option v-for="session in session_list" v-bind:value="session">{{ session }}</option></select>
       </div>
 
-      <!-- Controls -->
-      <div class="mastercontainer">
-
-        <div class="par_panel_parent">
-
-              <b-tabs content-class="mt-3">
-
-<!--                <b-tab title="Single simulation mode" active>-->
-<!--                  <div class="container">-->
-<!--                    <div class="controls">-->
-<!--                      <b>Base simulation parameters</b>-->
-<!--                      <div v-for="par in base_pars">-->
-<!--                          <br>-->
-<!--                          {{par.name}}: <input class="par_edit" v-model="par.best">-->
-<!--                        </div>-->
-<!--                      </div>-->
-<!--                      <div class="controls">-->
-<!--                        <b>Tracker parameters</b>-->
-<!--                        <div v-for="par in pars.microarray">-->
-<!--                          <br>-->
-<!--                          <div class="mytooltip">{{par.name}}: <input class="par_edit" v-model="par.best">  <span class="mytooltiptext">{{par.tooltip}}</span><br></div>-->
-<!--                          <b-form-input id="slider" v-model="par.best" type="range" min="0" max="1" step="0.01"></b-form-input>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                  </div>-->
-<!--                </b-tab>-->
-
-                <b-tab title="Simple scenario mode">
-                  <div class="controls">
-                    <b>Simulation parameters</b><br>
-                      <div v-for="par in pars">
-                      <br>
-                      {{par.name}}: <input class="par_edit" v-model="par.best">
-<!--                      <b-form-input id="slider" v-model="par.best" type="range" min="0" max="1" step="0.01"></b-form-input>-->
-                    </div>
-                  </div>
-                </b-tab>
-
-              </b-tabs>
-
-        </div>
-
+      <div class="app_header">
+        <h1 style="color: #000; font-size: 3.5em">COVID-ABM</h1> <!-- 007bff -->
+        <p style="font-size: 0.8em;"><i>Coronavirus (COVID-19) agent-based model</i></p>
       </div>
 
-      <!-- Run button -->
-      <div class="bottom_buttons">
-        <br>
-        <button v-if="status==='Running...'" class="btn btn-primary green" type="button" disabled>
-          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          Running...
-        </button>
-        <button v-else-if="status==='Not running'" class="btn btn-primary green" type="button" @click="plot">
-          Run
-        </button>
-        <button v-else class="btn btn-primary green" type="button" @click="plot">
-          {{status}}
-        </button>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <button class="btn btn-primary" type="button" @click="resetpars">
-          Reset
-        </button>
+      <div class="app_info">
+        &copy; 2020 <a href="http://idmod.org">IDM</a><br>
+        v{{ version }}
       </div>
 
     </div>
-    
-    <!-- Show the actual graph -->
-    <div id="graphs" class="graphs">{{no_graphs_text}}</div>
+
+    <!-- Controls -->
+    <div class="mastercontainer">
+
+      <div class="par_panel_parent">
+
+        <b-tabs content-class="mt-3">
+
+          <b-tab title="Simple simulation mode" active>
+            <div class="container">
+              <div class="controls">
+                <b>Simulation parameters</b>
+                <div v-for="par in sim_pars">
+                  <br>
+                  {{par.name}}: <input class="par_edit" v-model="par.best">
+                </div>
+              </div>
+              <div class="controls">
+                <b>Epidemiological parameters</b>
+                <div v-for="par in epi_pars">
+                  <br>
+                  {{par.name}}: <input class="par_edit" v-model="par.best">
+                </div>
+              </div>
+            </div>
+          </b-tab>
+
+<!--          <b-tab title="Simple scenario mode">-->
+<!--            <div class="controls">-->
+<!--              <b>Simulation parameters</b><br>-->
+<!--              <div v-for="par in pars">-->
+<!--                <br>-->
+<!--                {{par.name}}: <input class="par_edit" v-model="par.best">-->
+<!--                &lt;!&ndash;                      <b-form-input id="slider" v-model="par.best" type="range" min="0" max="1" step="0.01"></b-form-input>&ndash;&gt;-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </b-tab>-->
+
+        </b-tabs>
+
+      </div>
+
+    </div>
+
+    <!-- Run button -->
+    <div class="bottom_buttons">
+      <br>
+      <button v-if="status==='Running...'" class="btn btn-primary green" type="button" disabled>
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Running...
+      </button>
+      <button v-else-if="status==='Not running'" class="btn btn-primary green" type="button" @click="plot">
+        Run
+      </button>
+      <button v-else class="btn btn-primary green" type="button" @click="plot">
+        {{status}}
+      </button>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button class="btn btn-primary" type="button" @click="resetpars">
+        Reset
+      </button>
+    </div>
+
   </div>
+
+  <!-- Show the actual graph -->
+  <div id="graphs" class="graphs">{{no_graphs_text}}</div>
+</div>
 </body>
 
 
 <!-- SCRIPTS -->
 <script>
-  var vm = new Vue({
-    el: '#app',
+    var vm = new Vue({
+        el: '#app',
 
-    data() {
-      return {
-        version: 'Version information unavailable',
-        pars: {},
-        status: 'Not running',
-        session_list: [],
-        session_id: '',
-        ui_mode: 'none',
-        no_graphs_text: '<i>Click "Run" to display graphs</i>',
-        }
-      },
-
-    created() {
-      this.get_version()
-      this.get_sessions()
-      this.resetpars()
-      sciris.sleep(200).then(response => {this.ui_mode = 'simple'}) // Can't render this straight away since layout gets messed up for reasons unknown to humankind
-      console.log('ID for this session: ' + this.session_id)
-    },
-
-      filters: {
-        to2sf (value) {
-          return Number(value).toFixed(2)
-        }
-      },
-
-    methods: {
-
-      get_version: function() {
-        sciris.rpc('get_version')
-            .then(function (response) {
-              vm.version = response.data
-            })
-          },
-
-      get_sessions: function() {
-        sciris.rpc('get_sessions', [this.session_id])
-            .then(function (response) {
-              vm.session_id = response.data.session_id
-              vm.session_list = response.data.session_list
-            })
-          },
-
-      plot: function () {
-        vm.status = 'Running...'
-        console.log(vm.status)
-        console.log(vm.session_id, vm.pars)
-
-        // Run a a single sim
-        if (vm.ui_mode === 'simple') {
-          sciris.rpc('plot_sim', [vm.session_id, vm.pars])  // WARNING, hard-coded to the microarray parameters!
-            .then(function (response) {
-              document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
-              mpld3.draw_figure('graphs', response.data);
-              vm.status = 'Not running'
-              vm.get_sessions()
-            })
-        }
-
+        data() {
+            return {
+                version: 'Version information unavailable',
+                sim_pars: {},
+                epi_pars: {},
+                status: 'Not running',
+                session_list: [],
+                session_id: '',
+                ui_mode: 'none',
+                no_graphs_text: '<i>Click "Run" to display graphs</i>',
+            }
         },
 
-    resetpars: function () {
-        sciris.rpc('get_defaults')
-          .then(function (response) {
-            vm.pars = response.data.pars
-            sciris.sleep(200).then(response => { // Can't render this straight away since layout gets messed up
-              document.getElementById('graphs').innerHTML = vm.no_graphs_text; // Reset the DOM
-            })
-            vm.get_sessions()
-          })
+        created() {
+            this.get_version()
+            this.get_sessions()
+            this.resetpars()
+            sciris.sleep(200).then(response => {this.ui_mode = 'simple'}) // Can't render this straight away since layout gets messed up for reasons unknown to humankind
+            console.log('ID for this session: ' + this.session_id)
         },
-      }
+
+        filters: {
+            to2sf (value) {
+                return Number(value).toFixed(2)
+            }
+        },
+
+        methods: {
+
+            get_version: function() {
+                sciris.rpc('get_version')
+                    .then(function (response) {
+                        vm.version = response.data
+                    })
+            },
+
+            get_sessions: function() {
+                sciris.rpc('get_sessions', [this.session_id])
+                    .then(function (response) {
+                        vm.session_id = response.data.session_id
+                        vm.session_list = response.data.session_list
+                    })
+            },
+
+            plot: function () {
+                vm.status = 'Running...'
+                console.log(vm.status)
+                console.log(vm.session_id, vm.sim_pars, vm.epi_pars)
+
+                // Run a a single sim
+                if (vm.ui_mode === 'simple') {
+                    sciris.rpc('plot_sim', [vm.session_id, vm.sim_pars, vm.epi_pars])  // WARNING, hard-coded to the microarray parameters!
+                        .then(function (response) {
+                            document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
+                            mpld3.draw_figure('graphs', response.data);
+                            vm.status = 'Not running'
+                            vm.get_sessions()
+                        })
+                }
+
+            },
+
+            resetpars: function () {
+                sciris.rpc('get_defaults')
+                    .then(function (response) {
+                        vm.sim_pars = response.data.sim_pars
+                        vm.epi_pars = response.data.epi_pars
+                        sciris.sleep(200).then(response => { // Can't render this straight away since layout gets messed up
+                            document.getElementById('graphs').innerHTML = vm.no_graphs_text; // Reset the DOM
+                        })
+                        vm.get_sessions()
+                    })
+            },
+        }
     })
-  </script>
+</script>
 
 </html>

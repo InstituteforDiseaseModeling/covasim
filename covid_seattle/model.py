@@ -314,15 +314,15 @@ class Sim(ParsObj):
                                         print(f'          Person {person.uid} was diagnosed!')
 
             # Implement quarantine
-            if t == self['quarantine']:
+            if t == self['intervene']: # TODO: allow multiple interventions
                 if verbose>=1:
-                    print(f'Implementing quarantine on day {t}...')
-                self['contacts'] *= self['quarantine_eff']
+                    print(f'Implementing intervention on day {t}...')
+                self['contacts'] *= (1-self['intervention_eff'])
 
-            if t == self['unquarantine']:
+            if t == self['unintervene']:
                 if verbose>=1:
-                    print(f'Implementing unquarantine on day {t}...')
-                self['contacts'] /= self['quarantine_eff']
+                    print(f'Removing intervention on day {t}...')
+                self['contacts'] /= (1-self['intervention_eff'])
 
 
         # Compute cumulative results
