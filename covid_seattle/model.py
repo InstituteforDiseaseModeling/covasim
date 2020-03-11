@@ -284,7 +284,7 @@ class Sim(ParsObj):
                         n_contacts = cov_ut.pt(person['contacts']) # Draw the number of Poisson contacts for this person
                         contact_inds = cov_ut.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
                         for contact_ind in contact_inds:
-                            exposure = cov_ut.bt(self['r_contact']) # Check for exposure per person
+                            exposure = cov_ut.bt(self['r0']/self['dur']/self['contacts']) # Check for exposure per person
                             if exposure:
                                 target_person = self.get_person(contact_ind)
                                 if target_person.susceptible: # Skip people who are not susceptible
@@ -464,7 +464,7 @@ class Sim(ParsObj):
             pl.grid(use_grid)
             cov_ut.fixaxis(self)
             pl.ylabel('Count')
-            pl.xlabel('Days since index case')
+            pl.xlabel('Days')
             pl.title(title)
 
         # Ensure the figure actually renders or saves
@@ -499,7 +499,7 @@ def single_run(sim=None, noise=0.0, ind=0, verbose=None, **kwargs):
 
     new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
     new_sim.set_seed(new_sim['seed'])
-    new_sim['r_contact'] *= 1+noise*pl.randn() # Optionally add noise
+    new_sim['r0'] *= 1+noise*pl.randn() # Optionally add noise
     new_sim.run(verbose=verbose)
 
     return new_sim

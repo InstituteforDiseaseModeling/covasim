@@ -89,7 +89,7 @@
       display: flex;
       flex-direction: row;
       justify-content: space-around;
-      height: 65vh;
+      /*height: 65vh;*/
     }
 
     .controls {
@@ -102,7 +102,17 @@
     }
 
     .par_edit {
-      width: 50px;
+      width: 80px;
+      background-color: #eee;
+      border: solid 1px #bbb;
+      padding-left: 5px;
+    }
+
+    .txt_align {
+      float: left;
+      min-width: 230px;
+      text-align: right;
+      padding-right: 20px;
     }
 
     .bottom_buttons {
@@ -117,6 +127,11 @@
     .blueish {
       background-color: #307799;
       border-color: #307799;
+    }
+
+    .headerish {
+      font-size: 20px;
+      text-align: center;
     }
 
     .graphs {
@@ -177,7 +192,7 @@
 
       <div class="app_header">
         <h1 style="color: #000; font-size: 3.5em">COVID-ABM</h1> <!-- 007bff -->
-        <p style="font-size: 0.8em;"><i>Coronavirus (COVID-19) agent-based model</i></p>
+        <p style="font-size: 0.8em;"><i>Coronavirus (COVID-19) agent-based model (available on <a href="https://github.com/amath-idm/covid_abm">GitHub</a>)</i></p>
       </div>
 
       <div class="app_info">
@@ -192,17 +207,17 @@
 
             <div class="container">
               <div class="controls">
-                <b>Simulation parameters</b>
+                <p class="headerish">Simulation parameters</p>
                 <div v-for="par in sim_pars">
                   <br>
-                  {{par.name}}: <input class="par_edit" v-model="par.best">
+                  <span class="txt_align">{{par.name}}:</span> <input class="par_edit" v-model="par.best">
                 </div>
               </div>
               <div class="controls">
-                <b>Epidemiological parameters</b>
+                <p class="headerish">Epidemiological parameters</p>
                 <div v-for="par in epi_pars">
                   <br>
-                  {{par.name}}: <input class="par_edit" v-model="par.best">
+                  <span class="txt_align">{{par.name}}:</span> <input class="par_edit" v-model="par.best">
                 </div>
               </div>
             </div>

@@ -27,19 +27,19 @@ def get_defaults():
     ''' Get parameter defaults '''
 
     sim_pars = {}
-    sim_pars['scale']          = {'best':1,    'name':'Scaling factor'}
-    sim_pars['n']              = {'best':10000,'name':'Population size'}
-    sim_pars['n_infected']     = {'best':10,   'name':'Seed infections'}
-    sim_pars['n_days']         = {'best':45,   'name':'Duration (days)'}
+    sim_pars['scale']          = {'best':100,  'name':'Scaling factor'}
+    sim_pars['n']              = {'best':35000,'name':'Population size'}
+    sim_pars['n_infected']     = {'best':20,   'name':'Initial infections'}
+    sim_pars['n_days']         = {'best':60,   'name':'Duration (days)'}
+    sim_pars['intervene']      = {'best':30,   'name':'Intervention start (day)'}
+    sim_pars['unintervene']    = {'best':44,   'name':'Intervention end (day)'}
+    sim_pars['intervention_eff'] = {'best':0.9, 'name':'Intervention effectiveness'}
     sim_pars['seed']           = {'best':1,    'name':'Random seed'}
-    sim_pars['intervene']      = {'best':-1,   'name':'Intervention start'}
-    sim_pars['unintervene']    = {'best':-1,   'name':'Intervention end'}
-    sim_pars['intervention_eff'] = {'best':0.0, 'name':'Intervention effectiveness'}
 
     epi_pars = {}
-    epi_pars['r_contact']      = {'best':0.025,'name':'Infectiousness (beta)'}
-    epi_pars['contacts']       = {'best':10,   'name':'Number of contacts'}
-    epi_pars['incub']          = {'best':4.0,  'name':'Incubation period'}
+    epi_pars['r0']             = {'best':2.0,  'name':'R0 (infectiousness)'}
+    epi_pars['contacts']       = {'best':20,   'name':'Number of contacts'}
+    epi_pars['incub']          = {'best':5.0,  'name':'Incubation period'}
     epi_pars['dur']            = {'best':8.0,  'name':'Infection duration'}
     epi_pars['cfr']            = {'best':0.02, 'name':'Case fatality rate'}
     epi_pars['timetodie']      = {'best':22.0, 'name':'Days until death'}
@@ -58,13 +58,17 @@ def get_version():
 @app.register_RPC()
 def get_sessions(session_id=None):
     ''' Get the sessions '''
-    session_list = app.sessions.keys()
-    if not session_id:
-        session_id = len(session_list)+1
-        session_list.append(session_id)
-        app.sessions[str(session_id)] = sc.objdict()
-        print(f'Created session {session_id}')
-    output = {'session_id':session_id, 'session_list':session_list}
+    try:
+        session_list = app.sessions.keys()
+        if not session_id:
+            session_id = len(session_list)+1
+            session_list.append(session_id)
+            app.sessions[str(session_id)] = sc.objdict()
+            print(f'Created session {session_id}')
+        output = {'session_id':session_id, 'session_list':session_list}
+    except Exception as E:
+        print(f'Session retrieval failed! ({str(E)})')
+        output = {'session_id':1, 'session_list':[1]}
     return output
 
 
@@ -88,27 +92,36 @@ def plot_sim(session_id, sim_pars=None, epi_pars=None, verbose=True):
         sim.update_pars(pars=pars)
         print(f'Loaded sim session {session_id}')
     except Exception as E:
-        sim = cs.Sim()
-        sim.update_pars(pars=pars)
-        app.sessions[session_id].sim = sim
-        print(f'Added sim session {session_id} ({str(E)})')
+        try:
+            sim = cs.Sim()
+            sim.update_pars(pars=pars)
+            app.sessions[session_id].sim = sim
+            print(f'Added sim session {session_id} ({str(E)})')
+        except Exception as E2:
+            print(f'Sim creation failed!  ({str(E2)})')
 
     if verbose:
         print('Input parameters:')
         print(pars)
 
     # Core algorithm
-    sim.run(do_plot=False)
+    try:
+        sim.run(do_plot=False)
+    except Exception as E:
+            print(f'Sim run failed!  ({str(E)})')
 
     # Plotting
-    fig_args = {'figsize':(8,8)}
-    axis_args = {'left':0.15, 'bottom':0.1, 'right':0.9, 'top':0.95, 'wspace':0.2, 'hspace':0.25}
-    kwargs = dict(fig_args=fig_args, axis_args=axis_args, font_size=12, use_grid=False)
-    fig = sim.plot(**kwargs) # Plot the sim
-    mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=12, fmt='.4r')) # Add data cursor
+    try:
+        fig_args = {'figsize':(8,9)}
+        axis_args = {'left':0.15, 'bottom':0.1, 'right':0.9, 'top':0.95, 'wspace':0.2, 'hspace':0.25}
+        kwargs = dict(fig_args=fig_args, axis_args=axis_args, font_size=12, use_grid=False)
+        fig = sim.plot(**kwargs) # Plot the sim
+        mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=12, fmt='.4r')) # Add data cursor
+        graphjson = sw.mpld3ify(fig, jsonify=False)  # Convert to dict
+    except Exception as E:
+            print(f'Plotting failed!  ({str(E)})')
+            graphjson = {}
 
-    # Convert graph to FE
-    graphjson = sw.mpld3ify(fig, jsonify=False)  # Convert to dict
     return graphjson  # Return the JSON representation of the Matplotlib figure
 
 
