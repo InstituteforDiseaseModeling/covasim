@@ -32,8 +32,8 @@
       flex-direction: row;
       background: rgb(204,104,104);
       background: linear-gradient(270deg, rgba(204,204,204,0.5) 0%, rgba(200,100,100,0.5) 35%, rgba(223,250,255,0.5) 100%);
-      min-width: 1600px;
-      min-height: 600px;
+      /*min-width: 1600px;*/
+      /*min-height: 600px;*/
       height: 100vh !important;
       font-family: 'Muli', sans-serif;
     }
@@ -50,7 +50,7 @@
       text-align: left;
       font-size: 0.8em;
       line-height:2.5;
-      width:120px;
+      width:150px;
     }
 
     .app_info {
@@ -98,6 +98,7 @@
       margin: 5px;
       border: solid 2px #666;
       overflow-y: auto;
+      width: 30vw;
     }
 
     .par_edit {
@@ -168,7 +169,10 @@
     <div class="header_container">
 
       <div class="app_session">
-        Session: <select v-model="session_id" style="background-color: #fff"><option v-for="session in session_list" v-bind:value="session">{{ session }}</option></select>
+        Session: <select v-model="session_id" style="background-color: #fff"><option v-for="session in session_list" v-bind:value="session">{{ session }}</option></select> <br>
+        v{{ version }}<br>
+        &copy; 2020 <a href="http://idmod.org">IDM</a>
+
       </div>
 
       <div class="app_header">
@@ -177,8 +181,6 @@
       </div>
 
       <div class="app_info">
-        &copy; 2020 <a href="http://idmod.org">IDM</a><br>
-        v{{ version }}
       </div>
 
     </div>
