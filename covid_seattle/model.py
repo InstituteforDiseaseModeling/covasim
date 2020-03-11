@@ -76,7 +76,7 @@ class Person(ParsObj):
     '''
     def __init__(self, pars, age=0, sex=0):
         super().__init__(pars) # Set parameters
-        self.uid  = str(pl.randint(0,1e9)) # Unique identifier for this person
+        self.uid  = str(sc.uuid()) # Unique identifier for this person
         self.age  = float(age) # Age of the person (in years)
         self.sex  = sex # Female (0) or male (1)
 
@@ -146,6 +146,10 @@ class Sim(ParsObj):
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
+    
+    def get_person(self, ind):
+        ''' Return a person based on their ID '''
+        return self.people[self.uids[ind]]
 
 
     def init_people(self, verbose=None):
@@ -156,20 +160,24 @@ class Sim(ParsObj):
         if verbose>=2:
             print('Creating {self["n"]} people...')
         
-        self.people = sc.odict() # Dictionary for storing the people
+        self.people = {} # Dictionary for storing the people -- use plain dict since faster
         for p in range(self['n']): # Loop over each person
             age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
+        
+        # Store all the UIDs as a list
+        self.uids = list(self.people.keys())
 
         # Create the seed infections
         for i in range(self['n_infected']):
             self.results['infections'][0] += 1
-            self.people[i].susceptible = False
-            self.people[i].exposed = True
-            self.people[i].infectious = True
-            self.people[i].date_exposed = 0
-            self.people[i].date_infectious = 0
+            person = self.get_person(i)
+            person.susceptible = False
+            person.exposed = True
+            person.infectious = True
+            person.date_exposed = 0
+            person.date_infectious = 0
 
         return
 
@@ -218,9 +226,9 @@ class Sim(ParsObj):
         self.init_results()
         self.init_people() # Actually create the people
         daily_tests = [] # Number of tests each day, from the data # TODO: fix
-
+        
         # Main simulation loop
-        for t in range(1,self.npts):
+        for t in range(1, self.npts):
 
             # Print progress
             if verbose>=1:
@@ -239,6 +247,7 @@ class Sim(ParsObj):
                 # Count susceptibles
                 if person.susceptible:
                     self.results['n_susceptible'][t] += 1
+                    continue # Don't bother with the rest of the loop
 
                 # Handle testing probability
                 if person.infectious:
@@ -278,7 +287,7 @@ class Sim(ParsObj):
                         for contact_ind in contact_inds:
                             exposure = cov_ut.bt(self['r_contact']) # Check for exposure per person
                             if exposure:
-                                target_person = self.people[contact_ind]
+                                target_person = self.get_person(contact_ind)
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     self.results['infections'][t] += 1
                                     self.infect_person(source_person=person, target_person=target_person, t=t)
@@ -342,6 +351,9 @@ class Sim(ParsObj):
 
         if do_plot:
             self.plot(**kwargs)
+        
+        # Convert to an odict to allow e.g. sim.people[25] later
+        self.people = sc.odict(self.people)
 
         return self.results
 
