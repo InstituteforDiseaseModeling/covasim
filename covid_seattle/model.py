@@ -463,7 +463,7 @@ class Sim(ParsObj):
             # pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(use_grid)
             cov_ut.fixaxis(self)
-            pl.ylabel('Count')
+            # pl.ylabel('Count')
             pl.xlabel('Days')
             pl.title(title)
 
