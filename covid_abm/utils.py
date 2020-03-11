@@ -2,11 +2,22 @@
 Utilities for running the COVID-ABM
 '''
 
-import numba  as nb # For faster computations
-import numpy  as np # For numerics
-import pandas as pd # Used for pd.unique() (better than np.unique())
-import pylab  as pl # Used by fixaxis()
+print('start-utils')
+
 import sciris as sc # Used by fixaxis()
+
+t = sc.tic()
+
+sc.toc(t, label='0')
+# import numba  as nb # For faster computations
+sc.toc(t, label='1')
+import numpy  as np # For numerics
+sc.toc(t, label='2')
+import pandas as pd # Used for pd.unique() (better than np.unique())
+sc.toc(t, label='3')
+import pylab  as pl # Used by fixaxis()
+sc.toc(t, label='4')
+
 
 __all__ = ['set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis']
 
@@ -15,7 +26,7 @@ __all__ = ['set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighte
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
 
-    @nb.njit((nb.int64,))
+    # @nb.njit((nb.int64,))
     def set_seed_numba(seed):
         return np.random.seed(seed)
 
@@ -30,25 +41,28 @@ def set_seed(seed=None):
     return
 
 
-@nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
+sc.toc(t, label='4a')
+
+# @nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
 def bt(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
-@nb.njit((nb.float64[:], nb.int64))
+# @nb.njit((nb.float64[:], nb.int64))
 def mt(probs, repeats):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
-@nb.njit((nb.int64,))
+# @nb.njit((nb.int64,))
 def pt(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
 
+sc.toc(t, label='4b')
 
-@nb.njit((nb.int64, nb.int64))
+# @nb.njit((nb.int64, nb.int64))
 def choose_people(max_ind, n):
     '''
     Choose n people.
@@ -87,6 +101,7 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6):
     inds = unique_inds[:n]
     return inds
 
+sc.toc(t, label='4c')
 
 def fixaxis(sim, useSI=True, boxoff=False):
     ''' Make the plotting more consistent -- add a legend and ensure the axes start at 0 '''
@@ -97,3 +112,7 @@ def fixaxis(sim, useSI=True, boxoff=False):
     if boxoff:
         sc.boxoff() # Turn off top and right lines
     return
+
+sc.toc(t, label='5')
+
+print('end-utils')
