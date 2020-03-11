@@ -85,11 +85,11 @@ def plot_sim(session_id, pars=None, verbose=True):
     # Handle sessions
     try:
         sim = app.sessions[session_id]['sim']
-        # sim.update_pars(pars=sim_pars)
+        sim.update_pars(pars=sim_pars)
         print(f'Loaded sim session {session_id}')
     except Exception as E:
         sim = cs.Sim()
-        # sim.update_pars(pars=sim_pars)
+        sim.update_pars(pars=sim_pars)
         app.sessions[session_id].sim = sim
         print(f'Added sim session {session_id} ({str(E)})')
 
