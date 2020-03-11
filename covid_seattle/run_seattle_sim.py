@@ -6,16 +6,16 @@ import sciris as sc
 
 print('Importing...')
 sc.tic()
-import covid_seattle
+import covid_seattle as covid # Or: import covid_abm as covid
 sc.toc()
 
 do_plot = 1
 do_save = 0
-verbose = 5
+verbose = 1
 
 print('Making sim...')
 sc.tic()
-sim = covid_seattle.Sim()
+sim = covid.Sim()
 sim.set_seed(1)
 
 print('Running...')
