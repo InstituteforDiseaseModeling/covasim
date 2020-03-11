@@ -84,7 +84,9 @@ def plot_sim(session_id, base_pars=None, pars=None, verbose=True):
     sim.run(do_plot=False)
 
     # Plotting
-    kwargs = dict(fig_args={'figsize':(8,8)}, font_size=12, use_grid=False)
+    fig_args = {'figsize':(8,8)}
+    axis_args = {'left':0.15, 'bottom':0.1, 'right':0.9, 'top':0.95, 'wspace':0.2, 'hspace':0.25}
+    kwargs = dict(fig_args=fig_args, axis_args=axis_args, font_size=12, use_grid=False)
     fig = sim.plot(**kwargs) # Plot the sim
     mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=12, fmt='.4r')) # Add data cursor
 
