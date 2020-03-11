@@ -16,7 +16,7 @@
   <script src="assets/bootstrap-vue.js"></script> <!-- Was https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js -->
 
   <!-- Customization -->
-  <title>VoI Sim</title>
+  <title>COVID-ABM</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- Remove favicon.ico 404 -->
   <script src="assets/d3.v5.min.js"></script> <!-- Was http://thekerrlab.com/tmp/d3.v5.min.js -->
   <script src="assets/mpld3.v0.4.1.min.js"></script> <!-- Was http://thekerrlab.com/tmp/mpld3.v0.4.1.min.js -->
@@ -165,16 +165,15 @@
         </div>
 
         <div class="app_header">
-          <h1 style="color: #000; font-size: 3.5em">VoI Sim</h1> <!-- 007bff -->
-          <p style="font-size: 0.8em;"><i>Value-of-information simulator for measles vaccination campaigns</i></p>
+          <h1 style="color: #000; font-size: 3.5em">COVID-ABM</h1> <!-- 007bff -->
+          <p style="font-size: 0.8em;"><i>Coronavirus (COVID-19) agent-based model</i></p>
         </div>
 
         <div class="app_info">
-          &copy; 2019 <a href="http://idmod.org">IDM</a><br>
+          &copy; 2020 <a href="http://idmod.org">IDM</a><br>
           v{{ version }}
         </div>
         
-
       </div>
 
       <!-- Controls -->
@@ -184,25 +183,25 @@
 
               <b-tabs content-class="mt-3">
 
-                <b-tab title="Single simulation mode" active>
-                  <div class="container">
-                    <div class="controls">
-                      <b>Base simulation parameters</b>
-                      <div v-for="par in base_pars">
-                          <br>
-                          {{par.name}}: <input class="par_edit" v-model="par.best">
-                        </div>
-                      </div>
-                      <div class="controls">
-                        <b>Tracker parameters</b>
-                        <div v-for="par in pars.microarray">
-                          <br>
-                          <div class="mytooltip">{{par.name}}: <input class="par_edit" v-model="par.best">  <span class="mytooltiptext">{{par.tooltip}}</span><br></div>
-                          <b-form-input id="slider" v-model="par.best" type="range" min="0" max="1" step="0.01"></b-form-input>
-                        </div>
-                    </div>
-                  </div>
-                </b-tab>
+<!--                <b-tab title="Single simulation mode" active>-->
+<!--                  <div class="container">-->
+<!--                    <div class="controls">-->
+<!--                      <b>Base simulation parameters</b>-->
+<!--                      <div v-for="par in base_pars">-->
+<!--                          <br>-->
+<!--                          {{par.name}}: <input class="par_edit" v-model="par.best">-->
+<!--                        </div>-->
+<!--                      </div>-->
+<!--                      <div class="controls">-->
+<!--                        <b>Tracker parameters</b>-->
+<!--                        <div v-for="par in pars.microarray">-->
+<!--                          <br>-->
+<!--                          <div class="mytooltip">{{par.name}}: <input class="par_edit" v-model="par.best">  <span class="mytooltiptext">{{par.tooltip}}</span><br></div>-->
+<!--                          <b-form-input id="slider" v-model="par.best" type="range" min="0" max="1" step="0.01"></b-form-input>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                  </div>-->
+<!--                </b-tab>-->
 
                 <b-tab title="Simple scenario mode">
                   <div class="controls">
@@ -215,44 +214,7 @@
                   </div>
                 </b-tab>
 
-                <b-tab title="Advanced scenario mode">
-                  <div class="container">
-                    <div class="controls">
-                      <b>Finger mark parameters</b><br>
-                      <div v-for="par in pars.fingermark">
-                        <br>
-                        <div class="mytooltip">{{par.name}}: <input class="par_edit" v-model="par.best">  <span class="mytooltiptext">{{par.tooltip}}</span><br></div>
-                        <b-form-input id="slider" v-model="par.best" type="range" min="0" max="1" step="0.01"></b-form-input>
-                      </div>
-                    </div>
-                    <div class="controls">
-                        <b>Microarray parameters</b><br>
-                        <div v-for="par in pars.microarray">
-                          <br>
-                          <div class="mytooltip">{{par.name}}: <input class="par_edit" v-model="par.best">  <span class="mytooltiptext">{{par.tooltip}}</span><br></div>
-                          <b-form-input id="slider" v-model="par.best" type="range" min="0" max="1" step="0.01"></b-form-input>
-                        </div>
-                        <br>
-                      </div>
-                  </div>
-                </b-tab>
-
-
-                <b-tab title="Parameter sweep mode">
-                  <div class="controls">
-                    <b>Sweep options</b>
-                    <br><br>
-                    Number of steps: <input class="par_edit" v-model="sweep_pars.meta.steps">
-                    <br><br>
-                    Number of repetitions per step: <input class="par_edit" v-model="sweep_pars.meta.reps">
-                    <br><br>
-                    <b>Select sweep parameter</b>
-                        <div v-for="par,key in sweep_pars.pars">
-                          <br>
-                          <input type="radio" v-model="sweep_par" :value="key"> {{par.name}}: <input class="par_edit" v-model="par.min"> to <input class="par_edit" v-model="par.max">
-                      </div>
-                    </div>
-                </b-tab>
+              </b-tabs>
 
         </div>
 

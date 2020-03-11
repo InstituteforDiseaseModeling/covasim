@@ -1,2 +1,4 @@
-__version__ = '0.1'
-__versiondate__ = '2020-2-11'
+__all__ = ['__version__', '__versiondate__']
+
+__version__ = '0.2'
+__versiondate__ = '2020-03-11'
