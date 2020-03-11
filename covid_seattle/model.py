@@ -25,8 +25,7 @@ class ParsObj(sc.prettyobj):
 
     def __init__(self, pars):
         self.update_pars(pars)
-        self.results_keys = ['t',
-                             'n_susceptible',
+        self.results_keys = ['n_susceptible',
                              'n_exposed',
                              'n_infectious',
                              'n_recovered',
@@ -143,6 +142,7 @@ class Sim(ParsObj):
         self.results = {}
         for key in self.results_keys:
             self.results[key] = np.zeros(int(self.npts))
+        self.results['t'] = np.arange(int(self.npts))
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
@@ -238,7 +238,6 @@ class Sim(ParsObj):
                 else:
                     print(string)
 
-            self.results['t'][t] = t
             test_probs = {} # Store the probability of each person getting tested
 
             # Update each person
@@ -332,6 +331,10 @@ class Sim(ParsObj):
         self.results['cum_diagnosed'] = pl.cumsum(self.results['diagnoses'])
         self.results['cum_deaths']    = pl.cumsum(self.results['deaths'])
 
+        # Scale the results
+        for reskey in self.results_keys:
+            self.results[reskey] *= self['scale']
+
         # Compute likelihood
         # if calc_likelihood:
         #     self.likelihood()
@@ -388,7 +391,7 @@ class Sim(ParsObj):
 
 
 
-    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, verbose=None):
+    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, use_grid=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -458,7 +461,7 @@ class Sim(ParsObj):
                 # if key in data_mapping:
                 #     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             # pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-            pl.grid(True)
+            pl.grid(use_grid)
             cov_ut.fixaxis(self)
             pl.ylabel('Count')
             pl.xlabel('Days since index case')

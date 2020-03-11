@@ -54,9 +54,9 @@ if do_run:
     low = {}
     high = {}
     for key in reskeys:
-        best[key] = pl.median(both[key], axis=1)*orig_sim['scale']
-        low[key] = both[key].min(axis=1)*orig_sim['scale']
-        high[key] = both[key].max(axis=1)*orig_sim['scale']
+        best[key] = pl.median(both[key], axis=1)
+        low[key] = both[key].min(axis=1)
+        high[key] = both[key].max(axis=1)
 
 scenarios = {
     '25': '25% contact reduction',
@@ -100,9 +100,9 @@ if do_run:
         scen_low = {}
         scen_high = {}
         for key in reskeys:
-            scen_best[key] = pl.median(scenboth[key], axis=1)*orig_sim['scale']
-            scen_low[key] = scenboth[key].min(axis=1)*orig_sim['scale']
-            scen_high[key] = scenboth[key].max(axis=1)*orig_sim['scale']
+            scen_best[key] = pl.median(scenboth[key], axis=1)
+            scen_low[key] = scenboth[key].min(axis=1)
+            scen_high[key] = scenboth[key].max(axis=1)
 
 
 

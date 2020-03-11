@@ -72,7 +72,7 @@ def plot_sim(session_id, base_pars=None, pars=None, verbose=True):
         # sim.update_pars(pars=sim_pars)
         print(f'Loaded sim session {session_id}')
     except Exception as E:
-        sim = cs.Sim(pars=sim_pars)
+        sim = cs.Sim()#(pars=sim_pars)
         app.sessions[session_id].sim = sim
         print(f'Added sim session {session_id} ({str(E)})')
 
@@ -82,7 +82,10 @@ def plot_sim(session_id, base_pars=None, pars=None, verbose=True):
 
     # Core algorithm
     sim.run(do_plot=False)
-    fig = sim.plot(fig_args={'figsize':(8,8)}) # Plot the sim
+
+    # Plotting
+    kwargs = dict(fig_args={'figsize':(8,8)}, font_size=12, use_grid=False)
+    fig = sim.plot(**kwargs) # Plot the sim
     mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=12, fmt='.4r')) # Add data cursor
 
     # Convert graph to FE

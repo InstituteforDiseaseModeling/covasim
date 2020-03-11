@@ -271,7 +271,7 @@
       this.get_version()
       this.get_sessions()
       this.resetpars()
-      sciris.sleep(200).then(response => {this.ui_mode = 'single'}) // Can't render this straight away since layout gets messed up for reasons unknown to humankind
+      sciris.sleep(200).then(response => {this.ui_mode = 'simple'}) // Can't render this straight away since layout gets messed up for reasons unknown to humankind
       console.log('ID for this session: ' + this.session_id)
     },
 
@@ -304,27 +304,8 @@
         console.log(vm.session_id, vm.pars)
 
         // Run a a single sim
-        if (vm.ui_mode === 'single') {
-          sciris.rpc('plot_sim', [vm.session_id, vm.base_pars, vm.pars.microarray])  // WARNING, hard-coded to the microarray parameters!
-            .then(function (response) {
-              document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
-              mpld3.draw_figure('graphs', response.data);
-              vm.status = 'Not running'
-              vm.get_sessions()
-            })
-        }
-
-        // Simple mode, convert to normal pars
         if (vm.ui_mode === 'simple') {
-          for (const key of Object.keys(vm.simple_pars)) {
-            vm.pars.microarray[key].best = vm.simple_pars[key].best
-          }
-          vm.pars.fingermark.cost_vaccine.best = vm.simple_pars.cost_vaccine.best // These should match
-        }
-          
-        // Run a multisim
-        if (vm.ui_mode === 'simple' || vm.ui_mode === 'advanced') {
-          sciris.rpc('plot_multisim', [vm.session_id, vm.base_pars, vm.pars])
+          sciris.rpc('plot_sim', [vm.session_id]) // , vm.base_pars, vm.pars.microarray])  // WARNING, hard-coded to the microarray parameters!
             .then(function (response) {
               document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
               mpld3.draw_figure('graphs', response.data);
@@ -333,27 +314,12 @@
             })
         }
 
-        // Run a sweep
-        if (vm.ui_mode === 'sweep') {
-          vm.sweep_pars.meta.par = vm.sweep_par // Copy over
-          sciris.rpc('plot_sweep', [vm.session_id, vm.base_pars, vm.pars, vm.sweep_pars])
-            .then(function (response) {
-              document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
-              mpld3.draw_figure('graphs', response.data);
-              vm.status = 'Not running'
-              vm.get_sessions()
-            })
-        }
-        
         },
 
     resetpars: function () {
         sciris.rpc('get_defaults')
           .then(function (response) {
-            vm.pars        = response.data.advanced
-            vm.simple_pars = response.data.simple
-            vm.base_pars   = response.data.base
-            vm.sweep_pars  = response.data.sweep
+            vm.pars = response.data.pars
             sciris.sleep(200).then(response => { // Can't render this straight away since layout gets messed up
               document.getElementById('graphs').innerHTML = vm.no_graphs_text; // Reset the DOM
             })
