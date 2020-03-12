@@ -37,6 +37,8 @@ setup(
         "scirisweb>=0.15.0",
         "pandas",
         "numba",
+        "gunicorn",
+        "plotly_express",
 		# "parestlib>=0.3",
     ],
 )
