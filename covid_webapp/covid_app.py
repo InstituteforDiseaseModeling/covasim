@@ -11,14 +11,9 @@ import scirisweb as sw
 import covid_seattle as cs
 
 # Change to current folder and create the app
-os.chdir(os.path.abspath(os.path.dirname(__file__)))
-if len(sys.argv)>1:  port = int(sys.argv[1])
-else:                port = 8188
-if len(sys.argv)>2:  autoreload = int(sys.argv[2])
-else:                autoreload = 1
-app = sw.ScirisApp(__name__, name="Covid-ABM", server_port=port)
-app.sessions = sc.odict() # For storing user data
-
+app = sw.ScirisApp(__name__, name="Covid-ABM")
+app.sessions = dict() # For storing user data
+flask_app = app.flask_app
 
 #%% Define the API
 
@@ -142,4 +137,16 @@ def plot_sim(session_id, sim_pars=None, epi_pars=None, verbose=True):
 
 #%% Run the server
 if __name__ == "__main__":
+
+    os.chdir(os.path.abspath(os.path.dirname(__file__)))
+
+    if len(sys.argv) > 1:
+        app.config['SERVER_PORT'] = int(sys.argv[1])
+    else:
+        app.config['SERVER_PORT'] = 8188
+    if len(sys.argv) > 2:
+        autoreload = int(sys.argv[2])
+    else:
+        autoreload = 1
+
     app.run(autoreload=True)
