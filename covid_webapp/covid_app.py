@@ -26,19 +26,19 @@ def get_defaults(merge=False):
     max_days = 365
 
     sim_pars = {}
-    sim_pars['scale']            = {'best':100,  'min':1,   'max':1e9,      'name':'Population scale factor'}
-    sim_pars['n']                = {'best':35000,'min':1,   'max':max_pop,  'name':'Population size'}
-    sim_pars['n_infected']       = {'best':20,   'min':1,   'max':max_pop,  'name':'Initial infections'}
-    sim_pars['n_days']           = {'best':60,   'min':1,   'max':max_days, 'name':'Duration (days)'}
-    sim_pars['intervene']        = {'best':30,   'min':-1,  'max':max_days, 'name':'Intervention start (day)'}
-    sim_pars['unintervene']      = {'best':44,   'min':-1,  'max':max_days, 'name':'Intervention end (day)'}
+    sim_pars['scale']            = {'best':1,    'min':1,   'max':1e9,      'name':'Population scale factor'}
+    sim_pars['n']                = {'best':5000, 'min':1,   'max':max_pop,  'name':'Population size'}
+    sim_pars['n_infected']       = {'best':10,   'min':1,   'max':max_pop,  'name':'Initial infections'}
+    sim_pars['n_days']           = {'best':90,   'min':1,   'max':max_days, 'name':'Duration (days)'}
+    sim_pars['intervene']        = {'best':20,   'min':-1,  'max':max_days, 'name':'Intervention start (day)'}
+    sim_pars['unintervene']      = {'best':40,   'min':-1,  'max':max_days, 'name':'Intervention end (day)'}
     sim_pars['intervention_eff'] = {'best':0.9,  'min':0.0, 'max':1.0,      'name':'Intervention effectiveness'}
     sim_pars['seed']             = {'best':1,    'min':1,   'max':1e9,      'name':'Random seed'}
 
     epi_pars = {}
-    epi_pars['r0']        = {'best':2.0,  'min':0.0, 'max':20.0, 'name':'R0 (infectiousness)'}
+    epi_pars['r0']        = {'best':2.5,  'min':0.0, 'max':20.0, 'name':'R0 (infectiousness)'}
     epi_pars['contacts']  = {'best':20,   'min':0.0, 'max':100,  'name':'Number of contacts'}
-    epi_pars['incub']     = {'best':5.0,  'min':1.0, 'max':30,   'name':'Incubation period (days)'}
+    epi_pars['incub']     = {'best':4.0,  'min':1.0, 'max':30,   'name':'Incubation period (days)'}
     epi_pars['incub_std'] = {'best':1.0,  'min':0.0, 'max':30,   'name':'Incubation variability (days)'}
     epi_pars['dur']       = {'best':8.0,  'min':1.0, 'max':30,   'name':'Infection duration (days)'}
     epi_pars['dur_std']   = {'best':2.0,  'min':0.0, 'max':30,   'name':'Infection variability (days)'}
