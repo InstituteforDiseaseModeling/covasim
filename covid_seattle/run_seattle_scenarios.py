@@ -15,7 +15,7 @@ pars = covid_seattle.make_pars() # TODO: should be gotten from a sim
 sc.tic()
 
 # Whether or not to run!
-do_run = 1
+do_run = 0
 
 # Other options
 do_save = 0
@@ -68,7 +68,7 @@ scenarios = {
 if do_run:
 
     final = sc.objdict()
-    final['Baseline'] = sc.objdict({'scenname': 'Business as ususal', 'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
+    final['Baseline'] = sc.objdict({'scenname': 'Business as usual', 'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
 
     for scenkey,scenname in scenarios.items():
 
