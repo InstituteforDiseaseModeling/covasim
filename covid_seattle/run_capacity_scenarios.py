@@ -31,6 +31,7 @@ reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 folder = 'results_2020mar11/'
 fn_fig = folder + 'seattle-capacity_2020mar10_v0.png'
 fn_obj = folder + 'seattle-capacity_2020mar11v0.obj'
+fn_csv = folder + 'seattle-capacity_2020mar11v0.csv'
 
 # Don't need this if we're not running
 if do_run:

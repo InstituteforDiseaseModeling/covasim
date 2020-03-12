@@ -228,7 +228,7 @@ class Sim(ParsObj):
         daily_tests = [] # Number of tests each day, from the data # TODO: fix
 
         # Main simulation loop
-        for t in range(1, self.npts):
+        for t in range(self.npts):
 
             # Print progress
             if verbose>=1:
