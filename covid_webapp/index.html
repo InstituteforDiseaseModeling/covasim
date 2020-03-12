@@ -280,7 +280,8 @@
 
     mounted() {
       this.$nextTick(function () {
-            Plotly.react(this.graph.id, JSON.parse(this.graph.json));
+            let x = JSON.parse(this.graph.json)
+            Plotly.react(this.graph.id, x.data, x.layout, {responsive: true});
           }
       )
     },

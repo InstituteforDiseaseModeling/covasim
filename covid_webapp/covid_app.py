@@ -154,7 +154,9 @@ def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
                 fig.add_trace(go.Scatter(x=sim.data['day'], y=data_mapping[key],mode='markers',name=label,fill_color=this_color))
         fig.update_layout(title=title,
                           xaxis_title='Days since index case',
-                          yaxis_title='Count')
+                          yaxis_title='Count',
+                            autosize = True,
+        )
         output['graphs'].append({'json':fig.to_json(),'id':str(sc.uuid())})
 
     return output
