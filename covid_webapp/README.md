@@ -19,7 +19,11 @@ The site will be accessible at `http://localhost:8188` or whichever port is spec
 
 ## Deployment
 
-Recommended deployment is using `nginx` to serve the static files, and `gunicorn` to run the Flask app
+Recommended deployment is using `nginx` to serve the static files, and `gunicorn` to run the Flask app.
+
+### Requirements
+
+You must have nginx and gunicorn installed. 
 
 ### Set up nginx
 
@@ -32,9 +36,7 @@ Recommended deployment is using `nginx` to serve the static files, and `gunicorn
 
 ### Run gunicorn
 
-1. Edit `launch_gunicorn` to set the number of workers as desired - usual recommendation is twice the number of CPUs but it
-might be better for this app to just run the number of CPUs because the RPCs are computationally expensive
+1. Edit `launch_gunicorn` to set the number of workers as desired - usual recommendation is twice the number of CPUs but it might be better for this app to just run the number of CPUs because the RPCs are computationally expensive
 2. Run `launch_gunicorn`. This will need to be kept running to support the site (so run via `nohup` or `screen` etc.)
 
-Note that for local development, you can add the `--reload` flag to the `gunicorn` command to automatically reload the site.
-This can be using if using the `nginx+gunicorn` setup for local development
+Note that for local development, you can add the `--reload` flag to the `gunicorn` command to automatically reload the site. This can be helpful if using the `nginx+gunicorn` setup for local development.
