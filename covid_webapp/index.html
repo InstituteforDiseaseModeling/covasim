@@ -234,7 +234,7 @@
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         Running...
       </button>
-      <button v-else class="btn btn-primary green" type="button" @click="plot">
+      <button v-else class="btn btn-primary green" type="button" @click="runSim">
         Run
       </button>
 
@@ -298,6 +298,7 @@
     data() {
       return {
         version: 'Version information unavailable',
+        previousPars: [],
         sim_pars: {},
         epi_pars: {},
         activeGraphs: [],
@@ -324,11 +325,9 @@
         vm.version = response.data
       },
 
-      async plot() {
+      async runSim() {
         vm.running = true;
-
         vm.activeGraphs = [];
-
         console.log(vm.status);
         console.log(vm.sim_pars, vm.epi_pars);
 
