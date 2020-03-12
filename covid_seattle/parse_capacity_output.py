@@ -2,17 +2,17 @@ import sciris as sc
 import pylab as pl
 
 doplot = True
-folder = '/home/cliffk/idm/covid_abm/covid_seattle/results_2020mar11/'
-fn = folder + 'seattle-capacity_2020mar11v0.obj'
-fig_fn =  folder + 'seattle-capacity_2020mar11v0.png'
+folder = '/home/cliffk/idm/covid_abm/covid_seattle/results_2020mar12/'
+fn = folder + 'seattle-capacity_2020mar12_v0.obj'
+fig_fn =  folder + 'seattle-capacity_2020mar12_v0.png'
 scale = 100 # from parameters.py
 
 data = sc.loadobj(fn)
 
-reskey = 'n_exposed'
+reskey = 'cum_exposed'
 for key,valdict in data.items():
     arr = valdict[reskey]*scale
-    pl.savetxt(folder + f'seattle-capacity_2020mar11_{key}.csv', arr, fmt='%0.0f', delimiter=',')
+    pl.savetxt(folder + f'seattle-capacity_2020mar12_{key}.csv', arr, fmt='%0.0f', delimiter=',')
 
 
 if doplot:
@@ -28,10 +28,11 @@ if doplot:
         else:
             pl.title(f'{key}% reduction in transmission')
         pl.xlabel('Day from March 12th')
-        pl.ylabel('Number of active infections')
+        pl.ylabel('Cumulative infections')
         sc.commaticks()
-        pl.ylim([0,6e5])
+        pl.ylim([0,1.5e6])
 
     pl.savefig(fig_fn)
+    pl.show()
 
 print('Done')

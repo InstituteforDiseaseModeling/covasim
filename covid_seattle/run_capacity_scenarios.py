@@ -26,11 +26,11 @@ xmin = pars['day_0']
 xmax = xmin + pars['n_days']
 noise = 1*0.2 # Turn off noise
 seed = 1
-reskeys = ['n_exposed']
+reskeys = ['cum_exposed']
 
-folder = 'results_2020mar11/'
-fn_fig = folder + 'seattle-capacity_2020mar10_v0.png'
-fn_obj = folder + 'seattle-capacity_2020mar11v0.obj'
+folder = 'results_2020mar12/'
+fn_fig = folder + 'seattle-capacity_2020mar12_v0.png'
+fn_obj = folder + 'seattle-capacity_2020mar12_v0.obj'
 # fn_csv = folder + 'seattle-capacity_2020mar11v0.csv'
 
 # Don't need this if we're not running
