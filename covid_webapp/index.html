@@ -237,10 +237,16 @@
       <button v-else class="btn btn-primary green" type="button" @click="runSim">
         Run
       </button>
-
       <button :disabled="running" class="btn btn-primary blueish" type="button" @click="resetpars">
         Reset
       </button>
+
+      History:
+      <select :disabled="running" v-model="historyIdx" @change="loadPars">
+        <option v-for="(item, index) in history" :value="index">
+          {{ index }}
+        </option>
+      </select>
     </div>
 
     <br>
@@ -257,8 +263,8 @@
 
   <!-- Show the actual graph -->
   <div id="graphs" class="graphs">
-    <plotly-chart v-for="x in activeGraphs" :graph="x" :key="x.id"/>
-    <p v-if="activeGraphs.length === 0"><i>Click "Run" to display graphs</i></p>
+    <plotly-chart v-for="x in graphs" :graph="x" :key="x.id"/>
+    <p v-if="graphs.length === 0"><i>Click "Run" to display graphs</i></p>
   </div>
 </div>
 
@@ -298,10 +304,11 @@
     data() {
       return {
         version: 'Version information unavailable',
-        previousPars: [],
+        history: [],
+        historyIdx: 0,
         sim_pars: {},
         epi_pars: {},
-        activeGraphs: [],
+        graphs: [],
         running: false,
         err: '',
       }
@@ -327,15 +334,19 @@
 
       async runSim() {
         vm.running = true;
-        vm.activeGraphs = [];
+        vm.graphs = [];
+
         console.log(vm.status);
         console.log(vm.sim_pars, vm.epi_pars);
 
         // Run a a single sim
         try{
           let response = await sciris.rpc('plot_sim', [vm.sim_pars, vm.epi_pars]);
-            vm.activeGraphs = response.data.graphs;
+            vm.graphs = response.data.graphs;
             vm.err = response.data.err;
+            vm.history.push(JSON.parse(JSON.stringify({sim_pars:vm.sim_pars, epi_pars:vm.epi_pars, graphs:vm.graphs})));
+            vm.historyIdx = vm.history.length-1;
+
         } catch (e) {
             vm.err = 'Error running model';
         }
@@ -348,8 +359,14 @@
         let response = await sciris.rpc('get_defaults');
         vm.sim_pars = response.data.sim_pars;
         vm.epi_pars = response.data.epi_pars;
-        vm.activeGraphs = [];
+        vm.graphs = [];
       },
+
+      loadPars(){
+        vm.sim_pars = vm.history[vm.historyIdx].sim_pars;
+        vm.epi_pars = vm.history[vm.historyIdx].epi_pars;
+        vm.graphs = vm.history[vm.historyIdx].graphs;
+      }
     }
   })
 
