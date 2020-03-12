@@ -188,18 +188,12 @@
 
     <div class="header_container">
 
-      <div class="app_session">
-        Session: <select v-model="session_id" style="background-color: #fff">
-        <option v-for="session in session_list" :value="session">{{ session }}</option>
-      </select> <br>
-        v{{ version }}<br>
-        &copy; 2020 <a href="http://idmod.org">IDM</a>
 
-      </div>
 
       <div class="app_header">
         <h1 style="color: #000; font-size: 3.5em">COVID-ABM</h1> <!-- 007bff -->
         <p style="font-size: 0.8em;"><i>Coronavirus (COVID-19) agent-based model (available on <a href="https://github.com/amath-idm/covid_abm">GitHub</a>)</i></p>
+        <p style="font-size: 0.8em;">v{{ version }} &copy; 2020 <a href="http://idmod.org">IDM</a></p>
       </div>
 
       <div class="app_info">
@@ -281,8 +275,6 @@
         sim_pars: {},
         epi_pars: {},
         status: 'Not running',
-        session_list: [],
-        session_id: '',
         ui_mode: 'none',
         no_graphs_text: '<i>Click "Run" to display graphs</i>',
         err: '',
@@ -291,11 +283,9 @@
 
     async created() {
       this.get_version();
-      this.get_sessions();
       this.resetpars();
       await sciris.sleep(200);
       this.ui_mode = 'simple'; // Can't render this straight away since layout gets messed up for reasons unknown to humankind
-      console.log('ID for this session: ' + this.session_id)
     },
 
     filters: {
@@ -311,23 +301,14 @@
         vm.version = response.data
       },
 
-      async get_sessions() {
-        let response = await sciris.rpc('get_sessions', [this.session_id]);
-        vm.session_id = response.data.session_id;
-        vm.session_list = response.data.session_list;
-        if (vm.err === '') {
-          vm.err = response.data.err
-        }
-      },
-
       async plot() {
         vm.status = 'Running...';
         console.log(vm.status);
-        console.log(vm.session_id, vm.sim_pars, vm.epi_pars);
+        console.log(vm.sim_pars, vm.epi_pars);
 
         // Run a a single sim
         if (vm.ui_mode === 'simple') {
-          let response = await sciris.rpc('plot_sim', [vm.session_id, vm.sim_pars, vm.epi_pars])  // WARNING, hard-coded to the microarray parameters!
+          let response = await sciris.rpc('plot_sim', [vm.sim_pars, vm.epi_pars]);  // WARNING, hard-coded to the microarray parameters!
           document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
           try {
             mpld3.draw_figure('graphs', response.data.graph);
@@ -336,8 +317,6 @@
           }
           vm.status = 'Not running';
           vm.err = response.data.err;
-          vm.get_sessions()
-
         }
       },
 
@@ -345,9 +324,8 @@
         let response = await sciris.rpc('get_defaults');
         vm.sim_pars = response.data.sim_pars;
         vm.epi_pars = response.data.epi_pars;
-        await sciris.sleep(200)
+        await sciris.sleep(200);
         document.getElementById('graphs').innerHTML = vm.no_graphs_text; // Reset the DOM
-        vm.get_sessions()
       },
     }
   })

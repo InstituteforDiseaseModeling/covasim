@@ -69,15 +69,13 @@ def get_sessions(session_id=None):
 
 
 @app.register_RPC()
-def plot_sim(session_id, sim_pars=None, epi_pars=None, verbose=True):
+def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
     ''' Create, run, and plot everything '''
 
     err = ''
 
     try:
         # Fix up things that JavaScript mangles
-        session_id = str(session_id)
-
         sim_pars = sc.odict(sim_pars)
         epi_pars = sc.odict(epi_pars)
         pars = {}
@@ -90,20 +88,8 @@ def plot_sim(session_id, sim_pars=None, epi_pars=None, verbose=True):
         err += err1
 
     # Handle sessions
-    try:
-        sim = app.sessions[session_id]['sim']
-        sim.update_pars(pars=pars)
-        print(f'Loaded sim session {session_id}')
-    except Exception as E:
-        try:
-            sim = cs.Sim()
-            sim.update_pars(pars=pars)
-            app.sessions[session_id].sim = sim
-            print(f'Added sim session {session_id} ({str(E)})')
-        except Exception as E2:
-            err2 = f'Sim creation failed! ({str(E2)})'
-            print(err2)
-            err += err2
+    sim = cs.Sim()
+    sim.update_pars(pars=pars)
 
     if verbose:
         print('Input parameters:')
