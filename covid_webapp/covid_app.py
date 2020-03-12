@@ -22,8 +22,6 @@ flask_app = app.flask_app
 def get_defaults(region=None, merge=False):
     ''' Get parameter defaults '''
 
-    print('hi', region)
-
     if region is None:
         region = 'Example'
 
