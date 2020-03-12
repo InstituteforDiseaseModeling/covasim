@@ -19,11 +19,54 @@ flask_app = app.flask_app
 #%% Define the API
 
 @app.register_RPC()
-def get_defaults(merge=False):
+def get_defaults(region=None, merge=False):
     ''' Get parameter defaults '''
+
+    print('hi', region)
+
+    if region is None:
+        region = 'Example'
 
     max_pop = 1e5
     max_days = 365
+
+    regions = {
+        'scale': {
+            'Example': 1,
+            'Seattle': 25,
+            'Wuhan': 200,
+        },
+        'n': {
+            'Example': 5000,
+            'Seattle': 5000,
+            'Wuhan': 1,
+        },
+        'n_days': {
+            'Example': 90,
+            'Seattle': 28,
+            'Wuhan': 1,
+        },
+        'n_infected': {
+            'Example': 10,
+            'Seattle': 4,
+            'Wuhan': 1,
+        },
+        'intervene': {
+            'Example': 20,
+            'Seattle': 17,
+            'Wuhan': 1,
+        },
+        'unintervene': {
+            'Example': 40,
+            'Seattle': -1,
+            'Wuhan': 1,
+        },
+        'intervention_eff': {
+            'Example': 0.9,
+            'Seattle': 0.5,
+            'Wuhan': 0.9,
+        },
+    }
 
     sim_pars = {}
     sim_pars['scale']            = {'best':1,    'min':1,   'max':1e9,      'name':'Population scale factor'}
@@ -44,6 +87,9 @@ def get_defaults(merge=False):
     epi_pars['dur_std']   = {'best':2.0,  'min':0.0, 'max':30,   'name':'Infection variability (days)'}
     epi_pars['cfr']       = {'best':0.02, 'min':0.0, 'max':1.0,  'name':'Case fatality rate'}
     epi_pars['timetodie'] = {'best':22.0, 'min':1.0, 'max':60,   'name':'Days until death'}
+
+    for parkey,valuedict in regions.items():
+        sim_pars[parkey]['best'] = valuedict[region]
 
     if merge:
         output = {**sim_pars, **epi_pars}

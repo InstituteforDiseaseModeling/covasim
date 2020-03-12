@@ -486,14 +486,14 @@ to_plot = sc.odict({
             'cum_recoveries':'Number of recoveries',
             'n_susceptible': 'Number susceptible',
             'n_infectious': 'Number infectious',
-            'cum_diagnosed': 'Number diagnosed',
+            # 'cum_diagnosed': 'Number diagnosed',
         }),
         'Daily counts': sc.odict({
             'infections': 'New infections',
             'deaths': 'New deaths',
             'recoveries': 'New recoveries',
-            'tests': 'Number of tests',
-            'diagnoses': 'New diagnoses',
+            # 'tests': 'Number of tests',
+            # 'diagnoses': 'New diagnoses',
         })
     })
 

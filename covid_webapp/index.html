@@ -208,13 +208,20 @@
     <div class="mastercontainer">
 
       <div class="app_session">
+
         History:
         <select :disabled="running" v-model="historyIdx" @change="loadPars">
           <option v-for="(item, index) in history" :value="index">
             {{ index }}
           </option>
         </select>
+
+<!--         <button class="btn btn-primary blueish" type="button" @click="resetpars">
+            ↓
+        </button> -->
+        
       </div>
+
 
       <div class="par_panel_parent">
 
@@ -251,7 +258,13 @@
       </button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <button :disabled="running" class="btn btn-primary blueish" type="button" @click="resetpars">
         Reset
-      </button>
+      </button>&nbsp;&nbsp;&nbsp;
+
+    <select :disabled="running" v-model="reset_choice" @change="resetpars(reset_choice)">
+      <option v-for="(item, index) in reset_options" :value="item">
+        {{ item }}
+      </option>
+    </select>
 
     </div>
 
@@ -316,12 +329,14 @@
         graphs: [],
         running: false,
         err: '',
+        reset_options: ['Example', 'Seattle', 'Wuhan', 'Global'],
+        reset_choice: 'Example'
       }
     },
 
     async created() {
       this.get_version();
-      this.resetpars();
+      this.resetpars('Example');
     },
 
     filters: {
@@ -362,8 +377,8 @@
 
       },
 
-      async resetpars() {
-        let response = await sciris.rpc('get_defaults');
+      async resetpars(reset_choice) {
+        let response = await sciris.rpc('get_defaults', [reset_choice]);
         vm.sim_pars = response.data.sim_pars;
         vm.epi_pars = response.data.epi_pars;
         vm.graphs = [];
