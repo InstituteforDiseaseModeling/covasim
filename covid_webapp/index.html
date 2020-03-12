@@ -22,6 +22,7 @@
   <script src="assets/d3.v5.min.js"></script> <!-- Was http://thekerrlab.com/tmp/d3.v5.min.js -->
   <script src="assets/mpld3.v0.4.1.min.js"></script> <!-- Was http://thekerrlab.com/tmp/mpld3.v0.4.1.min.js -->
   <script src="assets/sciris-js.js"></script> <!-- Was https://unpkg.com/sciris-js/dist/sciris-js.js -->
+  <script src="assets/plotly-latest.min.js"></script> <!-- https://d3js.org/d3.v5.min.js -->
 
   <!-- Define styles -->
   <style>
@@ -189,11 +190,10 @@
     <div class="header_container">
 
 
-
       <div class="app_header">
         <h1 style="color: #000; font-size: 3.5em">COVID-ABM</h1> <!-- 007bff -->
         <p style="font-size: 0.8em;"><i>Coronavirus (COVID-19) agent-based model (available on <a href="https://github.com/amath-idm/covid_abm">GitHub</a>)</i></p>
-        <p style="font-size: 0.8em;">v{{ version }} &copy; 2020 <a href="http://idmod.org">IDM</a></p>
+        <p style="font-size: 0.8em;">{{ version }} &copy; 2020 <a href="http://idmod.org">IDM</a></p>
       </div>
 
       <div class="app_info">
@@ -211,14 +211,14 @@
             <p class="headerish">Simulation parameters</p>
             <div v-for="par in sim_pars">
               <br>
-              <span class="txt_align">{{par.name}}:</span> <input class="par_edit" v-model="par.best">
+              <span class="txt_align">{{par.name}}:</span> <input :disabled="running" class="par_edit" v-model="par.best">
             </div>
           </div>
           <div class="controls">
             <p class="headerish">Epidemiological parameters</p>
             <div v-for="par in epi_pars">
               <br>
-              <span class="txt_align">{{par.name}}:</span> <input class="par_edit" v-model="par.best">
+              <span class="txt_align">{{par.name}}:</span> <input :disabled="running" class="par_edit" v-model="par.best">
             </div>
           </div>
         </div>
@@ -230,17 +230,14 @@
     <!-- Run button -->
     <div class="bottom_buttons">
       <br>
-      <button v-if="status==='Running...'" class="btn btn-primary green" type="button" disabled>
+      <button v-if="running" class="btn btn-primary green" type="button" disabled>
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         Running...
       </button>
-      <button v-else-if="status==='Not running'" class="btn btn-primary green" type="button" @click="plot">
+      <button v-else class="btn btn-primary green" type="button" @click="plot">
         Run
       </button>
-      <button v-else class="btn btn-primary green" type="button" @click="plot">
-        {{status}}
-      </button>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
       <button class="btn btn-primary blueish" type="button" @click="resetpars">
         Reset
       </button>
@@ -259,24 +256,51 @@
   </div>
 
   <!-- Show the actual graph -->
-  <div id="graphs" class="graphs">{{no_graphs_text}}</div>
+  <div id="graphs" class="graphs">
+    <plotly-chart v-for="x in activeGraphs" :graph="x" :key="x.id"/>
+    <p v-if="activeGraphs.length === 0"><i>Click "Run" to display graphs</i></p>
+  </div>
 </div>
+
 </body>
 
 
 <!-- SCRIPTS -->
 <script>
+
+  const PlotlyChart = {
+    props: ['graph'],
+    render(h) {
+      return h('div', {
+        attrs: {
+          id: this.graph.id,
+        }
+      })
+    },
+
+    mounted() {
+      this.$nextTick(function () {
+            Plotly.react(this.graph.id, JSON.parse(this.graph.json));
+          }
+      )
+    },
+  };
+
+
   var vm = new Vue({
     el: '#app',
+
+    components: {
+      'plotly-chart': PlotlyChart,
+    },
 
     data() {
       return {
         version: 'Version information unavailable',
         sim_pars: {},
         epi_pars: {},
-        status: 'Not running',
-        ui_mode: 'none',
-        no_graphs_text: '<i>Click "Run" to display graphs</i>',
+        activeGraphs: [],
+        running: false,
         err: '',
       }
     },
@@ -284,8 +308,6 @@
     async created() {
       this.get_version();
       this.resetpars();
-      await sciris.sleep(200);
-      this.ui_mode = 'simple'; // Can't render this straight away since layout gets messed up for reasons unknown to humankind
     },
 
     filters: {
@@ -302,33 +324,35 @@
       },
 
       async plot() {
-        vm.status = 'Running...';
+        vm.running = true;
+
+        vm.activeGraphs = [];
+
         console.log(vm.status);
         console.log(vm.sim_pars, vm.epi_pars);
 
         // Run a a single sim
-        if (vm.ui_mode === 'simple') {
-          let response = await sciris.rpc('plot_sim', [vm.sim_pars, vm.epi_pars]);  // WARNING, hard-coded to the microarray parameters!
-          document.getElementById('graphs').innerHTML = ''; // Clear the DOM before redrawing
-          try {
-            mpld3.draw_figure('graphs', response.data.graph);
-          } catch (e) {
-            vm.err = 'Plotting failed'
-          }
-          vm.status = 'Not running';
-          vm.err = response.data.err;
+        try{
+          let response = await sciris.rpc('plot_sim', [vm.sim_pars, vm.epi_pars]);
+            vm.activeGraphs = response.data.graphs;
+            vm.err = response.data.err;
+        } catch (e) {
+            vm.err = 'Error running model';
         }
+        vm.running = false;
+
+
       },
 
       async resetpars() {
         let response = await sciris.rpc('get_defaults');
         vm.sim_pars = response.data.sim_pars;
         vm.epi_pars = response.data.epi_pars;
-        await sciris.sleep(200);
-        document.getElementById('graphs').innerHTML = vm.no_graphs_text; // Reset the DOM
+        vm.activeGraphs = [];
       },
     }
   })
+
 </script>
 
 </html>
