@@ -481,11 +481,11 @@ class Sim(ParsObj):
 
 to_plot = sc.odict({
         'Total counts': sc.odict({
-            'n_exposed': 'Number exposed',
-            'cum_deaths': 'Number of deaths',
-            'cum_recoveries':'Number of recoveries',
+            'cum_exposed': 'Cumulative infections',
+            'cum_deaths': 'Cumulative deaths',
+            'cum_recoveries':'Cumulative recoveries',
             'n_susceptible': 'Number susceptible',
-            'n_infectious': 'Number infectious',
+            'n_infectious': 'Number of active infections',
             # 'cum_diagnosed': 'Number diagnosed',
         }),
         'Daily counts': sc.odict({

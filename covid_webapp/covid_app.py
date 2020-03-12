@@ -63,7 +63,7 @@ def get_defaults(region=None, merge=False):
         },
         'intervention_eff': {
             'Example': 0.5,
-            'Seattle': 0.5,
+            'Seattle': 0.0,
             # 'Wuhan': 0.9,
         },
     }
@@ -81,7 +81,7 @@ def get_defaults(region=None, merge=False):
     epi_pars = {}
     epi_pars['r0']        = {'best':2.05,  'min':0.0, 'max':20.0, 'name':'R0 (infectiousness)'}
     epi_pars['contacts']  = {'best':20,   'min':0.0, 'max':100,  'name':'Number of contacts'}
-    epi_pars['incub']     = {'best':4.0,  'min':1.0, 'max':30,   'name':'Incubation period (days)'}
+    epi_pars['incub']     = {'best':4.5,  'min':1.0, 'max':30,   'name':'Incubation period (days)'}
     epi_pars['incub_std'] = {'best':1.0,  'min':0.0, 'max':30,   'name':'Incubation variability (days)'}
     epi_pars['dur']       = {'best':8.0,  'min':1.0, 'max':30,   'name':'Infection duration (days)'}
     epi_pars['dur_std']   = {'best':2.0,  'min':0.0, 'max':30,   'name':'Infection variability (days)'}
@@ -127,6 +127,8 @@ def get_sessions(session_id=None):
 @app.register_RPC()
 def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
     ''' Create, run, and plot everything '''
+
+    prev_threshold = 0.20 # Don't plot susceptibles if prevalence never gets above this threshold
 
     err = ''
 
@@ -180,7 +182,14 @@ def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
     output['epi_pars'] = epi_pars
     output['graphs'] = []
 
-    for p,title,keylabels in cw.to_plot.enumitems():
+    # If prevalence stays low, don't plot susceptibles
+    to_plot = sc.dcp(cw.to_plot)
+    max_exposed = sim.results['cum_exposed'].max()
+    threshold = prev_threshold*sim.results['n_susceptible'].max()
+    if max_exposed < threshold:
+        to_plot['Total counts'].pop('n_susceptible')
+
+    for p,title,keylabels in to_plot.enumitems():
         fig = go.Figure()
         colors = sc.gridcolors(len(keylabels))
         for i,key,label in keylabels.enumitems():
@@ -189,8 +198,8 @@ def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
             fig.add_trace(go.Scatter(x=sim.results['t'], y=y,mode='lines',name=label,line_color=this_color))
             if key in data_mapping:
                 fig.add_trace(go.Scatter(x=sim.data['day'], y=data_mapping[key],mode='markers',name=label,fill_color=this_color))
-        fig.update_layout(title=title,
-                          xaxis_title='Days since index case',
+        fig.update_layout(title={'text':title}, #, 'xanchor':'center', 'x':0.5},
+                          xaxis_title='Day',
                           yaxis_title='Count',
                             autosize = True,
         )

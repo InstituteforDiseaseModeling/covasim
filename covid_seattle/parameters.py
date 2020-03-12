@@ -26,7 +26,7 @@ def make_pars():
     # Epidemic parameters
     pars['r0']             = 2.0 # Updated to match Mike's distributions
     pars['contacts']       = 10 # Number of contacts per person per day, estimated
-    pars['incub']          = 4.0 # Using Mike's Snohomish number
+    pars['incub']          = 4.5 # Using Mike's Snohomish number
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
     pars['dur']            = 8 # Using Mike's Snohomish number
     pars['dur_std']        = 2 # Variance in duration
