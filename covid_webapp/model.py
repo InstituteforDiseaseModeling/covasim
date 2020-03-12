@@ -327,12 +327,14 @@ class Sim(ParsObj):
             if t == self['intervene']: # TODO: allow multiple interventions
                 if verbose>=1:
                     print(f'Implementing intervention on day {t}...')
-                self['contacts'] *= (1-self['intervention_eff'])
+                for person in self.people.values():
+                    person['contacts'] = float(person['contacts']*(1-self['intervention_eff']))
 
             if t == self['unintervene']:
                 if verbose>=1:
                     print(f'Removing intervention on day {t}...')
-                self['contacts'] /= (1-self['intervention_eff'])
+                for person in self.people.values():
+                    person['contacts'] = float(person['contacts']/(1-self['intervention_eff']))
 
 
         # Compute cumulative results

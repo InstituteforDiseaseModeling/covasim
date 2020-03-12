@@ -34,37 +34,37 @@ def get_defaults(region=None, merge=False):
         'scale': {
             'Example': 1,
             'Seattle': 25,
-            'Wuhan': 200,
+            # 'Wuhan': 200,
         },
         'n': {
             'Example': 5000,
-            'Seattle': 5000,
-            'Wuhan': 1,
+            'Seattle': 10000,
+            # 'Wuhan': 1,
         },
         'n_days': {
             'Example': 90,
-            'Seattle': 28,
-            'Wuhan': 1,
+            'Seattle': 45,
+            # 'Wuhan': 90,
         },
         'n_infected': {
             'Example': 10,
             'Seattle': 4,
-            'Wuhan': 1,
+            # 'Wuhan': 10,
         },
         'intervene': {
             'Example': 20,
             'Seattle': 17,
-            'Wuhan': 1,
+            # 'Wuhan': 1,
         },
         'unintervene': {
             'Example': 40,
             'Seattle': -1,
-            'Wuhan': 1,
+            # 'Wuhan': 1,
         },
         'intervention_eff': {
-            'Example': 0.9,
+            'Example': 0.5,
             'Seattle': 0.5,
-            'Wuhan': 0.9,
+            # 'Wuhan': 0.9,
         },
     }
 
@@ -79,7 +79,7 @@ def get_defaults(region=None, merge=False):
     sim_pars['seed']             = {'best':1,    'min':1,   'max':1e9,      'name':'Random seed'}
 
     epi_pars = {}
-    epi_pars['r0']        = {'best':2.5,  'min':0.0, 'max':20.0, 'name':'R0 (infectiousness)'}
+    epi_pars['r0']        = {'best':2.05,  'min':0.0, 'max':20.0, 'name':'R0 (infectiousness)'}
     epi_pars['contacts']  = {'best':20,   'min':0.0, 'max':100,  'name':'Number of contacts'}
     epi_pars['incub']     = {'best':4.0,  'min':1.0, 'max':30,   'name':'Incubation period (days)'}
     epi_pars['incub_std'] = {'best':1.0,  'min':0.0, 'max':30,   'name':'Incubation variability (days)'}
