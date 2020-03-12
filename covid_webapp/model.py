@@ -37,7 +37,8 @@ class ParsObj(sc.prettyobj):
                              'cum_exposed',
                              'cum_tested',
                              'cum_diagnosed',
-                             'cum_deaths',]
+                             'cum_deaths',
+                             'cum_recoveries',]
         return
 
     def __getitem__(self, key):
@@ -182,12 +183,21 @@ class Sim(ParsObj):
         return
 
 
-    def summary_stats(self):
+    def summary_stats(self, verbose=True):
         ''' Compute the summary statistics to display at the end of a run '''
-        keys = ['n_susceptible', 'cum_exposed', 'n_infectious', 'cum_deaths']
         summary = {}
-        for key in keys:
+        for key in self.results_keys:
             summary[key] = self.results[key][-1]
+
+        if verbose:
+            print(f"""Summary:
+     {summary['n_susceptible']:5.0f} susceptible
+     {summary['n_infectious']:5.0f} infectious
+     {summary['cum_exposed']:5.0f} exposed
+     {summary['cum_deaths']:5.0f} deaths
+     {summary['cum_recoveries']:5.0f} recovered
+               """)
+
         return summary
 
 
@@ -326,10 +336,11 @@ class Sim(ParsObj):
 
 
         # Compute cumulative results
-        self.results['cum_exposed']   = pl.cumsum(self.results['infections'])
-        self.results['cum_tested']    = pl.cumsum(self.results['tests'])
-        self.results['cum_diagnosed'] = pl.cumsum(self.results['diagnoses'])
-        self.results['cum_deaths']    = pl.cumsum(self.results['deaths'])
+        self.results['cum_exposed']    = pl.cumsum(self.results['infections'])
+        self.results['cum_tested']     = pl.cumsum(self.results['tests'])
+        self.results['cum_diagnosed']  = pl.cumsum(self.results['diagnoses'])
+        self.results['cum_deaths']     = pl.cumsum(self.results['deaths'])
+        self.results['cum_recoveries'] = pl.cumsum(self.results['recoveries'])
 
         # Scale the results
         for reskey in self.results_keys:
@@ -344,13 +355,7 @@ class Sim(ParsObj):
         elapsed = sc.toc(T, output=True)
         if verbose>=1:
             print(f'\nRun finished after {elapsed:0.1f} s.\n')
-            summary = self.summary_stats()
-            print(f"""Summary:
-     {summary['n_susceptible']:5.0f} susceptible
-     {summary['n_infectious']:5.0f} infectious
-     {summary['cum_exposed']:5.0f} exposed
-     {summary['cum_deaths']:5.0f} deaths
-               """)
+            self.results['summary'] = self.summary_stats()
 
         if do_plot:
             self.plot(**kwargs)
@@ -431,20 +436,23 @@ class Sim(ParsObj):
         res = self.results # Shorten since heavily used
 
         # Plot everything
-        colors = sc.gridcolors(5)
+
         to_plot = sc.odict({ # TODO
             'Total counts': sc.odict({'n_susceptible':'Number susceptible',
                                       'n_exposed':'Number exposed',
                                       'n_infectious':'Number infectious',
                                       'cum_diagnosed':'Number diagnosed',
                                       'cum_deaths':'Number of deaths',
+                                      'cum_recoveries':'Number of recoveries',
                                     }),
             'Daily counts': sc.odict({'infections':'New infections',
-                                      'tests':'Number of tests',
+                                      'tests':'Number tested',
                                       'diagnoses':'New diagnoses',
                                       'deaths':'New deaths',
+                                      'recoveries':'New recoveries',
                                      }),
             })
+        colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
         # data_mapping = {
         #     'cum_diagnosed': pl.cumsum(self.data['new_positives']),
@@ -463,6 +471,7 @@ class Sim(ParsObj):
             # pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(use_grid)
             cov_ut.fixaxis(self)
+            sc.commaticks()
             # pl.ylabel('Count')
             pl.xlabel('Days')
             pl.title(title)
