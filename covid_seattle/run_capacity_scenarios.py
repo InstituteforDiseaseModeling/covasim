@@ -19,7 +19,7 @@ do_run = 1
 
 # Other options
 do_save = 0
-do_plot = 0
+do_plot = 1
 verbose = 0
 n = 4
 xmin = pars['day_0']
