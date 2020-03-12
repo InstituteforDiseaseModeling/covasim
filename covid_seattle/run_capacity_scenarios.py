@@ -18,20 +18,20 @@ sc.tic()
 do_run = 1
 
 # Other options
-do_save = 0
-do_plot = 1
+do_save = 1
+do_plot = 0
 verbose = 0
-n = 4
+n = 20
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
-noise = 0*0.2 # Turn off noise
+noise = 1*0.2 # Turn off noise
 seed = 1
-reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
+reskeys = ['n_exposed']
 
 folder = 'results_2020mar11/'
 fn_fig = folder + 'seattle-capacity_2020mar10_v0.png'
 fn_obj = folder + 'seattle-capacity_2020mar11v0.obj'
-fn_csv = folder + 'seattle-capacity_2020mar11v0.csv'
+# fn_csv = folder + 'seattle-capacity_2020mar11v0.csv'
 
 # Don't need this if we're not running
 if do_run:
@@ -71,7 +71,7 @@ scenarios = {
 if do_run:
 
     final = sc.objdict()
-    final['Baseline'] = sc.objdict({'scenname': 'Business as ususal', 'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
+    final['Baseline'] = both
 
     for scenkey,scenname in scenarios.items():
 
@@ -109,111 +109,109 @@ if do_run:
 
 
 
-        final[scenkey] = sc.objdict({'scenname': scenname, 'best':sc.dcp(scen_best), 'low':sc.dcp(scen_low), 'high':sc.dcp(scen_high)})
+        final[scenkey] = scenboth
 
 # Don't run
 else:
     final = sc.loadobj(fn_obj)
 
-sc.heading('Plotting')
+if do_plot:
 
-fig_args     = {'figsize':(16,12)}
-plot_args    = {'lw':3, 'alpha':0.7}
-scatter_args = {'s':150, 'marker':'s'}
-axis_args    = {'left':0.10, 'bottom':0.1, 'right':0.95, 'top':0.95, 'wspace':0.2, 'hspace':0.25}
-fill_args    = {'alpha': 0.3}
-font_size = 18
-fig = pl.figure(**fig_args)
-pl.subplots_adjust(**axis_args)
-pl.rcParams['font.size'] = font_size
+    sc.heading('Plotting')
 
-# Create the tvec based on the results
-tvec = xmin+pl.arange(len(final['Baseline']['best'][reskeys[0]]))
+    fig_args     = {'figsize':(16,12)}
+    plot_args    = {'lw':3, 'alpha':0.7}
+    scatter_args = {'s':150, 'marker':'s'}
+    axis_args    = {'left':0.10, 'bottom':0.1, 'right':0.95, 'top':0.95, 'wspace':0.2, 'hspace':0.25}
+    fill_args    = {'alpha': 0.3}
+    font_size = 18
+    fig = pl.figure(**fig_args)
+    pl.subplots_adjust(**axis_args)
+    pl.rcParams['font.size'] = font_size
 
-for key, data in final.items():
-    print(key)
-    if key in scenarios:
-        scenname = scenarios[key]
-    else:
-        scenname = data['scenname']
+    # Create the tvec based on the results
+    tvec = xmin+pl.arange(len(final['Baseline']['best'][reskeys[0]]))
 
-
-    #%% Plotting
-
-
-    #pl.subplots_adjust(**axis_args)
-    #pl.rcParams['font.size'] = font_size
-
-    for k,key in enumerate(reskeys):
-        pl.subplot(len(reskeys),1,k+1)
-
-        #pl.fill_between(tvec, low[key], high[key], **fill_args)
-        ###pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
-        #pl.plot(tvec, best[key], label='Business as usual', **plot_args)
-
-        if key == 'cum_deaths':
-            pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
-            #pl.plot(tvec, scen_best['infections'], label=scenname, **plot_args)
-        pl.plot(tvec, data['best'][key], label=scenname, **plot_args)
-
-        '''
-
-        cov_ut.fixaxis(sim)
-        if k == 0:
-            pl.ylabel('Cumulative infections')
+    for key, data in final.items():
+        print(key)
+        if key in scenarios:
+            scenname = scenarios[key]
         else:
-            pl.ylabel('Cumulative deaths')
-        pl.xlabel('Days since March 5th')
-        '''
-
-        #if 'deaths' in key:
-        #    print('DEATHS', xmax, pars['n_days'])
-        #    xmax = pars['n_days']
-        #pl.xlim([xmin, xmax])
-        #pl.gca()._xticks(pl.arange(xmin,xmax+1, 5))
-
-        interv_col = [0.5, 0.2, 0.4]
-
-        if key == 'cum_exposed':
-            sc.setylim()
-            pl.title('Cumulative infections', fontweight='bold')
-            pl.legend()
-            pl.text(xmin+16.5, 12000, 'Intervention', color=interv_col, fontstyle='italic')
-
-        elif key == 'n_exposed':
-            sc.setylim()
-            pl.title('Active infections', fontweight='bold')
-
-        pl.grid(True)
-
-        pl.plot([xmin+16]*2, pl.ylim(), '--', lw=2, c=interv_col) # Plot intervention
-        pl.xlabel('Date', fontweight='bold')
-        pl.ylabel('Count', fontweight='bold')
-        pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
+            scenname = data['scenname']
 
 
-        xt = pl.gca().get_xticks()
-        print(xt)
-        lab = []
-        for t in xt:
-            tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t)) # + pars['day_0']
-            print(t, tmp)
+        #%% Plotting
 
-            lab.append( tmp.strftime('%B %d') )
-        pl.gca().set_xticklabels(lab)
 
-        sc.commaticks(axis='y')
+        #pl.subplots_adjust(**axis_args)
+        #pl.rcParams['font.size'] = font_size
 
-if do_save:
-    print(f'seattle_projections_v3.png')
-    pl.savefig(f'seattle_projections_v3.png')
+        for k,key in enumerate(reskeys):
+            pl.subplot(len(reskeys),1,k+1)
+
+            #pl.fill_between(tvec, low[key], high[key], **fill_args)
+            ###pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
+            #pl.plot(tvec, best[key], label='Business as usual', **plot_args)
+
+            if key == 'cum_deaths':
+                pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
+                #pl.plot(tvec, scen_best['infections'], label=scenname, **plot_args)
+            pl.plot(tvec, data['best'][key], label=scenname, **plot_args)
+
+            '''
+
+            cov_ut.fixaxis(sim)
+            if k == 0:
+                pl.ylabel('Cumulative infections')
+            else:
+                pl.ylabel('Cumulative deaths')
+            pl.xlabel('Days since March 5th')
+            '''
+
+            #if 'deaths' in key:
+            #    print('DEATHS', xmax, pars['n_days'])
+            #    xmax = pars['n_days']
+            #pl.xlim([xmin, xmax])
+            #pl.gca()._xticks(pl.arange(xmin,xmax+1, 5))
+
+            interv_col = [0.5, 0.2, 0.4]
+
+            if key == 'cum_exposed':
+                sc.setylim()
+                pl.title('Cumulative infections', fontweight='bold')
+                pl.legend()
+                pl.text(xmin+16.5, 12000, 'Intervention', color=interv_col, fontstyle='italic')
+
+            elif key == 'n_exposed':
+                sc.setylim()
+                pl.title('Active infections', fontweight='bold')
+
+            pl.grid(True)
+
+            pl.plot([xmin+16]*2, pl.ylim(), '--', lw=2, c=interv_col) # Plot intervention
+            pl.xlabel('Date', fontweight='bold')
+            pl.ylabel('Count', fontweight='bold')
+            pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
+
+
+            xt = pl.gca().get_xticks()
+            print(xt)
+            lab = []
+            for t in xt:
+                tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t)) # + pars['day_0']
+                print(t, tmp)
+
+                lab.append( tmp.strftime('%B %d') )
+            pl.gca().set_xticklabels(lab)
+
+            sc.commaticks(axis='y')
 
 
 #%% Print statistics
 #for k in ['baseline'] + list(scenarios.keys()):
-for k in list(scenarios.keys()):
-    for key in reskeys:
-        print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')
+# for k in list(scenarios.keys()):
+#     for key in reskeys:
+#         print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')
 
 if do_save:
     pl.savefig(fn_fig, dpi=100)
