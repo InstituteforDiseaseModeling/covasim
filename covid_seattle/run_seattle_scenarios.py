@@ -19,7 +19,7 @@ sc.tic()
 ## Read in configuration.  Better would be to extract from simulation output.
 pars = covid_seattle.make_pars()
 
-do_run = True # Run if True, otherwise load
+do_run = False # Run if True, otherwise load
 
 ## Configure saving.  If saving figures or obj, or for loading obj, use these files
 do_save = True
@@ -92,12 +92,14 @@ else:
             res0 = scen_sims[0].results
             npts = len(res0[reskeys[0]])
 
+        # Store all simulations
         allres = {}
         for key in reskeys:
             allres[key] = pl.zeros((npts, n))
             for s,sim in enumerate(scen_sims):
                 allres[key][:,s] = sim.results[key]
 
+        # Keep best, low, and high for errorbars
         scen_best = {}
         scen_low = {}
         scen_high = {}
@@ -126,7 +128,7 @@ for k,key in enumerate(reskeys):
     for fkey, data in final.items():
         scenname = scenarios[fkey]
         if errorbars:
-            pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
+            pl.fill_between(tvec, data['low'][key], data['high'][key], **fill_args)
         pl.plot(tvec, data['best'][key], label=scenname, **plot_args)
 
         interv_col = [0.5, 0.2, 0.4]
@@ -135,6 +137,7 @@ for k,key in enumerate(reskeys):
             sc.setylim()
             pl.title('Cumulative infections', fontweight='bold')
             pl.legend()
+            # Add "Intervention" line
             pl.text(xmin+16.5, 12000, 'Intervention', color=interv_col, fontstyle='italic')
 
         elif key == 'n_exposed':
