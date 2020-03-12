@@ -8,7 +8,7 @@ import sys
 import mpld3
 import sciris as sc
 import scirisweb as sw
-import covid_seattle as cs
+import covid_webapp as cw # Short for "Covid webapp model"
 
 # Change to current folder and create the app
 app = sw.ScirisApp(__name__, name="Covid-ABM")
@@ -21,23 +21,28 @@ flask_app = app.flask_app
 def get_defaults():
     ''' Get parameter defaults '''
 
+    max_pop = 1e5
+    max_days = 365
+
     sim_pars = {}
-    sim_pars['scale']          = {'best':100,  'name':'Scaling factor'}
-    sim_pars['n']              = {'best':35000,'name':'Population size'}
-    sim_pars['n_infected']     = {'best':20,   'name':'Initial infections'}
-    sim_pars['n_days']         = {'best':60,   'name':'Duration (days)'}
-    sim_pars['intervene']      = {'best':30,   'name':'Intervention start (day)'}
-    sim_pars['unintervene']    = {'best':44,   'name':'Intervention end (day)'}
-    sim_pars['intervention_eff'] = {'best':0.9, 'name':'Intervention effectiveness'}
-    sim_pars['seed']           = {'best':1,    'name':'Random seed'}
+    sim_pars['scale']            = {'best':100,  'min':1,   'max':1e9,      'name':'Population scale factor'}
+    sim_pars['n']                = {'best':35000,'min':1,   'max':max_pop,  'name':'Population size'}
+    sim_pars['n_infected']       = {'best':20,   'min':1,   'max':max_pop,  'name':'Initial infections'}
+    sim_pars['n_days']           = {'best':60,   'min':1,   'max':max_days, 'name':'Duration (days)'}
+    sim_pars['intervene']        = {'best':30,   'min':-1,  'max':max_days, 'name':'Intervention start (day)'}
+    sim_pars['unintervene']      = {'best':44,   'min':-1,  'max':max_days, 'name':'Intervention end (day)'}
+    sim_pars['intervention_eff'] = {'best':0.9,  'min':0.0, 'max':1.0,      'name':'Intervention effectiveness'}
+    sim_pars['seed']             = {'best':1,    'min':1,   'max':1e9,      'name':'Random seed'}
 
     epi_pars = {}
-    epi_pars['r0']             = {'best':2.0,  'name':'R0 (infectiousness)'}
-    epi_pars['contacts']       = {'best':20,   'name':'Number of contacts'}
-    epi_pars['incub']          = {'best':5.0,  'name':'Incubation period'}
-    epi_pars['dur']            = {'best':8.0,  'name':'Infection duration'}
-    epi_pars['cfr']            = {'best':0.02, 'name':'Case fatality rate'}
-    epi_pars['timetodie']      = {'best':22.0, 'name':'Days until death'}
+    epi_pars['r0']        = {'best':2.0,  'min':0.0, 'max':5.0, 'name':'R0 (infectiousness)'}
+    epi_pars['contacts']  = {'best':20,   'min':0.0, 'max':100, 'name':'Number of contacts'}
+    epi_pars['incub']     = {'best':5.0,  'min':1.0, 'max':30,  'name':'Incubation period (days)'}
+    epi_pars['incub_std'] = {'best':1.0,  'min':0.0, 'max':30,  'name':'Incubation variability (days)'}
+    epi_pars['dur']       = {'best':8.0,  'min':1.0, 'max':30,  'name':'Infection duration (days)'}
+    epi_pars['dur_std']   = {'best':2.0,  'min':0.0, 'max':30,  'name':'Infection variability (days)'}
+    epi_pars['cfr']       = {'best':0.02, 'min':0.0, 'max':1.0, 'name':'Case fatality rate'}
+    epi_pars['timetodie'] = {'best':22.0, 'min':1.0, 'max':60,  'name':'Days until death'}
 
     output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
     return output
@@ -46,7 +51,7 @@ def get_defaults():
 @app.register_RPC()
 def get_version():
     ''' Get the version '''
-    output = f'{cs.__version__} ({cs.__versiondate__})'
+    output = f'{cw.__version__} ({cw.__versiondate__})'
     return output
 
 
@@ -88,7 +93,7 @@ def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
         err += err1
 
     # Handle sessions
-    sim = cs.Sim()
+    sim = cw.Sim()
     sim.update_pars(pars=pars)
 
     if verbose:
