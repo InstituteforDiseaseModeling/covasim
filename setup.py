@@ -21,7 +21,7 @@ CLASSIFIERS = [
 setup(
     name="covid_abm",
     version=version,
-    author="Cliff Kerr, Daniel Klein",
+    author="Cliff Kerr, Romesh Abeysuriya, Daniel Klein",
     author_email="ckerr@idmod.org",
     description="Covid-19 Diamond Princess cruise ship infection model",
     keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess"],
@@ -37,6 +37,8 @@ setup(
         "scirisweb>=0.15.0",
         "pandas",
         "numba",
+        "gunicorn",
+        "plotly_express",
 		# "parestlib>=0.3",
     ],
 )

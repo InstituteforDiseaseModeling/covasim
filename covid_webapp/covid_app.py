@@ -19,7 +19,7 @@ flask_app = app.flask_app
 #%% Define the API
 
 @app.register_RPC()
-def get_defaults():
+def get_defaults(merge=False):
     ''' Get parameter defaults '''
 
     max_pop = 1e5
@@ -36,16 +36,20 @@ def get_defaults():
     sim_pars['seed']             = {'best':1,    'min':1,   'max':1e9,      'name':'Random seed'}
 
     epi_pars = {}
-    epi_pars['r0']        = {'best':2.0,  'min':0.0, 'max':5.0, 'name':'R0 (infectiousness)'}
-    epi_pars['contacts']  = {'best':20,   'min':0.0, 'max':100, 'name':'Number of contacts'}
-    epi_pars['incub']     = {'best':5.0,  'min':1.0, 'max':30,  'name':'Incubation period (days)'}
-    epi_pars['incub_std'] = {'best':1.0,  'min':0.0, 'max':30,  'name':'Incubation variability (days)'}
-    epi_pars['dur']       = {'best':8.0,  'min':1.0, 'max':30,  'name':'Infection duration (days)'}
-    epi_pars['dur_std']   = {'best':2.0,  'min':0.0, 'max':30,  'name':'Infection variability (days)'}
-    epi_pars['cfr']       = {'best':0.02, 'min':0.0, 'max':1.0, 'name':'Case fatality rate'}
-    epi_pars['timetodie'] = {'best':22.0, 'min':1.0, 'max':60,  'name':'Days until death'}
+    epi_pars['r0']        = {'best':2.0,  'min':0.0, 'max':20.0, 'name':'R0 (infectiousness)'}
+    epi_pars['contacts']  = {'best':20,   'min':0.0, 'max':100,  'name':'Number of contacts'}
+    epi_pars['incub']     = {'best':5.0,  'min':1.0, 'max':30,   'name':'Incubation period (days)'}
+    epi_pars['incub_std'] = {'best':1.0,  'min':0.0, 'max':30,   'name':'Incubation variability (days)'}
+    epi_pars['dur']       = {'best':8.0,  'min':1.0, 'max':30,   'name':'Infection duration (days)'}
+    epi_pars['dur_std']   = {'best':2.0,  'min':0.0, 'max':30,   'name':'Infection variability (days)'}
+    epi_pars['cfr']       = {'best':0.02, 'min':0.0, 'max':1.0,  'name':'Case fatality rate'}
+    epi_pars['timetodie'] = {'best':22.0, 'min':1.0, 'max':60,   'name':'Days until death'}
 
-    output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
+    if merge:
+        output = {**sim_pars, **epi_pars}
+    else:
+        output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
+
     return output
 
 
@@ -82,12 +86,18 @@ def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
 
     try:
         # Fix up things that JavaScript mangles
-        sim_pars = sc.odict(sim_pars)
-        epi_pars = sc.odict(epi_pars)
+        defaults = get_defaults(merge=True)
         pars = {}
         pars['verbose'] = verbose # Control verbosity here
-        for key,entry in sim_pars.items() + epi_pars.items():
-            pars[key] = float(entry['best'])
+        for key,entry in {**sim_pars, **epi_pars}.items():
+            print(key, entry)
+            userval = float(entry['best'])
+            minval = defaults[key]['min']
+            maxval = defaults[key]['max']
+            best = pl.median([userval, minval, maxval])
+            pars[key] = best
+            if key in sim_pars: sim_pars[key]['best'] = best
+            else:               epi_pars[key]['best'] = best
     except Exception as E:
         err1 = f'Parameter conversion failed! {str(E)}'
         print(err1)
@@ -109,22 +119,6 @@ def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
         print(err3)
         err += err3
 
-    to_plot = sc.odict({
-        'Total counts': sc.odict({
-            'n_susceptible': 'Number susceptible',
-            'n_exposed': 'Number exposed',
-            'n_infectious': 'Number infectious',
-            'cum_diagnosed': 'Number diagnosed',
-            'cum_deaths': 'Number of deaths',
-        }),
-        'Daily counts': sc.odict({
-            'infections': 'New infections',
-            'tests': 'Number of tests',
-            'diagnoses': 'New diagnoses',
-            'deaths': 'New deaths',
-        })
-    })
-
     if sim.data is not None:
         data_mapping = {
             'cum_diagnosed': pl.cumsum(sim.data['new_positives']),
@@ -136,9 +130,11 @@ def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
 
     output = {}
     output['err'] = err
+    output['sim_pars'] = sim_pars
+    output['epi_pars'] = epi_pars
     output['graphs'] = []
 
-    for p,title,keylabels in to_plot.enumitems():
+    for p,title,keylabels in cw.to_plot.enumitems():
         fig = go.Figure()
         colors = sc.gridcolors(len(keylabels))
         for i,key,label in keylabels.enumitems():

@@ -47,6 +47,14 @@
       padding-right: 10px;
     }
 
+  .app_session {
+    text-align: left;
+    font-size: 0.8em;
+    line-height:2.5;
+    width:120px;
+    padding-left: 20px;
+  }
+
     .app_header {
       text-align: center;
       width: 100%;
@@ -141,7 +149,7 @@
 
     .errorbox {
       background-color: #ffcaa2;
-      padding: 15px;
+      padding: 10px;
     }
 
     /* Tooltip container */
@@ -183,25 +191,32 @@
 
     <div class="header_container">
 
-
       <div class="app_header">
         <h1 style="color: #000; font-size: 3.5em">COVID-ABM</h1> <!-- 007bff -->
-        <p style="font-size: 1.0em;"><i>Coronavirus (COVID-19) agent-based model</i></p>
+        <p style="font-size: 1.0em;">Coronavirus (COVID-19) agent-based model</p>
         <p style="font-size: 0.7em;">
-          &copy; 2020 <a href="http://idmod.org">Institute for Disease Modeling</a>&nbsp;&nbsp;
+          &copy; 2020 <a href="http://idmod.org">Institute for Disease Modeling</a><br>
+          Version {{ version }}<br>
           <a href="https://github.com/amath-idm/covid_abm">
             <svg height="16" viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
           </a>
-          &nbsp;&nbsp;v{{ version }} </p>
-      </div>
-
-      <div class="app_info">
+          
+        </p>
       </div>
 
     </div>
 
     <!-- Controls -->
     <div class="mastercontainer">
+
+      <div class="app_session">
+        History:
+        <select :disabled="running" v-model="historyIdx" @change="loadPars">
+          <option v-for="(item, index) in history" :value="index">
+            {{ index }}
+          </option>
+        </select>
+      </div>
 
       <div class="par_panel_parent">
 
@@ -228,32 +243,25 @@
 
     <!-- Run button -->
     <div class="bottom_buttons">
-      <br>
+      <br>&nbsp;&nbsp;
       <button v-if="running" class="btn btn-primary green" type="button" disabled>
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         Running...
       </button>
       <button v-else class="btn btn-primary green" type="button" @click="runSim">
         Run
-      </button>
+      </button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <button :disabled="running" class="btn btn-primary blueish" type="button" @click="resetpars">
         Reset
       </button>
 
-      History:
-      <select :disabled="running" v-model="historyIdx" @change="loadPars">
-        <option v-for="(item, index) in history" :value="index">
-          {{ index }}
-        </option>
-      </select>
     </div>
 
     <br>
 
     <div v-if="err" class="errorbox">
-      <br>
-      We are extremely sorry, but you have encountered an error:<br><br>
-      {{ err }}<br><br>
+      We are extremely sorry, but you have encountered an error:<br>
+      {{ err }}<br>
       Please try to fix the problem and rerun.
     </div>
 
@@ -343,11 +351,13 @@
           let response = await sciris.rpc('plot_sim', [vm.sim_pars, vm.epi_pars]);
             vm.graphs = response.data.graphs;
             vm.err = response.data.err;
+            vm.sim_pars= response.data.sim_pars;
+            vm.epi_pars = response.data.epi_pars;
             vm.history.push(JSON.parse(JSON.stringify({sim_pars:vm.sim_pars, epi_pars:vm.epi_pars, graphs:vm.graphs})));
             vm.historyIdx = vm.history.length-1;
 
         } catch (e) {
-            vm.err = 'Error running model';
+            vm.err = 'Error running model: ' + e;
         }
         vm.running = false;
 

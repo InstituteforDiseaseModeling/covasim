@@ -13,7 +13,7 @@ from . import parameters as cov_pars
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
+__all__ = ['ParsObj', 'Person', 'Sim', 'to_plot', 'single_run', 'multi_run']
 
 
 
@@ -437,21 +437,6 @@ class Sim(ParsObj):
 
         # Plot everything
 
-        to_plot = sc.odict({ # TODO
-            'Total counts': sc.odict({'n_susceptible':'Number susceptible',
-                                      'n_exposed':'Number exposed',
-                                      'n_infectious':'Number infectious',
-                                      'cum_diagnosed':'Number diagnosed',
-                                      'cum_deaths':'Number of deaths',
-                                      'cum_recoveries':'Number of recoveries',
-                                    }),
-            'Daily counts': sc.odict({'infections':'New infections',
-                                      'tests':'Number tested',
-                                      'diagnoses':'New diagnoses',
-                                      'deaths':'New deaths',
-                                      'recoveries':'New recoveries',
-                                     }),
-            })
         colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
         # data_mapping = {
@@ -463,7 +448,7 @@ class Sim(ParsObj):
         for p,title,keylabels in to_plot.enumitems():
             pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
-                this_color = colors[i+p]
+                this_color = colors[i]
                 y = res[key]
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 # if key in data_mapping:
@@ -492,6 +477,25 @@ class Sim(ParsObj):
     def plot_people(self):
         ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
         raise NotImplementedError
+
+
+to_plot = sc.odict({
+        'Total counts': sc.odict({
+            'n_exposed': 'Number exposed',
+            'cum_deaths': 'Number of deaths',
+            'cum_recoveries':'Number of recoveries',
+            'n_susceptible': 'Number susceptible',
+            'n_infectious': 'Number infectious',
+            'cum_diagnosed': 'Number diagnosed',
+        }),
+        'Daily counts': sc.odict({
+            'infections': 'New infections',
+            'deaths': 'New deaths',
+            'recoveries': 'New recoveries',
+            'tests': 'Number of tests',
+            'diagnoses': 'New diagnoses',
+        })
+    })
 
 
 def single_run(sim=None, noise=0.0, ind=0, verbose=None, **kwargs):
