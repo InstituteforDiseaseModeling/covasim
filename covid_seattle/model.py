@@ -8,69 +8,16 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
-from covid_abm import utils as cov_ut
-from . import parameters as cov_pars
+import covid_abm
+from . import parameters as seattle_pars
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
+__all__ = ['Person', 'Sim', 'single_run', 'multi_run']
 
 
 
-#%% Define classes
-class ParsObj(sc.prettyobj):
-    '''
-    A class based around performing operations on a self.pars dict.
-    '''
-
-    def __init__(self, pars):
-        self.update_pars(pars)
-        self.results_keys = ['t',
-                             'n_susceptible', 
-                             'n_exposed', 
-                             'n_infectious', 
-                             'n_recovered',
-                             'infections', 
-                             'tests', 
-                             'diagnoses', 
-                             'recoveries',
-                             'deaths',
-                             'cum_exposed', 
-                             'cum_tested', 
-                             'cum_diagnosed',
-                             'cum_deaths',]
-        return
-
-    def __getitem__(self, key):
-        ''' Allow sim['par_name'] instead of sim.pars['par_name'] '''
-        return self.pars[key]
-
-    def __setitem__(self, key, value):
-        ''' Ditto '''
-        if key in self.pars:
-            self.pars[key] = value
-        else:
-            suggestion = sc.suggest(key, self.pars.keys())
-            if suggestion:
-                errormsg = f'Key {key} not found; did you mean "{suggestion}"?'
-            else:
-                all_keys = '\n'.join(list(self.pars.keys()))
-                errormsg = f'Key {key} not found; available keys:\n{all_keys}'
-            raise KeyError(errormsg)
-        return
-
-    def update_pars(self, pars):
-        ''' Update internal dict with new pars '''
-        if not isinstance(pars, dict):
-            raise TypeError(f'The pars object must be a dict; you supplied a {type(pars)}')
-        if not hasattr(self, 'pars'):
-            self.pars = pars
-        elif pars is not None:
-            self.pars.update(pars)
-        return
-
-
-class Person(ParsObj):
+class Person(covid_abm.Person):
     '''
     Class for a single person.
     '''
@@ -152,10 +99,10 @@ class Sim(ParsObj):
         ''' Create the people '''
         if verbose is None:
             verbose = self['verbose']
-        
+
         if verbose>=2:
             print('Creating {self["n"]} people...')
-        
+
         self.people = sc.odict() # Dictionary for storing the people
         for p in range(self['n']): # Loop over each person
             age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
@@ -181,8 +128,8 @@ class Sim(ParsObj):
         for key in keys:
             summary[key] = self.results[key][-1]
         return summary
-    
-    
+
+
     def infect_person(self, source_person, target_person, t, infectious=False):
         '''
         Infect target_person. source_person is used only for constructing the
@@ -193,7 +140,7 @@ class Sim(ParsObj):
         target_person.date_exposed = t
         incub_dist = round(pl.normal(target_person.pars['incub'], target_person.pars['incub_std']))
         target_person.date_infectious = t + incub_dist
-        
+
         # Program them to either die or recover
         if cov_ut.bt(target_person.pars['cfr']):
             death_dist = round(pl.normal(target_person.pars['timetodie'], target_person.pars['timetodie_std']))
@@ -201,9 +148,9 @@ class Sim(ParsObj):
         else:
             dur_dist = round(pl.normal(target_person.pars['dur'], target_person.pars['dur_std']))
             target_person.date_recovered = target_person.date_infectious + dur_dist
-        
+
         self.results['transtree'][target_person.uid] = {'from':source_person.uid, 'date':t}
-        
+
         return target_person
 
 
@@ -256,7 +203,7 @@ class Sim(ParsObj):
 
                 # If infectious, check if anyone gets infected
                 if person.infectious:
-                    
+
                     # Check for death
                     if person.date_died and t >= person.date_died:
                         person.exposed = False
@@ -264,7 +211,7 @@ class Sim(ParsObj):
                         person.recovered = False
                         person.died = True
                         self.results['deaths'][t] += 1
-                    
+
                     # First, check for recovery
                     if person.date_recovered and t >= person.date_recovered: # It's the day they become infectious
                         person.exposed = False
@@ -310,7 +257,7 @@ class Sim(ParsObj):
                 if verbose>=1:
                     print(f'Implementing quarantine on day {t}...')
                 self['contacts'] *= self['quarantine_eff']
-            
+
             if t == self['unquarantine']:
                 if verbose>=1:
                     print(f'Implementing unquarantine on day {t}...')
@@ -333,8 +280,8 @@ class Sim(ParsObj):
         if verbose>=1:
             print(f'\nRun finished after {elapsed:0.1f} s.\n')
             summary = self.summary_stats()
-            print(f"""Summary: 
-     {summary['n_susceptible']:5.0f} susceptible 
+            print(f"""Summary:
+     {summary['n_susceptible']:5.0f} susceptible
      {summary['n_infectious']:5.0f} infectious
      {summary['cum_exposed']:5.0f} exposed
      {summary['cum_deaths']:5.0f} deaths
@@ -418,16 +365,16 @@ class Sim(ParsObj):
         # Plot everything
         colors = sc.gridcolors(5)
         to_plot = sc.odict({ # TODO
-            'Total counts': sc.odict({'n_susceptible':'Number susceptible', 
-                                      'n_exposed':'Number exposed', 
+            'Total counts': sc.odict({'n_susceptible':'Number susceptible',
+                                      'n_exposed':'Number exposed',
                                       'n_infectious':'Number infectious',
                                       'cum_diagnosed':'Number diagnosed',
                                       'cum_deaths':'Number of deaths',
                                     }),
             'Daily counts': sc.odict({'infections':'New infections',
                                       'tests':'Number of tests',
-                                      'diagnoses':'New diagnoses', 
-                                      'deaths':'New deaths', 
+                                      'diagnoses':'New diagnoses',
+                                      'deaths':'New deaths',
                                      }),
             })
 

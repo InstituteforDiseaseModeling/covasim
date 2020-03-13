@@ -27,20 +27,10 @@ def make_pars():
     pars['r_contact']      = 0.05 # Probability of infection per contact, estimated
     pars['contacts_guest'] = 30 # Number of contacts per guest per day, estimated
     pars['contacts_crew']  = 30 # Number of contacts per crew member per day
-    pars['incub'] = {
-        'type': 'normal',
-        'params': {
-            'mu':          4.0, # Incubation period, in days, estimated
-            'sigma':       1.0  # Standard deviation of the serial interval, estimated
-        }
-    }
-    pars['dur'] = {
-        'type': 'normal',
-        'params': {
-            'mu':          12, # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
-            'sigma':       3 # Variance in duration
-        }
-    }
+    pars['incub']          = 4.0 # Using Mike's Snohomish number
+    pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
+    pars['dur']            = 8 # Using Mike's Snohomish number
+    pars['dur_std']        = 2 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
 
