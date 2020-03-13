@@ -12,7 +12,7 @@ __all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_peop
 
 #%% Define helper functions
 
-def sample(dist=None, par1=None, par2=None, size=1):
+def sample(dist=None, par1=None, par2=None, size=None):
     '''
     Draw a sample from the distribution specified by the input.
 
@@ -20,7 +20,7 @@ def sample(dist=None, par1=None, par2=None, size=1):
         dist (str): the distribution to sample from
         par1 (float): the "main" distribution parameter (e.g. mean)
         par2 (float): the "secondary" distribution parameter (e.g. std)
-        n (int): the number of samples
+        n (int): the number of samples (default=1)
 
     Returns:
         A length N array of samples
@@ -31,53 +31,19 @@ def sample(dist=None, par1=None, par2=None, size=1):
 
     '''
 
-    mapping = {
-        'uniform': {
-            'func': np.random.uniform,
-            'args': dict(low=par1, high=par2, size=size),
-            'post': None},
-        'normal': {
-            'func': np.random.normal,
-            'args': dict(loc=par1, low=par2, size=size),
-            'post': None},
-        'lognormal': {
-            'func': np.random.normal,
-            'args': dict(loc=par1, low=par2, size=size),
-            'post': None},
-        'pos_normal': {
-            'func': np.random.normal,
-            'args': dict(loc=par1, low=par2, size=size),
-            'post': },
-
-        }
-
-    if dist not in mapping.keys():
-        choicelist = '\n'.join(list(mapping.keys()))
-        errormsg = f'The selected distribution "{dist}" is not implemented; choices are:\n{choicelist}'
+    # TODO: refactor using a dict mapping if possible
+    if   dist == 'uniform':       samples = np.random.uniform(low=par1, high=par2, size=size)
+    elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
+    elif dist == 'lognormal':     samples = np.random.lognormal(mean=par1, sigma=par2, size=size)
+    elif dist == 'pos_normal':    samples = np.maximum(0, np.random.normal(loc=par1, scale=par2, size=size))
+    elif dist == 'neg_binomial':  samples = np.random.negative_binomial(n=par1, p=par2, size=size)
+    elif dist == 'normal_int':    samples = np.round(np.random.normal(loc=par1, scale=par2, size=size))
+    elif dist == 'lognormal_int': samples = np.round(np.random.lognormal(mean=par1, sigma=par2, size=size))
+    else:
+        errormsg = f'The selected distribution "{dist}" is not implemented'
         raise NotImplementedError(errormsg)
 
-    choice = mapping[dist]
-    samples = choice['func'](**choice['args'])
-    if choice['post']:
-        samples = choice['post'](samples)
-
     return samples
-
-    if dist == 'uniform':
-        return np.random.random(n)
-    elif dist == 'normal':
-        return np.random.normal(loc=params['mu'], scale=params['sigma'])
-    elif dist == 'lognormal':
-        return np.random.lognormal(mean=params['mu'], sigma=params['sigma'])
-    elif dist == 'positiveNormal':
-        return np.maximum(0, np.random.normal(loc=params['mu'], scale=params['sigma']))
-    elif dist == 'negativeBinomial':
-        return np.random.negative_binomial(n=params['k'], p=p)
-    elif dist == 'normalInteger':
-        return np.round(np.random.normal(loc=params['mu'], scale=params['sigma']))
-    elif dist == 'lognormalInteger':
-        return np.round(np.random.lognormal(mean=params['mu'], sigma=params['sigma']))
-    else:
 
 
 
