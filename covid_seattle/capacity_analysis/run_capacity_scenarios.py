@@ -9,6 +9,7 @@ import covid_seattle
 
 sc.heading('Setting up...')
 
+print('WARNING: default values will be used, not the model.py and parameters.py in this folder')
 
 pars = covid_seattle.make_pars() # TODO: should be gotten from a sim
 
