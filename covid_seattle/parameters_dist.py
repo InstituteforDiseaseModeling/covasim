@@ -24,12 +24,23 @@ def make_pars():
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['r_contact']      = 2.0/(8*10) # Updated to match Mike's distributions
+    pars['r0']             = 2.0 # Updated to match Mike's distributions
     pars['contacts']       = 10 # Number of contacts per person per day, estimated
-    pars['incub']          = 4.0 # Using Mike's Snohomish number
-    pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
-    pars['dur']            = 8 # Using Mike's Snohomish number
-    pars['dur_std']        = 2 # Variance in duration
+    pars['incub'] = {
+        'type': 'positiveNormal',
+        'params': {
+            'mu':          365*0.011,
+            'sigma':       365*0.0027
+        }
+    }
+
+    pars['dur'] = {
+        'type': 'positiveNormal',
+        'params': {
+            'mu':          365*0.0219,
+            'sigma':       365*0.0055
+        }
+    }
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
     pars['cfr']            = 0.02 # Case fatality rate
@@ -37,9 +48,9 @@ def make_pars():
     pars['timetodie_std']  = 2 # STD
 
     # Events
-    pars['quarantine']       = -1  # Day on which quarantine took effect
-    pars['unquarantine']     = -1  # Day on which unquarantine took effect
-    pars['quarantine_eff']   = 1.00 # Change in transmissibility due to quarantine, estimated
+    pars['intervene']        = -1  # Day on which intervention took effect
+    pars['unintervene']      = -1  # Day on which intervention stopped
+    pars['intervention_eff'] = 0.0 # Change in transmissibility due to intervention
 
     return pars
 
