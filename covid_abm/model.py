@@ -95,12 +95,13 @@ class Sim(ParsObj):
         return np.arange(self['n_days'] + 1)
 
 
+    def get_person(self, ind):
+        ''' Return a person based on their ID '''
+        return self.people[self.uids[ind]]
+
+
     def init_results(self):
         ''' Initialize results '''
-        self.results = {}
-        for key in self.results_keys:
-            self.results[key] = np.zeros(int(self.npts))
-        self.results['ready'] = False
         raise NotImplementedError
 
 

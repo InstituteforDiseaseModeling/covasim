@@ -2,6 +2,8 @@
 This file contains all the code for a single run of Covid-ABM.
 
 Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
+
+Version: 2020mar08
 '''
 
 #%% Imports
@@ -71,7 +73,6 @@ class Sim(cova.Sim):
     def init_results(self):
         ''' Initialize results '''
         self.results_keys = [
-            't',
             'n_susceptible',
             'n_exposed',
             'n_infectious',
@@ -87,9 +88,10 @@ class Sim(cova.Sim):
         self.results = {}
         for key in self.results_keys:
             self.results[key] = np.zeros(int(self.npts))
+        self.results['t'] = np.arange(int(self.npts))
+        self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
-
 
     def init_people(self, seed_infections=1):
         ''' Create the people '''
@@ -146,7 +148,6 @@ class Sim(cova.Sim):
                 else:
                     print(string)
 
-            self.results['t'][t] = t
             test_probs = {} # Store the probability of each person getting tested
 
             # Update each person
@@ -155,6 +156,7 @@ class Sim(cova.Sim):
                 # Count susceptibles
                 if person.susceptible:
                     self.results['n_susceptible'][t] += 1
+                    continue # Don't bother with the rest of the loop
 
                 # Handle testing probability
                 if person.infectious:
@@ -319,7 +321,7 @@ class Sim(cova.Sim):
 
 
 
-    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, verbose=None):
+    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, use_grid=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -387,7 +389,7 @@ class Sim(cova.Sim):
                 if key in data_mapping:
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-            pl.grid(True)
+            pl.grid(use_grid)
             cova.fixaxis(self)
             pl.ylabel('Count')
             pl.xlabel('Days since index case')
