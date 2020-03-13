@@ -5,8 +5,8 @@ Simple example usage for the Covid-19 agent-based model
 #%% Imports and settings
 import pytest
 import sciris as sc
-import covid_abm
-import covid_seattle
+import covid_abm as covid # TODO: reconcile
+# import covid_seattle as covid
 
 doplot = 1
 do_save = 0
@@ -16,7 +16,7 @@ do_save = 0
 
 def test_parsobj():
     pars1 = {'a':1, 'b':2}
-    parsobj = covid_abm.ParsObj(pars1)
+    parsobj = covid.ParsObj(pars1)
     
     # Once created, you cannot directly add new keys to a parsobj, and a nonexistent key works like a dict
     with pytest.raises(KeyError): parsobj['c'] = 3
@@ -25,7 +25,7 @@ def test_parsobj():
     # Only a dict is allowed
     with pytest.raises(TypeError):
         pars2 = ['a', 'b']
-        covid_abm.ParsObj(pars2)
+        covid.ParsObj(pars2)
     
     return parsobj
 
@@ -37,7 +37,7 @@ def test_sim(doplot=False, do_save=False): # If being run via pytest, turn off
     verbose = 1
 
     # Create and run the simulation
-    sim = covid_seattle.Sim() # TODO: reconcile with covid_abm
+    sim = covid.Sim() # TODO: reconcile with covid
     sim.set_seed(seed)
     sim.run(verbose=verbose)
 
@@ -50,7 +50,7 @@ def test_sim(doplot=False, do_save=False): # If being run via pytest, turn off
 
 def test_trans_tree(doplot=False, do_save=False): # If being run via pytest, turn off
 
-    sim = covid_seattle.Sim() # Create the simulation
+    sim = covid.Sim() # Create the simulation
     sim.run(verbose=1) # Run the simulation
     if doplot:
         sim.plot(do_save=do_save)
@@ -61,7 +61,7 @@ def test_trans_tree(doplot=False, do_save=False): # If being run via pytest, tur
 
 def test_multiscale(doplot=False, do_save=False): # If being run via pytest, turn off
     
-    sim1 = covid_seattle.Sim() # Create the simulation
+    sim1 = covid.Sim() # Create the simulation
     sim1['n'] = 1000
     sim1['n_days'] = 20
     sim.run(verbose=1) # Run the simulation
