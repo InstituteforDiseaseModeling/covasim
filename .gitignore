@@ -1,3 +1,11 @@
+# Custom
+covid_seattle/capacity_analysis
+covid_seattle/school_analysis
+covid_seattle/seattle_analysis
+presentations/
+scripts/early_results/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

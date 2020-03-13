@@ -6,7 +6,7 @@ import sciris as sc
 
 print('Importing...')
 sc.tic()
-import covid_seattle as covid # Or: import covid_abm as covid
+import covid_webapp as covid # Or: import covid_abm as covid
 sc.toc()
 
 do_plot = 1
