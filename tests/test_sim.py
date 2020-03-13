@@ -6,8 +6,9 @@ Simple example usage for the Covid-19 agent-based model
 import pytest
 import sciris as sc
 import covid_abm
+import covid_seattle
 
-do_plot = 0
+doplot = 1
 do_save = 0
 
 
@@ -29,26 +30,54 @@ def test_parsobj():
     return parsobj
 
 
-def test_sim(do_plot=False, do_save=False): # If being run via pytest, turn off
+def test_sim(doplot=False, do_save=False): # If being run via pytest, turn off
+    
+    # Settings
+    seed = 1
+    verbose = 1
 
-    # Create the simulation
-    sim = covid_abm.Sim()
-
-    # Run the simulation
-    sim.run(verbose=1)
+    # Create and run the simulation
+    sim = covid_seattle.Sim() # TODO: reconcile with covid_abm
+    sim.set_seed(seed)
+    sim.run(verbose=verbose)
 
     # Optionally plot
-    if do_plot:
+    if doplot:
         sim.plot(do_save=do_save)
 
     return sim
+
+
+def test_trans_tree(doplot=False, do_save=False): # If being run via pytest, turn off
+
+    sim = covid_seattle.Sim() # Create the simulation
+    sim.run(verbose=1) # Run the simulation
+    if doplot:
+        sim.plot(do_save=do_save)
+
+    return sim.results['transtree']
+
+
+
+def test_multiscale(doplot=False, do_save=False): # If being run via pytest, turn off
+    
+    sim1 = covid_seattle.Sim() # Create the simulation
+    sim1['n'] = 1000
+    sim1['n_days'] = 20
+    sim.run(verbose=1) # Run the simulation
+    if doplot:
+        sim.plot(do_save=do_save)
+
+    return sim.results['transtree']
 
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
     # parsobj = test_parsobj()
-    sim     = test_sim(do_plot=do_plot, do_save=do_save)
+    sim     = test_sim(doplot=doplot, do_save=do_save)
+    # trans_tree = test_trans_tree(doplot=doplot)
+    # sim = test_multiscale(doplot=doplot)
     sc.toc()
 
 
