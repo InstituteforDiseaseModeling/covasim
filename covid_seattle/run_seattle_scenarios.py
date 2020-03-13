@@ -18,17 +18,18 @@ sc.tic()
 do_run = 0
 
 # Other options
-do_save = 0
+do_save = 1
 verbose = 0
 n = 12
-xmin = pars['day_0']
-xmax = xmin + pars['n_days']
+xmin = 53 # pars['day_0']
+xmax = xmin+45 # xmin + pars['n_days']
 noise = 0*0.2 # Turn off noise
 seed = 1
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
-fn_fig = 'seattle-covid-projections_2020mar10e_v2.png'
-fn_obj = 'seattle-projection-results_v4e.obj'
+folder = 'results_2020mar10/'
+fn_fig = folder + 'seattle-covid-projections_2020mar12_update.png'
+fn_obj = folder + 'seattle-projection-results_v4e.obj'
 
 # Don't need this if we're not running
 if do_run:
@@ -117,12 +118,13 @@ sc.heading('Plotting')
 fig_args     = {'figsize':(16,12)}
 plot_args    = {'lw':3, 'alpha':0.7}
 scatter_args = {'s':150, 'marker':'s'}
-axis_args    = {'left':0.10, 'bottom':0.1, 'right':0.95, 'top':0.95, 'wspace':0.2, 'hspace':0.25}
+axis_args    = {'left':0.10, 'bottom':0.05, 'right':0.95, 'top':0.90, 'wspace':0.5, 'hspace':0.25}
 fill_args    = {'alpha': 0.3}
 font_size = 18
 fig = pl.figure(**fig_args)
 pl.subplots_adjust(**axis_args)
 pl.rcParams['font.size'] = font_size
+pl.rcParams['font.family'] = 'Proxima Nova'
 
 # Create the tvec based on the results
 tvec = xmin+pl.arange(len(final['Baseline']['best'][reskeys[0]]))
@@ -132,7 +134,7 @@ for key, data in final.items():
     if key in scenarios:
         scenname = scenarios[key]
     else:
-        scenname = data['scenname']
+        scenname = 'Business as usual'
 
 
     #%% Plotting
@@ -173,19 +175,21 @@ for key, data in final.items():
 
         if key == 'cum_exposed':
             sc.setylim()
-            pl.title('Cumulative infections', fontweight='bold')
+            pl.title('Cumulative infections')
             pl.legend()
             pl.text(xmin+16.5, 12000, 'Intervention', color=interv_col, fontstyle='italic')
 
+            pl.text(xmin-6, 30e3, 'COVID-19 projections, King + Snohomish counties', fontsize=24)
+
         elif key == 'n_exposed':
             sc.setylim()
-            pl.title('Active infections', fontweight='bold')
+            pl.title('Active infections')
 
         pl.grid(True)
 
         pl.plot([xmin+16]*2, pl.ylim(), '--', lw=2, c=interv_col) # Plot intervention
-        pl.xlabel('Date', fontweight='bold')
-        pl.ylabel('Count', fontweight='bold')
+        # pl.xlabel('Date')
+        # pl.ylabel('Count')
         pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
 
 
@@ -213,7 +217,7 @@ for k in list(scenarios.keys()):
         print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')
 
 if do_save:
-    pl.savefig(fn_fig, dpi=100)
+    pl.savefig(fn_fig, dpi=150)
     if do_run: # Don't resave loaded data
         sc.saveobj(fn_obj, final)
 
