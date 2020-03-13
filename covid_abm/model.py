@@ -249,8 +249,9 @@ class Sim(ParsObj):
                                     target_person.susceptible = False
                                     target_person.exposed = True
                                     target_person.date_exposed = t
-                                    incub_dist = round(pl.normal(target_person.pars['incub'], target_person.pars['incub_std']))
-                                    dur_dist = round(pl.normal(target_person.pars['dur'], target_person.pars['dur_std']))
+                                    incub_dist = cov_ut.sample(target_person.pars['incub'])
+                                    dur_dist = cov_ut.sample(target_person.pars['dur'])
+
                                     target_person.date_infectious = t + incub_dist
                                     target_person.date_recovered = target_person.date_infectious + dur_dist
                                     if verbose>=2:

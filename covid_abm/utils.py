@@ -8,9 +8,35 @@ import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 
-__all__ = ['set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis']
+__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis']
 
 #%% Define helper functions
+
+def sample(config):
+    ''' Draw a sample from the distribution specifiec by the input'''
+
+    dbn = config['type']
+    if 'params' in config:
+        params = config['params']
+
+    if dbn == 'fixed':
+        return str2num(config['value'])
+    elif dbn == 'normal':
+        return np.random.normal(loc=params['mu'], scale=params['sigma'])
+    elif dbn == 'lognormal':
+        return np.random.lognormal(mean=params['mu'], sigma=params['sigma'])
+    elif dbn == 'positiveNormal':
+        return np.maximum(0, np.random.normal(loc=params['mu'], scale=params['sigma']))
+    elif dbn == 'negativeBinomial':
+        return np.random.negative_binomial(n=params['k'], p=p)
+    elif dbn == 'normalInteger':
+        return np.round(np.random.normal(loc=params['mu'], scale=params['sigma']))
+    elif dbn == 'lognormalInteger':
+        return np.ceil(np.random.lognormal(mean=params['mu'], sigma=params['sigma']))
+
+    errormsg = f'The selected distribution "{dbn}" is NOT_IMPLEMENTED'
+    raise NotImplementedError(errormsg)
+
 
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''

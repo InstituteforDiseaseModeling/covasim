@@ -26,10 +26,21 @@ def make_pars():
     # Epidemic parameters
     pars['r0']             = 2.0 # Updated to match Mike's distributions
     pars['contacts']       = 10 # Number of contacts per person per day, estimated
-    pars['incub']          = 4.5 # Using Mike's Snohomish number
-    pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
-    pars['dur']            = 8 # Using Mike's Snohomish number
-    pars['dur_std']        = 2 # Variance in duration
+    pars['incub'] = {
+        'type': 'positiveNormal',
+        'params': {
+            'mu':          365*0.011,
+            'sigma':       365*0.0027
+        }
+    }
+
+    pars['dur'] = {
+        'type': 'positiveNormal',
+        'params': {
+            'mu':          365*0.0219,
+            'sigma':       365*0.0055
+        }
+    }
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
     pars['cfr']            = 0.02 # Case fatality rate
