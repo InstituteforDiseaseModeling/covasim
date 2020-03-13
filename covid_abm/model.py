@@ -57,8 +57,9 @@ class Person(ParsObj):
     '''
     Class for a single person.
     '''
-    def __init__(self):
-        raise NotImplementedError
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
+        return
 
 
 class Sim(ParsObj):
@@ -67,8 +68,9 @@ class Sim(ParsObj):
     number of time points, and the parameters of the simulation.
     '''
 
-    def __init__(self):
-        raise NotImplementedError
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
+        return
 
     def set_seed(self, seed=None, reset=False):
         ''' Set the seed for the random number stream '''
