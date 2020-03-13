@@ -12,30 +12,73 @@ __all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_peop
 
 #%% Define helper functions
 
-def sample(config):
-    ''' Draw a sample from the distribution specifiec by the input'''
+def sample(dist=None, par1=None, par2=None, size=1):
+    '''
+    Draw a sample from the distribution specified by the input.
 
-    dbn = config['type']
-    if 'params' in config:
-        params = config['params']
+    Args:
+        dist (str): the distribution to sample from
+        par1 (float): the "main" distribution parameter (e.g. mean)
+        par2 (float): the "secondary" distribution parameter (e.g. std)
+        n (int): the number of samples
 
-    if dbn == 'fixed':
-        return str2num(config['value'])
-    elif dbn == 'normal':
+    Returns:
+        A length N array of samples
+
+    Examples:
+        sample() # returns Unif(0,1)
+        sample(dist='normal', par1=3, par2=0.5) # returns Normal(μ=3, σ=0.5)
+
+    '''
+
+    mapping = {
+        'uniform': {
+            'func': np.random.uniform,
+            'args': dict(low=par1, high=par2, size=size),
+            'post': None},
+        'normal': {
+            'func': np.random.normal,
+            'args': dict(loc=par1, low=par2, size=size),
+            'post': None},
+        'lognormal': {
+            'func': np.random.normal,
+            'args': dict(loc=par1, low=par2, size=size),
+            'post': None},
+        'pos_normal': {
+            'func': np.random.normal,
+            'args': dict(loc=par1, low=par2, size=size),
+            'post': },
+
+        }
+
+    if dist not in mapping.keys():
+        choicelist = '\n'.join(list(mapping.keys()))
+        errormsg = f'The selected distribution "{dist}" is not implemented; choices are:\n{choicelist}'
+        raise NotImplementedError(errormsg)
+
+    choice = mapping[dist]
+    samples = choice['func'](**choice['args'])
+    if choice['post']:
+        samples = choice['post'](samples)
+
+    return samples
+
+    if dist == 'uniform':
+        return np.random.random(n)
+    elif dist == 'normal':
         return np.random.normal(loc=params['mu'], scale=params['sigma'])
-    elif dbn == 'lognormal':
+    elif dist == 'lognormal':
         return np.random.lognormal(mean=params['mu'], sigma=params['sigma'])
-    elif dbn == 'positiveNormal':
+    elif dist == 'positiveNormal':
         return np.maximum(0, np.random.normal(loc=params['mu'], scale=params['sigma']))
-    elif dbn == 'negativeBinomial':
+    elif dist == 'negativeBinomial':
         return np.random.negative_binomial(n=params['k'], p=p)
-    elif dbn == 'normalInteger':
+    elif dist == 'normalInteger':
         return np.round(np.random.normal(loc=params['mu'], scale=params['sigma']))
-    elif dbn == 'lognormalInteger':
-        return np.ceil(np.random.lognormal(mean=params['mu'], sigma=params['sigma']))
+    elif dist == 'lognormalInteger':
+        return np.round(np.random.lognormal(mean=params['mu'], sigma=params['sigma']))
+    else:
 
-    errormsg = f'The selected distribution "{dbn}" is NOT_IMPLEMENTED'
-    raise NotImplementedError(errormsg)
 
 
 def set_seed(seed=None):
