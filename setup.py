@@ -21,10 +21,10 @@ CLASSIFIERS = [
 setup(
     name="covid_abm",
     version=version,
-    author="Cliff Kerr, Romesh Abeysuriya, Daniel Klein",
+    author="Cliff Kerr, Romesh Abeysuriya, Dina Mistry, Mike Famulare, Daniel Klein",
     author_email="ckerr@idmod.org",
-    description="Covid-19 Diamond Princess cruise ship infection model",
-    keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess"],
+    description="Covid-19 agent-based model model",
+    keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess", "Seattle", "agent-based model"],
     platforms=["OS Independent"],
     classifiers=CLASSIFIERS,
     packages=find_packages(),
