@@ -29,6 +29,7 @@ reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
 fn_fig = 'seattle-covid-projections_2020mar10e_v2.png'
 fn_obj = 'seattle-projection-results_v4e.obj'
+fn_bl  = 'seattle-projection-baseline_v4e.obj'
 
 # Don't need this if we're not running
 if do_run:
@@ -49,6 +50,9 @@ if do_run:
     for key in reskeys:
         for s,sim in enumerate(finished_sims):
             both[key][:,s] = sim.results[key]
+
+    if do_save:
+        sc.saveobj(fn_bl, both)
 
     best = {}
     low = {}
