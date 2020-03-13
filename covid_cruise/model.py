@@ -191,8 +191,10 @@ class Sim(cova.Sim):
                                     target_person.susceptible = False
                                     target_person.exposed = True
                                     target_person.date_exposed = t
-                                    incub_dist = cova.sample(target_person.pars['incub'])
-                                    dur_dist = cova.sample(target_person.pars['dur'])
+                                    incub_pars = dict(dist='normal_int', par1=target_person.pars['incub'], par2=target_person.pars['incub_std'])
+                                    dur_pars   = dict(dist='normal_int', par1=target_person.pars['dur'],   par2=target_person.pars['dur_std'])
+                                    incub_dist = cova.sample(**incub_pars)
+                                    dur_dist   = cova.sample(**dur_pars)
 
                                     target_person.date_infectious = t + incub_dist
                                     target_person.date_recovered = target_person.date_infectious + dur_dist
