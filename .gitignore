@@ -1,8 +1,7 @@
 # Custom
-covid_seattle/capacity_analysis/results_2020mar11/
-covid_seattle/capacity_analysis/results_2020mar12/
-covid_seattle/school_analysis/results_2020mar08/
-covid_seattle/seattle_analysis/results_2020mar10/
+covid_seattle/capacity_analysis
+covid_seattle/school_analysis
+covid_seattle/seattle_analysis
 presentations/
 scripts/early_results/
 
