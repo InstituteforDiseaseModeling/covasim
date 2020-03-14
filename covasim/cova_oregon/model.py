@@ -22,16 +22,16 @@ to_plot = sc.odict({
             'cum_exposed': 'Cumulative infections',
             'cum_deaths': 'Cumulative deaths',
             'cum_recoveries':'Cumulative recoveries',
-            'n_susceptible': 'Number susceptible',
-            'n_infectious': 'Number of active infections',
-            # 'cum_diagnosed': 'Number diagnosed',
+            # 'n_susceptible': 'Number susceptible',
+            # 'n_infectious': 'Number of active infections',
+            'cum_diagnosed': 'Number diagnosed',
         }),
         'Daily counts': sc.odict({
             'infections': 'New infections',
             'deaths': 'New deaths',
             'recoveries': 'New recoveries',
-            # 'tests': 'Number of tests',
-            # 'diagnoses': 'New diagnoses',
+            'diagnoses': 'New diagnoses',
+            'tests': 'Number of tests',
         })
     })
 
@@ -47,7 +47,7 @@ class Person(cova.Person):
         super().__init__(pars) # Set parameters
         self.uid  = str(sc.uuid()) # Unique identifier for this person
         self.age  = float(age) # Age of the person (in years)
-        self.sex  = sex # Female (0) or male (1)
+        self.sex  = int(sex) # Female (0) or male (1)
 
         # Define state
         self.alive       = True
@@ -120,8 +120,12 @@ class Sim(cova.Sim):
             print(f'Creating {self["n"]} people...')
 
         self.people = {} # Dictionary for storing the people -- use plain dict since faster
+
         for p in range(int(self['n'])): # Loop over each person
-            age,sex = cova_pars.get_age_sex(use_data=self['usepopdata'])
+            if self['usepopdata']:
+                age,sex = -1, -1 # These get overwritten later
+            else:
+                age,sex = cova_pars.get_age_sex(use_data=False)
             person = Person(self.pars, age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
@@ -139,17 +143,15 @@ class Sim(cova.Sim):
             person.date_infectious = 0
 
         # Make the contact matrix
-        self.contact_keys = self['contacts'].keys()
         if not self['usepopdata']:
             if verbose>=2:
                 print(f'Creating contact matrix without data...')
             for p in range(self['n']):
                 person = self.get_person(p)
-                total_contacts = sum([val for val in person['contacts'].values()])
-                person.n_contacts = cova.pt(total_contacts) # Draw the number of Poisson contacts for this person
-                person.contact_inds = {key:[] for key in self.contact_keys} # Initialize
-                person.contact_inds['H'] = cova.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
+                person.n_contacts = cova.pt(person['contacts']) # Draw the number of Poisson contacts for this person
+                person.contact_inds = cova.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
         else:
+            self.contact_keys = self['contacts_pop'].keys()
             if verbose>=2:
                 print(f'Creating contact matrix with data...')
             import synthpops as sp
@@ -157,9 +159,7 @@ class Sim(cova.Sim):
             popdict = sp.make_contacts(popdict, self['contacts'], use_social_layers=True)
             popdict = sc.odict(popdict)
             for p,uid,entry in popdict.enumitems():
-                # print(p, uid, entry)
                 person = self.get_person(p)
-                person.uid = uid
                 person.age = entry['age']
                 person.sex = entry['sex']
                 person.contact_inds = entry['contacts']
@@ -224,7 +224,7 @@ class Sim(cova.Sim):
             verbose = self['verbose']
         self.init_results()
         self.init_people() # Actually create the people
-		daily_tests = self.data['new_tests'] # Number of tests each day, from the data
+        daily_tests = self.data['new_tests'] # Number of tests each day, from the data
 
         # Main simulation loop
         for t in range(self.npts):
@@ -280,19 +280,27 @@ class Sim(cova.Sim):
                         self.results['recoveries'][t] += 1
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        for ckey in self.contact_keys:
-                            for contact_ind in person.contact_inds[ckey]:
-                                exposure = cova.bt(self['beta']*self['beta_pop'][ckey]) # Check for exposure per person
+                        if not self['usepopdata']: # TODO: refactor!
+                            for contact_ind in person.contact_inds:
+                                exposure = cova.bt(self['beta']) # Check for exposure per person
                                 if exposure:
-                                    if self['usepopdata']:
-                                        target_person = self.people[contact_ind]
-                                    else:
-                                        target_person = self.get_person(contact_ind)
+                                    target_person = self.get_person(contact_ind) # Stored by integer
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         self.results['infections'][t] += 1
                                         self.infect_person(source_person=person, target_person=target_person, t=t)
                                         if verbose>=2:
                                             print(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
+                        else:
+                            for ckey in self.contact_keys:
+                                for contact_ind in person.contact_inds[ckey]:
+                                    exposure = cova.bt(self['beta']*self['beta_pop'][ckey]) # Check for exposure per person
+                                    if exposure:
+                                        target_person = self.people[contact_ind] # Stored by UID
+                                        if target_person.susceptible: # Skip people who are not susceptible
+                                            self.results['infections'][t] += 1
+                                            self.infect_person(source_person=person, target_person=target_person, t=t)
+                                            if verbose>=2:
+                                                print(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
 
                 # Count people who recovered
                 if person.recovered:

@@ -24,12 +24,13 @@ def make_pars():
     pars['n_days']     = 60 # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 2 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
-    pars['usepopdata'] = 1 # Whether or not to load actual population data
+    pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['beta']           = 0.01 # Beta per contact; absolute
-    pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.5} # Per-population beta weights; relative
-    pars['contacts']       = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 7.0} # default flu-like weights # Number of contacts per person per day, estimated
+    pars['beta']           = 0.015 # Beta per contact; absolute
+    pars['contacts']       = 20 # Beta per contact; absolute
+    pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.2} # Per-population beta weights; relative
+    pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
     pars['incub']          = 5.0 # Using Mike's Snohomish number
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
     pars['dur']            = 8 # Using Mike's Snohomish number
@@ -67,7 +68,7 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, use_data=True):
 def load_data(filename=None):
     ''' Load data for comparing to the model output '''
 
-    default_datafile = 'reported_infections.xlsx'
+    default_datafile = 'oregon-data.xlsx'
 
     # Handle default filename
     if filename is None:
@@ -78,7 +79,7 @@ def load_data(filename=None):
     raw_data = pd.read_excel(filename)
 
     # Confirm data integrity and simplify
-    cols = ['day', 'date', 'new_tests', 'new_positives', 'confirmed_crew', 'confirmed_guests', 'evacuated', 'evacuated_positives']
+    cols = ['day', 'date', 'new_tests', 'new_positives']
     data = pd.DataFrame()
     for col in cols:
         assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
