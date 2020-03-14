@@ -13,19 +13,19 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['scale']      = 100 # Factor by which to scale results ## 100
+    pars['scale']      = 1 # Factor by which to scale results ## 100
 
-    pars['n']          = 35000 # Number ultimately susceptible to CoV
-    pars['n_infected'] = 20 # Asked for 1000 in Seattle's population # 550
+    pars['n']          = 5000 # Number ultimately susceptible to CoV
+    pars['n_infected'] = 10 # Asked for 1000 in Seattle's population # 550
     pars['day_0']      = 0 #datetime(2020, 2, 10) # Start day of the epidemic 3/5
-    pars['n_days']     = 60 # 75 #(datetime(2020, 4, 28)-pars['day_0']).days # How many days to simulate Apr/30 # 54
+    pars['n_days']     = 40 # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
-    pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
+    pars['verbose']    = 2 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['beta']           = 0.01 # Beta per contact
-    pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.5} # Per-population beta weights
+    pars['beta']           = 0.01 # Beta per contact; absolute
+    pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.5} # Per-population beta weights; relative
     pars['contacts']       = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 7.0} # default flu-like weights # Number of contacts per person per day, estimated
     pars['incub']          = 5.0 # Using Mike's Snohomish number
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
@@ -39,7 +39,7 @@ def make_pars():
 
     # Events
     pars['interv_days'] = [30, 44]  # Day on which interventions started/stopped
-    pars['interv_effs'] = [0.9, 10] # Change in transmissibility
+    pars['interv_effs'] = [0.1, 10] # Change in transmissibility
 
     return pars
 
