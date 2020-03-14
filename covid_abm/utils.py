@@ -31,16 +31,27 @@ def sample(dist=None, par1=None, par2=None, size=None):
 
     '''
 
+    choices = [
+        'uniform',
+        'normal',
+        'lognormal',
+        'normal_pos',
+        'normal_int',
+        'lognormal_int',
+        'neg_binomial'
+        ]
+
     # TODO: refactor using a dict mapping if possible
     if   dist == 'uniform':       samples = np.random.uniform(low=par1, high=par2, size=size)
     elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
+    elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
+    elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size)))
     elif dist == 'lognormal':     samples = np.random.lognormal(mean=par1, sigma=par2, size=size)
-    elif dist == 'normal_pos':    samples = np.maximum(0, np.random.normal(loc=par1, scale=par2, size=size))
-    elif dist == 'normal_int':    samples = np.maximum(0, np.round(np.random.normal(loc=par1, scale=par2, size=size)))
-    elif dist == 'lognormal_int': samples = np.maximum(0, np.round(np.random.lognormal(mean=par1, sigma=par2, size=size)))
+    elif dist == 'lognormal_int': samples = np.round(np.random.lognormal(mean=par1, sigma=par2, size=size))
     elif dist == 'neg_binomial':  samples = np.random.negative_binomial(n=par1, p=par2, size=size)
     else:
-        errormsg = f'The selected distribution "{dist}" is not implemented'
+        choicestr = '\n'.join(choices)
+        errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {choicestr}'
         raise NotImplementedError(errormsg)
 
     return samples
