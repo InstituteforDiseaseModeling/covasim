@@ -57,9 +57,9 @@ class Sim(cova.Sim):
 
     def __init__(self, pars=None, datafile=None):
         if pars is None:
-            pars = cruise_pars.make_pars()
+            pars = webapp_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
-        self.data = None # cov_pars.load_data(datafile)
+        self.data = None # webapp_pars.load_data(datafile)
         self.set_seed(self['seed'])
         self.init_results()
         self.init_people()
@@ -103,7 +103,7 @@ class Sim(cova.Sim):
 
         self.people = {} # Dictionary for storing the people -- use plain dict since faster
         for p in range(int(self['n'])): # Loop over each person
-            age,sex = cov_pars.get_age_sex(use_data=self['usepopdata'])
+            age,sex = webapp_pars.get_age_sex(use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
@@ -152,17 +152,17 @@ class Sim(cova.Sim):
 
         incub_pars = dict(dist='normal_int', par1=target_person.pars['incub'],     par2=target_person.pars['incub_std'])
         dur_pars   = dict(dist='normal_int', par1=target_person.pars['dur'],       par2=target_person.pars['dur_std'])
-		death_pars = dict(dist='normal_int', par1=target_person.pars['timetodie'], par2=target_person.pars['timetodie_std'])
+        death_pars = dict(dist='normal_int', par1=target_person.pars['timetodie'], par2=target_person.pars['timetodie_std'])
 
-		incub_dist = cova.sample(**incub_pars)
+        incub_dist = cova.sample(**incub_pars)
         target_person.date_infectious = t + incub_dist
 
         # Program them to either die or recover
-        if cov_ut.bt(target_person.pars['cfr']):
-			death_dist = cova.sample(**death_pars)
+        if cova.bt(target_person.pars['cfr']):
+            death_dist = cova.sample(**death_pars)
             target_person.date_died = t + death_dist
         else:
-			dur_dist = cova.sample(**dur_pars)
+            dur_dist = cova.sample(**dur_pars)
             target_person.date_recovered = target_person.date_infectious + dur_dist
 
         self.results['transtree'][target_person.uid] = {'from':source_person.uid, 'date':t}
