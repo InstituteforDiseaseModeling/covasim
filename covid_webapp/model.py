@@ -15,7 +15,25 @@ from . import parameters as webapp_pars
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['Person', 'Sim']
+__all__ = ['to_plot', 'Person', 'Sim']
+
+to_plot = sc.odict({
+        'Total counts': sc.odict({
+            'cum_exposed': 'Cumulative infections',
+            'cum_deaths': 'Cumulative deaths',
+            'cum_recoveries':'Cumulative recoveries',
+            'n_susceptible': 'Number susceptible',
+            'n_infectious': 'Number of active infections',
+            # 'cum_diagnosed': 'Number diagnosed',
+        }),
+        'Daily counts': sc.odict({
+            'infections': 'New infections',
+            'deaths': 'New deaths',
+            'recoveries': 'New recoveries',
+            # 'tests': 'Number of tests',
+            # 'diagnoses': 'New diagnoses',
+        })
+    })
 
 
 
@@ -422,24 +440,3 @@ class Sim(cova.Sim):
     def plot_people(self):
         ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
         raise NotImplementedError
-
-
-to_plot = sc.odict({
-        'Total counts': sc.odict({
-            'cum_exposed': 'Cumulative infections',
-            'cum_deaths': 'Cumulative deaths',
-            'cum_recoveries':'Cumulative recoveries',
-            'n_susceptible': 'Number susceptible',
-            'n_infectious': 'Number of active infections',
-            # 'cum_diagnosed': 'Number diagnosed',
-        }),
-        'Daily counts': sc.odict({
-            'infections': 'New infections',
-            'deaths': 'New deaths',
-            'recoveries': 'New recoveries',
-            # 'tests': 'Number of tests',
-            # 'diagnoses': 'New diagnoses',
-        })
-    })
-
-

@@ -1,6 +1,5 @@
-from covid_abm.version import *
-from covid_abm.utils import *
-from covid_abm.poisson_stats import *
+from covid_abm import __version__, __versiondate__ # These are ignored by star imports
+from covid_abm import *
 from .parameters import *
 from .model import *
 
