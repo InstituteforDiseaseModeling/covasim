@@ -24,8 +24,9 @@ def make_pars():
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['r0']             = 2.0 # Updated to match Mike's distributions
-    pars['contacts']       = 20 # Number of contacts per person per day, estimated
+    pars['beta']           = 0.01 # Beta per contact
+    pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.5} # Per-population beta weights
+    pars['contacts']       = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 7.0} # default flu-like weights # Number of contacts per person per day, estimated
     pars['incub']          = 5.0 # Using Mike's Snohomish number
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
     pars['dur']            = 8 # Using Mike's Snohomish number
