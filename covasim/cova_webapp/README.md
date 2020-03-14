@@ -27,9 +27,9 @@ You must have nginx (`sudo apt install nginx`) and gunicorn (`pip install gunico
 
 ### Set up nginx
 
-1. Copy `example_nginx_config` to e.g. `/etc/nginx/sites-enabled/covid` (can change filename if desired)
+1. Copy `example_nginx_config` to e.g. `/etc/nginx/sites-enabled/covasim` (can change filename if desired)
 2. Edit the copied file to specify
-    - The hostname/URL for the site e.g. `voi.idmod.org`
+    - The hostname/URL for the site e.g. `covasim.mydomain.com`
     - The full path to the directory containing `index.html` on the system running `nginx`
     - Change the port in `proxy_pass` line if desired - it must match the port in `launch_gunicorn`
 3. Reload or restart `nginx` e.g. `sudo service nginx reload`
@@ -41,7 +41,7 @@ server {
     listen 8188;
     server_name localhost;
     location / {
-        root /home/my_username/covid_abm/covid_webapp;
+        root /home/my_username/covasim/covasim/cova_webapp;
     }
     location /api {
         proxy_pass http://127.0.0.1:8097/;
@@ -56,14 +56,14 @@ server {
 
 For example:
 ```script
-cd covid_abm/covid_webapp
-screen -S covid_app
+cd covasim/covasim/cova_webapp
+screen -S cova_app
 ./launch_gunicorn
 <Ctrl+D>
 
 ...
 
-screen -R covid_app
+screen -R cova_app
 ```
 
 Note that for local development, you can add the `--reload` flag to the `gunicorn` command to automatically reload the site. This can be helpful if using the `nginx+gunicorn` setup for local development.
@@ -79,13 +79,13 @@ docker build .
 This will create the docker image. You can name it using e.g.
 
 ```
-docker build -t covid .
+docker build -t covasim .
 ```
 
 To run the container, simply do
 
 ```
-docker run -p 127.0.0.1:8001:80 covid:latest
+docker run -p 127.0.0.1:8001:80 covasim:latest
 ```
 
 The `-p` command directs the external system port 8001 to port 80 within the container. This redirect could be written without the IP to allow external access e.g. `-p 80:80` to have the machine redirect HTTP requests to the container. Replace `covid:latest` with the name of the container.
