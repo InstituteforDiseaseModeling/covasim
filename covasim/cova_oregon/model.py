@@ -242,16 +242,16 @@ class Sim(cova.Sim):
             # Update each person
             for person in self.people.values():
 
-                # Count susceptibles
-                if person.susceptible:
-                    self.results['n_susceptible'][t] += 1
-                    continue # Don't bother with the rest of the loop
-
-                # Handle testing probability
+                # Handle testing probability -- # TODO: refactor to only assign this value once when they become infected
                 if person.infectious:
                     test_probs[person.uid] = self['symptomatic'] # They're infectious: high probability of testing
                 else:
                     test_probs[person.uid] = 1.0
+
+                # Count susceptibles
+                if person.susceptible:
+                    self.results['n_susceptible'][t] += 1
+                    continue # Don't bother with the rest of the loop
 
                 # If exposed, check if the person becomes infectious
                 if person.exposed:
@@ -311,11 +311,11 @@ class Sim(cova.Sim):
                 n_tests = daily_tests.iloc[t] # Number of tests for this day
                 if n_tests and not pl.isnan(n_tests): # There are tests this day
                     self.results['tests'][t] = n_tests # Store the number of tests
-                    test_probs = pl.array(list(test_probs.values()))
-                    test_probs /= test_probs.sum()
-                    test_inds = cova.choose_people_weighted(probs=test_probs, n=n_tests)
+                    test_probs_arr = pl.array(list(test_probs.values()))
+                    test_probs_arr /= test_probs_arr.sum()
+                    test_inds = cova.choose_people_weighted(probs=test_probs_arr, n=n_tests)
                     for test_ind in test_inds:
-                        tested_person = self.people[test_ind]
+                        tested_person = self.get_person(test_ind)
                         if tested_person.infectious and cova.bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
@@ -452,7 +452,7 @@ class Sim(cova.Sim):
             cova.fixaxis(self)
             sc.commaticks()
             # pl.ylabel('Count')
-            pl.xlabel('Days')
+            pl.xlabel(f'Days since {sc.getdate(self["day_0"])}')
             pl.title(title)
 
         # Ensure the figure actually renders or saves
