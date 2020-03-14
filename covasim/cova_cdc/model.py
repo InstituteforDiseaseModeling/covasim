@@ -10,7 +10,7 @@ Version: 2020mar13
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
-import covid_abm as cova
+import covasim.cova_base as cova
 from . import parameters as cov_pars
 
 
