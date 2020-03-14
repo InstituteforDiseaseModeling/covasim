@@ -6,7 +6,7 @@ import sciris as sc
 
 print('Importing...')
 sc.tic()
-import covasim.cova_cdc as cova
+import covasim.cova_oregon as cova
 sc.toc()
 
 do_plot = 1

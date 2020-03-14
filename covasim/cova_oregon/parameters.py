@@ -2,10 +2,13 @@
 Set the parameters for COVID-ABM.
 '''
 
+import os
 import pylab as pl
+import pandas as pd
+from datetime import datetime
 
 
-__all__ = ['make_pars', 'get_age_sex']
+__all__ = ['make_pars', 'get_age_sex', 'load_data']
 
 
 def make_pars():
@@ -16,8 +19,8 @@ def make_pars():
     pars['scale']      = 1 # Factor by which to scale results ## 100
 
     pars['n']          = 5000 # Number ultimately susceptible to CoV
-    pars['n_infected'] = 10 # Asked for 1000 in Seattle's population # 550
-    pars['day_0']      = 0 #datetime(2020, 2, 10) # Start day of the epidemic 3/5
+    pars['n_infected'] = 1 # Asked for 1000 in Seattle's population # 550
+    pars['day_0']      = datetime(2020, 2, 22)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
     pars['n_days']     = 60 # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 2 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
@@ -32,7 +35,7 @@ def make_pars():
     pars['dur']            = 8 # Using Mike's Snohomish number
     pars['dur_std']        = 2 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
-    pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
+    pars['symptomatic']    = 100 # Increased probability of testing someone symptomatic, estimated
     pars['cfr']            = 0.02 # Case fatality rate
     pars['timetodie']      = 22 # Days until death
     pars['timetodie_std']  = 2 # STD
@@ -59,6 +62,29 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, use_data=True):
         age = pl.normal(age_mean, age_std) # Define age distribution for the crew and guests
         age = pl.median([min_age, age, max_age]) # Normalize
     return age, sex
+
+
+def load_data(filename=None):
+    ''' Load data for comparing to the model output '''
+
+    default_datafile = 'reported_infections.xlsx'
+
+    # Handle default filename
+    if filename is None:
+        cwd = os.path.abspath(os.path.dirname(__file__))
+        filename = os.path.join(cwd, default_datafile)
+
+    # Load data
+    raw_data = pd.read_excel(filename)
+
+    # Confirm data integrity and simplify
+    cols = ['day', 'date', 'new_tests', 'new_positives', 'confirmed_crew', 'confirmed_guests', 'evacuated', 'evacuated_positives']
+    data = pd.DataFrame()
+    for col in cols:
+        assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
+    data = raw_data[cols]
+
+    return data
 
 
 
