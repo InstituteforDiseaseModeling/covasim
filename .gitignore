@@ -1,9 +1,8 @@
 # Custom
-covid_seattle/capacity_analysis
-covid_seattle/school_analysis
-covid_seattle/seattle_analysis
-presentations/
-scripts/early_results/
+covasim/cova_seattle/capacity_analysis
+covasim/cova_seattle/school_analysis
+covasim/cova_seattle/seattle_analysis
+results/
 
 
 # Byte-compiled / optimized / DLL files
