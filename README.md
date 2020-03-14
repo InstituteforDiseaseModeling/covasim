@@ -33,6 +33,11 @@ The package contains multiple different flavors of COVASim. Each flavor has its 
 More information is available in the `README.md` in each folder (coming soon).
 
 
-## That's great, but I want to know more
+### Oh god, why is there so much duplication?
+
+Because if we get a new request from the CDC, we don't want to break Seattle. Consistency and flexibility is more important than textbook-perfect software architecture here. We'll consider combining later.
+
+
+### I want to know more
 
 Totally reasonable request. We are still working on the documentation.
