@@ -8,8 +8,8 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
-import covid_abm as cova
-from . import parameters as seattle_pars
+import covasim.cova_base as cova
+from . import parameters as cova_pars
 
 
 # Specify all externally visible functions this file defines
@@ -73,9 +73,9 @@ class Sim(cova.Sim):
 
     def __init__(self, pars=None, datafile=None):
         if pars is None:
-            pars = seattle_pars.make_pars()
+            pars = cova_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
-        self.data = None # seattle_pars.load_data(datafile)
+        self.data = None # cova_pars.load_data(datafile)
         self.set_seed(self['seed'])
         self.init_results()
         self.init_people()
@@ -119,7 +119,7 @@ class Sim(cova.Sim):
 
         self.people = {} # Dictionary for storing the people -- use plain dict since faster
         for p in range(int(self['n'])): # Loop over each person
-            age,sex = seattle_pars.get_age_sex(use_data=self['usepopdata'])
+            age,sex = cova_pars.get_age_sex(use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
