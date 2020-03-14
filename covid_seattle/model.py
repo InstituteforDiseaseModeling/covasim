@@ -13,7 +13,26 @@ from . import parameters as seattle_pars
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['Person', 'Sim']
+__all__ = ['to_plot', 'Person', 'Sim']
+
+to_plot = sc.odict({
+        'Total counts': sc.odict({
+            'cum_exposed': 'Cumulative infections',
+            'cum_deaths': 'Cumulative deaths',
+            'cum_recoveries':'Cumulative recoveries',
+            'n_susceptible': 'Number susceptible',
+            'n_infectious': 'Number of active infections',
+            # 'cum_diagnosed': 'Number diagnosed',
+        }),
+        'Daily counts': sc.odict({
+            'infections': 'New infections',
+            'deaths': 'New deaths',
+            'recoveries': 'New recoveries',
+            # 'tests': 'Number of tests',
+            # 'diagnoses': 'New diagnoses',
+        })
+    })
+
 
 
 #%% Define classes
@@ -419,29 +438,5 @@ class Sim(cova.Sim):
     def plot_people(self):
         ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
         raise NotImplementedError
-
-
-def single_run(sim):
-    ''' Convenience function to perform a single simulation run '''
-    sim.run()
-    return sim
-
-
-def multi_run(orig_sim, n=4, noise=0.0, verbose=None):
-    ''' Ditto, for multiple runs '''
-
-    # Copy the simulations
-    sims = []
-    for i in range(n):
-        new_sim = sc.dcp(orig_sim)
-        new_sim['seed'] += i # Reset the seed, otherwise no point!
-        new_sim.set_seed(new_sim['seed'])
-        new_sim['r_contact'] *= 1+noise*pl.randn()
-        sims.append(new_sim)
-
-    finished_sims = sc.parallelize(single_run, iterarg=sims)
-
-    return finished_sims
-
 
 

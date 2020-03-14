@@ -159,36 +159,62 @@ class Sim(ParsObj):
         raise NotImplementedError
 
 
-def single_run(sim):
-    ''' Convenience function to perform a single simulation run '''
-    sim.run()
-    return sim
+def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, **kwargs):
+    '''
+    Convenience function to perform a single simulation run. Mostly used for
+    parallelization, but can also be used directly:
+        import covid_abm
+        sim = covid_abm.single_run() # Create and run a default simulation
+    '''
+    if sim is None:
+        new_sim = Sim(**kwargs)
+    else:
+        new_sim = sc.dcp(sim) # To avoid overwriting it; otherwise, use
+
+    noisefactor = 1 + noise*np.maximum(0, np.random.normal()) # Optionally add noise
+    new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
+    new_sim.set_seed(new_sim['seed'])
+    new_sim[noisepar] *= noisefactor
+    new_sim.run(verbose=verbose)
+
+    return new_sim
 
 
-def multi_run(orig_sim, n=4, verbose=None):
-    ''' Ditto, for multiple runs '''
+def multi_run(sim=None, n=4, noise=0.0, noisepar=None, verbose=None, combine=False, **kwargs):
+    '''
+    For running multiple runs in parallel. Example:
+        import covid_seattle
+        sim = covid_seattle.Sim()
+        sims = covid_seattle.multi_run(sim, n=6, noise=0.2)
+    '''
+    if sim is None:
+        sim = Sim(**kwargs)
+
+    # If the noise parameter is not found, guess what it should be
+    if noisepar is None:
+        guesses = ['r_contact', 'r0', 'beta']
+        found = [guess for guess in guesses if guess in sim.pars.keys()]
+        if len(found)!=1:
+            raise KeyError(f'Cound not guess noise parameter since out of {guesses}, {found} were found')
+        else:
+            noisepar = found[0]
 
     # Copy the simulations
-    sims = []
-    for i in range(n):
-        new_sim = sc.dcp(orig_sim)
-        new_sim.pars['seed'] += i # Reset the seed, otherwise no point!
-        new_sim.pars['n'] = int(new_sim.pars['n']/n) # Reduce the population size accordingly
-        sims.append(new_sim)
+    iterkwargs = {'ind':np.arange(n)}
+    kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose}
+    sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
 
-    finished_sims = sc.parallelize(single_run, iterarg=sims)
-
-    output_sim = sc.dcp(finished_sims[0])
-    output_sim.pars['parallelized'] = n # Store how this was parallelized
-    output_sim.pars['n'] *= n # Restore this since used in later calculations -- a bit hacky, it's true
-
-    for sim in finished_sims[1:]: # Skip the first one
-        output_sim.people.update(sim.people)
-        for key,val in sim.results.items():
-            if key != 't':
+    if not combine:
+        output = sims
+    else:
+        print('WARNING: not tested!')
+        output_sim = sc.dcp(sims[0])
+        output_sim.pars['parallelized'] = n # Store how this was parallelized
+        output_sim.pars['n'] *= n # Restore this since used in later calculations -- a bit hacky, it's true
+        for sim in sims[1:]: # Skip the first one
+            output_sim.people.update(sim.people)
+            for key in sim.results_keys:
                 output_sim.results[key] += sim.results[key]
+        output = output_sim
 
-    return output_sim
-
-
-
+    return output
