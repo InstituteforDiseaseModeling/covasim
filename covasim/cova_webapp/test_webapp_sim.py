@@ -6,7 +6,7 @@ import sciris as sc
 
 print('Importing...')
 sc.tic()
-import covid_seattle as covid # Or: import covid_abm as covid
+import covasim.cova_webapp as cova # Or: import covid_abm as covid
 sc.toc()
 
 do_plot = 1
@@ -15,7 +15,7 @@ verbose = 1
 
 print('Making sim...')
 sc.tic()
-sim = covid.Sim()
+sim = cova.Sim()
 sim.set_seed(1)
 
 print('Running...')

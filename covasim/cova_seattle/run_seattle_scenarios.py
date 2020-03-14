@@ -5,12 +5,12 @@ Simple script for running the Covid-19 agent-based model
 import pylab as pl
 import datetime as dt
 import sciris as sc
-import covid_seattle
+import covasim.cova_seattle as cova
 
 sc.heading('Setting up...')
 
 
-pars = covid_seattle.make_pars() # TODO: should be gotten from a sim
+pars = cova.make_pars() # TODO: should be gotten from a sim
 
 sc.tic()
 
@@ -37,9 +37,9 @@ if do_run:
 
     sc.heading('Baseline run')
 
-    orig_sim = covid_seattle.Sim()
+    orig_sim = cova.Sim()
     orig_sim.set_seed(seed)
-    finished_sims = covid_seattle.multi_run(orig_sim, n=n, noise=noise, noisepar=noisepar)
+    finished_sims = cova.multi_run(orig_sim, n=n, noise=noise, noisepar=noisepar)
 
     res0 = finished_sims[0].results
     npts = len(res0[reskeys[0]])
@@ -74,7 +74,7 @@ if do_run:
 
     for scenkey,scenname in scenarios.items():
 
-        scen_sim = covid_seattle.Sim()
+        scen_sim = cova.Sim()
         scen_sim.set_seed(seed)
         if scenkey == '25':
             scen_sim['quarantine'] = 17
@@ -88,7 +88,7 @@ if do_run:
 
         sc.heading(f'Multirun for {scenkey}')
 
-        scen_sims = covid_seattle.multi_run(scen_sim, n=n, noise=noise, noisepar=noisepar)
+        scen_sims = cova.multi_run(scen_sim, n=n, noise=noise, noisepar=noisepar)
 
         sc.heading(f'Processing {scenkey}')
 

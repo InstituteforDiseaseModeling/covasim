@@ -14,7 +14,7 @@
 #
 # To kill, find the PID corresponding to this process, and kill it
 #
-# Version: 2020mar10
+# Version: 2020mar14
 
 run_background=0
 run_sudo=
@@ -30,8 +30,8 @@ done
 
 if [ $run_background -gt 0 ]; then
     echo "Running in background with sudo=$sudo and port=$port"
-    $run_sudo nohup python3 ./covid_app.py $port 0 > voi_app.out &
+    $run_sudo nohup python3 ./cova_app.py $port 0 > voi_app.out &
 else
     echo "Running verbose with sudo=$sudo and port=$port"
-    $run_sudo python3 ./covid_app.py $port 1
+    $run_sudo python3 ./cova_app.py $port 1
 fi

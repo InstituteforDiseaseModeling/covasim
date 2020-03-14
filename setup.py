@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))
-versionpath = os.path.join(cwd, 'covid_abm', 'version.py')
+versionpath = os.path.join(cwd, 'covasim', 'cova_base', 'version.py')
 version = runpy.run_path(versionpath)['__version__']
 
 CLASSIFIERS = [
@@ -19,7 +19,7 @@ CLASSIFIERS = [
 ]
 
 setup(
-    name="covid_abm",
+    name="covasim",
     version=version,
     author="Cliff Kerr, Romesh Abeysuriya, Dina Mistry, Mike Famulare, Daniel Klein",
     author_email="ckerr@idmod.org",
