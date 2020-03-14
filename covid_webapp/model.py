@@ -101,7 +101,7 @@ class Sim(cova.Sim):
             'cum_tested',
             'cum_diagnosed',
             'cum_deaths',
-             'cum_recoveries',]
+            'cum_recoveries',]
         self.results = {}
         for key in self.results_keys:
             self.results[key] = np.zeros(int(self.npts))
