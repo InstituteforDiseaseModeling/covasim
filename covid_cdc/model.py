@@ -153,11 +153,11 @@ class Sim(cova.Sim):
             if verbose>=2:
                 print(f'Creating contact matrix with data...')
             import synthpops as sp
-            popdict = sp.make_popdict(self['n'])
+            popdict = sp.make_popdict(uids=self.uids)
             popdict = sp.make_contacts(popdict, self['contacts'], use_social_layers=True)
             popdict = sc.odict(popdict)
             for p,uid,entry in popdict.enumitems():
-                print(p, uid, entry)
+                # print(p, uid, entry)
                 person = self.get_person(p)
                 person.uid = uid
                 person.age = entry['age']
