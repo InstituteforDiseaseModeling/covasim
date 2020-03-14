@@ -1,6 +1,5 @@
 import covid_abm as cova
 import unittest
-import numpy as np
 
 
 class TestProperties:
