@@ -15,21 +15,22 @@ pars = covid_seattle.make_pars() # TODO: should be gotten from a sim
 sc.tic()
 
 # Whether or not to run!
-do_run = 0
+do_run = 1
 
 # Other options
-do_save = 1
+do_save = 0
 verbose = 0
-n = 12
+n = 4
 xmin = 53 # pars['day_0']
 xmax = xmin+45 # xmin + pars['n_days']
 noise = 0*0.2 # Turn off noise
+noisepar = 'r_contact'
 seed = 1
 reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 
-folder = 'results_2020mar10/'
-fn_fig = folder + 'seattle-covid-projections_2020mar12_update.png'
-fn_obj = folder + 'seattle-projection-results_v4e.obj'
+folder = 'results_2020mar13/'
+fn_fig = folder + 'seattle-covid-projections_2020mar13.png'
+fn_obj = folder + 'seattle-projection-results_v5.obj'
 
 # Don't need this if we're not running
 if do_run:
@@ -38,7 +39,7 @@ if do_run:
 
     orig_sim = covid_seattle.Sim()
     orig_sim.set_seed(seed)
-    finished_sims = covid_seattle.multi_run(orig_sim, n=n, noise=noise)
+    finished_sims = covid_seattle.multi_run(orig_sim, n=n, noise=noise, noisepar=noisepar)
 
     res0 = finished_sims[0].results
     npts = len(res0[reskeys[0]])
@@ -55,9 +56,9 @@ if do_run:
     low = {}
     high = {}
     for key in reskeys:
-        best[key] = pl.median(both[key], axis=1)*orig_sim['scale']
-        low[key] = both[key].min(axis=1)*orig_sim['scale']
-        high[key] = both[key].max(axis=1)*orig_sim['scale']
+        best[key] = pl.median(both[key], axis=1)
+        low[key] = both[key].min(axis=1)
+        high[key] = both[key].max(axis=1)
 
 scenarios = {
     '25': '25% contact reduction',
@@ -87,7 +88,7 @@ if do_run:
 
         sc.heading(f'Multirun for {scenkey}')
 
-        scen_sims = covid_seattle.multi_run(scen_sim, n=n, noise=noise)
+        scen_sims = covid_seattle.multi_run(scen_sim, n=n, noise=noise, noisepar=noisepar)
 
         sc.heading(f'Processing {scenkey}')
 
@@ -101,9 +102,9 @@ if do_run:
         scen_low = {}
         scen_high = {}
         for key in reskeys:
-            scen_best[key] = pl.median(scenboth[key], axis=1)*orig_sim['scale']
-            scen_low[key] = scenboth[key].min(axis=1)*orig_sim['scale']
-            scen_high[key] = scenboth[key].max(axis=1)*orig_sim['scale']
+            scen_best[key] = pl.median(scenboth[key], axis=1)
+            scen_low[key] = scenboth[key].min(axis=1)
+            scen_high[key] = scenboth[key].max(axis=1)
 
 
 
@@ -129,22 +130,22 @@ pl.rcParams['font.family'] = 'Proxima Nova'
 # Create the tvec based on the results
 tvec = xmin+pl.arange(len(final['Baseline']['best'][reskeys[0]]))
 
-for key, data in final.items():
-    print(key)
-    if key in scenarios:
-        scenname = scenarios[key]
-    else:
-        scenname = 'Business as usual'
 
 
-    #%% Plotting
 
+#%% Plotting
+for k,key in enumerate(reskeys):
+    pl.subplot(len(reskeys),1,k+1)
 
-    #pl.subplots_adjust(**axis_args)
-    #pl.rcParams['font.size'] = font_size
+    for datakey, data in final.items():
+        print(datakey)
+        if datakey in scenarios:
+            scenname = scenarios[datakey]
+        else:
+            scenname = 'Business as usual'
 
-    for k,key in enumerate(reskeys):
-        pl.subplot(len(reskeys),1,k+1)
+        #pl.subplots_adjust(**axis_args)
+        #pl.rcParams['font.size'] = font_size
 
         #pl.fill_between(tvec, low[key], high[key], **fill_args)
         ###pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
@@ -155,15 +156,12 @@ for key, data in final.items():
             #pl.plot(tvec, scen_best['infections'], label=scenname, **plot_args)
         pl.plot(tvec, data['best'][key], label=scenname, **plot_args)
 
-        '''
-
-        cov_ut.fixaxis(sim)
-        if k == 0:
-            pl.ylabel('Cumulative infections')
-        else:
-            pl.ylabel('Cumulative deaths')
-        pl.xlabel('Days since March 5th')
-        '''
+        # cov_ut.fixaxis(sim)
+        # if k == 0:
+        #     pl.ylabel('Cumulative infections')
+        # else:
+        #     pl.ylabel('Cumulative deaths')
+        # pl.xlabel('Days since March 5th')
 
         #if 'deaths' in key:
         #    print('DEATHS', xmax, pars['n_days'])
@@ -206,8 +204,7 @@ for key, data in final.items():
         sc.commaticks(axis='y')
 
 if do_save:
-    print(f'seattle_projections_v3.png')
-    pl.savefig(f'seattle_projections_v3.png')
+    pl.savefig(fn_fig)
 
 
 #%% Print statistics
