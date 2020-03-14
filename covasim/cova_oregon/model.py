@@ -31,8 +31,8 @@ to_plot = sc.odict({
             'infections': 'New infections',
             'deaths': 'New deaths',
             'recoveries': 'New recoveries',
-            'diagnoses': 'New diagnoses',
             'tests': 'Number of tests',
+            'diagnoses': 'New diagnoses',
         })
     })
 
