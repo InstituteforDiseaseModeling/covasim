@@ -138,6 +138,13 @@ class Sim(cova.Sim):
             person.date_exposed = 0
             person.date_infectious = 0
 
+        # Make the contact matrix
+        for p in range(self['n']):
+            person = self.get_person(p)
+            person.n_contacts = cov_ut.pt(person['contacts']) # Draw the number of Poisson contacts for this person
+            person.contact_inds = cov_ut.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random
+            # self.people[i] = person # Not sure why this is necessary?!
+
         return
 
 
@@ -254,10 +261,8 @@ class Sim(cova.Sim):
                         self.results['recoveries'][t] += 1
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        n_contacts = cova.pt(person['contacts']) # Draw the number of Poisson contacts for this person
-                        contact_inds = cova.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
-                        for contact_ind in contact_inds:
-                            exposure = cova.bt(self['r0']/self['dur']/self['contacts']) # Check for exposure per person
+                        for contact_ind in person.contact_inds:
+                            exposure = cov_ut.bt(self['r_contact']) # Check for exposure per person
                             if exposure:
                                 target_person = self.get_person(contact_ind)
                                 if target_person.susceptible: # Skip people who are not susceptible

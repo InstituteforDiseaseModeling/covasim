@@ -38,9 +38,8 @@ def make_pars():
     pars['timetodie_std']  = 2 # STD
 
     # Events
-    pars['intervene']        = 30  # Day on which intervention took effect
-    pars['unintervene']      = 44  # Day on which intervention stopped
-    pars['intervention_eff'] = 0.9 # Change in transmissibility due to intervention
+    pars['interv_days'] = [30, 44]  # Day on which interventions started/stopped
+    pars['interv_effs'] = [0.9, 10] # Change in transmissibility
 
     return pars
 
