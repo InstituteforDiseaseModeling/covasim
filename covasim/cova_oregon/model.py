@@ -22,9 +22,10 @@ to_plot = sc.odict({
             'cum_exposed': 'Cumulative infections',
             'cum_deaths': 'Cumulative deaths',
             'cum_recoveries':'Cumulative recoveries',
+            'cum_tested': 'Cumulative tested',
             # 'n_susceptible': 'Number susceptible',
             # 'n_infectious': 'Number of active infections',
-            'cum_diagnosed': 'Number diagnosed',
+            'cum_diagnosed': 'Cumulative diagnosed',
         }),
         'Daily counts': sc.odict({
             'infections': 'New infections',
@@ -243,7 +244,9 @@ class Sim(cova.Sim):
             for person in self.people.values():
 
                 # Handle testing probability -- # TODO: refactor to only assign this value once when they become infected
-                if person.infectious:
+                if person.diagnosed:
+                    test_probs[person.uid] = 0.0
+                elif person.infectious:
                     test_probs[person.uid] = self['symptomatic'] # They're infectious: high probability of testing
                 else:
                     test_probs[person.uid] = 1.0
@@ -435,6 +438,7 @@ class Sim(cova.Sim):
 
         data_mapping = {
             'cum_diagnosed': pl.cumsum(self.data['new_positives']),
+            'cum_tested':    pl.cumsum(self.data['new_tests']),
             'tests':         self.data['new_tests'],
             'diagnoses':     self.data['new_positives'],
             }
@@ -452,7 +456,7 @@ class Sim(cova.Sim):
             cova.fixaxis(self)
             sc.commaticks()
             # pl.ylabel('Count')
-            pl.xlabel(f'Days since {sc.getdate(self["day_0"])}')
+            pl.xlabel(f'Days since {sc.getdate(self["day_0"], dateformat="%Y-%b-%d")}')
             pl.title(title)
 
         # Ensure the figure actually renders or saves

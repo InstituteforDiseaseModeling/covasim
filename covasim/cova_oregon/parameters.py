@@ -19,15 +19,15 @@ def make_pars():
     pars['scale']      = 1 # Factor by which to scale results ## 100
 
     pars['n']          = 10000 # Number ultimately susceptible to CoV
-    pars['n_infected'] = 1 # Asked for 1000 in Seattle's population # 550
-    pars['day_0']      = datetime(2020, 2, 22)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
-    pars['n_days']     = 60 # How many days to simulate
+    pars['n_infected'] = 3 # Number of seed cases
+    pars['day_0']      = datetime(2020, 2, 21)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
+    pars['n_days']     = 25 # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 2 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['beta']           = 0.03 # Beta per contact; absolute
+    pars['beta']           = 0.015 # Beta per contact; absolute
     pars['contacts']       = 20 # Beta per contact; absolute
     pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.2} # Per-population beta weights; relative
     pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
@@ -36,7 +36,7 @@ def make_pars():
     pars['dur']            = 8 # Using Mike's Snohomish number
     pars['dur_std']        = 2 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
-    pars['symptomatic']    = 1000.0 # Increased probability of testing someone symptomatic, estimated
+    pars['symptomatic']    = 100.0 # Increased probability of testing someone symptomatic, estimated
     pars['cfr']            = 0.02 # Case fatality rate
     pars['timetodie']      = 22 # Days until death
     pars['timetodie_std']  = 2 # STD
