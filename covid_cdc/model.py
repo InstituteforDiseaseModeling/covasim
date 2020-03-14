@@ -154,7 +154,7 @@ class Sim(cova.Sim):
                 print(f'Creating contact matrix with data...')
             import synthpops as sp
             popdict = sp.make_popdict(self['n'])
-            popdict = sp.make_contacts(popdict, self['contacts'])
+            popdict = sp.make_contacts(popdict, self['contacts'], use_social_layers=True)
             popdict = sc.odict(popdict)
             for p,uid,entry in popdict.enumitems():
                 print(p, uid, entry)
