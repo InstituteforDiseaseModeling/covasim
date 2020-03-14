@@ -18,10 +18,10 @@ def make_pars():
     pars['n']          = 5000 # Number ultimately susceptible to CoV
     pars['n_infected'] = 10 # Asked for 1000 in Seattle's population # 550
     pars['day_0']      = 0 #datetime(2020, 2, 10) # Start day of the epidemic 3/5
-    pars['n_days']     = 40 # How many days to simulate
+    pars['n_days']     = 60 # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 2 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
-    pars['usepopdata'] = 0 # Whether or not to load actual population data
+    pars['usepopdata'] = 1 # Whether or not to load actual population data
 
     # Epidemic parameters
     pars['beta']           = 0.01 # Beta per contact; absolute

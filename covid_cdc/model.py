@@ -153,13 +153,16 @@ class Sim(cova.Sim):
             if verbose>=2:
                 print(f'Creating contact matrix with data...')
             import synthpops as sp
-            popdict = sc.odict(sp.make_popdict(self['n']))
+            popdict = sp.make_popdict(self['n'])
+            popdict = sp.make_contacts(popdict, self['contacts'])
+            popdict = sc.odict(popdict)
             for p,uid,entry in popdict.enumitems():
+                print(p, uid, entry)
                 person = self.get_person(p)
                 person.uid = uid
                 person.age = entry['age']
                 person.sex = entry['sex']
-                person.contacts = entry['contacts']
+                person.contact_inds = entry['contacts']
 
         return
 
@@ -281,7 +284,10 @@ class Sim(cova.Sim):
                             for contact_ind in person.contact_inds[ckey]:
                                 exposure = cova.bt(self['beta']*self['beta_pop'][ckey]) # Check for exposure per person
                                 if exposure:
-                                    target_person = self.get_person(contact_ind)
+                                    if self['usepopdata']:
+                                        target_person = self.people[contact_ind]
+                                    else:
+                                        target_person = self.get_person(contact_ind)
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         self.results['infections'][t] += 1
                                         self.infect_person(source_person=person, target_person=target_person, t=t)
@@ -312,7 +318,7 @@ class Sim(cova.Sim):
             if t in self['interv_days']:
                 if verbose>=1:
                     print(f'Implementing intervention/change on day {t}...')
-                ind = sc.findinds(self['interv_days'], t)
+                ind = sc.findinds(self['interv_days'], t)[0]
                 self['beta'] *= self['interv_effs'][ind] # TODO: pop-specific
 
         # Compute cumulative results
