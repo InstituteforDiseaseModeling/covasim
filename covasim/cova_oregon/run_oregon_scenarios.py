@@ -16,6 +16,7 @@ do_run = 1
 
 # Other options
 do_save = 1
+save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
 n = 20
 xmin = 52 # pars['day_0']
@@ -28,8 +29,8 @@ seed = 1
 reskeys = ['cum_exposed', 'n_exposed']
 quantiles = {'low':0.1, 'high':0.9}
 
-version = 'v2'
-folder = 'results_2020mar14'
+version = 'v3'
+folder = 'results_2020mar15'
 fn_fig = f'{folder}/oregon-projections_2020mar14_{version}.png'
 fn_obj = f'{folder}/oregon-projection-2020mar14_{version}.obj'
 
@@ -91,11 +92,12 @@ if do_run:
 
         final[scenkey] = sc.objdict({
             'scenname': scenname,
-            'sims':scen_sims,
             'best':sc.dcp(scen_best),
             'low':sc.dcp(scen_low),
             'high':sc.dcp(scen_high)
             })
+        if save_sims:
+            final['sims'] = scen_sims
 
 # Don't run
 else:

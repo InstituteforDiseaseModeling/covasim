@@ -15,8 +15,9 @@ do_save = 1
 verbose = 1
 just_calib = 1 # Just show the calibration period
 seed = 1 # 1092843
-folder = 'results_2020mar14/'
-fig_fn =  folder + 'oregon-projection-calibration_v1.png'
+folder = 'results_2020mar15'
+version = 'v3'
+fig_fn =  f'{folder}/oregon-projection-calibration_{version}.png'
 
 print('Making sim...')
 sc.tic()

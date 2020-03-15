@@ -464,12 +464,11 @@ class Sim(cova.Sim):
             sc.commaticks()
             pl.title(title)
 
-            # Set xticks as dates
+            # Set xticks as dates # TODO: make more general-purpose!
             ax = pl.gca()
             xmin,xmax = ax.get_xlim()
             ax.set_xticks(pl.arange(xmin, xmax+1, 7))
             xt = ax.get_xticks()
-            print(xt)
             lab = []
             for t in xt:
                 tmp = self['day_0'] + dt.timedelta(days=int(t)) # + pars['day_0']
