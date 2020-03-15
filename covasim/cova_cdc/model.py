@@ -475,12 +475,12 @@ class Sim(cova.Sim):
             # Set xticks as dates # TODO: make more general-purpose!
             ax = pl.gca()
             xmin,xmax = ax.get_xlim()
-            ax.set_xticks(pl.arange(xmin, xmax+1, 7))
+            ax.set_xticks(pl.arange(xmin, xmax+1, 31))
             xt = ax.get_xticks()
             lab = []
             for t in xt:
                 tmp = self['day_0'] + dt.timedelta(days=int(t)) # + pars['day_0']
-                lab.append(tmp.strftime('%B %d'))
+                lab.append(tmp.strftime('%B'))
             ax.set_xticklabels(lab)
 
         # Ensure the figure actually renders or saves
