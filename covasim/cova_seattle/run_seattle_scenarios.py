@@ -1,49 +1,54 @@
 '''
-Seattle social distancing scenarios using the Covid-19 agent-based model
-
-Resulting figure was presented by Govenor Jay Inslee on March 11, 2020
+Simple script for running the Covid-19 agent-based model
 '''
 
 # Standard imports
 import pylab as pl
 import datetime as dt
 import sciris as sc
-import covid_seattle
+import covasim.cova_seattle as cova
 
 sc.heading('Setting up...')
-
-sc.tic()
 
 ## CONFIGURATION
 
 ## Read in configuration.  Better would be to extract from simulation output.
-pars = covid_seattle.make_pars()
 
-do_run = False # Run if True, otherwise load
 
-## Configure saving.  If saving figures or obj, or for loading obj, use these files
-do_save = True
-fn_fig = 'seattle-covid-projections_2020mar10e_v4e.png'
-fn_obj = 'seattle-projection-results_v4e.obj'
+pars = cova.make_pars() # TODO: should be gotten from a sim, perhaps
 
-n = 12 # Number of replicates per configuration
+sc.tic()
+
+# Whether or not to run!
+do_run = 1
+verbose = 0
+
+# Other options
+do_save = 0
+version = 'v5'
+folder = 'results_2020mar15'
+fn_fig = f'{folder}/seattle-projections_2020mar15_{version}.png'
+fn_obj = f'{folder}/seattle-projection_2020mar15_{version}.obj'
+
+noise = 0*0.2 # Turn off noise
+noisepar = 'r_contact'
+n = 4 # Number of replicates per configuration
 seed = 1
 
-# Simulation channels to plot
-reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
-
-verbose = False
 
 # Plotting configuration
-errorbars = False
+reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
 xmin = pars['day_0']
 xmax = xmin + pars['n_days']
+errorbars = False
 fig_args     = {'figsize':(16,12)}
 plot_args    = {'lw':3, 'alpha':0.7}
 scatter_args = {'s':150, 'marker':'s'}
-axis_args    = {'left':0.10, 'bottom':0.1, 'right':0.95, 'top':0.95, 'wspace':0.2, 'hspace':0.25}
+axis_args    = {'left':0.10, 'bottom':0.05, 'right':0.95, 'top':0.90, 'wspace':0.5, 'hspace':0.25}
 fill_args    = {'alpha': 0.3}
 font_size = 18
+
+
 
 ## Setup a scenarios.  Value will appear in legend.
 scenarios = {
@@ -65,11 +70,9 @@ else:
     npts = None
     # Loop over scenarios and run each in turn
     for scenkey,scenname in scenarios.items():
-        # Initialize
-        scen_sim = covid_seattle.Sim()
-        scen_sim.set_seed(seed)
 
-        # Configure, no need to modify Baseline
+        scen_sim = cova.Sim()
+        scen_sim.set_seed(seed)
         if scenkey == '25':
             scen_sim['quarantine'] = 17
             scen_sim['quarantine_eff'] = 0.75
@@ -82,7 +85,8 @@ else:
 
         # Run
         sc.heading(f'Multirun for {scenkey}')
-        scen_sims = covid_seattle.multi_run(scen_sim, n=n)
+
+        scen_sims = cova.multi_run(scen_sim, n=n, noise=noise, noisepar=noisepar)
 
         sc.heading(f'Processing {scenkey}')
 
@@ -104,9 +108,9 @@ else:
         scen_low = {}
         scen_high = {}
         for key in reskeys:
-            scen_best[key] = pl.median(allres[key], axis=1)*scen_sim['scale']
-            scen_low[key] = allres[key].min(axis=1)*scen_sim['scale']
-            scen_high[key] = allres[key].max(axis=1)*scen_sim['scale']
+            scen_best[key] = pl.median(allres[key], axis=1)
+            scen_low[key] = allres[key].min(axis=1)
+            scen_high[key] = allres[key].max(axis=1)
 
         final[scenkey] = sc.objdict({'scenname': scenname, 'best':sc.dcp(scen_best), 'low':sc.dcp(scen_low), 'high':sc.dcp(scen_high)})
 
@@ -116,6 +120,7 @@ sc.heading('Plotting')
 fig = pl.figure(**fig_args)
 pl.subplots_adjust(**axis_args)
 pl.rcParams['font.size'] = font_size
+pl.rcParams['font.family'] = 'Proxima Nova'
 
 # Create the tvec based on the results
 tvec = xmin+pl.arange(len(final['Baseline']['best'][reskeys[0]]))
@@ -135,21 +140,19 @@ for k,key in enumerate(reskeys):
 
         if key == 'cum_exposed':
             sc.setylim()
-            pl.title('Cumulative infections', fontweight='bold')
+            pl.title('Cumulative infections')
             pl.legend()
-            # Add "Intervention" line
             pl.text(xmin+16.5, 12000, 'Intervention', color=interv_col, fontstyle='italic')
+
+            pl.text(xmin-6, 30e3, 'COVID-19 projections, King + Snohomish counties', fontsize=24)
 
         elif key == 'n_exposed':
             sc.setylim()
-            pl.title('Active infections', fontweight='bold')
+            pl.title('Active infections')
 
         pl.grid(True)
 
-        # Plot intervention
-        pl.plot([xmin+16]*2, pl.ylim(), '--', lw=2, c=interv_col)
-        pl.xlabel('Date', fontweight='bold')
-        pl.ylabel('Count', fontweight='bold')
+        pl.plot([xmin+16]*2, pl.ylim(), '--', lw=2, c=interv_col) # Plot intervention
         pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
 
         # Put calendar time on the x-axis
@@ -170,7 +173,7 @@ for k in list(scenarios.keys()):
 
 # Save if requested
 if do_save:
-    pl.savefig(fn_fig, dpi=100)
+    pl.savefig(fn_fig, dpi=150)
     if do_run: # Don't resave loaded data
         sc.saveobj(fn_obj, final)
 

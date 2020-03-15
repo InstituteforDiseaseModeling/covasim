@@ -27,10 +27,10 @@ def make_pars():
     pars['r_contact']      = 0.05 # Probability of infection per contact, estimated
     pars['contacts_guest'] = 30 # Number of contacts per guest per day, estimated
     pars['contacts_crew']  = 30 # Number of contacts per crew member per day
-    pars['incub']          = 4.0 # Incubation period, in days, estimated
+    pars['incub']          = 4.0 # Using Mike's Snohomish number
     pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
-    pars['dur']            = 12 # Duration of infectiousness, from https://www.nejm.org/doi/full/10.1056/NEJMc2001737
-    pars['dur_std']        = 3 # Variance in duration
+    pars['dur']            = 8 # Using Mike's Snohomish number
+    pars['dur_std']        = 2 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
 
@@ -51,7 +51,7 @@ def get_age_sex(is_crew=False, min_age=18, max_age=99, crew_age=35, crew_std=5, 
     Define age-sex distributions. Passenger age distribution based on:
         https://www.nytimes.com/reuters/2020/02/12/world/asia/12reuters-china-health-japan.html
 
-        "About 80% of the passengers were aged 60 or over [=2130], with 215 in their 80s and 11 in the 90s, 
+        "About 80% of the passengers were aged 60 or over [=2130], with 215 in their 80s and 11 in the 90s,
         the English-language Japan Times newspaper reported."
     '''
 

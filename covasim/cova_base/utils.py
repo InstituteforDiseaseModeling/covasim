@@ -8,9 +8,55 @@ import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 
-__all__ = ['set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis']
+__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis']
 
 #%% Define helper functions
+
+def sample(dist=None, par1=None, par2=None, size=None):
+    '''
+    Draw a sample from the distribution specified by the input.
+
+    Args:
+        dist (str): the distribution to sample from
+        par1 (float): the "main" distribution parameter (e.g. mean)
+        par2 (float): the "secondary" distribution parameter (e.g. std)
+        n (int): the number of samples (default=1)
+
+    Returns:
+        A length N array of samples
+
+    Examples:
+        sample() # returns Unif(0,1)
+        sample(dist='normal', par1=3, par2=0.5) # returns Normal(μ=3, σ=0.5)
+
+    '''
+
+    choices = [
+        'uniform',
+        'normal',
+        'lognormal',
+        'normal_pos',
+        'normal_int',
+        'lognormal_int',
+        'neg_binomial'
+        ]
+
+    # TODO: refactor using a dict mapping if possible
+    if   dist == 'uniform':       samples = np.random.uniform(low=par1, high=par2, size=size)
+    elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
+    elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
+    elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size)))
+    elif dist == 'lognormal':     samples = np.random.lognormal(mean=par1, sigma=par2, size=size)
+    elif dist == 'lognormal_int': samples = np.round(np.random.lognormal(mean=par1, sigma=par2, size=size))
+    elif dist == 'neg_binomial':  samples = np.random.negative_binomial(n=par1, p=par2, size=size)
+    else:
+        choicestr = '\n'.join(choices)
+        errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {choicestr}'
+        raise NotImplementedError(errormsg)
+
+    return samples
+
+
 
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
