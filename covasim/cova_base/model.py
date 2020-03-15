@@ -171,9 +171,16 @@ def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, **kwargs
     else:
         new_sim = sc.dcp(sim) # To avoid overwriting it; otherwise, use
 
-    noisefactor = np.maximum(0, 1+noise*np.random.normal()) # Optionally add noise
     new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
     new_sim.set_seed(new_sim['seed'])
+
+    # Handle noise -- normally distributed fractional error
+    noiseval = noise*np.random.normal()
+    if noiseval > 0:
+        noisefactor = 1 + noiseval
+    else:
+        noisefactor = 1/(1-noiseval)
+
     new_sim[noisepar] *= noisefactor
     new_sim.run(verbose=verbose)
 

@@ -10,6 +10,7 @@ Version: 2020mar13
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
+import datetime as dt
 import covasim.cova_base as cova
 from . import parameters as cova_pars
 
@@ -427,7 +428,7 @@ class Sim(cova.Sim):
         if verbose:
             print('Plotting...')
 
-        if fig_args     is None: fig_args     = {'figsize':(26,16)}
+        if fig_args     is None: fig_args     = {'figsize':(16,12)}
         if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7}
         if scatter_args is None: scatter_args = {'s':150, 'marker':'s'}
         if axis_args    is None: axis_args    = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
@@ -461,16 +462,26 @@ class Sim(cova.Sim):
             pl.grid(use_grid)
             cova.fixaxis(self)
             sc.commaticks()
-            # pl.ylabel('Count')
-            pl.xlabel(f'Days since {sc.getdate(self["day_0"], dateformat="%Y-%b-%d")}')
             pl.title(title)
+
+            # Set xticks as dates
+            ax = pl.gca()
+            xmin,xmax = ax.get_xlim()
+            ax.set_xticks(pl.arange(xmin, xmax+1, 7))
+            xt = ax.get_xticks()
+            print(xt)
+            lab = []
+            for t in xt:
+                tmp = self['day_0'] + dt.timedelta(days=int(t)) # + pars['day_0']
+                lab.append(tmp.strftime('%B %d'))
+            ax.set_xticklabels(lab)
 
         # Ensure the figure actually renders or saves
         if do_save:
             if isinstance(do_save, str):
                 filename = do_save # It's a string, assume it's a filename
             else:
-                filename = 'covid_abm_results.png' # Just give it a default name
+                filename = 'covasim_oregon.png' # Just give it a default name
             pl.savefig(filename)
 
         pl.show()

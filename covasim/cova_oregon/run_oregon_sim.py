@@ -4,7 +4,6 @@ Simple script for running the Covid-19 agent-based model
 
 import sciris as sc
 import pylab as pl
-import datetime as dt
 
 print('Importing...')
 sc.tic()
@@ -31,20 +30,5 @@ print('Running...')
 sim.run(verbose=verbose)
 if do_plot:
     fig = sim.plot(do_save=False)
-    fig.set_size_inches((16,12))
-
-    # Set x-axis
-    for ax in fig.axes:
-        xmin,xmax = ax.get_xlim()
-        ax.set_xticks(pl.arange(xmin, xmax+1, 7))
-        xt = ax.get_xticks()
-        print(xt)
-        lab = []
-        for t in xt:
-            tmp = sim['day_0'] + dt.timedelta(days=int(t)) # + pars['day_0']
-            lab.append(tmp.strftime('%B %d'))
-        ax.set_xticklabels(lab)
-        ax.set_xlabel(None)
-        sc.commaticks(axis='y')
-
-    pl.savefig(fig_fn)
+    if do_save:
+        pl.savefig(fig_fn)

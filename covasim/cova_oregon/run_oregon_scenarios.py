@@ -17,16 +17,16 @@ do_run = 1
 # Other options
 do_save = 1
 verbose = 1
-n = 12
+n = 1
 xmin = 52 # pars['day_0']
 xmax = xmin+50 # xmin + pars['n_days']
 interv_day = 24
 closure_len = 14
-noise = 0.25 # Use noise, optionally
+noise = 0.5 # Use noise, optionally
 noisepar = 'beta'
-seed = 1
+seed = 2348
 reskeys = ['cum_exposed', 'n_exposed']
-quantiles = {'low':0.0, 'high':0.9}
+quantiles = {'low':0.1, 'high':0.9}
 
 version = 'v2'
 folder = 'results_2020mar14'
@@ -55,10 +55,10 @@ if do_run:
             scen_sim['interv_effs'] = []
         elif scenkey == 'reopen':
             scen_sim['interv_days'] = [interv_day, interv_day+closure_len] # Close schools for 2 weeks starting Mar. 16, then reopen
-            scen_sim['interv_effs'] = [0.5, 1.6]
+            scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
         elif scenkey == 'closed':
             scen_sim['interv_days'] = [interv_day] # Close schools for 2 weeks starting Mar. 16, then reopen
-            scen_sim['interv_effs'] = [0.5]
+            scen_sim['interv_effs'] = [0.4]
         elif scenkey == 'aggressive':
             scen_sim['interv_days'] = [interv_day] # Close everything
             scen_sim['interv_effs'] = [0.1]
