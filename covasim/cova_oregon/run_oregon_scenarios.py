@@ -9,88 +9,68 @@ import covasim.cova_oregon as cova
 
 sc.heading('Setting up...')
 
-
-pars = cova.make_pars() # TODO: should be gotten from a sim
-
 sc.tic()
 
 # Whether or not to run!
 do_run = 1
 
 # Other options
-do_save = 0
+do_save = 1
 verbose = 0
-n = 4
-xmin = 53 # pars['day_0']
-xmax = xmin+45 # xmin + pars['n_days']
-noise = 0*0.2 # Turn off noise
-noisepar = 'r_contact'
+n = 8
+xmin = 52 # pars['day_0']
+xmax = xmin+50 # xmin + pars['n_days']
+noise = 1*0.1 # Use noise, optionally
+noisepar = 'beta'
 seed = 1
-reskeys = ['cum_exposed', 'n_exposed']#, 'cum_deaths']
+reskeys = ['cum_exposed', 'n_exposed']
 
-folder = 'results_2020mar13/'
-fn_fig = folder + 'seattle-covid-projections_2020mar13.png'
-fn_obj = folder + 'seattle-projection-results_v5.obj'
+quantiles = {'low':0.25, 'high':0.75}
 
-# Don't need this if we're not running
-if do_run:
+folder = 'results_2020mar14/'
+fn_fig = folder + 'oregon-covid-projections_2020mar14.png'
+fn_obj = folder + 'oregon-projection-results_v0.obj'
 
-    sc.heading('Baseline run')
-
-    orig_sim = cova.Sim()
-    orig_sim.set_seed(seed)
-    finished_sims = cova.multi_run(orig_sim, n=n, noise=noise, noisepar=noisepar)
-
-    res0 = finished_sims[0].results
-    npts = len(res0[reskeys[0]])
-    tvec = xmin+res0['t']
-
-    both = {}
-    for key in reskeys:
-        both[key] = pl.zeros((npts, n))
-    for key in reskeys:
-        for s,sim in enumerate(finished_sims):
-            both[key][:,s] = sim.results[key]
-
-    best = {}
-    low = {}
-    high = {}
-    for key in reskeys:
-        best[key] = pl.median(both[key], axis=1)
-        low[key] = both[key].min(axis=1)
-        high[key] = both[key].max(axis=1)
 
 scenarios = {
-    '25': '25% contact reduction',
-    '50': '50% contact reduction',
-    '75': '75% contact reduction',
+    'baseline':   'Business as usual',
+    'reopen':     'Current interventions, schools reopen',
+    'closed':     'Current interventions, schools stay closed',
+    'aggressive': 'Aggressive interventions (business closures)',
 }
 
 # If we're rerunning...
 if do_run:
 
     final = sc.objdict()
-    final['Baseline'] = sc.objdict({'scenname': 'Business as usual', 'best':sc.dcp(best), 'low':sc.dcp(low), 'high':sc.dcp(high)})
 
     for scenkey,scenname in scenarios.items():
 
         scen_sim = cova.Sim()
         scen_sim.set_seed(seed)
-        if scenkey == '25':
-            scen_sim['quarantine'] = 17
-            scen_sim['quarantine_eff'] = 0.75
-        elif scenkey == '50':
-            scen_sim['quarantine'] = 17
-            scen_sim['quarantine_eff'] = 0.50
-        elif scenkey == '75':
-            scen_sim['quarantine'] = 17
-            scen_sim['quarantine_eff'] = 0.25
+        if scenkey == 'baseline':
+            scen_sim['interv_days'] = [] # No interventions
+            scen_sim['interv_effs'] = []
+        elif scenkey == 'reopen':
+            scen_sim['interv_days'] = [24, 37] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_effs'] = [0.5, 1.6]
+        elif scenkey == 'closed':
+            scen_sim['interv_days'] = [24] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_effs'] = [0.5]
+        elif scenkey == 'aggressive':
+            scen_sim['interv_days'] = [24] # Close everything
+            scen_sim['interv_effs'] = [0.1]
 
         sc.heading(f'Multirun for {scenkey}')
 
-        scen_sims = cova.multi_run(scen_sim, n=n, noise=noise, noisepar=noisepar)
+        scen_sims = cova.multi_run(scen_sim, n=n, noise=noise, noisepar=noisepar, verbose=verbose)
 
         sc.heading(f'Processing {scenkey}')
+
+        # TODO: this only needs to be done once and can be done so much better!
+        res0 = scen_sims[0].results
+        npts = len(res0[reskeys[0]])
+        tvec = xmin+res0['t']
 
         scenboth = {}
         for key in reskeys:
@@ -103,8 +83,8 @@ if do_run:
         scen_high = {}
         for key in reskeys:
             scen_best[key] = pl.median(scenboth[key], axis=1)
-            scen_low[key] = scenboth[key].min(axis=1)
-            scen_high[key] = scenboth[key].max(axis=1)
+            scen_low[key]  = pl.quantile(scenboth[key], q=quantiles['low'], axis=1)
+            scen_high[key] = pl.quantile(scenboth[key], q=quantiles['high'], axis=1)
 
 
 
@@ -127,8 +107,8 @@ pl.subplots_adjust(**axis_args)
 pl.rcParams['font.size'] = font_size
 pl.rcParams['font.family'] = 'Proxima Nova'
 
-# Create the tvec based on the results
-tvec = xmin+pl.arange(len(final['Baseline']['best'][reskeys[0]]))
+# Create the tvec based on the results -- #TODO: make better!
+tvec = xmin+pl.arange(len(final['baseline']['best'][reskeys[0]]))
 
 
 
@@ -144,16 +124,8 @@ for k,key in enumerate(reskeys):
         else:
             scenname = 'Business as usual'
 
-        #pl.subplots_adjust(**axis_args)
-        #pl.rcParams['font.size'] = font_size
-
-        #pl.fill_between(tvec, low[key], high[key], **fill_args)
-        ###pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
-        #pl.plot(tvec, best[key], label='Business as usual', **plot_args)
-
-        if key == 'cum_deaths':
-            pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
-            #pl.plot(tvec, scen_best['infections'], label=scenname, **plot_args)
+        pl.fill_between(tvec, data['low'][key], data['high'][key], **fill_args)
+        # pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
         pl.plot(tvec, data['best'][key], label=scenname, **plot_args)
 
         # cov_ut.fixaxis(sim)
@@ -175,9 +147,9 @@ for k,key in enumerate(reskeys):
             sc.setylim()
             pl.title('Cumulative infections')
             pl.legend()
-            pl.text(xmin+16.5, 12000, 'Intervention', color=interv_col, fontstyle='italic')
+            pl.text(xmin+24.5, 1250, 'Intervention', color=interv_col, fontstyle='italic')
 
-            pl.text(xmin-6, 30e3, 'COVID-19 projections, King + Snohomish counties', fontsize=24)
+            pl.text(xmin-5, 2250, 'COVID-19 projections, Oregon', fontsize=24)
 
         elif key == 'n_exposed':
             sc.setylim()
@@ -185,7 +157,7 @@ for k,key in enumerate(reskeys):
 
         pl.grid(True)
 
-        pl.plot([xmin+16]*2, pl.ylim(), '--', lw=2, c=interv_col) # Plot intervention
+        pl.plot([xmin+24]*2, pl.ylim(), '--', lw=2, c=interv_col) # Plot intervention
         # pl.xlabel('Date')
         # pl.ylabel('Count')
         pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
@@ -208,7 +180,6 @@ if do_save:
 
 
 #%% Print statistics
-#for k in ['baseline'] + list(scenarios.keys()):
 for k in list(scenarios.keys()):
     for key in reskeys:
         print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')

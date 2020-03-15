@@ -44,9 +44,11 @@ class Person(cova.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, age=0, sex=0):
+    def __init__(self, pars, age=0, sex=0, uid=None, id_len=4):
         super().__init__(pars) # Set parameters
-        self.uid  = str(sc.uuid()) # Unique identifier for this person
+        if uid is None:
+            uid = sc.uuid(length=id_len) # Unique identifier for this person
+        self.uid  = str(uid)
         self.age  = float(age) # Age of the person (in years)
         self.sex  = int(sex) # Female (0) or male (1)
 
@@ -112,7 +114,7 @@ class Sim(cova.Sim):
         return
 
 
-    def init_people(self, verbose=None):
+    def init_people(self, verbose=None, id_len=4):
         ''' Create the people '''
         if verbose is None:
             verbose = self['verbose']
@@ -127,7 +129,11 @@ class Sim(cova.Sim):
                 age,sex = -1, -1 # These get overwritten later
             else:
                 age,sex = cova_pars.get_age_sex(use_data=False)
-            person = Person(self.pars, age=age, sex=sex) # Create the person
+            uid = None
+            while not uid or uid in self.people.keys():
+                uid = sc.uuid(length=id_len)
+
+            person = Person(self.pars, age=age, sex=sex, uid=uid) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
         # Store all the UIDs as a list
@@ -292,7 +298,7 @@ class Sim(cova.Sim):
                                         self.results['infections'][t] += 1
                                         self.infect_person(source_person=person, target_person=target_person, t=t)
                                         if verbose>=2:
-                                            print(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
+                                            print(f'        Person {person.uid} infected person {target_person.uid}!')
                         else:
                             for ckey in self.contact_keys:
                                 for contact_ind in person.contact_inds[ckey]:
