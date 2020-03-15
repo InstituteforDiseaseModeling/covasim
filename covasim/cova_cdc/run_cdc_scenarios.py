@@ -5,7 +5,7 @@ Simple script for running the Covid-19 agent-based model
 import pylab as pl
 import datetime as dt
 import sciris as sc
-import covasim.cova_oregon as cova
+import covasim.cova_cdc as cova
 
 sc.heading('Setting up...')
 
@@ -18,7 +18,7 @@ do_run = 1
 do_save = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-n = 20
+n = 4
 xmin = 52 # pars['day_0']
 xmax = xmin+50 # xmin + pars['n_days']
 interv_day = 24
@@ -31,8 +31,8 @@ quantiles = {'low':0.1, 'high':0.9}
 
 version = 'v3'
 folder = 'results_2020mar15'
-fn_fig = f'{folder}/oregon-projections_2020mar14_{version}.png'
-fn_obj = f'{folder}/oregon-projection-2020mar14_{version}.obj'
+fn_fig = f'{folder}/cdc-projections_2020mar14_{version}.png'
+fn_obj = f'{folder}/cdc-projection-2020mar14_{version}.obj'
 
 
 scenarios = {
@@ -147,7 +147,7 @@ for k,key in enumerate(reskeys):
             pl.text(xmin+interv_day+0.5, ymax*0.85, 'Interventions\nbegin', color=interv_col, fontstyle='italic')
             pl.text(xmin+interv_day+closure_len-5, ymax*0.8, 'Proposed\nreopening\nof schools', color=interv_col, fontstyle='italic')
 
-            pl.text(0.0, 1.1, 'COVID-19 projections, Oregon', fontsize=24, transform=pl.gca().transAxes)
+            pl.text(0.0, 1.1, 'COVID-19 projections, national', fontsize=24, transform=pl.gca().transAxes)
 
         elif key == 'n_exposed':
             sc.setylim()
@@ -166,7 +166,7 @@ for k,key in enumerate(reskeys):
         lab = []
         for t in xt:
             tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t)) # + pars['day_0']
-            lab.append( tmp.strftime('%B %d') )
+            lab.append( tmp.strftime('%B') )
         pl.gca().set_xticklabels(lab)
         sc.commaticks(axis='y')
 
