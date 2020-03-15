@@ -81,7 +81,7 @@ class Sim(cova.Sim):
         if pars is None:
             pars = cova_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
-        self.data = cova_pars.load_data(datafile)
+        self.data = None # cova_pars.load_data(datafile)
         self.set_seed(self['seed'])
         self.init_results()
         self.init_people()
@@ -232,7 +232,10 @@ class Sim(cova.Sim):
             verbose = self['verbose']
         self.init_results()
         self.init_people() # Actually create the people
-        daily_tests = self.data['new_tests'] # Number of tests each day, from the data
+        if self.data:
+            daily_tests = self.data['new_tests'] # Number of tests each day, from the data
+        else:
+            daily_tests = []
 
         # Main simulation loop
         for t in range(self.npts):
@@ -382,14 +385,15 @@ class Sim(cova.Sim):
             self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
 
         loglike = 0
-        for d,datum in enumerate(self.data['new_positives']):
-            if not pl.isnan(datum): # Skip days when no tests were performed
-                estimate = self.results['diagnoses'][d]
-                p = cova.poisson_test(datum, estimate)
-                logp = pl.log(p)
-                loglike += logp
-                if verbose>=2:
-                    print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
+        if self.data:
+            for d,datum in enumerate(self.data['new_positives']):
+                if not pl.isnan(datum): # Skip days when no tests were performed
+                    estimate = self.results['diagnoses'][d]
+                    p = cova.poisson_test(datum, estimate)
+                    logp = pl.log(p)
+                    loglike += logp
+                    if verbose>=2:
+                        print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
 
         self.results['likelihood'] = loglike
 
@@ -443,12 +447,15 @@ class Sim(cova.Sim):
 
         colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
-        data_mapping = {
-            'cum_diagnosed': pl.cumsum(self.data['new_positives']),
-            'cum_tested':    pl.cumsum(self.data['new_tests']),
-            'tests':         self.data['new_tests'],
-            'diagnoses':     self.data['new_positives'],
-            }
+        if self.data:
+            data_mapping = {
+                'cum_diagnosed': pl.cumsum(self.data['new_positives']),
+                'cum_tested':    pl.cumsum(self.data['new_tests']),
+                'tests':         self.data['new_tests'],
+                'diagnoses':     self.data['new_positives'],
+                }
+        else:
+            data_mapping = {}
 
         for p,title,keylabels in to_plot.enumitems():
             pl.subplot(2,1,p+1)
