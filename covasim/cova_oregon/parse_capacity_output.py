@@ -3,8 +3,8 @@ import pylab as pl
 
 doplot = 1
 folder = 'results_2020mar14/'
-fn = folder + 'oregon-projection-results_v0.obj'
-fig_fn =  folder + 'oregon-projection-results_v0.png'
+fn = folder + 'oregon-projection-results_v1.obj'
+fig_fn =  folder + 'oregon-projection-results_v1.png'
 typekeys = ['best','low', 'high']
 
 data = sc.loadobj(fn)
@@ -13,7 +13,7 @@ reskey = 'cum_exposed'
 for typekey in typekeys:
     for key,valdict in data.items():
         arr = valdict[typekey][reskey]
-        pl.savetxt(folder + f'oregon_exposed_2020mar14_{key}_{typekey}.csv', arr, fmt='%0.0f', delimiter=',')
+        pl.savetxt(folder + f'oregon_exposed_2020mar14_{key}_{typekey}_v1.csv', arr, fmt='%0.0f', delimiter=',')
 
 
 if doplot:

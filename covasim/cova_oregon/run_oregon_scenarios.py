@@ -12,7 +12,7 @@ sc.heading('Setting up...')
 sc.tic()
 
 # Whether or not to run!
-do_run = 1
+do_run = 0
 
 # Other options
 do_save = 1
@@ -20,16 +20,18 @@ verbose = 0
 n = 8
 xmin = 52 # pars['day_0']
 xmax = xmin+50 # xmin + pars['n_days']
+interv_day = 24
+closure_len = 14
 noise = 1*0.1 # Use noise, optionally
 noisepar = 'beta'
 seed = 1
 reskeys = ['cum_exposed', 'n_exposed']
 
-quantiles = {'low':0.25, 'high':0.75}
+quantiles = {'low':0.0, 'high':1.0}
 
 folder = 'results_2020mar14/'
-fn_fig = folder + 'oregon-covid-projections_2020mar14.png'
-fn_obj = folder + 'oregon-projection-results_v0.obj'
+fn_fig = folder + 'oregon-covid-projections_2020mar14_v1.png'
+fn_obj = folder + 'oregon-projection-results_v1.obj'
 
 
 scenarios = {
@@ -52,13 +54,13 @@ if do_run:
             scen_sim['interv_days'] = [] # No interventions
             scen_sim['interv_effs'] = []
         elif scenkey == 'reopen':
-            scen_sim['interv_days'] = [24, 37] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_days'] = [interv_day, interv_day+closure_len] # Close schools for 2 weeks starting Mar. 16, then reopen
             scen_sim['interv_effs'] = [0.5, 1.6]
         elif scenkey == 'closed':
-            scen_sim['interv_days'] = [24] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_days'] = [interv_day] # Close schools for 2 weeks starting Mar. 16, then reopen
             scen_sim['interv_effs'] = [0.5]
         elif scenkey == 'aggressive':
-            scen_sim['interv_days'] = [24] # Close everything
+            scen_sim['interv_days'] = [interv_day] # Close everything
             scen_sim['interv_effs'] = [0.1]
 
         sc.heading(f'Multirun for {scenkey}')
@@ -125,31 +127,20 @@ for k,key in enumerate(reskeys):
             scenname = 'Business as usual'
 
         pl.fill_between(tvec, data['low'][key], data['high'][key], **fill_args)
-        # pl.fill_between(tvec, scen_low[key], scen_high[key], **fill_args)
         pl.plot(tvec, data['best'][key], label=scenname, **plot_args)
 
-        # cov_ut.fixaxis(sim)
-        # if k == 0:
-        #     pl.ylabel('Cumulative infections')
-        # else:
-        #     pl.ylabel('Cumulative deaths')
-        # pl.xlabel('Days since March 5th')
-
-        #if 'deaths' in key:
-        #    print('DEATHS', xmax, pars['n_days'])
-        #    xmax = pars['n_days']
-        #pl.xlim([xmin, xmax])
-        #pl.gca()._xticks(pl.arange(xmin,xmax+1, 5))
-
         interv_col = [0.5, 0.2, 0.4]
+
+        ymax = pl.ylim()[1]
 
         if key == 'cum_exposed':
             sc.setylim()
             pl.title('Cumulative infections')
             pl.legend()
-            pl.text(xmin+24.5, 1250, 'Intervention', color=interv_col, fontstyle='italic')
+            pl.text(xmin+interv_day+0.5, ymax*0.85, 'Interventions\nbegin', color=interv_col, fontstyle='italic')
+            pl.text(xmin+interv_day+closure_len-5, ymax*0.8, 'Proposed\nreopening\nof schools', color=interv_col, fontstyle='italic')
 
-            pl.text(xmin-5, 2250, 'COVID-19 projections, Oregon', fontsize=24)
+            pl.text(0.0, 1.1, 'COVID-19 projections, Oregon', fontsize=24, transform=pl.gca().transAxes)
 
         elif key == 'n_exposed':
             sc.setylim()
@@ -157,7 +148,8 @@ for k,key in enumerate(reskeys):
 
         pl.grid(True)
 
-        pl.plot([xmin+24]*2, pl.ylim(), '--', lw=2, c=interv_col) # Plot intervention
+        pl.plot([xmin+interv_day]*2, pl.ylim(), '-', lw=1, c=interv_col) # Plot intervention
+        pl.plot([xmin+interv_day+closure_len]*2, pl.ylim(), '-', lw=1, c=interv_col) # Plot intervention
         # pl.xlabel('Date')
         # pl.ylabel('Count')
         pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))

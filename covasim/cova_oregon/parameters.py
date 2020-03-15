@@ -21,7 +21,7 @@ def make_pars():
     pars['n']          = 30000 # Number ultimately susceptible to CoV
     pars['n_infected'] = 10 # Number of seed cases
     pars['day_0']      = datetime(2020, 2, 21)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
-    pars['n_days']     = 25 # 50 # 25 for calibration, 50 for projections # How many days to simulate
+    pars['n_days']     = 50 # 50 # 25 for calibration, 50 for projections # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 2 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
