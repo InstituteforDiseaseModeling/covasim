@@ -14,7 +14,7 @@ do_plot = 1
 do_save = 1
 verbose = 1
 just_calib = 1 # Just show the calibration period
-seed = 1
+seed = 1 # 1092843
 folder = 'results_2020mar14/'
 fig_fn =  folder + 'oregon-projection-calibration_v1.png'
 

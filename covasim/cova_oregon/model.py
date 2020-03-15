@@ -154,7 +154,7 @@ class Sim(cova.Sim):
         if not self['usepopdata']:
             if verbose>=2:
                 print(f'Creating contact matrix without data...')
-            for p in range(self['n']):
+            for p in range(int(self['n'])):
                 person = self.get_person(p)
                 person.n_contacts = cova.pt(person['contacts']) # Draw the number of Poisson contacts for this person
                 person.contact_inds = cova.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
