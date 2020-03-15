@@ -1,4 +1,4 @@
-import covid_abm as cova
+import covasim.cova_base as cova
 import unittest
 
 

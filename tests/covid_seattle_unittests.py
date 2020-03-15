@@ -1,6 +1,6 @@
-from covid_seattle import Person
-from covid_seattle import parameters as seattle_parameters
-from covid_seattle import Sim
+from covasim.cova_seattle import Person
+from covasim.cova_seattle import parameters as seattle_parameters
+from covasim.cova_seattle import Sim
 import unittest
 import numpy as np
 
