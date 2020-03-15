@@ -12,26 +12,26 @@ sc.heading('Setting up...')
 sc.tic()
 
 # Whether or not to run!
-do_run = 0
+do_run = 1
 
 # Other options
 do_save = 1
-verbose = 0
-n = 8
+verbose = 1
+n = 12
 xmin = 52 # pars['day_0']
 xmax = xmin+50 # xmin + pars['n_days']
 interv_day = 24
 closure_len = 14
-noise = 1*0.1 # Use noise, optionally
+noise = 0.25 # Use noise, optionally
 noisepar = 'beta'
 seed = 1
 reskeys = ['cum_exposed', 'n_exposed']
+quantiles = {'low':0.0, 'high':0.9}
 
-quantiles = {'low':0.0, 'high':1.0}
-
-folder = 'results_2020mar14/'
-fn_fig = folder + 'oregon-covid-projections_2020mar14_v1.png'
-fn_obj = folder + 'oregon-projection-results_v1.obj'
+version = 'v2'
+folder = 'results_2020mar14'
+fn_fig = f'{folder}/oregon-projections_2020mar14_{version}.png'
+fn_obj = f'{folder}/oregon-projection-2020mar14_{version}.obj'
 
 
 scenarios = {
@@ -102,7 +102,7 @@ fig_args     = {'figsize':(16,12)}
 plot_args    = {'lw':3, 'alpha':0.7}
 scatter_args = {'s':150, 'marker':'s'}
 axis_args    = {'left':0.10, 'bottom':0.05, 'right':0.95, 'top':0.90, 'wspace':0.5, 'hspace':0.25}
-fill_args    = {'alpha': 0.3}
+fill_args    = {'alpha': 0.2}
 font_size = 18
 fig = pl.figure(**fig_args)
 pl.subplots_adjust(**axis_args)
@@ -152,19 +152,15 @@ for k,key in enumerate(reskeys):
         pl.plot([xmin+interv_day+closure_len]*2, pl.ylim(), '-', lw=1, c=interv_col) # Plot intervention
         # pl.xlabel('Date')
         # pl.ylabel('Count')
+
+        # Set x-axis
         pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
-
-
         xt = pl.gca().get_xticks()
-        print(xt)
         lab = []
         for t in xt:
             tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t)) # + pars['day_0']
-            print(t, tmp)
-
             lab.append( tmp.strftime('%B %d') )
         pl.gca().set_xticklabels(lab)
-
         sc.commaticks(axis='y')
 
 if do_save:
