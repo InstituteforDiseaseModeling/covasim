@@ -12,13 +12,13 @@ sc.heading('Setting up...')
 sc.tic()
 
 # Whether or not to run!
-do_run = 0
+do_run = 1
 
 # Other options
 do_save = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-n = 1
+n = 11
 xmin = 52 # pars['day_0']
 xmax = xmin+200 # xmin + pars['n_days']
 interv_day = 24
@@ -86,7 +86,7 @@ if do_run:
         scen_low = {}
         scen_high = {}
         for key in reskeys:
-            scen_best[key] = pl.median(scenboth[key], axis=1)
+            scen_best[key] = pl.mean(scenboth[key], axis=1) # Changed to mean for smoother plots
             scen_low[key]  = pl.quantile(scenboth[key], q=quantiles['low'], axis=1)
             scen_high[key] = pl.quantile(scenboth[key], q=quantiles['high'], axis=1)
 
