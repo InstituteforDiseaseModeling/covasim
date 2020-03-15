@@ -5,8 +5,8 @@ Simple distribution tests
 #%% Imports and settings
 import sciris as sc
 import pylab as pl
-from covid_abm import utils as cov_ut
-from covid_seattle import parameters as cov_pars
+from covasim.cova_base import utils as cov_ut
+from covasim.cova_seattle import parameters as cov_pars
 
 
 from yaml import load, dump

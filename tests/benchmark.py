@@ -1,9 +1,9 @@
 # Benchmark the simulation
 
 import sciris as sc
-import covid_seattle
+from covasim import cova_seattle
 
-sim = covid_seattle.Sim()
+sim = cova_seattle.Sim()
 to_profile = 'sim' # Must be one of the options listed below
 
 func_options = {'sim':    sim.run,

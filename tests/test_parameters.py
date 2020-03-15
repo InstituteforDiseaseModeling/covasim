@@ -6,7 +6,7 @@ Test that the parameters and data files are being created correctly.
 import pytest
 import pylab as pl
 import sciris as sc
-import covid_abm
+import covasim.cova_cruise as covid_abm
 
 do_plot = True
 

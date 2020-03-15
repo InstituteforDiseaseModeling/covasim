@@ -5,7 +5,7 @@ Simple example usage for the Covid-19 agent-based model
 #%% Imports and settings
 import pylab as pl
 import sciris as sc
-import covid_seattle
+from covasim import cova_seattle
 
 doplot = 1
 figsize = (20,16)
@@ -18,12 +18,12 @@ def test_age_structure(doplot=False): # If being run via pytest, turn off
     # Create and run the simulation without age structure
     sims = sc.objdict()
     
-    sims.without = covid_seattle.Sim()
+    sims.without = cova_seattle.Sim()
     sims.without['usepopdata'] = 0
     sims.without.run(verbose=1)
     
     # ...and with
-    sims.withdata = covid_seattle.Sim()
+    sims.withdata = cova_seattle.Sim()
     sims.withdata['usepopdata'] = 1
     sims.withdata.run(verbose=1)
     

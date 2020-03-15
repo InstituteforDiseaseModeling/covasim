@@ -5,8 +5,7 @@ Simple example usage for the Covid-19 agent-based model
 #%% Imports and settings
 import pytest
 import sciris as sc
-import covid_abm as covid # TODO: reconcile
-# import covid_seattle as covid
+from covasim import cova_seattle as covid
 
 doplot = 1
 do_save = 0

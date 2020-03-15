@@ -8,7 +8,7 @@ import numpy as np
 import numba as nb
 import pylab as pl
 import sciris as sc
-import covid_abm as cova
+import covasim.cova_base as cova
 
 
 doplot = 1
