@@ -12,15 +12,15 @@ sc.heading('Setting up...')
 sc.tic()
 
 # Whether or not to run!
-do_run = 1
+do_run = 0
 
 # Other options
 do_save = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-n = 4
+n = 1
 xmin = 52 # pars['day_0']
-xmax = xmin+50 # xmin + pars['n_days']
+xmax = xmin+200 # xmin + pars['n_days']
 interv_day = 24
 closure_len = 14
 noise = 0.1 # Use noise, optionally
@@ -161,7 +161,7 @@ for k,key in enumerate(reskeys):
         # pl.ylabel('Count')
 
         # Set x-axis
-        pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
+        pl.gca().set_xticks(pl.arange(xmin, xmax+1, 30.5))
         xt = pl.gca().get_xticks()
         lab = []
         for t in xt:

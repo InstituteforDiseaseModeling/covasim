@@ -15,7 +15,7 @@ do_save = 1
 verbose = 1
 seed = 1
 folder = 'results_2020mar15'
-version = 'v0'
+version = 'v1'
 fig_fn =  f'{folder}/cdc-projection_{version}.png'
 
 print('Making sim...')
