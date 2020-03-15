@@ -18,8 +18,8 @@ def make_pars():
     # Simulation parameters
     pars['scale']      = 1 # Factor by which to scale results ## 100
 
-    pars['n']          = 40e3 # Number ultimately susceptible to CoV
-    pars['n_infected'] = 4 # Number of seed cases
+    pars['n']          = 20e3 # Number ultimately susceptible to CoV
+    pars['n_infected'] = 5 # Number of seed cases
     pars['day_0']      = datetime(2020, 2, 21)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
     pars['n_days']     = 50 # 50 # 25 for calibration, 50 for projections # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
@@ -36,7 +36,7 @@ def make_pars():
     pars['dur']            = 8 # Using Mike's Snohomish number
     pars['dur_std']        = 2 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
-    pars['symptomatic']    = 200.0 # Increased probability of testing someone symptomatic, estimated
+    pars['symptomatic']    = 100.0 # Increased probability of testing someone symptomatic, estimated
     pars['cfr']            = 0.016 # Case fatality rate
     pars['timetodie']      = 21 # Days until death
     pars['timetodie_std']  = 2 # STD

@@ -17,14 +17,14 @@ do_run = 1
 # Other options
 do_save = 1
 verbose = 1
-n = 1
+n = 20
 xmin = 52 # pars['day_0']
 xmax = xmin+50 # xmin + pars['n_days']
 interv_day = 24
 closure_len = 14
-noise = 0.5 # Use noise, optionally
+noise = 0.1 # Use noise, optionally
 noisepar = 'beta'
-seed = 2348
+seed = 1
 reskeys = ['cum_exposed', 'n_exposed']
 quantiles = {'low':0.1, 'high':0.9}
 
@@ -50,6 +50,7 @@ if do_run:
 
         scen_sim = cova.Sim()
         scen_sim.set_seed(seed)
+
         if scenkey == 'baseline':
             scen_sim['interv_days'] = [] # No interventions
             scen_sim['interv_effs'] = []
@@ -88,9 +89,13 @@ if do_run:
             scen_low[key]  = pl.quantile(scenboth[key], q=quantiles['low'], axis=1)
             scen_high[key] = pl.quantile(scenboth[key], q=quantiles['high'], axis=1)
 
-
-
-        final[scenkey] = sc.objdict({'scenname': scenname, 'best':sc.dcp(scen_best), 'low':sc.dcp(scen_low), 'high':sc.dcp(scen_high)})
+        final[scenkey] = sc.objdict({
+            'scenname': scenname,
+            'sims':scen_sims,
+            'best':sc.dcp(scen_best),
+            'low':sc.dcp(scen_low),
+            'high':sc.dcp(scen_high)
+            })
 
 # Don't run
 else:

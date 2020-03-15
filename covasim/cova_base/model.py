@@ -72,10 +72,23 @@ class Sim(ParsObj):
         super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
         return
 
-    def set_seed(self, seed=None, reset=False):
-        ''' Set the seed for the random number stream '''
-        if reset:
-            seed = self['seed']
+    def set_seed(self, seed=None, randomize=False):
+        '''
+        Set the seed for the random number stream. Examples:
+            sim.set_seed(324) # Set sim['seed'] to 324 and reset the number stream
+            sim.set_seed() # Using sim['seed'], reset the number stream
+            sim.set_seed(randomize=True) # Randomize the number stream (no seed)
+        '''
+        if randomize:
+            if seed is None:
+                seed = None
+            else:
+                raise ValueError('You can supply a seed or set randomize=True, but not both')
+        else:
+            if seed is None:
+                seed = self['seed'] # Use the stored seed
+            else:
+                self['seed'] = seed # Store the supplied seed
         cov_ut.set_seed(seed)
         return
 
@@ -166,13 +179,14 @@ def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, **kwargs
         import covid_abm
         sim = covid_abm.single_run() # Create and run a default simulation
     '''
+
     if sim is None:
         new_sim = Sim(**kwargs)
     else:
         new_sim = sc.dcp(sim) # To avoid overwriting it; otherwise, use
 
     new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
-    new_sim.set_seed(new_sim['seed'])
+    new_sim.set_seed()
 
     # Handle noise -- normally distributed fractional error
     noiseval = noise*np.random.normal()
@@ -180,6 +194,9 @@ def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, **kwargs
         noisefactor = 1 + noiseval
     else:
         noisefactor = 1/(1-noiseval)
+
+    if verbose>=1:
+        print(f'Running a simulation using {new_sim["seed"]} seed and {noisefactor} noise')
 
     new_sim[noisepar] *= noisefactor
     new_sim.run(verbose=verbose)
