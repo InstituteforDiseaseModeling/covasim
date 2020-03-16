@@ -34,10 +34,11 @@ class HealthSystem(sc.prettyobj):
     Data are assumed to come from COVASim and be of the format:
         data[result_type][scenario_name][best,low,high] = time series
         e.g.
-        data['cum_exposed']['baseline']['best'] = [0, 1, 1, 2, 3, 5, 10, 13 ...]
+        data.cum_exposed.baseline.best = [0, 1, 1, 2, 3, 5, 10, 13 ...]
     '''
 
     def __init__(self, data=None, filename=None, hspars=None):
+        ''' Initialize the object '''
         if filename is not None:
             if data is not None:
                 raise ValueError(f'You can supply data or a filename, but what am I supposed to do with both?')
@@ -100,8 +101,8 @@ class HealthSystem(sc.prettyobj):
 
     def init_results(self):
         '''
-        Initialize the results structure:
-            self.results['aac_beds']['baseline']['best'] = time series
+        Initialize the results structure, e.g.:
+            self.beds.aac.baseline.best = time series
 
         '''
         self.reskeys = ['aac', 'icu', 'total']
@@ -163,12 +164,12 @@ class HealthSystem(sc.prettyobj):
 
 
     def analyze(self):
-        ''' Analyze the data and project resource needs '''
+        ''' Analyze the data and project resource needs -- all logic is in process_ts '''
 
         self.parse_data() # Make sure the data has the right structure
         self.init_results() # Create the ersults object
 
-        for sk,scenkey in enumerate(self.scenkeys):
+        for scenkey in self.scenkeys:
             for blh in self.blh:
                 this_ts = self.data[self.datakey][scenkey][blh]
                 thesebeds = self.process_ts(this_ts)
@@ -181,7 +182,6 @@ class HealthSystem(sc.prettyobj):
     def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None,
              fill_args=None, font_size=None, font_family=None, use_grid=True, verbose=None):
         ''' Plotting, copied from run_cdc_scenarios '''
-
 
         if fig_args     is None: fig_args     = {'figsize':(16,12)}
         if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7}
