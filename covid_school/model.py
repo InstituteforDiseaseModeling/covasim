@@ -11,11 +11,28 @@ import sciris as sc
 from covid_abm import utils as cov_ut
 from covid_abm import poisson_stats as cov_ps
 from . import parameters as cov_pars
+import os
+import math
 
+#%% Plotting specific import tools
+import matplotlib as mplt
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm, LinearSegmentedColormap
+from matplotlib.ticker import LogLocator, LogFormatter
+import matplotlib.font_manager as font_manager
+import copy
 
 # Specify all externally visible functions this file defines
 __all__ = ['ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
 
+# Set user-specific configurations
+username = os.path.split(os.path.expanduser('~'))[-1]
+fontdirdict = {
+    'dmistry': '/home/dmistry/Dropbox (IDM)/GoogleFonts',
+    'cliffk': '/home/cliffk/idm/covid-19/GoogleFonts',
+}
+if username not in fontdirdict:
+    fontdirdict[username] = os.path.expanduser(os.path.expanduser('~'),'Dropbox','GoogleFonts')
 
 
 #%% Define classes
@@ -341,8 +358,7 @@ class Sim(ParsObj):
     #     return loglike
 
 
-
-    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, verbose=None):
+    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, font_style=None, fontpath=None, xtick_units = 4,verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -370,19 +386,45 @@ class Sim(ParsObj):
         if verbose:
             print('Plotting...')
 
-        if fig_args     is None: fig_args     = {'figsize':(26,16)}
+        if fig_args     is None: fig_args     = {'figsize':(14,11)}
         if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7}
         if scatter_args is None: scatter_args = {'s':150, 'marker':'s'}
-        if axis_args    is None: axis_args    = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
+        if axis_args    is None: axis_args    = {'left':0.12, 'bottom':0.08, 'right':0.95, 'top':0.94, 'wspace':0.2, 'hspace':0.4}
 
-        fig = pl.figure(**fig_args)
-        pl.subplots_adjust(**axis_args)
-        pl.rcParams['font.size'] = font_size
+        if font_style is None:
+            try:
+                fontpath = fontdirdict[username]
+                font_style = 'Roboto_Condensed'
+                fontstyle_path = os.path.join(fontpath,font_style,font_style.replace('_','') + '-Light.ttf')
+                prop = font_manager.FontProperties(fname = fontstyle_path)
+                mplt.rcParams['font.family'] = prop.get_name()
+            except:
+                pass
+
+
+        fig = plt.figure(**fig_args)
+        plt.subplots_adjust(**axis_args)
+        plt.rcParams['font.size'] = font_size
 
         res = self.results # Shorten since heavily used
 
-        # Plot everything
-        colors = sc.gridcolors(5)
+        # Plot everything 
+        colors = sc.gridcolors(7) # need at least 7 different colors
+
+        # make sure plots for similar kinds of data match by color between subplots
+        colors = {}
+        colors['infections'] = '#d32828'
+        colors['infectious'] = colors['infections']
+        colors['deaths'] = '#111111'
+        colors['recoveries'] = '#009342'
+        colors['susceptible'] = '#1893e0'
+        colors['tests'] = '#5500ad'
+        # colors['diagnoses'] = '#e87f00'
+        colors['diagnoses'] = '#f38600'
+        colors['diagnosed'] = colors['diagnoses']
+        colors['exposed'] = '#ffd600'
+        # colors['exposed'] = '#b1dd2c' # for a toxic green
+
         to_plot = sc.odict({ # TODO
             'Total counts': sc.odict({'n_susceptible':'Number susceptible', 
                                       'n_exposed':'Number exposed', 
@@ -402,19 +444,43 @@ class Sim(ParsObj):
         #     }
 
         for p,title,keylabels in to_plot.enumitems():
-            pl.subplot(2,1,p+1)
+            plt.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
-                this_color = colors[i+p]
+                if type(colors) == list:
+                    this_color = colors[i+p]
+
+                elif type(colors) == dict:
+                    color_key = label
+                    color_key = label.split(' ')
+                    color_key = color_key[-1]
+                    # for prefix in ['Number of ','Number ','New ']:
+                        # color_key = color_key.replace(prefix,'') # grab the basic type of the data
+                    this_color = colors[color_key]
+
                 y = res[key]
-                pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
+                plt.plot(res['t'], y, label=label.title().replace(' Of ',' of '), **plot_args, color=this_color)
+
+
                 # if key in data_mapping:
                 #     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             # pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-            pl.grid(True)
+            plt.grid(True)
+
+            if p == 0:
+                # test how all colors look together!
+                plt.plot(res['t'], res['n_susceptible'] * 0.8, color = colors['recoveries'], **plot_args)
+                plt.plot(res['t'], res['n_susceptible'] * 0.6, color = colors['tests'], **plot_args)
+                plt.plot(res['t'], res['n_susceptible'] * 0.4, color = colors['deaths'], **plot_args)
+
+            if xtick_units != None:
+                max_xaxis = math.ceil(len(res['t'])/xtick_units) * xtick_units
+                plt.xticks(np.arange(0,max_xaxis,xtick_units))
+
+
             cov_ut.fixaxis(self)
-            pl.ylabel('Count')
-            pl.xlabel('Days since index case')
-            pl.title(title)
+            plt.ylabel('Count')
+            plt.xlabel('Days since index case')
+            plt.title(title, horizontalalignment = 'center', fontsize = font_size+4)
 
         # Ensure the figure actually renders or saves
         if do_save:
@@ -422,9 +488,9 @@ class Sim(ParsObj):
                 filename = do_save # It's a string, assume it's a filename
             else:
                 filename = 'covid_abm_results.png' # Just give it a default name
-            pl.savefig(filename)
+            plt.savefig(filename)
 
-        pl.show()
+        # plt.show()
 
         return fig
 
