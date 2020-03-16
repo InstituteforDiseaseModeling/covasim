@@ -1,10 +1,12 @@
 import covasim.cova_cdc as cova
 
-version  = 'v5'
+version  = 'v6'
 date     = '2020mar15'
 folder   = f'results_{date}'
 basename = f'{folder}/cdc-projections_{date}_{version}'
 fn_obj   = f'{basename}.obj'
 fn_fig   = f'{basename}_hs.png'
 
-healthsystems = cova.HealthSystem(filename=fn_obj)
+hsys = cova.HealthSystem(filename=fn_obj)
+hsys.analyze()
+hsys.plot()

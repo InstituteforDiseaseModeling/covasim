@@ -18,7 +18,7 @@ do_run = 1
 do_save = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-n = 11
+n = 11 # Change to 3 for quick, 11 for real
 xmin = 52 # pars['day_0']
 xmax = xmin+200 # xmin + pars['n_days']
 interv_day = 10
@@ -109,8 +109,8 @@ if do_run:
             scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=quantiles['low'], axis=1)
             scenres.high[reskey] = pl.quantile(scenraw[reskey], q=quantiles['high'], axis=1)
 
-        allres[reskey][scenkey].name = scenname
         for reskey in reskeys:
+            allres[reskey][scenkey]['name'] = scenname
             for blh in ['best', 'low', 'high']:
                 allres[reskey][scenkey][blh] = scenres[blh][reskey]
 
