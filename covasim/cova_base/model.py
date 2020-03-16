@@ -185,6 +185,9 @@ def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, **kwargs
     else:
         new_sim = sc.dcp(sim) # To avoid overwriting it; otherwise, use
 
+    if verbose is None:
+        verbose = new_sim['verbose']
+
     new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
     new_sim.set_seed()
 
