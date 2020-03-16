@@ -33,7 +33,7 @@ setup(
         "matplotlib>=2.2.2",
         "numpy>=1.10.1",
         "scipy>=1.2.0",
-        "sciris>=0.15.6",
+        "sciris>=0.15.8",
         "scirisweb>=0.15.0",
         "pandas",
         "numba",
