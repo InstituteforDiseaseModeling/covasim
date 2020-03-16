@@ -2,3 +2,4 @@ from covasim.cova_base import __version__, __versiondate__ # These are ignored b
 from covasim.cova_base import *
 from .parameters import *
 from .model import *
+from .healthsystems import *

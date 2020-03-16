@@ -24,9 +24,14 @@ def make_hspars():
     return hspars
 
 
-class HealthSystem(sc.prettobj):
+class HealthSystem(sc.prettyobj):
     '''
     Class for storing, analyzing, a plotting health systems data.
+
+    Data are assumed to come from COVASim and be of the format:
+        data[result_type][scenario_name][best,low,high] = time series
+        e.g.
+        data['cum_exposed']['baseline']['best'] = [0, 1, 1, 2, 3, 5, 10, 13 ...]
     '''
 
     def __init__(self, data=None, filename=None, hspars=None):
@@ -41,42 +46,41 @@ class HealthSystem(sc.prettobj):
         self.results = None
         return
 
-    @staticmethod
-    def check_blh(self, keylist):
-        ''' Check if keys are best, low, high '''
-        has_b = 'best' in keylist
-        has_l = 'low' in keylist
-        has_h = 'high' in keylist
-        is_blh = (has_b and has_l and has_h)
-        return is_blh
-
 
     def parse_data(self):
         '''
-        Ensure the data object has the right structure. It should be:
-            data[scenario][result]
-
+        Ensure the data object has the right structure, and store the keys in the object.
         '''
 
-        # Check first two levels are dicts
+        # Check first two three are dicts
         D = self.data # Shortcut
-        assert isinstance(D, dict), f'Data must be dict, but you supplied {type(D)}'
-        self.scenkeys = list(D.keys())
+        if not isinstance(D, dict):
+            raise TypeError(f'Data must be dict with keys for different results, but you supplied {type(D)}')
+
+        self.reskeys = list(D.keys())
+        rk0 = self.reskeys[0] # For "results key 0"
+        if not isinstance(D[rk0], dict):
+            raise TypeError(f'The second level in the data must also be a dict, but you supplied {type(D[rk0])}')
+
+        self.scenkeys = list(D[rk0].keys())
         sk0 = self.scenkeys[0]
-        assert isinstance(D[sk0], dict), f'The first key in the data must also be a dict, but you supplied {type(D[sk0])}'
+        if not isinstance(D[rk0][sk0], dict):
+            raise TypeError(f'The third level in the data must also be a dict, but you supplied {type(D[rk0][sk0])}')
 
-
-        self.blhfirst = True
-        keys = list(D[sk0].keys())
-
-        if self.check_blh(keys):
-        if 'best' in keys
+        self.blh = ['best', 'low', 'high']
+        if not all([(key in D[rk0][sk0]) for key in self.blh]):
+            raise ValueError(f'The required keys {self.blh} could not be found in {D[rk0][sk0].keys()}')
+        if not sc.isinstance(D[rk0][sk0].best, 'arraylike'):
+            raise TypeError(f'Was expecting a numeric array, but got {type(D[rk0][sk0].best)}')
 
         return
 
 
     def analyze(self):
-        self.parse_data()
+        ''' Analyze the data and project resource needs '''
+        hs = self.hspars # Shorten since used a lot
+        self.parse_data() # Make sure the data has the right structure
+
 
         return
 

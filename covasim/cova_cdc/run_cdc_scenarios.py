@@ -39,7 +39,7 @@ fn_fig   = f'{basename}.png'
 
 scenarios = {
     'baseline':   'Status quo',
-    'sq2wks':    'Satus quo, schools reopen in 2 weeks',
+    'sq2wks':     'Status quo, schools reopen in 2 weeks',
     'distance':   'Social distancing',
     '2wks':       'Social distancing, schools reopen in 2 weeks',
     # '8wks':       'Social distancing, schools reopen in 8 weeks',
