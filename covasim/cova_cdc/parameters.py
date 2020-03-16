@@ -18,7 +18,7 @@ def make_pars():
     # Simulation parameters
     pars['scale']      = 0.6*100 # Factor by which to scale results -- assume 60% of a population of 1m
 
-    pars['n']          = 0.1*10e3 # Number ultimately susceptible to CoV
+    pars['n']          = 10e3 # Number ultimately susceptible to CoV
     pars['n_infected'] = 10 # Number of seed cases
     pars['day_0']      = datetime(2020, 2, 21)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
     pars['n_days']     = 200 # 50 # 25 for calibration, 50 for projections # How many days to simulate

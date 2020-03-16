@@ -18,7 +18,7 @@ do_run = 1
 do_save = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-n = 3
+n = 11
 xmin = 52 # pars['day_0']
 xmax = xmin+200 # xmin + pars['n_days']
 interv_day = 10
@@ -129,7 +129,8 @@ plot_args    = {'lw':3, 'alpha':0.7}
 scatter_args = {'s':150, 'marker':'s'}
 axis_args    = {'left':0.10, 'bottom':0.05, 'right':0.95, 'top':0.90, 'wspace':0.5, 'hspace':0.25}
 fill_args    = {'alpha': 0.2}
-font_size = 18
+font_size    = 18
+
 fig = pl.figure(**fig_args)
 pl.subplots_adjust(**axis_args)
 pl.rcParams['font.size'] = font_size
