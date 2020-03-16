@@ -2,6 +2,7 @@
 Perform modeling of health systems capacity.
 '''
 
+import datetime as dt
 import pylab as pl
 import sciris as sc
 
@@ -195,7 +196,8 @@ class HealthSystem(sc.prettyobj):
         pl.rcParams['font.size'] = font_size
         pl.rcParams['font.family'] = font_family
 
-        tvec = pl.arange(self.npts) # TODO: fix! With dates!
+        xmin = 53
+        tvec = xmin + pl.arange(self.npts) # TODO: fix! With dates!
 
         for rk,reskey in enumerate(self.reskeys):
             pl.subplot(len(self.reskeys),1,rk+1)
@@ -203,11 +205,10 @@ class HealthSystem(sc.prettyobj):
             resdata = self.beds[reskey]
 
             for scenkey, scendata in resdata.items():
-                # pl.fill_between(tvec, scendata.low, scendata.high, **fill_args)
+                pl.fill_between(tvec, scendata.low, scendata.high, **fill_args)
                 pl.plot(tvec, scendata.best, label=self.scenlabels[scenkey], **plot_args)
 
                 if rk == 0:
-                    print('hi')
                     pl.legend()
 
                 pl.title(self.reslabels[rk])
@@ -215,13 +216,14 @@ class HealthSystem(sc.prettyobj):
                 pl.grid(True)
 
                 # Set x-axis
-                # pl.gca().set_xticks(pl.arange(xmin, xmax+1, 30.5))
-                # xt = pl.gca().get_xticks()
-                # lab = []
-                # for t in xt:
-                #     tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t)) # + pars['day_0']
-                #     lab.append( tmp.strftime('%B') )
-                # pl.gca().set_xticklabels(lab)
+                xmax = xmin + 200 # TODO: fix!!!
+                pl.gca().set_xticks(pl.arange(xmin, xmax+1, 30.5))
+                xt = pl.gca().get_xticks()
+                lab = []
+                for t in xt:
+                    tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t)) # + pars['day_0']
+                    lab.append( tmp.strftime('%B') )
+                pl.gca().set_xticklabels(lab)
                 sc.commaticks(axis='y')
 
         return fig

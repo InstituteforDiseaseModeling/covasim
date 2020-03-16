@@ -161,7 +161,7 @@ for rk,reskey in enumerate(reskeys):
             pl.title('Cumulative infections')
             # pl.text(xmin+interv_day+0.5, ymax*0.85, 'Interventions\nbegin', color=interv_col, fontstyle='italic')
             # pl.text(xmin+interv_day+closure_len-5, ymax*0.8, 'Proposed\nreopening\nof schools', color=interv_col, fontstyle='italic')
-            pl.text(0.0, 1.1, 'COVID-19 projections, national', fontsize=24, transform=pl.gca().transAxes)
+            pl.text(0.0, 1.1, 'COVID-19 projections, per 1 million susceptibles', fontsize=24, transform=pl.gca().transAxes)
 
         elif reskey == 'n_exposed':
             pl.legend()
