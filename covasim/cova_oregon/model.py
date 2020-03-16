@@ -232,7 +232,10 @@ class Sim(cova.Sim):
             verbose = self['verbose']
         self.init_results()
         self.init_people() # Actually create the people
-        daily_tests = self.data['new_tests'] # Number of tests each day, from the data
+        if self.data:
+            daily_tests = self.data['new_tests'] # Number of tests each day, from the data
+        else:
+            daily_tests = []
 
         # Main simulation loop
         for t in range(self.npts):
@@ -382,14 +385,15 @@ class Sim(cova.Sim):
             self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
 
         loglike = 0
-        for d,datum in enumerate(self.data['new_positives']):
-            if not pl.isnan(datum): # Skip days when no tests were performed
-                estimate = self.results['diagnoses'][d]
-                p = cova.poisson_test(datum, estimate)
-                logp = pl.log(p)
-                loglike += logp
-                if verbose>=2:
-                    print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
+        if self.data:
+            for d,datum in enumerate(self.data['new_positives']):
+                if not pl.isnan(datum): # Skip days when no tests were performed
+                    estimate = self.results['diagnoses'][d]
+                    p = cova.poisson_test(datum, estimate)
+                    logp = pl.log(p)
+                    loglike += logp
+                    if verbose>=2:
+                        print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
 
         self.results['likelihood'] = loglike
 
@@ -404,23 +408,14 @@ class Sim(cova.Sim):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
-        Parameters
-        ----------
-        do_save : bool or str
-            Whether or not to save the figure. If a string, save to that filename.
+        Args:
+            do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
+            fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
+            as_days (bool) Whether to plot the x-axis as days or time points
 
-        fig_args : dict
-            Dictionary of kwargs to be passed to pl.figure()
-
-        plot_args : dict
-            Dictionary of kwargs to be passed to pl.plot()
-
-        as_days : bool
-            Whether to plot the x-axis as days or time points
-
-        Returns
-        -------
-        Figure handle
+        Returns:
+            fig: Figure handle
         '''
 
         if verbose is None:
@@ -436,6 +431,7 @@ class Sim(cova.Sim):
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         pl.rcParams['font.size'] = font_size
+        pl.rcParams['font.family'] = 'Proxima Nova'
 
         res = self.results # Shorten since heavily used
 
@@ -443,12 +439,15 @@ class Sim(cova.Sim):
 
         colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
-        data_mapping = {
-            'cum_diagnosed': pl.cumsum(self.data['new_positives']),
-            'cum_tested':    pl.cumsum(self.data['new_tests']),
-            'tests':         self.data['new_tests'],
-            'diagnoses':     self.data['new_positives'],
-            }
+        if self.data:
+            data_mapping = {
+                'cum_diagnosed': pl.cumsum(self.data['new_positives']),
+                'cum_tested':    pl.cumsum(self.data['new_tests']),
+                'tests':         self.data['new_tests'],
+                'diagnoses':     self.data['new_positives'],
+                }
+        else:
+            data_mapping = {}
 
         for p,title,keylabels in to_plot.enumitems():
             pl.subplot(2,1,p+1)
@@ -458,7 +457,8 @@ class Sim(cova.Sim):
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key in data_mapping:
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
-            pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+            if self.data:
+                pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(use_grid)
             cova.fixaxis(self)
             sc.commaticks()
