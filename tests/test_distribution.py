@@ -8,19 +8,10 @@ import pylab as pl
 from covasim.cova_base import utils as cov_ut
 from covasim.cova_seattle import parameters as cov_pars
 
-
-from yaml import load, dump
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
+do_plot = 1
+do_save = 0
 
 #%% Define the tests
-
-def load_config(filename):
-    with open(filename, 'r') as stream:
-        config = load(stream, Loader=Loader)
-    return config
 
 def test_distribution(config):
     val = cov_ut.sample(config)
