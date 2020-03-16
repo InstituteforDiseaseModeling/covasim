@@ -18,7 +18,7 @@ do_run = 1
 do_save = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-n = 11
+n = 3
 xmin = 52 # pars['day_0']
 xmax = xmin+200 # xmin + pars['n_days']
 interv_day = 10
@@ -29,7 +29,7 @@ seed = 1
 reskeys = ['cum_exposed', 'n_exposed']
 quantiles = {'low':0.1, 'high':0.9}
 
-version  = 'v5'
+version  = 'v6'
 date     = '2020mar15'
 folder   = f'results_{date}'
 basename = f'{folder}/cdc-projections_{date}_{version}'
@@ -49,7 +49,14 @@ scenarios = {
 # If we're rerunning...
 if do_run:
 
-    final = sc.objdict()
+    # Order is: results key, scenario, best/low/high
+    allres = sc.objdict()
+    for reskey in reskeys:
+        allres[reskey] = sc.objdict()
+        for scenkey in scenarios.keys():
+            allres[reskey][scenkey] = sc.objdict()
+            for nblh in ['name', 'best', 'low', 'high']:
+                allres[reskey][scenkey][nblh] = None # This will get populated below
 
     for scenkey,scenname in scenarios.items():
 
@@ -87,32 +94,33 @@ if do_run:
         npts = len(res0[reskeys[0]])
         tvec = xmin+res0['t']
 
-        scenboth = {}
-        for key in reskeys:
-            scenboth[key] = pl.zeros((npts, n))
+        scenraw = {}
+        for reskey in reskeys:
+            scenraw[reskey] = pl.zeros((npts, n))
             for s,sim in enumerate(scen_sims):
-                scenboth[key][:,s] = sim.results[key]
+                scenraw[reskey][:,s] = sim.results[reskey]
 
-        scen_best = {}
-        scen_low = {}
-        scen_high = {}
-        for key in reskeys:
-            scen_best[key] = pl.mean(scenboth[key], axis=1) # Changed to mean for smoother plots
-            scen_low[key]  = pl.quantile(scenboth[key], q=quantiles['low'], axis=1)
-            scen_high[key] = pl.quantile(scenboth[key], q=quantiles['high'], axis=1)
+        scenres = sc.objdict()
+        scenres.best = {}
+        scenres.low = {}
+        scenres.high = {}
+        for reskey in reskeys:
+            scenres.best[reskey] = pl.mean(scenraw[reskey], axis=1) # Changed to mean for smoother plots
+            scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=quantiles['low'], axis=1)
+            scenres.high[reskey] = pl.quantile(scenraw[reskey], q=quantiles['high'], axis=1)
 
-        final[scenkey] = sc.objdict({
-            'scenname': scenname,
-            'best':sc.dcp(scen_best),
-            'low':sc.dcp(scen_low),
-            'high':sc.dcp(scen_high)
-            })
+        allres[reskey][scenkey].name = scenname
+        for reskey in reskeys:
+            for blh in ['best', 'low', 'high']:
+                allres[reskey][scenkey][blh] = scenres[blh][reskey]
+
         if save_sims:
-            final['sims'] = scen_sims
+            print('WARNING: saving sims, which will produce a very large file!')
+            allres['sims'] = scen_sims
 
 # Don't run
 else:
-    final = sc.loadobj(fn_obj)
+    allres = sc.loadobj(fn_obj)
 
 sc.heading('Plotting')
 
@@ -128,37 +136,33 @@ pl.rcParams['font.size'] = font_size
 pl.rcParams['font.family'] = 'Proxima Nova'
 
 # Create the tvec based on the results -- #TODO: make better!
-tvec = xmin+pl.arange(len(final['baseline']['best'][reskeys[0]]))
+tvec = xmin+pl.arange(len(allres[reskeys[0]].baseline.best))
 
 
 
 
 #%% Plotting
-for k,key in enumerate(reskeys):
-    pl.subplot(len(reskeys),1,k+1)
+for rk,reskey in enumerate(reskeys):
+    pl.subplot(len(reskeys),1,rk+1)
 
-    for datakey, data in final.items():
-        print(datakey)
-        if datakey in scenarios:
-            scenname = scenarios[datakey]
-        else:
-            scenname = 'Business as usual'
+    resdata = allres[reskey]
 
-        pl.fill_between(tvec, data['low'][key], data['high'][key], **fill_args)
-        pl.plot(tvec, data['best'][key], label=scenname, **plot_args)
+    for scenkey, scendata in resdata.items():
+        pl.fill_between(tvec, scendata.low, scendata.high, **fill_args)
+        pl.plot(tvec, scendata.best, label=scendata.name, **plot_args)
 
-        interv_col = [0.5, 0.2, 0.4]
+        # interv_col = [0.5, 0.2, 0.4]
 
         ymax = pl.ylim()[1]
 
-        if key == 'cum_exposed':
+        if reskey == 'cum_exposed':
             sc.setylim()
             pl.title('Cumulative infections')
             # pl.text(xmin+interv_day+0.5, ymax*0.85, 'Interventions\nbegin', color=interv_col, fontstyle='italic')
             # pl.text(xmin+interv_day+closure_len-5, ymax*0.8, 'Proposed\nreopening\nof schools', color=interv_col, fontstyle='italic')
             pl.text(0.0, 1.1, 'COVID-19 projections, national', fontsize=24, transform=pl.gca().transAxes)
 
-        elif key == 'n_exposed':
+        elif reskey == 'n_exposed':
             pl.legend()
             sc.setylim()
             pl.title('Active infections')
@@ -185,14 +189,14 @@ if do_save:
 
 
 #%% Print statistics
-for k in list(scenarios.keys()):
-    for key in reskeys:
-        print(f'{k} {key}: {final[k].best[key][-1]:0.0f}')
+for reskey in reskeys:
+    for scenkey in list(scenarios.keys()):
+        print(f'{reskey} {scenkey}: {allres[reskey][scenkey].best[-1]:0.0f}')
 
 if do_save:
     pl.savefig(fn_fig, dpi=150)
     if do_run: # Don't resave loaded data
-        sc.saveobj(fn_obj, final)
+        sc.saveobj(fn_obj, allres)
 
 sc.toc()
 pl.show()
