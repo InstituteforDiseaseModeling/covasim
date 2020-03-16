@@ -16,13 +16,13 @@ def make_hspars():
     '''
 
     hsp = sc.objdict() # This is a dict but allows access via e.g. hsp.icu instead of hsp['icu']
-    hsp.symptomatic  = 0.5 # Fraction of cases that are symptomatic
+    hsp.symptomatic  = 0.5  # Fraction of cases that are symptomatic
     hsp.hospitalized = 0.25 # Fraction of sympotmatic cases that require hospitalization
     hsp.icu          = 0.08 # Fraction of symptomatic cases that require ICU
-    hsp.mild_dur     = 11 # Days of a moderate stay -- from pl.mean([7.9, 13.4])
-    hsp.severe_dur   = 17 # Days of a severe stay -- from pl.mean([12.5, 21.2])
-    hsp.aac_frac     = 0.5 # Fraction of time in severe cases that stay in an AAC bed
-    hsp.delay        = 10 # Days between being infected and being hospitalized
+    hsp.mild_dur     = 11   # Days of a moderate stay -- from pl.mean([7.9, 13.4])
+    hsp.severe_dur   = 17   # Days of a severe stay -- from pl.mean([12.5, 21.2])
+    hsp.aac_frac     = 0.5  # Fraction of time in severe cases that stay in an AAC bed
+    hsp.delay        = 10   # Days between being infected and being hospitalized
 
     return hsp
 
