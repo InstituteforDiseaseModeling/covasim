@@ -6,7 +6,7 @@
 
 ## Coverage and unit tests
 
-To run code coverage on the unit tests:
+To run code coverage on the unit tests, you can just type `run_coverage`. If that doesn't work:
 1) pip install coverage
 2) coverage run -m unittest unittest_* test_*
 3) coverage html
