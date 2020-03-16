@@ -408,23 +408,14 @@ class Sim(cova.Sim):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
-        Parameters
-        ----------
-        do_save : bool or str
-            Whether or not to save the figure. If a string, save to that filename.
+        Args:
+            do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
+            fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
+            as_days (bool) Whether to plot the x-axis as days or time points
 
-        fig_args : dict
-            Dictionary of kwargs to be passed to pl.figure()
-
-        plot_args : dict
-            Dictionary of kwargs to be passed to pl.plot()
-
-        as_days : bool
-            Whether to plot the x-axis as days or time points
-
-        Returns
-        -------
-        Figure handle
+        Returns:
+            fig: Figure handle
         '''
 
         if verbose is None:
@@ -440,6 +431,7 @@ class Sim(cova.Sim):
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         pl.rcParams['font.size'] = font_size
+        pl.rcParams['font.family'] = 'Proxima Nova'
 
         res = self.results # Shorten since heavily used
 
