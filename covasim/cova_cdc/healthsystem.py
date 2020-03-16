@@ -15,7 +15,7 @@ def make_hspars():
         https://docs.google.com/document/d/1fIs2kCuu33tTCpbHQ-0YfvqXP4bSrqg-/edit#heading=h.gjdgxs
     '''
 
-    hsp = sc.objdict()
+    hsp = sc.objdict() # This is a dict but allows access via e.g. hsp.icu instead of hsp['icu']
     hsp.symptomatic  = 0.5 # Fraction of cases that are symptomatic
     hsp.hospitalized = 0.25 # Fraction of sympotmatic cases that require hospitalization
     hsp.icu          = 0.08 # Fraction of symptomatic cases that require ICU
@@ -103,7 +103,6 @@ class HealthSystem(sc.prettyobj):
         '''
         Initialize the results structure, e.g.:
             self.beds.aac.baseline.best = time series
-
         '''
         self.reskeys = ['aac', 'icu', 'total']
         self.reslabels = ['Adult acute beds', 'ICU beds', 'Total beds']
@@ -138,7 +137,7 @@ class HealthSystem(sc.prettyobj):
         if self.datatype == 'cumulative':
             ts = pl.diff(ts)
 
-        # Actually process the time series
+        # Actually process the time series -- where all the logic is, loop over each time point and update beds required
         for t,val in enumerate(ts):
 
             # Precompute results
@@ -179,9 +178,26 @@ class HealthSystem(sc.prettyobj):
         return
 
 
-    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None,
-             fill_args=None, font_size=None, font_family=None, use_grid=True, verbose=None):
-        ''' Plotting, copied from run_cdc_scenarios '''
+    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, fill_args=None,
+             axis_args=None, font_size=None, font_family=None, use_grid=True, verbose=None):
+        '''
+        Plotting, copied from run_cdc_scenarios.
+
+        Args:
+            do_save (bool/str):  whether or not to save the figure, if so, to this filename
+            fig_args (dict):     options for styling the figure (e.g. size)
+            plot_args (dict):    likewise, for the plot (e.g., line thickness)
+            scatter_args (dict): likewise, for scatter points (used for data)
+            fill_args (dict):    likewise, for uncertainty bounds (e.g. alpha)
+            axis_args (dict):    likewise, for axes (e.g. margins)
+            font_size (int):     overall figure font size
+            font_family (str):   what font to use (must exist on your system!)
+            use_grid (bool):     whether or not to plot gridlines on the plot
+            verbose (bool):      whether or not to print extra output
+
+        Returns:
+            fig: a matplotlib figure object
+        '''
 
         if fig_args     is None: fig_args     = {'figsize':(16,12)}
         if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7}
