@@ -165,4 +165,3 @@ if __name__ == '__main__':
 
     print('\n'*2)
     sc.toc()
-    print('Done.')
