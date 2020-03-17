@@ -2,6 +2,15 @@ import os
 import runpy
 from setuptools import setup, find_packages
 
+# Load requirements from txt file
+with open('requirements.txt') as requirements_file:
+    # ensure EOLs are '\n' in case on windows and splits
+    requirements = []
+    for line in requirements_file.read().replace('\r\n', '\n').split('\n'):
+        if line and line[0] != '#':
+            requirements.append(line)
+
+
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))
 versionpath = os.path.join(cwd, 'covasim', 'cova_base', 'version.py')
@@ -29,16 +38,5 @@ setup(
     classifiers=CLASSIFIERS,
     packages=find_packages(),
     include_package_data=True,
-    install_requires=[
-        "matplotlib>=2.2.2",
-        "numpy>=1.10.1",
-        "scipy>=1.2.0",
-        "sciris>=0.15.8",
-        "scirisweb>=0.15.0",
-        "pandas",
-        "numba",
-        "gunicorn",
-        "plotly_express",
-		# "parestlib>=0.3",
-    ],
+    install_requires=requirements
 )
