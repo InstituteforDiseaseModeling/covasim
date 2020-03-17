@@ -2,6 +2,8 @@
 Simple script for running the Covid-19 agent-based model
 '''
 
+import matplotlib
+matplotlib.use("TkAgg")
 import sciris as sc
 
 print('Importing...')
@@ -11,7 +13,7 @@ sc.toc()
 
 do_plot = 0
 do_save = 1
-verbose = 3
+verbose = 1
 
 print('Making sim...')
 sc.tic()

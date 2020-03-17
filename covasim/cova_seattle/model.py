@@ -124,8 +124,8 @@ class Sim(cova.Sim):
             person = Person(self.pars, age=age, sex=sex, cfr=cfr) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
-            if verbose >= 2:
-                print(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]}')
+        if verbose >= 1:
+            print(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]}')
 
         # Store all the UIDs as a list
         self.uids = list(self.people.keys())
@@ -177,11 +177,8 @@ class Sim(cova.Sim):
         incub_dist = cova.sample(**incub_pars)
         target_person.date_infectious = t + incub_dist
 
-        # Get this person's age-dependent CFR
-        this_cfr = target_person.pars['cfr']
-
         # Program them to either die or recover
-        if cova.bt(target_person.pars['cfr']):
+        if cova.bt(target_person.cfr):
             death_dist = cova.sample(**death_pars)
             target_person.date_died = t + death_dist
         else:

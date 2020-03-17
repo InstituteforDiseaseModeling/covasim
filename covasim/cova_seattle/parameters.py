@@ -32,7 +32,6 @@ def make_pars():
     pars['dur_std']        = 2 # Variance in duration
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 5 # Increased probability of testing someone symptomatic, estimated
-    pars['cfr']            = {'cutoffs': [9,19,29,39,49,59,69,79,99], 'values': [0.0001,0.0002,0.0009,0.0018,0.004,0.013,0.046,0.098,0.18]}
     pars['timetodie']      = 22 # Days until death
     pars['timetodie_std']  = 2 # STD
 
@@ -44,7 +43,7 @@ def make_pars():
     return pars
 
 
-def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, use_data=True):
+def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, age_cfr=True, use_data=True):
     '''
     Define age-sex distributions.
     '''
@@ -59,7 +58,7 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, use_data=True):
         age = pl.normal(age_mean, age_std) # Define age distribution for the crew and guests
         age = pl.median([min_age, age, max_age]) # Normalize
 
-    # Get case fataility rate for a person of this age
+    # Get case fatality rate for a person of this age
     cfr = get_cfr(age=age)
 
     return age, sex, cfr
@@ -79,6 +78,7 @@ def get_cfr(age=None, default_cfr=0.02, cfrdict=None):
                    'values': [0.0001, 0.0002, 0.0009, 0.0018, 0.004, 0.013, 0.046, 0.098, 0.18]} # Table 1 of https://www.medrxiv.org/content/10.1101/2020.03.04.20031104v1.full.pdf
 
     # Figure out which CFR applies to a person of the specified age
-    cfr = next((ind for ind, val in enumerate([True if age<cutoff else False for cutoff in cfr['cutoffs']]) if val))
+    cfrind = next((ind for ind, val in enumerate([True if age<cutoff else False for cutoff in cfrdict['cutoffs']]) if val))
+    cfr = cfrdict['values'][cfrind]
     return cfr
 
