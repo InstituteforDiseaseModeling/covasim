@@ -232,7 +232,7 @@ class Sim(cova.Sim):
             verbose = self['verbose']
         self.init_results()
         self.init_people() # Actually create the people
-        if self.data:
+        if self.data is not None and len(self.data): # TODO: refactor to single conditional
             daily_tests = self.data['new_tests'] # Number of tests each day, from the data
         else:
             daily_tests = []
@@ -385,7 +385,7 @@ class Sim(cova.Sim):
             self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
 
         loglike = 0
-        if self.data:
+        if self.data is not None and len(self.data):
             for d,datum in enumerate(self.data['new_positives']):
                 if not pl.isnan(datum): # Skip days when no tests were performed
                     estimate = self.results['diagnoses'][d]
@@ -439,12 +439,14 @@ class Sim(cova.Sim):
 
         colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
-        if self.data:
+        if self.data is not None and len(self.data):
             data_mapping = {
-                'cum_diagnosed': pl.cumsum(self.data['new_positives']),
-                'cum_tested':    pl.cumsum(self.data['new_tests']),
-                'tests':         self.data['new_tests'],
-                'diagnoses':     self.data['new_positives'],
+                'cum_exposed': pl.cumsum(self.data['new_infections']),
+                'cum_diagnosed':  pl.cumsum(self.data['new_positives']),
+                'cum_tested':     pl.cumsum(self.data['new_tests']),
+                'infections':     self.data['new_infections'],
+                'tests':          self.data['new_tests'],
+                'diagnoses':      self.data['new_positives'],
                 }
         else:
             data_mapping = {}
@@ -457,7 +459,7 @@ class Sim(cova.Sim):
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key in data_mapping:
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
-            if self.data:
+            if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(use_grid)
             cova.fixaxis(self)
