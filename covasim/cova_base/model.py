@@ -145,24 +145,6 @@ class Sim(ParsObj):
     def plot(self):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
-
-        Parameters
-        ----------
-        do_save : bool or str
-            Whether or not to save the figure. If a string, save to that filename.
-
-        fig_args : dict
-            Dictionary of kwargs to be passed to pl.figure()
-
-        plot_args : dict
-            Dictionary of kwargs to be passed to pl.plot()
-
-        as_days : bool
-            Whether to plot the x-axis as days or time points
-
-        Returns
-        -------
-        Figure handle
         '''
         raise NotImplementedError
 
@@ -172,7 +154,7 @@ class Sim(ParsObj):
         raise NotImplementedError
 
 
-def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, **kwargs):
+def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None, **kwargs):
     '''
     Convenience function to perform a single simulation run. Mostly used for
     parallelization, but can also be used directly:
@@ -180,8 +162,11 @@ def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, **kwargs
         sim = covid_abm.single_run() # Create and run a default simulation
     '''
 
+    if sim_args is None:
+        sim_args = {}
+
     if sim is None:
-        new_sim = Sim(**kwargs)
+        new_sim = Sim(**sim_args)
     else:
         new_sim = sc.dcp(sim) # To avoid overwriting it; otherwise, use
 
@@ -190,32 +175,6 @@ def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, **kwargs
 
     new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
     new_sim.set_seed()
-
-    # Handle noise -- normally distributed fractional error
-    noiseval = noise*np.random.normal()
-    if noiseval > 0:
-        noisefactor = 1 + noiseval
-    else:
-        noisefactor = 1/(1-noiseval)
-
-    if verbose>=1:
-        print(f'Running a simulation using {new_sim["seed"]} seed and {noisefactor} noise')
-
-    new_sim[noisepar] *= noisefactor
-    new_sim.run(verbose=verbose)
-
-    return new_sim
-
-
-def multi_run(sim=None, n=4, noise=0.0, noisepar=None, verbose=None, combine=False, **kwargs):
-    '''
-    For running multiple runs in parallel. Example:
-        import covid_seattle
-        sim = covid_seattle.Sim()
-        sims = covid_seattle.multi_run(sim, n=6, noise=0.2)
-    '''
-    if sim is None:
-        sim = Sim(**kwargs)
 
     # If the noise parameter is not found, guess what it should be
     if noisepar is None:
@@ -226,9 +185,64 @@ def multi_run(sim=None, n=4, noise=0.0, noisepar=None, verbose=None, combine=Fal
         else:
             noisepar = found[0]
 
+    # Handle noise -- normally distributed fractional error
+    noiseval = noise*np.random.normal()
+    if noiseval > 0:
+        noisefactor = 1 + noiseval
+    else:
+        noisefactor = 1/(1-noiseval)
+    new_sim[noisepar] *= noisefactor
+
+    if verbose>=1:
+        print(f'Running a simulation using {new_sim["seed"]} seed and {noisefactor} noise')
+
+    # Handle additional arguments
+    for key,val in kwargs.items():
+        print(f'Processing {key}:{val}')
+        if key in new_sim.pars.keys():
+            if verbose>=1:
+                print(f'Setting key {key} from {new_sim[key]} to {val}')
+                new_sim[key] = val
+            pass
+        else:
+            raise KeyError(f'Could not set key {key}: not a valid parameter name')
+
+    # Run
+    new_sim.run(verbose=verbose)
+
+    return new_sim
+
+
+def multi_run(sim=None, n=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, sim_args=None, combine=False, **kwargs):
+    '''
+    For running multiple runs in parallel. Example:
+        import covid_seattle
+        sim = covid_seattle.Sim()
+        sims = covid_seattle.multi_run(sim, n=6, noise=0.2)
+    '''
+
+    # Create the sims
+    if sim_args is None:
+        sim_args = {}
+    if sim is None:
+        sim = Sim(**sim_args)
+
+    # Handle iterpars
+    if iterpars is None:
+        iterpars = {}
+    else:
+        n = None # Reset and get from length of dict instead
+        for key,val in iterpars.items():
+            new_n = len(val)
+            if n is not None and new_n != n:
+                raise ValueError(f'Each entry in iterpars must have the same length, not {n} and {len(val)}')
+            else:
+                n = new_n
+
     # Copy the simulations
     iterkwargs = {'ind':np.arange(n)}
-    kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose}
+    iterkwargs.update(iterpars)
+    kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'sim_args':sim_args}
     sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
 
     if not combine:
