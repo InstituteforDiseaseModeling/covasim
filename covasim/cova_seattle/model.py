@@ -120,7 +120,7 @@ class Sim(cova.Sim):
 
         self.people = {} # Dictionary for storing the people -- use plain dict since faster
         for p in range(int(self['n'])): # Loop over each person
-            age,sex,cfr = cova_pars.get_age_sex(use_data=self['usepopdata'])
+            age,sex,cfr = cova_pars.get_age_sex(cfr_by_age=self['cfr_by_age'], use_data=self['usepopdata'])
             person = Person(self.pars, age=age, sex=sex, cfr=cfr) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 

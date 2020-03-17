@@ -43,11 +43,12 @@ class Person(cova.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, age=0, sex=0):
+    def __init__(self, pars, age=0, sex=0, cfr=0):
         super().__init__(pars) # Set parameters
         self.uid  = str(sc.uuid()) # Unique identifier for this person
         self.age  = float(age) # Age of the person (in years)
         self.sex  = sex # Female (0) or male (1)
+        self.cfr  = cfr # Case fatality rate
 
         # Define state
         self.alive       = True
@@ -121,9 +122,12 @@ class Sim(cova.Sim):
 
         self.people = {} # Dictionary for storing the people -- use plain dict since faster
         for p in range(int(self['n'])): # Loop over each person
-            age,sex = cova_pars.get_age_sex(use_data=self['usepopdata'])
-            person = Person(self.pars, age=age, sex=sex) # Create the person
+            age,sex,cfr = cova_pars.get_age_sex(cfr_by_age=self['cfr_by_age'], use_data=self['usepopdata'])
+            person = Person(self.pars, age=age, sex=sex, cfr=cfr) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
+
+        if verbose >= 2:
+            print(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]}')
 
         # Store all the UIDs as a list
         self.uids = list(self.people.keys())
@@ -202,7 +206,7 @@ class Sim(cova.Sim):
         target_person.date_infectious = t + incub_dist
 
         # Program them to either die or recover
-        if cova.bt(target_person.pars['cfr']):
+        if cova.bt(target_person.cfr):
             death_dist = cova.sample(**death_pars)
             target_person.date_died = t + death_dist
         else:
