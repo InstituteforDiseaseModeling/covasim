@@ -22,7 +22,7 @@ def make_pars():
     pars['seed']        = 1 # Random seed, if None, don't reset
     pars['verbose']     = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata']  = 0 # Whether or not to load actual population data
-    pars['cfr_by_age']  = 1 # Whether or not to use age-specific case fatality
+    pars['cfr_by_age']  = 0 # Whether or not to use age-specific case fatality
     pars['default_cfr'] = 0.02 # Default overall case fatality rate if not using age-specific values
 
     # Epidemic parameters
@@ -73,7 +73,7 @@ def get_cfr(age=None, default_cfr=0.02, cfrdict=None):
     '''
     # Check inputs and assign default CFR if age not supplied
     if age is None:
-        print(f'No age given, using default case fatality rate of {default_cfr}...')
+        #print(f'No age given, using default case fatality rate of {default_cfr}...')
         cfr = default_cfr
 
     else:
