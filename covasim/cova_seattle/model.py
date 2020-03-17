@@ -124,6 +124,9 @@ class Sim(cova.Sim):
             person = Person(self.pars, age=age, sex=sex, cfr=cfr) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
+            if verbose >= 2:
+                print(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]}')
+
         # Store all the UIDs as a list
         self.uids = list(self.people.keys())
 

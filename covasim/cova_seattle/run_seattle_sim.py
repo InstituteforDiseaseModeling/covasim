@@ -11,7 +11,7 @@ sc.toc()
 
 do_plot = 0
 do_save = 1
-verbose = 1
+verbose = 3
 
 print('Making sim...')
 sc.tic()
