@@ -212,7 +212,7 @@ class HealthSystem(sc.prettyobj):
         pl.rcParams['font.size'] = font_size
         pl.rcParams['font.family'] = font_family
 
-        xmin = 53
+        xmin = 48
         tvec = xmin + pl.arange(self.npts) # TODO: fix! With dates!
 
         for rk,reskey in enumerate(self.reskeys):
@@ -232,13 +232,13 @@ class HealthSystem(sc.prettyobj):
                 pl.grid(True)
 
                 # Set x-axis
-                xmax = xmin + 200 # TODO: fix!!!
-                pl.gca().set_xticks(pl.arange(xmin, xmax+1, 30.5))
+                xmax = xmin + self.npts # TODO: fix!!!
+                pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
                 xt = pl.gca().get_xticks()
                 lab = []
                 for t in xt:
                     tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t)) # + pars['day_0']
-                    lab.append( tmp.strftime('%B') )
+                    lab.append( tmp.strftime('%B %d') )
                 pl.gca().set_xticklabels(lab)
                 sc.commaticks(axis='y')
 
