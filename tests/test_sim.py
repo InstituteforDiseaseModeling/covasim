@@ -3,11 +3,14 @@ Simple example usage for the Covid-19 agent-based model
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use("TkAgg")
+#from matplotlib import pyplot as plt
 import pytest
 import sciris as sc
 import covasim.cova_seattle as cova
 
-doplot = 1
+doplot = 0
 do_save = 0
 
 
