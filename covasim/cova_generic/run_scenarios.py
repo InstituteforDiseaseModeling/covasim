@@ -29,12 +29,12 @@ seed = 1
 reskeys = ['cum_exposed', 'n_exposed']
 quantiles = {'low':0.1, 'high':0.9}
 
-version  = 'v6'
-date     = '2020mar15'
-folder   = f'results_{date}'
-basename = f'{folder}/cdc-projections_{date}_{version}'
-fn_obj   = f'{basename}.obj'
-fn_fig   = f'{basename}.png'
+version  = 'v0'
+date     = '2020mar18'
+folder   = 'results'
+basename = f'{folder}/covasim_scenarios_{date}_{version}'
+fig_path   = f'{basename}.png'
+obj_path   = f'{basename}.obj'
 
 
 scenarios = {
@@ -42,7 +42,6 @@ scenarios = {
     'sq2wks':     'Status quo, schools reopen in 2 weeks',
     'distance':   'Social distancing',
     '2wks':       'Social distancing, schools reopen in 2 weeks',
-    # '8wks':       'Social distancing, schools reopen in 8 weeks',
     '20wks':      'Social distancing, schools reopen in 20 weeks',
 }
 
@@ -120,7 +119,7 @@ if do_run:
 
 # Don't run
 else:
-    allres = sc.loadobj(fn_obj)
+    allres = sc.loadobj(obj_path)
 
 sc.heading('Plotting')
 
@@ -159,8 +158,6 @@ for rk,reskey in enumerate(reskeys):
         if reskey == 'cum_exposed':
             sc.setylim()
             pl.title('Cumulative infections')
-            # pl.text(xmin+interv_day+0.5, ymax*0.85, 'Interventions\nbegin', color=interv_col, fontstyle='italic')
-            # pl.text(xmin+interv_day+closure_len-5, ymax*0.8, 'Proposed\nreopening\nof schools', color=interv_col, fontstyle='italic')
             pl.text(0.0, 1.1, 'COVID-19 projections, per 1 million susceptibles', fontsize=24, transform=pl.gca().transAxes)
 
         elif reskey == 'n_exposed':
@@ -169,11 +166,6 @@ for rk,reskey in enumerate(reskeys):
             pl.title('Active infections')
 
         pl.grid(True)
-
-        # pl.plot([xmin+interv_day]*2, pl.ylim(), '-', lw=1, c=interv_col) # Plot intervention
-        # pl.plot([xmin+interv_day+closure_len]*2, pl.ylim(), '-', lw=1, c=interv_col) # Plot intervention
-        # pl.xlabel('Date')
-        # pl.ylabel('Count')
 
         # Set x-axis
         pl.gca().set_xticks(pl.arange(xmin, xmax+1, 30.5))
@@ -186,7 +178,7 @@ for rk,reskey in enumerate(reskeys):
         sc.commaticks(axis='y')
 
 if do_save:
-    pl.savefig(fn_fig)
+    pl.savefig(fig_path)
 
 
 #%% Print statistics
@@ -195,9 +187,9 @@ for reskey in reskeys:
         print(f'{reskey} {scenkey}: {allres[reskey][scenkey].best[-1]:0.0f}')
 
 if do_save:
-    pl.savefig(fn_fig, dpi=150)
+    pl.savefig(do_save=do_save, fig_path=fig_path, dpi=150)
     if do_run: # Don't resave loaded data
-        sc.saveobj(fn_obj, allres)
+        sc.saveobj(obj_path, allres)
 
 sc.toc()
 pl.show()
