@@ -2,8 +2,6 @@
 Simple script for running the Covid-19 agent-based model
 '''
 
-import matplotlib
-matplotlib.use("TkAgg")
 import sciris as sc
 import pylab as pl
 

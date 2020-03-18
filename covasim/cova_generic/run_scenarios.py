@@ -5,7 +5,7 @@ Simple script for running the Covid-19 agent-based model
 import pylab as pl
 import datetime as dt
 import sciris as sc
-import covasim.cova_cdc as cova
+import covasim.cova_generic as cova
 
 sc.heading('Setting up...')
 
@@ -177,9 +177,6 @@ for rk,reskey in enumerate(reskeys):
         pl.gca().set_xticklabels(lab)
         sc.commaticks(axis='y')
 
-if do_save:
-    pl.savefig(fig_path)
-
 
 #%% Print statistics
 for reskey in reskeys:
@@ -187,7 +184,7 @@ for reskey in reskeys:
         print(f'{reskey} {scenkey}: {allres[reskey][scenkey].best[-1]:0.0f}')
 
 if do_save:
-    pl.savefig(do_save=do_save, fig_path=fig_path, dpi=150)
+    pl.savefig(fig_path, dpi=150)
     if do_run: # Don't resave loaded data
         sc.saveobj(obj_path, allres)
 
