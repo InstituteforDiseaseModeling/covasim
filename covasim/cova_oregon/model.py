@@ -58,16 +58,18 @@ class Person(cova.Person):
         self.susceptible = True
         self.exposed     = False
         self.infectious  = False
+        self.symptomatic = False
         self.diagnosed   = False
         self.recovered   = False
         self.dead        = False
 
         # Keep track of dates
-        self.date_exposed    = None
-        self.date_infectious = None
-        self.date_diagnosed  = None
-        self.date_recovered  = None
-        self.date_died       = None
+        self.date_exposed     = None
+        self.date_infectious  = None
+        self.date_symptomatic = None
+        self.date_diagnosed   = None
+        self.date_recovered   = None
+        self.date_died        = None
         return
 
 
@@ -95,6 +97,7 @@ class Sim(cova.Sim):
             'n_susceptible',
             'n_exposed',
             'n_infectious',
+            'n_symptomatic',
             'n_recovered',
             'infections',
             'tests',
@@ -147,8 +150,10 @@ class Sim(cova.Sim):
             person.susceptible = False
             person.exposed = True
             person.infectious = True
+            person.symptomatic = True # Assume they have symptoms
             person.date_exposed = 0
             person.date_infectious = 0
+            person.date_symptomatic = 0
 
         # Make the contact matrix
         if not self['usepopdata']:
@@ -185,6 +190,7 @@ class Sim(cova.Sim):
             print(f"""Summary:
      {summary['n_susceptible']:5.0f} susceptible
      {summary['n_infectious']:5.0f} infectious
+     {summary['n_symptomatic']:5.0f} symptomatic
      {summary['cum_exposed']:5.0f} exposed
      {summary['cum_deaths']:5.0f} deaths
      {summary['cum_recoveries']:5.0f} recovered
@@ -202,18 +208,27 @@ class Sim(cova.Sim):
         target_person.exposed = True
         target_person.date_exposed = t
 
-        incub_pars = dict(dist='normal_int', par1=target_person.pars['incub'],     par2=target_person.pars['incub_std'])
-        dur_pars   = dict(dist='normal_int', par1=target_person.pars['dur'],       par2=target_person.pars['dur_std'])
-        death_pars = dict(dist='normal_int', par1=target_person.pars['timetodie'], par2=target_person.pars['timetodie_std'])
+        serial_pars = dict(dist='normal_int', par1=target_person.pars['serial'],    par2=target_person.pars['serial_std'])
+        incub_pars = dict(dist='normal_int',  par1=target_person.pars['incub'],     par2=target_person.pars['incub_std'])
+        dur_pars   = dict(dist='normal_int',  par1=target_person.pars['dur'],       par2=target_person.pars['dur_std'])
+        death_pars = dict(dist='normal_int',  par1=target_person.pars['timetodie'], par2=target_person.pars['timetodie_std'])
 
-        incub_dist = cova.sample(**incub_pars)
-        target_person.date_infectious = t + incub_dist
+        # Calculate how long before they can infect other people
+        serial_dist = cova.sample(**serial_pars)
+        target_person.date_infectious = t + serial_dist
 
         # Program them to either die or recover
         if cova.bt(target_person.pars['cfr']):
+            # They die
             death_dist = cova.sample(**death_pars)
             target_person.date_died = t + death_dist
         else:
+            # They don't die; determine whether they develop symptoms
+            # TODO, consider refactoring this with a "symptom_severity" parameter that could help determine likelihood of hospitalization
+            if not cova.bt(target_person.pars['asymptomatic']): # They develop symptoms
+                incub_dist = cova.sample(**incub_pars) # Caclulate how long til they develop symptoms
+                target_person.date_symptomatic = t + incub_dist
+
             dur_dist = cova.sample(**dur_pars)
             target_person.date_recovered = target_person.date_infectious + dur_dist
 
@@ -253,26 +268,22 @@ class Sim(cova.Sim):
             # Update each person
             for person in self.people.values():
 
-                # Handle testing probability -- # TODO: refactor to only assign this value once when they become infected
-                if person.diagnosed:
-                    test_probs[person.uid] = 0.0
-                elif person.infectious:
-                    test_probs[person.uid] = self['symptomatic'] # They're infectious: high probability of testing
-                else:
-                    test_probs[person.uid] = 1.0
-
                 # Count susceptibles
                 if person.susceptible:
                     self.results['n_susceptible'][t] += 1
                     continue # Don't bother with the rest of the loop
 
-                # If exposed, check if the person becomes infectious
+                # If exposed, check if the person becomes infectious or develops symptoms
                 if person.exposed:
                     self.results['n_exposed'][t] += 1
                     if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
                         person.infectious = True
-                        if verbose>=2:
+                        if verbose >= 2:
                             print(f'      Person {person.uid} became infectious!')
+                    if not person.symptomatic and person.date_symptomatic is not None and t >= person.date_symptomatic:  # It's the day they develop symptoms
+                        person.symptomatic = True
+                        if verbose >= 2:
+                            print(f'      Person {person.uid} developed symptoms!')
 
                 # If infectious, check if anyone gets infected
                 if person.infectious:
@@ -281,22 +292,27 @@ class Sim(cova.Sim):
                     if person.date_died and t >= person.date_died:
                         person.exposed = False
                         person.infectious = False
+                        person.symptomatic = False
                         person.recovered = False
                         person.died = True
                         self.results['deaths'][t] += 1
 
-                    # First, check for recovery
-                    if person.date_recovered and t >= person.date_recovered: # It's the day they become infectious
+                    # Check for recovery
+                    if person.date_recovered and t >= person.date_recovered: # It's the day they recover
                         person.exposed = False
                         person.infectious = False
+                        person.symptomatic = False
                         person.recovered = True
                         self.results['recoveries'][t] += 1
+
+                    # Calculate onward transmission
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
                         if not self['usepopdata']: # TODO: refactor!
                             for contact_ind in person.contact_inds:
-                                exposure = cova.bt(self['beta']) # Check for exposure per person
-                                if exposure:
+                                thisbeta = self['beta'] if person.symptomatic else self['beta']*self['asym_factor'] # Calculate transmission risk based on whether they're asymptomatic
+                                transmission = cova.bt(thisbeta) # Check whether virus is transmitted
+                                if transmission:
                                     target_person = self.get_person(contact_ind) # Stored by integer
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         self.results['infections'][t] += 1
@@ -306,14 +322,30 @@ class Sim(cova.Sim):
                         else:
                             for ckey in self.contact_keys:
                                 for contact_ind in person.contact_inds[ckey]:
-                                    exposure = cova.bt(self['beta']*self['beta_pop'][ckey]) # Check for exposure per person
-                                    if exposure:
+                                    if person.symptomatic: # Calculate exposure risk based on whether they're asymptomatic
+                                        thisbeta = self['beta']*self['beta_pop'][ckey]
+                                    else:
+                                        thisbeta = self['beta']*self['beta_pop'][ckey]*self['asym_factor']
+                                    transmission = cova.bt(thisbeta) # Check whether virus is transmitted
+                                    if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
                                             self.results['infections'][t] += 1
                                             self.infect_person(source_person=person, target_person=target_person, t=t)
                                             if verbose>=2:
                                                 print(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
+
+                # Count people who developed symptoms
+                if person.symptomatic:
+                    self.results['n_symptomatic'][t] += 1
+
+                # Handle testing probability
+                if person.diagnosed:
+                    test_probs[person.uid] = 0.0
+                elif person.infectious:
+                    test_probs[person.uid] = self['symptomatic'] # They're infectious: high probability of testing
+                else:
+                    test_probs[person.uid] = 1.0
 
                 # Count people who recovered
                 if person.recovered:

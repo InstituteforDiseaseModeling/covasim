@@ -27,16 +27,27 @@ def make_pars():
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
     # Epidemic parameters
-    pars['beta']           = 0.015 # Beta per contact; absolute
-    pars['contacts']       = 20 # Beta per contact; absolute
+    # Disease transmission
+    pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
+    pars['asym_factor']    = 1.0 # Multiply beta by this factor for asymptomatic cases
+    pars['contacts']       = 20
     pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.2} # Per-population beta weights; relative
     pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
-    pars['incub']          = 4.0 # Using Mike's Snohomish number
-    pars['incub_std']      = 1.0 # Standard deviation of the serial interval, estimated
+
+    # Disease progression
+    pars['serial']         = 4.0 # Serial interval: days after exposure before a person can infect others (see e.g. https://www.ncbi.nlm.nih.gov/pubmed/32145466)
+    pars['serial_std']     = 1.0 # Standard deviation of the serial interval
+    pars['asymptomatic']   = 0.17 # Proportion of asymptomatic cases - estimate based on https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.25.10.2000180, #TODO: look for better estimates
+    pars['incub']          = 5.0 # Incubation period: days until an exposed person develops symptoms
+    pars['incub_std']      = 1.0 # Standard deviation of the incubation period
     pars['dur']            = 8 # Using Mike's Snohomish number
     pars['dur_std']        = 2 # Variance in duration
+
+    # Testing
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['symptomatic']    = 100.0 # Increased probability of testing someone symptomatic, estimated
+
+    # Mortality
     pars['cfr']            = 0.016 # Case fatality rate
     pars['timetodie']      = 21 # Days until death
     pars['timetodie_std']  = 2 # STD
