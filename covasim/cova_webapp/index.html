@@ -44,17 +44,6 @@
     <div class="content row">
 
         <div id="parameters" class="col">
-            <div class="row history">
-                <fieldset class="col-12">
-                    <legend>History</legend>
-                    <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
-                        <option v-for="(item, index) in history" :value="index">
-                            {{ index }}
-                        </option>
-                    </select>
-                </fieldset>
-            </div>
-
 
             <div class="row">
 
@@ -83,16 +72,28 @@
                 </button>
                 <button v-else class="btn btn-primary green" type="button" @click="runSim">
                     Run
-                </button>
+                </button>&nbsp;&nbsp;&nbsp;&nbsp;
                 <button :disabled="running" class="btn btn-primary blueish" type="button" @click="resetpars">
                     Reset
-                </button>
+                </button>&nbsp;&nbsp;&nbsp;&nbsp;
 
                 <select :disabled="running" v-model="reset_choice" @change="resetpars(reset_choice)">
                     <option v-for="(item, index) in reset_options" :value="item">
                         {{ item }}
                     </option>
                 </select>
+
+                <!-- <div class="row history"> -->
+                <fieldset class="col-12">
+                    <!-- <legend>History</legend> -->
+                    History: 
+                    <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
+                        <option v-for="(item, index) in history" :value="index">
+                            {{ index }}
+                        </option>
+                    </select>
+                </fieldset>
+            <!-- </div> -->
 
             </div>
 
