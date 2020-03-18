@@ -19,9 +19,9 @@ def make_pars():
     pars['scale']      = 1 # Factor by which to scale results ## 100
 
     pars['n']          = 20e3 # Number ultimately susceptible to CoV
-    pars['n_infected'] = 5 # Number of seed cases
-    pars['day_0']      = datetime(2020, 2, 21)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
-    pars['n_days']     = 50 # 50 # 25 for calibration, 50 for projections # How many days to simulate
+    pars['n_infected'] = 4 # Number of seed cases
+    pars['day_0']      = datetime(2020, 2, 17)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
+    pars['n_days']     = 54 # 50 # 25 for calibration, 50 for projections # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
@@ -79,7 +79,7 @@ def load_data(filename=None):
     raw_data = pd.read_excel(filename)
 
     # Confirm data integrity and simplify
-    cols = ['day', 'date', 'new_tests', 'new_positives']
+    cols = ['day', 'date', 'new_tests', 'new_positives', 'new_infections']
     data = pd.DataFrame()
     for col in cols:
         assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'

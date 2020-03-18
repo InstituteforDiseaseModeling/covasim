@@ -15,16 +15,18 @@ do_save = 1
 verbose = 1
 just_calib = 1 # Just show the calibration period
 seed = 1 # 1092843
-folder = 'results_2020mar15'
-version = 'v3'
-fig_fn =  f'{folder}/oregon-projection-calibration_{version}.png'
+
+version = 'v1'
+date     = '2020mar16'
+folder   = f'results_{date}'
+fig_fn =  f'{folder}/oregon-calibration_{version}.png'
 
 print('Making sim...')
 sc.tic()
 sim = cova.Sim()
 sim.set_seed(seed)
 if just_calib:
-    sim['n_days'] = 21
+    sim['n_days'] = 28
 
 
 print('Running...')
