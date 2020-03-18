@@ -8,7 +8,7 @@ import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis']
+__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis', 'set_plot_styles']
 
 #%% Define helper functions
 
@@ -145,6 +145,23 @@ def fixaxis(sim, useSI=True, boxoff=False):
     return
 
 
-def load_styles():
+def set_plot_styles(family=None, font_size=None):
     ''' Load custom styles for plots '''
+    import os
+    import matplotlib as mpl
+
+    if font_size is None:
+        font_size = 18
+
+    available = ['quicksand', 'roboto']
+    if family is None:
+        family = available[0] # Change default here
+    if family not in available:
+        raise ValueError(f'Font choice {family} not available; must be in {available}')
+
     cwd = os.path.abspath(os.path.dirname(__file__))
+    fname = os.path.join(cwd, f'{family}.ttf')
+    properties = mpl.font_manager.FontProperties(fname=fname)
+    pl.rcParams['font.family'] = properties.get_name()
+    pl.rcParams['font.size'] = font_size
+    return

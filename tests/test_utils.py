@@ -152,16 +152,30 @@ def test_choose_people_weighted():
     return
 
 
+def test_figure_styling():
+
+    n = 30
+
+    fig = pl.figure(figsize=(20,16))
+    # cova.set_plot_styles()
+
+    pl.plot(pl.rand(n))
+    pl.title('Example plot')
+
+    return fig
+
+
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    test_rand()
-    test_poisson()
-    results = test_samples(doplot=doplot)
-    test_choose_people()
-    test_choose_people_weighted()
+    # test_rand()
+    # test_poisson()
+    # results = test_samples(doplot=doplot)
+    # test_choose_people()
+    # test_choose_people_weighted()
+    fig = test_figure_styling()
 
     print('\n'*2)
     sc.toc()

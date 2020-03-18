@@ -6,17 +6,12 @@ A simple, non-epidemic example.
 
 #%% Imports
 import numpy as np # style for aliasing
-import pylab as pyl
 import sciris as sc
 import os
 import math
-import copy
 import matplotlib as mplt
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm, LinearSegmentedColormap # style for importing more than one function
-from matplotlib.ticker import LogLocator, LogFormatter
 import matplotlib.font_manager as font_manager
-import functools
 
 # Set user-specific configurations
 username = os.path.split(os.path.expanduser('~'))[-1]
@@ -63,7 +58,7 @@ def plot(results, do_save=None, fig_args=None, plot_args=None, scatter_args=None
 
     Returns
     -------
-    Figure handle 
+    Figure handle
     '''
 
     # if verbose is None:
@@ -100,15 +95,15 @@ def plot(results, do_save=None, fig_args=None, plot_args=None, scatter_args=None
     res = results # Shorten since heavily used
 
     to_plot = sc.odict({ # TODO
-        'Total counts': sc.odict({'n_susceptible':'Number susceptible', 
-                              'n_exposed':'Number exposed', 
+        'Total counts': sc.odict({'n_susceptible':'Number susceptible',
+                              'n_exposed':'Number exposed',
                               'n_infectious':'Number infectious',
                               'cum_diagnosed':'Number diagnosed',
                               'n_recoveries': 'Number of recoveries',
                             }),
         'Daily counts': sc.odict({'infections':'New infections',
                               'tests':'Number of tests',
-                              'diagnoses':'New diagnoses', 
+                              'diagnoses':'New diagnoses',
                               'deaths': 'Number of deaths',
                              }),
         })
@@ -117,7 +112,7 @@ def plot(results, do_save=None, fig_args=None, plot_args=None, scatter_args=None
     colors = sc.gridcolors(7)
 
     # make sure plots for similar kinds of data match by color between subplots
-    if color_theme is 'primaries':  
+    if color_theme is 'primaries':
         keys = [item for subkey in [to_plot[k].keys() for k in to_plot] for item in subkey]
         colors = dict.fromkeys(keys)
         colors['infections'] = '#d32828'
@@ -142,8 +137,8 @@ def plot(results, do_save=None, fig_args=None, plot_args=None, scatter_args=None
         colors['black'] = '#4c4c4c'
         colors['purple'] = '#4a04d8' # indigo
 
-        colors['infections'] = colors['red'] 
-        colors['infectious'] = colors['infections'] 
+        colors['infections'] = colors['red']
+        colors['infectious'] = colors['infections']
         colors['exposed'] = colors['orange']
         colors['susceptible'] = colors['blue']
         colors['diagnoses'] = colors['yellow']
@@ -173,7 +168,7 @@ def plot(results, do_save=None, fig_args=None, plot_args=None, scatter_args=None
             # if key in data_mapping:
             #     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             # pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-            
+
         # just to see how everything looks together
         if p == 0:
             plt.plot(res['t'], res['tests'] * 1.2, color = colors['tests'], **plot_args)
@@ -208,14 +203,14 @@ def plot(results, do_save=None, fig_args=None, plot_args=None, scatter_args=None
 if __name__ == '__main__':
 
     to_plot = sc.odict({ # TODO
-        'Total counts': sc.odict({'n_susceptible':'Number susceptible', 
-                                  'n_exposed':'Number exposed', 
+        'Total counts': sc.odict({'n_susceptible':'Number susceptible',
+                                  'n_exposed':'Number exposed',
                                   'n_infectious':'Number infectious',
                                   'cum_diagnosed':'Number diagnosed',
                                 }),
         'Daily counts': sc.odict({'infections':'New infections',
                                   'tests':'Number of tests',
-                                  'diagnoses':'New diagnoses', 
+                                  'diagnoses':'New diagnoses',
                                  }),
         })
 
