@@ -21,8 +21,8 @@ CLASSIFIERS = [
 setup(
     name="covasim",
     version=version,
-    author="Cliff Kerr, Romesh Abeysuriya, Dina Mistry, Mike Famulare, Daniel Klein",
-    author_email="ckerr@idmod.org",
+    author="Cliff Kerr, Romesh Abeysuriya, Robyn Stuart, Dina Mistry, Mike Famulare, Daniel Klein",
+    author_email="covid@idmod.org",
     description="Covid-19 agent-based model model",
     keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess", "Seattle", "agent-based model"],
     platforms=["OS Independent"],
@@ -39,6 +39,7 @@ setup(
         "numba",
         "gunicorn",
         "plotly_express",
+        "covid_healthsystems",
 		# "parestlib>=0.3",
     ],
 )
