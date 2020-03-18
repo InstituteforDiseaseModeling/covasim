@@ -23,15 +23,10 @@ def make_pars():
     pars['day_0']      = datetime(2020, 2, 21)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
     pars['n_days']     = 200 # 50 # 25 for calibration, 50 for projections # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
-<<<<<<< HEAD
-    pars['verbose']    = 2 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
+    pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
     pars['cfr_by_age']  = 1 # Whether or not to use age-specific case fatality
     pars['default_cfr'] = 0.02 # Default overall case fatality rate if not using age-specific values
-=======
-    pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
-    pars['usepopdata'] = 0 # Whether or not to load actual population data
->>>>>>> flexible-multiruns
 
     # Epidemic parameters
     pars['beta']           = 0.015 # Beta per contact; absolute
