@@ -26,7 +26,7 @@ def get_defaults(region=None, merge=False):
         region = 'Example'
 
     max_pop = 10e3
-    max_days = 365
+    max_days = 90
 
     regions = {
         'scale': {
@@ -35,12 +35,12 @@ def get_defaults(region=None, merge=False):
             # 'Wuhan': 200,
         },
         'n': {
-            'Example': 5000,
+            'Example': 2000,
             'Seattle': 10000,
             # 'Wuhan': 1,
         },
         'n_days': {
-            'Example': 90,
+            'Example': 60,
             'Seattle': 45,
             # 'Wuhan': 90,
         },
