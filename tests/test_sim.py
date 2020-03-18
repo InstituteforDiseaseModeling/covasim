@@ -74,7 +74,7 @@ def test_singlerun(): # If being run via pytest, turn off
     sim = cova.Sim()
     sim = cova.single_run(sim=sim, **iterpars)
 
-    return sims
+    return sim
 
 
 def test_multirun(doplot=False): # If being run via pytest, turn off
