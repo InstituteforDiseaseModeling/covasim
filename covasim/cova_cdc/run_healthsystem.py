@@ -1,4 +1,4 @@
-import covasim.cova_cdc as cova
+import covid_healthsystems as covidhs
 
 version  = 'v6'
 date     = '2020mar15'
@@ -7,6 +7,6 @@ basename = f'{folder}/cdc-projections_{date}_{version}'
 fn_obj   = f'{basename}.obj'
 fn_fig   = f'{basename}_hs.png'
 
-hsys = cova.HealthSystem(filename=fn_obj)
+hsys = covidhs.HealthSystem(filename=fn_obj)
 hsys.analyze()
 hsys.plot()
