@@ -2,6 +2,10 @@ import os
 import runpy
 from setuptools import setup, find_packages
 
+# Load requirements from txt file
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))
 versionpath = os.path.join(cwd, 'covasim', 'cova_base', 'version.py')
@@ -21,8 +25,8 @@ CLASSIFIERS = [
 setup(
     name="covasim",
     version=version,
-    author="Cliff Kerr, Romesh Abeysuriya, Dina Mistry, Mike Famulare, Daniel Klein",
-    author_email="ckerr@idmod.org",
+    author="Cliff Kerr, Romesh Abeysuriya, Robyn Stuart, Dina Mistry, Mike Famulare, Daniel Klein",
+    author_email="covid@idmod.org",
     description="Covid-19 agent-based model model",
     keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess", "Seattle", "agent-based model"],
     platforms=["OS Independent"],

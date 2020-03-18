@@ -10,6 +10,7 @@ Version: 2020mar13
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
+import datetime as dt
 import covasim.cova_base as cova
 from . import parameters as cova_pars
 
@@ -22,16 +23,17 @@ to_plot = sc.odict({
             'cum_exposed': 'Cumulative infections',
             'cum_deaths': 'Cumulative deaths',
             'cum_recoveries':'Cumulative recoveries',
-            'n_susceptible': 'Number susceptible',
-            'n_infectious': 'Number of active infections',
-            # 'cum_diagnosed': 'Number diagnosed',
+            'cum_tested': 'Cumulative tested',
+            # 'n_susceptible': 'Number susceptible',
+            # 'n_infectious': 'Number of active infections',
+            'cum_diagnosed': 'Cumulative diagnosed',
         }),
         'Daily counts': sc.odict({
             'infections': 'New infections',
             'deaths': 'New deaths',
             'recoveries': 'New recoveries',
-            # 'tests': 'Number of tests',
-            # 'diagnoses': 'New diagnoses',
+            'tests': 'Number of tests',
+            'diagnoses': 'New diagnoses',
         })
     })
 
@@ -43,11 +45,13 @@ class Person(cova.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, age=0, sex=0):
+    def __init__(self, pars, age=0, sex=0, uid=None, id_len=4):
         super().__init__(pars) # Set parameters
-        self.uid  = str(sc.uuid()) # Unique identifier for this person
+        if uid is None:
+            uid = sc.uuid(length=id_len) # Unique identifier for this person
+        self.uid  = str(uid)
         self.age  = float(age) # Age of the person (in years)
-        self.sex  = sex # Female (0) or male (1)
+        self.sex  = int(sex) # Female (0) or male (1)
 
         # Define state
         self.alive       = True
@@ -111,7 +115,7 @@ class Sim(cova.Sim):
         return
 
 
-    def init_people(self, verbose=None):
+    def init_people(self, verbose=None, id_len=4):
         ''' Create the people '''
         if verbose is None:
             verbose = self['verbose']
@@ -120,9 +124,17 @@ class Sim(cova.Sim):
             print(f'Creating {self["n"]} people...')
 
         self.people = {} # Dictionary for storing the people -- use plain dict since faster
+
         for p in range(int(self['n'])): # Loop over each person
-            age,sex = cova_pars.get_age_sex(use_data=self['usepopdata'])
-            person = Person(self.pars, age=age, sex=sex) # Create the person
+            if self['usepopdata']:
+                age,sex = -1, -1 # These get overwritten later
+            else:
+                age,sex = cova_pars.get_age_sex(use_data=False)
+            uid = None
+            while not uid or uid in self.people.keys():
+                uid = sc.uuid(length=id_len)
+
+            person = Person(self.pars, age=age, sex=sex, uid=uid) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
         # Store all the UIDs as a list
@@ -139,17 +151,15 @@ class Sim(cova.Sim):
             person.date_infectious = 0
 
         # Make the contact matrix
-        self.contact_keys = self['contacts'].keys()
         if not self['usepopdata']:
             if verbose>=2:
                 print(f'Creating contact matrix without data...')
-            for p in range(self['n']):
+            for p in range(int(self['n'])):
                 person = self.get_person(p)
-                total_contacts = sum([val for val in person['contacts'].values()])
-                person.n_contacts = cova.pt(total_contacts) # Draw the number of Poisson contacts for this person
-                person.contact_inds = {key:[] for key in self.contact_keys} # Initialize
-                person.contact_inds['H'] = cova.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
+                person.n_contacts = cova.pt(person['contacts']) # Draw the number of Poisson contacts for this person
+                person.contact_inds = cova.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
         else:
+            self.contact_keys = self['contacts_pop'].keys()
             if verbose>=2:
                 print(f'Creating contact matrix with data...')
             import synthpops as sp
@@ -157,9 +167,7 @@ class Sim(cova.Sim):
             popdict = sp.make_contacts(popdict, self['contacts'], use_social_layers=True)
             popdict = sc.odict(popdict)
             for p,uid,entry in popdict.enumitems():
-                # print(p, uid, entry)
                 person = self.get_person(p)
-                person.uid = uid
                 person.age = entry['age']
                 person.sex = entry['sex']
                 person.contact_inds = entry['contacts']
@@ -224,7 +232,10 @@ class Sim(cova.Sim):
             verbose = self['verbose']
         self.init_results()
         self.init_people() # Actually create the people
-        daily_tests = [] # Number of tests each day, from the data # TODO: fix
+        if self.data:
+            daily_tests = self.data['new_tests'] # Number of tests each day, from the data
+        else:
+            daily_tests = []
 
         # Main simulation loop
         for t in range(self.npts):
@@ -242,16 +253,18 @@ class Sim(cova.Sim):
             # Update each person
             for person in self.people.values():
 
+                # Handle testing probability -- # TODO: refactor to only assign this value once when they become infected
+                if person.diagnosed:
+                    test_probs[person.uid] = 0.0
+                elif person.infectious:
+                    test_probs[person.uid] = self['symptomatic'] # They're infectious: high probability of testing
+                else:
+                    test_probs[person.uid] = 1.0
+
                 # Count susceptibles
                 if person.susceptible:
                     self.results['n_susceptible'][t] += 1
                     continue # Don't bother with the rest of the loop
-
-                # Handle testing probability
-                if person.infectious:
-                    test_probs[person.uid] = self['symptomatic'] # They're infectious: high probability of testing
-                else:
-                    test_probs[person.uid] = 1.0
 
                 # If exposed, check if the person becomes infectious
                 if person.exposed:
@@ -280,19 +293,27 @@ class Sim(cova.Sim):
                         self.results['recoveries'][t] += 1
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        for ckey in self.contact_keys:
-                            for contact_ind in person.contact_inds[ckey]:
-                                exposure = cova.bt(self['beta']*self['beta_pop'][ckey]) # Check for exposure per person
+                        if not self['usepopdata']: # TODO: refactor!
+                            for contact_ind in person.contact_inds:
+                                exposure = cova.bt(self['beta']) # Check for exposure per person
                                 if exposure:
-                                    if self['usepopdata']:
-                                        target_person = self.people[contact_ind]
-                                    else:
-                                        target_person = self.get_person(contact_ind)
+                                    target_person = self.get_person(contact_ind) # Stored by integer
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         self.results['infections'][t] += 1
                                         self.infect_person(source_person=person, target_person=target_person, t=t)
                                         if verbose>=2:
-                                            print(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
+                                            print(f'        Person {person.uid} infected person {target_person.uid}!')
+                        else:
+                            for ckey in self.contact_keys:
+                                for contact_ind in person.contact_inds[ckey]:
+                                    exposure = cova.bt(self['beta']*self['beta_pop'][ckey]) # Check for exposure per person
+                                    if exposure:
+                                        target_person = self.people[contact_ind] # Stored by UID
+                                        if target_person.susceptible: # Skip people who are not susceptible
+                                            self.results['infections'][t] += 1
+                                            self.infect_person(source_person=person, target_person=target_person, t=t)
+                                            if verbose>=2:
+                                                print(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
 
                 # Count people who recovered
                 if person.recovered:
@@ -303,11 +324,11 @@ class Sim(cova.Sim):
                 n_tests = daily_tests.iloc[t] # Number of tests for this day
                 if n_tests and not pl.isnan(n_tests): # There are tests this day
                     self.results['tests'][t] = n_tests # Store the number of tests
-                    test_probs = pl.array(list(test_probs.values()))
-                    test_probs /= test_probs.sum()
-                    test_inds = cova.choose_people_weighted(probs=test_probs, n=n_tests)
+                    test_probs_arr = pl.array(list(test_probs.values()))
+                    test_probs_arr /= test_probs_arr.sum()
+                    test_inds = cova.choose_people_weighted(probs=test_probs_arr, n=n_tests)
                     for test_ind in test_inds:
-                        tested_person = self.people[test_ind]
+                        tested_person = self.get_person(test_ind)
                         if tested_person.infectious and cova.bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
@@ -333,8 +354,8 @@ class Sim(cova.Sim):
             self.results[reskey] *= self['scale']
 
         # Compute likelihood
-        # if calc_likelihood:
-        #     self.likelihood()
+        if calc_likelihood:
+            self.likelihood()
 
         # Tidy up
         self.results['ready'] = True
@@ -352,33 +373,34 @@ class Sim(cova.Sim):
         return self.results
 
 
-    # def likelihood(self, verbose=None):
-    #     '''
-    #     Compute the log-likelihood of the current simulation based on the number
-    #     of new diagnoses.
-    #     '''
-    #     if verbose is None:
-    #         verbose = self['verbose']
+    def likelihood(self, verbose=None):
+        '''
+        Compute the log-likelihood of the current simulation based on the number
+        of new diagnoses.
+        '''
+        if verbose is None:
+            verbose = self['verbose']
 
-    #     if not self.results['ready']:
-    #         self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
+        if not self.results['ready']:
+            self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
 
-    #     loglike = 0
-    #     for d,datum in enumerate(self.data['new_positives']):
-    #         if not pl.isnan(datum): # Skip days when no tests were performed
-    #             estimate = self.results['diagnoses'][d]
-    #             p = cov_ps.poisson_test(datum, estimate)
-    #             logp = pl.log(p)
-    #             loglike += logp
-    #             if verbose>=2:
-    #                 print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
+        loglike = 0
+        if self.data:
+            for d,datum in enumerate(self.data['new_positives']):
+                if not pl.isnan(datum): # Skip days when no tests were performed
+                    estimate = self.results['diagnoses'][d]
+                    p = cova.poisson_test(datum, estimate)
+                    logp = pl.log(p)
+                    loglike += logp
+                    if verbose>=2:
+                        print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
 
-    #     self.results['likelihood'] = loglike
+        self.results['likelihood'] = loglike
 
-    #     if verbose>=1:
-    #         print(f'Likelihood: {loglike}')
+        if verbose>=1:
+            print(f'Likelihood: {loglike}')
 
-    #     return loglike
+        return loglike
 
 
 
@@ -386,23 +408,14 @@ class Sim(cova.Sim):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
-        Parameters
-        ----------
-        do_save : bool or str
-            Whether or not to save the figure. If a string, save to that filename.
+        Args:
+            do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
+            fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
+            as_days (bool) Whether to plot the x-axis as days or time points
 
-        fig_args : dict
-            Dictionary of kwargs to be passed to pl.figure()
-
-        plot_args : dict
-            Dictionary of kwargs to be passed to pl.plot()
-
-        as_days : bool
-            Whether to plot the x-axis as days or time points
-
-        Returns
-        -------
-        Figure handle
+        Returns:
+            fig: Figure handle
         '''
 
         if verbose is None:
@@ -410,7 +423,7 @@ class Sim(cova.Sim):
         if verbose:
             print('Plotting...')
 
-        if fig_args     is None: fig_args     = {'figsize':(26,16)}
+        if fig_args     is None: fig_args     = {'figsize':(16,12)}
         if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7}
         if scatter_args is None: scatter_args = {'s':150, 'marker':'s'}
         if axis_args    is None: axis_args    = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
@@ -418,6 +431,7 @@ class Sim(cova.Sim):
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         pl.rcParams['font.size'] = font_size
+        pl.rcParams['font.family'] = 'Proxima Nova'
 
         res = self.results # Shorten since heavily used
 
@@ -425,11 +439,15 @@ class Sim(cova.Sim):
 
         colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
-        # data_mapping = {
-        #     'cum_diagnosed': pl.cumsum(self.data['new_positives']),
-        #     'tests':         self.data['new_tests'],
-        #     'diagnoses':     self.data['new_positives'],
-        #     }
+        if self.data:
+            data_mapping = {
+                'cum_diagnosed': pl.cumsum(self.data['new_positives']),
+                'cum_tested':    pl.cumsum(self.data['new_tests']),
+                'tests':         self.data['new_tests'],
+                'diagnoses':     self.data['new_positives'],
+                }
+        else:
+            data_mapping = {}
 
         for p,title,keylabels in to_plot.enumitems():
             pl.subplot(2,1,p+1)
@@ -437,22 +455,32 @@ class Sim(cova.Sim):
                 this_color = colors[i]
                 y = res[key]
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
-                # if key in data_mapping:
-                #     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
-            # pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+                if key in data_mapping:
+                    pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
+            if self.data:
+                pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(use_grid)
             cova.fixaxis(self)
             sc.commaticks()
-            # pl.ylabel('Count')
-            pl.xlabel('Days')
             pl.title(title)
+
+            # Set xticks as dates # TODO: make more general-purpose!
+            ax = pl.gca()
+            xmin,xmax = ax.get_xlim()
+            ax.set_xticks(pl.arange(xmin, xmax+1, 31))
+            xt = ax.get_xticks()
+            lab = []
+            for t in xt:
+                tmp = self['day_0'] + dt.timedelta(days=int(t)) # + pars['day_0']
+                lab.append(tmp.strftime('%B'))
+            ax.set_xticklabels(lab)
 
         # Ensure the figure actually renders or saves
         if do_save:
             if isinstance(do_save, str):
                 filename = do_save # It's a string, assume it's a filename
             else:
-                filename = 'covid_abm_results.png' # Just give it a default name
+                filename = 'covasim_oregon.png' # Just give it a default name
             pl.savefig(filename)
 
         pl.show()
