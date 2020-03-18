@@ -69,7 +69,7 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, cfr_by_age=True,
             import synthpops as sp
         except ImportError as E:
             raise ImportError(f'Could not load synthpops; set sim["usepopdata"] = False or install ({str(E)})')
-        age, sex = sp.get_seattle_age_sex()
+        age, sex = sp.get_seattle_age_sex() # TODO -- should this be removed??
     else:
         sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
         age = pl.normal(age_mean, age_std) # Define age distribution for the crew and guests

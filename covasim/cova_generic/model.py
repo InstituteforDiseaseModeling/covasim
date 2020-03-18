@@ -45,13 +45,14 @@ class Person(cova.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, age=0, sex=0, uid=None, id_len=4):
+    def __init__(self, pars, age=0, sex=0, cfr=0, uid=None, id_len=4):
         super().__init__(pars) # Set parameters
         if uid is None:
             uid = sc.uuid(length=id_len) # Unique identifier for this person
         self.uid  = str(uid)
         self.age  = float(age) # Age of the person (in years)
         self.sex  = int(sex) # Female (0) or male (1)
+        self.cfr  = cfr # Case fatality rate
 
         # Define state
         self.alive       = True
@@ -130,15 +131,18 @@ class Sim(cova.Sim):
 
         for p in range(int(self['n'])): # Loop over each person
             if self['usepopdata']:
-                age,sex = -1, -1 # These get overwritten later
+                age,sex,cfr = -1, -1, 0 # These get overwritten later
             else:
-                age,sex = cova_pars.get_age_sex(use_data=False)
+                age,sex,cfr = cova_pars.get_age_sex(cfr_by_age=self['cfr_by_age'], use_data=False)
             uid = None
             while not uid or uid in self.people.keys():
                 uid = sc.uuid(length=id_len)
 
-            person = Person(self.pars, age=age, sex=sex, uid=uid) # Create the person
+            person = Person(self.pars, age=age, sex=sex, cfr=cfr, uid=uid) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
+
+        if verbose >= 1:
+            print(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]}')
 
         # Store all the UIDs as a list
         self.uids = list(self.people.keys())
@@ -218,7 +222,7 @@ class Sim(cova.Sim):
         target_person.date_infectious = t + serial_dist
 
         # Program them to either die or recover
-        if cova.bt(target_person.pars['cfr']):
+        if cova.bt(target_person.cfr):
             # They die
             death_dist = cova.sample(**death_pars)
             target_person.date_died = t + death_dist
