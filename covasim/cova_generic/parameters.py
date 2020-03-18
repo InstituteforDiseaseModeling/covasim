@@ -48,9 +48,10 @@ def make_pars():
     pars['symptomatic']    = 100.0 # Increased probability of testing someone symptomatic, estimated
 
     # Mortality
-    pars['cfr']            = 0.016 # Case fatality rate
     pars['timetodie']      = 21 # Days until death
     pars['timetodie_std']  = 2 # STD
+    pars['cfr_by_age']     = 1 # Whether or not to use age-specific case fatality
+    pars['default_cfr']    = 0.016 # Default overall case fatality rate if not using age-specific values
 
     # Events
     pars['interv_days'] = []# [30, 44]  # Day on which interventions started/stopped
