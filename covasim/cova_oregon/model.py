@@ -149,6 +149,7 @@ class Sim(cova.Sim):
             person.susceptible = False
             person.exposed = True
             person.infectious = True
+            person.symptomatic = False # Assume they're not symptomatic at first
             person.date_exposed = 0
             person.date_infectious = 0
 
@@ -187,6 +188,7 @@ class Sim(cova.Sim):
             print(f"""Summary:
      {summary['n_susceptible']:5.0f} susceptible
      {summary['n_infectious']:5.0f} infectious
+     {summary['n_symptomatic']:5.0f} symptomatic
      {summary['cum_exposed']:5.0f} exposed
      {summary['cum_deaths']:5.0f} deaths
      {summary['cum_recoveries']:5.0f} recovered
