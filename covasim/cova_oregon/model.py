@@ -58,16 +58,18 @@ class Person(cova.Person):
         self.susceptible = True
         self.exposed     = False
         self.infectious  = False
+        self.symptomatic = False
         self.diagnosed   = False
         self.recovered   = False
         self.dead        = False
 
         # Keep track of dates
-        self.date_exposed    = None
-        self.date_infectious = None
-        self.date_diagnosed  = None
-        self.date_recovered  = None
-        self.date_died       = None
+        self.date_exposed     = None
+        self.date_infectious  = None
+        self.date_symptomatic = None
+        self.date_diagnosed   = None
+        self.date_recovered   = None
+        self.date_died        = None
         return
 
 
@@ -323,6 +325,10 @@ class Sim(cova.Sim):
             if t<len(daily_tests): # Don't know how long the data is, ensure we don't go past the end
                 n_tests = daily_tests.iloc[t] # Number of tests for this day
                 if n_tests and not pl.isnan(n_tests): # There are tests this day
+                    import traceback;
+                    traceback.print_exc();
+                    import pdb;
+                    pdb.set_trace()
                     self.results['tests'][t] = n_tests # Store the number of tests
                     test_probs_arr = pl.array(list(test_probs.values()))
                     test_probs_arr /= test_probs_arr.sum()
