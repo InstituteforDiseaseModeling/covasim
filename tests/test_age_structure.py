@@ -62,7 +62,8 @@ def test_age_structure(doplot=False): # If being run via pytest, turn off
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
-    sims, ages = test_age_structure(doplot=doplot)
+    print('Not implemented yet')
+    # sims, ages = test_age_structure(doplot=doplot)
     sc.toc()
 
 
