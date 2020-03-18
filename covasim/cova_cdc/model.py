@@ -45,22 +45,14 @@ class Person(cova.Person):
     '''
     Class for a single person.
     '''
-<<<<<<< HEAD
-    def __init__(self, pars, age=0, sex=0, cfr=0):
-=======
-    def __init__(self, pars, age=0, sex=0, uid=None, id_len=4):
->>>>>>> flexible-multiruns
+    def __init__(self, pars, age=0, sex=0, cfr=0, uid=None, id_len=4):
         super().__init__(pars) # Set parameters
         if uid is None:
             uid = sc.uuid(length=id_len) # Unique identifier for this person
         self.uid  = str(uid)
         self.age  = float(age) # Age of the person (in years)
-<<<<<<< HEAD
-        self.sex  = sex # Female (0) or male (1)
-        self.cfr  = cfr # Case fatality rate
-=======
         self.sex  = int(sex) # Female (0) or male (1)
->>>>>>> flexible-multiruns
+        self.cfr  = cfr # Case fatality rate
 
         # Define state
         self.alive       = True
@@ -135,20 +127,15 @@ class Sim(cova.Sim):
         self.people = {} # Dictionary for storing the people -- use plain dict since faster
 
         for p in range(int(self['n'])): # Loop over each person
-<<<<<<< HEAD
-            age,sex,cfr = cova_pars.get_age_sex(cfr_by_age=self['cfr_by_age'], use_data=self['usepopdata'])
-            person = Person(self.pars, age=age, sex=sex, cfr=cfr) # Create the person
-=======
             if self['usepopdata']:
-                age,sex = -1, -1 # These get overwritten later
+                age,sex,cfr = -1, -1, 0 # These get overwritten later
             else:
-                age,sex = cova_pars.get_age_sex(use_data=False)
+                age, sex, cfr = cova_pars.get_age_sex(cfr_by_age=self['cfr_by_age'], use_data=False)
             uid = None
             while not uid or uid in self.people.keys():
                 uid = sc.uuid(length=id_len)
 
-            person = Person(self.pars, age=age, sex=sex, uid=uid) # Create the person
->>>>>>> flexible-multiruns
+            person = Person(self.pars, age=age, sex=sex, cfr=cfr, uid=uid)  # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
         if verbose >= 2:
