@@ -152,7 +152,6 @@ def test_choose_people_weighted():
     return
 
 
-
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
