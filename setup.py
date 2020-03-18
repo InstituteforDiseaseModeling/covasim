@@ -3,13 +3,8 @@ import runpy
 from setuptools import setup, find_packages
 
 # Load requirements from txt file
-with open('requirements.txt') as requirements_file:
-    # ensure EOLs are '\n' in case on windows and splits
-    requirements = []
-    for line in requirements_file.read().replace('\r\n', '\n').split('\n'):
-        if line and line[0] != '#':
-            requirements.append(line)
-
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))

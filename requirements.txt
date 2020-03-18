@@ -7,4 +7,3 @@ pandas
 numba
 gunicorn
 plotly_express
-#parestlib>=0.3
