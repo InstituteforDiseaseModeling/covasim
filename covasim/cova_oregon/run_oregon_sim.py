@@ -2,6 +2,8 @@
 Simple script for running the Covid-19 agent-based model
 '''
 
+import matplotlib
+matplotlib.use("TkAgg")
 import sciris as sc
 import pylab as pl
 
@@ -10,7 +12,7 @@ sc.tic()
 import covasim.cova_oregon as cova
 sc.toc()
 
-do_plot = 1
+do_plot = 0
 do_save = 1
 verbose = 1
 just_calib = 1 # Just show the calibration period
