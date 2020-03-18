@@ -143,3 +143,8 @@ def fixaxis(sim, useSI=True, boxoff=False):
     if boxoff:
         sc.boxoff() # Turn off top and right lines
     return
+
+
+def load_styles():
+    ''' Load custom styles for plots '''
+    cwd = os.path.abspath(os.path.dirname(__file__))
