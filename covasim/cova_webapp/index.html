@@ -48,14 +48,14 @@
             <div class="row">
 
                 <fieldset class="col-md-6">
-                    <legend>Simulation Parameters</legend>
+                    <legend>Simulation parameters</legend>
                     <div v-for="par in sim_pars" class="form-group">
                         <label>{{par.name}}:</label>
                         <input :disabled="running" class="form-control" v-model="par.best">
                     </div>
                 </fieldset>
                 <fieldset class="col-md-6">
-                    <legend>Epidemiological Parameters</legend>
+                    <legend>Epidemiological parameters</legend>
                     <div v-for="par in epi_pars" class="form-group">
                         <label>{{par.name}}:</label>
                         <input :disabled="running" class="form-control" v-model="par.best">
@@ -81,10 +81,11 @@
                     <option v-for="(item, index) in reset_options" :value="item">
                         {{ item }}
                     </option>
-                </select>
+                </select>&nbsp;&nbsp;&nbsp;&nbsp;
 
                 <!-- <div class="row history"> -->
-                <fieldset class="col-12">
+                <!-- <fieldset class="col-12"> -->
+                <div>
                     <!-- <legend>History</legend> -->
                     History: 
                     <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
@@ -92,7 +93,8 @@
                             {{ index }}
                         </option>
                     </select>
-                </fieldset>
+                </div>
+                <!-- </fieldset> -->
             <!-- </div> -->
 
             </div>
