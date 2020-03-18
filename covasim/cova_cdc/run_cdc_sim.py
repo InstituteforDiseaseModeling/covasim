@@ -2,8 +2,6 @@
 Simple script for running the Covid-19 agent-based model
 '''
 
-import matplotlib
-matplotlib.use("TkAgg")
 import pylab as pl
 import sciris as sc
 
@@ -12,8 +10,8 @@ sc.tic()
 import covasim.cova_cdc as cova
 sc.toc()
 
-do_plot = 0
-do_save = 1
+do_plot = 1
+do_save = 0
 verbose = 1
 seed = 1
 folder = 'results_2020mar15'
