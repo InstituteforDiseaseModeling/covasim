@@ -35,8 +35,8 @@
 <section id="app" class="container-fluid">
     <header class="row no-gutter">
         <nav class="navbar navbar-dark bg-dark">
-            <a class="navbar-brand" href="#">COVASim</a>
-            <span class="navbar-text">Coronavirus (COVID-19) agent-based model</span>
+            <a class="navbar-brand" href="#" style='font-size: 2.0em'>COVASim</a>
+            <span class="navbar-text">Coronavirus (COVID-19) Agent-based Simulator</span>
             <span class="navbar-text">Version {{ version }}</span>
         </nav>
     </header>
@@ -48,14 +48,14 @@
             <div class="row">
 
                 <fieldset class="col-md-6">
-                    <legend>Simulation parameters</legend>
+                    <legend>Simulation Parameters</legend>
                     <div v-for="par in sim_pars" class="form-group">
                         <label>{{par.name}}:</label>
                         <input :disabled="running" class="form-control" v-model="par.best">
                     </div>
                 </fieldset>
                 <fieldset class="col-md-6">
-                    <legend>Epidemiological parameters</legend>
+                    <legend>Epidemiological Parameters</legend>
                     <div v-for="par in epi_pars" class="form-group">
                         <label>{{par.name}}:</label>
                         <input :disabled="running" class="form-control" v-model="par.best">
