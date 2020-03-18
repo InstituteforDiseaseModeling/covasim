@@ -157,10 +157,10 @@ def test_figure_styling():
     n = 30
 
     fig = pl.figure(figsize=(20,16))
-    # cova.set_plot_styles()
+    prop = cova.set_plot_styles()
 
     pl.plot(pl.rand(n))
-    pl.title('Example plot')
+    pl.title('Example plot', fontproperties=prop, fontsize=30)
 
     return fig
 

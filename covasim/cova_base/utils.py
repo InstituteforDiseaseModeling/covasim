@@ -162,6 +162,6 @@ def set_plot_styles(family=None, font_size=None):
     cwd = os.path.abspath(os.path.dirname(__file__))
     fname = os.path.join(cwd, f'{family}.ttf')
     properties = mpl.font_manager.FontProperties(fname=fname)
-    pl.rcParams['font.family'] = properties.get_name()
+    # pl.rcParams['font.family'] = properties.get_name()
     pl.rcParams['font.size'] = font_size
-    return
+    return properties
