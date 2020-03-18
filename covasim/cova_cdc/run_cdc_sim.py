@@ -12,7 +12,7 @@ sc.tic()
 import covasim.cova_cdc as cova
 sc.toc()
 
-do_plot = 1
+do_plot = 0
 do_save = 1
 verbose = 1
 seed = 1
