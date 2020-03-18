@@ -3,12 +3,9 @@ Simple example usage for the Covid-19 agent-based model
 '''
 
 #%% Imports and settings
-import matplotlib
-matplotlib.use("TkAgg")
-#from matplotlib import pyplot as plt
 import pytest
 import sciris as sc
-import covasim.cova_seattle as cova
+import covasim.cova_generic as cova
 
 doplot = 0
 do_save = 0
@@ -67,7 +64,7 @@ def test_trans_tree(doplot=False, do_save=False): # If being run via pytest, tur
 def test_singlerun(): # If being run via pytest, turn off
     sc.heading('Single run test')
 
-    iterpars = {'r_contact': 0.035,
+    iterpars = {'beta': 0.035,
                 'incub': 8,
                 }
 
@@ -83,7 +80,7 @@ def test_multirun(doplot=False): # If being run via pytest, turn off
 
 
     # Note: this runs 3 simulations, not 3x3!
-    iterpars = {'r_contact': [0.015, 0.025, 0.035],
+    iterpars = {'beta': [0.015, 0.025, 0.035],
                 'incub': [4, 5, 6],
                 }
 
