@@ -2,6 +2,10 @@ import os
 import runpy
 from setuptools import setup, find_packages
 
+# Load requirements from txt file
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))
 versionpath = os.path.join(cwd, 'covasim', 'cova_base', 'version.py')
@@ -39,7 +43,6 @@ setup(
         "numba",
         "gunicorn",
         "plotly_express",
-        "covid_healthsystems",
 		# "parestlib>=0.3",
     ],
 )

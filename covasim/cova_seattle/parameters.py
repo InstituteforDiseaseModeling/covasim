@@ -13,16 +13,16 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['scale']       = 25 # Factor by which to scale results ## 100
+    pars['scale']       = 5#25 # Factor by which to scale results ## 100
 
     pars['n']           = int(0.1 * 0.4 * 3e6 // pars['scale']) # Number ultimately susceptible to CoV
     pars['n_infected']  = 100 // pars['scale'] # Asked for 1000 in Seattle's population # 550
     pars['day_0']       = 53 #datetime(2020, 2, 10) # Start day of the epidemic 3/5
-    pars['n_days']      = 45 # 75 #(datetime(2020, 4, 28)-pars['day_0']).days # How many days to simulate Apr/30 # 54
+    pars['n_days']      = 30+45 # 75 #(datetime(2020, 4, 28)-pars['day_0']).days # How many days to simulate Apr/30 # 54
     pars['seed']        = 1 # Random seed, if None, don't reset
     pars['verbose']     = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata']  = 0 # Whether or not to load actual population data
-    pars['cfr_by_age']  = 0 # Whether or not to use age-specific case fatality
+    pars['cfr_by_age']  = 1 # Whether or not to use age-specific case fatality
     pars['default_cfr'] = 0.02 # Default overall case fatality rate if not using age-specific values
 
     # Epidemic parameters
@@ -79,7 +79,7 @@ def get_cfr(age=None, default_cfr=0.02, cfrdict=None):
     else:
         # Define age-dependent case fatality rates if not given
         if cfrdict is None:
-            cfrdict = {'cutoffs': [9, 19, 29, 39, 49, 59, 69, 79, 99],
+            cfrdict = {'cutoffs': [9, 19, 29, 39, 49, 59, 69, 79, 120], # Absolute maximum upper age limit
                        'values': [0.0001, 0.0002, 0.0009, 0.0018, 0.004, 0.013, 0.046, 0.098, 0.18]} # Table 1 of https://www.medrxiv.org/content/10.1101/2020.03.04.20031104v1.full.pdf
 
         # Figure out which CFR applies to a person of the specified age
