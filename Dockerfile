@@ -3,8 +3,13 @@ FROM continuumio/anaconda3:latest
 ENV PATH="/opt/conda/bin:${PATH}"
 
 RUN apt-get -y update && apt-get install -y nginx supervisor
-RUN conda install twisted python-Levenshtein gunicorn
-RUN python3 -m pip install plotly_express
+RUN mkdir /app && \
+    conda install twisted python-Levenshtein
+
+# Add requiremments.txt first and install to maximize chances of hitting docker cache
+ADD requirements.txt /app
+RUN python3 -m pip install -r /app/requirements.txt
+
 ADD . /app
 WORKDIR /app
 
