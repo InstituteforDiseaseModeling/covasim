@@ -25,13 +25,24 @@ CLASSIFIERS = [
 setup(
     name="covasim",
     version=version,
-    author="Cliff Kerr, Romesh Abeysuriya, Dina Mistry, Mike Famulare, Daniel Klein",
-    author_email="ckerr@idmod.org",
+    author="Cliff Kerr, Romesh Abeysuriya, Robyn Stuart, Dina Mistry, Mike Famulare, Daniel Klein",
+    author_email="covid@idmod.org",
     description="Covid-19 agent-based model model",
     keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess", "Seattle", "agent-based model"],
     platforms=["OS Independent"],
     classifiers=CLASSIFIERS,
     packages=find_packages(),
     include_package_data=True,
-    install_requires=requirements
+    install_requires=[
+        "matplotlib>=2.2.2",
+        "numpy>=1.10.1",
+        "scipy>=1.2.0",
+        "sciris>=0.15.8",
+        "scirisweb>=0.15.0",
+        "pandas",
+        "numba",
+        "gunicorn",
+        "plotly_express",
+		# "parestlib>=0.3",
+    ],
 )

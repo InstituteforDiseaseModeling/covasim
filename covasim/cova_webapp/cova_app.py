@@ -25,7 +25,7 @@ def get_defaults(region=None, merge=False):
     if region is None:
         region = 'Example'
 
-    max_pop = 1e5
+    max_pop = 10e3
     max_days = 365
 
     regions = {
