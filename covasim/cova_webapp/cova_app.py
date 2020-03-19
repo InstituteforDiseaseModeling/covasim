@@ -126,15 +126,15 @@ def get_sessions(session_id=None):
 @app.register_RPC(call_type='download')
 def download_pars(sim_pars, epi_pars):
     d = {'sim_pars':sim_pars,'epi_pars':epi_pars}
-    s = json.dumps(d).encode()
-    print(s)
-    print(len(s))
-    return io.BytesIO(s), 'parameters.txt'
+    s = json.dumps(json.dumps(d))
+    return io.BytesIO(("'%s'" % (s)).encode()), 'parameters.txt'
 
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
     with open(fname,'r') as f:
-        d = json.load(f)
+        s = f.read()
+    d = json.loads(json.loads(s[1:-1]))
+    print(d)
     return d
 
 
