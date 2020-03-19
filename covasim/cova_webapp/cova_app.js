@@ -1,4 +1,3 @@
-
 const PlotlyChart = {
     props: ['graph'],
     render(h) {
@@ -43,7 +42,7 @@ var vm = new Vue({
 
     async created() {
         this.get_version();
-        this.resetpars('Example');
+        this.resetPars();
     },
 
     filters: {
@@ -56,45 +55,60 @@ var vm = new Vue({
 
         async get_version() {
             let response = await sciris.rpc('get_version');
-            vm.version = response.data
+            this.version = response.data
         },
 
         async runSim() {
-            vm.running = true;
-            vm.graphs = [];
+            this.running = true;
+            this.graphs = [];
 
-            console.log(vm.status);
-            console.log(vm.sim_pars, vm.epi_pars);
+            console.log(this.status);
+            console.log(this.sim_pars, this.epi_pars);
 
             // Run a a single sim
             try{
-                let response = await sciris.rpc('plot_sim', [vm.sim_pars, vm.epi_pars]);
-                vm.graphs = response.data.graphs;
-                vm.err = response.data.err;
-                vm.sim_pars= response.data.sim_pars;
-                vm.epi_pars = response.data.epi_pars;
-                vm.history.push(JSON.parse(JSON.stringify({sim_pars:vm.sim_pars, epi_pars:vm.epi_pars, graphs:vm.graphs})));
-                vm.historyIdx = vm.history.length-1;
+                let response = await sciris.rpc('plot_sim', [this.sim_pars, this.epi_pars]);
+                this.graphs = response.data.graphs;
+                this.err = response.data.err;
+                this.sim_pars= response.data.sim_pars;
+                this.epi_pars = response.data.epi_pars;
+                this.history.push(JSON.parse(JSON.stringify({sim_pars:this.sim_pars, epi_pars:this.epi_pars, graphs:this.graphs})));
+                this.historyIdx = this.history.length-1;
 
             } catch (e) {
-                vm.err = 'Error running model: ' + e;
+                this.err = 'Error running model: ' + e;
             }
-            vm.running = false;
+            this.running = false;
 
 
         },
 
-        async resetpars(reset_choice) {
-            let response = await sciris.rpc('get_defaults', [reset_choice]);
-            vm.sim_pars = response.data.sim_pars;
-            vm.epi_pars = response.data.epi_pars;
-            vm.graphs = [];
+        async resetPars() {
+            let response = await sciris.rpc('get_defaults', [this.reset_choice]);
+            this.sim_pars = response.data.sim_pars;
+            this.epi_pars = response.data.epi_pars;
+            this.graphs = [];
+        },
+
+        async downloadPars() {
+            await sciris.download('download_pars', [this.sim_pars, this.epi_pars]);
+        },
+
+        async uploadPars() {
+            try {
+                let response = await sciris.upload('upload_pars');  //, [], {}, '');
+                this.sim_pars = response.data.sim_pars;
+                this.epi_pars = response.data.epi_pars;
+                this.graphs = [];
+            } catch (error) {
+                sciris.fail(this, 'Could not upload parameters', error);
+            }
         },
 
         loadPars(){
-            vm.sim_pars = vm.history[vm.historyIdx].sim_pars;
-            vm.epi_pars = vm.history[vm.historyIdx].epi_pars;
-            vm.graphs = vm.history[vm.historyIdx].graphs;
+            this.sim_pars = this.history[this.historyIdx].sim_pars;
+            this.epi_pars = this.history[this.historyIdx].epi_pars;
+            this.graphs = this.history[this.historyIdx].graphs;
         }
     }
 })

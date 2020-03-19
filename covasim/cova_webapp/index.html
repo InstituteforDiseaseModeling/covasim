@@ -4,13 +4,13 @@
 
 <!-- HEADER -->
 <head>
-
     <!-- Bootstrap boilerplate -->
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
     <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
     <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+  <link type="text/css" rel="stylesheet" href="assets/themify-icons.css"/>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver"></script>
     <script src="https://unpkg.com/vue@latest/dist/vue.js"></script>
     <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
@@ -32,6 +32,7 @@
 
 <!-- BODY -->
 <body>
+
 <section id="app" class="container-fluid">
     <header class="row no-gutter">
         <nav class="navbar navbar-dark bg-dark">
@@ -73,30 +74,43 @@
                 <button v-else class="btn btn-primary green" type="button" @click="runSim">
                     Run
                 </button>&nbsp;&nbsp;&nbsp;&nbsp;
-                <button :disabled="running" class="btn btn-primary blueish" type="button" @click="resetpars">
+                <button :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
                     Reset
                 </button>&nbsp;&nbsp;&nbsp;&nbsp;
 
-                <select :disabled="running" v-model="reset_choice" @change="resetpars(reset_choice)">
+                <select :disabled="running" v-model="reset_choice" @change="resetPars()">
                     <option v-for="(item, index) in reset_options" :value="item">
                         {{ item }}
                     </option>
                 </select>&nbsp;&nbsp;&nbsp;&nbsp;
 
-                <!-- <div class="row history"> -->
-                <!-- <fieldset class="col-12"> -->
-                <div>
-                    <!-- <legend>History</legend> -->
-                    History: 
-                    <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
-                        <option v-for="(item, index) in history" :value="index">
-                            {{ index }}
-                        </option>
-                    </select>
-                </div>
-                <!-- </fieldset> -->
-            <!-- </div> -->
 
+                <div style='padding-left:10px;'>
+                    History: <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
+                      <option v-for="(item, index) in history" :value="index">
+                        {{ index }}
+                      </option>
+                    </select>
+
+                </div>
+
+                <div style='padding-left:30px; padding-top: 15px'>
+
+                    <button id="download-parameters-button" :disabled="running" class="btn btn-primary green" type="button" @click="downloadPars">
+                      <span class="ti-download"/>
+                    </button>
+                    <b-tooltip target="download-parameters-button" triggers="hover">
+                      Download parameters
+                    </b-tooltip>
+
+                    <button id="upload-parameters-button" :disabled="running" class="btn btn-primary green" type="button" @click="uploadPars">
+                      <span class="ti-upload"/>
+                    </button>
+                    <b-tooltip target="upload-parameters-button" triggers="hover">
+                      Upload parameters
+                    </b-tooltip>
+
+                </div>
             </div>
 
             <div v-if="err" class="errorbox">
@@ -104,7 +118,6 @@
                 <p>{{ err }}</p>
                 Please try to fix the problem and rerun.
             </div>
-
 
         </div>
 

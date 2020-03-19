@@ -4,12 +4,14 @@ Sciris app to run the web interface.
 
 # Imports
 import os
+import io
 import sys
 import sciris as sc
 import scirisweb as sw
 import plotly.graph_objects as go
 import pylab as pl
 import covasim.cova_webapp as cw # Short for "Covid webapp model"
+import json
 
 # Change to current folder and create the app
 app = sw.ScirisApp(__name__, name="COVASim")
@@ -120,6 +122,26 @@ def get_sessions(session_id=None):
         print(err)
         output = {'session_id':1, 'session_list':[1], 'err':err}
     return output
+
+@app.register_RPC(call_type='download')
+def download_pars(sim_pars, epi_pars):
+    datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
+    filename = f'COVASim_parameters_{datestamp}.json'
+    d = {'sim_pars':sim_pars,'epi_pars':epi_pars}
+    s = json.dumps(d,indent=2)
+    output = (io.BytesIO(("'%s'" % (s)).encode()), filename)
+    return output
+
+@app.register_RPC(call_type='upload')
+def upload_pars(fname):
+    with open(fname,'r') as f:
+        s = f.read()
+    parameters = json.loads(s[1:-1])
+    if not isinstance(parameters, dict):
+        raise TypeError(f'Uploaded file was a {type(parameters)} object rather than a dict')
+    if  'sim_pars' not in parameters or 'epi_pars' not in parameters:
+        raise KeyError(f'Parameters file must have keys "sim_pars" and "epi_pars", not {parameters.keys()}')
+    return parameters
 
 
 @app.register_RPC()
