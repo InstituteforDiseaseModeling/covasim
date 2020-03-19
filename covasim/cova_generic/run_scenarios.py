@@ -19,7 +19,7 @@ scenarios = {
 #    'distance':    'Social distancing',
 #    '2wks':        'Social distancing, schools reopen in 2 weeks',
 #    '20wks':       'Social distancing, schools reopen in 20 weeks',
-    'isolatepos80': 'Untargeted testing, isolate positives',
+    'isolatepos':   'Untargeted testing, isolate positives',
     '2xtests':      'Double testing efforts (untargeted), isolate positives',
     'tracing':      'Trace, test, and isolate all contacts of positives',
 }
