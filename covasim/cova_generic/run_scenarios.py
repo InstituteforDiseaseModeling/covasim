@@ -11,8 +11,19 @@ sc.heading('Setting up...')
 
 sc.tic()
 
-# Whether or not to run!
+# Specify what to run!
 do_run = 1
+scenarios = {
+    'baseline':     'Status quo',
+#    'sq2wks':      'Status quo, schools reopen in 2 weeks',
+#    'distance':    'Social distancing',
+#    '2wks':        'Social distancing, schools reopen in 2 weeks',
+#    '20wks':       'Social distancing, schools reopen in 20 weeks',
+    'isolatepos80': 'Isolate positives (80% effective)',
+    '2xtests':      'Double testing efforts (untargeted), isolate positives',
+    'tracing':      'Trace, test, and isolate all contacts of positives',
+}
+
 
 # Other options
 do_save = 1
@@ -37,13 +48,6 @@ fig_path   = f'{basename}.png'
 obj_path   = f'{basename}.obj'
 
 
-scenarios = {
-    'baseline':   'Status quo',
-    'sq2wks':     'Status quo, schools reopen in 2 weeks',
-    'distance':   'Social distancing',
-    '2wks':       'Social distancing, schools reopen in 2 weeks',
-    '20wks':      'Social distancing, schools reopen in 20 weeks',
-}
 
 # If we're rerunning...
 if do_run:
@@ -75,10 +79,10 @@ if do_run:
             scen_sim['interv_days'] = [interv_day, interv_day+2*7] # Close schools for 2 weeks starting Mar. 16, then reopen
             scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
         elif scenkey == '8wks':
-            scen_sim['interv_days'] = [interv_day, interv_day+8*7] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_days'] = [interv_day, interv_day+8*7] # Close schools for 8 weeks starting Mar. 16, then reopen
             scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
         elif scenkey == '20wks':
-            scen_sim['interv_days'] = [interv_day, interv_day+20*7] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_days'] = [interv_day, interv_day+20*7] # Close schools for 20 weeks starting Mar. 16, then reopen
             scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
 
 
