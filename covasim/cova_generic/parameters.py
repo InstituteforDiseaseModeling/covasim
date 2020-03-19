@@ -29,7 +29,8 @@ def make_pars():
     # Epidemic parameters
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
-    pars['asym_factor']    = 1.0 # Multiply beta by this factor for asymptomatic cases
+    pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']    = 0.1 # Multiply beta by this factor for diganosed cases
     pars['contacts']       = 20
     pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.2} # Per-population beta weights; relative
     pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated

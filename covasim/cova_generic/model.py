@@ -313,9 +313,13 @@ class Sim(cova.Sim):
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
                         if not self['usepopdata']: # TODO: refactor!
+
                             for contact_ind in person.contact_inds:
-                                thisbeta = self['beta'] if person.symptomatic else self['beta']*self['asym_factor'] # Calculate transmission risk based on whether they're asymptomatic
+
+                                # Calculate transmission risk based on whether they're asymptomatic/diagnosed
+                                thisbeta = self['beta'] * (self['asym_factor'] if person.symptomatic else 1.) * (self['diag_factor'] if person.diagnosed else 1.)
                                 transmission = cova.bt(thisbeta) # Check whether virus is transmitted
+
                                 if transmission:
                                     target_person = self.get_person(contact_ind) # Stored by integer
                                     if target_person.susceptible: # Skip people who are not susceptible
@@ -324,13 +328,14 @@ class Sim(cova.Sim):
                                         if verbose>=2:
                                             print(f'        Person {person.uid} infected person {target_person.uid}!')
                         else:
+
                             for ckey in self.contact_keys:
+
+                                # Calculate transmission risk based on whether they're asymptomatic/diagnosed
                                 for contact_ind in person.contact_inds[ckey]:
-                                    if person.symptomatic: # Calculate exposure risk based on whether they're asymptomatic
-                                        thisbeta = self['beta']*self['beta_pop'][ckey]
-                                    else:
-                                        thisbeta = self['beta']*self['beta_pop'][ckey]*self['asym_factor']
+                                    thisbeta = self['beta'] * self['beta_pop'][ckey]  * (self['asym_factor'] if person.symptomatic else 1.) * (self['diag_factor'] if person.diagnosed else 1.)
                                     transmission = cova.bt(thisbeta) # Check whether virus is transmitted
+
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
