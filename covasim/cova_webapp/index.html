@@ -85,12 +85,16 @@
                 </select>&nbsp;&nbsp;&nbsp;&nbsp;
 
 
-                <div>
+                <div style='padding-left:10px;'>
                     History: <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
                       <option v-for="(item, index) in history" :value="index">
                         {{ index }}
                       </option>
                     </select>
+
+                </div>
+
+                <div style='padding-left:30px; padding-top: 15px'>
 
                     <button id="download-parameters-button" :disabled="running" class="btn btn-primary green" type="button" @click="downloadPars">
                       <span class="ti-download"/>
