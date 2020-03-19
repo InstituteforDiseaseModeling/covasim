@@ -126,15 +126,17 @@ def get_sessions(session_id=None):
 @app.register_RPC(call_type='download')
 def download_pars(sim_pars, epi_pars):
     d = {'sim_pars':sim_pars,'epi_pars':epi_pars}
-    s = json.dumps(json.dumps(d))
+    s = json.dumps(d,indent=2)
     return io.BytesIO(("'%s'" % (s)).encode()), 'parameters.txt'
 
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
     with open(fname,'r') as f:
         s = f.read()
-    d = json.loads(json.loads(s[1:-1]))
-    print(d)
+    d = json.loads(s[1:-1])
+    assert isinstance(d,dict), "File did not contain required parameter structure"
+    assert "sim_pars" in d, "Simulation pars missing in file"
+    assert "epi_pars" in d, "Epidemiological parameters missing in file"
     return d
 
 
