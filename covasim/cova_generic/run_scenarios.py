@@ -28,7 +28,8 @@ scenarios = {
 
 
 # Other options
-do_save = 1
+do_save = 0
+show_plot = 0
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
 n = 11 # Change to 3 for quick, 11 for real
@@ -205,5 +206,7 @@ if do_save:
         sc.saveobj(obj_path, allres)
 
 sc.toc()
-pl.show()
+
+if show_plot: # Optionally show plot
+    pl.show()
 
