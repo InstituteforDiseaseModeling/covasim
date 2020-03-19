@@ -154,21 +154,19 @@ class Sim(ParsObj):
         raise NotImplementedError
 
 
-def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None, **kwargs):
+def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None, **kwargs):
     '''
     Convenience function to perform a single simulation run. Mostly used for
     parallelization, but can also be used directly:
-        import covid_abm
-        sim = covid_abm.single_run() # Create and run a default simulation
+        import covasim.cova_generic as cova
+        sim = cova.Sim() # Create a default simulation
+        sim = cova.single_run(sim) # Run it, equivalent(ish) to sim.run()
     '''
 
     if sim_args is None:
         sim_args = {}
 
-    if sim is None:
-        new_sim = Sim(**sim_args)
-    else:
-        new_sim = sc.dcp(sim) # To avoid overwriting it; otherwise, use
+    new_sim = sc.dcp(sim) # To avoid overwriting it; otherwise, use
 
     if verbose is None:
         verbose = new_sim['verbose']
@@ -213,7 +211,7 @@ def single_run(sim=None, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args
     return new_sim
 
 
-def multi_run(sim=None, n=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, sim_args=None, combine=False, **kwargs):
+def multi_run(sim, n=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, sim_args=None, combine=False, **kwargs):
     '''
     For running multiple runs in parallel. Example:
         import covid_seattle
@@ -224,8 +222,6 @@ def multi_run(sim=None, n=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     # Create the sims
     if sim_args is None:
         sim_args = {}
-    if sim is None:
-        sim = Sim(**sim_args)
 
     # Handle iterpars
     if iterpars is None:
