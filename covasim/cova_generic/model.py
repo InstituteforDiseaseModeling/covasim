@@ -392,9 +392,9 @@ class Sim(cova.Sim):
                         if tested_person.infectious and cova.bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
-                            target_person.date_diagnosed = t
+                            tested_person.date_diagnosed = t
                             if verbose>=2:
-                                        print(f'          Person {person.uid} was diagnosed!')
+                                        print(f'          Person {person.uid} was diagnosed at timestep {t}!')
 
             # Implement quarantine
             if t in self['interv_days']:

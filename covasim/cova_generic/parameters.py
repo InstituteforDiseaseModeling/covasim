@@ -46,7 +46,7 @@ def make_pars():
     pars['dur_std']        = 2 # Variance in duration
 
     # Testing
-    pars['daily_tests']    = pd.Series([100]*pars['n_days']) # If there's no testing data, optionally define a list of daily tests here
+    pars['daily_tests']    = pd.Series([100]*pars['n_days']) # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
     pars['trace_test']     = 100.0 # Multiply testing probability by this factor for contacts of known positives
