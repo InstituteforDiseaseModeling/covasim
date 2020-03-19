@@ -5,7 +5,7 @@ Simple script for running the Covid-19 agent-based model
 import pylab as pl
 import datetime as dt
 import sciris as sc
-import covasim.cova_oregon as cova
+import covasim.cova_generic as cova
 
 sc.heading('Setting up...')
 
@@ -18,10 +18,10 @@ do_run = 1
 do_save = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-n = 11
-xmin = 48 # pars['day_0']
-xmax = xmin+54 # xmin + pars['n_days']
-interv_day = 24
+n = 11 # Change to 3 for quick, 11 for real
+xmin = 52 # pars['day_0']
+xmax = xmin+200 # xmin + pars['n_days']
+interv_day = 10
 closure_len = 14
 noise = 0.1 # Use noise, optionally
 noisepar = 'beta'
@@ -29,20 +29,20 @@ seed = 1
 reskeys = ['cum_exposed', 'n_exposed']
 quantiles = {'low':0.1, 'high':0.9}
 
-version = 'v1'
-date     = '2020mar16'
-folder   = f'results_{date}'
-basename = f'{folder}/oregon-projections_{date}_{version}'
-fn_obj   = f'{basename}.obj'
-fn_fig   = f'{basename}.png'
-
+version  = 'v0'
+date     = '2020mar18'
+folder   = 'results'
+basename = f'{folder}/covasim_scenarios_{date}_{version}'
+fig_path   = f'{basename}.png'
+obj_path   = f'{basename}.obj'
 
 
 scenarios = {
-    'baseline':   'Business as usual',
-    'reopen':     'Current interventions, schools reopen',
-    'closed':     'Current interventions, schools stay closed',
-    'aggressive': 'Aggressive interventions (business closures)',
+    'baseline':   'Status quo',
+    'sq2wks':     'Status quo, schools reopen in 2 weeks',
+    'distance':   'Social distancing',
+    '2wks':       'Social distancing, schools reopen in 2 weeks',
+    '20wks':      'Social distancing, schools reopen in 20 weeks',
 }
 
 # If we're rerunning...
@@ -65,15 +65,22 @@ if do_run:
         if scenkey == 'baseline':
             scen_sim['interv_days'] = [] # No interventions
             scen_sim['interv_effs'] = []
-        elif scenkey == 'reopen':
-            scen_sim['interv_days'] = [interv_day, interv_day+closure_len] # Close schools for 2 weeks starting Mar. 16, then reopen
-            scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
-        elif scenkey == 'closed':
+        elif scenkey == 'sq2wks':
+            scen_sim['interv_days'] = [interv_day, interv_day+2*7] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_effs'] = [0.7, 1.0/0.7] # Change to 40% and then back to 70%
+        elif scenkey == 'distance':
             scen_sim['interv_days'] = [interv_day] # Close schools for 2 weeks starting Mar. 16, then reopen
-            scen_sim['interv_effs'] = [0.4]
-        elif scenkey == 'aggressive':
-            scen_sim['interv_days'] = [interv_day] # Close everything
-            scen_sim['interv_effs'] = [0.1]
+            scen_sim['interv_effs'] = [0.7] # Change to 40% and then back to 70%
+        elif scenkey == '2wks':
+            scen_sim['interv_days'] = [interv_day, interv_day+2*7] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
+        elif scenkey == '8wks':
+            scen_sim['interv_days'] = [interv_day, interv_day+8*7] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
+        elif scenkey == '20wks':
+            scen_sim['interv_days'] = [interv_day, interv_day+20*7] # Close schools for 2 weeks starting Mar. 16, then reopen
+            scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
+
 
         sc.heading(f'Multirun for {scenkey}')
 
@@ -112,7 +119,7 @@ if do_run:
 
 # Don't run
 else:
-    allres = sc.loadobj(fn_obj)
+    allres = sc.loadobj(obj_path)
 
 sc.heading('Plotting')
 
@@ -144,42 +151,31 @@ for rk,reskey in enumerate(reskeys):
         pl.fill_between(tvec, scendata.low, scendata.high, **fill_args)
         pl.plot(tvec, scendata.best, label=scendata.name, **plot_args)
 
-        interv_col = [0.5, 0.2, 0.4]
+        # interv_col = [0.5, 0.2, 0.4]
 
         ymax = pl.ylim()[1]
 
         if reskey == 'cum_exposed':
             sc.setylim()
             pl.title('Cumulative infections')
-            pl.legend()
-            pl.text(xmin+interv_day+0.5, ymax*0.85, 'Interventions\nbegin', color=interv_col, fontstyle='italic')
-            pl.text(xmin+interv_day+closure_len-5, ymax*0.8, 'Proposed\nreopening\nof schools', color=interv_col, fontstyle='italic')
-
-            pl.text(0.0, 1.1, 'COVID-19 projections, Oregon', fontsize=24, transform=pl.gca().transAxes)
+            pl.text(0.0, 1.1, 'COVID-19 projections, per 1 million susceptibles', fontsize=24, transform=pl.gca().transAxes)
 
         elif reskey == 'n_exposed':
+            pl.legend()
             sc.setylim()
             pl.title('Active infections')
 
         pl.grid(True)
 
-        pl.plot([xmin+interv_day]*2, pl.ylim(), '-', lw=1, c=interv_col) # Plot intervention
-        pl.plot([xmin+interv_day+closure_len]*2, pl.ylim(), '-', lw=1, c=interv_col) # Plot intervention
-        # pl.xlabel('Date')
-        # pl.ylabel('Count')
-
         # Set x-axis
-        pl.gca().set_xticks(pl.arange(xmin, xmax+1, 7))
+        pl.gca().set_xticks(pl.arange(xmin, xmax+1, 30.5))
         xt = pl.gca().get_xticks()
         lab = []
         for t in xt:
             tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t)) # + pars['day_0']
-            lab.append( tmp.strftime('%B %d') )
+            lab.append( tmp.strftime('%B') )
         pl.gca().set_xticklabels(lab)
         sc.commaticks(axis='y')
-
-if do_save:
-    pl.savefig(fn_fig)
 
 
 #%% Print statistics
@@ -188,9 +184,9 @@ for reskey in reskeys:
         print(f'{reskey} {scenkey}: {allres[reskey][scenkey].best[-1]:0.0f}')
 
 if do_save:
-    pl.savefig(fn_fig, dpi=150)
+    pl.savefig(fig_path, dpi=150)
     if do_run: # Don't resave loaded data
-        sc.saveobj(fn_obj, allres)
+        sc.saveobj(obj_path, allres)
 
 sc.toc()
 pl.show()

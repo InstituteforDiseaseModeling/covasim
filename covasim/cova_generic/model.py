@@ -83,7 +83,7 @@ class Sim(cova.Sim):
         if pars is None:
             pars = cova_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
-        self.data = cova_pars.load_data(datafile)
+        self.data = None # cova_pars.load_data(datafile)
         self.set_seed(self['seed'])
         self.init_results()
         self.init_people()
@@ -436,7 +436,7 @@ class Sim(cova.Sim):
 
 
 
-    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, use_grid=True, verbose=None):
+    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, use_grid=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -511,11 +511,11 @@ class Sim(cova.Sim):
 
         # Ensure the figure actually renders or saves
         if do_save:
-            if isinstance(do_save, str):
-                filename = do_save # It's a string, assume it's a filename
+            if isinstance(do_save, str) and fig_path is None:
+                fig_path = do_save # It's a string, assume it's a filename
             else:
-                filename = 'covasim_oregon.png' # Just give it a default name
-            pl.savefig(filename)
+                fig_path = 'covasim.png' # Just give it a default name
+            pl.savefig(fig_path)
 
         pl.show()
 
