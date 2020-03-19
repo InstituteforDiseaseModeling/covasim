@@ -387,6 +387,7 @@ class Sim(cova.Sim):
                     test_probs_arr = pl.array(list(test_probs.values()))
                     test_probs_arr /= test_probs_arr.sum()
                     test_inds = cova.choose_people_weighted(probs=test_probs_arr, n=n_tests)
+
                     for test_ind in test_inds:
                         tested_person = self.get_person(test_ind)
                         if tested_person.infectious and cova.bt(self['sensitivity']): # Person was tested and is true-positive
@@ -394,7 +395,7 @@ class Sim(cova.Sim):
                             tested_person.diagnosed = True
                             tested_person.date_diagnosed = t
                             if verbose>=2:
-                                        print(f'          Person {person.uid} was diagnosed at timestep {t}!')
+                                        print(f'          Person {tested_person.uid} was diagnosed at timestep {t}!')
 
             # Implement quarantine
             if t in self['interv_days']:

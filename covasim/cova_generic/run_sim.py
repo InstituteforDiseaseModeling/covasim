@@ -13,7 +13,7 @@ sc.toc()
 
 do_plot = 0
 do_save = 1
-verbose = 1
+verbose = 2
 seed = 1
 
 version  = 'v0'

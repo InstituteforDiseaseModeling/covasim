@@ -19,7 +19,7 @@ scenarios = {
 #    'distance':    'Social distancing',
 #    '2wks':        'Social distancing, schools reopen in 2 weeks',
 #    '20wks':       'Social distancing, schools reopen in 20 weeks',
-    'isolatepos':   'Untargeted testing, isolate positives',
+    'isolatepos':   'Isolate people who diagnose positive',
     '2xtests':      'Double testing efforts (untargeted), isolate positives',
     'tracing':      'Trace, test, and isolate all contacts of positives',
 }
@@ -84,6 +84,16 @@ if do_run:
         elif scenkey == '20wks':
             scen_sim['interv_days'] = [interv_day, interv_day+20*7] # Close schools for 20 weeks starting Mar. 16, then reopen
             scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
+        elif scenkey == 'isolatepos':
+            scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
+        elif scenkey == '2xtests':
+            scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
+            scen_sim['daily_tests'].loc[interv_day:] *= 2 # Double testing starting on the intervention start day
+        elif scenkey == 'tracing':
+            scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
+            scen_sim['cont_factor'] = 0.1 # Scale beta by this amount for anyone who's had contact with a known positive
+            scen_sim['trace_test'] = 100 # Test people who've had known positive contacts
+
 
 
         sc.heading(f'Multirun for {scenkey}')

@@ -30,8 +30,8 @@ def make_pars():
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
     pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']    = 0.1 # Multiply beta by this factor for diganosed cases
-    pars['cont_factor']    = 0.1 # Multiply beta by this factor for people who've been in contact with known positives
+    pars['diag_factor']    = 1.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
+    pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']       = 20
     pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.2} # Per-population beta weights; relative
     pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
@@ -46,10 +46,10 @@ def make_pars():
     pars['dur_std']        = 2 # Variance in duration
 
     # Testing
-    pars['daily_tests']    = pd.Series([100]*pars['n_days']) # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']
+    pars['daily_tests']    = pd.Series([0.01*pars['n']]*pars['n_days']) # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']. Here we say 1% of the population is tested
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
-    pars['trace_test']     = 100.0 # Multiply testing probability by this factor for contacts of known positives
+    pars['trace_test']     = 1.0 # Multiply testing probability by this factor for contacts of known positives -- baseline assumes no contact tracing
 
     # Mortality
     pars['timetodie']      = 21 # Days until death
