@@ -1,3 +1,3 @@
 #!/bin/bash
 export MPLBACKEND=agg
-gunicorn --reload --workers=2 --bind=127.0.0.1:8097 cova_app:flask_app
+gunicorn --reload --workers=8 --bind=127.0.0.1:8097 cova_app:flask_app

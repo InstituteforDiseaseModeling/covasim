@@ -17,14 +17,15 @@ The module should then be importable as `import covasim`.
 
 ## Usage
 
-Simplest usage is `python -i scripts/run_sim.py`. This will create a figure (and, by default, save it to disk). Different flavors are described below.
+Simplest usage is `python scripts/run_sim.py`. This will create a figure. Different flavors are described below.
 
 
 ## Flavors
 
 The package contains multiple different flavors of COVASim. Each flavor has its own parameters file (`parameters.py`) and slight variations to the model (`model.py`). Different versions are:
-* `cova_base` -- not to be used directly, the base classes for the simulation.
+* `cova_base` -- not to be used directly, the base classes for the simulation
 * `cova_cdc` -- for intervention scenarios for the CDC, uses detailed age mixing patterns for Seattle
+* `cova_generic` -- **the latest version of the code**, not specific to a particular context
 * `cova_cruise` -- for the Diamond Princess cruise ship, includes data on diagnoses and passengers and crew
 * `cova_oregon` -- estimtaes for the Oregon Health Authority
 * `cova_seattle` -- estimates for the Washington Department of Health

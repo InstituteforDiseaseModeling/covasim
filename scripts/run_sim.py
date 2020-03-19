@@ -2,15 +2,12 @@
 Simple script for running the Covid-19 agent-based model
 '''
 
-import covid_abm
+import covasim.cova_generic as cova
 
 do_plot = 1
-do_save = 0
-verbose = 0
+verbose = 1
 
-sim = covid_abm.Sim()
-sim.set_seed(5) # 4 ok, 5 ok, 6 good
+sim = cova.Sim()
 sim.run(verbose=verbose)
-sim.likelihood()
 if do_plot:
-    sim.plot(do_save=do_save)
+    sim.plot()
