@@ -197,6 +197,7 @@ class Sim(cova.Sim):
      {summary['n_infectious']:5.0f} infectious
      {summary['n_symptomatic']:5.0f} symptomatic
      {summary['cum_exposed']:5.0f} exposed
+     {summary['cum_diagnosed']:5.0f} diagnosed
      {summary['cum_deaths']:5.0f} deaths
      {summary['cum_recoveries']:5.0f} recovered
                """)
@@ -255,7 +256,7 @@ class Sim(cova.Sim):
         if self.data is not None and len(self.data): # TODO: refactor to single conditional
             daily_tests = self.data['new_tests'] # Number of tests each day, from the data
         else:
-            daily_tests = []
+            daily_tests = self['daily_tests']
 
         # Main simulation loop
         for t in range(self.npts):
@@ -323,7 +324,7 @@ class Sim(cova.Sim):
                                 target_person = self.get_person(contact_ind)  # Stored by integer
 
                                 # This person was diagnosed last time step: time to flag their contacts
-                                if person.date_diagnosed >= t-1:
+                                if person.date_diagnosed is not None and person.date_diagnosed == t-1:
                                     target_person.known_contact = True
 
                                 # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated

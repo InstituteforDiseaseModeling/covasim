@@ -21,7 +21,7 @@ def make_pars():
     pars['n']          = 10e3 # Number ultimately susceptible to CoV
     pars['n_infected'] = 10 # Number of seed cases
     pars['day_0']      = datetime(2020, 3, 1)  #datetime(2020, 2, 10) # Start day of the epidemic 3/5
-    pars['n_days']     = 200 # 50 # 25 for calibration, 50 for projections # How many days to simulate
+    pars['n_days']     = 20 # 50 # 25 for calibration, 50 for projections # How many days to simulate
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
@@ -46,6 +46,7 @@ def make_pars():
     pars['dur_std']        = 2 # Variance in duration
 
     # Testing
+    pars['daily_tests']    = pd.Series([100]*pars['n_days']) # If there's no testing data, optionally define a list of daily tests here
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
     pars['trace_test']     = 100.0 # Multiply testing probability by this factor for contacts of known positives
@@ -57,7 +58,6 @@ def make_pars():
     pars['default_cfr']    = 0.016 # Default overall case fatality rate if not using age-specific values
 
     # Events and interventions
-    pars['quar_length'] = 14 # Number of days to isolate if you've been in contact with a known positive
     pars['interv_days'] = []# [30, 44]  # Day on which interventions started/stopped
     pars['interv_effs'] = []# [0.1, 10] # Change in transmissibility
 
