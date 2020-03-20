@@ -32,25 +32,28 @@ if _sc.compareversions(_sw.__version__, _min_scirisweb_version) < 0:
 
 # Check health systems -- optional dependency
 try:
-    import covid_healthsystems as _hsys
+    import covid_healthsystems as _hsys_available
+    _hsys_available = True
 except ImportError as E:
     print(f'Warning: covid_healthsystems is not available. Hospital capacity analyses will not be available. (Error: {str(E)})\n')
-    _hsys = None
+    _hsys_available = False
 
 
 # Check synthpops -- optional dependency
 try:
-    import synthpops as _synth
+    import synthpops as _synth_available
+    _synth_available = True
 except ImportError as E:
     print(f'Warning: synthpops is not available. Detailed demographic data will not be available. (Error: {str(E)})\n')
-    _synth = None
+    _synth_available = False
 
 # Check parestlib -- optional dependency
 try:
-    import parestlib as _parest
+    import parestlib as _parest_available
+    _parest_available = True
 except ImportError as E:
     print(f'Warning: parestlib is not available. Automated calibration will not be available. (Error: {str(E)})\n')
-    _parest = None
+    _parest_available = False
 
 
 # Tidy up temporary variables, leaving _hsys and _parest since these are used later

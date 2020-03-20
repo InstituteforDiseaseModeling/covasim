@@ -8,7 +8,6 @@ import sciris as sc
 import covasim.cova_generic as cova
 
 doplot = 0
-do_save = 0
 
 
 #%% Define the tests
@@ -31,7 +30,7 @@ def test_parsobj():
     return parsobj
 
 
-def test_sim(doplot=False, do_save=False): # If being run via pytest, turn off
+def test_sim(doplot=False): # If being run via pytest, turn off
     sc.heading('Basic sim test')
 
     # Settings
@@ -45,63 +44,64 @@ def test_sim(doplot=False, do_save=False): # If being run via pytest, turn off
 
     # Optionally plot
     if doplot:
-        sim.plot(do_save=do_save)
+        sim.plot()
 
     return sim
 
 
-def test_trans_tree(doplot=False, do_save=False): # If being run via pytest, turn off
-    sc.heading('Transmission tree test')
-
-    sim = cova.Sim() # Create the simulation
-    sim.run(verbose=1) # Run the simulation
+def test_trans_tree(doplot=False): # If being run via pytest, turn off
     if doplot:
-        sim.plot(do_save=do_save)
+        sc.heading('Transmission tree test')
 
-    return sim.results['transtree']
+        sim = cova.Sim() # Create the simulation
+        sim.run(verbose=1) # Run the simulation
+        if doplot:
+            sim.plot()
+
+        return sim.results['transtree']
 
 
 def test_singlerun(): # If being run via pytest, turn off
-    sc.heading('Single run test')
+    if doplot:
+        sc.heading('Single run test')
 
-    iterpars = {'beta': 0.035,
-                'incub': 8,
-                }
+        iterpars = {'beta': 0.035,
+                    'incub': 8,
+                    }
 
-    sim = cova.Sim()
-    sim = cova.single_run(sim=sim, **iterpars)
+        sim = cova.Sim()
+        sim = cova.single_run(sim=sim, **iterpars)
 
-    return sim
+        return sim
 
 
 def test_multirun(doplot=False): # If being run via pytest, turn off
-    sc.heading('Multirun test')
-
-
-
-    # Note: this runs 3 simulations, not 3x3!
-    iterpars = {'beta': [0.015, 0.025, 0.035],
-                'incub': [4, 5, 6],
-                }
-
-    sim = cova.Sim() # Shouldn't be necessary, but is for now
-    sims = cova.multi_run(sim=sim, iterpars=iterpars)
-
     if doplot:
-        for sim in sims:
-            sim.plot(do_save=do_save)
+        sc.heading('Multirun test')
 
-    return sims
+        # Note: this runs 3 simulations, not 3x3!
+        iterpars = {'beta': [0.015, 0.025, 0.035],
+                    'incub': [4, 5, 6],
+                    }
+
+        sim = cova.Sim() # Shouldn't be necessary, but is for now
+        sims = cova.multi_run(sim=sim, iterpars=iterpars)
+
+        if doplot:
+            for sim in sims:
+                sim.plot()
+
+        return sims
 
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    # parsobj = test_parsobj()
-    # sim     = test_sim(doplot=doplot, do_save=do_save)
-    # tt      = test_trans_tree(doplot=doplot)
-    # sim     = test_singlerun(doplot=doplot)
+    parsobj = test_parsobj()
+    sim     = test_sim(doplot=doplot)
+    tt      = test_trans_tree(doplot=doplot)
+    sim     = test_singlerun(doplot=doplot)
     sims    = test_multirun(doplot=doplot)
 
     sc.toc()
