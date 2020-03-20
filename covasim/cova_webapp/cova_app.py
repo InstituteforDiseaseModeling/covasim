@@ -6,6 +6,8 @@ Sciris app to run the web interface.
 import os
 import io
 import sys
+import base64
+import zipfile
 import sciris as sc
 import scirisweb as sw
 import plotly.graph_objects as go
@@ -145,7 +147,7 @@ def upload_pars(fname):
 
 
 @app.register_RPC()
-def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     ''' Create, run, and plot everything '''
 
     prev_threshold = 0.20 # Don't plot susceptibles if prevalence never gets above this threshold
@@ -224,6 +226,29 @@ def plot_sim(sim_pars=None, epi_pars=None, verbose=True):
                             autosize = True,
         )
         output['graphs'].append({'json':fig.to_json(),'id':str(sc.uuid())})
+
+    # Create and send output files
+    # base64 encoded content
+    datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
+    output['files'] = {}
+
+    ss = sim.export_xlsx()
+    output['files']['xlsx'] = {
+        'filename': f'COVASim_results_{datestamp}.xlsx',
+        'content': base64.b64encode(ss.blob).decode("utf-8"),
+    }
+
+    result_json = sim.export_json()
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as f:
+        f.writestr('results.txt', result_json)
+    zip_buffer.flush()
+    zip_buffer.seek(0)
+
+    output['files']['json'] = {
+        'filename': f'COVASim_results_{datestamp}.zip',
+        'content': base64.b64encode(zip_buffer.read()).decode("utf-8"),
+    }
 
     return output
 

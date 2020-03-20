@@ -32,7 +32,8 @@ var vm = new Vue({
             historyIdx: 0,
             sim_pars: {},
             epi_pars: {},
-            graphs: [],
+            graphs: [], // Store plotly graph jsons
+            files: {}, // Store files for download
             running: false,
             err: '',
             reset_options: ['Example', 'Seattle'], // , 'Wuhan', 'Global'],
@@ -67,8 +68,9 @@ var vm = new Vue({
 
             // Run a a single sim
             try{
-                let response = await sciris.rpc('plot_sim', [this.sim_pars, this.epi_pars]);
+                let response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars]);
                 this.graphs = response.data.graphs;
+                this.files = response.data.files;
                 this.err = response.data.err;
                 this.sim_pars= response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
@@ -109,6 +111,20 @@ var vm = new Vue({
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
             this.graphs = this.history[this.historyIdx].graphs;
-        }
-    }
+        },
+
+        async downloadExcel() {
+          let res = await fetch('data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + this.files.xlsx.content);
+          let blob = await res.blob();
+          saveAs(blob, this.files.xlsx.filename);
+        },
+
+        async downloadJson() {
+          let res = await fetch('data:application/zip;base64,' + this.files.json.content);
+          let blob = await res.blob();
+          saveAs(blob, this.files.json.filename);
+        },
+
+      },
+
 })

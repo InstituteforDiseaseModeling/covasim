@@ -5,8 +5,11 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 '''
 
 #%% Imports
+import io
+import json
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
+import pandas as pd
 from . import utils as cov_ut
 
 # Specify all externally visible functions this file defines
@@ -121,31 +124,25 @@ class Sim(ParsObj):
         ''' Create a time vector '''
         return np.arange(self['n_days'] + 1)
 
-
     def get_person(self, ind):
         ''' Return a person based on their ID '''
         return self.people[self.uids[ind]]
-
 
     def init_results(self):
         ''' Initialize results '''
         raise NotImplementedError
 
-
     def init_people(self):
         ''' Create the people '''
         raise NotImplementedError
-
 
     def summary_stats(self):
         ''' Compute the summary statistics to display at the end of a run '''
         raise NotImplementedError
 
-
     def run(self):
         ''' Run the simulation '''
         raise NotImplementedError
-
 
     def likelihood(self):
         '''
@@ -154,13 +151,43 @@ class Sim(ParsObj):
         '''
         raise NotImplementedError
 
+    def export_json(self) -> str:
+        """
+        Export results as JSON
+
+        Returns:
+            A unicode string containing a JSON representation of the results
+
+        """
+
+        return json.dumps(sc.sanitizejson(self.results), indent=2)
+
+    def export_xlsx(self) -> sc.Spreadsheet:
+        """
+        Export results as XLSX
+
+        Returns:
+            A sc.Spreadsheet with an Excel file
+
+        """
+
+        output = {}
+        for k,v in self.results.items():
+            if isinstance(v, np.ndarray) and v.size == self.npts:
+                output[k] = v
+        df = pd.DataFrame.from_dict(output)
+        df.index = self.tvec
+        df.index.name = 'Day'
+
+        output = io.BytesIO()
+        df.to_excel(output, engine='xlsxwriter')
+        return sc.Spreadsheet(output)
 
     def plot(self):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
         '''
         raise NotImplementedError
-
 
     def plot_people(self):
         ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
