@@ -111,7 +111,6 @@ class Sim(cova.Sim):
         ''' Initialize results '''
 
         self.results = {}
-<<<<<<< HEAD
         self.results['n_susceptible']       = Result('Number susceptible')
         self.results['n_exposed']           = Result('Number exposed')
         self.results['n_infectious']        = Result('Number infectious')
@@ -129,20 +128,15 @@ class Sim(cova.Sim):
         self.results['cum_recoveries']      = Result('Cumulative number recovered')
         self.results['doubling_time']       = Result('Doubling time', scale=False)
 
-        self.reskeys = [k for k in self.results.keys() if isinstance(self.results[k],Result)] # Save the names of the main result keys
+        self.reskeys = [k for k in self.results.keys() if isinstance(self.results[k], Result)] # Save the names of the main result keys
 
         for key in self.reskeys:
             self.results[key].values = np.zeros(int(self.npts))
 
-        self.results['t'] = np.arange(int(self.npts))
-=======
-        for key in self.results_keys:
-            self.results[key] = np.zeros(self.npts)
         self.results['t'] = self.tvec
         self.results['date'] = []
         for t in self.tvec:
             self.results['date'].append(self['start_day'] + dt.timedelta(days=int(t)))
->>>>>>> develop
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
