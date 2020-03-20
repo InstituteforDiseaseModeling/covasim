@@ -41,7 +41,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
         'neg_binomial'
         ]
 
-    # TODO: refactor using a dict mapping if possible
+    # NB, if adding a new distribution, also add to choices above
     if   dist == 'uniform':       samples = np.random.uniform(low=par1, high=par2, size=size)
     elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
     elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
