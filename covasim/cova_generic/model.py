@@ -112,8 +112,11 @@ class Sim(cova.Sim):
             'cum_recoveries',]
         self.results = {}
         for key in self.results_keys:
-            self.results[key] = np.zeros(int(self.npts))
-        self.results['t'] = np.arange(int(self.npts))
+            self.results[key] = np.zeros(self.npts)
+        self.results['t'] = self.tvec
+        self.results['date'] = []
+        for t in self.tvec:
+            self.results['date'].append(self['start_day'] + dt.timedelta(days=int(t)))
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
@@ -440,7 +443,9 @@ class Sim(cova.Sim):
 
 
 
-    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, use_grid=True, verbose=None):
+    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+             scatter_args=None, axis_args=None, as_days=True, interval=None, dateformat=None,
+             font_size=18, font_family=None, use_grid=True, use_dates=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -467,7 +472,8 @@ class Sim(cova.Sim):
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         pl.rcParams['font.size'] = font_size
-        pl.rcParams['font.family'] = 'Proxima Nova'
+        if font_family:
+            pl.rcParams['font.family'] = font_family
 
         res = self.results # Shorten since heavily used
 
@@ -488,7 +494,7 @@ class Sim(cova.Sim):
             data_mapping = {}
 
         for p,title,keylabels in to_plot.enumitems():
-            pl.subplot(2,1,p+1)
+            ax = pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = colors[i]
                 y = res[key]
@@ -502,16 +508,14 @@ class Sim(cova.Sim):
             sc.commaticks()
             pl.title(title)
 
-            # Set xticks as dates # TODO: make more general-purpose!
-            ax = pl.gca()
-            xmin,xmax = ax.get_xlim()
-            ax.set_xticks(pl.arange(xmin, xmax+1, 7))
-            xt = ax.get_xticks()
-            lab = []
-            for t in xt:
-                tmp = self['day_0'] + dt.timedelta(days=int(t)) # + pars['day_0']
-                lab.append(tmp.strftime('%B %d'))
-            ax.set_xticklabels(lab)
+            # Set xticks as dates
+            if use_dates:
+                if interval:
+                    xmin,xmax = ax.get_xlim()
+                    ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+                xticks = ax.get_xticks()
+                xticklabels = self.inds2dates(xticks, dateformat=dateformat)
+                ax.set_xticklabels(xticklabels)
 
         # Ensure the figure actually renders or saves
         if do_save:

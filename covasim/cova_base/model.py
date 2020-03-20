@@ -5,6 +5,7 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 '''
 
 #%% Imports
+import datetime as dt
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cov_ut
@@ -106,6 +107,22 @@ class Sim(ParsObj):
     def tvec(self):
         ''' Create a time vector '''
         return np.arange(self['n_days'] + 1)
+
+
+    def inds2dates(self, inds, dateformat=None):
+        ''' Convert a set of indices to a set of dates '''
+
+        if sc.isnumber(inds): # If it's a number, convert it to a list
+            inds = sc.promotetolist(inds)
+
+        if dateformat is None:
+            dateformat = '%b-%d'
+
+        dates = []
+        for ind in inds:
+            tmp = self['start_day'] + dt.timedelta(days=int(ind))
+            dates.append(tmp.strftime(dateformat))
+        return dates
 
 
     def get_person(self, ind):

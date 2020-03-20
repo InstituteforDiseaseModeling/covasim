@@ -152,15 +152,16 @@ def test_choose_people_weighted():
     return
 
 
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    test_rand()
-    test_poisson()
-    results = test_samples(doplot=doplot)
-    test_choose_people()
-    test_choose_people_weighted()
+    # test_rand()
+    # test_poisson()
+    # results = test_samples(doplot=doplot)
+    # test_choose_people()
+    # test_choose_people_weighted()
 
     print('\n'*2)
     sc.toc()
