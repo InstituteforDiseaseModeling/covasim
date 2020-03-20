@@ -64,6 +64,7 @@ class Person(cova.Person):
         self.recovered      = False
         self.dead           = False
         self.known_contact  = False # Keep track of whether each person is a contact of a known positive
+        self.n_infected     = 0 # Keep track of how many people each person infects
 
         # Keep track of dates
         self.date_exposed     = None
