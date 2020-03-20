@@ -11,6 +11,7 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
+import statsmodels.api as sm
 import covasim.cova_base as cova
 from . import parameters as cova_pars
 
@@ -96,25 +97,27 @@ class Sim(cova.Sim):
 
     def init_results(self):
         ''' Initialize results '''
-        self.results_keys = [
-            'n_susceptible',
-            'n_exposed',
-            'n_infectious',
-            'n_symptomatic',
-            'n_recovered',
-            'infections',
-            'tests',
-            'diagnoses',
-            'recoveries',
-            'deaths',
-            'cum_exposed',
-            'cum_tested',
-            'cum_diagnosed',
-            'cum_deaths',
-            'cum_recoveries',]
+
         self.results = {}
-        for key in self.results_keys:
-            self.results[key] = np.zeros(int(self.npts))
+        self.results['n_susceptible']       = cova.Result('Number susceptible')
+        self.results['n_exposed']           = cova.Result('Number exposed')
+        self.results['n_infectious']        = cova.Result('Number infectious')
+        self.results['n_symptomatic']       = cova.Result('Number symptomatic')
+        self.results['n_recovered']         = cova.Result('Number recovered')
+        self.results['infections']          = cova.Result('Number of new infections')
+        self.results['tests']               = cova.Result('Number of tests')
+        self.results['diagnoses']           = cova.Result('Number of new diagnoses')
+        self.results['recoveries']          = cova.Result('Number of new recoveries')
+        self.results['deaths']              = cova.Result('Number of new deaths')
+        self.results['cum_exposed']         = cova.Result('Cumulative number exposed')
+        self.results['cum_tested']          = cova.Result('Cumulative number of tests')
+        self.results['cum_diagnosed']       = cova.Result('Cumulative number diagnosed')
+        self.results['cum_deaths']          = cova.Result('Cumulative number of deaths')
+        self.results['cum_recoveries']      = cova.Result('Cumulative number recovered')
+        self.results['doubling_time']       = cova.Result('Doubling time', scale=False)
+
+        for key in self.results.keys():
+            self.results[key].values = np.zeros(int(self.npts))
         self.results['t'] = np.arange(int(self.npts))
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
@@ -151,7 +154,7 @@ class Sim(cova.Sim):
 
         # Create the seed infections
         for i in range(int(self['n_infected'])):
-            self.results['infections'][0] += 1
+            self.results['infections'].values[0] += 1
             person = self.get_person(i)
             person.susceptible = False
             person.exposed = True
@@ -186,10 +189,14 @@ class Sim(cova.Sim):
         return
 
 
-    def summary_stats(self, verbose=True):
+    def summary_stats(self, verbose=None):
         ''' Compute the summary statistics to display at the end of a run '''
+
+        if verbose is None:
+            verbose = self['verbose']
+
         summary = {}
-        for key in self.results_keys:
+        for key in self.results.keys():
             summary[key] = self.results[key][-1]
 
         if verbose:
@@ -204,6 +211,7 @@ class Sim(cova.Sim):
                """)
 
         return summary
+
 
 
     def infect_person(self, source_person, target_person, t, infectious=False):
@@ -280,12 +288,12 @@ class Sim(cova.Sim):
 
                 # Count susceptibles
                 if person.susceptible:
-                    self.results['n_susceptible'][t] += 1
+                    self.results['n_susceptible'].values[t] += 1
                     continue # Don't bother with the rest of the loop
 
                 # If exposed, check if the person becomes infectious or develops symptoms
                 if person.exposed:
-                    self.results['n_exposed'][t] += 1
+                    self.results['n_exposed'].values[t] += 1
                     if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
                         person.infectious = True
                         if verbose >= 2:
@@ -305,7 +313,7 @@ class Sim(cova.Sim):
                         person.symptomatic = False
                         person.recovered = False
                         person.died = True
-                        self.results['deaths'][t] += 1
+                        self.results['deaths'].values[t] += 1
 
                     # Check for recovery
                     if person.date_recovered and t >= person.date_recovered: # It's the day they recover
@@ -313,11 +321,11 @@ class Sim(cova.Sim):
                         person.infectious = False
                         person.symptomatic = False
                         person.recovered = True
-                        self.results['recoveries'][t] += 1
+                        self.results['recoveries'].values[t] += 1
 
                     # Calculate onward transmission
                     else:
-                        self.results['n_infectious'][t] += 1 # Count this person as infectious
+                        self.results['n_infectious'].values[t] += 1 # Count this person as infectious
                         if not self['usepopdata']: # TODO: refactor!
 
                             for contact_ind in person.contact_inds:
@@ -337,8 +345,9 @@ class Sim(cova.Sim):
 
                                 if transmission:
                                     if target_person.susceptible: # Skip people who are not susceptible
-                                        self.results['infections'][t] += 1
+                                        self.results['infections'].values[t] += 1
                                         self.infect_person(source_person=person, target_person=target_person, t=t)
+                                        person.n_infected += 1
                                         if verbose>=2:
                                             print(f'        Person {person.uid} infected person {target_person.uid}!')
 
@@ -357,19 +366,20 @@ class Sim(cova.Sim):
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
-                                            self.results['infections'][t] += 1
+                                            self.results['infections'].values[t] += 1
                                             self.infect_person(source_person=person, target_person=target_person, t=t)
+                                            person.n_infected += 1
                                             if verbose>=2:
                                                 print(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
 
 
                 # Count people who developed symptoms
                 if person.symptomatic:
-                    self.results['n_symptomatic'][t] += 1
+                    self.results['n_symptomatic'].values[t] += 1
 
                 # Count people who recovered
                 if person.recovered:
-                    self.results['n_recovered'][t] += 1
+                    self.results['n_recovered'].values[t] += 1
 
                 # Adjust testing probability based on what's happened to the person
                 # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
@@ -384,7 +394,7 @@ class Sim(cova.Sim):
             if t<len(daily_tests): # Don't know how long the data is, ensure we don't go past the end
                 n_tests = daily_tests.iloc[t] # Number of tests for this day
                 if n_tests and not pl.isnan(n_tests): # There are tests this day
-                    self.results['tests'][t] = n_tests # Store the number of tests
+                    self.results['tests'].values[t] = n_tests # Store the number of tests
                     test_probs_arr = pl.array(list(test_probs.values()))
                     test_probs_arr /= test_probs_arr.sum()
                     test_inds = cova.choose_people_weighted(probs=test_probs_arr, n=n_tests)
@@ -392,7 +402,7 @@ class Sim(cova.Sim):
                     for test_ind in test_inds:
                         tested_person = self.get_person(test_ind)
                         if tested_person.infectious and cova.bt(self['sensitivity']): # Person was tested and is true-positive
-                            self.results['diagnoses'][t] += 1
+                            self.results['diagnoses'].values[t] += 1
                             tested_person.diagnosed = True
                             tested_person.date_diagnosed = t
                             if verbose>=2:
@@ -405,16 +415,25 @@ class Sim(cova.Sim):
                 ind = sc.findinds(self['interv_days'], t)[0]
                 self['beta'] *= self['interv_effs'][ind] # TODO: pop-specific
 
+            # Doubling time
+            if t>=1:
+                exog  = sm.add_constant(np.arange(t+1))
+                endog = np.log2(pl.cumsum(self.results['infections'].values[:t+1]))
+                model = sm.OLS(endog, exog)
+                doubling_time = 1 / model.fit().params[1]
+                self.results['doubling_time'].values[t] = doubling_time
+
         # Compute cumulative results
-        self.results['cum_exposed']    = pl.cumsum(self.results['infections'])
-        self.results['cum_tested']     = pl.cumsum(self.results['tests'])
-        self.results['cum_diagnosed']  = pl.cumsum(self.results['diagnoses'])
-        self.results['cum_deaths']     = pl.cumsum(self.results['deaths'])
-        self.results['cum_recoveries'] = pl.cumsum(self.results['recoveries'])
+        self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values)
+        self.results['cum_tested'].values     = pl.cumsum(self.results['tests'].values)
+        self.results['cum_diagnosed'].values  = pl.cumsum(self.results['diagnoses'].values)
+        self.results['cum_deaths'].values     = pl.cumsum(self.results['deaths'].values)
+        self.results['cum_recoveries'].values = pl.cumsum(self.results['recoveries'].values)
 
         # Scale the results
-        for reskey in self.results_keys:
-            self.results[reskey] *= self['scale']
+        for reskey in self.results.keys():
+            if self.results[reskey].scale:
+                self.results[reskey] *= self['scale']
 
         # Compute likelihood
         if calc_likelihood:

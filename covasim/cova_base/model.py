@@ -64,7 +64,7 @@ class Person(ParsObj):
 
 class Sim(ParsObj):
     '''
-    The Sim class handles the running of the simulation: the number of children,
+    The Sim class handles the running of the simulation: the number of people,
     number of time points, and the parameters of the simulation.
     '''
 
@@ -152,6 +152,17 @@ class Sim(ParsObj):
     def plot_people(self):
         ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
         raise NotImplementedError
+
+
+class Result(sc.prettyobj):
+    '''
+    Stores results
+    '''
+    def __init__(self, name=None, scale=True, ispercentage=False, values=None):
+        self.name = name  # Name of this result
+        self.ispercentage = ispercentage  # Whether or not the result is a percentage
+        self.scale = scale  # Whether or not to scale the result by the scale factor
+        self.values = values
 
 
 def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None, **kwargs):
