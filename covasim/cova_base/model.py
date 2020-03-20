@@ -154,17 +154,6 @@ class Sim(ParsObj):
         raise NotImplementedError
 
 
-class Result(sc.prettyobj):
-    '''
-    Stores results
-    '''
-    def __init__(self, name=None, scale=True, ispercentage=False, values=None):
-        self.name = name  # Name of this result
-        self.ispercentage = ispercentage  # Whether or not the result is a percentage
-        self.scale = scale  # Whether or not to scale the result by the scale factor
-        self.values = values
-
-
 def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None, **kwargs):
     '''
     Convenience function to perform a single simulation run. Mostly used for

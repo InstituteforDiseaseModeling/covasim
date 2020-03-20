@@ -77,6 +77,18 @@ class Person(cova.Person):
         return
 
 
+class Result(sc.prettyobj): #TODO: make this a general class?
+    '''
+    Stores a single result
+    '''
+    def __init__(self, name=None, scale=True, ispercentage=False, values=None):
+        self.name = name  # Name of this result
+        self.ispercentage = ispercentage  # Whether or not the result is a percentage
+        self.scale = scale  # Whether or not to scale the result by the scale factor
+        self.values = values
+        return
+
+
 class Sim(cova.Sim):
     '''
     The Sim class handles the running of the simulation: the number of children,
@@ -99,25 +111,28 @@ class Sim(cova.Sim):
         ''' Initialize results '''
 
         self.results = {}
-        self.results['n_susceptible']       = cova.Result('Number susceptible')
-        self.results['n_exposed']           = cova.Result('Number exposed')
-        self.results['n_infectious']        = cova.Result('Number infectious')
-        self.results['n_symptomatic']       = cova.Result('Number symptomatic')
-        self.results['n_recovered']         = cova.Result('Number recovered')
-        self.results['infections']          = cova.Result('Number of new infections')
-        self.results['tests']               = cova.Result('Number of tests')
-        self.results['diagnoses']           = cova.Result('Number of new diagnoses')
-        self.results['recoveries']          = cova.Result('Number of new recoveries')
-        self.results['deaths']              = cova.Result('Number of new deaths')
-        self.results['cum_exposed']         = cova.Result('Cumulative number exposed')
-        self.results['cum_tested']          = cova.Result('Cumulative number of tests')
-        self.results['cum_diagnosed']       = cova.Result('Cumulative number diagnosed')
-        self.results['cum_deaths']          = cova.Result('Cumulative number of deaths')
-        self.results['cum_recoveries']      = cova.Result('Cumulative number recovered')
-        self.results['doubling_time']       = cova.Result('Doubling time', scale=False)
+        self.results['n_susceptible']       = Result('Number susceptible')
+        self.results['n_exposed']           = Result('Number exposed')
+        self.results['n_infectious']        = Result('Number infectious')
+        self.results['n_symptomatic']       = Result('Number symptomatic')
+        self.results['n_recovered']         = Result('Number recovered')
+        self.results['infections']          = Result('Number of new infections')
+        self.results['tests']               = Result('Number of tests')
+        self.results['diagnoses']           = Result('Number of new diagnoses')
+        self.results['recoveries']          = Result('Number of new recoveries')
+        self.results['deaths']              = Result('Number of new deaths')
+        self.results['cum_exposed']         = Result('Cumulative number exposed')
+        self.results['cum_tested']          = Result('Cumulative number of tests')
+        self.results['cum_diagnosed']       = Result('Cumulative number diagnosed')
+        self.results['cum_deaths']          = Result('Cumulative number of deaths')
+        self.results['cum_recoveries']      = Result('Cumulative number recovered')
+        self.results['doubling_time']       = Result('Doubling time', scale=False)
 
-        for key in self.results.keys():
+        self.reskeys = [k for k in self.results.keys() if isinstance(self.results[k],Result)] # Save the names of the main result keys
+
+        for key in self.reskeys:
             self.results[key].values = np.zeros(int(self.npts))
+
         self.results['t'] = np.arange(int(self.npts))
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
@@ -196,8 +211,8 @@ class Sim(cova.Sim):
             verbose = self['verbose']
 
         summary = {}
-        for key in self.results.keys():
-            summary[key] = self.results[key][-1]
+        for key in self.reskeys:
+            summary[key] = self.results[key].values[-1]
 
         if verbose:
             print(f"""Summary:
@@ -431,9 +446,15 @@ class Sim(cova.Sim):
         self.results['cum_recoveries'].values = pl.cumsum(self.results['recoveries'].values)
 
         # Scale the results
-        for reskey in self.results.keys():
-            if self.results[reskey].scale:
-                self.results[reskey] *= self['scale']
+        for reskey in self.reskeys:
+            try:
+                if self.results[reskey].scale:
+                    self.results[reskey].values *= self['scale']
+            except:
+                import traceback;
+                traceback.print_exc();
+                import pdb;
+                pdb.set_trace()
 
         # Compute likelihood
         if calc_likelihood:
