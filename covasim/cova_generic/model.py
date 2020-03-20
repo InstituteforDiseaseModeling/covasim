@@ -451,14 +451,8 @@ class Sim(cova.Sim):
 
         # Scale the results
         for reskey in self.reskeys:
-            try:
-                if self.results[reskey].scale:
-                    self.results[reskey].values *= self['scale']
-            except:
-                import traceback;
-                traceback.print_exc();
-                import pdb;
-                pdb.set_trace()
+            if self.results[reskey].scale:
+                self.results[reskey].values *= self['scale']
 
         # Compute likelihood
         if calc_likelihood:
