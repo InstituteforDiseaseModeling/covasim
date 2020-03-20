@@ -23,7 +23,7 @@ to_plot = sc.odict({
             'cum_exposed': 'Cumulative infections',
             'cum_deaths': 'Cumulative deaths',
             'cum_recoveries':'Cumulative recoveries',
-            'cum_tested': 'Cumulative tested',
+            # 'cum_tested': 'Cumulative tested',
             # 'n_susceptible': 'Number susceptible',
             # 'n_infectious': 'Number of active infections',
             'cum_diagnosed': 'Cumulative diagnosed',
@@ -32,7 +32,7 @@ to_plot = sc.odict({
             'infections': 'New infections',
             'deaths': 'New deaths',
             'recoveries': 'New recoveries',
-            'tests': 'Number of tests',
+            # 'tests': 'Number of tests',
             'diagnoses': 'New diagnoses',
         })
     })
