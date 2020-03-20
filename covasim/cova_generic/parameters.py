@@ -73,8 +73,10 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, cfr_by_age=True,
     else:
         sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
         age = pl.normal(age_mean, age_std) # Define age distribution for the crew and guests
-        age = pl.median([min_age, age, max_age]) # Normalize
-
+        if age > max_age:
+            age = max_age
+        elif age < min_age:
+            age = min_age
     # Get case fatality rate for a person of this age
     age_for_cfr = age if cfr_by_age else None # Whether or not to use age-specific values
     cfr = get_cfr(age=age_for_cfr)
