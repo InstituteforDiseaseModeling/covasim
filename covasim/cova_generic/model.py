@@ -13,7 +13,7 @@ import sciris as sc
 import datetime as dt
 import statsmodels.api as sm
 import covasim.cova_base as cova
-from . import parameters as cova_pars
+from . import parameters as cova_pars 
 
 
 # Specify all externally visible functions this file defines
