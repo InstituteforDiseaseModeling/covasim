@@ -29,8 +29,8 @@ scenarios = {
 
 # Other options
 do_save = 0 # refers to whether to save plot - see also save_sims
-do_plot = 0
-show_plot = 0
+do_plot = 1
+show_plot = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
 n = 3 # Change to 3 for quick, 11 for real
