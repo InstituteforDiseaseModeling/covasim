@@ -23,7 +23,7 @@ to_plot = sc.odict({
             'cum_exposed': 'Cumulative infections',
             'cum_deaths': 'Cumulative deaths',
             'cum_recoveries':'Cumulative recoveries',
-            'cum_tested': 'Cumulative tested',
+            # 'cum_tested': 'Cumulative tested',
             # 'n_susceptible': 'Number susceptible',
             # 'n_infectious': 'Number of active infections',
             'cum_diagnosed': 'Cumulative diagnosed',
@@ -32,7 +32,7 @@ to_plot = sc.odict({
             'infections': 'New infections',
             'deaths': 'New deaths',
             'recoveries': 'New recoveries',
-            'tests': 'Number of tests',
+            # 'tests': 'Number of tests',
             'diagnoses': 'New diagnoses',
         })
     })
@@ -55,14 +55,15 @@ class Person(cova.Person):
         self.cfr  = cfr # Case fatality rate
 
         # Define state
-        self.alive       = True
-        self.susceptible = True
-        self.exposed     = False
-        self.infectious  = False
-        self.symptomatic = False
-        self.diagnosed   = False
-        self.recovered   = False
-        self.dead        = False
+        self.alive          = True
+        self.susceptible    = True
+        self.exposed        = False
+        self.infectious     = False
+        self.symptomatic    = False
+        self.diagnosed      = False
+        self.recovered      = False
+        self.dead           = False
+        self.known_contact  = False # Keep track of whether each person is a contact of a known positive
 
         # Keep track of dates
         self.date_exposed     = None
@@ -199,6 +200,7 @@ class Sim(cova.Sim):
      {summary['n_infectious']:5.0f} infectious
      {summary['n_symptomatic']:5.0f} symptomatic
      {summary['cum_exposed']:5.0f} exposed
+     {summary['cum_diagnosed']:5.0f} diagnosed
      {summary['cum_deaths']:5.0f} deaths
      {summary['cum_recoveries']:5.0f} recovered
                """)
@@ -224,7 +226,7 @@ class Sim(cova.Sim):
         serial_dist = cova.sample(**serial_pars)
         target_person.date_infectious = t + serial_dist
 
-        # Program them to either die or recover
+        # Program them to either die or recover in the future
         if cova.bt(target_person.cfr):
             # They die
             death_dist = cova.sample(**death_pars)
@@ -257,7 +259,7 @@ class Sim(cova.Sim):
         if self.data is not None and len(self.data): # TODO: refactor to single conditional
             daily_tests = self.data['new_tests'] # Number of tests each day, from the data
         else:
-            daily_tests = []
+            daily_tests = self['daily_tests']
 
         # Main simulation loop
         for t in range(self.npts):
@@ -274,6 +276,9 @@ class Sim(cova.Sim):
 
             # Update each person
             for person in self.people.values():
+
+                # Initialise testing -- assign equal testing probabilities initially, these will get adjusted later
+                test_probs[person.uid] = 1.0
 
                 # Count susceptibles
                 if person.susceptible:
@@ -316,24 +321,41 @@ class Sim(cova.Sim):
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
                         if not self['usepopdata']: # TODO: refactor!
+
                             for contact_ind in person.contact_inds:
-                                thisbeta = self['beta'] if person.symptomatic else self['beta']*self['asym_factor'] # Calculate transmission risk based on whether they're asymptomatic
+
+                                target_person = self.get_person(contact_ind)  # Stored by integer
+
+                                # This person was diagnosed last time step: time to flag their contacts
+                                if person.date_diagnosed is not None and person.date_diagnosed == t-1:
+                                    target_person.known_contact = True
+
+                                # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
+                                thisbeta = self['beta'] * \
+                                           (self['asym_factor'] if person.symptomatic else 1.) * \
+                                           (self['diag_factor'] if person.diagnosed else 1.) * \
+                                           (self['cont_factor'] if person.known_contact else 1.)
                                 transmission = cova.bt(thisbeta) # Check whether virus is transmitted
+
                                 if transmission:
-                                    target_person = self.get_person(contact_ind) # Stored by integer
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         self.results['infections'][t] += 1
                                         self.infect_person(source_person=person, target_person=target_person, t=t)
                                         if verbose>=2:
                                             print(f'        Person {person.uid} infected person {target_person.uid}!')
+
                         else:
+
                             for ckey in self.contact_keys:
+
+                                # Calculate transmission risk based on whether they're asymptomatic/diagnosed
                                 for contact_ind in person.contact_inds[ckey]:
-                                    if person.symptomatic: # Calculate exposure risk based on whether they're asymptomatic
-                                        thisbeta = self['beta']*self['beta_pop'][ckey]
-                                    else:
-                                        thisbeta = self['beta']*self['beta_pop'][ckey]*self['asym_factor']
+                                    thisbeta = self['beta'] * self['beta_pop'][ckey]  * \
+                                               (self['asym_factor'] if person.symptomatic else 1.) * \
+                                               (self['diag_factor'] if person.diagnosed else 1.) * \
+                                               (self['cont_factor'] if person.known_contact else 1.)
                                     transmission = cova.bt(thisbeta) # Check whether virus is transmitted
+
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
@@ -342,21 +364,23 @@ class Sim(cova.Sim):
                                             if verbose>=2:
                                                 print(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
 
+
                 # Count people who developed symptoms
                 if person.symptomatic:
                     self.results['n_symptomatic'][t] += 1
 
-                # Handle testing probability
-                if person.diagnosed:
-                    test_probs[person.uid] = 0.0
-                elif person.infectious:
-                    test_probs[person.uid] = self['symptomatic'] # They're infectious: high probability of testing
-                else:
-                    test_probs[person.uid] = 1.0
-
                 # Count people who recovered
                 if person.recovered:
                     self.results['n_recovered'][t] += 1
+
+                # Adjust testing probability based on what's happened to the person
+                # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
+                if person.symptomatic:
+                    test_probs[person.uid] *= self['sympt_test'] # They're symptomatic
+                if person.known_contact:
+                    test_probs[person.uid] *= self['trace_test']  # They've had contact with a known positive
+                if person.diagnosed:
+                    test_probs[person.uid] = 0.0
 
             # Implement testing -- this is outside of the loop over people, but inside the loop over time
             if t<len(daily_tests): # Don't know how long the data is, ensure we don't go past the end
@@ -366,13 +390,15 @@ class Sim(cova.Sim):
                     test_probs_arr = pl.array(list(test_probs.values()))
                     test_probs_arr /= test_probs_arr.sum()
                     test_inds = cova.choose_people_weighted(probs=test_probs_arr, n=n_tests)
+
                     for test_ind in test_inds:
                         tested_person = self.get_person(test_ind)
                         if tested_person.infectious and cova.bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
+                            tested_person.date_diagnosed = t
                             if verbose>=2:
-                                        print(f'          Person {person.uid} was diagnosed!')
+                                        print(f'          Person {tested_person.uid} was diagnosed at timestep {t}!')
 
             # Implement quarantine
             if t in self['interv_days']:

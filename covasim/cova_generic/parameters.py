@@ -29,7 +29,9 @@ def make_pars():
     # Epidemic parameters
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
-    pars['asym_factor']    = 1.0 # Multiply beta by this factor for asymptomatic cases
+    pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']    = 1.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
+    pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']       = 20
     pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.2} # Per-population beta weights; relative
     pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
@@ -44,8 +46,10 @@ def make_pars():
     pars['dur_std']        = 2 # Variance in duration
 
     # Testing
+    pars['daily_tests']    = pd.Series([0.01*pars['n']]*pars['n_days']) # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']. Here we say 1% of the population is tested
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
-    pars['symptomatic']    = 100.0 # Increased probability of testing someone symptomatic, estimated
+    pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
+    pars['trace_test']     = 1.0 # Multiply testing probability by this factor for contacts of known positives -- baseline assumes no contact tracing
 
     # Mortality
     pars['timetodie']      = 21 # Days until death
@@ -53,7 +57,7 @@ def make_pars():
     pars['cfr_by_age']     = 1 # Whether or not to use age-specific case fatality
     pars['default_cfr']    = 0.016 # Default overall case fatality rate if not using age-specific values
 
-    # Events
+    # Events and interventions
     pars['interv_days'] = []# [30, 44]  # Day on which interventions started/stopped
     pars['interv_effs'] = []# [0.1, 10] # Change in transmissibility
 
@@ -73,10 +77,8 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, cfr_by_age=True,
     else:
         sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
         age = pl.normal(age_mean, age_std) # Define age distribution for the crew and guests
-        if age > max_age:
-            age = max_age
-        elif age < min_age:
-            age = min_age
+        age = pl.median([min_age, age, max_age]) # Normalize
+
     # Get case fatality rate for a person of this age
     age_for_cfr = age if cfr_by_age else None # Whether or not to use age-specific values
     cfr = get_cfr(age=age_for_cfr)
