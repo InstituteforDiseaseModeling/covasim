@@ -38,6 +38,13 @@ except ImportError as E:
     _hsys = None
 
 
+# Check synthpops -- optional dependency
+try:
+    import synthpops as _synth
+except ImportError as E:
+    print(f'Warning: synthpops is not available. Detailed demographic data will not be available. (Error: {str(E)})\n')
+    _synth = None
+
 # Check parestlib -- optional dependency
 try:
     import parestlib as _parest
