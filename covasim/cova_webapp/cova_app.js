@@ -60,7 +60,8 @@ var vm = new Vue({
 
         async runSim() {
             this.running = true;
-            this.graphs = [];
+            // this.graphs = this.$options.data().graphs; // Uncomment this to clear the graphs on each run
+            this.err = this.$options.data().err;
 
             console.log(this.status);
             console.log(this.sim_pars, this.epi_pars);
