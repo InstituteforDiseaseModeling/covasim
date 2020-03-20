@@ -442,12 +442,16 @@ class Sim(cova.Sim):
                 doubling_time = 1 / model.fit().params[1]
                 self.results['doubling_time'].values[t] = doubling_time
 
+            # Effective reproductive number based on number still susceptible
+            self.results['r_e'].values[t] = self['r_0']*self.results['n_susceptible'].values[t]/self['n']
+
         # Compute cumulative results
         self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values)
         self.results['cum_tested'].values     = pl.cumsum(self.results['tests'].values)
         self.results['cum_diagnosed'].values  = pl.cumsum(self.results['diagnoses'].values)
         self.results['cum_deaths'].values     = pl.cumsum(self.results['deaths'].values)
         self.results['cum_recoveries'].values = pl.cumsum(self.results['recoveries'].values)
+
 
         # Scale the results
         for reskey in self.reskeys:

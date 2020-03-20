@@ -63,7 +63,7 @@ def make_pars():
 
     # Derived values
     pars['eff_beta'] = pars['asym_prop']*pars['asym_factor']*pars['beta'] + (1-pars['asym_prop'])*pars['beta']  # Using asymptomatic proportion
-    pars['r0'] = pars['contacts']*pars['dur']*pars['eff_beta']
+    pars['r_0']      = pars['contacts']*pars['dur']*pars['eff_beta']
 
 
     return pars
