@@ -444,16 +444,25 @@ class Sim(cova.Sim):
 
 
     def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             scatter_args=None, axis_args=None, as_days=True, interval=None, dateformat=None,
-             font_size=18, font_family=None, use_grid=True, use_dates=True, verbose=None):
+             scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
+             font_size=18, font_family=None, use_grid=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
             do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
+            fig_path (str): Path to save the figure
             fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
             plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
-            as_days (bool) Whether to plot the x-axis as days or time points
+            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
+            axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            as_dates (bool): Whether to plot the x-axis as dates or time points
+            interval (int): Interval between tick marks
+            dateformat (str): Date string format, e.g. '%B %d'
+            font_size (int): Size of the font
+            font_family (str): Font face
+            use_grid (bool): Whether or not to plot gridlines
+
 
         Returns:
             fig: Figure handle
@@ -481,6 +490,7 @@ class Sim(cova.Sim):
 
         colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
+        # Define the data mapping. Must be here since uses functions
         if self.data is not None and len(self.data):
             data_mapping = {
                 'cum_exposed': pl.cumsum(self.data['new_infections']),
@@ -508,11 +518,13 @@ class Sim(cova.Sim):
             sc.commaticks()
             pl.title(title)
 
+            # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+            if interval:
+                xmin,xmax = ax.get_xlim()
+                ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+
             # Set xticks as dates
-            if use_dates:
-                if interval:
-                    xmin,xmax = ax.get_xlim()
-                    ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+            if as_dates:
                 xticks = ax.get_xticks()
                 xticklabels = self.inds2dates(xticks, dateformat=dateformat)
                 ax.set_xticklabels(xticklabels)
