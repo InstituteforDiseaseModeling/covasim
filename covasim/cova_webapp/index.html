@@ -10,7 +10,7 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
     <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
     <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
-  <link type="text/css" rel="stylesheet" href="assets/themify-icons.css"/>
+    <link type="text/css" rel="stylesheet" href="assets/themify-icons.css"/>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver"></script>
     <script src="https://unpkg.com/vue@latest/dist/vue.js"></script>
     <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
@@ -20,10 +20,9 @@
     <!-- Customization -->
     <title>COVASim</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- Remove favicon.ico 404 -->
-    <script src="assets/d3.v5.min.js"></script> <!-- Was http://thekerrlab.com/tmp/d3.v5.min.js -->
-    <script src="assets/mpld3.v0.4.1.min.js"></script> <!-- Was http://thekerrlab.com/tmp/mpld3.v0.4.1.min.js -->
     <script src="assets/sciris-js.js"></script> <!-- Was https://unpkg.com/sciris-js/dist/sciris-js.js -->
     <script src="assets/plotly-latest.min.js"></script> <!-- https://d3js.org/d3.v5.min.js -->
+    <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
 
     <!-- Define styles -->
     <link rel="stylesheet" href="cova_app.css" type="text/css">
@@ -47,7 +46,7 @@
             </span>
         </nav>
 
-        
+
 
         <!-- Modal -->
         <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -154,14 +153,39 @@
 
         </div>
 
-        <!-- Show the actual graph -->
-        <div id="graphs" class="graphs col">
-            <fieldset>
-                <legend>Output</legend>
-                <plotly-chart v-for="x in graphs" :graph="x" :key="x.id"/>
-                <p v-if="graphs.length === 0"><i>Click "Run" to display graphs</i></p>
-            </fieldset>
-        </div>
+      <!-- Show the actual graph -->
+      <div id="graphs" class="graphs col">
+        <fieldset>
+          <legend>Output</legend>
+<!--           <template v-if="running">
+            <p><i>Please wait, running model...</i></p>
+            <b-spinner />
+          </template> -->
+          <template v-if="result.graphs.length === 0">
+            <p><i>Click "Run" to display graphs</i></p>
+          </template>
+          <template v-else>
+
+
+            <div>
+              <plotly-chart v-for="x in result.graphs" :graph="x" :key="x.id"/>
+            </div>
+
+            <!-- <b>After {{ result.summary.days }} days: {{ result.summary.cases }} cases, {{ result.summary.deaths }} deaths</b> -->
+
+            <div style="padding-left:70px">
+              <button class="btn btn-primary green" type="button" @click="downloadExcel">
+                Download XLSX
+              </button>
+              <button class="btn btn-primary green" type="button" @click="downloadJson">
+                Download JSON
+              </button>
+            </div>
+
+          </template>
+
+        </fieldset>
+      </div>
     </div>
 
     <footer class="row no-gutter">

@@ -32,7 +32,11 @@ var vm = new Vue({
             historyIdx: 0,
             sim_pars: {},
             epi_pars: {},
-            graphs: [],
+            result: { // Store currently displayed results
+                graphs: [],
+                summary: {},
+                files: {},
+            },
             running: false,
             err: '',
             reset_options: ['Example', 'Seattle'], // , 'Wuhan', 'Global'],
@@ -68,19 +72,20 @@ var vm = new Vue({
 
             // Run a a single sim
             try{
-                let response = await sciris.rpc('plot_sim', [this.sim_pars, this.epi_pars]);
-                this.graphs = response.data.graphs;
+                let response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars]);
+                this.result.graphs = response.data.graphs;
+                this.result.files = response.data.files;
+                this.result.summary = response.data.summary;
                 this.err = response.data.err;
                 this.sim_pars= response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
-                this.history.push(JSON.parse(JSON.stringify({sim_pars:this.sim_pars, epi_pars:this.epi_pars, graphs:this.graphs})));
+                this.history.push(JSON.parse(JSON.stringify({sim_pars:this.sim_pars, epi_pars:this.epi_pars, result:this.result})));
                 this.historyIdx = this.history.length-1;
 
             } catch (e) {
                 this.err = 'Error running model: ' + e;
             }
             this.running = false;
-
 
         },
 
@@ -109,7 +114,21 @@ var vm = new Vue({
         loadPars(){
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
-            this.graphs = this.history[this.historyIdx].graphs;
-        }
-    }
+            this.result = this.history[this.historyIdx].result;
+        },
+
+        async downloadExcel() {
+          let res = await fetch('data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + this.result.files.xlsx.content);
+          let blob = await res.blob();
+          saveAs(blob, this.result.files.xlsx.filename);
+        },
+
+        async downloadJson() {
+          let res = await fetch('data:application/zip;base64,' + this.result.files.json.content);
+          let blob = await res.blob();
+          saveAs(blob, this.result.files.json.filename);
+        },
+
+      },
+
 })

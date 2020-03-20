@@ -61,6 +61,9 @@ header.row, footer.row {
     border-color: rgba(99, 123, 158, 0.92);
 }
 
+.centered {
+    text-align: center;
+}
 
 .errorbox {
     background-color: #ffcaa2;

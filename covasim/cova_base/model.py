@@ -5,9 +5,12 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 '''
 
 #%% Imports
+import io
+import json
 import datetime as dt
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
+import pandas as pd
 from . import utils as cov_ut
 
 # Specify all externally visible functions this file defines
@@ -73,13 +76,27 @@ class Sim(ParsObj):
         super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
         return
 
-    def set_seed(self, seed=None, randomize=False):
-        '''
-        Set the seed for the random number stream. Examples:
-            sim.set_seed(324) # Set sim['seed'] to 324 and reset the number stream
-            sim.set_seed() # Using sim['seed'], reset the number stream
-            sim.set_seed(randomize=True) # Randomize the number stream (no seed)
-        '''
+    def set_seed(self, seed: int = None, randomize: bool = False) -> None:
+        """
+        Set the seed for the random number stream
+
+        Examples:
+
+            >>> sim.set_seed(324) # Set sim['seed'] to 324 and reset the number stream
+
+            >>> sim.set_seed() # Using sim['seed'], reset the number stream
+
+            >>> sim.set_seed(randomize=True) # Randomize the number stream (no seed)
+
+        Args:
+            seed (int): Optional. Set seed and reset the random number stream.
+            randomize (bool): Optional. If True, randomly select seed
+
+        Returns:
+            None
+
+        """
+
         if randomize:
             if seed is None:
                 seed = None
@@ -158,6 +175,38 @@ class Sim(ParsObj):
         raise NotImplementedError
 
 
+    def export_json(self) -> str:
+        """
+        Export results as JSON
+
+        Returns:
+            A unicode string containing a JSON representation of the results
+
+        """
+
+        return json.dumps(sc.sanitizejson(self.results), indent=2)
+
+
+    def export_xlsx(self) -> sc.Spreadsheet:
+        """
+        Export results as XLSX
+
+        Returns:
+            A sc.Spreadsheet with an Excel file
+
+        """
+
+        output = {}
+        for k,v in self.results.items():
+            if isinstance(v, np.ndarray) and v.size == self.npts:
+                output[k] = v
+        df = pd.DataFrame.from_dict(output)
+        df.index = self.tvec
+        df.index.name = 'Day'
+
+        output = io.BytesIO()
+        df.to_excel(output, engine='xlsxwriter')
+        return sc.Spreadsheet(output)
 
     def plot(self):
         '''
