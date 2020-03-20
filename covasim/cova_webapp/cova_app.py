@@ -161,13 +161,14 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         pars['verbose'] = verbose # Control verbosity here
         for key,entry in {**sim_pars, **epi_pars}.items():
             print(key, entry)
-            userval = float(entry['best'])
             minval = defaults[key]['min']
             maxval = defaults[key]['max']
-            best = pl.median([userval, minval, maxval])
-            pars[key] = best
-            if key in sim_pars: sim_pars[key]['best'] = best
-            else:               epi_pars[key]['best'] = best
+            if entry['best']:
+                pars[key] = pl.median([float(entry['best']), minval, maxval])
+            else:
+                pars[key] = None
+            if key in sim_pars: sim_pars[key]['best'] = pars[key]
+            else:               epi_pars[key]['best'] = pars[key]
     except Exception as E:
         err1 = f'Parameter conversion failed! {str(E)}'
         print(err1)
@@ -176,6 +177,10 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     # Handle sessions
     sim = cw.Sim()
     sim.update_pars(pars=pars)
+    if pars['seed'] is not None:
+        sim.set_seed(int(pars['seed']))
+    else:
+        sim.set_seed()
 
     if verbose:
         print('Input parameters:')

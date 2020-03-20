@@ -7,6 +7,7 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 #%% Imports
 import io
 import json
+import datetime as dt
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 import pandas as pd
@@ -124,25 +125,47 @@ class Sim(ParsObj):
         ''' Create a time vector '''
         return np.arange(self['n_days'] + 1)
 
+
+    def inds2dates(self, inds, dateformat=None):
+        ''' Convert a set of indices to a set of dates '''
+
+        if sc.isnumber(inds): # If it's a number, convert it to a list
+            inds = sc.promotetolist(inds)
+
+        if dateformat is None:
+            dateformat = '%b-%d'
+
+        dates = []
+        for ind in inds:
+            tmp = self['start_day'] + dt.timedelta(days=int(ind))
+            dates.append(tmp.strftime(dateformat))
+        return dates
+
+
     def get_person(self, ind):
         ''' Return a person based on their ID '''
         return self.people[self.uids[ind]]
+
 
     def init_results(self):
         ''' Initialize results '''
         raise NotImplementedError
 
+
     def init_people(self):
         ''' Create the people '''
         raise NotImplementedError
+
 
     def summary_stats(self):
         ''' Compute the summary statistics to display at the end of a run '''
         raise NotImplementedError
 
+
     def run(self):
         ''' Run the simulation '''
         raise NotImplementedError
+
 
     def likelihood(self):
         '''
@@ -150,6 +173,7 @@ class Sim(ParsObj):
         of new diagnoses.
         '''
         raise NotImplementedError
+
 
     def export_json(self) -> str:
         """
@@ -161,6 +185,7 @@ class Sim(ParsObj):
         """
 
         return json.dumps(sc.sanitizejson(self.results), indent=2)
+
 
     def export_xlsx(self) -> sc.Spreadsheet:
         """
@@ -188,6 +213,7 @@ class Sim(ParsObj):
         Plot the results -- can supply arguments for both the figure and the plots.
         '''
         raise NotImplementedError
+
 
     def plot_people(self):
         ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
