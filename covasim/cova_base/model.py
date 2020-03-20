@@ -14,7 +14,7 @@ import pandas as pd
 from . import utils as cov_ut
 
 # Specify all externally visible functions this file defines
-__all__ = ['ParsObj', 'Person', 'Sim', 'single_run', 'multi_run']
+__all__ = ['ParsObj', 'Result', 'Person', 'Sim', 'single_run', 'multi_run']
 
 
 
@@ -55,6 +55,25 @@ class ParsObj(sc.prettyobj):
         elif pars is not None:
             self.pars.update(pars)
         return
+
+
+
+class Result(sc.prettyobj):
+    '''
+    Stores a single result -- by default, acts like an array
+    '''
+    def __init__(self, name=None, scale=True, ispercentage=False, values=None):
+        self.name = name  # Name of this result
+        self.ispercentage = ispercentage  # Whether or not the result is a percentage
+        self.scale = scale  # Whether or not to scale the result by the scale factor
+        self.values = values
+        return
+
+    def __getitem__(self, *args, **kwargs):
+        return self.values.__getitem__(*args, **kwargs)
+
+    def __setitem__(self, *args, **kwargs):
+        return self.values.__setitem__(*args, **kwargs)
 
 
 class Person(ParsObj):

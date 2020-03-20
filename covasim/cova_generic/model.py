@@ -77,18 +77,6 @@ class Person(cova.Person):
         return
 
 
-class Result(sc.prettyobj): #TODO: make this a general class?
-    '''
-    Stores a single result
-    '''
-    def __init__(self, name=None, scale=True, ispercentage=False, values=None):
-        self.name = name  # Name of this result
-        self.ispercentage = ispercentage  # Whether or not the result is a percentage
-        self.scale = scale  # Whether or not to scale the result by the scale factor
-        self.values = values
-        return
-
-
 class Sim(cova.Sim):
     '''
     The Sim class handles the running of the simulation: the number of children,
@@ -110,34 +98,37 @@ class Sim(cova.Sim):
     def init_results(self):
         ''' Initialize results '''
 
+        def init_res(*args, **kwargs):
+            ''' Initialize a single results object '''
+            values = np.zeros(int(self.npts))
+            output = cova.Result(*args, **kwargs, values=values)
+            return output
+
+        # Create the main results structure
         self.results = {}
-        self.results['n_susceptible']       = Result('Number susceptible')
-        self.results['n_exposed']           = Result('Number exposed')
-        self.results['n_infectious']        = Result('Number infectious')
-        self.results['n_symptomatic']       = Result('Number symptomatic')
-        self.results['n_recovered']         = Result('Number recovered')
-        self.results['infections']          = Result('Number of new infections')
-        self.results['tests']               = Result('Number of tests')
-        self.results['diagnoses']           = Result('Number of new diagnoses')
-        self.results['recoveries']          = Result('Number of new recoveries')
-        self.results['deaths']              = Result('Number of new deaths')
-        self.results['cum_exposed']         = Result('Cumulative number exposed')
-        self.results['cum_tested']          = Result('Cumulative number of tests')
-        self.results['cum_diagnosed']       = Result('Cumulative number diagnosed')
-        self.results['cum_deaths']          = Result('Cumulative number of deaths')
-        self.results['cum_recoveries']      = Result('Cumulative number recovered')
-        self.results['doubling_time']       = Result('Doubling time', scale=False)
-        self.results['r_e']                 = Result('Effective reproductive number', scale=False)
+        self.results['n_susceptible']  = init_res('Number susceptible')
+        self.results['n_exposed']      = init_res('Number exposed')
+        self.results['n_infectious']   = init_res('Number infectious')
+        self.results['n_symptomatic']  = init_res('Number symptomatic')
+        self.results['n_recovered']    = init_res('Number recovered')
+        self.results['infections']     = init_res('Number of new infections')
+        self.results['tests']          = init_res('Number of tests')
+        self.results['diagnoses']      = init_res('Number of new diagnoses')
+        self.results['recoveries']     = init_res('Number of new recoveries')
+        self.results['deaths']         = init_res('Number of new deaths')
+        self.results['cum_exposed']    = init_res('Cumulative number exposed')
+        self.results['cum_tested']     = init_res('Cumulative number of tests')
+        self.results['cum_diagnosed']  = init_res('Cumulative number diagnosed')
+        self.results['cum_deaths']     = init_res('Cumulative number of deaths')
+        self.results['cum_recoveries'] = init_res('Cumulative number recovered')
+        self.results['doubling_time']  = init_res('Doubling time', scale=False)
+        self.results['r_e']            = init_res('Effective reproductive number', scale=False)
 
-        self.reskeys = [k for k in self.results.keys() if isinstance(self.results[k], Result)] # Save the names of the main result keys
+        self.reskeys = list(self.results.keys()) # Save the names of the main result keys
 
-        for key in self.reskeys:
-            self.results[key].values = np.zeros(int(self.npts))
-
+        # Populate the rest of the results
         self.results['t'] = self.tvec
-        self.results['date'] = []
-        for t in self.tvec:
-            self.results['date'].append(self['start_day'] + dt.timedelta(days=int(t)))
+        self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
