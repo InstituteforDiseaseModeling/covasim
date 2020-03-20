@@ -1,4 +1,4 @@
-import covasim.cova_base as cova
+import covasim as cova
 import unittest
 
 
