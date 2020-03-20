@@ -20,8 +20,6 @@
     <!-- Customization -->
     <title>COVASim</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- Remove favicon.ico 404 -->
-    <script src="assets/d3.v5.min.js"></script> <!-- Was http://thekerrlab.com/tmp/d3.v5.min.js -->
-    <script src="assets/mpld3.v0.4.1.min.js"></script> <!-- Was http://thekerrlab.com/tmp/mpld3.v0.4.1.min.js -->
     <script src="assets/sciris-js.js"></script> <!-- Was https://unpkg.com/sciris-js/dist/sciris-js.js -->
     <script src="assets/plotly-latest.min.js"></script> <!-- https://d3js.org/d3.v5.min.js -->
     <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
@@ -155,7 +153,7 @@
 
         </div>
 
-        <!-- Show the actual graph -->
+      <!-- Show the actual graph -->
       <div id="graphs" class="graphs col">
         <fieldset>
           <legend>Output</legend>
@@ -163,15 +161,15 @@
             <p><i>Please wait, running model...</i></p>
             <b-spinner />
           </template>
-          <template v-else-if="graphs.length === 0">
+          <template v-else-if="result.graphs.length === 0">
             <p><i>Click "Run" to display graphs</i></p>
           </template>
           <template v-else>
 
-            <h5><b>After {{ summary.days }} days: {{ summary.cases }} cases, {{ summary.deaths }} deaths</b></h5>
+            <h5><b>After {{ result.summary.days }} days: {{ result.summary.cases }} cases, {{ result.summary.deaths }} deaths</b></h5>
 
             <div>
-              <plotly-chart v-for="x in graphs" :graph="x" :key="x.id"/>
+              <plotly-chart v-for="x in result.graphs" :graph="x" :key="x.id"/>
             </div>
 
             <button class="btn btn-primary green" type="button" @click="downloadExcel">
@@ -180,7 +178,7 @@
             <button class="btn btn-primary green" type="button" @click="downloadJson">
               Download JSON
             </button>
-            
+
           </template>
 
         </fieldset>
