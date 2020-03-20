@@ -50,7 +50,7 @@ def test_rand():
     assert d != e
     assert y != z
 
-    return
+    return a
 
 
 def test_poisson():
@@ -68,7 +68,7 @@ def test_poisson():
     print(f'f(10,10) {s1} == {l1}')
     print(f'f(10,15) {s2} > {l2}')
     print(f'f(0,100) {s3} < {l3}')
-    return
+    return s3
 
 
 def test_samples(doplot=False):
@@ -125,7 +125,7 @@ def test_choose_people():
     with pytest.raises(Exception):
         cova.choose_people_weighted(10, 5) # Requesting mroe people than are available
     print(f'Uniform sample from 0-9: {x1}')
-    return
+    return x1
 
 
 def test_choose_people_weighted():
@@ -149,18 +149,19 @@ def test_choose_people_weighted():
     print(f'Weighted sample 0-99: x1 = {x1}, mean {x1.mean()}')
     print(f'All weight on 0: x2 = {x2}')
     print(f'All weight on 0 or 1: x3 = {x3}')
-    return
+    return x1
+
 
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    test_rand()
-    test_poisson()
-    results = test_samples(doplot=doplot)
-    test_choose_people()
-    test_choose_people_weighted()
+    rnd1    = test_rand()
+    rnd2    = test_poisson()
+    samples = test_samples(doplot=doplot)
+    people1 = test_choose_people()
+    people2 = test_choose_people_weighted()
 
     print('\n'*2)
     sc.toc()

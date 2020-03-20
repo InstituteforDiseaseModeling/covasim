@@ -112,8 +112,11 @@ class Sim(cova.Sim):
             'cum_recoveries',]
         self.results = {}
         for key in self.results_keys:
-            self.results[key] = np.zeros(int(self.npts))
-        self.results['t'] = np.arange(int(self.npts))
+            self.results[key] = np.zeros(self.npts)
+        self.results['t'] = self.tvec
+        self.results['date'] = []
+        for t in self.tvec:
+            self.results['date'].append(self['start_day'] + dt.timedelta(days=int(t)))
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
@@ -440,15 +443,27 @@ class Sim(cova.Sim):
 
 
 
-    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, use_grid=True, verbose=None):
+    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+             scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
+             font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
             do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
+            fig_path (str): Path to save the figure
             fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
             plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
-            as_days (bool) Whether to plot the x-axis as days or time points
+            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
+            axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            as_dates (bool): Whether to plot the x-axis as dates or time points
+            interval (int): Interval between tick marks
+            dateformat (str): Date string format, e.g. '%B %d'
+            font_size (int): Size of the font
+            font_family (str): Font face
+            use_grid (bool): Whether or not to plot gridlines
+            do_show (bool): Whether or not to show the figure
+            verbose (bool): Display a bit of extra information
 
         Returns:
             fig: Figure handle
@@ -467,7 +482,8 @@ class Sim(cova.Sim):
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         pl.rcParams['font.size'] = font_size
-        pl.rcParams['font.family'] = 'Proxima Nova'
+        if font_family:
+            pl.rcParams['font.family'] = font_family
 
         res = self.results # Shorten since heavily used
 
@@ -475,6 +491,7 @@ class Sim(cova.Sim):
 
         colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
+        # Define the data mapping. Must be here since uses functions
         if self.data is not None and len(self.data):
             data_mapping = {
                 'cum_exposed': pl.cumsum(self.data['new_infections']),
@@ -488,7 +505,7 @@ class Sim(cova.Sim):
             data_mapping = {}
 
         for p,title,keylabels in to_plot.enumitems():
-            pl.subplot(2,1,p+1)
+            ax = pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = colors[i]
                 y = res[key]
@@ -502,16 +519,16 @@ class Sim(cova.Sim):
             sc.commaticks()
             pl.title(title)
 
-            # Set xticks as dates # TODO: make more general-purpose!
-            ax = pl.gca()
-            xmin,xmax = ax.get_xlim()
-            ax.set_xticks(pl.arange(xmin, xmax+1, 7))
-            xt = ax.get_xticks()
-            lab = []
-            for t in xt:
-                tmp = self['day_0'] + dt.timedelta(days=int(t)) # + pars['day_0']
-                lab.append(tmp.strftime('%B %d'))
-            ax.set_xticklabels(lab)
+            # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+            if interval:
+                xmin,xmax = ax.get_xlim()
+                ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+
+            # Set xticks as dates
+            if as_dates:
+                xticks = ax.get_xticks()
+                xticklabels = self.inds2dates(xticks, dateformat=dateformat)
+                ax.set_xticklabels(xticklabels)
 
         # Ensure the figure actually renders or saves
         if do_save:
@@ -521,7 +538,10 @@ class Sim(cova.Sim):
                 fig_path = 'covasim.png' # Just give it a default name
             pl.savefig(fig_path)
 
-        pl.show()
+        if do_show:
+            pl.show()
+        else:
+            pl.close(fig)
 
         return fig
 
