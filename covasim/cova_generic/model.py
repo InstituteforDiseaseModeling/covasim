@@ -574,7 +574,7 @@ class Sim(cova.Sim):
             ax = pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = colors[i]
-                y = res[key]
+                y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key in data_mapping:
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
