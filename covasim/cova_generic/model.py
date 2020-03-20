@@ -13,7 +13,7 @@ import sciris as sc
 import datetime as dt
 import statsmodels.api as sm
 import covasim.cova_base as cova
-from . import parameters as cova_pars 
+from . import parameters as cova_pars
 
 
 # Specify all externally visible functions this file defines
@@ -127,6 +127,7 @@ class Sim(cova.Sim):
         self.results['cum_deaths']          = Result('Cumulative number of deaths')
         self.results['cum_recoveries']      = Result('Cumulative number recovered')
         self.results['doubling_time']       = Result('Doubling time', scale=False)
+        self.results['r_e']                 = Result('Effective reproductive number', scale=False)
 
         self.reskeys = [k for k in self.results.keys() if isinstance(self.results[k], Result)] # Save the names of the main result keys
 
@@ -258,7 +259,7 @@ class Sim(cova.Sim):
         else:
             # They don't die; determine whether they develop symptoms
             # TODO, consider refactoring this with a "symptom_severity" parameter that could help determine likelihood of hospitalization
-            if not cova.bt(target_person.pars['asymptomatic']): # They develop symptoms
+            if not cova.bt(target_person.pars['asym_prop']): # They develop symptoms
                 incub_dist = cova.sample(**incub_pars) # Caclulate how long til they develop symptoms
                 target_person.date_symptomatic = t + incub_dist
 
