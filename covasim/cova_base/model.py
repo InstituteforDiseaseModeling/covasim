@@ -72,13 +72,27 @@ class Sim(ParsObj):
         super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
         return
 
-    def set_seed(self, seed=None, randomize=False):
-        '''
-        Set the seed for the random number stream. Examples:
-            sim.set_seed(324) # Set sim['seed'] to 324 and reset the number stream
-            sim.set_seed() # Using sim['seed'], reset the number stream
-            sim.set_seed(randomize=True) # Randomize the number stream (no seed)
-        '''
+    def set_seed(self, seed: int = None, randomize: bool = False) -> None:
+        """
+        Set the seed for the random number stream
+
+        Examples:
+
+            >>> sim.set_seed(324) # Set sim['seed'] to 324 and reset the number stream
+
+            >>> sim.set_seed() # Using sim['seed'], reset the number stream
+
+            >>> sim.set_seed(randomize=True) # Randomize the number stream (no seed)
+
+        Args:
+            seed (int): Optional. Set seed and reset the random number stream.
+            randomize (bool): Optional. If True, randomly select seed
+
+        Returns:
+            None
+
+        """
+
         if randomize:
             if seed is None:
                 seed = None
@@ -139,7 +153,6 @@ class Sim(ParsObj):
         of new diagnoses.
         '''
         raise NotImplementedError
-
 
 
     def plot(self):
