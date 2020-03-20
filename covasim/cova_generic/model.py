@@ -445,7 +445,7 @@ class Sim(cova.Sim):
 
     def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
-             font_size=18, font_family=None, use_grid=True, verbose=None):
+             font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -462,7 +462,8 @@ class Sim(cova.Sim):
             font_size (int): Size of the font
             font_family (str): Font face
             use_grid (bool): Whether or not to plot gridlines
-
+            do_show (bool): Whether or not to show the figure
+            verbose (bool): Display a bit of extra information
 
         Returns:
             fig: Figure handle
@@ -537,7 +538,10 @@ class Sim(cova.Sim):
                 fig_path = 'covasim.png' # Just give it a default name
             pl.savefig(fig_path)
 
-        pl.show()
+        if do_show:
+            pl.show()
+        else:
+            pl.close(fig)
 
         return fig
 
