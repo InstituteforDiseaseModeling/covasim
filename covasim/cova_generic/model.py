@@ -11,6 +11,7 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
+import statsmodels.api as sm
 import covasim.cova_base as cova
 from . import parameters as cova_pars
 
@@ -64,6 +65,7 @@ class Person(cova.Person):
         self.recovered      = False
         self.dead           = False
         self.known_contact  = False # Keep track of whether each person is a contact of a known positive
+        self.n_infected     = 0 # Keep track of how many people each person infects
 
         # Keep track of dates
         self.date_exposed     = None
@@ -95,29 +97,38 @@ class Sim(cova.Sim):
 
     def init_results(self):
         ''' Initialize results '''
-        self.results_keys = [
-            'n_susceptible',
-            'n_exposed',
-            'n_infectious',
-            'n_symptomatic',
-            'n_recovered',
-            'infections',
-            'tests',
-            'diagnoses',
-            'recoveries',
-            'deaths',
-            'cum_exposed',
-            'cum_tested',
-            'cum_diagnosed',
-            'cum_deaths',
-            'cum_recoveries',]
+
+        def init_res(*args, **kwargs):
+            ''' Initialize a single results object '''
+            values = np.zeros(int(self.npts))
+            output = cova.Result(*args, **kwargs, values=values)
+            return output
+
+        # Create the main results structure
         self.results = {}
-        for key in self.results_keys:
-            self.results[key] = np.zeros(self.npts)
+        self.results['n_susceptible']  = init_res('Number susceptible')
+        self.results['n_exposed']      = init_res('Number exposed')
+        self.results['n_infectious']   = init_res('Number infectious')
+        self.results['n_symptomatic']  = init_res('Number symptomatic')
+        self.results['n_recovered']    = init_res('Number recovered')
+        self.results['infections']     = init_res('Number of new infections')
+        self.results['tests']          = init_res('Number of tests')
+        self.results['diagnoses']      = init_res('Number of new diagnoses')
+        self.results['recoveries']     = init_res('Number of new recoveries')
+        self.results['deaths']         = init_res('Number of new deaths')
+        self.results['cum_exposed']    = init_res('Cumulative number exposed')
+        self.results['cum_tested']     = init_res('Cumulative number of tests')
+        self.results['cum_diagnosed']  = init_res('Cumulative number diagnosed')
+        self.results['cum_deaths']     = init_res('Cumulative number of deaths')
+        self.results['cum_recoveries'] = init_res('Cumulative number recovered')
+        self.results['doubling_time']  = init_res('Doubling time', scale=False)
+        self.results['r_e']            = init_res('Effective reproductive number', scale=False)
+
+        self.reskeys = list(self.results.keys()) # Save the names of the main result keys
+
+        # Populate the rest of the results
         self.results['t'] = self.tvec
-        self.results['date'] = []
-        for t in self.tvec:
-            self.results['date'].append(self['start_day'] + dt.timedelta(days=int(t)))
+        self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
         self.results['transtree'] = {} # For storing the transmission tree
         self.results['ready'] = False
         return
@@ -188,10 +199,14 @@ class Sim(cova.Sim):
         return
 
 
-    def summary_stats(self, verbose=True):
+    def summary_stats(self, verbose=None):
         ''' Compute the summary statistics to display at the end of a run '''
+
+        if verbose is None:
+            verbose = self['verbose']
+
         summary = {}
-        for key in self.results_keys:
+        for key in self.reskeys:
             summary[key] = self.results[key][-1]
 
         if verbose:
@@ -206,6 +221,7 @@ class Sim(cova.Sim):
                """)
 
         return summary
+
 
 
     def infect_person(self, source_person, target_person, t, infectious=False):
@@ -234,7 +250,7 @@ class Sim(cova.Sim):
         else:
             # They don't die; determine whether they develop symptoms
             # TODO, consider refactoring this with a "symptom_severity" parameter that could help determine likelihood of hospitalization
-            if not cova.bt(target_person.pars['asymptomatic']): # They develop symptoms
+            if not cova.bt(target_person.pars['asym_prop']): # They develop symptoms
                 incub_dist = cova.sample(**incub_pars) # Caclulate how long til they develop symptoms
                 target_person.date_symptomatic = t + incub_dist
 
@@ -341,6 +357,7 @@ class Sim(cova.Sim):
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         self.results['infections'][t] += 1
                                         self.infect_person(source_person=person, target_person=target_person, t=t)
+                                        person.n_infected += 1
                                         if verbose>=2:
                                             print(f'        Person {person.uid} infected person {target_person.uid}!')
 
@@ -361,6 +378,7 @@ class Sim(cova.Sim):
                                         if target_person.susceptible: # Skip people who are not susceptible
                                             self.results['infections'][t] += 1
                                             self.infect_person(source_person=person, target_person=target_person, t=t)
+                                            person.n_infected += 1
                                             if verbose>=2:
                                                 print(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
 
@@ -407,16 +425,29 @@ class Sim(cova.Sim):
                 ind = sc.findinds(self['interv_days'], t)[0]
                 self['beta'] *= self['interv_effs'][ind] # TODO: pop-specific
 
+            # Doubling time
+            if t>=1:
+                exog  = sm.add_constant(np.arange(t+1))
+                endog = np.log2(pl.cumsum(self.results['infections'][:t+1]))
+                model = sm.OLS(endog, exog)
+                doubling_time = 1 / model.fit().params[1]
+                self.results['doubling_time'][t] = doubling_time
+
+            # Effective reproductive number based on number still susceptible
+            self.results['r_e'][t] = self['r_0']*self.results['n_susceptible'][t]/self['n']
+
         # Compute cumulative results
-        self.results['cum_exposed']    = pl.cumsum(self.results['infections'])
-        self.results['cum_tested']     = pl.cumsum(self.results['tests'])
-        self.results['cum_diagnosed']  = pl.cumsum(self.results['diagnoses'])
-        self.results['cum_deaths']     = pl.cumsum(self.results['deaths'])
-        self.results['cum_recoveries'] = pl.cumsum(self.results['recoveries'])
+        self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values)
+        self.results['cum_tested'].values     = pl.cumsum(self.results['tests'].values)
+        self.results['cum_diagnosed'].values  = pl.cumsum(self.results['diagnoses'].values)
+        self.results['cum_deaths'].values     = pl.cumsum(self.results['deaths'].values)
+        self.results['cum_recoveries'].values = pl.cumsum(self.results['recoveries'].values)
+
 
         # Scale the results
-        for reskey in self.results_keys:
-            self.results[reskey] *= self['scale']
+        for reskey in self.reskeys:
+            if self.results[reskey].scale:
+                self.results[reskey].values *= self['scale']
 
         # Compute likelihood
         if calc_likelihood:
@@ -534,7 +565,7 @@ class Sim(cova.Sim):
             ax = pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = colors[i]
-                y = res[key]
+                y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key in data_mapping:
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)

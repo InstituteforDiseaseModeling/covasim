@@ -28,10 +28,12 @@ scenarios = {
 
 
 # Other options
-do_save = 1
+do_save = 0 # refers to whether to save plot - see also save_sims
+do_plot = 1
+show_plot = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-n = 11 # Change to 3 for quick, 11 for real
+n = 3 # Change to 3 for quick, 11 for real
 xmin = 52 # pars['day_0']
 xmax = xmin+200 # xmin + pars['n_days']
 interv_day = 10
@@ -137,61 +139,70 @@ if do_run:
 else:
     allres = sc.loadobj(obj_path)
 
-sc.heading('Plotting')
 
-fig_args     = {'figsize':(16,12)}
-plot_args    = {'lw':3, 'alpha':0.7}
-scatter_args = {'s':150, 'marker':'s'}
-axis_args    = {'left':0.10, 'bottom':0.05, 'right':0.95, 'top':0.90, 'wspace':0.5, 'hspace':0.25}
-fill_args    = {'alpha': 0.2}
-font_size    = 18
+if do_plot:
 
-fig = pl.figure(**fig_args)
-pl.subplots_adjust(**axis_args)
-pl.rcParams['font.size'] = font_size
-pl.rcParams['font.family'] = 'Proxima Nova'
+    sc.heading('Plotting')
 
-# Create the tvec based on the results -- #TODO: make better!
-tvec = xmin+pl.arange(len(allres[reskeys[0]].baseline.best))
+    fig_args = {'figsize': (16, 12)}
+    plot_args = {'lw': 3, 'alpha': 0.7}
+    scatter_args = {'s': 150, 'marker': 's'}
+    axis_args = {'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}
+    fill_args = {'alpha': 0.2}
+    font_size = 18
 
+    fig = pl.figure(**fig_args)
+    pl.subplots_adjust(**axis_args)
+    pl.rcParams['font.size'] = font_size
+    pl.rcParams['font.family'] = 'Proxima Nova'
 
+    # Create the tvec based on the results -- #TODO: make better!
+    tvec = xmin + pl.arange(len(allres[reskeys[0]].baseline.best))
 
+    # %% Plotting
+    for rk, reskey in enumerate(reskeys):
+        pl.subplot(len(reskeys), 1, rk + 1)
 
-#%% Plotting
-for rk,reskey in enumerate(reskeys):
-    pl.subplot(len(reskeys),1,rk+1)
+        resdata = allres[reskey]
 
-    resdata = allres[reskey]
+        for scenkey, scendata in resdata.items():
+            pl.fill_between(tvec, scendata.low, scendata.high, **fill_args)
+            pl.plot(tvec, scendata.best, label=scendata.name, **plot_args)
 
-    for scenkey, scendata in resdata.items():
-        pl.fill_between(tvec, scendata.low, scendata.high, **fill_args)
-        pl.plot(tvec, scendata.best, label=scendata.name, **plot_args)
+            # interv_col = [0.5, 0.2, 0.4]
 
-        # interv_col = [0.5, 0.2, 0.4]
+            ymax = pl.ylim()[1]
 
-        ymax = pl.ylim()[1]
+            if reskey == 'cum_exposed':
+                sc.setylim()
+                pl.title('Cumulative infections')
+                pl.text(0.0, 1.1, 'COVID-19 projections, per 1 million susceptibles', fontsize=24,
+                        transform=pl.gca().transAxes)
 
-        if reskey == 'cum_exposed':
-            sc.setylim()
-            pl.title('Cumulative infections')
-            pl.text(0.0, 1.1, 'COVID-19 projections, per 1 million susceptibles', fontsize=24, transform=pl.gca().transAxes)
+            elif reskey == 'n_exposed':
+                pl.legend()
+                sc.setylim()
+                pl.title('Active infections')
 
-        elif reskey == 'n_exposed':
-            pl.legend()
-            sc.setylim()
-            pl.title('Active infections')
+            pl.grid(True)
 
-        pl.grid(True)
+            # Set x-axis
+            pl.gca().set_xticks(pl.arange(xmin, xmax + 1, 30.5))
+            xt = pl.gca().get_xticks()
+            lab = []
+            for t in xt:
+                tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t))  # + pars['day_0']
+                lab.append(tmp.strftime('%B'))
+            pl.gca().set_xticklabels(lab)
+            sc.commaticks(axis='y')
 
-        # Set x-axis
-        pl.gca().set_xticks(pl.arange(xmin, xmax+1, 30.5))
-        xt = pl.gca().get_xticks()
-        lab = []
-        for t in xt:
-            tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t)) # + pars['day_0']
-            lab.append( tmp.strftime('%B') )
-        pl.gca().set_xticklabels(lab)
-        sc.commaticks(axis='y')
+    if do_save:
+        pl.savefig(fig_path, dpi=150)
+        if do_run:  # Don't resave loaded data
+            sc.saveobj(obj_path, allres)
+
+    if show_plot: # Optionally show plot
+        pl.show()
 
 
 #%% Print statistics
@@ -199,11 +210,5 @@ for reskey in reskeys:
     for scenkey in list(scenarios.keys()):
         print(f'{reskey} {scenkey}: {allres[reskey][scenkey].best[-1]:0.0f}')
 
-if do_save:
-    pl.savefig(fig_path, dpi=150)
-    if do_run: # Don't resave loaded data
-        sc.saveobj(obj_path, allres)
-
 sc.toc()
-pl.show()
 

@@ -29,6 +29,7 @@ def make_pars():
     # Epidemic parameters
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
+    pars['asym_prop']   = 0.17 # Proportion of asymptomatic cases - estimate based on https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.25.10.2000180, #TODO: look for better estimates
     pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']    = 1.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
@@ -39,7 +40,6 @@ def make_pars():
     # Disease progression
     pars['serial']         = 4.0 # Serial interval: days after exposure before a person can infect others (see e.g. https://www.ncbi.nlm.nih.gov/pubmed/32145466)
     pars['serial_std']     = 1.0 # Standard deviation of the serial interval
-    pars['asymptomatic']   = 0.17 # Proportion of asymptomatic cases - estimate based on https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.25.10.2000180, #TODO: look for better estimates
     pars['incub']          = 5.0 # Incubation period: days until an exposed person develops symptoms
     pars['incub_std']      = 1.0 # Standard deviation of the incubation period
     pars['dur']            = 8 # Using Mike's Snohomish number
@@ -60,6 +60,11 @@ def make_pars():
     # Events and interventions
     pars['interv_days'] = []# [30, 44]  # Day on which interventions started/stopped
     pars['interv_effs'] = []# [0.1, 10] # Change in transmissibility
+
+    # Derived values
+    pars['eff_beta'] = pars['asym_prop']*pars['asym_factor']*pars['beta'] + (1-pars['asym_prop'])*pars['beta']  # Using asymptomatic proportion
+    pars['r_0']      = pars['contacts']*pars['dur']*pars['eff_beta']
+
 
     return pars
 
