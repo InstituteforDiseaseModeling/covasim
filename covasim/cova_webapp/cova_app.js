@@ -34,6 +34,7 @@ var vm = new Vue({
             epi_pars: {},
             graphs: [], // Store plotly graph jsons
             files: {}, // Store files for download
+            summary: {}, // Store summary values
             running: false,
             err: '',
             reset_options: ['Example', 'Seattle'], // , 'Wuhan', 'Global'],
@@ -71,6 +72,7 @@ var vm = new Vue({
                 let response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars]);
                 this.graphs = response.data.graphs;
                 this.files = response.data.files;
+                this.summary = response.data.summary;
                 this.err = response.data.err;
                 this.sim_pars= response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;

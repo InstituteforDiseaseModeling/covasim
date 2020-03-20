@@ -167,8 +167,12 @@
             <p><i>Click "Run" to display graphs</i></p>
           </template>
           <template v-else>
-            
-            <plotly-chart v-for="x in graphs" :graph="x" :key="x.id"/>
+
+            <h5><b>After {{ summary.days }} days: {{ summary.cases }} cases, {{ summary.deaths }} deaths</b></h5>
+
+            <div>
+              <plotly-chart v-for="x in graphs" :graph="x" :key="x.id"/>
+            </div>
 
             <button class="btn btn-primary green" type="button" @click="downloadExcel">
               Download XLSX
@@ -176,7 +180,7 @@
             <button class="btn btn-primary green" type="button" @click="downloadJson">
               Download JSON
             </button>
-
+            
           </template>
 
         </fieldset>

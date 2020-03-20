@@ -250,6 +250,13 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         'content': base64.b64encode(zip_buffer.read()).decode("utf-8"),
     }
 
+    # Summary output
+    output['summary'] = {
+        'days': sim.npts-1,
+        'cases': round(sim.results['cum_exposed'][-1]),
+        'deaths': round(sim.results['cum_deaths'][-1]),
+    }
+
     return output
 
 
