@@ -98,51 +98,52 @@
             </div>
 
             <!-- Run button -->
-            <div class="btn-group btn-group-lg">
-                <button v-if="running" class="btn btn-primary green" type="button" disabled>
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Running...
-                </button>
-                <button v-else class="btn btn-primary green" type="button" @click="runSim">
-                    Run
-                </button>&nbsp;&nbsp;&nbsp;&nbsp;
-                <button :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
-                    Reset
-                </button>&nbsp;&nbsp;&nbsp;&nbsp;
+            <div class="centered">
+              <div class="btn-group btn-group-lg">
+                  <button v-if="running" class="btn btn-primary green" type="button" disabled>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Running...
+                  </button>
+                  <button v-else class="btn btn-primary green" type="button" @click="runSim">
+                      Run
+                  </button>&nbsp;&nbsp;&nbsp;&nbsp;
+                  <button :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
+                      Reset
+                  </button>&nbsp;&nbsp;&nbsp;&nbsp;
 
-                <select :disabled="running" v-model="reset_choice" @change="resetPars()">
-                    <option v-for="(item, index) in reset_options" :value="item">
-                        {{ item }}
-                    </option>
-                </select>&nbsp;&nbsp;&nbsp;&nbsp;
+                  <select :disabled="running" v-model="reset_choice" @change="resetPars()">
+                      <option v-for="(item, index) in reset_options" :value="item">
+                          {{ item }}
+                      </option>
+                  </select>&nbsp;&nbsp;&nbsp;&nbsp;
 
 
-                <div style='padding-left:10px;'>
+                  <div style='padding-left:20px; padding-right:20px;'>
                     History: <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
                       <option v-for="(item, index) in history" :value="index">
                         {{ index }}
                       </option>
                     </select>
+                  </div>
 
-                </div>
+                  <div style='padding-left:30px; padding-top: 15px'>
 
-                <div style='padding-left:30px; padding-top: 15px'>
+                      <button id="download-parameters-button" :disabled="running" class="btn btn-primary green" type="button" @click="downloadPars">
+                        <span class="ti-download"/>
+                      </button>
+                      <b-tooltip target="download-parameters-button" triggers="hover">
+                        Download parameters
+                      </b-tooltip>
 
-                    <button id="download-parameters-button" :disabled="running" class="btn btn-primary green" type="button" @click="downloadPars">
-                      <span class="ti-download"/>
-                    </button>
-                    <b-tooltip target="download-parameters-button" triggers="hover">
-                      Download parameters
-                    </b-tooltip>
+                      <button id="upload-parameters-button" :disabled="running" class="btn btn-primary green" type="button" @click="uploadPars">
+                        <span class="ti-upload"/>
+                      </button>
+                      <b-tooltip target="upload-parameters-button" triggers="hover">
+                        Upload parameters
+                      </b-tooltip>
 
-                    <button id="upload-parameters-button" :disabled="running" class="btn btn-primary green" type="button" @click="uploadPars">
-                      <span class="ti-upload"/>
-                    </button>
-                    <b-tooltip target="upload-parameters-button" triggers="hover">
-                      Upload parameters
-                    </b-tooltip>
-
-                </div>
+                  </div>
+              </div>
             </div>
 
             <div v-if="err" class="errorbox">
@@ -157,27 +158,30 @@
       <div id="graphs" class="graphs col">
         <fieldset>
           <legend>Output</legend>
-          <template v-if="running">
+<!--           <template v-if="running">
             <p><i>Please wait, running model...</i></p>
             <b-spinner />
-          </template>
-          <template v-else-if="result.graphs.length === 0">
+          </template> -->
+          <template v-if="result.graphs.length === 0">
             <p><i>Click "Run" to display graphs</i></p>
           </template>
           <template v-else>
 
-            <h5><b>After {{ result.summary.days }} days: {{ result.summary.cases }} cases, {{ result.summary.deaths }} deaths</b></h5>
 
             <div>
               <plotly-chart v-for="x in result.graphs" :graph="x" :key="x.id"/>
             </div>
 
-            <button class="btn btn-primary green" type="button" @click="downloadExcel">
-              Download XLSX
-            </button>
-            <button class="btn btn-primary green" type="button" @click="downloadJson">
-              Download JSON
-            </button>
+            <!-- <b>After {{ result.summary.days }} days: {{ result.summary.cases }} cases, {{ result.summary.deaths }} deaths</b> -->
+
+            <div class="centered">
+              <button class="btn btn-primary green" type="button" @click="downloadExcel">
+                Download XLSX
+              </button>
+              <button class="btn btn-primary green" type="button" @click="downloadJson">
+                Download JSON
+              </button>
+            </div>
 
           </template>
 
