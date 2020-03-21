@@ -1,5 +1,6 @@
 import covasim as cova
 import unittest
+import datetime as dt
 
 
 class TestProperties:
@@ -18,15 +19,16 @@ class TestProperties:
     class Sim:
         expected_number_people = 123
         expected_number_days = 365
-        expected_disease = "rhinovirus"
         expected_seed = 112233
+        expected_start_day = dt.datetime(2020,1,1)
 
 class DummySim(cova.Sim):
     def __init__(self):
         sim_parameters = {
-            "num_people" : TestProperties.Sim.expected_number_people,
-            "num_days" : TestProperties.Sim.expected_number_days,
-            "disease_selection" : TestProperties.Sim.expected_disease
+            "n" : TestProperties.Sim.expected_number_people,
+            "n_days" : TestProperties.Sim.expected_number_days,
+            "seed": TestProperties.Sim.expected_seed,
+            "start_day": TestProperties.Sim.expected_start_day,
         }
         super().__init__(sim_parameters)
         self.people = {}
@@ -36,7 +38,7 @@ class DummySim(cova.Sim):
     def init_people(self):
         ages_in_question = [1, 5, 10, 20, 21, 40, 41, 42, 60, 70, 80]
         age_length = len(ages_in_question)
-        for p in range(1, self['num_people'] + 1):
+        for p in range(1, self['n'] + 1):
             sex = p % 2
             age_index = p % age_length
             person_params = {
@@ -165,10 +167,10 @@ class CovaUnitTests(unittest.TestCase):
     # region Sim
     def create_predicatable_sim(self):
         parameters_dict = {
-            "num_people" : TestProperties.Sim.expected_number_people,
-            "number_days" : TestProperties.Sim.expected_number_days,
-            "disease_to_simulate" : TestProperties.Sim.expected_disease,
-            "seed": TestProperties.Sim.expected_seed
+            "n" : TestProperties.Sim.expected_number_people,
+            "n_days" : TestProperties.Sim.expected_number_days,
+            "seed": TestProperties.Sim.expected_seed,
+            "start_day": TestProperties.Sim.expected_start_day,
         }
         self.sim = cova.Sim(pars=parameters_dict)
         pass
