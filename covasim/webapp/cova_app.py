@@ -112,21 +112,11 @@ def get_version():
     return output
 
 
-@app.register_RPC(call_type='download')
-def download_pars(sim_pars, epi_pars):
-    datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
-    filename = f'COVASim_parameters_{datestamp}.json'
-    d = {'sim_pars':sim_pars,'epi_pars':epi_pars}
-    s = sc.jsonify(d, tostring=True, indent=2)
-    output = (io.BytesIO(("'%s'" % (s)).encode()), filename)
-    return output
-
-
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
     with open(fname,'r') as f:
         s = f.read()
-    parameters = json.loads(s[1:-1])
+    parameters = json.loads(s)
     if not isinstance(parameters, dict):
         raise TypeError(f'Uploaded file was a {type(parameters)} object rather than a dict')
     if  'sim_pars' not in parameters or 'epi_pars' not in parameters:

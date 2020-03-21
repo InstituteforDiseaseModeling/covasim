@@ -97,7 +97,20 @@ var vm = new Vue({
         },
 
         async downloadPars() {
-            await sciris.download('download_pars', [this.sim_pars, this.epi_pars]);
+            var d = new Date();
+            let datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
+            let fileName = `COVASim_parameters_${datestamp}.txt`
+            
+            // Adapted from https://stackoverflow.com/a/45594892 by Gautham
+            let data = {
+                sim_pars: this.sim_pars,
+                epi_pars: this.epi_pars,
+            };
+            let fileToSave = new Blob([JSON.stringify(data, null, 4)], {
+                type: 'application/text',
+                name: fileName
+            });
+            saveAs(fileToSave, fileName);
         },
 
         async uploadPars() {
