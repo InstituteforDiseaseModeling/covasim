@@ -1,7 +1,7 @@
 # Benchmark the simulation
 
 import sciris as sc
-import covasim.cova_seattle as cova
+import covasim as cova
 
 sim = cova.Sim()
 to_profile = 'sim' # Must be one of the options listed below...currently only 1

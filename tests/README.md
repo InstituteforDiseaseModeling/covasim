@@ -2,9 +2,11 @@
 
 ## pytest
 
-`pytest` will automatically run all the tests in the folder. Just type `pytest` and it will run everything beginning `test_`.
+`pytest` will automatically run all the tests in the folder. Just type `pytest` and it will run everything beginning `test_`. You can also run `run_tests`.
 
 ## Coverage and unit tests
+
+*Please see unittests subfolder. Note that the unit tests are currently broken.*
 
 To run code coverage on the unit tests, you can just type `run_coverage`. If that doesn't work:
 1) pip install coverage

@@ -5,7 +5,7 @@ Simple example usage for the Covid-19 agent-based model
 #%% Imports and settings
 import pytest
 import sciris as sc
-import covasim.cova_generic as cova
+import covasim as cova
 
 doplot = 0
 

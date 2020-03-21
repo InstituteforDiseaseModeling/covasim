@@ -5,7 +5,7 @@ Simple example usage for the Covid-19 agent-based model
 #%% Imports and settings
 import pylab as pl
 import sciris as sc
-import covasim.cova_generic as cova
+import covasim as cova
 
 doplot = 1
 figsize = (20,16)
