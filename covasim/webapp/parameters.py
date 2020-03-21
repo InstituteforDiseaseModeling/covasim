@@ -1,5 +1,5 @@
 '''
-Set the parameters for COVID-ABM.
+Set the parameters for the Covasim webapp.
 '''
 
 import pylab as pl

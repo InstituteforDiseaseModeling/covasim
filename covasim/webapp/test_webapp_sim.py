@@ -6,7 +6,7 @@ import sciris as sc
 
 print('Importing...')
 sc.tic()
-import covasim.cova_webapp as cova # Or: import covid_abm as covid
+import covasim.webapp as cova # Or: import covid_abm as covid
 sc.toc()
 
 do_plot = 1

@@ -1,16 +1,14 @@
 '''
-This file contains all the code for a single run of Covid-ABM.
+This file contains all the code for running the webapp.
 
-Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
-
-Version: 2020mar13
+Version: 2020mar20
 '''
 
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
-import covasim.cova_base as cova
+import covasim.framework as cv
 from . import parameters as cova_pars
 
 
@@ -39,7 +37,7 @@ to_plot = sc.odict({
 
 #%% Define classes
 
-class Person(cova.Person):
+class Person(cv.Person):
     '''
     Class for a single person.
     '''
@@ -67,7 +65,7 @@ class Person(cova.Person):
         return
 
 
-class Sim(cova.Sim):
+class Sim(cv.Sim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
@@ -172,15 +170,15 @@ class Sim(cova.Sim):
         dur_pars   = dict(dist='normal_int', par1=target_person.pars['dur'],       par2=target_person.pars['dur_std'])
         death_pars = dict(dist='normal_int', par1=target_person.pars['timetodie'], par2=target_person.pars['timetodie_std'])
 
-        incub_dist = cova.sample(**incub_pars)
+        incub_dist = cv.sample(**incub_pars)
         target_person.date_infectious = t + incub_dist
 
         # Program them to either die or recover
-        if cova.bt(target_person.pars['cfr']):
-            death_dist = cova.sample(**death_pars)
+        if cv.bt(target_person.pars['cfr']):
+            death_dist = cv.sample(**death_pars)
             target_person.date_died = t + death_dist
         else:
-            dur_dist = cova.sample(**dur_pars)
+            dur_dist = cv.sample(**dur_pars)
             target_person.date_recovered = target_person.date_infectious + dur_dist
 
         self.results['transtree'][target_person.uid] = {'from':source_person.uid, 'date':t}
@@ -254,10 +252,10 @@ class Sim(cova.Sim):
                         self.results['recoveries'][t] += 1
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        n_contacts = cova.pt(person['contacts']) # Draw the number of Poisson contacts for this person
-                        contact_inds = cova.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
+                        n_contacts = cv.pt(person['contacts']) # Draw the number of Poisson contacts for this person
+                        contact_inds = cv.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
                         for contact_ind in contact_inds:
-                            exposure = cova.bt(self['r0']/self['dur']/self['contacts']) # Check for exposure per person
+                            exposure = cv.bt(self['r0']/self['dur']/self['contacts']) # Check for exposure per person
                             if exposure:
                                 target_person = self.get_person(contact_ind)
                                 if target_person.susceptible: # Skip people who are not susceptible
@@ -277,10 +275,10 @@ class Sim(cova.Sim):
                     self.results['tests'][t] = n_tests # Store the number of tests
                     test_probs = pl.array(list(test_probs.values()))
                     test_probs /= test_probs.sum()
-                    test_inds = cova.choose_people_weighted(probs=test_probs, n=n_tests)
+                    test_inds = cv.choose_people_weighted(probs=test_probs, n=n_tests)
                     for test_ind in test_inds:
                         tested_person = self.people[test_ind]
-                        if tested_person.infectious and cova.bt(self['sensitivity']): # Person was tested and is true-positive
+                        if tested_person.infectious and cv.bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
                             if verbose>=2:
@@ -418,7 +416,7 @@ class Sim(cova.Sim):
                 #     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             # pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(use_grid)
-            cova.fixaxis(self)
+            cv.fixaxis(self)
             sc.commaticks()
             # pl.ylabel('Count')
             pl.xlabel('Days')
