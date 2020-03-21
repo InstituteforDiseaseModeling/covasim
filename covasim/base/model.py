@@ -202,15 +202,8 @@ class Sim(cv.Sim):
 
         # Create the seed infections
         for i in range(int(self['n_infected'])):
-            self.results['infections'][0] += 1
             person = self.get_person(i)
-            person.susceptible = False
-            person.exposed = True
-            person.infectious = True
-            person.symptomatic = True # Assume they have symptoms
-            person.date_exposed = 0
-            person.date_infectious = 0
-            person.date_symptomatic = 0
+            self.infect_person(source_person=None, target_person=person, t=0)
 
         # Make the contact matrix
         if not self['usepopdata']:
@@ -295,7 +288,8 @@ class Sim(cv.Sim):
             dur_dist = cv.sample(**dur_pars)
             target_person.date_recovered = target_person.date_infectious + dur_dist
 
-        self.transtree[target_person.uid] = {'from':source_person.uid, 'date':t}
+        if source_person:
+            self.transtree[target_person.uid] = {'from':source_person.uid, 'date':t}
 
         return target_person
 
@@ -476,7 +470,7 @@ class Sim(cv.Sim):
             self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
 
         # Compute cumulative results
-        self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values)
+        self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values) + self['n_infected'] # Include initially infected people
         self.results['cum_tested'].values     = pl.cumsum(self.results['tests'].values)
         self.results['cum_diagnosed'].values  = pl.cumsum(self.results['diagnoses'].values)
         self.results['cum_deaths'].values     = pl.cumsum(self.results['deaths'].values)
