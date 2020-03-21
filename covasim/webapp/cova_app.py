@@ -12,11 +12,11 @@ import sciris as sc
 import scirisweb as sw
 import plotly.graph_objects as go
 import pylab as pl
-import covasim.cova_webapp as cw # Short for "Covid webapp model"
+import covasim.webapp as cw # Short for "Covid webapp model"
 import json
 
 # Change to current folder and create the app
-app = sw.ScirisApp(__name__, name="COVASim")
+app = sw.ScirisApp(__name__, name="Covasim")
 app.sessions = dict() # For storing user data
 flask_app = app.flask_app
 
