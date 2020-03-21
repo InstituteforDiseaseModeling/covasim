@@ -41,11 +41,12 @@ class Person(cv.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, age=0, sex=0):
-        super().__init__(pars) # Set parameters
-        self.uid  = str(sc.uuid()) # Unique identifier for this person
+    def __init__(self, age=0, sex=0, cfr=0, uid=None, id_len=4):
+        if uid is None:
+            uid = sc.uuid(length=id_len) # Unique identifier for this person
+        self.uid  = str(uid)
         self.age  = float(age) # Age of the person (in years)
-        self.sex  = sex # Female (0) or male (1)
+        self.sex  = int(sex) # Female (0) or male (1)
 
         # Define state
         self.alive       = True
@@ -120,7 +121,7 @@ class Sim(cv.Sim):
         self.people = {} # Dictionary for storing the people -- use plain dict since faster
         for p in range(int(self['n'])): # Loop over each person
             age,sex = cova_pars.get_age_sex(use_data=self['usepopdata'])
-            person = Person(self.pars, age=age, sex=sex) # Create the person
+            person = Person(age=age, sex=sex) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
         # Store all the UIDs as a list
@@ -166,15 +167,15 @@ class Sim(cv.Sim):
         target_person.exposed = True
         target_person.date_exposed = t
 
-        incub_pars = dict(dist='normal_int', par1=target_person.pars['incub'],     par2=target_person.pars['incub_std'])
-        dur_pars   = dict(dist='normal_int', par1=target_person.pars['dur'],       par2=target_person.pars['dur_std'])
-        death_pars = dict(dist='normal_int', par1=target_person.pars['timetodie'], par2=target_person.pars['timetodie_std'])
+        incub_pars  = dict(dist='normal_int', par1=self['incub'],     par2=self['incub_std'])
+        dur_pars    = dict(dist='normal_int', par1=self['dur'],       par2=self['dur_std'])
+        death_pars  = dict(dist='normal_int', par1=self['timetodie'], par2=self['timetodie_std'])
 
         incub_dist = cv.sample(**incub_pars)
         target_person.date_infectious = t + incub_dist
 
         # Program them to either die or recover
-        if cv.bt(target_person.pars['cfr']):
+        if cv.bt(self['cfr']):
             death_dist = cv.sample(**death_pars)
             target_person.date_died = t + death_dist
         else:
@@ -196,7 +197,10 @@ class Sim(cv.Sim):
             verbose = self['verbose']
         self.init_results()
         self.init_people() # Actually create the people
-        daily_tests = [] # Number of tests each day, from the data # TODO: fix
+        if self.data is not None and len(self.data): # TODO: refactor to single conditional
+            daily_tests = self.data['new_tests'] # Number of tests each day, from the data
+        else:
+            daily_tests = []
 
         # Main simulation loop
         for t in range(self.npts):
@@ -252,7 +256,7 @@ class Sim(cv.Sim):
                         self.results['recoveries'][t] += 1
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        n_contacts = cv.pt(person['contacts']) # Draw the number of Poisson contacts for this person
+                        n_contacts = cv.pt(self['contacts']) # Draw the number of Poisson contacts for this person
                         contact_inds = cv.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
                         for contact_ind in contact_inds:
                             exposure = cv.bt(self['r0']/self['dur']/self['contacts']) # Check for exposure per person
@@ -327,57 +331,31 @@ class Sim(cv.Sim):
         return self.results
 
 
-    # def likelihood(self, verbose=None):
-    #     '''
-    #     Compute the log-likelihood of the current simulation based on the number
-    #     of new diagnoses.
-    #     '''
-    #     if verbose is None:
-    #         verbose = self['verbose']
 
-    #     if not self.results['ready']:
-    #         self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
-
-    #     loglike = 0
-    #     for d,datum in enumerate(self.data['new_positives']):
-    #         if not pl.isnan(datum): # Skip days when no tests were performed
-    #             estimate = self.results['diagnoses'][d]
-    #             p = cov_ps.poisson_test(datum, estimate)
-    #             logp = pl.log(p)
-    #             loglike += logp
-    #             if verbose>=2:
-    #                 print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
-
-    #     self.results['likelihood'] = loglike
-
-    #     if verbose>=1:
-    #         print(f'Likelihood: {loglike}')
-
-    #     return loglike
-
-
-
-    def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, axis_args=None, as_days=True, font_size=18, use_grid=True, verbose=None):
+    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+             scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
+             font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
-        Parameters
-        ----------
-        do_save : bool or str
-            Whether or not to save the figure. If a string, save to that filename.
+        Args:
+            do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
+            fig_path (str): Path to save the figure
+            fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
+            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
+            axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            as_dates (bool): Whether to plot the x-axis as dates or time points
+            interval (int): Interval between tick marks
+            dateformat (str): Date string format, e.g. '%B %d'
+            font_size (int): Size of the font
+            font_family (str): Font face
+            use_grid (bool): Whether or not to plot gridlines
+            do_show (bool): Whether or not to show the figure
+            verbose (bool): Display a bit of extra information
 
-        fig_args : dict
-            Dictionary of kwargs to be passed to pl.figure()
-
-        plot_args : dict
-            Dictionary of kwargs to be passed to pl.plot()
-
-        as_days : bool
-            Whether to plot the x-axis as days or time points
-
-        Returns
-        -------
-        Figure handle
+        Returns:
+            fig: Figure handle
         '''
 
         if verbose is None:
@@ -393,6 +371,8 @@ class Sim(cv.Sim):
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         pl.rcParams['font.size'] = font_size
+        if font_family:
+            pl.rcParams['font.family'] = font_family
 
         res = self.results # Shorten since heavily used
 
@@ -400,14 +380,21 @@ class Sim(cv.Sim):
 
         colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
-        # data_mapping = {
-        #     'cum_diagnosed': pl.cumsum(self.data['new_positives']),
-        #     'tests':         self.data['new_tests'],
-        #     'diagnoses':     self.data['new_positives'],
-        #     }
+        # Define the data mapping. Must be here since uses functions
+        if self.data is not None and len(self.data):
+            data_mapping = {
+                'cum_exposed': pl.cumsum(self.data['new_infections']),
+                'cum_diagnosed':  pl.cumsum(self.data['new_positives']),
+                'cum_tested':     pl.cumsum(self.data['new_tests']),
+                'infections':     self.data['new_infections'],
+                'tests':          self.data['new_tests'],
+                'diagnoses':      self.data['new_positives'],
+                }
+        else:
+            data_mapping = {}
 
         for p,title,keylabels in to_plot.enumitems():
-            pl.subplot(2,1,p+1)
+            ax = pl.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = colors[i]
                 y = res[key]
@@ -424,13 +411,16 @@ class Sim(cv.Sim):
 
         # Ensure the figure actually renders or saves
         if do_save:
-            if isinstance(do_save, str):
-                filename = do_save # It's a string, assume it's a filename
+            if isinstance(do_save, str) and fig_path is None:
+                fig_path = do_save # It's a string, assume it's a filename
             else:
-                filename = 'covid_abm_results.png' # Just give it a default name
-            pl.savefig(filename)
+                fig_path = 'covasim.png' # Just give it a default name
+            pl.savefig(fig_path)
 
-        pl.show()
+        if do_show:
+            pl.show()
+        else:
+            pl.close(fig)
 
         return fig
 

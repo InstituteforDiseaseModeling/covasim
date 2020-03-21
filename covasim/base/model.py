@@ -1,9 +1,7 @@
 '''
-This file contains all the code for a single run of Covid-ABM.
+This file contains all the code for the basic use of Covasim.
 
-Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
-
-Version: 2020mar13
+Version: 2020mar20
 '''
 
 #%% Imports
@@ -46,8 +44,7 @@ class Person(cv.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, age=0, sex=0, cfr=0, uid=None, id_len=4):
-        super().__init__(pars) # Set parameters
+    def __init__(self, age=0, sex=0, cfr=0, uid=None, id_len=4):
         if uid is None:
             uid = sc.uuid(length=id_len) # Unique identifier for this person
         self.uid  = str(uid)
@@ -152,7 +149,7 @@ class Sim(cv.Sim):
             while not uid or uid in self.people.keys():
                 uid = sc.uuid(length=id_len)
 
-            person = Person(self.pars, age=age, sex=sex, cfr=cfr, uid=uid) # Create the person
+            person = Person(age=age, sex=sex, cfr=cfr, uid=uid) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
         if verbose >= 1:
@@ -179,7 +176,7 @@ class Sim(cv.Sim):
                 print(f'Creating contact matrix without data...')
             for p in range(int(self['n'])):
                 person = self.get_person(p)
-                person.n_contacts = cv.pt(person['contacts']) # Draw the number of Poisson contacts for this person
+                person.n_contacts = cv.pt(self['contacts']) # Draw the number of Poisson contacts for this person
                 person.contact_inds = cv.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
         else:
             self.contact_keys = self['contacts_pop'].keys()
@@ -222,7 +219,6 @@ class Sim(cv.Sim):
         return summary
 
 
-
     def infect_person(self, source_person, target_person, t, infectious=False):
         '''
         Infect target_person. source_person is used only for constructing the
@@ -232,10 +228,10 @@ class Sim(cv.Sim):
         target_person.exposed = True
         target_person.date_exposed = t
 
-        serial_pars = dict(dist='normal_int', par1=target_person.pars['serial'],    par2=target_person.pars['serial_std'])
-        incub_pars = dict(dist='normal_int',  par1=target_person.pars['incub'],     par2=target_person.pars['incub_std'])
-        dur_pars   = dict(dist='normal_int',  par1=target_person.pars['dur'],       par2=target_person.pars['dur_std'])
-        death_pars = dict(dist='normal_int',  par1=target_person.pars['timetodie'], par2=target_person.pars['timetodie_std'])
+        serial_pars = dict(dist='normal_int', par1=self['serial'],    par2=self['serial_std'])
+        incub_pars  = dict(dist='normal_int', par1=self['incub'],     par2=self['incub_std'])
+        dur_pars    = dict(dist='normal_int', par1=self['dur'],       par2=self['dur_std'])
+        death_pars  = dict(dist='normal_int', par1=self['timetodie'], par2=self['timetodie_std'])
 
         # Calculate how long before they can infect other people
         serial_dist = cv.sample(**serial_pars)
@@ -249,7 +245,7 @@ class Sim(cv.Sim):
         else:
             # They don't die; determine whether they develop symptoms
             # TODO, consider refactoring this with a "symptom_severity" parameter that could help determine likelihood of hospitalization
-            if not cv.bt(target_person.pars['asym_prop']): # They develop symptoms
+            if not cv.bt(self['asym_prop']): # They develop symptoms
                 incub_dist = cv.sample(**incub_pars) # Caclulate how long til they develop symptoms
                 target_person.date_symptomatic = t + incub_dist
 
