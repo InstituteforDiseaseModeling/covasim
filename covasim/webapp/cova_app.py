@@ -199,13 +199,13 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
     output['files'] = {}
 
-    ss = sim.export_xlsx()
+    ss = sim.to_xlsx()
     output['files']['xlsx'] = {
         'filename': f'COVASim_results_{datestamp}.xlsx',
         'content': base64.b64encode(ss.blob).decode("utf-8"),
     }
 
-    result_json = sim.export_json()
+    result_json = sim.to_json()
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as f:
         f.writestr('results.txt', result_json)
