@@ -99,7 +99,7 @@ var vm = new Vue({
         async downloadPars() {
             var d = new Date();
             let datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
-            let fileName = `COVASim_parameters_${datestamp}.txt`
+            let fileName = `COVASim_parameters_${datestamp}.json`
             
             // Adapted from https://stackoverflow.com/a/45594892 by Gautham
             let data = {
@@ -107,7 +107,7 @@ var vm = new Vue({
                 epi_pars: this.epi_pars,
             };
             let fileToSave = new Blob([JSON.stringify(data, null, 4)], {
-                type: 'application/text',
+                type: 'application/json',
                 name: fileName
             });
             saveAs(fileToSave, fileName);
