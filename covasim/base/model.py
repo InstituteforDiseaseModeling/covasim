@@ -172,7 +172,7 @@ class Sim(cv.Sim):
         return
 
 
-    def init_people(self, verbose=None, id_len=4):
+    def init_people(self, verbose=None, id_len=6):
         ''' Create the people '''
         if verbose is None:
             verbose = self['verbose']
@@ -180,30 +180,22 @@ class Sim(cv.Sim):
         if verbose>=2:
             print(f'Creating {self["n"]} people...')
 
-        self.people = {} # Dictionary for storing the people -- use plain dict since faster
-
+        # Create the people -- just placeholders if we're using actual data
+        self.people = {} # Dictionary for storing the people -- use plain dict since faster than odict
         for p in range(int(self['n'])): # Loop over each person
             if self['usepopdata']:
                 age,sex,cfr = None, None, None # These get overwritten later
             else:
                 age,sex,cfr = cvpars.get_age_sex(cfr_by_age=self['cfr_by_age'], use_data=False)
             uid = None
-            while not uid or uid in self.people.keys():
+            while not uid or uid in self.people.keys(): # Avoid duplicates!
                 uid = sc.uuid(length=id_len)
 
             person = Person(age=age, sex=sex, cfr=cfr, uid=uid) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
-        if verbose >= 1:
-            print(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]}')
-
         # Store all the UIDs as a list
         self.uids = list(self.people.keys())
-
-        # Create the seed infections
-        for i in range(int(self['n_infected'])):
-            person = self.get_person(i)
-            self.infect_person(source_person=None, target_person=person, t=0)
 
         # Make the contact matrix
         if not self['usepopdata']:
@@ -214,10 +206,11 @@ class Sim(cv.Sim):
                 person.n_contacts = cv.pt(self['contacts']) # Draw the number of Poisson contacts for this person
                 person.contact_inds = cv.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
         else:
-            self.contact_keys = self['contacts_pop'].keys()
             if verbose>=2:
                 print(f'Creating contact matrix with data...')
             import synthpops as sp
+
+            self.contact_keys = self['contacts_pop'].keys()
             popdict = sp.make_popdict(uids=self.uids)
             popdict = sp.make_contacts(popdict, self['contacts'], use_social_layers=True)
             popdict = sc.odict(popdict)
@@ -227,6 +220,14 @@ class Sim(cv.Sim):
                 person.sex = entry['sex']
                 person.cfr = cvpars.get_cfr(person.age, default_cfr=self['default_cfr'], cfr_by_age=self['cfr_by_age'])
                 person.contact_inds = entry['contacts']
+
+        if verbose >= 1:
+            print(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]}')
+
+        # Create the seed infections
+        for i in range(int(self['n_infected'])):
+            person = self.get_person(i)
+            self.infect_person(source_person=None, target_person=person, t=0)
 
         return
 

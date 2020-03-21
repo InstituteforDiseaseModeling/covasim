@@ -85,7 +85,7 @@ def get_defaults(region=None, merge=False):
     epi_pars['serial']      = dict(best=4.0,   min=1.0, max=30,  name='Serial interval (days)',    tip='Number of days between exposure and being infectious')
     epi_pars['incub']       = dict(best=5.0,   min=1.0, max=30,  name='Incubation period (days)',  tip='Number of days between exposure and developing symptoms')
     epi_pars['dur']         = dict(best=8.0,   min=1.0, max=30,  name='Infection duration (days)', tip='Average length of time of infection (viral shedding)')
-    epi_pars['default_cfr'] = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',        tip='Proportion of people who become infected who die (leave blank to use age-based-mortality)')
+    epi_pars['default_cfr'] = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',        tip='Proportion of people who become infected who die')
     epi_pars['timetodie']   = dict(best=22.0,  min=1.0, max=60,  name='Days until death',          tip='Average length of time between infection and death')
 
     for parkey,valuedict in regions.items():
@@ -156,8 +156,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
 
     # Handle sessions
     sim = cv.Sim()
-    # if pars['default_cfr'] is not None:
-    #     sim['cfr_by_age'] = False # So the user can override this value
+    sim['cfr_by_age'] = False # So the user can override this value
     sim.update_pars(pars=pars)
     if pars['seed'] is not None:
         sim.set_seed(int(pars['seed']))

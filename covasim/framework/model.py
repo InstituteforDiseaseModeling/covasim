@@ -186,7 +186,7 @@ class Sim(ParsObj):
 
     def get_person(self, ind):
         ''' Return a person based on their ID '''
-        return self.people[self.uids[ind]]
+        return self.people[self.uids[int(ind)]]
 
 
     def init_results(self):
