@@ -58,17 +58,12 @@ def get_defaults(region=None, merge=False):
             'Seattle': 4,
             # 'Wuhan': 10,
         },
-        'intervene': {
+        'interv_days': {
             'Example': 20,
-            'Seattle': 17,
+            'Seattle': 20,
             # 'Wuhan': 1,
         },
-        'unintervene': {
-            'Example': 40,
-            'Seattle': -1,
-            # 'Wuhan': 1,
-        },
-        'intervention_eff': {
+        'interv_effs': {
             'Example': 0.5,
             'Seattle': 0.0,
             # 'Wuhan': 0.9,
@@ -76,24 +71,22 @@ def get_defaults(region=None, merge=False):
     }
 
     sim_pars = {}
-    sim_pars['scale']            = dict(best=1,    min=1,   max=1e9,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
-    sim_pars['n']                = dict(best=5000, min=1,   max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
-    sim_pars['n_infected']       = dict(best=10,   min=1,   max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
-    sim_pars['n_days']           = dict(best=90,   min=1,   max=max_days, name='Duration (days)',            tip='Number of days to run the simulation for')
-    sim_pars['intervene']        = dict(best=20,   min=-1,  max=max_days, name='Intervention start (day)',   tip='Start day of the intervention (can be blank)')
-    sim_pars['unintervene']      = dict(best=40,   min=-1,  max=max_days, name='Intervention end (day)',     tip='Final day of intervention (can be blank)')
-    sim_pars['intervention_eff'] = dict(best=0.9,  min=0.0, max=1.0,      name='Intervention effectiveness', tip='Change in infection rate due to intervention')
-    sim_pars['seed']             = dict(best=1,    min=1,   max=1e9,      name='Random seed',                tip='Random number seed (leave blank for random results)')
+    sim_pars['scale']       = dict(best=1,    min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
+    sim_pars['n']           = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
+    sim_pars['n_infected']  = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
+    sim_pars['n_days']      = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
+    sim_pars['interv_days'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (can be blank)')
+    sim_pars['interv_effs'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Change in infection rate due to intervention')
+    sim_pars['seed']        = dict(best=1,    min=1, max=100,      name='Random seed',                tip='Random number seed (leave blank for random results)')
 
     epi_pars = {}
-    epi_pars['beta']      = dict(best=0.015, min=0.0, max=0.1,  name='Beta (infectiousness)',         tip='Probability of infection per contact per day')
-    epi_pars['contacts']  = dict(best=20,    min=0.0, max=100,  name='Number of contacts',            tip='Number of people, on average, each person is in contact with')
-    epi_pars['incub']     = dict(best=4.5,   min=1.0, max=30,   name='Incubation period (days)',      tip='Average length of time of incubation before symptoms')
-    epi_pars['incub_std'] = dict(best=1.0,   min=0.0, max=30,   name='Incubation variability (days)', tip='Standard deviation of incubation period')
-    epi_pars['dur']       = dict(best=8.0,   min=1.0, max=30,   name='Infection duration (days)',     tip='Average length of time of infection (viral shedding)')
-    epi_pars['dur_std']   = dict(best=2.0,   min=0.0, max=30,   name='Infection variability (days)',  tip='Standard deviation of infection period')
-    epi_pars['cfr']       = dict(best=0.02,  min=0.0, max=1.0,  name='Case fatality rate',            tip='Proportion of people who become infected who die')
-    epi_pars['timetodie'] = dict(best=22.0,  min=1.0, max=60,   name='Days until death',              tip='Average length of time between infection and death')
+    epi_pars['beta']        = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',     tip='Probability of infection per contact per day')
+    epi_pars['contacts']    = dict(best=20,    min=0.0, max=50,  name='Number of contacts',        tip='Number of people, on average, each person is in contact with')
+    epi_pars['serial']      = dict(best=4.0,   min=1.0, max=30,  name='Serial interval (days)',    tip='Number of days between exposure and being infectious')
+    epi_pars['incub']       = dict(best=5.0,   min=1.0, max=30,  name='Incubation period (days)',  tip='Number of days between exposure and developing symptoms')
+    epi_pars['dur']         = dict(best=8.0,   min=1.0, max=30,  name='Infection duration (days)', tip='Average length of time of infection (viral shedding)')
+    epi_pars['default_cfr'] = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',        tip='Proportion of people who become infected who die')
+    epi_pars['timetodie']   = dict(best=22.0,  min=1.0, max=60,  name='Days until death',          tip='Average length of time between infection and death')
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict[region]
@@ -163,6 +156,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
 
     # Handle sessions
     sim = cv.Sim()
+    sim['cfr_by_age'] = False # So the user can override this value
     sim.update_pars(pars=pars)
     if pars['seed'] is not None:
         sim.set_seed(int(pars['seed']))
