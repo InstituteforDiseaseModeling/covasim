@@ -2,17 +2,6 @@
 Sciris app to run the web interface.
 '''
 
-_min_scirisweb_version = '0.16.0'
-
-# Check ScirisWeb import
-try:
-    import scirisweb as sw
-except ImportError:
-    raise ImportError('Scirisweb not found; please install via "pip install scirisweb"')
-if _sc.compareversions(_sw.__version__, _min_scirisweb_version) < 0:
-    raise ImportError(f'Scirisweb {_sw.__version__} is incompatible; please upgrade via "pip install scirisweb=={_min_scirisweb_version}"')
-
-
 # Imports
 import os
 import io
@@ -22,8 +11,11 @@ import zipfile
 import sciris as sc
 import plotly.graph_objects as go
 import pylab as pl
-import covasim.base as cw # Short for "Covid webapp model"
+import covasim as cw
 import json
+
+# Check requirements
+cv._requirements.check_scirisweb(die=True)
 
 # Create the app
 app = sw.ScirisApp(__name__, name="Covasim")
@@ -114,7 +106,7 @@ def get_defaults(region=None, merge=False):
 @app.register_RPC()
 def get_version():
     ''' Get the version '''
-    output = f'Version {cw.__version__} ({cw.__versiondate__})'
+    output = f'Version {cv.__version__} ({cv.__versiondate__})'
     return output
 
 
@@ -167,7 +159,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         err += err1
 
     # Handle sessions
-    sim = cw.Sim()
+    sim = cv.Sim()
     sim.update_pars(pars=pars)
     if pars['seed'] is not None:
         sim.set_seed(int(pars['seed']))
@@ -193,7 +185,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     output['graphs'] = []
 
     # Core plotting
-    to_plot = sc.dcp(cw.to_plot)
+    to_plot = sc.dcp(cv.to_plot)
     for p,title,keylabels in to_plot.enumitems():
         fig = go.Figure()
         colors = sc.gridcolors(len(keylabels))
