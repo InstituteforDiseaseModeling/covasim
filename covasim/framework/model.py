@@ -93,13 +93,13 @@ class Result(sc.prettyobj):
         return len(self.values)
 
 
-class Person(ParsObj):
+class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
-        return
+        raise NotImplementedError
+
 
 
 class Sim(ParsObj):

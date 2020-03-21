@@ -8,7 +8,6 @@ import sciris as sc
 import covasim.cruise_ship as cova
 
 doplot = 1
-do_save = 0
 
 
 #%% Define the tests
@@ -29,40 +28,33 @@ def test_parsobj():
     return parsobj
 
 
-def test_sim(doplot=False, do_save=False): # If being run via pytest, turn off
+def test_sim(doplot=False): # If being run via pytest, turn off
 
     # Settings
     seed = 1
     verbose = 1
 
     # Create and run the simulation
-    sim = cova.Sim() # TODO: reconcile with covid
+    sim = cova.Sim()
     sim.set_seed(seed)
     sim.run(verbose=verbose)
 
     # Optionally plot
     if doplot:
-        sim.plot(do_save=do_save)
+        sim.plot()
 
     return sim
 
 
-def test_trans_tree(doplot=False, do_save=False): # If being run via pytest, turn off
-
-    sim = cova.Sim() # Create the simulation
-    sim.run(verbose=1) # Run the simulation
-    if doplot:
-        sim.plot(do_save=do_save)
-
-    return sim.results['transtree']
 
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
+
     parsobj = test_parsobj()
-    sim     = test_sim(doplot=doplot, do_save=do_save)
-    trans_tree = test_trans_tree(doplot=doplot)
+    sim     = test_sim(doplot=doplot)
+
     sc.toc()
 
 

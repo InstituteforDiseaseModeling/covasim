@@ -26,16 +26,12 @@ class Person(cv.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, age=0, sex=0, crew=False):
-        super().__init__(pars) # Set parameters
-        self.uid  = str(pl.randint(0,1e9)) # Unique identifier for this person
-        self.age  = float(age) # Age of the person (in years)
-        self.sex  = sex # Female (0) or male (1)
-        self.crew = crew # Wehther the person is a crew member
-        if self.crew:
-            self.contacts = self['contacts_crew'] # Determine how many contacts they have
-        else:
-            self.contacts = self['contacts_guest']
+    def __init__(self, age=0, sex=0, crew=False, contacts=0):
+        self.uid      = str(pl.randint(0,1e9)) # Unique identifier for this person
+        self.age      = float(age) # Age of the person (in years)
+        self.sex      = sex # Female (0) or male (1)
+        self.crew     = crew # Wehther the person is a crew member
+        self.contacts = contacts # Determine how many contacts they have
 
         # Define state
         self.alive       = True
@@ -102,16 +98,21 @@ class Sim(cv.Sim):
         crew   = [1]*self['n_crew']
         for is_crew in crew+guests: # Loop over each person
             age,sex = cova_pars.get_age_sex(is_crew)
-            person = Person(self.pars, age=age, sex=sex, crew=is_crew) # Create the person
+            if is_crew:
+                contacts = self['contacts_crew']
+            else:
+                contacts = self['contacts_guest']
+            person = Person(age=age, sex=sex, crew=is_crew, contacts=contacts) # Create the person
             self.people[person.uid] = person # Save them to the dictionary
 
         # Create the seed infections
         for i in range(seed_infections):
-            self.people[i].susceptible = False
-            self.people[i].exposed = True
-            self.people[i].infectious = True
-            self.people[i].date_exposed = 0
-            self.people[i].date_infectious = 0
+            person = self.people[i]
+            person.susceptible = False
+            person.exposed = True
+            person.infectious = True
+            person.date_exposed = 0
+            person.date_infectious = 0
 
         return
 
@@ -143,7 +144,7 @@ class Sim(cv.Sim):
 
             # Print progress
             if verbose>=1:
-                string = f'  Running day {t:0.0f} of {self.pars["n_days"]}...'
+                string = f'  Running day {t:0.0f} of {self["n_days"]}...'
                 if verbose>=2:
                     sc.heading(string)
                 else:
@@ -194,8 +195,8 @@ class Sim(cv.Sim):
                                     target_person.susceptible = False
                                     target_person.exposed = True
                                     target_person.date_exposed = t
-                                    incub_pars = dict(dist='normal_int', par1=target_person.pars['incub'], par2=target_person.pars['incub_std'])
-                                    dur_pars   = dict(dist='normal_int', par1=target_person.pars['dur'],   par2=target_person.pars['dur_std'])
+                                    incub_pars = dict(dist='normal_int', par1=self['incub'], par2=self['incub_std'])
+                                    dur_pars   = dict(dist='normal_int', par1=self['dur'],   par2=self['dur_std'])
                                     incub_dist = cv.sample(**incub_pars)
                                     dur_dist   = cv.sample(**dur_pars)
 
