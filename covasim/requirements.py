@@ -11,16 +11,19 @@ min_versions = {}
 #%% Get the right versions
 
 def get_min_versions():
+    ''' Parse requirements.txt and get minimum versions for everything '''
+
+    # Set options and get the file to load
     filename = 'requirements.txt'
     comparator = '>='
     cwd = os.path.abspath(os.path.dirname(__file__))
     filepath = os.path.join(cwd, os.pardir, filename)
-    print(__file__, cwd, filepath)
 
-    # Load requirements from txt file
+    # Load requirements from file
     with open(filepath) as f:
         requirements = f.read().splitlines()
 
+    # Process them
     for requirement in requirements: # Expecting e.g. 'scirisweb>=0.16.0'
         split = requirement.split(comparator)
         if len(split) == 2:

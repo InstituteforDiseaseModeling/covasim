@@ -16,8 +16,9 @@ import base64
 import zipfile
 import json
 
-# Check requirements
+# Check requirements, and if met, import scirisweb
 cv._requirements.check_scirisweb(die=True)
+import scirisweb as sw
 
 # Create the app
 app = sw.ScirisApp(__name__, name="Covasim")
