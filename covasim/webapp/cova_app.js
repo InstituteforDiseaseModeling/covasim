@@ -118,13 +118,13 @@ var vm = new Vue({
         },
 
         async downloadExcel() {
-          let res = await fetch('data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + this.result.files.xlsx.content);
+          let res = await fetch(this.result.files.xlsx.content);
           let blob = await res.blob();
           saveAs(blob, this.result.files.xlsx.filename);
         },
 
         async downloadJson() {
-          let res = await fetch('data:application/zip;base64,' + this.result.files.json.content);
+          let res = await fetch(this.result.files.json.content);
           let blob = await res.blob();
           saveAs(blob, this.result.files.json.filename);
         },
