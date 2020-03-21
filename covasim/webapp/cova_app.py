@@ -178,28 +178,14 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         print(err3)
         err += err3
 
-    if sim.data is not None:
-        data_mapping = {
-            'cum_diagnosed': pl.cumsum(sim.data['new_positives']),
-            'tests':         sim.data['new_tests'],
-            'diagnoses':     sim.data['new_positives'],
-            }
-    else:
-        data_mapping = {}
-
     output = {}
     output['err'] = err
     output['sim_pars'] = sim_pars
     output['epi_pars'] = epi_pars
     output['graphs'] = []
 
-    # If prevalence stays low, don't plot susceptibles
+    # Core plotting
     to_plot = sc.dcp(cw.to_plot)
-    max_exposed = sim.results['cum_exposed'][:].max()
-    threshold = prev_threshold*sim.results['n_susceptible'][:].max()
-    if max_exposed < threshold:
-        to_plot['Total counts'].pop('n_susceptible')
-
     for p,title,keylabels in to_plot.enumitems():
         fig = go.Figure()
         colors = sc.gridcolors(len(keylabels))
