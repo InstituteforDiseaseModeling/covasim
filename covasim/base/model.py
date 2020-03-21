@@ -12,7 +12,7 @@ import pylab as pl
 import sciris as sc
 import datetime as dt
 import statsmodels.api as sm
-import covasim.cova_base as cova
+import covasim.framework as cv
 from . import parameters as cova_pars
 
 
@@ -42,7 +42,7 @@ to_plot = sc.odict({
 
 #%% Define classes
 
-class Person(cova.Person):
+class Person(cv.Person):
     '''
     Class for a single person.
     '''
@@ -77,7 +77,7 @@ class Person(cova.Person):
         return
 
 
-class Sim(cova.Sim):
+class Sim(cv.Sim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
@@ -101,7 +101,7 @@ class Sim(cova.Sim):
         def init_res(*args, **kwargs):
             ''' Initialize a single results object '''
             values = np.zeros(int(self.npts))
-            output = cova.Result(*args, **kwargs, values=values)
+            output = cv.Result(*args, **kwargs, values=values)
             return output
 
         # Create the main results structure
@@ -180,8 +180,8 @@ class Sim(cova.Sim):
                 print(f'Creating contact matrix without data...')
             for p in range(int(self['n'])):
                 person = self.get_person(p)
-                person.n_contacts = cova.pt(person['contacts']) # Draw the number of Poisson contacts for this person
-                person.contact_inds = cova.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
+                person.n_contacts = cv.pt(person['contacts']) # Draw the number of Poisson contacts for this person
+                person.contact_inds = cv.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
         else:
             self.contact_keys = self['contacts_pop'].keys()
             if verbose>=2:
@@ -239,22 +239,22 @@ class Sim(cova.Sim):
         death_pars = dict(dist='normal_int',  par1=target_person.pars['timetodie'], par2=target_person.pars['timetodie_std'])
 
         # Calculate how long before they can infect other people
-        serial_dist = cova.sample(**serial_pars)
+        serial_dist = cv.sample(**serial_pars)
         target_person.date_infectious = t + serial_dist
 
         # Program them to either die or recover in the future
-        if cova.bt(target_person.cfr):
+        if cv.bt(target_person.cfr):
             # They die
-            death_dist = cova.sample(**death_pars)
+            death_dist = cv.sample(**death_pars)
             target_person.date_died = t + death_dist
         else:
             # They don't die; determine whether they develop symptoms
             # TODO, consider refactoring this with a "symptom_severity" parameter that could help determine likelihood of hospitalization
-            if not cova.bt(target_person.pars['asym_prop']): # They develop symptoms
-                incub_dist = cova.sample(**incub_pars) # Caclulate how long til they develop symptoms
+            if not cv.bt(target_person.pars['asym_prop']): # They develop symptoms
+                incub_dist = cv.sample(**incub_pars) # Caclulate how long til they develop symptoms
                 target_person.date_symptomatic = t + incub_dist
 
-            dur_dist = cova.sample(**dur_pars)
+            dur_dist = cv.sample(**dur_pars)
             target_person.date_recovered = target_person.date_infectious + dur_dist
 
         self.results['transtree'][target_person.uid] = {'from':source_person.uid, 'date':t}
@@ -351,7 +351,7 @@ class Sim(cova.Sim):
                                            (self['asym_factor'] if person.symptomatic else 1.) * \
                                            (self['diag_factor'] if person.diagnosed else 1.) * \
                                            (self['cont_factor'] if person.known_contact else 1.)
-                                transmission = cova.bt(thisbeta) # Check whether virus is transmitted
+                                transmission = cv.bt(thisbeta) # Check whether virus is transmitted
 
                                 if transmission:
                                     if target_person.susceptible: # Skip people who are not susceptible
@@ -371,7 +371,7 @@ class Sim(cova.Sim):
                                                (self['asym_factor'] if person.symptomatic else 1.) * \
                                                (self['diag_factor'] if person.diagnosed else 1.) * \
                                                (self['cont_factor'] if person.known_contact else 1.)
-                                    transmission = cova.bt(thisbeta) # Check whether virus is transmitted
+                                    transmission = cv.bt(thisbeta) # Check whether virus is transmitted
 
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
@@ -407,11 +407,11 @@ class Sim(cova.Sim):
                     self.results['tests'][t] = n_tests # Store the number of tests
                     test_probs_arr = pl.array(list(test_probs.values()))
                     test_probs_arr /= test_probs_arr.sum()
-                    test_inds = cova.choose_people_weighted(probs=test_probs_arr, n=n_tests)
+                    test_inds = cv.choose_people_weighted(probs=test_probs_arr, n=n_tests)
 
                     for test_ind in test_inds:
                         tested_person = self.get_person(test_ind)
-                        if tested_person.infectious and cova.bt(self['sensitivity']): # Person was tested and is true-positive
+                        if tested_person.infectious and cv.bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
                             tested_person.date_diagnosed = t
@@ -485,7 +485,7 @@ class Sim(cova.Sim):
             for d,datum in enumerate(self.data['new_positives']):
                 if not pl.isnan(datum): # Skip days when no tests were performed
                     estimate = self.results['diagnoses'][d]
-                    p = cova.poisson_test(datum, estimate)
+                    p = cv.poisson_test(datum, estimate)
                     logp = pl.log(p)
                     loglike += logp
                     if verbose>=2:
@@ -572,7 +572,7 @@ class Sim(cova.Sim):
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(use_grid)
-            cova.fixaxis(self)
+            cv.fixaxis(self)
             sc.commaticks()
             pl.title(title)
 
