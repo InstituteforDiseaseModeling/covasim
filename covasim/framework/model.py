@@ -54,10 +54,11 @@ class ParsObj(sc.prettyobj):
             self.pars = pars
         elif pars is not None:
             if not create:
-                available_keys = self.pars.keys()
+                available_keys = list(self.pars.keys())
                 mismatches = [key for key in pars.keys() if key not in available_keys]
                 if len(mismatches):
-                    raise KeyError(f'Key(s) {mismatches} not found; available keys are {available_keys}')
+                    errormsg = f'Key(s) {mismatches} not found; available keys are {available_keys}'
+                    raise KeyError(errormsg)
             self.pars.update(pars)
         return
 

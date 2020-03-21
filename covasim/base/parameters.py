@@ -8,7 +8,7 @@ import pandas as pd
 from datetime import datetime
 
 
-__all__ = ['make_pars', 'get_age_sex', 'load_data']
+__all__ = ['make_pars', 'get_age_sex', 'get_cfr', 'load_data']
 
 
 def make_pars():
@@ -60,11 +60,6 @@ def make_pars():
     pars['interv_days'] = []# [30, 44]  # Day on which interventions started/stopped
     pars['interv_effs'] = []# [0.1, 10] # Change in transmissibility
 
-    # Derived values
-    pars['eff_beta'] = pars['asym_prop']*pars['asym_factor']*pars['beta'] + (1-pars['asym_prop'])*pars['beta']  # Using asymptomatic proportion
-    pars['r_0']      = pars['contacts']*pars['dur']*pars['eff_beta']
-
-
     return pars
 
 
@@ -90,14 +85,13 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, cfr_by_age=True,
     return age, sex, cfr
 
 
-def get_cfr(age=None, default_cfr=0.02, cfrdict=None):
+def get_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
     '''
     Get age-dependent case-fatality rates
     '''
     # Check inputs and assign default CFR if age not supplied
-    if age is None:
+    if age is None or not cfr_by_age:
         cfr = default_cfr
-
     else:
         # Define age-dependent case fatality rates if not given
         if cfrdict is None:

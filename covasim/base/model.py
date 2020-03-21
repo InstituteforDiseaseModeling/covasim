@@ -11,7 +11,7 @@ import sciris as sc
 import datetime as dt
 import statsmodels.api as sm
 import covasim.framework as cv
-from . import parameters as cova_pars
+from . import parameters as cvpars
 
 
 # Specify all externally visible functions this file defines
@@ -82,13 +82,49 @@ class Sim(cv.Sim):
 
     def __init__(self, pars=None, datafile=None):
         if pars is None:
-            pars = cova_pars.make_pars()
+            pars = cvpars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
-        self.data = None # cova_pars.load_data(datafile)
+        self.data = None # cvpars.load_data(datafile)
+        return
+
+
+    def initialize(self):
+        ''' Perform all initializations '''
+        self.validate_pars()
         self.set_seed(self['seed'])
         self.init_results()
         self.init_people()
-        self.interventions = {}
+        return
+
+
+    def validate_pars(self):
+        ''' Some parameters can take multiple types; this makes them consistent '''
+
+        # Handle start day
+        start_day = self['start_day'] # Shorten
+        if start_day in [None, 0]: # Use default start day
+            start_day = dt.datetime(2020, 1, 1)
+        if not isinstance(start_day, dt.datetime):
+            errormsg = f"Start day must be a YYYY-MM-DD string or a datetime object, not {start_day}" # Not an error yet, but used twice, so pre-create it
+            if sc.isstring(start_day):
+                try:
+                    start_day = dt.datetime.strptime(start_day, '%Y-%M-%d')
+                except ValueError:
+                    raise ValueError(errormsg) # Raise this
+            else:
+                raise TypeError(errormsg)
+        self['start_day'] = start_day # Convert back
+
+        # Replace tests with data, if available
+        if self.data is not None:
+            self['daily_tests'] = self.data['new_tests'] # Number of tests each day, from the data
+
+        # Handle interventions
+        for key in ['interv_days', 'interv_effs', 'daily_tests']:
+            val = self[key]
+            if val is None: val = [] # TODO: have skipnone be an option in promotetoarray()
+            self[key] = sc.promotetoarray(self[key])
+
         return
 
 
@@ -118,15 +154,20 @@ class Sim(cv.Sim):
         self.results['cum_deaths']     = init_res('Cumulative number of deaths')
         self.results['cum_recoveries'] = init_res('Cumulative number recovered')
         self.results['doubling_time']  = init_res('Doubling time', scale=False)
-        self.results['r_e']            = init_res('Effective reproductive number', scale=False)
+        self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
 
         self.reskeys = list(self.results.keys()) # Save the names of the main result keys
 
         # Populate the rest of the results
         self.results['t'] = self.tvec
         self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
-        self.results['transtree'] = {} # For storing the transmission tree
+        self.transtree = {} # For storing the transmission tree
         self.results_ready = False
+
+        # Create calculated values structure
+        self.calculated = {}
+        self.calculated['eff_beta'] = self['asym_prop']*self['asym_factor']*self['beta'] + (1-self['asym_prop'])*self['beta']  # Using asymptomatic proportion
+        self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
 
 
@@ -142,9 +183,9 @@ class Sim(cv.Sim):
 
         for p in range(int(self['n'])): # Loop over each person
             if self['usepopdata']:
-                age,sex,cfr = -1, -1, 0 # These get overwritten later
+                age,sex,cfr = None, None, None # These get overwritten later
             else:
-                age,sex,cfr = cova_pars.get_age_sex(cfr_by_age=self['cfr_by_age'], use_data=False)
+                age,sex,cfr = cvpars.get_age_sex(cfr_by_age=self['cfr_by_age'], use_data=False)
             uid = None
             while not uid or uid in self.people.keys():
                 uid = sc.uuid(length=id_len)
@@ -190,6 +231,7 @@ class Sim(cv.Sim):
                 person = self.get_person(p)
                 person.age = entry['age']
                 person.sex = entry['sex']
+                person.cfr = cvpars.get_cfr(person.age, default_cfr=self['default_cfr'], cfr_by_age=self['cfr_by_age'])
                 person.contact_inds = entry['contacts']
 
         return
@@ -210,10 +252,10 @@ class Sim(cv.Sim):
      {summary['n_susceptible']:5.0f} susceptible
      {summary['n_infectious']:5.0f} infectious
      {summary['n_symptomatic']:5.0f} symptomatic
-     {summary['cum_exposed']:5.0f} exposed
-     {summary['cum_diagnosed']:5.0f} diagnosed
-     {summary['cum_deaths']:5.0f} deaths
-     {summary['cum_recoveries']:5.0f} recovered
+     {summary['cum_exposed']:5.0f} total exposed
+     {summary['cum_diagnosed']:5.0f} total diagnosed
+     {summary['cum_deaths']:5.0f} total deaths
+     {summary['cum_recoveries']:5.0f} total recovered
                """)
 
         return summary
@@ -252,7 +294,7 @@ class Sim(cv.Sim):
             dur_dist = cv.sample(**dur_pars)
             target_person.date_recovered = target_person.date_infectious + dur_dist
 
-        self.results['transtree'][target_person.uid] = {'from':source_person.uid, 'date':t}
+        self.transtree[target_person.uid] = {'from':source_person.uid, 'date':t}
 
         return target_person
 
@@ -265,12 +307,7 @@ class Sim(cv.Sim):
         # Reset settings and results
         if verbose is None:
             verbose = self['verbose']
-        self.init_results()
-        self.init_people() # Actually create the people
-        if self.data is not None and len(self.data): # TODO: refactor to single conditional
-            daily_tests = self.data['new_tests'] # Number of tests each day, from the data
-        else:
-            daily_tests = self['daily_tests']
+        self.initialize() # Create people, results, etc.
 
         # Main simulation loop
         for t in range(self.npts):
@@ -396,8 +433,8 @@ class Sim(cv.Sim):
                     test_probs[person.uid] = 0.0
 
             # Implement testing -- this is outside of the loop over people, but inside the loop over time
-            if t<len(daily_tests): # Don't know how long the data is, ensure we don't go past the end
-                n_tests = daily_tests[t] # Number of tests for this day
+            if t<len(self['daily_tests']): # Don't know how long the data is, ensure we don't go past the end
+                n_tests = self['daily_tests'][t] # Number of tests for this day
                 if n_tests and not pl.isnan(n_tests): # There are tests this day
                     self.results['tests'][t] = n_tests # Store the number of tests
                     test_probs_arr = pl.array(list(test_probs.values()))
@@ -411,7 +448,7 @@ class Sim(cv.Sim):
                             tested_person.diagnosed = True
                             tested_person.date_diagnosed = t
                             if verbose>=2:
-                                        print(f'          Person {tested_person.uid} was diagnosed at timestep {t}!')
+                                print(f'          Person {tested_person.uid} was diagnosed at timestep {t}!')
 
             # Implement quarantine
             if t in self['interv_days']:
@@ -420,16 +457,17 @@ class Sim(cv.Sim):
                 ind = sc.findinds(self['interv_days'], t)[0]
                 self['beta'] *= self['interv_effs'][ind] # TODO: pop-specific
 
-            # Doubling time
-            if t>=1:
+            # Calculate doubling time
+            if t>=2: # TODO: make more robust?
+                cum_infections = pl.cumsum(self.results['infections'][:t+1])
                 exog  = sm.add_constant(np.arange(t+1))
-                endog = np.log2(pl.cumsum(self.results['infections'][:t+1]))
+                endog = np.log2(cum_infections)
                 model = sm.OLS(endog, exog)
                 doubling_time = 1 / model.fit().params[1]
                 self.results['doubling_time'][t] = doubling_time
 
             # Effective reproductive number based on number still susceptible
-            self.results['r_e'][t] = self['r_0']*self.results['n_susceptible'][t]/self['n']
+            self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
 
         # Compute cumulative results
         self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values)
