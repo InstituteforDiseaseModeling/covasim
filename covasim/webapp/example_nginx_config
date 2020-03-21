@@ -2,7 +2,7 @@ server {
 	listen 80;
 	server_name <hostname>;
 	location / {
-		root <repo_path>/covasim/cova_webapp;
+		root <repo_path>/covasim/webapp;
 	}
 	location /api {
 		proxy_pass http://127.0.0.1:8097/;

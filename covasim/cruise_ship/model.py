@@ -1,16 +1,17 @@
 '''
-This file contains all the code for a single run of Covid-ABM.
+This file contains all the code for a single run of the cruise ship flavor of
+Covasim.
 
 Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 
-Version: 2020mar08
+Version: 2020mar20
 '''
 
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
-import covasim.cova_base as cova
+import covasim.framework as cv
 from . import parameters as cova_pars
 
 
@@ -21,7 +22,7 @@ __all__ = ['Person', 'Sim']
 
 #%% Define classes
 
-class Person(cova.Person):
+class Person(cv.Person):
     '''
     Class for a single person.
     '''
@@ -52,7 +53,7 @@ class Person(cova.Person):
         return
 
 
-class Sim(cova.Sim):
+class Sim(cv.Sim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
@@ -182,10 +183,10 @@ class Sim(cova.Sim):
                         self.results['recoveries'][t] += 1
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        n_contacts = cova.pt(person.contacts) # Draw the number of Poisson contacts for this person
-                        contact_inds = cova.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
+                        n_contacts = cv.pt(person.contacts) # Draw the number of Poisson contacts for this person
+                        contact_inds = cv.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
                         for contact_ind in contact_inds:
-                            exposure = cova.bt(self['r_contact']) # Check for exposure per person
+                            exposure = cv.bt(self['r_contact']) # Check for exposure per person
                             if exposure:
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
@@ -195,8 +196,8 @@ class Sim(cova.Sim):
                                     target_person.date_exposed = t
                                     incub_pars = dict(dist='normal_int', par1=target_person.pars['incub'], par2=target_person.pars['incub_std'])
                                     dur_pars   = dict(dist='normal_int', par1=target_person.pars['dur'],   par2=target_person.pars['dur_std'])
-                                    incub_dist = cova.sample(**incub_pars)
-                                    dur_dist   = cova.sample(**dur_pars)
+                                    incub_dist = cv.sample(**incub_pars)
+                                    dur_dist   = cv.sample(**dur_pars)
 
                                     target_person.date_infectious = t + incub_dist
                                     target_person.date_recovered = target_person.date_infectious + dur_dist
@@ -214,11 +215,11 @@ class Sim(cova.Sim):
                     self.results['tests'][t] = n_tests # Store the number of tests
                     test_probs = pl.array(list(test_probs.values()))
                     test_probs /= test_probs.sum()
-                    test_inds = cova.choose_people_weighted(probs=test_probs, n=n_tests)
+                    test_inds = cv.choose_people_weighted(probs=test_probs, n=n_tests)
                     uids_to_pop = []
                     for test_ind in test_inds:
                         tested_person = self.people[test_ind]
-                        if tested_person.infectious and cova.bt(self['sensitivity']): # Person was tested and is true-positive
+                        if tested_person.infectious and cv.bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
                             if self['evac_positives']:
@@ -254,11 +255,11 @@ class Sim(cova.Sim):
                 if n_evacuated and not pl.isnan(n_evacuated): # There are evacuees this day # TODO -- refactor with n_tests
                     if verbose>=1:
                         print(f'Implementing evacuation on day {t}')
-                    evac_inds = cova.choose_people(max_ind=len(self.people), n=n_evacuated)
+                    evac_inds = cv.choose_people(max_ind=len(self.people), n=n_evacuated)
                     uids_to_pop = []
                     for evac_ind in evac_inds:
                         evac_person = self.people[evac_ind]
-                        if evac_person.infectious and cova.bt(self['sensitivity']):
+                        if evac_person.infectious and cv.bt(self['sensitivity']):
                             self.results['evac_diagnoses'][t] += 1
                         uids_to_pop.append(evac_person.uid)
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
@@ -306,7 +307,7 @@ class Sim(cova.Sim):
         for d,datum in enumerate(self.data['new_positives']):
             if not pl.isnan(datum): # Skip days when no tests were performed
                 estimate = self.results['diagnoses'][d]
-                p = cova.poisson_test(datum, estimate)
+                p = cv.poisson_test(datum, estimate)
                 logp = pl.log(p)
                 loglike += logp
                 if verbose>=2:
@@ -390,7 +391,7 @@ class Sim(cova.Sim):
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(use_grid)
-            cova.fixaxis(self)
+            cv.fixaxis(self)
             pl.ylabel('Count')
             pl.xlabel('Days since index case')
             pl.title(title)

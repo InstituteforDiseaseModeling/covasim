@@ -41,7 +41,7 @@ server {
     listen 8188;
     server_name localhost;
     location / {
-        root /home/my_username/covasim/covasim/cova_webapp;
+        root /home/my_username/covasim/covasim/webapp;
     }
     location /api {
         proxy_pass http://127.0.0.1:8097/;

@@ -1,11 +1,11 @@
 '''
-Simple example usage for the cova.19 agent-based model
+Cruise-ship specific tests
 '''
 
 #%% Imports and settings
 import pytest
 import sciris as sc
-import covasim.cova_cruise as cova
+import covasim.cruise_ship as cova
 
 doplot = 1
 do_save = 0
