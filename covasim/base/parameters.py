@@ -26,10 +26,9 @@ def make_pars():
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
 
-    # Epidemic parameters
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
-    pars['asym_prop']   = 0.17 # Proportion of asymptomatic cases - estimate based on https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.25.10.2000180, #TODO: look for better estimates
+    pars['asym_prop']      = 0.17 # Proportion of asymptomatic cases - estimate based on https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.25.10.2000180, #TODO: look for better estimates
     pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']    = 1.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
@@ -46,7 +45,7 @@ def make_pars():
     pars['dur_std']        = 2 # Variance in duration
 
     # Testing
-    pars['daily_tests']    = pd.Series([0.01*pars['n']]*pars['n_days']) # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']. Here we say 1% of the population is tested
+    pars['daily_tests']    = [0.01*pars['n']]*pars['n_days'] # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']. Here we say 1% of the population is tested
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
     pars['trace_test']     = 1.0 # Multiply testing probability by this factor for contacts of known positives -- baseline assumes no contact tracing

@@ -397,7 +397,7 @@ class Sim(cv.Sim):
 
             # Implement testing -- this is outside of the loop over people, but inside the loop over time
             if t<len(daily_tests): # Don't know how long the data is, ensure we don't go past the end
-                n_tests = daily_tests.iloc[t] # Number of tests for this day
+                n_tests = daily_tests[t] # Number of tests for this day
                 if n_tests and not pl.isnan(n_tests): # There are tests this day
                     self.results['tests'][t] = n_tests # Store the number of tests
                     test_probs_arr = pl.array(list(test_probs.values()))
