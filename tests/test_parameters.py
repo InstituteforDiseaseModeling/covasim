@@ -6,9 +6,9 @@ Test that the parameters and data files are being created correctly.
 import pytest
 import pylab as pl
 import sciris as sc
-import covasim.cova_cruise as cova
+import covasim.cruise_ship as cova # NOTE: this is the only tests script that doesn't use base
 
-do_plot = True
+do_plot = False
 
 
 #%% Define the tests
@@ -86,9 +86,11 @@ def test_data():
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
+
     pars = test_parameters()
     data = test_data()
     ages = test_age_sex(do_plot=do_plot)
+
     sc.toc()
 
 

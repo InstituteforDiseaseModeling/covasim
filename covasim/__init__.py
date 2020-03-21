@@ -60,6 +60,6 @@ except ImportError as E:
 del _min_sciris_version, _min_scirisweb_version, _sc, _sw
 
 
-#%% Imports from here
-from .cova_base import *
-from .cova_generic import *
+#%% Imports from here -- just the framework, basic functions, and base -- the "base" version
+from .framework import *
+from .base import *
