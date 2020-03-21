@@ -29,7 +29,6 @@ if 'nowebapp' in sys.argv:
 
 if 'full' in sys.argv:
     print('Performing full installation, including optional dependencies')
-    raise NotImplementedError('full installation not functional yet (dependent packages still private)')
     sys.argv.remove('full')
     full_reqs = [
         'covid_healthsystems',
@@ -37,8 +36,6 @@ if 'full' in sys.argv:
         'parestlib'
     ]
     requirements.extend(full_reqs)
-
-print(f'reqs => {requirements}')
 
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))
