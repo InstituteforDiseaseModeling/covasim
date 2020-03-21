@@ -85,6 +85,7 @@ class Sim(cv.Sim):
             pars = cvpars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
         self.data = None # cvpars.load_data(datafile)
+        self.stopped = False # Whether the simulation is running or not
         return
 
 
@@ -310,7 +311,12 @@ class Sim(cv.Sim):
         self.initialize() # Create people, results, etc.
 
         # Main simulation loop
+        self.stopped = False # We've just been asked to run, so ensure we're unstopped
         for t in range(self.npts):
+
+            # If this gets set, stop running -- most useful for the webapp
+            if self.stopped:
+                break
 
             # Print progress
             if verbose>=1:
@@ -488,6 +494,7 @@ class Sim(cv.Sim):
 
         # Tidy up
         self.results_ready = True
+        self.stopped = True
         elapsed = sc.toc(T, output=True)
         if verbose>=1:
             print(f'\nRun finished after {elapsed:0.1f} s.\n')
