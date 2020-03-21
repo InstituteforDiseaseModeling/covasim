@@ -35,15 +35,11 @@
 <section id="app" class="container-fluid">
     <header class="row no-gutter">
         <nav class="navbar navbar-dark bg-dark">
-            <a class="navbar-brand" href="#" style='font-size: 2.0em'>Covasim</a>
-            <span class="navbar-text">Coronavirus (COVID-19) Agent-based Simulator</span>
-            <span class="navbar-text">Version {{ version }}
-
-<!-- Button trigger modal -->
-        <button type="button" class="btn" data-toggle="modal" data-target="#exampleModal" style="color:rgba(255,255,255,.5); padding-bottom:10px;">
-          About
+            <a class="navbar-brand" href="#" style='font-size: 2.2em; '>Covasim</a>
+            <button type="button" class="btn" data-toggle="modal" data-target="#exampleModal" style="color:rgba(255,255,255); padding-bottom:10px;">
+          COVID-19 agent-based simulator
         </button>
-            </span>
+            <span class="navbar-text"><a href="https://github.com/institutefordiseasemodeling/covasim" target="_blank">Version {{ version }}</a></span>
         </nav>
 
         <!-- Modal -->
@@ -57,11 +53,11 @@
                 </button>
               </div>
               <div class="modal-body">
-                <p>Covasim is an agent-based model that simulates the transmission of COVID-19 in a population. Each individual in the model may pass through the following stages of COVID-19 infection: susceptible, exposed, infectious, and recovered (SEIR). The epidemiological parameter values are taken from literature.</p>
+                <p>Covasim is an agent-based model that simulates the transmission of COVID-19 (novel coronavirus, SARS-CoV-2) in a population. Each individual in the model may pass through the following stages of COVID-19 infection: susceptible, exposed, infectious, and recovered (SEIR). The epidemiological parameter values are taken from literature.</p>
 
-                <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals in neighboring nodes to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.05 and a doubling time of 6-7 days. For more information, please visit the <a href="https://github.com/institutefordiseasemodeling/covasim">GitHub</a> repository.
+                <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals in neighboring nodes to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.05 and a doubling time of 6-7 days. For more information, please visit the <a href="https://github.com/institutefordiseasemodeling/covasim" target="_blank">GitHub</a> repository.
 
-                <p>Note: This site is intended to provide information about COVID-19. Models are only as good as the values of the parameters put into them. This is a rapidly changing situation, and we will update content as relevant information is received.</p>
+                <p>Note: Models are only as good as the values of the parameters put into them. This is a rapidly changing situation, and we will update content as relevant information is received.</p>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -189,9 +185,9 @@
     <footer class="row no-gutter">
         <nav class="navbar navbar-dark bg-dark">
             <span class="navbar-text">
-              &copy; 2020 <a href="http://idmod.org">Institute for Disease Modeling</a>
+              &copy; 2020 <a href="http://idmod.org" target="_blank">Institute for Disease Modeling</a>
             </span>
-            <a href="https://github.com/amath-idm/covasim" class="navbar-text">
+            <a href="https://github.com/institutefordiseasemodeling/covasim" target="_blank" class="navbar-text">
                 <svg height="16" viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true">
                     <path fill-rule="evenodd" fill="currentColor"
                           d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
