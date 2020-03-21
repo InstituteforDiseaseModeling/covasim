@@ -1,3 +1,11 @@
+'''
+Covasim installation. Requirements are listed in requirements.txt. There are three
+options:
+    python setup.py develop          # standard install, includes webapp, does not include optional libraries
+    python setup.py develop nowebapp # backend only, no webapp functionality
+    python setup.py develop full     # full install, including optional libraries (NB: these libraries are not available publicly yet)
+'''
+
 import os
 import re
 import sys

@@ -2,16 +2,18 @@
 Sciris app to run the web interface.
 '''
 
-# Imports
+# Key imports
 import os
-import io
 import sys
+import pylab as pl
+import plotly.graph_objects as go
+import sciris as sc
+import covasim as cv
+
+# Download/upload-specific imports
+import io
 import base64
 import zipfile
-import sciris as sc
-import plotly.graph_objects as go
-import pylab as pl
-import covasim as cw
 import json
 
 # Check requirements

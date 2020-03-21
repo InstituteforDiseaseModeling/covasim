@@ -1,75 +1,118 @@
+#%% Housekeeping
+
 import os
 
-_min_sciris_version    = '0.16.0'
+__all__ = ['available', 'min_versions', 'get_min_versions', 'check_sciris', 'check_scirisweb', 'check_extra_libs']
 
-class Available:
-    ''' Store information about optional imports '''
-    scirisweb     = None
-    healthsystems = None
-    synthpops     = None
-    parestlib     = None
 
-available = Available() # Make this available at the module level
+available = {} # Make this available at the module level
 min_versions = {}
 
-def get_requirements():
+#%% Get the right versions
+
+def get_min_versions():
     filename = 'requirements.txt'
+    comparator = '>='
     cwd = os.path.abspath(os.path.dirname(__file__))
-    filepath = os.path.join(os.pardir, cwd, filename)
+    filepath = os.path.join(cwd, os.pardir, filename)
+    print(__file__, cwd, filepath)
 
     # Load requirements from txt file
     with open(filepath) as f:
         requirements = f.read().splitlines()
 
+    for requirement in requirements: # Expecting e.g. 'scirisweb>=0.16.0'
+        split = requirement.split(comparator)
+        if len(split) == 2:
+            package = split[0]
+            version = split[1]
+            min_versions[package] = version
+
+    return # NB, modifies the module-level min_versions dict in-place
+
+get_min_versions() # Populate these straight away
 
 
+#%% Check dependencies
+
+def check_sciris():
+    ''' Check that Sciris is available and the right version '''
+    try:
+        import sciris as sc
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError('Sciris is a required dependency but is not found; please install via "pip install sciris"')
+    ver = sc.__version__
+    minver = min_versions['sciris']
+    if sc.compareversions(ver, minver) < 0:
+        raise ImportError(f'You have Sciris {ver} but {minver} is required; please upgrade via "pip install --upgrade sciris"')
+    return
 
 
-# Check Sciris
-try:
-    import sciris as _sc
-except ImportError:
-    raise ImportError('Sciris not found; please install via "pip install sciris"')
-if _sc.compareversions(_sc.__version__, _min_sciris_version) < 0:
-    raise ImportError(f'Sciris {_sc.__version__} is incompatible; please upgrade via "pip install sciris=={_min_sciris_version}"')
+def check_scirisweb(die=False):
+    ''' Check that Scirisweb is available and the right version '''
+    import sciris as sc # Here since one of the purposes of this file is to check if this exists
+    available['scirisweb'] = True # Assume it works
+    import_error = ''
+    version_error = ''
+
+    # Try imports
+    try:
+        import scirisweb
+    except ModuleNotFoundError:
+        import_error = 'Scirisweb not found; please install via "pip install scirisweb"'
+    if not import_error:
+        ver = scirisweb.__version__
+        minver = min_versions['scirisweb']
+        if sc.compareversions(ver, minver) < 0:
+            version_error = f'You have Scirisweb {ver} but {minver} is required; please upgrade via "pip install --upgrade scirisweb"'
+
+    # Handle consequences
+    if die:
+        if import_error:
+            raise ModuleNotFoundError(import_error)
+        elif version_error:
+            raise ImportError(version_error)
+    else:
+        if import_error:
+            print('Warning: scirisweb was not found; webapp functionality is not available (you can install with "pip install scirisweb")')
+        elif version_error:
+            print(f'Warning: scirisweb is version {ver} but {minver} is required; webapp is disabled (fix with "pip install --upgrade scirisweb")')
+
+    if import_error or version_error:
+        available['scirisweb'] = False
+
+    return
 
 
-_min_scirisweb_version = '0.16.0'
+def check_extra_libs():
+    ''' Check whether optional dependencies are available '''
 
-# Check ScirisWeb import
-try:
-    import scirisweb as sw
-except ImportError:
-    raise ImportError('Scirisweb not found; please install via "pip install scirisweb"')
-if _sc.compareversions(_sw.__version__, _min_scirisweb_version) < 0:
-    raise ImportError(f'Scirisweb {_sw.__version__} is incompatible; please upgrade via "pip install scirisweb=={_min_scirisweb_version}"')
+    # Check health systems -- optional dependency
+    try:
+        import covid_healthsystems # noqa
+        available['covid_healthsystems'] = True
+    except ImportError as E:
+        import_error = f'Warning: covid_healthsystems is not available. Hospital capacity analyses will not be available. (Error: {str(E)})\n'
+        available['covid_healthsystems'] = False
+        print(import_error)
 
+    # Check synthpops -- optional dependency
+    try:
+        import synthpops # noqa
+        available['synthpops'] = True
+    except ImportError as E:
+        import_error = f'Warning: synthpops is not available. Detailed demographic data will not be available. (Error: {str(E)})\n'
+        available['synthpops'] = True
+        print(import_error)
 
-# Check health systems -- optional dependency
-try:
-    import covid_healthsystems as _hsys_available
-    _hsys_available = True
-except ImportError as E:
-    print(f'Warning: covid_healthsystems is not available. Hospital capacity analyses will not be available. (Error: {str(E)})\n')
-    _hsys_available = False
+    # Check parestlib -- optional dependency
+    try:
+        import parestlib as _parest_available # noqa
+        available['parestlib'] = True
+    except ImportError as E:
+        import_error = f'Warning: parestlib is not available. Automated calibration will not be available. (Error: {str(E)})\n'
+        available['parestlib'] = True
+        print(import_error)
 
+    return
 
-# Check synthpops -- optional dependency
-try:
-    import synthpops as _synth_available
-    _synth_available = True
-except ImportError as E:
-    print(f'Warning: synthpops is not available. Detailed demographic data will not be available. (Error: {str(E)})\n')
-    _synth_available = False
-
-# Check parestlib -- optional dependency
-try:
-    import parestlib as _parest_available
-    _parest_available = True
-except ImportError as E:
-    print(f'Warning: parestlib is not available. Automated calibration will not be available. (Error: {str(E)})\n')
-    _parest_available = False
-
-
-# Tidy up temporary variables, leaving _hsys and _parest since these are used later
-del _min_sciris_version, _sc

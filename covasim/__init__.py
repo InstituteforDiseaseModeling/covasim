@@ -3,52 +3,14 @@
 
 #%% Print version and license information
 from .version import __version__, __versiondate__, __license__
+from . import requirements as _requirements
 print(__license__)
 
 
-#%% Check imports -- note, must be manually updated to match requirements.txt unfortunately!
-
-_min_sciris_version    = '0.16.0'
-
-
-# Check Sciris
-try:
-    import sciris as _sc
-except ImportError:
-    raise ImportError('Sciris not found; please install via "pip install sciris"')
-if _sc.compareversions(_sc.__version__, _min_sciris_version) < 0:
-    raise ImportError(f'Sciris {_sc.__version__} is incompatible; please upgrade via "pip install sciris=={_min_sciris_version}"')
-
-
-
-# Check health systems -- optional dependency
-try:
-    import covid_healthsystems as _hsys_available
-    _hsys_available = True
-except ImportError as E:
-    print(f'Warning: covid_healthsystems is not available. Hospital capacity analyses will not be available. (Error: {str(E)})\n')
-    _hsys_available = False
-
-
-# Check synthpops -- optional dependency
-try:
-    import synthpops as _synth_available
-    _synth_available = True
-except ImportError as E:
-    print(f'Warning: synthpops is not available. Detailed demographic data will not be available. (Error: {str(E)})\n')
-    _synth_available = False
-
-# Check parestlib -- optional dependency
-try:
-    import parestlib as _parest_available
-    _parest_available = True
-except ImportError as E:
-    print(f'Warning: parestlib is not available. Automated calibration will not be available. (Error: {str(E)})\n')
-    _parest_available = False
-
-
-# Tidy up temporary variables, leaving _hsys and _parest since these are used later
-del _min_sciris_version, _sc
+#%% Check that requirements are met
+_requirements.check_sciris()
+_requirements.check_scirisweb(die=False)
+_requirements.check_extra_libs()
 
 
 #%% Imports from here -- just the framework, basic functions, and base -- the "base" version
