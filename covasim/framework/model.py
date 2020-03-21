@@ -60,13 +60,26 @@ class ParsObj(sc.prettyobj):
 
 class Result(sc.prettyobj):
     '''
-    Stores a single result -- by default, acts like an array
+    Stores a single result -- by default, acts like an array.
+
+    Example:
+        import covasim as cova
+        r1 = cova.Result(name='test1', npts=10)
+        r1[:5] = 20
+        print(r2.values)
+        r2 = cova.Result(name='test2', values=range(10))
+        print(r2)
     '''
-    def __init__(self, name=None, scale=True, ispercentage=False, values=None):
+    def __init__(self, name=None, values=None, npts=None, scale=True, ispercentage=False):
         self.name = name  # Name of this result
         self.ispercentage = ispercentage  # Whether or not the result is a percentage
         self.scale = scale  # Whether or not to scale the result by the scale factor
-        self.values = values
+        if values is None:
+            if npts is not None:
+                values = np.zeros(int(npts)) # If length is known, use zeros
+            else:
+                values = [] # Otherwise, empty
+        self.values = np.array(values, dtype=float) # Ensure it's an array
         return
 
     def __getitem__(self, *args, **kwargs):
@@ -74,6 +87,10 @@ class Result(sc.prettyobj):
 
     def __setitem__(self, *args, **kwargs):
         return self.values.__setitem__(*args, **kwargs)
+
+    @property
+    def npts(self):
+        return len(self.values)
 
 
 class Person(ParsObj):

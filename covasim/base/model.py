@@ -99,9 +99,8 @@ class Sim(cv.Sim):
         ''' Initialize results '''
 
         def init_res(*args, **kwargs):
-            ''' Initialize a single results object '''
-            values = np.zeros(int(self.npts))
-            output = cv.Result(*args, **kwargs, values=values)
+            ''' Initialize a single result object '''
+            output = cv.Result(*args, **kwargs, npts=self.npts)
             return output
 
         # Create the main results structure

@@ -2,12 +2,10 @@
 Simple script for running the Covid-19 agent-based model
 '''
 
-import matplotlib
-matplotlib.use('TkAgg')
 import pylab as pl
 import datetime as dt
 import sciris as sc
-import covasim.cova_generic as cova
+import covasim as cova
 
 sc.heading('Setting up...')
 
@@ -108,14 +106,14 @@ if do_run:
 
         # TODO: this only needs to be done once and can be done so much better!
         res0 = scen_sims[0].results
-        npts = len(res0[reskeys[0]])
+        npts = res0[reskeys[0]].npts
         tvec = xmin+res0['t']
 
         scenraw = {}
         for reskey in reskeys:
             scenraw[reskey] = pl.zeros((npts, n))
             for s,sim in enumerate(scen_sims):
-                scenraw[reskey][:,s] = sim.results[reskey]
+                scenraw[reskey][:,s] = sim.results[reskey][:]
 
         scenres = sc.objdict()
         scenres.best = {}
