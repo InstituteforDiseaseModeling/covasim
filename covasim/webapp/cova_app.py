@@ -13,7 +13,6 @@ import covasim as cv
 # Download/upload-specific imports
 import io
 import base64
-import zipfile
 import json
 
 # Check requirements, and if met, import scirisweb
@@ -106,21 +105,11 @@ def get_version():
     return output
 
 
-@app.register_RPC(call_type='download')
-def download_pars(sim_pars, epi_pars):
-    datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
-    filename = f'COVASim_parameters_{datestamp}.json'
-    d = {'sim_pars':sim_pars,'epi_pars':epi_pars}
-    s = sc.jsonify(d, tostring=True, indent=2)
-    output = (io.BytesIO(("'%s'" % (s)).encode()), filename)
-    return output
-
-
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
     with open(fname,'r') as f:
         s = f.read()
-    parameters = json.loads(s[1:-1])
+    parameters = json.loads(s)
     if not isinstance(parameters, dict):
         raise TypeError(f'Uploaded file was a {type(parameters)} object rather than a dict')
     if  'sim_pars' not in parameters or 'epi_pars' not in parameters:
@@ -201,19 +190,13 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     ss = sim.to_xlsx()
     output['files']['xlsx'] = {
         'filename': f'COVASim_results_{datestamp}.xlsx',
-        'content': base64.b64encode(ss.blob).decode("utf-8"),
+        'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
     }
 
-    result_json = sim.to_json()
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as f:
-        f.writestr('results.txt', result_json)
-    zip_buffer.flush()
-    zip_buffer.seek(0)
-
+    json = sim.to_json()
     output['files']['json'] = {
-        'filename': f'COVASim_results_{datestamp}.zip',
-        'content': base64.b64encode(zip_buffer.read()).decode("utf-8"),
+        'filename': f'COVASim_results_{datestamp}.txt',
+        'content': 'data:application/text;base64,' + base64.b64encode(json.encode()).decode("utf-8"),
     }
 
     # Summary output

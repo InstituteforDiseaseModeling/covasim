@@ -97,7 +97,20 @@ var vm = new Vue({
         },
 
         async downloadPars() {
-            await sciris.download('download_pars', [this.sim_pars, this.epi_pars]);
+            var d = new Date();
+            let datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
+            let fileName = `COVASim_parameters_${datestamp}.json`
+            
+            // Adapted from https://stackoverflow.com/a/45594892 by Gautham
+            let data = {
+                sim_pars: this.sim_pars,
+                epi_pars: this.epi_pars,
+            };
+            let fileToSave = new Blob([JSON.stringify(data, null, 4)], {
+                type: 'application/json',
+                name: fileName
+            });
+            saveAs(fileToSave, fileName);
         },
 
         async uploadPars() {
@@ -118,13 +131,13 @@ var vm = new Vue({
         },
 
         async downloadExcel() {
-          let res = await fetch('data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + this.result.files.xlsx.content);
+          let res = await fetch(this.result.files.xlsx.content);
           let blob = await res.blob();
           saveAs(blob, this.result.files.xlsx.filename);
         },
 
         async downloadJson() {
-          let res = await fetch('data:application/zip;base64,' + this.result.files.json.content);
+          let res = await fetch(this.result.files.json.content);
           let blob = await res.blob();
           saveAs(blob, this.result.files.json.filename);
         },
