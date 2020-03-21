@@ -114,7 +114,7 @@ def get_defaults(region=None, merge=False):
 @app.register_RPC()
 def get_version():
     ''' Get the version '''
-    output = f'{cw.__version__} ({cw.__versiondate__})'
+    output = f'Version {cw.__version__} ({cw.__versiondate__})'
     return output
 
 
@@ -123,7 +123,7 @@ def download_pars(sim_pars, epi_pars):
     datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
     filename = f'COVASim_parameters_{datestamp}.json'
     d = {'sim_pars':sim_pars,'epi_pars':epi_pars}
-    s = json.dumps(d,indent=2)
+    s = sc.jsonify(d, tostring=True, indent=2)
     output = (io.BytesIO(("'%s'" % (s)).encode()), filename)
     return output
 
@@ -143,8 +143,6 @@ def upload_pars(fname):
 @app.register_RPC()
 def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     ''' Create, run, and plot everything '''
-
-    prev_threshold = 0.20 # Don't plot susceptibles if prevalence never gets above this threshold
 
     err = ''
 
@@ -211,13 +209,13 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
     output['files'] = {}
 
-    ss = sim.export_xlsx()
+    ss = sim.to_xlsx()
     output['files']['xlsx'] = {
         'filename': f'COVASim_results_{datestamp}.xlsx',
         'content': base64.b64encode(ss.blob).decode("utf-8"),
     }
 
-    result_json = sim.export_json()
+    result_json = sim.to_json()
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as f:
         f.writestr('results.txt', result_json)

@@ -27,7 +27,7 @@ var vm = new Vue({
 
     data() {
         return {
-            version: 'Version information unavailable',
+            version: 'Unable to connect to server!', // This text will display instead of the version
             history: [],
             historyIdx: 0,
             sim_pars: {},

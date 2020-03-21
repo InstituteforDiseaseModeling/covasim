@@ -126,7 +126,7 @@ class Sim(cv.Sim):
         self.results['t'] = self.tvec
         self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
         self.results['transtree'] = {} # For storing the transmission tree
-        self.results['ready'] = False
+        self.results_ready = False
         return
 
 
@@ -449,7 +449,7 @@ class Sim(cv.Sim):
             self.likelihood()
 
         # Tidy up
-        self.results['ready'] = True
+        self.results_ready = True
         elapsed = sc.toc(T, output=True)
         if verbose>=1:
             print(f'\nRun finished after {elapsed:0.1f} s.\n')
@@ -472,7 +472,7 @@ class Sim(cv.Sim):
         if verbose is None:
             verbose = self['verbose']
 
-        if not self.results['ready']:
+        if not self.results_ready:
             self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
 
         loglike = 0

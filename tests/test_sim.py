@@ -3,6 +3,7 @@ Simple example usage for the Covid-19 agent-based model
 '''
 
 #%% Imports and settings
+import os
 import pytest
 import sciris as sc
 import covasim as cova
@@ -49,49 +50,63 @@ def test_sim(doplot=False): # If being run via pytest, turn off
     return sim
 
 
-def test_trans_tree(doplot=False): # If being run via pytest, turn off
-    if doplot:
-        sc.heading('Transmission tree test')
+def test_singlerun():
+    sc.heading('Single run test')
 
-        sim = cova.Sim() # Create the simulation
-        sim.run(verbose=1) # Run the simulation
-        if doplot:
-            sim.plot()
+    iterpars = {'beta': 0.035,
+                'incub': 8,
+                }
 
-        return sim.results['transtree']
+    sim = cova.Sim()
+    sim = cova.single_run(sim=sim, **iterpars)
 
-
-def test_singlerun(): # If being run via pytest, turn off
-    if doplot:
-        sc.heading('Single run test')
-
-        iterpars = {'beta': 0.035,
-                    'incub': 8,
-                    }
-
-        sim = cova.Sim()
-        sim = cova.single_run(sim=sim, **iterpars)
-
-        return sim
+    return sim
 
 
 def test_multirun(doplot=False): # If being run via pytest, turn off
+    sc.heading('Multirun test')
+
+    # Note: this runs 3 simulations, not 3x3!
+    iterpars = {'beta': [0.015, 0.025, 0.035],
+                'incub': [4, 5, 6],
+                }
+
+    sim = cova.Sim() # Shouldn't be necessary, but is for now
+    sim['n_days'] = 60
+    sims = cova.multi_run(sim=sim, iterpars=iterpars)
+
     if doplot:
-        sc.heading('Multirun test')
+        for sim in sims:
+            sim.plot()
 
-        # Note: this runs 3 simulations, not 3x3!
-        iterpars = {'beta': [0.015, 0.025, 0.035],
-                    'incub': [4, 5, 6],
-                    }
+    return sims
 
-        sim = cova.Sim() # Shouldn't be necessary, but is for now
-        sims = cova.multi_run(sim=sim, iterpars=iterpars)
 
-        if doplot:
-            for sim in sims:
-                sim.plot()
+def test_fileio():
+    sc.heading('Test file saving')
 
-        return sims
+    json_path = 'test_covasim.json'
+    xlsx_path = 'test_covasim.xlsx'
+
+    # Create and run the simulation
+    sim = cova.Sim()
+    sim['n_days'] = 20
+    sim.run(verbose=0)
+
+    # Create objects
+    json = sim.to_json()
+    xlsx = sim.to_xlsx()
+    print(xlsx)
+
+    # Save files
+    sim.to_json(json_path)
+    sim.to_xlsx(xlsx_path)
+
+    for path in [json_path, xlsx_path]:
+        print(f'Removing {path}')
+        os.remove(path)
+
+    return json
 
 
 #%% Run as a script
@@ -100,9 +115,9 @@ if __name__ == '__main__':
 
     parsobj = test_parsobj()
     sim     = test_sim(doplot=doplot)
-    tt      = test_trans_tree(doplot=doplot)
-    sim     = test_singlerun(doplot=doplot)
+    sim     = test_singlerun()
     sims    = test_multirun(doplot=doplot)
+    json    = test_fileio()
 
     sc.toc()
 
