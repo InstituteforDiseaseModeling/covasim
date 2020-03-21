@@ -12,10 +12,10 @@ import sciris as sc
 import scirisweb as sw
 import plotly.graph_objects as go
 import pylab as pl
-import covasim.webapp as cw # Short for "Covid webapp model"
+import covasim.base as cw # Short for "Covid webapp model"
 import json
 
-# Change to current folder and create the app
+# Create the app
 app = sw.ScirisApp(__name__, name="Covasim")
 app.sessions = dict() # For storing user data
 flask_app = app.flask_app
@@ -71,24 +71,24 @@ def get_defaults(region=None, merge=False):
     }
 
     sim_pars = {}
-    sim_pars['scale']            = {'best':1,    'min':1,   'max':1e9,      'name':'Population scale factor'}
-    sim_pars['n']                = {'best':5000, 'min':1,   'max':max_pop,  'name':'Population size'}
-    sim_pars['n_infected']       = {'best':10,   'min':1,   'max':max_pop,  'name':'Initial infections'}
-    sim_pars['n_days']           = {'best':90,   'min':1,   'max':max_days, 'name':'Duration (days)'}
-    sim_pars['intervene']        = {'best':20,   'min':-1,  'max':max_days, 'name':'Intervention start (day)'}
-    sim_pars['unintervene']      = {'best':40,   'min':-1,  'max':max_days, 'name':'Intervention end (day)'}
-    sim_pars['intervention_eff'] = {'best':0.9,  'min':0.0, 'max':1.0,      'name':'Intervention effectiveness'}
-    sim_pars['seed']             = {'best':1,    'min':1,   'max':1e9,      'name':'Random seed'}
+    sim_pars['scale']            = dict(best=1,    min=1,   max=1e9,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
+    sim_pars['n']                = dict(best=5000, min=1,   max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
+    sim_pars['n_infected']       = dict(best=10,   min=1,   max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
+    sim_pars['n_days']           = dict(best=90,   min=1,   max=max_days, name='Duration (days)',            tip='Number of days to run the simulation for')
+    sim_pars['intervene']        = dict(best=20,   min=-1,  max=max_days, name='Intervention start (day)',   tip='Start day of the intervention (can be blank)')
+    sim_pars['unintervene']      = dict(best=40,   min=-1,  max=max_days, name='Intervention end (day)',     tip='Final day of intervention (can be blank)')
+    sim_pars['intervention_eff'] = dict(best=0.9,  min=0.0, max=1.0,      name='Intervention effectiveness', tip='Change in infection rate due to intervention')
+    sim_pars['seed']             = dict(best=1,    min=1,   max=1e9,      name='Random seed',                tip='Random number seed (leave blank for random results)')
 
     epi_pars = {}
-    epi_pars['r0']        = {'best':2.05,  'min':0.0, 'max':20.0, 'name':'R0 (infectiousness)'}
-    epi_pars['contacts']  = {'best':20,   'min':0.0, 'max':100,  'name':'Number of contacts'}
-    epi_pars['incub']     = {'best':4.5,  'min':1.0, 'max':30,   'name':'Incubation period (days)'}
-    epi_pars['incub_std'] = {'best':1.0,  'min':0.0, 'max':30,   'name':'Incubation variability (days)'}
-    epi_pars['dur']       = {'best':8.0,  'min':1.0, 'max':30,   'name':'Infection duration (days)'}
-    epi_pars['dur_std']   = {'best':2.0,  'min':0.0, 'max':30,   'name':'Infection variability (days)'}
-    epi_pars['cfr']       = {'best':0.02, 'min':0.0, 'max':1.0,  'name':'Case fatality rate'}
-    epi_pars['timetodie'] = {'best':22.0, 'min':1.0, 'max':60,   'name':'Days until death'}
+    epi_pars['beta']      = dict(best=0.015, min=0.0, max=0.1,  name='Beta (infectiousness)',         tip='Probability of infection per contact per day')
+    epi_pars['contacts']  = dict(best=20,    min=0.0, max=100,  name='Number of contacts',            tip='Number of people, on average, each person is in contact with')
+    epi_pars['incub']     = dict(best=4.5,   min=1.0, max=30,   name='Incubation period (days)',      tip='Average length of time of incubation before symptoms')
+    epi_pars['incub_std'] = dict(best=1.0,   min=0.0, max=30,   name='Incubation variability (days)', tip='Standard deviation of incubation period')
+    epi_pars['dur']       = dict(best=8.0,   min=1.0, max=30,   name='Infection duration (days)',     tip='Average length of time of infection (viral shedding)')
+    epi_pars['dur_std']   = dict(best=2.0,   min=0.0, max=30,   name='Infection variability (days)',  tip='Standard deviation of infection period')
+    epi_pars['cfr']       = dict(best=0.02,  min=0.0, max=1.0,  name='Case fatality rate',            tip='Proportion of people who become infected who die')
+    epi_pars['timetodie'] = dict(best=22.0,  min=1.0, max=60,   name='Days until death',              tip='Average length of time between infection and death')
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict[region]
@@ -108,23 +108,6 @@ def get_version():
     return output
 
 
-@app.register_RPC()
-def get_sessions(session_id=None):
-    ''' Get the sessions '''
-    try:
-        session_list = app.sessions.keys()
-        if not session_id:
-            session_id = len(session_list)+1
-            session_list.append(session_id)
-            app.sessions[str(session_id)] = sc.objdict()
-            print(f'Created session {session_id}')
-        output = {'session_id':session_id, 'session_list':session_list, 'err':''}
-    except Exception as E:
-        err = f'Session retrieval failed! ({str(E)})'
-        print(err)
-        output = {'session_id':1, 'session_list':[1], 'err':err}
-    return output
-
 @app.register_RPC(call_type='download')
 def download_pars(sim_pars, epi_pars):
     datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
@@ -133,6 +116,7 @@ def download_pars(sim_pars, epi_pars):
     s = json.dumps(d,indent=2)
     output = (io.BytesIO(("'%s'" % (s)).encode()), filename)
     return output
+
 
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
@@ -211,8 +195,8 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
 
     # If prevalence stays low, don't plot susceptibles
     to_plot = sc.dcp(cw.to_plot)
-    max_exposed = sim.results['cum_exposed'].max()
-    threshold = prev_threshold*sim.results['n_susceptible'].max()
+    max_exposed = sim.results['cum_exposed'][:].max()
+    threshold = prev_threshold*sim.results['n_susceptible'][:].max()
     if max_exposed < threshold:
         to_plot['Total counts'].pop('n_susceptible')
 
@@ -221,15 +205,9 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         colors = sc.gridcolors(len(keylabels))
         for i,key,label in keylabels.enumitems():
             this_color = 'rgb(%d,%d,%d)' % (255*colors[i][0],255*colors[i][1],255*colors[i][2])
-            y = sim.results[key]
-            fig.add_trace(go.Scatter(x=sim.results['t'], y=y,mode='lines',name=label,line_color=this_color))
-            if key in data_mapping:
-                fig.add_trace(go.Scatter(x=sim.data['day'], y=data_mapping[key],mode='markers',name=label,fill_color=this_color))
-        fig.update_layout(title={'text':title}, #, 'xanchor':'center', 'x':0.5},
-                          xaxis_title='Day',
-                          yaxis_title='Count',
-                            autosize = True,
-        )
+            y = sim.results[key][:]
+            fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
+        fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
         output['graphs'].append({'json':fig.to_json(),'id':str(sc.uuid())})
 
     # Create and send output files
@@ -268,7 +246,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
 #%% Run the server
 if __name__ == "__main__":
 
-    os.chdir(os.path.abspath(os.path.dirname(__file__)))
+    os.chdir(sc.thisdir(__file__))
 
     if len(sys.argv) > 1:
         app.config['SERVER_PORT'] = int(sys.argv[1])

@@ -75,17 +75,27 @@
             <div class="row">
 
                 <fieldset class="col-md-6">
-                    <legend>Simulation Parameters</legend>
+                    <legend>Simulation parameters</legend>
                     <div v-for="par in sim_pars" class="form-group">
+                      <div :id="par.name">
                         <label>{{par.name}}:</label>
                         <input :disabled="running" class="form-control" v-model="par.best">
+                      </div>
+                        <b-tooltip :target="par.name" triggers="hover">
+                          {{par.tip}}
+                        </b-tooltip>
                     </div>
                 </fieldset>
                 <fieldset class="col-md-6">
-                    <legend>Epidemiological Parameters</legend>
+                    <legend>Epidemiological parameters</legend>
                     <div v-for="par in epi_pars" class="form-group">
+                      <div :id="par.name">
                         <label>{{par.name}}:</label>
                         <input :disabled="running" class="form-control" v-model="par.best">
+                      </div>
+                      <b-tooltip :target="par.name" triggers="hover">
+                          {{par.tip}}
+                        </b-tooltip>
                     </div>
                 </fieldset>
 
@@ -97,28 +107,44 @@
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     Running...
                 </button>
-                <button v-else class="btn btn-primary green" type="button" @click="runSim">
+                <button v-else id="run_btn" class="btn btn-primary green" type="button" @click="runSim">
                     Run
                 </button>&nbsp;&nbsp;&nbsp;&nbsp;
-                <button :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
+                <!-- Doesn't go away when clicked -->
+<!--                 <b-tooltip target="run_btn" triggers="hover"> 
+                      Run simulation  (simulations usually take 5-20 seconds)
+                    </b-tooltip> -->
+                
+
+                <button id="reset_btn" :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
                     Reset
                 </button>&nbsp;&nbsp;&nbsp;&nbsp;
+                <b-tooltip target="reset_btn" triggers="hover">
+                      Reset parameters to default values
+                    </b-tooltip>
 
+                <div id='examples'>
                 <select :disabled="running" v-model="reset_choice" @change="resetPars()">
                     <option v-for="(item, index) in reset_options" :value="item">
                         {{ item }}
                     </option>
                 </select>&nbsp;&nbsp;&nbsp;&nbsp;
+              </div>
+              <b-tooltip target="examples" triggers="hover">
+                      Example parameter configurations
+                    </b-tooltip>
 
 
-                <div style='padding-left:10px;'>
+                <div id='history' style='padding-left:10px;'>
                     History: <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
                       <option v-for="(item, index) in history" :value="index">
                         {{ index }}
                       </option>
                     </select>
-
                 </div>
+                <b-tooltip target="history" triggers="hover">
+                      History of parameters used in this session
+                    </b-tooltip>
 
                 <div style='padding-left:30px; padding-top: 15px'>
 
