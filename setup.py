@@ -1,10 +1,41 @@
+'''
+Covasim installation. Requirements are listed in requirements.txt. There are three
+options:
+    python setup.py develop          # standard install, includes webapp, does not include optional libraries
+    python setup.py develop nowebapp # backend only, no webapp functionality
+    python setup.py develop full     # full install, including optional libraries (NB: these libraries are not available publicly yet)
+'''
+
 import os
+import re
+import sys
 import runpy
 from setuptools import setup, find_packages
 
 # Load requirements from txt file
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
+
+if 'nowebapp' in sys.argv:
+    print('Performing standalone installation -- running as a web application will not work')
+    sys.argv.remove('nowebapp')
+    webapp_reqs = [
+        'scirisweb',
+        'gunicorn',
+        'plotly_express'
+    ]
+    regex = re.compile('[\W]+.*\Z')  # compare requirements to just the package name (strip off version info)
+    requirements = list(filter(lambda p: regex.sub('', p) not in webapp_reqs, requirements))
+
+if 'full' in sys.argv:
+    print('Performing full installation, including optional dependencies')
+    sys.argv.remove('full')
+    full_reqs = [
+        'covid_healthsystems',
+        'synthpops',
+        'parestlib'
+    ]
+    requirements.extend(full_reqs)
 
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))
