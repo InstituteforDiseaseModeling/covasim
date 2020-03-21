@@ -113,7 +113,7 @@ def download_pars(sim_pars, epi_pars):
     datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
     filename = f'COVASim_parameters_{datestamp}.json'
     d = {'sim_pars':sim_pars,'epi_pars':epi_pars}
-    s = json.dumps(d,indent=2)
+    s = sc.jsonify(d, tostring=True, indent=2)
     output = (io.BytesIO(("'%s'" % (s)).encode()), filename)
     return output
 
@@ -133,8 +133,6 @@ def upload_pars(fname):
 @app.register_RPC()
 def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     ''' Create, run, and plot everything '''
-
-    prev_threshold = 0.20 # Don't plot susceptibles if prevalence never gets above this threshold
 
     err = ''
 

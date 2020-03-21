@@ -5,12 +5,9 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 '''
 
 #%% Imports
-import io
-import json
 import datetime as dt
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
-import pandas as pd
 from . import utils as cov_ut
 
 # Specify all externally visible functions this file defines
@@ -211,38 +208,68 @@ class Sim(ParsObj):
         raise NotImplementedError
 
 
-    def export_json(self) -> str:
+    def _make_resdict(self, for_json=True):
+        ''' Pre-convert the results structure to a friendier output'''
+        resdict = {}
+        if for_json:
+            resdict['timeseries_keys'] = self.reskeys
+        for key,res in self.results.items():
+            if isinstance(res, Result):
+                res = res.values
+            if for_json or sc.isiterable(res) and len(res)==self.npts:
+                resdict[key] = res
+        return resdict
+
+
+    def to_json(self, filename=None, indent=2, *args, **kwargs):
         """
-        Export results as JSON
+        Export results as JSON.
+
+        Args:
+            filename (str): if None, return string; else, write to file
 
         Returns:
-            A unicode string containing a JSON representation of the results
+            A unicode string containing a JSON representation of the results,
+            or writes the JSON file to disk
 
         """
+        resdict = self._make_resdict()
 
-        return json.dumps(sc.sanitizejson(self.results), indent=2)
+        if filename is None:
+            output = sc.jsonify(resdict, indent=indent, *args, **kwargs)
+        else:
+            output = sc.savejson(filename=filename, obj=resdict, *args, **kwargs)
+
+        return output
 
 
-    def export_xlsx(self) -> sc.Spreadsheet:
+    def to_xlsx(self, filename=None):
         """
         Export results as XLSX
 
+        Args:
+            filename (str): if None, return string; else, write to file
+
         Returns:
-            A sc.Spreadsheet with an Excel file
+            An sc.Spreadsheet with an Excel file, or writes the file to disk
 
         """
-
-        output = {}
-        for k,v in self.results.items():
-            if isinstance(v, np.ndarray) and v.size == self.npts:
-                output[k] = v
-        df = pd.DataFrame.from_dict(output)
+        resdict = self._make_resdict(for_json=False)
+        df = sc.dataframe(resdict).pandas()
         df.index = self.tvec
         df.index.name = 'Day'
 
-        output = io.BytesIO()
-        df.to_excel(output, engine='xlsxwriter')
-        return sc.Spreadsheet(output)
+        spreadsheet = sc.Spreadsheet()
+        spreadsheet.freshbytes()
+        df.to_excel(spreadsheet.bytes, engine='xlsxwriter')
+        spreadsheet.load()
+
+        if filename is None:
+            output = spreadsheet
+        else:
+            output = spreadsheet.save(filename)
+
+        return output
 
     def plot(self):
         '''
