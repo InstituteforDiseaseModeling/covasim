@@ -63,7 +63,7 @@ def make_pars():
     return pars
 
 
-def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, cfr_by_age=True, use_data=True):
+def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, cfr_by_age=True, use_data=True):
     '''
     Define age-sex distributions.
     '''
@@ -79,7 +79,7 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, cfr_by_age=True,
         age = pl.median([min_age, age, max_age]) # Normalize
 
     # Get case fatality rate for a person of this age
-    cfr = get_cfr(age=age, cfr_by_age=cfr_by_age)
+    cfr = get_cfr(age=age, default_cfr=default_cfr, cfr_by_age=cfr_by_age)
 
     return age, sex, cfr
 

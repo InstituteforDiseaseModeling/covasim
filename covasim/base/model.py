@@ -44,7 +44,7 @@ class Person(cv.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, age=0, sex=0, cfr=0, uid=None, id_len=4):
+    def __init__(self, age, sex, cfr, uid=None, id_len=4):
         if uid is None:
             uid = sc.uuid(length=id_len) # Unique identifier for this person
         self.uid  = str(uid)
@@ -184,9 +184,9 @@ class Sim(cv.Sim):
         self.people = {} # Dictionary for storing the people -- use plain dict since faster than odict
         for p in range(int(self['n'])): # Loop over each person
             if self['usepopdata']:
-                age,sex,cfr = None, None, None # These get overwritten later
+                age,sex,cfr = -1, -1, -1 # These get overwritten later
             else:
-                age,sex,cfr = cvpars.get_age_sex(cfr_by_age=self['cfr_by_age'], use_data=False)
+                age,sex,cfr = cvpars.get_age_sex(cfr_by_age=self['cfr_by_age'], default_cfr=self['default_cfr'], use_data=False)
             uid = None
             while not uid or uid in self.people.keys(): # Avoid duplicates!
                 uid = sc.uuid(length=id_len)
@@ -459,13 +459,16 @@ class Sim(cv.Sim):
                 self['beta'] *= self['interv_effs'][ind] # TODO: pop-specific
 
             # Calculate doubling time
-            if t>=2: # TODO: make more robust?
-                cum_infections = pl.cumsum(self.results['infections'][:t+1])
-                exog  = sm.add_constant(np.arange(t+1))
-                endog = np.log2(cum_infections)
+            cum_infections = pl.cumsum(self.results['infections'][:t+1])
+            nonzero = np.nonzero(cum_infections)[0] # Skip days with zero infections for the log2 below
+            if len(nonzero) >= 2: # Need at least 2 points
+                exog  = sm.add_constant(self.tvec[nonzero])
+                endog = np.log2(cum_infections[nonzero])
                 model = sm.OLS(endog, exog)
-                doubling_time = 1 / model.fit().params[1]
-                self.results['doubling_time'][t] = doubling_time
+                doubling_rate = model.fit().params[1]
+                if doubling_rate != 0: # If it's zero, skip
+                    doubling_time = 1.0 / doubling_rate
+                    self.results['doubling_time'][t] = doubling_time
 
             # Effective reproductive number based on number still susceptible
             self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
