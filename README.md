@@ -14,7 +14,7 @@ Standard Python package installation: `python setup.py develop`.
 
 The module should then be importable as `import covasim`.
 
-If you want to run the model within a web application, also run: `pip install covasim[webapp]`.
+If you want to run as just a standalone model (not within a web application), you can instead run `python setup.py develop nowebapp`.
 
 
 ## Usage

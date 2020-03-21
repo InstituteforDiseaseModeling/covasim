@@ -1,7 +1,9 @@
 sciris>=0.16.0
+scirisweb>=0.16.0
 matplotlib>=2.2.2
 numpy>=1.10.1
 scipy>=1.2.0
 pandas
 numba
-statsmodels
+gunicorn
+plotly_express

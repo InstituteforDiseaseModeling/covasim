@@ -8,7 +8,7 @@ _min_scirisweb_version = '0.16.0'
 try:
     import scirisweb as sw
 except ImportError:
-    raise ImportError('Scirisweb not found; please install via "pip install covasim[webapp]" or "pip install scirisweb"')
+    raise ImportError('Scirisweb not found; please install via "pip install scirisweb"')
 if _sc.compareversions(_sw.__version__, _min_scirisweb_version) < 0:
     raise ImportError(f'Scirisweb {_sw.__version__} is incompatible; please upgrade via "pip install scirisweb=={_min_scirisweb_version}"')
 
