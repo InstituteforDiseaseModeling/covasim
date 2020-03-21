@@ -86,14 +86,14 @@ def get_defaults(region=None, merge=False):
     sim_pars['seed']             = dict(best=1,    min=1,   max=1e9,      name='Random seed',                tip='Random number seed (leave blank for random results)')
 
     epi_pars = {}
-    epi_pars['beta']      = dict(best=0.015, min=0.0, max=0.1,  name='Beta (infectiousness)',         tip='Probability of infection per contact per day')
-    epi_pars['contacts']  = dict(best=20,    min=0.0, max=100,  name='Number of contacts',            tip='Number of people, on average, each person is in contact with')
-    epi_pars['incub']     = dict(best=4.5,   min=1.0, max=30,   name='Incubation period (days)',      tip='Average length of time of incubation before symptoms')
-    epi_pars['incub_std'] = dict(best=1.0,   min=0.0, max=30,   name='Incubation variability (days)', tip='Standard deviation of incubation period')
-    epi_pars['dur']       = dict(best=8.0,   min=1.0, max=30,   name='Infection duration (days)',     tip='Average length of time of infection (viral shedding)')
-    epi_pars['dur_std']   = dict(best=2.0,   min=0.0, max=30,   name='Infection variability (days)',  tip='Standard deviation of infection period')
-    epi_pars['cfr']       = dict(best=0.02,  min=0.0, max=1.0,  name='Case fatality rate',            tip='Proportion of people who become infected who die')
-    epi_pars['timetodie'] = dict(best=22.0,  min=1.0, max=60,   name='Days until death',              tip='Average length of time between infection and death')
+    epi_pars['beta']        = dict(best=0.015, min=0.0, max=0.1,  name='Beta (infectiousness)',         tip='Probability of infection per contact per day')
+    epi_pars['contacts']    = dict(best=20,    min=0.0, max=100,  name='Number of contacts',            tip='Number of people, on average, each person is in contact with')
+    epi_pars['incub']       = dict(best=4.5,   min=1.0, max=30,   name='Incubation period (days)',      tip='Average length of time of incubation before symptoms')
+    epi_pars['incub_std']   = dict(best=1.0,   min=0.0, max=30,   name='Incubation variability (days)', tip='Standard deviation of incubation period')
+    epi_pars['dur']         = dict(best=8.0,   min=1.0, max=30,   name='Infection duration (days)',     tip='Average length of time of infection (viral shedding)')
+    epi_pars['dur_std']     = dict(best=2.0,   min=0.0, max=30,   name='Infection variability (days)',  tip='Standard deviation of infection period')
+    epi_pars['default_cfr'] = dict(best=0.02,  min=0.0, max=1.0,  name='Case fatality rate',            tip='Proportion of people who become infected who die (leave blank to use age-based-mortality)')
+    epi_pars['timetodie']   = dict(best=22.0,  min=1.0, max=60,   name='Days until death',              tip='Average length of time between infection and death')
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict[region]
@@ -163,6 +163,8 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
 
     # Handle sessions
     sim = cv.Sim()
+    if pars['default_cfr'] is not None:
+        sim['cfr_by_age'] = False # So the user can override this value
     sim.update_pars(pars=pars)
     if pars['seed'] is not None:
         sim.set_seed(int(pars['seed']))

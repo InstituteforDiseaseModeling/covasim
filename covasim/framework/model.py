@@ -22,7 +22,7 @@ class ParsObj(sc.prettyobj):
     '''
 
     def __init__(self, pars):
-        self.update_pars(pars)
+        self.update_pars(pars, create=True)
         return
 
     def __getitem__(self, key):
@@ -43,13 +43,21 @@ class ParsObj(sc.prettyobj):
             raise KeyError(errormsg)
         return
 
-    def update_pars(self, pars):
-        ''' Update internal dict with new pars '''
+    def update_pars(self, pars, create=False):
+        '''
+        Update internal dict with new pars. If create is False, then raise a KeyError
+        if the key does not already exist.
+        '''
         if not isinstance(pars, dict):
             raise TypeError(f'The pars object must be a dict; you supplied a {type(pars)}')
         if not hasattr(self, 'pars'):
             self.pars = pars
         elif pars is not None:
+            if not create:
+                available_keys = self.pars.keys()
+                mismatches = [key for key in pars.keys() if key not in available_keys]
+                if len(mismatches):
+                    raise KeyError(f'Key(s) {mismatches} not found; available keys are {available_keys}')
             self.pars.update(pars)
         return
 
