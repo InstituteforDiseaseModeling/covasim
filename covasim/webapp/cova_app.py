@@ -104,7 +104,7 @@ def get_defaults(region=None, merge=False):
 @app.register_RPC()
 def get_version():
     ''' Get the version '''
-    output = f'{cw.__version__} ({cw.__versiondate__})'
+    output = f'Version {cw.__version__} ({cw.__versiondate__})'
     return output
 
 
