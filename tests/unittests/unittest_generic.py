@@ -1,38 +1,38 @@
-from covasim.cova_seattle import Person
-from covasim.cova_seattle import parameters as seattle_parameters
-from covasim.cova_seattle import Sim
+from covasim import Person
+from covasim import parameters
+from covasim import Sim
 import unittest
 import numpy as np
 
-class CovaSeattleUnittests(unittest.TestCase):
+class CovagenericUnittests(unittest.TestCase):
 
     def setUp(self):
         self.bonnie = None
         self.clyde = None
-        self.seattle_pars = None
-        self.seattle_sim = None
+        self.generic_pars = None
+        self.generic_sim = None
         pass
 
     def tearDown(self):
         pass
 
-    # region Seattle Helpers
+    # region generic Helpers
     def create_predictable_person_pars(self):
         self.bonnie = Person(pars={}, age=24, sex=0)
         self.clyde = Person(pars={}, age=25, sex=1)
         self.people = [self.bonnie, self.clyde]
         pass
 
-    def create_seattle_parameters(self):
-        self.seattle_pars = seattle_parameters.make_pars()
+    def create_parameters(self):
+        self.generic_pars = parameters.make_pars()
         pass
 
-    def create_seattle_sim_default(self):
-        self.create_seattle_parameters()
-        self.seattle_sim = Sim(self.seattle_pars)
+    def create_generic_sim_default(self):
+        self.create_parameters()
+        self.generic_sim = Sim(self.generic_pars)
     # endregion
 
-    # region SeattlePerson
+    # region genericPerson
     def test_person_init(self):
         self.create_predictable_person_pars()
         for person in self.people:
@@ -50,56 +50,56 @@ class CovaSeattleUnittests(unittest.TestCase):
         self.assertNotEqual(self.bonnie.uid, self.clyde.uid)
     # endregion
 
-    # region SeattleParameters
-    def test_seattle_pars_created(self):
-        self.assertIsNone(self.seattle_pars)
-        self.create_seattle_parameters()
-        self.assertIsNotNone(self.seattle_pars)
-        self.assertEqual(type(self.seattle_pars), dict)
-        self.assertEqual(self.seattle_pars["seed"], 1)
+    # region genericParameters
+    def test_generic_pars_created(self):
+        self.assertIsNone(self.generic_pars)
+        self.create_parameters()
+        self.assertIsNotNone(self.generic_pars)
+        self.assertEqual(type(self.generic_pars), dict)
+        self.assertEqual(self.generic_pars["seed"], 1)
         pass
     # endregion
 
-    # region SeattleSim
+    # region genericSim
     def test_sim_init_default_parameters(self):
-        self.assertIsNone(self.seattle_sim)
-        self.create_seattle_sim_default()
-        self.assertIsNotNone(self.seattle_sim)
+        self.assertIsNone(self.generic_sim)
+        self.create_generic_sim_default()
+        self.assertIsNotNone(self.generic_sim)
 
         # test init_results
-        self.assertFalse(self.seattle_sim.results['ready'])
-        results_keys = self.seattle_sim.results_keys
-        for k in results_keys:
+        self.assertFalse(self.generic_sim.results['ready'])
+        reskeys = self.generic_sim.reskeys
+        for k in reskeys:
             if "infections" != k: # We start with 4 of those right now
-                total_channel = np.sum(self.seattle_sim.results[k])
+                total_channel = np.sum(self.generic_sim.results[k].values)
                 self.assertEqual(total_channel, 0, msg=f"Channel {k} should equal zero. Got {total_channel}\n")
             pass
-        self.assertEqual({}, self.seattle_sim.results['transtree'])
+        self.assertEqual({}, self.generic_sim.results['transtree'])
 
         # test init_people
-        people = self.seattle_sim.people
-        self.assertEqual(self.seattle_pars["n"], len(people))
+        people = self.generic_sim.people
+        self.assertEqual(self.generic_pars["n"], len(people))
 
         # test init interventions
-        self.assertEqual({}, self.seattle_sim.interventions)
+        self.assertEqual({}, self.generic_sim.interventions)
         pass
 
     def test_sim_infect_person(self):
-        self.create_seattle_sim_default()
-        infector_uuid = self.seattle_sim.uids[0]
-        infector = self.seattle_sim.people[infector_uuid]
+        self.create_generic_sim_default()
+        infector_uuid = self.generic_sim.uids[0]
+        infector = self.generic_sim.people[infector_uuid]
 
-        victim_uuid = self.seattle_sim.uids[1]
-        victim = self.seattle_sim.people[victim_uuid]
+        victim_uuid = self.generic_sim.uids[1]
+        victim = self.generic_sim.people[victim_uuid]
 
         infection_time = 42
 
-        target_person = self.seattle_sim.infect_person(infector, victim, infection_time)
+        target_person = self.generic_sim.infect_person(infector, victim, infection_time)
         self.assertFalse(victim.susceptible)
         self.assertTrue(victim.exposed)
         self.assertEqual(victim.date_exposed, infection_time)
 
-        transmission_tree = self.seattle_sim.results['transtree']
+        transmission_tree = self.generic_sim.results['transtree']
         self.assertIn(victim_uuid, transmission_tree) # victim now in transmission tree
 
         transmission_event = transmission_tree[victim_uuid]

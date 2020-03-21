@@ -8,7 +8,7 @@ with open('requirements.txt') as f:
 
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))
-versionpath = os.path.join(cwd, 'covasim', 'cova_base', 'version.py')
+versionpath = os.path.join(cwd, 'covasim', 'version.py')
 version = runpy.run_path(versionpath)['__version__']
 
 CLASSIFIERS = [
@@ -25,7 +25,7 @@ CLASSIFIERS = [
 setup(
     name="covasim",
     version=version,
-    author="Cliff Kerr, Romesh Abeysuriya, Robyn Stuart, Dina Mistry, Mike Famulare, Daniel Klein",
+    author="Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, Dina Mistry, Lauren George, Mike Famulare, Daniel Klein",
     author_email="covid@idmod.org",
     description="Covid-19 agent-based model model",
     keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess", "Seattle", "agent-based model"],
