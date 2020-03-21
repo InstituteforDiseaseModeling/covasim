@@ -1,9 +1,7 @@
 '''
-This file contains all the code for a single run of Covid-ABM.
+This file contains all the code for the basic use of Covasim.
 
-Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
-
-Version: 2020mar13
+Version: 2020mar20
 '''
 
 #%% Imports
