@@ -9,7 +9,6 @@ print(__license__)
 #%% Check imports -- note, must be manually updated to match requirements.txt unfortunately!
 
 _min_sciris_version    = '0.16.0'
-_min_scirisweb_version = '0.16.0'
 
 
 # Check Sciris
@@ -20,14 +19,6 @@ except ImportError:
 if _sc.compareversions(_sc.__version__, _min_sciris_version) < 0:
     raise ImportError(f'Sciris {_sc.__version__} is incompatible; please upgrade via "pip install sciris=={_min_sciris_version}"')
 
-
-# Check ScirisWeb
-try:
-    import scirisweb as _sw
-except ImportError:
-    raise ImportError('Scirisweb not found; please install via "pip install scirisweb"')
-if _sc.compareversions(_sw.__version__, _min_scirisweb_version) < 0:
-    raise ImportError(f'Scirisweb {_sw.__version__} is incompatible; please upgrade via "pip install scirisweb=={_min_scirisweb_version}"')
 
 
 # Check health systems -- optional dependency
@@ -57,7 +48,7 @@ except ImportError as E:
 
 
 # Tidy up temporary variables, leaving _hsys and _parest since these are used later
-del _min_sciris_version, _min_scirisweb_version, _sc, _sw
+del _min_sciris_version, _sc
 
 
 #%% Imports from here -- just the framework, basic functions, and base -- the "base" version
