@@ -116,9 +116,7 @@ class Sim(cv.Sim):
 
         # Handle interventions
         for key in ['interv_days', 'interv_effs', 'daily_tests']:
-            val = self[key]
-            if val is None: val = [] # TODO: have skipnone be an option in promotetoarray()
-            self[key] = sc.promotetoarray(self[key])
+            self[key] = sc.promotetoarray(self[key], skipnone=True)
 
         return
 
