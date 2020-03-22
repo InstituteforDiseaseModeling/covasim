@@ -478,7 +478,15 @@ class Sim(cv.Sim):
                             if verbose>=2:
                                 print(f'          Person {tested_person.uid} was diagnosed at timestep {t}!')
 
-            # Update counts for this time step.
+            # Implement quarantine
+            if t in self['interv_days']:
+                ind = sc.findinds(self['interv_days'], t)[0]
+                eff = self['interv_effs'][ind]
+                if verbose>=1:
+                    print(f'Implementing intervention/change of {eff} on day {t}...')
+                beta *= eff # TODO: pop-specific
+
+            # Update counts for this time step
             self.results['n_susceptible'][t] = n_susceptible
             self.results['n_exposed'][t]     = n_exposed
             self.results['deaths'][t]        = n_deaths
@@ -488,14 +496,6 @@ class Sim(cv.Sim):
             self.results['n_symptomatic'][t] = n_symptomatic
             self.results['n_recovered'][t]   = n_recovered
             self.results['diagnoses'][t]     = n_diagnoses
-
-            # Implement quarantine
-            if t in self['interv_days']:
-                ind = sc.findinds(self['interv_days'], t)[0]
-                eff = self['interv_effs'][ind]
-                if verbose>=1:
-                    print(f'Implementing intervention/change of {eff} on day {t}...')
-                self['beta'] *= eff # TODO: pop-specific
 
             # Calculate doubling time
             cum_infections = pl.cumsum(self.results['infections'][:t+1])
