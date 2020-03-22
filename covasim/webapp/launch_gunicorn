@@ -2,6 +2,7 @@
 
 import os
 import argparse
+import sciris as sc
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -9,7 +10,7 @@ parser.add_argument("-w", "--workers", type=int, default=8,     help="number of 
 parser.add_argument("-p", "--port",    type=int, default=8097,  help="port to bind to (default 8097)")
 parser.add_argument("-b", "--backend", type=str, default='agg', help="Matplotlib backend (default agg)")
 args = parser.parse_args()
-print(f'Launching gunicorn with {args.workers} workers on port {args.port}')
+sc.heading(f'Covasim: launching gunicorn with {args.workers} workers on port {args.port} with backend {args.backend}')
 
 os.system(f'export MPLBACKEND={args.backend}')
 os.system(f'gunicorn --reload --workers={args.workers} --bind=127.0.0.1:{args.port} cova_app:flask_app')
