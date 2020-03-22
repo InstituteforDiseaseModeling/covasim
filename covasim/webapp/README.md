@@ -51,8 +51,7 @@ server {
 
 ### Run gunicorn
 
-1. Edit `launch_gunicorn` to set the number of workers as desired - usual recommendation is twice the number of CPUs but it might be better for this app to just run the number of CPUs because the RPCs are computationally expensive
-2. Run `launch_gunicorn`. This will need to be kept running to support the site (so run via `nohup` or `screen` etc.).
+1. Run `launch_gunicorn`, optionally setting a number of workers, e.g. `./launch_gunicorn --workers=32`. This will need to be kept running to support the site (so run via `nohup` or `screen` etc.).
 
 For example:
 ```script
@@ -66,7 +65,7 @@ screen -S cova_app
 screen -R cova_app
 ```
 
-Note that for local development, you can add the `--reload` flag to the `gunicorn` command to automatically reload the site. This can be helpful if using the `nginx+gunicorn` setup for local development.
+Note that for local development, the `--reload` flag to the `gunicorn` command automatically reloads the site. This can be helpful if using the `nginx+gunicorn` setup for local development.
 
 ## Docker
 
@@ -104,4 +103,4 @@ curl --data "funcname=get_version" http://localhost:8001/api/rpcs
 
 which should display the version number.
 
-The artifact produced by `docker build` would be suitable to run via any container mechanism
+The artifact produced by `docker build` would be suitable to run via any container mechanism.

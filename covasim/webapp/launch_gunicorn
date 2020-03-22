@@ -1,3 +1,28 @@
-#!/bin/bash
-export MPLBACKEND=agg
-gunicorn --reload --workers=8 --bind=127.0.0.1:8097 cova_app:flask_app
+#!/usr/bin/env python3
+
+'''
+Launch gunicorn. Standard usage is just:
+    ./launch_gunicorn
+
+but can also do e.g.
+    ./launch_gunicorn -w 48
+
+to launch with 48 workers.
+
+Version: 2020mar21
+'''
+
+import os
+import argparse
+import sciris as sc
+
+# Parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("-w", "--workers", type=int, default=8,     help="number of workers (default 8)")
+parser.add_argument("-p", "--port",    type=int, default=8097,  help="port to bind to (default 8097)")
+parser.add_argument("-b", "--backend", type=str, default='agg', help="Matplotlib backend (default agg)")
+args = parser.parse_args()
+
+sc.heading(f'Covasim: launching gunicorn with {args.workers} workers on port {args.port} with backend {args.backend}')
+os.system(f'export MPLBACKEND={args.backend}')
+os.system(f'gunicorn --reload --workers={args.workers} --bind=127.0.0.1:{args.port} cova_app:flask_app')

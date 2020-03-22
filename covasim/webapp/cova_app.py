@@ -209,7 +209,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     return output
 
 
-#%% Run the server
+#%% Run the server using Flask
 if __name__ == "__main__":
 
     os.chdir(sc.thisdir(__file__))
