@@ -77,12 +77,13 @@ def get_defaults(region=None, merge=False):
 
     epi_pars = {}
     epi_pars['beta']        = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',     tip='Probability of infection per contact per day')
-    epi_pars['contacts']    = dict(best=20,    min=0.0, max=50,  name='Number of contacts',        tip='Number of people, on average, each person is in contact with')
-    epi_pars['serial']      = dict(best=4.0,   min=1.0, max=30,  name='Serial interval (days)',    tip='Number of days between exposure and being infectious')
-    epi_pars['incub']       = dict(best=5.0,   min=1.0, max=30,  name='Incubation period (days)',  tip='Number of days between exposure and developing symptoms')
-    epi_pars['dur']         = dict(best=8.0,   min=1.0, max=30,  name='Infection duration (days)', tip='Average length of time of infection (viral shedding)')
+    epi_pars['contacts']    = dict(best=20,    min=0.0, max=50,  name='Number of contacts',        tip='Average number of people each person is in contact with each day')
+    epi_pars['serial']      = dict(best=4.0,   min=1.0, max=30,  name='Serial interval (days)',    tip='Average number of days between exposure and being infectious')
+    epi_pars['incub']       = dict(best=5.0,   min=1.0, max=30,  name='Incubation period (days)',  tip='Average number of days between exposure and developing symptoms')
+    epi_pars['dur']         = dict(best=8.0,   min=1.0, max=30,  name='Infection duration (days)', tip='Average number of days between infection and recovery (viral shedding period)')
+    epi_pars['timetodie']   = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',   tip='Average number of days between infection and death')
     epi_pars['default_cfr'] = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',        tip='Proportion of people who become infected who die')
-    epi_pars['timetodie']   = dict(best=22.0,  min=1.0, max=60,  name='Days until death',          tip='Average length of time between infection and death')
+
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict[region]
