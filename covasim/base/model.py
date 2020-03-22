@@ -181,33 +181,22 @@ class Sim(cv.Sim):
             print(f'Creating {self["n"]} people...')
 
         # Create the people -- just placeholders if we're using actual data
-        self.people = {} # Dictionary for storing the people -- use plain dict since faster than odict
-        iter_people = range(int(self['n']))
-        for p in iter_people:
-
-
-
-
-        print('hiiiiii')
-        n = int(self['n'])
-        sc.tic()
-        self.uids = sc.uuid(which='ascii', n=n, length=6)
-        sc.toc()
-        # self.uids = uids
+        people = {} # Dictionary for storing the people -- use plain dict since faster than odict
+        n_people = int(self['n'])
+        uids = sc.uuid(which='ascii', n=n_people, length=id_len)
         for p in range(n_people): # Loop over each person
+            uid = uids[p]
             if self['usepopdata']:
                 age,sex,cfr = -1, -1, -1 # These get overwritten later
             else:
                 age,sex,cfr = cvpars.get_age_sex(cfr_by_age=self['cfr_by_age'], default_cfr=self['default_cfr'], use_data=False)
-            uid = self.uids[p] #None
-            # while not uid or uid in self.people.keys(): # Avoid duplicates!
-            #     uid = sc.uuid(length=id_len)
 
             person = Person(age=age, sex=sex, cfr=cfr, uid=uid) # Create the person
-            self.people[person.uid] = person # Save them to the dictionary
+            people[uid] = person # Save them to the dictionary
 
-        # Store all the UIDs as a list
-        self.uids = list(self.people.keys())
+        # Store UIDs and people
+        self.uids = uids
+        self.people = people
 
         # Make the contact matrix
         if not self['usepopdata']:
