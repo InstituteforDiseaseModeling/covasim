@@ -50,17 +50,17 @@ def get_defaults(region=None, merge=False):
             # 'Wuhan': 90,
         },
         'n_infected': {
-            'Example': 10,
+            'Example': 100,
             'Seattle': 4,
             # 'Wuhan': 10,
         },
-        'interv_days': {
-            'Example': 20,
-            'Seattle': 20,
+        'web_int_day': {
+            'Example': 25,
+            'Seattle': 0,
             # 'Wuhan': 1,
         },
-        'interv_effs': {
-            'Example': 0.5,
+        'web_int_eff': {
+            'Example': 0.8,
             'Seattle': 0.0,
             # 'Wuhan': 0.9,
         },
@@ -71,8 +71,8 @@ def get_defaults(region=None, merge=False):
     sim_pars['n']           = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
     sim_pars['n_infected']  = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
     sim_pars['n_days']      = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
-    sim_pars['interv_days'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (can be blank)')
-    sim_pars['interv_effs'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Change in infection rate due to intervention')
+    sim_pars['web_int_day'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (can be blank)')
+    sim_pars['web_int_eff'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Reduction in infectiousness due to intervention')
     sim_pars['seed']        = dict(best=1,    min=1, max=100,      name='Random seed',                tip='Random number seed (leave blank for random results)')
 
     epi_pars = {}
@@ -122,84 +122,125 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     try:
         # Fix up things that JavaScript mangles
         defaults = get_defaults(merge=True)
-        pars = {}
-        pars['verbose'] = verbose # Control verbosity here
+        web_pars = {}
+        web_pars['verbose'] = verbose # Control verbosity here
+
         for key,entry in {**sim_pars, **epi_pars}.items():
             print(key, entry)
+
+            best   = defaults[key]['best']
             minval = defaults[key]['min']
             maxval = defaults[key]['max']
-            if entry['best']:
-                pars[key] = pl.median([float(entry['best']), minval, maxval])
-            else:
-                pars[key] = None
-            if key in sim_pars: sim_pars[key]['best'] = pars[key]
-            else:               epi_pars[key]['best'] = pars[key]
-    except Exception as E:
-        err1 = f'Parameter conversion failed! {str(E)}'
-        print(err1)
-        err += err1
 
-    # Handle sessions
-    sim = cv.Sim()
-    sim['cfr_by_age'] = False # So the user can override this value
-    sim.update_pars(pars=pars)
-    if pars['seed'] is not None:
-        sim.set_seed(int(pars['seed']))
-    else:
-        sim.set_seed()
+            try:
+                web_pars[key] = pl.median([float(entry['best']), minval, maxval])
+            except Exception:
+                user_key = entry['name']
+                user_val = entry['best']
+                err1 = f'Could not convert parameter "{user_key}", value "{user_val}"; using default value instead\n'
+                print(err1)
+                err += err1
+                web_pars[key] = best
+            if key in sim_pars: sim_pars[key]['best'] = web_pars[key]
+            else:               epi_pars[key]['best'] = web_pars[key]
+
+        # Handle special cases
+        web_pars['interv_days'] = [web_pars.pop('web_int_day')] # Turn from scalar to list
+        web_pars['interv_effs'] = [1-web_pars.pop('web_int_eff')] # Turn from scalar to list and take inverse
+
+    except Exception as E:
+        err2 = f'Parameter conversion failed! {str(E)}\n'
+        print(err2)
+        err += err2
+
+    # Create the sim and update the parameters
+    try:
+        sim = cv.Sim()
+        sim['cfr_by_age'] = False # So the user can override this value
+        sim.update_pars(pars=web_pars)
+        if web_pars['seed'] is not None:
+            sim.set_seed(int(web_pars['seed']))
+        else:
+            sim.set_seed()
+    except Exception as E:
+        err3 = f'Sim creation failed! {str(E)}\n'
+        print(err3)
+        err += err3
 
     if verbose:
         print('Input parameters:')
-        print(pars)
+        print(web_pars)
 
     # Core algorithm
     try:
         sim.run(do_plot=False)
     except Exception as E:
-        err3 = f'Sim run failed! ({str(E)})'
-        print(err3)
-        err += err3
-
-    output = {}
-    output['err'] = err
-    output['sim_pars'] = sim_pars
-    output['epi_pars'] = epi_pars
-    output['graphs'] = []
+        err4 = f'Sim run failed! {str(E)}\n'
+        print(err4)
+        err += err4
 
     # Core plotting
-    to_plot = sc.dcp(cv.to_plot)
-    for p,title,keylabels in to_plot.enumitems():
-        fig = go.Figure()
-        colors = sc.gridcolors(len(keylabels))
-        for i,key,label in keylabels.enumitems():
-            this_color = 'rgb(%d,%d,%d)' % (255*colors[i][0],255*colors[i][1],255*colors[i][2])
-            y = sim.results[key][:]
-            fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
-        fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-        output['graphs'].append({'json':fig.to_json(),'id':str(sc.uuid())})
+    graphs = []
+    try:
+
+        to_plot = sc.dcp(cv.to_plot)
+        for p,title,keylabels in to_plot.enumitems():
+            fig = go.Figure()
+            colors = sc.gridcolors(len(keylabels))
+            for i,key,label in keylabels.enumitems():
+                this_color = 'rgb(%d,%d,%d)' % (255*colors[i][0],255*colors[i][1],255*colors[i][2])
+                y = sim.results[key][:]
+                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
+
+            if len(sim['interv_days']):
+                interv_day = sim['interv_days'][0]
+                if interv_day > 0 and interv_day < sim['n_days']:
+                    fig.add_shape(dict(type="line", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+            fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
+            graphs.append({'json':fig.to_json(),'id':str(sc.uuid())})
+    except Exception as E:
+        err5 = f'Plotting failed! {str(E)}\n'
+        print(err5)
+        err += err5
+
 
     # Create and send output files (base64 encoded content)
-    datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
-    output['files'] = {}
+    files = {}
+    summary = {}
+    try:
+        datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
 
-    ss = sim.to_xlsx()
-    output['files']['xlsx'] = {
-        'filename': f'COVASim_results_{datestamp}.xlsx',
-        'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
-    }
 
-    json = sim.to_json()
-    output['files']['json'] = {
-        'filename': f'COVASim_results_{datestamp}.txt',
-        'content': 'data:application/text;base64,' + base64.b64encode(json.encode()).decode("utf-8"),
-    }
+        ss = sim.to_xlsx()
+        files['xlsx'] = {
+            'filename': f'COVASim_results_{datestamp}.xlsx',
+            'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
+        }
 
-    # Summary output
-    output['summary'] = {
-        'days': sim.npts-1,
-        'cases': round(sim.results['cum_exposed'][-1]),
-        'deaths': round(sim.results['cum_deaths'][-1]),
-    }
+        json = sim.to_json()
+        files['json'] = {
+            'filename': f'COVASim_results_{datestamp}.txt',
+            'content': 'data:application/text;base64,' + base64.b64encode(json.encode()).decode("utf-8"),
+        }
+
+        # Summary output
+        summary = {
+            'days': sim.npts-1,
+            'cases': round(sim.results['cum_exposed'][-1]),
+            'deaths': round(sim.results['cum_deaths'][-1]),
+        }
+    except Exception as E:
+        err6 = f'File saving failed! {str(E)}\n'
+        print(err6)
+        err += err6
+
+    output = {}
+    output['err']      = err
+    output['sim_pars'] = sim_pars
+    output['epi_pars'] = epi_pars
+    output['graphs']   = graphs
+    output['files']    = files
+    output['summary']  = summary
 
     return output
 

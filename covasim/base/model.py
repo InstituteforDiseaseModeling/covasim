@@ -453,10 +453,11 @@ class Sim(cv.Sim):
 
             # Implement quarantine
             if t in self['interv_days']:
-                if verbose>=1:
-                    print(f'Implementing intervention/change on day {t}...')
                 ind = sc.findinds(self['interv_days'], t)[0]
-                self['beta'] *= self['interv_effs'][ind] # TODO: pop-specific
+                eff = self['interv_effs'][ind]
+                if verbose>=1:
+                    print(f'Implementing intervention/change of {eff} on day {t}...')
+                self['beta'] *= eff # TODO: pop-specific
 
             # Calculate doubling time
             cum_infections = pl.cumsum(self.results['infections'][:t+1])
