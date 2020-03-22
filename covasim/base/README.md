@@ -4,7 +4,7 @@ The base model includes the core functionality of Covasim.
 
 ## Parameters
 
-This section describes the expected behavior of each parameter in the model.
+This section describes the expected behavior of each parameter in the model. Note: the term "overall infection rate" can be explored using `sim.calculated['doubling_time']`.
 
 ### Simulation parameters
 * `pars['scale']`: Multiplicative scale for results. Test: run 2 sims, set to 10, `sim.results['cum_exposed']` in 2nd sim should be 10x higher than first.
@@ -19,31 +19,31 @@ This section describes the expected behavior of each parameter in the model.
 * `pars['stop_func']`: User-defined stopping function (no test).
 
 ### Disease transmission
-* `pars['beta']`: Transmissibility per contact. Test: set to 0 for no infections, set to 1 for ~`contacts` infections per day (will not be exactly equal due to overlap and other effects)
+* `pars['beta']`: Transmissibility per contact. Test: set to 0 for no infections, set to 1 for ≈`contacts` infections per day (will not be exactly equal due to overlap and other effects)
 * `pars['asym_prop']`: Proportion asymptomatic. Test: set to 1 and set `asym_factor` to 0 for no infections.
 * `pars['asym_factor']`: Effect of asymptomaticity on transmission. Test: see above.
 * `pars['diag_factor']`: Effect of diagnosis on transmission. Highly complex; no unit test for now.
 * `pars['cont_factor']`: Effect of being a known contact  on transmission. Highly complex; no unit test for now.
 * `pars['contacts']`: Number of contacts per person. Test: set to 0 for no infections; infection rate should scale roughly linearly with this parameter.
-* `pars['beta_pop']`: Transmissibility per contact, population-specific. Dependent on `synthpops`. Test: set all to 0 for no infections; infection rate should scale roughly linearly with these parameters
+* `pars['beta_pop']`: Transmissibility per contact, population-specific. Dependent on `synthpops`. Test: set all to 0 for no infections; infection rate should scale roughly linearly with these parameters.
 * `pars['contacts_pop']`: Number of contacts per person, popularion-specific. See `synthpops` documentation for tests.
 
 ### Disease progression
-    pars['serial']         = 4.0 # Serial interval: days after exposure before a person can infect others (see e.g. https://www.ncbi.nlm.nih.gov/pubmed/32145466)
-    pars['serial_std']     = 1.0 # Standard deviation of the serial interval
-    pars['incub']          = 5.0 # Incubation period: days until an exposed person develops symptoms
-    pars['incub_std']      = 1.0 # Standard deviation of the incubation period
-    pars['dur']            = 8 # Using Mike's Snohomish number
-    pars['dur_std']        = 2 # Variance in duration
+* `pars['serial']`: Serial interval (duration between infection and infectiousness). Test: set to `>n` for no transmission. Overall infection rate should scale roughly linearly with this parameter. 
+* `pars['serial_std']`: Standard deviation of serial interval. Test: set to 0, set `pars['beta']=1`, and confirm that infections occur `pars['serial']` days apart.
+* `pars['incub']`: Incubation period for people who are symptomatic. Highly complex; no unit test for now.
+* `pars['incub_std']`: See above.
+* `pars['dur']`: Duration of infectiousness. Test: overall infection rate should scale roughly linearly with this parameter. 
+* `pars['dur_std']`: Standard deviation of duration of infectiousness. Highly complex; no unit test for now.
 
 ### Testing
-    pars['daily_tests']    = [0.01*pars['n']]*pars['n_days'] # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']. Here we say 1% of the population is tested
-    pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
-    pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
-    pars['trace_test']     = 1.0 # Multiply testing probability by this factor for contacts of known positives -- baseline assumes no contact tracing
+* `pars['daily_tests']`: Number of daily tests. Tests: set to 0 and diagnoses should be 0; set to `n` and diagnoses should equal number infected if `pars['sensitivity']`=1.
+* `pars['sensitivity']`: Sensitivity of the test. Test: set to 0 and diagnoses should be 0.
+* `pars['sympt_test']`: Excess probability of testing if symptomatic. Test: for `pars['daily_tests']` ≪ `n`, setting `pars['sympt_test']` ≫ 1 should lead to more diagnoses.
+* `pars['trace_test']`: Excess probability of testing if a known contact is infected. Test: for `pars['daily_tests']` ≪ `n`, setting `pars['trace_test']` ≫ 1 should lead to more diagnoses.
 
 ### Mortality
-    pars['timetodie']      = 21 # Days until death
-    pars['timetodie_std']  = 2 # STD
-    pars['cfr_by_age']     = 0 # Whether or not to use age-specific case fatality
-    pars['default_cfr']    = 0.016 # Default overall case fatality rate if not using age-specific values
+* `pars['timetodie']`: Duration of time until death.  Test: set `pars['timetodie_std']=0` and `pars['timetodie']>pars['n_days']`, and there should be no deaths even with `pars['default_cfr']=1`.
+* `pars['timetodie_std']`: Standard deviation of death. Tests: set to 0, set `pars['cfr_by_age']=0` and `pars['default_cfr']=1` and `pars['n_infected']=pars['n']`, and everyone should die after this many days. Increase it and it should spread.
+* `pars['cfr_by_age']`: Whether or not to use age-dependent CFR. Overrides `pars['default_cfr']`. Test: set to `True`, and make two populations for two simulations, `sim1` with everyone aged 20 and `sim2` with everyone aged 80. Assuming sufficient population size, `sim1.results['cum_deaths'][-1] < sim2.results['cum_deaths'][-1]`.
+* `pars['default_cfr']`: Case fatality rate. Test: set `pars['cfr_by_age']` to `False`. Set to 0 and there should be no deaths. Set to 1 and all infected people should die (given enough time).
