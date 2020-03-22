@@ -71,6 +71,7 @@ def test_singlerun():
                 }
 
     sim = cova.Sim()
+    sim['n_days'] = 20
     sim = cova.single_run(sim=sim, **iterpars)
 
     return sim
@@ -128,10 +129,10 @@ if __name__ == '__main__':
 
     parsobj = test_parsobj()
     sim0    = test_microsim()
-    # sim1    = test_sim(doplot=doplot)
-    # sim2    = test_singlerun()
-    # sims    = test_multirun(doplot=doplot)
-    # json    = test_fileio()
+    sim1    = test_sim(doplot=doplot)
+    sim2    = test_singlerun()
+    sims    = test_multirun(doplot=doplot)
+    json    = test_fileio()
 
     sc.toc()
 
