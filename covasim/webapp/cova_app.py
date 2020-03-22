@@ -210,7 +210,10 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
                     fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
             graphs.append({'json':fig.to_json(),'id':str(sc.uuid())})
+
         graphs.append(plot_people(sim))
+        graphs.append(animate_people(sim))
+
     except Exception as E:
         err5 = f'Plotting failed! {str(E)}\n'
         print(err5)
@@ -278,6 +281,103 @@ def plot_people(sim: cv.Sim) -> dict:
 
     fig.update_layout(title={'text': 'Individual states'}, xaxis_title='Day', yaxis_title='Person', autosize=True)
     return {'json': fig.to_json(), 'id': str(sc.uuid())}
+
+def animate_people(sim: cv.Sim) -> dict:
+
+    people = sorted(sim.people.values(), key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
+
+    states = ['Healthy','Exposed','Infectious','Recovered','Dead']
+    quantities = [None, 'date_exposed','date_infectious','date_recovered','date_died']
+
+    z = np.zeros((int(np.ceil(len(people) ** 0.5) ** 2), sim.npts))
+
+    for i, p in enumerate(people):
+        for j, (state, quantity) in enumerate(zip(states, quantities)):
+            if quantity is None:
+                continue
+            elif getattr(p, quantity) is not None:
+                z[i, int(getattr(p, quantity)):] = j
+
+    z = np.reshape(z, (int(z.shape[0] ** 0.5), int(z.shape[0] ** 0.5), -1))
+
+    days = sim.tvec
+
+    fig_dict = {
+        "data": [],
+        "layout": {},
+        "frames": []
+    }
+
+    fig_dict["layout"]["updatemenus"] = [
+        {
+            "buttons": [
+                {
+                    "args": [None, {"frame": {"duration": 100, "redraw": True},
+                                    "fromcurrent": True}],
+                    "label": "Play",
+                    "method": "animate"
+                },
+                {
+                    "args": [[None], {"frame": {"duration": 0, "redraw": True},
+                                      "mode": "immediate",
+                                      "transition": {"duration": 0}}],
+                    "label": "Pause",
+                    "method": "animate"
+                }
+            ],
+            "direction": "left",
+            "pad": {"r": 10, "t": 87},
+            "showactive": False,
+            "type": "buttons",
+            "x": 0.1,
+            "xanchor": "right",
+            "y": 0,
+            "yanchor": "top"
+        }
+    ]
+
+    sliders_dict = {
+        "active": 0,
+        "yanchor": "top",
+        "xanchor": "left",
+        "currentvalue": {
+            "font": {"size": 20},
+            "prefix": "Day:",
+            "visible": True,
+            "xanchor": "right"
+        },
+        "transition": {"duration": 100},
+        "pad": {"b": 10, "t": 50},
+        "len": 0.9,
+        "x": 0.1,
+        "y": 0,
+        "steps": []
+    }
+
+    # make data
+    fig_dict["data"] = [go.Heatmap(z=z[:, :, 0], zmin=0, zmax=len(states)-1)]
+
+    # make frames
+    for i, day in enumerate(days):
+        frame = {"data": [go.Heatmap(z=z[:, :, i])],
+                 "name": i}
+        fig_dict["frames"].append(frame)
+        slider_step = {"args": [
+            [i],
+            {"frame": {"duration": 100, "redraw": True},
+             "mode": "immediate", }
+        ],
+            "label": i,
+            "method": "animate"}
+        sliders_dict["steps"].append(slider_step)
+
+    fig_dict["layout"]["sliders"] = [sliders_dict]
+
+    fig = go.Figure(fig_dict)
+
+    return {'json': fig.to_json(), 'id': str(sc.uuid())}
+
+
 
 #%% Run the server using Flask
 if __name__ == "__main__":
