@@ -67,12 +67,9 @@ def make_pars():
 
 
 @nb.njit()
-def _get_age(min_age, max_age, age_mean, age_std):
-    # age = pl.normal(age_mean, age_std) # Define age distribution for the crew and guests
-    # age = pl.median([min_age, age, max_age]) # Normalize
-    # Creating a list just for median() is expensive
-    age = pl.normal(age_mean, age_std)
-    age = pl.minimum(pl.maximum(age, min_age), max_age)
+def _get_norm_age(min_age, max_age, age_mean, age_std):
+    norm_age = pl.normal(age_mean, age_std)
+    age = pl.minimum(pl.maximum(norm_age, min_age), max_age)
     return age
 
 
@@ -85,10 +82,10 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None
             import synthpops as sp
         except ImportError as E:
             raise ImportError(f'Could not load synthpops; set sim["usepopdata"] = False or install ({str(E)})')
-        age, sex = sp.get_seattle_age_sex() # TODO -- should this be removed??
+        age, sex = sp.get_seattle_age_sex() # TODO -- make more general
     else:
         sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
-        age = _get_age(min_age, max_age, age_mean, age_std)
+        age = _get_norm_age(min_age, max_age, age_mean, age_std)
 
     # Get case fatality rate for a person of this age
     cfr = get_cfr(age=age, default_cfr=default_cfr, cfr_by_age=cfr_by_age)
