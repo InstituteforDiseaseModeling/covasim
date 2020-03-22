@@ -5,6 +5,7 @@ Sciris app to run the web interface.
 # Key imports
 import os
 import sys
+import numpy as np
 import pylab as pl
 import plotly.graph_objects as go
 import sciris as sc
@@ -209,6 +210,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
                     fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
             graphs.append({'json':fig.to_json(),'id':str(sc.uuid())})
+        graphs.append(plot_people(sim))
     except Exception as E:
         err5 = f'Plotting failed! {str(E)}\n'
         print(err5)
@@ -255,6 +257,27 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
 
     return output
 
+
+def plot_people(sim: cv.Sim) -> dict:
+
+    people = sorted(sim.people.values(), key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
+
+    states = ['Healthy','Exposed','Infectious','Recovered','Dead']
+    quantities = [None, 'date_exposed','date_infectious','date_recovered','date_died']
+
+    z = np.zeros((len(people), sim.npts))
+
+    for i, p in enumerate(people):
+        for j, (state, quantity) in enumerate(zip(states, quantities)):
+            if quantity is None:
+                continue
+            elif getattr(p, quantity) is not None:
+                z[i, int(getattr(p, quantity)):] = j
+
+    fig = go.Figure(data=go.Heatmap(z=z))
+
+    fig.update_layout(title={'text': 'Individual states'}, xaxis_title='Day', yaxis_title='Person', autosize=True)
+    return {'json': fig.to_json(), 'id': str(sc.uuid())}
 
 #%% Run the server using Flask
 if __name__ == "__main__":
