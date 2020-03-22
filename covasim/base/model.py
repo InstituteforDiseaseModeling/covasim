@@ -305,6 +305,17 @@ class Sim(cv.Sim):
             verbose = self['verbose']
         self.initialize() # Create people, results, etc.
 
+        # Extract these for later use. The values are not dynamic and the dictionary lookup is expensive.
+        usepopdata       = self['usepopdata']
+        beta             = self['beta']
+        asym_factor      = self['asym_factor']
+        diag_factor      = self['diag_factor']
+        cont_factor      = self['cont_factor']
+        beta_pop         = self['beta_pop']
+        sympt_test       = self['sympt_test']
+        trace_test       = self['trace_test']
+        test_sensitivity = self['sensitivity']
+
         # Main simulation loop
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
         for t in range(self.npts):
@@ -312,6 +323,17 @@ class Sim(cv.Sim):
             # If this gets set, stop running -- most useful for the webapp
             if self.stopped:
                 break
+
+            # Zero counts for this time step.
+            n_susceptible = 0
+            n_exposed     = 0
+            n_deaths      = 0
+            n_recoveries  = 0
+            n_infectious  = 0
+            n_infections  = 0
+            n_symptomatic = 0
+            n_recovered   = 0
+            n_diagnoses   = 0
 
             # Print progress
             if verbose>=1:
@@ -331,12 +353,12 @@ class Sim(cv.Sim):
 
                 # Count susceptibles
                 if person.susceptible:
-                    self.results['n_susceptible'][t] += 1
+                    n_susceptible += 1
                     continue # Don't bother with the rest of the loop
 
                 # If exposed, check if the person becomes infectious or develops symptoms
                 if person.exposed:
-                    self.results['n_exposed'][t] += 1
+                    n_exposed += 1
                     if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
                         person.infectious = True
                         if verbose >= 2:
@@ -356,7 +378,7 @@ class Sim(cv.Sim):
                         person.symptomatic = False
                         person.recovered = False
                         person.died = True
-                        self.results['deaths'][t] += 1
+                        n_deaths += 1
 
                     # Check for recovery
                     if person.date_recovered and t >= person.date_recovered: # It's the day they recover
@@ -364,12 +386,12 @@ class Sim(cv.Sim):
                         person.infectious = False
                         person.symptomatic = False
                         person.recovered = True
-                        self.results['recoveries'][t] += 1
+                        n_recoveries += 1
 
                     # Calculate onward transmission
                     else:
-                        self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        if not self['usepopdata']: # TODO: refactor!
+                        n_infectious += 1 # Count this person as infectious
+                        if not usepopdata: # TODO: refactor!
 
                             for contact_ind in person.contact_inds:
 
@@ -380,15 +402,15 @@ class Sim(cv.Sim):
                                     target_person.known_contact = True
 
                                 # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                                thisbeta = self['beta'] * \
-                                           (self['asym_factor'] if person.symptomatic else 1.) * \
-                                           (self['diag_factor'] if person.diagnosed else 1.) * \
-                                           (self['cont_factor'] if person.known_contact else 1.)
+                                thisbeta = beta * \
+                                           (asym_factor if person.symptomatic else 1.) * \
+                                           (diag_factor if person.diagnosed else 1.) * \
+                                           (cont_factor if person.known_contact else 1.)
                                 transmission = cv.bt(thisbeta) # Check whether virus is transmitted
 
                                 if transmission:
                                     if target_person.susceptible: # Skip people who are not susceptible
-                                        self.results['infections'][t] += 1
+                                        n_infections += 1
                                         self.infect_person(source_person=person, target_person=target_person, t=t)
                                         person.n_infected += 1
                                         if verbose>=2:
@@ -398,18 +420,20 @@ class Sim(cv.Sim):
 
                             for ckey in self.contact_keys:
 
+                                b_pop = beta_pop[ckey]
+
                                 # Calculate transmission risk based on whether they're asymptomatic/diagnosed
                                 for contact_ind in person.contact_inds[ckey]:
-                                    thisbeta = self['beta'] * self['beta_pop'][ckey]  * \
-                                               (self['asym_factor'] if person.symptomatic else 1.) * \
-                                               (self['diag_factor'] if person.diagnosed else 1.) * \
-                                               (self['cont_factor'] if person.known_contact else 1.)
+                                    thisbeta = beta * b_pop * \
+                                               (asym_factor if person.symptomatic else 1.) * \
+                                               (diag_factor if person.diagnosed else 1.) * \
+                                               (cont_factor if person.known_contact else 1.)
                                     transmission = cv.bt(thisbeta) # Check whether virus is transmitted
 
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
-                                            self.results['infections'][t] += 1
+                                            n_infections += 1
                                             self.infect_person(source_person=person, target_person=target_person, t=t)
                                             person.n_infected += 1
                                             if verbose>=2:
@@ -418,18 +442,18 @@ class Sim(cv.Sim):
 
                 # Count people who developed symptoms
                 if person.symptomatic:
-                    self.results['n_symptomatic'][t] += 1
+                    n_symptomatic += 1
 
                 # Count people who recovered
                 if person.recovered:
-                    self.results['n_recovered'][t] += 1
+                    n_recovered += 1
 
                 # Adjust testing probability based on what's happened to the person
                 # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
                 if person.symptomatic:
-                    test_probs[person.uid] *= self['sympt_test'] # They're symptomatic
+                    test_probs[person.uid] *= sympt_test    # They're symptomatic
                 if person.known_contact:
-                    test_probs[person.uid] *= self['trace_test']  # They've had contact with a known positive
+                    test_probs[person.uid] *= trace_test    # They've had contact with a known positive
                 if person.diagnosed:
                     test_probs[person.uid] = 0.0
 
@@ -444,19 +468,31 @@ class Sim(cv.Sim):
 
                     for test_ind in test_inds:
                         tested_person = self.get_person(test_ind)
-                        if tested_person.infectious and cv.bt(self['sensitivity']): # Person was tested and is true-positive
-                            self.results['diagnoses'][t] += 1
+                        if tested_person.infectious and cv.bt(test_sensitivity): # Person was tested and is true-positive
+                            n_diagnoses += 1
                             tested_person.diagnosed = True
                             tested_person.date_diagnosed = t
                             if verbose>=2:
                                 print(f'          Person {tested_person.uid} was diagnosed at timestep {t}!')
+
+            # Update counts for this time step.
+            self.results['n_susceptible'][t] = n_susceptible
+            self.results['n_exposed'][t]     = n_exposed
+            self.results['deaths'][t]        = n_deaths
+            self.results['recoveries'][t]    = n_recoveries
+            self.results['n_infectious'][t]  = n_infectious
+            self.results['infections'][t]    = n_infections
+            self.results['n_symptomatic'][t] = n_symptomatic
+            self.results['n_recovered'][t]   = n_recovered
+            self.results['diagnoses'][t]     = n_diagnoses
 
             # Implement quarantine
             if t in self['interv_days']:
                 if verbose>=1:
                     print(f'Implementing intervention/change on day {t}...')
                 ind = sc.findinds(self['interv_days'], t)[0]
-                self['beta'] *= self['interv_effs'][ind] # TODO: pop-specific
+                beta *= self['interv_effs'][ind]    # TODO: pop-specific
+                self['beta'] = beta
 
             # Calculate doubling time
             cum_infections = pl.cumsum(self.results['infections'][:t+1])
