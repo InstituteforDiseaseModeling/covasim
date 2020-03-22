@@ -25,9 +25,6 @@ sc.tic()
 sim = cova.Sim()
 sim.set_seed(seed)
 
-
-# Print extras
-
 print('Running...')
 sim.run(verbose=verbose)
 if do_plot:

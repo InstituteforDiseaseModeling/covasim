@@ -6,6 +6,7 @@ import os
 import pylab as pl
 import pandas as pd
 from datetime import datetime
+import numba as nb
 
 
 __all__ = ['make_pars', 'get_age_sex', 'get_cfr', 'load_data']
@@ -25,6 +26,8 @@ def make_pars():
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
+    pars['timelimit']  = 3600 # Time limit for a simulation (seconds)
+    pars['stop_func']  = None # A function to call to stop the sim partway through
 
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
@@ -63,6 +66,13 @@ def make_pars():
     return pars
 
 
+@nb.njit()
+def _get_norm_age(min_age, max_age, age_mean, age_std):
+    norm_age = pl.normal(age_mean, age_std)
+    age = pl.minimum(pl.maximum(norm_age, min_age), max_age)
+    return age
+
+
 def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, cfr_by_age=True, use_data=True):
     '''
     Define age-sex distributions.
@@ -72,11 +82,10 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None
             import synthpops as sp
         except ImportError as E:
             raise ImportError(f'Could not load synthpops; set sim["usepopdata"] = False or install ({str(E)})')
-        age, sex = sp.get_seattle_age_sex() # TODO -- should this be removed??
+        age, sex = sp.get_seattle_age_sex() # TODO -- make more general
     else:
         sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
-        age = pl.normal(age_mean, age_std) # Define age distribution for the crew and guests
-        age = pl.median([min_age, age, max_age]) # Normalize
+        age = _get_norm_age(min_age, max_age, age_mean, age_std)
 
     # Get case fatality rate for a person of this age
     cfr = get_cfr(age=age, default_cfr=default_cfr, cfr_by_age=cfr_by_age)

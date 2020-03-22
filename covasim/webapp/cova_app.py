@@ -23,15 +23,17 @@ flask_app = app.flask_app
 
 #%% Define the API
 
+# Set defaults
+max_pop  = 10e3 # Maximum population size
+max_days = 180  # Maximum number of days
+max_time = 10   # Maximum of seconds for a run
+
 @app.register_RPC()
 def get_defaults(region=None, merge=False):
     ''' Get parameter defaults '''
 
     if region is None:
         region = 'Example'
-
-    max_pop = 10e3
-    max_days = 90
 
     regions = {
         'scale': {
@@ -157,6 +159,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     try:
         sim = cv.Sim()
         sim['cfr_by_age'] = False # So the user can override this value
+        sim['timelimit'] = max_time # Set the time limit
         sim.update_pars(pars=web_pars)
         if web_pars['seed'] is not None:
             sim.set_seed(int(web_pars['seed']))
@@ -178,6 +181,14 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         err4 = f'Sim run failed! {str(E)}\n'
         print(err4)
         err += err4
+
+    if sim.stopped:
+        try: # Assume it stopped because of the time, but if not, don't worry
+            day = sim.stopped['t']
+            time_exceeded = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
+            err += time_exceeded
+        except:
+            pass
 
     # Core plotting
     graphs = []
