@@ -13,7 +13,12 @@ __all__ = ['make_pars', 'get_age_sex', 'get_cfr', 'load_data']
 
 
 def make_pars():
-    ''' Set parameters for the simulation '''
+    '''
+    Set parameters for the simulation.
+
+    NOTE: If you update these values or add a new parameter, please update README.md 
+    in this folder as well.
+    '''
     pars = {}
 
     # Simulation parameters
