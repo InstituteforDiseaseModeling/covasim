@@ -86,6 +86,7 @@ class Sim(cv.Sim):
         super().__init__(pars) # Initialize and set the parameters as attributes
         self.data = None # cvpars.load_data(datafile)
         self.stopped = None # If the simulation has stopped
+        self.results_ready = False # Whether or not results are ready
         return
 
 
