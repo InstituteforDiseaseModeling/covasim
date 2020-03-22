@@ -25,6 +25,8 @@ def make_pars():
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
+    pars['timelimit']  = 3600 # Time limit for a simulation (seconds)
+    pars['stop_func']  = None # A function to call to stop the sim partway through
 
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute

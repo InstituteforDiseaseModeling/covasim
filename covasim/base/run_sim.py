@@ -23,6 +23,7 @@ fig_path = f'{basename}.png'
 print('Making sim...')
 sc.tic()
 sim = cova.Sim()
+sim['timelimit'] = 1
 sim.set_seed(seed)
 
 

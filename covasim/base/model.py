@@ -85,7 +85,7 @@ class Sim(cv.Sim):
             pars = cvpars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
         self.data = None # cvpars.load_data(datafile)
-        self.stopped = False # Whether the simulation is running or not
+        self.stopped = None # If the simulation has stopped
         return
 
 
@@ -309,13 +309,22 @@ class Sim(cv.Sim):
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
         for t in range(self.npts):
 
-            # If this gets set, stop running -- most useful for the webapp
+            # Check timing and stopping function
+            elapsed = sc.toc(T, output=True)
+            if elapsed > self['timelimit']:
+                print(f"Time limit ({self['timelimit']} s) exceeded; stopping...")
+                self.stopped = {'why':'timelimit', 'message':'Time limit exceeded at step {t}', 't':t}
+
+            if self['stop_func']:
+                self.stopped = self['stop_func'](self) # Feed in the current simulation object
+
+            # If this gets set, stop running -- e.g. if the time limit is exceeded
             if self.stopped:
                 break
 
             # Print progress
             if verbose>=1:
-                string = f'  Running day {t:0.0f} of {self.pars["n_days"]}...'
+                string = f'  Running day {t:0.0f} of {self.pars["n_days"]} ({elapsed:0.2f} s elapsed)...'
                 if verbose>=2:
                     sc.heading(string)
                 else:
@@ -493,8 +502,6 @@ class Sim(cv.Sim):
 
         # Tidy up
         self.results_ready = True
-        self.stopped = True
-        elapsed = sc.toc(T, output=True)
         if verbose>=1:
             print(f'\nRun finished after {elapsed:0.1f} s.\n')
             self.results['summary'] = self.summary_stats()
