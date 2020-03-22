@@ -106,14 +106,7 @@ class Sim(cv.Sim):
         if start_day in [None, 0]: # Use default start day
             start_day = dt.datetime(2020, 1, 1)
         if not isinstance(start_day, dt.datetime):
-            errormsg = f"Start day must be a YYYY-MM-DD string or a datetime object, not {start_day}" # Not an error yet, but used twice, so pre-create it
-            if sc.isstring(start_day):
-                try:
-                    start_day = dt.datetime.strptime(start_day, '%Y-%M-%d')
-                except ValueError:
-                    raise ValueError(errormsg) # Raise this
-            else:
-                raise TypeError(errormsg)
+            start_day = sc.readdate(start_day)
         self['start_day'] = start_day # Convert back
 
         # Replace tests with data, if available
