@@ -102,14 +102,14 @@ def choose_people(max_ind, n):
     choose_people(5, 2) will choose 2 out of 5 people with equal probability.
     '''
     if max_ind < n:
-        raise Exception('Number of samples requested is greater than the number of people')
+        raise Exception('Number of samples requested is greater than the number of people') # NB: because it's Numba, can't display values
     n_samples = min(int(n), max_ind)
     inds = np.random.choice(max_ind, n_samples, replace=False)
     return inds
 
 
 # @nb.njit((nb.float64[:], nb.int64, nb.float64))
-def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6):
+def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10):
     '''
     Choose n people, each with a probability from the distribution probs. Overshoot
     handles the case where there are repeats
@@ -120,16 +120,25 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6):
     np.unique(return_index=True), hence why this function is not jitted.
     '''
     probs = np.array(probs, dtype=np.float64)
-    n = int(n)
+    n_samples = int(n)
+    n_people = len(probs)
     if abs(probs.sum() - 1) > eps:
         raise Exception('Probabilities should sum to 1')
-    if len(probs) < n: # Otherwise, it's everyone
-        raise Exception('Number of samples requested is greater than the number of people')
+    if n_people == n_samples: # It's everyone
+        return np.arange(len(probs))
+    if n_people < n_samples: # It's more than everyone
+        errormsg = f'Number of samples requested ({n_samples}) is greater than the number of people ({n_people})'
+        raise Exception(errormsg)
     unique_inds = np.array([], dtype=np.int)
-    while len(unique_inds)<n:
-        raw_inds = mt(probs, int(n*overshoot)) # Return raw indices, with replacement
+    tries = 0
+    while len(unique_inds)<n_samples and tries<max_tries:
+        tries += 1
+        raw_inds = mt(probs, int(n_samples*overshoot)) # Return raw indices, with replacement
         mixed_inds = np.hstack((unique_inds, raw_inds))
         unique_inds = pd.unique(mixed_inds) # Or np.unique(mixed_inds, return_index=True) with another step
+    if tries == max_tries:
+        errormsg = f'Unable to choose {n_samples} unique samples from {n_people} people after {max_tries} tries'
+        raise RuntimeError(errormsg)
     inds = unique_inds[:n]
     return inds
 

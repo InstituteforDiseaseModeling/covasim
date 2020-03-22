@@ -16,7 +16,7 @@ def make_pars():
     '''
     Set parameters for the simulation.
 
-    NOTE: If you update these values or add a new parameter, please update README.md 
+    NOTE: If you update these values or add a new parameter, please update README.md
     in this folder as well.
     '''
     pars = {}
@@ -53,7 +53,7 @@ def make_pars():
     pars['dur_std']        = 2 # Variance in duration
 
     # Testing
-    pars['daily_tests']    = [0.01*pars['n']]*pars['n_days'] # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']. Here we say 1% of the population is tested
+    pars['daily_tests']    = [] # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']. To say e.g. 1% of the population is tested, use [0.01*pars['n']]*pars['n_days']
     pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
     pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
     pars['trace_test']     = 1.0 # Multiply testing probability by this factor for contacts of known positives -- baseline assumes no contact tracing

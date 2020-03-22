@@ -81,12 +81,13 @@ class Sim(cv.Sim):
     '''
 
     def __init__(self, pars=None, datafile=None):
-        if pars is None:
-            pars = cvpars.make_pars()
-        super().__init__(pars) # Initialize and set the parameters as attributes
+        default_pars = cvpars.make_pars() # Start with default pars
+        super().__init__(default_pars) # Initialize and set the parameters as attributes
         self.data = None # cvpars.load_data(datafile)
         self.stopped = None # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
+        if pars is not None:
+            self.update_pars(pars)
         return
 
 
@@ -114,9 +115,22 @@ class Sim(cv.Sim):
         if self.data is not None:
             self['daily_tests'] = self.data['new_tests'] # Number of tests each day, from the data
 
+        # Ensure test counts are valid
+        self['daily_tests'] = np.minimum(self['daily_tests'], self['n']) # Cannot do more tests than there are people
+
         # Handle interventions
         for key in ['interv_days', 'interv_effs', 'daily_tests']:
             self[key] = sc.promotetoarray(self[key], skipnone=True)
+
+        # Handle population data
+        popdata_choices = ['random', 'bayesian', 'data']
+        if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
+            self['usepopdata'] = popdata_choices[int(self['usepopdata'])] # Choose one of these
+        if self['usepopdata'] not in popdata_choices:
+            choice = self['usepopdata']
+            choicestr = ', '.join(popdata_choices)
+            errormsg = f'Population data option "{choice}" not available; choices are: {choicestr}'
+            raise ValueError(errormsg)
 
         return
 
@@ -178,7 +192,7 @@ class Sim(cv.Sim):
         uids = sc.uuid(which='ascii', n=n_people, length=id_len)
         for p in range(n_people): # Loop over each person
             uid = uids[p]
-            if self['usepopdata']:
+            if self['usepopdata'] != 'random':
                 age,sex,cfr = -1, -1, -1 # These get overwritten later
             else:
                 age,sex,cfr = cvpars.get_age_sex(cfr_by_age=self['cfr_by_age'], default_cfr=self['default_cfr'], use_data=False)
@@ -191,7 +205,7 @@ class Sim(cv.Sim):
         self.people = people
 
         # Make the contact matrix
-        if not self['usepopdata']:
+        if self['usepopdata'] == 'random':
             if verbose>=2:
                 print(f'Creating contact matrix without data...')
             for p in range(int(self['n'])):
@@ -215,7 +229,7 @@ class Sim(cv.Sim):
                 person.contact_inds = entry['contacts']
 
         if verbose >= 1:
-            print(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]}')
+            print(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]:0.2f} years')
 
         # Create the seed infections
         for i in range(int(self['n_infected'])):
@@ -299,7 +313,7 @@ class Sim(cv.Sim):
         self.initialize() # Create people, results, etc.
 
         # Extract these for later use. The values are not dynamic and the dictionary lookup is expensive.
-        usepopdata       = self['usepopdata']
+        userandpopdata   = (self['usepopdata'] == 'random')
         beta             = self['beta']
         asym_factor      = self['asym_factor']
         diag_factor      = self['diag_factor']
@@ -393,7 +407,7 @@ class Sim(cv.Sim):
                     # Calculate onward transmission
                     else:
                         n_infectious += 1 # Count this person as infectious
-                        if not usepopdata: # TODO: refactor!
+                        if userandpopdata: # TODO: refactor!
 
                             for contact_ind in person.contact_inds:
 
@@ -419,9 +433,7 @@ class Sim(cv.Sim):
                                             print(f'        Person {person.uid} infected person {target_person.uid}!')
 
                         else:
-
                             for ckey in self.contact_keys:
-
                                 b_pop = beta_pop[ckey]
 
                                 # Calculate transmission risk based on whether they're asymptomatic/diagnosed

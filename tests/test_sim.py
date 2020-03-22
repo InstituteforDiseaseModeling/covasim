@@ -31,6 +31,19 @@ def test_parsobj():
     return parsobj
 
 
+def test_microsim():
+    sc.heading('Minimal sim test')
+
+    sim = cova.Sim()
+    sim['n'] = 10
+    sim['n_infected'] = 1
+    sim['contacts'] = 2
+    sim['n_days'] = 10
+    sim.run()
+
+    return sim
+
+
 def test_sim(doplot=False): # If being run via pytest, turn off
     sc.heading('Basic sim test')
 
@@ -114,10 +127,11 @@ if __name__ == '__main__':
     sc.tic()
 
     parsobj = test_parsobj()
-    sim     = test_sim(doplot=doplot)
-    sim     = test_singlerun()
-    sims    = test_multirun(doplot=doplot)
-    json    = test_fileio()
+    sim0    = test_microsim()
+    # sim1    = test_sim(doplot=doplot)
+    # sim2    = test_singlerun()
+    # sims    = test_multirun(doplot=doplot)
+    # json    = test_fileio()
 
     sc.toc()
 
