@@ -9,11 +9,8 @@ import pylab as pl
 import plotly.graph_objects as go
 import sciris as sc
 import covasim as cv
+import base64 # Download/upload-specific import
 
-# Download/upload-specific imports
-import io
-import base64
-import json
 
 # Check requirements, and if met, import scirisweb
 cv._requirements.check_scirisweb(die=True)
@@ -107,9 +104,7 @@ def get_version():
 
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
-    with open(fname,'r') as f:
-        s = f.read()
-    parameters = json.loads(s)
+    parameters = sc.loadjson(fname)
     if not isinstance(parameters, dict):
         raise TypeError(f'Uploaded file was a {type(parameters)} object rather than a dict')
     if  'sim_pars' not in parameters or 'epi_pars' not in parameters:
@@ -182,8 +177,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
         output['graphs'].append({'json':fig.to_json(),'id':str(sc.uuid())})
 
-    # Create and send output files
-    # base64 encoded content
+    # Create and send output files (base64 encoded content)
     datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
     output['files'] = {}
 
