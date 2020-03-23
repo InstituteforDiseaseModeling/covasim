@@ -65,8 +65,9 @@ def make_pars():
     pars['default_cfr']    = 0.016 # Default overall case fatality rate if not using age-specific values
 
     # Events and interventions
-    pars['interv_days'] = []# [30, 44]  # Day on which interventions started/stopped
-    pars['interv_effs'] = []# [0.1, 10] # Change in transmissibility
+    pars['interv_days'] = [] # Day on which interventions started/stopped, e.g. [30, 44]
+    pars['interv_effs'] = [] # Change in transmissibility, e.g. [0.1, 10]
+    pars['interv_func'] = None # Custom intervention function
 
     return pars
 
