@@ -22,7 +22,7 @@ def make_pars():
     pars = {}
 
     # Simulation parameters
-    pars['scale']       = 0.6*100 # Factor by which to scale results -- assume 60% of a population of 1m
+    pars['scale']      = 1 # Factor by which to scale results -- e.g. 0.6*100 with n=10e3 assumes 60% of a population of 1m
 
     pars['n']          = 10e3 # Number ultimately susceptible to CoV
     pars['n_infected'] = 10 # Number of seed cases

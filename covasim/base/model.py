@@ -218,8 +218,9 @@ class Sim(cv.Sim):
             import synthpops as sp
 
             self.contact_keys = self['contacts_pop'].keys()
+            options_args = dict.fromkeys(['use_age','use_sex','use_loc','use_usa','use_social_layers'], True)
             popdict = sp.make_popdict(uids=self.uids)
-            popdict = sp.make_contacts(popdict, self['contacts'], use_social_layers=True)
+            popdict = sp.make_contacts(popdict, options_args=options_args)
             popdict = sc.odict(popdict)
             for p,uid,entry in popdict.enumitems():
                 person = self.get_person(p)

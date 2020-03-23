@@ -35,10 +35,13 @@ def test_microsim():
     sc.heading('Minimal sim test')
 
     sim = cova.Sim()
-    sim['n'] = 10
-    sim['n_infected'] = 1
-    sim['contacts'] = 2
-    sim['n_days'] = 10
+    pars = {
+        'n': 10,
+        'n_infected': 1,
+        'contacts': 2,
+        'n_days': 10
+        }
+    sim.update_pars(pars)
     sim.run()
 
     return sim
