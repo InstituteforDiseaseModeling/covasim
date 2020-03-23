@@ -526,15 +526,13 @@ class Sim(cv.Sim):
             # Calculate doubling time
             if t >= burnin:
                 cum_infections = pl.cumsum(self.results['infections'][burnin:t+1]) + self['n_infected'] # Include initially infected people
-                nonzero = np.nonzero(cum_infections)[0] # Skip days with zero infections for the log2 below
-                if len(nonzero) >= 2: # Need at least 2 points
-                    exog  = sm.add_constant(np.arange(burnin,t+1)-burnin)
-                    endog = np.log2(cum_infections[nonzero])
-                    model = sm.OLS(endog, exog)
-                    doubling_rate = model.fit().params[1]
-                    if doubling_rate != 0: # If it's zero, skip
-                        doubling_time = 1.0 / doubling_rate
-                        self.results['doubling_time'][t] = doubling_time
+                exog  = sm.add_constant(np.arange(burnin,t+1)-burnin)
+                endog = np.log2(cum_infections)
+                model = sm.OLS(endog, exog)
+                doubling_rate = model.fit().params[1]
+                if doubling_rate != 0: # If it's zero, skip
+                    doubling_time = 1.0 / doubling_rate
+                    self.results['doubling_time'][t] = doubling_time
 
             # Effective reproductive number based on number still susceptible
             self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
