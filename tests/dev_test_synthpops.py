@@ -9,7 +9,7 @@ import covasim as cova
 try:
     import synthpops as sp
 except:
-    print('Synthpops import failed')
+    print('Synthpops import failed, you are not going to be able to run this')
 
 doplot = 1
 

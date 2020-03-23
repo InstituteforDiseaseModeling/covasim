@@ -683,6 +683,7 @@ class Sim(cv.Sim):
                 fig_path = do_save # It's a string, assume it's a filename
             else:
                 fig_path = 'covasim.png' # Just give it a default name
+            fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
             pl.savefig(fig_path)
 
         if do_show:
