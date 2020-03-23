@@ -57,7 +57,6 @@ def sample(dist=None, par1=None, par2=None, size=None):
     return samples
 
 
-
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
 
@@ -81,6 +80,7 @@ def bt(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
+
 @nb.njit((nb.float64[:], nb.int64))
 def mt(probs, repeats):
     ''' A multinomial trial '''
@@ -91,7 +91,6 @@ def mt(probs, repeats):
 def pt(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
-
 
 
 @nb.njit((nb.int64, nb.int64))

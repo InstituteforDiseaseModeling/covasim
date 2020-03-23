@@ -25,10 +25,9 @@ def test_import():
 def test_pop_options(doplot=False): # If being run via pytest, turn off
     sc.heading('Basic populations tests')
 
-    popchoices = ['random', 'bayesian']
+    popchoices = ['random', 'bayesian', 'data']
 
     basepars = {
-        'scale': 1,
         'n': 3000,
         'n_infected': 10,
         'contacts': 20,
@@ -37,6 +36,7 @@ def test_pop_options(doplot=False): # If being run via pytest, turn off
 
     sims = sc.objdict()
     for popchoice in popchoices:
+        sc.heading(f'Running {popchoice}')
         sims[popchoice] = cova.Sim()
         sims[popchoice].update_pars(basepars)
         sims[popchoice]['usepopdata'] = popchoice
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     sc.tic()
 
     test_import()
-    sim     = test_pop_options(doplot=doplot)
+    sims = test_pop_options(doplot=doplot)
 
     sc.toc()
 

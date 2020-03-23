@@ -41,7 +41,7 @@ def make_pars():
     pars['diag_factor']    = 1.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']       = 20
-    pars['beta_pop']       = {'H': 1.5,  'S': 1.0,   'W': 1.0,  'R': 0.2} # Per-population beta weights; relative
+    pars['beta_pop']       = {'H': 1.5,  'S': 1.5,   'W': 1.5,  'R': 0.5} # Per-population beta weights; relative
     pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
 
     # Disease progression
@@ -82,15 +82,8 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None
     '''
     Define age-sex distributions.
     '''
-    if use_data:
-        try:
-            import synthpops as sp
-        except ImportError as E:
-            raise ImportError(f'Could not load synthpops; set sim["usepopdata"] = False or install ({str(E)})')
-        age, sex = sp.get_seattle_age_sex() # TODO -- make more general
-    else:
-        sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
-        age = _get_norm_age(min_age, max_age, age_mean, age_std)
+    sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
+    age = _get_norm_age(min_age, max_age, age_mean, age_std)
 
     # Get case fatality rate for a person of this age
     cfr = get_cfr(age=age, default_cfr=default_cfr, cfr_by_age=cfr_by_age)

@@ -204,7 +204,7 @@ class Sim(cv.Sim):
         self.uids = uids
         self.people = people
 
-        # Make the contact matrix
+        # Make the contact matrix -- TODO: move into a separate function
         if self['usepopdata'] == 'random':
             if verbose>=2:
                 print(f'Creating contact matrix without data...')
@@ -218,11 +218,24 @@ class Sim(cv.Sim):
             import synthpops as sp
 
             self.contact_keys = self['contacts_pop'].keys()
-            options_args = dict.fromkeys(['use_age','use_sex','use_loc','use_usa','use_social_layers'], True)
-            popdict = sp.make_popdict(uids=self.uids)
-            popdict = sp.make_contacts(popdict, options_args=options_args)
-            popdict = sc.odict(popdict)
-            for p,uid,entry in popdict.enumitems():
+
+            make_contacts_keys = ['use_age','use_sex','use_loc','use_social_layers']
+            options_args = dict.fromkeys(make_contacts_keys, True)
+            if self['usepopdata'] == 'bayesian':
+                bayesian_args = sc.dcp(options_args)
+                bayesian_args['use_bayesian'] = True
+                bayesian_args['use_usa'] = False
+                popdict = sp.make_popdict(uids=self.uids, use_bayesian=True)
+                contactdict = sp.make_contacts(popdict, options_args=bayesian_args)
+            elif self['usepopdata'] == 'data':
+                data_args = sc.dcp(options_args)
+                data_args['use_bayesian'] = False
+                data_args['use_usa'] = True
+                popdict = sp.make_popdict(uids=self.uids, use_bayesian=False)
+                contactdict = sp.make_contacts(popdict, options_args=data_args)
+
+            contactdict = sc.odict(contactdict)
+            for p,uid,entry in contactdict.enumitems():
                 person = self.get_person(p)
                 person.age = entry['age']
                 person.sex = entry['sex']
