@@ -114,15 +114,8 @@ def get_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
     return cfr
 
 
-def load_data(filename=None):
+def load_data(filename):
     ''' Load data for comparing to the model output '''
-
-    default_datafile = 'oregon-data.xlsx'
-
-    # Handle default filename
-    if filename is None:
-        cwd = os.path.abspath(os.path.dirname(__file__))
-        filename = os.path.join(cwd, default_datafile)
 
     # Load data
     raw_data = pd.read_excel(filename)

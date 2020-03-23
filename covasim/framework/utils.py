@@ -138,7 +138,7 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10):
     if tries == max_tries:
         errormsg = f'Unable to choose {n_samples} unique samples from {n_people} people after {max_tries} tries'
         raise RuntimeError(errormsg)
-    inds = unique_inds[:n]
+    inds = unique_inds[:int(n)]
     return inds
 
 

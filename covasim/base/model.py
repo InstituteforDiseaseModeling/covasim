@@ -82,7 +82,10 @@ class Sim(cv.Sim):
     def __init__(self, pars=None, datafile=None):
         default_pars = cvpars.make_pars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
-        self.data = None # cvpars.load_data(datafile)
+        self.datafile = datafile # Store this
+        self.data = None
+        if datafile is not None: # If a data file is provided, load it
+            self.data = cvpars.load_data(datafile)
         self.stopped = None # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
         if pars is not None:
