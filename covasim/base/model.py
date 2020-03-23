@@ -664,6 +664,10 @@ class Sim(cv.Sim):
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+            for day in self['interv_days']:
+                ylims = pl.ylim()
+                pl.plot([day,day], ylims, '--')
+
             pl.grid(use_grid)
             cv.fixaxis(self)
             sc.commaticks()

@@ -113,7 +113,7 @@ if do_run:
         for reskey in reskeys:
             scenraw[reskey] = pl.zeros((npts, n))
             for s,sim in enumerate(scen_sims):
-                scenraw[reskey][:,s] = sim.results[reskey][:]
+                scenraw[reskey][:,s] = sim.results[reskey].values
 
         scenres = sc.objdict()
         scenres.best = {}
