@@ -527,7 +527,7 @@ class Sim(cv.Sim):
                 if r > 1:  # Avoid divide by zero
                     doubling_time = window*np.log(2)/np.log(r)
                     doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
-                self.results['doubling_time'][t] = doubling_time
+                    self.results['doubling_time'][t] = doubling_time
 
             # Effective reproductive number based on number still susceptible -- TODO: use data instead
             # self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
