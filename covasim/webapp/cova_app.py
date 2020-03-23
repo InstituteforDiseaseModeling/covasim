@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 import sciris as sc
 import covasim as cv
 import base64 # Download/upload-specific import
-
+import json
 
 # Check requirements, and if met, import scirisweb
 cv._requirements.check_scirisweb(die=True)
@@ -209,7 +209,12 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
                 if interv_day > 0 and interv_day < sim['n_days']:
                     fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-            graphs.append({'json':fig.to_json(),'id':str(sc.uuid())})
+
+            output = {'json': fig.to_json(), 'id': str(sc.uuid())}
+            d = json.loads(output['json'])
+            d['config'] = {'responsive': True}
+            output['json'] = json.dumps(d)
+            graphs.append(output)
 
         graphs.append(plot_people(sim))
         graphs.append(animate_people(sim))
@@ -233,10 +238,10 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
-        json = sim.to_json()
+        json_string = sim.to_json()
         files['json'] = {
             'filename': f'COVASim_results_{datestamp}.txt',
-            'content': 'data:application/text;base64,' + base64.b64encode(json.encode()).decode("utf-8"),
+            'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 
         # Summary output
@@ -261,44 +266,99 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     return output
 
 
-def plot_people(sim: cv.Sim) -> dict:
-
+def get_individual_states(sim):
     people = sorted(sim.people.values(), key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
 
-    states = ['Healthy','Exposed','Infectious','Recovered','Dead']
-    quantities = [None, 'date_exposed','date_infectious','date_recovered','date_died']
+    # Order these in order of precedence
+    # The last matching quantity will be used
+    states = [
+        {'name': 'Healthy',
+         'quantity': None,
+         'color': 'rgb(163, 197, 255)',
+         'value': 0
+         },
+        {'name': 'Exposed',
+         'quantity': 'date_exposed',
+         'color': 'rgb(255, 175, 117)',
+         'value': 2
+         },
+        {'name': 'Infectious',
+         'quantity': 'date_infectious',
+         'color': 'rgb(255, 97, 97)',
+         'value': 3
+         },
+        {'name': 'Recovered',
+         'quantity': 'date_recovered',
+         'color': 'rgb(134, 181, 147)',
+         'value': 4
+         },
+        {'name': 'Dead',
+         'quantity': 'date_died',
+         'color': 'rgb(0, 0, 0)',
+         'value': 5
+         },
+    ]
+
+    # Could use sciris colors
+    # colors = sc.gridcolors(len(states))
+    # for i, color in enumerate(colors):
+    #     states[i]['color'] = 'rgb(%d,%d,%d)' % (255 * color[0], 255 * color[1], 255 * color[2])
 
     z = np.zeros((len(people), sim.npts))
 
     for i, p in enumerate(people):
-        for j, (state, quantity) in enumerate(zip(states, quantities)):
-            if quantity is None:
+        for state in states:
+            if state['quantity'] is None:
                 continue
-            elif getattr(p, quantity) is not None:
-                z[i, int(getattr(p, quantity)):] = j
+            elif getattr(p, state['quantity']) is not None:
+                z[i, int(getattr(p, state['quantity'])):] = state['value']
 
-    fig = go.Figure(data=go.Heatmap(z=z))
+    return z, states
 
-    fig.update_layout(title={'text': 'Individual states'}, xaxis_title='Day', yaxis_title='Person', autosize=True)
-    return {'json': fig.to_json(), 'id': str(sc.uuid())}
+def plot_people(sim) -> dict:
+    z, states = get_individual_states(sim)
 
-def animate_people(sim: cv.Sim) -> dict:
+    fig = go.Figure()
 
-    people = sorted(sim.people.values(), key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
+    for state in states[::-1]:  # Reverse order for plotting
+        fig.add_trace(go.Scatter(
+            x=sim.tvec, y=(z == state['value']).sum(axis=0),
+            stackgroup='one',
+            line=dict(width=0.5, color=state['color']),
+            fillcolor=state['color'],
+            hoverinfo="y+name",
+            name=state['name']
+        ))
 
-    states = ['Healthy','Exposed','Infectious','Recovered','Dead']
-    quantities = [None, 'date_exposed','date_infectious','date_recovered','date_died']
+    if len(sim['interv_days']):
+        interv_day = sim['interv_days'][0]
+        if interv_day > 0 and interv_day < sim['n_days']:
+            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
 
-    z = np.zeros((int(np.ceil(len(people) ** 0.5) ** 2), sim.npts))
+    fig.update_layout(yaxis_range=(0, sim.n))
+    fig.update_layout(title={'text': 'Epidemic'}, xaxis_title='Day', yaxis_title='People', autosize=True)
 
-    for i, p in enumerate(people):
-        for j, (state, quantity) in enumerate(zip(states, quantities)):
-            if quantity is None:
-                continue
-            elif getattr(p, quantity) is not None:
-                z[i, int(getattr(p, quantity)):] = j
+    output = {'json': fig.to_json(), 'id': str(sc.uuid())}
+    d = json.loads(output['json'])
+    d['config'] = {'responsive': True}
+    output['json'] = json.dumps(d)
 
-    z = np.reshape(z, (int(z.shape[0] ** 0.5), int(z.shape[0] ** 0.5), -1))
+    return output
+
+def animate_people(sim) -> dict:
+    z, states = get_individual_states(sim)
+
+    min_color = min(states, key=lambda x: x['value'])['value']
+    max_color = max(states, key=lambda x: x['value'])['value']
+    colorscale = [[x['value'] / max_color, x['color']] for x in states]
+
+    aspect = 3
+    y_size = int(np.ceil((z.shape[0] / aspect) ** 0.5))
+    x_size = int(np.ceil(aspect * y_size))
+
+    z = np.pad(z, ((0, x_size * y_size - z.shape[0]), (0, 0)), mode='constant', constant_values=np.nan)
+
+    #     z = np.reshape(z, (x_size, y_size, -1))
 
     days = sim.tvec
 
@@ -355,16 +415,26 @@ def animate_people(sim: cv.Sim) -> dict:
     }
 
     # make data
-    fig_dict["data"] = [go.Heatmap(z=z[:, :, 0], zmin=0, zmax=len(states)-1)]
+    fig_dict["data"] = [go.Heatmap(z=np.reshape(z[:, 0], (y_size, x_size)),
+                                   zmin=min_color,
+                                   zmax=max_color,
+                                   colorscale=colorscale,
+                                   showscale=False,
+                                   )]
+
+    for state in states:
+        fig_dict["data"].append(go.Scatter(x=[None], y=[None], mode='markers',
+                                           marker=dict(size=10, color=state['color']),
+                                           showlegend=True, name=state['name']))
 
     # make frames
     for i, day in enumerate(days):
-        frame = {"data": [go.Heatmap(z=z[:, :, i])],
+        frame = {"data": [go.Heatmap(z=np.reshape(z[:, i], (y_size, x_size)))],
                  "name": i}
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
             [i],
-            {"frame": {"duration": 100, "redraw": True},
+            {"frame": {"duration": 5, "redraw": True},
              "mode": "immediate", }
         ],
             "label": i,
@@ -375,9 +445,38 @@ def animate_people(sim: cv.Sim) -> dict:
 
     fig = go.Figure(fig_dict)
 
-    return {'json': fig.to_json(), 'id': str(sc.uuid())}
+    fig.update_layout(
+    autosize=True,
+        xaxis=dict(
+            automargin=True,
+            range=[-0.5, x_size + 0.5],
+            constrain="domain",
+            showgrid=False,
+            showline=False,
+            showticklabels=False,
+        ),
+        yaxis=dict(
+            automargin=True,
+            range=[-0.5, y_size + 0.5],
+            constrain="domain",
+            scaleanchor="x",
+            scaleratio=1,
+            showgrid=False,
+            showline=False,
+            showticklabels=False,
+        ),
+    )
 
+    fig.update_layout(
+        plot_bgcolor='#fff'
+    )
 
+    output = {'json': fig.to_json(), 'id': str(sc.uuid())}
+    d = json.loads(output['json'])
+    d['config'] = {'responsive': True}
+    output['json'] = json.dumps(d)
+
+    return output
 
 #%% Run the server using Flask
 if __name__ == "__main__":
