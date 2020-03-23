@@ -27,7 +27,7 @@ def make_pars():
     pars['n']          = 10e3 # Number ultimately susceptible to CoV
     pars['n_infected'] = 10 # Number of seed cases
     pars['start_day']  = datetime(2020, 3, 1) # Start day of the simulation
-    pars['n_days']     = 120 # Number of days of run, if end_day isn't used
+    pars['n_days']     = 20 # Number of days of run, if end_day isn't used
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 0 # Whether or not to load actual population data
@@ -66,8 +66,9 @@ def make_pars():
     pars['default_cfr']    = 0.016 # Default overall case fatality rate if not using age-specific values
 
     # Events and interventions
-    pars['interv_days'] = []# [30, 44]  # Day on which interventions started/stopped
-    pars['interv_effs'] = []# [0.1, 10] # Change in transmissibility
+    pars['interv_days'] = [] # Day on which interventions started/stopped, e.g. [30, 44]
+    pars['interv_effs'] = [] # Change in transmissibility, e.g. [0.1, 10]
+    pars['interv_func'] = None # Custom intervention function
 
     return pars
 

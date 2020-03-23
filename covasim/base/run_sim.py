@@ -12,8 +12,8 @@ sc.tic()
 import covasim as cova
 sc.toc()
 
-do_plot = 1
-do_save = 1
+do_plot = 0
+do_save = 0
 do_show = 0
 verbose = 1
 seed    = 1
@@ -35,3 +35,16 @@ sim.run(verbose=verbose)
 if do_plot:
     print('Plotting...')
     fig = sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+
+
+# Test doubling time
+#dt1 = sim.get_doubling_time(interval=[3,20])
+#dt2 = sim.get_doubling_time(start_day=3,end_day=20)
+dt3 = sim.get_doubling_time(start_day=3, end_day=20, moving_window=4)
+#dt4 = sim.get_doubling_time(interval=[3,20], moving_window=3)
+#dt5 = sim.get_doubling_time(interval=[3,20], moving_window=3, exp_approx=True)
+#import numpy as np
+#dt6 = sim.get_doubling_time(series=np.exp(range(50)), interval=[3,30], moving_window=3)
+
+
+
