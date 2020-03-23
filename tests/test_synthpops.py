@@ -1,123 +1,67 @@
 '''
-Simple example usage for the Covid-19 agent-based model
+Test different population options
 '''
 
 #%% Imports and settings
-import os
-import pytest
+import pylab as pl
 import sciris as sc
 import covasim as cova
 
-doplot = 0
+doplot = 1
 
 
 #%% Define the tests
 
-def test_parsobj():
-    sc.heading('Testing parameters object')
+def test_import():
+    sc.heading('Testing imports')
 
-    pars1 = {'a':1, 'b':2}
-    parsobj = cova.ParsObj(pars1)
+    assert cova._requirements.available['synthpops'] == True
+    import synthpops as sp
+    print(sp.datadir)
 
-    # Once created, you cannot directly add new keys to a parsobj, and a nonexistent key works like a dict
-    with pytest.raises(KeyError): parsobj['c'] = 3
-    with pytest.raises(KeyError): parsobj['c']
-
-    # Only a dict is allowed
-    with pytest.raises(TypeError):
-        pars2 = ['a', 'b']
-        cova.ParsObj(pars2)
-
-    return parsobj
+    return
 
 
-def test_sim(doplot=False): # If being run via pytest, turn off
-    sc.heading('Basic sim test')
+def test_pop_options(doplot=False): # If being run via pytest, turn off
+    sc.heading('Basic populations tests')
 
-    # Settings
-    seed = 1
-    verbose = 1
-
-    # Create and run the simulation
-    sim = cova.Sim()
-    sim.set_seed(seed)
-    sim.run(verbose=verbose)
-
-    # Optionally plot
-    if doplot:
-        sim.plot()
-
-    return sim
+    import synthpops as sp
 
 
-def test_singlerun():
-    sc.heading('Single run test')
+    popchoices = ['random', 'bayesian']
+    if sp.config.full_data_available:
+        popchoices.append('data')
 
-    iterpars = {'beta': 0.035,
-                'incub': 8,
-                }
+    basepars = {
+        'n': 3000,
+        'n_infected': 10,
+        'contacts': 20,
+        'n_days': 90
+        }
 
-    sim = cova.Sim()
-    sim = cova.single_run(sim=sim, **iterpars)
-
-    return sim
-
-
-def test_multirun(doplot=False): # If being run via pytest, turn off
-    sc.heading('Multirun test')
-
-    # Note: this runs 3 simulations, not 3x3!
-    iterpars = {'beta': [0.015, 0.025, 0.035],
-                'incub': [4, 5, 6],
-                }
-
-    sim = cova.Sim() # Shouldn't be necessary, but is for now
-    sim['n_days'] = 60
-    sims = cova.multi_run(sim=sim, iterpars=iterpars)
+    sims = sc.objdict()
+    for popchoice in popchoices:
+        sc.heading(f'Running {popchoice}')
+        sims[popchoice] = cova.Sim()
+        sims[popchoice].update_pars(basepars)
+        sims[popchoice]['usepopdata'] = popchoice
+        sims[popchoice].run()
 
     if doplot:
-        for sim in sims:
+        for key,sim in sims.items():
             sim.plot()
+            pl.gcf().axes[0].set_title(f'Counts: {key}')
 
     return sims
 
-
-def test_fileio():
-    sc.heading('Test file saving')
-
-    json_path = 'test_covasim.json'
-    xlsx_path = 'test_covasim.xlsx'
-
-    # Create and run the simulation
-    sim = cova.Sim()
-    sim['n_days'] = 20
-    sim.run(verbose=0)
-
-    # Create objects
-    json = sim.to_json()
-    xlsx = sim.to_xlsx()
-    print(xlsx)
-
-    # Save files
-    sim.to_json(json_path)
-    sim.to_xlsx(xlsx_path)
-
-    for path in [json_path, xlsx_path]:
-        print(f'Removing {path}')
-        os.remove(path)
-
-    return json
 
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    parsobj = test_parsobj()
-    sim     = test_sim(doplot=doplot)
-    sim     = test_singlerun()
-    sims    = test_multirun(doplot=doplot)
-    json    = test_fileio()
+    test_import()
+    sims = test_pop_options(doplot=doplot)
 
     sc.toc()
 
