@@ -108,14 +108,14 @@ def check_extra_libs():
         available['synthpops'] = True
         print(import_error)
 
-    # Check parestlib -- optional dependency
-    try:
-        import parestlib as _parest_available # noqa
-        available['parestlib'] = True
-    except ImportError as E:
-        import_error = f'Warning: parestlib is not available. Automated calibration will not be available. (Error: {str(E)})\n'
-        available['parestlib'] = True
-        print(import_error)
+    # # Check parestlib -- optional dependency -- not currently implemented
+    # try:
+    #     import parestlib as _parest_available # noqa
+    #     available['parestlib'] = True
+    # except ImportError as E:
+    #     import_error = f'Warning: parestlib is not available. Automated calibration will not be available. (Error: {str(E)})\n'
+    #     available['parestlib'] = True
+    #     print(import_error)
 
     return
 
