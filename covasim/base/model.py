@@ -9,7 +9,6 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
-import statsmodels.api as sm
 import covasim.framework as cv
 from . import parameters as cvpars
 
