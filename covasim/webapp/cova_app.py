@@ -76,7 +76,7 @@ def get_defaults(region=None, merge=False):
     sim_pars['n_days']      = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
     sim_pars['web_int_day'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (can be blank)')
     sim_pars['web_int_eff'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Reduction in infectiousness due to intervention')
-    sim_pars['seed']        = dict(best=1,    min=1, max=100,      name='Random seed',                tip='Random number seed (leave blank for random results)')
+    sim_pars['seed']        = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
 
     epi_pars = {}
     epi_pars['beta']        = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',     tip='Probability of infection per contact per day')
@@ -162,10 +162,10 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         sim['cfr_by_age'] = False # So the user can override this value
         sim['timelimit'] = max_time # Set the time limit
         sim.update_pars(pars=web_pars)
-        if web_pars['seed'] is not None:
+        if web_pars['seed'] != 0:
             sim.set_seed(int(web_pars['seed']))
         else:
-            sim.set_seed()
+            sim.set_seed(None)
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
