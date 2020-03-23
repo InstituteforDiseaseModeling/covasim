@@ -1,3 +1,7 @@
+'''
+Scraper to auto-generate the NOTICE file.
+'''
+
 import csv
 import json
 import os
@@ -10,6 +14,9 @@ from typing import Dict, List
 
 from importlib_metadata import distribution
 from typing.io import IO
+
+
+NOTICE_FILE = "NOTICE"
 
 
 project = Path(os.path.dirname(os.path.abspath(__file__))).parent.resolve()
@@ -114,7 +121,7 @@ def as_text(file: IO, reqs: List[Dict[str, str]]):
 
 
 if __name__ == '__main__':
-    default_outfile = project.joinpath("NOTICE")
+    default_outfile = project.joinpath(NOTICE_FILE)
     parser = ArgumentParser(description="Generate license NOTICE file for 3rd party packages")
     parser.add_argument("-f", "--format", default="text", choices=['text', 'json', 'csv'])
     parser.add_argument("-o", "--outfile", default=default_outfile.as_posix())
