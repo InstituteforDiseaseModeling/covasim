@@ -336,6 +336,7 @@ class Sim(cv.Sim):
         sympt_test       = self['sympt_test']
         trace_test       = self['trace_test']
         test_sensitivity = self['sensitivity']
+        burnin           = self['burnin']
 
         # Main simulation loop
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
@@ -523,16 +524,17 @@ class Sim(cv.Sim):
             self.results['diagnoses'][t]     = n_diagnoses
 
             # Calculate doubling time
-            cum_infections = pl.cumsum(self.results['infections'][:t+1])
-            nonzero = np.nonzero(cum_infections)[0] # Skip days with zero infections for the log2 below
-            if len(nonzero) >= 2: # Need at least 2 points
-                exog  = sm.add_constant(self.tvec[nonzero])
-                endog = np.log2(cum_infections[nonzero])
-                model = sm.OLS(endog, exog)
-                doubling_rate = model.fit().params[1]
-                if doubling_rate != 0: # If it's zero, skip
-                    doubling_time = 1.0 / doubling_rate
-                    self.results['doubling_time'][t] = doubling_time
+            if t >= burnin:
+                cum_infections = pl.cumsum(self.results['infections'][burnin:t+1]) + self['n_infected'] # Include initially infected people
+                nonzero = np.nonzero(cum_infections)[0] # Skip days with zero infections for the log2 below
+                if len(nonzero) >= 2: # Need at least 2 points
+                    exog  = sm.add_constant(np.arange(burnin,t+1)-burnin)
+                    endog = np.log2(cum_infections[nonzero])
+                    model = sm.OLS(endog, exog)
+                    doubling_rate = model.fit().params[1]
+                    if doubling_rate != 0: # If it's zero, skip
+                        doubling_time = 1.0 / doubling_rate
+                        self.results['doubling_time'][t] = doubling_time
 
             # Effective reproductive number based on number still susceptible
             self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
@@ -689,10 +691,11 @@ class Sim(cv.Sim):
 
         # Ensure the figure actually renders or saves
         if do_save:
-            if isinstance(do_save, str) and fig_path is None:
-                fig_path = do_save # It's a string, assume it's a filename
-            else:
-                fig_path = 'covasim.png' # Just give it a default name
+            if fig_path is None: # No figpath provided - see whether do_save is a figpath
+                if isinstance(do_save, str) :
+                    fig_path = do_save # It's a string, assume it's a filename
+                else:
+                    fig_path = 'covasim.png' # Just give it a default name
             pl.savefig(fig_path)
 
         if do_show:
