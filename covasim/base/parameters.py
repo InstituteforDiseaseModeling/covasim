@@ -2,7 +2,6 @@
 Set the parameters for COVID-ABM.
 '''
 
-import os
 import pylab as pl
 import pandas as pd
 from datetime import datetime
@@ -24,13 +23,13 @@ def make_pars():
     # Simulation parameters
     pars['scale']      = 1 # Factor by which to scale results -- e.g. 0.6*100 with n=10e3 assumes 60% of a population of 1m
 
-    pars['n']          = 10e3 # Number ultimately susceptible to CoV
+    pars['n']          = 20e3 # Number ultimately susceptible to CoV
     pars['n_infected'] = 10 # Number of seed cases
     pars['start_day']  = datetime(2020, 3, 1) # Start day of the simulation
-    pars['n_days']     = 120 # Number of days of run, if end_day isn't used
+    pars['n_days']     = 60 # Number of days of run, if end_day isn't used
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
-    pars['usepopdata'] = 0 # Whether or not to load actual population data
+    pars['usepopdata'] = 'random' # Whether or not to load actual population data
     pars['timelimit']  = 3600 # Time limit for a simulation (seconds)
     pars['stop_func']  = None # A function to call to stop the sim partway through
     pars['window']     = 7 # Integration window for doubling time and R_eff
@@ -121,7 +120,7 @@ def load_data(filename):
     raw_data = pd.read_excel(filename)
 
     # Confirm data integrity and simplify
-    cols = ['day', 'date', 'new_tests', 'new_positives', 'new_infections']
+    cols = ['day', 'date', 'new_tests', 'new_positives']
     data = pd.DataFrame()
     for col in cols:
         assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'

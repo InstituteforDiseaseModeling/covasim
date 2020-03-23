@@ -115,7 +115,7 @@ class Sim(cv.Sim):
 
         # Replace tests with data, if available
         if self.data is not None:
-            self['daily_tests'] = self.data['new_tests'] # Number of tests each day, from the data
+            self['daily_tests'] = np.array(self.data['new_tests']) # Number of tests each day, from the data
 
         # Ensure test counts are valid
         self['daily_tests'] = np.minimum(self['daily_tests'], self['n']) # Cannot do more tests than there are people

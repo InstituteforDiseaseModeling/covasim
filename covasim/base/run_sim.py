@@ -13,7 +13,7 @@ do_plot = 1
 do_save = 0
 do_show = 1
 verbose = 1
-seed    = 1
+seed    = 4
 
 version  = 'v0'
 date     = '2020mar21'
