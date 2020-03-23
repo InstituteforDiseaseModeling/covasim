@@ -6,6 +6,10 @@ Test different population options
 import pylab as pl
 import sciris as sc
 import covasim as cova
+try:
+    import synthpops as sp
+except:
+    print('Synthpops import failed')
 
 doplot = 1
 
@@ -26,6 +30,40 @@ def test_pop_options(doplot=False): # If being run via pytest, turn off
     sc.heading('Basic populations tests')
 
     import synthpops as sp
+
+
+    popchoices = ['random', 'bayesian']
+    if sp.config.full_data_available:
+        popchoices.append('data')
+
+    basepars = {
+        'n': 3000,
+        'n_infected': 10,
+        'contacts': 20,
+        'n_days': 90
+        }
+
+    sims = sc.objdict()
+    for popchoice in popchoices:
+        sc.heading(f'Running {popchoice}')
+        sims[popchoice] = cova.Sim()
+        sims[popchoice].update_pars(basepars)
+        sims[popchoice]['usepopdata'] = popchoice
+        sims[popchoice].run()
+
+    if doplot:
+        for key,sim in sims.items():
+            sim.plot()
+            pl.gcf().axes[0].set_title(f'Counts: {key}')
+
+    return sims
+
+
+
+def test_interventions(doplot=False): # If being run via pytest, turn off
+    sc.heading('Basic populations tests')
+
+
 
 
     popchoices = ['random', 'bayesian']
