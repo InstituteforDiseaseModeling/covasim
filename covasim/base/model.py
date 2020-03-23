@@ -183,7 +183,7 @@ class Sim(cv.Sim):
         if verbose is None:
             verbose = self['verbose']
 
-        sc.printv(f'Creating {self["n"]} people...', verbose, 1)
+        sc.printv(f'Creating {self["n"]} people...', 1, verbose)
 
         # Create the people -- just placeholders if we're using actual data
         people = {} # Dictionary for storing the people -- use plain dict since faster than odict
@@ -205,13 +205,13 @@ class Sim(cv.Sim):
 
         # Make the contact matrix -- TODO: move into a separate function
         if self['usepopdata'] == 'random':
-            sc.printv(f'Creating contact matrix without data...', verbose, 2)
+            sc.printv(f'Creating contact matrix without data...', 2, verbose)
             for p in range(int(self['n'])):
                 person = self.get_person(p)
                 person.n_contacts = cv.pt(self['contacts']) # Draw the number of Poisson contacts for this person
                 person.contact_inds = cv.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
         else:
-            sc.printv(f'Creating contact matrix with data...', verbose, 2)
+            sc.printv(f'Creating contact matrix with data...', 2, verbose)
             import synthpops as sp
 
             self.contact_keys = self['contacts_pop'].keys()
@@ -239,7 +239,7 @@ class Sim(cv.Sim):
                 person.cfr = cvpars.get_cfr(person.age, default_cfr=self['default_cfr'], cfr_by_age=self['cfr_by_age'])
                 person.contact_inds = entry['contacts']
 
-        sc.printv(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]:0.2f} years', verbose, 1)
+        sc.printv(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]:0.2f} years', 1, verbose)
 
         # Create the seed infections
         for i in range(int(self['n_infected'])):
@@ -267,7 +267,7 @@ class Sim(cv.Sim):
      {summary['cum_diagnosed']:5.0f} total diagnosed
      {summary['cum_deaths']:5.0f} total deaths
      {summary['cum_recoveries']:5.0f} total recovered
-               """, verbose, 1)
+               """, 1, verbose)
 
         return summary
 
@@ -319,8 +319,6 @@ class Sim(cv.Sim):
         # Reset settings and results
         if verbose is None:
             verbose = self['verbose']
-
-        printv = lambda v, string: sc.printv(string=string, thisverbose=v, verbose=verbose) # Simplify printing for different verbosity levels
         self.initialize() # Create people, results, etc.
 
         # Main simulation loop
@@ -388,10 +386,10 @@ class Sim(cv.Sim):
                     n_exposed += 1
                     if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
                         person.infectious = True
-                        printv(2, f'      Person {person.uid} became infectious!')
+                        sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
                     if not person.symptomatic and person.date_symptomatic is not None and t >= person.date_symptomatic:  # It's the day they develop symptoms
                         person.symptomatic = True
-                        printv(2, f'      Person {person.uid} developed symptoms!')
+                        sc.printv(f'      Person {person.uid} developed symptoms!', 2, verbose)
 
                 # If infectious, check if anyone gets infected
                 if person.infectious:
@@ -438,7 +436,7 @@ class Sim(cv.Sim):
                                         n_infections += 1
                                         self.infect_person(source_person=person, target_person=target_person, t=t)
                                         person.n_infected += 1
-                                        printv(2, f'        Person {person.uid} infected person {target_person.uid}!')
+                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
                         else:
                             for ckey in self.contact_keys:
@@ -458,7 +456,7 @@ class Sim(cv.Sim):
                                             n_infections += 1
                                             self.infect_person(source_person=person, target_person=target_person, t=t)
                                             person.n_infected += 1
-                                            printv(2, f'        Person {person.uid} infected person {target_person.uid} via {ckey}!')
+                                            sc.printv(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!', 2, verbose)
 
 
                 # Count people who developed symptoms
@@ -493,17 +491,17 @@ class Sim(cv.Sim):
                             n_diagnoses += 1
                             tested_person.diagnosed = True
                             tested_person.date_diagnosed = t
-                            sc.printv(f'          Person {tested_person.uid} was diagnosed at timestep {t}!', verbose, 2)
+                            sc.printv(f'          Person {tested_person.uid} was diagnosed at timestep {t}!', 2, verbose)
 
             # Implement quarantine
             if t in self['interv_days']:
                 ind = sc.findnearest(self['interv_days'], t)
                 if self['interv_func'] is not None: # Apply custom intervention function
-                    sc.printv(f'Applying custom intervention/change on day {t}...', verbose, 1)
+                    sc.printv(f'Applying custom intervention/change on day {t}...', 1, verbose)
                     self =self['interv_func'](self, t)
                 else:
                     eff = self['interv_effs'][ind]
-                    sc.printv(f'Applying intervention/change of {eff} on day {t}...', verbose, 1)
+                    sc.printv(f'Applying intervention/change of {eff} on day {t}...', 1, verbose)
                     self['beta'] *= eff # Just change beta
 
             # Update counts for this time step
@@ -551,7 +549,7 @@ class Sim(cv.Sim):
 
         # Tidy up
         self.results_ready = True
-        sc.printv(f'\nRun finished after {elapsed:0.1f} s.\n', verbose, 1)
+        sc.printv(f'\nRun finished after {elapsed:0.1f} s.\n', 1, verbose)
         self.results['summary'] = self.summary_stats()
 
         if do_plot:
@@ -582,11 +580,11 @@ class Sim(cv.Sim):
                     p = cv.poisson_test(datum, estimate)
                     logp = pl.log(p)
                     loglike += logp
-                    sc.printv(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', verbose, 2)
+                    sc.printv(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
         self.results['likelihood'] = loglike
 
-        sc.printv(f'Likelihood: {loglike}', verbose, 1)
+        sc.printv(f'Likelihood: {loglike}', 1, verbose)
 
         return loglike
 
@@ -620,7 +618,7 @@ class Sim(cv.Sim):
 
         if verbose is None:
             verbose = self['verbose']
-        sc.printv('Plotting...', verbose, 1)
+        sc.printv('Plotting...', 1, verbose)
 
         if fig_args     is None: fig_args     = {'figsize':(16,12)}
         if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7}
