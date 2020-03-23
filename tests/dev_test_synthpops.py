@@ -61,40 +61,70 @@ def test_interventions(doplot=False): # If being run via pytest, turn off
     sc.heading('Test interventions')
 
     popchoice = 'bayesian'
-    intervs = ['none', 'all', 'school', 'work', 'comm']
+    # intervs = ['none', 'all', 'S', 'W', 'R']
+    intervs = ['none', 'all', 'HSWR', 'SWR', 'H']
     interv_days = [21]
 
     basepars = {
         'n': 10000,
         'n_infected': 100,
-        'n_days': 60
+        'n_days': 60,
+        'interv_days': interv_days,
+        'usepopdata': popchoice,
         }
 
     def interv_func(sim, t, interv):
         if   interv == 'none':   sim['beta'] *= 1.0
         elif interv == 'all':    sim['beta'] *= 0.1
-        elif interv == 'school': sim['beta_pop']['S'] = 0
-        elif interv == 'work':   sim['beta_pop']['W'] = 0
-        elif interv == 'comm':   sim['beta_pop']['R'] = 0
         else:
-            raise KeyError(interv)
+            for key in interv: sim['beta_pop'][key] = 0
         return sim
 
+    # Create the base sim and initialize (since slow)
+    base_sim = cova.Sim()
+    base_sim.update_pars(basepars)
+    base_sim.initialize()
+
+    # Run the sims
     sims = sc.objdict()
     for interv in intervs:
         sc.heading(f'Running {interv}')
         interv_lambda = lambda sim,t: interv_func(sim=sim, t=t, interv=interv)
-        sims[interv] = cova.Sim()
-        sims[interv].update_pars(basepars)
-        sims[interv]['usepopdata'] = popchoice
-        sims[interv]['interv_days'] = interv_days
+        sims[interv] = sc.dcp(base_sim)
         sims[interv]['interv_func'] = interv_lambda
-        sims[interv].run()
+        sims[interv].run(initialize=False) # Since already initialized
 
     if doplot:
         for key,sim in sims.items():
             sim.plot()
             pl.gcf().axes[0].set_title(f'Counts: {key}')
+
+    return sims
+
+
+def test_simple_interv(doplot=False): # If being run via pytest, turn off
+    sc.heading('Test simple intervention')
+
+    def close_schools(sim, t):
+        sim['beta_pop']['S'] = 0
+        return sim
+
+    basepars = {
+        'n':           2000,
+        'n_infected':  100,
+        'n_days':      60,
+        'interv_days': [20],
+        'interv_func': close_schools,
+        'usepopdata':  'bayesian',
+        }
+
+    sim = cova.Sim()
+    sim.update_pars(basepars)
+    sim['interv_func'] = close_schools
+    sim.run()
+
+    if doplot:
+        sim.plot()
 
     return sims
 
@@ -107,6 +137,7 @@ if __name__ == '__main__':
     # test_import()
     # sims1 = test_pop_options(doplot=doplot)
     sims2 = test_interventions(doplot=doplot)
+    sims3 = test_simple_interv(oplot=doplot)
 
     sc.toc()
 

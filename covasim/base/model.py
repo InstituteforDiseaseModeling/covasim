@@ -311,7 +311,7 @@ class Sim(cv.Sim):
         return target_person
 
 
-    def run(self, verbose=None, calc_likelihood=False, do_plot=False, **kwargs):
+    def run(self, initialize=True, calc_likelihood=False, do_plot=False, verbose=None, **kwargs):
         ''' Run the simulation '''
 
         T = sc.tic()
@@ -319,7 +319,8 @@ class Sim(cv.Sim):
         # Reset settings and results
         if verbose is None:
             verbose = self['verbose']
-        self.initialize() # Create people, results, etc.
+        if initialize:
+            self.initialize() # Create people, results, etc.
 
         # Main simulation loop
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
