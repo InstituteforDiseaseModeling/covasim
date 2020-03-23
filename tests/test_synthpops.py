@@ -25,7 +25,12 @@ def test_import():
 def test_pop_options(doplot=False): # If being run via pytest, turn off
     sc.heading('Basic populations tests')
 
-    popchoices = ['random', 'bayesian', 'data']
+    import synthpops as sp
+
+
+    popchoices = ['random', 'bayesian']
+    if sp.config.full_data_available:
+        popchoices.append('data')
 
     basepars = {
         'n': 3000,
