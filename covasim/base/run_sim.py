@@ -18,7 +18,7 @@ version  = 'v0'
 date     = '2020mar21'
 folder   = 'results'
 basename = f'{folder}/covasim_run_{date}_{version}'
-fig_path = f'{basename}.png'
+fig_path = sc.makefilepath(f'{basename}.png')
 
 print('Making sim...')
 sc.tic()

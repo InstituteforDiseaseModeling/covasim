@@ -61,21 +61,35 @@ def test_interventions(doplot=False): # If being run via pytest, turn off
     sc.heading('Test interventions')
 
     popchoice = 'bayesian'
+    intervs = ['none', 'all', 'school', 'work', 'comm']
+    interv_days = [21]
 
     basepars = {
-        'n': 3000,
-        'n_infected': 10,
-        'contacts': 20,
-        'n_days': 90
+        'n': 10000,
+        'n_infected': 100,
+        'n_days': 60
         }
 
+    def interv_func(sim, t, interv):
+        if   interv == 'none':   sim['beta'] *= 1.0
+        elif interv == 'all':    sim['beta'] *= 0.1
+        elif interv == 'school': sim['beta_pop']['S'] = 0
+        elif interv == 'work':   sim['beta_pop']['W'] = 0
+        elif interv == 'comm':   sim['beta_pop']['R'] = 0
+        else:
+            raise KeyError(interv)
+        return sim
+
     sims = sc.objdict()
-    for popchoice in popchoices:
-        sc.heading(f'Running {popchoice}')
-        sims[popchoice] = cova.Sim()
-        sims[popchoice].update_pars(basepars)
-        sims[popchoice]['usepopdata'] = popchoice
-        sims[popchoice].run()
+    for interv in intervs:
+        sc.heading(f'Running {interv}')
+        interv_lambda = lambda sim,t: interv_func(sim=sim, t=t, interv=interv)
+        sims[interv] = cova.Sim()
+        sims[interv].update_pars(basepars)
+        sims[interv]['usepopdata'] = popchoice
+        sims[interv]['interv_days'] = interv_days
+        sims[interv]['interv_func'] = interv_lambda
+        sims[interv].run()
 
     if doplot:
         for key,sim in sims.items():
@@ -90,8 +104,9 @@ def test_interventions(doplot=False): # If being run via pytest, turn off
 if __name__ == '__main__':
     sc.tic()
 
-    test_import()
-    sims = test_pop_options(doplot=doplot)
+    # test_import()
+    # sims1 = test_pop_options(doplot=doplot)
+    sims2 = test_interventions(doplot=doplot)
 
     sc.toc()
 
