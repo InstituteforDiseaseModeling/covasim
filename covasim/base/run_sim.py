@@ -23,7 +23,7 @@ fig_path = f'{basename}.png'
 print('Making sim...')
 sc.tic()
 sim = cova.Sim()
-sim.set_seed(seed)
+sim.set_seed(None)
 
 print('Running...')
 sim.run(verbose=verbose)

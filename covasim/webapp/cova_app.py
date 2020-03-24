@@ -345,6 +345,7 @@ def plot_people(sim) -> dict:
 
     return output
 
+
 def animate_people(sim) -> dict:
     z, states = get_individual_states(sim)
 
@@ -372,7 +373,7 @@ def animate_people(sim) -> dict:
         {
             "buttons": [
                 {
-                    "args": [None, {"frame": {"duration": 100, "redraw": True},
+                    "args": [None, {"frame": {"duration": 200, "redraw": True},
                                     "fromcurrent": True}],
                     "label": "Play",
                     "method": "animate"
@@ -406,7 +407,7 @@ def animate_people(sim) -> dict:
             "visible": True,
             "xanchor": "right"
         },
-        "transition": {"duration": 100},
+        "transition": {"duration": 200},
         "pad": {"b": 10, "t": 50},
         "len": 0.9,
         "x": 0.1,
