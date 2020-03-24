@@ -161,11 +161,9 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         sim = cv.Sim()
         sim['cfr_by_age'] = False # So the user can override this value
         sim['timelimit'] = max_time # Set the time limit
-        sim.update_pars(pars=web_pars)
-        if web_pars['seed'] != 0:
-            sim.set_seed(int(web_pars['seed']))
-        else:
-            sim.set_seed(None)
+        if web_pars['seed'] == 0:
+            web_pars['seed'] = None # Reset
+        sim.update_pars(web_pars)
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
@@ -274,27 +272,27 @@ def get_individual_states(sim):
     states = [
         {'name': 'Healthy',
          'quantity': None,
-         'color': 'rgb(163, 197, 255)',
+         'color': '#b9d58a',
          'value': 0
          },
         {'name': 'Exposed',
          'quantity': 'date_exposed',
-         'color': 'rgb(255, 175, 117)',
+         'color': '#e37c30',
          'value': 2
          },
         {'name': 'Infectious',
          'quantity': 'date_infectious',
-         'color': 'rgb(255, 97, 97)',
+         'color': '#c35d86',
          'value': 3
          },
         {'name': 'Recovered',
          'quantity': 'date_recovered',
-         'color': 'rgb(134, 181, 147)',
+         'color': '#799956',
          'value': 4
          },
         {'name': 'Dead',
          'quantity': 'date_died',
-         'color': 'rgb(0, 0, 0)',
+         'color': '#000000',
          'value': 5
          },
     ]
@@ -314,6 +312,7 @@ def get_individual_states(sim):
                 z[i, int(getattr(p, state['quantity'])):] = state['value']
 
     return z, states
+
 
 def plot_people(sim) -> dict:
     z, states = get_individual_states(sim)
