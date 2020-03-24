@@ -83,7 +83,10 @@ class Sim(cv.Sim):
     def __init__(self, pars=None, datafile=None):
         default_pars = cvpars.make_pars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
-        self.data = None # cvpars.load_data(datafile)
+        self.datafile = datafile # Store this
+        self.data = None
+        if datafile is not None: # If a data file is provided, load it
+            self.data = cvpars.load_data(datafile)
         self.stopped = None # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
         if pars is not None:
@@ -113,7 +116,7 @@ class Sim(cv.Sim):
 
         # Replace tests with data, if available
         if self.data is not None:
-            self['daily_tests'] = self.data['new_tests'] # Number of tests each day, from the data
+            self['daily_tests'] = np.array(self.data['new_tests']) # Number of tests each day, from the data
 
         # Ensure test counts are valid
         self['daily_tests'] = np.minimum(self['daily_tests'], self['n']) # Cannot do more tests than there are people
@@ -738,6 +741,10 @@ class Sim(cv.Sim):
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+            for day in self['interv_days']:
+                ylims = pl.ylim()
+                pl.plot([day,day], ylims, '--')
+
             pl.grid(use_grid)
             cv.fixaxis(self)
             sc.commaticks()
