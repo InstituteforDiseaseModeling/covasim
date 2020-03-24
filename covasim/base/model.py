@@ -160,7 +160,6 @@ class Sim(cv.Sim):
         self.results['cum_diagnosed']  = init_res('Cumulative number diagnosed')
         self.results['cum_deaths']     = init_res('Cumulative number of deaths')
         self.results['cum_recoveries'] = init_res('Cumulative number recovered')
-        self.results['doubling_time']  = init_res('Doubling time', scale=False)
         self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
 
         self.reskeys = list(self.results.keys()) # Save the names of the main result keys
@@ -271,13 +270,13 @@ class Sim(cv.Sim):
 
         return summary
 
-    def get_doubling_time(self, series=None, interval=None, start_day=None, end_day=None, moving_window=None):
+    def get_doubling_time(self, series=None, interval=None, start_day=None, end_day=None, moving_window=None, exp_approx=False, max_doubling_time=100, eps=1e-3):
         '''
         Method to calculate doubling time
-        Can be used in 2 ways:
-        1. sim.get_doubling_time(interval=[3,30]) returns the doubling time over the given interval (single float)
-        2. sim.get_doubling_time(interval=[3,30], moving_window=3) returns doubling times calculated over moving windows (array)
-        Instead of an interval, can alternatively pass in the start and end days
+        Can be used in various ways:
+            1. sim.get_doubling_time(interval=[3,30]) returns the doubling time over the given interval (single float)
+            2. sim.get_doubling_time(interval=[3,30], moving_window=3) returns doubling times calculated over moving windows (array)
+        Instead of an interval, can pass in the start and end days (as integers - TODO, change this to accept dates)
         Can pass in a series or the name of a result
         '''
 
@@ -292,7 +291,7 @@ class Sim(cv.Sim):
             if not self.results_ready:
                 raise Exception(f"Results not ready, cannot calculate doubling time")
             else:
-                if series is None or series not in sim.reskeys:
+                if series is None or series not in self.reskeys:
                     print(f"Series not suplied or not found in results; defaulting to use cumulative exposures")
                     series='cum_exposed'
                 series = self.results[series].values
@@ -310,26 +309,45 @@ class Sim(cv.Sim):
 
             else:
                 if not isinstance(moving_window,int):
-                    print(f"Moving window should be an integer; recasting {moving_window} an int")
+                    print(f"Moving window should be an integer; recasting {moving_window} the nearest integer... ")
                     moving_window = int(moving_window)
+                if moving_window < 2:
+                    print(f"Moving window should be greater than 1; recasting {moving_window} to 2")
+                    moving_window = 2
 
                 doubling_time = []
                 for w in range(int_length-moving_window+1):
                     this_start = start_day + w
                     this_end = this_start + moving_window
-                    this_doubling_time = self.get_doubling_time(series=series, start_day=this_start, end_day=this_end)
+                    this_doubling_time = self.get_doubling_time(series=series, start_day=this_start, end_day=this_end, exp_approx=exp_approx)
                     doubling_time.append(this_doubling_time)
 
         # Do calculations
         else:
-            exog  = sm.add_constant(np.arange(int_length))
-            endog = np.log2(series[start_day:end_day])
-            model = sm.OLS(endog, exog)
-            doubling_rate = model.fit().params[1]
-            if doubling_rate != 0:
-                doubling_time = 1.0 / doubling_rate
+            if exp_approx:
+                if series[start_day] > 0:
+                    r = series[end_day] / series[start_day]
+                    if r > 1:
+                        doubling_time = int_length * np.log(2) / np.log(r)
+                        doubling_time = min(doubling_time, max_doubling_time)  # Otherwise, it's unbounded
+                else:
+                    raise Exception(f"Can't calculate doubling time with exponential approximation when initial value is zero.")
             else:
-                doubling_time = np.inf # TODO - something better here
+                if np.any(series[start_day:end_day]): # Deal with zero values if possible
+                    nonzero = np.nonzero(series[start_day:end_day])[0]
+                    if len(nonzero) >= 2:
+                        exog  = sm.add_constant(np.arange(len(nonzero)))
+                        endog = np.log2((series[start_day:end_day])[nonzero])
+                        model = sm.OLS(endog, exog)
+                        doubling_rate = model.fit().params[1]
+                        if doubling_rate > eps:
+                            doubling_time = 1.0 / doubling_rate
+                        else:
+                            doubling_time = max_doubling_time
+
+                    else: raise Exception(f"Can't calculate doubling time for series {series[start_day:end_day]}. Check whether series is growing.")
+
+                else: raise Exception(f"Can't calculate doubling time for series {series[start_day:end_day]}. Check whether series is growing.")
 
         return doubling_time
 
