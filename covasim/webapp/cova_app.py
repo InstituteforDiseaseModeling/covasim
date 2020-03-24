@@ -296,11 +296,6 @@ def get_individual_states(sim):
          },
     ]
 
-    # Could use sciris colors
-    # colors = sc.gridcolors(len(states))
-    # for i, color in enumerate(colors):
-    #     states[i]['color'] = 'rgb(%d,%d,%d)' % (255 * color[0], 255 * color[1], 255 * color[2])
-
     z = np.zeros((len(people), sim.npts))
 
     for i, p in enumerate(people):
