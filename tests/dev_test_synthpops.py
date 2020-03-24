@@ -126,7 +126,7 @@ def test_simple_interv(doplot=False): # If being run via pytest, turn off
     if doplot:
         sim.plot()
 
-    return sims
+    return sim
 
 
 
