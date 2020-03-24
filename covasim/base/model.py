@@ -96,7 +96,7 @@ class Sim(cv.Sim):
     def initialize(self):
         ''' Perform all initializations '''
         self.validate_pars()
-        self.set_seed(self['seed'])
+        self.set_seed()
         self.init_results()
         self.init_people()
         return

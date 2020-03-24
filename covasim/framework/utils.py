@@ -67,7 +67,11 @@ def set_seed(seed=None):
     def set_seed_regular(seed):
         return np.random.seed(seed)
 
-    set_seed_regular(seed)
+    # Dies if a float is given
+    if seed is not None:
+        seed = int(seed)
+
+    set_seed_regular(seed) # If None, reinitializes it
     if seed is None: # Numba can't accept a None seed, so use our just-reinitialized Numpy stream to generate one
         seed = np.random.randint(1e9)
     set_seed_numba(seed)

@@ -5,12 +5,12 @@ Sciris app to run the web interface.
 # Key imports
 import os
 import sys
-import pylab as pl
+import numpy as np
 import plotly.graph_objects as go
 import sciris as sc
 import covasim as cv
 import base64 # Download/upload-specific import
-
+import json
 
 # Check requirements, and if met, import scirisweb
 cv._requirements.check_scirisweb(die=True)
@@ -135,7 +135,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
             maxval = defaults[key]['max']
 
             try:
-                web_pars[key] = pl.median([float(entry['best']), minval, maxval])
+                web_pars[key] = np.median([float(entry['best']), minval, maxval])
             except Exception:
                 user_key = entry['name']
                 user_val = entry['best']
@@ -160,11 +160,9 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         sim = cv.Sim()
         sim['cfr_by_age'] = False # So the user can override this value
         sim['timelimit'] = max_time # Set the time limit
-        sim.update_pars(pars=web_pars)
-        if web_pars['seed'] != 0:
-            sim.set_seed(int(web_pars['seed']))
-        else:
-            sim.set_seed(None)
+        if web_pars['seed'] == 0:
+            web_pars['seed'] = None # Reset
+        sim.update_pars(web_pars)
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
@@ -208,7 +206,16 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
                 if interv_day > 0 and interv_day < sim['n_days']:
                     fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-            graphs.append({'json':fig.to_json(),'id':str(sc.uuid())})
+
+            output = {'json': fig.to_json(), 'id': str(sc.uuid())}
+            d = json.loads(output['json'])
+            d['config'] = {'responsive': True}
+            output['json'] = json.dumps(d)
+            graphs.append(output)
+
+        graphs.append(plot_people(sim))
+        graphs.append(animate_people(sim))
+
     except Exception as E:
         err5 = f'Plotting failed! {str(E)}\n'
         print(err5)
@@ -228,10 +235,10 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
-        json = sim.to_json()
+        json_string = sim.to_json()
         files['json'] = {
             'filename': f'COVASim_results_{datestamp}.txt',
-            'content': 'data:application/text;base64,' + base64.b64encode(json.encode()).decode("utf-8"),
+            'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 
         # Summary output
@@ -255,6 +262,213 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
 
     return output
 
+
+def get_individual_states(sim):
+    people = sorted(sim.people.values(), key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
+
+    # Order these in order of precedence
+    # The last matching quantity will be used
+    states = [
+        {'name': 'Healthy',
+         'quantity': None,
+         'color': '#b9d58a',
+         'value': 0
+         },
+        {'name': 'Exposed',
+         'quantity': 'date_exposed',
+         'color': '#e37c30',
+         'value': 2
+         },
+        {'name': 'Infectious',
+         'quantity': 'date_infectious',
+         'color': '#c35d86',
+         'value': 3
+         },
+        {'name': 'Recovered',
+         'quantity': 'date_recovered',
+         'color': '#799956',
+         'value': 4
+         },
+        {'name': 'Dead',
+         'quantity': 'date_died',
+         'color': '#000000',
+         'value': 5
+         },
+    ]
+
+    z = np.zeros((len(people), sim.npts))
+
+    for i, p in enumerate(people):
+        for state in states:
+            if state['quantity'] is None:
+                continue
+            elif getattr(p, state['quantity']) is not None:
+                z[i, int(getattr(p, state['quantity'])):] = state['value']
+
+    return z, states
+
+
+def plot_people(sim) -> dict:
+    z, states = get_individual_states(sim)
+
+    fig = go.Figure()
+
+    for state in states[::-1]:  # Reverse order for plotting
+        fig.add_trace(go.Scatter(
+            x=sim.tvec, y=(z == state['value']).sum(axis=0),
+            stackgroup='one',
+            line=dict(width=0.5, color=state['color']),
+            fillcolor=state['color'],
+            hoverinfo="y+name",
+            name=state['name']
+        ))
+
+    if len(sim['interv_days']):
+        interv_day = sim['interv_days'][0]
+        if interv_day > 0 and interv_day < sim['n_days']:
+            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+
+    fig.update_layout(yaxis_range=(0, sim.n))
+    fig.update_layout(title={'text': 'Epidemic'}, xaxis_title='Day', yaxis_title='People', autosize=True)
+
+    output = {'json': fig.to_json(), 'id': str(sc.uuid())}
+    d = json.loads(output['json'])
+    d['config'] = {'responsive': True}
+    output['json'] = json.dumps(d)
+
+    return output
+
+
+def animate_people(sim) -> dict:
+    z, states = get_individual_states(sim)
+
+    min_color = min(states, key=lambda x: x['value'])['value']
+    max_color = max(states, key=lambda x: x['value'])['value']
+    colorscale = [[x['value'] / max_color, x['color']] for x in states]
+
+    aspect = 3
+    y_size = int(np.ceil((z.shape[0] / aspect) ** 0.5))
+    x_size = int(np.ceil(aspect * y_size))
+
+    z = np.pad(z, ((0, x_size * y_size - z.shape[0]), (0, 0)), mode='constant', constant_values=np.nan)
+
+    days = sim.tvec
+
+    fig_dict = {
+        "data": [],
+        "layout": {},
+        "frames": []
+    }
+
+    fig_dict["layout"]["updatemenus"] = [
+        {
+            "buttons": [
+                {
+                    "args": [None, {"frame": {"duration": 200, "redraw": True},
+                                    "fromcurrent": True}],
+                    "label": "Play",
+                    "method": "animate"
+                },
+                {
+                    "args": [[None], {"frame": {"duration": 0, "redraw": True},
+                                      "mode": "immediate",
+                                      "transition": {"duration": 0}}],
+                    "label": "Pause",
+                    "method": "animate"
+                }
+            ],
+            "direction": "left",
+            "pad": {"r": 10, "t": 87},
+            "showactive": False,
+            "type": "buttons",
+            "x": 0.1,
+            "xanchor": "right",
+            "y": 0,
+            "yanchor": "top"
+        }
+    ]
+
+    sliders_dict = {
+        "active": 0,
+        "yanchor": "top",
+        "xanchor": "left",
+        "currentvalue": {
+            "font": {"size": 20},
+            "prefix": "Day:",
+            "visible": True,
+            "xanchor": "right"
+        },
+        "transition": {"duration": 200},
+        "pad": {"b": 10, "t": 50},
+        "len": 0.9,
+        "x": 0.1,
+        "y": 0,
+        "steps": []
+    }
+
+    # make data
+    fig_dict["data"] = [go.Heatmap(z=np.reshape(z[:, 0], (y_size, x_size)),
+                                   zmin=min_color,
+                                   zmax=max_color,
+                                   colorscale=colorscale,
+                                   showscale=False,
+                                   )]
+
+    for state in states:
+        fig_dict["data"].append(go.Scatter(x=[None], y=[None], mode='markers',
+                                           marker=dict(size=10, color=state['color']),
+                                           showlegend=True, name=state['name']))
+
+    # make frames
+    for i, day in enumerate(days):
+        frame = {"data": [go.Heatmap(z=np.reshape(z[:, i], (y_size, x_size)))],
+                 "name": i}
+        fig_dict["frames"].append(frame)
+        slider_step = {"args": [
+            [i],
+            {"frame": {"duration": 5, "redraw": True},
+             "mode": "immediate", }
+        ],
+            "label": i,
+            "method": "animate"}
+        sliders_dict["steps"].append(slider_step)
+
+    fig_dict["layout"]["sliders"] = [sliders_dict]
+
+    fig = go.Figure(fig_dict)
+
+    fig.update_layout(
+    autosize=True,
+        xaxis=dict(
+            automargin=True,
+            range=[-0.5, x_size + 0.5],
+            constrain="domain",
+            showgrid=False,
+            showline=False,
+            showticklabels=False,
+        ),
+        yaxis=dict(
+            automargin=True,
+            range=[-0.5, y_size + 0.5],
+            constrain="domain",
+            scaleanchor="x",
+            scaleratio=1,
+            showgrid=False,
+            showline=False,
+            showticklabels=False,
+        ),
+    )
+
+    fig.update_layout(
+        plot_bgcolor='#fff'
+    )
+
+    output = {'json': fig.to_json(), 'id': str(sc.uuid())}
+    d = json.loads(output['json'])
+    d['config'] = {'responsive': True}
+    output['json'] = json.dumps(d)
+
+    return output
 
 #%% Run the server using Flask
 if __name__ == "__main__":
