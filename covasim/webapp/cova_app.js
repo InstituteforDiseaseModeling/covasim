@@ -10,8 +10,9 @@ const PlotlyChart = {
 
     mounted() {
         this.$nextTick(function () {
-                let x = JSON.parse(this.graph.json)
-                Plotly.react(this.graph.id, x.data, x.layout, {responsive: true});
+                let x = JSON.parse(this.graph.json);
+                x.responsive = true;
+                Plotly.react(this.graph.id, x);
             }
         )
     },
