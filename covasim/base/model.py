@@ -9,7 +9,6 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
-import statsmodels.api as sm
 import covasim.framework as cv
 from . import parameters as cvpars
 
@@ -83,7 +82,10 @@ class Sim(cv.Sim):
     def __init__(self, pars=None, datafile=None):
         default_pars = cvpars.make_pars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
-        self.data = None # cvpars.load_data(datafile)
+        self.datafile = datafile # Store this
+        self.data = None
+        if datafile is not None: # If a data file is provided, load it
+            self.data = cvpars.load_data(datafile)
         self.stopped = None # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
         if pars is not None:
@@ -94,7 +96,7 @@ class Sim(cv.Sim):
     def initialize(self):
         ''' Perform all initializations '''
         self.validate_pars()
-        self.set_seed(self['seed'])
+        self.set_seed()
         self.init_results()
         self.init_people()
         return
@@ -113,7 +115,7 @@ class Sim(cv.Sim):
 
         # Replace tests with data, if available
         if self.data is not None:
-            self['daily_tests'] = self.data['new_tests'] # Number of tests each day, from the data
+            self['daily_tests'] = np.array(self.data['new_tests']) # Number of tests each day, from the data
 
         # Ensure test counts are valid
         self['daily_tests'] = np.minimum(self['daily_tests'], self['n']) # Cannot do more tests than there are people
@@ -360,6 +362,7 @@ class Sim(cv.Sim):
             sympt_test       = self['sympt_test']
             trace_test       = self['trace_test']
             test_sensitivity = self['sensitivity']
+            window           = self['window']
 
             # Print progress
             if verbose>=1:
@@ -517,19 +520,19 @@ class Sim(cv.Sim):
             self.results['diagnoses'][t]     = n_diagnoses
 
             # Calculate doubling time
-            cum_infections = pl.cumsum(self.results['infections'][:t+1])
-            nonzero = np.nonzero(cum_infections)[0] # Skip days with zero infections for the log2 below
-            if len(nonzero) >= 2: # Need at least 2 points
-                exog  = sm.add_constant(self.tvec[nonzero])
-                endog = np.log2(cum_infections[nonzero])
-                model = sm.OLS(endog, exog)
-                doubling_rate = model.fit().params[1]
-                if doubling_rate != 0: # If it's zero, skip
-                    doubling_time = 1.0 / doubling_rate
+            if t >= window:
+                max_doubling_time = 100 # Because
+                cum_infections = pl.cumsum(self.results['infections'][:t+1]) + self['n_infected'] # TODO: duplicated from below
+                infections_now = cum_infections[t]
+                infections_prev = cum_infections[t-window]
+                r = infections_now/infections_prev
+                if r > 1:  # Avoid divide by zero
+                    doubling_time = window*np.log(2)/np.log(r)
+                    doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
                     self.results['doubling_time'][t] = doubling_time
 
-            # Effective reproductive number based on number still susceptible
-            self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
+            # Effective reproductive number based on number still susceptible -- TODO: use data instead
+            # self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
 
         # Compute cumulative results
         self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values) + self['n_infected'] # Include initially infected people
@@ -661,6 +664,10 @@ class Sim(cv.Sim):
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+            for day in self['interv_days']:
+                ylims = pl.ylim()
+                pl.plot([day,day], ylims, '--')
+
             pl.grid(use_grid)
             cv.fixaxis(self)
             sc.commaticks()
@@ -679,10 +686,11 @@ class Sim(cv.Sim):
 
         # Ensure the figure actually renders or saves
         if do_save:
-            if isinstance(do_save, str) and fig_path is None:
-                fig_path = do_save # It's a string, assume it's a filename
-            else:
-                fig_path = 'covasim.png' # Just give it a default name
+            if fig_path is None: # No figpath provided - see whether do_save is a figpath
+                if isinstance(do_save, str) :
+                    fig_path = do_save # It's a string, assume it's a filename
+                else:
+                    fig_path = 'covasim.png' # Just give it a default name
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
             pl.savefig(fig_path)
 

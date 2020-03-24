@@ -11,8 +11,9 @@ sc.toc()
 
 do_plot = 1
 do_save = 0
+do_show = 1
 verbose = 1
-seed    = 1
+seed    = 4
 
 version  = 'v0'
 date     = '2020mar21'
@@ -27,5 +28,7 @@ sim.set_seed(seed)
 
 print('Running...')
 sim.run(verbose=verbose)
+
 if do_plot:
-    fig = sim.plot(do_save=do_save, fig_path=fig_path)
+    print('Plotting...')
+    fig = sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path, interval=7)

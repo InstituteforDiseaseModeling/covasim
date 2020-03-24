@@ -118,38 +118,20 @@ class Sim(ParsObj):
         super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
         return
 
-    def set_seed(self, seed: int = None, randomize: bool = False) -> None:
+    def set_seed(self, seed=-1) -> None:
         """
-        Set the seed for the random number stream
-
-        Examples:
-
-            >>> sim.set_seed(324) # Set sim['seed'] to 324 and reset the number stream
-
-            >>> sim.set_seed() # Using sim['seed'], reset the number stream
-
-            >>> sim.set_seed(randomize=True) # Randomize the number stream (no seed)
+        Set the seed for the random number stream from the stored or supplied value
 
         Args:
-            seed (int): Optional. Set seed and reset the random number stream.
-            randomize (bool): Optional. If True, randomly select seed
+            seed (None or int): if no argument, use current seed; if None, randomize; otherwise, use and store supplied seed
 
         Returns:
             None
-
         """
-
-        if randomize:
-            if seed is None:
-                seed = None
-            else:
-                raise ValueError('You can supply a seed or set randomize=True, but not both')
-        else:
-            if seed is None:
-                seed = self['seed'] # Use the stored seed
-            else:
-                self['seed'] = seed # Store the supplied seed
-        cov_ut.set_seed(seed)
+        # Unless no seed is supplied, reset it
+        if seed != -1:
+            self['seed'] = seed
+        cov_ut.set_seed(self['seed'])
         return
 
     @property
