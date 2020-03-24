@@ -518,7 +518,8 @@ class Sim(cv.Sim):
                                 if person.date_diagnosed is not None and person.date_diagnosed == t-1:
                                     target_person.known_contact = True
 
-                                transmission = cv.bt(thisbeta) # Check whether virus is transmitted
+                                # Check whether virus is transmitted
+                                transmission = cv.bt(thisbeta)
                                 if transmission:
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         n_infections += 1
@@ -537,7 +538,8 @@ class Sim(cv.Sim):
                                     if person.date_diagnosed is not None and person.date_diagnosed == t - 1:
                                         target_person.known_contact = True
 
-                                    transmission = cv.bt(thisbeta) # Check whether virus is transmitted
+                                    # Check whether virus is transmitted
+                                    transmission = cv.bt(thisbeta)
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
