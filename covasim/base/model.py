@@ -503,23 +503,22 @@ class Sim(cv.Sim):
                     # Calculate onward transmission
                     else:
                         n_infectious += 1 # Count this person as infectious
+
+                        # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
+                        thisbeta = beta * \
+                                   (asym_factor if person.symptomatic else 1.) * \
+                                   (diag_factor if person.diagnosed else 1.) * \
+                                   (cont_factor if person.known_contact else 1.)
+
                         if rand_popdata: # TODO: refactor!
-
                             for contact_ind in person.contact_inds:
-
                                 target_person = self.get_person(contact_ind)  # Stored by integer
 
                                 # This person was diagnosed last time step: time to flag their contacts
                                 if person.date_diagnosed is not None and person.date_diagnosed == t-1:
                                     target_person.known_contact = True
 
-                                # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                                thisbeta = beta * \
-                                           (asym_factor if person.symptomatic else 1.) * \
-                                           (diag_factor if person.diagnosed else 1.) * \
-                                           (cont_factor if person.known_contact else 1.)
                                 transmission = cv.bt(thisbeta) # Check whether virus is transmitted
-
                                 if transmission:
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         n_infections += 1
@@ -529,16 +528,16 @@ class Sim(cv.Sim):
 
                         else:
                             for ckey in self.contact_keys:
-                                b_pop = beta_pop[ckey]
+                                thisbeta *= beta_pop[ckey]
 
                                 # Calculate transmission risk based on whether they're asymptomatic/diagnosed
                                 for contact_ind in person.contact_inds[ckey]:
-                                    thisbeta = beta * b_pop * \
-                                               (asym_factor if person.symptomatic else 1.) * \
-                                               (diag_factor if person.diagnosed else 1.) * \
-                                               (cont_factor if person.known_contact else 1.)
-                                    transmission = cv.bt(thisbeta) # Check whether virus is transmitted
 
+                                    # This person was diagnosed last time step: time to flag their contacts
+                                    if person.date_diagnosed is not None and person.date_diagnosed == t - 1:
+                                        target_person.known_contact = True
+
+                                    transmission = cv.bt(thisbeta) # Check whether virus is transmitted
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
