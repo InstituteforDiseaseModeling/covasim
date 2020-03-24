@@ -6,7 +6,6 @@ Sciris app to run the web interface.
 import os
 import sys
 import numpy as np
-import pylab as pl
 import plotly.graph_objects as go
 import sciris as sc
 import covasim as cv
@@ -136,7 +135,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
             maxval = defaults[key]['max']
 
             try:
-                web_pars[key] = pl.median([float(entry['best']), minval, maxval])
+                web_pars[key] = np.median([float(entry['best']), minval, maxval])
             except Exception:
                 user_key = entry['name']
                 user_val = entry['best']
@@ -357,8 +356,6 @@ def animate_people(sim) -> dict:
     x_size = int(np.ceil(aspect * y_size))
 
     z = np.pad(z, ((0, x_size * y_size - z.shape[0]), (0, 0)), mode='constant', constant_values=np.nan)
-
-    #     z = np.reshape(z, (x_size, y_size, -1))
 
     days = sim.tvec
 
