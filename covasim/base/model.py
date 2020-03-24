@@ -9,6 +9,7 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
+import statsmodels.api as sm
 import covasim.framework as cv
 from . import parameters as cvpars
 
@@ -269,7 +270,7 @@ class Sim(cv.Sim):
 
         return summary
 
-    def get_doubling_time(self, series=None, interval=None, start_day=None, end_day=None, moving_window=None, exp_approx=False, max_doubling_time=100, eps=1e-3):
+    def get_doubling_time(self, series=None, interval=None, start_day=None, end_day=None, moving_window=None, exp_approx=False, max_doubling_time=100, eps=1e-3, verbose=None):
         '''
         Method to calculate doubling time
         Can be used in various ways:
@@ -279,39 +280,46 @@ class Sim(cv.Sim):
         Can pass in a series or the name of a result
         '''
 
-        # Validate inputs
-        if interval is not None:
-            if len(interval) != 2:
-                raise Exception(f"Interval should be a list/array/tuple of length 2, not {len(interval)}")
-            start_day, end_day = interval[0], interval[1]
-        int_length = end_day - start_day
+        # Set verbose level
+        if verbose is None:
+            verbose = self['verbose']
 
+        # Validate inputs: series
         if series is None or isinstance(series, str):
             if not self.results_ready:
                 raise Exception(f"Results not ready, cannot calculate doubling time")
             else:
                 if series is None or series not in self.reskeys:
-                    print(f"Series not suplied or not found in results; defaulting to use cumulative exposures")
+                    sc.printv(f"Series not suplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
                     series='cum_exposed'
                 series = self.results[series].values
         else:
             series = sc.promotetoarray(series)
 
-        if len(series) < int_length:
-            raise Exception(f"Length of series ({len(series)}) is shorter than the doubling time interval supplied ({int_length}).")
+        # Validate inputs: interval
+        if interval is not None:
+            if len(interval) != 2:
+                sc.printv(f"Interval should be a list/array/tuple of length 2, not {len(interval)}. Resetting to length of series.", 1, verbose)
+                interval = [0,len(series)]
+            start_day, end_day = interval[0], interval[1]
+
+        if len(series) < end_day:
+            sc.printv(f"End day {end_day} is after the series ends ({len(series)}). Resetting to length of series.", 1, verbose)
+            end_day = len(series)
+        int_length = end_day - start_day
 
         # Deal with moving window
         if moving_window is not None:
             if not sc.isnumber(moving_window):
-                print(f"Moving window should be an integer; ignoring and calculating single result")
+                sc.printv(f"Moving window should be an integer; ignoring and calculating single result", 1, verbose)
                 doubling_time = self.get_doubling_time(series=series, start_day=start_day, end_day=end_day, moving_window=None, exp_approx=exp_approx)
 
             else:
                 if not isinstance(moving_window,int):
-                    print(f"Moving window should be an integer; recasting {moving_window} the nearest integer... ")
+                    sc.printv(f"Moving window should be an integer; recasting {moving_window} the nearest integer... ", 1, verbose)
                     moving_window = int(moving_window)
                 if moving_window < 2:
-                    print(f"Moving window should be greater than 1; recasting {moving_window} to 2")
+                    sc.printv(f"Moving window should be greater than 1; recasting {moving_window} to 2", 1, verbose)
                     moving_window = 2
 
                 doubling_time = []
