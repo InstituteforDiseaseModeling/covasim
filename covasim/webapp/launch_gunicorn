@@ -9,7 +9,7 @@ but can also do e.g.
 
 to launch with 48 workers.
 
-Version: 2020mar21
+Version: 2020mar22
 '''
 
 import os
@@ -24,5 +24,7 @@ parser.add_argument("-b", "--backend", type=str, default='agg', help="Matplotlib
 args = parser.parse_args()
 
 sc.heading(f'Covasim: launching gunicorn with {args.workers} workers on port {args.port} with backend {args.backend}')
+cmd = f'gunicorn --reload --workers={args.workers} --bind=127.0.0.1:{args.port} cova_app:flask_app'
+print(cmd)
 os.system(f'export MPLBACKEND={args.backend}')
-os.system(f'gunicorn --reload --workers={args.workers} --bind=127.0.0.1:{args.port} cova_app:flask_app')
+os.system(cmd)
