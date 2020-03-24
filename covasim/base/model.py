@@ -293,7 +293,7 @@ class Sim(cv.Sim):
                 raise Exception(f"Results not ready, cannot calculate doubling time")
             else:
                 if series is None or series not in self.reskeys:
-                    sc.printv(f"Series not suplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
+                    sc.printv(f"Series not supplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
                     series='cum_exposed'
                 series = self.results[series].values
         else:
