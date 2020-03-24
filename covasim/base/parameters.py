@@ -113,6 +113,29 @@ def set_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
     return cfr
 
 
+def set_severity(age=None, sex=None):
+    '''
+    Set person-dependent disease severity
+    '''
+
+    # Check inputs and assign default CFR if age not supplied
+    if age is None or not severity_by_age:
+        severity = None
+    else:
+        # Define age-dependent case fatality rates if not given
+        if cfrdict is None:
+            cfrdict = {'cutoffs': [10,     20,     30,     40,     50,    60,    70,    80,    100], # Age cutoffs
+                       'values':  [0.0001, 0.0002, 0.0009, 0.0018, 0.004, 0.013, 0.046, 0.098, 0.18]} # Table 1 of https://www.medrxiv.org/content/10.1101/2020.03.04.20031104v1.full.pdf
+
+        # Figure out which CFR applies to a person of the specified age
+        max_age_cfr = cfrdict['values'][-1] # For people older than the oldest
+        cfrind = next((ind for ind, val in enumerate([True if age<cutoff else False for cutoff in cfrdict['cutoffs']]) if val), max_age_cfr)
+        cfr = cfrdict['values'][cfrind]
+
+    return cfr
+
+
+
 def load_data(filename=None):
     ''' Load data for comparing to the model output '''
 
