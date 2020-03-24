@@ -38,13 +38,13 @@ if do_plot:
 
 
 # Test doubling time
-#dt1 = sim.get_doubling_time(interval=[3,20])
-#dt2 = sim.get_doubling_time(start_day=3,end_day=20)
+dt1 = sim.get_doubling_time(interval=[3,20])
+dt2 = sim.get_doubling_time(start_day=3,end_day=20)
 dt3 = sim.get_doubling_time(start_day=3, end_day=20, moving_window=4)
-#dt4 = sim.get_doubling_time(interval=[3,20], moving_window=3)
-#dt5 = sim.get_doubling_time(interval=[3,20], moving_window=3, exp_approx=True)
-#import numpy as np
-#dt6 = sim.get_doubling_time(series=np.exp(range(50)), interval=[3,30], moving_window=3)
+dt4 = sim.get_doubling_time(interval=[3,20], moving_window=6)
+import numpy as np
+dt5 = sim.get_doubling_time(series=np.power(1.03, range(100)), interval=[3,30], moving_window=3) # Should be 23.44977..
+dt6 = sim.get_doubling_time(start_day=3, end_day=20, moving_window=4, series="cum_deaths")
 
 
 

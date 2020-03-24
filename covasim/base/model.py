@@ -271,14 +271,13 @@ class Sim(cv.Sim):
 
         return summary
 
-    def get_doubling_time(self, series=None, interval=None, start_day=None, end_day=None, moving_window=None, exp_approx=False):
+    def get_doubling_time(self, series=None, interval=None, start_day=None, end_day=None, moving_window=None):
         '''
         Method to calculate doubling time
         Can be used in 2 ways:
         1. sim.get_doubling_time(interval=[3,30]) returns the doubling time over the given interval (single float)
         2. sim.get_doubling_time(interval=[3,30], moving_window=3) returns doubling times calculated over moving windows (array)
         Instead of an interval, can alternatively pass in the start and end days
-        exp_approx indicates whether to use an exponential growth approximation
         Can pass in a series or the name of a result
         '''
 
@@ -315,10 +314,10 @@ class Sim(cv.Sim):
                     moving_window = int(moving_window)
 
                 doubling_time = []
-                for w in range(int_length):
+                for w in range(int_length-moving_window+1):
                     this_start = start_day + w
                     this_end = this_start + moving_window
-                    this_doubling_time = self.get_doubling_time(series=series, start_day=this_start, end_day=this_end, exp_approx=exp_approx)
+                    this_doubling_time = self.get_doubling_time(series=series, start_day=this_start, end_day=this_end)
                     doubling_time.append(this_doubling_time)
 
         # Do calculations
@@ -326,7 +325,6 @@ class Sim(cv.Sim):
             exog  = sm.add_constant(np.arange(int_length))
             endog = np.log2(series[start_day:end_day])
             model = sm.OLS(endog, exog)
-            #import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             doubling_rate = model.fit().params[1]
             if doubling_rate != 0:
                 doubling_time = 1.0 / doubling_rate
