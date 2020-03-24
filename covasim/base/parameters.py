@@ -6,6 +6,7 @@ import pylab as pl
 import pandas as pd
 from datetime import datetime
 import numba as nb
+import sciris as sc
 
 
 __all__ = ['make_pars', 'get_age_sex', 'set_cfr', 'load_data']
@@ -95,19 +96,33 @@ def set_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
     '''
     Set age-dependent case-fatality rates
     '''
-    # Check inputs and assign default CFR if age not supplied
+
+    # Process different options for age
+    # Not supplied, use default
     if age is None or not cfr_by_age:
         cfr = default_cfr
-    else:
+
+    # Single number
+    elif sc.isnumber(age):
+
         # Define age-dependent case fatality rates if not given
         if cfrdict is None:
-            cfrdict = {'cutoffs': [10,     20,     30,     40,     50,    60,    70,    80,    100], # Age cutoffs
-                       'values':  [0.0001, 0.0002, 0.0009, 0.0018, 0.004, 0.013, 0.046, 0.098, 0.18]} # Table 1 of https://www.medrxiv.org/content/10.1101/2020.03.04.20031104v1.full.pdf
+            cfrdict = {'cutoffs': [10, 20, 30, 40, 50, 60, 70, 80, 100],  # Age cutoffs
+                       'values': [0.0001, 0.0002, 0.0009, 0.0018, 0.004, 0.013, 0.046, 0.098,
+                                  0.18]}  # Table 1 of https://www.medrxiv.org/content/10.1101/2020.03.04.20031104v1.full.pdf
+        max_age_cfr = cfrdict['values'][-1]  # For people older than the oldest
 
         # Figure out which CFR applies to a person of the specified age
-        max_age_cfr = cfrdict['values'][-1] # For people older than the oldest
-        cfrind = next((ind for ind, val in enumerate([True if age<cutoff else False for cutoff in cfrdict['cutoffs']]) if val), max_age_cfr)
+        cfrind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in cfrdict['cutoffs']]) if val), max_age_cfr)
         cfr = cfrdict['values'][cfrind]
+
+    # Listlike
+    elif sc.checktype(age, 'listlike'):
+        cfr = []
+        for a in age: cfr.append(set_cfr(age=a, default_cfr=default_cfr, cfrdict=cfrdict, cfr_by_age=cfr_by_age))
+
+    else:
+        raise TypeError
 
     return cfr
 
