@@ -9,7 +9,6 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
-import statsmodels.api as sm
 import covasim.framework as cv
 from . import parameters as cvpars
 
@@ -441,6 +440,7 @@ class Sim(cv.Sim):
             sympt_test       = self['sympt_test']
             trace_test       = self['trace_test']
             test_sensitivity = self['sensitivity']
+            window           = self['window']
 
             # Print progress
             if verbose>=1:
@@ -753,6 +753,7 @@ class Sim(cv.Sim):
                     fig_path = do_save # It's a string, assume it's a filename
                 else:
                     fig_path = 'covasim.png' # Just give it a default name
+            fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
             pl.savefig(fig_path)
 
         if do_show:
