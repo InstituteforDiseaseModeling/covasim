@@ -9,7 +9,7 @@ from datetime import datetime
 import numba as nb
 
 
-__all__ = ['make_pars', 'get_age_sex', 'get_cfr', 'load_data']
+__all__ = ['make_pars', 'get_age_sex', 'set_cfr', 'load_data']
 
 
 def make_pars():
@@ -87,14 +87,14 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None
     age = _get_norm_age(min_age, max_age, age_mean, age_std)
 
     # Get case fatality rate for a person of this age
-    cfr = get_cfr(age=age, default_cfr=default_cfr, cfr_by_age=cfr_by_age)
+    cfr = set_cfr(age=age, default_cfr=default_cfr, cfr_by_age=cfr_by_age)
 
     return age, sex, cfr
 
 
-def get_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
+def set_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
     '''
-    Get age-dependent case-fatality rates
+    Set age-dependent case-fatality rates
     '''
     # Check inputs and assign default CFR if age not supplied
     if age is None or not cfr_by_age:

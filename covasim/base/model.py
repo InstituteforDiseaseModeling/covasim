@@ -235,7 +235,7 @@ class Sim(cv.Sim):
                 person = self.get_person(p)
                 person.age = entry['age']
                 person.sex = entry['sex']
-                person.cfr = cvpars.get_cfr(person.age, default_cfr=self['default_cfr'], cfr_by_age=self['cfr_by_age'])
+                person.cfr = cvpars.set_cfr(person.age, default_cfr=self['default_cfr'], cfr_by_age=self['cfr_by_age'])
                 person.contact_inds = entry['contacts']
 
         sc.printv(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]:0.2f} years', 1, verbose)
