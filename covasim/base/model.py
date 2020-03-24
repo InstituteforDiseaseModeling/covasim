@@ -353,9 +353,6 @@ class Sim(cv.Sim):
 
 
 
-
-
-
     def infect_person(self, source_person, target_person, t, infectious=False):
         '''
         Infect target_person. source_person is used only for constructing the
