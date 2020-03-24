@@ -448,7 +448,6 @@ class Sim(cv.Sim):
             sympt_test       = self['sympt_test']
             trace_test       = self['trace_test']
             test_sensitivity = self['sensitivity']
-            window           = self['window']
 
             # Print progress
             if verbose>=1:
