@@ -247,7 +247,7 @@ class Sim(ParsObj):
 
         """
         resdict = self._make_resdict(for_json=False)
-        result_df = sc.dataframe(resdict).pandas()
+        result_df = pd.DataFrame.from_dict(resdict)
         result_df.index = self.tvec
         result_df.index.name = 'Day'
 
