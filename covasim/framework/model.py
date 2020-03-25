@@ -256,11 +256,9 @@ class Sim(ParsObj):
 
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
-        writer = pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter')
-        result_df.to_excel(writer, sheet_name='Results')
-        par_df.to_excel(writer, sheet_name='Parameters')
-        writer.save()
-        writer.close()
+        with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
+            result_df.to_excel(writer, sheet_name='Results')
+            par_df.to_excel(writer, sheet_name='Parameters')
         spreadsheet.load()
 
         if filename is None:
