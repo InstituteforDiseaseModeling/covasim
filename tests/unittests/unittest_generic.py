@@ -74,7 +74,7 @@ class CovagenericUnittests(unittest.TestCase):
                 total_channel = np.sum(self.generic_sim.results[k].values)
                 self.assertEqual(total_channel, 0, msg=f"Channel {k} should equal zero. Got {total_channel}\n")
             pass
-        self.assertEqual({}, self.generic_sim.results['transtree'])
+
 
         # test init_people
         people = self.generic_sim.people
@@ -99,11 +99,5 @@ class CovagenericUnittests(unittest.TestCase):
         self.assertTrue(victim.exposed)
         self.assertEqual(victim.date_exposed, infection_time)
 
-        transmission_tree = self.generic_sim.results['transtree']
-        self.assertIn(victim_uuid, transmission_tree) # victim now in transmission tree
-
-        transmission_event = transmission_tree[victim_uuid]
-        self.assertEqual(transmission_event['from'], infector_uuid)
-        self.assertEqual(transmission_event['date'], infection_time)
     # endregion
     pass
