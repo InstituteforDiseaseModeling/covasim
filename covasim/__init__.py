@@ -11,7 +11,6 @@ requirements.check_scirisweb(die=False)
 requirements.check_extra_libs()
 
 #%% Import the actual model
-from .poisson_stats import *
 from .utils import *
 from .base import *
 from .parameters import *
