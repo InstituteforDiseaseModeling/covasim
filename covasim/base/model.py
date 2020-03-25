@@ -86,12 +86,11 @@ class Person(cv.Person):
         """
         Infect this person
 
-        This routine infects the pe
+        This routine infects the person
         Args:
             source: A Person instance. If None, then it was a seed infection
 
-        Returns:
-
+        Returns: none
         """
         self.susceptible = False
         self.exposed = True
