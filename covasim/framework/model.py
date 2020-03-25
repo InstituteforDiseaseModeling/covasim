@@ -5,7 +5,6 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 '''
 
 #%% Imports
-import io
 import datetime as dt
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
@@ -252,46 +251,17 @@ class Sim(ParsObj):
         result_df.index = self.tvec
         result_df.index.name = 'Day'
 
-        # self.pars has some parameters like `beta_pop` that are a nested
-        # dictionary. This data structure cannot be written to Excel. The routine
-        # below flattens the dictionary. It's a little different to `sc.flattendict`
-        def flatten(input_dict: dict, prefix='') -> dict:
-            """
-            Flatten nested dictionary
-
-            Example:
-
-                >>> flatten({'a':{'b':1,'c':{'d':2,'e':3}}})
-                {'a_b':1, 'a_c_d': 2, 'a_c_e': 3}
-
-            Args:
-                d: Input dictionary with dicts as values
-
-            Returns:
-                A flat dictionary where no values are dicts
-
-            """
-
-            output_dict = {}
-            for k, v in input_dict.items():
-                if isinstance(v, dict):
-                    output_dict.update(flatten(input_dict[k], prefix=prefix+'_'+k if prefix else k))
-                else:
-                    output_dict[prefix+'_'+k if prefix else k] = v
-            return output_dict
-
-        par_df = pd.DataFrame.from_dict(flatten(self.pars), orient='index', columns=['Value'])
+        par_df = pd.DataFrame.from_dict(sc.flattendict(self.pars, sep='_'), orient='index', columns=['Value'])
         par_df.index.name = 'Parameter'
 
-        f = io.BytesIO()
-        writer = pd.ExcelWriter(f, engine='xlsxwriter')
+        spreadsheet = sc.Spreadsheet()
+        spreadsheet.freshbytes()
+        writer = pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter')
         result_df.to_excel(writer, sheet_name='Results')
         par_df.to_excel(writer, sheet_name='Parameters')
         writer.save()
         writer.close()
-        f.flush()
-        spreadsheet = sc.Spreadsheet(f)
-        f.close()
+        spreadsheet.load()
 
         if filename is None:
             output = spreadsheet
