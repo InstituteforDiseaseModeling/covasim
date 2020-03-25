@@ -8,6 +8,7 @@ Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
 import datetime as dt
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
+import pandas as pd
 from . import utils as cov_ut
 
 # Specify all externally visible functions this file defines
@@ -225,11 +226,11 @@ class Sim(ParsObj):
 
         """
         resdict = self._make_resdict()
-
+        d = {'results': resdict, 'parameters': self.pars}
         if filename is None:
-            output = sc.jsonify(resdict, tostring=tostring, indent=indent, *args, **kwargs)
+            output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
         else:
-            output = sc.savejson(filename=filename, obj=resdict, *args, **kwargs)
+            output = sc.savejson(filename=filename, obj=d, *args, **kwargs)
 
         return output
 
@@ -246,13 +247,18 @@ class Sim(ParsObj):
 
         """
         resdict = self._make_resdict(for_json=False)
-        df = sc.dataframe(resdict).pandas()
-        df.index = self.tvec
-        df.index.name = 'Day'
+        result_df = pd.DataFrame.from_dict(resdict)
+        result_df.index = self.tvec
+        result_df.index.name = 'Day'
+
+        par_df = pd.DataFrame.from_dict(sc.flattendict(self.pars, sep='_'), orient='index', columns=['Value'])
+        par_df.index.name = 'Parameter'
 
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
-        df.to_excel(spreadsheet.bytes, engine='xlsxwriter')
+        with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
+            result_df.to_excel(writer, sheet_name='Results')
+            par_df.to_excel(writer, sheet_name='Parameters')
         spreadsheet.load()
 
         if filename is None:
