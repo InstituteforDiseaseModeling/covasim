@@ -10,7 +10,7 @@ requirements.check_sciris()
 requirements.check_scirisweb(die=False)
 requirements.check_extra_libs()
 
-#%% Imports from here -- just the framework, basic functions, and base -- the "base" version
+#%% Import the actual model
 from .poisson_stats import *
 from .utils import *
 from .base import *
