@@ -81,7 +81,8 @@ def _get_norm_age(min_age, max_age, age_mean, age_std):
     return age
 
 
-def set_person_attributes(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, default_severity=None, severity_by_age=True, cfr_by_age=True, use_data=True):
+def set_person_attributes(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, default_severity=None,
+                          severity_fn=None, severity_by_age=True, cfr_by_age=True, use_data=True):
     '''
     Set the attributes for an individual, including:
         * age
@@ -154,12 +155,12 @@ def set_severity(age=None, default_severity=0.3, severity_by_age=True, severity_
     Alternative approach: (for future consideration) use a beta distribution (often used as a prior over binomial probs)
     '''
 
+    if severity_fn is None: severity_fn = 'linear' # Default to linear
+
     # Process different options for age
     # Not supplied, use default
     if age is None or not severity_by_age:
         severity = default_severity
-
-    if severity_fn is None: severity_fn = 'linear' # Default to linear
 
     # Single number
     elif sc.isnumber(age):
