@@ -90,7 +90,7 @@ if do_run:
             scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
         elif scenkey == '2xtests':
             scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
-            scen_sim['daily_tests'].loc[interv_day:] *= 2 # Double testing starting on the intervention start day
+            scen_sim['daily_tests'][interv_day:] *= 2 # Double testing starting on the intervention start day
         elif scenkey == 'tracing':
             scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
             scen_sim['cont_factor'] = 0.1 # Scale beta by this amount for anyone who's had contact with a known positive
