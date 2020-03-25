@@ -331,30 +331,48 @@ class Sim(cv.BaseSim):
         return
 
 
-    def summary_stats(self, verbose=None):
-        ''' Compute the summary statistics to display at the end of a run '''
+    def apply_testing(self, t, n_diagnoses, verbose):
+        ''' Perform testing '''
+        test_sensitivity = self['sensitivity']
+        test_probs = self.test_probs
+        if t<len(self['daily_tests']): # Don't know how long the data is, ensure we don't go past the end
+            n_tests = self['daily_tests'][t] # Number of tests for this day
+            if n_tests and not pl.isnan(n_tests): # There are tests this day
+                self.results['tests'][t] = n_tests # Store the number of tests
+                test_probs_arr = pl.array(list(test_probs.values()))
+                test_probs_arr /= test_probs_arr.sum()
+                test_inds = cv.choose_people_weighted(probs=test_probs_arr, n=n_tests)
 
-        if verbose is None:
-            verbose = self['verbose']
+                for test_ind in test_inds:
+                    tested_person = self.get_person(test_ind)
+                    if tested_person.infectious and cv.bt(test_sensitivity): # Person was tested and is true-positive
+                        n_diagnoses += 1
+                        tested_person.diagnosed = True
+                        tested_person.date_diagnosed = t
+                        sc.printv(f'          Person {tested_person.uid} was diagnosed at timestep {t}!', 2, verbose)
 
-        summary = {}
-        for key in self.reskeys:
-            summary[key] = self.results[key][-1]
-
-        sc.printv(f"""Summary:
-     {summary['n_susceptible']:5.0f} susceptible
-     {summary['n_infectious']:5.0f} infectious
-     {summary['n_symptomatic']:5.0f} symptomatic
-     {summary['cum_exposed']:5.0f} total exposed
-     {summary['cum_diagnosed']:5.0f} total diagnosed
-     {summary['cum_deaths']:5.0f} total deaths
-     {summary['cum_recoveries']:5.0f} total recovered
-               """, 1, verbose)
-
-        return summary
+        return n_diagnoses
 
 
-    def run(self, initialize=True, calc_likelihood=False, do_plot=False, verbose=None, **kwargs):
+    def apply_interventions(self, t, verbose):
+        '''
+        Apply interventions, if they exist at this time point. Can either
+        modify beta, or can be a function that makes an arbitrary modification
+        to the Sim object.
+        '''
+        if t in self['interv_days']:
+            ind = sc.findnearest(self['interv_days'], t)
+            if self['interv_func'] is not None: # Apply custom intervention function
+                sc.printv(f'Applying custom intervention/change on day {t}...', 1, verbose)
+                self =self['interv_func'](self, t)
+            else:
+                eff = self['interv_effs'][ind]
+                sc.printv(f'Applying intervention/change of {eff} on day {t}...', 1, verbose)
+                self['beta'] *= eff # Just change beta
+        return
+
+
+    def run(self, initialize=True, do_plot=False, verbose=None, **kwargs):
         ''' Run the simulation '''
 
         T = sc.tic()
@@ -402,8 +420,6 @@ class Sim(cv.BaseSim):
             beta_pop         = self['beta_pop']
             sympt_test       = self['sympt_test']
             trace_test       = self['trace_test']
-            test_sensitivity = self['sensitivity']
-            window           = self['window']
 
             # Print progress
             if verbose>=1:
@@ -413,13 +429,11 @@ class Sim(cv.BaseSim):
                 else:
                     print(string)
 
-            test_probs = {} # Store the probability of each person getting tested
+            # Initialise testing -- assign equal testing probabilities initially, these will get adjusted later
+            self.test_probs = dict.fromkeys(self.uids, 1.0) # Store the probability of each person getting tested
 
             # Update each person
             for person in self.people.values():
-
-                # Initialise testing -- assign equal testing probabilities initially, these will get adjusted later
-                test_probs[person.uid] = 1.0
 
                 # Count susceptibles
                 if person.susceptible:
@@ -503,39 +517,17 @@ class Sim(cv.BaseSim):
                 # Adjust testing probability based on what's happened to the person
                 # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
                 if person.symptomatic:
-                    test_probs[person.uid] *= sympt_test    # They're symptomatic
+                    self.test_probs[person.uid] *= sympt_test    # They're symptomatic
                 if person.known_contact:
-                    test_probs[person.uid] *= trace_test    # They've had contact with a known positive
+                    self.test_probs[person.uid] *= trace_test    # They've had contact with a known positive
                 if person.diagnosed:
-                    test_probs[person.uid] = 0.0
+                    self.test_probs[person.uid] = 0.0
 
             # Implement testing -- this is outside of the loop over people, but inside the loop over time
-            if t<len(self['daily_tests']): # Don't know how long the data is, ensure we don't go past the end
-                n_tests = self['daily_tests'][t] # Number of tests for this day
-                if n_tests and not pl.isnan(n_tests): # There are tests this day
-                    self.results['tests'][t] = n_tests # Store the number of tests
-                    test_probs_arr = pl.array(list(test_probs.values()))
-                    test_probs_arr /= test_probs_arr.sum()
-                    test_inds = cv.choose_people_weighted(probs=test_probs_arr, n=n_tests)
+            self.apply_testing(t, n_diagnoses, verbose)
 
-                    for test_ind in test_inds:
-                        tested_person = self.get_person(test_ind)
-                        if tested_person.infectious and cv.bt(test_sensitivity): # Person was tested and is true-positive
-                            n_diagnoses += 1
-                            tested_person.diagnosed = True
-                            tested_person.date_diagnosed = t
-                            sc.printv(f'          Person {tested_person.uid} was diagnosed at timestep {t}!', 2, verbose)
-
-            # Implement quarantine
-            if t in self['interv_days']:
-                ind = sc.findnearest(self['interv_days'], t)
-                if self['interv_func'] is not None: # Apply custom intervention function
-                    sc.printv(f'Applying custom intervention/change on day {t}...', 1, verbose)
-                    self =self['interv_func'](self, t)
-                else:
-                    eff = self['interv_effs'][ind]
-                    sc.printv(f'Applying intervention/change of {eff} on day {t}...', 1, verbose)
-                    self['beta'] *= eff # Just change beta
+            # Implement interventions
+            self.apply_interventions(t, verbose)
 
             # Update counts for this time step
             self.results['n_susceptible'][t] = n_susceptible
@@ -548,37 +540,22 @@ class Sim(cv.BaseSim):
             self.results['n_recovered'][t]   = n_recovered
             self.results['diagnoses'][t]     = n_diagnoses
 
-            # Calculate doubling time
-            if t >= window:
-                max_doubling_time = 100 # Because
-                cum_infections = pl.cumsum(self.results['infections'][:t+1]) + self['n_infected'] # TODO: duplicated from below
-                infections_now = cum_infections[t]
-                infections_prev = cum_infections[t-window]
-                r = infections_now/infections_prev
-                if r > 1:  # Avoid divide by zero
-                    doubling_time = window*np.log(2)/np.log(r)
-                    doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
-                    self.results['doubling_time'][t] = doubling_time
-
-            # Effective reproductive number based on number still susceptible -- TODO: use data instead
-            # self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
-
-        # Compute cumulative results
+        # Compute cumulative results outside of the time loop
         self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values) + self['n_infected'] # Include initially infected people
         self.results['cum_tested'].values     = pl.cumsum(self.results['tests'].values)
         self.results['cum_diagnosed'].values  = pl.cumsum(self.results['diagnoses'].values)
         self.results['cum_deaths'].values     = pl.cumsum(self.results['deaths'].values)
         self.results['cum_recoveries'].values = pl.cumsum(self.results['recoveries'].values)
 
-
         # Scale the results
         for reskey in self.reskeys:
             if self.results[reskey].scale:
                 self.results[reskey].values *= self['scale']
 
-        # Compute likelihood
-        if calc_likelihood:
-            self.likelihood()
+        # Perform calculations on results
+        self.compute_doubling()
+        self.compute_r_eff()
+        self.likelihood()
 
         # Tidy up
         self.results_ready = True
@@ -588,10 +565,69 @@ class Sim(cv.BaseSim):
         if do_plot:
             self.plot(**kwargs)
 
-        # Convert to an odict to allow e.g. sim.people[25] later
+        # Convert to an odict to allow e.g. sim.people[25] later, and results to an objdict to allow e.g. sim.results.diagnoses
         self.people = sc.odict(self.people)
+        self.results = sc.objdict(self.results)
 
         return self.results
+
+
+    def compute_doubling(self, window=None, max_doubling_time=100):
+        '''
+        Calculate doubling time using exponential approximation -- a more detailed
+        approach is in utils.py. Compares infections at time t to infections at time
+        t-window, and uses that to compute the doubling time. For example, if there are
+        100 cumulative infections on day 12 and 200 infections on day 19, doubling
+        time is 7 days.
+
+        Args:
+            window (float): the size of the window used (larger values are more accurate but less precise)
+            max_doubling_time (float): doubling time could be infinite, so this places a bound on it
+
+        Returns:
+            None (modifies results in place)
+        '''
+        window = self['window']
+        cum_infections = self.results['cum_exposed']
+        for t in range(window, self.npts):
+            infections_now = cum_infections[t]
+            infections_prev = cum_infections[t-window]
+            r = infections_now/infections_prev
+            if r > 1:  # Avoid divide by zero
+                doubling_time = window*np.log(2)/np.log(r)
+                doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
+                self.results['doubling_time'][t] = doubling_time
+        return
+
+
+    def compute_r_eff(self):
+        ''' Effective reproductive number based on number still susceptible -- TODO: use data instead '''
+
+        # Initialize arrays to hold sources and targets infected each day
+        sources = np.zeros(self.npts)
+        targets = np.zeros(self.npts)
+
+        # Loop over each person to pull out the transmission
+        for person in self.people.values():
+            if person.date_exposed is not None: # Skip people who were never exposed
+                if person.date_recovered is not None:
+                    outcome_date = person.date_recovered
+                elif person.date_died is not None:
+                    outcome_date = person.date_died
+                else:
+                    errormsg = f'No outcome (death or recovery) can be determined for the following person:\n{person}'
+                    raise ValueError(errormsg)
+
+                if outcome_date is not None and outcome_date<self.npts:
+                    outcome_date = int(outcome_date)
+                    sources[outcome_date] += 1
+                    targets[outcome_date] += len(person.infected)
+
+        # Populate the array -- to avoid divide-by-zero, skip indices that are 0
+        inds = sc.findinds(sources>0)
+        r_eff = targets[inds]/sources[inds]
+        self.results['r_eff'].values[inds] = r_eff
+        return
 
 
     def likelihood(self, verbose=None):
@@ -602,11 +638,8 @@ class Sim(cv.BaseSim):
         if verbose is None:
             verbose = self['verbose']
 
-        if not self.results_ready:
-            self.run(calc_likelihood=False, verbose=verbose) # To avoid an infinite loop
-
         loglike = 0
-        if self.data is not None and len(self.data):
+        if self.data is not None and len(self.data): # Only perform likelihood calculation if data are available
             for d,datum in enumerate(self.data['new_positives']):
                 if not pl.isnan(datum): # Skip days when no tests were performed
                     estimate = self.results['diagnoses'][d]
@@ -615,11 +648,33 @@ class Sim(cv.BaseSim):
                     loglike += logp
                     sc.printv(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
-        self.results['likelihood'] = loglike
-
-        sc.printv(f'Likelihood: {loglike}', 1, verbose)
+            self.results['likelihood'] = loglike
+            sc.printv(f'Likelihood: {loglike}', 1, verbose)
 
         return loglike
+
+
+    def summary_stats(self, verbose=None):
+        ''' Compute the summary statistics to display at the end of a run '''
+
+        if verbose is None:
+            verbose = self['verbose']
+
+        summary = {}
+        for key in self.reskeys:
+            summary[key] = self.results[key][-1]
+
+        sc.printv(f"""Summary:
+     {summary['n_susceptible']:5.0f} susceptible
+     {summary['n_infectious']:5.0f} infectious
+     {summary['n_symptomatic']:5.0f} symptomatic
+     {summary['cum_exposed']:5.0f} total exposed
+     {summary['cum_diagnosed']:5.0f} total diagnosed
+     {summary['cum_deaths']:5.0f} total deaths
+     {summary['cum_recoveries']:5.0f} total recovered
+               """, 1, verbose)
+
+        return summary
 
 
 
