@@ -64,7 +64,7 @@ class ParsObj(sc.prettyobj):
         return
 
 
-class Result(sc.prettyobj):
+class Result(object):
     '''
     Stores a single result -- by default, acts like an array.
 
@@ -88,6 +88,12 @@ class Result(sc.prettyobj):
                 values = [] # Otherwise, empty
         self.values = np.array(values, dtype=float) # Ensure it's an array
         return
+
+    def __repr__(self, *args, **kwargs):
+        ''' Use pretty repr, like sc.prettyobj, but displaying full values '''
+        output  = sc.prepr(self, skip='values')
+        output += 'values:\n' + repr(self.values)
+        return output
 
     def __getitem__(self, *args, **kwargs):
         return self.values.__getitem__(*args, **kwargs)

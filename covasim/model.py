@@ -331,9 +331,10 @@ class Sim(cv.BaseSim):
         return
 
 
-    def apply_testing(self, t, test_probs, n_diagnoses, verbose):
+    def apply_testing(self, t, n_diagnoses, verbose):
         ''' Perform testing '''
         test_sensitivity = self['sensitivity']
+        test_probs = self.test_probs
         if t<len(self['daily_tests']): # Don't know how long the data is, ensure we don't go past the end
             n_tests = self['daily_tests'][t] # Number of tests for this day
             if n_tests and not pl.isnan(n_tests): # There are tests this day
@@ -349,6 +350,7 @@ class Sim(cv.BaseSim):
                         tested_person.diagnosed = True
                         tested_person.date_diagnosed = t
                         sc.printv(f'          Person {tested_person.uid} was diagnosed at timestep {t}!', 2, verbose)
+
         return n_diagnoses
 
 
@@ -427,13 +429,11 @@ class Sim(cv.BaseSim):
                 else:
                     print(string)
 
-            test_probs = {} # Store the probability of each person getting tested
+            # Initialise testing -- assign equal testing probabilities initially, these will get adjusted later
+            self.test_probs = dict.fromkeys(self.uids, 1.0) # Store the probability of each person getting tested
 
             # Update each person
             for person in self.people.values():
-
-                # Initialise testing -- assign equal testing probabilities initially, these will get adjusted later
-                test_probs[person.uid] = 1.0
 
                 # Count susceptibles
                 if person.susceptible:
@@ -517,14 +517,14 @@ class Sim(cv.BaseSim):
                 # Adjust testing probability based on what's happened to the person
                 # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
                 if person.symptomatic:
-                    test_probs[person.uid] *= sympt_test    # They're symptomatic
+                    self.test_probs[person.uid] *= sympt_test    # They're symptomatic
                 if person.known_contact:
-                    test_probs[person.uid] *= trace_test    # They've had contact with a known positive
+                    self.test_probs[person.uid] *= trace_test    # They've had contact with a known positive
                 if person.diagnosed:
-                    test_probs[person.uid] = 0.0
+                    self.test_probs[person.uid] = 0.0
 
             # Implement testing -- this is outside of the loop over people, but inside the loop over time
-            self.apply_testing(t, test_probs, n_diagnoses, verbose)
+            self.apply_testing(t, n_diagnoses, verbose)
 
             # Implement interventions
             self.apply_interventions(t, verbose)
@@ -554,7 +554,7 @@ class Sim(cv.BaseSim):
 
         # Perform calculations on results
         self.compute_doubling()
-        # self.compute_r_eff()
+        self.compute_r_eff()
         self.likelihood()
 
         # Tidy up
@@ -565,8 +565,9 @@ class Sim(cv.BaseSim):
         if do_plot:
             self.plot(**kwargs)
 
-        # Convert to an odict to allow e.g. sim.people[25] later
+        # Convert to an odict to allow e.g. sim.people[25] later, and results to an objdict to allow e.g. sim.results.diagnoses
         self.people = sc.odict(self.people)
+        self.results = sc.objdict(self.results)
 
         return self.results
 
@@ -600,9 +601,36 @@ class Sim(cv.BaseSim):
 
 
     def compute_r_eff(self):
-        # Effective reproductive number based on number still susceptible -- TODO: use data instead
-        # self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
-        raise NotImplementedError
+        ''' Effective reproductive number based on number still susceptible -- TODO: use data instead '''
+
+        # Initialize arrays to hold sources and targets infected each day
+        sources = np.zeros(self.npts)
+        targets = np.zeros(self.npts)
+
+        # Loop over each person to pull out the transmission
+        for person in self.people.values():
+            if person.date_exposed is not None: # Skip people who were never exposed
+                if person.date_recovered is not None:
+                    outcome_date = person.date_recovered
+                elif person.date_died is not None:
+                    outcome_date = person.date_died
+                else:
+                    errormsg = f'No outcome (death or recovery) can be determined for the following person:\n{person}'
+                    raise ValueError(errormsg)
+
+                if outcome_date is not None and outcome_date<self.npts:
+                    outcome_date = int(outcome_date)
+                    sources[outcome_date] += 1
+                    targets[outcome_date] += len(person.infected)
+            else:
+                # print(f'Person {person.uid} is NOT exposed')
+                pass
+
+        # Populate the array -- to avoid divide-by-zero, skip indices that are 0
+        inds = sc.findinds(sources>0)
+        r_eff = targets[inds]/sources[inds]
+        self.results['r_eff'].values[inds] = r_eff
+        return
 
 
     def likelihood(self, verbose=None):

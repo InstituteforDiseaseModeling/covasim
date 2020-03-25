@@ -1,4 +1,4 @@
-sciris>=0.16.3
+sciris>=0.16.4
 scirisweb>=0.16.0
 matplotlib>=2.2.2
 numpy>=1.10.1
