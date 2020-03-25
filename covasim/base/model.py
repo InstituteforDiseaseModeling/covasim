@@ -121,6 +121,10 @@ class Person(cv.Person):
 
         return
 
+    def __repr__(self):
+        output = sc.prepr(self, skip=['infected'])
+        return output
+
 class Sim(cv.Sim):
     '''
     The Sim class handles the running of the simulation: the number of children,
