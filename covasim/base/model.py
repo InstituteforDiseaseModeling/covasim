@@ -210,6 +210,7 @@ class Sim(cv.Sim):
         self.results['cum_diagnosed']  = init_res('Cumulative number diagnosed')
         self.results['cum_deaths']     = init_res('Cumulative number of deaths')
         self.results['cum_recoveries'] = init_res('Cumulative number recovered')
+        self.results['doubling_time']  = init_res('Doubling time', scale=False)
         self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
 
         self.reskeys = list(self.results.keys()) # Save the names of the main result keys
@@ -370,6 +371,7 @@ class Sim(cv.Sim):
             sympt_test       = self['sympt_test']
             trace_test       = self['trace_test']
             test_sensitivity = self['sensitivity']
+            window           = self['window']
 
             # Print progress
             if verbose>=1:
@@ -525,8 +527,20 @@ class Sim(cv.Sim):
             self.results['n_recovered'][t]   = n_recovered
             self.results['diagnoses'][t]     = n_diagnoses
 
-            # Effective reproductive number based on number still susceptible
-            self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
+            # Calculate doubling time
+            if t >= window:
+                max_doubling_time = 100 # Because
+                cum_infections = pl.cumsum(self.results['infections'][:t+1]) + self['n_infected'] # TODO: duplicated from below
+                infections_now = cum_infections[t]
+                infections_prev = cum_infections[t-window]
+                r = infections_now/infections_prev
+                if r > 1:  # Avoid divide by zero
+                    doubling_time = window*np.log(2)/np.log(r)
+                    doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
+                    self.results['doubling_time'][t] = doubling_time
+
+            # Effective reproductive number based on number still susceptible -- TODO: use data instead
+            # self.results['r_eff'][t] = self.calculated['r_0']*self.results['n_susceptible'][t]/self['n']
 
         # Compute cumulative results
         self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values) + self['n_infected'] # Include initially infected people
