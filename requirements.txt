@@ -5,6 +5,5 @@ numpy>=1.10.1
 scipy>=1.2.0
 numba
 pandas
-statsmodels
 gunicorn
 plotly_express
