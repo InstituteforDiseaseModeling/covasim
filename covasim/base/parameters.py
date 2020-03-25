@@ -151,6 +151,7 @@ def set_severity(age=None, default_severity=0.3, severity_by_age=True, severity_
     Sources:
         https://jamanetwork.com/journals/jama/fullarticle/2762130 -- distribution in China
         https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(20)30566-3/fulltext -- "increasing odds of in-hospital death associated with older age (odds ratio 1·10)"
+        https://www.medrxiv.org/content/10.1101/2020.03.16.20037259v1.full.pdf -- asymptomaticity in different age groups in China
 
     Implemented approach: use a simple linear relationship btwn age and severity index
     Alternative approach: (for future consideration) use a beta distribution (often used as a prior over binomial probs)
