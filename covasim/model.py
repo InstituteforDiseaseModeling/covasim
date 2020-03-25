@@ -1,7 +1,5 @@
 '''
 This file contains all the code for the basic use of Covasim.
-
-Version: 2020mar20
 '''
 
 #%% Imports
@@ -16,6 +14,8 @@ from . import parameters as cvpars
 # Specify all externally visible functions this file defines
 __all__ = ['to_plot', 'Person', 'Sim']
 
+
+# Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines
 to_plot = sc.odict({
         'Total counts': sc.odict({
             'cum_exposed': 'Cumulative infections',

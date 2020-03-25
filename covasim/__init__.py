@@ -15,4 +15,4 @@ from .poisson_stats import *
 from .utils import *
 from .base import *
 from .parameters import *
-from .sim import *
+from .model import *

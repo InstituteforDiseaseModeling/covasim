@@ -64,7 +64,6 @@ class ParsObj(sc.prettyobj):
         return
 
 
-
 class Result(sc.prettyobj):
     '''
     Stores a single result -- by default, acts like an array.
@@ -77,6 +76,7 @@ class Result(sc.prettyobj):
         r2 = cova.Result(name='test2', values=range(10))
         print(r2)
     '''
+
     def __init__(self, name=None, values=None, npts=None, scale=True, ispercentage=False):
         self.name = name  # Name of this result
         self.ispercentage = ispercentage  # Whether or not the result is a percentage
