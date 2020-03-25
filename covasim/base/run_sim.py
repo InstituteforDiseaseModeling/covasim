@@ -2,8 +2,6 @@
 Simple script for running the Covid-19 agent-based model
 '''
 
-import matplotlib
-matplotlib.use('TkAgg')
 import sciris as sc
 
 print('Importing...')
@@ -11,9 +9,9 @@ sc.tic()
 import covasim as cova
 sc.toc()
 
-do_plot = 0
+do_plot = 1
 do_save = 0
-do_show = 0
+do_show = 1
 verbose = 1
 seed    = 4
 
@@ -39,7 +37,7 @@ if do_plot:
 # Test doubling time
 dt1 = sim.get_doubling_time(interval=[3,sim['n_days']+10], verbose=2) # should reset end date to sim['n_days']
 dt2 = sim.get_doubling_time(start_day=3,end_day=sim['n_days'])
-dt3 = sim.get_doubling_time(interval=[3,sim['n_days']], exp_approx=True) 
+dt3 = sim.get_doubling_time(interval=[3,sim['n_days']], exp_approx=True)
 dt4 = sim.get_doubling_time(start_day=3, end_day=sim['n_days'], moving_window=4) # should return array
 import numpy as np
 dt5 = sim.get_doubling_time(series=np.power(1.03, range(100)), interval=[3,30], moving_window=3) # Should be a series with values = 23.44977..
