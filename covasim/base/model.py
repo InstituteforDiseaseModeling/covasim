@@ -44,7 +44,7 @@ class Person(cv.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, age, sex, cfr, severity, uid=None, id_len=4):
+    def __init__(self, age, sex, cfr, severity, pars, uid=None, id_len=4):
         if uid is None:
             uid = sc.uuid(length=id_len) # Unique identifier for this person
         self.uid  = str(uid)
@@ -63,7 +63,12 @@ class Person(cv.Person):
         self.recovered      = False
         self.dead           = False
         self.known_contact  = False # Keep track of whether each person is a contact of a known positive
-        self.n_infected     = 0 # Keep track of how many people each person infects
+
+        # Infection property distributions
+        self.dist_serial = dict(dist='normal_int', par1=pars['serial'], par2=pars['serial_std'])
+        self.dist_incub = dict(dist='normal_int', par1=pars['incub'], par2=pars['incub_std'])
+        self.dist_dur = dict(dist='normal_int', par1=pars['dur'], par2=pars['dur_std'])
+        self.dist_death = dict(dist='normal_int', par1=pars['timetodie'], par2=pars['timetodie_std'])
 
         # Keep track of dates
         self.date_exposed     = None
@@ -72,8 +77,50 @@ class Person(cv.Person):
         self.date_diagnosed   = None
         self.date_recovered   = None
         self.date_died        = None
+
+        self.infected = [] #: Track all people this person infected
+        self.infected_by = None #: Track the person who caused the infection. If None but person is infected, it was an externally seeded infection
         return
 
+    def infect(self, t, source = None):
+        """
+        Infect this person
+
+        This routine infects the pe
+        Args:
+            source: A Person instance. If None, then it was a seed infection
+
+        Returns:
+
+        """
+        self.susceptible = False
+        self.exposed = True
+        self.date_exposed = t
+
+        # Calculate how long before they can infect other people
+        serial_dist = cv.sample(**self.dist_serial)
+        self.date_infectious = t + serial_dist
+
+        # Program them to either die or recover in the future
+        if cv.bt(self.cfr):
+            # They die
+            death_dist = cv.sample(**self.dist_death)
+            self.date_died = t + death_dist
+        else:
+            # They don't die; determine whether they develop symptoms
+            has_symptoms = cv.bt(self.severity)  # Binomial distribution with probability equal to age-linked symptom severity index
+            if has_symptoms:  # They develop symptoms
+                incub_dist = cv.sample(**self.dist_incub)  # Caclulate how long til they develop symptoms
+                self.date_symptomatic = t + incub_dist
+
+            dur_dist = cv.sample(**self.dist_dur)
+            self.date_recovered = self.date_infectious + dur_dist
+
+        if source:
+            self.infected_by = source
+            source.infected.append(self)
+
+        return
 
 class Sim(cv.Sim):
     '''
@@ -171,7 +218,6 @@ class Sim(cv.Sim):
         # Populate the rest of the results
         self.results['t'] = self.tvec
         self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
-        self.transtree = {} # For storing the transmission tree
         self.results_ready = False
 
         # Create calculated values structure
@@ -200,7 +246,7 @@ class Sim(cv.Sim):
                 age,sex,cfr,severity = cvpars.set_person_attributes(cfr_by_age=self['cfr_by_age'],
                                                                     default_cfr=self['default_cfr'],
                                                                     use_data=False)
-            person = Person(age=age, sex=sex, cfr=cfr, severity=severity, uid=uid) # Create the person
+            person = Person(age=age, sex=sex, cfr=cfr, severity=severity, uid=uid, pars=self.pars) # Create the person
             people[uid] = person # Save them to the dictionary
 
         # Store UIDs and people
@@ -248,7 +294,7 @@ class Sim(cv.Sim):
         # Create the seed infections
         for i in range(int(self['n_infected'])):
             person = self.get_person(i)
-            self.infect_person(source_person=None, target_person=person, t=0)
+            person.infect(t=0)
 
         return
 
@@ -362,46 +408,6 @@ class Sim(cv.Sim):
                 else: raise Exception(f"Can't calculate doubling time for series {series[start_day:end_day]}. Check whether series is growing.")
 
         return doubling_time
-
-
-
-    def infect_person(self, source_person, target_person, t, infectious=False):
-        '''
-        Infect target_person. source_person is used only for constructing the
-        transmission tree.
-        '''
-        target_person.susceptible = False
-        target_person.exposed = True
-        target_person.date_exposed = t
-
-        serial_pars = dict(dist='normal_int', par1=self['serial'],    par2=self['serial_std'])
-        incub_pars  = dict(dist='normal_int', par1=self['incub'],     par2=self['incub_std'])
-        dur_pars    = dict(dist='normal_int', par1=self['dur'],       par2=self['dur_std'])
-        death_pars  = dict(dist='normal_int', par1=self['timetodie'], par2=self['timetodie_std'])
-
-        # Calculate how long before they can infect other people
-        serial_dist = cv.sample(**serial_pars)
-        target_person.date_infectious = t + serial_dist
-
-        # Program them to either die or recover in the future
-        if cv.bt(target_person.cfr):
-            # They die
-            death_dist = cv.sample(**death_pars)
-            target_person.date_died = t + death_dist
-        else:
-            # They don't die; determine whether they develop symptoms
-            has_symptoms = cv.bt(target_person.severity) # Binomial distribution with probability equal to age-linked symptom severity index
-            if has_symptoms: # They develop symptoms
-                incub_dist = cv.sample(**incub_pars) # Caclulate how long til they develop symptoms
-                target_person.date_symptomatic = t + incub_dist
-
-            dur_dist = cv.sample(**dur_pars)
-            target_person.date_recovered = target_person.date_infectious + dur_dist
-
-        if source_person:
-            self.transtree[target_person.uid] = {'from':source_person.uid, 'date':t}
-
-        return target_person
 
 
     def run(self, initialize=True, calc_likelihood=False, do_plot=False, verbose=None, **kwargs):
@@ -528,8 +534,7 @@ class Sim(cv.Sim):
                                 if transmission:
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         n_infections += 1
-                                        self.infect_person(source_person=person, target_person=target_person, t=t)
-                                        person.n_infected += 1
+                                        target_person.infect(t, person)
                                         sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
                         else:
@@ -549,8 +554,7 @@ class Sim(cv.Sim):
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
                                             n_infections += 1
-                                            self.infect_person(source_person=person, target_person=target_person, t=t)
-                                            person.n_infected += 1
+                                            target_person.infect(t, person)
                                             sc.printv(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!', 2, verbose)
 
 
