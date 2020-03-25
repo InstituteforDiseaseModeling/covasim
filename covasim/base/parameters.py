@@ -33,6 +33,7 @@ def make_pars():
     pars['usepopdata'] = 'random' # Whether or not to load actual population data
     pars['timelimit']  = 3600 # Time limit for a simulation (seconds)
     pars['stop_func']  = None # A function to call to stop the sim partway through
+    pars['window']     = 7 # Integration window for doubling time and R_eff
 
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
