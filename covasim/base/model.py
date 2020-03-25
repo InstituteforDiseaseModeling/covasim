@@ -176,7 +176,7 @@ class Sim(cv.Sim):
 
         # Create calculated values structure
         self.calculated = {}
-        self.calculated['eff_beta'] = self['asym_prop']*self['asym_factor']*self['beta'] + (1-self['asym_prop'])*self['beta']  # Using asymptomatic proportion
+        self.calculated['eff_beta'] = (1-self['default_severity'])*self['asym_factor']*self['beta'] + self['default_severity']*self['beta']  # Using asymptomatic proportion
         self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
 
