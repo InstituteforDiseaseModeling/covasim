@@ -13,6 +13,6 @@ _requirements.check_extra_libs()
 #%% Imports from here -- just the framework, basic functions, and base -- the "base" version
 from .poisson_stats import *
 from .utils import *
-from .basesim import *
+from .base import *
 from .parameters import *
-from .model import *
+from .sim import *
