@@ -13,7 +13,7 @@ import base64 # Download/upload-specific import
 import json
 
 # Check requirements, and if met, import scirisweb
-cv._requirements.check_scirisweb(die=True)
+cv.requirements.check_scirisweb(die=True)
 import scirisweb as sw
 
 # Create the app
