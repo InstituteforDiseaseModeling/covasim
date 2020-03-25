@@ -78,8 +78,8 @@ class Person(cv.Person):
         self.date_recovered   = None
         self.date_died        = None
 
-        self.infected = [] #: Track all people this person infected
-        self.infected_by = None #: Track the person who caused the infection. If None but person is infected, it was an externally seeded infection
+        self.infected = [] #: Record the UIDs of all people this person infected
+        self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
         return
 
     def infect(self, t, source = None):
@@ -116,14 +116,11 @@ class Person(cv.Person):
             self.date_recovered = self.date_infectious + dur_dist
 
         if source:
-            self.infected_by = source
-            source.infected.append(self)
+            self.infected_by = source.uid
+            source.infected.append(self.uid)
 
         return
 
-    def __repr__(self):
-        output = sc.prepr(self, skip=['infected'])
-        return output
 
 class Sim(cv.Sim):
     '''
