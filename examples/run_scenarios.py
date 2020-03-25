@@ -1,39 +1,35 @@
 '''
-Simple script for running the Covid-19 agent-based model
+Simple script for running Covasim scenarios
 '''
 
 import pylab as pl
 import datetime as dt
 import sciris as sc
 import covasim as cova
+import covid_healthsystems as covidhs
+
 
 sc.heading('Setting up...')
 
 sc.tic()
 
-# Specify what to run!
-do_run = 1
+# Specify what to run
 scenarios = {
     'baseline':     'Status quo',
-#    'sq2wks':      'Status quo, schools reopen in 2 weeks',
-#    'distance':    'Social distancing',
-#    '2wks':        'Social distancing, schools reopen in 2 weeks',
-#    '20wks':       'Social distancing, schools reopen in 20 weeks',
-    'isolatepos':   'Isolate people who diagnose positive',
-    '2xtests':      'Double testing efforts (untargeted), isolate positives',
-    'tracing':      'Trace, test, and isolate all contacts of positives',
+    'distance':    'Social distancing',
+    # 'isolatepos':   'Isolate people who diagnose positive',
 }
 
-
-# Other options
+# Run options
+do_run = 1
 do_save = 0 # refers to whether to save plot - see also save_sims
 do_plot = 1
 show_plot = 1
 save_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-n = 3 # Change to 3 for quick, 11 for real
-xmin = 52 # pars['day_0']
-xmax = xmin+200 # xmin + pars['n_days']
+n = 3 # Number of parallel runs; change to 3 for quick, 11 for real
+
+# Sim options
 interv_day = 10
 closure_len = 14
 noise = 0.1 # Use noise, optionally
@@ -42,8 +38,9 @@ seed = 1
 reskeys = ['cum_exposed', 'n_exposed']
 quantiles = {'low':0.1, 'high':0.9}
 
+# For saving
 version  = 'v0'
-date     = '2020mar18'
+date     = '2020mar24'
 folder   = 'results'
 basename = f'{folder}/covasim_scenarios_{date}_{version}'
 fig_path   = f'{basename}.png'
@@ -71,31 +68,16 @@ if do_run:
         if scenkey == 'baseline':
             scen_sim['interv_days'] = [] # No interventions
             scen_sim['interv_effs'] = []
-        elif scenkey == 'sq2wks':
-            scen_sim['interv_days'] = [interv_day, interv_day+2*7] # Close schools for 2 weeks starting Mar. 16, then reopen
-            scen_sim['interv_effs'] = [0.7, 1.0/0.7] # Change to 40% and then back to 70%
+
         elif scenkey == 'distance':
             scen_sim['interv_days'] = [interv_day] # Close schools for 2 weeks starting Mar. 16, then reopen
             scen_sim['interv_effs'] = [0.7] # Change to 40% and then back to 70%
-        elif scenkey == '2wks':
-            scen_sim['interv_days'] = [interv_day, interv_day+2*7] # Close schools for 2 weeks starting Mar. 16, then reopen
-            scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
-        elif scenkey == '8wks':
-            scen_sim['interv_days'] = [interv_day, interv_day+8*7] # Close schools for 8 weeks starting Mar. 16, then reopen
-            scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
-        elif scenkey == '20wks':
-            scen_sim['interv_days'] = [interv_day, interv_day+20*7] # Close schools for 20 weeks starting Mar. 16, then reopen
-            scen_sim['interv_effs'] = [0.4, 0.7/0.4] # Change to 40% and then back to 70%
+
         elif scenkey == 'isolatepos':
             scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
-        elif scenkey == '2xtests':
-            scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
-            scen_sim['daily_tests'][interv_day:] *= 2 # Double testing starting on the intervention start day
-        elif scenkey == 'tracing':
-            scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
-            scen_sim['cont_factor'] = 0.1 # Scale beta by this amount for anyone who's had contact with a known positive
-            scen_sim['trace_test'] = 100 # Test people who've had known positive contacts
 
+        else:
+            raise KeyError
 
 
         sc.heading(f'Multirun for {scenkey}')
@@ -104,10 +86,10 @@ if do_run:
 
         sc.heading(f'Processing {scenkey}')
 
-        # TODO: this only needs to be done once and can be done so much better!
+        # TODO: this only needs to be done once
         res0 = scen_sims[0].results
         npts = res0[reskeys[0]].npts
-        tvec = xmin+res0['t']
+        tvec = res0['t']
 
         scenraw = {}
         for reskey in reskeys:
@@ -120,7 +102,7 @@ if do_run:
         scenres.low = {}
         scenres.high = {}
         for reskey in reskeys:
-            scenres.best[reskey] = pl.mean(scenraw[reskey], axis=1) # Changed to mean for smoother plots
+            scenres.best[reskey] = pl.mean(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
             scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=quantiles['low'], axis=1)
             scenres.high[reskey] = pl.quantile(scenraw[reskey], q=quantiles['high'], axis=1)
 
@@ -152,10 +134,7 @@ if do_plot:
     fig = pl.figure(**fig_args)
     pl.subplots_adjust(**axis_args)
     pl.rcParams['font.size'] = font_size
-    pl.rcParams['font.family'] = 'Proxima Nova'
-
-    # Create the tvec based on the results -- #TODO: make better!
-    tvec = xmin + pl.arange(len(allres[reskeys[0]].baseline.best))
+    pl.rcParams['font.family'] = 'Proxima Nova' # NB, may not be available on all systems
 
     # %% Plotting
     for rk, reskey in enumerate(reskeys):
@@ -185,12 +164,11 @@ if do_plot:
             pl.grid(True)
 
             # Set x-axis
-            pl.gca().set_xticks(pl.arange(xmin, xmax + 1, 30.5))
             xt = pl.gca().get_xticks()
             lab = []
             for t in xt:
                 tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t))  # + pars['day_0']
-                lab.append(tmp.strftime('%B'))
+                lab.append(tmp.strftime('%b-%d'))
             pl.gca().set_xticklabels(lab)
             sc.commaticks(axis='y')
 
@@ -207,6 +185,12 @@ if do_plot:
 for reskey in reskeys:
     for scenkey in list(scenarios.keys()):
         print(f'{reskey} {scenkey}: {allres[reskey][scenkey].best[-1]:0.0f}')
+
+
+# Perform health systems analysis
+hsys = covidhs.HealthSystem(allres)
+hsys.analyze()
+hsys.plot()
 
 sc.toc()
 

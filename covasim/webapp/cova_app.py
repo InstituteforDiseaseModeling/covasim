@@ -334,7 +334,7 @@ def plot_people(sim) -> dict:
             fig.update_layout(annotations=[dict(x=interv_day, y=1, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
-    fig.update_layout(title={'text': 'Epidemic'}, xaxis_title='Day', yaxis_title='People', autosize=True)
+    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
 
     output = {'json': fig.to_json(), 'id': str(sc.uuid())}
     d = json.loads(output['json'])
@@ -467,6 +467,8 @@ def animate_people(sim) -> dict:
     fig.update_layout(
         plot_bgcolor='#fff'
     )
+
+    fig.update_layout(title={'text': 'Epidemic over time'})
 
     output = {'json': fig.to_json(), 'id': str(sc.uuid())}
     d = json.loads(output['json'])

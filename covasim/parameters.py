@@ -1,5 +1,5 @@
 '''
-Set the parameters for COVID-ABM.
+Set the parameters for Covasim.
 '''
 
 import pylab as pl
@@ -9,7 +9,7 @@ import numba as nb
 import sciris as sc
 
 
-__all__ = ['make_pars', 'set_person_attributes', 'set_cfr', 'set_severity', 'load_data']
+__all__ = ['make_pars', 'set_person_attrs', 'set_cfr', 'set_severity', 'load_data']
 
 
 def make_pars():
@@ -81,7 +81,7 @@ def _get_norm_age(min_age, max_age, age_mean, age_std):
     return age
 
 
-def set_person_attributes(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, default_severity=None,
+def set_person_attrs(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, default_severity=None,
                           severity_fn=None, severity_by_age=True, cfr_by_age=True, use_data=True):
     '''
     Set the attributes for an individual, including:

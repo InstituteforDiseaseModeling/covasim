@@ -1,7 +1,5 @@
 '''
 This file contains all the code for the basic use of Covasim.
-
-Version: 2020mar20
 '''
 
 #%% Imports
@@ -9,13 +7,15 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
-import covasim.framework as cv
+import covasim as cv
 from . import parameters as cvpars
 
 
 # Specify all externally visible functions this file defines
 __all__ = ['to_plot', 'Person', 'Sim']
 
+
+# Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines
 to_plot = sc.odict({
         'Total counts': sc.odict({
             'cum_exposed': 'Cumulative infections',
@@ -39,17 +39,17 @@ to_plot = sc.odict({
 
 #%% Define classes
 
-class Person(cv.Person):
+class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, age, sex, cfr, severity, pars, uid=None, id_len=4):
+    def __init__(self, age, sex, cfr, severity, pars, uid=None, id_len=8):
         if uid is None:
             uid = sc.uuid(length=id_len) # Unique identifier for this person
-        self.uid  = str(uid)
-        self.age  = float(age) # Age of the person (in years)
-        self.sex  = int(sex) # Female (0) or male (1)
-        self.cfr  = cfr # Case fatality rate
+        self.uid = str(uid)
+        self.age = float(age) # Age of the person (in years)
+        self.sex = int(sex) # Female (0) or male (1)
+        self.cfr = cfr # Case fatality rate
         self.severity  = severity # Severity
 
         # Define state
@@ -64,10 +64,10 @@ class Person(cv.Person):
         self.known_contact  = False # Keep track of whether each person is a contact of a known positive
 
         # Infection property distributions
-        self.dist_serial = dict(dist='normal_int', par1=pars['serial'], par2=pars['serial_std'])
-        self.dist_incub = dict(dist='normal_int', par1=pars['incub'], par2=pars['incub_std'])
-        self.dist_dur = dict(dist='normal_int', par1=pars['dur'], par2=pars['dur_std'])
-        self.dist_death = dict(dist='normal_int', par1=pars['timetodie'], par2=pars['timetodie_std'])
+        self.dist_serial = dict(dist='normal_int', par1=pars['serial'],    par2=pars['serial_std'])
+        self.dist_incub  = dict(dist='normal_int', par1=pars['incub'],     par2=pars['incub_std'])
+        self.dist_dur    = dict(dist='normal_int', par1=pars['dur'],       par2=pars['dur_std'])
+        self.dist_death  = dict(dist='normal_int', par1=pars['timetodie'], par2=pars['timetodie_std'])
 
         # Keep track of dates
         self.date_exposed     = None
@@ -81,7 +81,8 @@ class Person(cv.Person):
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
         return
 
-    def infect(self, t, source = None):
+
+    def infect(self, t, source=None):
         """
         Infect this person
 
@@ -118,10 +119,43 @@ class Person(cv.Person):
             self.infected_by = source.uid
             source.infected.append(self.uid)
 
-        return
+        infected = 1  # For incrementing counters
+
+        return infected
 
 
-class Sim(cv.Sim):
+    def check_death(self, t):
+        ''' Check whether or not this person died on this timestep -- let's hope not '''
+
+        if self.date_died and t >= self.date_died:
+            self.exposed     = False
+            self.infectious  = False
+            self.symptomatic = False
+            self.recovered   = False
+            self.died        = True
+            death = 1
+        else:
+            death = 0
+
+        return death
+
+
+    def check_recovery(self, t):
+        ''' Check if an infected person has recovered '''
+
+        if self.date_recovered and t >= self.date_recovered: # It's the day they recover
+            self.exposed     = False
+            self.infectious  = False
+            self.symptomatic = False
+            self.recovered   = True
+            recovery = 1
+        else:
+            recovery = 0
+
+        return recovery
+
+
+class Sim(cv.BaseSim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
@@ -243,9 +277,7 @@ class Sim(cv.Sim):
             if self['usepopdata'] != 'random':
                 age,sex,cfr,severity = -1, -1, -1, -1 # These get overwritten later
             else:
-                age,sex,cfr,severity = cvpars.set_person_attributes(cfr_by_age=self['cfr_by_age'],
-                                                                    default_cfr=self['default_cfr'],
-                                                                    use_data=False)
+                age,sex,cfr,severity = cvpars.set_person_attrs(cfr_by_age=self['cfr_by_age'],default_cfr=self['default_cfr'], use_data=False)
             person = Person(age=age, sex=sex, cfr=cfr, severity=severity, uid=uid, pars=self.pars) # Create the person
             people[uid] = person # Save them to the dictionary
 
@@ -408,24 +440,15 @@ class Sim(cv.Sim):
                 if person.infectious:
 
                     # Check for death
-                    if person.date_died and t >= person.date_died:
-                        person.exposed = False
-                        person.infectious = False
-                        person.symptomatic = False
-                        person.recovered = False
-                        person.died = True
-                        n_deaths += 1
+                    died = person.check_death(t)
+                    n_deaths += died
 
                     # Check for recovery
-                    if person.date_recovered and t >= person.date_recovered: # It's the day they recover
-                        person.exposed = False
-                        person.infectious = False
-                        person.symptomatic = False
-                        person.recovered = True
-                        n_recoveries += 1
+                    recovered = person.check_recovery(t)
+                    n_recoveries += recovered
 
-                    # Calculate onward transmission
-                    else:
+                    # If the person didn't die or recover, check for onward transmission
+                    if not died and not recovered:
                         n_infectious += 1 # Count this person as infectious
 
                         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
@@ -446,8 +469,7 @@ class Sim(cv.Sim):
                                 transmission = cv.bt(thisbeta)
                                 if transmission:
                                     if target_person.susceptible: # Skip people who are not susceptible
-                                        n_infections += 1
-                                        target_person.infect(t, person)
+                                        n_infections += target_person.infect(t, person)
                                         sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
                         else:
@@ -466,8 +488,7 @@ class Sim(cv.Sim):
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
-                                            n_infections += 1
-                                            target_person.infect(t, person)
+                                            n_infections += target_person.infect(t, person)
                                             sc.printv(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!', 2, verbose)
 
 
