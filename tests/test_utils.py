@@ -152,6 +152,25 @@ def test_choose_people_weighted():
     return x1
 
 
+def test_doubling_time():
+
+    sim = cova.Sim()
+    sim.run(verbose=0)
+
+    d = sc.objdict()
+
+    # Test doubling time
+    d.t1 = cova.get_doubling_time(sim, interval=[3,sim['n_days']+10], verbose=2) # should reset end date to sim['n_days']
+    d.t2 = cova.get_doubling_time(sim, start_day=3,end_day=sim['n_days'])
+    d.t3 = cova.get_doubling_time(sim, interval=[3,sim['n_days']], exp_approx=True)
+    d.t4 = cova.get_doubling_time(sim, start_day=3, end_day=sim['n_days'], moving_window=4) # should return array
+    d.t5 = cova.get_doubling_time(sim, series=np.power(1.03, range(100)), interval=[3,30], moving_window=3) # Should be a series with values = 23.44977..
+    d.t6 = cova.get_doubling_time(sim, start_day=9, end_day=20, moving_window=1, series="cum_recoveries") # Should recast window to 2 then return a series with 100s in it
+    with pytest.raises(ValueError):
+        d.t7 = cova.get_doubling_time(sim, start_day=3, end_day=20, moving_window=4, series="cum_deaths") # Should fail, no growth in deaths
+
+    return d
+
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -162,6 +181,7 @@ if __name__ == '__main__':
     samples = test_samples(doplot=doplot)
     people1 = test_choose_people()
     people2 = test_choose_people_weighted()
+    dt = test_doubling_time()
 
     print('\n'*2)
     sc.toc()
