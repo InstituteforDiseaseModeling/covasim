@@ -4,7 +4,7 @@ The base model includes the core functionality of Covasim.
 
 ## Parameters
 
-This section describes the expected behavior of each parameter in the model. Note: the term "overall infection rate" can be explored using `sim.calculated['doubling_time']`.
+This section describes the expected behavior of each parameter in the model. Note: the term "overall infection rate" can be explored using `sim.results['doubling_time']`.
 
 ### Simulation parameters
 * `pars['scale']`: Multiplicative scale for results. Test: run 2 sims, set to 10, `sim.results['cum_exposed']` in 2nd sim should be 10x higher than first.
