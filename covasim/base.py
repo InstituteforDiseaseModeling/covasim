@@ -12,7 +12,7 @@ import pandas as pd
 from . import utils as cov_ut
 
 # Specify all externally visible functions this file defines
-__all__ = ['ParsObj', 'Result', 'Person', 'Sim', 'single_run', 'multi_run']
+__all__ = ['ParsObj', 'Result', 'BaseSim', 'single_run', 'multi_run']
 
 
 
@@ -100,18 +100,9 @@ class Result(sc.prettyobj):
         return len(self.values)
 
 
-class Person(sc.prettyobj):
+class BaseSim(ParsObj):
     '''
-    Class for a single person.
-    '''
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError
-
-
-
-class Sim(ParsObj):
-    '''
-    The Sim class handles the running of the simulation: the number of people,
+    The BaseSim class handles the running of the simulation: the number of people,
     number of time points, and the parameters of the simulation.
     '''
 
@@ -170,34 +161,6 @@ class Sim(ParsObj):
     def get_person(self, ind):
         ''' Return a person based on their ID '''
         return self.people[self.uids[int(ind)]]
-
-
-    def init_results(self):
-        ''' Initialize results '''
-        raise NotImplementedError
-
-
-    def init_people(self):
-        ''' Create the people '''
-        raise NotImplementedError
-
-
-    def summary_stats(self):
-        ''' Compute the summary statistics to display at the end of a run '''
-        raise NotImplementedError
-
-
-    def run(self):
-        ''' Run the simulation '''
-        raise NotImplementedError
-
-
-    def likelihood(self):
-        '''
-        Compute the log-likelihood of the current simulation based on the number
-        of new diagnoses.
-        '''
-        raise NotImplementedError
 
 
     def _make_resdict(self, for_json=True):
@@ -267,17 +230,6 @@ class Sim(ParsObj):
             output = spreadsheet.save(filename)
 
         return output
-
-    def plot(self):
-        '''
-        Plot the results -- can supply arguments for both the figure and the plots.
-        '''
-        raise NotImplementedError
-
-
-    def plot_people(self):
-        ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
-        raise NotImplementedError
 
 
 def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None, **kwargs):

@@ -9,7 +9,7 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
-import covasim.framework as cv
+import covasim as cv
 from . import parameters as cvpars
 
 
@@ -39,7 +39,7 @@ to_plot = sc.odict({
 
 #%% Define classes
 
-class Person(cv.Person):
+class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
@@ -121,7 +121,7 @@ class Person(cv.Person):
         return
 
 
-class Sim(cv.Sim):
+class Sim(cv.BaseSim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
