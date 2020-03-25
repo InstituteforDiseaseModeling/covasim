@@ -205,6 +205,8 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
                 interv_day = sim['interv_days'][0]
                 if interv_day > 0 and interv_day < sim['n_days']:
                     fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+                    fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
+
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
 
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
@@ -263,8 +265,10 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     return output
 
 
-def get_individual_states(sim):
-    people = sorted(sim.people.values(), key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
+def get_individual_states(sim, order=True):
+    people = sim.people.values()
+    if order:
+        people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
 
     # Order these in order of precedence
     # The last matching quantity will be used
@@ -327,6 +331,7 @@ def plot_people(sim) -> dict:
         interv_day = sim['interv_days'][0]
         if interv_day > 0 and interv_day < sim['n_days']:
             fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+            fig.update_layout(annotations=[dict(x=interv_day, y=1, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
     fig.update_layout(title={'text': 'Epidemic'}, xaxis_title='Day', yaxis_title='People', autosize=True)
@@ -340,7 +345,7 @@ def plot_people(sim) -> dict:
 
 
 def animate_people(sim) -> dict:
-    z, states = get_individual_states(sim)
+    z, states = get_individual_states(sim, order=False)
 
     min_color = min(states, key=lambda x: x['value'])['value']
     max_color = max(states, key=lambda x: x['value'])['value']
