@@ -1,6 +1,6 @@
 # Covasim
 
-COVID-19 agent-based simulator. A stochastic individual-based model that can be used for Covid-19 (novel coronavrius, SARS-CoV-2) epidemic projections, scenario interventions, etc., and adapted to different contexts (e.g. the Diamond Princess cruise ship, cities, countries).
+Covasim is a stochastic COVID-19 agent-based simulator that can be used for Covid-19 (novel coronavrius, SARS-CoV-2) epidemic projections, scenario interventions, etc. It can also be adapted to different contexts (e.g. the Diamond Princess cruise ship, cities, countries).
 
 
 ## Requirements
@@ -24,7 +24,7 @@ Simplest usage is `python examples/simple.py`. This will create a figure. See al
 
 ## Structure
 
-All core model code is located in the `covasim` subfolder; standard usage is `import covasim as cv`.
+All core model code is located in the `covasim` subfolder; standard usage is `import covasim as cv`. The other subfolders, `cruise_ship` and `webapp`, are also described below.
 
 ### covasim
 
@@ -38,15 +38,13 @@ The structure of the `covasim` folder, in the order imported, is as follows:
 * `utils.py`: Numeric utilities, mostly based on Numba, for choosing random numbers (plus other helper functions).
 * `base.py`: The `ParsObj` class, plus basic methods of the `BaseSim` class, and associated functions.
 * `parameters.py`: Functions for creating the parameters dictionary and populating correct attributes for people.
-* `model.py`: The core class defining the model, namely `Person` and `Sim`. `Sim` inherits from `BaseSim` which inherits from `ParsObj` which inherits from `prettyobj`.
+* `model.py`: The core classes defining the model, namely `Person` and `Sim`. `Sim` inherits from `BaseSim` which inherits from `ParsObj` which inherits from `prettyobj`.
 
-The package contains multiple different flavors of Covasim. A flavor can have its own parameters file (`parameters.py`) and/or slight variations to the model (`model.py`). 
-
-The `README.md` in that folder contains more information on the parameters.
+The `README.md` in this folder contains detailed information on the model parameters.
 
 ### cruise_ship
 
-A version of the Covasim code specifically adapted for modeling the Diamond Princess cruise ship.
+A version ("flavor") of the Covasim model specifically adapted for modeling the Diamond Princess cruise ship. It uses its own parameters file (`parameters.py`) and has slight variations to the model (`model.py`). 
 
 ### webapp
 
