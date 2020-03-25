@@ -11,5 +11,8 @@ _requirements.check_scirisweb(die=False)
 _requirements.check_extra_libs()
 
 #%% Imports from here -- just the framework, basic functions, and base -- the "base" version
-from .framework import *
-from .base import *
+from .poisson_stats import *
+from .utils import *
+from .basesim import *
+from .parameters import *
+from .model import *
