@@ -36,7 +36,6 @@ def make_pars():
 
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
-    pars['asym_prop']      = 0.17 # Proportion of asymptomatic cases - estimate based on https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.25.10.2000180, #TODO: look for better estimates
     pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']    = 1.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
@@ -64,7 +63,7 @@ def make_pars():
     pars['cfr_by_age']          = 0 # Whether or not to use age-specific case fatality
     pars['default_cfr']         = 0.016 # Default overall case fatality rate if not using age-specific values
     pars['severity_by_age']     = 0 # Whether or not to use age-specific case fatality
-    pars['default_severity']    = 0.3 # Default overall case fatality rate if not using age-specific values
+    pars['default_severity']    = 0.7 # Default overall severity if not using age-specific values. This gives the overall proportion of symptomatic cases
 
     # Events and interventions
     pars['interv_days'] = [] # Day on which interventions started/stopped, e.g. [30, 44]
