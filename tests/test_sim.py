@@ -3,6 +3,8 @@ Simple example usage for the Covid-19 agent-based model
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('TkAgg')
 import os
 import pytest
 import sciris as sc

@@ -118,7 +118,7 @@ def set_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
         # Define age-dependent case fatality rates if not given
         if cfrdict is None:
             cfrdict = {'cutoffs':   [10,      20,      30,     40,     50,     60,     70,    80,    100],  # Age cutoffs
-                       'values':    [0.00002, 0.00006, 0.0003, 0.0008, 0.0015, 0.0060, 0.022, 0.051, 0.93]}  # Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf
+                       'values':    [0.00002, 0.00006, 0.0003, 0.0008, 0.0015, 0.0060, 0.022, 0.051, 0.093]}  # Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf
         max_age_cfr = cfrdict['values'][-1]  # For people older than the oldest
 
         # Figure out which CFR applies to a person of the specified age
