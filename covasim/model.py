@@ -622,9 +622,6 @@ class Sim(cv.BaseSim):
                     outcome_date = int(outcome_date)
                     sources[outcome_date] += 1
                     targets[outcome_date] += len(person.infected)
-            else:
-                # print(f'Person {person.uid} is NOT exposed')
-                pass
 
         # Populate the array -- to avoid divide-by-zero, skip indices that are 0
         inds = sc.findinds(sources>0)
