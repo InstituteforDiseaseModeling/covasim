@@ -44,13 +44,14 @@ class Person(cv.Person):
     '''
     Class for a single person.
     '''
-    def __init__(self, age, sex, cfr, uid=None, id_len=4):
+    def __init__(self, age, sex, cfr, severity, uid=None, id_len=4):
         if uid is None:
             uid = sc.uuid(length=id_len) # Unique identifier for this person
         self.uid  = str(uid)
         self.age  = float(age) # Age of the person (in years)
         self.sex  = int(sex) # Female (0) or male (1)
         self.cfr  = cfr # Case fatality rate
+        self.severity  = severity # Severity
 
         # Define state
         self.alive          = True
@@ -194,11 +195,12 @@ class Sim(cv.Sim):
         for p in range(n_people): # Loop over each person
             uid = uids[p]
             if self['usepopdata'] != 'random':
-                age,sex,cfr = -1, -1, -1 # These get overwritten later
+                age,sex,cfr,severity = -1, -1, -1, -1 # These get overwritten later
             else:
-                age,sex,cfr = cvpars.get_age_sex(cfr_by_age=self['cfr_by_age'], default_cfr=self['default_cfr'], use_data=False)
-
-            person = Person(age=age, sex=sex, cfr=cfr, uid=uid) # Create the person
+                age,sex,cfr,severity = cvpars.set_person_attributes(cfr_by_age=self['cfr_by_age'],
+                                                                    default_cfr=self['default_cfr'],
+                                                                    use_data=False)
+            person = Person(age=age, sex=sex, cfr=cfr, severity=severity, uid=uid) # Create the person
             people[uid] = person # Save them to the dictionary
 
         # Store UIDs and people

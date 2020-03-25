@@ -9,7 +9,7 @@ import numba as nb
 import sciris as sc
 
 
-__all__ = ['make_pars', 'get_age_sex', 'set_cfr', 'load_data']
+__all__ = ['make_pars', 'set_person_attributes', 'set_cfr', 'set_severity', 'load_data']
 
 
 def make_pars():
@@ -58,11 +58,13 @@ def make_pars():
     pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
     pars['trace_test']     = 1.0 # Multiply testing probability by this factor for contacts of known positives -- baseline assumes no contact tracing
 
-    # Mortality
-    pars['timetodie']      = 21 # Days until death
-    pars['timetodie_std']  = 2 # STD
-    pars['cfr_by_age']     = 0 # Whether or not to use age-specific case fatality
-    pars['default_cfr']    = 0.016 # Default overall case fatality rate if not using age-specific values
+    # Mortality and severity
+    pars['timetodie']           = 21 # Days until death
+    pars['timetodie_std']       = 2 # STD
+    pars['cfr_by_age']          = 0 # Whether or not to use age-specific case fatality
+    pars['default_cfr']         = 0.016 # Default overall case fatality rate if not using age-specific values
+    pars['severity_by_age']     = 0 # Whether or not to use age-specific case fatality
+    pars['default_severity']    = 0.3 # Default overall case fatality rate if not using age-specific values
 
     # Events and interventions
     pars['interv_days'] = [] # Day on which interventions started/stopped, e.g. [30, 44]
@@ -79,9 +81,13 @@ def _get_norm_age(min_age, max_age, age_mean, age_std):
     return age
 
 
-def get_attributes(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, cfr_by_age=True, use_data=True):
+def set_person_attributes(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, default_severity=None, severity_by_age=True, cfr_by_age=True, use_data=True):
     '''
-    Define age-sex distributions.
+    Set the attributes for an individual, including:
+        * age
+        * sex
+        * severity (i.e., how likely they are to develop symptoms -- based on age)
+        * case-fatality rate (i.e., how likely they are to die -- based on age)
     '''
     sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
     age = _get_norm_age(min_age, max_age, age_mean, age_std)
@@ -92,7 +98,7 @@ def get_attributes(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=N
     # Get symptom severity for a person of this age
     severity = set_severity(age=age, default_severity=default_severity, severity_by_age=severity_by_age, severity_fn=severity_fn, max_age=max_age)
 
-    return age, sex, cfr
+    return age, sex, cfr, severity
 
 
 def set_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
@@ -158,9 +164,9 @@ def set_severity(age=None, default_severity=0.3, severity_by_age=True, severity_
     # Single number
     elif sc.isnumber(age):
         if severity_fn == 'linear':
-            severity = 0.5+0.5*age/max_age
+            severity = 0.5+0.5*age/max_age # Simple function designed to give desired features
         else:
-            raise(NotImplementedError)
+            raise NotImplementedError('Only accepting linear severity function at the moment.')
 
     # Listlike
     elif sc.checktype(age, 'listlike'):
