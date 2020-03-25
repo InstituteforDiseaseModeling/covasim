@@ -79,7 +79,7 @@ def _get_norm_age(min_age, max_age, age_mean, age_std):
     return age
 
 
-def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, cfr_by_age=True, use_data=True):
+def get_attributes(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None, cfr_by_age=True, use_data=True):
     '''
     Define age-sex distributions.
     '''
@@ -88,6 +88,9 @@ def get_age_sex(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr=None
 
     # Get case fatality rate for a person of this age
     cfr = set_cfr(age=age, default_cfr=default_cfr, cfr_by_age=cfr_by_age)
+
+    # Get symptom severity for a person of this age
+    severity = set_severity(age=age, default_severity=default_severity, severity_by_age=severity_by_age, severity_fn=severity_fn, max_age=max_age)
 
     return age, sex, cfr
 
@@ -127,6 +130,46 @@ def set_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
     return cfr
 
 
+def set_severity(age=None, default_severity=0.3, severity_by_age=True, severity_fn=None, max_age=100):
+    '''
+    Set symptom severity
+    Desired features:
+    1. Overall severity distribution:
+           a. ~30% of cases should be asymptomatic
+           b. ~50% of cases should be mild
+           c. ~15% of cases should be severe
+           d. ~5% of cases should be critical
+    2. Severity by age distribution: older people should be more likely to become severe/critical
+
+    Sources:
+        https://jamanetwork.com/journals/jama/fullarticle/2762130
+
+    Implemented approach: use a simple linear relationship btwn age and severity index
+    Alternative approach: (for future consideration) use a beta distribution (often used as a prior over binomial probs)
+    '''
+
+    # Process different options for age
+    # Not supplied, use default
+    if age is None or not severity_by_age:
+        severity = default_severity
+
+    if severity_fn is None: severity_fn = 'linear' # Default to linear
+
+    # Single number
+    elif sc.isnumber(age):
+        if severity_fn == 'linear':
+            severity = 0.5+0.5*age/max_age
+        else:
+            raise(NotImplementedError)
+
+    # Listlike
+    elif sc.checktype(age, 'listlike'):
+        severity = []
+        for a in age: severity.append(set_severity(age=a, default_severity=default_severity, severity_by_age=severity_by_age, severity_fn=severity_fn, max_age=max_age))
+    else:
+        raise TypeError(f"set_severity accepts a single age or list/aray of ages, not type {type(age)}")
+
+    return severity
 
 
 def load_data(filename):

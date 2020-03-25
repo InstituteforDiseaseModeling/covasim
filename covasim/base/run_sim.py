@@ -48,3 +48,11 @@ dt6 = sim.get_doubling_time(start_day=9, end_day=20, moving_window=1, series="cu
 
 
 
+
+
+
+
+
+
+
+
