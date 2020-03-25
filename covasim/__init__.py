@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #%% Print version and license information
 from .version import __version__, __versiondate__, __license__
 print(__license__)

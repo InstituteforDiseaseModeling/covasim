@@ -4,11 +4,104 @@ Functions for running multiple Covasim runs.
 
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
+import pylab as pl
 import sciris as sc
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['single_run', 'multi_run']
+__all__ = ['SimSet', 'single_run', 'multi_run']
+
+class SimSet(sc.prettyobj):
+    '''
+    Class for running multiple sets of multiple simulations -- e.g., scenarios
+    '''
+
+    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+             axis_args=None, as_dates=True, interval=None, dateformat=None,
+             font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
+        '''
+        Plot the results -- can supply arguments for both the figure and the plots.
+
+        Args:
+            do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
+            fig_path (str): Path to save the figure
+            fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
+            axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            as_dates (bool): Whether to plot the x-axis as dates or time points
+            interval (int): Interval between tick marks
+            dateformat (str): Date string format, e.g. '%B %d'
+            font_size (int): Size of the font
+            font_family (str): Font face
+            use_grid (bool): Whether or not to plot gridlines
+            do_show (bool): Whether or not to show the figure
+            verbose (bool): Display a bit of extra information
+
+        Returns:
+            fig: Figure handle
+        '''
+
+        if verbose is None:
+            verbose = self['verbose']
+        sc.printv('Plotting...', 1, verbose)
+
+        fig_args = {'figsize': (16, 12)}
+        plot_args = {'lw': 3, 'alpha': 0.7}
+        axis_args = {'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}
+        fill_args = {'alpha': 0.2}
+        font_size = 18
+
+        fig = pl.figure(**fig_args)
+        pl.subplots_adjust(**axis_args)
+        pl.rcParams['font.size'] = font_size
+        pl.rcParams['font.family'] = 'Proxima Nova' # NB, may not be available on all systems
+
+        # %% Plotting
+        for rk, reskey in enumerate(reskeys):
+            pl.subplot(len(reskeys), 1, rk + 1)
+
+            resdata = allres[reskey]
+
+            for scenkey, scendata in resdata.items():
+                pl.fill_between(tvec, scendata.low, scendata.high, **fill_args)
+                pl.plot(tvec, scendata.best, label=scendata.name, **plot_args)
+
+                # interv_col = [0.5, 0.2, 0.4]
+
+                ymax = pl.ylim()[1]
+
+                if reskey == 'cum_exposed':
+                    sc.setylim()
+                    pl.title('Cumulative infections')
+                    pl.text(0.0, 1.1, 'COVID-19 projections, per 1 million susceptibles', fontsize=24,
+                            transform=pl.gca().transAxes)
+
+                elif reskey == 'n_exposed':
+                    pl.legend()
+                    sc.setylim()
+                    pl.title('Active infections')
+
+                pl.grid(True)
+
+                # Set x-axis
+                xt = pl.gca().get_xticks()
+                lab = []
+                for t in xt:
+                    tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t))  # + pars['day_0']
+                    lab.append(tmp.strftime('%b-%d'))
+                pl.gca().set_xticklabels(lab)
+                sc.commaticks(axis='y')
+
+        if do_save:
+            pl.savefig(fig_path, dpi=150)
+            if do_run:  # Don't resave loaded data
+                sc.saveobj(obj_path, allres)
+
+        if show_plot: # Optionally show plot
+            pl.show()
+
+        return fig
+
 
 
 def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None, **kwargs):

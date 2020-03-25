@@ -161,15 +161,23 @@ class Sim(cv.BaseSim):
     number of time points, and the parameters of the simulation.
     '''
 
-    def __init__(self, pars=None, datafile=None):
+    def __init__(self, pars=None, datafile=None, filename=None):
         default_pars = cvpars.make_pars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
         self.datafile = datafile # Store this
         self.data = None
         if datafile is not None: # If a data file is provided, load it
             self.data = cvpars.load_data(datafile)
+        self.created = sc.now()
+        if filename is None:
+            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
+            filename = f'covasim_{datestr}.sim'
+        self.filename = filename
         self.stopped = None # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
+        self.people = {}
+        self.results = {}
+        self.calculated = {}
         if pars is not None:
             self.update_pars(pars)
         return
@@ -228,7 +236,6 @@ class Sim(cv.BaseSim):
             return output
 
         # Create the main results structure
-        self.results = {}
         self.results['n_susceptible']  = init_res('Number susceptible')
         self.results['n_exposed']      = init_res('Number exposed')
         self.results['n_infectious']   = init_res('Number infectious')
@@ -255,7 +262,6 @@ class Sim(cv.BaseSim):
         self.results_ready = False
 
         # Create calculated values structure
-        self.calculated = {}
         self.calculated['eff_beta'] = (1-self['default_severity'])*self['asym_factor']*self['beta'] + self['default_severity']*self['beta']  # Using asymptomatic proportion
         self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
@@ -677,7 +683,6 @@ class Sim(cv.BaseSim):
         return summary
 
 
-
     def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
              font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
@@ -784,8 +789,3 @@ class Sim(cv.BaseSim):
             pl.close(fig)
 
         return fig
-
-
-    def plot_people(self):
-        ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
-        raise NotImplementedError

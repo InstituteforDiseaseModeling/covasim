@@ -234,3 +234,45 @@ class BaseSim(ParsObj):
             output = spreadsheet.save(filename)
 
         return output
+
+
+    def save(self, filename=None, **kwargs):
+        '''
+        Save to disk as a gzipped pickle.
+
+        Args:
+            filename (str or None): the name or path of the file to save to; if None, uses stored
+            keywords: passed to makefilepath()
+
+        Returns:
+            filename (str): the validated absolute path to the saved file
+
+        Example:
+            sim.save() # Saves to a .sim file with the date and time of creation by default
+
+        '''
+        if filename is None:
+            filename = self.filename
+        filename = sc.makefilepath(filename=filename, **kwargs)
+        sc.saveobj(filename=filename, obj=self)
+        return filename
+
+
+    @staticmethod
+    def load(filename, **kwargs):
+        '''
+        Load from disk from a gzipped pickle.
+
+        Args:
+            filename (str): the name or path of the file to save to
+            keywords: passed to makefilepath()
+
+        Returns:
+            sim (Sim): the loaded simulation object
+
+        Example:
+            sim = cv.Sim.load('my-simulation.sim')
+        '''
+        filename = sc.makefilepath(filename=filename, **kwargs)
+        sim = sc.loadobj(filename=filename)
+        return sim
