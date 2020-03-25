@@ -149,7 +149,8 @@ def set_severity(age=None, default_severity=0.3, severity_by_age=True, severity_
     2. Severity by age distribution: older people should be more likely to become severe/critical
 
     Sources:
-        https://jamanetwork.com/journals/jama/fullarticle/2762130
+        https://jamanetwork.com/journals/jama/fullarticle/2762130 -- distribution in China
+        https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(20)30566-3/fulltext -- "increasing odds of in-hospital death associated with older age (odds ratio 1·10)"
 
     Implemented approach: use a simple linear relationship btwn age and severity index
     Alternative approach: (for future consideration) use a beta distribution (often used as a prior over binomial probs)

@@ -390,8 +390,8 @@ class Sim(cv.Sim):
             target_person.date_died = t + death_dist
         else:
             # They don't die; determine whether they develop symptoms
-            # TODO, consider refactoring this with a "symptom_severity" parameter that could help determine likelihood of hospitalization
-            if not cv.bt(self['asym_prop']): # They develop symptoms
+            has_symptoms = cv.bt(target_person.severity) # Binomial distribution with probability equal to age-linked symptom severity index
+            if has_symptoms: # They develop symptoms
                 incub_dist = cv.sample(**incub_pars) # Caclulate how long til they develop symptoms
                 target_person.date_symptomatic = t + incub_dist
 
