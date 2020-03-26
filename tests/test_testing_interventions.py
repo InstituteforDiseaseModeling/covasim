@@ -9,7 +9,7 @@ import covasim as cv
 doplot = 1
 
 def test_interventions(doplot=False):
-    sc.heading('Minimal sim test')
+    sc.heading('Test of testing interventions')
 
 
     sc.heading('Setting up...')
@@ -51,7 +51,7 @@ def test_interventions(doplot=False):
               }
           },
         'tracing10pc': {
-          'name':'TTest 10% (contact tracing); isolate positives',
+          'name':'Test 10% (contact tracing); isolate positives',
           'pars': {
               'interventions': cv.TestNum(npts, daily_tests=[0.10*n_people]*npts),
               'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
