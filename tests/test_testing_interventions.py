@@ -4,9 +4,9 @@ Testing the effect of testing interventions in Covasim
 
 #%% Imports and settings
 import sciris as sc
-import covasim as cova
+import covasim as cv
 
-doplot = 0
+doplot = 1
 
 def test_interventions(doplot=False):
     sc.heading('Minimal sim test')
@@ -19,7 +19,7 @@ def test_interventions(doplot=False):
     n_runs = 3
     verbose = 1
 
-    base_sim = cova.Sim() # create sim object
+    base_sim = cv.Sim() # create sim object
     n_people = base_sim['n']
     npts = base_sim.npts
 
@@ -34,40 +34,40 @@ def test_interventions(doplot=False):
         'test1pc': {
           'name':'Test 1% (untargeted); isolate positives',
           'pars': {
-              'interventions': cova.TestNum(npts, daily_tests=[0.01*n_people]*npts),
+              'interventions': cv.TestNum(npts, daily_tests=[0.01*n_people]*npts),
               }
           },
         'test10pc': {
           'name':'Test 10% (untargeted); isolate positives',
           'pars': {
-              'interventions': cova.TestNum(npts, daily_tests=[0.10*n_people]*npts),
+              'interventions': cv.TestNum(npts, daily_tests=[0.10*n_people]*npts),
               }
           },
         'tracing1pc': {
           'name':'Test 1% (contact tracing); isolate positives',
           'pars': {
-              'interventions': cova.TestNum(npts, daily_tests=[0.01*n_people]*npts),
+              'interventions': cv.TestNum(npts, daily_tests=[0.01*n_people]*npts),
               'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
               }
           },
         'tracing10pc': {
           'name':'TTest 10% (contact tracing); isolate positives',
           'pars': {
-              'interventions': cova.TestNum(npts, daily_tests=[0.10*n_people]*npts),
+              'interventions': cv.TestNum(npts, daily_tests=[0.10*n_people]*npts),
               'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
               }
           },
         'floating': {
           'name':'Test a constant proportion of the population',
           'pars': {
-              'interventions': cova.TestProp(npts, symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
+              'interventions': cv.TestProp(npts, symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
               }
           },
          }
 
     metapars = {'n_runs': n_runs}
 
-    scens = cova.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose)
 
     return scens
