@@ -70,6 +70,9 @@ def test_interventions(doplot=False):
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose)
 
+    if doplot:
+        scens.plot()
+
     return scens
 
 
