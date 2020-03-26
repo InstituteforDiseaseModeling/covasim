@@ -157,7 +157,7 @@ class Person(sc.prettyobj):
 
 
     def test(self, t, test_sensitivity):
-        if self.infectious and cv.bt(test_sensitivity):  # Person was tested and is true-positive
+        if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
             self.diagnosed = True
             self.date_diagnosed = t
             diagnosed = 1
@@ -476,8 +476,8 @@ class Sim(cvbase.BaseSim):
                 if person.recovered:
                     n_recovered += 1
 
+            # End of person loop; apply interventions
             for intervention in self['interventions']:
-                print('yoooo')
                 intervention.apply(self, t)
 
             # Update counts for this time step
@@ -490,7 +490,7 @@ class Sim(cvbase.BaseSim):
             self.results['n_symptomatic'][t] = n_symptomatic
             self.results['n_recovered'][t]   = n_recovered
 
-        # Compute cumulative results outside of the time loop
+        # End of time loop; compute cumulative results outside of the time loop
         self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values) + self['n_infected'] # Include initially infected people
         self.results['cum_tested'].values     = pl.cumsum(self.results['tests'].values)
         self.results['cum_diagnosed'].values  = pl.cumsum(self.results['diagnoses'].values)
@@ -707,10 +707,9 @@ class Sim(cvbase.BaseSim):
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
 
-            for intervention in self['interventions']:
-                if isinstance(intervention, cv.ReduceBetaIntervention):
-                    ylims = pl.ylim()
-                    pl.plot([intervention.day,intervention.day], ylims, '--')
+            # for intervention in self['interventions']:
+            #     ylims = pl.ylim()
+            #     pl.plot([intervention.day,intervention.day], ylims, '--')
 
             pl.grid(use_grid)
             cvu.fixaxis(self)
