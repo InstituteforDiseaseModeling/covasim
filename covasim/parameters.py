@@ -67,9 +67,7 @@ def make_pars():
     pars['default_severity']    = 0.7 # Default overall severity if not using age-specific values. This gives the overall proportion of symptomatic cases
 
     # Events and interventions
-    pars['interv_days'] = [] # Day on which interventions started/stopped, e.g. [30, 44]
-    pars['interv_effs'] = [] # Change in transmissibility, e.g. [0.1, 10]
-    pars['interv_func'] = None # Custom intervention function
+    pars['interventions'] = []  #: List of Intervention instances
 
     return pars
 
