@@ -56,7 +56,7 @@ CLASSIFIERS = [
 setup(
     name="covasim",
     version=version,
-    author="Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, Dina Mistry, Lauren George, Mike Famulare, Daniel Klein",
+    author="Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, Dina Mistry, Lauren George, Mike Famulare, Daniel Klein, on behalf of the IDM COVID-19 Response Team",
     author_email="covid@idmod.org",
     description="Covid-19 agent-based model model",
     keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess", "Seattle", "agent-based model"],
