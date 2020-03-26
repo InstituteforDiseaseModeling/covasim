@@ -79,13 +79,16 @@ class Scenarios(cvbase.ParsObj):
         self.base_sim = sim
         if basepars is None:
             basepars = {}
-        self.base_sim.update_pars(basepars)
+        self.basepars = basepars
+        self.base_sim.update_pars(self.basepars)
+        self.base_sim.validate_pars()
         self.base_sim.init_results()
 
         # Copy quantities from the base sim to the main object
         self.npts = self.base_sim.npts
         self.tvec = self.base_sim.tvec
         self.reskeys = self.base_sim.reskeys
+        print('hiiiii', self.npts, self.tvec)
 
         # Create the results object; order is: results key, scenario, best/low/high
         self.allres = sc.objdict()
@@ -127,11 +130,16 @@ class Scenarios(cvbase.ParsObj):
             # Create and run the simulations
 
             print_heading(f'Multirun for {scenkey}')
-            scen_sim = cvmodel.Sim(pars=scenpars)
+            scen_sim = cvmodel.Sim(pars=self.basepars)
+            scen_sim.update_pars(scenpars)
+            print(scen_sim['n_days'])
+            print(self.basepars['n_days'])
             scen_sims = multi_run(scen_sim, n=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], verbose=verbose)
 
             # Process the simulations
             print_heading(f'Processing {scenkey}')
+
+            print('hisdlkfsldf', self.npts)
 
             scenraw = {}
             for reskey in reskeys:
