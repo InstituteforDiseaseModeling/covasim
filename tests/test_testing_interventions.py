@@ -8,9 +8,12 @@ matplotlib.use('TkAgg')
 import sciris as sc
 import covasim as cv
 
-doplot = 1
+do_plot = 1
+do_show = 0
+do_save = 1
+fig_path = 'results/testing_scens.png'
 
-def test_interventions(doplot=False):
+def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None):
     sc.heading('Test of testing interventions')
 
 
@@ -72,8 +75,8 @@ def test_interventions(doplot=False):
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose)
 
-    if doplot:
-        scens.plot()
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
 
     return scens
 
@@ -82,7 +85,7 @@ def test_interventions(doplot=False):
 if __name__ == '__main__':
     sc.tic()
 
-    scens = test_interventions(doplot=doplot)
+    scens = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
 
     sc.toc()
 
