@@ -79,7 +79,6 @@ class ChangeBeta(Intervention):
     '''
 
     def __init__(self, days, changes):
-        print('sdkffkldj')
         super().__init__()
         self.days = sc.promotetoarray(days)
         self.changes = sc.promotetoarray(changes)
@@ -92,8 +91,6 @@ class ChangeBeta(Intervention):
 
     def apply(self, sim, t):
 
-        print('hiiiii', t, self.days, sc.findinds(self.days, t))
-
         # If this is the first time it's being run, store beta
         if self.orig_beta is None:
             self.orig_beta = sim['beta']
@@ -105,7 +102,6 @@ class ChangeBeta(Intervention):
             for ind in inds:
                 new_beta = new_beta * self.changes[ind]
             sim['beta'] = new_beta
-            print(ind, sim['beta'])
 
         return
 
