@@ -49,7 +49,7 @@ class ReduceBetaIntervention(Intervention):
         self.day = day
         self.efficacy = efficacy
 
-    def apply(self, t, sim):
+    def apply(self, sim, t):
         if t == self.day:
             sim['beta'] *= (1-self.efficacy)
 
