@@ -71,7 +71,6 @@ class DiseaseTransmissionTests(CovaSimTest):
         Test that with zero contacts, no transmission
         depends on test_beta_scaling
         """
-        self.is_debugging = True
         self.set_smallpop_hightransmission()
         beta_zero = {
             TKeys.contacts_per_agent: 0

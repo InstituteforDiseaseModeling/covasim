@@ -6,6 +6,9 @@ import unittest
 
 from unittest_support_classes import CovaSimTest, TestProperties
 
+TPKeys = TestProperties.ParameterKeys.SimulationKeys
+ResKeys = TestProperties.ResultsDataKeys
+
 class SimulationParameterTests(CovaSimTest):
     def setUp(self):
         super().setUp()
@@ -60,7 +63,6 @@ class SimulationParameterTests(CovaSimTest):
         """
         self.is_debugging = True
         self.set_microsim()
-        TPKeys = TestProperties.ParameterKeys.SimulationKeys
         pop_zero_one_day = {
             TPKeys.population_scaling_factor: 1,
             TPKeys.number_simulated_days: 1,
@@ -81,7 +83,6 @@ class SimulationParameterTests(CovaSimTest):
         """
         self.is_debugging = True
         self.set_smallpop_hightransmission()
-        TPKeys = TestProperties.ParameterKeys.SimulationKeys
         negative_infected_count = {
             TPKeys.population_scaling_factor: 1,
             TPKeys.initial_infected_count: -1
@@ -101,7 +102,6 @@ class SimulationParameterTests(CovaSimTest):
         Depends on population_size
         """
         self.set_microsim()
-        TPKeys = TestProperties.ParameterKeys.SimulationKeys
         scale_1_one_day = {
             TPKeys.population_scaling_factor: 1,
             TPKeys.number_simulated_days: 1
@@ -129,7 +129,6 @@ class SimulationParameterTests(CovaSimTest):
         Set a vanilla number of infections (13)
         Run sim for one day and verify correct count
         """
-        TPKeys = TestProperties.ParameterKeys.SimulationKeys
         infected_0_one_day = {
             TPKeys.number_simulated_days: 1,
             TPKeys.population_scaling_factor: 1,
@@ -166,7 +165,6 @@ class SimulationParameterTests(CovaSimTest):
         different in the third
         """
         self.set_smallpop_hightransmission()
-        TPKeys = TestProperties.ParameterKeys.SimulationKeys
         seed_1_params = {
             TPKeys.random_seed: 1
         }
@@ -175,17 +173,17 @@ class SimulationParameterTests(CovaSimTest):
         }
         self.run_sim(seed_1_params)
         infectious_seed_1_v1 = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infectious_at_timestep
+            ResKeys.infectious_at_timestep
         )
         exposures_seed_1_v1 = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.exposed_at_timestep
+            ResKeys.exposed_at_timestep
         )
         self.run_sim(seed_1_params)
         infectious_seed_1_v2 = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infectious_at_timestep
+            ResKeys.infectious_at_timestep
         )
         exposures_seed_1_v2 = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.exposed_at_timestep
+            ResKeys.exposed_at_timestep
         )
         self.assertEqual(infectious_seed_1_v1, infectious_seed_1_v2,
                          msg=f"With random seed the same, these channels should"
@@ -195,10 +193,10 @@ class SimulationParameterTests(CovaSimTest):
                              f"be identical.")
         self.run_sim(seed_2_params)
         infectious_seed_2 = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infectious_at_timestep
+            ResKeys.infectious_at_timestep
         )
         exposures_seed_2 = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.exposed_at_timestep
+            ResKeys.exposed_at_timestep
         )
         self.assertNotEqual(infectious_seed_1_v1, infectious_seed_2,
                          msg=f"With random seed the different, these channels should"
@@ -216,25 +214,25 @@ class SimulationParameterTests(CovaSimTest):
         limit expired.
         """
         short_time_limit = {
-            TestProperties.ParameterKeys.SimulationKeys.time_limit: 0.5
+            TPKeys.time_limit: 0.5
         }
         med_time_limit = {
-            TestProperties.ParameterKeys.SimulationKeys.time_limit: 1.5
+            TPKeys.time_limit: 1.5
         }
         long_time_limit = {
-            TestProperties.ParameterKeys.SimulationKeys.time_limit: 15.0
+            TPKeys.time_limit: 15.0
         }
         self.run_sim(params_dict=short_time_limit)
         infections_channel_short = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infectious_at_timestep
+            ResKeys.infectious_at_timestep
         )
         self.run_sim(params_dict=med_time_limit)
         infections_channel_med = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infectious_at_timestep
+            ResKeys.infectious_at_timestep
         )
         self.run_sim(params_dict=long_time_limit)
         infections_channel_long = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infectious_at_timestep
+            ResKeys.infectious_at_timestep
         )
         def remove_zeros(channel):
             while 0 in channel:
