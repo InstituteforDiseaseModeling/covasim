@@ -66,7 +66,7 @@ class TestProperties:
             n = 500
             n_infected = 10
             n_days = 30
-            contacts = 30
+            contacts = 5
             beta = 0.2
             serial = 2
             serial_std = 0.5
