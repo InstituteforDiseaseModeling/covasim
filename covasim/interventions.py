@@ -3,7 +3,7 @@ import pylab as pl
 import numpy as np
 import sciris as sc
 
-#%% Define classes
+
 class Intervention:
     """
     Abstract class for interventions
@@ -61,6 +61,7 @@ class Intervention:
         d['InterventionType'] = self.__class__.__name__
         return d
 
+
 class ReduceBetaIntervention(Intervention):
     def __init__(self, day, efficacy):
         super().__init__()
@@ -70,6 +71,7 @@ class ReduceBetaIntervention(Intervention):
     def apply(self, sim, t):
         if t == self.day:
             sim['beta'] *= (1-self.efficacy)
+
 
 class FixedTestIntervention(Intervention):
     """
@@ -122,14 +124,14 @@ class FixedTestIntervention(Intervention):
         self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
 
 
-class FloatingTestIntervention:
+class FloatingTestIntervention(Intervention):
     """
     Test as many people as required based on test probability
 
     Returns:
 
     """
-    def __init__(self, sim, symptomatic_probability=0.5, trace_probability=1.0, test_sensitivity=1.0):
+    def __init__(self, sim, symptomatic_probability=0.9, asymptomatic_probability=0.01, trace_probability=1.0, test_sensitivity=1.0):
         """
 
         Args:
@@ -142,6 +144,8 @@ class FloatingTestIntervention:
         """
         super().__init__()
         self.symptomatic_probability = symptomatic_probability
+        self.asymptomatic_probability = asymptomatic_probability
+
         self.trace_probability = trace_probability # Probability that identified contacts get tested
         self.test_sensitivity = test_sensitivity
 
@@ -154,19 +158,20 @@ class FloatingTestIntervention:
         self.scheduled_tests = set() # Track UIDs of people that are guaranteed to be tested at the next step
 
 
-    def apply(self, t, sim):
+    def apply(self, sim, t):
         ''' Perform testing '''
 
         new_scheduled_tests = set()
 
-        for person in sim.people.values():
-            if person.uid in self.scheduled_tests or (person.symptomatic and cv.bt(self.symptomatic_probability)):
+        for i, person in enumerate(sim.people.values()):
+            if i in self.scheduled_tests or (person.symptomatic and cv.bt(self.symptomatic_probability)) or (not person.symptomatic and cv.bt(self.asymptomatic_probability)):
+                self.results['n_tested'][t] += 1
                 person.test(t, self.test_sensitivity)
-                self.results['n_diagnoses'][t] += 1
-
-                for idx in person.contact_inds:
-                    if person.diagnosed and self.trace_probability and cv.bt(self.trace_probability):
-                        new_scheduled_tests.add(sim.people[idx].uid)
+                if person.diagnosed:
+                    self.results['n_diagnoses'][t] += 1
+                    for idx in person.contact_inds:
+                        if person.diagnosed and self.trace_probability and cv.bt(self.trace_probability):
+                            new_scheduled_tests.add(idx)
 
         self.scheduled_tests = new_scheduled_tests
 

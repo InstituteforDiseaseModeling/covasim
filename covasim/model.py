@@ -483,6 +483,7 @@ class Sim(cv.BaseSim):
 
         # Add in the results from the interventions
         for intervention in self['interventions']:
+            intervention.finalize()  # Execute any post-processing
             self.results.update(intervention.results)
 
         # Scale the results

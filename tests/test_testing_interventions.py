@@ -25,6 +25,7 @@ scenarios = {
     'test10pc':     'Test 10% (untargeted); isolate positives',
     'tracing1pc':   'Test 1% (contact tracing); isolate positives',
     'tracing10pc':  'Test 10% (contact tracing); isolate positives',
+    'floating':     'Known probability of testing',
 }
 
 # Other options
@@ -76,6 +77,10 @@ if do_run:
         elif scenkey == 'tracing10pc':
             scen_sim['interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.1*n_people]*scen_sim.npts, trace_test=100)]
             scen_sim['cont_factor'] = 0.1 # This means that people who've been in contact with known positives isolate with 90% effectiveness
+
+        elif scenkey == 'floating':
+            scen_sim['interventions'] = [cova.FloatingTestIntervention(scen_sim, symptomatic_probability=0.9, asymptomatic_probability=0.00, trace_probability=0.9)]
+
 
         scen_sim.run(verbose=verbose)
 
