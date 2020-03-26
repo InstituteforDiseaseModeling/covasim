@@ -1,6 +1,7 @@
 import covasim as cv
 import pylab as pl
 import numpy as np
+import sciris as sc
 
 #%% Define classes
 class Intervention:
@@ -42,6 +43,23 @@ class Intervention:
 
         """
         return
+
+    def to_json(self):
+        """
+        Return JSON-compatible representation
+
+        Custom classes can't be directly represented in JSON. This method is a
+        one-way export to produce a JSON-compatible representation of the
+        intervention. In the first instance, the object dict will be returned.
+        However, if an intervention itself contains non-standard variables as
+        attributes, then its `to_json` method will need to handle those
+
+        Returns: JSON-serializable representation (typically a dict, but could be anything else)
+
+        """
+        d = sc.dcp(self.__dict__)
+        d['InterventionType'] = self.__class__.__name__
+        return d
 
 class ReduceBetaIntervention(Intervention):
     def __init__(self, day, efficacy):
