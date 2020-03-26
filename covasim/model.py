@@ -200,13 +200,6 @@ class Sim(cv.BaseSim):
             start_day = sc.readdate(start_day)
         self['start_day'] = start_day # Convert back
 
-        # Replace tests with data, if available
-        if self.data is not None:
-            self['daily_tests'] = np.array(self.data['new_tests']) # Number of tests each day, from the data
-
-        # Ensure test counts are valid
-        self['daily_tests'] = np.minimum(self['daily_tests'], self['n']) # Cannot do more tests than there are people
-
         # Handle population data
         popdata_choices = ['random', 'bayesian', 'data']
         if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
@@ -693,9 +686,11 @@ class Sim(cv.BaseSim):
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-            for day in self['interv_days']:
-                ylims = pl.ylim()
-                pl.plot([day,day], ylims, '--')
+
+            for intervention in self['interventions']:
+                if isinstance(intervention, cv.ReduceBetaIntervention):
+                    ylims = pl.ylim()
+                    pl.plot([intervention.day,intervention.day], ylims, '--')
 
             pl.grid(use_grid)
             cv.fixaxis(self)

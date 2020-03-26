@@ -76,7 +76,7 @@ class FixedTestIntervention(Intervention):
     Test a fixed number of people per day
     """
 
-    def __init__(self, sim, daily_tests, sympt_test=100.0, trace_test=100.0, sensitivity=1.0):
+    def __init__(self, sim, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0):
         super().__init__()
 
         self.daily_tests = daily_tests #: Should be a list of length matching time
@@ -89,15 +89,15 @@ class FixedTestIntervention(Intervention):
 
         assert len(self.daily_tests) >= sim.npts, 'Number of daily tests must be specified for at least as many days in the simulation'
 
-    def apply(self, t, sim):
+    def apply(self, sim, t):
 
-        n_tests = self['daily_tests'][t]  # Number of tests for this day
+        n_tests = self.daily_tests[t]  # Number of tests for this day
 
         # If there are no tests today, abort early
         if not (n_tests and pl.isfinite(n_tests)):
             return
 
-        test_probs = np.ones(sim.npts)
+        test_probs = np.ones(sim.n)
 
         for i, person in enumerate(sim.people.values()):
             # Adjust testing probability based on what's happened to the person

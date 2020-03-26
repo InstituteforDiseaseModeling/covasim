@@ -52,12 +52,6 @@ def make_pars():
     pars['dur']            = 8 # Using Mike's Snohomish number
     pars['dur_std']        = 2 # Variance in duration
 
-    # Testing
-    pars['daily_tests']    = [] # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']. To say e.g. 1% of the population is tested, use [0.01*pars['n']]*pars['n_days']
-    pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
-    pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
-    pars['trace_test']     = 1.0 # Multiply testing probability by this factor for contacts of known positives -- baseline assumes no contact tracing
-
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death
     pars['timetodie_std']       = 2 # STD

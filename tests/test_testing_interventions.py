@@ -59,26 +59,23 @@ if do_run:
         scen_sim = cova.Sim() # create sim object
         scen_sim.set_seed(seed)
         n_people = scen_sim['n']
-        n_days = scen_sim['n_days']
 
         if scenkey == 'baseline':
-            scen_sim['daily_tests'] = [] # No tests
+            scen_sim['interventions'] = []
 
         elif scenkey == 'test1pc':
-            scen_sim['daily_tests'] = [0.01*n_people]*n_days
+            scen_sim['interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.01*n_people]*scen_sim.npts)]
 
         elif scenkey == 'test10pc':
-            scen_sim['daily_tests'] = [0.1*n_people]*n_days
+            scen_sim['interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.1*n_people]*scen_sim.npts)]
 
         elif scenkey == 'tracing1pc':
-            scen_sim['daily_tests'] = [0.01*n_people]*n_days
+            scen_sim['interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.01*n_people]*scen_sim.npts, trace_test=100)]
             scen_sim['cont_factor'] = 0.1 # This means that people who've been in contact with known positives isolate with 90% effectiveness
-            scen_sim['trace_test'] = 100 # This means that people who've been in contact with known positives are 100x more likely to test
 
         elif scenkey == 'tracing10pc':
-            scen_sim['daily_tests'] = [0.1*n_people]*n_days
+            scen_sim['interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.1*n_people]*scen_sim.npts, trace_test=100)]
             scen_sim['cont_factor'] = 0.1 # This means that people who've been in contact with known positives isolate with 90% effectiveness
-            scen_sim['trace_test'] = 100 # This means that people who've been in contact with known positives are 100x more likely to test
 
         scen_sim.run(verbose=verbose)
 
