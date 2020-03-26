@@ -34,10 +34,8 @@ class TestProperties:
             diagnosis_transmission_factor = 'diag_factor'
             contact_transmission_factor = 'cont_factor'
             contacts_per_agent = 'contacts'
-            '''
-            * `pars['beta_pop']`: Transmissibility per contact, population-specific. Dependent on `synthpops`. Test: set all to 0 for no infections; infection rate should scale roughly linearly with these parameters.
-            * `pars['contacts_pop']`: Number of contacts per person, popularion-specific. See `synthpops` documentation for tests.
-            '''
+            beta_population_specific = 'beta_pop'
+            contacts_population_specific = 'contacts_pop'
             pass
         class ProgressionKeys:
             exposed_to_infectious = 'serial'
@@ -63,6 +61,16 @@ class TestProperties:
             n_infected = 1
             contacts = 2
             n_days = 10
+            pass
+        class Hightransmission:
+            n = 500
+            n_infected = 10
+            n_days = 30
+            contacts = 30
+            beta = 0.2
+            serial = 2
+            serial_std = 0.5
+            dur = 3
             pass
         pass
     class ResultsDataKeys:
@@ -158,11 +166,12 @@ class CovaSimTest(unittest.TestCase):
     def set_microsim(self):
         Simkeys = TestProperties.ParameterKeys.SimulationKeys
         Transkeys = TestProperties.ParameterKeys.TransmissionKeys
+        Micro = TestProperties.SpecializedSimulations.Microsim
         microsim_parameters = {
-            Simkeys.number_agents : 10,
-            Simkeys.initial_infected_count: 1,
-            Simkeys.number_simulated_days: 10,
-            Transkeys.contacts_per_agent: 2
+            Simkeys.number_agents : Micro.n,
+            Simkeys.initial_infected_count: Micro.n_infected,
+            Simkeys.number_simulated_days: Micro.n_days,
+            Transkeys.contacts_per_agent: Micro.contacts
         }
         self.set_simulation_parameters(microsim_parameters)
         pass
@@ -174,15 +183,16 @@ class CovaSimTest(unittest.TestCase):
         Simkeys = TestProperties.ParameterKeys.SimulationKeys
         Transkeys = TestProperties.ParameterKeys.TransmissionKeys
         Progkeys = TestProperties.ParameterKeys.ProgressionKeys
+        Hightrans = TestProperties.SpecializedSimulations.Hightransmission
         hightrans_parameters = {
-            Simkeys.number_agents : 500,
-            Simkeys.initial_infected_count: 10,
-            Simkeys.number_simulated_days: 30,
-            Transkeys.contacts_per_agent: 5,
-            Transkeys.beta : 0.2, # default 0.015
-            Progkeys.exposed_to_infectious: 2,
-            Progkeys.exposed_to_infectious_std: 0.5,
-            Progkeys.infectiousness_duration: 3
+            Simkeys.number_agents : Hightrans.n,
+            Simkeys.initial_infected_count: Hightrans.n_infected,
+            Simkeys.number_simulated_days: Hightrans.n_days,
+            Transkeys.contacts_per_agent: Hightrans.contacts,
+            Transkeys.beta : Hightrans.beta,
+            Progkeys.exposed_to_infectious: Hightrans.serial,
+            Progkeys.exposed_to_infectious_std: Hightrans.serial_std,
+            Progkeys.infectiousness_duration: Hightrans.dur
         }
         self.set_simulation_parameters(hightrans_parameters)
     # endregion
@@ -232,8 +242,7 @@ class TestSupportTests(CovaSimTest):
         self.assertIsNone(self.sim)
         self.set_smallpop_hightransmission()
         self.run_sim()
-        result_data = self.simulation_result["results"]
-        resultKeys = TestProperties.ResultsDataKeys
+
         self.assertIsNotNone(self.sim)
         self.assertIsNotNone(self.simulation_parameters)
         exposed_today_channel = self.get_full_result_channel(
