@@ -29,7 +29,7 @@ verbose = 1
 
 # Sim options
 interv_day = 10
-closure_len = 14
+interv_eff = 0.7
 
 metapars = dict(
     n_runs = 3, # Number of parallel runs; change to 3 for quick, 11 for real
@@ -51,15 +51,13 @@ obj_path   = f'{basename}.scens'
 scenarios = {'baseline': {
               'name':'Baseline',
               'pars': {
-                  'interv_days': [],
-                  'interv_effs': [],
+                  'interventions': None,
                   }
               },
             'distance': {
               'name':'Social distancing',
               'pars': {
-                  'interv_days': [interv_day],
-                  'interv_effs': [0.7],
+                  'interventions': cova.ChangeBeta(days=interv_day, changes=interv_eff)
                   }
               },
              }

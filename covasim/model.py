@@ -224,6 +224,9 @@ class Sim(cvbase.BaseSim):
             errormsg = f'Population data option "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
 
+        # Handle interventions
+        self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
+
         return
 
 
@@ -474,6 +477,7 @@ class Sim(cvbase.BaseSim):
                     n_recovered += 1
 
             for intervention in self['interventions']:
+                print('yoooo')
                 intervention.apply(self, t)
 
             # Update counts for this time step
@@ -495,8 +499,7 @@ class Sim(cvbase.BaseSim):
 
         # Add in the results from the interventions
         for intervention in self['interventions']:
-            intervention.finalize()  # Execute any post-processing
-            self.results.update(intervention.results)
+            intervention.finalize(self)  # Execute any post-processing
 
         # Scale the results
         for reskey in self.reskeys:

@@ -16,75 +16,59 @@ def test_interventions(doplot=False):
 
     sc.tic()
 
-    # Specify what to run!
-    scenarios = {
-        'baseline':     'Status quo, no testing',
-        'test1pc':      'Test 1% (untargeted); isolate positives',
-        'test10pc':     'Test 10% (untargeted); isolate positives',
-        'tracing1pc':   'Test 1% (contact tracing); isolate positives',
-        'tracing10pc':  'Test 10% (contact tracing); isolate positives',
-        'floating':     'Known probability of testing',
-    }
+    n_runs = 3
+    verbose = 1
+
+    base_sim = cova.Sim() # create sim object
+    n_people = base_sim['n']
+    npts = base_sim.npts
 
     # Define the scenarios
-    scenarios = {'baseline': {
-                  'name':'Baseline',
-                  'pars': {
-                      'interv_days': [],
-                      'interv_effs': [],
-                      }
-                  },
-                'test1pc': {
-                  'name':'Test 1% of the population',
-                  'pars': {
-                      'interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.01*n_people]*scen_sim.npts)]
-                      }
-                  },
-                 }
+    scenarios = {
+        'baseline': {
+          'name':'Status quo, no testing',
+          'pars': {
+              'interventions': None,
+              }
+          },
+        'test1pc': {
+          'name':'Test 1% (untargeted); isolate positives',
+          'pars': {
+              'interventions': cova.TestNum(npts, daily_tests=[0.01*n_people]*npts),
+              }
+          },
+        'test10pc': {
+          'name':'Test 10% (untargeted); isolate positives',
+          'pars': {
+              'interventions': cova.TestNum(npts, daily_tests=[0.10*n_people]*npts),
+              }
+          },
+        'tracing1pc': {
+          'name':'Test 1% (contact tracing); isolate positives',
+          'pars': {
+              'interventions': cova.TestNum(npts, daily_tests=[0.01*n_people]*npts),
+              'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
+              }
+          },
+        'tracing10pc': {
+          'name':'TTest 10% (contact tracing); isolate positives',
+          'pars': {
+              'interventions': cova.TestNum(npts, daily_tests=[0.10*n_people]*npts),
+              'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
+              }
+          },
+        'floating': {
+          'name':'Test a constant proportion of the population',
+          'pars': {
+              'interventions': cova.TestProp(npts, symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
+              }
+          },
+         }
 
+    metapars = {'n_runs': n_runs}
 
-    scens = cova.Scenarios(metapars=metapars, scenarios=scenarios)
-    scens.run(keep_sims=keep_sims, verbose=verbose)
-
-
-    for scenkey,scenname in scenarios.items():
-
-        scen_sim = cova.Sim() # create sim object
-        scen_sim.set_seed(seed)
-        n_people = scen_sim['n']
-
-        if scenkey == 'baseline':
-            scen_sim['interventions'] = []
-
-        elif scenkey == 'test1pc':
-            scen_sim['interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.01*n_people]*scen_sim.npts)]
-
-        elif scenkey == 'test10pc':
-            scen_sim['interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.1*n_people]*scen_sim.npts)]
-
-        elif scenkey == 'tracing1pc':
-            scen_sim['interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.01*n_people]*scen_sim.npts, trace_test=100)]
-            scen_sim['cont_factor'] = 0.1 # This means that people who've been in contact with known positives isolate with 90% effectiveness
-
-        elif scenkey == 'tracing10pc':
-            scen_sim['interventions'] = [cova.FixedTestIntervention(scen_sim, daily_tests=[0.1*n_people]*scen_sim.npts, trace_test=100)]
-            scen_sim['cont_factor'] = 0.1 # This means that people who've been in contact with known positives isolate with 90% effectiveness
-
-        elif scenkey == 'floating':
-            scen_sim['interventions'] = [cova.FloatingTestIntervention(scen_sim, symptomatic_probability=0.9, asymptomatic_probability=0.00, trace_probability=0.9)]
-
-
-        scen_sim.run(verbose=verbose)
-
-        for reskey in reskeys:
-            allres[reskey][scenkey]['name'] = scenname
-            allres[reskey][scenkey]['values'] = scen_sim.results[reskey].values
-
-
-    #%% Print statistics
-    for reskey in reskeys:
-        for scenkey in list(scenarios.keys()):
-            print(f'{reskey} {scenkey}: {allres[reskey][scenkey]["values"][-1]:0.0f}')
+    scens = cova.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run(verbose=verbose)
 
     return scens
 

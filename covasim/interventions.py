@@ -3,6 +3,8 @@ import pylab as pl
 import numpy as np
 import sciris as sc
 
+__all__ = ['Intervention', 'ChangeBeta', 'TestNum', 'TestProp']
+
 
 class Intervention:
     """
@@ -62,23 +64,58 @@ class Intervention:
         return d
 
 
-class ReduceBetaIntervention(Intervention):
-    def __init__(self, day, efficacy):
+class ChangeBeta(Intervention):
+    '''
+    The most basic intervention -- change beta by a certain amount.
+
+    Args:
+        days (int or array): the day or array of days to apply the interventions
+        changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
+
+    Examples:
+        interv = ChangeBeta(25, 0.3) # On day 25, reduce beta by 70% to 0.3
+        interv = ChangeBeta([14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
+
+    '''
+
+    def __init__(self, days, changes):
+        print('sdkffkldj')
         super().__init__()
-        self.day = day
-        self.efficacy = efficacy
+        self.days = sc.promotetoarray(days)
+        self.changes = sc.promotetoarray(changes)
+        if len(self.days) != len(self.changes):
+            errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
+            raise ValueError(errormsg)
+        self.orig_beta = None
+        return
+
 
     def apply(self, sim, t):
-        if t == self.day:
-            sim['beta'] *= (1-self.efficacy)
+
+        print('hiiiii', t, self.days, sc.findinds(self.days, t))
+
+        # If this is the first time it's being run, store beta
+        if self.orig_beta is None:
+            self.orig_beta = sim['beta']
+
+        # If this day is found in the list, apply the intervention
+        inds = sc.findinds(self.days, t)
+        if len(inds):
+            new_beta = self.orig_beta
+            for ind in inds:
+                new_beta = new_beta * self.changes[ind]
+            sim['beta'] = new_beta
+            print(ind, sim['beta'])
+
+        return
 
 
-class FixedTestIntervention(Intervention):
+class TestNum(Intervention):
     """
     Test a fixed number of people per day
     """
 
-    def __init__(self, sim, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0):
+    def __init__(self, npts, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0):
         super().__init__()
 
         self.daily_tests = daily_tests #: Should be a list of length matching time
@@ -86,14 +123,18 @@ class FixedTestIntervention(Intervention):
         self.trace_test = trace_test
         self.sensitivity = sensitivity
 
-        self.results['n_diagnoses'] = cv.Result('Number diagnosed', npts=sim.npts)
-        self.results['cum_diagnoses'] = cv.Result('Cumulative number diagnosed', npts=sim.npts)
+        self.results['n_diagnoses'] = cv.Result('Number diagnosed', npts=npts)
+        self.results['cum_diagnoses'] = cv.Result('Cumulative number diagnosed', npts=npts)
 
-        assert len(self.daily_tests) >= sim.npts, 'Number of daily tests must be specified for at least as many days in the simulation'
+        return
 
     def apply(self, sim, t):
 
-        n_tests = self.daily_tests[t]  # Number of tests for this day
+        # Check that there are still tests
+        if t < len(self.daily_tests):
+            n_tests = self.daily_tests[t]  # Number of tests for this day
+        else:
+            return
 
         # If there are no tests today, abort early
         if not (n_tests and pl.isfinite(n_tests)):
@@ -120,42 +161,47 @@ class FixedTestIntervention(Intervention):
             if person.diagnosed:
                 self.results['n_diagnoses'][t] += 1
 
-    def finalize(self, *args, **kwargs):
+        return
+
+
+    def finalize(self, sim, *args, **kwargs):
         self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
+        sim.results.update(self.results)
+        return
 
 
-class FloatingTestIntervention(Intervention):
+class TestProp(Intervention):
     """
     Test as many people as required based on test probability
 
     Returns:
 
     """
-    def __init__(self, sim, symptomatic_probability=0.9, asymptomatic_probability=0.01, trace_probability=1.0, test_sensitivity=1.0):
+    def __init__(self, npts, symptomatic_prob=0.9, asymptomatic_prob=0.01, trace_prob=1.0, test_sensitivity=1.0):
         """
 
         Args:
             self:
-            symptomatic_probability:
-            trace_probability:
+            symptomatic_prob:
+            trace_prob:
 
         Returns:
 
         """
         super().__init__()
-        self.symptomatic_probability = symptomatic_probability
-        self.asymptomatic_probability = asymptomatic_probability
-
-        self.trace_probability = trace_probability # Probability that identified contacts get tested
+        self.symptomatic_prob = symptomatic_prob
+        self.asymptomatic_prob = asymptomatic_prob
+        self.trace_prob = trace_prob # Probability that identified contacts get tested
         self.test_sensitivity = test_sensitivity
 
         # Instantiate the results to track
-        self.results['n_tested'] = cv.Result('Number tested', npts=sim.npts)
-        self.results['n_diagnoses'] = cv.Result('Number diagnosed', npts=sim.npts)
-        self.results['cum_tested'] = cv.Result('Cumulative number tested', npts=sim.npts)
-        self.results['cum_diagnoses'] = cv.Result('Cumulative number diagnosed', npts=sim.npts)
+        self.results['n_tested']      = cv.Result('Number tested', npts=npts)
+        self.results['n_diagnoses']   = cv.Result('Number diagnosed', npts=npts)
+        self.results['cum_tested']    = cv.Result('Cumulative number tested', npts=npts)
+        self.results['cum_diagnoses'] = cv.Result('Cumulative number diagnosed', npts=npts)
 
         self.scheduled_tests = set() # Track UIDs of people that are guaranteed to be tested at the next step
+        return
 
 
     def apply(self, sim, t):
@@ -164,18 +210,21 @@ class FloatingTestIntervention(Intervention):
         new_scheduled_tests = set()
 
         for i, person in enumerate(sim.people.values()):
-            if i in self.scheduled_tests or (person.symptomatic and cv.bt(self.symptomatic_probability)) or (not person.symptomatic and cv.bt(self.asymptomatic_probability)):
+            if i in self.scheduled_tests or (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
                 self.results['n_tested'][t] += 1
                 person.test(t, self.test_sensitivity)
                 if person.diagnosed:
                     self.results['n_diagnoses'][t] += 1
                     for idx in person.contact_inds:
-                        if person.diagnosed and self.trace_probability and cv.bt(self.trace_probability):
+                        if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
                             new_scheduled_tests.add(idx)
 
         self.scheduled_tests = new_scheduled_tests
+        return
 
 
-    def finalize(self, *args, **kwargs):
+    def finalize(self, sim, *args, **kwargs):
         self.results['cum_tested'].values = pl.cumsum(self.results['n_tested'].values)
         self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
+        sim.results.update(self.results)
+        return
