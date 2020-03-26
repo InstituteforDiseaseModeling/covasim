@@ -22,7 +22,7 @@ scenarios = {
 do_run = 1
 do_save = 0 # refers to whether to save plot - see also save_sims
 do_plot = 1
-show_plot = 1
+do_show = 1
 keep_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
 
@@ -31,11 +31,10 @@ interv_day = 10
 closure_len = 14
 
 metapars = dict(
-    n = 3, # Number of parallel runs; change to 3 for quick, 11 for real
+    n_runs = 3, # Number of parallel runs; change to 3 for quick, 11 for real
     noise = 0.1, # Use noise, optionally
     noisepar = 'beta',
     seed = 1,
-    reskeys = ['cum_exposed', 'n_exposed'],
     quantiles = {'low':0.1, 'high':0.9},
 )
 
@@ -78,7 +77,7 @@ else:
 
 
 if do_plot:
-    scens.plot(show_plot=show_plot)
+    scens.plot(do_show=do_show)
 
 
 

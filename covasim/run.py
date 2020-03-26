@@ -3,7 +3,6 @@ Functions for running multiple Covasim runs.
 '''
 
 #%% Imports
-import datetime as dt
 import numpy as np
 import pylab as pl
 import sciris as sc
@@ -13,7 +12,23 @@ import covid_healthsystems as covidhs
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['make_metapars', 'Scenarios', 'single_run', 'multi_run']
+__all__ = ['to_plot_scens', 'make_metapars', 'Scenarios', 'single_run', 'multi_run']
+
+
+to_plot_scens = sc.odict({
+            'cum_exposed': 'Cumulative infections',
+            # 'cum_deaths': 'Cumulative deaths',
+            # 'cum_recoveries':'Cumulative recoveries',
+            # 'cum_tested': 'Cumulative tested',
+            # 'n_susceptible': 'Number susceptible',
+            'n_infectious': 'Number of active infections',
+            # 'cum_diagnosed': 'Cumulative diagnosed',
+            # 'infections': 'New infections',
+            # 'deaths': 'New deaths',
+            # 'recoveries': 'New recoveries',
+            # 'tests': 'Number of tests',
+            # 'diagnoses': 'New diagnoses',
+    })
 
 
 def make_metapars():
@@ -23,8 +38,8 @@ def make_metapars():
         noise     = 0.1, # Use noise, optionally
         noisepar  = 'beta',
         seed      = 1,
-        reskeys   = ['cum_exposed', 'n_exposed'],
         quantiles = {'low':0.1, 'high':0.9},
+        verbose   = 1,
     )
     return metapars
 
@@ -44,7 +59,7 @@ class Scenarios(cvbase.ParsObj):
         self.created = sc.now()
         if filename is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            filename = f'covasim_{datestr}.sim'
+            filename = f'covasim_scenarios_{datestr}.scens'
         self.filename = filename
 
         # Handle scenarios -- by default, create a baseline scenario
@@ -63,12 +78,16 @@ class Scenarios(cvbase.ParsObj):
         if basepars is None:
             basepars = {}
         self.base_sim.update_pars(basepars)
+        self.base_sim.init_results()
+
+        # Copy quantities from the base sim to the main object
         self.npts = self.base_sim.npts
         self.tvec = self.base_sim.tvec
+        self.reskeys = self.base_sim.reskeys
 
         # Create the results object; order is: results key, scenario, best/low/high
         self.allres = sc.objdict()
-        for reskey in self['reskeys']:
+        for reskey in self.reskeys:
             self.allres[reskey] = sc.objdict()
             for scenkey in scenarios.keys():
                 self.allres[reskey][scenkey] = sc.objdict()
@@ -91,10 +110,10 @@ class Scenarios(cvbase.ParsObj):
                 print(string)
             return
 
-        reskeys = self['reskeys'] # Shorten since used extensively
+        reskeys = self.reskeys # Shorten since used extensively
 
         # Loop over scenarios
-        for scenkey,scen in self['scenarios'].items():
+        for scenkey,scen in self.scenarios.items():
             scenname = scen['name']
             scenpars = scen['pars']
 
@@ -192,9 +211,8 @@ class Scenarios(cvbase.ParsObj):
         pl.rcParams['font.family'] = 'Proxima Nova' # NB, may not be available on all systems
 
         # %% Plotting
-        reskeys = self['reskeys']
-        for rk, reskey in enumerate(reskeys):
-            pl.subplot(len(reskeys), 1, rk + 1)
+        for rk,reskey,title in to_plot_scens.enumitems():
+            ax = pl.subplot(len(to_plot_scens), 1, rk + 1)
 
             resdata = self.allres[reskey]
 
@@ -202,33 +220,35 @@ class Scenarios(cvbase.ParsObj):
                 pl.fill_between(self.tvec, scendata.low, scendata.high, **fill_args)
                 pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
 
-                if reskey == 'cum_exposed':
-                    sc.setylim()
-                    pl.title('Cumulative infections')
-                    pl.text(0.0, 1.1, 'COVID-19 projections, per 1 million susceptibles', fontsize=24,
-                            transform=pl.gca().transAxes)
+                pl.title(title)
+                if rk == 0:
+                    pl.legend(loc='best')
 
-                elif reskey == 'n_exposed':
-                    pl.legend()
-                    sc.setylim()
-                    pl.title('Active infections')
+                sc.setylim()
+                pl.grid(use_grid)
 
-                pl.grid(True)
+                # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                if interval:
+                    xmin,xmax = ax.get_xlim()
+                    ax.set_xticks(pl.arange(xmin, xmax+1, interval))
 
-                # Set x-axis
-                xt = pl.gca().get_xticks()
-                lab = []
-                for t in xt:
-                    tmp = dt.datetime(2020, 1, 1) + dt.timedelta(days=int(t))  # + pars['day_0']
-                    lab.append(tmp.strftime('%b-%d'))
-                pl.gca().set_xticklabels(lab)
-                sc.commaticks(axis='y')
+                # Set xticks as dates
+                if as_dates:
+                    xticks = ax.get_xticks()
+                    xticklabels = self.base_sim.inds2dates(xticks, dateformat=dateformat)
+                    ax.set_xticklabels(xticklabels)
 
+        # Ensure the figure actually renders or saves
         if do_save:
-            pl.savefig(fig_path, dpi=150)
+            if fig_path is None: # No figpath provided - see whether do_save is a figpath
+                fig_path = 'covasim_scenarios.png' # Just give it a default name
+            fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
+            pl.savefig(fig_path)
 
-        if do_show: # Optionally show plot
+        if do_show:
             pl.show()
+        else:
+            pl.close(fig)
 
         return fig
 
