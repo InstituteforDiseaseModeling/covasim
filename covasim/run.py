@@ -3,42 +3,72 @@ Functions for running multiple Covasim runs.
 '''
 
 #%% Imports
-import numpy as np # Needed for a few things not provided by pl
+import datetime as dt
+import numpy as np
 import pylab as pl
 import sciris as sc
+from . import base as cvbase
+from . import model as cvmodel
+import covid_healthsystems as covidhs
 
 
 # Specify all externally visible functions this file defines
 __all__ = ['make_metapars', 'Scenarios', 'single_run', 'multi_run']
 
+
 def make_metapars():
     ''' Create default metaparameters for a Scenarios run '''
     metapars = dict(
-        n = 3, # Number of parallel runs; change to 3 for quick, 11 for real
-        noise = 0.1, # Use noise, optionally
-        noisepar = 'beta',
-        seed = 1,
-        reskeys = ['cum_exposed', 'n_exposed'],
+        n_runs    = 3, # Number of parallel runs; change to 3 for quick, 11 for real
+        noise     = 0.1, # Use noise, optionally
+        noisepar  = 'beta',
+        seed      = 1,
+        reskeys   = ['cum_exposed', 'n_exposed'],
         quantiles = {'low':0.1, 'high':0.9},
     )
     return metapars
 
 
-class Scenarios(sc.prettyobj):
+class Scenarios(cvbase.ParsObj):
     '''
     Class for running multiple sets of multiple simulations -- e.g., scenarios
     '''
 
-    def __init__(self, filename=None):
+    def __init__(self, metapars=None, scenarios=None, basepars=None, filename=None):
+
+        # For this object, metapars are the foundation
+        default_pars = make_metapars() # Start with default pars
+        super().__init__(default_pars) # Initialize and set the parameters as attributes
+
+        # Handle filename
         self.created = sc.now()
         if filename is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             filename = f'covasim_{datestr}.sim'
         self.filename = filename
 
-        # Order is: results key, scenario, best/low/high
+        # Handle scenarios -- by default, create a baseline scenario
+        if scenarios is None:
+            scenarios = {'baseline':{'name':'Baseline', 'pars':{}}}
+        self.scenarios = scenarios
+
+        # Handle metapars
+        if metapars is None:
+            metapars = {}
+        self.metapars = metapars
+        self.update_pars(self.metapars)
+
+        # Create the simulation and handle basepars
+        self.base_sim = cvmodel.Sim()
+        if basepars is None:
+            basepars = {}
+        self.base_sim.update_pars(basepars)
+        self.npts = self.base_sim.npts
+        self.tvec = self.base_sim.tvec
+
+        # Create the results object; order is: results key, scenario, best/low/high
         self.allres = sc.objdict()
-        for reskey in reskeys:
+        for reskey in self['reskeys']:
             self.allres[reskey] = sc.objdict()
             for scenkey in scenarios.keys():
                 self.allres[reskey][scenkey] = sc.objdict()
@@ -46,44 +76,45 @@ class Scenarios(sc.prettyobj):
                     self.allres[reskey][scenkey][nblh] = None # This will get populated below
         return
 
-    def run(self):
 
+    def run(self, keep_sims=False, verbose=None):
+        ''' Run the actual scenarios'''
 
+        if verbose is None:
+            verbose = self['verbose']
 
-        for scenkey,scenname in scenarios.items():
+        def print_heading(string):
+            ''' Choose whether to print a heading, regular text, or nothing '''
+            if verbose >= 2:
+                sc.heading(string)
+            elif verbose == 1:
+                print(string)
+            return
 
-            scen_sim = cova.Sim()
-            scen_sim.set_seed(seed)
+        reskeys = self['reskeys'] # Shorten since used extensively
 
-            if scenkey == 'baseline':
-                scen_sim['interv_days'] = [] # No interventions
-                scen_sim['interv_effs'] = []
+        # Loop over scenarios
+        for scenkey,scen in self['scenarios'].items():
+            scenname = scen['name']
+            scenpars = scen['pars']
 
-            elif scenkey == 'distance':
-                scen_sim['interv_days'] = [interv_day] # Close schools for 2 weeks starting Mar. 16, then reopen
-                scen_sim['interv_effs'] = [0.7] # Change to 40% and then back to 70%
+            # This is necessary for plotting, and since self.npts is defined prior to run
+            if 'n_days' in scenpars.keys():
+                errormsg = 'Scenarios cannot be run with different numbers of days; set via basepars instead'
+                raise ValueError(errormsg)
 
-            elif scenkey == 'isolatepos':
-                scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
+            # Create and run the simulations
 
-            else:
-                raise KeyError
+            print_heading(f'Multirun for {scenkey}')
+            scen_sim = cvmodel.Sim(pars=scenpars)
+            scen_sims = multi_run(scen_sim, n=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], verbose=verbose)
 
-
-            sc.heading(f'Multirun for {scenkey}')
-
-            scen_sims = cova.multi_run(scen_sim, n=n, noise=noise, noisepar=noisepar, verbose=verbose)
-
-            sc.heading(f'Processing {scenkey}')
-
-            # TODO: this only needs to be done once
-            res0 = scen_sims[0].results
-            npts = res0[reskeys[0]].npts
-            tvec = res0['t']
+            # Process the simulations
+            print_heading(f'Processing {scenkey}')
 
             scenraw = {}
             for reskey in reskeys:
-                scenraw[reskey] = pl.zeros((npts, n))
+                scenraw[reskey] = pl.zeros((self.npts, self['n_runs']))
                 for s,sim in enumerate(scen_sims):
                     scenraw[reskey][:,s] = sim.results[reskey].values
 
@@ -93,27 +124,29 @@ class Scenarios(sc.prettyobj):
             scenres.high = {}
             for reskey in reskeys:
                 scenres.best[reskey] = pl.mean(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
-                scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=quantiles['low'], axis=1)
-                scenres.high[reskey] = pl.quantile(scenraw[reskey], q=quantiles['high'], axis=1)
+                scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
+                scenres.high[reskey] = pl.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
 
             for reskey in reskeys:
-                allres[reskey][scenkey]['name'] = scenname
+                self.allres[reskey][scenkey]['name'] = scenname
                 for blh in ['best', 'low', 'high']:
-                    allres[reskey][scenkey][blh] = scenres[blh][reskey]
+                    self.allres[reskey][scenkey][blh] = scenres[blh][reskey]
 
-            if save_sims:
+            if keep_sims:
                 print('WARNING: saving sims, which will produce a very large file!')
-                allres['sims'] = scen_sims
+                self.allres['sims'] = scen_sims
+                sc.checkmem(self.allres) # Print a warning about how big the file is likely to be
+
 
         #%% Print statistics
-        for reskey in reskeys:
-            for scenkey in list(scenarios.keys()):
-                print(f'{reskey} {scenkey}: {allres[reskey][scenkey].best[-1]:0.0f}')
+        if verbose:
+            for reskey in reskeys:
+                for scenkey in list(self.scenarios.keys()):
+                    print(f'{reskey} {scenkey}: {self.allres[reskey][scenkey].best[-1]:0.0f}')
 
         # Perform health systems analysis
-        hsys = covidhs.HealthSystem(allres)
-        hsys.analyze()
-        hsys.plot()
+        self.hsys = covidhs.HealthSystem(self.allres)
+        self.hsys.analyze()
 
         return
 
@@ -159,18 +192,15 @@ class Scenarios(sc.prettyobj):
         pl.rcParams['font.family'] = 'Proxima Nova' # NB, may not be available on all systems
 
         # %% Plotting
+        reskeys = self['reskeys']
         for rk, reskey in enumerate(reskeys):
             pl.subplot(len(reskeys), 1, rk + 1)
 
-            resdata = allres[reskey]
+            resdata = self.allres[reskey]
 
             for scenkey, scendata in resdata.items():
-                pl.fill_between(tvec, scendata.low, scendata.high, **fill_args)
-                pl.plot(tvec, scendata.best, label=scendata.name, **plot_args)
-
-                # interv_col = [0.5, 0.2, 0.4]
-
-                ymax = pl.ylim()[1]
+                pl.fill_between(self.tvec, scendata.low, scendata.high, **fill_args)
+                pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
 
                 if reskey == 'cum_exposed':
                     sc.setylim()
@@ -196,13 +226,16 @@ class Scenarios(sc.prettyobj):
 
         if do_save:
             pl.savefig(fig_path, dpi=150)
-            if do_run:  # Don't resave loaded data
-                sc.saveobj(obj_path, allres)
 
-        if show_plot: # Optionally show plot
+        if do_show: # Optionally show plot
             pl.show()
 
         return fig
+
+
+    def plot_healthsystem(self, *args, **kwargs):
+        ''' Very simple method to plot the health system results '''
+        return self.hsys.plot(*args, **kwargs)
 
 
     def save(self, filename=None, **kwargs):

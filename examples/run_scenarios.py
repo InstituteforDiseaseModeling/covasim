@@ -2,11 +2,9 @@
 Simple script for running Covasim scenarios
 '''
 
-import pylab as pl
-import datetime as dt
+
 import sciris as sc
 import covasim as cova
-import covid_healthsystems as covidhs
 
 
 sc.heading('Setting up...')
@@ -25,9 +23,8 @@ do_run = 1
 do_save = 0 # refers to whether to save plot - see also save_sims
 do_plot = 1
 show_plot = 1
-save_sims = 0 # WARNING, huge! (>100 MB)
+keep_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
-
 
 # Sim options
 interv_day = 10
@@ -48,14 +45,32 @@ date     = '2020mar24'
 folder   = 'results'
 basename = f'{folder}/covasim_scenarios_{date}_{version}'
 fig_path   = f'{basename}.png'
-obj_path   = f'{basename}.obj'
+obj_path   = f'{basename}.scens'
 
+# Define the scenarios
+scenarios = {'baseline': {
+              'name':'Baseline',
+              'pars': {
+                  'interv_days': [],
+                  'interv_effs': [],
+                  }
+              },
+            'distance': {
+              'name':'Social distancing',
+              'pars': {
+                  'interv_days': [interv_day],
+                  'interv_effs': [0.7],
+                  }
+              },
+             }
 
 
 # If we're rerunning...
 if do_run:
-    scens = cova.Scenarios(metapars=metapars)
-    scens.run()
+    scens = cova.Scenarios(metapars=metapars, scenarios=scenarios)
+    scens.run(keep_sims=keep_sims, verbose=verbose)
+    if do_save:
+        scens.save(filename=obj_path)
 
 # Don't run
 else:
@@ -63,7 +78,7 @@ else:
 
 
 if do_plot:
-    scens.plot()
+    scens.plot(show_plot=show_plot)
 
 
 

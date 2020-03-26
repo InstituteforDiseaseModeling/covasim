@@ -7,7 +7,8 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
-import covasim as cv
+from . import utils as cvu
+from . import base as cvbase
 from . import parameters as cvpars
 
 
@@ -97,22 +98,22 @@ class Person(sc.prettyobj):
         self.date_exposed = t
 
         # Calculate how long before they can infect other people
-        serial_dist = cv.sample(**self.dist_serial)
+        serial_dist = cvu.sample(**self.dist_serial)
         self.date_infectious = t + serial_dist
 
         # Program them to either die or recover in the future
-        if cv.bt(self.cfr):
+        if cvu.bt(self.cfr):
             # They die
-            death_dist = cv.sample(**self.dist_death)
+            death_dist = cvu.sample(**self.dist_death)
             self.date_died = t + death_dist
         else:
             # They don't die; determine whether they develop symptoms
-            has_symptoms = cv.bt(self.severity)  # Binomial distribution with probability equal to age-linked symptom severity index
+            has_symptoms = cvu.bt(self.severity)  # Binomial distribution with probability equal to age-linked symptom severity index
             if has_symptoms:  # They develop symptoms
-                incub_dist = cv.sample(**self.dist_incub)  # Caclulate how long til they develop symptoms
+                incub_dist = cvu.sample(**self.dist_incub)  # Caclulate how long til they develop symptoms
                 self.date_symptomatic = t + incub_dist
 
-            dur_dist = cv.sample(**self.dist_dur)
+            dur_dist = cvu.sample(**self.dist_dur)
             self.date_recovered = self.date_infectious + dur_dist
 
         if source:
@@ -155,7 +156,7 @@ class Person(sc.prettyobj):
         return recovery
 
 
-class Sim(cv.BaseSim):
+class Sim(cvbase.BaseSim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
@@ -232,7 +233,7 @@ class Sim(cv.BaseSim):
 
         def init_res(*args, **kwargs):
             ''' Initialize a single result object '''
-            output = cv.Result(*args, **kwargs, npts=self.npts)
+            output = cvbase.Result(*args, **kwargs, npts=self.npts)
             return output
 
         # Create the main results structure
@@ -296,8 +297,8 @@ class Sim(cv.BaseSim):
             sc.printv(f'Creating contact matrix without data...', 2, verbose)
             for p in range(int(self['n'])):
                 person = self.get_person(p)
-                person.n_contacts = cv.pt(self['contacts']) # Draw the number of Poisson contacts for this person
-                person.contact_inds = cv.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
+                person.n_contacts = cvu.pt(self['contacts']) # Draw the number of Poisson contacts for this person
+                person.contact_inds = cvu.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
         else:
             sc.printv(f'Creating contact matrix with data...', 2, verbose)
             import synthpops as sp
@@ -347,11 +348,11 @@ class Sim(cv.BaseSim):
                 self.results['tests'][t] = n_tests # Store the number of tests
                 test_probs_arr = pl.array(list(test_probs.values()))
                 test_probs_arr /= test_probs_arr.sum()
-                test_inds = cv.choose_people_weighted(probs=test_probs_arr, n=n_tests)
+                test_inds = cvu.choose_people_weighted(probs=test_probs_arr, n=n_tests)
 
                 for test_ind in test_inds:
                     tested_person = self.get_person(test_ind)
-                    if tested_person.infectious and cv.bt(test_sensitivity): # Person was tested and is true-positive
+                    if tested_person.infectious and cvu.bt(test_sensitivity): # Person was tested and is true-positive
                         n_diagnoses += 1
                         tested_person.diagnosed = True
                         tested_person.date_diagnosed = t
@@ -486,7 +487,7 @@ class Sim(cv.BaseSim):
                                     target_person.known_contact = True
 
                                 # Check whether virus is transmitted
-                                transmission = cv.bt(thisbeta)
+                                transmission = cvu.bt(thisbeta)
                                 if transmission:
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         n_infections += target_person.infect(t, person)
@@ -504,7 +505,7 @@ class Sim(cv.BaseSim):
                                         target_person.known_contact = True
 
                                     # Check whether virus is transmitted
-                                    transmission = cv.bt(thisbeta)
+                                    transmission = cvu.bt(thisbeta)
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
@@ -649,7 +650,7 @@ class Sim(cv.BaseSim):
             for d,datum in enumerate(self.data['new_positives']):
                 if not pl.isnan(datum): # Skip days when no tests were performed
                     estimate = self.results['diagnoses'][d]
-                    p = cv.poisson_test(datum, estimate)
+                    p = cvu.poisson_test(datum, estimate)
                     logp = pl.log(p)
                     loglike += logp
                     sc.printv(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
@@ -758,7 +759,7 @@ class Sim(cv.BaseSim):
                 pl.plot([day,day], ylims, '--')
 
             pl.grid(use_grid)
-            cv.fixaxis(self)
+            cvu.fixaxis(self)
             sc.commaticks()
             pl.title(title)
 
