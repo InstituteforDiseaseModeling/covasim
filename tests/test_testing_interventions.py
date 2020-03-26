@@ -3,6 +3,8 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('TkAgg')
 import sciris as sc
 import covasim as cv
 
