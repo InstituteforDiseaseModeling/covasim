@@ -23,6 +23,7 @@ do_run = 1
 do_save = 0 # refers to whether to save plot - see also save_sims
 do_plot = 1
 do_show = 1
+plot_health = 1
 keep_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
 
@@ -77,7 +78,10 @@ else:
 
 
 if do_plot:
-    scens.plot(do_show=do_show)
+    fig1 = scens.plot(do_show=do_show)
+
+if plot_health:
+    fig2 = scens.plot_healthsystem()
 
 
 

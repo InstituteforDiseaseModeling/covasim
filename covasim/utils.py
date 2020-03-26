@@ -7,7 +7,7 @@ import numpy  as np # For numerics
 import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
-import scipy  as sp # Used by poisson_test()
+import scipy.stats as sps # Used by poisson_test()
 
 __all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test']
 
@@ -346,11 +346,11 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         '''
         zstat = value / std_diff
         if alternative in ['two-sided', '2-sided', '2s']:
-            pvalue = sp.stats.norm.sf(np.abs(zstat))*2
+            pvalue = sps.norm.sf(np.abs(zstat))*2
         elif alternative in ['larger', 'l']:
-            pvalue = sp.stats.norm.sf(zstat)
+            pvalue = sps.norm.sf(zstat)
         elif alternative in ['smaller', 's']:
-            pvalue = sp.stats.norm.cdf(zstat)
+            pvalue = sps.norm.cdf(zstat)
         else:
             raise ValueError('invalid alternative')
         return pvalue# zstat
@@ -379,7 +379,7 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         pvalue = proportion.binom_test(y1, y_total, prop=bp, alternative=alternative)
         if method in ['cond-midp']:
             # not inplace in case we still want binom pvalue
-            pvalue = pvalue - 0.5 * sp.stats.binom.pmf(y1, y_total, bp)
+            pvalue = pvalue - 0.5 * sps.binom.pmf(y1, y_total, bp)
 
         dist = 'binomial'
 

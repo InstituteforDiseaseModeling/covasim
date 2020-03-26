@@ -13,11 +13,11 @@ from . import parameters as cvpars
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['to_plot', 'Person', 'Sim']
+__all__ = ['default_sim_plots', 'Person', 'Sim']
 
 
 # Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines
-to_plot = sc.odict({
+default_sim_plots = sc.odict({
         'Total counts': sc.odict({
             'cum_exposed': 'Cumulative infections',
             'cum_deaths': 'Cumulative deaths',
@@ -684,13 +684,14 @@ class Sim(cvbase.BaseSim):
         return summary
 
 
-    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+    def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
              font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
+            to_plot (dict): Nested dict of results to plot; see default_sim_plots for structure
             do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
             fig_path (str): Path to save the figure
             fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
@@ -713,6 +714,10 @@ class Sim(cvbase.BaseSim):
         if verbose is None:
             verbose = self['verbose']
         sc.printv('Plotting...', 1, verbose)
+
+        if to_plot is None:
+            to_plot = default_sim_plots
+        to_plot = sc.odict(to_plot) # In case it's supplied as a dict
 
         if fig_args     is None: fig_args     = {'figsize':(16,12)}
         if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7}

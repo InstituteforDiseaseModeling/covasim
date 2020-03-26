@@ -12,10 +12,10 @@ import covid_healthsystems as covidhs
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['to_plot_scens', 'make_metapars', 'Scenarios', 'single_run', 'multi_run']
+__all__ = ['default_scen_plots', 'make_metapars', 'Scenarios', 'single_run', 'multi_run']
 
 
-to_plot_scens = sc.odict({
+default_scen_plots = sc.odict({
             'cum_exposed': 'Cumulative infections',
             # 'cum_deaths': 'Cumulative deaths',
             # 'cum_recoveries':'Cumulative recoveries',
@@ -170,13 +170,14 @@ class Scenarios(cvbase.ParsObj):
         return
 
 
-    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+    def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              axis_args=None, as_dates=True, interval=None, dateformat=None,
              font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
+            to_plot (dict): Dict of results to plot; see default_scen_plots for structure
             do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
             fig_path (str): Path to save the figure
             fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
@@ -199,6 +200,10 @@ class Scenarios(cvbase.ParsObj):
             verbose = self['verbose']
         sc.printv('Plotting...', 1, verbose)
 
+        if to_plot is None:
+            to_plot = default_scen_plots
+        to_plot = sc.odict(to_plot) # In case it's supplied as a dict
+
         fig_args = {'figsize': (16, 12)}
         plot_args = {'lw': 3, 'alpha': 0.7}
         axis_args = {'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}
@@ -211,8 +216,8 @@ class Scenarios(cvbase.ParsObj):
         pl.rcParams['font.family'] = 'Proxima Nova' # NB, may not be available on all systems
 
         # %% Plotting
-        for rk,reskey,title in to_plot_scens.enumitems():
-            ax = pl.subplot(len(to_plot_scens), 1, rk + 1)
+        for rk,reskey,title in to_plot.enumitems():
+            ax = pl.subplot(len(to_plot), 1, rk + 1)
 
             resdata = self.allres[reskey]
 
