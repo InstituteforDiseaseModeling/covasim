@@ -28,6 +28,12 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     n_people = base_sim['n']
     npts = base_sim.npts
 
+    # Define overall testing assumptions
+    # As the most optimistic case, we assume countries could get to South Korea's testing levels. S Korea has tested
+    # an average of 10000 people/day over March, or 270,000 in total. This is ~200 people per million every day (0.02%).
+    max_optimistic_testing = 0.0002
+    optimistic_daily_tests = [max_optimistic_testing*n_people]*npts # Very best-case scenario
+
     # Define the scenarios
     scenarios = {
         'baseline': {
@@ -36,29 +42,16 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
               'interventions': None,
               }
           },
-        'test1pc': {
-          'name':'Test 1% (untargeted); isolate positives',
+        'test_skorea': {
+          'name':'Assuming South Korea testing levels of 0.02% daily (untargeted); isolate positives',
           'pars': {
-              'interventions': cv.TestNum(npts, daily_tests=[0.01*n_people]*npts),
-              }
-          },
-        'test10pc': {
-          'name':'Test 10% (untargeted); isolate positives',
-          'pars': {
-              'interventions': cv.TestNum(npts, daily_tests=[0.10*n_people]*npts),
+              'interventions': cv.TestNum(npts, daily_tests=optimistic_daily_tests)
               }
           },
         'tracing1pc': {
-          'name':'Test 1% (contact tracing); isolate positives',
+          'name':'Assuming South Korea testing levels of 0.02% daily (with contact tracing); isolate positives',
           'pars': {
-              'interventions': cv.TestNum(npts, daily_tests=[0.01*n_people]*npts),
-              'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
-              }
-          },
-        'tracing10pc': {
-          'name':'Test 10% (contact tracing); isolate positives',
-          'pars': {
-              'interventions': cv.TestNum(npts, daily_tests=[0.10*n_people]*npts),
+              'interventions': cv.TestNum(npts, daily_tests=optimistic_daily_tests),
               'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
               }
           },
