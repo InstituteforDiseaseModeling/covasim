@@ -9,12 +9,114 @@ import sciris as sc
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['SimSet', 'single_run', 'multi_run']
+__all__ = ['make_metapars', 'Scenarios', 'single_run', 'multi_run']
 
-class SimSet(sc.prettyobj):
+def make_metapars():
+    ''' Create default metaparameters for a Scenarios run '''
+    metapars = dict(
+        n = 3, # Number of parallel runs; change to 3 for quick, 11 for real
+        noise = 0.1, # Use noise, optionally
+        noisepar = 'beta',
+        seed = 1,
+        reskeys = ['cum_exposed', 'n_exposed'],
+        quantiles = {'low':0.1, 'high':0.9},
+    )
+    return metapars
+
+
+class Scenarios(sc.prettyobj):
     '''
     Class for running multiple sets of multiple simulations -- e.g., scenarios
     '''
+
+    def __init__(self, filename=None):
+        self.created = sc.now()
+        if filename is None:
+            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
+            filename = f'covasim_{datestr}.sim'
+        self.filename = filename
+
+        # Order is: results key, scenario, best/low/high
+        self.allres = sc.objdict()
+        for reskey in reskeys:
+            self.allres[reskey] = sc.objdict()
+            for scenkey in scenarios.keys():
+                self.allres[reskey][scenkey] = sc.objdict()
+                for nblh in ['name', 'best', 'low', 'high']:
+                    self.allres[reskey][scenkey][nblh] = None # This will get populated below
+        return
+
+    def run(self):
+
+
+
+        for scenkey,scenname in scenarios.items():
+
+            scen_sim = cova.Sim()
+            scen_sim.set_seed(seed)
+
+            if scenkey == 'baseline':
+                scen_sim['interv_days'] = [] # No interventions
+                scen_sim['interv_effs'] = []
+
+            elif scenkey == 'distance':
+                scen_sim['interv_days'] = [interv_day] # Close schools for 2 weeks starting Mar. 16, then reopen
+                scen_sim['interv_effs'] = [0.7] # Change to 40% and then back to 70%
+
+            elif scenkey == 'isolatepos':
+                scen_sim['diag_factor'] = 0.1 # Scale beta by this amount for anyone who's diagnosed
+
+            else:
+                raise KeyError
+
+
+            sc.heading(f'Multirun for {scenkey}')
+
+            scen_sims = cova.multi_run(scen_sim, n=n, noise=noise, noisepar=noisepar, verbose=verbose)
+
+            sc.heading(f'Processing {scenkey}')
+
+            # TODO: this only needs to be done once
+            res0 = scen_sims[0].results
+            npts = res0[reskeys[0]].npts
+            tvec = res0['t']
+
+            scenraw = {}
+            for reskey in reskeys:
+                scenraw[reskey] = pl.zeros((npts, n))
+                for s,sim in enumerate(scen_sims):
+                    scenraw[reskey][:,s] = sim.results[reskey].values
+
+            scenres = sc.objdict()
+            scenres.best = {}
+            scenres.low = {}
+            scenres.high = {}
+            for reskey in reskeys:
+                scenres.best[reskey] = pl.mean(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
+                scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=quantiles['low'], axis=1)
+                scenres.high[reskey] = pl.quantile(scenraw[reskey], q=quantiles['high'], axis=1)
+
+            for reskey in reskeys:
+                allres[reskey][scenkey]['name'] = scenname
+                for blh in ['best', 'low', 'high']:
+                    allres[reskey][scenkey][blh] = scenres[blh][reskey]
+
+            if save_sims:
+                print('WARNING: saving sims, which will produce a very large file!')
+                allres['sims'] = scen_sims
+
+        #%% Print statistics
+        for reskey in reskeys:
+            for scenkey in list(scenarios.keys()):
+                print(f'{reskey} {scenkey}: {allres[reskey][scenkey].best[-1]:0.0f}')
+
+        # Perform health systems analysis
+        hsys = covidhs.HealthSystem(allres)
+        hsys.analyze()
+        hsys.plot()
+
+        return
+
 
     def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              axis_args=None, as_dates=True, interval=None, dateformat=None,
@@ -101,6 +203,48 @@ class SimSet(sc.prettyobj):
             pl.show()
 
         return fig
+
+
+    def save(self, filename=None, **kwargs):
+        '''
+        Save to disk as a gzipped pickle.
+
+        Args:
+            filename (str or None): the name or path of the file to save to; if None, uses stored
+            keywords: passed to makefilepath()
+
+        Returns:
+            filename (str): the validated absolute path to the saved file
+
+        Example:
+            scens.save() # Saves to a .scens file with the date and time of creation by default
+
+        '''
+        if filename is None:
+            filename = self.filename
+        filename = sc.makefilepath(filename=filename, **kwargs)
+        sc.saveobj(filename=filename, obj=self)
+        return filename
+
+
+    @staticmethod
+    def load(filename, **kwargs):
+        '''
+        Load from disk from a gzipped pickle.
+
+        Args:
+            filename (str): the name or path of the file to save to
+            keywords: passed to makefilepath()
+
+        Returns:
+            scens (Scenarios): the loaded scenarios object
+
+        Example:
+            sim = cv.Scenarios.load('my-scenarios.scens')
+        '''
+        filename = sc.makefilepath(filename=filename, **kwargs)
+        scens = sc.loadobj(filename=filename)
+        return scens
 
 
 
