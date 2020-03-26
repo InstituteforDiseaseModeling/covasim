@@ -38,7 +38,7 @@ def make_pars():
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
     pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']    = 1.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
+    pars['diag_factor']    = 0. # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']       = 20
     pars['beta_pop']       = {'H': 1.5,  'S': 1.5,   'W': 1.5,  'R': 0.5} # Per-population beta weights; relative
