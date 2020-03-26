@@ -121,8 +121,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
 
     err = ''
 
-    if True:
-    # try:
+    try:
         # Fix up things that JavaScript mangles
         defaults = get_defaults(merge=True)
         web_pars = {}
@@ -151,12 +150,11 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         # Add the intervention
         web_pars['interventions'] = []
         if web_pars['web_int_day'] is not None:
-            web_pars['interventions'].append(cv.ReduceBetaIntervention(day=web_pars['web_int_day'], efficacy=web_pars['web_int_eff']))
-    #
-    # except Exception as E:
-    #     err2 = f'Parameter conversion failed! {str(E)}\n'
-    #     print(err2)
-    #     err += err2
+            web_pars['interventions'].append(cv.ReduceBetaIntervention(day=web_pars.pop('web_int_day'), efficacy=web_pars.pop('web_int_eff')))
+    except Exception as E:
+        err2 = f'Parameter conversion failed! {str(E)}\n'
+        print(err2)
+        err += err2
 
     # Create the sim and update the parameters
     try:
