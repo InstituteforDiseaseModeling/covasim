@@ -49,7 +49,7 @@ class Scenarios(cvbase.ParsObj):
     Class for running multiple sets of multiple simulations -- e.g., scenarios
     '''
 
-    def __init__(self, metapars=None, scenarios=None, basepars=None, filename=None):
+    def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, filename=None):
 
         # For this object, metapars are the foundation
         default_pars = make_metapars() # Start with default pars
@@ -74,7 +74,9 @@ class Scenarios(cvbase.ParsObj):
         self.update_pars(self.metapars)
 
         # Create the simulation and handle basepars
-        self.base_sim = cvmodel.Sim()
+        if sim is None:
+            sim = cvmodel.Sim()
+        self.base_sim = sim
         if basepars is None:
             basepars = {}
         self.base_sim.update_pars(basepars)

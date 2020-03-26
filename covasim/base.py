@@ -167,7 +167,7 @@ class BaseSim(ParsObj):
         return self.people[self.uids[int(ind)]]
 
 
-    def _make_resdict(self, for_json=True):
+    def _make_resdict(self, for_json: bool = True) -> dict:
         ''' Pre-convert the results structure to a friendier output'''
         resdict = {}
         if for_json:
@@ -179,6 +179,19 @@ class BaseSim(ParsObj):
                 resdict[key] = res
         return resdict
 
+    def _make_pardict(self) -> dict:
+        """
+        Return parameters for JSON export
+
+        This method is required so that interventions can specify
+        their JSON-friendly representation
+
+        Returns:
+
+        """
+        pardict = self.pars
+        pardict['interventions'] = [intervention.to_json() for intervention in pardict['interventions']]
+        return pardict
 
     def to_json(self, filename=None, tostring=True, indent=2, *args, **kwargs):
         """
@@ -193,7 +206,8 @@ class BaseSim(ParsObj):
 
         """
         resdict = self._make_resdict()
-        d = {'results': resdict, 'parameters': self.pars}
+        pardict = self._make_pardict()
+        d = {'results': resdict, 'parameters': pardict}
         if filename is None:
             output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
         else:
