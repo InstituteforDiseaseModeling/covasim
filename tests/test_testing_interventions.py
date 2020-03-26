@@ -53,8 +53,14 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
               'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
               }
           },
-        'floating': {
-          'name':'Test a constant proportion of the population',
+        'floating_realistic': {
+          'name':'Test a constant proportion of the population (0.02%)',
+          'pars': {
+              'interventions': cv.TestProp(npts, symptomatic_prob=0.002, asymptomatic_prob=0.0, trace_prob=0.9)
+              }
+          },
+        'floating_extreme': {
+          'name':'Test a constant proportion of the population (90%)',
           'pars': {
               'interventions': cv.TestProp(npts, symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
               }
