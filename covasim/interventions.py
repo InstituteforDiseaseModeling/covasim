@@ -37,7 +37,7 @@ class Intervention:
         This can be used to do things like compute cumulative results
 
         Args:
-            sim:
+            sim: the Sim instance
 
         Returns:
 
