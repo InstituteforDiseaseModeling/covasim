@@ -99,6 +99,15 @@ def test_multirun(doplot=False): # If being run via pytest, turn off
     return sims
 
 
+def test_scenarios(doplot=False):
+    sc.heading('Scenarios test')
+    scens = cova.Scenarios()
+    scens.run()
+    if doplot:
+        scens.plot()
+    return scens
+
+
 def test_fileio():
     sc.heading('Test file saving')
 
@@ -135,6 +144,7 @@ if __name__ == '__main__':
     sim1    = test_sim(doplot=doplot)
     sim2    = test_singlerun()
     sims    = test_multirun(doplot=doplot)
+    scens   = test_scenarios(doplot=doplot)
     json    = test_fileio()
 
     sc.toc()
