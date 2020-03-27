@@ -127,14 +127,16 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, norm
 
     # Ensure it's the right type and optionally normalize
     probs = np.array(probs, dtype=np.float64)
+    n_people = len(probs)
+    n_samples = int(n)
     if normalize:
         probs_sum = probs.sum()
-        if probs_sum:
+        if probs_sum: # Weight is nonzero, rescale
             probs /= probs_sum
+        else: # Weights are all zero, choose uniformly
+            probs = np.ones(n_people)/n_people
 
     # Perform checks
-    n_samples = int(n)
-    n_people = len(probs)
     if abs(probs.sum() - 1) > eps:
         raise Exception('Probabilities should sum to 1')
     if n_people == n_samples: # It's everyone
