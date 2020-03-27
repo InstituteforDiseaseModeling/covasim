@@ -321,6 +321,7 @@ class Scenarios(cvbase.ParsObj):
         if filename is None:
             filename = self.filename
         filename = sc.makefilepath(filename=filename, **kwargs)
+        self.filename = filename # Store the actual saved filename
         sc.saveobj(filename=filename, obj=self)
         return filename
 
