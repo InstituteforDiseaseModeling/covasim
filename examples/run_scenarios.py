@@ -30,6 +30,7 @@ verbose = 1
 # Sim options
 interv_day = 10
 interv_eff = 0.7
+default_beta = 0.015 # Should match parameters.py
 
 metapars = dict(
     n_runs = 3, # Number of parallel runs; change to 3 for quick, 11 for real
@@ -60,6 +61,12 @@ scenarios = {'baseline': {
                   'interventions': cv.change_beta(days=interv_day, changes=interv_eff)
                   }
               },
+            # 'distance2': { # With noise = 0.0, this should be identical to the above
+            #   'name':'Social distancing, version 2',
+            #   'pars': {
+            #       'interventions': cv.dynamic_pars({'beta':dict(days=interv_day, vals=interv_eff*default_beta)})
+            #       }
+            #   },
              }
 
 
