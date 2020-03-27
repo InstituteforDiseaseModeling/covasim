@@ -43,11 +43,13 @@ def check_sciris():
     try:
         import sciris as sc
     except ModuleNotFoundError:
-        raise ModuleNotFoundError('Sciris is a required dependency but is not found; please install via "pip install sciris"')
+        errormsg = 'Sciris is a required dependency but is not found; please install via "pip install sciris"'
+        raise ModuleNotFoundError(errormsg)
     ver = sc.__version__
     minver = min_versions['sciris']
     if sc.compareversions(ver, minver) < 0:
-        raise ImportError(f'You have Sciris {ver} but {minver} is required; please upgrade via "pip install --upgrade sciris"')
+        errormsg = f'You have Sciris {ver} but {minver} is required; please upgrade via "pip install --upgrade sciris"'
+        raise ImportError(errormsg)
     return
 
 
