@@ -163,7 +163,7 @@ class BaseSim(ParsObj):
 
 
     def get_person(self, ind):
-        ''' Return a person based on their ID '''
+        ''' Return a person based on their index '''
         return self.people[self.uids[int(ind)]]
 
 
