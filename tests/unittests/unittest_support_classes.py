@@ -282,10 +282,10 @@ class TestSupportTests(CovaSimTest):
             TestProperties.ResultsDataKeys.exposed_at_timestep
         )
         prev_exposed = exposed_today_channel[0]
-        for t in range(1, 15):
+        for t in range(1, 10):
             today_exposed = exposed_today_channel[t]
             self.assertGreaterEqual(today_exposed, prev_exposed,
-                                    msg=f"The first 15 days should have increasing"
+                                    msg=f"The first 10 days should have increasing"
                                         f" exposure counts. At time {t}: {today_exposed} at"
                                         f" {t-1}: {prev_exposed}.")
             prev_exposed = today_exposed
@@ -294,10 +294,10 @@ class TestSupportTests(CovaSimTest):
             TestProperties.ResultsDataKeys.infectious_at_timestep
         )
         prev_infectious = infectious_channel[1]
-        for t in range(2, 15):
+        for t in range(2, 10):
             today_infectious = infectious_channel[t]
             self.assertGreaterEqual(today_infectious, prev_infectious,
-                                    msg=f"The first 15 days should have increasing"
+                                    msg=f"The first 10 days should have increasing"
                                         f" infection counts. At time {t}: {today_infectious}"
                                         f" at {t-1}: {prev_infectious}")
             prev_infectious = today_infectious
