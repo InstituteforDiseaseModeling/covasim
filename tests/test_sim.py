@@ -6,9 +6,9 @@ Simple example usage for the Covid-19 agent-based model
 import os
 import pytest
 import sciris as sc
-import covasim as cova
+import covasim as cv
 
-doplot = 0
+doplot = 1
 
 
 #%% Define the tests
@@ -17,7 +17,7 @@ def test_parsobj():
     sc.heading('Testing parameters object')
 
     pars1 = {'a':1, 'b':2}
-    parsobj = cova.ParsObj(pars1)
+    parsobj = cv.ParsObj(pars1)
 
     # Once created, you cannot directly add new keys to a parsobj, and a nonexistent key works like a dict
     with pytest.raises(KeyError): parsobj['c'] = 3
@@ -26,7 +26,7 @@ def test_parsobj():
     # Only a dict is allowed
     with pytest.raises(TypeError):
         pars2 = ['a', 'b']
-        cova.ParsObj(pars2)
+        cv.ParsObj(pars2)
 
     return parsobj
 
@@ -34,7 +34,7 @@ def test_parsobj():
 def test_microsim():
     sc.heading('Minimal sim test')
 
-    sim = cova.Sim()
+    sim = cv.Sim()
     pars = {
         'n': 10,
         'n_infected': 1,
@@ -55,7 +55,7 @@ def test_sim(doplot=False): # If being run via pytest, turn off
     verbose = 1
 
     # Create and run the simulation
-    sim = cova.Sim()
+    sim = cv.Sim()
     sim.set_seed(seed)
     sim.run(verbose=verbose)
 
@@ -73,9 +73,32 @@ def test_singlerun():
                 'incub': 8,
                 }
 
-    sim = cova.Sim()
+    sim = cv.Sim()
     sim['n_days'] = 20
-    sim = cova.single_run(sim=sim, **iterpars)
+    sim = cv.single_run(sim=sim, **iterpars)
+
+    return sim
+
+
+def test_combine(doplot=False): # If being run via pytest, turn off
+    sc.heading('Combine results test')
+
+    n_runs = 5
+    n = 2000
+    n_infected = 100
+
+    print('Running first sim...')
+    sim = cv.Sim({'n':n, 'n_infected':n_infected})
+    sim = cv.multi_run(sim=sim, n_runs=n_runs, combine=True)
+    assert len(sim.people) == n*n_runs
+
+    print('Running second sim, results should be similar but not identical (stochastic differences)...')
+    sim2 = cv.Sim({'n':n*n_runs, 'n_infected':n_infected*n_runs})
+    sim2.run()
+
+    if doplot:
+        sim.plot()
+        sim2.plot()
 
     return sim
 
@@ -88,9 +111,9 @@ def test_multirun(doplot=False): # If being run via pytest, turn off
                 'incub': [4, 5, 6],
                 }
 
-    sim = cova.Sim() # Shouldn't be necessary, but is for now
+    sim = cv.Sim() # Shouldn't be necessary, but is for now
     sim['n_days'] = 60
-    sims = cova.multi_run(sim=sim, iterpars=iterpars)
+    sims = cv.multi_run(sim=sim, iterpars=iterpars)
 
     if doplot:
         for sim in sims:
@@ -101,7 +124,7 @@ def test_multirun(doplot=False): # If being run via pytest, turn off
 
 def test_scenarios(doplot=False):
     sc.heading('Scenarios test')
-    scens = cova.Scenarios()
+    scens = cv.Scenarios()
     scens.run()
     if doplot:
         scens.plot()
@@ -115,7 +138,7 @@ def test_fileio():
     xlsx_path = 'test_covasim.xlsx'
 
     # Create and run the simulation
-    sim = cova.Sim()
+    sim = cv.Sim()
     sim['n_days'] = 20
     sim.run(verbose=0)
 
@@ -143,6 +166,7 @@ if __name__ == '__main__':
     sim0    = test_microsim()
     sim1    = test_sim(doplot=doplot)
     sim2    = test_singlerun()
+    sim3    = test_combine(doplot=doplot)
     sims    = test_multirun(doplot=doplot)
     scens   = test_scenarios(doplot=doplot)
     json    = test_fileio()
