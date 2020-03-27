@@ -108,13 +108,12 @@ class Person(sc.prettyobj):
         death_dist    = cvu.sample(**self.dist_death)
         incub_dist    = cvu.sample(**self.dist_incub)  # Caclulate how long til they develop symptoms
 
-        if sympt_bool:  # They develop symptoms
+        if sympt_bool or death_bool:  # They develop symptoms
             self.date_symptomatic = t + incub_dist # Date they become symptomatic
-            if death_bool: # They die
-                self.date_died = t + death_dist # Date of death
-            else:
-                self.date_recovered = self.date_infectious + dur_dist
-        else:
+
+        if death_bool: # They die
+            self.date_died = t + death_dist # Date of death
+        else: # They recover
             self.date_recovered = self.date_infectious + dur_dist
 
         if source:
