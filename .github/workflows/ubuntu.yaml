@@ -41,7 +41,7 @@ jobs:
         working-directory: ./tests
         run: |
           pip install pytest
-          pytest test_*.py unittests/*tests.py --junitxml=test-results.xml
+          pytest test*.py unittests/test*.py --junitxml=test-results.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v1

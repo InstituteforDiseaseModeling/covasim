@@ -7,11 +7,11 @@ cov.start()
 
 # First, load and run the unittest tests
 from unittest_support_classes import TestSupportTests
-from tests_simulation_parameter import SimulationParameterTests
-from tests_disease_transmission import DiseaseTransmissionTests
-from tests_disease_progression import DiseaseProgressionTests
-from tests_disease_mortality import DiseaseMortalityTests
-from tests_diagnostic_testing import DiagnosticTestingTests
+from test_simulation_parameter import SimulationParameterTests
+from test_disease_transmission import DiseaseTransmissionTests
+from test_disease_progression import DiseaseProgressionTests
+from test_disease_mortality import DiseaseMortalityTests
+from test_diagnostic_testing import DiagnosticTestingTests
 
 test_classes_to_run = [TestSupportTests,
                        SimulationParameterTests,
