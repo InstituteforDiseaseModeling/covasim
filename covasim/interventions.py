@@ -3,7 +3,7 @@ import pylab as pl
 import numpy as np
 import sciris as sc
 
-__all__ = ['Intervention', 'dynamic_pars', 'change_beta', 'test_num', 'test_prop']
+__all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'test_historical']
 
 
 class Intervention:
@@ -32,7 +32,7 @@ class Intervention:
         """
         raise NotImplementedError
 
-    def finalize(self, sim):
+    def finalize(self, sim) -> None:
         """
         Call function at end of simulation
 
@@ -111,6 +111,52 @@ class dynamic_pars(Intervention):
         return
 
 
+class sequence(Intervention):
+    """
+    This is an example of a meta-intervention which switches between a sequence of interventions.
+
+    Args:
+        days (list): the days on which to apply each intervention
+        interventions (list): the interventions to apply on those days
+
+    Example:
+        interv = cv.sequence(days=[10, 51], interventions=[
+                    cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
+                    cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002, trace_prob=0.9),
+                ])
+    """
+
+    def __init__(self, days, interventions):
+        super().__init__()
+        assert len(days) == len(interventions)
+        self.days = days
+        self.interventions = interventions
+        self._cum_days = np.cumsum(days)
+        return
+
+
+    def apply(self, sim, t):
+        idx = np.argmax(self._cum_days > t)  # Index of the intervention to apply on this day
+        self.interventions[idx].apply(sim, t)
+        return
+
+
+    def finalize(self, sim, *args, **kwargs):
+        # If any of the sequential interventions write the same quantity to results then
+        # aggregate them
+        for intervention in self.interventions:
+            for label, result in intervention.results.items():
+                if label not in self.results:
+                    self.results[label] = sc.dcp(result)
+                else:
+                    if not result.ispercentage:
+                        self.results[label].values += result.values
+                    else:
+                        raise NotImplementedError # Haven't implemented aggregating by averaging for percentage quantities yet
+        sim.results.update(self.results)
+        return
+
+
 class change_beta(Intervention):
     '''
     The most basic intervention -- change beta by a certain amount.
@@ -172,8 +218,8 @@ class test_num(Intervention):
         self.trace_test = trace_test
         self.sensitivity = sensitivity
 
-        self.results['n_diagnoses'] = cv.Result('Number diagnosed', npts=npts)
-        self.results['cum_diagnoses'] = cv.Result('Cumulative number diagnosed', npts=npts)
+        self.results['n_diagnosed'] = cv.Result('Number diagnosed', npts=npts)
+        self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', npts=npts)
 
         return
 
@@ -201,25 +247,24 @@ class test_num(Intervention):
             if person.diagnosed:
                 test_probs[i] = 0.0
 
-        test_probs /= test_probs.sum()
-        test_inds = cv.choose_people_weighted(probs=test_probs, n=n_tests)
+        test_inds = cv.choose_people_weighted(probs=test_probs, n=n_tests, normalize=True)
 
         for test_ind in test_inds:
             person = sim.get_person(test_ind)
             person.test(t, self.sensitivity)
             if person.diagnosed:
-                self.results['n_diagnoses'][t] += 1
+                self.results['n_diagnosed'][t] += 1
 
         return
 
 
     def finalize(self, sim, *args, **kwargs):
-        self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
+        self.results['cum_diagnosed'].values = pl.cumsum(self.results['n_diagnosed'].values)
         sim.results.update(self.results)
         return
 
 
-class test_prop(Intervention):
+class test_prob(Intervention):
     """
     Test as many people as required based on test probability.
 
@@ -248,9 +293,9 @@ class test_prop(Intervention):
 
         # Instantiate the results to track
         self.results['n_tested']      = cv.Result('Number tested', npts=npts)
-        self.results['n_diagnoses']   = cv.Result('Number diagnosed', npts=npts)
+        self.results['n_diagnosed']   = cv.Result('Number diagnosed', npts=npts)
         self.results['cum_tested']    = cv.Result('Cumulative number tested', npts=npts)
-        self.results['cum_diagnoses'] = cv.Result('Cumulative number diagnosed', npts=npts)
+        self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', npts=npts)
 
         self.scheduled_tests = set() # Track UIDs of people that are guaranteed to be tested at the next step
         return
@@ -266,7 +311,7 @@ class test_prop(Intervention):
                 self.results['n_tested'][t] += 1
                 person.test(t, self.test_sensitivity)
                 if person.diagnosed:
-                    self.results['n_diagnoses'][t] += 1
+                    self.results['n_diagnosed'][t] += 1
                     for idx in person.contact_inds:
                         if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
                             new_scheduled_tests.add(idx)
@@ -277,6 +322,75 @@ class test_prop(Intervention):
 
     def finalize(self, sim, *args, **kwargs):
         self.results['cum_tested'].values = pl.cumsum(self.results['n_tested'].values)
-        self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
+        self.results['cum_diagnosed'].values = pl.cumsum(self.results['n_diagnosed'].values)
+        sim.results.update(self.results)
+        return
+
+
+class test_historical(Intervention):
+    """
+    Test a known number of positive cases
+
+    This can be used to simulate historical data containing the number of tests performed and the
+    number of cases identified as a result.
+
+    This intervention will actually test all individuals. At the moment, testing someone who is negative
+    has no effect, so they don't really need to be tested. However, it's possible that in the future
+    a negative test may still have an impact (e.g. make it less likely for an individual to re-test even
+    if they become symptomatic). Therefore to remain as accurate as possible, `Person.test()` is guaranteed
+    to be called for every person tested.
+
+    One minor limitation of this intervention is that symptomatic individuals that are tested and in reality
+    returned a false negative result would not be tested at all - instead, a non-infectious individual would
+    be tested. At the moment this would not affect model dynamics because a false negative is equivalent to
+    not performing the test at all.
+
+    """
+
+    def __init__(self, npts, n_tests, n_positive):
+        """
+
+        Args:
+            npts: Number of simulation timepoints
+            n_tests: Number of tests per day. If this is a scalar or an array with length less than npts, it will be zero-padded
+            n_positive: Number of positive tests (confirmed cases) per day. If this is a scalar or an array with length less than npts, it will be zero-padded
+        """
+
+        super().__init__()
+        self.n_tests = np.pad(sc.promotetoarray(n_tests),(0,max(0,npts-len(n_tests))))
+        self.n_positive = np.pad(sc.promotetoarray(n_positive),(0,max(0,npts-len(n_positive))))
+        self.results['n_tested'] = cv.Result('Number tested', npts=npts)
+        self.results['n_diagnosed'] = cv.Result('Number diagnosed', npts=npts)
+
+    def apply(self, sim, t):
+        ''' Perform testing '''
+
+        if self.n_tests[t]:
+            # Compute weights for people who would test positive or negative
+            positive_tests = np.zeros((sim.n,))
+            for i, person in enumerate(sim.people.values()):
+                if person.infectious:
+                    positive_tests[i] = 1
+            negative_tests = 1-positive_tests
+
+            # Select the people to test in each category
+            positive_inds = cv.choose_people_weighted(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]), normalize=True)
+            negative_inds = cv.choose_people_weighted(probs=negative_tests, n=min(sum(negative_tests),self.n_tests[t]-len(positive_inds)), normalize=True)
+
+            # Todo - assess performance and optimize e.g. to reduce dict indexing
+            for ind in positive_inds:
+                person = sim.get_person(ind)
+                person.test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
+                self.results['n_tested'][t] += 1
+                self.results['n_diagnosed'][t] += 1
+
+            for ind in negative_inds:
+                person = sim.get_person(ind)
+                person.test(t, test_sensitivity=1.0)
+                self.results['n_tested'][t] += 1
+
+    def finalize(self, sim, *args, **kwargs):
+        self.results['cum_tested']    = cv.Result('Cumulative number tested', values=pl.cumsum(self.results['n_tested'].values))
+        self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', values=pl.cumsum(self.results['n_diagnosed'].values))
         sim.results.update(self.results)
         return
