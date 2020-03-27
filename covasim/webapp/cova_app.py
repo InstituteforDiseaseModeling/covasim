@@ -150,7 +150,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         # Add the intervention
         web_pars['interventions'] = []
         if web_pars['web_int_day'] is not None:
-            web_pars['interventions'].append(cv.ReduceBetaIntervention(day=web_pars.pop('web_int_day'), efficacy=web_pars.pop('web_int_eff')))
+            web_pars['interventions'] = cv.change_beta(days=web_pars.pop('web_int_day'), changes=(1-web_pars.pop('web_int_eff')))
     except Exception as E:
         err2 = f'Parameter conversion failed! {str(E)}\n'
         print(err2)
@@ -193,7 +193,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     graphs = []
     try:
 
-        to_plot = sc.dcp(cv.to_plot)
+        to_plot = sc.dcp(cv.default_sim_plots)
         for p,title,keylabels in to_plot.enumitems():
             fig = go.Figure()
             colors = sc.gridcolors(len(keylabels))
@@ -203,7 +203,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
                 fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
 
             if sim['interventions']:
-                interv_day = sim['interventions'][0].day
+                interv_day = sim['interventions'][0].days[0]
                 if interv_day > 0 and interv_day < sim['n_days']:
                     fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
@@ -329,10 +329,10 @@ def plot_people(sim) -> dict:
         ))
 
     if sim['interventions']:
-        interv_day = sim['interventions'][0].day
+        interv_day = sim['interventions'][0].days[0]
         if interv_day > 0 and interv_day < sim['n_days']:
             fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-            fig.update_layout(annotations=[dict(x=interv_day, y=1, xref="x", yref="paper", text="Intervention start", showarrow=False)])
+            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
     fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
