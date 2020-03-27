@@ -45,15 +45,18 @@ class TestProperties:
             infectiousness_duration = 'dur'
             infectiousness_duration_std = 'dur_std'
             pass
-
         class DiagnosticTestingKeys:
             number_daily_tests = 'daily_tests'
             daily_test_sensitivity = 'sensitivity'
             symptomatic_testing_multiplier = 'sympt_test'
             contacttrace_testing_multiplier = 'trace_test'
             pass
-
-        # TODO: class MortalityKeys:
+        class MortalityKeys:
+            time_to_death = 'timetodie'
+            time_to_death_std = 'timetodie_std'
+            use_cfr_by_age = 'cfr_by_age'
+            default_cfr = 'default_cfr'
+            pass
         pass
     class SpecializedSimulations:
         class Microsim:
@@ -72,23 +75,29 @@ class TestProperties:
             serial_std = 0.5
             dur = 3
             pass
+        class HighMortality:
+            n = 1000
+            cfr_by_age = False
+            default_cfr = 0.2
+            timetodie = 6
+            timetodie_std = 2
         pass
     class ResultsDataKeys:
         deaths_cumulative = 'cum_deaths'
         deaths_daily = 'deaths'
         diagnoses_cumulative = 'cum_diagnosed'
         diagnoses_at_timestep = 'diagnoses'
+        diagnostics_at_timestep = 'tests'
+        diagnostics_cumulative = 'cum_tested'
         exposed_cumulative = 'cum_exposed'
         exposed_at_timestep = 'n_exposed'
         susceptible_at_timestep = 'n_susceptible'
         infectious_at_timestep = 'n_infectious'
         symptomatic_at_timestep = 'n_symptomatic'
         recovered_at_timestep = 'n_recovered'
-        infections_at_timestep = 'infections'
-        diagnostics_at_timestep = 'tests'
-        recovered_at_timestep_WHAT = 'recoveries'
-        diagnostics_cumulative = 'cum_tested'
         recovered_cumulative = 'cum_recoveries'
+        recovered_at_timestep_WHAT = 'recoveries'
+        infections_at_timestep = 'infections'
         GUESS_doubling_time_at_timestep = 'doubling_time'
         GUESS_r_effective_at_timestep = 'r_eff'
 
@@ -160,6 +169,10 @@ class CovaSimTest(unittest.TestCase):
         """
         result_data = self.get_full_result_channel(channel=channel)
         return result_data[0]
+
+    def get_day_final_channel_value(self, channel):
+        channel = self.get_full_result_channel(channel=channel)
+        return channel[-1]
     # endregion
 
     # region specialized simulation methods
@@ -195,6 +208,26 @@ class CovaSimTest(unittest.TestCase):
             Progkeys.infectiousness_duration: Hightrans.dur
         }
         self.set_simulation_parameters(hightrans_parameters)
+        pass
+
+    def set_superhigh_mortality(self):
+        """
+        builds on high transmission with high mortality
+        """
+        Simkeys = TestProperties.ParameterKeys.SimulationKeys
+        MortKeys = TestProperties.ParameterKeys.MortalityKeys
+        MortalityTestKeys = TestProperties.SpecializedSimulations.HighMortality
+        self.set_smallpop_hightransmission()
+        more_people_high_mortality = {
+            Simkeys.number_agents: MortalityTestKeys.n,
+            MortKeys.use_cfr_by_age: MortalityTestKeys.cfr_by_age,
+            MortKeys.default_cfr: MortalityTestKeys.default_cfr,
+            MortKeys.time_to_death: MortalityTestKeys.timetodie,
+            MortKeys.time_to_death_std: MortalityTestKeys.timetodie_std
+        }
+        self.set_simulation_parameters(params_dict=more_people_high_mortality)
+        pass
+
     # endregion
     pass
 
@@ -269,6 +302,39 @@ class TestSupportTests(CovaSimTest):
                                         f" at {t-1}: {prev_infectious}")
             prev_infectious = today_infectious
             pass
+        pass
+
+    def test_high_mortality_scenario(self):
+        """
+        Configures high mortality scenario and makes sure that
+        at 2x the time to die we start getting a consistently
+        increasing number of deaths
+        """
+        self.assertIsNone(self.simulation_parameters)
+        self.assertIsNone(self.sim)
+        self.set_superhigh_mortality()
+        self.run_sim()
+
+        self.assertIsNotNone(self.sim)
+        self.assertIsNotNone(self.simulation_parameters)
+        deaths_today_channel = self.get_full_result_channel(
+            TestProperties.ResultsDataKeys.deaths_daily
+        )
+        wait_period = self.simulation_parameters[
+            TestProperties.ParameterKeys.MortalityKeys.time_to_death
+                      ] * 2
+        sim_duration = self.simulation_parameters[
+            TestProperties.ParameterKeys.SimulationKeys.number_simulated_days
+        ]
+        total_deaths_in_range = 0
+        for t in range(wait_period, sim_duration):
+            today_deaths = deaths_today_channel[t]
+            self.assertGreaterEqual(today_deaths, 1,
+                                    msg="Should be some deaths here.")
+            total_deaths_in_range += today_deaths
+            pass
+        self.assertGreaterEqual(total_deaths_in_range, 100,
+                                msg="100 deaths should be enough data to test with")
         pass
     pass
 
