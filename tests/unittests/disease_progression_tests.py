@@ -19,6 +19,7 @@ class DiseaseProgressionTests(CovaSimTest):
         super().tearDown()
         pass
 
+    @unittest.skip("P1")
     def test_exposure_to_infectiousness_delay_deviation_zero(self):
         """
         Configure exposure to infectiousness delay to 1/2 sim
@@ -33,7 +34,7 @@ class DiseaseProgressionTests(CovaSimTest):
             TSimKeys.number_simulated_days: 60,
             TSimKeys.initial_infected_count: initially_infected,
             DProgKeys.exposed_to_infectious: infectious_day,
-            DProgKeys.exposed_to_infectious_std: 0
+            DProgKeys.exposed_to_infectious_std: 0,
         }
         self.run_sim(serial_dev_zero)
         infectious_channel = self.get_full_result_channel(
@@ -213,3 +214,6 @@ class DiseaseProgressionTests(CovaSimTest):
                              msg="verify that after the infectious duration, no more shedders")
         pass
     pass
+
+if __name__ == '__main__':
+    unittest.main()

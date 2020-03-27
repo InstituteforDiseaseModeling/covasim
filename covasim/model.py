@@ -101,20 +101,17 @@ class Person(sc.prettyobj):
         serial_dist = cvu.sample(**self.dist_serial)
         self.date_infectious = t + serial_dist
 
-        # Program them to either die or recover in the future
-        if cvu.bt(self.cfr):
-            # They die
-            death_dist = cvu.sample(**self.dist_death)
-            self.date_died = t + death_dist
-        else:
-            # They don't die; determine whether they develop symptoms
-            has_symptoms = cvu.bt(self.severity)  # Binomial distribution with probability equal to age-linked symptom severity index
-            if has_symptoms:  # They develop symptoms
-                incub_dist = cvu.sample(**self.dist_incub)  # Caclulate how long til they develop symptoms
-                self.date_symptomatic = t + incub_dist
+        # Disease progression and resolution parameters
+        sympt_bool    = cvu.bt(self.severity)  # Probability of developing symptoms determined by age-linked symptom severity index
+        death_bool    = cvu.bt(self.cfr)  # Probability of death determined by age-linked mortality
 
-            dur_dist = cvu.sample(**self.dist_dur)
-            self.date_recovered = self.date_infectious + dur_dist
+        if sympt_bool or death_bool:  # They develop symptoms
+            self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
+
+        if death_bool: # They die
+            self.date_died = t + cvu.sample(**self.dist_death) # Date of death
+        else: # They recover
+            self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
 
         if source:
             self.infected_by = source.uid
