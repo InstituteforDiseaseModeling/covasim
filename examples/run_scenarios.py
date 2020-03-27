@@ -4,7 +4,7 @@ Simple script for running Covasim scenarios
 
 
 import sciris as sc
-import covasim as cova
+import covasim as cv
 
 
 sc.heading('Setting up...')
@@ -57,7 +57,7 @@ scenarios = {'baseline': {
             'distance': {
               'name':'Social distancing',
               'pars': {
-                  'interventions': cova.ChangeBeta(days=interv_day, changes=interv_eff)
+                  'interventions': cv.change_beta(days=interv_day, changes=interv_eff)
                   }
               },
              }
@@ -65,14 +65,14 @@ scenarios = {'baseline': {
 
 # If we're rerunning...
 if do_run:
-    scens = cova.Scenarios(metapars=metapars, scenarios=scenarios)
+    scens = cv.Scenarios(metapars=metapars, scenarios=scenarios)
     scens.run(keep_sims=keep_sims, verbose=verbose)
     if do_save:
         scens.save(filename=obj_path)
 
 # Don't run
 else:
-    scens = cova.Scenarios.load(obj_path)
+    scens = cv.Scenarios.load(obj_path)
 
 
 if do_plot:

@@ -34,33 +34,33 @@ def test_interventions(doplot=False):
         'test1pc': {
           'name':'Test 1% (untargeted); isolate positives',
           'pars': {
-              'interventions': cv.TestNum(npts, daily_tests=[0.01*n_people]*npts),
+              'interventions': cv.test_num(npts, daily_tests=[0.01*n_people]*npts),
               }
           },
         'test10pc': {
           'name':'Test 10% (untargeted); isolate positives',
           'pars': {
-              'interventions': cv.TestNum(npts, daily_tests=[0.10*n_people]*npts),
+              'interventions': cv.test_num(npts, daily_tests=[0.10*n_people]*npts),
               }
           },
         'tracing1pc': {
           'name':'Test 1% (contact tracing); isolate positives',
           'pars': {
-              'interventions': cv.TestNum(npts, daily_tests=[0.01*n_people]*npts),
-              'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
+              'interventions': [cv.test_num(npts, daily_tests=[0.01*n_people]*npts),
+                                cv.dynamic_pars({'cont_factor':{'days':20, 'vals':0.1}})] # This means that people who've been in contact with known positives isolate with 90% effectiveness
               }
           },
         'tracing10pc': {
           'name':'Test 10% (contact tracing); isolate positives',
           'pars': {
-              'interventions': cv.TestNum(npts, daily_tests=[0.10*n_people]*npts),
-              'cont_factor': 0.1, # This means that people who've been in contact with known positives isolate with 90% effectiveness
+              'interventions': [cv.test_num(npts, daily_tests=[0.10*n_people]*npts),
+                                cv.dynamic_pars(pars={'cont_factor':{'days':20, 'vals':0.1}})]
               }
           },
         'floating': {
           'name':'Test a constant proportion of the population',
           'pars': {
-              'interventions': cv.TestProp(npts, symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
+              'interventions': cv.test_prop(npts, symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
               }
           },
          }
