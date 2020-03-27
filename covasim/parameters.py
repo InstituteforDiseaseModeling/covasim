@@ -62,6 +62,7 @@ def make_pars():
 
     # Events and interventions
     pars['interventions'] = []  #: List of Intervention instances
+    pars['interv_func'] = None # Custom intervention function
 
     return pars
 

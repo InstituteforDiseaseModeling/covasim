@@ -3,9 +3,11 @@ Test different population options
 '''
 
 #%% Imports and settings
+import pytest
 import pylab as pl
 import sciris as sc
 import covasim as cova
+import covasim.requirements as reqs
 try:
     import synthpops as sp
 except:
@@ -19,7 +21,7 @@ doplot = 1
 def test_import():
     sc.heading('Testing imports')
 
-    assert cova._requirements.available['synthpops'] == True
+    assert reqs.available['synthpops'] == True
     import synthpops as sp
     print(sp.datadir)
 
@@ -56,12 +58,10 @@ def test_pop_options(doplot=False): # If being run via pytest, turn off
     return sims
 
 
-
 def test_interventions(doplot=False): # If being run via pytest, turn off
     sc.heading('Test interventions')
 
     popchoice = 'bayesian'
-    # intervs = ['none', 'all', 'S', 'W', 'R']
     intervs = ['none', 'all', 'HSWR', 'SWR', 'H']
     interv_days = [21]
 
@@ -69,15 +69,16 @@ def test_interventions(doplot=False): # If being run via pytest, turn off
         'n': 10000,
         'n_infected': 100,
         'n_days': 60,
-        'interv_days': interv_days,
         'usepopdata': popchoice,
         }
 
-    def interv_func(sim, t, interv):
-        if   interv == 'none':   sim['beta'] *= 1.0
-        elif interv == 'all':    sim['beta'] *= 0.1
-        else:
-            for key in interv: sim['beta_pop'][key] = 0
+    def interv_func(sim, t, interv, interv_days):
+        if t in interv_days:
+            print(f'Applying custom intervention/change on day {t}...')
+            if   interv == 'none':   sim['beta'] *= 1.0
+            elif interv == 'all':    sim['beta'] *= 0.1
+            else:
+                for key in interv: sim['beta_pop'][key] = 0
         return sim
 
     # Create the base sim and initialize (since slow)
@@ -89,7 +90,7 @@ def test_interventions(doplot=False): # If being run via pytest, turn off
     sims = sc.objdict()
     for interv in intervs:
         sc.heading(f'Running {interv}')
-        interv_lambda = lambda sim,t: interv_func(sim=sim, t=t, interv=interv)
+        interv_lambda = lambda sim,t: interv_func(sim=sim, t=t, interv=interv, interv_days=interv_days)
         sims[interv] = sc.dcp(base_sim)
         sims[interv]['interv_func'] = interv_lambda
         sims[interv].run(initialize=False) # Since already initialized
@@ -106,21 +107,21 @@ def test_simple_interv(doplot=False): # If being run via pytest, turn off
     sc.heading('Test simple intervention')
 
     def close_schools(sim, t):
-        sim['beta_pop']['S'] = 0
+        if t == 10:
+            print(f'Closing schools on day {t}...')
+            sim['beta_pop']['S'] = 0
         return sim
 
     basepars = {
         'n':           2000,
         'n_infected':  100,
         'n_days':      60,
-        'interv_days': [20],
         'interv_func': close_schools,
         'usepopdata':  'bayesian',
         }
 
     sim = cova.Sim()
     sim.update_pars(basepars)
-    sim['interv_func'] = close_schools
     sim.run()
 
     if doplot:
@@ -134,10 +135,10 @@ def test_simple_interv(doplot=False): # If being run via pytest, turn off
 if __name__ == '__main__':
     sc.tic()
 
-    # test_import()
-    # sims1 = test_pop_options(doplot=doplot)
+    test_import()
+    sims1 = test_pop_options(doplot=doplot)
     sims2 = test_interventions(doplot=doplot)
-    sims3 = test_simple_interv(oplot=doplot)
+    sims3 = test_simple_interv(doplot=doplot)
 
     sc.toc()
 
