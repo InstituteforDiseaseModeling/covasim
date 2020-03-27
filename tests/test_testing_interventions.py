@@ -3,6 +3,8 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('TkAgg')
 import sciris as sc
 import covasim as cv
 
@@ -46,14 +48,20 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
               'interventions': cv.test_num(npts, daily_tests=optimistic_daily_tests)
               }
           },
-        'tracing1pc': {
+        'tracing': {
           'name':'Assuming South Korea testing levels of 0.02% daily (with contact tracing); isolate positives',
           'pars': {
               'interventions': [cv.test_num(npts, daily_tests=optimistic_daily_tests),
                                 cv.dynamic_pars({'cont_factor':{'days':20, 'vals':0.1}})] # This means that people who've been in contact with known positives isolate with 90% effectiveness
               }
           },
-         }
+        'floating': {
+            'name': 'Test a constant proportion of the population',
+            'pars': {
+                'interventions': cv.test_prop(npts, symptomatic_prob=max_optimistic_testing, asymptomatic_prob=0.0, trace_prob=0.9)
+                }
+        },
+    }
 
     metapars = {'n_runs': n_runs}
 
