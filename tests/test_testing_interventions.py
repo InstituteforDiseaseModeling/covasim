@@ -10,7 +10,7 @@ do_plot   = 1
 do_show   = 1
 do_save   = 0
 debug     = 1
-keep_sims = 1
+keep_sims = 0
 fig_path  = 'results/testing_scens.png'
 
 def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None):

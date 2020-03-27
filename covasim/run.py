@@ -188,8 +188,8 @@ class Scenarios(cvbase.ParsObj):
             if keep_sims:
                 if 'sims' not in self.allres:
                     self.allres['sims'] = sc.objdict()
-                print('WARNING: saving sims, which will produce a very large file!')
                 self.allres['sims'][scenkey] = scen_sims
+                print('Note: saving sims, which may produce a large file! Estimated to be:')
                 sc.checkmem(self.allres) # Print a warning about how big the file is likely to be
 
 
