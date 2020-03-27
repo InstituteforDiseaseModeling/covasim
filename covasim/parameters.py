@@ -55,13 +55,14 @@ def make_pars():
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death
     pars['timetodie_std']       = 2 # STD
-    pars['cfr_by_age']          = 0 # Whether or not to use age-specific case fatality
+    pars['cfr_by_age']          = False # Whether or not to use age-specific case fatality
     pars['default_cfr']         = 0.016 # Default overall case fatality rate if not using age-specific values
-    pars['severity_by_age']     = 0 # Whether or not to use age-specific case fatality
+    pars['severity_by_age']     = False # Whether or not to use age-specific case fatality
     pars['default_severity']    = 0.7 # Default overall severity if not using age-specific values. This gives the overall proportion of symptomatic cases
 
     # Events and interventions
     pars['interventions'] = []  #: List of Intervention instances
+    pars['interv_func'] = None # Custom intervention function
 
     return pars
 
@@ -142,7 +143,6 @@ def set_severity(age=None, default_severity=0.3, severity_by_age=True, severity_
     Sources:
         https://jamanetwork.com/journals/jama/fullarticle/2762130 -- distribution in China
         https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(20)30566-3/fulltext -- "increasing odds of in-hospital death associated with older age (odds ratio 1·10)"
-        https://www.medrxiv.org/content/10.1101/2020.03.16.20037259v1.full.pdf -- asymptomaticity in different age groups in China
         https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf -- 2/3 symptomatic
 
     Implemented approach: use a simple linear relationship btwn age and severity index

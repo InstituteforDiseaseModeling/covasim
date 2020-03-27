@@ -101,20 +101,17 @@ class Person(sc.prettyobj):
         serial_dist = cvu.sample(**self.dist_serial)
         self.date_infectious = t + serial_dist
 
-        # Program them to either die or recover in the future
-        if cvu.bt(self.cfr):
-            # They die
-            death_dist = cvu.sample(**self.dist_death)
-            self.date_died = t + death_dist
-        else:
-            # They don't die; determine whether they develop symptoms
-            has_symptoms = cvu.bt(self.severity)  # Binomial distribution with probability equal to age-linked symptom severity index
-            if has_symptoms:  # They develop symptoms
-                incub_dist = cvu.sample(**self.dist_incub)  # Caclulate how long til they develop symptoms
-                self.date_symptomatic = t + incub_dist
+        # Disease progression and resolution parameters
+        sympt_bool    = cvu.bt(self.severity)  # Probability of developing symptoms determined by age-linked symptom severity index
+        death_bool    = cvu.bt(self.cfr)  # Probability of death determined by age-linked mortality
 
-            dur_dist = cvu.sample(**self.dist_dur)
-            self.date_recovered = self.date_infectious + dur_dist
+        if sympt_bool or death_bool:  # They develop symptoms
+            self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
+
+        if death_bool: # They die
+            self.date_died = t + cvu.sample(**self.dist_death) # Date of death
+        else: # They recover
+            self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
 
         if source:
             self.infected_by = source.uid
@@ -257,8 +254,6 @@ class Sim(cvbase.BaseSim):
         self.results['doubling_time']  = init_res('Doubling time', scale=False)
         self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
 
-        self.reskeys = list(self.results.keys()) # Save the names of the main result keys
-
         # Populate the rest of the results
         self.results['t'] = self.tvec
         self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
@@ -268,6 +263,17 @@ class Sim(cvbase.BaseSim):
         self.calculated['eff_beta'] = (1-self['default_severity'])*self['asym_factor']*self['beta'] + self['default_severity']*self['beta']  # Using asymptomatic proportion
         self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
+
+
+    @property
+    def reskeys(self):
+        ''' Get the actual results objects, not other things stored in sim.results '''
+        all_keys = list(self.results.keys())
+        res_keys = []
+        for key in all_keys:
+            if isinstance(self.results[key], cvbase.Result):
+                res_keys.append(key)
+        return res_keys
 
 
     def init_people(self, verbose=None, id_len=6):
@@ -305,7 +311,7 @@ class Sim(cvbase.BaseSim):
             sc.printv(f'Creating contact matrix with data...', 2, verbose)
             import synthpops as sp
 
-            self.contact_keys = self['contacts_pop'].keys()
+            self.contact_keys = list(self['contacts_pop'].keys())
 
             make_contacts_keys = ['use_age','use_sex','use_loc','use_social_layers']
             options_args = dict.fromkeys(make_contacts_keys, True)
@@ -479,6 +485,8 @@ class Sim(cvbase.BaseSim):
             # End of person loop; apply interventions
             for intervention in self['interventions']:
                 intervention.apply(self, t)
+            if self['interv_func'] is not None: # Apply custom intervention function
+                self =self['interv_func'](self, t)
 
             # Update counts for this time step
             self.results['n_susceptible'][t] = n_susceptible

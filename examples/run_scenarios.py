@@ -3,7 +3,7 @@ Simple script for running Covasim scenarios
 '''
 
 import sciris as sc
-import covasim as cova
+import covasim as cv
 
 
 sc.heading('Setting up...')
@@ -27,9 +27,10 @@ verbose = 1
 # Sim options
 interv_day = 10
 interv_eff = 0.7
+default_beta = 0.015 # Should match parameters.py
 
 metapars = dict(
-    n_runs = 1, # Number of parallel runs; change to 3 for quick, 11 for real
+    n_runs = 3, # Number of parallel runs; change to 3 for quick, 11 for real
     noise = 0.1, # Use noise, optionally
     noisepar = 'beta',
     seed = 1,
@@ -41,8 +42,8 @@ version  = 'v0'
 date     = '2020mar24'
 folder   = 'results'
 basename = f'{folder}/covasim_scenarios_{date}_{version}'
-fig_path = f'{basename}.png'
-obj_path = f'{basename}.scens'
+fig_path   = f'{basename}.png'
+obj_path   = f'{basename}.scens'
 
 # Define the scenarios
 scenarios = {'baseline': {
@@ -54,9 +55,15 @@ scenarios = {'baseline': {
             'distance': {
               'name':'Social distancing',
               'pars': {
-                  'interventions': cova.ChangeBeta(days=interv_day, changes=interv_eff)
+                  'interventions': cv.change_beta(days=interv_day, changes=interv_eff)
                   }
               },
+            # 'distance2': { # With noise = 0.0, this should be identical to the above
+            #   'name':'Social distancing, version 2',
+            #   'pars': {
+            #       'interventions': cv.dynamic_pars({'beta':dict(days=interv_day, vals=interv_eff*default_beta)})
+            #       }
+            #   },
              }
 
 
@@ -66,14 +73,14 @@ if __name__ == "__main__": # Required for parallel processing on Windows
 
     # If we're rerunning...
     if do_run:
-        scens = cova.Scenarios(metapars=metapars, scenarios=scenarios)
+        scens = cv.Scenarios(metapars=metapars, scenarios=scenarios)
         scens.run(keep_sims=keep_sims, verbose=verbose)
         if do_save:
             scens.save(filename=obj_path)
 
     # Don't run
     else:
-        scens = cova.Scenarios.load(obj_path)
+        scens = cv.Scenarios.load(obj_path)
 
     if do_plot:
         fig1 = scens.plot(do_show=do_show)
