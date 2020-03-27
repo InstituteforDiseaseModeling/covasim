@@ -114,7 +114,7 @@ def choose_people(max_ind, n):
 
 
 # @nb.njit((nb.float64[:], nb.int64, nb.float64))
-def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10):
+def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False):
     '''
     Choose n people, each with a probability from the distribution probs. Overshoot
     handles the case where there are repeats
@@ -124,9 +124,15 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10):
     NB: unfortunately pd.unique() is not supported by Numba, nor is
     np.unique(return_index=True), hence why this function is not jitted.
     '''
-    probs = np.array(probs, dtype=np.float64)
-    probs /= probs.sum()
 
+    # Ensure it's the right type and optionally normalize
+    probs = np.array(probs, dtype=np.float64)
+    if normalize:
+        probs_sum = probs.sum()
+        if probs_sum:
+            probs /= probs_sum
+
+    # Perform checks
     n_samples = int(n)
     n_people = len(probs)
     if abs(probs.sum() - 1) > eps:
@@ -136,6 +142,8 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10):
     if n_people < n_samples: # It's more than everyone
         errormsg = f'Number of samples requested ({n_samples}) is greater than the number of people ({n_people})'
         raise Exception(errormsg)
+
+    # Choose samples
     unique_inds = np.array([], dtype=np.int)
     tries = 0
     while len(unique_inds)<n_samples and tries<max_tries:
@@ -147,6 +155,7 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10):
         errormsg = f'Unable to choose {n_samples} unique samples from {n_people} people after {max_tries} tries'
         raise RuntimeError(errormsg)
     inds = unique_inds[:int(n)]
+
     return inds
 
 
