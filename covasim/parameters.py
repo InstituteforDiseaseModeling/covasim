@@ -55,9 +55,9 @@ def make_pars():
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death
     pars['timetodie_std']       = 2 # STD
-    pars['cfr_by_age']          = False # Whether or not to use age-specific case fatality
-    pars['default_cfr']         = 0.016 # Default overall case fatality rate if not using age-specific values
-    pars['severity_by_age']     = False # Whether or not to use age-specific case fatality
+#    pars['cfr_by_age']          = False # Whether or not to use age-specific case fatality
+#    pars['default_cfr']         = 0.016 # Default overall case fatality rate if not using age-specific values
+    pars['severity_by_age']     = True # Whether or not to use age-specific probabilities of developing severe infection
     pars['default_severity']    = 0.7 # Default overall severity if not using age-specific values. This gives the overall proportion of symptomatic cases
 
     # Events and interventions
@@ -95,38 +95,39 @@ def set_person_attrs(min_age=0, max_age=99, age_mean=40, age_std=15, default_cfr
     return age, sex, cfr, severity
 
 
-def set_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
+def set_severity(age=None, default_severity=0.02, severitydict=None, severity_by_age=True):
     '''
-    Set age-dependent case-fatality rates
+    Determine the clinical characteristics of an infected person, based on their age
+    Specifically, we use this to determine the proportion of cases that would end up hospitalised
     '''
 
     # Process different options for age
     # Not supplied, use default
-    if age is None or not cfr_by_age:
-        cfr = default_cfr
+    if age is None or not severity_by_age:
+        severity = default_severity
 
     # Single number
     elif sc.isnumber(age):
 
-        # Define age-dependent case fatality rates if not given
-        if cfrdict is None:
-            cfrdict = {'cutoffs':   [10,      20,      30,     40,     50,     60,     70,    80,    100],  # Age cutoffs
-                       'values':    [0.00002, 0.00006, 0.0003, 0.0008, 0.0015, 0.0060, 0.022, 0.051, 0.093]}  # Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf
-        max_age_cfr = cfrdict['values'][-1]  # For people older than the oldest
+        # Define the age-dependent probabilities of developing severe infection
+        if severitydict is None:
+            severitydict = {'cutoffs':   [10,      20,      30,     40,     50,     60,     70,    80,    100],  # Age cutoffs
+                            'values':    [0.00004, 0.0004,  0.011,  0.034,  0.043,  0.082,  0.118, 0.166, 0.184]}  # Table 3 of https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+        max_age_severity = severitydict['values'][-1]  # For people older than the oldest
 
-        # Figure out which CFR applies to a person of the specified age
-        cfrind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in cfrdict['cutoffs']]) if val), max_age_cfr)
-        cfr = cfrdict['values'][cfrind]
+        # Figure out which probability applies to a person of the specified age
+        severityind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in severitydict['cutoffs']]) if val), max_age_severity)
+        severity = severitydict['values'][cfrind]
 
     # Listlike
     elif sc.checktype(age, 'listlike'):
-        cfr = []
-        for a in age: cfr.append(set_cfr(age=a, default_cfr=default_cfr, cfrdict=cfrdict, cfr_by_age=cfr_by_age))
+        severity = []
+        for a in age: severity.append(set_severity(age=a, default_severity=default_severityfr, severitydict=severitydict, severity_by_age=severity_by_age))
 
     else:
-        raise TypeError(f"set_cfr accepts a single age or list/aray of ages, not type {type(age)}")
+        raise TypeError(f"set_severity accepts a single age or list/aray of ages, not type {type(age)}")
 
-    return cfr
+    return severity
 
 
 def set_severity(age=None, default_severity=0.3, severity_by_age=True, severity_fn=None, max_age=100):
