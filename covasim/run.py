@@ -431,17 +431,24 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'sim_args':sim_args}
     sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
 
+    # Usual case -- return a list of sims
     if not combine:
-        output = sims
+        return sims
+
+    # Or, combine them into a single sim with scaled results
     else:
-        raise NotImplementedError('This feature has not yet been tested and is not ready to use')
         output_sim = sc.dcp(sims[0])
         output_sim.pars['parallelized'] = n_runs # Store how this was parallelized
         output_sim.pars['n'] *= n_runs # Restore this since used in later calculations -- a bit hacky, it's true
-        for sim in sims[1:]: # Skip the first one
+        for s,sim in enumerate(sims[1:]): # Skip the first one
             output_sim.people.update(sim.people)
-            for key in sim.results_keys:
-                output_sim.results[key] += sim.results[key]
-        output = output_sim
+            for key in sim.reskeys:
+                this_res = sim.results[key]
+                output_sim.results[key].values += this_res.values
 
-    return output
+        # For non-count results (scale=False), rescale them
+        for key in output_sim.reskeys:
+            if not output_sim.results[key].scale:
+                output_sim.results[key].values /= len(sims)
+
+        return output_sim
