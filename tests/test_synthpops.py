@@ -122,7 +122,6 @@ def test_simple_interv(doplot=False): # If being run via pytest, turn off
 
     sim = cova.Sim()
     sim.update_pars(basepars)
-    sim['interv_func'] = close_schools
     sim.run()
 
     if doplot:
