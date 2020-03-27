@@ -104,17 +104,14 @@ class Person(sc.prettyobj):
         # Disease progression and resolution parameters
         sympt_bool    = cvu.bt(self.severity)  # Probability of developing symptoms determined by age-linked symptom severity index
         death_bool    = cvu.bt(self.cfr)  # Probability of death determined by age-linked mortality
-        dur_dist      = cvu.sample(**self.dist_dur)
-        death_dist    = cvu.sample(**self.dist_death)
-        incub_dist    = cvu.sample(**self.dist_incub)  # Caclulate how long til they develop symptoms
 
         if sympt_bool or death_bool:  # They develop symptoms
-            self.date_symptomatic = t + incub_dist # Date they become symptomatic
+            self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
 
         if death_bool: # They die
-            self.date_died = t + death_dist # Date of death
+            self.date_died = t + cvu.sample(**self.dist_death) # Date of death
         else: # They recover
-            self.date_recovered = self.date_infectious + dur_dist
+            self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
 
         if source:
             self.infected_by = source.uid
