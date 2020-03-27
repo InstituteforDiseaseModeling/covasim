@@ -89,11 +89,18 @@ def set_person_attrs(min_age=0, max_age=99, age_mean=40, age_std=15, default_sev
     return age, sex, severity
 
 
-def set_symptoms(age=None, default_severity=0.2, severitydict=None, severity_by_age=True):
+def set_prognosis(age=None, default_severity=0.2, by_age=True):
     '''
-    Determine the probabilities of an infected person being:
-        (a) asymptomatic, and (develoing severe symptoms, based on their age
+    Determine the prognosis of an infected person: probability of developing severe symptoms and dying, based on their age
     '''
+
+    # Probabilities of death after onset of severe symptoms
+    age_cutoffs  = [10,      20,      30,      40,      50,      60,      70,      80,      100]
+    symp_probs   = [0.00000, 0.00000, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]
+    severe_probs = [0.00000, 0.00000, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]
+    death_probs  = [0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]
+
+    fr_if_severe = [d/s if s>0 and d/s>0 else 0 for (d,s) in zip(death_props,severe_props)] # Fatality rate among those severe symptoms who die, by age
 
     # Process different options for age
     # Not supplied, use default
@@ -104,14 +111,14 @@ def set_symptoms(age=None, default_severity=0.2, severitydict=None, severity_by_
     elif sc.isnumber(age):
 
         # Define the age-dependent probabilities of developing severe infection
-        if severitydict is None:
-            severitydict = {'cutoffs':   [10,      20,     30,    40,    50,    60,    70,    80,    100],      # Age cutoffs
-                            'values':    [0.00004, 0.0004, 0.011, 0.034, 0.043, 0.082, 0.118, 0.166, 0.184]}    # Table 3 of https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
-        max_age_severity = severitydict['values'][-1]  # For people older than the oldest
+        max_age_death_severe = death_probs[-1]
+        max_age_severity     = severe_probs[-1]
 
         # Figure out which probability applies to a person of the specified age
-        severityind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in severitydict['cutoffs']]) if val), max_age_severity)
-        severity = severitydict['values'][severityind]
+        severityind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), max_age_severity)
+        severity    = severe_probs[severityind] # Probability of developing severe symptoms
+        deathind    = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), max_age_death_severe)
+        death       = death_severe[deathind] # Probability of dying after developing severe symptoms
 
     # Listlike
     elif sc.checktype(age, 'listlike'):
