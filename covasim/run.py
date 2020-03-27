@@ -76,7 +76,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Handle scenarios -- by default, create a baseline scenario
         if scenarios is None:
-            scenarios = default_scenario
+            scenarios = sc.dcp(default_scenario)
         self.scenarios = scenarios
 
         # Handle metapars
@@ -240,7 +240,7 @@ class Scenarios(cvbase.ParsObj):
 
         if to_plot is None:
             to_plot = default_scen_plots
-        to_plot = sc.odict(to_plot) # In case it's supplied as a dict
+        to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
 
         fig_args = {'figsize': (16, 12)}
         plot_args = {'lw': 3, 'alpha': 0.7}
