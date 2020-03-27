@@ -6,6 +6,7 @@ Test different population options
 import pylab as pl
 import sciris as sc
 import covasim as cova
+import covasim.requirements as reqs
 try:
     import synthpops as sp
 except:
@@ -19,7 +20,7 @@ doplot = 1
 def test_import():
     sc.heading('Testing imports')
 
-    assert cova._requirements.available['synthpops'] == True
+    assert reqs.available['synthpops'] == True
     import synthpops as sp
     print(sp.datadir)
 
@@ -134,10 +135,10 @@ def test_simple_interv(doplot=False): # If being run via pytest, turn off
 if __name__ == '__main__':
     sc.tic()
 
-    # test_import()
-    # sims1 = test_pop_options(doplot=doplot)
-    sims2 = test_interventions(doplot=doplot)
-    sims3 = test_simple_interv(oplot=doplot)
+    test_import()
+    sims1 = test_pop_options(doplot=doplot)
+    # sims2 = test_interventions(doplot=doplot)
+    # sims3 = test_simple_interv(doplot=doplot)
 
     sc.toc()
 
