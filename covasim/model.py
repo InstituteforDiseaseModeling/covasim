@@ -311,7 +311,7 @@ class Sim(cvbase.BaseSim):
             sc.printv(f'Creating contact matrix with data...', 2, verbose)
             import synthpops as sp
 
-            self.contact_keys = self['contacts_pop'].keys()
+            self.contact_keys = list(self['contacts_pop'].keys())
 
             make_contacts_keys = ['use_age','use_sex','use_loc','use_social_layers']
             options_args = dict.fromkeys(make_contacts_keys, True)
@@ -485,8 +485,7 @@ class Sim(cvbase.BaseSim):
             # End of person loop; apply interventions
             for intervention in self['interventions']:
                 intervention.apply(self, t)
-			if self['interv_func'] is not None: # Apply custom intervention function
-                sc.printv(f'Applying custom intervention/change on day {t}...', 1, verbose)
+            if self['interv_func'] is not None: # Apply custom intervention function
                 self =self['interv_func'](self, t)
 
             # Update counts for this time step
