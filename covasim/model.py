@@ -90,22 +90,21 @@ class Person(sc.prettyobj):
         This routine infects the person
         Args:
             source: A Person instance. If None, then it was a seed infection
-
-        Returns: none
+        Returns:
+            1 (for incrementing counters)
         """
-        self.susceptible = False
-        self.exposed = True
-        self.date_exposed = t
+        self.susceptible    = False
+        self.exposed        = True
+        self.date_exposed   = t
 
         # Calculate how long before they can infect other people
-        serial_dist = cvu.sample(**self.dist_serial)
+        serial_dist          = cvu.sample(**self.dist_serial)
         self.date_infectious = t + serial_dist
 
-        # Disease progression and resolution parameters
-        sympt_bool    = cvu.bt(self.severity)  # Probability of developing symptoms determined by age-linked symptom severity index
-        death_bool    = cvu.bt(self.cfr)  # Probability of death determined by age-linked mortality
+        # Probability of developing severe infection
+        severe_bool = cvu.bt(self.severity)
 
-        if sympt_bool or death_bool:  # They develop symptoms
+        if sympt_bool:  # They develop symptoms
             self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
 
         if death_bool: # They die
