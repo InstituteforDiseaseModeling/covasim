@@ -11,6 +11,8 @@ jobs:
         python-version: [ '3.7' ]
     name: Install and test
     steps:
+      - name: testing
+        run: echo $GITHUB_ACTOR - $GITHUB_REPOSITORY
       - name: Checkout sources
         uses: actions/checkout@v1
       - name: Checkout synthpops
