@@ -153,6 +153,7 @@ class sequence(Intervention):
                         self.results[label].values += result.values
                     else:
                         raise NotImplementedError # Haven't implemented aggregating by averaging for percentage quantities yet
+        sim.results.update(self.results)
         return
 
 
@@ -259,6 +260,7 @@ class test_num(Intervention):
 
     def finalize(self, sim, *args, **kwargs):
         self.results['cum_diagnosed'].values = pl.cumsum(self.results['n_diagnosed'].values)
+        sim.results.update(self.results)
         return
 
 
@@ -321,6 +323,7 @@ class test_prob(Intervention):
     def finalize(self, sim, *args, **kwargs):
         self.results['cum_tested'].values = pl.cumsum(self.results['n_tested'].values)
         self.results['cum_diagnosed'].values = pl.cumsum(self.results['n_diagnosed'].values)
+        sim.results.update(self.results)
         return
 
 
@@ -389,4 +392,5 @@ class test_historical(Intervention):
     def finalize(self, sim, *args, **kwargs):
         self.results['cum_tested']    = cv.Result('Cumulative number tested', values=pl.cumsum(self.results['n_tested'].values))
         self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', values=pl.cumsum(self.results['n_diagnosed'].values))
+        sim.results.update(self.results)
         return
