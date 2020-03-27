@@ -7,16 +7,17 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
-import covasim as cv
+from . import utils as cvu
+from . import base as cvbase
 from . import parameters as cvpars
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['to_plot', 'Person', 'Sim']
+__all__ = ['default_sim_plots', 'Person', 'Sim']
 
 
 # Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines
-to_plot = sc.odict({
+default_sim_plots = sc.odict({
         'Total counts': sc.odict({
             'cum_exposed': 'Cumulative infections',
             'cum_deaths': 'Cumulative deaths',
@@ -97,22 +98,22 @@ class Person(sc.prettyobj):
         self.date_exposed = t
 
         # Calculate how long before they can infect other people
-        serial_dist = cv.sample(**self.dist_serial)
+        serial_dist = cvu.sample(**self.dist_serial)
         self.date_infectious = t + serial_dist
 
         # Program them to either die or recover in the future
-        if cv.bt(self.cfr):
+        if cvu.bt(self.cfr):
             # They die
-            death_dist = cv.sample(**self.dist_death)
+            death_dist = cvu.sample(**self.dist_death)
             self.date_died = t + death_dist
         else:
             # They don't die; determine whether they develop symptoms
-            has_symptoms = cv.bt(self.severity)  # Binomial distribution with probability equal to age-linked symptom severity index
+            has_symptoms = cvu.bt(self.severity)  # Binomial distribution with probability equal to age-linked symptom severity index
             if has_symptoms:  # They develop symptoms
-                incub_dist = cv.sample(**self.dist_incub)  # Caclulate how long til they develop symptoms
+                incub_dist = cvu.sample(**self.dist_incub)  # Caclulate how long til they develop symptoms
                 self.date_symptomatic = t + incub_dist
 
-            dur_dist = cv.sample(**self.dist_dur)
+            dur_dist = cvu.sample(**self.dist_dur)
             self.date_recovered = self.date_infectious + dur_dist
 
         if source:
@@ -155,21 +156,39 @@ class Person(sc.prettyobj):
         return recovery
 
 
-class Sim(cv.BaseSim):
+    def test(self, t, test_sensitivity):
+        if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
+            self.diagnosed = True
+            self.date_diagnosed = t
+            diagnosed = 1
+        else:
+            diagnosed = 0
+        return diagnosed
+
+
+class Sim(cvbase.BaseSim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
     '''
 
-    def __init__(self, pars=None, datafile=None):
+    def __init__(self, pars=None, datafile=None, filename=None):
         default_pars = cvpars.make_pars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
         self.datafile = datafile # Store this
         self.data = None
         if datafile is not None: # If a data file is provided, load it
             self.data = cvpars.load_data(datafile)
+        self.created = sc.now()
+        if filename is None:
+            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
+            filename = f'covasim_{datestr}.sim'
+        self.filename = filename
         self.stopped = None # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
+        self.people = {}
+        self.results = {}
+        self.calculated = {}
         if pars is not None:
             self.update_pars(pars)
         return
@@ -195,17 +214,6 @@ class Sim(cv.BaseSim):
             start_day = sc.readdate(start_day)
         self['start_day'] = start_day # Convert back
 
-        # Replace tests with data, if available
-        if self.data is not None:
-            self['daily_tests'] = np.array(self.data['new_tests']) # Number of tests each day, from the data
-
-        # Ensure test counts are valid
-        self['daily_tests'] = np.minimum(self['daily_tests'], self['n']) # Cannot do more tests than there are people
-
-        # Handle interventions
-        for key in ['interv_days', 'interv_effs', 'daily_tests']:
-            self[key] = sc.promotetoarray(self[key], skipnone=True)
-
         # Handle population data
         popdata_choices = ['random', 'bayesian', 'data']
         if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
@@ -216,6 +224,9 @@ class Sim(cv.BaseSim):
             errormsg = f'Population data option "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
 
+        # Handle interventions
+        self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
+
         return
 
 
@@ -224,11 +235,10 @@ class Sim(cv.BaseSim):
 
         def init_res(*args, **kwargs):
             ''' Initialize a single result object '''
-            output = cv.Result(*args, **kwargs, npts=self.npts)
+            output = cvbase.Result(*args, **kwargs, npts=self.npts)
             return output
 
         # Create the main results structure
-        self.results = {}
         self.results['n_susceptible']  = init_res('Number susceptible')
         self.results['n_exposed']      = init_res('Number exposed')
         self.results['n_infectious']   = init_res('Number infectious')
@@ -247,18 +257,26 @@ class Sim(cv.BaseSim):
         self.results['doubling_time']  = init_res('Doubling time', scale=False)
         self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
 
-        self.reskeys = list(self.results.keys()) # Save the names of the main result keys
-
         # Populate the rest of the results
         self.results['t'] = self.tvec
         self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
         self.results_ready = False
 
         # Create calculated values structure
-        self.calculated = {}
         self.calculated['eff_beta'] = (1-self['default_severity'])*self['asym_factor']*self['beta'] + self['default_severity']*self['beta']  # Using asymptomatic proportion
         self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
+
+
+    @property
+    def reskeys(self):
+        ''' Get the actual results objects, not other things stored in sim.results '''
+        all_keys = list(self.results.keys())
+        res_keys = []
+        for key in all_keys:
+            if isinstance(self.results[key], cvbase.Result):
+                res_keys.append(key)
+        return res_keys
 
 
     def init_people(self, verbose=None, id_len=6):
@@ -290,8 +308,8 @@ class Sim(cv.BaseSim):
             sc.printv(f'Creating contact matrix without data...', 2, verbose)
             for p in range(int(self['n'])):
                 person = self.get_person(p)
-                person.n_contacts = cv.pt(self['contacts']) # Draw the number of Poisson contacts for this person
-                person.contact_inds = cv.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
+                person.n_contacts = cvu.pt(self['contacts']) # Draw the number of Poisson contacts for this person
+                person.contact_inds = cvu.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
         else:
             sc.printv(f'Creating contact matrix with data...', 2, verbose)
             import synthpops as sp
@@ -328,47 +346,6 @@ class Sim(cv.BaseSim):
             person = self.get_person(i)
             person.infect(t=0)
 
-        return
-
-
-    def apply_testing(self, t, n_diagnoses, verbose):
-        ''' Perform testing '''
-        test_sensitivity = self['sensitivity']
-        test_probs = self.test_probs
-        if t<len(self['daily_tests']): # Don't know how long the data is, ensure we don't go past the end
-            n_tests = self['daily_tests'][t] # Number of tests for this day
-            if n_tests and not pl.isnan(n_tests): # There are tests this day
-                self.results['tests'][t] = n_tests # Store the number of tests
-                test_probs_arr = pl.array(list(test_probs.values()))
-                test_probs_arr /= test_probs_arr.sum()
-                test_inds = cv.choose_people_weighted(probs=test_probs_arr, n=n_tests)
-
-                for test_ind in test_inds:
-                    tested_person = self.get_person(test_ind)
-                    if tested_person.infectious and cv.bt(test_sensitivity): # Person was tested and is true-positive
-                        n_diagnoses += 1
-                        tested_person.diagnosed = True
-                        tested_person.date_diagnosed = t
-                        sc.printv(f'          Person {tested_person.uid} was diagnosed at timestep {t}!', 2, verbose)
-
-        return n_diagnoses
-
-
-    def apply_interventions(self, t, verbose):
-        '''
-        Apply interventions, if they exist at this time point. Can either
-        modify beta, or can be a function that makes an arbitrary modification
-        to the Sim object.
-        '''
-        if t in self['interv_days']:
-            ind = sc.findnearest(self['interv_days'], t)
-            if self['interv_func'] is not None: # Apply custom intervention function
-                sc.printv(f'Applying custom intervention/change on day {t}...', 1, verbose)
-                self =self['interv_func'](self, t)
-            else:
-                eff = self['interv_effs'][ind]
-                sc.printv(f'Applying intervention/change of {eff} on day {t}...', 1, verbose)
-                self['beta'] *= eff # Just change beta
         return
 
 
@@ -409,7 +386,6 @@ class Sim(cv.BaseSim):
             n_infections  = 0
             n_symptomatic = 0
             n_recovered   = 0
-            n_diagnoses   = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
             rand_popdata     = (self['usepopdata'] == 'random')
@@ -418,8 +394,6 @@ class Sim(cv.BaseSim):
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
             beta_pop         = self['beta_pop']
-            sympt_test       = self['sympt_test']
-            trace_test       = self['trace_test']
 
             # Print progress
             if verbose>=1:
@@ -428,9 +402,6 @@ class Sim(cv.BaseSim):
                     sc.heading(string)
                 else:
                     print(string)
-
-            # Initialise testing -- assign equal testing probabilities initially, these will get adjusted later
-            self.test_probs = dict.fromkeys(self.uids, 1.0) # Store the probability of each person getting tested
 
             # Update each person
             for person in self.people.values():
@@ -480,7 +451,7 @@ class Sim(cv.BaseSim):
                                     target_person.known_contact = True
 
                                 # Check whether virus is transmitted
-                                transmission = cv.bt(thisbeta)
+                                transmission = cvu.bt(thisbeta)
                                 if transmission:
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         n_infections += target_person.infect(t, person)
@@ -498,7 +469,7 @@ class Sim(cv.BaseSim):
                                         target_person.known_contact = True
 
                                     # Check whether virus is transmitted
-                                    transmission = cv.bt(thisbeta)
+                                    transmission = cvu.bt(thisbeta)
                                     if transmission:
                                         target_person = self.people[contact_ind] # Stored by UID
                                         if target_person.susceptible: # Skip people who are not susceptible
@@ -514,20 +485,9 @@ class Sim(cv.BaseSim):
                 if person.recovered:
                     n_recovered += 1
 
-                # Adjust testing probability based on what's happened to the person
-                # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
-                if person.symptomatic:
-                    self.test_probs[person.uid] *= sympt_test    # They're symptomatic
-                if person.known_contact:
-                    self.test_probs[person.uid] *= trace_test    # They've had contact with a known positive
-                if person.diagnosed:
-                    self.test_probs[person.uid] = 0.0
-
-            # Implement testing -- this is outside of the loop over people, but inside the loop over time
-            self.apply_testing(t, n_diagnoses, verbose)
-
-            # Implement interventions
-            self.apply_interventions(t, verbose)
+            # End of person loop; apply interventions
+            for intervention in self['interventions']:
+                intervention.apply(self, t)
 
             # Update counts for this time step
             self.results['n_susceptible'][t] = n_susceptible
@@ -538,14 +498,17 @@ class Sim(cv.BaseSim):
             self.results['infections'][t]    = n_infections
             self.results['n_symptomatic'][t] = n_symptomatic
             self.results['n_recovered'][t]   = n_recovered
-            self.results['diagnoses'][t]     = n_diagnoses
 
-        # Compute cumulative results outside of the time loop
+        # End of time loop; compute cumulative results outside of the time loop
         self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values) + self['n_infected'] # Include initially infected people
         self.results['cum_tested'].values     = pl.cumsum(self.results['tests'].values)
         self.results['cum_diagnosed'].values  = pl.cumsum(self.results['diagnoses'].values)
         self.results['cum_deaths'].values     = pl.cumsum(self.results['deaths'].values)
         self.results['cum_recoveries'].values = pl.cumsum(self.results['recoveries'].values)
+
+        # Add in the results from the interventions
+        for intervention in self['interventions']:
+            intervention.finalize(self)  # Execute any post-processing
 
         # Scale the results
         for reskey in self.reskeys:
@@ -643,7 +606,7 @@ class Sim(cv.BaseSim):
             for d,datum in enumerate(self.data['new_positives']):
                 if not pl.isnan(datum): # Skip days when no tests were performed
                     estimate = self.results['diagnoses'][d]
-                    p = cv.poisson_test(datum, estimate)
+                    p = cvu.poisson_test(datum, estimate)
                     logp = pl.log(p)
                     loglike += logp
                     sc.printv(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
@@ -677,14 +640,14 @@ class Sim(cv.BaseSim):
         return summary
 
 
-
-    def plot(self, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+    def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
              font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
+            to_plot (dict): Nested dict of results to plot; see default_sim_plots for structure
             do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
             fig_path (str): Path to save the figure
             fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
@@ -707,6 +670,10 @@ class Sim(cv.BaseSim):
         if verbose is None:
             verbose = self['verbose']
         sc.printv('Plotting...', 1, verbose)
+
+        if to_plot is None:
+            to_plot = default_sim_plots
+        to_plot = sc.odict(to_plot) # In case it's supplied as a dict
 
         if fig_args     is None: fig_args     = {'figsize':(16,12)}
         if plot_args    is None: plot_args    = {'lw':3, 'alpha':0.7}
@@ -748,12 +715,13 @@ class Sim(cv.BaseSim):
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-            for day in self['interv_days']:
-                ylims = pl.ylim()
-                pl.plot([day,day], ylims, '--')
+
+            # for intervention in self['interventions']:
+            #     ylims = pl.ylim()
+            #     pl.plot([intervention.day,intervention.day], ylims, '--')
 
             pl.grid(use_grid)
-            cv.fixaxis(self)
+            cvu.fixaxis(self)
             sc.commaticks()
             pl.title(title)
 
@@ -784,8 +752,3 @@ class Sim(cv.BaseSim):
             pl.close(fig)
 
         return fig
-
-
-    def plot_people(self):
-        ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
-        raise NotImplementedError

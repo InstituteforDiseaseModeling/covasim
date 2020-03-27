@@ -38,7 +38,7 @@ def make_pars():
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
     pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']    = 1.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
+    pars['diag_factor']    = 0. # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']       = 20
     pars['beta_pop']       = {'H': 1.5,  'S': 1.5,   'W': 1.5,  'R': 0.5} # Per-population beta weights; relative
@@ -52,24 +52,16 @@ def make_pars():
     pars['dur']            = 8 # Using Mike's Snohomish number
     pars['dur_std']        = 2 # Variance in duration
 
-    # Testing
-    pars['daily_tests']    = [] # If there's no testing data, optionally define a list of daily tests here. Remember this gets scaled by pars['scale']. To say e.g. 1% of the population is tested, use [0.01*pars['n']]*pars['n_days']
-    pars['sensitivity']    = 1.0 # Probability of a true positive, estimated
-    pars['sympt_test']     = 100.0 # Multiply testing probability by this factor for symptomatic cases
-    pars['trace_test']     = 1.0 # Multiply testing probability by this factor for contacts of known positives -- baseline assumes no contact tracing
-
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death
     pars['timetodie_std']       = 2 # STD
-    pars['cfr_by_age']          = 0 # Whether or not to use age-specific case fatality
+    pars['cfr_by_age']          = False # Whether or not to use age-specific case fatality
     pars['default_cfr']         = 0.016 # Default overall case fatality rate if not using age-specific values
-    pars['severity_by_age']     = 0 # Whether or not to use age-specific case fatality
+    pars['severity_by_age']     = False # Whether or not to use age-specific case fatality
     pars['default_severity']    = 0.7 # Default overall severity if not using age-specific values. This gives the overall proportion of symptomatic cases
 
     # Events and interventions
-    pars['interv_days'] = [] # Day on which interventions started/stopped, e.g. [30, 44]
-    pars['interv_effs'] = [] # Change in transmissibility, e.g. [0.1, 10]
-    pars['interv_func'] = None # Custom intervention function
+    pars['interventions'] = []  #: List of Intervention instances
 
     return pars
 
@@ -118,7 +110,7 @@ def set_cfr(age=None, default_cfr=0.02, cfrdict=None, cfr_by_age=True):
         # Define age-dependent case fatality rates if not given
         if cfrdict is None:
             cfrdict = {'cutoffs':   [10,      20,      30,     40,     50,     60,     70,    80,    100],  # Age cutoffs
-                       'values':    [0.00002, 0.00006, 0.0003, 0.0008, 0.0015, 0.0060, 0.022, 0.051, 0.93]}  # Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf
+                       'values':    [0.00002, 0.00006, 0.0003, 0.0008, 0.0015, 0.0060, 0.022, 0.051, 0.093]}  # Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf
         max_age_cfr = cfrdict['values'][-1]  # For people older than the oldest
 
         # Figure out which CFR applies to a person of the specified age
