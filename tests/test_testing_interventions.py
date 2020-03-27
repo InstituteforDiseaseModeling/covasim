@@ -34,37 +34,53 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
 
     # Define the scenarios
     scenarios = {
-        'baseline': {
-          'name':'Status quo, no testing',
-          'pars': {
-              'interventions': None,
-              }
-          },
-        'test_skorea': {
-          'name':'Assuming South Korea testing levels of 0.02% daily (untargeted); isolate positives',
-          'pars': {
-              'interventions': cv.test_num(npts, daily_tests=optimistic_daily_tests)
-              }
-          },
-        'tracing': {
-          'name':'Assuming South Korea testing levels of 0.02% daily (with contact tracing); isolate positives',
-          'pars': {
-              'interventions': [cv.test_num(npts, daily_tests=optimistic_daily_tests),
-                                cv.dynamic_pars({'cont_factor':{'days':20, 'vals':0.1}})] # This means that people who've been in contact with known positives isolate with 90% effectiveness
-              }
-          },
-        'floating': {
-            'name': 'Test a constant proportion of the population',
+        # 'baseline': {
+        #   'name':'Status quo, no testing',
+        #   'pars': {
+        #       'interventions': None,
+        #       }
+        #   },
+        # 'test_skorea': {
+        #   'name':'Assuming South Korea testing levels of 0.02% daily (untargeted); isolate positives',
+        #   'pars': {
+        #       'interventions': cv.test_num(npts, daily_tests=optimistic_daily_tests)
+        #       }
+        #   },
+        # 'tracing': {
+        #   'name':'Assuming South Korea testing levels of 0.02% daily (with contact tracing); isolate positives',
+        #   'pars': {
+        #       'interventions': [cv.test_num(npts, daily_tests=optimistic_daily_tests),
+        #                         cv.dynamic_pars({'cont_factor':{'days':20, 'vals':0.1}})] # This means that people who've been in contact with known positives isolate with 90% effectiveness
+        #       }
+        #   },
+        # 'floating': {
+        #     'name': 'Test with constant probability based on symptoms',
+        #     'pars': {
+        #         'interventions': cv.test_prob(npts, symptomatic_prob=max_optimistic_testing, asymptomatic_prob=0.0, trace_prob=0.9)
+        #         }
+        # },
+        'historical': {
+            'name': 'Test a known number of positive cases',
             'pars': {
-                'interventions': cv.test_prob(npts, symptomatic_prob=max_optimistic_testing, asymptomatic_prob=0.0, trace_prob=0.9)
-                }
+                'interventions': cv.test_historical(npts, n_tests=[100]*npts, n_positive = [1]*npts)
+            }
         },
+        'sequence': {
+            'name': 'Historical switching to probability',
+            'pars': {
+                'interventions': cv.sequence(days=[10, 51], interventions=[
+                    cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
+                    cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002, trace_prob=0.9),
+                ])
+            }
+        },
+
     }
 
     metapars = {'n_runs': n_runs}
 
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose)
+    scens.run(verbose=verbose, debug=True, keep_sims=True)
 
     if do_plot:
         scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)

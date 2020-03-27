@@ -125,6 +125,8 @@ def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10):
     np.unique(return_index=True), hence why this function is not jitted.
     '''
     probs = np.array(probs, dtype=np.float64)
+    probs /= probs.sum()
+
     n_samples = int(n)
     n_people = len(probs)
     if abs(probs.sum() - 1) > eps:

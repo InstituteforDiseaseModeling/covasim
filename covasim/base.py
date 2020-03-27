@@ -162,9 +162,9 @@ class BaseSim(ParsObj):
         return dates
 
 
-    def get_person(self, uid):
-        ''' Return a person based on their ID '''
-        return self.people[self.uids[int(uid)]]
+    def get_person(self, ind):
+        ''' Return a person based on their index '''
+        return self.people[self.uids[int(ind)]]
 
 
     def _make_resdict(self, for_json: bool = True) -> dict:

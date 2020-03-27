@@ -3,7 +3,9 @@ import pylab as pl
 import numpy as np
 import sciris as sc
 
-__all__ = ['Intervention', 'dynamic_pars', 'change_beta', 'test_num', 'test_prob']
+# Cliff: Might be a bit annoying to have to add every intervention here, can we just
+# export everything in this file (and prepend non-exported things with `_`)?
+#__all__ = ['Intervention', 'dynamic_pars', 'change_beta', 'test_num', 'test_prob']
 
 
 class Intervention:
@@ -172,8 +174,8 @@ class test_num(Intervention):
         self.trace_test = trace_test
         self.sensitivity = sensitivity
 
-        self.results['n_diagnoses'] = cv.Result('Number diagnosed', npts=npts)
-        self.results['cum_diagnoses'] = cv.Result('Cumulative number diagnosed', npts=npts)
+        self.results['n_diagnosed'] = cv.Result('Number diagnosed', npts=npts)
+        self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', npts=npts)
 
         return
 
@@ -201,21 +203,19 @@ class test_num(Intervention):
             if person.diagnosed:
                 test_probs[i] = 0.0
 
-        test_probs /= test_probs.sum()
         test_inds = cv.choose_people_weighted(probs=test_probs, n=n_tests)
 
         for test_ind in test_inds:
             person = sim.get_person(test_ind)
             person.test(t, self.sensitivity)
             if person.diagnosed:
-                self.results['n_diagnoses'][t] += 1
+                self.results['n_diagnosed'][t] += 1
 
         return
 
 
     def finalize(self, sim, *args, **kwargs):
-        self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
-        sim.results.update(self.results)
+        self.results['cum_diagnosed'].values = pl.cumsum(self.results['n_diagnosed'].values)
         return
 
 
@@ -248,9 +248,9 @@ class test_prob(Intervention):
 
         # Instantiate the results to track
         self.results['n_tested']      = cv.Result('Number tested', npts=npts)
-        self.results['n_diagnoses']   = cv.Result('Number diagnosed', npts=npts)
+        self.results['n_diagnosed']   = cv.Result('Number diagnosed', npts=npts)
         self.results['cum_tested']    = cv.Result('Cumulative number tested', npts=npts)
-        self.results['cum_diagnoses'] = cv.Result('Cumulative number diagnosed', npts=npts)
+        self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', npts=npts)
 
         self.scheduled_tests = set() # Track UIDs of people that are guaranteed to be tested at the next step
         return
@@ -266,7 +266,7 @@ class test_prob(Intervention):
                 self.results['n_tested'][t] += 1
                 person.test(t, self.test_sensitivity)
                 if person.diagnosed:
-                    self.results['n_diagnoses'][t] += 1
+                    self.results['n_diagnosed'][t] += 1
                     for idx in person.contact_inds:
                         if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
                             new_scheduled_tests.add(idx)
@@ -277,8 +277,7 @@ class test_prob(Intervention):
 
     def finalize(self, sim, *args, **kwargs):
         self.results['cum_tested'].values = pl.cumsum(self.results['n_tested'].values)
-        self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
-        sim.results.update(self.results)
+        self.results['cum_diagnosed'].values = pl.cumsum(self.results['n_diagnosed'].values)
         return
 
 
@@ -312,34 +311,45 @@ class test_historical(Intervention):
         """
 
         super().__init__()
-        self.n_tests = sc.promotetoarray(n_tests).resize((npts,))
-        self.n_positive = sc.promotetoarray(n_positive).resize((npts,))
-        self.results['n_tests'] = cv.Result('Number tested', values=self.n_tests)
-        self.results['n_diagnoses'] = cv.Result('Number diagnosed', values=self.n_diagnoses)
+        self.n_tests = np.pad(sc.promotetoarray(n_tests),(0,max(0,npts-len(n_tests))))
+        self.n_positive = np.pad(sc.promotetoarray(n_positive),(0,max(0,npts-len(n_positive))))
+        self.results['n_tested'] = cv.Result('Number tested', npts=npts)
+        self.results['n_diagnosed'] = cv.Result('Number diagnosed', npts=npts)
 
     def apply(self, sim, t):
         ''' Perform testing '''
 
         if self.n_tests[t]:
             # Compute weights for people who would test positive or negative
-            positive_tests = np.zeros_like(self.n_tests)
+            positive_tests = np.zeros((sim.n,))
             for i, person in enumerate(sim.people.values()):
                 if person.infectious:
                     positive_tests[i] = 1
             negative_tests = 1-positive_tests
 
             # Select the people to test in each category
-            positive_inds = cv.choose_people_weighted(probs=positive_tests, n=self.n_positive[t])
-            negative_inds = cv.choose_people_weighted(probs=negative_tests, n=self.n_tests[t]-self.n_positive[t])
+            positive_inds = cv.choose_people_weighted(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]))
+            negative_inds = cv.choose_people_weighted(probs=negative_tests, n=min(sum(negative_tests),self.n_tests[t]-len(positive_inds)))
 
-            for idx in positive_inds:
-                sim.people[idx].test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
+            # Todo - assess performance and optimize e.g. to reduce dict indexing
+            for ind in positive_inds:
+                person = sim.get_person(ind)
+                person.test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
+                self.results['n_tested'][t] += 1
+                self.results['n_diagnosed'][t] += 1
 
-            for idx in negative_inds:
-                sim.people[idx].test(t, test_sensitivity=1.0)
+            for ind in negative_inds:
+                person = sim.get_person(ind)
+                person.test(t, test_sensitivity=1.0)
+                self.results['n_tested'][t] += 1
+
+    def finalize(self, sim, *args, **kwargs):
+        self.results['cum_tested']    = cv.Result('Cumulative number tested', values=pl.cumsum(self.results['n_tested'].values))
+        self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', values=pl.cumsum(self.results['n_diagnosed'].values))
+        return
 
 
-class sequential_interventions(Intervention):
+class sequence(Intervention):
     """
     This is an example of a meta-intervention which switches between a sequence of interventions
 
@@ -353,33 +363,26 @@ class sequential_interventions(Intervention):
             interventions: List of interventions
 
         """
+        super().__init__()
 
         assert len(days) == len(interventions)
         self.days = days
         self.interventions = interventions
         self._cum_days = np.cumsum(days)
 
-
     def apply(self, sim, t):
         idx = np.argmax(self._cum_days > t)  # Index of the intervention to apply on this day
         self.interventions[idx].apply(sim, t)
 
-
     def finalize(self, sim, *args, **kwargs):
         # If any of the sequential interventions write the same quantity to results then
-        # aggregate them. WARNING - it is assumed here that the quantities can be added to aggregate.
-        # This is fine for numbers/counts but probably not for normalized quantities like probabilities
-        # or fractions, that may be more appropriately average. If this becomes important, the Result's
-        # `ispercentage` should be used to determine when to average
-
-        results = {}
+        # aggregate them
         for intervention in self.interventions:
             for label, result in intervention.results.items():
-                if label not in results:
-                    results[label] = sc.dcp(result)
+                if label not in self.results:
+                    self.results[label] = sc.dcp(result)
                 else:
-                    results[label].values +=
-
-        self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
-        sim.results.update(self.results)
-        return
+                    if not result.ispercentage:
+                        self.results[label].values += result.values
+                    else:
+                        raise NotImplementedError # Haven't implemented aggregating by averaging for percentage quantities yet
