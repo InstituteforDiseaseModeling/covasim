@@ -485,6 +485,9 @@ class Sim(cvbase.BaseSim):
             # End of person loop; apply interventions
             for intervention in self['interventions']:
                 intervention.apply(self, t)
+			if self['interv_func'] is not None: # Apply custom intervention function
+                sc.printv(f'Applying custom intervention/change on day {t}...', 1, verbose)
+                self =self['interv_func'](self, t)
 
             # Update counts for this time step
             self.results['n_susceptible'][t] = n_susceptible
