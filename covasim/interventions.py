@@ -3,9 +3,7 @@ import pylab as pl
 import numpy as np
 import sciris as sc
 
-# Cliff: Might be a bit annoying to have to add every intervention here, can we just
-# export everything in this file (and prepend non-exported things with `_`)?
-#__all__ = ['Intervention', 'dynamic_pars', 'change_beta', 'test_num', 'test_prob']
+__all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'test_historical']
 
 
 class Intervention:
@@ -110,6 +108,51 @@ class dynamic_pars(Intervention):
                     raise ValueError(f'Duplicate days are not allowed for Dynamic interventions (day={t}, indices={inds})')
                 else:
                     sim[parkey] = parval['vals'][inds[0]] # Actually set the parameter
+        return
+
+
+class sequence(Intervention):
+    """
+    This is an example of a meta-intervention which switches between a sequence of interventions.
+
+    Args:
+        days (list): the days on which to apply each intervention
+        interventions (list): the interventions to apply on those days
+
+    Example:
+        interv = cv.sequence(days=[10, 51], interventions=[
+                    cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
+                    cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002, trace_prob=0.9),
+                ])
+    """
+
+    def __init__(self, days, interventions):
+        super().__init__()
+        assert len(days) == len(interventions)
+        self.days = days
+        self.interventions = interventions
+        self._cum_days = np.cumsum(days)
+        return
+
+
+    def apply(self, sim, t):
+        idx = np.argmax(self._cum_days > t)  # Index of the intervention to apply on this day
+        self.interventions[idx].apply(sim, t)
+        return
+
+
+    def finalize(self, sim, *args, **kwargs):
+        # If any of the sequential interventions write the same quantity to results then
+        # aggregate them
+        for intervention in self.interventions:
+            for label, result in intervention.results.items():
+                if label not in self.results:
+                    self.results[label] = sc.dcp(result)
+                else:
+                    if not result.ispercentage:
+                        self.results[label].values += result.values
+                    else:
+                        raise NotImplementedError # Haven't implemented aggregating by averaging for percentage quantities yet
         return
 
 
@@ -347,42 +390,3 @@ class test_historical(Intervention):
         self.results['cum_tested']    = cv.Result('Cumulative number tested', values=pl.cumsum(self.results['n_tested'].values))
         self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', values=pl.cumsum(self.results['n_diagnosed'].values))
         return
-
-
-class sequence(Intervention):
-    """
-    This is an example of a meta-intervention which switches between a sequence of interventions
-
-    """
-
-    def __init__(self, days, interventions):
-        """
-
-        Args:
-            days: List of number of days to apply each intervention
-            interventions: List of interventions
-
-        """
-        super().__init__()
-
-        assert len(days) == len(interventions)
-        self.days = days
-        self.interventions = interventions
-        self._cum_days = np.cumsum(days)
-
-    def apply(self, sim, t):
-        idx = np.argmax(self._cum_days > t)  # Index of the intervention to apply on this day
-        self.interventions[idx].apply(sim, t)
-
-    def finalize(self, sim, *args, **kwargs):
-        # If any of the sequential interventions write the same quantity to results then
-        # aggregate them
-        for intervention in self.interventions:
-            for label, result in intervention.results.items():
-                if label not in self.results:
-                    self.results[label] = sc.dcp(result)
-                else:
-                    if not result.ispercentage:
-                        self.results[label].values += result.values
-                    else:
-                        raise NotImplementedError # Haven't implemented aggregating by averaging for percentage quantities yet
