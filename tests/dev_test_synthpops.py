@@ -7,7 +7,6 @@ import pytest
 import pylab as pl
 import sciris as sc
 import covasim as cova
-import covasim.requirements as reqs
 try:
     import synthpops as sp
 except:
@@ -21,7 +20,7 @@ doplot = 1
 def test_import():
     sc.heading('Testing imports')
 
-    assert reqs.available['synthpops'] == True
+    assert cova.requirements.available['synthpops'] == True
     import synthpops as sp
     print(sp.datadir)
 
@@ -53,7 +52,10 @@ def test_pop_options(doplot=False): # If being run via pytest, turn off
     if doplot:
         for key,sim in sims.items():
             sim.plot()
-            pl.gcf().axes[0].set_title(f'Counts: {key}')
+            try:
+                pl.gcf().axes[0].set_title(f'Counts: {key}')
+            except:
+                pass
 
     return sims
 
