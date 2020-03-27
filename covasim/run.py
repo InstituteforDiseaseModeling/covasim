@@ -281,7 +281,8 @@ class Scenarios(cvbase.ParsObj):
 
                 sc.setylim()
                 pl.grid(use_grid)
-                sc.commaticks(use_commaticks)
+                if use_commaticks:
+                    sc.commaticks()
 
                 # Optionally reset tick marks (useful for e.g. plotting weeks/months)
                 if interval:

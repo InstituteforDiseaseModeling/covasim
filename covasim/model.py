@@ -723,7 +723,8 @@ class Sim(cvbase.BaseSim):
 
             pl.grid(use_grid)
             cvu.fixaxis(self)
-            sc.commaticks(use_commaticks)
+            if use_commaticks:
+                sc.commaticks()
             pl.title(title)
 
             # Optionally reset tick marks (useful for e.g. plotting weeks/months)
