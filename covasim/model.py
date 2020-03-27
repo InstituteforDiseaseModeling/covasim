@@ -641,7 +641,8 @@ class Sim(cvbase.BaseSim):
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
-             font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
+             font_size=18, font_family=None, use_grid=True, use_commaticks=True, do_show=True,
+             verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -659,6 +660,7 @@ class Sim(cvbase.BaseSim):
             font_size (int): Size of the font
             font_family (str): Font face
             use_grid (bool): Whether or not to plot gridlines
+            use_commaticks (bool): Plot y-axis with commas rather than scientific notation
             do_show (bool): Whether or not to show the figure
             verbose (bool): Display a bit of extra information
 
@@ -721,7 +723,7 @@ class Sim(cvbase.BaseSim):
 
             pl.grid(use_grid)
             cvu.fixaxis(self)
-            sc.commaticks()
+            sc.commaticks(use_commaticks)
             pl.title(title)
 
             # Optionally reset tick marks (useful for e.g. plotting weeks/months)
