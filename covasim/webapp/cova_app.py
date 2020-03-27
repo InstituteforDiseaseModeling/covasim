@@ -13,7 +13,7 @@ import base64 # Download/upload-specific import
 import json
 
 # Check requirements, and if met, import scirisweb
-cv._requirements.check_scirisweb(die=True)
+cv.requirements.check_scirisweb(die=True)
 import scirisweb as sw
 
 # Create the app
@@ -73,8 +73,8 @@ def get_defaults(region=None, merge=False):
     sim_pars['n']           = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
     sim_pars['n_infected']  = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
     sim_pars['n_days']      = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
-    sim_pars['web_int_day'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (can be blank)')
-    sim_pars['web_int_eff'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Reduction in infectiousness due to intervention')
+    sim_pars['web_int_day'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (for no intervention, set start day to 0 and effectiveness to 0)')
+    sim_pars['web_int_eff'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Fractional reduction in infectiousness due to intervention')
     sim_pars['seed']        = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
 
     epi_pars = {}
@@ -127,6 +127,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         web_pars = {}
         web_pars['verbose'] = verbose # Control verbosity here
 
+
         for key,entry in {**sim_pars, **epi_pars}.items():
             print(key, entry)
 
@@ -135,7 +136,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
             maxval = defaults[key]['max']
 
             try:
-                web_pars[key] = np.median([float(entry['best']), minval, maxval])
+                web_pars[key] = np.clip(float(entry['best']), minval, maxval)
             except Exception:
                 user_key = entry['name']
                 user_val = entry['best']
@@ -146,10 +147,10 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
             if key in sim_pars: sim_pars[key]['best'] = web_pars[key]
             else:               epi_pars[key]['best'] = web_pars[key]
 
-        # Handle special cases
-        web_pars['interv_days'] = [web_pars.pop('web_int_day')] # Turn from scalar to list
-        web_pars['interv_effs'] = [1-web_pars.pop('web_int_eff')] # Turn from scalar to list and take inverse
-
+        # Add the intervention
+        web_pars['interventions'] = []
+        if web_pars['web_int_day'] is not None:
+            web_pars['interventions'].append(cv.ReduceBetaIntervention(day=web_pars.pop('web_int_day'), efficacy=web_pars.pop('web_int_eff')))
     except Exception as E:
         err2 = f'Parameter conversion failed! {str(E)}\n'
         print(err2)
@@ -201,8 +202,8 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
                 y = sim.results[key][:]
                 fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
 
-            if len(sim['interv_days']):
-                interv_day = sim['interv_days'][0]
+            if sim['interventions']:
+                interv_day = sim['interventions'][0].day
                 if interv_day > 0 and interv_day < sim['n_days']:
                     fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
@@ -327,14 +328,14 @@ def plot_people(sim) -> dict:
             name=state['name']
         ))
 
-    if len(sim['interv_days']):
-        interv_day = sim['interv_days'][0]
+    if sim['interventions']:
+        interv_day = sim['interventions'][0].day
         if interv_day > 0 and interv_day < sim['n_days']:
             fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
             fig.update_layout(annotations=[dict(x=interv_day, y=1, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
-    fig.update_layout(title={'text': 'Epidemic'}, xaxis_title='Day', yaxis_title='People', autosize=True)
+    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
 
     output = {'json': fig.to_json(), 'id': str(sc.uuid())}
     d = json.loads(output['json'])
@@ -467,6 +468,8 @@ def animate_people(sim) -> dict:
     fig.update_layout(
         plot_bgcolor='#fff'
     )
+
+    fig.update_layout(title={'text': 'Epidemic over time'})
 
     output = {'json': fig.to_json(), 'id': str(sc.uuid())}
     d = json.loads(output['json'])

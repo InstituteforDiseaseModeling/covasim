@@ -1,7 +1,5 @@
 '''
-This file contains all the code for a single run of Covid-ABM.
-
-Based heavily on LEMOD-FP (https://github.com/amath-idm/lemod_fp).
+Base classes for Covasim.
 '''
 
 #%% Imports
@@ -12,7 +10,7 @@ import pandas as pd
 from . import utils as cov_ut
 
 # Specify all externally visible functions this file defines
-__all__ = ['ParsObj', 'Result', 'Person', 'Sim', 'single_run', 'multi_run']
+__all__ = ['ParsObj', 'Result', 'BaseSim']
 
 
 
@@ -64,8 +62,7 @@ class ParsObj(sc.prettyobj):
         return
 
 
-
-class Result(sc.prettyobj):
+class Result(object):
     '''
     Stores a single result -- by default, acts like an array.
 
@@ -77,6 +74,7 @@ class Result(sc.prettyobj):
         r2 = cova.Result(name='test2', values=range(10))
         print(r2)
     '''
+
     def __init__(self, name=None, values=None, npts=None, scale=True, ispercentage=False):
         self.name = name  # Name of this result
         self.ispercentage = ispercentage  # Whether or not the result is a percentage
@@ -89,6 +87,12 @@ class Result(sc.prettyobj):
         self.values = np.array(values, dtype=float) # Ensure it's an array
         return
 
+    def __repr__(self, *args, **kwargs):
+        ''' Use pretty repr, like sc.prettyobj, but displaying full values '''
+        output  = sc.prepr(self, skip='values')
+        output += 'values:\n' + repr(self.values)
+        return output
+
     def __getitem__(self, *args, **kwargs):
         return self.values.__getitem__(*args, **kwargs)
 
@@ -100,18 +104,9 @@ class Result(sc.prettyobj):
         return len(self.values)
 
 
-class Person(sc.prettyobj):
+class BaseSim(ParsObj):
     '''
-    Class for a single person.
-    '''
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError
-
-
-
-class Sim(ParsObj):
-    '''
-    The Sim class handles the running of the simulation: the number of people,
+    The BaseSim class handles the running of the simulation: the number of people,
     number of time points, and the parameters of the simulation.
     '''
 
@@ -172,35 +167,7 @@ class Sim(ParsObj):
         return self.people[self.uids[int(ind)]]
 
 
-    def init_results(self):
-        ''' Initialize results '''
-        raise NotImplementedError
-
-
-    def init_people(self):
-        ''' Create the people '''
-        raise NotImplementedError
-
-
-    def summary_stats(self):
-        ''' Compute the summary statistics to display at the end of a run '''
-        raise NotImplementedError
-
-
-    def run(self):
-        ''' Run the simulation '''
-        raise NotImplementedError
-
-
-    def likelihood(self):
-        '''
-        Compute the log-likelihood of the current simulation based on the number
-        of new diagnoses.
-        '''
-        raise NotImplementedError
-
-
-    def _make_resdict(self, for_json=True):
+    def _make_resdict(self, for_json: bool = True) -> dict:
         ''' Pre-convert the results structure to a friendier output'''
         resdict = {}
         if for_json:
@@ -212,6 +179,19 @@ class Sim(ParsObj):
                 resdict[key] = res
         return resdict
 
+    def _make_pardict(self) -> dict:
+        """
+        Return parameters for JSON export
+
+        This method is required so that interventions can specify
+        their JSON-friendly representation
+
+        Returns:
+
+        """
+        pardict = self.pars
+        pardict['interventions'] = [intervention.to_json() for intervention in pardict['interventions']]
+        return pardict
 
     def to_json(self, filename=None, tostring=True, indent=2, *args, **kwargs):
         """
@@ -226,7 +206,8 @@ class Sim(ParsObj):
 
         """
         resdict = self._make_resdict()
-        d = {'results': resdict, 'parameters': self.pars}
+        pardict = self._make_pardict()
+        d = {'results': resdict, 'parameters': pardict}
         if filename is None:
             output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
         else:
@@ -268,116 +249,44 @@ class Sim(ParsObj):
 
         return output
 
-    def plot(self):
+
+    def save(self, filename=None, **kwargs):
         '''
-        Plot the results -- can supply arguments for both the figure and the plots.
+        Save to disk as a gzipped pickle.
+
+        Args:
+            filename (str or None): the name or path of the file to save to; if None, uses stored
+            keywords: passed to makefilepath()
+
+        Returns:
+            filename (str): the validated absolute path to the saved file
+
+        Example:
+            sim.save() # Saves to a .sim file with the date and time of creation by default
+
         '''
-        raise NotImplementedError
+        if filename is None:
+            filename = self.filename
+        filename = sc.makefilepath(filename=filename, **kwargs)
+        sc.saveobj(filename=filename, obj=self)
+        return filename
 
 
-    def plot_people(self):
-        ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
-        raise NotImplementedError
+    @staticmethod
+    def load(filename, **kwargs):
+        '''
+        Load from disk from a gzipped pickle.
 
+        Args:
+            filename (str): the name or path of the file to save to
+            keywords: passed to makefilepath()
 
-def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None, **kwargs):
-    '''
-    Convenience function to perform a single simulation run. Mostly used for
-    parallelization, but can also be used directly:
-        import covasim.cova_generic as cova
-        sim = cova.Sim() # Create a default simulation
-        sim = cova.single_run(sim) # Run it, equivalent(ish) to sim.run()
-    '''
+        Returns:
+            sim (Sim): the loaded simulation object
 
-    if sim_args is None:
-        sim_args = {}
-
-    new_sim = sc.dcp(sim) # To avoid overwriting it; otherwise, use
-
-    if verbose is None:
-        verbose = new_sim['verbose']
-
-    new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
-    new_sim.set_seed()
-
-    # If the noise parameter is not found, guess what it should be
-    if noisepar is None:
-        guesses = ['r_contact', 'r0', 'beta']
-        found = [guess for guess in guesses if guess in sim.pars.keys()]
-        if len(found)!=1:
-            raise KeyError(f'Cound not guess noise parameter since out of {guesses}, {found} were found')
-        else:
-            noisepar = found[0]
-
-    # Handle noise -- normally distributed fractional error
-    noiseval = noise*np.random.normal()
-    if noiseval > 0:
-        noisefactor = 1 + noiseval
-    else:
-        noisefactor = 1/(1-noiseval)
-    new_sim[noisepar] *= noisefactor
-
-    if verbose>=1:
-        print(f'Running a simulation using {new_sim["seed"]} seed and {noisefactor} noise')
-
-    # Handle additional arguments
-    for key,val in kwargs.items():
-        print(f'Processing {key}:{val}')
-        if key in new_sim.pars.keys():
-            if verbose>=1:
-                print(f'Setting key {key} from {new_sim[key]} to {val}')
-                new_sim[key] = val
-            pass
-        else:
-            raise KeyError(f'Could not set key {key}: not a valid parameter name')
-
-    # Run
-    new_sim.run(verbose=verbose)
-
-    return new_sim
-
-
-def multi_run(sim, n=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, sim_args=None, combine=False, **kwargs):
-    '''
-    For running multiple runs in parallel. Example:
-        import covid_seattle
-        sim = covid_seattle.Sim()
-        sims = covid_seattle.multi_run(sim, n=6, noise=0.2)
-    '''
-
-    # Create the sims
-    if sim_args is None:
-        sim_args = {}
-
-    # Handle iterpars
-    if iterpars is None:
-        iterpars = {}
-    else:
-        n = None # Reset and get from length of dict instead
-        for key,val in iterpars.items():
-            new_n = len(val)
-            if n is not None and new_n != n:
-                raise ValueError(f'Each entry in iterpars must have the same length, not {n} and {len(val)}')
-            else:
-                n = new_n
-
-    # Copy the simulations
-    iterkwargs = {'ind':np.arange(n)}
-    iterkwargs.update(iterpars)
-    kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'sim_args':sim_args}
-    sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
-
-    if not combine:
-        output = sims
-    else:
-        print('WARNING: not tested!')
-        output_sim = sc.dcp(sims[0])
-        output_sim.pars['parallelized'] = n # Store how this was parallelized
-        output_sim.pars['n'] *= n # Restore this since used in later calculations -- a bit hacky, it's true
-        for sim in sims[1:]: # Skip the first one
-            output_sim.people.update(sim.people)
-            for key in sim.results_keys:
-                output_sim.results[key] += sim.results[key]
-        output = output_sim
-
-    return output
+        Example:
+            sim = cv.Sim.load('my-simulation.sim')
+        '''
+        filename = sc.makefilepath(filename=filename, **kwargs)
+        sim = sc.loadobj(filename=filename)
+        return sim

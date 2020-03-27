@@ -180,7 +180,7 @@ class HealthSystem(sc.prettyobj):
 
 
     def plot(self, do_save=None, fig_args=None, plot_args=None, scatter_args=None, fill_args=None,
-             axis_args=None, font_size=None, font_family=None, use_grid=True, verbose=None):
+             axis_args=None, font_size=None, font_family=None, use_grid=True, do_show=True, verbose=None):
         '''
         Plotting, copied from run_cdc_scenarios.
 
@@ -244,6 +244,9 @@ class HealthSystem(sc.prettyobj):
                     lab.append( tmp.strftime('%B %d') )
                 pl.gca().set_xticklabels(lab)
                 sc.commaticks(axis='y')
+
+        if do_show:
+            pl.show()
 
         return fig
 
