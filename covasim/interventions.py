@@ -3,7 +3,7 @@ import pylab as pl
 import numpy as np
 import sciris as sc
 
-__all__ = ['Intervention', 'dynamic_pars', 'change_beta', 'test_num', 'test_prop']
+__all__ = ['Intervention', 'dynamic_pars', 'change_beta', 'test_num', 'test_prob']
 
 
 class Intervention:
@@ -32,7 +32,7 @@ class Intervention:
         """
         raise NotImplementedError
 
-    def finalize(self, sim):
+    def finalize(self, sim) -> None:
         """
         Call function at end of simulation
 
@@ -219,7 +219,7 @@ class test_num(Intervention):
         return
 
 
-class test_prop(Intervention):
+class test_prob(Intervention):
     """
     Test as many people as required based on test probability.
 
@@ -277,6 +277,109 @@ class test_prop(Intervention):
 
     def finalize(self, sim, *args, **kwargs):
         self.results['cum_tested'].values = pl.cumsum(self.results['n_tested'].values)
+        self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
+        sim.results.update(self.results)
+        return
+
+
+class test_historical(Intervention):
+    """
+    Test a known number of positive cases
+
+    This can be used to simulate historical data containing the number of tests performed and the
+    number of cases identified as a result.
+
+    This intervention will actually test all individuals. At the moment, testing someone who is negative
+    has no effect, so they don't really need to be tested. However, it's possible that in the future
+    a negative test may still have an impact (e.g. make it less likely for an individual to re-test even
+    if they become symptomatic). Therefore to remain as accurate as possible, `Person.test()` is guaranteed
+    to be called for every person tested.
+
+    One minor limitation of this intervention is that symptomatic individuals that are tested and in reality
+    returned a false negative result would not be tested at all - instead, a non-infectious individual would
+    be tested. At the moment this would not affect model dynamics because a false negative is equivalent to
+    not performing the test at all.
+
+    """
+
+    def __init__(self, npts, n_tests, n_positive):
+        """
+
+        Args:
+            npts: Number of simulation timepoints
+            n_tests: Number of tests per day. If this is a scalar or an array with length less than npts, it will be zero-padded
+            n_positive: Number of positive tests (confirmed cases) per day. If this is a scalar or an array with length less than npts, it will be zero-padded
+        """
+
+        super().__init__()
+        self.n_tests = sc.promotetoarray(n_tests).resize((npts,))
+        self.n_positive = sc.promotetoarray(n_positive).resize((npts,))
+        self.results['n_tests'] = cv.Result('Number tested', values=self.n_tests)
+        self.results['n_diagnoses'] = cv.Result('Number diagnosed', values=self.n_diagnoses)
+
+    def apply(self, sim, t):
+        ''' Perform testing '''
+
+        if self.n_tests[t]:
+            # Compute weights for people who would test positive or negative
+            positive_tests = np.zeros_like(self.n_tests)
+            for i, person in enumerate(sim.people.values()):
+                if person.infectious:
+                    positive_tests[i] = 1
+            negative_tests = 1-positive_tests
+
+            # Select the people to test in each category
+            positive_inds = cv.choose_people_weighted(probs=positive_tests, n=self.n_positive[t])
+            negative_inds = cv.choose_people_weighted(probs=negative_tests, n=self.n_tests[t]-self.n_positive[t])
+
+            for idx in positive_inds:
+                sim.people[idx].test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
+
+            for idx in negative_inds:
+                sim.people[idx].test(t, test_sensitivity=1.0)
+
+
+class sequential_interventions(Intervention):
+    """
+    This is an example of a meta-intervention which switches between a sequence of interventions
+
+    """
+
+    def __init__(self, days, interventions):
+        """
+
+        Args:
+            days: List of number of days to apply each intervention
+            interventions: List of interventions
+
+        """
+
+        assert len(days) == len(interventions)
+        self.days = days
+        self.interventions = interventions
+        self._cum_days = np.cumsum(days)
+
+
+    def apply(self, sim, t):
+        idx = np.argmax(self._cum_days > t)  # Index of the intervention to apply on this day
+        self.interventions[idx].apply(sim, t)
+
+
+    def finalize(self, sim, *args, **kwargs):
+        # If any of the sequential interventions write the same quantity to results then
+        # aggregate them. WARNING - it is assumed here that the quantities can be added to aggregate.
+        # This is fine for numbers/counts but probably not for normalized quantities like probabilities
+        # or fractions, that may be more appropriately average. If this becomes important, the Result's
+        # `ispercentage` should be used to determine when to average
+
+        results = {}
+        for intervention in self.interventions:
+            for label, result in intervention.results.items():
+                if label not in results:
+                    results[label] = sc.dcp(result)
+                else:
+                    results[label].values +=
+
         self.results['cum_diagnoses'].values = pl.cumsum(self.results['n_diagnoses'].values)
         sim.results.update(self.results)
         return

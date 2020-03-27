@@ -56,7 +56,7 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
         'floating': {
             'name': 'Test a constant proportion of the population',
             'pars': {
-                'interventions': cv.test_prop(npts, symptomatic_prob=max_optimistic_testing, asymptomatic_prob=0.0, trace_prob=0.9)
+                'interventions': cv.test_prob(npts, symptomatic_prob=max_optimistic_testing, asymptomatic_prob=0.0, trace_prob=0.9)
                 }
         },
     }
