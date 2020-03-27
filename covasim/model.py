@@ -257,8 +257,6 @@ class Sim(cvbase.BaseSim):
         self.results['doubling_time']  = init_res('Doubling time', scale=False)
         self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
 
-        self.reskeys = list(self.results.keys()) # Save the names of the main result keys
-
         # Populate the rest of the results
         self.results['t'] = self.tvec
         self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
@@ -268,6 +266,17 @@ class Sim(cvbase.BaseSim):
         self.calculated['eff_beta'] = (1-self['default_severity'])*self['asym_factor']*self['beta'] + self['default_severity']*self['beta']  # Using asymptomatic proportion
         self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
+
+
+    @property
+    def reskeys(self):
+        ''' Get the actual results objects, not other things stored in sim.results '''
+        all_keys = list(self.results.keys())
+        res_keys = []
+        for key in all_keys:
+            if isinstance(self.results[key], cvbase.Result):
+                res_keys.append(key)
+        return res_keys
 
 
     def init_people(self, verbose=None, id_len=6):

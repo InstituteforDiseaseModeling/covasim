@@ -55,9 +55,9 @@ def make_pars():
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death
     pars['timetodie_std']       = 2 # STD
-    pars['cfr_by_age']          = 0 # Whether or not to use age-specific case fatality
+    pars['cfr_by_age']          = False # Whether or not to use age-specific case fatality
     pars['default_cfr']         = 0.016 # Default overall case fatality rate if not using age-specific values
-    pars['severity_by_age']     = 0 # Whether or not to use age-specific case fatality
+    pars['severity_by_age']     = False # Whether or not to use age-specific case fatality
     pars['default_severity']    = 0.7 # Default overall severity if not using age-specific values. This gives the overall proportion of symptomatic cases
 
     # Events and interventions

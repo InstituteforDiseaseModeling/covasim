@@ -3,7 +3,7 @@ import pylab as pl
 import numpy as np
 import sciris as sc
 
-__all__ = ['Intervention', 'ChangeBeta', 'TestNum', 'TestProp']
+__all__ = ['Intervention', 'dynamic_pars', 'change_beta', 'test_num', 'test_prop']
 
 
 class Intervention:
@@ -64,7 +64,54 @@ class Intervention:
         return d
 
 
-class ChangeBeta(Intervention):
+class dynamic_pars(Intervention):
+    '''
+    A generic intervention that modifies a set of parameters at specified points
+    in time.
+
+    The intervention takes a single argument, pars, which is a dictionary of which
+    parameters to change, with following structure: keys are the parameters to change,
+    then subkeys 'days' and 'vals' are either a scalar or list of when the change(s)
+    should take effect and what the new value should be, respectively.
+
+    Args:
+        pars (dict): described above
+
+    Examples:
+        interv = cv.dynamic_pars({'diag_factor':{'days':30, 'vals':0.5}, 'cont_factor':{'days':30, 'vals':0.5}}) # Starting day 30, make diagnosed people and people with contacts half as likely to transmit
+        interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}}) # On day 14, change beta to 0.005, and on day 28 change it back to 0.015
+    '''
+
+    def __init__(self, pars):
+        super().__init__()
+        subkeys = ['days', 'vals']
+        for parkey in pars.keys():
+            for subkey in subkeys:
+                if subkey not in pars[parkey].keys():
+                    errormsg = f'Parameter {parkey} is missing subkey {subkey}'
+                    raise KeyError(errormsg)
+                pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
+            len_days = len(pars[parkey]['days'])
+            len_vals = len(pars[parkey]['vals'])
+            if len_days != len_vals:
+                raise ValueError(f'Length of days ({len_days}) does not match length of values ({len_vals}) for parameter {parkey}')
+        self.pars = pars
+        return
+
+
+    def apply(self, sim, t):
+        ''' Loop over the parameters, and then loop over the days, applying them if any are found '''
+        for parkey,parval in self.pars.items():
+            inds = sc.findinds(parval['days'], t) # Look for matches
+            if len(inds):
+                if len(inds)>1:
+                    raise ValueError(f'Duplicate days are not allowed for Dynamic interventions (day={t}, indices={inds})')
+                else:
+                    sim[parkey] = parval['vals'][inds[0]] # Actually set the parameter
+        return
+
+
+class change_beta(Intervention):
     '''
     The most basic intervention -- change beta by a certain amount.
 
@@ -73,8 +120,8 @@ class ChangeBeta(Intervention):
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
 
     Examples:
-        interv = ChangeBeta(25, 0.3) # On day 25, reduce beta by 70% to 0.3
-        interv = ChangeBeta([14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
+        interv = cv.change_beta(25, 0.3) # On day 25, reduce beta by 70% to 0.3
+        interv = cv.change_beta([14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
 
     '''
 
@@ -106,9 +153,15 @@ class ChangeBeta(Intervention):
         return
 
 
-class TestNum(Intervention):
+class test_num(Intervention):
     """
-    Test a fixed number of people per day
+    Test a fixed number of people per day.
+
+    Example:
+        interv = cv.test_num(npts, daily_tests=[0.10*n_people]*npts)
+
+    Returns:
+        Intervention
     """
 
     def __init__(self, npts, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0):
@@ -166,12 +219,15 @@ class TestNum(Intervention):
         return
 
 
-class TestProp(Intervention):
+class test_prop(Intervention):
     """
-    Test as many people as required based on test probability
+    Test as many people as required based on test probability.
+
+    Example:
+        interv = cv.test_prop(npts, symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
 
     Returns:
-
+        Intervention
     """
     def __init__(self, npts, symptomatic_prob=0.9, asymptomatic_prob=0.01, trace_prob=1.0, test_sensitivity=1.0):
         """
