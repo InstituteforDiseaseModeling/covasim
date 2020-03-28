@@ -67,9 +67,9 @@ class ExperimentalDiseaseMortalityTests(CovaSimTest):
         # Check results
         total_deaths = sim.results[ResultsKeys.cumulative_number_of_deaths][:][-1] # Get the total number of deaths (last value of the cumulative number)
         self.assertEqual(0, total_deaths,
-                     msg="There should be no deaths given parameters {test_parameters}. "
-                         "Channel {ResultsKeys.cumulative_number_of_deaths} had "
-                         "bad data: {total_deaths}")
+                     msg=f"There should be no deaths given parameters {test_parameters}. "
+                         f"Channel {ResultsKeys.cumulative_number_of_deaths} had "
+                         f"bad data: {total_deaths}")
 
         pass
 
@@ -96,9 +96,9 @@ class ExperimentalDiseaseMortalityTests(CovaSimTest):
         # Check results
         total_deaths = sim.results[ResultsKeys.cumulative_number_of_deaths][:][-1] # Get the total number of deaths (last value of the cumulative number)
         self.assertEqual(sim[SimKeys.number_agents], total_deaths,
-                     msg="Everyone should die with parameters {test_parameters}. "
-                         "Channel {ResultsKeys.cumulative_number_of_deaths} had "
-                         "bad data: {total_deaths} deaths vs. {sim[SimKeys.number_agents]} people.")
+                     msg=f"Everyone should die with parameters {test_parameters}. "
+                         f"Channel {ResultsKeys.cumulative_number_of_deaths} had "
+                         f"bad data: {total_deaths} deaths vs. {sim[SimKeys.number_agents]} people.")
 
         pass
 
