@@ -116,8 +116,8 @@ class DiseaseProgressionTests(CovaSimTest):
             DProgKeys.exposed_to_infectious_std: 0,
             DProgKeys.infectiousness_duration: infectious_duration,
             DProgKeys.infectiousness_duration_std: 0,
-            'cfr_by_age': False, # HACK: haven't tested this
-            'default_cfr': 0 # HACK: haven't tested this
+            'prog_by_age': False, # HACK: haven't tested this
+            'default_death_prob': 0 # HACK: haven't tested this
         }
         self.run_sim(serial_dev_zero)
         infectious_channel = self.get_full_result_channel(
@@ -181,8 +181,8 @@ class DiseaseProgressionTests(CovaSimTest):
             TSimKeys.number_agents: all_agents,
             DProgKeys.exposed_to_infectious_std: 0,
             DProgKeys.infectiousness_duration_std: 0,
-            'cfr_by_age': False, # HACK: haven't tested this
-            'default_cfr': 0 # HACK: haven't tested this
+            'prog_by_age': False, # HACK: haven't tested this
+            'default_death_prob': 0 # HACK: haven't tested this
         }
         self.set_simulation_parameters(setup_params)
 

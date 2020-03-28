@@ -54,8 +54,8 @@ class TestProperties:
         class MortalityKeys:
             time_to_death = 'timetodie'
             time_to_death_std = 'timetodie_std'
-            use_cfr_by_age = 'cfr_by_age'
-            default_cfr = 'default_cfr'
+            use_cfr_by_age = 'prog_by_age'
+            default_cfr = 'default_death_prob'
             pass
         pass
     class SpecializedSimulations:

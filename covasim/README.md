@@ -38,8 +38,10 @@ This README describes the expected behavior of each parameter in the model. Note
 * `pars['sympt_test']`: Excess probability of testing if symptomatic. Test: for `pars['daily_tests']` ≪ `n`, setting `pars['sympt_test']` ≫ 1 should lead to more diagnoses.
 * `pars['trace_test']`: Excess probability of testing if a known contact is infected. Test: for `pars['daily_tests']` ≪ `n`, setting `pars['trace_test']` ≫ 1 should lead to more diagnoses.
 
-## Mortality
+## Mortality and severity
 * `pars['timetodie']`: Duration of time until death.  Test: set `pars['timetodie_std']=0` and `pars['timetodie']>pars['n_days']`, and there should be no deaths even with `pars['default_cfr']=1`.
 * `pars['timetodie_std']`: Standard deviation of death. Tests: set to 0, set `pars['cfr_by_age']=0` and `pars['default_cfr']=1` and `pars['n_infected']=pars['n']`, and everyone should die after this many days. Increase it and it should spread.
-* `pars['cfr_by_age']`: Whether or not to use age-dependent CFR. Overrides `pars['default_cfr']`. Test: set to `True`, and make two populations for two simulations, `sim1` with everyone aged 20 and `sim2` with everyone aged 80. Assuming sufficient population size, `sim1.results['cum_deaths'][-1] < sim2.results['cum_deaths'][-1]`.
-* `pars['default_cfr']`: Case fatality rate. Test: set `pars['cfr_by_age']` to `False`. Set to 0 and there should be no deaths. Set to 1 and all infected people should die (given enough time).
+* `pars['prog_by_age']`: Whether or not to use age-dependent CFR. Overrides `pars['default_death_prob']`. Test: set to `True`, and make two populations for two simulations, `sim1` with everyone aged 20 and `sim2` with everyone aged 80. Assuming sufficient population size, `sim1.results['cum_deaths'][-1] < sim2.results['cum_deaths'][-1]`.
+* `pars['default_symp_prob']`: Probability of developing symptoms; see test below.
+* `pars['default_severe_prob']`: Probability of developing a severe case; see test below.
+* `pars['default_death_prob']`: Case fatality rate. Test: set `pars['prog_by_age']` to `False`. Set to 0 and there should be no deaths. Set to 1 along with `pars['default_symp_prob']` and `pars['default_severe_prob']`, and all infected people should die (given enough time).

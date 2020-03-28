@@ -20,12 +20,6 @@ jobs:
         uses: actions/checkout@v2
         with:
             repository: ${{ env.GITHUB_OWNER }}/synthpops
-            # Checking out a private repo requires a Personal Access Token (PAT).  To create one, follow the instructions at:
-            #   https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line#creating-a-token
-            # The account creating the PAT needs to have access to the private repo, and the PAT should be scoped to "repo".
-            # To add the PAT as a Secret, usable by this workflow, follow the instructions at:
-            #   https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets
-            # NOTE: The secret must be named "GitHub_PAT"
             token: ${{ secrets.GitHub_PAT }}
             path: ./synthpops
       - uses: actions/setup-python@master
@@ -42,7 +36,6 @@ jobs:
         run: |
           pip install pytest
           pytest test*.py unittests/test*.py --junitxml=test-results.xml
-
       - name: Upload test results
         uses: actions/upload-artifact@v1
         if: failure()
