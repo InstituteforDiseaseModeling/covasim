@@ -2,10 +2,9 @@ import covasim as cv
 from unittest_support_classes import CovaSimTest
 
 
-class SimulationKeys:
+class SimKeys:
     ''' Define explicit mapping to simulation keys '''
     number_agents = 'n'
-    population_scaling_factor = 'scale'
     initial_infected_count = 'n_infected'
     start_day = 'start_day'
     number_simulated_days = 'n_days'
@@ -13,7 +12,7 @@ class SimulationKeys:
     pass
 
 
-class DiseaseProgressionKeys:
+class DiseaseKeys:
     ''' Define mapping to keys associated with disease progression '''
     modify_progression_by_age = 'prog_by_age'
     probability_of_infected_developing_symptoms = 'default_symp_prob'
@@ -31,11 +30,10 @@ class ResultsKeys:
 def define_base_parameters():
     ''' Define the basic parameters for a simulation -- these will rarely change between tests '''
     base_parameters_dict = {
-        SimulationKeys.number_agents: 1000,
-        SimulationKeys.initial_infected_count: 100,
-        SimulationKeys.population_scaling_factor: 1,
-        SimulationKeys.random_seed: 1,
-        SimulationKeys.number_simulated_days: 60,
+        SimKeys.number_agents: 1000, # Keep it small so they run faster
+        SimKeys.initial_infected_count: 100, # Use a relatively large number to avoid stochastic effects
+        SimKeys.random_seed: 1, # Ensure it's reproducible
+        SimKeys.number_simulated_days: 60, # Don't run for too long for speed, but run for long enough
         }
     return base_parameters_dict
 
@@ -51,14 +49,52 @@ class ExperimentalDiseaseMortalityTests(CovaSimTest):
 
     def test_zero_deaths(self):
         ''' Confirm that if mortality is set to zero, there are zero deaths '''
-        sim = BaseSim() # Create the sim
-        sim[DiseaseProgressionKeys.probability_of_severe_developing_death] = 0 # Change mortality rates to 0
-        sim.run() # Run the simulation
+
+        # Create the sim
+        sim = BaseSim()
+
+        # Define test-secific configurations
+        test_parameters = {
+            DiseaseKeys.modify_progression_by_age: False, # Otherwise these parameters have no effect
+            DiseaseKeys.probability_of_severe_developing_death: 0 # Change mortality rate to 0
+            }
+
+        # Run the simulation
+        sim.update_pars(test_parameters)
+        sim.run()
+
+        # Check results
         total_deaths = sim.results[ResultsKeys.cumulative_number_of_deaths][:][-1] # Get the total number of deaths (last value of the cumulative number)
         self.assertEqual(0, total_deaths,
-                     msg="There should be no deaths"
-                         "with {DiseaseProgressionKeys.probability_of_severe_developing_death} = 0."
+                     msg="There should be no deaths given parameters {test_parameters}. "
                          "Channel {ResultsKeys.cumulative_number_of_deaths} had "
                          "bad data: {total_deaths}")
+
+
+    def test_full_deaths(self):
+        ''' Confirm that if all progression parameters are set to 1, everyone dies'''
+
+        # Create the sim
+        sim = BaseSim()
+
+        # Define test-secific configurations
+        test_parameters = {
+            SimKeys.initial_infected_count: sim[SimKeys.number_agents], # Ensure everyone is infected
+            DiseaseKeys.modify_progression_by_age: False, # Otherwise these parameters have no effect
+            DiseaseKeys.probability_of_infected_developing_symptoms: 1, # Everyone infected gets symptoms
+            DiseaseKeys.probability_of_symptoms_developing_severe: 1, # Everyone with symptoms has severe disease
+            DiseaseKeys.probability_of_severe_developing_death: 1, # Everyone with severe disease dies
+        }
+
+        # Run the simulation
+        sim.update_pars(test_parameters)
+        sim.run()
+
+        # Check results
+        total_deaths = sim.results[ResultsKeys.cumulative_number_of_deaths][:][-1] # Get the total number of deaths (last value of the cumulative number)
+        self.assertEqual(sim[SimKeys.number_agents], total_deaths,
+                     msg="Everyone should die with parameters {test_parameters}. "
+                         "Channel {ResultsKeys.cumulative_number_of_deaths} had "
+                         "bad data: {total_deaths} deaths vs. {sim[SimKeys.number_agents]} people.")
 
 
