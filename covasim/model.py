@@ -44,14 +44,15 @@ class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, age, sex, cfr, severity, pars, uid=None, id_len=8):
+    def __init__(self, age, sex, sym_prob, severe_prob, death_prob, pars, uid=None, id_len=8):
         if uid is None:
             uid = sc.uuid(length=id_len) # Unique identifier for this person
         self.uid = str(uid)
         self.age = float(age) # Age of the person (in years)
         self.sex = int(sex) # Female (0) or male (1)
-        self.cfr = cfr # Case fatality rate
-        self.severity  = severity # Severity
+        self.sym_prob = sym_prob # Probability of developing symptoms
+        self.severe_prob = severe_prob # Conditional probability of symptoms becoming sever, if symptomatic
+        self.death_prob = death_prob # Conditional probability of dying, given severe symptoms
 
         # Define state
         self.alive          = True
@@ -101,14 +102,17 @@ class Person(sc.prettyobj):
         serial_dist          = cvu.sample(**self.dist_serial)
         self.date_infectious = t + serial_dist
 
-        # Probability of developing severe infection
-        severe_bool = cvu.bt(self.severity)
+        # Use prognosis probabilities to determine what happens to them
+        sym_bool = cvu.bt(self.sym_prob)
 
-        if sympt_bool:  # They develop symptoms
+        if sym_bool:  # They develop symptoms
             self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
 
-        if death_bool: # They die
-            self.date_died = t + cvu.sample(**self.dist_death) # Date of death
+            sev_bool = cvu.bt(self.severe_prob) # Not used yet, but use this to determine if they get treated
+            death_bool = cvu.bt(self.death_prob)
+            if death_bool: # They die
+                self.date_died = t + cvu.sample(**self.dist_death) # Date of death
+
         else: # They recover
             self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
 

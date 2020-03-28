@@ -55,9 +55,10 @@ def make_pars():
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death
     pars['timetodie_std']       = 2 # STD
-    pars['severity_by_age']     = True # Whether or not to use age-specific probabilities of developing severe infection
-    pars['default_severity']    = 0.2 # If not using age-specific values: overall proportion of severe cases
-    pars['asymp_prop']          = 0.2 # Proportion of asymptomatic cases
+    pars['by_age']              = True # Whether or not to use age-specific probabilities of symptoms/severe symptoms/death
+    pars['default_sym_prob']    = 0.7 # If not using age-specific values: overall proportion of symptomatic cases
+    pars['default_severe_prob'] = 0.2/pars['default_sym_prob'] # If not using age-specific values: proportion of symptomatic cases that become severe
+    pars['default_death_prob']  = 0.02/pars['default_severe_prob'] # If not using age-specific values: proportion of severe cases that result in death
 
     # Events and interventions
     pars['interventions'] = []  #: List of Intervention instances
@@ -73,20 +74,22 @@ def _get_norm_age(min_age, max_age, age_mean, age_std):
     return age
 
 
-def set_person_attrs(min_age=0, max_age=99, age_mean=40, age_std=15, default_severity=None, severity_by_age=True, use_data=True):
+def set_person_attrs(min_age=0, max_age=99, age_mean=40, age_std=15,
+                     default_sym_prob=None, default_severe_prob=None, default_death_prob=default_death_prob,
+                     by_age=True, use_data=True):
     '''
     Set the attributes for an individual, including:
         * age
         * sex
-        * severity (i.e., how likely they are to develop severe symptoms -- based on age)
+        * prognosis (i.e., how likely they are to develop symptoms/develop severe symptoms/die, based on age)
     '''
     sex = pl.randint(2) # Define female (0) or male (1) -- evenly distributed
     age = _get_norm_age(min_age, max_age, age_mean, age_std)
 
-    # Get the probability of developing severe symptoms for a person of this age
-    severity = set_severity(age=age, default_severity=default_severity, severity_by_age=severity_by_age, severity_fn=severity_fn, max_age=max_age)
+    # Get the prognosis for a person of this age
+    sym_prob, severe_prob, death_prob = set_prognosis(age=age, default_sym_prob=default_sym_prob, default_severe_prob=default_severe_prob, default_death_prob=default_death_prob, by_age=by_age)
 
-    return age, sex, severity
+    return age, sex, sym_prob, severe_prob, death_prob
 
 
 def set_prognosis(age=None, default_sym_prob=0.7, default_severe_prob=0.2, default_death_prob=0.02, by_age=True):
