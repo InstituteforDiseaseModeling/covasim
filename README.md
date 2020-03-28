@@ -10,8 +10,8 @@ the Diamond Princess cruise ship, cities, countries).
 
 Python >=3.6 (64-bit).
 
-We recommend, but do not require, using Python virtual environments. For
-more information, see https://docs.python.org/3/library/venv.html or (for Anaconda)
+We also recommend, but do not require, using Python virtual environments. For
+more information, see https://docs.python.org/3/tutorial/venv.html or (for Anaconda)
 https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html.
 
 ## Installation
@@ -19,7 +19,9 @@ https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environme
 1.  Clone a copy of the repository. If you intend to make changes to the code,
     we recommend that you fork it first.
 
-2.  Navigate to the root of the repository install the Covasim Python package
+2.  (Optional) Create and activate a virtual environment.
+
+3.  Navigate to the root of the repository install the Covasim Python package
     using one of the following options:
 
     *   To install with webapp support (recommended):
