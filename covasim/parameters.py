@@ -9,7 +9,7 @@ import numba as nb
 import sciris as sc
 
 
-__all__ = ['make_pars', 'set_person_attrs', 'set_cfr', 'set_severity', 'load_data']
+__all__ = ['make_pars', 'set_person_attrs', 'set_prognosis', 'load_data']
 
 
 def make_pars():
@@ -74,9 +74,8 @@ def _get_norm_age(min_age, max_age, age_mean, age_std):
     return age
 
 
-def set_person_attrs(min_age=0, max_age=99, age_mean=40, age_std=15,
-                     default_sym_prob=None, default_severe_prob=None, default_death_prob=default_death_prob,
-                     by_age=True, use_data=True):
+def set_person_attrs(min_age=0, max_age=99, age_mean=40, age_std=15, default_sym_prob=None, default_severe_prob=None,
+                     default_death_prob=None, by_age=True, use_data=True):
     '''
     Set the attributes for an individual, including:
         * age

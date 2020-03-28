@@ -112,6 +112,8 @@ class Person(sc.prettyobj):
             death_bool = cvu.bt(self.death_prob)
             if death_bool: # They die
                 self.date_died = t + cvu.sample(**self.dist_death) # Date of death
+            else: # They recover
+                self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
 
         else: # They recover
             self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
@@ -263,7 +265,7 @@ class Sim(cvbase.BaseSim):
         self.results_ready = False
 
         # Create calculated values structure
-        self.calculated['eff_beta'] = (1-self['default_severity'])*self['asym_factor']*self['beta'] + self['default_severity']*self['beta']  # Using asymptomatic proportion
+        self.calculated['eff_beta'] = (1-self['default_sym_prob'])*self['asym_factor']*self['beta'] + self['default_sym_prob']*self['beta']  # Using asymptomatic proportion
         self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
 
@@ -293,10 +295,14 @@ class Sim(cvbase.BaseSim):
         for p in range(n_people): # Loop over each person
             uid = uids[p]
             if self['usepopdata'] != 'random':
-                age,sex,cfr,severity = -1, -1, -1, -1 # These get overwritten later
+                age, sex, sym_prob, severe_prob, death_prob= -1, -1, -1, -1, -1 # These get overwritten later
             else:
-                age,sex,cfr,severity = cvpars.set_person_attrs(cfr_by_age=self['cfr_by_age'],default_cfr=self['default_cfr'], use_data=False)
-            person = Person(age=age, sex=sex, cfr=cfr, severity=severity, uid=uid, pars=self.pars) # Create the person
+                age, sex, sym_prob, severe_prob, death_prob = cvpars.set_person_attrs(by_age=self['by_age'],
+                                                                                      default_sym_prob=self['default_sym_prob'],
+                                                                                      default_severe_prob=self['default_severe_prob'],
+                                                                                      default_death_prob=self['default_death_prob'],
+                                                                                      use_data=False)
+            person = Person(age=age, sex=sex, sym_prob=sym_prob, severe_prob=severe_prob, death_prob=death_prob, uid=uid, pars=self.pars) # Create the person
             people[uid] = person # Save them to the dictionary
 
         # Store UIDs and people
