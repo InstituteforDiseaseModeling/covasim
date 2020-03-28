@@ -8,7 +8,7 @@ the Diamond Princess cruise ship, cities, countries).
 
 ## Requirements
 
-Python >=3.6 (64-bit). See https://www.python.org/downloads/.
+Python >=3.6 (64-bit).
 
 We recommend, but do not require, using Python virtual environments. For
 more information, see https://docs.python.org/3/library/venv.html or (for Anaconda)
@@ -17,16 +17,16 @@ https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environme
 ## Installation
 
 1.  Clone a copy of the repository. If you intend to make changes to the code,
-    we recommend creating a fork for you to work in first.
+    we recommend that you fork it first.
 
 2.  Navigate to the root of the repository install the Covasim Python package
     using one of the following options:
 
-    *   To install within a web application, enter:
+    *   To install with webapp support (recommended):
 
         `python setup.py develop`
 
-    *   To install as a standalone model without the web application, enter:
+    *   To install as a standalone Python model without webapp support:
 
         `python setup.py develop nowebapp`
 
@@ -36,6 +36,7 @@ https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environme
         `python setup.py develop full`
 
     The module should then be importable as `import covasim`.
+
 
 ## Usage
 
@@ -52,16 +53,17 @@ All core model code is located in the `covasim` subfolder; standard usage is
 `import covasim as cv`. The other subfolders, `cruise_ship` and `webapp`, are
 also described below.
 
+
 ### covasim
 
 The model consists of two core classes: the `Person` class (which contains
 information on health state), and the `Sim` class (which contains methods for
 running, calculating results, plotting, etc.).
 
-The structure of the `covasim` folder, in the order imported, is as follows:
+The structure of the `covasim` folder is as follows:
 
 * `base.py`: The `ParsObj` class, plus basic methods of the `BaseSim` class, and associated functions.
-* `interventions.py`: The classes for adding interventions aimed at stopping transmission.
+* `interventions.py`: The classes for adding interventions and dynamically modifying parameters.
 * `model.py`: The core classes defining the model, namely `Person` and `Sim`. `Sim` inherits from `BaseSim` which inherits from `ParsObj` which inherits from `prettyobj`.
 * `parameters.py`: Functions for creating the parameters dictionary and populating correct attributes for people.
 * `README.md`: Detailed information on the model parameters.
@@ -77,10 +79,12 @@ A version of the Covasim model specifically adapted for modeling the Diamond
 Princess cruise ship. It uses its own parameters file (`parameters.py`) and has
 slight variations to the model (`model.py`).
 
+
 ### webapp
 
-For running the interactive web application; please see the `README.md` in that
-folder for more information.
+For running the interactive web application: please see the `README.md` in that
+folder for more information, including informaion on Docker deployment.
+
 
 ## Disclaimer
 
