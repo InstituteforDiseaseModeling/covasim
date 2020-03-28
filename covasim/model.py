@@ -44,13 +44,13 @@ class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, age, sex, sym_prob, severe_prob, death_prob, pars, uid=None, id_len=8):
+    def __init__(self, age, sex, symp_prob, severe_prob, death_prob, pars, uid=None, id_len=8):
         if uid is None:
             uid = sc.uuid(length=id_len) # Unique identifier for this person
         self.uid = str(uid)
         self.age = float(age) # Age of the person (in years)
         self.sex = int(sex) # Female (0) or male (1)
-        self.sym_prob = sym_prob # Probability of developing symptoms
+        self.symp_prob = symp_prob # Probability of developing symptoms
         self.severe_prob = severe_prob # Conditional probability of symptoms becoming sever, if symptomatic
         self.death_prob = death_prob # Conditional probability of dying, given severe symptoms
 
@@ -103,7 +103,7 @@ class Person(sc.prettyobj):
         self.date_infectious = t + serial_dist
 
         # Use prognosis probabilities to determine what happens to them
-        sym_bool = cvu.bt(self.sym_prob)
+        sym_bool = cvu.bt(self.symp_prob)
 
         if sym_bool:  # They develop symptoms
             self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
@@ -265,7 +265,7 @@ class Sim(cvbase.BaseSim):
         self.results_ready = False
 
         # Create calculated values structure
-        self.calculated['eff_beta'] = (1-self['default_sym_prob'])*self['asym_factor']*self['beta'] + self['default_sym_prob']*self['beta']  # Using asymptomatic proportion
+        self.calculated['eff_beta'] = (1-self['default_symp_prob'])*self['asym_factor']*self['beta'] + self['default_symp_prob']*self['beta']  # Using asymptomatic proportion
         self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
 
@@ -295,14 +295,14 @@ class Sim(cvbase.BaseSim):
         for p in range(n_people): # Loop over each person
             uid = uids[p]
             if self['usepopdata'] != 'random':
-                age, sex, sym_prob, severe_prob, death_prob= -1, -1, -1, -1, -1 # These get overwritten later
+                age, sex, symp_prob, severe_prob, death_prob= -1, -1, -1, -1, -1 # These get overwritten later
             else:
-                age, sex, sym_prob, severe_prob, death_prob = cvpars.set_person_attrs(by_age=self['by_age'],
-                                                                                      default_sym_prob=self['default_sym_prob'],
+                age, sex, symp_prob, severe_prob, death_prob = cvpars.set_person_attrs(by_age=self['prog_by_age'],
+                                                                                      default_symp_prob=self['default_symp_prob'],
                                                                                       default_severe_prob=self['default_severe_prob'],
                                                                                       default_death_prob=self['default_death_prob'],
                                                                                       use_data=False)
-            person = Person(age=age, sex=sex, sym_prob=sym_prob, severe_prob=severe_prob, death_prob=death_prob, uid=uid, pars=self.pars) # Create the person
+            person = Person(age=age, sex=sex, symp_prob=symp_prob, severe_prob=severe_prob, death_prob=death_prob, uid=uid, pars=self.pars) # Create the person
             people[uid] = person # Save them to the dictionary
 
         # Store UIDs and people
