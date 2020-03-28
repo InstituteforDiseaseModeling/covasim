@@ -36,7 +36,7 @@ Python >=3.6 (64-bit). See https://www.python.org/downloads/.
 
     *   To install within a web application, enter:
 
-        `python setup.py develop`.
+        `python setup.py develop`
 
     *   To install as a standalone model without the web application, enter:
 
