@@ -26,7 +26,7 @@ class DiseaseProgressionTests(CovaSimTest):
         length, and std_dev to 0. Verify that every n_infected
         at start goes infectious on the same day
         """
-        self.is_debugging = True
+        self.is_debugging = False
         self.set_smallpop_hightransmission()
         infectious_day = 30
         initially_infected = 10
