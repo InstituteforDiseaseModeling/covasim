@@ -5,13 +5,12 @@ COVID-19 (novel coronavirus, SARS-CoV-2) epidemic projections, scenario
 interventions, etc. It can also be adapted to different contexts (for example,
 the Diamond Princess cruise ship, cities, countries).
 
-
 ## Requirements
 
-Python >=3.6 (64-bit). See https://www.python.org/downloads/.
+Python >=3.6 (64-bit)
 
-We recommend, but do not require, using Python virtual environments. For
-more information, see https://docs.python.org/3/library/venv.html or (for Anaconda)
+We also recommend, but do not require, using Python virtual environments. For
+more information, see https://docs.python.org/3/tutorial/venv.html or (for Anaconda)
 https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html.
 
 ## Installation
@@ -19,7 +18,9 @@ https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environme
 1.  Clone a copy of the repository. If you intend to make changes to the code,
     we recommend creating a fork for you to work in first.
 
-2.  Navigate to the root of the repository install the Covasim Python package
+2.  (Optional) Create and activate a virtual environment.
+
+3.  Navigate to the root of the repository and install the Covasim Python package
     using one of the following options:
 
     *   To install within a web application, enter:
@@ -58,7 +59,7 @@ The model consists of two core classes: the `Person` class (which contains
 information on health state), and the `Sim` class (which contains methods for
 running, calculating results, plotting, etc.).
 
-The structure of the `covasim` folder, in the order imported, is as follows:
+The structure of the `covasim` folder is as follows:
 
 * `base.py`: The `ParsObj` class, plus basic methods of the `BaseSim` class, and associated functions.
 * `interventions.py`: The classes for adding interventions aimed at stopping transmission.
