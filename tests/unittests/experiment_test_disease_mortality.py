@@ -3,7 +3,7 @@ from unittest_support_classes import CovaSimTest
 
 
 class SimKeys:
-    ''' Define explicit mapping to simulation keys '''
+    ''' Define mapping to simulation keys '''
     number_agents = 'n'
     initial_infected_count = 'n_infected'
     start_day = 'start_day'
@@ -28,7 +28,7 @@ class ResultsKeys:
 
 
 def define_base_parameters():
-    ''' Define the basic parameters for a simulation -- these will rarely change between tests '''
+    ''' Define the basic parameters for a simulation -- these will sometimes, but rarely, change between tests '''
     base_parameters_dict = {
         SimKeys.number_agents: 1000, # Keep it small so they run faster
         SimKeys.initial_infected_count: 100, # Use a relatively large number to avoid stochastic effects
@@ -46,6 +46,7 @@ def BaseSim():
 
 
 class ExperimentalDiseaseMortalityTests(CovaSimTest):
+    ''' Define the actual tests '''
 
     def test_zero_deaths(self):
         ''' Confirm that if mortality is set to zero, there are zero deaths '''
@@ -69,6 +70,8 @@ class ExperimentalDiseaseMortalityTests(CovaSimTest):
                      msg="There should be no deaths given parameters {test_parameters}. "
                          "Channel {ResultsKeys.cumulative_number_of_deaths} had "
                          "bad data: {total_deaths}")
+
+        pass
 
 
     def test_full_deaths(self):
@@ -96,5 +99,7 @@ class ExperimentalDiseaseMortalityTests(CovaSimTest):
                      msg="Everyone should die with parameters {test_parameters}. "
                          "Channel {ResultsKeys.cumulative_number_of_deaths} had "
                          "bad data: {total_deaths} deaths vs. {sim[SimKeys.number_agents]} people.")
+
+        pass
 
 
