@@ -1,6 +1,6 @@
 """
 Tests of simulation parameters from
-..\..\covasim\README.md
+../../covasim/README.md
 """
 import unittest
 
