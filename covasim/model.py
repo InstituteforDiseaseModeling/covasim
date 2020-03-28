@@ -409,13 +409,19 @@ class Sim(cvbase.BaseSim):
                 else:
                     print(string)
 
-            # Update each person
-            for person in self.people.values():
+            not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
+            n_susceptible = len(self.people)
 
-                # Count susceptibles
-                if person.susceptible:
-                    n_susceptible += 1
-                    continue # Don't bother with the rest of the loop
+            for person in not_susceptible:
+                n_susceptible -= 1
+
+            # # Update each person
+            # for person in self.people.values():
+
+            #     # Count susceptibles
+            #     if person.susceptible:
+            #         n_susceptible += 1
+            #         continue # Don't bother with the rest of the loop
 
                 # If exposed, check if the person becomes infectious or develops symptoms
                 if person.exposed:
