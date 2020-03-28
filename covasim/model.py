@@ -409,11 +409,14 @@ class Sim(cvbase.BaseSim):
                 else:
                     print(string)
 
+
+            # Update each person, skipping people who are susceptible
             not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
             n_susceptible = len(self.people)
-            # Update each person
+
             for person in not_susceptible:
                 n_susceptible -= 1
+
                 # If exposed, check if the person becomes infectious or develops symptoms
                 if person.exposed:
                     n_exposed += 1
@@ -447,15 +450,17 @@ class Sim(cvbase.BaseSim):
 
                         if rand_popdata: # TODO: refactor!
                             for contact_ind in person.contact_inds:
-                                target_person = self.get_person(contact_ind)  # Stored by integer
-
-                                # This person was diagnosed last time step: time to flag their contacts
-                                if person.date_diagnosed is not None and person.date_diagnosed == t-1:
-                                    target_person.known_contact = True
 
                                 # Check whether virus is transmitted
                                 transmission = cvu.bt(thisbeta)
+
                                 if transmission:
+                                    target_person = self.get_person(contact_ind)  # Stored by integer
+
+                                    # This person was diagnosed last time step: time to flag their contacts
+                                    if person.date_diagnosed is not None and person.date_diagnosed == t-1:
+                                        target_person.known_contact = True
+
                                     if target_person.susceptible: # Skip people who are not susceptible
                                         n_infections += target_person.infect(t, person)
                                         sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
