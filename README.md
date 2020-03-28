@@ -1,6 +1,6 @@
-# COVASim
+# Covasim
 
-COVASIM is a stochastic COVID-19 agent-based simulator that can be used for
+Covasim is a stochastic COVID-19 agent-based simulator that can be used for
 COVID-19 (novel coronavirus, SARS-CoV-2) epidemic projections, scenario
 interventions, etc. It can also be adapted to different contexts (for example,
 the Diamond Princess cruise ship, cities, countries).
@@ -10,28 +10,16 @@ the Diamond Princess cruise ship, cities, countries).
 
 Python >=3.6 (64-bit). See https://www.python.org/downloads/.
 
+We recommend, but do not require, using Python virtual environments. For
+more information, see https://docs.python.org/3/library/venv.html or (for Anaconda)
+https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html.
+
 ## Installation
 
 1.  Clone a copy of the repository. If you intend to make changes to the code,
     we recommend creating a fork for you to work in first.
 
-2.  Open a command prompt and create a virtual environment in any directory you
-    choose. The command below names the environment "covasim", but you may use
-    any desired name. This is not strictly required, but is highly recommended:
-
-    `python -m venv covasim`
-
-3.  Activate the virtual environment:
-
-    * On Windows, enter the following:
-
-        `covasim\Scripts\activate`
-
-    * On Linux or Mac, enter the following:
-
-        `source covasim/bin/activate`
-
-4.  Navigate to the root of the repository install the COVASim Python package
+2.  Navigate to the root of the repository install the Covasim Python package
     using one of the following options:
 
     *   To install within a web application, enter:
@@ -42,7 +30,7 @@ Python >=3.6 (64-bit). See https://www.python.org/downloads/.
 
         `python setup.py develop nowebapp`
 
-    *   To install COVASim and optional dependencies (be aware this may fail
+    *   To install Covasim and optional dependencies (be aware this may fail
         since it relies on private packages), enter:
 
         `python setup.py develop full`
@@ -55,7 +43,7 @@ There are several examples under the `examples` directory. Run them using the fo
 
 `python examples/simple.py`
 
-The example above creates a figure and other examples run COVASim simulations.
+The example above creates a figure and other examples run Covasim simulations.
 
 
 ## Structure
@@ -85,7 +73,7 @@ The structure of the `covasim` folder, in the order imported, is as follows:
 
 ### cruise_ship
 
-A version of the COVASim model specifically adapted for modeling the Diamond
+A version of the Covasim model specifically adapted for modeling the Diamond
 Princess cruise ship. It uses its own parameters file (`parameters.py`) and has
 slight variations to the model (`model.py`).
 
