@@ -6,11 +6,11 @@
 
 ## Coverage and unit tests
 
-*Please see unittests subfolder. Note that the unit tests are currently broken.*
+To run code coverage on the unit tests, you can just type `run_coverage`. If that doesn't work,
+try the following:
 
-To run code coverage on the unit tests, you can just type `run_coverage`. If that doesn't work:
-1) pip install coverage
-2) coverage run -m unittest unittest_* test_*
-3) coverage html
+1. `pip install coverage`
+2. `coverage run -m unittest unittest_* test_*`
+3. `coverage html`
 
-Then open the htmlcov directory and open index.html in a browser
+Then open the htmlcov directory and open index.html in a browser.
