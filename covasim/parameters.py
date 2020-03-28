@@ -89,46 +89,48 @@ def set_person_attrs(min_age=0, max_age=99, age_mean=40, age_std=15, default_sev
     return age, sex, severity
 
 
-def set_prognosis(age=None, default_severity=0.2, by_age=True):
+def set_prognosis(age=None, default_sym_prob=0.7, default_severe_prob=0.2, default_death_prob=0.02, by_age=True):
     '''
-    Determine the prognosis of an infected person: probability of developing severe symptoms and dying, based on their age
+    Determine the prognosis of an infected person: probability of being aymptomatic, or if symptoms develop, probability
+    of developing severe symptoms and dying, based on their age
     '''
-
-    # Probabilities of death after onset of severe symptoms
+    # Overall probabilities of symptoms, severe symptoms, and death
     age_cutoffs  = [10,      20,      30,      40,      50,      60,      70,      80,      100]
-    symp_probs   = [0.00000, 0.00000, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]
-    severe_probs = [0.00000, 0.00000, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]
-    death_probs  = [0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]
+    symp_probs   = [0.50,    0.55,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.95]    # Overall probability of developing symptoms
+    severe_probs = [0.00000, 0.00000, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400] # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
+    death_probs  = [0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300] # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
 
-    fr_if_severe = [d/s if s>0 and d/s>0 else 0 for (d,s) in zip(death_props,severe_props)] # Fatality rate among those severe symptoms who die, by age
+    # Conditional probabilities of severe symptoms (given symptomatic) and death (given severe symptoms)
+    severe_if_sym   = [sev/sym if sym>0 and sev/sym>0 else 0 for (sev,sym) in zip(severe_probs,symp_probs)]   # Conditional probabilty of developing severe symptoms, given symptomatic
+    death_if_severe = [d/s if s>0 and d/s>0 else 0 for (d,s) in zip(death_probs,severe_probs)]                # Conditional probabilty of dying, given severe symptoms
 
     # Process different options for age
     # Not supplied, use default
-    if age is None or not severity_by_age:
-        severity = default_severity
+    if age is None or not by_age:
+        sym_prob, severe_prob, death_prob = default_sym_prob, default_severe_prob, default_death_prob
 
     # Single number
     elif sc.isnumber(age):
 
-        # Define the age-dependent probabilities of developing severe infection
-        max_age_death_severe = death_probs[-1]
-        max_age_severity     = severe_probs[-1]
-
         # Figure out which probability applies to a person of the specified age
-        severityind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), max_age_severity)
-        severity    = severe_probs[severityind] # Probability of developing severe symptoms
-        deathind    = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), max_age_death_severe)
-        death       = death_severe[deathind] # Probability of dying after developing severe symptoms
+        ind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), -1)
+        sym_prob    = symp_probs[ind]    # Probability of developing symptoms
+        severe_prob = severe_if_sym[ind] # Probability of developing severe symptoms
+        death_prob  = death_if_severe[ind] # Probability of dying after developing severe symptoms
 
     # Listlike
     elif sc.checktype(age, 'listlike'):
-        severity = []
-        for a in age: severity.append(set_severity(age=a, default_severity=default_severityfr, severitydict=severitydict, severity_by_age=severity_by_age))
+        sym_prob, severe_prob, death_prob  = [],[],[]
+        for a in age:
+            this_sym_prob, this_severe_prob, this_death_prob = set_prognosis(age=age, default_sym_prob=default_sym_prob, default_severe_prob=default_severe_prob, default_death_prob=default_death_prob, by_age=by_age)
+            sym_prob.append(this_sym_prob)
+            severe_prob.append(this_severe_prob)
+            death_prob.append(this_death_prob)
 
     else:
-        raise TypeError(f"set_severity accepts a single age or list/aray of ages, not type {type(age)}")
+        raise TypeError(f"set_prognosis accepts a single age or list/aray of ages, not type {type(age)}")
 
-    return severity
+    return sym_prob, severe_prob, death_prob
 
 
 def load_data(filename):
