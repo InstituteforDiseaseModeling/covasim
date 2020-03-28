@@ -7,16 +7,18 @@ cov.start()
 
 # First, load and run the unittest tests
 from unittest_support_classes import TestSupportTests
-from simulation_parameter_tests import SimulationParameterTests
-from disease_transmission_tests import DiseaseTransmissionTests
-from disease_progression_tests import DiseaseProgressionTests
-from disease_mortality_tests import DiseaseMortalityTests
-from diagnostic_testing_tests import DiagnosticTestingTests
+from test_miscellaneous_features import MiscellaneousFeatureTests
+from test_simulation_parameter import SimulationParameterTests
+from test_disease_transmission import DiseaseTransmissionTests
+from test_disease_progression import DiseaseProgressionTests
+from test_disease_mortality import DiseaseMortalityTests
+from test_diagnostic_testing import DiagnosticTestingTests
 
 test_classes_to_run = [TestSupportTests,
                        SimulationParameterTests,
                        DiseaseTransmissionTests,
-                       DiseaseProgressionTests]
+                       DiseaseProgressionTests,
+                       MiscellaneousFeatureTests]
 
 suites_list = []
 for tc in test_classes_to_run:
