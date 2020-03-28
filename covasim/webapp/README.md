@@ -15,7 +15,7 @@ To run the app locally via Twisted, simply run
 ./launch_webapp
 ```
 
-The site will be accessible at `http://localhost:8188` or whichever port is specified in `launch_webapp`
+The site will be accessible at `http://localhost:8188` or whichever port is specified in `launch_webapp`.
 
 ## Deployment
 
@@ -23,16 +23,16 @@ Recommended deployment is using `nginx` to serve the static files, and `gunicorn
 
 ### Requirements
 
-You must have nginx (`sudo apt install nginx`) and gunicorn (`pip install gunicorn`) installed. 
+You must have nginx (`sudo apt install nginx`) and gunicorn (`pip install gunicorn`) installed.
 
 ### Set up nginx
 
-1. Copy `example_nginx_config` to e.g. `/etc/nginx/sites-enabled/covasim` (can change filename if desired)
-2. Edit the copied file to specify
-    - The hostname/URL for the site e.g. `covasim.mydomain.com`
-    - The full path to the directory containing `index.html` on the system running `nginx`
-    - Change the port in `proxy_pass` line if desired - it must match the port in `launch_gunicorn`
-3. Reload or restart `nginx` e.g. `sudo service nginx reload`
+1. Copy `example_nginx_config` to e.g. `/etc/nginx/sites-enabled/covasim` (can change filename if desired).
+2. Edit the copied file to specify:
+    - The hostname/URL for the site e.g. `covasim.mydomain.com`.
+    - The full path to the directory containing `index.html` on the system running `nginx`.
+    - Change the port in `proxy_pass` line if desired - it must match the port in `launch_gunicorn`.
+3. Reload or restart `nginx` e.g. `sudo service nginx reload`.
 
 For example, this will start it running at `localhost:8188`:
 
@@ -54,6 +54,7 @@ server {
 1. Run `launch_gunicorn`, optionally setting a number of workers, e.g. `./launch_gunicorn --workers=32`. This will need to be kept running to support the site (so run via `nohup` or `screen` etc.).
 
 For example:
+
 ```script
 cd covasim/covasim/cova_webapp
 screen -S cova_app
