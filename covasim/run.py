@@ -212,7 +212,8 @@ class Scenarios(cvbase.ParsObj):
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              axis_args=None, as_dates=True, interval=None, dateformat=None,
-             font_size=18, font_family=None, use_grid=True, do_show=True, verbose=None):
+             font_size=18, font_family=None, use_grid=True, use_commaticks=True, do_show=True, separate_figs=False,
+             verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -229,7 +230,9 @@ class Scenarios(cvbase.ParsObj):
             font_size (int): Size of the font
             font_family (str): Font face
             use_grid (bool): Whether or not to plot gridlines
+            use_commaticks (bool): Plot y-axis with commas rather than scientific notation
             do_show (bool): Whether or not to show the figure
+            separate_figs (bool): Whether to show separate figures for different results instead of subplots
             verbose (bool): Display a bit of extra information
 
         Returns:
@@ -244,20 +247,28 @@ class Scenarios(cvbase.ParsObj):
             to_plot = default_scen_plots
         to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
 
-        fig_args = {'figsize': (16, 12)}
-        plot_args = {'lw': 3, 'alpha': 0.7}
-        axis_args = {'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}
-        fill_args = {'alpha': 0.2}
-        font_size = 18
+        # Handle input arguments -- merge user input with defaults
+        fig_args  = sc.mergedicts({'figsize': (16, 12)}, fig_args)
+        plot_args = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
+        axis_args = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}, axis_args)
+        fill_args = sc.mergedicts({'alpha': 0.2}, fill_args)
 
-        fig = pl.figure(**fig_args)
+        if separate_figs:
+            figs = []
+        else:
+            fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         pl.rcParams['font.size'] = font_size
-        pl.rcParams['font.family'] = 'Proxima Nova' # NB, may not be available on all systems
+        if font_family:
+            pl.rcParams['font.family'] = font_family
 
         # %% Plotting
         for rk,reskey,title in to_plot.enumitems():
-            ax = pl.subplot(len(to_plot), 1, rk + 1)
+            if separate_figs:
+                figs.append(pl.figure(**fig_args))
+                ax = pl.subplot(111)
+            else:
+                ax = pl.subplot(len(to_plot), 1, rk + 1)
 
             resdata = self.allres[reskey]
 
@@ -271,6 +282,8 @@ class Scenarios(cvbase.ParsObj):
 
                 sc.setylim()
                 pl.grid(use_grid)
+                if use_commaticks:
+                    sc.commaticks()
 
                 # Optionally reset tick marks (useful for e.g. plotting weeks/months)
                 if interval:
@@ -321,6 +334,7 @@ class Scenarios(cvbase.ParsObj):
         if filename is None:
             filename = self.filename
         filename = sc.makefilepath(filename=filename, **kwargs)
+        self.filename = filename # Store the actual saved filename
         sc.saveobj(filename=filename, obj=self)
         return filename
 
