@@ -1,6 +1,6 @@
 """
 Tests of simulation parameters from
-..\..\covasim\README.md
+../../covasim/README.md
 """
 import unittest
 
@@ -8,6 +8,7 @@ from unittest_support_classes import CovaSimTest, TestProperties
 DProgKeys = TestProperties.ParameterKeys.ProgressionKeys
 TransKeys = TestProperties.ParameterKeys.TransmissionKeys
 TSimKeys = TestProperties.ParameterKeys.SimulationKeys
+MortKeys = TestProperties.ParameterKeys.MortalityKeys
 ResKeys = TestProperties.ResultsDataKeys
 
 class DiseaseProgressionTests(CovaSimTest):
@@ -19,13 +20,13 @@ class DiseaseProgressionTests(CovaSimTest):
         super().tearDown()
         pass
 
-    @unittest.skip("P1")
     def test_exposure_to_infectiousness_delay_deviation_zero(self):
         """
         Configure exposure to infectiousness delay to 1/2 sim
         length, and std_dev to 0. Verify that every n_infected
         at start goes infectious on the same day
         """
+        self.is_debugging = True
         self.set_smallpop_hightransmission()
         infectious_day = 30
         initially_infected = 10
@@ -35,6 +36,9 @@ class DiseaseProgressionTests(CovaSimTest):
             TSimKeys.initial_infected_count: initially_infected,
             DProgKeys.exposed_to_infectious: infectious_day,
             DProgKeys.exposed_to_infectious_std: 0,
+            MortKeys.default_cfr: 0.0,
+            DProgKeys.infectiousness_duration: 5,
+            DProgKeys.infectiousness_duration_std: 1
         }
         self.run_sim(serial_dev_zero)
         infectious_channel = self.get_full_result_channel(

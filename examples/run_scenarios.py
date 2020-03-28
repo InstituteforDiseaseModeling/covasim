@@ -2,14 +2,11 @@
 Simple script for running Covasim scenarios
 '''
 
-
 import sciris as sc
 import covasim as cv
 
 
 sc.heading('Setting up...')
-
-sc.tic()
 
 # Specify what to run
 scenarios = {
@@ -70,26 +67,26 @@ scenarios = {'baseline': {
              }
 
 
-# If we're rerunning...
-if do_run:
-    scens = cv.Scenarios(metapars=metapars, scenarios=scenarios)
-    scens.run(keep_sims=keep_sims, verbose=verbose)
-    if do_save:
-        scens.save(filename=obj_path)
+if __name__ == "__main__": # Required for parallel processing on Windows
 
-# Don't run
-else:
-    scens = cv.Scenarios.load(obj_path)
+    sc.tic()
 
+    # If we're rerunning...
+    if do_run:
+        scens = cv.Scenarios(metapars=metapars, scenarios=scenarios)
+        scens.run(keep_sims=keep_sims, verbose=verbose)
+        if do_save:
+            scens.save(filename=obj_path)
 
-if do_plot:
-    fig1 = scens.plot(do_show=do_show)
+    # Don't run
+    else:
+        scens = cv.Scenarios.load(obj_path)
 
-if plot_health:
-    fig2 = scens.plot_healthsystem()
+    if do_plot:
+        fig1 = scens.plot(do_show=do_show)
 
+    if plot_health:
+        fig2 = scens.plot_healthsystem()
 
-
-
-sc.toc()
+    sc.toc()
 
