@@ -7,6 +7,7 @@ import numba as nb
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
+from . import requirements as cvreqs
 
 
 # Specify all externally visible functions this file defines
@@ -146,6 +147,7 @@ def make_people(sim, verbose=None, id_len=None):
 
     if verbose is None: verbose = sim['verbose']
     if id_len  is None: id_len  = 6
+    usepopdata = sim['usepopdata'] # Shorten
 
     # Create the people -- just placeholders if we're using actual data
     people = {} # Dictionary for storing the people -- use plain dict since faster than odict
