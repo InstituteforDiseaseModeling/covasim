@@ -14,6 +14,7 @@ class Intervention:
     def __init__(self):
         self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
 
+
     def apply(self, sim, t: int) -> None:
         """
         Apply intervention
@@ -28,9 +29,10 @@ class Intervention:
             t: The current time index
 
         Returns:
-
+            None
         """
         raise NotImplementedError
+
 
     def finalize(self, sim) -> None:
         """
@@ -42,9 +44,26 @@ class Intervention:
             sim: the Sim instance
 
         Returns:
-
+            None
         """
         return
+
+
+    def plot(self, sim, ax) -> None:
+        """
+        Call function during plotting
+
+        This can be used to do things like add vertical lines on days when interventions take place
+
+        Args:
+            sim: the Sim instance
+            ax: the axis instance
+
+        Returns:
+            None
+        """
+        return
+
 
     def to_json(self):
         """
@@ -196,6 +215,14 @@ class change_beta(Intervention):
                 new_beta = new_beta * self.changes[ind]
             sim['beta'] = new_beta
 
+        return
+
+
+    def plot(self, sim, ax):
+        ''' Plot vertical lines for when changes in beta '''
+        ylims = ax.get_ylim()
+        for day in self.days:
+            pl.plot([day]*2, ylims, '--')
         return
 
 

@@ -92,21 +92,12 @@ def check_scirisweb(die=False):
 def check_extra_libs():
     ''' Check whether optional dependencies are available '''
 
-    # Check health systems -- optional dependency
-    try:
-        import covid_healthsystems # noqa
-        available['covid_healthsystems'] = True
-    except ImportError as E:
-        import_error = f'Warning: covid_healthsystems is not available. Hospital capacity analyses will not be available. (Reason: {str(E)})\n'
-        available['covid_healthsystems'] = False
-        print(import_error)
-
     # Check synthpops -- optional dependency
     try:
         import synthpops # noqa
         available['synthpops'] = True
     except ImportError as E:
-        import_error = f'Warning: synthpops is not available. Detailed demographic data will not be available. (Reason: {str(E)})\n'
+        import_error = f'Note: synthpops (for detailed demographic data) is not available (reason: {str(E)})\n'
         available['synthpops'] = True
         print(import_error)
 
@@ -115,7 +106,7 @@ def check_extra_libs():
     #     import parestlib as _parest_available # noqa
     #     available['parestlib'] = True
     # except ImportError as E:
-    #     import_error = f'Warning: parestlib is not available. Automated calibration will not be available. (Reason: {str(E)})\n'
+    #     import_error = f'Note: parestlib (for automatic calibration) is not available (reason: {str(E)})\n'
     #     available['parestlib'] = True
     #     print(import_error)
 
