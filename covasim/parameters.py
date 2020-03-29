@@ -74,8 +74,7 @@ def load_data(filename):
     raw_data = pd.read_excel(filename)
 
     # Confirm data integrity and simplify
-    cols = ['day', 'date', 'new_tests', 'new_positives']
-    data = pd.DataFrame()
+    cols = ['day', 'date', 'new_tests', 'new_positives', 'new_infections']
     for col in cols:
         assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
     data = raw_data[cols]
