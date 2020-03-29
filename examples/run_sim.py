@@ -6,7 +6,7 @@ import sciris as sc
 
 print('Importing...')
 sc.tic()
-import covasim as cova
+import covasim as cv
 sc.toc()
 
 do_plot = 1
@@ -23,8 +23,9 @@ fig_path = f'{basename}.png'
 
 print('Making sim...')
 sc.tic()
-sim = cova.Sim()
+sim = cv.Sim()
 sim.set_seed(seed)
+sim['interventions'] = cv.change_beta(days=10, changes=0.5)
 
 print('Running...')
 sim.run(verbose=verbose)

@@ -7,7 +7,7 @@ import numpy as np
 import pylab as pl
 import sciris as sc
 from . import base as cvbase
-from . import model as cvmodel
+from . import sim as cvsim
 from . import healthsystem as cvhs
 
 
@@ -87,7 +87,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Create the simulation and handle basepars
         if sim is None:
-            sim = cvmodel.Sim()
+            sim = cvsim.Sim()
         self.base_sim = sim
         if basepars is None:
             basepars = {}
