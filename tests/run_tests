@@ -1,2 +1,3 @@
 #!/bin/bash
-pytest test*.py unittests/test*.py
+# Run the integration tests
+pytest test*.py

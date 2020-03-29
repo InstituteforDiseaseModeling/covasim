@@ -117,26 +117,36 @@ def pt(rate):
 
 
 @nb.njit((nb.int64, nb.int64))
-def choose(max_ind, n):
+def choose(max_n, n):
     '''
-    Choose n people.
+    Choose a subset of items (e.g., people) without replace.
 
-    choose(5, 2) will choose 2 out of 5 people with equal probability.
+    Args:
+        max_n (int): the total number of items
+        n (int): the number of items to choose
+
+    Example:
+        choose(5, 2) will choose 2 out of 5 people with equal probability.
     '''
-    if max_ind < n:
-        raise Exception('Number of samples requested is greater than the number of people') # NB: because it's Numba, can't display values
-    n_samples = min(int(n), max_ind)
-    inds = np.random.choice(max_ind, n_samples, replace=False)
-    return inds
+    return np.random.choice(max_n, n, replace=False)
 
 
 # @nb.njit((nb.float64[:], nb.int64, nb.float64))
 def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False):
     '''
-    Choose n people, each with a probability from the distribution probs. Overshoot
-    handles the case where there are repeats
+    Choose n items (e.g. people), each with a probability from the distribution probs.
+    Overshoot handles the case where there are repeats.
 
-    choose([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
+    Args:
+        probs (array): list of probabilities, should sum to 1
+        n (int): number of samples to choose
+        overshoot (float): number of extra samples to generate, expecting duplicates
+        eps (float): how close to check that probabilities sum to 1
+        max_tries (int): maximum number of times to try to pick samples without replacement
+        normalize (bool): whether or not to normalize probs to always sum to 1
+
+    Example:
+        choose_weighted([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
 
     NB: unfortunately pd.unique() is not supported by Numba, nor is
     np.unique(return_index=True), hence why this function is not jitted.
