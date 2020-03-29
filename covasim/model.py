@@ -5,8 +5,10 @@ This file contains all the code for the basic use of Covasim.
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
+import pandas as pd
 import sciris as sc
 import datetime as dt
+from numba import jit
 from . import utils as cvu
 from . import base as cvbase
 from . import parameters as cvpars
@@ -303,19 +305,30 @@ class Sim(cvbase.BaseSim):
                                                                                       default_death_prob=self['default_death_prob'],
                                                                                       use_data=False)
             person = Person(age=age, sex=sex, symp_prob=symp_prob, severe_prob=severe_prob, death_prob=death_prob, uid=uid, pars=self.pars) # Create the person
+            person.id = p
             people[uid] = person # Save them to the dictionary
 
         # Store UIDs and people
         self.uids = uids
         self.people = people
 
+        # This creates dataframe from self.people and add new column - infected
+        self.people_pd = pd.DataFrame(map(lambda p: p.__dict__, people.values()))
+        self.people_pd["infected"] = 0
+
         # Make the contact matrix -- TODO: move into a separate function
+
+        distances = []
         if self['usepopdata'] == 'random':
             sc.printv(f'Creating contact matrix without data...', 2, verbose)
             for p in range(int(self['n'])):
                 person = self.get_person(p)
                 person.n_contacts = cvu.pt(self['contacts']) # Draw the number of Poisson contacts for this person
                 person.contact_inds = cvu.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
+                # This will be dataframe representing edge list + weight. Person 1 is contact of Person 2 and relative probability of transimssion between them 
+                distances.extend([{"person1": person.id, "person2": self.get_person(ind).id, "relative_infection_proba": 1.} for ind in person.contact_inds])
+            
+            self.relative_distance = pd.DataFrame(distances)  # TODO: drop duplicate edges, this shouldn't be directed graph so p1,p2 and p2,p1 should be same edge
         else:
             sc.printv(f'Creating contact matrix with data...', 2, verbose)
             import synthpops as sp
@@ -347,13 +360,15 @@ class Sim(cvbase.BaseSim):
 
         sc.printv(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]:0.2f} years', 1, verbose)
 
+        self.infected = pd.DataFrame(columns=["person", "infected"])
         # Create the seed infections
         for i in range(int(self['n_infected'])):
             person = self.get_person(i)
             person.infect(t=0)
+            # Infect people in dataframe
+            self.people_pd.loc[i, "infected"] = 1
 
         return
-
 
     def run(self, initialize=True, do_plot=False, verbose=None, **kwargs):
         ''' Run the simulation '''
@@ -410,6 +425,7 @@ class Sim(cvbase.BaseSim):
                     print(string)
 
             # Update each person
+            '''
             for person in self.people.values():
 
                 # Count susceptibles
@@ -490,19 +506,44 @@ class Sim(cvbase.BaseSim):
                 # Count people who recovered
                 if person.recovered:
                     n_recovered += 1
+            '''
 
+
+            # select features that are relevant to calculate probability of person infecting another and it's modifier
+            # modifier is probability that given feature prevents infection. Higher means less likely to infect
+            infectious_features = {
+                'diagnosed': 1 - diag_factor,
+                'symptomatic': 1 - asym_factor
+            }
+
+            infectious_people = self.people_pd[self.people_pd.infected == 1]
+            infectious = infectious_people[infectious_features.keys()].astype(int)
+            feature_probas = np.array(list(infectious_features.values()))
+
+            # Calculate probability of each person being infectious
+            infectious_probas = np.clip( (1 - np.dot(infectious, feature_probas)), 0, 1)
+            infectious_people["infectious_proba"] = infectious_probas * beta
+            # Find people in relative_distance
+            infectable = self.relative_distance[self.relative_distance.person1.isin(infectious_people.id)]
+            # Calculate cumulative infection proba
+            infectable = infectable.join(infectious_people[["id", "infectious_proba"]].set_index("id"), on="person1")
+            infectable["cumul_proba"] = infectable["relative_infection_proba"] * infectable["infectious_proba"]
+            to_infect = infectable[infectable["cumul_proba"] > np.random.random(len(infectable))]
+            
+            # Finally, infect people
+            self.people_pd.loc[self.people_pd.id.isin(to_infect["person2"]), "infected"] = 1
+                    
             # End of person loop; apply interventions
             for intervention in self['interventions']:
                 intervention.apply(self, t)
             if self['interv_func'] is not None: # Apply custom intervention function
                 self =self['interv_func'](self, t)
-
             # Update counts for this time step
             self.results['n_susceptible'][t] = n_susceptible
             self.results['n_exposed'][t]     = n_exposed
             self.results['deaths'][t]        = n_deaths
             self.results['recoveries'][t]    = n_recoveries
-            self.results['n_infectious'][t]  = n_infectious
+            self.results['n_infectious'][t]  = len(self.people_pd[self.people_pd.infected == 1])
             self.results['infections'][t]    = n_infections
             self.results['n_symptomatic'][t] = n_symptomatic
             self.results['n_recovered'][t]   = n_recovered
