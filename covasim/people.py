@@ -33,6 +33,7 @@ class Person(sc.prettyobj):
         self.exposed        = False
         self.infectious     = False
         self.symptomatic    = False
+        self.severe         = False
         self.diagnosed      = False
         self.recovered      = False
         self.dead           = False
@@ -80,13 +81,13 @@ class Person(sc.prettyobj):
 
         if sym_bool:  # They develop symptoms
             self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
-
-            sev_bool = cvu.bt(self.severe_prob) # Not used yet, but use this to determine if they get treated
-            death_bool = cvu.bt(self.death_prob)
-            if death_bool: # They die
-                self.date_died = t + cvu.sample(**self.dist_death) # Date of death
-            else: # They recover
-                self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
+            self.severe = cvu.bt(self.severe_prob) # See if they're a severe or mild case
+            if self.severe: # TODO: incorporate health system
+                death_bool = cvu.bt(self.death_prob)
+                if death_bool: # They die
+                    self.date_died = t + cvu.sample(**self.dist_death) # Date of death
+                else: # They recover
+                    self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
 
         else: # They recover
             self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
@@ -157,10 +158,10 @@ def make_people(sim, verbose=None, id_len=None):
             age, sex, symp_prob, severe_prob, death_prob= -1, -1, -1, -1, -1 # These get overwritten later
         else:
             age, sex, symp_prob, severe_prob, death_prob = set_person_attrs(by_age=sim['prog_by_age'],
-                                                                                  default_symp_prob=sim['default_symp_prob'],
-                                                                                  default_severe_prob=sim['default_severe_prob'],
-                                                                                  default_death_prob=sim['default_death_prob'],
-                                                                                  use_data=False)
+                                                                            default_symp_prob=sim['default_symp_prob'],
+                                                                            default_severe_prob=sim['default_severe_prob'],
+                                                                            default_death_prob=sim['default_death_prob'],
+                                                                            use_data=False)
         person = Person(age=age, sex=sex, symp_prob=symp_prob, severe_prob=severe_prob, death_prob=death_prob, uid=uid, pars=sim.pars) # Create the person
         people[uid] = person # Save them to the dictionary
 
@@ -241,7 +242,7 @@ def set_prognosis(age=None, default_symp_prob=0.7, default_severe_prob=0.2, defa
     # Overall probabilities of symptoms, severe symptoms, and death
     age_cutoffs  = [10,      20,      30,      40,      50,      60,      70,      80,      100]
     symp_probs   = [0.50,    0.55,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.95]    # Overall probability of developing symptoms
-    severe_probs = [0.00000, 0.00000, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400] # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
+    severe_probs = [0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400] # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
     death_probs  = [0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300] # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
 
     # Conditional probabilities of severe symptoms (given symptomatic) and death (given severe symptoms)
