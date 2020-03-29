@@ -432,7 +432,7 @@ class Sim(cvbase.BaseSim):
         if verbose is None:
             verbose = self['verbose']
 
-        summary = {}
+        summary = sc.objdict()
         for key in self.reskeys:
             summary[key] = self.results[key][-1]
 

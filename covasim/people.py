@@ -82,12 +82,11 @@ class Person(sc.prettyobj):
         if sym_bool:  # They develop symptoms
             self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
             self.severe = cvu.bt(self.severe_prob) # See if they're a severe or mild case
-            if self.severe: # TODO: incorporate health system
-                death_bool = cvu.bt(self.death_prob)
-                if death_bool: # They die
-                    self.date_died = t + cvu.sample(**self.dist_death) # Date of death
-                else: # They recover
-                    self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
+            death_bool = cvu.bt(self.death_prob) # TODO: incorporate health system
+            if death_bool and self.severe: # They die
+                self.date_died = t + cvu.sample(**self.dist_death) # Date of death
+            else: # They recover
+                self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
 
         else: # They recover
             self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
