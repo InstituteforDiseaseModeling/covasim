@@ -4,8 +4,8 @@ import sciris as sc
 import covasim as cova
 
 sim = cova.Sim()
-sim['n_days'] = 10
-to_profile = 'init_people' # Must be one of the options listed below...currently only 1
+sim['n_days'] = 60
+to_profile = 'run' # Must be one of the options listed below...currently only 1
 
 func_options = {'run':        sim.run,
                 'initialize': sim.initialize,
