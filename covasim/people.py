@@ -206,10 +206,12 @@ def make_people(sim, verbose=None, id_len=None):
 
     sc.printv(f'Created {sim["n"]} people, average age {sum([person.age for person in sim.people.values()])/sim["n"]:0.2f} years', 1, verbose)
 
+    return
+
 
 @nb.njit()
 def _get_norm_age(min_age, max_age, age_mean, age_std):
-    norm_age = np.normal(age_mean, age_std)
+    norm_age = np.random.normal(age_mean, age_std)
     age = np.minimum(np.maximum(norm_age, min_age), max_age)
     return age
 

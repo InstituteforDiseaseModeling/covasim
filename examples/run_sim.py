@@ -14,6 +14,7 @@ do_save = 0
 do_show = 1
 verbose = 1
 seed    = 4
+interv  = True
 
 version  = 'v0'
 date     = '2020mar21'
@@ -25,7 +26,8 @@ print('Making sim...')
 sc.tic()
 sim = cv.Sim()
 sim.set_seed(seed)
-sim['interventions'] = cv.change_beta(days=10, changes=0.5)
+if interv:
+    sim['interventions'] = cv.change_beta(days=45, changes=0.5)
 
 print('Running...')
 sim.run(verbose=verbose)

@@ -158,7 +158,7 @@ class Sim(cvbase.BaseSim):
 
         sc.printv(f'Creating {self["n"]} people...', 1, verbose)
 
-        self.people = cvppl.make_people(self, verbose=verbose, id_len=id_len)
+        cvppl.make_people(self, verbose=verbose, id_len=id_len)
 
         # Create the seed infections
         for i in range(int(self['n_infected'])):
@@ -528,10 +528,6 @@ class Sim(cvbase.BaseSim):
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
 
-            for intervention in self['interventions']:
-                if hasattr(intervention, 'plot'):
-                    intervention.plot(self, ax)
-
             pl.grid(use_grid)
             cvu.fixaxis(self)
             if use_commaticks:
@@ -548,6 +544,10 @@ class Sim(cvbase.BaseSim):
                 xticks = ax.get_xticks()
                 xticklabels = self.inds2dates(xticks, dateformat=dateformat)
                 ax.set_xticklabels(xticklabels)
+
+            # Plot interventions
+            for intervention in self['interventions']:
+                intervention.plot(self, ax)
 
         # Ensure the figure actually renders or saves
         if do_save:
