@@ -211,29 +211,30 @@ class Scenarios(cvbase.ParsObj):
 
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             axis_args=None, as_dates=True, interval=None, dateformat=None,
-             font_size=18, font_family=None, use_grid=True, use_commaticks=True, do_show=True, separate_figs=False,
+             axis_args=None, fill_args=None, as_dates=True, interval=None, dateformat=None,
+             font_size=18, font_family=None, grid=True, commaticks=True, do_show=True, sep_figs=False,
              verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
-            to_plot (dict): Dict of results to plot; see default_scen_plots for structure
-            do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
-            fig_path (str): Path to save the figure
-            fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
-            axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            as_dates (bool): Whether to plot the x-axis as dates or time points
-            interval (int): Interval between tick marks
-            dateformat (str): Date string format, e.g. '%B %d'
-            font_size (int): Size of the font
-            font_family (str): Font face
-            use_grid (bool): Whether or not to plot gridlines
-            use_commaticks (bool): Plot y-axis with commas rather than scientific notation
-            do_show (bool): Whether or not to show the figure
-            separate_figs (bool): Whether to show separate figures for different results instead of subplots
-            verbose (bool): Display a bit of extra information
+            to_plot     (dict): Dict of results to plot; see default_scen_plots for structure
+            do_save     (bool): Whether or not to save the figure
+            fig_path    (str):  Path to save the figure
+            fig_args    (dict): Dictionary of kwargs to be passed to pl.figure                             ( )
+            plot_args   (dict): Dictionary of kwargs to be passed to pl.plot                               ( )
+            axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust                    ( )
+            fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between                       ( )
+            as_dates    (bool): Whether to plot the x-axis as dates or time points
+            interval    (int):  Interval between tick marks
+            dateformat  (str):  Date string format, e.g. '%B %d'
+            font_size   (int):  Size of the font
+            font_family (str):  Font face
+            grid        (bool): Whether or not to plot gridlines
+            commaticks  (bool): Plot y-axis with commas rather than scientific notation
+            do_show     (bool): Whether or not to show the figure
+            sep_figs    (bool): Whether to show separate figures for different results instead of subplots
+            verbose     (bool): Display a bit of extra information
 
         Returns:
             fig: Figure handle
@@ -253,7 +254,7 @@ class Scenarios(cvbase.ParsObj):
         axis_args = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}, axis_args)
         fill_args = sc.mergedicts({'alpha': 0.2}, fill_args)
 
-        if separate_figs:
+        if sep_figs:
             figs = []
         else:
             fig = pl.figure(**fig_args)
@@ -264,7 +265,7 @@ class Scenarios(cvbase.ParsObj):
 
         # %% Plotting
         for rk,reskey,title in to_plot.enumitems():
-            if separate_figs:
+            if sep_figs:
                 figs.append(pl.figure(**fig_args))
                 ax = pl.subplot(111)
             else:
@@ -281,8 +282,8 @@ class Scenarios(cvbase.ParsObj):
                     pl.legend(loc='best')
 
                 sc.setylim()
-                pl.grid(use_grid)
-                if use_commaticks:
+                pl.grid(grid)
+                if commaticks:
                     sc.commaticks()
 
                 # Optionally reset tick marks (useful for e.g. plotting weeks/months)
