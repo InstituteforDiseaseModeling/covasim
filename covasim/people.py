@@ -235,7 +235,7 @@ def make_randpop(sim, id_len=6):
     contacts = []
     for p in range(n_people):
         n_contacts = cvu.pt(sim['contacts']) # Draw the number of Poisson contacts for this person
-        contact_inds = cvu.choose(max_ind=n_people, n=n_contacts) # Choose people at random, assigning to household
+        contact_inds = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random, assigning to household
         contacts.append(contact_inds)
 
     # Store output; data duplicated as per-person and list-like formats for convenience
