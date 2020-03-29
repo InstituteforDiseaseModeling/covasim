@@ -88,6 +88,12 @@ def bt(prob):
 
 
 @nb.njit((nb.float64, nb.int64))
+def rbt(prob, n):
+    ''' A repeated Bernoulli (binomial) trial '''
+    return np.random.binomial(1, prob, n)
+
+
+@nb.njit((nb.float64, nb.int64))
 def mbt(prob, n):
     ''' Multiple Bernoulli (binomial) trials -- return indices that passed '''
     return list((np.random.random(n) < prob).nonzero()[0])
