@@ -1,2 +1,2 @@
 #!/bin/bash
-pytest test*.py -n 8
+pytest test*.py unittests/test*.py
