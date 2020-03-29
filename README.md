@@ -85,7 +85,7 @@ slight variations to the model (`model.py`).
 ### webapp
 
 For running the interactive web application: please see the `README.md` in that
-folder for more information, including informaion on Docker deployment.
+folder for more information, including information on Docker deployment.
 
 
 ## Disclaimer
