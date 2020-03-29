@@ -143,16 +143,35 @@ class Person(sc.prettyobj):
 
 
 
-def make_people(sim, verbose=None, id_len=None):
+def make_people(sim, verbose=None, id_len=None, die=True):
 
     if verbose is None: verbose = sim['verbose']
     if id_len  is None: id_len  = 6
+
+    # Set
     usepopdata = sim['usepopdata'] # Shorten
+    use_rand_pop = (usepopdata == 'random')
+    n_people = int(sim['n'])
+
+    if not use_rand_pop and not cvreqs.available['synthpops']:
+        errormsg = f'You have requested "{usepopdata}" population, but synthpops is not available; please use "random"'
+        if die:
+            raise ValueError(errormsg)
+        else:
+            print(errormsg)
+            usepopdata = 'random'
+
+    if use_rand_pop:
+        popdict = make_randpop(n=sim['n'])
+    else:
+        import synthpops as sp # Optional import
+        popdict = sp.make_population(n=sim['n'])
+
 
     # Create the people -- just placeholders if we're using actual data
     people = {} # Dictionary for storing the people -- use plain dict since faster than odict
-    n_people = int(sim['n'])
-    uids = sc.uuid(which='ascii', n=n_people, length=id_len)
+
+
     for p in range(n_people): # Loop over each person
         uid = uids[p]
         if sim['usepopdata'] != 'random':
@@ -176,7 +195,7 @@ def make_people(sim, verbose=None, id_len=None):
         for p in range(int(sim['n'])):
             person = sim.get_person(p)
             person.n_contacts = cvu.pt(sim['contacts']) # Draw the number of Poisson contacts for this person
-            person.contact_inds = cvu.choose_people(max_ind=len(sim.people), n=person.n_contacts) # Choose people at random, assigning to household
+            person.contact_inds = cvu.choose(max_ind=len(sim.people), n=person.n_contacts) # Choose people at random, assigning to household
     else:
         sc.printv(f'Creating contact matrix with data...', 2, verbose)
         import synthpops as sp
@@ -209,6 +228,36 @@ def make_people(sim, verbose=None, id_len=None):
     sc.printv(f'Created {sim["n"]} people, average age {sum([person.age for person in sim.people.values()])/sim["n"]:0.2f} years', 1, verbose)
 
     return
+
+def make_randpop(n):
+    ''' Make a random population, without contacts '''
+
+    # Load age data based on 2018 Seattle demographics
+    age_data [
+        [ 0,  4, 0.0605],
+        [ 5,  9, 0.0607],
+        [10, 14, 0.0566],
+        [15, 19, 0.0557],
+        [20, 24, 0.0612],
+        [25, 29, 0.0843],
+        [30, 34, 0.0848],
+        [35, 39, 0.0764],
+        [40, 44, 0.0697],
+        [45, 49, 0.0701],
+        [50, 54, 0.0681],
+        [55, 59, 0.0653],
+        [60, 64, 0.0591],
+        [65, 69, 0.0453],
+        [70, 74, 0.0312],
+        [75, 99, 0.0504],
+        ]
+
+    uids = sc.uuid(which='ascii', n=n_people, length=id_len)
+    sexes = np.random.binomial(n,0.5)
+    ages =
+
+
+    return popdict
 
 
 @nb.njit()

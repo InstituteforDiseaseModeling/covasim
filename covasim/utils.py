@@ -9,7 +9,7 @@ import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose_people', 'choose_people_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test']
+__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test']
 
 
 #%% Define helper functions
@@ -111,11 +111,11 @@ def pt(rate):
 
 
 @nb.njit((nb.int64, nb.int64))
-def choose_people(max_ind, n):
+def choose(max_ind, n):
     '''
     Choose n people.
 
-    choose_people(5, 2) will choose 2 out of 5 people with equal probability.
+    choose(5, 2) will choose 2 out of 5 people with equal probability.
     '''
     if max_ind < n:
         raise Exception('Number of samples requested is greater than the number of people') # NB: because it's Numba, can't display values
@@ -125,12 +125,12 @@ def choose_people(max_ind, n):
 
 
 # @nb.njit((nb.float64[:], nb.int64, nb.float64))
-def choose_people_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False):
+def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False):
     '''
     Choose n people, each with a probability from the distribution probs. Overshoot
     handles the case where there are repeats
 
-    choose_people([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
+    choose([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
 
     NB: unfortunately pd.unique() is not supported by Numba, nor is
     np.unique(return_index=True), hence why this function is not jitted.

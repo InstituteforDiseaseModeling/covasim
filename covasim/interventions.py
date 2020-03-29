@@ -274,7 +274,7 @@ class test_num(Intervention):
             if person.diagnosed:
                 test_probs[i] = 0.0
 
-        test_inds = cv.choose_people_weighted(probs=test_probs, n=n_tests, normalize=True)
+        test_inds = cv.choose_weighted(probs=test_probs, n=n_tests, normalize=True)
 
         for test_ind in test_inds:
             person = sim.get_person(test_ind)
@@ -401,8 +401,8 @@ class test_historical(Intervention):
             negative_tests = 1-positive_tests
 
             # Select the people to test in each category
-            positive_inds = cv.choose_people_weighted(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]), normalize=True)
-            negative_inds = cv.choose_people_weighted(probs=negative_tests, n=min(sum(negative_tests),self.n_tests[t]-len(positive_inds)), normalize=True)
+            positive_inds = cv.choose_weighted(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]), normalize=True)
+            negative_inds = cv.choose_weighted(probs=negative_tests, n=min(sum(negative_tests),self.n_tests[t]-len(positive_inds)), normalize=True)
 
             # Todo - assess performance and optimize e.g. to reduce dict indexing
             for ind in positive_inds:
