@@ -49,6 +49,8 @@ def make_pars():
     pars['serial_std']     = 1.0 # Standard deviation of the serial interval
     pars['incub']          = 5.0 # Incubation period: days until an exposed person develops symptoms
     pars['incub_std']      = 1.0 # Standard deviation of the incubation period
+    pars['severe']         = 3.0 # Number of days after symptom onset before hospitalization is required (for severe cases)
+    pars['severe_std']     = 1.0 # Standard deviation of the above period
     pars['dur']            = 8 # Using Mike's Snohomish number
     pars['dur_std']        = 2 # Variance in duration
 
@@ -56,13 +58,20 @@ def make_pars():
     pars['timetodie']           = 21 # Days until death
     pars['timetodie_std']       = 2 # STD
     pars['prog_by_age']         = True # Whether or not to use age-specific probabilities of prognosis (symptoms/severe symptoms/death)
-    pars['default_symp_prob']   = 0.7 # If not using age-specific values: overall proportion of symptomatic cases
+    pars['default_sym_prob']    = 0.7 # If not using age-specific values: overall proportion of symptomatic cases
     pars['default_severe_prob'] = 0.3 # If not using age-specific values: proportion of symptomatic cases that become severe (default 0.2 total)
     pars['default_death_prob']  = 0.07 # If not using age-specific values: proportion of severe cases that result in death (default 0.02 CFR)
+    pars['OR_no_treat']         = 2. # Odds ratio for how much more likely people are to die if no treatment available
 
     # Events and interventions
     pars['interventions'] = []  #: List of Intervention instances
     pars['interv_func'] = None # Custom intervention function
+
+    # Health system parameters
+    pars['incl_hs'] = True # Whether or not to include health systems
+    if pars['incl_hs']:
+        pars['n_beds'] = 1000 # Temporary assumption
+
 
     return pars
 
