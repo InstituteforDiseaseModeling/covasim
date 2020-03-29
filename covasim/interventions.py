@@ -339,7 +339,7 @@ class test_prob(Intervention):
                 person.test(t, self.test_sensitivity)
                 if person.diagnosed:
                     self.results['n_diagnosed'][t] += 1
-                    for idx in person.contact_inds:
+                    for idx in person.contacts:
                         if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
                             new_scheduled_tests.add(idx)
 
