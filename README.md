@@ -65,11 +65,12 @@ The structure of the `covasim` folder is as follows:
 
 * `base.py`: The `ParsObj` class, plus basic methods of the `BaseSim` class, and associated functions.
 * `interventions.py`: The classes for adding interventions and dynamically modifying parameters.
-* `model.py`: The core classes defining the model, namely `Person` and `Sim`. `Sim` inherits from `BaseSim` which inherits from `ParsObj` which inherits from `prettyobj`.
 * `parameters.py`: Functions for creating the parameters dictionary and populating correct attributes for people.
+* `people.py`: Class for people and functions to create a population of people.
 * `README.md`: Detailed information on the model parameters.
 * `requirements.py`: Check that imports succeeded, and turn off features if they didn't.
 * `run.py`: Functions for running simulations (e.g. parallel runs and scenarios).
+* `sim.py`: The core class defining the model, namely `Sim`, which initializes the model, runs, and plots.
 * `utils.py`: Numeric utilities, mostly based on Numba, for choosing random numbers (plus other helper functions).
 * `version.py`: Version and version date information.
 
