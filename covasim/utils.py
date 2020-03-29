@@ -87,6 +87,17 @@ def bt(prob):
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
 
+@nb.njit((nb.float64, nb.int64))
+def mbt(prob, n):
+    ''' Multiple Bernoulli (binomial) trials -- return indices that passed '''
+    return list((np.random.random(n) < prob).nonzero()[0])
+
+
+@nb.njit((nb.float64, nb.int64[:]))
+def bf(prob, arr):
+    ''' Bernoulli "filter" -- return entries that passed '''
+    return list(arr[(np.random.random(len(arr)) < prob).nonzero()[0]])
+
 @nb.njit((nb.float64[:], nb.int64))
 def mt(probs, repeats):
     ''' A multinomial trial '''

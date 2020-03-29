@@ -448,41 +448,27 @@ class Sim(cvbase.BaseSim):
                                    (diag_factor if person.diagnosed else 1.) * \
                                    (cont_factor if person.known_contact else 1.)
 
-                        if rand_popdata: # TODO: refactor!
-                            for contact_ind in person.contact_inds:
-
-                                # Check whether virus is transmitted
-                                transmission = cvu.bt(thisbeta)
-
-                                if transmission:
-                                    target_person = self.get_person(contact_ind)  # Stored by integer
-
-                                    # This person was diagnosed last time step: time to flag their contacts
-                                    if person.date_diagnosed is not None and person.date_diagnosed == t-1:
-                                        target_person.known_contact = True
-
-                                    if target_person.susceptible: # Skip people who are not susceptible
-                                        n_infections += target_person.infect(t, person)
-                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
-
-                        else:
+                        # Determine who gets infected
+                        if rand_popdata: # Flat contacts
+                            transmission_inds = cvu.bf(thisbeta, person.contact_inds)
+                        else: # Dictionary of contacts -- extra loop over layers
+                            transmission_inds = []
                             for ckey in self.contact_keys:
-                                thisbeta *= beta_pop[ckey]
+                                layer_beta = thisbeta * beta_pop[ckey]
+                                transmission_inds.extend(cvu.bf(layer_beta, person.contact_inds[ckey]))
 
-                                # Calculate transmission risk based on whether they're asymptomatic/diagnosed
-                                for contact_ind in person.contact_inds[ckey]:
+                        # Loop over people who do
+                        for contact_ind in transmission_inds:
+                            target_person = self.get_person(contact_ind) # Stored by integer
 
-                                    # This person was diagnosed last time step: time to flag their contacts
-                                    if person.date_diagnosed is not None and person.date_diagnosed == t - 1:
-                                        target_person.known_contact = True
+                            # This person was diagnosed last time step: time to flag their contacts
+                            if person.date_diagnosed is not None and person.date_diagnosed == t-1:
+                                target_person.known_contact = True
 
-                                    # Check whether virus is transmitted
-                                    transmission = cvu.bt(thisbeta)
-                                    if transmission:
-                                        target_person = self.people[contact_ind] # Stored by UID
-                                        if target_person.susceptible: # Skip people who are not susceptible
-                                            n_infections += target_person.infect(t, person)
-                                            sc.printv(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!', 2, verbose)
+                            # Skip people who are not susceptible
+                            if target_person.susceptible:
+                                n_infections += target_person.infect(t, person) # Actually infect them
+                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
 
                 # Count people who developed symptoms
