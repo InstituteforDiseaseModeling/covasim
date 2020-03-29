@@ -506,6 +506,8 @@ class Sim(cvbase.BaseSim):
 
         # Define the data mapping. Must be here since uses functions
         if self.data is not None and len(self.data):
+            # start day of data may not co-incide with simulation
+            data_offset = (self.data.iloc[0]['date'] - self.pars['start_day']).days
             data_mapping = {
                 'cum_exposed': pl.cumsum(self.data['new_infections']),
                 'cum_diagnosed':  pl.cumsum(self.data['new_positives']),
@@ -524,7 +526,7 @@ class Sim(cvbase.BaseSim):
                 y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key in data_mapping:
-                    pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
+                    pl.scatter(self.data['day']+data_offset, data_mapping[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
 
