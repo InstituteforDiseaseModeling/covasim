@@ -12,6 +12,8 @@ requirements.check_extra_libs()
 from .utils import *
 from .base import *
 from .parameters import *
-from .model import *
+from .people import *
+from .sim import *
 from .run import *
 from .interventions import *
+from .healthsystem import *

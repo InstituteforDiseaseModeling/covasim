@@ -7,8 +7,8 @@ import numpy as np
 import pylab as pl
 import sciris as sc
 from . import base as cvbase
-from . import model as cvmodel
-import covid_healthsystems as covidhs
+from . import sim as cvsim
+from . import healthsystem as cvhs
 
 
 # Specify all externally visible functions this file defines
@@ -87,7 +87,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Create the simulation and handle basepars
         if sim is None:
-            sim = cvmodel.Sim()
+            sim = cvsim.Sim()
         self.base_sim = sim
         if basepars is None:
             basepars = {}
@@ -204,7 +204,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Perform health systems analysis
         if healthsystems:
-            self.hsys = covidhs.HealthSystem(self.allres)
+            self.hsys = cvhs.HealthSystem(self.allres)
             self.hsys.analyze()
 
         return

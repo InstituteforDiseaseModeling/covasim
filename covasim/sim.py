@@ -1,5 +1,5 @@
 '''
-This file contains all the code for the basic use of Covasim.
+Defines the Sim class, Covasim's core class.
 '''
 
 #%% Imports
@@ -10,10 +10,11 @@ import datetime as dt
 from . import utils as cvu
 from . import base as cvbase
 from . import parameters as cvpars
+from . import people as cvppl
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['default_sim_plots', 'Person', 'Sim']
+__all__ = ['default_sim_plots', 'Sim']
 
 
 # Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines
@@ -35,137 +36,6 @@ default_sim_plots = sc.odict({
             'diagnoses': 'New diagnoses',
         })
     })
-
-
-
-#%% Define classes
-
-class Person(sc.prettyobj):
-    '''
-    Class for a single person.
-    '''
-    def __init__(self, age, sex, symp_prob, severe_prob, death_prob, pars, uid=None, id_len=8):
-        if uid is None:
-            uid = sc.uuid(length=id_len) # Unique identifier for this person
-        self.uid = str(uid)
-        self.age = float(age) # Age of the person (in years)
-        self.sex = int(sex) # Female (0) or male (1)
-        self.symp_prob = symp_prob # Probability of developing symptoms
-        self.severe_prob = severe_prob # Conditional probability of symptoms becoming sever, if symptomatic
-        self.death_prob = death_prob # Conditional probability of dying, given severe symptoms
-
-        # Define state
-        self.alive          = True
-        self.susceptible    = True
-        self.exposed        = False
-        self.infectious     = False
-        self.symptomatic    = False
-        self.diagnosed      = False
-        self.recovered      = False
-        self.dead           = False
-        self.known_contact  = False # Keep track of whether each person is a contact of a known positive
-
-        # Infection property distributions
-        self.dist_serial = dict(dist='normal_int', par1=pars['serial'],    par2=pars['serial_std'])
-        self.dist_incub  = dict(dist='normal_int', par1=pars['incub'],     par2=pars['incub_std'])
-        self.dist_dur    = dict(dist='normal_int', par1=pars['dur'],       par2=pars['dur_std'])
-        self.dist_death  = dict(dist='normal_int', par1=pars['timetodie'], par2=pars['timetodie_std'])
-
-        # Keep track of dates
-        self.date_exposed     = None
-        self.date_infectious  = None
-        self.date_symptomatic = None
-        self.date_diagnosed   = None
-        self.date_recovered   = None
-        self.date_died        = None
-
-        self.infected = [] #: Record the UIDs of all people this person infected
-        self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
-        return
-
-
-    def infect(self, t, source=None):
-        """
-        Infect this person
-
-        This routine infects the person
-        Args:
-            source: A Person instance. If None, then it was a seed infection
-        Returns:
-            1 (for incrementing counters)
-        """
-        self.susceptible    = False
-        self.exposed        = True
-        self.date_exposed   = t
-
-        # Calculate how long before they can infect other people
-        serial_dist          = cvu.sample(**self.dist_serial)
-        self.date_infectious = t + serial_dist
-
-        # Use prognosis probabilities to determine what happens to them
-        sym_bool = cvu.bt(self.symp_prob)
-
-        if sym_bool:  # They develop symptoms
-            self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
-
-            sev_bool = cvu.bt(self.severe_prob) # Not used yet, but use this to determine if they get treated
-            death_bool = cvu.bt(self.death_prob)
-            if death_bool: # They die
-                self.date_died = t + cvu.sample(**self.dist_death) # Date of death
-            else: # They recover
-                self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
-
-        else: # They recover
-            self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
-
-        if source:
-            self.infected_by = source.uid
-            source.infected.append(self.uid)
-
-        infected = 1  # For incrementing counters
-
-        return infected
-
-
-    def check_death(self, t):
-        ''' Check whether or not this person died on this timestep -- let's hope not '''
-
-        if self.date_died and t >= self.date_died:
-            self.exposed     = False
-            self.infectious  = False
-            self.symptomatic = False
-            self.recovered   = False
-            self.died        = True
-            death = 1
-        else:
-            death = 0
-
-        return death
-
-
-    def check_recovery(self, t):
-        ''' Check if an infected person has recovered '''
-
-        if self.date_recovered and t >= self.date_recovered: # It's the day they recover
-            self.exposed     = False
-            self.infectious  = False
-            self.symptomatic = False
-            self.recovered   = True
-            recovery = 1
-        else:
-            recovery = 0
-
-        return recovery
-
-
-    def test(self, t, test_sensitivity):
-        if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
-            self.diagnosed = True
-            self.date_diagnosed = t
-            diagnosed = 1
-        else:
-            diagnosed = 0
-        return diagnosed
 
 
 class Sim(cvbase.BaseSim):
@@ -281,71 +151,14 @@ class Sim(cvbase.BaseSim):
         return res_keys
 
 
-    def init_people(self, verbose=None, id_len=6):
+    def init_people(self, verbose=None, id_len=None):
         ''' Create the people '''
         if verbose is None:
             verbose = self['verbose']
 
         sc.printv(f'Creating {self["n"]} people...', 1, verbose)
 
-        # Create the people -- just placeholders if we're using actual data
-        people = {} # Dictionary for storing the people -- use plain dict since faster than odict
-        n_people = int(self['n'])
-        uids = sc.uuid(which='ascii', n=n_people, length=id_len)
-        for p in range(n_people): # Loop over each person
-            uid = uids[p]
-            if self['usepopdata'] != 'random':
-                age, sex, symp_prob, severe_prob, death_prob= -1, -1, -1, -1, -1 # These get overwritten later
-            else:
-                age, sex, symp_prob, severe_prob, death_prob = cvpars.set_person_attrs(by_age=self['prog_by_age'],
-                                                                                      default_symp_prob=self['default_symp_prob'],
-                                                                                      default_severe_prob=self['default_severe_prob'],
-                                                                                      default_death_prob=self['default_death_prob'],
-                                                                                      use_data=False)
-            person = Person(age=age, sex=sex, symp_prob=symp_prob, severe_prob=severe_prob, death_prob=death_prob, uid=uid, pars=self.pars) # Create the person
-            people[uid] = person # Save them to the dictionary
-
-        # Store UIDs and people
-        self.uids = uids
-        self.people = people
-
-        # Make the contact matrix -- TODO: move into a separate function
-        if self['usepopdata'] == 'random':
-            sc.printv(f'Creating contact matrix without data...', 2, verbose)
-            for p in range(int(self['n'])):
-                person = self.get_person(p)
-                person.n_contacts = cvu.pt(self['contacts']) # Draw the number of Poisson contacts for this person
-                person.contact_inds = cvu.choose_people(max_ind=len(self.people), n=person.n_contacts) # Choose people at random, assigning to household
-        else:
-            sc.printv(f'Creating contact matrix with data...', 2, verbose)
-            import synthpops as sp
-
-            self.contact_keys = list(self['contacts_pop'].keys())
-
-            make_contacts_keys = ['use_age','use_sex','use_loc','use_social_layers']
-            options_args = dict.fromkeys(make_contacts_keys, True)
-            if self['usepopdata'] == 'bayesian':
-                bayesian_args = sc.dcp(options_args)
-                bayesian_args['use_bayesian'] = True
-                bayesian_args['use_usa'] = False
-                popdict = sp.make_popdict(uids=self.uids, use_bayesian=True)
-                contactdict = sp.make_contacts(popdict, options_args=bayesian_args)
-            elif self['usepopdata'] == 'data':
-                data_args = sc.dcp(options_args)
-                data_args['use_bayesian'] = False
-                data_args['use_usa'] = True
-                popdict = sp.make_popdict(uids=self.uids, use_bayesian=False)
-                contactdict = sp.make_contacts(popdict, options_args=data_args)
-
-            contactdict = sc.odict(contactdict)
-            for p,uid,entry in contactdict.enumitems():
-                person = self.get_person(p)
-                person.age = entry['age']
-                person.sex = entry['sex']
-                person.cfr = cvpars.set_cfr(person.age, default_cfr=self['default_cfr'], cfr_by_age=self['cfr_by_age'])
-                person.contact_inds = entry['contacts']
-
-        sc.printv(f'Created {self["n"]} people, average age {sum([person.age for person in self.people.values()])/self["n"]:0.2f} years', 1, verbose)
+        cvppl.make_people(self, verbose=verbose, id_len=id_len)
 
         # Create the seed infections
         for i in range(int(self['n_infected'])):
@@ -409,13 +222,13 @@ class Sim(cvbase.BaseSim):
                 else:
                     print(string)
 
-            # Update each person
-            for person in self.people.values():
 
-                # Count susceptibles
-                if person.susceptible:
-                    n_susceptible += 1
-                    continue # Don't bother with the rest of the loop
+            # Update each person, skipping people who are susceptible
+            not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
+            n_susceptible = len(self.people)
+
+            for person in not_susceptible:
+                n_susceptible -= 1
 
                 # If exposed, check if the person becomes infectious or develops symptoms
                 if person.exposed:
@@ -448,39 +261,27 @@ class Sim(cvbase.BaseSim):
                                    (diag_factor if person.diagnosed else 1.) * \
                                    (cont_factor if person.known_contact else 1.)
 
-                        if rand_popdata: # TODO: refactor!
-                            for contact_ind in person.contact_inds:
-                                target_person = self.get_person(contact_ind)  # Stored by integer
-
-                                # This person was diagnosed last time step: time to flag their contacts
-                                if person.date_diagnosed is not None and person.date_diagnosed == t-1:
-                                    target_person.known_contact = True
-
-                                # Check whether virus is transmitted
-                                transmission = cvu.bt(thisbeta)
-                                if transmission:
-                                    if target_person.susceptible: # Skip people who are not susceptible
-                                        n_infections += target_person.infect(t, person)
-                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
-
-                        else:
+                        # Determine who gets infected
+                        if rand_popdata: # Flat contacts
+                            transmission_inds = cvu.bf(thisbeta, person.contact_inds)
+                        else: # Dictionary of contacts -- extra loop over layers
+                            transmission_inds = []
                             for ckey in self.contact_keys:
-                                thisbeta *= beta_pop[ckey]
+                                layer_beta = thisbeta * beta_pop[ckey]
+                                transmission_inds.extend(cvu.bf(layer_beta, person.contact_inds[ckey]))
 
-                                # Calculate transmission risk based on whether they're asymptomatic/diagnosed
-                                for contact_ind in person.contact_inds[ckey]:
+                        # Loop over people who do
+                        for contact_ind in transmission_inds:
+                            target_person = self.get_person(contact_ind) # Stored by integer
 
-                                    # This person was diagnosed last time step: time to flag their contacts
-                                    if person.date_diagnosed is not None and person.date_diagnosed == t - 1:
-                                        target_person.known_contact = True
+                            # This person was diagnosed last time step: time to flag their contacts
+                            if person.date_diagnosed is not None and person.date_diagnosed == t-1:
+                                target_person.known_contact = True
 
-                                    # Check whether virus is transmitted
-                                    transmission = cvu.bt(thisbeta)
-                                    if transmission:
-                                        target_person = self.people[contact_ind] # Stored by UID
-                                        if target_person.susceptible: # Skip people who are not susceptible
-                                            n_infections += target_person.infect(t, person)
-                                            sc.printv(f'        Person {person.uid} infected person {target_person.uid} via {ckey}!', 2, verbose)
+                            # Skip people who are not susceptible
+                            if target_person.susceptible:
+                                n_infections += target_person.infect(t, person) # Actually infect them
+                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
 
                 # Count people who developed symptoms
@@ -631,7 +432,7 @@ class Sim(cvbase.BaseSim):
         if verbose is None:
             verbose = self['verbose']
 
-        summary = {}
+        summary = sc.objdict()
         for key in self.reskeys:
             summary[key] = self.results[key][-1]
 
@@ -727,10 +528,6 @@ class Sim(cvbase.BaseSim):
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
 
-            # for intervention in self['interventions']:
-            #     ylims = pl.ylim()
-            #     pl.plot([intervention.day,intervention.day], ylims, '--')
-
             pl.grid(use_grid)
             cvu.fixaxis(self)
             if use_commaticks:
@@ -747,6 +544,10 @@ class Sim(cvbase.BaseSim):
                 xticks = ax.get_xticks()
                 xticklabels = self.inds2dates(xticks, dateformat=dateformat)
                 ax.set_xticklabels(xticklabels)
+
+            # Plot interventions
+            for intervention in self['interventions']:
+                intervention.plot(self, ax)
 
         # Ensure the figure actually renders or saves
         if do_save:
