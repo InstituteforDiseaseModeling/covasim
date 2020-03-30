@@ -38,9 +38,9 @@ def make_pars():
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
     pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']    = 0. # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
+    pars['diag_factor']    = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
-    pars['contacts']       = 20
+    pars['contacts']       = 20 # Estimated number of contacts
     pars['beta_pop']       = {'H': 1.5,  'S': 1.5,   'W': 1.5,  'R': 0.5} # Per-population beta weights; relative
     pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
 
@@ -49,6 +49,7 @@ def make_pars():
     pars['serial_std']     = 1.0 # Standard deviation of the serial interval
     pars['incub']          = 5.0 # Incubation period: days until an exposed person develops symptoms
     pars['incub_std']      = 1.0 # Standard deviation of the incubation period
+<<<<<<< HEAD
     pars['severe']         = 3.0 # Number of days after symptom onset before hospitalization is required (for severe cases)
     pars['severe_std']     = 1.0 # Standard deviation of the above period
 
@@ -57,6 +58,10 @@ def make_pars():
     pars['dur_std']        = 2.0 # Variance in duration
     pars['dur_sev']        = 11.0 # Mean length of hospital stay for severe cases
     pars['dur_sev_std']    = 3.0 # Variance in duration of hospital stay
+=======
+    pars['dur']            = 8 # Using Mike Famulare's Snohomish number
+    pars['dur_std']        = 2 # Variance in duration
+>>>>>>> develop
 
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death

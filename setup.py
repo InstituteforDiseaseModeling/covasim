@@ -31,7 +31,6 @@ if 'full' in sys.argv:
     print('Performing full installation, including optional dependencies')
     sys.argv.remove('full')
     full_reqs = [
-        'covid_healthsystems',
         'synthpops',
         'parestlib'
     ]
@@ -45,21 +44,21 @@ version = runpy.run_path(versionpath)['__version__']
 CLASSIFIERS = [
     "Environment :: Console",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GPLv3",
+    "License :: Other/Proprietary License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Development Status :: 1",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3.7",
 ]
 
 setup(
     name="covasim",
     version=version,
-    author="Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, Dina Mistry, Lauren George, Mike Famulare, Daniel Klein, on behalf of the IDM COVID-19 Response Team",
+    author="Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, Dina Mistry, Lauren George, and Daniel Klein, on behalf of the IDM COVID-19 Response Team",
     author_email="covid@idmod.org",
-    description="Covid-19 agent-based model model",
-    keywords=["Covid-19", "coronavirus", "cruise ship", "Diamond Princess", "Seattle", "agent-based model"],
+    description="COVID-19 agent-based simulator",
+    keywords=["Covid-19", "coronavirus", "SARS-CoV-2", "stochastic", "agent-based model"],
     platforms=["OS Independent"],
     classifiers=CLASSIFIERS,
     packages=find_packages(),
