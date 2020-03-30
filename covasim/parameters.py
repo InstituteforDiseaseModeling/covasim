@@ -2,11 +2,8 @@
 Set the parameters for Covasim.
 '''
 
-import pylab as pl
 import pandas as pd
 from datetime import datetime
-import numba as nb
-import sciris as sc
 
 
 __all__ = ['make_pars', 'load_data']
@@ -67,17 +64,29 @@ def make_pars():
     return pars
 
 
-def load_data(filename):
-    ''' Load data for comparing to the model output '''
+def load_data(filename, datacols=None, **kwargs):
+    '''
+    Load data for comparing to the model output.
+
+    Args:
+        filename (str): the name of the file to load
+        datacols (list): list of required column names
+        kwargs (dict): passed to pd.read_excel()
+
+    Returns:
+        data (dataframe): pandas dataframe of the loaded data
+    '''
+
+    if datacols is None:
+        datacols = ['day', 'date', 'new_tests', 'new_positives', 'new_infections']
 
     # Load data
-    raw_data = pd.read_excel(filename)
+    raw_data = pd.read_excel(filename, **kwargs)
 
     # Confirm data integrity and simplify
-    cols = ['day', 'date', 'new_tests', 'new_positives', 'new_infections']
-    for col in cols:
+    for col in datacols:
         assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
-    data = raw_data[cols]
+    data = raw_data[datacols]
 
     return data
 

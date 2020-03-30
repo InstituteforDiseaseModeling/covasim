@@ -1,3 +1,17 @@
 #!/bin/bash
 # Run both integration and unit tests
-pytest test*.py unittests/test*.py
+
+# Change to root folder
+cd ..
+
+
+echo "RUNNING ALL TESTS"
+
+echo "STEP 1: RUNNING INTEGRATION TESTS"
+pytest tests/test*.py
+
+echo "STEP 2: RUNNING UNIT TESTS"
+pytest tests/unittests/test*.py
+
+echo "STEP 3: RUNNING EXAMPLES"
+python3 examples/*.py
