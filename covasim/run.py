@@ -214,10 +214,10 @@ class Scenarios(cvbase.ParsObj):
             to_plot     (dict): Dict of results to plot; see default_scen_plots for structure
             do_save     (bool): Whether or not to save the figure
             fig_path    (str):  Path to save the figure
-            fig_args    (dict): Dictionary of kwargs to be passed to pl.figure                             ( )
-            plot_args   (dict): Dictionary of kwargs to be passed to pl.plot                               ( )
-            axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust                    ( )
-            fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between                       ( )
+            fig_args    (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args   (dict): Dictionary of kwargs to be passed to pl.plot()
+            axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between()
             as_dates    (bool): Whether to plot the x-axis as dates or time points
             interval    (int):  Interval between tick marks
             dateformat  (str):  Date string format, e.g. '%B %d'
