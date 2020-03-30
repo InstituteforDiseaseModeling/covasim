@@ -71,7 +71,7 @@ class Person(sc.prettyobj):
 
         Args:
             t: (int) timestep
-            n_beds: (int) number of available beds, if None, no bed constraints
+            bed_constraint: (bool) whether or not there is a bed available for this person
             source: (Person instance), if None, then it was a seed infection
 
         Returns:
