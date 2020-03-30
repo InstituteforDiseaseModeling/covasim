@@ -2,11 +2,8 @@
 Set the parameters for Covasim.
 '''
 
-import pylab as pl
 import pandas as pd
 from datetime import datetime
-import numba as nb
-import sciris as sc
 
 
 __all__ = ['make_pars', 'load_data']
@@ -38,9 +35,9 @@ def make_pars():
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
     pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']    = 0. # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
+    pars['diag_factor']    = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
-    pars['contacts']       = 20
+    pars['contacts']       = 20 # Estimated number of contacts
     pars['beta_pop']       = {'H': 1.5,  'S': 1.5,   'W': 1.5,  'R': 0.5} # Per-population beta weights; relative
     pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
 
@@ -49,7 +46,7 @@ def make_pars():
     pars['serial_std']     = 1.0 # Standard deviation of the serial interval
     pars['incub']          = 5.0 # Incubation period: days until an exposed person develops symptoms
     pars['incub_std']      = 1.0 # Standard deviation of the incubation period
-    pars['dur']            = 8 # Using Mike's Snohomish number
+    pars['dur']            = 8 # Using Mike Famulare's Snohomish number
     pars['dur_std']        = 2 # Variance in duration
 
     # Mortality and severity
@@ -67,18 +64,29 @@ def make_pars():
     return pars
 
 
-def load_data(filename):
-    ''' Load data for comparing to the model output '''
+def load_data(filename, datacols=None, **kwargs):
+    '''
+    Load data for comparing to the model output.
+
+    Args:
+        filename (str): the name of the file to load
+        datacols (list): list of required column names
+        kwargs (dict): passed to pd.read_excel()
+
+    Returns:
+        data (dataframe): pandas dataframe of the loaded data
+    '''
+
+    if datacols is None:
+        datacols = ['day', 'date', 'new_tests', 'new_positives']
 
     # Load data
-    raw_data = pd.read_excel(filename)
+    raw_data = pd.read_excel(filename, **kwargs)
 
     # Confirm data integrity and simplify
-    cols = ['day', 'date', 'new_tests', 'new_positives']
-    data = pd.DataFrame()
-    for col in cols:
+    for col in datacols:
         assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
-    data = raw_data[cols]
+    data = raw_data[datacols]
 
     return data
 

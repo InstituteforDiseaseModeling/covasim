@@ -42,27 +42,45 @@ class Sim(cvbase.BaseSim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
+
+    Args:
+        pars (dict): parameters to modify from their default values
+        datafile (str): filename of (Excel) data file to load, if any
+        datacols (list): list of column names of the data file to load
+        filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, filename=None):
+    def __init__(self, pars=None, datafile=None, datacols=None, filename=None):
         default_pars = cvpars.make_pars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
-        self.datafile = datafile # Store this
-        self.data = None
-        if datafile is not None: # If a data file is provided, load it
-            self.data = cvpars.load_data(datafile)
+        self.set_metadata(filename) # Set the simulation date and filename
+        self.load_data(datafile, datacols) # Load the data, if provided
+        self.update_pars(pars) # Update the parameters, if provided
+        self.stopped = None # If the simulation has stopped
+        self.results_ready = False # Whether or not results are ready
+        self.people = {} # Initialize these here so methods that check their length can see they're empty
+        self.results = {}
+        self.calculated = {}
+        return
+
+
+    def set_metadata(self, filename):
+        ''' Set the metadata for the simulation -- creation time and filename '''
         self.created = sc.now()
         if filename is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             filename = f'covasim_{datestr}.sim'
         self.filename = filename
-        self.stopped = None # If the simulation has stopped
-        self.results_ready = False # Whether or not results are ready
-        self.people = {}
-        self.results = {}
-        self.calculated = {}
-        if pars is not None:
-            self.update_pars(pars)
+        return
+
+
+    def load_data(self, datafile=None, datacols=None, **kwargs):
+        ''' Load the data to calibrate against, if provided '''
+        self.datafile = datafile # Store this
+        if datafile is not None: # If a data file is provided, load it
+            self.data = cvpars.load_data(datafile=datafile, datacols=datacols, **kwargs)
+        else: # Otherwise, skip
+            self.data = None
         return
 
 
@@ -506,6 +524,8 @@ class Sim(cvbase.BaseSim):
 
         # Define the data mapping. Must be here since uses functions
         if self.data is not None and len(self.data):
+            # start day of data may not co-incide with simulation
+            data_offset = (self.data.iloc[0]['date'] - self.pars['start_day']).days
             data_mapping = {
                 'cum_exposed': pl.cumsum(self.data['new_infections']),
                 'cum_diagnosed':  pl.cumsum(self.data['new_positives']),
@@ -524,7 +544,7 @@ class Sim(cvbase.BaseSim):
                 y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key in data_mapping:
-                    pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
+                    pl.scatter(self.data['day']+data_offset, data_mapping[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
 

@@ -14,7 +14,7 @@ do_save = 0
 do_show = 1
 verbose = 1
 seed    = 4
-interv  = True
+interv  = 1
 
 version  = 'v0'
 date     = '2020mar21'
