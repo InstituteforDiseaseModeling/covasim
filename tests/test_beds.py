@@ -7,8 +7,8 @@ import sciris as sc
 import covasim as cv
 
 do_plot   = 1
-do_show   = 0
-do_save   = 1
+do_show   = 1
+do_save   = 0
 debug     = 1
 keep_sims = 0
 fig_path  = 'results/testing_beds.png'
