@@ -78,7 +78,7 @@ class Sim(cvbase.BaseSim):
         ''' Load the data to calibrate against, if provided '''
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvpars.load_data(datafile=datafile, datacols=datacols, **kwargs)
+            self.data = cvpars.load_data(filename=datafile, datacols=datacols, **kwargs)
         else: # Otherwise, skip
             self.data = None
         return
