@@ -185,7 +185,7 @@ class Sim(cv.BaseSim):
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
                         n_contacts = cv.pt(person.contacts) # Draw the number of Poisson contacts for this person
-                        contact_inds = cv.choose_people(max_ind=len(self.people), n=n_contacts) # Choose people at random
+                        contact_inds = cv.choose(max_n=len(self.people), n=n_contacts) # Choose people at random
                         for contact_ind in contact_inds:
                             exposure = cv.bt(self['r_contact']) # Check for exposure per person
                             if exposure:
@@ -216,7 +216,7 @@ class Sim(cv.BaseSim):
                     self.results['tests'][t] = n_tests # Store the number of tests
                     test_probs = pl.array(list(test_probs.values()))
                     test_probs /= test_probs.sum()
-                    test_inds = cv.choose_people_weighted(probs=test_probs, n=n_tests)
+                    test_inds = cv.choose_weighted(probs=test_probs, n=n_tests)
                     uids_to_pop = []
                     for test_ind in test_inds:
                         tested_person = self.people[test_ind]
@@ -256,7 +256,7 @@ class Sim(cv.BaseSim):
                 if n_evacuated and not pl.isnan(n_evacuated): # There are evacuees this day # TODO -- refactor with n_tests
                     if verbose>=1:
                         print(f'Implementing evacuation on day {t}')
-                    evac_inds = cv.choose_people(max_ind=len(self.people), n=n_evacuated)
+                    evac_inds = cv.choose(max_n=len(self.people), n=n_evacuated)
                     uids_to_pop = []
                     for evac_ind in evac_inds:
                         evac_person = self.people[evac_ind]
