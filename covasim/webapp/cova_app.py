@@ -3,12 +3,12 @@ Sciris app to run the web interface.
 '''
 
 # Key imports
+import covasim as cv
 import os
 import sys
 import numpy as np
 import plotly.graph_objects as go
 import sciris as sc
-import covasim as cv
 import base64 # Download/upload-specific import
 import json
 
