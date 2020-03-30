@@ -133,10 +133,12 @@ class Sim(cvbase.BaseSim):
         self.results['n_exposed']      = init_res('Number exposed')
         self.results['n_infectious']   = init_res('Number infectious')
         self.results['n_symptomatic']  = init_res('Number symptomatic')
+        self.results['n_severe']       = init_res('Number with severe symptoms')
         self.results['n_recovered']    = init_res('Number recovered')
         self.results['infections']     = init_res('Number of new infections')
         self.results['tests']          = init_res('Number of tests')
         self.results['diagnoses']      = init_res('Number of new diagnoses')
+        self.results['bed_capacity']   = init_res('Percentage bed capacity', ispercentage=True)
         self.results['recoveries']     = init_res('Number of new recoveries')
         self.results['deaths']         = init_res('Number of new deaths')
         self.results['cum_exposed']    = init_res('Cumulative number exposed')
@@ -153,7 +155,7 @@ class Sim(cvbase.BaseSim):
         self.results_ready = False
 
         # Create calculated values structure
-        self.calculated['eff_beta'] = (1-self['default_symp_prob'])*self['asym_factor']*self['beta'] + self['default_symp_prob']*self['beta']  # Using asymptomatic proportion
+        self.calculated['eff_beta'] = (1-self['default_symp_prob'])*self['asymp_factor']*self['beta'] + self['default_symp_prob']*self['beta']  # Using asymptomatic proportion
         self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
 
@@ -222,15 +224,18 @@ class Sim(cvbase.BaseSim):
             n_infectious  = 0
             n_infections  = 0
             n_symptomatic = 0
+            n_severe      = 0
             n_recovered   = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
             rand_popdata     = (self['usepopdata'] == 'random')
             beta             = self['beta']
-            asym_factor      = self['asym_factor']
+            asymp_factor      = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
             beta_pop         = self['beta_pop']
+            n_beds           = self['n_beds']
+            bed_constraint   = False
 
             # Print progress
             if verbose>=1:
@@ -239,7 +244,6 @@ class Sim(cvbase.BaseSim):
                     sc.heading(string)
                 else:
                     print(string)
-
 
             # Update each person, skipping people who are susceptible
             not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
@@ -254,9 +258,6 @@ class Sim(cvbase.BaseSim):
                     if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
                         person.infectious = True
                         sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
-                    if not person.symptomatic and person.date_symptomatic is not None and t >= person.date_symptomatic:  # It's the day they develop symptoms
-                        person.symptomatic = True
-                        sc.printv(f'      Person {person.uid} developed symptoms!', 2, verbose)
 
                 # If infectious, check if anyone gets infected
                 if person.infectious:
@@ -269,13 +270,19 @@ class Sim(cvbase.BaseSim):
                     recovered = person.check_recovery(t)
                     n_recoveries += recovered
 
+                    # No recovery: check symptoms
+                    if not recovered:
+                        n_symptomatic += person.check_symptomatic(t)
+                        n_severe += person.check_severe(t)
+                        if n_severe > n_beds: bed_constraint = True
+
                     # If the person didn't die or recover, check for onward transmission
                     if not died and not recovered:
                         n_infectious += 1 # Count this person as infectious
 
                         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                         thisbeta = beta * \
-                                   (asym_factor if person.symptomatic else 1.) * \
+                                   (asymp_factor if person.symptomatic else 1.) * \
                                    (diag_factor if person.diagnosed else 1.) * \
                                    (cont_factor if person.known_contact else 1.)
 
@@ -298,18 +305,15 @@ class Sim(cvbase.BaseSim):
 
                             # Skip people who are not susceptible
                             if target_person.susceptible:
-                                n_infections += target_person.infect(t, person) # Actually infect them
+                                n_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                 sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
-
-                # Count people who developed symptoms
-                if person.symptomatic:
-                    n_symptomatic += 1
 
                 # Count people who recovered
                 if person.recovered:
                     n_recovered += 1
 
+            sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)
             # End of person loop; apply interventions
             for intervention in self['interventions']:
                 intervention.apply(self, t)
@@ -324,7 +328,9 @@ class Sim(cvbase.BaseSim):
             self.results['n_infectious'][t]  = n_infectious
             self.results['infections'][t]    = n_infections
             self.results['n_symptomatic'][t] = n_symptomatic
+            self.results['n_severe'][t]      = n_severe
             self.results['n_recovered'][t]   = n_recovered
+            self.results['bed_capacity'][t]  = n_severe/n_beds if n_beds>0 else None
 
         # End of time loop; compute cumulative results outside of the time loop
         self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values) + self['n_infected'] # Include initially infected people

@@ -8,7 +8,6 @@ import pylab as pl
 import sciris as sc
 from . import base as cvbase
 from . import sim as cvsim
-from . import healthsystem as cvhs
 
 
 # Specify all externally visible functions this file defines
@@ -112,14 +111,13 @@ class Scenarios(cvbase.ParsObj):
         return
 
 
-    def run(self, keep_sims=False, debug=False, healthsystems=True, verbose=None):
+    def run(self, keep_sims=False, debug=False, verbose=None):
         '''
         Run the actual scenarios
 
         Args:
             keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object (NB, very large)
             debug (bool): if True, runs a single run instead of multiple, which makes debugging easier
-            healthsystems (bool): whether or not to run a health systems analysis on the results
             verbose (int): level of detail to print, passed to sim.run()
 
         Returns:
@@ -202,11 +200,6 @@ class Scenarios(cvbase.ParsObj):
                     print(f'  {scenkey}: {self.allres[reskey][scenkey].best[-1]:0.0f}')
             print() # Add a blank space
 
-        # Perform health systems analysis
-        if healthsystems:
-            self.hsys = cvhs.HealthSystem(self.allres)
-            self.hsys.analyze()
-
         return
 
 
@@ -221,10 +214,10 @@ class Scenarios(cvbase.ParsObj):
             to_plot     (dict): Dict of results to plot; see default_scen_plots for structure
             do_save     (bool): Whether or not to save the figure
             fig_path    (str):  Path to save the figure
-            fig_args    (dict): Dictionary of kwargs to be passed to pl.figure                             ( )
-            plot_args   (dict): Dictionary of kwargs to be passed to pl.plot                               ( )
-            axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust                    ( )
-            fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between                       ( )
+            fig_args    (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args   (dict): Dictionary of kwargs to be passed to pl.plot()
+            axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between()
             as_dates    (bool): Whether to plot the x-axis as dates or time points
             interval    (int):  Interval between tick marks
             dateformat  (str):  Date string format, e.g. '%B %d'
@@ -272,8 +265,11 @@ class Scenarios(cvbase.ParsObj):
                 ax = pl.subplot(len(to_plot), 1, rk + 1)
 
             resdata = self.allres[reskey]
+            lowest_y  = min([min(resdata[k]['low']) for k in range(len(resdata))])
+            highest_y = max([max(resdata[k]['low']) for k in range(len(resdata))])
 
             for scenkey, scendata in resdata.items():
+
                 pl.fill_between(self.tvec, scendata.low, scendata.high, **fill_args)
                 pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
 
@@ -281,8 +277,8 @@ class Scenarios(cvbase.ParsObj):
                 if rk == 0:
                     pl.legend(loc='best')
 
-                sc.setylim()
                 pl.grid(grid)
+                pl.gca().set_ylim([lowest_y, highest_y])
                 if commaticks:
                     sc.commaticks()
 
@@ -311,10 +307,6 @@ class Scenarios(cvbase.ParsObj):
 
         return fig
 
-
-    def plot_healthsystem(self, *args, **kwargs):
-        ''' Very simple method to plot the health system results '''
-        return self.hsys.plot(*args, **kwargs)
 
 
     def save(self, filename=None, **kwargs):

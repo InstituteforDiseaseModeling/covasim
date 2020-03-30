@@ -23,8 +23,9 @@ class Person(sc.prettyobj):
         self.sex         = int(sex) # Female (0) or male (1)
         self.contacts    = contacts # The contacts this person has
         self.symp_prob   = symp_prob # Probability of developing symptoms
-        self.severe_prob = severe_prob # Conditional probability of symptoms becoming sever, if symptomatic
+        self.severe_prob = severe_prob # Conditional probability of symptoms becoming severe, if symptomatic
         self.death_prob  = death_prob # Conditional probability of dying, given severe symptoms
+        self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
 
         # Define state
         self.alive          = True
@@ -39,31 +40,41 @@ class Person(sc.prettyobj):
         self.known_contact  = False # Keep track of whether each person is a contact of a known positive
 
         # Infection property distributions
-        self.dist_serial = dict(dist='normal_int', par1=pars['serial'],    par2=pars['serial_std'])
-        self.dist_incub  = dict(dist='normal_int', par1=pars['incub'],     par2=pars['incub_std'])
-        self.dist_dur    = dict(dist='normal_int', par1=pars['dur'],       par2=pars['dur_std'])
-        self.dist_death  = dict(dist='normal_int', par1=pars['timetodie'], par2=pars['timetodie_std'])
+        self.dist_serial  = dict(dist='normal_int', par1=pars['serial'],    par2=pars['serial_std'])
+        self.dist_incub   = dict(dist='normal_int', par1=pars['incub'],     par2=pars['incub_std'])
+        self.dist_sev     = dict(dist='normal_int', par1=pars['severe'],    par2=pars['severe_std'])
+        self.dist_dur     = dict(dist='normal_int', par1=pars['dur'],       par2=pars['dur_std'])
+        self.dist_dur_sev = dict(dist='normal_int', par1=pars['dur_sev'],   par2=pars['dur_sev_std'])
+        self.dist_death   = dict(dist='normal_int', par1=pars['timetodie'], par2=pars['timetodie_std'])
 
         # Keep track of dates
-        self.date_exposed     = None
-        self.date_infectious  = None
-        self.date_symptomatic = None
-        self.date_diagnosed   = None
-        self.date_recovered   = None
-        self.date_died        = None
+        self.date_exposed      = None
+        self.date_infectious   = None
+        self.date_symptomatic  = None
+        self.date_severe       = None
+#        self.date_hospitalized = None
+        self.date_diagnosed    = None
+        self.date_recovered    = None
+        self.date_died         = None
 
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
         return
 
 
-    def infect(self, t, source=None):
+    def infect(self, t, bed_constraint=None, source=None):
         """
-        Infect this person
+        Infect this person and determine their eventual outcomes.
+            * Every infected person can infect other people, regardless of whether they develop symptoms
+            * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization)
+            * Every asymptomatic infected person recovers
+            * Symptomatic infected people either recover or die, with the probability of recovery affected by whether they are hospitalized
 
-        This routine infects the person
         Args:
-            source: A Person instance. If None, then it was a seed infection
+            t: (int) timestep
+            bed_constraint: (bool) whether or not there is a bed available for this person
+            source: (Person instance), if None, then it was a seed infection
+
         Returns:
             1 (for incrementing counters)
         """
@@ -71,24 +82,37 @@ class Person(sc.prettyobj):
         self.exposed        = True
         self.date_exposed   = t
 
+        # Deal with bed constraint if applicable
+        if bed_constraint is None: bed_constraint = False
+
         # Calculate how long before they can infect other people
         serial_dist          = cvu.sample(**self.dist_serial)
         self.date_infectious = t + serial_dist
 
         # Use prognosis probabilities to determine what happens to them
-        sym_bool = cvu.bt(self.symp_prob)
+        symp_bool = cvu.bt(self.symp_prob) # Determine if they develop symptoms
 
-        if sym_bool:  # They develop symptoms
+        # CASE 1: Asymptomatic: may infect others, but no symptoms and no probability of death
+        if not symp_bool:  # No symptoms
+            self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur)  # Date they recover
+
+        # CASE 2: Symptomatic: can either be a mild case or a severe case
+        else:
             self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
-            self.severe = cvu.bt(self.severe_prob) # See if they're a severe or mild case
-            death_bool = cvu.bt(self.death_prob) # TODO: incorporate health system
-            if death_bool and self.severe: # They die
-                self.date_died = t + cvu.sample(**self.dist_death) # Date of death
-            else: # They recover
-                self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
+            sev_bool = cvu.bt(self.severe_prob) # See if they're a severe or mild case
 
-        else: # They recover
-            self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
+            # CASE 2a: Mild symptoms, no hospitalization required and no probaility of death
+            if not sev_bool: # Easiest outcome is that they're a mild case - set recovery date
+                self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur)  # Date they recover
+
+            # CASE 2b: Severe cases: hospitalization required, death possible
+            else:
+                self.date_severe = self.date_symptomatic + cvu.sample(**self.dist_sev)  # Date symptoms become severe
+                this_death_prob = self.death_prob * (self.OR_no_treat if bed_constraint else 1.) # Probability they'll die
+                death_bool = cvu.bt(this_death_prob)  # Death outcome
+                #if not bed_constraint: self.date_hospitalized = self.date_severe  # They get hospitalized when symptoms become severe
+                if death_bool: self.date_died = t + cvu.sample(**self.dist_death)  # Date of death
+                else: self.date_recovered = self.date_severe + cvu.sample(**self.dist_dur_sev) # Date they recover
 
         if source:
             self.infected_by = source.uid
@@ -100,12 +124,12 @@ class Person(sc.prettyobj):
 
 
     def check_death(self, t):
-        ''' Check whether or not this person died on this timestep -- let's hope not '''
-
-        if self.date_died and t >= self.date_died:
+        ''' Check whether or not this person died on this timestep  '''
+        if self.date_died and t == self.date_died:
             self.exposed     = False
             self.infectious  = False
             self.symptomatic = False
+            self.severe      = False
             self.recovered   = False
             self.died        = True
             death = 1
@@ -115,13 +139,34 @@ class Person(sc.prettyobj):
         return death
 
 
+    def check_symptomatic(self, t):
+        ''' Check if an infected person has developed symptoms '''
+        if self.date_symptomatic and t == self.date_symptomatic: # Person is symptomatic
+            self.symptomatic = True
+            symptomatic = 1
+        else:
+            symptomatic = 0
+        return symptomatic
+
+
+    def check_severe(self, t):
+        ''' Check if an infected person has developed severe symptoms requiring hospitalization'''
+        if self.date_severe and t == self.date_severe: # Symptoms have become bad enough to need hospitalization
+            self.severe = True
+            severe = 1
+        else:
+            severe = 0
+        return severe
+
+
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
 
-        if self.date_recovered and t >= self.date_recovered: # It's the day they recover
+        if self.date_recovered and t == self.date_recovered: # It's the day they recover
             self.exposed     = False
             self.infectious  = False
             self.symptomatic = False
+            self.severe      = False
             self.recovered   = True
             recovery = 1
         else:
@@ -262,7 +307,7 @@ def set_prognoses(sim, popdict):
 
     # If not by age, same value for everyone
     if not by_age:
-        prognoses.symp_prob   = sim['default_symp_prob']*np.ones(n)
+        prognoses.symp_prob    = sim['default_symp_prob']*np.ones(n)
         prognoses.severe_prob = sim['default_severe_prob']*np.ones(n)
         prognoses.death_prob  = sim['default_death_prob']*np.ones(n)
 
@@ -290,9 +335,9 @@ def set_prognoses(sim, popdict):
             death_prob.append(this_death_prob)
 
         # Return output
-        prognoses.symp_prob   = symp_prob
+        prognoses.symp_prob    = symp_prob
         prognoses.severe_prob = severe_prob
-        prognoses.death_prob   = death_prob
+        prognoses.death_prob  = death_prob
 
     popdict.update(prognoses) # Add keys to popdict
 

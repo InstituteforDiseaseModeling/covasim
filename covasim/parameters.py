@@ -34,7 +34,7 @@ def make_pars():
 
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
-    pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['asymp_factor']   = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']    = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']       = 20 # Estimated number of contacts
@@ -46,8 +46,14 @@ def make_pars():
     pars['serial_std']     = 1.0 # Standard deviation of the serial interval
     pars['incub']          = 5.0 # Incubation period: days until an exposed person develops symptoms
     pars['incub_std']      = 1.0 # Standard deviation of the incubation period
-    pars['dur']            = 8 # Using Mike Famulare's Snohomish number
-    pars['dur_std']        = 2 # Variance in duration
+    pars['severe']         = 3.0 # Number of days after symptom onset before hospitalization is required (for severe cases)
+    pars['severe_std']     = 1.0 # Standard deviation of the above period
+
+    # Recovery
+    pars['dur']            = 8.0 # Mean recovery time for asymptomatic and mild cases
+    pars['dur_std']        = 2.0 # Variance in duration
+    pars['dur_sev']        = 11.0 # Mean length of hospital stay for severe cases
+    pars['dur_sev_std']    = 3.0 # Variance in duration of hospital stay for severe cases
 
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death
@@ -56,10 +62,14 @@ def make_pars():
     pars['default_symp_prob']   = 0.7 # If not using age-specific values: overall proportion of symptomatic cases
     pars['default_severe_prob'] = 0.3 # If not using age-specific values: proportion of symptomatic cases that become severe (default 0.2 total)
     pars['default_death_prob']  = 0.07 # If not using age-specific values: proportion of severe cases that result in death (default 0.02 CFR)
+    pars['OR_no_treat']         = 2. # Odds ratio for how much more likely people are to die if no treatment available
 
     # Events and interventions
     pars['interventions'] = []  #: List of Intervention instances
     pars['interv_func'] = None # Custom intervention function
+
+    # Health system parameters
+    pars['n_beds'] = pars['n']  # Baseline assumption is that there's enough beds for the whole population (i.e., no constraints)
 
     return pars
 

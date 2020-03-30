@@ -13,4 +13,3 @@ from .people import *
 from .sim import *
 from .run import *
 from .interventions import *
-from .healthsystem import *
