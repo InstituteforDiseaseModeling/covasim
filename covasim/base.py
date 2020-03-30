@@ -42,16 +42,19 @@ class ParsObj(sc.prettyobj):
             raise KeyError(errormsg)
         return
 
-    def update_pars(self, pars, create=False):
+    def update_pars(self, pars=None, create=False):
         '''
-        Update internal dict with new pars. If create is False, then raise a KeyError
-        if the key does not already exist.
+        Update internal dict with new pars.
+
+        Args:
+            pars (dict): the parameters to update (if None, do nothing)
+            create (bool): if create is False, then raise a KeyError if the key does not already exist
         '''
-        if not isinstance(pars, dict):
-            raise TypeError(f'The pars object must be a dict; you supplied a {type(pars)}')
-        if not hasattr(self, 'pars'):
-            self.pars = pars
-        elif pars is not None:
+        if pars is not None:
+            if not isinstance(pars, dict):
+                raise TypeError(f'The pars object must be a dict; you supplied a {type(pars)}')
+            if not hasattr(self, 'pars'):
+                self.pars = pars
             if not create:
                 available_keys = list(self.pars.keys())
                 mismatches = [key for key in pars.keys() if key not in available_keys]
