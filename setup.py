@@ -48,7 +48,7 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Development Status :: 3",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3.7",
 ]
 
