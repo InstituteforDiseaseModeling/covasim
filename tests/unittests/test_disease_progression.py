@@ -2,6 +2,8 @@
 Tests of simulation parameters from
 ../../covasim/README.md
 """
+import matplotlib
+matplotlib.use('TkAgg')
 import unittest
 
 from unittest_support_classes import CovaSimTest, TestProperties
