@@ -62,7 +62,7 @@ class Person(sc.prettyobj):
         return
 
 
-    def infect(self, t, n_beds=None, source=None):
+    def infect(self, t, bed_constraint=None, source=None):
         """
         Infect this person and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
@@ -83,8 +83,7 @@ class Person(sc.prettyobj):
         self.date_exposed   = t
 
         # Deal with bed constraint if applicable
-        bed_constraint = False
-        if (n_beds is not None) and (n_beds == 0): bed_constraint = True
+        if bed_constraint is None: bed_constraint = False
 
         # Calculate how long before they can infect other people
         serial_dist          = cvu.sample(**self.dist_serial)
@@ -125,7 +124,7 @@ class Person(sc.prettyobj):
 
 
     def check_death(self, t):
-        ''' Check whether or not this person died on this timestep -- let's hope not '''
+        ''' Check whether or not this person died on this timestep  '''
         if self.date_died and t >= self.date_died:
             self.exposed     = False
             self.infectious  = False

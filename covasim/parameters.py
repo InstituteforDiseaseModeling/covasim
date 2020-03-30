@@ -68,10 +68,7 @@ def make_pars():
     pars['interv_func'] = None # Custom intervention function
 
     # Health system parameters
-    pars['incl_hs'] = True # Whether or not to include health systems
-    if pars['incl_hs']:
-        pars['n_beds'] = 1000 # Temporary assumption
-
+    pars['n_beds'] = pars['n']  # Baseline assumption is that there's enough beds for the whole population (i.e., no constraints)
 
     return pars
 

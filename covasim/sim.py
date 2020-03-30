@@ -216,6 +216,7 @@ class Sim(cvbase.BaseSim):
             cont_factor      = self['cont_factor']
             beta_pop         = self['beta_pop']
             n_beds           = self['n_beds']
+            bed_constraint   = False
 
             # Print progress
             if verbose>=1:
@@ -253,12 +254,13 @@ class Sim(cvbase.BaseSim):
                     recovered = person.check_recovery(t)
                     n_recoveries += recovered
 
-                    # Check symptoms
-                    symptomatic = person.check_symptomatic(t)
-                    n_symptomatic += symptomatic
-                    severe = person.check_severe(t)
-                    n_severe += severe
-                    n_beds -= severe
+                    # No recovery: check symptoms
+                    if not recovered:
+                        symptomatic = person.check_symptomatic(t)
+                        n_symptomatic += symptomatic
+                        severe = person.check_severe(t)
+                        n_severe += severe
+                        if n_severe > n_beds: bed_constraint = True
 
                     # If the person didn't die or recover, check for onward transmission
                     if not died and not recovered:
@@ -289,7 +291,7 @@ class Sim(cvbase.BaseSim):
 
                             # Skip people who are not susceptible
                             if target_person.susceptible:
-                                n_infections += target_person.infect(t, n_beds, source=person) # Actually infect them
+                                n_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                 sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
 
@@ -297,6 +299,7 @@ class Sim(cvbase.BaseSim):
                 if person.recovered:
                     n_recovered += 1
 
+            sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 1, verbose)
             # End of person loop; apply interventions
             for intervention in self['interventions']:
                 intervention.apply(self, t)
