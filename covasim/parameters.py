@@ -34,7 +34,7 @@ def make_pars():
 
     # Disease transmission
     pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
-    pars['asym_factor']    = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['asymp_factor']   = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']    = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes no isolation
     pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']       = 20 # Estimated number of contacts
@@ -59,7 +59,7 @@ def make_pars():
     pars['timetodie']           = 21 # Days until death
     pars['timetodie_std']       = 2 # STD
     pars['prog_by_age']         = True # Whether or not to use age-specific probabilities of prognosis (symptoms/severe symptoms/death)
-    pars['default_sym_prob']    = 0.7 # If not using age-specific values: overall proportion of symptomatic cases
+    pars['default_symp_prob']   = 0.7 # If not using age-specific values: overall proportion of symptomatic cases
     pars['default_severe_prob'] = 0.3 # If not using age-specific values: proportion of symptomatic cases that become severe (default 0.2 total)
     pars['default_death_prob']  = 0.07 # If not using age-specific values: proportion of severe cases that result in death (default 0.02 CFR)
     pars['OR_no_treat']         = 2. # Odds ratio for how much more likely people are to die if no treatment available

@@ -155,7 +155,7 @@ class Sim(cvbase.BaseSim):
         self.results_ready = False
 
         # Create calculated values structure
-        self.calculated['eff_beta'] = (1-self['default_sym_prob'])*self['asym_factor']*self['beta'] + self['default_sym_prob']*self['beta']  # Using asymptomatic proportion
+        self.calculated['eff_beta'] = (1-self['default_symp_prob'])*self['asymp_factor']*self['beta'] + self['default_symp_prob']*self['beta']  # Using asymptomatic proportion
         self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
 
@@ -230,7 +230,7 @@ class Sim(cvbase.BaseSim):
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
             rand_popdata     = (self['usepopdata'] == 'random')
             beta             = self['beta']
-            asym_factor      = self['asym_factor']
+            asymp_factor      = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
             beta_pop         = self['beta_pop']
@@ -272,10 +272,8 @@ class Sim(cvbase.BaseSim):
 
                     # No recovery: check symptoms
                     if not recovered:
-                        symptomatic = person.check_symptomatic(t)
-                        n_symptomatic += symptomatic
-                        severe = person.check_severe(t)
-                        n_severe += severe
+                        n_symptomatic += person.check_symptomatic(t)
+                        n_severe += person.check_severe(t)
                         if n_severe > n_beds: bed_constraint = True
 
                     # If the person didn't die or recover, check for onward transmission
@@ -284,7 +282,7 @@ class Sim(cvbase.BaseSim):
 
                         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                         thisbeta = beta * \
-                                   (asym_factor if person.symptomatic else 1.) * \
+                                   (asymp_factor if person.symptomatic else 1.) * \
                                    (diag_factor if person.diagnosed else 1.) * \
                                    (cont_factor if person.known_contact else 1.)
 

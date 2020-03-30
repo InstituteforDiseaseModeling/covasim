@@ -17,7 +17,7 @@ This file describes the expected behavior of each parameter in the model. Note: 
 
 ## Disease transmission
 * `beta`: Transmissibility per contact. Test: set to 0 for no infections, set to 1 for ≈`contacts` infections per day (will not be exactly equal due to overlap and other effects)
-* `asym_factor`: Effect of asymptomaticity on transmission.
+* `asymp_factor`: Effect of asymptomaticity on transmission.
 * `diag_factor`: Effect of diagnosis on transmission.
 * `cont_factor`: Effect of being a known contact  on transmission.
 * `contacts`: Number of contacts per person. Test: set to 0 for no infections. Infection rate should scale roughly linearly with this parameter.

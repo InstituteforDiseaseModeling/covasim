@@ -17,12 +17,12 @@ class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, uid, age, sex, contacts, sym_prob, severe_prob, death_prob):
+    def __init__(self, pars, uid, age, sex, contacts, symp_prob, severe_prob, death_prob):
         self.uid         = str(uid) # This person's unique identifier
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
         self.contacts    = contacts # The contacts this person has
-        self.sym_prob    = sym_prob # Probability of developing symptoms
+        self.symp_prob   = symp_prob # Probability of developing symptoms
         self.severe_prob = severe_prob # Conditional probability of symptoms becoming severe, if symptomatic
         self.death_prob  = death_prob # Conditional probability of dying, given severe symptoms
         self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
@@ -90,10 +90,10 @@ class Person(sc.prettyobj):
         self.date_infectious = t + serial_dist
 
         # Use prognosis probabilities to determine what happens to them
-        sym_bool = cvu.bt(self.sym_prob) # Determine if they develop symptoms
+        symp_bool = cvu.bt(self.symp_prob) # Determine if they develop symptoms
 
         # CASE 1: Asymptomatic: may infect others, but no symptoms and no probability of death
-        if not sym_bool:  # No symptoms
+        if not symp_bool:  # No symptoms
             self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur)  # Date they recover
 
         # CASE 2: Symptomatic: can either be a mild case or a severe case
@@ -219,7 +219,7 @@ def make_people(sim, verbose=None, id_len=None, die=True):
     # Actually create the people
     people = {} # Dictionary for storing the people -- use plain dict since faster than odict
     for p in range(n_people): # Loop over each person
-        keys = ['uid', 'age', 'sex', 'contacts', 'sym_prob', 'severe_prob', 'death_prob']
+        keys = ['uid', 'age', 'sex', 'contacts', 'symp_prob', 'severe_prob', 'death_prob']
         person_args = {}
         for key in keys:
             person_args[key] = popdict[key][p] # Convert from list to dict
@@ -307,35 +307,35 @@ def set_prognoses(sim, popdict):
 
     # If not by age, same value for everyone
     if not by_age:
-        prognoses.sym_prob    = sim['default_sym_prob']*np.ones(n)
+        prognoses.symp_prob    = sim['default_symp_prob']*np.ones(n)
         prognoses.severe_prob = sim['default_severe_prob']*np.ones(n)
         prognoses.death_prob  = sim['default_death_prob']*np.ones(n)
 
     else:
         # Overall probabilities of symptoms, severe symptoms, and death
         age_cutoffs  = [10,      20,      30,      40,      50,      60,      70,      80,      100]
-        sym_probs   = [0.50,    0.55,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.95]    # Overall probability of developing symptoms
+        symp_probs   = [0.50,    0.55,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.95]    # Overall probability of developing symptoms
         severe_probs = [0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400] # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
         death_probs  = [0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300] # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
 
         # Conditional probabilities of severe symptoms (given symptomatic) and death (given severe symptoms)
-        severe_if_sym   = [sev/sym if sym>0 and sev/sym>0 else 0 for (sev,sym) in zip(severe_probs,sym_probs)]   # Conditional probabilty of developing severe symptoms, given symptomatic
+        severe_if_sym   = [sev/sym if sym>0 and sev/sym>0 else 0 for (sev,sym) in zip(severe_probs,symp_probs)]   # Conditional probabilty of developing severe symptoms, given symptomatic
         death_if_severe = [d/s if s>0 and d/s>0 else 0 for (d,s) in zip(death_probs,severe_probs)]                # Conditional probabilty of dying, given severe symptoms
 
         # Calculate prognosis for each person
-        sym_prob, severe_prob, death_prob  = [],[],[]
+        symp_prob, severe_prob, death_prob  = [],[],[]
         for age in ages:
             # Figure out which probability applies to a person of the specified age
             ind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), -1)
-            this_sym_prob    = sym_probs[ind]    # Probability of developing symptoms
+            this_symp_prob    = symp_probs[ind]    # Probability of developing symptoms
             this_severe_prob = severe_if_sym[ind] # Probability of developing severe symptoms
             this_death_prob  = death_if_severe[ind] # Probability of dying after developing severe symptoms
-            sym_prob.append(this_sym_prob)
+            symp_prob.append(this_symp_prob)
             severe_prob.append(this_severe_prob)
             death_prob.append(this_death_prob)
 
         # Return output
-        prognoses.sym_prob    = sym_prob
+        prognoses.symp_prob    = symp_prob
         prognoses.severe_prob = severe_prob
         prognoses.death_prob  = death_prob
 
