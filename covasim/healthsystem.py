@@ -31,7 +31,7 @@ class HealthSystem(sc.prettyobj):
     '''
     Class for storing, analyzing, a plotting health systems data.
 
-    Data are assumed to come from COVASim and be of the format:
+    Data are assumed to come from Covasim and be of the format:
         data[result_type][scenario_name][best,low,high] = time series
         e.g.
         data.cum_exposed.baseline.best = [0, 1, 1, 2, 3, 5, 10, 13 ...]
