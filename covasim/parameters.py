@@ -78,7 +78,7 @@ def load_data(filename, datacols=None, **kwargs):
     '''
 
     if datacols is None:
-        datacols = ['day', 'date', 'new_tests', 'new_positives', 'new_infections']
+        datacols = ['day', 'date', 'new_tests', 'new_positives']
 
     # Load data
     raw_data = pd.read_excel(filename, **kwargs)
