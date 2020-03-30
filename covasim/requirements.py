@@ -33,8 +33,6 @@ def get_min_versions():
 
     return # NB, modifies the module-level min_versions dict in-place
 
-get_min_versions() # Populate these straight away
-
 
 #%% Check dependencies
 
@@ -97,7 +95,7 @@ def check_extra_libs():
         import synthpops # noqa
         available['synthpops'] = True
     except ImportError as E:
-        import_error = f'Note: synthpops (for detailed demographic data) is not available (reason: {str(E)})\n'
+        import_error = f'Note: synthpops (for detailed demographic data) is not available ({str(E)})\n'
         available['synthpops'] = True
         print(import_error)
 
@@ -106,9 +104,14 @@ def check_extra_libs():
     #     import parestlib as _parest_available # noqa
     #     available['parestlib'] = True
     # except ImportError as E:
-    #     import_error = f'Note: parestlib (for automatic calibration) is not available (reason: {str(E)})\n'
+    #     import_error = f'Note: parestlib (for automatic calibration) is not available ({str(E)})\n'
     #     available['parestlib'] = True
     #     print(import_error)
 
     return
 
+# Perform the version checks on import
+get_min_versions()
+check_sciris()
+check_scirisweb(die=False)
+check_extra_libs()

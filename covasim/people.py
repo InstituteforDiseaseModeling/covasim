@@ -3,30 +3,29 @@ Defines the Person class and functions associated with making people.
 '''
 
 #%% Imports
-import numba as nb
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
+from . import requirements as cvreqs
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['Person', 'make_people', 'set_person_attrs', 'set_prognosis']
+__all__ = ['Person', 'make_people', 'make_randpop', 'set_prognoses']
 
 
 class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, age, sex, sym_prob, severe_prob, death_prob, pars, uid=None, id_len=8):
-        if uid is None:
-            uid = sc.uuid(length=id_len) # Unique identifier for this person
-        self.uid = str(uid)
-        self.age = float(age) # Age of the person (in years)
-        self.sex = int(sex) # Female (0) or male (1)
+    def __init__(self, pars, uid, age, sex, contacts, symp_prob, severe_prob, death_prob):
+        self.uid         = str(uid) # This person's unique identifier
+        self.age         = float(age) # Age of the person (in years)
+        self.sex         = int(sex) # Female (0) or male (1)
+        self.contacts    = contacts # The contacts this person has
         self.sym_prob = sym_prob # Probability of developing symptoms
-        self.severe_prob = severe_prob # Conditional probability of symptoms becoming sever, if symptomatic
-        self.death_prob = death_prob # Conditional probability of dying, given severe symptoms
-        self.OR_no_treat = pars['OR_no_treat'] # Increase in the probability of dying if treatment not available
+        self.severe_prob = severe_prob # Conditional probability of symptoms becoming severe, if symptomatic
+        self.death_prob  = death_prob # Conditional probability of dying, given severe symptoms
+        self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
 
         # Define state
         self.alive          = True
@@ -186,136 +185,159 @@ class Person(sc.prettyobj):
 
 
 
-def make_people(sim, verbose=None, id_len=None):
+def make_people(sim, verbose=None, id_len=None, die=True):
 
+    # Set defaults
     if verbose is None: verbose = sim['verbose']
     if id_len  is None: id_len  = 6
 
-    # Create the people -- just placeholders if we're using actual data
-    people = {} # Dictionary for storing the people -- use plain dict since faster than odict
-    n_people = int(sim['n'])
-    uids = sc.uuid(which='ascii', n=n_people, length=id_len)
-    for p in range(n_people): # Loop over each person
-        uid = uids[p]
-        if sim['usepopdata'] != 'random':
-            age, sex, sym_prob, severe_prob, death_prob= -1, -1, -1, -1, -1 # These get overwritten later
+    # Set inputs
+    n_people     = int(sim['n']) # Shorten
+    usepopdata   = sim['usepopdata'] # Shorten
+    use_rand_pop = (usepopdata == 'random') # Whether or not to use a random population (as opposed to synthpops)
+
+    # Check which type of population to rpoduce
+    if not use_rand_pop and not cvreqs.available['synthpops']:
+        errormsg = f'You have requested "{usepopdata}" population, but synthpops is not available; please use "random"'
+        if die:
+            raise ValueError(errormsg)
         else:
-            age, sex, sym_prob, severe_prob, death_prob = set_person_attrs(by_age=sim['prog_by_age'],
-                                                                            default_sym_prob=sim['default_sym_prob'],
-                                                                            default_severe_prob=sim['default_severe_prob'],
-                                                                            default_death_prob=sim['default_death_prob'],
-                                                                            use_data=False)
-        person = Person(age=age, sex=sex, sym_prob=sym_prob, severe_prob=severe_prob, death_prob=death_prob, uid=uid, pars=sim.pars) # Create the person
-        people[uid] = person # Save them to the dictionary
+            print(errormsg)
+            usepopdata = 'random'
+
+    # Actually create the population
+    if use_rand_pop:
+        popdict = make_randpop(sim)
+    else:
+        import synthpops as sp # Optional import
+        popdict = sp.make_population(n=sim['n'])
+
+    # Set prognoses by modifying popdict in place
+    set_prognoses(sim, popdict)
+
+    # Actually create the people
+    people = {} # Dictionary for storing the people -- use plain dict since faster than odict
+    for p in range(n_people): # Loop over each person
+        keys = ['uid', 'age', 'sex', 'contacts', 'symp_prob', 'severe_prob', 'death_prob']
+        person_args = {}
+        for key in keys:
+            person_args[key] = popdict[key][p] # Convert from list to dict
+        person = Person(pars=sim.pars, **person_args) # Create the person
+        people[person_args['uid']] = person # Save them to the dictionary
 
     # Store UIDs and people
-    sim.uids = uids
+    sim.uids = popdict['uid']
     sim.people = people
+    sim.contact_keys = list(sim['contacts_pop'].keys())
 
-    # Make the contact matrix -- TODO: move into a separate function
-    if sim['usepopdata'] == 'random':
-        sc.printv(f'Creating contact matrix without data...', 2, verbose)
-        for p in range(int(sim['n'])):
-            person = sim.get_person(p)
-            person.n_contacts = cvu.pt(sim['contacts']) # Draw the number of Poisson contacts for this person
-            person.contact_inds = cvu.choose_people(max_ind=len(sim.people), n=person.n_contacts) # Choose people at random, assigning to household
-    else:
-        sc.printv(f'Creating contact matrix with data...', 2, verbose)
-        import synthpops as sp
-
-        sim.contact_keys = list(sim['contacts_pop'].keys())
-
-        make_contacts_keys = ['use_age','use_sex','use_loc','use_social_layers']
-        options_args = dict.fromkeys(make_contacts_keys, True)
-        if sim['usepopdata'] == 'bayesian':
-            bayesian_args = sc.dcp(options_args)
-            bayesian_args['use_bayesian'] = True
-            bayesian_args['use_usa'] = False
-            popdict = sp.make_popdict(uids=sim.uids, use_bayesian=True)
-            contactdict = sp.make_contacts(popdict, options_args=bayesian_args)
-        elif sim['usepopdata'] == 'data':
-            data_args = sc.dcp(options_args)
-            data_args['use_bayesian'] = False
-            data_args['use_usa'] = True
-            popdict = sp.make_popdict(uids=sim.uids, use_bayesian=False)
-            contactdict = sp.make_contacts(popdict, options_args=data_args)
-
-        contactdict = sc.odict(contactdict)
-        for p,uid,entry in contactdict.enumitems():
-            person = sim.get_person(p)
-            person.age = entry['age']
-            person.sex = entry['sex']
-            person.cfr = set_cfr(person.age, default_cfr=sim['default_cfr'], cfr_by_age=sim['cfr_by_age'])
-            person.contact_inds = entry['contacts']
-
-    sc.printv(f'Created {sim["n"]} people, average age {sum([person.age for person in sim.people.values()])/sim["n"]:0.2f} years', 1, verbose)
+    average_age = sum(popdict['age']/n_people)
+    sc.printv(f'Created {n_people} people, average age {average_age:0.2f} years', 1, verbose)
 
     return
 
+def make_randpop(sim, id_len=6):
+    ''' Make a random population, without contacts '''
 
-@nb.njit()
-def _get_norm_age(min_age, max_age, age_mean, age_std):
-    norm_age = np.random.normal(age_mean, age_std)
-    age = np.minimum(np.maximum(norm_age, min_age), max_age)
-    return age
+    # Load age data based on 2018 Seattle demographics
+    age_data = np.array([
+        [ 0,  4, 0.0605],
+        [ 5,  9, 0.0607],
+        [10, 14, 0.0566],
+        [15, 19, 0.0557],
+        [20, 24, 0.0612],
+        [25, 29, 0.0843],
+        [30, 34, 0.0848],
+        [35, 39, 0.0764],
+        [40, 44, 0.0697],
+        [45, 49, 0.0701],
+        [50, 54, 0.0681],
+        [55, 59, 0.0653],
+        [60, 64, 0.0591],
+        [65, 69, 0.0453],
+        [70, 74, 0.0312],
+        [75, 79, 0.02016], # Calculated based on 0.0504 total for >=75
+        [80, 84, 0.01344],
+        [85, 89, 0.01008],
+        [90, 99, 0.00672],
+        ])
+
+    # Handle sex and UID
+    n_people = int(sim['n']) # Number of people
+    uids = sc.uuid(which='ascii', n=n_people, length=id_len)
+    sexes = cvu.rbt(0.5, n_people)
+
+    # Handle ages
+    age_data_min  = age_data[:,0]
+    age_data_max  = age_data[:,1] + 1 # Since actually e.g. 69.999
+    age_data_range = age_data_max - age_data_min
+    age_data_prob = age_data[:,2]
+    age_data_prob /= age_data_prob.sum() # Ensure it sums to 1
+    age_bins = cvu.mt(age_data_prob, n_people) # Choose age bins
+    ages = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(n_people) # Uniformly distribute within this age bin
+
+    # Make contacts
+    contacts = []
+    for p in range(n_people):
+        n_contacts = cvu.pt(sim['contacts']) # Draw the number of Poisson contacts for this person
+        contact_inds = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random, assigning to household
+        contacts.append(contact_inds)
+
+    # Store output; data duplicated as per-person and list-like formats for convenience
+    popdict = {}
+    popdict['uid']     = uids
+    popdict['age']     = ages
+    popdict['sex']    = sexes
+    popdict['contacts'] = contacts
+
+    return popdict
 
 
-def set_person_attrs(min_age=0, max_age=99, age_mean=40, age_std=15, default_sym_prob=None, default_severe_prob=None,
-                     default_death_prob=None, by_age=True, use_data=True):
-    '''
-    Set the attributes for an individual, including:
-        * age
-        * sex
-        * prognosis (i.e., how likely they are to develop symptoms/develop severe symptoms/die, based on age)
-    '''
-    sex = np.random.randint(2) # Define female (0) or male (1) -- evenly distributed
-    age = _get_norm_age(min_age, max_age, age_mean, age_std)
-
-    # Get the prognosis for a person of this age
-    sym_prob, severe_prob, death_prob = set_prognosis(age=age, default_sym_prob=default_sym_prob, default_severe_prob=default_severe_prob, default_death_prob=default_death_prob, by_age=by_age)
-
-    return age, sex, sym_prob, severe_prob, death_prob
-
-
-def set_prognosis(age=None, default_sym_prob=0.7, default_severe_prob=0.2, default_death_prob=0.02, by_age=True):
+def set_prognoses(sim, popdict):
     '''
     Determine the prognosis of an infected person: probability of being aymptomatic, or if symptoms develop, probability
     of developing severe symptoms and dying, based on their age
     '''
-    # Overall probabilities of symptoms, severe symptoms, and death
-    age_cutoffs  = [10,      20,      30,      40,      50,      60,      70,      80,      100]
-    sym_probs    = [0.50,    0.55,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.95]    # Overall probability of developing symptoms
-    severe_probs = [0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400] # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
-    death_probs  = [0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300] # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
 
-    # Conditional probabilities of severe symptoms (given symptomatic) and death (given severe symptoms)
-    severe_if_sym   = [sev/sym if sym>0 and sev/sym>0 else 0 for (sev,sym) in zip(severe_probs,sym_probs)]   # Conditional probabilty of developing severe symptoms, given symptomatic
-    death_if_severe = [d/s if s>0 and d/s>0 else 0 for (d,s) in zip(death_probs,severe_probs)]                # Conditional probabilty of dying, given severe symptoms
+    # Initialize input and output
+    by_age = sim['prog_by_age']
+    ages = sc.promotetoarray(popdict['age']) # Ensure it's an array
+    n = len(ages)
+    prognoses = sc.objdict()
 
-    # Process different options for age
-    # Not supplied, use default
-    if age is None or not by_age:
-        sym_prob, severe_prob, death_prob = default_sym_prob, default_severe_prob, default_death_prob
+    # If not by age, same value for everyone
+    if not by_age:
+        prognoses.symp_prob   = sim['default_sym_prob']*np.ones(n)
+        prognoses.severe_prob = sim['default_severe_prob']*np.ones(n)
+        prognoses.death_prob  = sim['default_death_prob']*np.ones(n)
 
-    # Single number
-    elif sc.isnumber(age):
+    else:
+        # Overall probabilities of symptoms, severe symptoms, and death
+        age_cutoffs  = [10,      20,      30,      40,      50,      60,      70,      80,      100]
+        sym_probs   = [0.50,    0.55,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.95]    # Overall probability of developing symptoms
+        severe_probs = [0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400] # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
+        death_probs  = [0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300] # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
 
-        # Figure out which probability applies to a person of the specified age
-        ind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), -1)
-        sym_prob    = sym_probs[ind]    # Probability of developing symptoms
-        severe_prob = severe_if_sym[ind] # Probability of developing severe symptoms
-        death_prob  = death_if_severe[ind] # Probability of dying after developing severe symptoms
+        # Conditional probabilities of severe symptoms (given symptomatic) and death (given severe symptoms)
+        severe_if_sym   = [sev/sym if sym>0 and sev/sym>0 else 0 for (sev,sym) in zip(severe_probs,sym_probs)]   # Conditional probabilty of developing severe symptoms, given symptomatic
+        death_if_severe = [d/s if s>0 and d/s>0 else 0 for (d,s) in zip(death_probs,severe_probs)]                # Conditional probabilty of dying, given severe symptoms
 
-    # Listlike
-    elif sc.checktype(age, 'listlike'):
+        # Calculate prognosis for each person
         sym_prob, severe_prob, death_prob  = [],[],[]
-        for a in age:
-            this_sym_prob, this_severe_prob, this_death_prob = set_prognosis(age=age, default_sym_prob=default_sym_prob, default_severe_prob=default_severe_prob, default_death_prob=default_death_prob, by_age=by_age)
+        for age in ages:
+            # Figure out which probability applies to a person of the specified age
+            ind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), -1)
+            this_sym_prob    = sym_probs[ind]    # Probability of developing symptoms
+            this_severe_prob = severe_if_sym[ind] # Probability of developing severe symptoms
+            this_death_prob  = death_if_severe[ind] # Probability of dying after developing severe symptoms
             sym_prob.append(this_sym_prob)
             severe_prob.append(this_severe_prob)
             death_prob.append(this_death_prob)
 
-    else:
-        raise TypeError(f"set_prognosis accepts a single age or list/aray of ages, not type {type(age)}")
+        # Return output
+        prognoses.sym_prob    = sym_prob
+        prognoses.severe_prob = severe_prob
+        prognoses.death_prob  = death_prob
 
-    return sym_prob, severe_prob, death_prob
+    popdict.update(prognoses) # Add keys to popdict
+
+    return
