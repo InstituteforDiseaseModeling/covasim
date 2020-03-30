@@ -306,7 +306,7 @@ def set_prognoses(sim, popdict):
 
     # If not by age, same value for everyone
     if not by_age:
-        prognoses.symp_prob   = sim['default_sym_prob']*np.ones(n)
+        prognoses.sym_prob    = sim['default_sym_prob']*np.ones(n)
         prognoses.severe_prob = sim['default_severe_prob']*np.ones(n)
         prognoses.death_prob  = sim['default_death_prob']*np.ones(n)
 
