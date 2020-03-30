@@ -274,14 +274,16 @@ class Scenarios(cvbase.ParsObj):
             resdata = self.allres[reskey]
 
             for scenkey, scendata in resdata.items():
+
+                ymin,ymax = sc.setylim(scendata.high)
+
                 pl.fill_between(self.tvec, scendata.low, scendata.high, **fill_args)
-                pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
+                pl.plot(self.tvec, scendata.best, label=scendata.name, ymin=ymin, ymax=ymax, **plot_args)
 
                 pl.title(title)
                 if rk == 0:
                     pl.legend(loc='best')
 
-                sc.setylim()
                 pl.grid(grid)
                 if commaticks:
                     sc.commaticks()
