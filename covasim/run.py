@@ -8,7 +8,6 @@ import pylab as pl
 import sciris as sc
 from . import base as cvbase
 from . import sim as cvsim
-from . import healthsystem as cvhs
 
 
 # Specify all externally visible functions this file defines
@@ -112,14 +111,13 @@ class Scenarios(cvbase.ParsObj):
         return
 
 
-    def run(self, keep_sims=False, debug=False, healthsystems=True, verbose=None):
+    def run(self, keep_sims=False, debug=False, verbose=None):
         '''
         Run the actual scenarios
 
         Args:
             keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object (NB, very large)
             debug (bool): if True, runs a single run instead of multiple, which makes debugging easier
-            healthsystems (bool): whether or not to run a health systems analysis on the results
             verbose (int): level of detail to print, passed to sim.run()
 
         Returns:
@@ -201,11 +199,6 @@ class Scenarios(cvbase.ParsObj):
                 for scenkey in list(self.scenarios.keys()):
                     print(f'  {scenkey}: {self.allres[reskey][scenkey].best[-1]:0.0f}')
             print() # Add a blank space
-
-        # Perform health systems analysis
-        if healthsystems:
-            self.hsys = cvhs.HealthSystem(self.allres)
-            self.hsys.analyze()
 
         return
 
@@ -314,10 +307,6 @@ class Scenarios(cvbase.ParsObj):
 
         return fig
 
-
-    def plot_healthsystem(self, *args, **kwargs):
-        ''' Very simple method to plot the health system results '''
-        return self.hsys.plot(*args, **kwargs)
 
 
     def save(self, filename=None, **kwargs):

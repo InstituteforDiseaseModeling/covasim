@@ -51,8 +51,12 @@ def make_pars():
     pars['incub_std']      = 1.0 # Standard deviation of the incubation period
     pars['severe']         = 3.0 # Number of days after symptom onset before hospitalization is required (for severe cases)
     pars['severe_std']     = 1.0 # Standard deviation of the above period
-    pars['dur']            = 8 # Using Mike's Snohomish number
-    pars['dur_std']        = 2 # Variance in duration
+
+    # Recovery
+    pars['dur']            = 8.0 # Mean recovery time for asymptomatic and mild cases
+    pars['dur_std']        = 2.0 # Variance in duration
+    pars['dur_sev']        = 11.0 # Mean length of hospital stay for severe cases
+    pars['dur_sev_std']    = 3.0 # Variance in duration of hospital stay
 
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death

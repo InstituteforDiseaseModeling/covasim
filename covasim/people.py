@@ -40,11 +40,12 @@ class Person(sc.prettyobj):
         self.known_contact  = False # Keep track of whether each person is a contact of a known positive
 
         # Infection property distributions
-        self.dist_serial = dict(dist='normal_int', par1=pars['serial'],    par2=pars['serial_std'])
-        self.dist_incub  = dict(dist='normal_int', par1=pars['incub'],     par2=pars['incub_std'])
-        self.dist_sev    = dict(dist='normal_int', par1=pars['severe'],    par2=pars['severe_std'])
-        self.dist_dur    = dict(dist='normal_int', par1=pars['dur'],       par2=pars['dur_std'])
-        self.dist_death  = dict(dist='normal_int', par1=pars['timetodie'], par2=pars['timetodie_std'])
+        self.dist_serial  = dict(dist='normal_int', par1=pars['serial'],    par2=pars['serial_std'])
+        self.dist_incub   = dict(dist='normal_int', par1=pars['incub'],     par2=pars['incub_std'])
+        self.dist_sev     = dict(dist='normal_int', par1=pars['severe'],    par2=pars['severe_std'])
+        self.dist_dur     = dict(dist='normal_int', par1=pars['dur'],       par2=pars['dur_std'])
+        self.dist_dur_sev = dict(dist='normal_int', par1=pars['dur_sev'],   par2=pars['dur_sev_std'])
+        self.dist_death   = dict(dist='normal_int', par1=pars['timetodie'], par2=pars['timetodie_std'])
 
         # Keep track of dates
         self.date_exposed      = None
@@ -104,14 +105,14 @@ class Person(sc.prettyobj):
             if not sev_bool: # Easiest outcome is that they're a mild case - set recovery date
                 self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur)  # Date they recover
 
-            # CASE 2b: Hospitalization required, death possible
+            # CASE 2b: Severe cases: hospitalization required, death possible
             else:
                 self.date_severe = self.date_symptomatic + cvu.sample(**self.dist_sev)  # Date symptoms become severe
                 this_death_prob = self.death_prob * (self.OR_no_treat if bed_constraint else 1.) # Probability they'll die
                 death_bool = cvu.bt(this_death_prob)  # Death outcome
                 #if not bed_constraint: self.date_hospitalized = self.date_severe  # They get hospitalized when symptoms become severe
                 if death_bool: self.date_died = t + cvu.sample(**self.dist_death)  # Date of death
-                else: self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur) # Date they recover
+                else: self.date_recovered = self.date_severe + cvu.sample(**self.dist_dur_sev) # Date they recover
 
         if source:
             self.infected_by = source.uid
