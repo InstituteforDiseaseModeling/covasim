@@ -3,12 +3,12 @@ Sciris app to run the web interface.
 '''
 
 # Key imports
+import covasim as cv
 import os
 import sys
 import numpy as np
 import plotly.graph_objects as go
 import sciris as sc
-import covasim as cv
 import base64 # Download/upload-specific import
 import json
 
@@ -84,7 +84,7 @@ def get_defaults(region=None, merge=False):
     epi_pars['incub']       = dict(best=5.0,   min=1.0, max=30,  name='Incubation period (days)',  tip='Average number of days between exposure and developing symptoms')
     epi_pars['dur']         = dict(best=8.0,   min=1.0, max=30,  name='Infection duration (days)', tip='Average number of days between infection and recovery (viral shedding period)')
     epi_pars['timetodie']   = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',   tip='Average number of days between infection and death')
-    epi_pars['default_cfr'] = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',        tip='Proportion of people who become infected who die')
+    epi_pars['web_cfr']     = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',        tip='Proportion of people who become infected who die')
 
 
     for parkey,valuedict in regions.items():
@@ -151,6 +151,12 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
         web_pars['interventions'] = []
         if web_pars['web_int_day'] is not None:
             web_pars['interventions'] = cv.change_beta(days=web_pars.pop('web_int_day'), changes=(1-web_pars.pop('web_int_eff')))
+    
+        # Handle CFR -- ignore symptoms
+        web_pars['default_symp_prob'] = 1.0
+        web_pars['default_severe_prob'] = 1.0
+        web_pars['default_death_prob'] = web_pars.pop('web_cfr')
+
     except Exception as E:
         err2 = f'Parameter conversion failed! {str(E)}\n'
         print(err2)
@@ -159,7 +165,7 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
     # Create the sim and update the parameters
     try:
         sim = cv.Sim()
-        sim['cfr_by_age'] = False # So the user can override this value
+        sim['prog_by_age'] = False # So the user can override this value
         sim['timelimit'] = max_time # Set the time limit
         if web_pars['seed'] == 0:
             web_pars['seed'] = None # Reset

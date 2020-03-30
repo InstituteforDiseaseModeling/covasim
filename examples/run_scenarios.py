@@ -25,7 +25,7 @@ keep_sims = 0 # WARNING, huge! (>100 MB)
 verbose = 1
 
 # Sim options
-interv_day = 10
+interv_day = 35
 interv_eff = 0.7
 default_beta = 0.015 # Should match parameters.py
 

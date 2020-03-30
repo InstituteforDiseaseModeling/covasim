@@ -1,39 +1,15 @@
+'''
+Check that correct versions of each library are installed, and print warnings
+or errors if not.
+'''
+
 #%% Housekeeping
 
-import os
-
-__all__ = ['available', 'min_versions', 'get_min_versions', 'check_sciris', 'check_scirisweb', 'check_extra_libs']
+__all__ = ['available', 'min_versions', 'check_sciris', 'check_scirisweb', 'check_extra_libs']
 
 
 available = {} # Make this available at the module level
-min_versions = {}
-
-#%% Get the right versions
-
-def get_min_versions():
-    ''' Parse requirements.txt and get minimum versions for everything '''
-
-    # Set options and get the file to load
-    filename = 'requirements.txt'
-    comparator = '>='
-    cwd = os.path.abspath(os.path.dirname(__file__))
-    filepath = os.path.join(cwd, os.pardir, filename)
-
-    # Load requirements from file
-    with open(filepath) as f:
-        requirements = f.read().splitlines()
-
-    # Process them
-    for requirement in requirements: # Expecting e.g. 'scirisweb>=0.16.0'
-        split = requirement.split(comparator)
-        if len(split) == 2:
-            package = split[0]
-            version = split[1]
-            min_versions[package] = version
-
-    return # NB, modifies the module-level min_versions dict in-place
-
-get_min_versions() # Populate these straight away
+min_versions = {'sciris':'0.16.7', 'scirisweb':'0.16.0'}
 
 
 #%% Check dependencies
@@ -43,12 +19,12 @@ def check_sciris():
     try:
         import sciris as sc
     except ModuleNotFoundError:
-        errormsg = 'Sciris is a required dependency but is not found; please rerun setup.py or install via "pip install sciris"'
+        errormsg = 'Sciris is a required dependency but is not found; please install via "pip install sciris"'
         raise ModuleNotFoundError(errormsg)
     ver = sc.__version__
     minver = min_versions['sciris']
     if sc.compareversions(ver, minver) < 0:
-        errormsg = f'You have Sciris {ver} but {minver} is required; please rerun setup.py or upgrade via "pip install --upgrade sciris"'
+        errormsg = f'You have Sciris {ver} but {minver} is required; please upgrade via "pip install --upgrade sciris"'
         raise ImportError(errormsg)
     return
 
@@ -69,7 +45,7 @@ def check_scirisweb(die=False):
         ver = scirisweb.__version__
         minver = min_versions['scirisweb']
         if sc.compareversions(ver, minver) < 0:
-            version_error = f'You have Scirisweb {ver} but {minver} is required; please rerun setup.py or upgrade via "pip install --upgrade scirisweb"'
+            version_error = f'You have Scirisweb {ver} but {minver} is required; please upgrade via "pip install --upgrade scirisweb"'
 
     # Handle consequences
     if die:
@@ -97,7 +73,7 @@ def check_extra_libs():
         import synthpops # noqa
         available['synthpops'] = True
     except ImportError as E:
-        import_error = f'Note: synthpops (for detailed demographic data) is not available (reason: {str(E)})\n'
+        import_error = f'Note: synthpops (for detailed demographic data) is not available ({str(E)})\n'
         available['synthpops'] = True
         print(import_error)
 
@@ -106,9 +82,13 @@ def check_extra_libs():
     #     import parestlib as _parest_available # noqa
     #     available['parestlib'] = True
     # except ImportError as E:
-    #     import_error = f'Note: parestlib (for automatic calibration) is not available (reason: {str(E)})\n'
+    #     import_error = f'Note: parestlib (for automatic calibration) is not available ({str(E)})\n'
     #     available['parestlib'] = True
     #     print(import_error)
 
     return
 
+# Perform the version checks on import
+check_sciris()
+check_scirisweb(die=False)
+check_extra_libs()

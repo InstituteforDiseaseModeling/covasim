@@ -263,12 +263,12 @@ class Sim(cvbase.BaseSim):
 
                         # Determine who gets infected
                         if rand_popdata: # Flat contacts
-                            transmission_inds = cvu.bf(thisbeta, person.contact_inds)
+                            transmission_inds = cvu.bf(thisbeta, person.contacts)
                         else: # Dictionary of contacts -- extra loop over layers
                             transmission_inds = []
                             for ckey in self.contact_keys:
                                 layer_beta = thisbeta * beta_pop[ckey]
-                                transmission_inds.extend(cvu.bf(layer_beta, person.contact_inds[ckey]))
+                                transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
 
                         # Loop over people who do
                         for contact_ind in transmission_inds:

@@ -119,32 +119,32 @@ def test_samples(doplot=False):
 
 
 
-def test_choose_people():
+def test_choose():
     sc.heading('Choose people')
-    x1 = cova.choose_people(10, 5)
+    x1 = cova.choose(10, 5)
     with pytest.raises(Exception):
-        cova.choose_people_weighted(10, 5) # Requesting mroe people than are available
+        cova.choose_weighted(10, 5) # Requesting mroe people than are available
     print(f'Uniform sample from 0-9: {x1}')
     return x1
 
 
-def test_choose_people_weighted():
+def test_choose_weighted():
     sc.heading('Choose weighted people')
     n = 100
     samples = 5
     lin = np.arange(n)
     lin = lin/lin.sum()
-    x0 = cova.choose_people_weighted([0.01]*n, samples)
-    x1 = cova.choose_people_weighted(lin, samples)
-    x2 = cova.choose_people_weighted([1, 0, 0, 0, 0], 1)
-    x3 = cova.choose_people_weighted([0.5, 0.5, 0, 0, 0], 1)
+    x0 = cova.choose_weighted([0.01]*n, samples)
+    x1 = cova.choose_weighted(lin, samples)
+    x2 = cova.choose_weighted([1, 0, 0, 0, 0], 1)
+    x3 = cova.choose_weighted([0.5, 0.5, 0, 0, 0], 1)
     assert x2[0] == 0
     assert x3[0] in [0,1]
     assert len(x0) == len(x1) == samples
     with pytest.raises(Exception):
-        cova.choose_people_weighted([0.5, 0, 0, 0, 0], 1) # Probabilities don't sum to 1
+        cova.choose_weighted([0.5, 0, 0, 0, 0], 1) # Probabilities don't sum to 1
     with pytest.raises(Exception):
-        cova.choose_people_weighted([0.5, 0.5], 10) # Requesting mroe people than are available
+        cova.choose_weighted([0.5, 0.5], 10) # Requesting mroe people than are available
     print(f'Uniform sample 0-99: x0 = {x0}, mean {x0.mean()}')
     print(f'Weighted sample 0-99: x1 = {x1}, mean {x1.mean()}')
     print(f'All weight on 0: x2 = {x2}')
@@ -169,6 +169,7 @@ def test_doubling_time():
     with pytest.raises(ValueError):
         d.t7 = cova.get_doubling_time(sim, start_day=3, end_day=20, moving_window=4, series="cum_deaths") # Should fail, no growth in deaths
 
+    print('NOTE: this test prints some warnings; these are intended.')
     return d
 
 
@@ -179,8 +180,8 @@ if __name__ == '__main__':
     rnd1    = test_rand()
     rnd2    = test_poisson()
     samples = test_samples(doplot=doplot)
-    people1 = test_choose_people()
-    people2 = test_choose_people_weighted()
+    people1 = test_choose()
+    people2 = test_choose_weighted()
     dt = test_doubling_time()
 
     print('\n'*2)
