@@ -17,12 +17,12 @@ class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, uid, age, sex, contacts, symp_prob, severe_prob, death_prob):
+    def __init__(self, pars, uid, age, sex, contacts, sym_prob, severe_prob, death_prob):
         self.uid         = str(uid) # This person's unique identifier
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
         self.contacts    = contacts # The contacts this person has
-        self.sym_prob = sym_prob # Probability of developing symptoms
+        self.sym_prob    = sym_prob # Probability of developing symptoms
         self.severe_prob = severe_prob # Conditional probability of symptoms becoming severe, if symptomatic
         self.death_prob  = death_prob # Conditional probability of dying, given severe symptoms
         self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
@@ -218,7 +218,7 @@ def make_people(sim, verbose=None, id_len=None, die=True):
     # Actually create the people
     people = {} # Dictionary for storing the people -- use plain dict since faster than odict
     for p in range(n_people): # Loop over each person
-        keys = ['uid', 'age', 'sex', 'contacts', 'symp_prob', 'severe_prob', 'death_prob']
+        keys = ['uid', 'age', 'sex', 'contacts', 'sym_prob', 'severe_prob', 'death_prob']
         person_args = {}
         for key in keys:
             person_args[key] = popdict[key][p] # Convert from list to dict
