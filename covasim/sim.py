@@ -120,6 +120,7 @@ class Sim(cvbase.BaseSim):
         self.results['infections']     = init_res('Number of new infections')
         self.results['tests']          = init_res('Number of tests')
         self.results['diagnoses']      = init_res('Number of new diagnoses')
+        self.results['bed_capacity']   = init_res('Percentage bed capacity', ispercentage=True)
         self.results['recoveries']     = init_res('Number of new recoveries')
         self.results['deaths']         = init_res('Number of new deaths')
         self.results['cum_exposed']    = init_res('Cumulative number exposed')
@@ -239,9 +240,6 @@ class Sim(cvbase.BaseSim):
                     if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
                         person.infectious = True
                         sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
-                    if not person.symptomatic and person.date_symptomatic is not None and t >= person.date_symptomatic:  # It's the day they develop symptoms
-                        person.symptomatic = True
-                        sc.printv(f'      Person {person.uid} developed symptoms!', 2, verbose)
 
                 # If infectious, check if anyone gets infected
                 if person.infectious:
@@ -316,6 +314,7 @@ class Sim(cvbase.BaseSim):
             self.results['n_symptomatic'][t] = n_symptomatic
             self.results['n_severe'][t]      = n_severe
             self.results['n_recovered'][t]   = n_recovered
+            self.results['bed_capacity'][t]  = n_severe/n_beds if n_beds>0 else None
 
         # End of time loop; compute cumulative results outside of the time loop
         self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values) + self['n_infected'] # Include initially infected people

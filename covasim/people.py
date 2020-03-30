@@ -124,7 +124,7 @@ class Person(sc.prettyobj):
 
     def check_death(self, t):
         ''' Check whether or not this person died on this timestep  '''
-        if self.date_died and t >= self.date_died:
+        if self.date_died and t == self.date_died:
             self.exposed     = False
             self.infectious  = False
             self.symptomatic = False
@@ -140,7 +140,7 @@ class Person(sc.prettyobj):
 
     def check_symptomatic(self, t):
         ''' Check if an infected person has developed symptoms '''
-        if self.date_symptomatic and t >= self.date_symptomatic: # It's the day symptoms appear
+        if self.date_symptomatic and t == self.date_symptomatic: # Person is symptomatic
             self.symptomatic = True
             symptomatic = 1
         else:
@@ -150,7 +150,7 @@ class Person(sc.prettyobj):
 
     def check_severe(self, t):
         ''' Check if an infected person has developed severe symptoms requiring hospitalization'''
-        if self.date_severe and t >= self.date_severe: # It's the day symptoms become bad enough to need hospitalization
+        if self.date_severe and t == self.date_severe: # Symptoms have become bad enough to need hospitalization
             self.severe = True
             severe = 1
         else:
@@ -161,7 +161,7 @@ class Person(sc.prettyobj):
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
 
-        if self.date_recovered and t >= self.date_recovered: # It's the day they recover
+        if self.date_recovered and t == self.date_recovered: # It's the day they recover
             self.exposed     = False
             self.infectious  = False
             self.symptomatic = False
