@@ -297,7 +297,7 @@ class Sim(cvbase.BaseSim):
                 if person.recovered:
                     n_recovered += 1
 
-            sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 1, verbose)
+            sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)
             # End of person loop; apply interventions
             for intervention in self['interventions']:
                 intervention.apply(self, t)

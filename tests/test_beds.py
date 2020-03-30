@@ -7,7 +7,7 @@ import sciris as sc
 import covasim as cv
 
 do_plot   = 1
-do_show   = 1
+do_show   = 0
 do_save   = 1
 debug     = 1
 keep_sims = 0
@@ -58,7 +58,7 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
     if do_plot:
         to_plot = sc.odict({
             'cum_deaths': 'Cumulative deaths',
-            'bed_capacity': 'Percentage bed capacity',
+            'bed_capacity': 'People needing beds / beds',
         })
         scens.plot(to_plot=to_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
 
@@ -69,7 +69,7 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
 if __name__ == '__main__':
     sc.tic()
 
-    sim = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
 
     sc.toc()
 
