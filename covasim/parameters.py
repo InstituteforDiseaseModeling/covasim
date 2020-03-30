@@ -56,7 +56,7 @@ def make_pars():
     pars['dur']            = 8.0 # Mean recovery time for asymptomatic and mild cases
     pars['dur_std']        = 2.0 # Variance in duration
     pars['dur_sev']        = 11.0 # Mean length of hospital stay for severe cases
-    pars['dur_sev_std']    = 3.0 # Variance in duration of hospital stay
+    pars['dur_sev_std']    = 3.0 # Variance in duration of hospital stay for severe cases
 
     # Mortality and severity
     pars['timetodie']           = 21 # Days until death
