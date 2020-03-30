@@ -3,7 +3,6 @@ Tests of simulation parameters from
 ../../covasim/README.md
 """
 import unittest
-import pytest
 
 from unittest_support_classes import CovaSimTest, TestProperties
 
@@ -12,10 +11,6 @@ DProgKeys = TestProperties.ParameterKeys.ProgressionKeys
 TransKeys = TestProperties.ParameterKeys.TransmissionKeys
 TSimKeys = TestProperties.ParameterKeys.SimulationKeys
 ResKeys = TestProperties.ResultsDataKeys
-
-
-pytest.skip("Requires update (regression issue)", allow_module_level=True)
-
 
 class DiseaseMortalityTests(CovaSimTest):
     def setUp(self):
@@ -31,9 +26,10 @@ class DiseaseMortalityTests(CovaSimTest):
         Infect lots of people with cfr one and short time to die
         duration. Verify that everyone dies, no recoveries.
         """
-        self.set_smallpop_hightransmission()
+        total_agents = 500
+        self.set_everyone_is_going_to_die(num_agents=total_agents)
         default_cfr_one = {
-            MortKeys.default_cfr: 1.0
+            MortKeys.prob_severe_death: 1.0
         }
         self.run_sim(default_cfr_one)
         recoveries_channel = self.get_full_result_channel(
@@ -71,9 +67,10 @@ class DiseaseMortalityTests(CovaSimTest):
         duration. Verify that no one dies.
         Depends on default_cfr_one
         """
-        self.set_smallpop_hightransmission()
+        total_agents = 500
+        self.set_everyone_is_going_to_die(num_agents=total_agents)
         default_cfr_one = {
-            MortKeys.default_cfr: 0.0
+            MortKeys.prob_severe_death: 0.0
         }
         self.run_sim(default_cfr_one)
         deaths_at_timestep_channel = self.get_full_result_channel(
@@ -107,18 +104,17 @@ class DiseaseMortalityTests(CovaSimTest):
         duration. Verify that no one dies.
         Depends on default_cfr_one
         """
-        self.set_smallpop_hightransmission()
-        sim_dur = 60
+        total_agents = 500
+        self.set_everyone_is_going_to_die(num_agents=total_agents)
         end_sample_size = 10 # last few days most interesting
-        cfrs = [0.01, 0.05, 0.10, 0.15]
+        death_probs = [0.01, 0.05, 0.10, 0.15]
         old_ratio_sum = 0
         old_cumulative_deaths = 0
-        for cfr in cfrs:
-            default_cfr = {
-                MortKeys.default_cfr: cfr,
-                TSimKeys.number_simulated_days: sim_dur
+        for death_prob in death_probs:
+            test_config = {
+                MortKeys.prob_severe_death: death_prob
             }
-            self.run_sim(default_cfr)
+            self.run_sim(test_config)
             deaths_at_timestep_channel = self.get_full_result_channel(
                 ResKeys.deaths_daily
             )
@@ -139,14 +135,6 @@ class DiseaseMortalityTests(CovaSimTest):
                                     msg="Should be more deaths with higer ratio")
             old_cumulative_deaths = cumulative_deaths
             old_ratio_sum = sum(new_ratio)
-        pass
-
-    @unittest.skip("P1")
-    def test_time_to_die_duration(self):
-        pass
-
-    @unittest.skip("P0")
-    def test_time_do_die_std(self):
         pass
 
     @unittest.skip("P3")
