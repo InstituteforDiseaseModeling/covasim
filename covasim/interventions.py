@@ -231,22 +231,19 @@ class test_num(Intervention):
     Test a fixed number of people per day.
 
     Example:
-        interv = cv.test_num(npts, daily_tests=[0.10*n_people]*npts)
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
 
     Returns:
         Intervention
     """
 
-    def __init__(self, npts, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0):
+    def __init__(self, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0):
         super().__init__()
 
         self.daily_tests = daily_tests #: Should be a list of length matching time
         self.sympt_test = sympt_test
         self.trace_test = trace_test
         self.sensitivity = sensitivity
-
-        self.results['n_diagnosed'] = cv.Result('Number diagnosed', npts=npts)
-        self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', npts=npts)
 
         return
 
@@ -280,14 +277,8 @@ class test_num(Intervention):
             person = sim.get_person(test_ind)
             person.test(t, self.sensitivity)
             if person.diagnosed:
-                self.results['n_diagnosed'][t] += 1
+                sim.results['diagnoses'][t] += 1
 
-        return
-
-
-    def finalize(self, sim, *args, **kwargs):
-        self.results['cum_diagnosed'].values = pl.cumsum(self.results['n_diagnosed'].values)
-        sim.results.update(self.results)
         return
 
 
@@ -296,12 +287,12 @@ class test_prob(Intervention):
     Test as many people as required based on test probability.
 
     Example:
-        interv = cv.test_prop(npts, symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
+        interv = cv.test_prop(symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
 
     Returns:
         Intervention
     """
-    def __init__(self, npts, symptomatic_prob=0.9, asymptomatic_prob=0.01, trace_prob=1.0, test_sensitivity=1.0):
+    def __init__(self, symptomatic_prob=0.9, asymptomatic_prob=0.01, trace_prob=1.0, test_sensitivity=1.0):
         """
 
         Args:
@@ -317,13 +308,6 @@ class test_prob(Intervention):
         self.asymptomatic_prob = asymptomatic_prob
         self.trace_prob = trace_prob # Probability that identified contacts get tested
         self.test_sensitivity = test_sensitivity
-
-        # Instantiate the results to track
-        self.results['n_tested']      = cv.Result('Number tested', npts=npts)
-        self.results['n_diagnosed']   = cv.Result('Number diagnosed', npts=npts)
-        self.results['cum_tested']    = cv.Result('Cumulative number tested', npts=npts)
-        self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', npts=npts)
-
         self.scheduled_tests = set() # Track UIDs of people that are guaranteed to be tested at the next step
         return
 
@@ -335,22 +319,15 @@ class test_prob(Intervention):
 
         for i, person in enumerate(sim.people.values()):
             if i in self.scheduled_tests or (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
-                self.results['n_tested'][t] += 1
+                self.results['tests'][t] += 1
                 person.test(t, self.test_sensitivity)
                 if person.diagnosed:
-                    self.results['n_diagnosed'][t] += 1
+                    self.results['diagnoses'][t] += 1
                     for idx in person.contacts:
                         if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
                             new_scheduled_tests.add(idx)
 
         self.scheduled_tests = new_scheduled_tests
-        return
-
-
-    def finalize(self, sim, *args, **kwargs):
-        self.results['cum_tested'].values = pl.cumsum(self.results['n_tested'].values)
-        self.results['cum_diagnosed'].values = pl.cumsum(self.results['n_diagnosed'].values)
-        sim.results.update(self.results)
         return
 
 

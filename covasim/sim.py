@@ -135,6 +135,8 @@ class Sim(cvbase.BaseSim):
         self.results['n_symptomatic']  = init_res('Number symptomatic')
         self.results['n_severe']       = init_res('Number with severe symptoms')
         self.results['n_recovered']    = init_res('Number recovered')
+        self.results['n_tested']       = init_res('Number tested')
+        self.results['n_diagnosed']    = init_res('Number diagnosed')
         self.results['infections']     = init_res('Number of new infections')
         self.results['tests']          = init_res('Number of tests')
         self.results['diagnoses']      = init_res('Number of new diagnoses')
@@ -230,7 +232,7 @@ class Sim(cvbase.BaseSim):
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
             rand_popdata     = (self['usepopdata'] == 'random')
             beta             = self['beta']
-            asymp_factor      = self['asymp_factor']
+            asymp_factor     = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
             beta_pop         = self['beta_pop']
@@ -437,7 +439,7 @@ class Sim(cvbase.BaseSim):
         loglike = 0
         if self.data is not None and len(self.data): # Only perform likelihood calculation if data are available
             for d,datum in enumerate(self.data['new_positives']):
-                if not pl.isnan(datum): # Skip days when no tests were performed
+                if not pl.isnan(datum) and d<len(self.results['diagnoses'].values): # TODO: make more flexible # Skip days when no tests were performed
                     estimate = self.results['diagnoses'][d]
                     p = cvu.poisson_test(datum, estimate)
                     logp = pl.log(p)
@@ -533,10 +535,10 @@ class Sim(cvbase.BaseSim):
             # start day of data may not co-incide with simulation
             data_offset = (self.data.iloc[0]['date'] - self.pars['start_day']).days
             data_mapping = {
-                'cum_exposed': pl.cumsum(self.data['new_infections']),
+                # 'cum_exposed': pl.cumsum(self.data['new_infections']),
                 'cum_diagnosed':  pl.cumsum(self.data['new_positives']),
                 'cum_tested':     pl.cumsum(self.data['new_tests']),
-                'infections':     self.data['new_infections'],
+                # 'infections':     self.data['new_infections'],
                 'tests':          self.data['new_tests'],
                 'diagnoses':      self.data['new_positives'],
                 }
@@ -544,7 +546,7 @@ class Sim(cvbase.BaseSim):
             data_mapping = {}
 
         for p,title,keylabels in to_plot.enumitems():
-            ax = pl.subplot(2,1,p+1)
+            ax = pl.subplot(len(to_plot),1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = colors[i]
                 y = res[key].values

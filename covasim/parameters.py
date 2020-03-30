@@ -74,12 +74,12 @@ def make_pars():
     return pars
 
 
-def load_data(filename, datacols=None, **kwargs):
+def load_data(datafile, datacols=None, **kwargs):
     '''
     Load data for comparing to the model output.
 
     Args:
-        filename (str): the name of the file to load
+        datafile (str): the name of the file to load
         datacols (list): list of required column names
         kwargs (dict): passed to pd.read_excel()
 
@@ -91,7 +91,7 @@ def load_data(filename, datacols=None, **kwargs):
         datacols = ['day', 'date', 'new_tests', 'new_positives']
 
     # Load data
-    raw_data = pd.read_excel(filename, **kwargs)
+    raw_data = pd.read_excel(datafile, **kwargs)
 
     # Confirm data integrity and simplify
     for col in datacols:
