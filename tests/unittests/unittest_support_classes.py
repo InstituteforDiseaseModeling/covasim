@@ -55,7 +55,9 @@ class TestProperties:
             time_to_death = 'timetodie'
             time_to_death_std = 'timetodie_std'
             use_cfr_by_age = 'prog_by_age'
-            default_cfr = 'default_death_prob'
+            prob_severe_death = 'default_death_prob'
+            prob_symptomatic_severe = 'default_severe_prob'
+            prob_infected_symptomatic = 'default_symp_prob'
             pass
         pass
     class SpecializedSimulations:
@@ -69,8 +71,8 @@ class TestProperties:
             n = 500
             n_infected = 10
             n_days = 30
-            contacts = 5
-            beta = 0.2
+            contacts = 3
+            beta = 0.4
             serial = 2
             serial_std = 0.5
             dur = 3
@@ -189,6 +191,65 @@ class CovaSimTest(unittest.TestCase):
         self.set_simulation_parameters(microsim_parameters)
         pass
 
+    def set_everyone_infected(self, agent_count=1000):
+        Simkeys = TestProperties.ParameterKeys.SimulationKeys
+        everyone_infected = {
+            Simkeys.number_agents: agent_count,
+            Simkeys.initial_infected_count: agent_count
+        }
+        self.set_simulation_parameters(params_dict=everyone_infected)
+        pass
+
+    def set_everyone_infectious_same_day(self, num_agents, days_to_infectious=1, num_days=60):
+        """
+        Args:
+            num_agents: number of agents to create and infect
+            days_to_infectious: days until all agents are infectious (1)
+            num_days: days to simulate (60)
+        """
+        self.set_everyone_infected(agent_count=num_agents)
+        test_config = {
+            TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: num_days,
+            TestProperties.ParameterKeys.ProgressionKeys.exposed_to_infectious: days_to_infectious,
+            TestProperties.ParameterKeys.ProgressionKeys.exposed_to_infectious_std: 0,
+            TestProperties.ParameterKeys.MortalityKeys.use_cfr_by_age: False,
+            TestProperties.ParameterKeys.MortalityKeys.prob_infected_symptomatic: 0
+        }
+        self.set_simulation_parameters(params_dict=test_config)
+        pass
+
+    def set_everyone_symptomatic(self, num_agents):
+        """
+        Cause all agents in the simulation to begin infected
+        And proceed to symptomatic (but not severe or death)
+        Args:
+            num_agents: Number of agents to begin with
+        """
+        self.set_everyone_infectious_same_day(num_agents=num_agents,
+                                              days_to_infectious=0)
+        everyone_symptomatic_config = {
+            TestProperties.ParameterKeys.MortalityKeys.prob_infected_symptomatic: 1.0,
+            TestProperties.ParameterKeys.MortalityKeys.prob_symptomatic_severe: 0
+        }
+        self.set_simulation_parameters(params_dict=everyone_symptomatic_config)
+        pass
+
+    def set_everyone_is_going_to_die(self, num_agents):
+        """
+        Cause all agents in the simulation to begin infected and die.
+        Args:
+            num_agents: Number of agents to simulate
+        """
+        self.set_everyone_infectious_same_day(num_agents=num_agents)
+        everyone_dying_config = {
+            TestProperties.ParameterKeys.MortalityKeys.use_cfr_by_age: False,
+            TestProperties.ParameterKeys.MortalityKeys.prob_infected_symptomatic: 1,  # Uh oh
+            TestProperties.ParameterKeys.MortalityKeys.prob_symptomatic_severe: 1,  # Oh no
+            TestProperties.ParameterKeys.MortalityKeys.prob_severe_death: 1,  # No recoveries
+        }
+        self.set_simulation_parameters(params_dict=everyone_dying_config)
+        pass
+
     def set_smallpop_hightransmission(self):
         """
         Creates a small population with lots of transmission
@@ -208,24 +269,6 @@ class CovaSimTest(unittest.TestCase):
             Progkeys.infectiousness_duration: Hightrans.dur
         }
         self.set_simulation_parameters(hightrans_parameters)
-        pass
-
-    def set_superhigh_mortality(self):
-        """
-        builds on high transmission with high mortality
-        """
-        Simkeys = TestProperties.ParameterKeys.SimulationKeys
-        MortKeys = TestProperties.ParameterKeys.MortalityKeys
-        MortalityTestKeys = TestProperties.SpecializedSimulations.HighMortality
-        self.set_smallpop_hightransmission()
-        more_people_high_mortality = {
-            Simkeys.number_agents: MortalityTestKeys.n,
-            MortKeys.use_cfr_by_age: MortalityTestKeys.cfr_by_age,
-            MortKeys.default_cfr: MortalityTestKeys.default_cfr,
-            MortKeys.time_to_death: MortalityTestKeys.timetodie,
-            MortKeys.time_to_death_std: MortalityTestKeys.timetodie_std
-        }
-        self.set_simulation_parameters(params_dict=more_people_high_mortality)
         pass
 
     # endregion
@@ -265,12 +308,27 @@ class TestSupportTests(CovaSimTest):
                          microsimParams.n_infected)
         pass
 
-    def test_run_small_higtransmission_sim(self):
+    def test_everyone_infected(self):
+        """
+        All agents start infected
+        """
+        self.is_debugging = True
+
+        total_agents = 500
+        self.set_everyone_infected(agent_count=total_agents)
+        self.run_sim()
+        exposed_channel = TestProperties.ResultsDataKeys.exposed_at_timestep
+        day_0_exposed = self.get_day_zero_channel_value(exposed_channel)
+        self.assertEqual(day_0_exposed, total_agents)
+        pass
+
+    def test_run_small_hightransmission_sim(self):
         """
         Runs a small simulation with lots of transmission
         Verifies that there are lots of infections in
         a short time.
         """
+        self.is_debugging = True
         self.assertIsNone(self.simulation_parameters)
         self.assertIsNone(self.sim)
         self.set_smallpop_hightransmission()
@@ -290,51 +348,11 @@ class TestSupportTests(CovaSimTest):
                                         f" {t-1}: {prev_exposed}.")
             prev_exposed = today_exposed
             pass
-        infectious_channel = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infectious_at_timestep
+        infections_channel = self.get_full_result_channel(
+            TestProperties.ResultsDataKeys.infections_at_timestep
         )
-        prev_infectious = infectious_channel[1]
-        for t in range(2, 10):
-            today_infectious = infectious_channel[t]
-            self.assertGreaterEqual(today_infectious, prev_infectious,
-                                    msg=f"The first 10 days should have increasing"
-                                        f" infection counts. At time {t}: {today_infectious}"
-                                        f" at {t-1}: {prev_infectious}")
-            prev_infectious = today_infectious
-            pass
-        pass
-
-    def test_high_mortality_scenario(self):
-        """
-        Configures high mortality scenario and makes sure that
-        at 2x the time to die we start getting a consistently
-        increasing number of deaths
-        """
-        self.assertIsNone(self.simulation_parameters)
-        self.assertIsNone(self.sim)
-        self.set_superhigh_mortality()
-        self.run_sim()
-
-        self.assertIsNotNone(self.sim)
-        self.assertIsNotNone(self.simulation_parameters)
-        deaths_today_channel = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.deaths_daily
-        )
-        wait_period = self.simulation_parameters[
-            TestProperties.ParameterKeys.MortalityKeys.time_to_death
-                      ] * 2
-        sim_duration = self.simulation_parameters[
-            TestProperties.ParameterKeys.SimulationKeys.number_simulated_days
-        ]
-        total_deaths_in_range = 0
-        for t in range(wait_period, sim_duration):
-            today_deaths = deaths_today_channel[t]
-            self.assertGreaterEqual(today_deaths, 1,
-                                    msg="Should be some deaths here.")
-            total_deaths_in_range += today_deaths
-            pass
-        self.assertGreaterEqual(total_deaths_in_range, 100,
-                                msg="100 deaths should be enough data to test with")
+        self.assertGreaterEqual(sum(infections_channel), 150,
+                                msg=f"Should have at least 150 infections")
         pass
     pass
 
