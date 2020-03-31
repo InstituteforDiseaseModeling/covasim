@@ -10,7 +10,6 @@ do_plot   = 1
 do_show   = 1
 do_save   = 0
 debug     = 1
-keep_sims = 0
 fig_path  = 'results/testing_beds.png'
 
 def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
@@ -53,7 +52,7 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
     metapars = {'n_runs': n_runs}
 
     scens = cv.Scenarios(sim=sim, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose, debug=debug, keep_sims=keep_sims)
+    scens.run(verbose=verbose, debug=debug)
 
     if do_plot:
         to_plot = sc.odict({

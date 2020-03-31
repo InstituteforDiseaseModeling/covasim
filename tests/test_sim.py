@@ -162,13 +162,13 @@ def test_fileio():
 if __name__ == '__main__':
     sc.tic()
 
-    parsobj = test_parsobj()
-    sim0    = test_microsim()
-    sim1    = test_sim(doplot=doplot)
-    sim2    = test_singlerun()
-    sim3    = test_combine(doplot=doplot)
-    sims    = test_multirun(doplot=doplot)
-    scens   = test_scenarios(doplot=doplot)
+    # parsobj = test_parsobj()
+    # sim0    = test_microsim()
+    # sim1    = test_sim(doplot=doplot)
+    # sim2    = test_singlerun()
+    # sim3    = test_combine(doplot=doplot)
+    # sims    = test_multirun(doplot=doplot)
+    # scens   = test_scenarios(doplot=doplot)
     json    = test_fileio()
 
     sc.toc()
