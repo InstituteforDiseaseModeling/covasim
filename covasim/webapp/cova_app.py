@@ -116,7 +116,7 @@ def upload_pars(fname):
 
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     ''' Create, run, and plot everything '''
 
     err = ''
@@ -223,7 +223,9 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
             graphs.append(output)
 
         graphs.append(plot_people(sim))
-        graphs.append(animate_people(sim))
+
+        if show_animation:
+            graphs.append(animate_people(sim))
 
     except Exception as E:
         err5 = f'Plotting failed! {str(E)}\n'
