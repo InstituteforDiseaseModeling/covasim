@@ -319,10 +319,10 @@ class test_prob(Intervention):
 
         for i, person in enumerate(sim.people.values()):
             if i in self.scheduled_tests or (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
-                self.results['tests'][t] += 1
+                sim.results['tests'][t] += 1
                 person.test(t, self.test_sensitivity)
                 if person.diagnosed:
-                    self.results['diagnoses'][t] += 1
+                    sim.results['diagnoses'][t] += 1
                     for idx in person.contacts:
                         if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
                             new_scheduled_tests.add(idx)
@@ -363,8 +363,6 @@ class test_historical(Intervention):
         super().__init__()
         self.n_tests = np.pad(sc.promotetoarray(n_tests),(0,max(0,npts-len(n_tests))))
         self.n_positive = np.pad(sc.promotetoarray(n_positive),(0,max(0,npts-len(n_positive))))
-        self.results['n_tested'] = cv.Result('Number tested', npts=npts)
-        self.results['n_diagnosed'] = cv.Result('Number diagnosed', npts=npts)
 
     def apply(self, sim, t):
         ''' Perform testing '''
@@ -385,16 +383,10 @@ class test_historical(Intervention):
             for ind in positive_inds:
                 person = sim.get_person(ind)
                 person.test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
-                self.results['n_tested'][t] += 1
-                self.results['n_diagnosed'][t] += 1
+                sim.results['tests'][t] += 1
+                sim.results['diagnoses'][t] += 1
 
             for ind in negative_inds:
                 person = sim.get_person(ind)
                 person.test(t, test_sensitivity=1.0)
-                self.results['n_tested'][t] += 1
-
-    def finalize(self, sim, *args, **kwargs):
-        self.results['cum_tested']    = cv.Result('Cumulative number tested', values=pl.cumsum(self.results['n_tested'].values))
-        self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', values=pl.cumsum(self.results['n_diagnosed'].values))
-        sim.results.update(self.results)
-        return
+                self.results['tests'][t] += 1
