@@ -3,8 +3,6 @@ Tests of the utilies for the model.
 '''
 
 #%% Imports and settings
-import matplotlib
-matplotlib.use('TkAgg')
 import pytest
 import numpy as np
 import numba as nb
