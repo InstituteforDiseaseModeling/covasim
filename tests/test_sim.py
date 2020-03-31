@@ -163,14 +163,14 @@ def test_fileio():
 if __name__ == '__main__':
     sc.tic()
 
-#    parsobj = test_parsobj()
-#    sim0    = test_microsim()
+    parsobj = test_parsobj()
+    sim0    = test_microsim()
     sim1    = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
-#    sim2    = test_singlerun()
-#    sim3    = test_combine(do_plot=do_plot)
-#    sims    = test_multirun(do_plot=do_plot)
-#    scens   = test_scenarios(do_plot=do_plot)
-#    json    = test_fileio()
+    sim2    = test_singlerun()
+    sim3    = test_combine(do_plot=do_plot)
+    sims    = test_multirun(do_plot=do_plot)
+    scens   = test_scenarios(do_plot=do_plot)
+    json    = test_fileio()
 
     sc.toc()
 

@@ -109,7 +109,7 @@ class Person(sc.prettyobj):
             # CASE 2a: Mild symptoms, no hospitalization required and no probaility of death
             if not sev_bool: # Easiest outcome is that they're a mild case - set recovery date
                 dur_mild2rec = cvu.sample(**self.durpars['mild2rec'])
-                self.date_recovered = self.date_infectious + dur_mild2rec  # Date they recover
+                self.date_recovered = self.date_symptomatic + dur_mild2rec  # Date they recover
                 self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + dur_mild2rec  # Store how long this person had COVID-19
 
             # CASE 2b: Severe cases: hospitalization required, may become critical
@@ -136,7 +136,7 @@ class Person(sc.prettyobj):
                     else:
                         dur_crit2rec = cvu.sample(**self.durpars['crit2rec'])
                         self.date_recovered = self.date_critical + dur_crit2rec # Date they recover
-                        self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + dur_crit2rec  # Store how long this person had COVID-19
+                        self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2rec  # Store how long this person had COVID-19
 
         if source:
             self.infected_by = source.uid
