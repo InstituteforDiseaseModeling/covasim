@@ -31,6 +31,12 @@ def sample(dist=None, par1=None, par2=None, size=None):
         sample() # returns Unif(0,1)
         sample(dist='normal', par1=3, par2=0.5) # returns Normal(μ=3, σ=0.5)
 
+    Notes:
+        Lognormal distributions are parameterized with reference to the underlying normal distribution (see:
+        https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.random.lognormal.html), but this function assumes
+        the user wants to specify the mean and variance of the lognormal distribution
+
+
     '''
 
     choices = [
@@ -43,13 +49,17 @@ def sample(dist=None, par1=None, par2=None, size=None):
         'neg_binomial'
         ]
 
+    # Compute distribution parameters and draw samples
     # NB, if adding a new distribution, also add to choices above
     if   dist == 'uniform':       samples = np.random.uniform(low=par1, high=par2, size=size)
     elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
     elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
     elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size)))
-    elif dist == 'lognormal':     samples = np.random.lognormal(mean=par1, sigma=par2, size=size)
-    elif dist == 'lognormal_int': samples = np.round(np.random.lognormal(mean=par1, sigma=par2, size=size))
+    elif dist in ['lognormal', 'lognormal_int']:
+        mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
+        sigma = np.sqrt(np.log(par2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
+        samples = np.random.lognormal(mean=mean, sigma=sigma, size=size)
+        if dist == 'lognormal_int': samples = np.round(samples)
     elif dist == 'neg_binomial':  samples = np.random.negative_binomial(n=par1, p=par2, size=size)
     else:
         choicestr = '\n'.join(choices)

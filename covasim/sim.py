@@ -134,6 +134,7 @@ class Sim(cvbase.BaseSim):
         self.results['n_infectious']   = init_res('Number infectious')
         self.results['n_symptomatic']  = init_res('Number symptomatic')
         self.results['n_severe']       = init_res('Number with severe symptoms')
+        self.results['n_critical']     = init_res('Number of critical cases')
         self.results['n_recovered']    = init_res('Number recovered')
         self.results['infections']     = init_res('Number of new infections')
         self.results['tests']          = init_res('Number of tests')
@@ -156,7 +157,7 @@ class Sim(cvbase.BaseSim):
 
         # Create calculated values structure
         self.calculated['eff_beta'] = (1-self['default_symp_prob'])*self['asymp_factor']*self['beta'] + self['default_symp_prob']*self['beta']  # Using asymptomatic proportion
-        self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
+        self.calculated['r_0']      = self['contacts']*self['dur']['exp2inf']['par1']*self.calculated['eff_beta']
         return
 
 
@@ -225,6 +226,7 @@ class Sim(cvbase.BaseSim):
             n_infections  = 0
             n_symptomatic = 0
             n_severe      = 0
+            n_critical    = 0
             n_recovered   = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
@@ -255,7 +257,7 @@ class Sim(cvbase.BaseSim):
                 # If exposed, check if the person becomes infectious or develops symptoms
                 if person.exposed:
                     n_exposed += 1
-                    if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
+                    if not person.infectious and t == person.date_infectious: # It's the day they become infectious
                         person.infectious = True
                         sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
 
@@ -274,6 +276,7 @@ class Sim(cvbase.BaseSim):
                     if not recovered:
                         n_symptomatic += person.check_symptomatic(t)
                         n_severe += person.check_severe(t)
+                        n_critical += person.check_critical(t)
                         if n_severe > n_beds: bed_constraint = True
 
                     # If the person didn't die or recover, check for onward transmission
@@ -329,6 +332,7 @@ class Sim(cvbase.BaseSim):
             self.results['infections'][t]    = n_infections
             self.results['n_symptomatic'][t] = n_symptomatic
             self.results['n_severe'][t]      = n_severe
+            self.results['n_critical'][t]    = n_critical
             self.results['n_recovered'][t]   = n_recovered
             self.results['bed_capacity'][t]  = n_severe/n_beds if n_beds>0 else None
 
@@ -464,6 +468,8 @@ class Sim(cvbase.BaseSim):
      {summary['n_susceptible']:5.0f} susceptible
      {summary['n_infectious']:5.0f} infectious
      {summary['n_symptomatic']:5.0f} symptomatic
+     {summary['n_severe']:5.0f} severe cases
+     {summary['n_critical']:5.0f} critical cases
      {summary['cum_exposed']:5.0f} total exposed
      {summary['cum_diagnosed']:5.0f} total diagnosed
      {summary['cum_deaths']:5.0f} total deaths

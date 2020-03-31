@@ -3,13 +3,16 @@ Simple example usage for the Covid-19 agent-based model
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('TkAgg')
 import os
 import pytest
 import sciris as sc
 import covasim as cv
 
-doplot = 1
-
+do_plot = 1
+do_save = 1
+do_show = 0
 
 #%% Define the tests
 
@@ -47,7 +50,7 @@ def test_microsim():
     return sim
 
 
-def test_sim(doplot=False): # If being run via pytest, turn off
+def test_sim(do_plot=False, do_save=False, do_show=False): # If being run via pytest, turn off
     sc.heading('Basic sim test')
 
     # Settings
@@ -60,8 +63,8 @@ def test_sim(doplot=False): # If being run via pytest, turn off
     sim.run(verbose=verbose)
 
     # Optionally plot
-    if doplot:
-        sim.plot()
+    if do_plot:
+        sim.plot(do_save=do_save, do_show=do_show)
 
     return sim
 
@@ -80,7 +83,7 @@ def test_singlerun():
     return sim
 
 
-def test_combine(doplot=False): # If being run via pytest, turn off
+def test_combine(do_plot=False): # If being run via pytest, turn off
     sc.heading('Combine results test')
 
     n_runs = 5
@@ -96,14 +99,14 @@ def test_combine(doplot=False): # If being run via pytest, turn off
     sim2 = cv.Sim({'n':n*n_runs, 'n_infected':n_infected*n_runs})
     sim2.run()
 
-    if doplot:
+    if do_plot:
         sim.plot()
         sim2.plot()
 
     return sim
 
 
-def test_multirun(doplot=False): # If being run via pytest, turn off
+def test_multirun(do_plot=False): # If being run via pytest, turn off
     sc.heading('Multirun test')
 
     # Note: this runs 3 simulations, not 3x3!
@@ -115,18 +118,18 @@ def test_multirun(doplot=False): # If being run via pytest, turn off
     sim['n_days'] = 60
     sims = cv.multi_run(sim=sim, iterpars=iterpars)
 
-    if doplot:
+    if do_plot:
         for sim in sims:
             sim.plot()
 
     return sims
 
 
-def test_scenarios(doplot=False):
+def test_scenarios(do_plot=False):
     sc.heading('Scenarios test')
     scens = cv.Scenarios()
     scens.run()
-    if doplot:
+    if do_plot:
         scens.plot()
     return scens
 
@@ -162,14 +165,14 @@ def test_fileio():
 if __name__ == '__main__':
     sc.tic()
 
-    parsobj = test_parsobj()
-    sim0    = test_microsim()
-    sim1    = test_sim(doplot=doplot)
-    sim2    = test_singlerun()
-    sim3    = test_combine(doplot=doplot)
-    sims    = test_multirun(doplot=doplot)
-    scens   = test_scenarios(doplot=doplot)
-    json    = test_fileio()
+#    parsobj = test_parsobj()
+#    sim0    = test_microsim()
+    sim1    = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
+#    sim2    = test_singlerun()
+#    sim3    = test_combine(do_plot=do_plot)
+#    sims    = test_multirun(do_plot=do_plot)
+#    scens   = test_scenarios(do_plot=do_plot)
+#    json    = test_fileio()
 
     sc.toc()
 

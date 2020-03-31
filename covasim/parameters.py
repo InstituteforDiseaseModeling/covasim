@@ -41,23 +41,23 @@ def make_pars():
     pars['beta_pop']       = {'H': 1.5,  'S': 1.5,   'W': 1.5,  'R': 0.5} # Per-population beta weights; relative
     pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
 
-    # Disease progression
-    pars['serial']         = 4.0 # Serial interval: days after exposure before a person can infect others (see e.g. https://www.ncbi.nlm.nih.gov/pubmed/32145466)
-    pars['serial_std']     = 1.0 # Standard deviation of the serial interval
-    pars['incub']          = 5.0 # Incubation period: days until an exposed person develops symptoms
-    pars['incub_std']      = 1.0 # Standard deviation of the incubation period
-    pars['severe']         = 3.0 # Number of days after symptom onset before hospitalization is required (for severe cases)
-    pars['severe_std']     = 1.0 # Standard deviation of the above period
+    # Duration parameters: time for disease progression
+    pars['dur'] = dict()
+    pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4, par2=1) # Duration from exposed to infectious
+    pars['dur']['inf2sym']  = dict(dist='lognormal_int', par1=1, par2=1) # Duration from infectious to symptomatic
+    pars['dur']['sym2sev']  = dict(dist='lognormal_int', par1=1, par2=1) # Duration from symptomatic to severe symptoms
+    pars['dur']['sev2crit'] = dict(dist='lognormal_int', par1=1, par2=1) # Duration from severe symptoms to requiring ICU
 
-    # Recovery
-    pars['dur']            = 8.0 # Mean recovery time for asymptomatic and mild cases
-    pars['dur_std']        = 2.0 # Variance in duration
-    pars['dur_sev']        = 11.0 # Mean length of hospital stay for severe cases
-    pars['dur_sev_std']    = 3.0 # Variance in duration of hospital stay for severe cases
+    # Duration parameters: time for disease recovery
+    pars['dur']['asym2rec'] = dict(dist='lognormal_int', par1=8, par2=2) # Duration for asymptomatics to recover
+    pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8, par2=2) # Duration from mild symptoms to recovered
+    pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=11, par2=3) # Duration from severe symptoms to recovered - leads to mean total disease time of
+    pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=17, par2=3) # Duration from critical symptoms to recovered
 
-    # Mortality and severity
-    pars['timetodie']           = 21 # Days until death
-    pars['timetodie_std']       = 2 # STD
+    # Duration parameters: time to die for critical cases
+    pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=21, par2=4) # Duration from critical symptoms to death
+
+    # Severity parameters: probabilities of symptom progression
     pars['prog_by_age']         = True # Whether or not to use age-specific probabilities of prognosis (symptoms/severe symptoms/death)
     pars['default_symp_prob']   = 0.7 # If not using age-specific values: overall proportion of symptomatic cases
     pars['default_severe_prob'] = 0.3 # If not using age-specific values: proportion of symptomatic cases that become severe (default 0.2 total)
