@@ -166,7 +166,7 @@ class Person(sc.prettyobj):
 
     def check_symptomatic(self, t):
         ''' Check if an infected person has developed symptoms '''
-        if self.date_symptomatic and t == self.date_symptomatic: # Person is symptomatic
+        if self.date_symptomatic and t >= self.date_symptomatic: # Person is symptomatic - use >= here because we want to know the total number symptomatic at each time step, not new symptomatics
             self.symptomatic = True
             symptomatic = 1
         else:
@@ -176,7 +176,7 @@ class Person(sc.prettyobj):
 
     def check_severe(self, t):
         ''' Check if an infected person has developed severe symptoms requiring hospitalization'''
-        if self.date_severe and t == self.date_severe: # Symptoms have become bad enough to need hospitalization
+        if self.date_severe and t >= self.date_severe: # Symptoms have become bad enough to need hospitalization
             self.severe = True
             severe = 1
         else:
@@ -185,7 +185,7 @@ class Person(sc.prettyobj):
 
     def check_critical(self, t):
         ''' Check if an infected person is in need of IC'''
-        if self.date_critical and t == self.date_critical: # Symptoms have become bad enough to need ICU
+        if self.date_critical and t >= self.date_critical: # Symptoms have become bad enough to need ICU
             self.critical = True
             critical = 1
         else:
