@@ -73,9 +73,9 @@ if __name__ == "__main__": # Required for parallel processing on Windows
     # If we're rerunning...
     if do_run:
         scens = cv.Scenarios(metapars=metapars, scenarios=scenarios)
-        scens.run(keep_sims=keep_sims, verbose=verbose)
+        scens.run(verbose=verbose)
         if do_save:
-            scens.save(filename=obj_path)
+            scens.save(filename=obj_path, keep_sims=keep_sims)
 
     # Don't run
     else:
