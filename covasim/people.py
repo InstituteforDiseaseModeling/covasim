@@ -246,7 +246,29 @@ def make_people(sim, verbose=None, id_len=None, die=True):
         popdict = make_randpop(sim)
     else:
         import synthpops as sp # Optional import
-        popdict = sp.make_population(n=sim['n'])
+        population = sp.make_population(n=sim['n'])
+        uids, ages, sexes, contacts = [], [], [], []
+        for uid,person in population.items():
+            uids.append(uid)
+            ages.append(person['age'])
+            sexes.append(person['sex'])
+
+        # Replace contact UIDs with ints...
+        for uid,person in population.items():
+            uid_contacts = person['contacts']
+            int_contacts = {}
+            for key in uid_contacts.keys():
+                int_contacts[key] = []
+                for uid in uid_contacts[key]:
+                    int_contacts[key].append(uids.index(uid))
+                int_contacts[key] = np.array(int_contacts[key], dtype=np.int64)
+            contacts.append(int_contacts)
+
+        popdict = {}
+        popdict['uid']     = uids
+        popdict['age']     = np.array(ages)
+        popdict['sex']    = np.array(sexes)
+        popdict['contacts'] = contacts
 
     # Set prognoses by modifying popdict in place
     set_prognoses(sim, popdict)

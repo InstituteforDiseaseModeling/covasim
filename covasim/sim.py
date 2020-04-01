@@ -105,7 +105,7 @@ class Sim(cvbase.BaseSim):
         self['start_day'] = start_day # Convert back
 
         # Handle population data
-        popdata_choices = ['random', 'bayesian', 'data']
+        popdata_choices = ['random', 'microstructure']
         if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
             self['usepopdata'] = popdata_choices[int(self['usepopdata'])] # Choose one of these
         if self['usepopdata'] not in popdata_choices:
