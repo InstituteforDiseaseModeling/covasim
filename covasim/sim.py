@@ -29,11 +29,11 @@ default_sim_plots = sc.odict({
             'cum_diagnosed': 'Cumulative diagnosed',
         }),
         'Daily counts': sc.odict({
-            'infections': 'New infections',
-            'deaths': 'New deaths',
-            'recoveries': 'New recoveries',
+            'new_infections': 'New infections',
+            'new_deaths': 'New deaths',
+            'new_recoveries': 'New recoveries',
             # 'tests': 'Number of tests',
-            'diagnoses': 'New diagnoses',
+            'new_diagnoses': 'New diagnoses',
         })
     })
 
@@ -60,7 +60,6 @@ class Sim(cvbase.BaseSim):
         self.results_ready = False # Whether or not results are ready
         self.people = {} # Initialize these here so methods that check their length can see they're empty
         self.results = {}
-        self.calculated = {}
         return
 
 
@@ -128,35 +127,46 @@ class Sim(cvbase.BaseSim):
             output = cvbase.Result(*args, **kwargs, npts=self.npts)
             return output
 
-        # Create the main results structure
+        # Create the main results structure.
+        # We differentiate between flows, stocks, and cumulative results
+        # The prefix "new" is used for flow variables, i.e. counting new events (infections/deaths/recoveries) on each timestep
+        # The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any paticular timestep
+        # The prefix "cum_" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
+        # Note that, by definition, n_dead is the same as cum_deaths and n_recovered is the same as cum_recoveries, so we only define the cumulative versions
+
+        # Stock variables
         self.results['n_susceptible']  = init_res('Number susceptible')
         self.results['n_exposed']      = init_res('Number exposed')
         self.results['n_infectious']   = init_res('Number infectious')
         self.results['n_symptomatic']  = init_res('Number symptomatic')
         self.results['n_severe']       = init_res('Number with severe symptoms')
-        self.results['n_recovered']    = init_res('Number recovered')
-        self.results['infections']     = init_res('Number of new infections')
-        self.results['tests']          = init_res('Number of tests')
-        self.results['diagnoses']      = init_res('Number of new diagnoses')
+        self.results['n_critical']     = init_res('Number of critical cases')
         self.results['bed_capacity']   = init_res('Percentage bed capacity', ispercentage=True)
-        self.results['recoveries']     = init_res('Number of new recoveries')
-        self.results['deaths']         = init_res('Number of new deaths')
+
+        # Flow variables
+        # self.results['new_exposures']  = init_res('Number of new exposures')
+        self.results['new_infections'] = init_res('Number of new infections')
+        self.results['new_recoveries'] = init_res('Number of new recoveries')
+        self.results['new_deaths']     = init_res('Number of new deaths')
+        self.results['new_tests']      = init_res('Number of new tests')
+        self.results['new_diagnoses']  = init_res('Number of new diagnoses')
+
+        # Cumulative variables
         self.results['cum_exposed']    = init_res('Cumulative number exposed')
         self.results['cum_tested']     = init_res('Cumulative number of tests')
         self.results['cum_diagnosed']  = init_res('Cumulative number diagnosed')
         self.results['cum_deaths']     = init_res('Cumulative number of deaths')
         self.results['cum_recoveries'] = init_res('Cumulative number recovered')
-        self.results['doubling_time']  = init_res('Doubling time', scale=False)
+
+        # Other variables
         self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
+        self.results['doubling_time']  = init_res('Doubling time', scale=False)
 
         # Populate the rest of the results
         self.results['t'] = self.tvec
         self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
         self.results_ready = False
 
-        # Create calculated values structure
-        self.calculated['eff_beta'] = (1-self['default_symp_prob'])*self['asymp_factor']*self['beta'] + self['default_symp_prob']*self['beta']  # Using asymptomatic proportion
-        self.calculated['r_0']      = self['contacts']*self['dur']*self.calculated['eff_beta']
         return
 
 
@@ -216,21 +226,23 @@ class Sim(cvbase.BaseSim):
             if self.stopped:
                 break
 
-            # Zero counts for this time step.
-            n_susceptible = 0
-            n_exposed     = 0
-            n_deaths      = 0
-            n_recoveries  = 0
-            n_infectious  = 0
-            n_infections  = 0
-            n_symptomatic = 0
-            n_severe      = 0
-            n_recovered   = 0
+            # Zero counts for this time step: stocks
+            n_susceptible   = 0
+            n_exposed       = 0
+            n_infectious    = 0
+            n_symptomatic   = 0
+            n_severe        = 0
+            n_critical      = 0
+
+            # Zero counts for this time step: flows
+            new_recoveries  = 0
+            new_deaths      = 0
+            new_infections  = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
             rand_popdata     = (self['usepopdata'] == 'random')
             beta             = self['beta']
-            asymp_factor      = self['asymp_factor']
+            asymp_factor     = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
             beta_pop         = self['beta_pop']
@@ -255,29 +267,30 @@ class Sim(cvbase.BaseSim):
                 # If exposed, check if the person becomes infectious or develops symptoms
                 if person.exposed:
                     n_exposed += 1
-                    if not person.infectious and t >= person.date_infectious: # It's the day they become infectious
+                    if not person.infectious and t == person.date_infectious: # It's the day they become infectious
                         person.infectious = True
                         sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
 
                 # If infectious, check if anyone gets infected
                 if person.infectious:
 
-                    # Check for death
-                    died = person.check_death(t)
-                    n_deaths += died
+                    # Check whether the person died on this timestep
+                    new_death = person.check_death(t)
+                    new_deaths += new_death
 
-                    # Check for recovery
-                    recovered = person.check_recovery(t)
-                    n_recoveries += recovered
+                    # Check whether the person recovered on this timestep
+                    new_recovery = person.check_recovery(t)
+                    new_recoveries += new_recovery
 
                     # No recovery: check symptoms
-                    if not recovered:
-                        n_symptomatic += person.check_symptomatic(t)
-                        n_severe += person.check_severe(t)
+                    if not new_recovery:
+                        n_symptomatic   += person.check_symptomatic(t)
+                        n_severe        += person.check_severe(t)
+                        n_critical      += person.check_critical(t)
                         if n_severe > n_beds: bed_constraint = True
 
                     # If the person didn't die or recover, check for onward transmission
-                    if not died and not recovered:
+                    if not new_death and not new_recovery:
                         n_infectious += 1 # Count this person as infectious
 
                         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
@@ -305,13 +318,9 @@ class Sim(cvbase.BaseSim):
 
                             # Skip people who are not susceptible
                             if target_person.susceptible:
-                                n_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                 sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
-
-                # Count people who recovered
-                if person.recovered:
-                    n_recovered += 1
 
             sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)
             # End of person loop; apply interventions
@@ -320,24 +329,26 @@ class Sim(cvbase.BaseSim):
             if self['interv_func'] is not None: # Apply custom intervention function
                 self =self['interv_func'](self, t)
 
-            # Update counts for this time step
-            self.results['n_susceptible'][t] = n_susceptible
-            self.results['n_exposed'][t]     = n_exposed
-            self.results['deaths'][t]        = n_deaths
-            self.results['recoveries'][t]    = n_recoveries
-            self.results['n_infectious'][t]  = n_infectious
-            self.results['infections'][t]    = n_infections
-            self.results['n_symptomatic'][t] = n_symptomatic
-            self.results['n_severe'][t]      = n_severe
-            self.results['n_recovered'][t]   = n_recovered
-            self.results['bed_capacity'][t]  = n_severe/n_beds if n_beds>0 else None
+            # Update counts for this time step: stocks
+            self.results['n_susceptible'][t]  = n_susceptible
+            self.results['n_exposed'][t]      = n_exposed
+            self.results['n_infectious'][t]   = n_infectious # Tracks total number infectious at this timestep
+            self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
+            self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
+            self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
+            self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else None
+
+            # Update counts for this time step: flows
+            self.results['new_infections'][t] = new_infections # New infections on this timestep
+            self.results['new_recoveries'][t] = new_recoveries # Tracks new recoveries on this timestep
+            self.results['new_deaths'][t]     = new_deaths
 
         # End of time loop; compute cumulative results outside of the time loop
-        self.results['cum_exposed'].values    = pl.cumsum(self.results['infections'].values) + self['n_infected'] # Include initially infected people
-        self.results['cum_tested'].values     = pl.cumsum(self.results['tests'].values)
-        self.results['cum_diagnosed'].values  = pl.cumsum(self.results['diagnoses'].values)
-        self.results['cum_deaths'].values     = pl.cumsum(self.results['deaths'].values)
-        self.results['cum_recoveries'].values = pl.cumsum(self.results['recoveries'].values)
+        self.results['cum_exposed'].values    = pl.cumsum(self.results['new_infections'].values) + self['n_infected'] # Include initially infected people
+        self.results['cum_tested'].values     = pl.cumsum(self.results['new_tests'].values)
+        self.results['cum_diagnosed'].values  = pl.cumsum(self.results['new_diagnoses'].values)
+        self.results['cum_deaths'].values     = pl.cumsum(self.results['new_deaths'].values)
+        self.results['cum_recoveries'].values = pl.cumsum(self.results['new_recoveries'].values)
 
         # Add in the results from the interventions
         for intervention in self['interventions']:
@@ -464,6 +475,8 @@ class Sim(cvbase.BaseSim):
      {summary['n_susceptible']:5.0f} susceptible
      {summary['n_infectious']:5.0f} infectious
      {summary['n_symptomatic']:5.0f} symptomatic
+     {summary['n_severe']:5.0f} severe cases
+     {summary['n_critical']:5.0f} critical cases
      {summary['cum_exposed']:5.0f} total exposed
      {summary['cum_diagnosed']:5.0f} total diagnosed
      {summary['cum_deaths']:5.0f} total deaths
