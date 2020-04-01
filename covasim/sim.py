@@ -85,10 +85,11 @@ class Sim(cvbase.BaseSim):
 
     def initialize(self):
         ''' Perform all initializations '''
-        self.validate_pars()
-        self.set_seed()
-        self.init_results()
-        self.init_people()
+        self.t = 0 # The current time index
+        self.validate_pars() # Ensure parameters have valid values
+        self.set_seed() # Reset the random seed
+        self.init_results() # Create the results stucture
+        self.init_people() # Create all the people (slow)
         return
 
 
@@ -197,12 +198,57 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def run(self, initialize=True, do_plot=False, verbose=None, **kwargs):
-        ''' Run the simulation '''
+    def next(self, steps=None, stop=None, initialize=False, finalize=False, verbose=0, **kwargs):
+        '''
+        A method to step through the simulation rather than run all at once.
+
+        Args:
+            steps (int): the number of timesteps to run (default: 1)
+            stop (int): alternative to steps, index of the simulation to run until (default: current + 1)
+            kwargs (dict): passed to self.run()
+
+        Returns:
+            None.
+        '''
+        start = self.t
+        if steps is None:
+            steps = 1
+        if stop is None:
+            stop = start + steps
+        self.run(start=start, stop=stop, initialize=initialize, finalize=finalize, verbose=verbose, **kwargs)
+        return None # Unlike run(), do not return results
+
+
+
+    def run(self, start=None, stop=None, initialize=None, finalize=None, do_plot=False, verbose=None, **kwargs):
+        '''
+        Run the simulation.
+
+        Args:
+            start (int): when to start the simulation relative to the time vector; default 0
+            stop (int): when to stop; default -1
+            initialize (bool): whether to initialize people and results objects
+            finalize (bool): whether or not to calculate final results objects after the time loop
+            do_plot (bool): whether to plot
+            verbose (int): level of detail to print
+            kwargs (dict): passed to self.plot()
+
+        Returns:
+            results: the results object (also modifies in-place)
+        '''
 
         T = sc.tic()
 
         # Reset settings and results
+        if start is None:
+            start = 0
+        if initialize is None:
+            if start > 0:
+                initialize = False
+            else:
+                initialize = True
+        if finalize is None:
+            finalize = True
         if verbose is None:
             verbose = self['verbose']
         if initialize:
@@ -210,7 +256,9 @@ class Sim(cvbase.BaseSim):
 
         # Main simulation loop
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
-        for t in range(self.npts):
+        tvec = self.tvec[start:stop]
+        for t in tvec:
+            self.t += 1 # Store the current time
 
             # Check timing and stopping function
             elapsed = sc.toc(T, output=True)
@@ -219,7 +267,7 @@ class Sim(cvbase.BaseSim):
                 self.stopped = {'why':'timelimit', 'message':'Time limit exceeded at step {t}', 't':t}
 
             if self['stop_func']:
-                self.stopped = self['stop_func'](self, t) # Feed in the current simulation object and the time
+                self.stopped = self['stop_func'](self) # Feed in the current simulation object and the time
 
             # If this gets set, stop running -- e.g. if the time limit is exceeded
             if self.stopped:
@@ -324,9 +372,9 @@ class Sim(cvbase.BaseSim):
             sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)
             # End of person loop; apply interventions
             for intervention in self['interventions']:
-                intervention.apply(self, t)
+                intervention.apply(self)
             if self['interv_func'] is not None: # Apply custom intervention function
-                self =self['interv_func'](self, t)
+                self =self['interv_func'](self)
 
             # Update counts for this time step: stocks
             self.results['n_susceptible'][t]  = n_susceptible
@@ -343,6 +391,17 @@ class Sim(cvbase.BaseSim):
             self.results['new_deaths'][t]     = new_deaths
 
         # End of time loop; compute cumulative results outside of the time loop
+        if finalize:
+            self.finalize(verbose=verbose) # Finalize the results
+            sc.printv(f'\nRun finished after {elapsed:0.1f} s.\n', 1, verbose)
+            self.summary = self.summary_stats(verbose=verbose)
+            if do_plot: # Optionally plot
+                self.plot(**kwargs)
+
+        return self.results
+
+
+    def finalize(self, verbose=None):
         self.results['cum_exposed'].values    = pl.cumsum(self.results['new_infections'].values) + self['n_infected'] # Include initially infected people
         self.results['cum_tested'].values     = pl.cumsum(self.results['new_tests'].values)
         self.results['cum_diagnosed'].values  = pl.cumsum(self.results['new_diagnoses'].values)
@@ -363,19 +422,12 @@ class Sim(cvbase.BaseSim):
         self.compute_r_eff()
         self.likelihood()
 
-        # Tidy up
-        self.results_ready = True
-        sc.printv(f'\nRun finished after {elapsed:0.1f} s.\n', 1, verbose)
-        self.results['summary'] = self.summary_stats()
-
-        if do_plot:
-            self.plot(**kwargs)
-
         # Convert to an odict to allow e.g. sim.people[25] later, and results to an objdict to allow e.g. sim.results.diagnoses
         self.people = sc.odict(self.people)
         self.results = sc.objdict(self.results)
+        self.results_ready = True
 
-        return self.results
+        return
 
 
     def compute_doubling(self, window=None, max_doubling_time=100):

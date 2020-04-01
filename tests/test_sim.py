@@ -158,20 +158,49 @@ def test_fileio():
     return json
 
 
+def test_start_stop(): # If being run via pytest, turn off
+    sc.heading('Test starting and stopping')
+
+    # Create and run a basic simulation
+    sim1 = cv.Sim()
+    sim1.run(verbose=0)
+
+    # Test start and stop
+    stop = 20
+    sim2 = cv.Sim()
+    sim2.run(start=0, stop=stop, verbose=0)
+    sim2.run(start=stop, stop=None, verbose=0)
+
+    # Test that next works
+    sim3 = cv.Sim()
+    sim3.initialize()
+    for n in range(sim3.npts):
+        sim3.next(verbose=0)
+    sim3.finalize()
+
+    # Compare results
+    key = 'cum_exposed'
+    assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Start-stop values do not match'
+    assert (sim1.results[key][:] == sim3.results[key][:]).all(), 'Next values do not match'
+
+    return sim2
+
+
 #%% Run as a script
 if __name__ == '__main__':
-    sc.tic()
+    T = sc.tic()
 
-    parsobj = test_parsobj()
-    sim0    = test_microsim()
-    sim1    = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2    = test_singlerun()
-    sim3    = test_combine(do_plot=do_plot)
-    sims    = test_multirun(do_plot=do_plot)
-    scens   = test_scenarios(do_plot=do_plot)
-    json    = test_fileio()
+    # pars  = test_parsobj()
+    # sim0  = test_microsim()
+    # sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim2  = test_singlerun()
+    # sim3  = test_combine(do_plot=do_plot)
+    # sims  = test_multirun(do_plot=do_plot)
+    # scens = test_scenarios(do_plot=do_plot)
+    # json  = test_fileio()
+    sim   = test_start_stop()
 
-    sc.toc()
+    sc.toc(T)
 
 
 print('Done.')
