@@ -298,6 +298,8 @@ class Sim(cvbase.BaseSim):
             beta_pop         = self['beta_pop']
             n_beds           = self['n_beds']
             bed_constraint   = False
+            n_people         = len(self.people)
+            n_comm_contacts  = self['contacts_pop']['R'] # TODO: refactor
 
             # Print progress
             if verbose>=1:
@@ -354,6 +356,8 @@ class Sim(cvbase.BaseSim):
                             transmission_inds = cvu.bf(thisbeta, person.contacts)
                         else: # Dictionary of contacts -- extra loop over layers
                             transmission_inds = []
+                            community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
+                            person.contacts['R'] = community_contact_inds
                             for ckey in self.contact_keys:
                                 layer_beta = thisbeta * beta_pop[ckey]
                                 transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))

@@ -39,7 +39,7 @@ def make_pars():
     pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
     pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']     = 20 # Estimated number of contacts
-    pars['beta_pop']     = {'H': 1.5,  'S': 1.5,   'W': 1.5,  'R': 0.5} # Per-population beta weights; relative
+    pars['beta_pop']     = {'H': 2,  'S': 1,   'W': 1,  'R': 0.3} # Per-population beta weights; relative
     pars['contacts_pop'] = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
 
     # Duration parameters: time for disease progression

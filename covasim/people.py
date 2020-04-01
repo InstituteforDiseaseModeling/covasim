@@ -184,6 +184,7 @@ class Person(sc.prettyobj):
             severe = 0
         return severe
 
+
     def check_critical(self, t):
         ''' Check if an infected person is in need of IC'''
         if self.date_critical and t >= self.date_critical: # Symptoms have become bad enough to need ICU
@@ -192,6 +193,7 @@ class Person(sc.prettyobj):
         else:
             critical = 0
         return critical
+
 
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
@@ -223,14 +225,14 @@ class Person(sc.prettyobj):
 
 def make_people(sim, verbose=None, id_len=None, die=True):
 
-    # Set defaults
-    if verbose is None: verbose = sim['verbose']
-    if id_len  is None: id_len  = 6
-
     # Set inputs
     n_people     = int(sim['n']) # Shorten
     usepopdata   = sim['usepopdata'] # Shorten
     use_rand_pop = (usepopdata == 'random') # Whether or not to use a random population (as opposed to synthpops)
+
+    # Set defaults
+    if verbose is None: verbose = sim['verbose']
+    if id_len  is None: id_len  = int(np.log10(n_people)) + 2 # Dynamically generate based on the number of people required
 
     # Check which type of population to rpoduce
     if not use_rand_pop and not cvreqs.available['synthpops']:
