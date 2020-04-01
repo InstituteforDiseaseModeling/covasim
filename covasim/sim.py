@@ -144,7 +144,6 @@ class Sim(cvbase.BaseSim):
         self.results['bed_capacity']   = init_res('Percentage bed capacity', ispercentage=True)
 
         # Flow variables
-        # self.results['new_exposures']  = init_res('Number of new exposures')
         self.results['new_infections'] = init_res('Number of new infections')
         self.results['new_recoveries'] = init_res('Number of new recoveries')
         self.results['new_deaths']     = init_res('Number of new deaths')

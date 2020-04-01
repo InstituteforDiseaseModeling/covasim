@@ -134,6 +134,15 @@ class BaseSim(ParsObj):
         return
 
     @property
+    def n(self):
+        ''' Count the number of people -- if it fails, assume none '''
+        try: # By default, the length of the people dict
+            output = len(self.people)
+        except: # If it's None or missing
+            output = 0
+        return output
+
+    @property
     def npts(self):
         ''' Count the number of time points '''
         return int(self['n_days'] + 1)
