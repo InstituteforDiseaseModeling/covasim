@@ -361,7 +361,6 @@ class test_historical(Intervention):
         """
 
         Args:
-            npts: Number of simulation timepoints
             n_tests: Number of tests per day. If this is a scalar or an array with length less than npts, it will be zero-padded
             n_positive: Number of positive tests (confirmed cases) per day. If this is a scalar or an array with length less than npts, it will be zero-padded
         """
