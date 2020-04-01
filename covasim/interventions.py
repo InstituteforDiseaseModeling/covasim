@@ -17,7 +17,7 @@ class Intervention:
         self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
 
 
-    def apply(self, sim, t: int) -> None:
+    def apply(self, sim) -> None:
         """
         Apply intervention
 
@@ -28,7 +28,6 @@ class Intervention:
         Args:
             self:
             sim: The Sim instance
-            t: The current time index
 
         Returns:
             None
@@ -120,8 +119,9 @@ class dynamic_pars(Intervention):
         return
 
 
-    def apply(self, sim, t):
+    def apply(self, sim):
         ''' Loop over the parameters, and then loop over the days, applying them if any are found '''
+        t = sim.t
         for parkey,parval in self.pars.items():
             inds = sc.findinds(parval['days'], t) # Look for matches
             if len(inds):
@@ -156,9 +156,9 @@ class sequence(Intervention):
         return
 
 
-    def apply(self, sim, t):
-        idx = np.argmax(self._cum_days > t)  # Index of the intervention to apply on this day
-        self.interventions[idx].apply(sim, t)
+    def apply(self, sim):
+        idx = np.argmax(self._cum_days > sim.t)  # Index of the intervention to apply on this day
+        self.interventions[idx].apply(sim)
         return
 
 
@@ -203,14 +203,14 @@ class change_beta(Intervention):
         return
 
 
-    def apply(self, sim, t):
+    def apply(self, sim):
 
         # If this is the first time it's being run, store beta
         if self.orig_beta is None:
             self.orig_beta = sim['beta']
 
         # If this day is found in the list, apply the intervention
-        inds = sc.findinds(self.days, t)
+        inds = sc.findinds(self.days, sim.t)
         if len(inds):
             new_beta = self.orig_beta
             for ind in inds:
@@ -252,7 +252,9 @@ class test_num(Intervention):
         return
 
 
-    def apply(self, sim, t):
+    def apply(self, sim):
+
+        t = sim.t
 
         # Check that there are still tests
         if t < len(self.daily_tests):
@@ -318,9 +320,10 @@ class test_prob(Intervention):
         return
 
 
-    def apply(self, sim, t):
+    def apply(self, sim):
         ''' Perform testing '''
 
+        t = sim.t
         new_scheduled_tests = set()
 
         for i, person in enumerate(sim.people.values()):
@@ -370,8 +373,10 @@ class test_historical(Intervention):
         return
 
 
-    def apply(self, sim, t):
+    def apply(self, sim):
         ''' Perform testing '''
+
+        t = sim.t
 
         if self.n_tests[t]:
 

@@ -372,34 +372,46 @@ class Scenarios(cvbase.ParsObj):
 
 
 
-def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None, **kwargs):
+def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None, sim_args=None, **kwargs):
     '''
     Convenience function to perform a single simulation run. Mostly used for
-    parallelization, but can also be used directly:
-        import covasim.cova_generic as cova
-        sim = cova.Sim() # Create a default simulation
-        sim = cova.single_run(sim) # Run it, equivalent(ish) to sim.run()
+    parallelization, but can also be used directly.
+
+    Args:
+        sim (Sim): the sim instance to be run
+        ind (int): the index of this sim
+        noise (float): the amount of noise to add to each run
+        noisepar (string): the name of the parameter to add noise to
+        verbose (int): detail to print
+        run_args (dict): arguments passed to sim.run()
+        sim_args (dict): extra parameters to pass to the sim, e.g. 'n_infected'
+        kwargs (dict): also passed to the sim
+
+    Returns:
+        sim (Sim): a single sim object with results
+
+    Example:
+        import covasim as cv
+        sim = cv.Sim() # Create a default simulation
+        sim = cv.single_run(sim) # Run it, equivalent(ish) to sim.run()
     '''
 
-    if sim_args is None:
-        sim_args = {}
+    new_sim = sc.dcp(sim) # Copy the sim to avoid overwriting it
 
-    new_sim = sc.dcp(sim) # To avoid overwriting it; otherwise, use
-
+    # Set sim and run arguments
     if verbose is None:
         verbose = new_sim['verbose']
+    sim_args = sc.mergedicts(sim_args, kwargs)
+    run_args = sc.mergedicts({'verbose':verbose}, run_args)
 
     new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
     new_sim.set_seed()
 
     # If the noise parameter is not found, guess what it should be
     if noisepar is None:
-        guesses = ['r_contact', 'r0', 'beta']
-        found = [guess for guess in guesses if guess in sim.pars.keys()]
-        if len(found)!=1:
-            raise KeyError(f'Cound not guess noise parameter since out of {guesses}, {found} were found')
-        else:
-            noisepar = found[0]
+        noisepar = 'beta'
+        if noisepar not in sim.pars.keys():
+            raise KeyError(f'Noise parameter {noisepar} was not found in sim parameters')
 
     # Handle noise -- normally distributed fractional error
     noiseval = noise*np.random.normal()
@@ -413,7 +425,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None
         print(f'Running a simulation using {new_sim["seed"]} seed and {noisefactor} noise')
 
     # Handle additional arguments
-    for key,val in kwargs.items():
+    for key,val in sim_args.items():
         print(f'Processing {key}:{val}')
         if key in new_sim.pars.keys():
             if verbose>=1:
@@ -424,17 +436,37 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, sim_args=None
             raise KeyError(f'Could not set key {key}: not a valid parameter name')
 
     # Run
-    new_sim.run(verbose=verbose)
+    new_sim.run(**run_args)
 
     return new_sim
 
 
-def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, sim_args=None, combine=False, **kwargs):
+def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, combine=False, run_args=None, sim_args=None, **kwargs):
     '''
-    For running multiple runs in parallel. Example:
-        import covid_seattle
-        sim = covid_seattle.Sim()
-        sims = covid_seattle.multi_run(sim, n_runs=6, noise=0.2)
+    For running multiple runs in parallel.
+
+    Args:
+        sim (Sim): the sim instance to be run
+        n_runs (int): the number of parallel runs
+        noise (float): the amount of noise to add to each run
+        noisepar (string): the name of the parameter to add noise to
+        iterpars (dict): any other parameters to iterate over the runs; see sc.parallelize() for syntax
+        verbose (int): detail to print
+        combine (bool): whether or not to combine all results into one sim, rather than return multiple sim objects
+        run_args (dict): arguments passed to sim.run()
+        sim_args (dict): extra parameters to pass to the sim
+        kwargs (dict): also passed to the sim
+
+    Returns:
+        if combine:
+            a single sim object with the combined results from each sim
+        else (default):
+            a list of sim objects
+
+    Example:
+        import covasim as cv
+        sim = cv.Sim()
+        sims = cv.multi_run(sim, n_runs=6, noise=0.2)
     '''
 
     # Create the sims
@@ -456,7 +488,7 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     # Copy the simulations
     iterkwargs = {'ind':np.arange(n_runs)}
     iterkwargs.update(iterpars)
-    kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'sim_args':sim_args}
+    kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'sim_args':sim_args, 'run_args':run_args}
     sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
 
     # Usual case -- return a list of sims
