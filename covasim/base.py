@@ -175,14 +175,27 @@ class BaseSim(ParsObj):
 
 
     def _make_resdict(self, for_json: bool = True) -> dict:
-        ''' Pre-convert the results structure to a friendier output'''
+        """
+        Convert results to dict
+
+        The results written to Excel must have a regular table shape, whereas
+        for the JSON output, arbitrary data shapes are supported.
+
+        Args:
+            for_json: If False, only data associated with Result objects will be included in the converted output
+
+        Returns: Dictionary representation of the results
+
+        """
         resdict = {}
+        resdict['t'] = self.results['t'] # Assume that there is a key for time
+
         if for_json:
             resdict['timeseries_keys'] = self.reskeys
         for key,res in self.results.items():
             if isinstance(res, Result):
-                res = res.values
-            if for_json or sc.isiterable(res) and len(res)==self.npts:
+                resdict[key] = res.values
+            elif for_json:
                 resdict[key] = res
         return resdict
 
