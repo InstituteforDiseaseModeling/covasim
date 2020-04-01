@@ -247,6 +247,7 @@ def make_people(sim, verbose=None, id_len=None, die=True, fromfile=False, do_sav
     if fromfile and popdictfile is not None:
         print('TEMP LOADING')
         popdict = sc.loadobj(popdictfile)
+        assert len(popdict['uid']) == sim['n'], 'Population dict has wrong length'
     else:
         print('TEMP CREATING')
         if use_rand_pop:
