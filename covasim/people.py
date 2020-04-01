@@ -376,7 +376,7 @@ def set_prognoses(sim, popdict):
         # Return output
         prognoses.symp_prob   = symp_prob
         prognoses.severe_prob = severe_prob
-        prognoses.crit_prob   = severe_prob
+        prognoses.crit_prob   = crit_prob
         prognoses.death_prob  = death_prob
 
     popdict.update(prognoses) # Add keys to popdict
