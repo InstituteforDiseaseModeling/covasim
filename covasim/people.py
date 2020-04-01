@@ -343,7 +343,7 @@ def set_prognoses(sim, popdict):
     if not by_age:
         prognoses.symp_prob   = sim['default_symp_prob']*np.ones(n)
         prognoses.severe_prob = sim['default_severe_prob']*np.ones(n)
-        prognoses.crit_prob = sim['default_crit_prob']*np.ones(n)
+        prognoses.crit_prob   = sim['default_crit_prob']*np.ones(n)
         prognoses.death_prob  = sim['default_death_prob']*np.ones(n)
 
     else:
@@ -364,10 +364,10 @@ def set_prognoses(sim, popdict):
         for age in ages:
             # Figure out which probability applies to a person of the specified age
             ind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), -1)
-            this_symp_prob      = symp_probs[ind]    # Probability of developing symptoms
-            this_severe_prob    = severe_if_sym[ind] # Probability of developing severe symptoms
-            this_crit_prob      = crit_if_severe[ind] # Probability of developing critical symptoms
-            this_death_prob     = death_if_crit[ind] # Probability of dying after developing critical symptoms
+            this_symp_prob   = symp_probs[ind]    # Probability of developing symptoms
+            this_severe_prob = severe_if_sym[ind] # Probability of developing severe symptoms
+            this_crit_prob   = crit_if_severe[ind] # Probability of developing critical symptoms
+            this_death_prob  = death_if_crit[ind] # Probability of dying after developing critical symptoms
             symp_prob.append(this_symp_prob)
             severe_prob.append(this_severe_prob)
             crit_prob.append(this_crit_prob)
