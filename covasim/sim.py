@@ -242,8 +242,6 @@ class Sim(cvbase.BaseSim):
         # Reset settings and results
         if start is None:
             start = 0
-        if stop is None:
-            stop = -1
         if initialize is None:
             if start > 0:
                 initialize = False
@@ -258,7 +256,8 @@ class Sim(cvbase.BaseSim):
 
         # Main simulation loop
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
-        for t in self.tvec[start:stop]:
+        tvec = self.tvec[start:stop]
+        for t in tvec:
             self.t += 1 # Store the current time
 
             # Check timing and stopping function

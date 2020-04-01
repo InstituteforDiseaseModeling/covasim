@@ -169,12 +169,12 @@ def test_start_stop(): # If being run via pytest, turn off
     stop = 20
     sim2 = cv.Sim()
     sim2.run(start=0, stop=stop, verbose=0)
-    sim2.run(start=stop, stop=-1, verbose=0)
+    sim2.run(start=stop, stop=None, verbose=0)
 
     # Test that next works
     sim3 = cv.Sim()
     sim3.initialize()
-    for n in range(sim3.npts-1):
+    for n in range(sim3.npts):
         sim3.next(verbose=0)
     sim3.finalize()
 
@@ -190,14 +190,14 @@ def test_start_stop(): # If being run via pytest, turn off
 if __name__ == '__main__':
     T = sc.tic()
 
-    pars  = test_parsobj()
-    sim0  = test_microsim()
-    sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2  = test_singlerun()
-    sim3  = test_combine(do_plot=do_plot)
-    sims  = test_multirun(do_plot=do_plot)
-    scens = test_scenarios(do_plot=do_plot)
-    json  = test_fileio()
+    # pars  = test_parsobj()
+    # sim0  = test_microsim()
+    # sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim2  = test_singlerun()
+    # sim3  = test_combine(do_plot=do_plot)
+    # sims  = test_multirun(do_plot=do_plot)
+    # scens = test_scenarios(do_plot=do_plot)
+    # json  = test_fileio()
     sim   = test_start_stop()
 
     sc.toc(T)
