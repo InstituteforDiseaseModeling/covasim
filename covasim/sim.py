@@ -56,6 +56,7 @@ class Sim(cvbase.BaseSim):
         self.set_metadata(filename) # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
         self.update_pars(pars) # Update the parameters, if provided
+        self.initialized = False
         self.stopped = None # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
         self.people = {} # Initialize these here so methods that check their length can see they're empty
@@ -83,13 +84,20 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def initialize(self):
-        ''' Perform all initializations '''
+    def initialize(self, **kwargs):
+        '''
+        Perform all initializations.
+
+        Args:
+            kwargs (dict): passed to init_people
+        '''
+        print('TEMP initializing')
         self.t = None # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
-        self.init_people() # Create all the people (slow)
+        self.init_people(**kwargs) # Create all the people (slow)
+        self.initialized = True
         return
 
 
@@ -181,14 +189,17 @@ class Sim(cvbase.BaseSim):
         return res_keys
 
 
-    def init_people(self, verbose=None, id_len=None):
+    def init_people(self, verbose=None, id_len=None, **kwargs):
         ''' Create the people '''
+
+        print('TEMP init people')
+
         if verbose is None:
             verbose = self['verbose']
 
         sc.printv(f'Creating {self["n"]} people...', 1, verbose)
 
-        cvppl.make_people(self, verbose=verbose, id_len=id_len)
+        cvppl.make_people(self, verbose=verbose, id_len=id_len, **kwargs)
 
         # Create the seed infections
         for i in range(int(self['n_infected'])):
@@ -246,7 +257,7 @@ class Sim(cvbase.BaseSim):
         if start is None:
             start = 0
         if initialize is None:
-            if start > 0:
+            if start > 0 or self.initialized:
                 initialize = False
             else:
                 initialize = True
