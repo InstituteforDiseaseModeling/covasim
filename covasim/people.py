@@ -343,6 +343,7 @@ def set_prognoses(sim, popdict):
     if not by_age:
         prognoses.symp_prob   = sim['default_symp_prob']*np.ones(n)
         prognoses.severe_prob = sim['default_severe_prob']*np.ones(n)
+        prognoses.crit_prob = sim['default_crit_prob']*np.ones(n)
         prognoses.death_prob  = sim['default_death_prob']*np.ones(n)
 
     else:
