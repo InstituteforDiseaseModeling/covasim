@@ -60,7 +60,6 @@ class Sim(cvbase.BaseSim):
         self.results_ready = False # Whether or not results are ready
         self.people = {} # Initialize these here so methods that check their length can see they're empty
         self.results = {}
-        self.calculated = {}
         return
 
 
@@ -168,9 +167,6 @@ class Sim(cvbase.BaseSim):
         self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
         self.results_ready = False
 
-        # Create calculated values structure
-        self.calculated['eff_beta'] = (1-self['default_symp_prob'])*self['asymp_factor']*self['beta'] + self['default_symp_prob']*self['beta']  # Using asymptomatic proportion
-        self.calculated['r_0']      = self['contacts']*self['dur']['exp2inf']['par1']*self.calculated['eff_beta']
         return
 
 
