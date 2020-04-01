@@ -11,7 +11,7 @@ import sciris as sc
 import covasim as cova
 
 
-doplot = 1
+doplot = 0
 
 
 #%% Define the tests
@@ -165,7 +165,7 @@ def test_doubling_time():
     d.t3 = cova.get_doubling_time(sim, interval=[3,sim['n_days']], exp_approx=True)
     d.t4 = cova.get_doubling_time(sim, start_day=3, end_day=sim['n_days'], moving_window=4) # should return array
     d.t5 = cova.get_doubling_time(sim, series=np.power(1.03, range(100)), interval=[3,30], moving_window=3) # Should be a series with values = 23.44977..
-    d.t6 = cova.get_doubling_time(sim, start_day=9, end_day=20, moving_window=1, series="cum_recoveries") # Should recast window to 2 then return a series with 100s in it
+    d.t6 = cova.get_doubling_time(sim, start_day=9, end_day=20, moving_window=1, series="cum_exposed") # Should recast window to 2 then return a series with 100s in it
     with pytest.raises(ValueError):
         d.t7 = cova.get_doubling_time(sim, start_day=3, end_day=20, moving_window=4, series="cum_deaths") # Should fail, no growth in deaths
 

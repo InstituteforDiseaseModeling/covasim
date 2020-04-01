@@ -6,6 +6,8 @@ import sciris as sc
 __all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'test_historical']
 
 
+#%% Generic intervention classes
+
 class Intervention:
     """
     Abstract class for interventions
@@ -226,6 +228,8 @@ class change_beta(Intervention):
         return
 
 
+#%% Testing interventions
+
 class test_num(Intervention):
     """
     Test a fixed number of people per day.
@@ -247,11 +251,13 @@ class test_num(Intervention):
 
         return
 
+
     def apply(self, sim, t):
 
         # Check that there are still tests
         if t < len(self.daily_tests):
             n_tests = self.daily_tests[t]  # Number of tests for this day
+            sim.results['new_tests'][t] += n_tests
         else:
             return
 
@@ -277,7 +283,7 @@ class test_num(Intervention):
             person = sim.get_person(test_ind)
             person.test(t, self.sensitivity)
             if person.diagnosed:
-                sim.results['diagnoses'][t] += 1
+                sim.results['new_diagnoses'][t] += 1
 
         return
 
@@ -319,10 +325,10 @@ class test_prob(Intervention):
 
         for i, person in enumerate(sim.people.values()):
             if i in self.scheduled_tests or (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
-                sim.results['tests'][t] += 1
+                sim.results['new_tests'][t] += 1
                 person.test(t, self.test_sensitivity)
                 if person.diagnosed:
-                    sim.results['diagnoses'][t] += 1
+                    sim.results['new_diagnoses'][t] += 1
                     for idx in person.contacts:
                         if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
                             new_scheduled_tests.add(idx)
@@ -351,23 +357,24 @@ class test_historical(Intervention):
 
     """
 
-    def __init__(self, npts, n_tests, n_positive):
+    def __init__(self, n_tests, n_positive):
         """
 
         Args:
-            npts: Number of simulation timepoints
             n_tests: Number of tests per day. If this is a scalar or an array with length less than npts, it will be zero-padded
             n_positive: Number of positive tests (confirmed cases) per day. If this is a scalar or an array with length less than npts, it will be zero-padded
         """
-
         super().__init__()
-        self.n_tests = np.pad(sc.promotetoarray(n_tests),(0,max(0,npts-len(n_tests))))
-        self.n_positive = np.pad(sc.promotetoarray(n_positive),(0,max(0,npts-len(n_positive))))
+        self.n_tests    = sc.promotetoarray(n_tests)
+        self.n_positive = sc.promotetoarray(n_positive)
+        return
+
 
     def apply(self, sim, t):
         ''' Perform testing '''
 
         if self.n_tests[t]:
+
             # Compute weights for people who would test positive or negative
             positive_tests = np.zeros((sim.n,))
             for i, person in enumerate(sim.people.values()):
@@ -377,16 +384,18 @@ class test_historical(Intervention):
 
             # Select the people to test in each category
             positive_inds = cv.choose_weighted(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]), normalize=True)
-            negative_inds = cv.choose_weighted(probs=negative_tests, n=min(sum(negative_tests),self.n_tests[t]-len(positive_inds)), normalize=True)
+            negative_inds = cv.choose_weighted(probs=negative_tests, n=min(sum(negative_tests), self.n_tests[t]-len(positive_inds)), normalize=True)
 
             # Todo - assess performance and optimize e.g. to reduce dict indexing
             for ind in positive_inds:
                 person = sim.get_person(ind)
                 person.test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
-                sim.results['tests'][t] += 1
-                sim.results['diagnoses'][t] += 1
+                sim.results['new_diagnoses'][t] += 1
 
             for ind in negative_inds:
                 person = sim.get_person(ind)
                 person.test(t, test_sensitivity=1.0)
-                self.results['tests'][t] += 1
+
+            sim.results['new_tests'][t] += self.n_tests[t]
+
+        return

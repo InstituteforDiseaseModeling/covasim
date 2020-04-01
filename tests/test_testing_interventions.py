@@ -64,14 +64,14 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
         'historical': {
             'name': 'Test a known number of positive cases',
             'pars': {
-                'interventions': cv.test_historical(npts, n_tests=[100]*npts, n_positive = [1]*npts)
+                'interventions': cv.test_historical(n_tests=[100]*npts, n_positive = [1]*npts)
             }
         },
         'sequence': {
             'name': 'Historical switching to probability',
             'pars': {
                 'interventions': cv.sequence(days=[10, 51], interventions=[
-                    cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
+                    cv.test_historical(n_tests=[100] * npts, n_positive=[1] * npts),
                     cv.test_prob(symptomatic_prob=0.2, asymptomatic_prob=0.002, trace_prob=0.9),
                 ])
             }
@@ -82,7 +82,7 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     metapars = {'n_runs': n_runs}
 
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose)
+    scens.run(verbose=verbose, debug=debug)
 
     if do_plot:
         scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)

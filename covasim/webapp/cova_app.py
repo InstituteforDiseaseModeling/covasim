@@ -78,13 +78,13 @@ def get_defaults(region=None, merge=False):
     sim_pars['seed']        = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
 
     epi_pars = {}
-    epi_pars['beta']        = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',     tip='Probability of infection per contact per day')
-    epi_pars['contacts']    = dict(best=20,    min=0.0, max=50,  name='Number of contacts',        tip='Average number of people each person is in contact with each day')
-    epi_pars['serial']      = dict(best=4.0,   min=1.0, max=30,  name='Serial interval (days)',    tip='Average number of days between exposure and being infectious')
-    epi_pars['incub']       = dict(best=5.0,   min=1.0, max=30,  name='Incubation period (days)',  tip='Average number of days between exposure and developing symptoms')
-    epi_pars['dur']         = dict(best=8.0,   min=1.0, max=30,  name='Infection duration (days)', tip='Average number of days between infection and recovery (viral shedding period)')
-    epi_pars['timetodie']   = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',   tip='Average number of days between infection and death')
-    epi_pars['web_cfr']     = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',        tip='Proportion of people who become infected who die')
+    epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
+    epi_pars['contacts']      = dict(best=20,    min=0.0, max=50,  name='Number of contacts',            tip ='Average number of people each person is in contact with each day')
+    epi_pars['web_exp2inf']   = dict(best=4.0,   min=1.0, max=30,  name='Time to infectiousness (days)', tip ='Average number of days between exposure and being infectious')
+    epi_pars['web_inf2sym']   = dict(best=1.0,   min=1.0, max=30,  name='Asymptomatic period (days)',    tip ='Average number of days between exposure and developing symptoms')
+    epi_pars['web_dur']       = dict(best=10.0,  min=1.0, max=30,  name='Infection duration (days)',     tip ='Average number of days between infection and recovery (viral shedding period)')
+    epi_pars['web_timetodie'] = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',       tip ='Average number of days between infection and death')
+    epi_pars['web_cfr']       = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',            tip ='Proportion of people who become infected who die')
 
 
     for parkey,valuedict in regions.items():
@@ -116,13 +116,14 @@ def upload_pars(fname):
 
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     ''' Create, run, and plot everything '''
 
     err = ''
 
     try:
         # Fix up things that JavaScript mangles
+        orig_pars = cv.make_pars()
         defaults = get_defaults(merge=True)
         web_pars = {}
         web_pars['verbose'] = verbose # Control verbosity here
@@ -147,15 +148,26 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
             if key in sim_pars: sim_pars[key]['best'] = web_pars[key]
             else:               epi_pars[key]['best'] = web_pars[key]
 
+        # Convert durations
+        web_pars['dur'] = sc.dcp(orig_pars['dur']) # This is complicated, so just copy it
+        web_pars['dur']['exp2inf']['par1']  = web_pars.pop('web_exp2inf')
+        web_pars['dur']['inf2sym']['par1']  = web_pars.pop('web_inf2sym')
+        web_pars['dur']['crit2die']['par1'] = web_pars.pop('web_timetodie')
+        web_dur = web_pars.pop('web_dur')
+        for key in ['asym2rec', 'mild2rec', 'sev2rec', 'crit2rec']:
+            web_pars['dur'][key]['par1'] = web_dur
+
         # Add the intervention
         web_pars['interventions'] = []
         if web_pars['web_int_day'] is not None:
             web_pars['interventions'] = cv.change_beta(days=web_pars.pop('web_int_day'), changes=(1-web_pars.pop('web_int_eff')))
-    
-        # Handle CFR -- ignore symptoms
-        web_pars['default_symp_prob'] = 1.0
-        web_pars['default_severe_prob'] = 1.0
-        web_pars['default_death_prob'] = web_pars.pop('web_cfr')
+
+        # Handle CFR -- ignore symptoms and set to 1
+        prog_pars = cv.get_default_prognoses(by_age=False)
+        web_pars['rel_symp_prob']   = 1.0/prog_pars.symp_prob
+        web_pars['rel_severe_prob'] = 1.0/prog_pars.severe_prob
+        web_pars['rel_crit_prob']   = 1.0/prog_pars.crit_prob
+        web_pars['rel_death_prob']  = web_pars.pop('web_cfr')/prog_pars.death_prob
 
     except Exception as E:
         err2 = f'Parameter conversion failed! {str(E)}\n'
@@ -223,7 +235,9 @@ def run_sim(sim_pars=None, epi_pars=None, verbose=True):
             graphs.append(output)
 
         graphs.append(plot_people(sim))
-        graphs.append(animate_people(sim))
+
+        if show_animation:
+            graphs.append(animate_people(sim))
 
     except Exception as E:
         err5 = f'Plotting failed! {str(E)}\n'
