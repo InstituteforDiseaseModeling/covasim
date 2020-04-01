@@ -59,7 +59,7 @@ def make_pars():
     # Severity parameters: probabilities of symptom progression
     pars['prog_by_age']         = True # Whether or not to use age-specific probabilities of prognosis (symptoms/severe symptoms/death)
     pars['default_symp_prob']   = 0.75 # If not using age-specific values: overall proportion of symptomatic cases
-    pars['default_severe_prob'] = 0.075 # If not using age-specific values: proportion of symptomatic cases that become severe
+    pars['default_severe_prob'] = 0.12 # If not using age-specific values: proportion of symptomatic cases that become severe
     pars['default_crit_prob']   = 0.25 # If not using age-specific values: proportion of severe cases that become critical
     pars['default_death_prob']  = 0.5 # If not using age-specific values: proportion of critical cases that result in death
     pars['OR_no_treat']         = 2. # Odds ratio for how much more likely people are to die if no treatment available
