@@ -101,6 +101,7 @@ class Scenarios(cvbase.ParsObj):
         self.reskeys = self.base_sim.reskeys
 
         # Create the results object; order is: results key, scenario, best/low/high
+        self.sims = sc.objdict()
         self.allres = sc.objdict()
         for reskey in self.reskeys:
             self.allres[reskey] = sc.objdict()
@@ -111,12 +112,11 @@ class Scenarios(cvbase.ParsObj):
         return
 
 
-    def run(self, keep_sims=False, debug=False, verbose=None):
+    def run(self,  debug=False, verbose=None):
         '''
         Run the actual scenarios
 
         Args:
-            keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object (NB, very large)
             debug (bool): if True, runs a single run instead of multiple, which makes debugging easier
             verbose (int): level of detail to print, passed to sim.run()
 
@@ -183,12 +183,8 @@ class Scenarios(cvbase.ParsObj):
                 for blh in ['best', 'low', 'high']:
                     self.allres[reskey][scenkey][blh] = scenres[blh][reskey]
 
-            if keep_sims:
-                if 'sims' not in self.allres:
-                    self.allres['sims'] = sc.objdict()
-                self.allres['sims'][scenkey] = scen_sims
-                print('Note: saving sims, which may produce a large file! Estimated to be:')
-                sc.checkmem(self.allres) # Print a warning about how big the file is likely to be
+            self.sims[scenkey] = scen_sims
+
 
 
         #%% Print statistics
@@ -309,12 +305,14 @@ class Scenarios(cvbase.ParsObj):
 
 
 
-    def save(self, filename=None, **kwargs):
+    def save(self, filename=None, keep_sims=True, keep_people=False, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
         Args:
             filename (str or None): the name or path of the file to save to; if None, uses stored
+            keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object
+            keep_people (bool): whether or not to store the people in the Sim objects (NB, very large)
             keywords: passed to makefilepath()
 
         Returns:
@@ -328,7 +326,27 @@ class Scenarios(cvbase.ParsObj):
             filename = self.filename
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
-        sc.saveobj(filename=filename, obj=self)
+
+        # Store sims seperately
+        sims = self.sims
+        self.sims = None # Remove for now
+
+        obj = sc.dcp(self) # This should be quick once we've removed the sims
+
+        if keep_sims:
+            if keep_people:
+                obj.sims = sims # Just restore the object in full
+                print('Note: saving people, which may produce a large file!')
+            else:
+                obj.sims = sc.objdict()
+                for key in sims.keys():
+                    obj.sims[key] = []
+                    for sim in sims[key]:
+                        obj.sims[key].append(sim.shrink())
+
+        sc.saveobj(filename=filename, obj=obj) # Actually save
+
+        self.sims = sims # Restore
         return filename
 
 

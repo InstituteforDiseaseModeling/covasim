@@ -78,13 +78,13 @@ def get_defaults(region=None, merge=False):
     sim_pars['seed']        = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
 
     epi_pars = {}
-    epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',     tip='Probability of infection per contact per day')
-    epi_pars['contacts']      = dict(best=20,    min=0.0, max=50,  name='Number of contacts',        tip='Average number of people each person is in contact with each day')
-    epi_pars['web_exp2inf']   = dict(best=4.0,   min=1.0, max=30,  name='Time to infectiousness (days)', tip='Average number of days between exposure and being infectious')
-    epi_pars['web_inf2sym']   = dict(best=1.0,   min=1.0, max=30,  name='Asymptomatic period (days)',    tip='Average number of days between exposure and developing symptoms')
-    epi_pars['web_dur']       = dict(best=10.0,  min=1.0, max=30,  name='Infection duration (days)', tip='Average number of days between infection and recovery (viral shedding period)')
-    epi_pars['web_timetodie'] = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',   tip='Average number of days between infection and death')
-    epi_pars['web_cfr']       = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',        tip='Proportion of people who become infected who die')
+    epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
+    epi_pars['contacts']      = dict(best=20,    min=0.0, max=50,  name='Number of contacts',            tip ='Average number of people each person is in contact with each day')
+    epi_pars['web_exp2inf']   = dict(best=4.0,   min=1.0, max=30,  name='Time to infectiousness (days)', tip ='Average number of days between exposure and being infectious')
+    epi_pars['web_inf2sym']   = dict(best=1.0,   min=1.0, max=30,  name='Asymptomatic period (days)',    tip ='Average number of days between exposure and developing symptoms')
+    epi_pars['web_dur']       = dict(best=10.0,  min=1.0, max=30,  name='Infection duration (days)',     tip ='Average number of days between infection and recovery (viral shedding period)')
+    epi_pars['web_timetodie'] = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',       tip ='Average number of days between infection and death')
+    epi_pars['web_cfr']       = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',            tip ='Proportion of people who become infected who die')
 
 
     for parkey,valuedict in regions.items():

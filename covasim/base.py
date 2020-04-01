@@ -135,8 +135,12 @@ class BaseSim(ParsObj):
 
     @property
     def n(self):
-        ''' Count the number of people '''
-        return len(self.people)
+        ''' Count the number of people -- if it fails, assume none '''
+        try: # By default, the length of the people dict
+            output = len(self.people)
+        except: # If it's None or missing
+            output = 0
+        return output
 
     @property
     def npts(self):
@@ -146,7 +150,7 @@ class BaseSim(ParsObj):
     @property
     def tvec(self):
         ''' Create a time vector '''
-        return np.arange(self['n_days'] + 1)
+        return np.arange(self.npts)
 
 
     def inds2dates(self, inds, dateformat=None):
@@ -182,6 +186,7 @@ class BaseSim(ParsObj):
                 resdict[key] = res
         return resdict
 
+
     def _make_pardict(self) -> dict:
         """
         Return parameters for JSON export
@@ -195,6 +200,7 @@ class BaseSim(ParsObj):
         pardict = self.pars
         pardict['interventions'] = [intervention.to_json() for intervention in pardict['interventions']]
         return pardict
+
 
     def to_json(self, filename=None, tostring=True, indent=2, *args, **kwargs):
         """
@@ -253,26 +259,53 @@ class BaseSim(ParsObj):
         return output
 
 
-    def save(self, filename=None, **kwargs):
+    def shrink(self, skip_attrs=None):
+        '''
+        "Shrinks" the simulation by removing the people and UIDs, and returns
+        a copy of the "shrunken" simulation. Used to reduce the memory required
+        for saved files.
+
+        Args:
+            skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "people" and "uids"
+
+        Returns:
+            shrunken_sim (Sim): a Sim object with the listed attributes removed
+        '''
+
+        # By default, skip people (~90%) and uids (~9%)
+        if skip_attrs is None:
+            skip_attrs = ['people', 'uids']
+
+        # Create the new object, and copy original dict, skipping the skipped attributes
+        shrunken_sim = object.__new__(self.__class__)
+        shrunken_sim.__dict__ = {k:(v if k not in skip_attrs else None) for k,v in self.__dict__.items()}
+
+        return shrunken_sim
+
+
+    def save(self, filename=None, keep_people=False, skip_attrs=None, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
         Args:
             filename (str or None): the name or path of the file to save to; if None, uses stored
-            keywords: passed to makefilepath()
+            kwargs: passed to makefilepath()
 
         Returns:
             filename (str): the validated absolute path to the saved file
 
         Example:
             sim.save() # Saves to a .sim file with the date and time of creation by default
-
         '''
         if filename is None:
             filename = self.filename
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
-        sc.saveobj(filename=filename, obj=self)
+        if skip_attrs or not keep_people:
+            obj = self.shrink(skip_attrs=skip_attrs)
+        else:
+            obj = self
+        sc.saveobj(filename=filename, obj=obj)
         return filename
 
 

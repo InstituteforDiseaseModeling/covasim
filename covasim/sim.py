@@ -144,7 +144,6 @@ class Sim(cvbase.BaseSim):
         self.results['bed_capacity']   = init_res('Percentage bed capacity', ispercentage=True)
 
         # Flow variables
-        # self.results['new_exposures']  = init_res('Number of new exposures')
         self.results['new_infections'] = init_res('Number of new infections')
         self.results['new_recoveries'] = init_res('Number of new recoveries')
         self.results['new_deaths']     = init_res('Number of new deaths')
@@ -448,7 +447,7 @@ class Sim(cvbase.BaseSim):
         loglike = 0
         if self.data is not None and len(self.data): # Only perform likelihood calculation if data are available
             for d,datum in enumerate(self.data['new_positives']):
-                if not pl.isnan(datum): # Skip days when no tests were performed
+                if not pl.isnan(datum) and d<len(self.results['diagnoses'].values): # TODO: make more flexible # Skip days when no tests were performed
                     estimate = self.results['diagnoses'][d]
                     p = cvu.poisson_test(datum, estimate)
                     logp = pl.log(p)
@@ -557,7 +556,7 @@ class Sim(cvbase.BaseSim):
             data_mapping = {}
 
         for p,title,keylabels in to_plot.enumitems():
-            ax = pl.subplot(2,1,p+1)
+            ax = pl.subplot(len(to_plot),1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = colors[i]
                 y = res[key].values
