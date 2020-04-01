@@ -353,18 +353,16 @@ def set_prognoses(sim, popdict):
 
     # Otherwise, calculate probabilities of symptoms, severe symptoms, and death by age
     else:
-        symp_probs   = sim['rel_symp_prob']   * prog_pars.symp_probs   # Overall probability of developing symptoms
-        severe_probs = sim['rel_severe_prob'] * prog_pars.severe_probs # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
-        crit_probs   = sim['rel_crit_prob']   * prog_pars.crit_probs   # Overall probability of developing critical symptoms (derived from https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm)
-        death_probs  = sim['rel_death_prob']  * prog_pars.death_probs  # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
-
         # Conditional probabilities of severe symptoms (given symptomatic) and death (given severe symptoms)
-        severe_if_sym   = [sev/sym  if sym>0 and sev/sym>0  else 0 for (sev,sym)  in zip(severe_probs,symp_probs)] # Conditional probabilty of developing severe symptoms, given symptomatic
-        crit_if_severe  = [crit/sev if sev>0 and crit/sev>0 else 0 for (crit,sev) in zip(crit_probs,severe_probs)] # Conditional probabilty of developing critical symptoms, given severe
-        death_if_crit   = [d/c      if c>0   and d/c>0      else 0 for (d,c)      in zip(death_probs,crit_probs)]  # Conditional probabilty of dying, given critical
+        severe_if_sym   = np.array([sev/sym  if sym>0 and sev/sym>0  else 0 for (sev,sym)  in zip(prog_pars.severe_probs, prog_pars.symp_probs)]) # Conditional probabilty of developing severe symptoms, given symptomatic
+        crit_if_severe  = np.array([crit/sev if sev>0 and crit/sev>0 else 0 for (crit,sev) in zip(prog_pars.crit_probs,   prog_pars.severe_probs)]) # Conditional probabilty of developing critical symptoms, given severe
+        death_if_crit   = np.array([d/c      if c>0   and d/c>0      else 0 for (d,c)      in zip(prog_pars.death_probs,  prog_pars.crit_probs)])  # Conditional probabilty of dying, given critical
 
+        symp_probs     = sim['rel_symp_prob']   * prog_pars.symp_probs  # Overall probability of developing symptoms
+        severe_if_sym  = sim['rel_severe_prob'] * severe_if_sym         # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
+        crit_if_severe = sim['rel_crit_prob']   * crit_if_severe        # Overall probability of developing critical symptoms (derived from https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm)
+        death_if_crit  = sim['rel_death_prob']  * death_if_crit         # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
 
-        print(death_if_crit)
         # Calculate prognosis for each person
         symp_prob, severe_prob, crit_prob, death_prob  = [],[],[],[]
         age_cutoffs = prog_pars.age_cutoffs

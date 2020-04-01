@@ -28,7 +28,6 @@ sim = cv.Sim()
 sim.set_seed(seed)
 sim['n_days'] = 180
 sim['prog_by_age'] = True
-sim['rel_death_prob'] = 2
 if interv:
     sim['interventions'] = cv.change_beta(days=45, changes=0.5)
 
