@@ -197,12 +197,16 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def run(self, initialize=True, do_plot=False, verbose=None, **kwargs):
+    def run(self, start=None, stop=None, initialize=True, do_plot=False, verbose=None, **kwargs):
         ''' Run the simulation '''
 
         T = sc.tic()
 
         # Reset settings and results
+        if start is None:
+            start = 0
+        if stop is None:
+            stop = -1
         if verbose is None:
             verbose = self['verbose']
         if initialize:
@@ -210,7 +214,7 @@ class Sim(cvbase.BaseSim):
 
         # Main simulation loop
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
-        for t in range(self.npts):
+        for t in self.tvec[start:stop]:
 
             # Check timing and stopping function
             elapsed = sc.toc(T, output=True)

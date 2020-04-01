@@ -32,7 +32,7 @@ if interv:
     sim['interventions'] = cv.change_beta(days=45, changes=0.5)
 
 print('Running...')
-sim.run(verbose=verbose)
+sim.run(start=0, stop=10, verbose=verbose)
 
 if do_plot:
     print('Plotting...')
