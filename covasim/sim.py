@@ -85,7 +85,7 @@ class Sim(cvbase.BaseSim):
 
     def initialize(self):
         ''' Perform all initializations '''
-        self.t = 0 # The current time index
+        self.t = -1 # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
@@ -210,7 +210,7 @@ class Sim(cvbase.BaseSim):
         Returns:
             None.
         '''
-        start = self.t
+        start = self.t + 1
         if steps is None:
             steps = 1
         if stop is None:
@@ -258,7 +258,7 @@ class Sim(cvbase.BaseSim):
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
         tvec = self.tvec[start:stop]
         for t in tvec:
-            self.t += 1 # Store the current time
+            self.t = t # Store the current time
 
             # Check timing and stopping function
             elapsed = sc.toc(T, output=True)
