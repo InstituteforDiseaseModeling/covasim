@@ -85,7 +85,7 @@ class Sim(cvbase.BaseSim):
 
     def initialize(self):
         ''' Perform all initializations '''
-        self.t = -1 # The current time index
+        self.t = None # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
@@ -210,7 +210,10 @@ class Sim(cvbase.BaseSim):
         Returns:
             None.
         '''
-        start = self.t + 1
+        if self.t is None:
+            start = 0
+        else:
+            start = self.t + 1
         if steps is None:
             steps = 1
         if stop is None:
