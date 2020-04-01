@@ -14,10 +14,10 @@ do_save = 0
 do_show = 1
 verbose = 1
 seed    = 4
-interv  = 1
+interv  = 0
 
 version  = 'v0'
-date     = '2020mar21'
+date     = '2020mar31'
 folder   = 'results'
 basename = f'{folder}/covasim_run_{date}_{version}'
 fig_path = f'{basename}.png'
@@ -26,6 +26,7 @@ print('Making sim...')
 sc.tic()
 sim = cv.Sim()
 sim.set_seed(seed)
+sim['n_days'] = 180
 if interv:
     sim['interventions'] = cv.change_beta(days=45, changes=0.5)
 
