@@ -20,7 +20,6 @@ def make_pars():
 
     # Simulation parameters
     pars['scale']      = 1 # Factor by which to scale results -- e.g. 0.6*100 with n=10e3 assumes 60% of a population of 1m
-
     pars['n']          = 20e3 # Number ultimately susceptible to CoV
     pars['n_infected'] = 10 # Number of seed cases
     pars['start_day']  = datetime(2020, 3, 1) # Start day of the simulation
@@ -33,13 +32,13 @@ def make_pars():
     pars['window']     = 7 # Integration window for doubling time and R_eff
 
     # Disease transmission
-    pars['beta']           = 0.015 # Beta per symptomatic contact; absolute
-    pars['asymp_factor']   = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']    = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
-    pars['cont_factor']    = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
-    pars['contacts']       = 20 # Estimated number of contacts
-    pars['beta_pop']       = {'H': 1.5,  'S': 1.5,   'W': 1.5,  'R': 0.5} # Per-population beta weights; relative
-    pars['contacts_pop']   = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
+    pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
+    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
+    pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
+    pars['contacts']     = 20 # Estimated number of contacts
+    pars['beta_pop']     = {'H': 1.5,  'S': 1.5,   'W': 1.5,  'R': 0.5} # Per-population beta weights; relative
+    pars['contacts_pop'] = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()
