@@ -54,8 +54,6 @@ def make_pars():
     pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8, par2=2) # Duration from mild symptoms to recovered
     pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=11, par2=3) # Duration from severe symptoms to recovered - leads to mean total disease time of
     pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=17, par2=3) # Duration from critical symptoms to recovered
-
-    # Duration parameters: time to die for critical cases
     pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=21, par2=4) # Duration from critical symptoms to death
 
     # Severity parameters: probabilities of symptom progression
