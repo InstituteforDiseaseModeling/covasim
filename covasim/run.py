@@ -112,13 +112,14 @@ class Scenarios(cvbase.ParsObj):
         return
 
 
-    def run(self,  debug=False, verbose=None):
+    def run(self, debug=False, verbose=None, **kwargs):
         '''
         Run the actual scenarios
 
         Args:
             debug (bool): if True, runs a single run instead of multiple, which makes debugging easier
             verbose (int): level of detail to print, passed to sim.run()
+            kwargs (dict): passed to multi_run() and thence to sim.run()
 
         Returns:
             None (modifies Scenarios object in place)
@@ -156,9 +157,9 @@ class Scenarios(cvbase.ParsObj):
             if debug:
                 print('Running in debug mode (not parallelized)')
                 run_args.pop('n_runs', None) # Remove n_runs argument, not used for a single run
-                scen_sims = [single_run(scen_sim, **run_args)]
+                scen_sims = [single_run(scen_sim, **run_args, **kwargs)]
             else:
-                scen_sims = multi_run(scen_sim, **run_args) # This is where the sims actually get run
+                scen_sims = multi_run(scen_sim, **run_args, **kwargs) # This is where the sims actually get run
 
             # Process the simulations
             print_heading(f'Processing {scenkey}')
