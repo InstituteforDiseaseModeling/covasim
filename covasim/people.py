@@ -299,7 +299,7 @@ def make_randpop(sim, id_len=6):
 
     # Handle sex and UID
     n_people = int(sim['n']) # Number of people
-    uids = sc.uuid(which='ascii', n=n_people, length=id_len)
+    uids = sc.uuid(which='ascii', n=n_people, length=id_len, safety=1)
     sexes = cvu.rbt(0.5, n_people)
 
     # Handle ages
