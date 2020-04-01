@@ -33,6 +33,7 @@ var vm = new Vue({
             historyIdx: 0,
             sim_pars: {},
             epi_pars: {},
+            show_animation: false,
             result: { // Store currently displayed results
                 graphs: [],
                 summary: {},
@@ -73,7 +74,7 @@ var vm = new Vue({
 
             // Run a a single sim
             try{
-                let response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars]);
+                let response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.show_animation]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;

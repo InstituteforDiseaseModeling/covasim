@@ -6,6 +6,7 @@ Defines the Person class and functions associated with making people.
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
+from . import parameters as cvpars
 from . import requirements as cvreqs
 
 
@@ -17,15 +18,17 @@ class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, uid, age, sex, contacts, symp_prob, severe_prob, death_prob):
+    def __init__(self, pars, uid, age, sex, contacts, symp_prob, severe_prob, crit_prob, death_prob):
         self.uid         = str(uid) # This person's unique identifier
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
         self.contacts    = contacts # The contacts this person has
         self.symp_prob   = symp_prob # Probability of developing symptoms
         self.severe_prob = severe_prob # Conditional probability of symptoms becoming severe, if symptomatic
+        self.crit_prob   = crit_prob # Conditional probability of symptoms becoming critical, if severe
         self.death_prob  = death_prob # Conditional probability of dying, given severe symptoms
         self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
+        self.durpars         = pars['dur']  # Store duration parameters
 
         # Define state
         self.alive          = True
@@ -34,28 +37,28 @@ class Person(sc.prettyobj):
         self.infectious     = False
         self.symptomatic    = False
         self.severe         = False
+        self.critical       = False
         self.diagnosed      = False
         self.recovered      = False
         self.dead           = False
         self.known_contact  = False # Keep track of whether each person is a contact of a known positive
-
-        # Infection property distributions
-        self.dist_serial  = dict(dist='normal_int', par1=pars['serial'],    par2=pars['serial_std'])
-        self.dist_incub   = dict(dist='normal_int', par1=pars['incub'],     par2=pars['incub_std'])
-        self.dist_sev     = dict(dist='normal_int', par1=pars['severe'],    par2=pars['severe_std'])
-        self.dist_dur     = dict(dist='normal_int', par1=pars['dur'],       par2=pars['dur_std'])
-        self.dist_dur_sev = dict(dist='normal_int', par1=pars['dur_sev'],   par2=pars['dur_sev_std'])
-        self.dist_death   = dict(dist='normal_int', par1=pars['timetodie'], par2=pars['timetodie_std'])
 
         # Keep track of dates
         self.date_exposed      = None
         self.date_infectious   = None
         self.date_symptomatic  = None
         self.date_severe       = None
-#        self.date_hospitalized = None
+        self.date_critical     = None
         self.date_diagnosed    = None
         self.date_recovered    = None
         self.date_died         = None
+
+        # Keep track of durations
+        self.dur_exp2inf  = None # Duration from exposure to infectiousness
+        self.dur_inf2sym  = None # Duration from infectiousness to symptoms
+        self.dur_sym2sev  = None # Duration from symptoms to severe symptoms
+        self.dur_sev2crit = None # Duration from symptoms to severe symptoms
+        self.dur_disease  = None # Total duration of disease, from date of exposure to date of recovery or death
 
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
@@ -66,9 +69,9 @@ class Person(sc.prettyobj):
         """
         Infect this person and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
-            * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization)
-            * Every asymptomatic infected person recovers
-            * Symptomatic infected people either recover or die, with the probability of recovery affected by whether they are hospitalized
+            * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
+            * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
+            * Critical cases either recover or die
 
         Args:
             t: (int) timestep
@@ -85,34 +88,56 @@ class Person(sc.prettyobj):
         # Deal with bed constraint if applicable
         if bed_constraint is None: bed_constraint = False
 
-        # Calculate how long before they can infect other people
-        serial_dist          = cvu.sample(**self.dist_serial)
-        self.date_infectious = t + serial_dist
+        # Calculate how long before this person can infect other people
+        self.dur_exp2inf     = cvu.sample(**self.durpars['exp2inf'])
+        self.date_infectious = t + self.dur_exp2inf
 
         # Use prognosis probabilities to determine what happens to them
         symp_bool = cvu.bt(self.symp_prob) # Determine if they develop symptoms
 
-        # CASE 1: Asymptomatic: may infect others, but no symptoms and no probability of death
+        # CASE 1: Asymptomatic: may infect others, but have no symptoms and do not die
         if not symp_bool:  # No symptoms
-            self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur)  # Date they recover
+            dur_asym2rec = cvu.sample(**self.durpars['asym2rec'])
+            self.date_recovered = self.date_infectious + dur_asym2rec  # Date they recover
+            self.dur_disease = self.dur_exp2inf + dur_asym2rec  # Store how long this person had COVID-19
 
-        # CASE 2: Symptomatic: can either be a mild case or a severe case
+        # CASE 2: Symptomatic: can either be mild, severe, or critical
         else:
-            self.date_symptomatic = t + cvu.sample(**self.dist_incub) # Date they become symptomatic
+            self.dur_inf2sym = cvu.sample(**self.durpars['inf2sym']) # Store how long this person took to develop symptoms
+            self.date_symptomatic = self.date_infectious + self.dur_inf2sym # Date they become symptomatic
             sev_bool = cvu.bt(self.severe_prob) # See if they're a severe or mild case
 
             # CASE 2a: Mild symptoms, no hospitalization required and no probaility of death
             if not sev_bool: # Easiest outcome is that they're a mild case - set recovery date
-                self.date_recovered = self.date_infectious + cvu.sample(**self.dist_dur)  # Date they recover
+                dur_mild2rec = cvu.sample(**self.durpars['mild2rec'])
+                self.date_recovered = self.date_symptomatic + dur_mild2rec  # Date they recover
+                self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + dur_mild2rec  # Store how long this person had COVID-19
 
-            # CASE 2b: Severe cases: hospitalization required, death possible
+            # CASE 2b: Severe cases: hospitalization required, may become critical
             else:
-                self.date_severe = self.date_symptomatic + cvu.sample(**self.dist_sev)  # Date symptoms become severe
-                this_death_prob = self.death_prob * (self.OR_no_treat if bed_constraint else 1.) # Probability they'll die
-                death_bool = cvu.bt(this_death_prob)  # Death outcome
-                #if not bed_constraint: self.date_hospitalized = self.date_severe  # They get hospitalized when symptoms become severe
-                if death_bool: self.date_died = t + cvu.sample(**self.dist_death)  # Date of death
-                else: self.date_recovered = self.date_severe + cvu.sample(**self.dist_dur_sev) # Date they recover
+                self.dur_sym2sev = cvu.sample(**self.durpars['sym2sev']) # Store how long this person took to develop severe symptoms
+                self.date_severe = self.date_symptomatic + self.dur_sym2sev  # Date symptoms become severe
+                crit_bool = cvu.bt(self.crit_prob)  # See if they're a critical case
+
+                if not crit_bool:  # Not critical - they will recover
+                    dur_sev2rec = cvu.sample(**self.durpars['sev2rec'])
+                    self.date_recovered = self.date_severe + dur_sev2rec  # Date they recover
+                    self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + dur_sev2rec  # Store how long this person had COVID-19
+
+                # CASE 2c: Critical cases: ICU required, may die
+                else:
+                    self.dur_sev2crit = cvu.sample(**self.durpars['sev2crit'])
+                    self.date_critical = self.date_severe + self.dur_sev2crit  # Date they become critical
+                    this_death_prob = self.death_prob * (self.OR_no_treat if bed_constraint else 1.) # Probability they'll die
+                    death_bool = cvu.bt(this_death_prob)  # Death outcome
+                    if death_bool:
+                        dur_crit2die = cvu.sample(**self.durpars['crit2die'])
+                        self.date_died = self.date_critical + dur_crit2die # Date of death
+                        self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2die   # Store how long this person had COVID-19
+                    else:
+                        dur_crit2rec = cvu.sample(**self.durpars['crit2rec'])
+                        self.date_recovered = self.date_critical + dur_crit2rec # Date they recover
+                        self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2rec  # Store how long this person had COVID-19
 
         if source:
             self.infected_by = source.uid
@@ -130,6 +155,7 @@ class Person(sc.prettyobj):
             self.infectious  = False
             self.symptomatic = False
             self.severe      = False
+            self.critical    = False
             self.recovered   = False
             self.died        = True
             death = 1
@@ -141,7 +167,7 @@ class Person(sc.prettyobj):
 
     def check_symptomatic(self, t):
         ''' Check if an infected person has developed symptoms '''
-        if self.date_symptomatic and t == self.date_symptomatic: # Person is symptomatic
+        if self.date_symptomatic and t >= self.date_symptomatic: # Person is symptomatic - use >= here because we want to know the total number symptomatic at each time step, not new symptomatics
             self.symptomatic = True
             symptomatic = 1
         else:
@@ -151,13 +177,21 @@ class Person(sc.prettyobj):
 
     def check_severe(self, t):
         ''' Check if an infected person has developed severe symptoms requiring hospitalization'''
-        if self.date_severe and t == self.date_severe: # Symptoms have become bad enough to need hospitalization
+        if self.date_severe and t >= self.date_severe: # Symptoms have become bad enough to need hospitalization
             self.severe = True
             severe = 1
         else:
             severe = 0
         return severe
 
+    def check_critical(self, t):
+        ''' Check if an infected person is in need of IC'''
+        if self.date_critical and t >= self.date_critical: # Symptoms have become bad enough to need ICU
+            self.critical = True
+            critical = 1
+        else:
+            critical = 0
+        return critical
 
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
@@ -167,6 +201,7 @@ class Person(sc.prettyobj):
             self.infectious  = False
             self.symptomatic = False
             self.severe      = False
+            self.critical    = False
             self.recovered   = True
             recovery = 1
         else:
@@ -219,7 +254,7 @@ def make_people(sim, verbose=None, id_len=None, die=True):
     # Actually create the people
     people = {} # Dictionary for storing the people -- use plain dict since faster than odict
     for p in range(n_people): # Loop over each person
-        keys = ['uid', 'age', 'sex', 'contacts', 'symp_prob', 'severe_prob', 'death_prob']
+        keys = ['uid', 'age', 'sex', 'contacts', 'symp_prob', 'severe_prob', 'crit_prob', 'death_prob']
         person_args = {}
         for key in keys:
             person_args[key] = popdict[key][p] # Convert from list to dict
@@ -293,6 +328,7 @@ def make_randpop(sim, id_len=6):
     return popdict
 
 
+
 def set_prognoses(sim, popdict):
     '''
     Determine the prognosis of an infected person: probability of being aymptomatic, or if symptoms develop, probability
@@ -305,38 +341,47 @@ def set_prognoses(sim, popdict):
     n = len(ages)
     prognoses = sc.objdict()
 
+    prog_pars = cvpars.get_default_prognoses(by_age=by_age)
+
     # If not by age, same value for everyone
     if not by_age:
-        prognoses.symp_prob    = sim['default_symp_prob']*np.ones(n)
-        prognoses.severe_prob = sim['default_severe_prob']*np.ones(n)
-        prognoses.death_prob  = sim['default_death_prob']*np.ones(n)
 
+        prognoses.symp_prob   = sim['rel_symp_prob']   * prog_pars.symp_prob   * np.ones(n)
+        prognoses.severe_prob = sim['rel_severe_prob'] * prog_pars.severe_prob * np.ones(n)
+        prognoses.crit_prob   = sim['rel_crit_prob']   * prog_pars.crit_prob   * np.ones(n)
+        prognoses.death_prob  = sim['rel_death_prob']  * prog_pars.death_prob  * np.ones(n)
+
+    # Otherwise, calculate probabilities of symptoms, severe symptoms, and death by age
     else:
-        # Overall probabilities of symptoms, severe symptoms, and death
-        age_cutoffs  = [10,      20,      30,      40,      50,      60,      70,      80,      100]
-        symp_probs   = [0.50,    0.55,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.95]    # Overall probability of developing symptoms
-        severe_probs = [0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400] # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
-        death_probs  = [0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300] # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
-
         # Conditional probabilities of severe symptoms (given symptomatic) and death (given severe symptoms)
-        severe_if_sym   = [sev/sym if sym>0 and sev/sym>0 else 0 for (sev,sym) in zip(severe_probs,symp_probs)]   # Conditional probabilty of developing severe symptoms, given symptomatic
-        death_if_severe = [d/s if s>0 and d/s>0 else 0 for (d,s) in zip(death_probs,severe_probs)]                # Conditional probabilty of dying, given severe symptoms
+        severe_if_sym   = np.array([sev/sym  if sym>0 and sev/sym>0  else 0 for (sev,sym)  in zip(prog_pars.severe_probs, prog_pars.symp_probs)]) # Conditional probabilty of developing severe symptoms, given symptomatic
+        crit_if_severe  = np.array([crit/sev if sev>0 and crit/sev>0 else 0 for (crit,sev) in zip(prog_pars.crit_probs,   prog_pars.severe_probs)]) # Conditional probabilty of developing critical symptoms, given severe
+        death_if_crit   = np.array([d/c      if c>0   and d/c>0      else 0 for (d,c)      in zip(prog_pars.death_probs,  prog_pars.crit_probs)])  # Conditional probabilty of dying, given critical
+
+        symp_probs     = sim['rel_symp_prob']   * prog_pars.symp_probs  # Overall probability of developing symptoms
+        severe_if_sym  = sim['rel_severe_prob'] * severe_if_sym         # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
+        crit_if_severe = sim['rel_crit_prob']   * crit_if_severe        # Overall probability of developing critical symptoms (derived from https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm)
+        death_if_crit  = sim['rel_death_prob']  * death_if_crit         # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
 
         # Calculate prognosis for each person
-        symp_prob, severe_prob, death_prob  = [],[],[]
+        symp_prob, severe_prob, crit_prob, death_prob  = [],[],[],[]
+        age_cutoffs = prog_pars.age_cutoffs
         for age in ages:
             # Figure out which probability applies to a person of the specified age
             ind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), -1)
-            this_symp_prob    = symp_probs[ind]    # Probability of developing symptoms
+            this_symp_prob   = symp_probs[ind]    # Probability of developing symptoms
             this_severe_prob = severe_if_sym[ind] # Probability of developing severe symptoms
-            this_death_prob  = death_if_severe[ind] # Probability of dying after developing severe symptoms
+            this_crit_prob   = crit_if_severe[ind] # Probability of developing critical symptoms
+            this_death_prob  = death_if_crit[ind] # Probability of dying after developing critical symptoms
             symp_prob.append(this_symp_prob)
             severe_prob.append(this_severe_prob)
+            crit_prob.append(this_crit_prob)
             death_prob.append(this_death_prob)
 
         # Return output
-        prognoses.symp_prob    = symp_prob
+        prognoses.symp_prob   = symp_prob
         prognoses.severe_prob = severe_prob
+        prognoses.crit_prob   = crit_prob
         prognoses.death_prob  = death_prob
 
     popdict.update(prognoses) # Add keys to popdict

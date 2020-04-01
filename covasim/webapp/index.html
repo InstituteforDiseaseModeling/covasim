@@ -110,11 +110,6 @@
         <button v-else id="run_btn" class="btn btn-primary green" type="button" @click="runSim" style="width:160px">
           Run
         </button>&nbsp;&nbsp;&nbsp;&nbsp;
-        <!-- Doesn't go away when clicked -->
-        <!--                         <b-tooltip target="run_btn" triggers="hover">-->
-        <!--                              Run simulation  (simulations usually take 5-20 seconds)-->
-        <!--                            </b-tooltip> -->
-
         <button id="reset_btn" :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
           Reset
         </button>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -130,7 +125,6 @@
         <b-tooltip target="examples" triggers="hover">
           Example parameter configurations
         </b-tooltip>
-
 
         <div style='padding-left:10px; padding-right:10px; padding-top: 15px'>
 
@@ -150,6 +144,7 @@
 
         </div>
 
+
         <div id='history' style='padding-left:10px; padding-top:20px'>
           <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
             <option v-for="(item, index) in history" :value="index">
@@ -161,6 +156,12 @@
           History of parameters used in this session
         </b-tooltip>
       </div>
+
+      <div>
+         <input type="checkbox" v-model="show_animation">Render animation</input>
+      </div>
+
+
 
       <div v-if="err" class="errorbox">
         <p>During the simulation, the following warning(s) were encountered:</p>
