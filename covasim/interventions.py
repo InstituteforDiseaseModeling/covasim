@@ -245,7 +245,7 @@ class test_num(Intervention):
         self.trace_test = trace_test
         self.sensitivity = sensitivity
 
-        self.results['n_diagnosed'] = cv.Result('Number diagnosed', npts=npts)
+        self.results['diagnoses'] = cv.Result('Number diagnosed', npts=npts)
         self.results['cum_diagnosed'] = cv.Result('Cumulative number diagnosed', npts=npts)
 
         return
@@ -280,13 +280,13 @@ class test_num(Intervention):
             person = sim.get_person(test_ind)
             person.test(t, self.sensitivity)
             if person.diagnosed:
-                self.results['n_diagnosed'][t] += 1
+                self.results['diagnoses'][t] += 1
 
         return
 
 
     def finalize(self, sim, *args, **kwargs):
-        self.results['cum_diagnosed'].values = pl.cumsum(self.results['n_diagnosed'].values)
+        self.results['cum_diagnosed'].values = pl.cumsum(self.results['diagnoses'].values)
         sim.results.update(self.results)
         return
 
