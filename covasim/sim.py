@@ -121,7 +121,6 @@ class Sim(cvbase.BaseSim):
         Args:
             kwargs (dict): passed to init_people
         '''
-        print('TEMP initializing -- warning fix run to do everything except people!')
         self.t = None # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
