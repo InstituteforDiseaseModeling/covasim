@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: covasim
+  labels:
+    app: covasim
+spec:
+  containers:
+  - image: "registry.hub.docker.com/jules2689/covasim:latest"
+    name: covasim-image
+    ports:
+    - containerPort: 80
+      protocol: TCP
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: covasim
+spec:
+  selector:
+    app: covasim
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
