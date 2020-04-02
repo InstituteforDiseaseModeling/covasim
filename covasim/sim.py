@@ -56,8 +56,10 @@ class Sim(cvbase.BaseSim):
         self.set_metadata(filename) # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
         self.update_pars(pars) # Update the parameters, if provided
+        self.initialized = False
         self.stopped = None # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
+        self.popdict = None
         self.people = {} # Initialize these here so methods that check their length can see they're empty
         self.results = {}
         return
@@ -83,13 +85,48 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def initialize(self):
-        ''' Perform all initializations '''
+    def load_people(self, filename, **kwargs):
+        '''
+        Load the population dictionary from file.
+
+        Args:
+            filename (str): name of the file to load.
+        '''
+        filepath = sc.makefilepath(filename=filename, **kwargs)
+        self.popdict = sc.loadobj(filepath)
+        n_actual = len(self.popdict['uid'])
+        n_expected = self['n']
+        if n_actual != n_expected:
+            errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "n" to match or regenerate the file'
+            raise ValueError(errormsg)
+        return
+
+
+    def save_people(self, filename, **kwargs):
+        '''
+        Save the population dictionary to file.
+
+        Args:
+            filename (str): name of the file to save to.
+        '''
+        filepath = sc.makefilepath(filename=filename, **kwargs)
+        sc.saveobj(filepath, self.popdict)
+        return filepath
+
+
+    def initialize(self, **kwargs):
+        '''
+        Perform all initializations.
+
+        Args:
+            kwargs (dict): passed to init_people
+        '''
         self.t = None # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
-        self.init_people() # Create all the people (slow)
+        self.init_people(**kwargs) # Create all the people (slow)
+        self.initialized = True
         return
 
 
@@ -105,7 +142,7 @@ class Sim(cvbase.BaseSim):
         self['start_day'] = start_day # Convert back
 
         # Handle population data
-        popdata_choices = ['random', 'bayesian', 'data']
+        popdata_choices = ['random', 'microstructure']
         if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
             self['usepopdata'] = popdata_choices[int(self['usepopdata'])] # Choose one of these
         if self['usepopdata'] not in popdata_choices:
@@ -181,14 +218,17 @@ class Sim(cvbase.BaseSim):
         return res_keys
 
 
-    def init_people(self, verbose=None, id_len=None):
+    def init_people(self, verbose=None, id_len=None, **kwargs):
         ''' Create the people '''
+
+        print('TEMP init people')
+
         if verbose is None:
             verbose = self['verbose']
 
         sc.printv(f'Creating {self["n"]} people...', 1, verbose)
 
-        cvppl.make_people(self, verbose=verbose, id_len=id_len)
+        cvppl.make_people(self, verbose=verbose, id_len=id_len, **kwargs)
 
         # Create the seed infections
         for i in range(int(self['n_infected'])):
@@ -246,7 +286,7 @@ class Sim(cvbase.BaseSim):
         if start is None:
             start = 0
         if initialize is None:
-            if start > 0:
+            if start > 0 or self.initialized:
                 initialize = False
             else:
                 initialize = True
@@ -298,6 +338,8 @@ class Sim(cvbase.BaseSim):
             beta_pop         = self['beta_pop']
             n_beds           = self['n_beds']
             bed_constraint   = False
+            n_people         = len(self.people)
+            n_comm_contacts  = self['contacts_pop']['R'] # TODO: refactor name
 
             # Print progress
             if verbose>=1:
@@ -354,6 +396,8 @@ class Sim(cvbase.BaseSim):
                             transmission_inds = cvu.bf(thisbeta, person.contacts)
                         else: # Dictionary of contacts -- extra loop over layers
                             transmission_inds = []
+                            community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
+                            person.contacts['R'] = community_contact_inds
                             for ckey in self.contact_keys:
                                 layer_beta = thisbeta * beta_pop[ckey]
                                 transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))

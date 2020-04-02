@@ -184,6 +184,7 @@ class Person(sc.prettyobj):
             severe = 0
         return severe
 
+
     def check_critical(self, t):
         ''' Check if an infected person is in need of IC'''
         if self.date_critical and t >= self.date_critical: # Symptoms have become bad enough to need ICU
@@ -192,6 +193,7 @@ class Person(sc.prettyobj):
         else:
             critical = 0
         return critical
+
 
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
@@ -221,16 +223,29 @@ class Person(sc.prettyobj):
 
 
 
-def make_people(sim, verbose=None, id_len=None, die=True):
+def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
+    '''
+    Make the actual people for the simulation.
 
-    # Set defaults
-    if verbose is None: verbose = sim['verbose']
-    if id_len  is None: id_len  = 6
+    Args:
+        sim (Sim): the simulation object
+        verbose (bool): level of detail to print
+        id_len (int): length of ID for each person (default: calculate required length based on the number of people)
+        die (bool): whether or not to fail if synthetic populations are requested but not available
+        reset (bool): whether to force population creation even if self.popdict exists
+
+    Returns:
+        None.
+    '''
 
     # Set inputs
     n_people     = int(sim['n']) # Shorten
     usepopdata   = sim['usepopdata'] # Shorten
     use_rand_pop = (usepopdata == 'random') # Whether or not to use a random population (as opposed to synthpops)
+
+    # Set defaults
+    if verbose is None: verbose = sim['verbose']
+    if id_len  is None: id_len  = int(np.log10(n_people)) + 2 # Dynamically generate based on the number of people required
 
     # Check which type of population to rpoduce
     if not use_rand_pop and not cvreqs.available['synthpops']:
@@ -242,11 +257,36 @@ def make_people(sim, verbose=None, id_len=None, die=True):
             usepopdata = 'random'
 
     # Actually create the population
-    if use_rand_pop:
-        popdict = make_randpop(sim)
+    if sim.popdict and not reset:
+        popdict = sim.popdict # Use stored one
     else:
-        import synthpops as sp # Optional import
-        popdict = sp.make_population(n=sim['n'])
+        if use_rand_pop:
+            popdict = make_randpop(sim)
+        else:
+            import synthpops as sp # Optional import
+            population = sp.make_population(n=sim['n'])
+            uids, ages, sexes, contacts = [], [], [], []
+            for uid,person in population.items():
+                uids.append(uid)
+                ages.append(person['age'])
+                sexes.append(person['sex'])
+
+            # Replace contact UIDs with ints...
+            for uid,person in population.items():
+                uid_contacts = person['contacts']
+                int_contacts = {}
+                for key in uid_contacts.keys():
+                    int_contacts[key] = []
+                    for uid in uid_contacts[key]:
+                        int_contacts[key].append(uids.index(uid))
+                    int_contacts[key] = np.array(int_contacts[key], dtype=np.int64)
+                contacts.append(int_contacts)
+
+            popdict = {}
+            popdict['uid']      = uids
+            popdict['age']      = np.array(ages)
+            popdict['sex']      = np.array(sexes)
+            popdict['contacts'] = contacts
 
     # Set prognoses by modifying popdict in place
     set_prognoses(sim, popdict)
@@ -262,7 +302,8 @@ def make_people(sim, verbose=None, id_len=None, die=True):
         people[person_args['uid']] = person # Save them to the dictionary
 
     # Store UIDs and people
-    sim.uids = popdict['uid']
+    sim.popdict = popdict
+    sim.uids = popdict['uid'] # Duplication, but used in an innermost loop so make as efficient as possible
     sim.people = people
     sim.contact_keys = list(sim['contacts_pop'].keys())
 

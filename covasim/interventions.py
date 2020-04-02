@@ -110,7 +110,8 @@ class dynamic_pars(Intervention):
                 if subkey not in pars[parkey].keys():
                     errormsg = f'Parameter {parkey} is missing subkey {subkey}'
                     raise KeyError(errormsg)
-                pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
+                if not sc.isiterable(pars[parkey][subkey]):
+                    pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
             len_days = len(pars[parkey]['days'])
             len_vals = len(pars[parkey]['vals'])
             if len_days != len_vals:
@@ -128,7 +129,11 @@ class dynamic_pars(Intervention):
                 if len(inds)>1:
                     raise ValueError(f'Duplicate days are not allowed for Dynamic interventions (day={t}, indices={inds})')
                 else:
-                    sim[parkey] = parval['vals'][inds[0]] # Actually set the parameter
+                    val = parval['vals'][inds[0]]
+                    if isinstance(val, dict):
+                        sim[parkey].update(val) # Set the parameter if a nested dict
+                    else:
+                        sim[parkey] = val # Set the parameter if not a dict
         return
 
 
