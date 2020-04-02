@@ -9,7 +9,7 @@ spec:
   - image: "registry.hub.docker.com/jules2689/covasim:latest"
     name: covasim-image
     ports:
-    - containerPort: 80
+    - containerPort: 8000
       protocol: TCP
 
 ---
@@ -23,5 +23,5 @@ spec:
     app: covasim
   ports:
   - protocol: TCP
-    port: 80
-    targetPort: 80
+    port: 8000
+    targetPort: 8000

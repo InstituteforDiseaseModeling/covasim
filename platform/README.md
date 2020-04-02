@@ -16,6 +16,8 @@ kubectl get pods
 kubectl get service
 ```
 
+You app should now be running at http://localhost:8000
+
 To stop the application run
 ```bash
 kubectl delete service/covasim pod/covasim
