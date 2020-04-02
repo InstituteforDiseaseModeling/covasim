@@ -310,7 +310,7 @@ class Sim(cvbase.BaseSim):
             n_beds           = self['n_beds']
             bed_constraint   = False
             n_people         = len(self.people)
-            n_comm_contacts  = self['contacts_pop']['R'] # TODO: refactor
+            n_comm_contacts  = self['contacts_pop']['R'] # TODO: refactor name
 
             # Print progress
             if verbose>=1:
