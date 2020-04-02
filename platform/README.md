@@ -1,9 +1,7 @@
 Covasim Platform
 ================
 
-This contains files to run Covasim on Kubernetes. 
-
-
+This contains files to run Covasim on Kubernetes. This is meant for testing Kubernetes Locally.
 
 # Running Locally
 
