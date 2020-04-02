@@ -4,7 +4,7 @@ Defines the Sim class, Covasim's core class.
 
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 import datetime as dt
 from . import utils as cvu
@@ -449,11 +449,11 @@ class Sim(cvbase.BaseSim):
 
 
     def finalize(self, verbose=None):
-        self.results['cum_exposed'].values    = pl.cumsum(self.results['new_infections'].values) + self['n_infected'] # Include initially infected people
-        self.results['cum_tested'].values     = pl.cumsum(self.results['new_tests'].values)
-        self.results['cum_diagnosed'].values  = pl.cumsum(self.results['new_diagnoses'].values)
-        self.results['cum_deaths'].values     = pl.cumsum(self.results['new_deaths'].values)
-        self.results['cum_recoveries'].values = pl.cumsum(self.results['new_recoveries'].values)
+        self.results['cum_exposed'].values    = np.cumsum(self.results['new_infections'].values) + self['n_infected'] # Include initially infected people
+        self.results['cum_tested'].values     = np.cumsum(self.results['new_tests'].values)
+        self.results['cum_diagnosed'].values  = np.cumsum(self.results['new_diagnoses'].values)
+        self.results['cum_deaths'].values     = np.cumsum(self.results['new_deaths'].values)
+        self.results['cum_recoveries'].values = np.cumsum(self.results['new_recoveries'].values)
 
         # Add in the results from the interventions
         for intervention in self['interventions']:
@@ -546,10 +546,10 @@ class Sim(cvbase.BaseSim):
         loglike = 0
         if self.data is not None and len(self.data): # Only perform likelihood calculation if data are available
             for d,datum in enumerate(self.data['new_positives']):
-                if not pl.isnan(datum) and d<len(self.results['diagnoses'].values): # TODO: make more flexible # Skip days when no tests were performed
+                if not np.isnan(datum) and d<len(self.results['diagnoses'].values): # TODO: make more flexible # Skip days when no tests were performed
                     estimate = self.results['diagnoses'][d]
                     p = cvu.poisson_test(datum, estimate)
-                    logp = pl.log(p)
+                    logp = np.log(p)
                     loglike += logp
                     sc.printv(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
@@ -595,10 +595,10 @@ class Sim(cvbase.BaseSim):
             to_plot (dict): Nested dict of results to plot; see default_sim_plots for structure
             do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
             fig_path (str): Path to save the figure
-            fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
-            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-            axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            fig_args (dict): Dictionary of kwargs to be passed to plt.figure()
+            plot_args (dict): Dictionary of kwargs to be passed to plt.plot()
+            scatter_args (dict): Dictionary of kwargs to be passed to plt.scatter()
+            axis_args (dict): Dictionary of kwargs to be passed to plt.subplots_adjust()
             as_dates (bool): Whether to plot the x-axis as dates or time points
             interval (int): Interval between tick marks
             dateformat (str): Date string format, e.g. '%B %d'
@@ -627,11 +627,11 @@ class Sim(cvbase.BaseSim):
         scatter_args = sc.mergedicts({'s':150, 'marker':'s'}, scatter_args)
         axis_args    = sc.mergedicts({'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}, axis_args)
 
-        fig = pl.figure(**fig_args)
-        pl.subplots_adjust(**axis_args)
-        pl.rcParams['font.size'] = font_size
+        fig = plt.figure(**fig_args)
+        plt.subplots_adjust(**axis_args)
+        plt.rcParams['font.size'] = font_size
         if font_family:
-            pl.rcParams['font.family'] = font_family
+            plt.rcParams['font.family'] = font_family
 
         res = self.results # Shorten since heavily used
 
@@ -644,9 +644,9 @@ class Sim(cvbase.BaseSim):
             # start day of data may not co-incide with simulation
             data_offset = (self.data.iloc[0]['date'] - self.pars['start_day']).days
             data_mapping = {
-                'cum_exposed': pl.cumsum(self.data['new_infections']),
-                'cum_diagnosed':  pl.cumsum(self.data['new_positives']),
-                'cum_tested':     pl.cumsum(self.data['new_tests']),
+                'cum_exposed': np.cumsum(self.data['new_infections']),
+                'cum_diagnosed':  np.cumsum(self.data['new_positives']),
+                'cum_tested':     np.cumsum(self.data['new_tests']),
                 'infections':     self.data['new_infections'],
                 'tests':          self.data['new_tests'],
                 'diagnoses':      self.data['new_positives'],
@@ -655,26 +655,26 @@ class Sim(cvbase.BaseSim):
             data_mapping = {}
 
         for p,title,keylabels in to_plot.enumitems():
-            ax = pl.subplot(len(to_plot),1,p+1)
+            ax = plt.subplot(len(to_plot),1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = colors[i]
                 y = res[key].values
-                pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
+                plt.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key in data_mapping:
-                    pl.scatter(self.data['day']+data_offset, data_mapping[key], c=[this_color], **scatter_args)
+                    plt.scatter(self.data['day']+data_offset, data_mapping[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
-                pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+                plt.scatter(np.nan, np.nan, c=[(0,0,0)], label='Data', **scatter_args)
 
-            pl.grid(use_grid)
+            plt.grid(use_grid)
             cvu.fixaxis(self)
             if use_commaticks:
                 sc.commaticks()
-            pl.title(title)
+            plt.title(title)
 
             # Optionally reset tick marks (useful for e.g. plotting weeks/months)
             if interval:
                 xmin,xmax = ax.get_xlim()
-                ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+                ax.set_xticks(np.arange(xmin, xmax+1, interval))
 
             # Set xticks as dates
             if as_dates:
@@ -694,11 +694,11 @@ class Sim(cvbase.BaseSim):
                 else:
                     fig_path = 'covasim.png' # Just give it a default name
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-            pl.savefig(fig_path)
+            plt.savefig(fig_path)
 
         if do_show:
-            pl.show()
+            plt.show()
         else:
-            pl.close(fig)
+            plt.close(fig)
 
         return fig

@@ -3,7 +3,7 @@ Set the parameters for COVID-ABM.
 '''
 
 import os
-import pylab as pl
+import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
 
@@ -56,16 +56,16 @@ def get_age_sex(is_crew=False, min_age=18, max_age=99, crew_age=35, crew_std=5, 
     '''
 
     # Define female (0) or male (1) -- evenly distributed
-    sex = pl.randint(2)
+    sex = np.random.randint(2)
 
     # Define age distribution for the crew and guests
     if is_crew:
-        age = pl.normal(crew_age, crew_std)
+        age = np.normal(crew_age, crew_std)
     else:
-        age = pl.normal(guest_age, guest_std)
+        age = np.normal(guest_age, guest_std)
 
     # Normalize
-    age = pl.median([min_age, age, max_age])
+    age = np.median([min_age, age, max_age])
 
     return age, sex
 
@@ -91,6 +91,3 @@ def load_data(filename=None):
     data = raw_data[cols]
 
     return data
-
-
-

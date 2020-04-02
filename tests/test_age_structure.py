@@ -3,7 +3,7 @@ Simple example usage for the Covid-19 agent-based model
 '''
 
 #%% Imports and settings
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 import covasim as cova
 
@@ -44,17 +44,17 @@ def test_age_structure(doplot=False): # If being run via pytest, turn off
     #         sim.plot()
 
     #     # Plot ages
-    #     pl.figure(figsize=figsize)
+    #     plt.figure(figsize=figsize)
     #     for a,key,age in ages.enumitems():
     #         if key == 'without':
     #             title = f'Normally-distributed age distribution'
     #         elif key == 'withdata':
     #             title = f'Age distribution based on Seattle census data'
-    #         pl.subplot(2,1,a+1)
-    #         pl.hist(ages[a], nbins)
-    #         pl.title(title)
-    #         pl.xlabel('Age')
-    #         pl.ylabel('Number of people')
+    #         plt.subplot(2,1,a+1)
+    #         plt.hist(ages[a], nbins)
+    #         plt.title(title)
+    #         plt.xlabel('Age')
+    #         plt.ylabel('Number of people')
 
     # return sims, ages
 

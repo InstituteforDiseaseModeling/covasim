@@ -4,7 +4,7 @@ Functions for running multiple Covasim runs.
 
 #%% Imports
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 from . import base as cvbase
 from . import sim as cvsim
@@ -166,7 +166,7 @@ class Scenarios(cvbase.ParsObj):
 
             scenraw = {}
             for reskey in reskeys:
-                scenraw[reskey] = pl.zeros((self.npts, len(scen_sims)))
+                scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
                     scenraw[reskey][:,s] = sim.results[reskey].values
 
@@ -175,9 +175,9 @@ class Scenarios(cvbase.ParsObj):
             scenres.low = {}
             scenres.high = {}
             for reskey in reskeys:
-                scenres.best[reskey] = pl.mean(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
-                scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
-                scenres.high[reskey] = pl.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
+                scenres.best[reskey] = np.mean(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
+                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
+                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
 
             for reskey in reskeys:
                 self.allres[reskey][scenkey]['name'] = scenname
@@ -211,10 +211,10 @@ class Scenarios(cvbase.ParsObj):
             to_plot     (dict): Dict of results to plot; see default_scen_plots for structure
             do_save     (bool): Whether or not to save the figure
             fig_path    (str):  Path to save the figure
-            fig_args    (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args   (dict): Dictionary of kwargs to be passed to pl.plot()
-            axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between()
+            fig_args    (dict): Dictionary of kwargs to be passed to plt.figure()
+            plot_args   (dict): Dictionary of kwargs to be passed to plt.plot()
+            axis_args   (dict): Dictionary of kwargs to be passed to plt.subplots_adjust()
+            fill_args   (dict): Dictionary of kwargs to be passed to plt.fill_between()
             as_dates    (bool): Whether to plot the x-axis as dates or time points
             interval    (int):  Interval between tick marks
             dateformat  (str):  Date string format, e.g. '%B %d'
@@ -247,38 +247,38 @@ class Scenarios(cvbase.ParsObj):
         if sep_figs:
             figs = []
         else:
-            fig = pl.figure(**fig_args)
-        pl.subplots_adjust(**axis_args)
-        pl.rcParams['font.size'] = font_size
+            fig = plt.figure(**fig_args)
+        plt.subplots_adjust(**axis_args)
+        plt.rcParams['font.size'] = font_size
         if font_family:
-            pl.rcParams['font.family'] = font_family
+            plt.rcParams['font.family'] = font_family
 
         # %% Plotting
         for rk,reskey,title in to_plot.enumitems():
             if sep_figs:
-                figs.append(pl.figure(**fig_args))
-                ax = pl.subplot(111)
+                figs.append(plt.figure(**fig_args))
+                ax = plt.subplot(111)
             else:
-                ax = pl.subplot(len(to_plot), 1, rk + 1)
+                ax = plt.subplot(len(to_plot), 1, rk + 1)
 
             resdata = self.allres[reskey]
 
             for scenkey, scendata in resdata.items():
 
-                pl.fill_between(self.tvec, scendata.low, scendata.high, **fill_args)
-                pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
-                pl.title(title)
+                plt.fill_between(self.tvec, scendata.low, scendata.high, **fill_args)
+                plt.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
+                plt.title(title)
                 if rk == 0:
-                    pl.legend(loc='best')
+                    plt.legend(loc='best')
 
-                pl.grid(grid)
+                plt.grid(grid)
                 if commaticks:
                     sc.commaticks()
 
                 # Optionally reset tick marks (useful for e.g. plotting weeks/months)
                 if interval:
                     xmin,xmax = ax.get_xlim()
-                    ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+                    ax.set_xticks(plt.arange(xmin, xmax+1, interval))
 
                 # Set xticks as dates
                 if as_dates:
@@ -291,12 +291,12 @@ class Scenarios(cvbase.ParsObj):
             if fig_path is None: # No figpath provided - see whether do_save is a figpath
                 fig_path = 'covasim_scenarios.png' # Just give it a default name
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-            pl.savefig(fig_path)
+            plt.savefig(fig_path)
 
         if do_show:
-            pl.show()
+            plt.show()
         else:
-            pl.close(fig)
+            plt.close(fig)
 
         return fig
 

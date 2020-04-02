@@ -9,7 +9,7 @@ Version: 2020mar20
 
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 import covasim as cv
 from . import parameters as cova_pars
@@ -27,7 +27,7 @@ class Person(cv.Person):
     Class for a single person.
     '''
     def __init__(self, age=0, sex=0, crew=False, contacts=0):
-        self.uid      = str(pl.randint(0,1e9)) # Unique identifier for this person
+        self.uid      = str(np.random.randint(0,1e9)) # Unique identifier for this person
         self.age      = float(age) # Age of the person (in years)
         self.sex      = sex # Female (0) or male (1)
         self.crew     = crew # Wehther the person is a crew member
@@ -212,9 +212,9 @@ class Sim(cv.BaseSim):
             # Implement testing -- this is outside of the loop over people, but inside the loop over time
             if t<len(daily_tests): # Don't know how long the data is, ensure we don't go past the end
                 n_tests = daily_tests.iloc[t] # Number of tests for this day
-                if n_tests and not pl.isnan(n_tests): # There are tests this day
+                if n_tests and not np.isnan(n_tests): # There are tests this day
                     self.results['tests'][t] = n_tests # Store the number of tests
-                    test_probs = pl.array(list(test_probs.values()))
+                    test_probs = np.array(list(test_probs.values()))
                     test_probs /= test_probs.sum()
                     test_inds = cv.choose_weighted(probs=test_probs, n=n_tests)
                     uids_to_pop = []
@@ -253,7 +253,7 @@ class Sim(cv.BaseSim):
             # Implement evacuations
             if t<len(evacuated):
                 n_evacuated = evacuated.iloc[t] # Number of evacuees for this day
-                if n_evacuated and not pl.isnan(n_evacuated): # There are evacuees this day # TODO -- refactor with n_tests
+                if n_evacuated and not np.isnan(n_evacuated): # There are evacuees this day # TODO -- refactor with n_tests
                     if verbose>=1:
                         print(f'Implementing evacuation on day {t}')
                     evac_inds = cv.choose(max_n=len(self.people), n=n_evacuated)
@@ -267,9 +267,9 @@ class Sim(cv.BaseSim):
                         self.off_ship[uid] = self.people.pop(uid)
 
         # Compute cumulative results
-        self.results['cum_exposed']   = pl.cumsum(self.results['infections'])
-        self.results['cum_tested']    = pl.cumsum(self.results['tests'])
-        self.results['cum_diagnosed'] = pl.cumsum(self.results['diagnoses'])
+        self.results['cum_exposed']   = np.cumsum(self.results['infections'])
+        self.results['cum_tested']    = np.cumsum(self.results['tests'])
+        self.results['cum_diagnosed'] = np.cumsum(self.results['diagnoses'])
 
         # Compute likelihood
         if calc_likelihood:
@@ -306,10 +306,10 @@ class Sim(cv.BaseSim):
 
         loglike = 0
         for d,datum in enumerate(self.data['new_positives']):
-            if not pl.isnan(datum): # Skip days when no tests were performed
+            if not np.isnan(datum): # Skip days when no tests were performed
                 estimate = self.results['diagnoses'][d]
                 p = cv.poisson_test(datum, estimate)
-                logp = pl.log(p)
+                logp = np.log(p)
                 loglike += logp
                 if verbose>=2:
                     print(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}')
@@ -333,10 +333,10 @@ class Sim(cv.BaseSim):
             Whether or not to save the figure. If a string, save to that filename.
 
         fig_args : dict
-            Dictionary of kwargs to be passed to pl.figure()
+            Dictionary of kwargs to be passed to plt.figure()
 
         plot_args : dict
-            Dictionary of kwargs to be passed to pl.plot()
+            Dictionary of kwargs to be passed to plt.plot()
 
         as_days : bool
             Whether to plot the x-axis as days or time points
@@ -356,9 +356,9 @@ class Sim(cv.BaseSim):
         if scatter_args is None: scatter_args = {'s':150, 'marker':'s'}
         if axis_args    is None: axis_args    = {'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}
 
-        fig = pl.figure(**fig_args)
-        pl.subplots_adjust(**axis_args)
-        pl.rcParams['font.size'] = font_size
+        fig = plt.figure(**fig_args)
+        plt.subplots_adjust(**axis_args)
+        plt.rcParams['font.size'] = font_size
 
         res = self.results # Shorten since heavily used
 
@@ -377,25 +377,25 @@ class Sim(cv.BaseSim):
             })
 
         data_mapping = {
-            'cum_diagnosed': pl.cumsum(self.data['new_positives']),
+            'cum_diagnosed': np.cumsum(self.data['new_positives']),
             'tests':         self.data['new_tests'],
             'diagnoses':     self.data['new_positives'],
             }
 
         for p,title,keylabels in to_plot.enumitems():
-            pl.subplot(2,1,p+1)
+            plt.subplot(2,1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = colors[i+p]
                 y = res[key]
-                pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
+                plt.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key in data_mapping:
-                    pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
-            pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-            pl.grid(use_grid)
+                    plt.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
+            plt.scatter(np.nan, np.nan, c=[(0,0,0)], label='Data', **scatter_args)
+            plt.grid(use_grid)
             cv.fixaxis(self)
-            pl.ylabel('Count')
-            pl.xlabel('Days since index case')
-            pl.title(title)
+            plt.ylabel('Count')
+            plt.xlabel('Days since index case')
+            plt.title(title)
 
         # Ensure the figure actually renders or saves
         if do_save:
@@ -403,9 +403,9 @@ class Sim(cv.BaseSim):
                 filename = do_save # It's a string, assume it's a filename
             else:
                 filename = 'covid_abm_results.png' # Just give it a default name
-            pl.savefig(filename)
+            plt.savefig(filename)
 
-        pl.show()
+        plt.show()
 
         return fig
 

@@ -6,7 +6,7 @@ Tests of the utilies for the model.
 import pytest
 import numpy as np
 import numba as nb
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 import covasim as cova
 
@@ -89,7 +89,7 @@ def test_samples(doplot=False):
         ]
 
     if doplot:
-        pl.figure(figsize=(20,14))
+        plt.figure(figsize=(20,14))
 
     # Run the samples
     nchoices = len(choices)
@@ -108,9 +108,9 @@ def test_samples(doplot=False):
         results[choice] = cova.sample(dist=choice, par1=par1, par2=par2, size=n)
 
         if doplot:
-            pl.subplot(nsqr, nsqr, c+1)
-            pl.hist(x=results[choice], bins=nbins)
-            pl.title(f'dist={choice}, par1={par1}, par2={par2}')
+            plt.subplot(nsqr, nsqr, c+1)
+            plt.hist(x=results[choice], bins=nbins)
+            plt.title(f'dist={choice}, par1={par1}, par2={par2}')
 
     with pytest.raises(NotImplementedError):
         cova.sample(dist='not_found')

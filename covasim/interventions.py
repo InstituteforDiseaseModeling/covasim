@@ -1,5 +1,5 @@
 import covasim as cv
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 import sciris as sc
 
@@ -229,7 +229,7 @@ class change_beta(Intervention):
         ''' Plot vertical lines for when changes in beta '''
         ylims = ax.get_ylim()
         for day in self.days:
-            pl.plot([day]*2, ylims, '--')
+            plt.plot([day]*2, ylims, '--')
         return
 
 
@@ -269,7 +269,7 @@ class test_num(Intervention):
             return
 
         # If there are no tests today, abort early
-        if not (n_tests and pl.isfinite(n_tests)):
+        if not (n_tests and np.isfinite(n_tests)):
             return
 
         test_probs = np.ones(sim.n)

@@ -5,7 +5,7 @@ Utilities for running the COVID-ABM
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
 import pandas as pd # Used for pd.unique() (better than np.unique())
-import pylab  as pl # Used by fixaxis()
+import matplotlib.pyplot as plt # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 
@@ -201,9 +201,9 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
 def fixaxis(sim, useSI=True, boxoff=False):
     ''' Make the plotting more consistent -- add a legend and ensure the axes start at 0 '''
     delta = 0.5
-    pl.legend() # Add legend
+    plt.legend() # Add legend
     sc.setylim() # Rescale y to start at 0
-    pl.xlim((0, sim['n_days']+delta))
+    plt.xlim((0, sim['n_days']+delta))
     if boxoff:
         sc.boxoff() # Turn off top and right lines
     return

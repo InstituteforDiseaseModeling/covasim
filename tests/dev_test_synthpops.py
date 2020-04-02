@@ -4,7 +4,7 @@ Test different population options
 
 #%% Imports and settings
 import pytest
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 import covasim as cova
 try:
@@ -53,7 +53,7 @@ def test_pop_options(doplot=False): # If being run via pytest, turn off
         for key,sim in sims.items():
             sim.plot()
             try:
-                pl.gcf().axes[0].set_title(f'Counts: {key}')
+                plt.gcf().axes[0].set_title(f'Counts: {key}')
             except:
                 pass
 
@@ -100,7 +100,7 @@ def test_interventions(doplot=False): # If being run via pytest, turn off
     if doplot:
         for key,sim in sims.items():
             sim.plot()
-            pl.gcf().axes[0].set_title(f'Counts: {key}')
+            plt.gcf().axes[0].set_title(f'Counts: {key}')
 
     return sims
 
