@@ -12,10 +12,10 @@ It can be served in two ways
 To run the app locally via Twisted, simply run
 
 ```shell script
-./launch_webapp
+./launch_flask
 ```
 
-The site will be accessible at `http://localhost:8188` or whichever port is specified in `launch_webapp`.
+The site will be accessible at `http://localhost:8188` or whichever port is specified in `launch_flask`.
 
 ## Deployment
 
