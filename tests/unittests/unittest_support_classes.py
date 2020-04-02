@@ -13,6 +13,7 @@ import os
 
 from covasim import Sim, parameters
 
+
 class TestProperties:
     class ParameterKeys:
         class SimulationKeys:
@@ -27,6 +28,7 @@ class TestProperties:
             time_limit = 'timelimit'
             # stopping_function = 'stop_func'
             pass
+
         class TransmissionKeys:
             beta = 'beta'
             asymptomatic_fraction = 'asym_prop'
@@ -37,29 +39,49 @@ class TestProperties:
             beta_population_specific = 'beta_pop'
             contacts_population_specific = 'contacts_pop'
             pass
+
         class ProgressionKeys:
-            exposed_to_infectious = 'serial'
-            exposed_to_infectious_std = 'serial_std'
-            exposed_to_symptomatic = 'incub'
-            exposed_to_symptomatic_std = 'incub_std'
-            infectiousness_duration = 'dur'
-            infectiousness_duration_std = 'dur_std'
+            durations = "dur"
+            param_1 = "par1"
+            param_2 = "par2"
+
+            class DurationKeys:
+                exposed_to_infectious = 'exp2inf'
+                infectious_to_symptomatic = 'inf2sym'
+                infectious_asymptomatic_to_recovered = 'asym2rec'
+                infectious_symptomatic_to_recovered = 'mild2rec'
+                symptomatic_to_severe = 'sym2sev'
+                severe_to_critical = 'sev2crit'
+                aymptomatic_to_recovered = 'asym2rec'
+                severe_to_recovered = 'sev2rec'
+                critical_to_recovered = 'crit2rec'
+                critical_to_death = 'crit2die'
+                pass
+
+            class ProbabilityKeys:
+                inf_to_symptomatic_probability = 'rel_symp_prob'
+                sym_to_severe_probability = 'rel_severe_prob'
+                sev_to_critical_probability = 'rel_crit_prob'
+                crt_to_death_probability = 'rel_death_prob'
+                use_progression_by_age = 'prog_by_age'
             pass
+
         class DiagnosticTestingKeys:
             number_daily_tests = 'daily_tests'
             daily_test_sensitivity = 'sensitivity'
             symptomatic_testing_multiplier = 'sympt_test'
             contacttrace_testing_multiplier = 'trace_test'
             pass
-        class MortalityKeys:
+
+        class NOPE_MortalityKeys:
             time_to_death = 'timetodie'
             time_to_death_std = 'timetodie_std'
-            use_cfr_by_age = 'prog_by_age'
             prob_severe_death = 'default_death_prob'
             prob_symptomatic_severe = 'default_severe_prob'
             prob_infected_symptomatic = 'default_symp_prob'
             pass
         pass
+
     class SpecializedSimulations:
         class Microsim:
             n = 10
@@ -74,7 +96,7 @@ class TestProperties:
             contacts = 3
             beta = 0.4
             serial = 2
-            serial_std = 0.5
+            # serial_std = 0.5
             dur = 3
             pass
         class HighMortality:
@@ -82,11 +104,12 @@ class TestProperties:
             cfr_by_age = False
             default_cfr = 0.2
             timetodie = 6
-            timetodie_std = 2
+            # timetodie_std = 2
         pass
+
     class ResultsDataKeys:
         deaths_cumulative = 'cum_deaths'
-        deaths_daily = 'deaths'
+        deaths_daily = 'new_deaths'
         diagnoses_cumulative = 'cum_diagnosed'
         diagnoses_at_timestep = 'diagnoses'
         diagnostics_at_timestep = 'tests'
@@ -96,14 +119,17 @@ class TestProperties:
         susceptible_at_timestep = 'n_susceptible'
         infectious_at_timestep = 'n_infectious'
         symptomatic_at_timestep = 'n_symptomatic'
-        recovered_at_timestep = 'n_recovered'
+        recovered_at_timestep = 'new_recoveries'
         recovered_cumulative = 'cum_recoveries'
-        recovered_at_timestep_WHAT = 'recoveries'
-        infections_at_timestep = 'infections'
+        infections_at_timestep = 'new_infections'
         GUESS_doubling_time_at_timestep = 'doubling_time'
         GUESS_r_effective_at_timestep = 'r_eff'
 
     pass
+
+
+DurationKeys = TestProperties.ParameterKeys.ProgressionKeys.DurationKeys
+
 
 class CovaSimTest(unittest.TestCase):
     def setUp(self):
@@ -140,6 +166,23 @@ class CovaSimTest(unittest.TestCase):
         if params_dict:
             self.simulation_parameters.update(params_dict)
         pass
+
+    def set_duration_distribution_parameters(self, duration_in_question,
+                                             par1, par2):
+        if not self.simulation_parameters:
+            self.set_simulation_parameters()
+            pass
+        duration_node = self.simulation_parameters["dur"]
+        duration_node[duration_in_question] = {
+            "dist": "normal",
+            "par1": par1,
+            "par2": par2
+        }
+        params_dict = {
+            "dur": duration_node
+        }
+        self.set_simulation_parameters(params_dict=params_dict)
+
 
     def run_sim(self, params_dict=None, write_results_json=True):
         if not self.simulation_parameters or params_dict: # If we need one, or have one here
@@ -200,6 +243,8 @@ class CovaSimTest(unittest.TestCase):
         self.set_simulation_parameters(params_dict=everyone_infected)
         pass
 
+    DurationKeys = TestProperties.ParameterKeys.ProgressionKeys.DurationKeys
+
     def set_everyone_infectious_same_day(self, num_agents, days_to_infectious=1, num_days=60):
         """
         Args:
@@ -210,15 +255,18 @@ class CovaSimTest(unittest.TestCase):
         self.set_everyone_infected(agent_count=num_agents)
         test_config = {
             TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: num_days,
-            TestProperties.ParameterKeys.ProgressionKeys.exposed_to_infectious: days_to_infectious,
-            TestProperties.ParameterKeys.ProgressionKeys.exposed_to_infectious_std: 0,
-            TestProperties.ParameterKeys.MortalityKeys.use_cfr_by_age: False,
-            TestProperties.ParameterKeys.MortalityKeys.prob_infected_symptomatic: 0
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.use_progression_by_age: False,
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 0
         }
+        self.set_duration_distribution_parameters(
+            duration_in_question=DurationKeys.exposed_to_infectious,
+            par1=days_to_infectious,
+            par2=0
+        )
         self.set_simulation_parameters(params_dict=test_config)
         pass
 
-    def set_everyone_symptomatic(self, num_agents):
+    def set_everyone_symptomatic(self, num_agents, constant_delay:int=None):
         """
         Cause all agents in the simulation to begin infected
         And proceed to symptomatic (but not severe or death)
@@ -228,10 +276,16 @@ class CovaSimTest(unittest.TestCase):
         self.set_everyone_infectious_same_day(num_agents=num_agents,
                                               days_to_infectious=0)
         everyone_symptomatic_config = {
-            TestProperties.ParameterKeys.MortalityKeys.prob_infected_symptomatic: 1.0,
-            TestProperties.ParameterKeys.MortalityKeys.prob_symptomatic_severe: 0
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 1.0,
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sym_to_severe_probability: 0
         }
         self.set_simulation_parameters(params_dict=everyone_symptomatic_config)
+        if constant_delay is not None:
+            self.set_duration_distribution_parameters(
+                duration_in_question=DurationKeys.infectious_to_symptomatic,
+                par1=constant_delay,
+                par2=0
+            )
         pass
 
     def set_everyone_is_going_to_die(self, num_agents):
@@ -240,15 +294,51 @@ class CovaSimTest(unittest.TestCase):
         Args:
             num_agents: Number of agents to simulate
         """
+        ProbKeys = TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys
         self.set_everyone_infectious_same_day(num_agents=num_agents)
         everyone_dying_config = {
-            TestProperties.ParameterKeys.MortalityKeys.use_cfr_by_age: False,
-            TestProperties.ParameterKeys.MortalityKeys.prob_infected_symptomatic: 1,  # Uh oh
-            TestProperties.ParameterKeys.MortalityKeys.prob_symptomatic_severe: 1,  # Oh no
-            TestProperties.ParameterKeys.MortalityKeys.prob_severe_death: 1,  # No recoveries
+            ProbKeys.use_progression_by_age: False,
+            ProbKeys.inf_to_symptomatic_probability: 1,
+            ProbKeys.sym_to_severe_probability: 1,
+            ProbKeys.sev_to_critical_probability: 1,
+            ProbKeys.crt_to_death_probability: 1
         }
         self.set_simulation_parameters(params_dict=everyone_dying_config)
         pass
+
+    def set_everyone_severe(self, num_agents, constant_delay:int=None):
+        self.set_everyone_symptomatic(num_agents=num_agents, constant_delay=constant_delay)
+        everyone_severe_config = {
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sym_to_severe_probability: 1.0,
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sev_to_critical_probability: 0.0
+        }
+        self.set_simulation_parameters(params_dict=everyone_severe_config)
+        if constant_delay is not None:
+            self.set_duration_distribution_parameters(
+                duration_in_question=DurationKeys.symptomatic_to_severe,
+                par1=constant_delay,
+                par2=0
+            )
+        pass
+
+    def set_everyone_critical(self, num_agents, constant_delay:int=None):
+        """
+        Causes all agents to become critically ill day 1
+        """
+        self.set_everyone_severe(num_agents=num_agents, constant_delay=constant_delay)
+        everyone_critical_config = {
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sev_to_critical_probability: 1.0,
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.crt_to_death_probability: 0.0
+        }
+        self.set_simulation_parameters(params_dict=everyone_critical_config)
+        if constant_delay is not None:
+            self.set_duration_distribution_parameters(
+                duration_in_question=DurationKeys.severe_to_critical,
+                par1=constant_delay,
+                par2=0
+            )
+        pass
+
 
     def set_smallpop_hightransmission(self):
         """
@@ -263,10 +353,7 @@ class CovaSimTest(unittest.TestCase):
             Simkeys.initial_infected_count: Hightrans.n_infected,
             Simkeys.number_simulated_days: Hightrans.n_days,
             Transkeys.contacts_per_agent: Hightrans.contacts,
-            Transkeys.beta : Hightrans.beta,
-            Progkeys.exposed_to_infectious: Hightrans.serial,
-            Progkeys.exposed_to_infectious_std: Hightrans.serial_std,
-            Progkeys.infectiousness_duration: Hightrans.dur
+            Transkeys.beta : Hightrans.beta
         }
         self.set_simulation_parameters(hightrans_parameters)
         pass
