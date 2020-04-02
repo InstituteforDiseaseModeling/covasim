@@ -278,7 +278,7 @@ class Scenarios(cvbase.ParsObj):
                 # Optionally reset tick marks (useful for e.g. plotting weeks/months)
                 if interval:
                     xmin,xmax = ax.get_xlim()
-                    ax.set_xticks(plt.arange(xmin, xmax+1, interval))
+                    ax.set_xticks(np.arange(xmin, xmax+1, interval))
 
                 # Set xticks as dates
                 if as_dates:

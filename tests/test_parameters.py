@@ -5,6 +5,7 @@ Test that the parameters and data files are being created correctly.
 #%% Imports
 import pytest
 import matplotlib.pyplot as plt
+import numpy as np
 import sciris as sc
 import covasim.cruise_ship as cova # NOTE: this is the only tests script that doesn't use base
 
