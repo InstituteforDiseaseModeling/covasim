@@ -16,16 +16,16 @@ jobs:
         run: print("::set-env name=GITHUB_OWNER::{}".format('${{github.repository}}'.split('/')[0]))
       - name: Checkout sources
         uses: actions/checkout@v1
-      - name: Checkout synthpops
-        uses: actions/checkout@v2
-        with:
-            repository: ${{ env.GITHUB_OWNER }}/synthpops
-            token: ${{ secrets.GitHub_PAT }}
-            path: ./synthpops
-      - uses: actions/setup-python@master
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
+      # - name: Checkout synthpops
+      #   uses: actions/checkout@v2
+      #   with:
+      #       repository: ${{ env.GITHUB_OWNER }}/synthpops
+      #       token: ${{ secrets.GitHub_PAT }}
+      #       path: ./synthpops
+      # - uses: actions/setup-python@master
+      #   with:
+      #     python-version: ${{ matrix.python-version }}
+      #     architecture: x64
       - name: Install Covasim
         run: python setup.py develop
       - name: Install synthpops
