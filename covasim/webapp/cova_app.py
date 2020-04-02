@@ -76,6 +76,7 @@ def get_defaults(region=None, merge=False):
     sim_pars['web_int_day'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (for no intervention, set start day to 0 and effectiveness to 0)')
     sim_pars['web_int_eff'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Fractional reduction in infectiousness due to intervention')
     sim_pars['seed']        = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
+    sim_pars['n_beds'] = dict(best=100, min=0, max=10000, name="Number of ICU Beds", tip="Number of available ICU beds")
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
