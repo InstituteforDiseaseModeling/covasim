@@ -56,7 +56,7 @@ server {
 For example:
 
 ```script
-cd covasim/covasim/cova_webapp
+cd covasim/covasim/webapp
 screen -S cova_app
 ./launch_gunicorn
 <Ctrl+D>
