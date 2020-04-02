@@ -3,26 +3,11 @@ Covasim Platform
 
 This contains files to run Covasim on Kubernetes. 
 
-# Running
 
-Deploy the app using
-```bash
-kubectl apply -f covasim-deployment.yaml
-```
 
-Check the status of the app using
-```bash
-kubectl get pods
-kubectl get service
-```
+# Running Locally
 
-You app should now be running at http://localhost:8000
-
-To stop the application run
-```bash
-kubectl delete service/covasim pod/covasim
-```
-# Tips
+## Setup environment
 
 On Linux machines that support snaps, you can use the following steps to obtain kubernetes for testing
 
@@ -57,4 +42,30 @@ sudo usermod -a -G microk8s $(whoami)
 sudo chown -f -R $(whoami) ~/.kube
 ```
 
-After running those commands you will to logout and login back in to register new groups. You can also perform `su - $(whoami)` to get a new shell with the group changes loaded. 
+After running those commands you will to logout and login back in to register new groups. You can also perform `su - $(whoami)` to get a new shell with the group changes loaded.
+
+Lastly, enable DNS addon
+```bash
+sudo microk8s.enable dashboard dns
+``` 
+
+## Deploy 
+Deploy the app using
+```bash
+kubectl apply -f covasim-service.yaml
+
+```
+
+Check the status of the app using
+```bash
+kubectl get pods
+kubectl get service
+```
+
+Find the internal ip using `echo "http://$(kubectl get all --all-namespaces | grep service/covasim | awk '{print $4}')"`
+
+To stop the application run
+```bash
+kubectl delete service/covasim pod/covasim
+```
+
