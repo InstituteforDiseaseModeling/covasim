@@ -512,4 +512,4 @@ if __name__ == "__main__":
     else:
         autoreload = 1
 
-    app.run(autoreload=True)
+    app.run(autoreload=autoreload)
