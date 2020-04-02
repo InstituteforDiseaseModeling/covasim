@@ -262,20 +262,16 @@ class Scenarios(cvbase.ParsObj):
                 ax = pl.subplot(len(to_plot), 1, rk + 1)
 
             resdata = self.allres[reskey]
-            # lowest_y  = min([min(resdata[k]['low']) for k in range(len(resdata))])
-            # highest_y = max([max(resdata[k]['low']) for k in range(len(resdata))])
 
             for scenkey, scendata in resdata.items():
 
                 pl.fill_between(self.tvec, scendata.low, scendata.high, **fill_args)
                 pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
-
                 pl.title(title)
                 if rk == 0:
                     pl.legend(loc='best')
 
                 pl.grid(grid)
-                # pl.gca().set_ylim([lowest_y, highest_y])
                 if commaticks:
                     sc.commaticks()
 

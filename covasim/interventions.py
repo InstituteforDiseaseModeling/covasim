@@ -129,11 +129,11 @@ class dynamic_pars(Intervention):
                 if len(inds)>1:
                     raise ValueError(f'Duplicate days are not allowed for Dynamic interventions (day={t}, indices={inds})')
                 else:
-                    val = parval['vals'][inds[0]] # Actually set the parameter
+                    val = parval['vals'][inds[0]]
                     if isinstance(val, dict):
-                        sim[parkey].update(val) # Handle nested dicts
+                        sim[parkey].update(val) # Set the parameter if a nested dict
                     else:
-                        sim[parkey] = val
+                        sim[parkey] = val # Set the parameter if not a dict
         return
 
 
