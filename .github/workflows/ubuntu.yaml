@@ -28,9 +28,9 @@ jobs:
           architecture: x64
       - name: Install Covasim
         run: python setup.py develop
-      - name: Install synthpops
-        working-directory: ./synthpops
-        run: python setup.py develop
+      # - name: Install synthpops
+      #   working-directory: ./synthpops
+      #   run: python setup.py develop
       - name: Run tests
         working-directory: ./tests
         run: |
