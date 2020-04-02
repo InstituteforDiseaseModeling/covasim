@@ -34,7 +34,7 @@ def make_pars():
     pars['window']     = 7 # Integration window for doubling time and R_eff
 
     # Disease transmission
-    pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
+    pars['beta']         = 0.013 # Beta per symptomatic contact; absolute
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
     pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
