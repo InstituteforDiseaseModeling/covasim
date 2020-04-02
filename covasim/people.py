@@ -223,7 +223,20 @@ class Person(sc.prettyobj):
 
 
 
-def make_people(sim, verbose=None, id_len=None, die=True, fromfile=False, do_save=False, popdictfile=None):
+def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
+    '''
+    Make the actual people for the simulation.
+
+    Args:
+        sim (Sim): the simulation object
+        verbose (bool): level of detail to print
+        id_len (int): length of ID for each person (default: calculate required length based on the number of people)
+        die (bool): whether or not to fail if synthetic populations are requested but not available
+        reset (bool): whether to force population creation even if self.popdict exists
+
+    Returns:
+        None.
+    '''
 
     # Set inputs
     n_people     = int(sim['n']) # Shorten
@@ -244,16 +257,9 @@ def make_people(sim, verbose=None, id_len=None, die=True, fromfile=False, do_sav
             usepopdata = 'random'
 
     # Actually create the population
-    if fromfile and popdictfile is not None:
-        print('TEMP LOADING')
-        popdict = sc.loadobj(popdictfile)
-        n_actual = len(popdict['uid'])
-        n_expected = sim['n']
-        if n_actual != n_expected:
-            errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "n" to match or regenerate the file'
-            raise ValueError(errormsg)
+    if sim.popdict and not reset:
+        popdict = sim.popdict # Use stored one
     else:
-        print('TEMP CREATING')
         if use_rand_pop:
             popdict = make_randpop(sim)
         else:
@@ -277,15 +283,10 @@ def make_people(sim, verbose=None, id_len=None, die=True, fromfile=False, do_sav
                 contacts.append(int_contacts)
 
             popdict = {}
-            popdict['uid']     = uids
-            popdict['age']     = np.array(ages)
-            popdict['sex']    = np.array(sexes)
+            popdict['uid']      = uids
+            popdict['age']      = np.array(ages)
+            popdict['sex']      = np.array(sexes)
             popdict['contacts'] = contacts
-
-    # Optionally save -- TODO refactor!
-    if do_save and popdictfile is not None:
-        print('TEMP SAVING')
-        sc.saveobj(popdictfile, popdict)
 
     # Set prognoses by modifying popdict in place
     set_prognoses(sim, popdict)
@@ -301,8 +302,8 @@ def make_people(sim, verbose=None, id_len=None, die=True, fromfile=False, do_sav
         people[person_args['uid']] = person # Save them to the dictionary
 
     # Store UIDs and people
-    sim.popdict = popdict # WARNING TEMP
-    sim.uids = popdict['uid']
+    sim.popdict = popdict
+    sim.uids = popdict['uid'] # Duplication, but used in an innermost loop so make as efficient as possible
     sim.people = people
     sim.contact_keys = list(sim['contacts_pop'].keys())
 

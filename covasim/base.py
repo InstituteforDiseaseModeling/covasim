@@ -279,7 +279,7 @@ class BaseSim(ParsObj):
         for saved files.
 
         Args:
-            skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "people" and "uids"
+            skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "people", "popdict", and "uids"
 
         Returns:
             shrunken_sim (Sim): a Sim object with the listed attributes removed
@@ -287,7 +287,7 @@ class BaseSim(ParsObj):
 
         # By default, skip people (~90%) and uids (~9%)
         if skip_attrs is None:
-            skip_attrs = ['people', 'uids']
+            skip_attrs = ['popdict', 'uids', 'people']
 
         # Create the new object, and copy original dict, skipping the skipped attributes
         shrunken_sim = object.__new__(self.__class__)

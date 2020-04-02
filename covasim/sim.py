@@ -59,6 +59,7 @@ class Sim(cvbase.BaseSim):
         self.initialized = False
         self.stopped = None # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
+        self.popdict = None
         self.people = {} # Initialize these here so methods that check their length can see they're empty
         self.results = {}
         return
@@ -82,6 +83,35 @@ class Sim(cvbase.BaseSim):
         else: # Otherwise, skip
             self.data = None
         return
+
+
+    def load_people(self, filename, **kwargs):
+        '''
+        Load the population dictionary from file.
+
+        Args:
+            filename (str): name of the file to load.
+        '''
+        filepath = sc.makefilepath(filename=filename, **kwargs)
+        self.popdict = sc.loadobj(filepath)
+        n_actual = len(self.popdict['uid'])
+        n_expected = self['n']
+        if n_actual != n_expected:
+            errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "n" to match or regenerate the file'
+            raise ValueError(errormsg)
+        return
+
+
+    def save_people(self, filename, **kwargs):
+        '''
+        Save the population dictionary to file.
+
+        Args:
+            filename (str): name of the file to save to.
+        '''
+        filepath = sc.makefilepath(filename=filename, **kwargs)
+        sc.saveobj(filepath, self.popdict)
+        return filepath
 
 
     def initialize(self, **kwargs):
