@@ -428,13 +428,13 @@
 
     /**
      * Check if a tag is reserved so that it cannot be registered as a
-     * component. This is .platform-dependent and may be overwritten.
+     * component. This is platform-dependent and may be overwritten.
      */
     isReservedTag: no,
 
     /**
      * Check if an attribute is reserved so that it cannot be used as a component
-     * prop. This is .platform-dependent and may be overwritten.
+     * prop. This is platform-dependent and may be overwritten.
      */
     isReservedAttr: no,
 
@@ -450,7 +450,7 @@
     getTagNamespace: noop,
 
     /**
-     * Parse the real tag name for the specific .platform.
+     * Parse the real tag name for the specific platform.
      */
     parsePlatformTagName: identity,
 
@@ -3410,7 +3410,7 @@
       var Ctor;
       ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag);
       if (config.isReservedTag(tag)) {
-        // .platform built-in elements
+        // platform built-in elements
         vnode = new VNode(
           config.parsePlatformTagName(tag), data, children,
           undefined, undefined, context
@@ -8374,18 +8374,18 @@
 
   /*  */
 
-  // install .platform specific utils
+  // install platform specific utils
   Vue.config.mustUseProp = mustUseProp;
   Vue.config.isReservedTag = isReservedTag;
   Vue.config.isReservedAttr = isReservedAttr;
   Vue.config.getTagNamespace = getTagNamespace;
   Vue.config.isUnknownElement = isUnknownElement;
 
-  // install .platform runtime directives & components
+  // install platform runtime directives & components
   extend(Vue.options.directives, platformDirectives);
   extend(Vue.options.components, platformComponents);
 
-  // install .platform patch function
+  // install platform patch function
   Vue.prototype.__patch__ = inBrowser ? patch : noop;
 
   // public mount method
