@@ -76,7 +76,9 @@ def get_defaults(region=None, merge=False):
     sim_pars['web_int_day'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (for no intervention, set start day to 0 and effectiveness to 0)')
     sim_pars['web_int_eff'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Fractional reduction in infectiousness due to intervention')
     sim_pars['seed']        = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
-    sim_pars['n_beds'] = dict(best=100, min=0, max=10000, name="Number of ICU Beds", tip="Number of available ICU beds")
+
+    health_system_pars = {}
+    health_system_pars['n_beds'] = dict(best=100, min=0, max=1e6, name="Number of ICU Beds", tip="Number of available ICU beds")
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
@@ -92,9 +94,9 @@ def get_defaults(region=None, merge=False):
         sim_pars[parkey]['best'] = valuedict[region]
 
     if merge:
-        output = {**sim_pars, **epi_pars}
+        output = {**sim_pars, **epi_pars, **health_system_pars}
     else:
-        output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
+        output = {'sim_pars': sim_pars, 'epi_pars': epi_pars, 'health_system_pars': health_system_pars}
 
     return output
 
@@ -117,7 +119,7 @@ def upload_pars(fname):
 
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, health_system_pars=None, show_animation=False, verbose=True):
     ''' Create, run, and plot everything '''
 
     err = ''
@@ -130,7 +132,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         web_pars['verbose'] = verbose # Control verbosity here
 
 
-        for key,entry in {**sim_pars, **epi_pars}.items():
+        for key,entry in {**sim_pars, **epi_pars, **health_system_pars}.items():
             print(key, entry)
 
             best   = defaults[key]['best']
@@ -147,6 +149,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                 err += err1
                 web_pars[key] = best
             if key in sim_pars: sim_pars[key]['best'] = web_pars[key]
+            elif key in health_system_pars: health_system_pars[key]['best'] = web_pars[key]
             else:               epi_pars[key]['best'] = web_pars[key]
 
         # Convert durations
@@ -192,6 +195,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         print('Input parameters:')
         print(web_pars)
 
+    print(sim['n_beds'])
     # Core algorithm
     try:
         sim.run(do_plot=False)
@@ -280,6 +284,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     output['err']      = err
     output['sim_pars'] = sim_pars
     output['epi_pars'] = epi_pars
+    output['health_system_pars'] = health_system_pars
     output['graphs']   = graphs
     output['files']    = files
     output['summary']  = summary

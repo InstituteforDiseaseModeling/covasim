@@ -100,6 +100,21 @@
         </fieldset>
 
       </div>
+      <div class="row">
+
+        <fieldset class="col-md-6">
+          <legend>Health System parameters</legend>
+          <div v-for="par in health_system_pars" class="form-group">
+            <div :id="par.name">
+              <label>{{par.name}}:</label>
+              <input :disabled="running" class="form-control" v-model="par.best">
+            </div>
+            <b-tooltip :target="par.name" triggers="hover">
+              {{par.tip}}
+            </b-tooltip>
+          </div>
+        </fieldset>
+      </div>
 
       <!-- Run button -->
       <div class="btn-group btn-group-lg">

@@ -33,6 +33,7 @@ var vm = new Vue({
             historyIdx: 0,
             sim_pars: {},
             epi_pars: {},
+            health_system_pars: {},
             show_animation: false,
             result: { // Store currently displayed results
                 graphs: [],
@@ -74,14 +75,15 @@ var vm = new Vue({
 
             // Run a a single sim
             try{
-                let response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.show_animation]);
+                let response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.health_system_pars, this.show_animation]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
                 this.err = response.data.err;
                 this.sim_pars= response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
-                this.history.push(JSON.parse(JSON.stringify({sim_pars:this.sim_pars, epi_pars:this.epi_pars, result:this.result})));
+                this.health_system_pars = response.data.health_system_pars;
+                this.history.push(JSON.parse(JSON.stringify({sim_pars:this.sim_pars, epi_pars:this.epi_pars, health_system_pars: this.health_system_pars, result:this.result})));
                 this.historyIdx = this.history.length-1;
 
             } catch (e) {
@@ -95,6 +97,7 @@ var vm = new Vue({
             let response = await sciris.rpc('get_defaults', [this.reset_choice]);
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
+            this.health_system_pars = response.data.health_system_pars;
             this.graphs = [];
         },
 
@@ -102,11 +105,12 @@ var vm = new Vue({
             var d = new Date();
             let datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
             let fileName = `COVASim_parameters_${datestamp}.json`
-            
+
             // Adapted from https://stackoverflow.com/a/45594892 by Gautham
             let data = {
                 sim_pars: this.sim_pars,
                 epi_pars: this.epi_pars,
+                health_system_pars: this.health_system_pars
             };
             let fileToSave = new Blob([JSON.stringify(data, null, 4)], {
                 type: 'application/json',
@@ -129,6 +133,7 @@ var vm = new Vue({
         loadPars(){
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
+            this.health_system_pars = this.history[this.historyIdx].health_system_pars;
             this.result = this.history[this.historyIdx].result;
         },
 
