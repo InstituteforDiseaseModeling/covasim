@@ -22,6 +22,9 @@ def test_webapp():
 
     pars = cw.get_defaults()
     output = cw.run_sim(sim_pars=pars['sim_pars'], epi_pars=pars['epi_pars'])
+    assert output['err'] == ''
+    assert output['sim_pars'] == pars['sim_pars']
+    assert output['epi_pars'] == pars['epi_pars']
 
     return output
 
