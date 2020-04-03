@@ -81,7 +81,7 @@
               <label :for="key">{{par.name}}:</label>
               <input :id="key" :disabled="running" class="form-control" v-model="par.best">
             </div>
-            <b-tooltip :target="key+'-wpr'" triggers="hover focus">
+            <b-tooltip :target="key+'-wpr'">
               {{par.tip}}
             </b-tooltip>
           </div>
@@ -93,7 +93,7 @@
               <label :for="key">{{par.name}}:</label>
               <input :id="key" :disabled="running" class="form-control" v-model="par.best">
             </div>
-            <b-tooltip :target="key+'-wpr'" triggers="hover focus">
+            <b-tooltip :target="key+'-wpr'">
               {{par.tip}}
             </b-tooltip>
           </div>
@@ -113,7 +113,7 @@
         <button id="reset_btn" :disabled="running" class="btn btn-primary btn-lg ml-2 mr-2 blueish" type="button" @click="resetPars">
           Reset
         </button>
-        <b-tooltip target="reset_btn" triggers="hover focus">
+        <b-tooltip target="reset_btn">
           Reset parameters to default values
         </b-tooltip>
 
@@ -122,7 +122,7 @@
             {{ item }}
           </option>
         </select>
-        <b-tooltip target="examples" triggers="hover focus">
+        <b-tooltip target="examples">
           Example parameter configurations
         </b-tooltip>
 
@@ -130,7 +130,7 @@
           <span class="ti-download"/>
           <span class="sr-only"> Download parameters </span>
         </button>
-        <b-tooltip target="download-parameters-button" triggers="hover focus">
+        <b-tooltip target="download-parameters-button">
           Download parameters
         </b-tooltip>
 
@@ -138,7 +138,7 @@
           <span class="ti-upload"/>
           <span class="sr-only"> Upload parameters </span>
         </button>
-        <b-tooltip target="upload-parameters-button" triggers="hover focus">
+        <b-tooltip target="upload-parameters-button">
           Upload parameters
         </b-tooltip>
 
@@ -149,7 +149,7 @@
             </option>
           </select>
         </div>
-        <b-tooltip target="history" triggers="hover focus">
+        <b-tooltip target="history">
           History of parameters used in this session
         </b-tooltip>
       </div>
@@ -194,10 +194,10 @@
               <button id="download_json" class="btn btn-primary blueish" type="button" @click="downloadJson">
                 <span class="sr-only">Download</span> JSON <span class="ti-download"/>
               </button>
-              <b-tooltip target="download_xlsx" triggers="hover focus">
+              <b-tooltip target="download_xlsx">
                 Download results as an XLSX file
               </b-tooltip>
-              <b-tooltip target="download_json" triggers="hover focus">
+              <b-tooltip target="download_json">
                 Download results as a JSON file
               </b-tooltip>
             </div>
