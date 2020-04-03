@@ -35,8 +35,8 @@
 <section id="app" class="container-fluid">
   <header class="row no-gutter">
     <nav class="navbar navbar-dark bg-dark">
-      <a class="navbar-brand" href="#" style='font-size: 2.2em; '>Covasim</a>
-      <button type="button" class="btn" data-toggle="modal" data-target="#exampleModal" style="color:rgba(255,255,255); padding-bottom:10px;">
+      <a class="navbar-brand" href="#">Covasim</a>
+      <button type="button" class="btn text-white" data-toggle="modal" data-target="#exampleModal">
         COVID-19 agent-based simulator
       </button>
       <span class="navbar-text"><a href="https://github.com/institutefordiseasemodeling/covasim" target="_blank">{{ version }}</a></span>
@@ -55,7 +55,7 @@
           <div class="modal-body">
             <p>Covasim is an agent-based model that simulates the transmission of COVID-19 (novel coronavirus, SARS-CoV-2) in a population. Each individual in the model may pass through the following stages of COVID-19 infection: susceptible, exposed, infectious, and recovered (SEIR). The epidemiological parameter values are taken from literature.</p>
 
-            <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals in neighboring nodes to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.05 and a doubling time of 6-7 days. For more information, please visit the <a href="https://github.com/institutefordiseasemodeling/covasim" target="_blank">GitHub</a> repository.
+            <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals in neighboring nodes to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.05 and a doubling time of 6-7 days. For more information, please visit the <a href="https://github.com/institutefordiseasemodeling/covasim" target="_blank">GitHub</a> repository.</p>
 
             <p>Note: Models are only as good as the values of the parameters put into them. This is a rapidly changing situation, and we will update content as relevant information is received.</p>
           </div>
@@ -70,30 +70,30 @@
 
   <div class="content row">
 
-    <div id="parameters" class="col">
+    <div id="parameters" class="col-sm">
 
       <div class="row">
 
         <fieldset class="col-md-6">
           <legend>Simulation parameters</legend>
-          <div v-for="par in sim_pars" class="form-group">
-            <div :id="par.name">
-              <label>{{par.name}}:</label>
-              <input :disabled="running" class="form-control" v-model="par.best">
+          <div v-for="(par, key) in sim_pars" class="form-group">
+            <div :id="key+'-wpr'">
+              <label :for="key">{{par.name}}:</label>
+              <input :id="key" :disabled="running" class="form-control" v-model="par.best">
             </div>
-            <b-tooltip :target="par.name" triggers="hover">
+            <b-tooltip :target="key+'-wpr'" triggers="hover focus">
               {{par.tip}}
             </b-tooltip>
           </div>
         </fieldset>
         <fieldset class="col-md-6">
           <legend>Epidemiological parameters</legend>
-          <div v-for="par in epi_pars" class="form-group">
-            <div :id="par.name">
-              <label>{{par.name}}:</label>
-              <input :disabled="running" class="form-control" v-model="par.best">
+          <div v-for="(par, key) in epi_pars" class="form-group">
+            <div :id="key+'-wpr'">
+              <label :for="key">{{par.name}}:</label>
+              <input :id="key" :disabled="running" class="form-control" v-model="par.best">
             </div>
-            <b-tooltip :target="par.name" triggers="hover">
+            <b-tooltip :target="key+'-wpr'" triggers="hover focus">
               {{par.tip}}
             </b-tooltip>
           </div>
@@ -102,64 +102,61 @@
       </div>
 
       <!-- Run button -->
-      <div class="btn-group btn-group-lg">
-        <button v-if="running" class="btn btn-primary green" type="button" disabled  style="width:160px">
+      <div class="d-flex align-items-center flex-wrap">
+        <button v-if="running" class="btn btn-primary btn-lg btn-run green" type="button" disabled>
           <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           Running...
         </button>
-        <button v-else id="run_btn" class="btn btn-primary green" type="button" @click="runSim" style="width:160px">
+        <button v-else id="run_btn" class="btn btn-primary btn-lg btn-run green" type="button" @click="runSim">
           Run
-        </button>&nbsp;&nbsp;&nbsp;&nbsp;
-        <button id="reset_btn" :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
+        </button>
+        <button id="reset_btn" :disabled="running" class="btn btn-primary btn-lg ml-2 mr-2 blueish" type="button" @click="resetPars">
           Reset
-        </button>&nbsp;&nbsp;&nbsp;&nbsp;
-        <b-tooltip target="reset_btn" triggers="hover">
+        </button>
+        <b-tooltip target="reset_btn" triggers="hover focus">
           Reset parameters to default values
         </b-tooltip>
 
-        <select :disabled="running" id="examples" v-model="reset_choice" @change="resetPars()">
+        <select :disabled="running" id="examples" v-model="reset_choice" @change="resetPars()" class="mr-2" aria-label="Example Presets">
           <option v-for="(item, index) in reset_options" :value="item">
             {{ item }}
           </option>
-        </select>&nbsp;&nbsp;&nbsp;&nbsp;
-        <b-tooltip target="examples" triggers="hover">
+        </select>
+        <b-tooltip target="examples" triggers="hover focus">
           Example parameter configurations
         </b-tooltip>
 
-        <div style='padding-left:10px; padding-right:10px; padding-top: 15px'>
+        <button id="download-parameters-button" :disabled="running" class="btn btn-primary mr-2 blueish" type="button" @click="downloadPars">
+          <span class="ti-download"/>
+          <span class="sr-only"> Download parameters </span>
+        </button>
+        <b-tooltip target="download-parameters-button" triggers="hover focus">
+          Download parameters
+        </b-tooltip>
 
-          <button id="download-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="downloadPars">
-            <span class="ti-download"/>
-          </button>
-          <b-tooltip target="download-parameters-button" triggers="hover">
-            Download parameters
-          </b-tooltip>
+        <button id="upload-parameters-button" :disabled="running" class="btn btn-primary mr-2 blueish" type="button" @click="uploadPars">
+          <span class="ti-upload"/>
+          <span class="sr-only"> Upload parameters </span>
+        </button>
+        <b-tooltip target="upload-parameters-button" triggers="hover focus">
+          Upload parameters
+        </b-tooltip>
 
-          <button id="upload-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="uploadPars">
-            <span class="ti-upload"/>
-          </button>
-          <b-tooltip target="upload-parameters-button" triggers="hover">
-            Upload parameters
-          </b-tooltip>
-
-        </div>
-
-
-        <div id='history' style='padding-left:10px; padding-top:20px'>
-          <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm">
+        <div id="history">
+          <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">
             <option v-for="(item, index) in history" :value="index">
               {{ index }}
             </option>
           </select>
         </div>
-        <b-tooltip target="history" triggers="hover">
+        <b-tooltip target="history" triggers="hover focus">
           History of parameters used in this session
         </b-tooltip>
       </div>
 
-      <div>
-         <input type="checkbox" v-model="show_animation">Render animation</input>
-      </div>
+      <label>
+         <input type="checkbox" v-model="show_animation" />Render animation
+      </label>
 
 
 
@@ -171,7 +168,7 @@
     </div>
 
     <!-- Show the actual graph -->
-    <div id="graphs" class="graphs col">
+    <div id="graphs" class="graphs col-sm">
       <fieldset>
         <legend>Results</legend>
         <!--           <template v-if="running">
@@ -183,24 +180,24 @@
         </template>
         <template v-else>
 
-          <div style="overflow-x:hidden; overflow-y:auto; max-height:75vh">
+          <div class="chart-frame">
             <div>
               <plotly-chart v-for="x in result.graphs" :graph="x" :key="x.id"/>
             </div>
 
             <!-- <b>After {{ result.summary.days }} days: {{ result.summary.cases }} cases, {{ result.summary.deaths }} deaths</b> -->
 
-            <div style="padding-left:70px">
+            <div class="text-center">
               <button id="download_xlsx" class="btn btn-primary blueish" type="button" @click="downloadExcel">
-                XLSX <span class="ti-download"/>
+                <span class="sr-only">Download</span> XLSX <span class="ti-download"/>
               </button>
               <button id="download_json" class="btn btn-primary blueish" type="button" @click="downloadJson">
-                JSON <span class="ti-download"/>
+                <span class="sr-only">Download</span> JSON <span class="ti-download"/>
               </button>
-              <b-tooltip target="download_xlsx" triggers="hover">
+              <b-tooltip target="download_xlsx" triggers="hover focus">
                 Download results as an XLSX file
               </b-tooltip>
-              <b-tooltip target="download_json" triggers="hover">
+              <b-tooltip target="download_json" triggers="hover focus">
                 Download results as a JSON file
               </b-tooltip>
             </div>
@@ -215,10 +212,11 @@
 
   <footer class="row no-gutter">
     <nav class="navbar navbar-dark bg-dark">
-            <span class="navbar-text">
+            <span class="navbar-text text-white">
               &copy; 2020 <a href="http://idmod.org" target="_blank">Institute for Disease Modeling</a>
             </span>
       <a href="https://github.com/institutefordiseasemodeling/covasim" target="_blank" class="navbar-text">
+        <span class="sr-only">View this project on GitHub</span>
         <svg height="16" viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true">
           <path fill-rule="evenodd" fill="currentColor"
                 d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
