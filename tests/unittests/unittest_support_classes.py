@@ -13,6 +13,24 @@ import os
 
 from covasim import Sim, parameters
 
+from sciris import objdict
+
+traditional_get_default_prognoses = parameters.get_default_prognoses
+
+def get_default_prognoses_for_test(by_age=False):
+    if not by_age:
+        prog_pars = objdict(dict(
+            symp_prob = 1.0,
+            severe_prob = 1.0,
+            crit_prob = 1.0,
+            death_prob = 1.0
+        ))
+        return prog_pars
+    else:
+        return traditional_get_default_prognoses(by_age=by_age)
+
+parameters.get_default_prognoses = get_default_prognoses_for_test
+
 
 class TestProperties:
     class ParameterKeys:
