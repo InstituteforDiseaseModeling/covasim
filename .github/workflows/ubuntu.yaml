@@ -35,7 +35,7 @@ jobs:
         working-directory: ./tests
         run: |
           pip install pytest
-          # pytest test*.py unittests/test*.py --junitxml=test-results.xml # Run actual tests
+          pytest test*.py unittests/test*.py --junitxml=test-results.xml # Run actual tests
           pytest test*.py --junitxml=test-results.xml # Run actual tests
       - name: Run examples
         working-directory: ./examples
