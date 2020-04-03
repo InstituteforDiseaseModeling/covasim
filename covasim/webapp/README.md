@@ -70,38 +70,4 @@ Note that for local development, the `--reload` flag to the `gunicorn` command a
 
 ## Docker
 
-To use Docker, go into the root directory (containing `Dockerfile`) and run
-
-```
-docker build .
-```
-
-This will create the docker image. You can name it using e.g.
-
-```
-docker build -t covasim .
-```
-
-To run the container, simply do
-
-```
-docker run -p 127.0.0.1:8001:80 covasim:latest
-```
-
-The `-p` command directs the external system port 8001 to port 80 within the container. This redirect could be written without the IP to allow external access e.g. `-p 80:80` to have the machine redirect HTTP requests to the container. Replace `covid:latest` with the name of the container.
-
-In this case, we can verify it is working using
-
-```
-curl localhost:8001
-```
-
-which should display the HTML content, and
-
-```
-curl --data "funcname=get_version" http://localhost:8001/api/rpcs
-```
-
-which should display the version number.
-
-The artifact produced by `docker build` would be suitable to run via any container mechanism.
+See [Docker Readme](../../.platform/docker)
