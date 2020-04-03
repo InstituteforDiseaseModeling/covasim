@@ -192,12 +192,12 @@ class change_beta(Intervention):
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
 
     Examples:
-        interv = cv.change_beta(25, 0.3) # On day 25, reduce beta by 70% to 0.3
-        interv = cv.change_beta([14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
+        interv = cv.change_beta(contact_layer, 25, 0.3) # On day 25, reduce beta by 70% to 0.3
+        interv = cv.change_beta(contact_layer, [14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
 
     '''
 
-    def __init__(self, days, changes):
+    def __init__(self, contact_layer, days, changes):
         super().__init__()
         self.days = sc.promotetoarray(days)
         self.changes = sc.promotetoarray(changes)
@@ -205,6 +205,7 @@ class change_beta(Intervention):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
         self.orig_beta = None
+        self.contact_layer = contact_layer # Reference to contact layer in which to apply change
         return
 
 
@@ -212,7 +213,7 @@ class change_beta(Intervention):
 
         # If this is the first time it's being run, store beta
         if self.orig_beta is None:
-            self.orig_beta = sim['beta']
+            self.orig_beta = self.contact_layer.beta
 
         # If this day is found in the list, apply the intervention
         inds = sc.findinds(self.days, sim.t)
@@ -220,7 +221,7 @@ class change_beta(Intervention):
             new_beta = self.orig_beta
             for ind in inds:
                 new_beta = new_beta * self.changes[ind]
-            sim['beta'] = new_beta
+            self.contact_layer.beta = new_beta
 
         return
 
