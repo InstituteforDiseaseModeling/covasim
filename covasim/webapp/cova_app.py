@@ -105,6 +105,18 @@ def get_version():
     return output
 
 
+@app.register_RPC()
+def get_preset_options():
+    ''' Get the list of options for the location select '''
+    # TODO import locations from datasets/translators.py that @@gwincr11 is working on
+    datasetsTranslator = {
+        'Seattle': 'somePlace'
+        # etc. 'usa': 'sources/johnhopkins.json'
+    }
+    output = list(datasetsTranslator.keys())
+    return output
+
+
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
     parameters = sc.loadjson(fname)

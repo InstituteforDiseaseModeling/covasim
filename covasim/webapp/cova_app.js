@@ -41,13 +41,14 @@ var vm = new Vue({
             },
             running: false,
             err: '',
-            reset_options: ['Example', 'Seattle'], // , 'Wuhan', 'Global'],
+            reset_options: ['Example'],
             reset_choice: 'Example'
         }
     },
 
     async created() {
         this.get_version();
+        this.get_preset_options();
         this.resetPars();
     },
 
@@ -62,6 +63,11 @@ var vm = new Vue({
         async get_version() {
             let response = await sciris.rpc('get_version');
             this.version = response.data
+        },
+
+        async get_preset_options() {
+            let response = await sciris.rpc('get_preset_options');
+            this.reset_options.push(...response.data)
         },
 
         async runSim() {
