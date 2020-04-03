@@ -1,7 +1,7 @@
 Covasim Platform
 ================
 
-This contains files to run Covasim on Kubernetes. This is meant for testing Kubernetes Locally.
+This contains files to run Covasim on Kubernetes. This is meant for testing Kubernetes Locally at the moment. 
 
 # Running Locally
 
@@ -31,7 +31,6 @@ Optionally you can alias the snap's kubectl script
 sudo snap alias microk8s.kubectl kubectl
 ```
 
-The steps under [Running](#Running) assumes you have
 
 You will also need to do the following to setup permission to run the kubectl commands
 
@@ -45,13 +44,14 @@ After running those commands you will to logout and login back in to register ne
 Lastly, enable DNS addon
 ```bash
 sudo microk8s.enable dashboard dns
+sudo microk8s.enable ingress
 ``` 
 
 ## Deploy 
 Deploy the app using
 ```bash
-kubectl apply -f covasim-service.yaml
-
+kubectl apply -f covasim-deployment.yaml
+kubectl apply -f ingress-local.yaml
 ```
 
 Check the status of the app using
@@ -60,10 +60,10 @@ kubectl get pods
 kubectl get service
 ```
 
-Find the internal ip using `echo "http://$(kubectl get all --all-namespaces | grep service/covasim | awk '{print $4}')"`
+The service should now available at http://localhost:8000
 
 To stop the application run
 ```bash
-kubectl delete service/covasim pod/covasim
+kubectl delete deployment.apps/covasim service/covasim
 ```
 
