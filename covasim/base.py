@@ -174,8 +174,9 @@ class BaseSim(ParsObj):
         if filterby is None:
             people = self.people
         elif filterby in self.pars['possible_states']:
-            people = sc.odict((k,v) for k,v in self.people.iteritems() if v.__getattribute__(filterby))
-        return people[self.uids[int(ind)]]
+            people = sc.odict((k,v) for k,v in self.people.items() if v.__getattribute__(filterby))
+        uids = [p.uid for p in people.values()]
+        return people[uids[int(ind)]]
 
 
     def _make_resdict(self, for_json: bool = True) -> dict:
