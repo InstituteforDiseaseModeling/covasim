@@ -361,9 +361,8 @@ class DiseaseProgressionTests(CovaSimTest):
         pass
 
     def test_time_to_die_duration_scaling(self):
-        self.is_debugging = True
         total_agents = 500
-        self.set_everyone_critical(num_agents=500, constant_delay=1)
+        self.set_everyone_critical(num_agents=500, constant_delay=0)
         all_critical_to_die = {
             ParamKeys.ProgressionKeys.ProbabilityKeys.crt_to_death_probability: 1.0
         }
