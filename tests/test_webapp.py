@@ -21,7 +21,7 @@ def test_webapp():
     sc.heading('Testing webapp')
 
     pars = cw.get_defaults()
-    output = cw.run_sim(sim_pars=pars['sim_pars'], epi_pars=pars['epi_pars'])
+    output = cw.run_sim(sim_pars=pars['sim_pars'], epi_pars=pars['epi_pars'], health_system_pars=pars['health_system_pars'])
 
     return output
 
