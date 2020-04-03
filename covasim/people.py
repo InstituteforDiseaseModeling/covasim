@@ -8,26 +8,21 @@ import sciris as sc
 from . import utils as cvu
 from . import parameters as cvpars
 from . import requirements as cvreqs
+from . import utils as cvu
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['Person', 'make_people', 'make_randpop', 'set_prognoses']
+__all__ = ['Person']
 
 
 class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, uid, age, sex, contacts, symp_prob, severe_prob, crit_prob, death_prob):
+    def __init__(self, pars, uid, age, sex):
         self.uid         = str(uid) # This person's unique identifier
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
-        self.contacts    = contacts # The contacts this person has
-        self.symp_prob   = symp_prob # Probability of developing symptoms
-        self.severe_prob = severe_prob # Conditional probability of symptoms becoming severe, if symptomatic
-        self.crit_prob   = crit_prob # Conditional probability of symptoms becoming critical, if severe
-        self.death_prob  = death_prob # Conditional probability of dying, given severe symptoms
-        self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
         self.durpars         = pars['dur']  # Store duration parameters
 
         # Define state
@@ -62,6 +57,15 @@ class Person(sc.prettyobj):
 
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
+
+        # Set prognoses
+        idx = np.argmax(pars['prognoses']['age_cutoffs'] > self.age)  # Index of the age bin to use
+        self.symp_prob = pars['prognoses']['symp_probs'][idx]# Probability of developing symptoms
+        self.severe_prob = pars['prognoses']['severe_probs'][idx]/self.symp_prob if self.symp_prob > 0 else 0 # Conditional probability of symptoms becoming severe, if symptomatic
+        self.crit_prob   = pars['prognoses']['crit_probs'][idx]/self.severe_prob if self.severe_prob > 0 else 0 # Conditional probability of symptoms becoming critical, if severe
+        self.death_prob  = pars['prognoses']['death_probs'][idx]/self.crit_prob if self.crit_prob > 0 else 0 # Conditional probability of dying, given severe symptoms
+        self.OR_no_treat = pars['prognoses']['OR_no_treat']  # Increase in the probability of dying if treatment not available
+
         return
 
 
@@ -221,210 +225,3 @@ class Person(sc.prettyobj):
             diagnosed = 0
         return diagnosed
 
-
-
-def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
-    '''
-    Make the actual people for the simulation.
-
-    Args:
-        sim (Sim): the simulation object
-        verbose (bool): level of detail to print
-        id_len (int): length of ID for each person (default: calculate required length based on the number of people)
-        die (bool): whether or not to fail if synthetic populations are requested but not available
-        reset (bool): whether to force population creation even if self.popdict exists
-
-    Returns:
-        None.
-    '''
-
-    # Set inputs
-    n_people     = int(sim['n']) # Shorten
-    usepopdata   = sim['usepopdata'] # Shorten
-    use_rand_pop = (usepopdata == 'random') # Whether or not to use a random population (as opposed to synthpops)
-
-    # Set defaults
-    if verbose is None: verbose = sim['verbose']
-    if id_len  is None: id_len  = int(np.log10(n_people)) + 2 # Dynamically generate based on the number of people required
-
-    # Check which type of population to rpoduce
-    if not use_rand_pop and not cvreqs.available['synthpops']:
-        errormsg = f'You have requested "{usepopdata}" population, but synthpops is not available; please use "random"'
-        if die:
-            raise ValueError(errormsg)
-        else:
-            print(errormsg)
-            usepopdata = 'random'
-
-    # Actually create the population
-    if sim.popdict and not reset:
-        popdict = sim.popdict # Use stored one
-    else:
-        if use_rand_pop:
-            popdict = make_randpop(sim)
-        else:
-            import synthpops as sp # Optional import
-            population = sp.make_population(n=sim['n'])
-            uids, ages, sexes, contacts = [], [], [], []
-            for uid,person in population.items():
-                uids.append(uid)
-                ages.append(person['age'])
-                sexes.append(person['sex'])
-
-            # Replace contact UIDs with ints...
-            for uid,person in population.items():
-                uid_contacts = person['contacts']
-                int_contacts = {}
-                for key in uid_contacts.keys():
-                    int_contacts[key] = []
-                    for uid in uid_contacts[key]:
-                        int_contacts[key].append(uids.index(uid))
-                    int_contacts[key] = np.array(int_contacts[key], dtype=np.int64)
-                contacts.append(int_contacts)
-
-            popdict = {}
-            popdict['uid']      = uids
-            popdict['age']      = np.array(ages)
-            popdict['sex']      = np.array(sexes)
-            popdict['contacts'] = contacts
-
-    # Set prognoses by modifying popdict in place
-    set_prognoses(sim, popdict)
-
-    # Actually create the people
-    people = {} # Dictionary for storing the people -- use plain dict since faster than odict
-    for p in range(n_people): # Loop over each person
-        keys = ['uid', 'age', 'sex', 'contacts', 'symp_prob', 'severe_prob', 'crit_prob', 'death_prob']
-        person_args = {}
-        for key in keys:
-            person_args[key] = popdict[key][p] # Convert from list to dict
-        person = Person(pars=sim.pars, **person_args) # Create the person
-        people[person_args['uid']] = person # Save them to the dictionary
-
-    # Store UIDs and people
-    sim.popdict = popdict
-    sim.uids = popdict['uid'] # Duplication, but used in an innermost loop so make as efficient as possible
-    sim.people = people
-    sim.contact_keys = list(sim['contacts_pop'].keys())
-
-    average_age = sum(popdict['age']/n_people)
-    sc.printv(f'Created {n_people} people, average age {average_age:0.2f} years', 1, verbose)
-
-    return
-
-def make_randpop(sim, id_len=6):
-    ''' Make a random population, without contacts '''
-
-    # Load age data based on 2018 Seattle demographics
-    age_data = np.array([
-        [ 0,  4, 0.0605],
-        [ 5,  9, 0.0607],
-        [10, 14, 0.0566],
-        [15, 19, 0.0557],
-        [20, 24, 0.0612],
-        [25, 29, 0.0843],
-        [30, 34, 0.0848],
-        [35, 39, 0.0764],
-        [40, 44, 0.0697],
-        [45, 49, 0.0701],
-        [50, 54, 0.0681],
-        [55, 59, 0.0653],
-        [60, 64, 0.0591],
-        [65, 69, 0.0453],
-        [70, 74, 0.0312],
-        [75, 79, 0.02016], # Calculated based on 0.0504 total for >=75
-        [80, 84, 0.01344],
-        [85, 89, 0.01008],
-        [90, 99, 0.00672],
-        ])
-
-    # Handle sex and UID
-    n_people = int(sim['n']) # Number of people
-    uids = sc.uuid(which='ascii', n=n_people, length=id_len)
-    sexes = cvu.rbt(0.5, n_people)
-
-    # Handle ages
-    age_data_min  = age_data[:,0]
-    age_data_max  = age_data[:,1] + 1 # Since actually e.g. 69.999
-    age_data_range = age_data_max - age_data_min
-    age_data_prob = age_data[:,2]
-    age_data_prob /= age_data_prob.sum() # Ensure it sums to 1
-    age_bins = cvu.mt(age_data_prob, n_people) # Choose age bins
-    ages = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(n_people) # Uniformly distribute within this age bin
-
-    # Make contacts
-    contacts = []
-    for p in range(n_people):
-        n_contacts = cvu.pt(sim['contacts']) # Draw the number of Poisson contacts for this person
-        contact_inds = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random, assigning to household
-        contacts.append(contact_inds)
-
-    # Store output; data duplicated as per-person and list-like formats for convenience
-    popdict = {}
-    popdict['uid']     = uids
-    popdict['age']     = ages
-    popdict['sex']    = sexes
-    popdict['contacts'] = contacts
-
-    return popdict
-
-
-
-def set_prognoses(sim, popdict):
-    '''
-    Determine the prognosis of an infected person: probability of being aymptomatic, or if symptoms develop, probability
-    of developing severe symptoms and dying, based on their age
-    '''
-
-    # Initialize input and output
-    by_age = sim['prog_by_age']
-    ages = sc.promotetoarray(popdict['age']) # Ensure it's an array
-    n = len(ages)
-    prognoses = sc.objdict()
-
-    prog_pars = cvpars.get_default_prognoses(by_age=by_age)
-
-    # If not by age, same value for everyone
-    if not by_age:
-
-        prognoses.symp_prob   = sim['rel_symp_prob']   * prog_pars.symp_prob   * np.ones(n)
-        prognoses.severe_prob = sim['rel_severe_prob'] * prog_pars.severe_prob * np.ones(n)
-        prognoses.crit_prob   = sim['rel_crit_prob']   * prog_pars.crit_prob   * np.ones(n)
-        prognoses.death_prob  = sim['rel_death_prob']  * prog_pars.death_prob  * np.ones(n)
-
-    # Otherwise, calculate probabilities of symptoms, severe symptoms, and death by age
-    else:
-        # Conditional probabilities of severe symptoms (given symptomatic) and death (given severe symptoms)
-        severe_if_sym   = np.array([sev/sym  if sym>0 and sev/sym>0  else 0 for (sev,sym)  in zip(prog_pars.severe_probs, prog_pars.symp_probs)]) # Conditional probabilty of developing severe symptoms, given symptomatic
-        crit_if_severe  = np.array([crit/sev if sev>0 and crit/sev>0 else 0 for (crit,sev) in zip(prog_pars.crit_probs,   prog_pars.severe_probs)]) # Conditional probabilty of developing critical symptoms, given severe
-        death_if_crit   = np.array([d/c      if c>0   and d/c>0      else 0 for (d,c)      in zip(prog_pars.death_probs,  prog_pars.crit_probs)])  # Conditional probabilty of dying, given critical
-
-        symp_probs     = sim['rel_symp_prob']   * prog_pars.symp_probs  # Overall probability of developing symptoms
-        severe_if_sym  = sim['rel_severe_prob'] * severe_if_sym         # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
-        crit_if_severe = sim['rel_crit_prob']   * crit_if_severe        # Overall probability of developing critical symptoms (derived from https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm)
-        death_if_crit  = sim['rel_death_prob']  * death_if_crit         # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
-
-        # Calculate prognosis for each person
-        symp_prob, severe_prob, crit_prob, death_prob  = [],[],[],[]
-        age_cutoffs = prog_pars.age_cutoffs
-        for age in ages:
-            # Figure out which probability applies to a person of the specified age
-            ind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), -1)
-            this_symp_prob   = symp_probs[ind]    # Probability of developing symptoms
-            this_severe_prob = severe_if_sym[ind] # Probability of developing severe symptoms
-            this_crit_prob   = crit_if_severe[ind] # Probability of developing critical symptoms
-            this_death_prob  = death_if_crit[ind] # Probability of dying after developing critical symptoms
-            symp_prob.append(this_symp_prob)
-            severe_prob.append(this_severe_prob)
-            crit_prob.append(this_crit_prob)
-            death_prob.append(this_death_prob)
-
-        # Return output
-        prognoses.symp_prob   = symp_prob
-        prognoses.severe_prob = severe_prob
-        prognoses.crit_prob   = crit_prob
-        prognoses.death_prob  = death_prob
-
-    popdict.update(prognoses) # Add keys to popdict
-
-    return

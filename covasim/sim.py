@@ -50,17 +50,18 @@ class Sim(cvbase.BaseSim):
         filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, filename=None):
-        default_pars = cvpars.make_pars() # Start with default pars
-        super().__init__(default_pars) # Initialize and set the parameters as attributes
-        self.set_metadata(filename) # Set the simulation date and filename
-        self.load_data(datafile, datacols) # Load the data, if provided
-        self.update_pars(pars) # Update the parameters, if provided
+    def __init__(self, pars=None, datafile=None, datacols=None, filename=None, people=None, contact_layers=None):
+        default_pars = cvpars.make_pars()  # Start with default pars
+        super().__init__(default_pars)  # Initialize and set the parameters as attributes
+        self.set_metadata(filename)  # Set the simulation date and filename
+        self.load_data(datafile, datacols)  # Load the data, if provided
+        self.update_pars(pars)  # Update the parameters, if provided
         self.initialized = False
-        self.stopped = None # If the simulation has stopped
-        self.results_ready = False # Whether or not results are ready
+        self.stopped = None  # If the simulation has stopped
+        self.results_ready = False  # Whether or not results are ready
         self.popdict = None
-        self.people = {} # Initialize these here so methods that check their length can see they're empty
+        self.people = people  #: Dictionary of Person instances
+        self.contact_layers = contact_layers  #: Dictionary storing ContactLayer instances
         self.results = {}
         return
 
@@ -124,8 +125,8 @@ class Sim(cvbase.BaseSim):
         self.t = None # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
+        self.init_people() # Create the results stucture
         self.init_results() # Create the results stucture
-        self.init_people(**kwargs) # Create all the people (slow)
         self.initialized = True
         return
 
@@ -142,14 +143,8 @@ class Sim(cvbase.BaseSim):
         self['start_day'] = start_day # Convert back
 
         # Handle population data
-        popdata_choices = ['random', 'microstructure']
-        if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
-            self['usepopdata'] = popdata_choices[int(self['usepopdata'])] # Choose one of these
-        if self['usepopdata'] not in popdata_choices:
-            choice = self['usepopdata']
-            choicestr = ', '.join(popdata_choices)
-            errormsg = f'Population data option "{choice}" not available; choices are: {choicestr}'
-            raise ValueError(errormsg)
+        assert self.people, "Need to add people"
+        assert self.contact_layers, "Need to add contact layers"
 
         # Handle interventions
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
@@ -218,23 +213,12 @@ class Sim(cvbase.BaseSim):
         return res_keys
 
 
-    def init_people(self, verbose=None, id_len=None, **kwargs):
-        ''' Create the people '''
-
-        print('TEMP init people')
-
-        if verbose is None:
-            verbose = self['verbose']
-
-        sc.printv(f'Creating {self["n"]} people...', 1, verbose)
-
-        cvppl.make_people(self, verbose=verbose, id_len=id_len, **kwargs)
-
-        # Create the seed infections
+    def init_people(self):
+        ''' Seed infections '''
+        self.uids = {i:x.uid for i,x in enumerate(self.people.values())}
         for i in range(int(self['n_infected'])):
             person = self.get_person(i)
             person.infect(t=0)
-
         return
 
 
@@ -330,16 +314,11 @@ class Sim(cvbase.BaseSim):
             new_infections  = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
-            rand_popdata     = (self['usepopdata'] == 'random')
-            beta             = self['beta']
             asymp_factor     = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
-            beta_pop         = self['beta_pop']
             n_beds           = self['n_beds']
             bed_constraint   = False
-            n_people         = len(self.people)
-            n_comm_contacts  = self['contacts_pop']['R'] # TODO: refactor name
 
             # Print progress
             if verbose>=1:
@@ -386,34 +365,26 @@ class Sim(cvbase.BaseSim):
                         n_infectious += 1 # Count this person as infectious
 
                         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                        thisbeta = beta * \
-                                   (asymp_factor if person.symptomatic else 1.) * \
+                        thisbeta = (asymp_factor if person.symptomatic else 1.) * \
                                    (diag_factor if person.diagnosed else 1.) * \
                                    (cont_factor if person.known_contact else 1.)
 
-                        # Determine who gets infected
-                        if rand_popdata: # Flat contacts
-                            transmission_inds = cvu.bf(thisbeta, person.contacts)
-                        else: # Dictionary of contacts -- extra loop over layers
-                            transmission_inds = []
-                            community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
-                            person.contacts['R'] = community_contact_inds
-                            for ckey in self.contact_keys:
-                                layer_beta = thisbeta * beta_pop[ckey]
-                                transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
+                        for layer in self.contact_layers.values():
+                            contacts = layer.get_contacts(person, t)
+                            layer_beta = thisbeta * layer.beta
+                            transmission_inds = cvu.bf(layer_beta, contacts)
 
-                        # Loop over people who do
-                        for contact_ind in transmission_inds:
-                            target_person = self.get_person(contact_ind) # Stored by integer
+                            for contact_ind in transmission_inds:
+                                target_person = self.get_person(contact_ind)  # Stored by integer
 
-                            # This person was diagnosed last time step: time to flag their contacts
-                            if person.date_diagnosed is not None and person.date_diagnosed == t-1:
-                                target_person.known_contact = True
+                                # This person was diagnosed last time step: time to flag their contacts
+                                if person.date_diagnosed is not None and person.date_diagnosed == t-1:
+                                    target_person.known_contact = True
 
-                            # Skip people who are not susceptible
-                            if target_person.susceptible:
-                                new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+                                # Skip people who are not susceptible
+                                if target_person.susceptible:
+                                    new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                    sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
 
             sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)

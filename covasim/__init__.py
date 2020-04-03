@@ -10,6 +10,7 @@ from .utils import *
 from .base import *
 from .parameters import *
 from .people import *
+from .populations import *
 from .sim import *
 from .run import *
 from .interventions import *
