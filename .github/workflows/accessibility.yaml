@@ -1,0 +1,46 @@
+name: Accessibility Insights
+on: [push]
+
+jobs:
+  assess_selenium:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        python-version: ['3.7']
+    name: Install and test
+    steps:
+      - name: Set repo owner env variable
+        shell: python
+        run: print("::set-env name=GITHUB_OWNER::{}".format('${{github.repository}}'.split('/')[0]))
+      - name: Set PYTHONPATH
+        run: |
+          mkdir -p $HOME/.cache/site-packages
+          echo "::set-env name=PYTHONPATH::$HOME/.cache/site-packages"
+      - name: Checkout sources
+        uses: actions/checkout@v1
+      - uses: actions/setup-python@master
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+      - name: Cache Packages
+        id: cache-packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/ # This path is specific to Ubuntu
+          # Look to see if there is a cache hit for the corresponding requirements file
+          key: packages-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            packages-${{ runner.os }}-${{ matrix.python-version }}-
+      - name: Install Covasim
+        run: python setup.py develop --install-dir ~/.cache/site-packages
+      - name: Run Webapp
+        working-directory: ./covasim/webapp
+        run: ./launch_flask &
+      - name: Upload test results
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: test_results
+          path: tests/test-results.xml
