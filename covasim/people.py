@@ -28,20 +28,13 @@ class Person(sc.prettyobj):
         self.crit_prob   = crit_prob # Conditional probability of symptoms becoming critical, if severe
         self.death_prob  = death_prob # Conditional probability of dying, given severe symptoms
         self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
-        self.durpars         = pars['dur']  # Store duration parameters
+        self.durpars     = pars['dur']  # Store duration parameters
 
-        # Define state
+        # Define states
+        for state in pars['possible_states']:
+            setattr(self, state, False)
         self.alive          = True
         self.susceptible    = True
-        self.exposed        = False
-        self.infectious     = False
-        self.symptomatic    = False
-        self.severe         = False
-        self.critical       = False
-        self.diagnosed      = False
-        self.recovered      = False
-        self.dead           = False
-        self.known_contact  = False # Keep track of whether each person is a contact of a known positive
 
         # Keep track of dates
         self.date_exposed      = None

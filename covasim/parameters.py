@@ -25,13 +25,17 @@ def make_pars():
     pars['n']          = 20e3 # Number ultimately susceptible to CoV
     pars['n_infected'] = 10 # Number of seed cases
     pars['start_day']  = dt.datetime(2020, 3, 1) # Start day of the simulation
-    pars['n_days']     = 180 # Number of days of run, if end_day isn't used
+    pars['n_days']     = 60 # Number of days of run, if end_day isn't used
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
     pars['usepopdata'] = 'random' # Whether or not to load actual population data
     pars['timelimit']  = 3600 # Time limit for a simulation (seconds)
     pars['stop_func']  = None # A function to call to stop the sim partway through
     pars['window']     = 7 # Integration window for doubling time and R_eff
+
+    # Disease states
+    pars['possible_states'] = ['alive', 'susceptible', 'exposed', 'infectious', 'symptomatic', 'severe', 'critical',
+                               'diagnosed', 'recovered', 'dead', 'known_contact']
 
     # Disease transmission
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
@@ -54,7 +58,7 @@ def make_pars():
     pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8, par2=2) # Duration from mild symptoms to recovered
     pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=11, par2=3) # Duration from severe symptoms to recovered - leads to mean total disease time of
     pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=17, par2=3) # Duration from critical symptoms to recovered
-    pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=4, par2=4) # Duration from critical symptoms to death
+    pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=21, par2=4) # Duration from critical symptoms to death
 
     # Severity parameters: probabilities of symptom progression
     pars['prog_by_age']     = True # Whether or not to use age-specific probabilities of prognosis (symptoms/severe symptoms/death)

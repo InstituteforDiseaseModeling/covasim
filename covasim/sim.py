@@ -353,10 +353,15 @@ class Sim(cvbase.BaseSim):
             not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
             n_susceptible = len(self.people)
 
+#            # Randomly infect some people
+#            for i in range(int(self['n_infected'])):
+#                person = self.get_person(i)
+#                person.infect(t=t)
+
             for person in not_susceptible:
                 n_susceptible -= 1
 
-                # If exposed, check if the person becomes infectious or develops symptoms
+                # If exposed, check if the person becomes infectious
                 if person.exposed:
                     n_exposed += 1
                     if not person.infectious and t == person.date_infectious: # It's the day they become infectious

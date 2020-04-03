@@ -169,9 +169,13 @@ class BaseSim(ParsObj):
         return dates
 
 
-    def get_person(self, ind):
-        ''' Return a person based on their index '''
-        return self.people[self.uids[int(ind)]]
+    def get_person(self, ind, filterby=None):
+        ''' Return a person based on their index (and optionally, their disease state)'''
+        if filterby is None:
+            people = self.people
+        elif filterby in self.pars['possible_states']:
+            people = sc.odict((k,v) for k,v in self.people.iteritems() if v.__getattribute__(filterby))
+        return people[self.uids[int(ind)]]
 
 
     def _make_resdict(self, for_json: bool = True) -> dict:
