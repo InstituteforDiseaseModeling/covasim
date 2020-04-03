@@ -15,24 +15,18 @@ from setuptools import setup, find_packages
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
-if 'nowebapp' in sys.argv:
-    print('Performing standalone installation -- running as a web application will not work')
-    sys.argv.remove('nowebapp')
-    webapp_reqs = [
+extras_require = {
+    'webapp': [
         'scirisweb',
         'gunicorn',
-        'plotly_express'
-    ]
-    requirements = [req for req in requirements if req not in webapp_reqs]
-
-if 'full' in sys.argv:
-    print('Performing full installation, including optional dependencies')
-    sys.argv.remove('full')
-    full_reqs = [
+        'plotly_express',
+    ],
+    'test': ['pytest'],
+    'full': [
         'synthpops',
-        'parestlib'
-    ]
-    requirements.extend(full_reqs)
+        'parestlib',
+    ],
+}
 
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))
@@ -68,5 +62,6 @@ setup(
     classifiers=CLASSIFIERS,
     packages=find_packages(),
     include_package_data=True,
-    install_requires=requirements
+    install_requires=requirements,
+    extras_require=extras_require,
 )

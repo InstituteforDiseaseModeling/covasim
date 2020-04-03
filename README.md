@@ -15,7 +15,7 @@ more information, see documentation for [venv](https://docs.python.org/3/tutoria
 
 ## Quick start guide
 
-Install with `pip install covasim`. If everything is working, the following Python commands should bring up a plot:
+Install with `pip install covasim[webapp]`. If everything is working, the following Python commands should bring up a plot:
 
 ```python
 import covasim as cv
@@ -24,8 +24,7 @@ sim.run()
 sim.plot()
 ```
 
-
-## Detailed installation instructions
+## Development setup instructions
 
 1.  Clone a copy of the repository. If you intend to make changes to the code,
     we recommend that you fork it first.
@@ -37,16 +36,16 @@ sim.plot()
 
     *   To install with webapp support (recommended):
 
-        `python setup.py develop`
+        `pip install -e ".[test, webapp]"`
 
-    *   To install as a standalone Python model without webapp support:
+    *   To install without webapp support:
 
-        `python setup.py develop nowebapp`
+        `pip install -e ".[test]`
 
     *   To install Covasim and optional dependencies (be aware this may fail
         since it relies on private packages), enter:
 
-        `python setup.py develop full`
+        `pip install -e ".[test, webapp, full]"`
 
     The module should then be importable via `import covasim`.
 
