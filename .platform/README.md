@@ -54,6 +54,8 @@ kubectl apply -f covasim-deployment.yaml
 kubectl apply -f ingress-local.yaml
 ```
 
+When deploying to azure, you want to use the `ingress-azure.yaml` ingress file.
+
 Check the status of the app using
 ```bash
 kubectl get pods
