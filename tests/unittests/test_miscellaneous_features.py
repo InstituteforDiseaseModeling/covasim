@@ -26,7 +26,6 @@ class MiscellaneousFeatureTests(CovaSimTest):
         error_message = str(context.exception)
         self.assertIn('n_infectey', error_message)
         self.assertIn('n_infected', error_message)
-        print("OH YEAH")
         pass
 
     def test_update_pars_invalid_key(self):
