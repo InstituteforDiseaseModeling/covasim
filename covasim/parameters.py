@@ -27,7 +27,7 @@ def make_pars():
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
-    pars['n']          = 2000  #: Default number of people to use IF a population instance is not specified
+    pars['n']          = 20000  #: Default number of people to use IF a population instance is not specified
     pars['population'] = None  #: Store a :class:`Population` instance
     pars['n_infected'] = 10 # Number of seed cases
 

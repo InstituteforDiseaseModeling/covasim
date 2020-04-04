@@ -289,6 +289,7 @@ class Sim(cvbase.BaseSim):
             new_infections  = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
+            beta             = self['beta']
             asymp_factor     = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
@@ -340,7 +341,7 @@ class Sim(cvbase.BaseSim):
                         n_infectious += 1 # Count this person as infectious
 
                         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                        thisbeta = (asymp_factor if person.symptomatic else 1.) * \
+                        thisbeta = beta * (asymp_factor if person.symptomatic else 1.) * \
                                    (diag_factor if person.diagnosed else 1.) * \
                                    (cont_factor if person.known_contact else 1.)
 
