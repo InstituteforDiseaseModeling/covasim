@@ -5,16 +5,16 @@ const PlotlyChart = {
             attrs: {
                 id: this.graph.id,
             }
-        })
+        });
     },
 
     mounted() {
         this.$nextTick(function () {
-                let x = JSON.parse(this.graph.json);
-                x.responsive = true;
-                Plotly.react(this.graph.id, x);
-            }
-        )
+            let x = JSON.parse(this.graph.json);
+            x.responsive = true;
+            Plotly.react(this.graph.id, x);
+        }
+        );
     },
 };
 
@@ -39,11 +39,12 @@ var vm = new Vue({
                 summary: {},
                 files: {},
             },
+            paramError: {},
             running: false,
             err: '',
             reset_options: ['Example', 'Seattle'], // , 'Wuhan', 'Global'],
             reset_choice: 'Example'
-        }
+        };
     },
 
     async created() {
@@ -53,15 +54,22 @@ var vm = new Vue({
 
     filters: {
         to2sf(value) {
-            return Number(value).toFixed(2)
+            return Number(value).toFixed(2);
+        }
+    },
+
+    computed: {
+        isRunDisabled: function () {
+            console.log(this.paramError);
+            return this.paramError && Object.keys(this.paramError).length > 0;
         }
     },
 
     methods: {
 
         async get_version() {
-            let response = await sciris.rpc('get_version');
-            this.version = response.data
+            const response = await sciris.rpc('get_version');
+            this.version = response.data;
         },
 
         async runSim() {
@@ -73,16 +81,16 @@ var vm = new Vue({
             console.log(this.sim_pars, this.epi_pars);
 
             // Run a a single sim
-            try{
-                let response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.show_animation]);
+            try {
+                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.show_animation]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
                 this.err = response.data.err;
-                this.sim_pars= response.data.sim_pars;
+                this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
-                this.history.push(JSON.parse(JSON.stringify({sim_pars:this.sim_pars, epi_pars:this.epi_pars, result:this.result})));
-                this.historyIdx = this.history.length-1;
+                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, result: this.result })));
+                this.historyIdx = this.history.length - 1;
 
             } catch (e) {
                 this.err = 'Error running model: ' + e;
@@ -92,23 +100,43 @@ var vm = new Vue({
         },
 
         async resetPars() {
-            let response = await sciris.rpc('get_defaults', [this.reset_choice]);
+            const response = await sciris.rpc('get_defaults', [this.reset_choice]);
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
+            this.setupFormWatcher('sim_pars');
+            this.setupFormWatcher('epi_pars');
             this.graphs = [];
+        },
+        setupFormWatcher(paramKey) {
+            const params = this[paramKey];
+            if (!params) {
+                return;
+            }
+            Object.keys(params).forEach(key => {
+                this.$watch(`${paramKey}.${key}`, this.validateParam(key), { deep: true });
+            });
+        },
+        validateParam(key) {
+            return (param) => {
+                if (param.best <= param.max && param.best >= param.min) {
+                    this.$delete(this.paramError, key);
+                } else {
+                    this.$set(this.paramError, key, `Please enter number between ${param.min} to ${param.max}`);
+                }
+            };
         },
 
         async downloadPars() {
-            var d = new Date();
-            let datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
-            let fileName = `COVASim_parameters_${datestamp}.json`
-            
+            const d = new Date();
+            const datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
+            const fileName = `COVASim_parameters_${datestamp}.json`;
+
             // Adapted from https://stackoverflow.com/a/45594892 by Gautham
-            let data = {
+            const data = {
                 sim_pars: this.sim_pars,
                 epi_pars: this.epi_pars,
             };
-            let fileToSave = new Blob([JSON.stringify(data, null, 4)], {
+            const fileToSave = new Blob([JSON.stringify(data, null, 4)], {
                 type: 'application/json',
                 name: fileName
             });
@@ -117,7 +145,7 @@ var vm = new Vue({
 
         async uploadPars() {
             try {
-                let response = await sciris.upload('upload_pars');  //, [], {}, '');
+                const response = await sciris.upload('upload_pars');  //, [], {}, '');
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.graphs = [];
@@ -126,24 +154,24 @@ var vm = new Vue({
             }
         },
 
-        loadPars(){
+        loadPars() {
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
             this.result = this.history[this.historyIdx].result;
         },
 
         async downloadExcel() {
-          let res = await fetch(this.result.files.xlsx.content);
-          let blob = await res.blob();
-          saveAs(blob, this.result.files.xlsx.filename);
+            const res = await fetch(this.result.files.xlsx.content);
+            const blob = await res.blob();
+            saveAs(blob, this.result.files.xlsx.filename);
         },
 
         async downloadJson() {
-          let res = await fetch(this.result.files.json.content);
-          let blob = await res.blob();
-          saveAs(blob, this.result.files.json.filename);
+            const res = await fetch(this.result.files.json.content);
+            const blob = await res.blob();
+            saveAs(blob, this.result.files.json.filename);
         },
 
-      },
+    },
 
-})
+});
