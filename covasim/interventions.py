@@ -345,9 +345,12 @@ class test_prob(Intervention):
                 person.test(t, self.test_sensitivity)
                 if person.diagnosed:
                     sim.results['new_diagnoses'][t] += 1
-                    for idx in person.contacts:
-                        if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
-                            new_scheduled_tests.add(idx)
+                    if self.trace_prob:
+                        for layer in sim['population'].contact_layers.values():
+                            if layer.traceable:
+                                for idx in layer.get_contacts(person, sim):
+                                    if cv.bt(self.trace_prob):
+                                        new_scheduled_tests.add(idx)
 
         self.scheduled_tests = new_scheduled_tests
         return
