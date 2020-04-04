@@ -100,7 +100,8 @@ class Population(sc.prettyobj):
         self.contact_layers[layer.name] = layer
 
         # Make random contacts
-        self.contact_layers['Community'] = RandomContactLayer(name='Community', max_n=n_people, n=n_random_contacts)
+        if n_random_contacts > 0:
+            self.contact_layers['Community'] = RandomContactLayer(name='Community', max_n=n_people, n=n_random_contacts)
 
         return self
 
