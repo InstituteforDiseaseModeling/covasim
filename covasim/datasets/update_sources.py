@@ -5,23 +5,9 @@ import covasim.datasets.translators as t
 dirname = os.path.dirname(__file__)
 mapper_file_path = os.path.join(dirname,"sources/lookup.json")
 
-
-class NeherLabPop:
-    URL="https://raw.githubusercontent.com/neherlab/covid19_scenarios/master/src/assets/data/country_age_distribution.json"
-    FILENAME="neherlab"
-
+class DataLoader:
     def __init__(self):
         self.load_data()
-
-    def translator(self, translator=t.neherlab_translator):
-        return translator
-
-    def countries(self):
-        return self.data.keys()
-
-    def data_for_country(self, country):
-        func = self.translator()
-        return func(country, self.data)
 
     def update_data(self):
         r = requests.get(self.URL)
@@ -38,6 +24,24 @@ class NeherLabPop:
         with open(self.file_path()) as datafile:
             strdata = json.load(datafile)
         self.data = strdata
+
+    def data_for_country(self, country):
+        func = self.translator()
+        return func(country, self.data)
+
+
+
+class NeherLabPop(DataLoader):
+    URL="https://raw.githubusercontent.com/neherlab/covid19_scenarios/master/src/assets/data/country_age_distribution.json"
+    FILENAME="neherlab"
+
+    def countries(self):
+        return self.data.keys()
+
+    def translator(self, translator=t.neherlab_translator):
+        return translator
+
+
 
 def load_country_pop(country):
     with open(mapper_file_path) as f:
