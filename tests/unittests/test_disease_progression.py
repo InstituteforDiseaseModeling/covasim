@@ -139,8 +139,7 @@ class DiseaseProgressionTests(CovaSimTest):
             }
             self.set_simulation_prognosis_probability(prob_dict)
             serial_delay = {
-                TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: sim_dur,
-                TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.use_progression_by_age: False
+                TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: sim_dur
             }
             self.run_sim(serial_delay)
             infectious_channel = self.get_full_result_channel(
@@ -278,7 +277,7 @@ class DiseaseProgressionTests(CovaSimTest):
                 par1=TEST_dur,
                 par2=infectious_duration_stddev
             )
-            self.run_sim(params_dict=only_mild_infections)
+            self.run_sim()
             recoveries_channel = self.get_full_result_channel(
                 TestProperties.ResultsDataKeys.recovered_at_timestep
             )
@@ -380,7 +379,7 @@ class DiseaseProgressionTests(CovaSimTest):
                 par1=TEST_dur,
                 par2=time_to_die_stddev
             )
-            self.run_sim(params_dict=all_critical_to_die)
+            self.run_sim()
             deaths_today_channel = self.get_full_result_channel(
                 TestProperties.ResultsDataKeys.deaths_daily
             )
