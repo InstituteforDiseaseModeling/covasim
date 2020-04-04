@@ -11,7 +11,7 @@ from . import utils as cvu
 from . import base as cvbase
 from . import parameters as cvpars
 from . import people as cvppl
-
+from . import populations as cvpop
 
 # Specify all externally visible functions this file defines
 __all__ = ['default_sim_plots', 'Sim']
@@ -50,21 +50,21 @@ class Sim(cvbase.BaseSim):
         filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, filename=None, people=None, contact_layers=None):
+    def __init__(self, pars=None, datafile=None, datacols=None, filename=None):
         default_pars = cvpars.make_pars()  # Start with default pars
         super().__init__(default_pars)  # Initialize and set the parameters as attributes
         self.set_metadata(filename)  # Set the simulation date and filename
         self.load_data(datafile, datacols)  # Load the data, if provided
-        self.update_pars(pars)  # Update the parameters, if provided
+        self.update_pars(sc.dcp(pars))  # Update the parameters, if provided
         self.initialized = False
         self.stopped = None  # If the simulation has stopped
         self.results_ready = False  # Whether or not results are ready
-        self.popdict = None
-        self.people = people  #: Dictionary of Person instances
-        self.contact_layers = contact_layers  #: Dictionary storing ContactLayer instances
         self.results = {}
         return
 
+    @property
+    def people(self):
+        return self['population'].people
 
     def set_metadata(self, filename):
         ''' Set the metadata for the simulation -- creation time and filename '''
@@ -84,36 +84,6 @@ class Sim(cvbase.BaseSim):
         else: # Otherwise, skip
             self.data = None
         return
-
-
-    def load_people(self, filename, **kwargs):
-        '''
-        Load the population dictionary from file.
-
-        Args:
-            filename (str): name of the file to load.
-        '''
-        filepath = sc.makefilepath(filename=filename, **kwargs)
-        self.popdict = sc.loadobj(filepath)
-        n_actual = len(self.popdict['uid'])
-        n_expected = self['n']
-        if n_actual != n_expected:
-            errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "n" to match or regenerate the file'
-            raise ValueError(errormsg)
-        return
-
-
-    def save_people(self, filename, **kwargs):
-        '''
-        Save the population dictionary to file.
-
-        Args:
-            filename (str): name of the file to save to.
-        '''
-        filepath = sc.makefilepath(filename=filename, **kwargs)
-        sc.saveobj(filepath, self.popdict)
-        return filepath
-
 
     def initialize(self, **kwargs):
         '''
@@ -141,10 +111,6 @@ class Sim(cvbase.BaseSim):
         if not isinstance(start_day, dt.datetime):
             start_day = sc.readdate(start_day)
         self['start_day'] = start_day # Convert back
-
-        # Handle population data
-        assert self.people, "Need to add people"
-        assert self.contact_layers, "Need to add contact layers"
 
         # Handle interventions
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
@@ -201,7 +167,6 @@ class Sim(cvbase.BaseSim):
 
         return
 
-
     @property
     def reskeys(self):
         ''' Get the actual results objects, not other things stored in sim.results '''
@@ -212,12 +177,21 @@ class Sim(cvbase.BaseSim):
                 res_keys.append(key)
         return res_keys
 
+    @property
+    def people(self):
+        return self['population'].people
+
+    def get_person(self, *args, **kwargs):
+        return self['population'].get_person(*args, **kwargs)
 
     def init_people(self):
         ''' Seed infections '''
-        self.uids = {i:x.uid for i,x in enumerate(self.people.values())}
+        if self['population'] is None:
+            # Make a random network
+            self['population'] = cvpop.Population.random(pars=self.pars)
+
         for i in range(int(self['n_infected'])):
-            person = self.get_person(i)
+            person = self['population'].get_person(i)
             person.infect(t=0)
         return
 
@@ -369,13 +343,13 @@ class Sim(cvbase.BaseSim):
                                    (diag_factor if person.diagnosed else 1.) * \
                                    (cont_factor if person.known_contact else 1.)
 
-                        for layer in self.contact_layers.values():
+                        for layer in self['population'].contact_layers.values():
                             contacts = layer.get_contacts(person, t)
                             layer_beta = thisbeta * layer.beta
                             transmission_inds = cvu.bf(layer_beta, contacts)
 
                             for contact_ind in transmission_inds:
-                                target_person = self.get_person(contact_ind)  # Stored by integer
+                                target_person = self['population'].get_person(contact_ind)  # Stored by integer
 
                                 # This person was diagnosed last time step: time to flag their contacts
                                 if person.date_diagnosed is not None and person.date_diagnosed == t-1:
@@ -440,8 +414,8 @@ class Sim(cvbase.BaseSim):
         self.compute_r_eff()
         self.likelihood()
 
-        # Convert to an odict to allow e.g. sim.people[25] later, and results to an objdict to allow e.g. sim.results.diagnoses
-        self.people = sc.odict(self.people)
+        # Convert results to an objdict to allow e.g. sim.results.diagnoses
+        # Access people by index using `Sim.get_person(25)`
         self.results = sc.objdict(self.results)
         self.results_ready = True
 
