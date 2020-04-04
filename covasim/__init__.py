@@ -9,8 +9,8 @@ from . import requirements
 from .utils import *
 from .base import *
 from .parameters import *
-from .people import *
-from .populations import *
+from .person import *
+from .population import *
 from .sim import *
 from .run import *
 from .interventions import *

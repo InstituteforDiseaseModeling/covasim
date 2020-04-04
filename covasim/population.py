@@ -1,7 +1,7 @@
 import numpy as np  # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
-from .people import Person
+from .person import Person
 
 
 class Population(sc.prettyobj):

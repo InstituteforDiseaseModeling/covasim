@@ -10,7 +10,7 @@ import datetime as dt
 from . import utils as cvu
 from . import base as cvbase
 from . import parameters as cvpars
-from . import populations as cvpop
+from . import population as cvpop
 
 # Specify all externally visible functions this file defines
 __all__ = ['default_sim_plots', 'Sim']

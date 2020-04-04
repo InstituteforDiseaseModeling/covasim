@@ -6,9 +6,6 @@ Defines the Person class and functions associated with making people.
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
-from . import parameters as cvpars
-from . import requirements as cvreqs
-from . import utils as cvu
 
 
 # Specify all externally visible functions this file defines
