@@ -17,7 +17,7 @@ class Intervention:
         self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
 
 
-    def apply(self, sim) -> None:
+    def apply(self, sim: cv.Sim) -> None:
         """
         Apply intervention
 
@@ -35,7 +35,7 @@ class Intervention:
         raise NotImplementedError
 
 
-    def finalize(self, sim) -> None:
+    def finalize(self, sim: cv.Sim) -> None:
         """
         Call function at end of simulation
 
@@ -50,7 +50,7 @@ class Intervention:
         return
 
 
-    def plot(self, sim, ax) -> None:
+    def plot(self, sim: cv.Sim, ax: pl.Axes) -> None:
         """
         Call function during plotting
 
@@ -120,7 +120,7 @@ class dynamic_pars(Intervention):
         return
 
 
-    def apply(self, sim):
+    def apply(self, sim: cv.Sim):
         ''' Loop over the parameters, and then loop over the days, applying them if any are found '''
         t = sim.t
         for parkey,parval in self.pars.items():
@@ -161,13 +161,13 @@ class sequence(Intervention):
         return
 
 
-    def apply(self, sim):
+    def apply(self, sim: cv.Sim):
         idx = np.argmax(self._cum_days > sim.t)  # Index of the intervention to apply on this day
         self.interventions[idx].apply(sim)
         return
 
 
-    def finalize(self, sim, *args, **kwargs):
+    def finalize(self, sim: cv.Sim, *args, **kwargs):
         # If any of the sequential interventions write the same quantity to results then
         # aggregate them
         for intervention in self.interventions:
@@ -209,7 +209,7 @@ class change_beta(Intervention):
         return
 
 
-    def apply(self, sim):
+    def apply(self, sim: cv.Sim):
 
         # If this is the first time it's being run, store beta
         if self.orig_beta is None:
@@ -233,7 +233,7 @@ class change_beta(Intervention):
         return
 
 
-    def plot(self, sim, ax):
+    def plot(self, sim: cv.Sim, ax: pl.Axes):
         ''' Plot vertical lines for when changes in beta '''
         ylims = ax.get_ylim()
         for day in self.days:
@@ -265,7 +265,7 @@ class test_num(Intervention):
         return
 
 
-    def apply(self, sim):
+    def apply(self, sim: cv.Sim):
 
         t = sim.t
 
@@ -333,7 +333,7 @@ class test_prob(Intervention):
         return
 
 
-    def apply(self, sim):
+    def apply(self, sim: cv.Sim):
         ''' Perform testing '''
 
         t = sim.t
@@ -389,7 +389,7 @@ class test_historical(Intervention):
         return
 
 
-    def apply(self, sim):
+    def apply(self, sim: cv.Sim):
         ''' Perform testing '''
 
         t = sim.t

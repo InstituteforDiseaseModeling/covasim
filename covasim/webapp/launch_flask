@@ -1,16 +1,16 @@
 #!/bin/bash
 #
 # Usage: simply call:
-#   ./launch_webapp
+#   ./launch_flask
 #
 # To run in the background, call
-#   ./launch_webapp -b
+#   ./launch_flask -b
 #
 # To run sudo, call
-#   ./launch_webapp -s
+#   ./launch_flask -s
 #
 # To run both (as on a production server), call
-#   ./launch_webapp -s -b
+#   ./launch_flask -s -b
 #
 # To kill, find the PID corresponding to this process, and kill it
 #
