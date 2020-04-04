@@ -76,10 +76,11 @@
 
         <fieldset class="col-md-6">
           <legend>Simulation parameters</legend>
-          <div v-for="par in sim_pars" class="form-group">
+          <div v-for="(par, key) in sim_pars" class="form-group">
             <div :id="par.name">
               <label>{{par.name}}:</label>
               <input :disabled="running" class="form-control" v-model="par.best">
+              <span v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
             </div>
             <b-tooltip :target="par.name" triggers="hover">
               {{par.tip}}
@@ -88,10 +89,11 @@
         </fieldset>
         <fieldset class="col-md-6">
           <legend>Epidemiological parameters</legend>
-          <div v-for="par in epi_pars" class="form-group">
+          <div v-for="(par, key) in epi_pars" class="form-group">
             <div :id="par.name">
               <label>{{par.name}}:</label>
               <input :disabled="running" class="form-control" v-model="par.best">
+              <span v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
             </div>
             <b-tooltip :target="par.name" triggers="hover">
               {{par.tip}}
@@ -107,7 +109,7 @@
           <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           Running...
         </button>
-        <button v-else id="run_btn" class="btn btn-primary green" type="button" @click="runSim" style="width:160px">
+        <button v-else id="run_btn" :disabled="isRunDisabled" class="btn btn-primary green" type="button" @click="runSim" style="width:160px">
           Run
         </button>&nbsp;&nbsp;&nbsp;&nbsp;
         <button id="reset_btn" :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
