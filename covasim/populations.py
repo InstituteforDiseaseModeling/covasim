@@ -1,10 +1,8 @@
-import numpy as np # Needed for a few things not provided by pl
+import numpy as np  # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
-from . import parameters as cvpars
-from . import requirements as cvreqs
-from . import utils as cvu
 from .people import Person
+
 
 class Population(sc.prettyobj):
     """
@@ -29,7 +27,7 @@ class Population(sc.prettyobj):
         return self.people[self._uids[ind]]
 
     @classmethod
-    def random(cls, pars, n_people: int = 2000, n_regular_contacts: int = 20, n_random_contacts: int = 0, id_len=6):
+    def random(cls, pars, n_people: int = None, n_regular_contacts: int = 20, n_random_contacts: int = 0, id_len=6):
         """
         Make a simple random population
 
@@ -46,6 +44,9 @@ class Population(sc.prettyobj):
         """
 
         self = cls()
+
+        if n_people is None:
+            n_people = pars['n']
 
         # Load age data based on 2018 Seattle demographics
         age_data = np.array([
@@ -85,7 +86,7 @@ class Population(sc.prettyobj):
 
         # Instantiate people
         self.people = {uid: Person(pars=pars, uid=uid, age=age, sex=sex) for uid, age, sex in zip(uids, ages, sexes)}
-        self._uids = {i:x.uid for i,x in enumerate(self.people.values())}
+        self._uids = {i: x.uid for i, x in enumerate(self.people.values())}
 
         # Make contacts
         self.contact_layers = {}
@@ -95,16 +96,16 @@ class Population(sc.prettyobj):
         for i, person in enumerate(self.people.values()):
             n_contacts = cvu.pt(n_regular_contacts)  # Draw the number of Poisson contacts for this person
             contacts[person.uid] = cvu.choose(max_n=n_people, n=n_contacts)  # Choose people at random, assigning to 'household'
-        layer = StaticContactLayer(name='Household', beta=0.015, contacts=contacts)
+        layer = StaticContactLayer(name='Household', contacts=contacts)
         self.contact_layers[layer.name] = layer
 
         # Make random contacts
-        self.contact_layers['Community'] = RandomContactLayer(name='Community', beta=0.015, max_n=n_people, n=n_random_contacts)
+        self.contact_layers['Community'] = RandomContactLayer(name='Community', max_n=n_people, n=n_random_contacts)
 
         return self
 
     @classmethod
-    def synthpops(cls, pars, n_people = 5000, n_random_contacts: int = 20, beta = 0.015, betas = None):
+    def synthpops(cls, pars, n_people=5000, n_random_contacts: int = 20, betas=None):
         """
         Construct network with microstructure using Synthpops
 
@@ -131,24 +132,24 @@ class Population(sc.prettyobj):
         self.people = {}
         for uid, person in population.items():
             self.people[uid] = Person(pars=pars, uid=uid, age=person['age'], sex=person['sex'])
-        self._uids = {i:x.uid for i,x in enumerate(self.people.values())}
+        self._uids = {i: x.uid for i, x in enumerate(self.people.values())}
 
         # Make contact layers
-        layers = ['H','S','W'] # Hardcode the expected synthpops contact layers for now
+        layers = ['H', 'S', 'W']  # Hardcode the expected synthpops contact layers for now
         self.contact_layers = {}
-        uid_to_index = {x.uid:i for i,x in enumerate(self.people.values())}
+        uid_to_index = {x.uid: i for i, x in enumerate(self.people.values())}
         for layer in layers:
             contacts = {}
             for uid, person in population.items():
-                contacts[uid] = np.array([uid_to_index[uid] for uid in person['contacts'][layer]],dtype=np.int64) # match datatype in covasim.utils.bf
+                contacts[uid] = np.array([uid_to_index[uid] for uid in person['contacts'][layer]], dtype=np.int64)  # match datatype in covasim.utils.bf
                 self.people[uid] = Person(pars=pars, uid=uid, age=person['age'], sex=person['sex'])
-            self.contact_layers[layer] = StaticContactLayer(name=layer, beta=beta*betas[layer], contacts=contacts)
-        self.contact_layers['R'] = RandomContactLayer(name='R', beta=beta*betas['R'], max_n=n_people, n=n_random_contacts)
+            self.contact_layers[layer] = StaticContactLayer(name=layer, beta=betas[layer], contacts=contacts)
+        self.contact_layers['R'] = RandomContactLayer(name='R', beta=betas['R'], max_n=n_people, n=n_random_contacts)
 
         return self
 
     @classmethod
-    def country(cls, country_code, beta = 0.015):
+    def country(cls, country_code, beta=0.015):
         """
         Create population from country data
 
@@ -186,7 +187,6 @@ class Population(sc.prettyobj):
         return filepath
 
 
-
 class ContactLayer(sc.prettyobj):
     """
 
@@ -195,7 +195,7 @@ class ContactLayer(sc.prettyobj):
 
     """
 
-    def __init__(self, name:str, beta: float, traceable: bool=True) -> None:
+    def __init__(self, name: str, beta: float, traceable: bool = True) -> None:
         self.name = name  #: Name of the contact layer e.g. 'Households'
         self.beta = beta  #: Transmission probability per contact (absolute)
         self.traceable = traceable  #: If True, the contacts should be considered tracable via contact tracing
@@ -214,7 +214,7 @@ class ContactLayer(sc.prettyobj):
 
 
 class StaticContactLayer(ContactLayer):
-    def __init__(self, name:str, beta: float, contacts: dict) -> None:
+    def __init__(self, name: str, contacts: dict, beta: float = 1.0) -> None:
         """
         Contacts that are the same every timestep
 
@@ -236,7 +236,7 @@ class StaticContactLayer(ContactLayer):
 
 
 class RandomContactLayer(ContactLayer):
-    def __init__(self, name:str, beta: float, max_n: int, n: int) -> None:
+    def __init__(self, name: str, max_n: int, n: int, beta: float = 1.0) -> None:
         """
         Randomly sampled contacts each timestep
 
@@ -250,36 +250,9 @@ class RandomContactLayer(ContactLayer):
 
         """
 
-        super().__init__(name, beta, traceable=False) # nb. cannot trace random contacts e.g. in community
+        super().__init__(name, beta, traceable=False)  # nb. cannot trace random contacts e.g. in community
         self.max_n = max_n
         self.n = n  #: Number of randomly sampled contacts per timestep
 
     def get_contacts(self, person, sim) -> list:
         return cvu.choose(max_n=self.max_n, n=self.n)
-
-
-
-
-
-def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
-    '''
-    Make the actual people for the simulation.
-
-    Args:
-        sim (Sim): the simulation object
-        verbose (bool): level of detail to print
-        id_len (int): length of ID for each person (default: calculate required length based on the number of people)
-        die (bool): whether or not to fail if synthetic populations are requested but not available
-        reset (bool): whether to force population creation even if self.popdict exists
-
-    Returns:
-        None.
-    '''
-
-    # Set inputs
-    n_people     = int(sim['n']) # Shorten
-    usepopdata   = sim['usepopdata'] # Shorten
-    use_rand_pop = (usepopdata == 'random') # Whether or not to use a random population (as opposed to synthpops)
-
-
-

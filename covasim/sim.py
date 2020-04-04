@@ -10,7 +10,6 @@ import datetime as dt
 from . import utils as cvu
 from . import base as cvbase
 from . import parameters as cvpars
-from . import people as cvppl
 from . import populations as cvpop
 
 # Specify all externally visible functions this file defines
@@ -55,7 +54,13 @@ class Sim(cvbase.BaseSim):
         super().__init__(default_pars)  # Initialize and set the parameters as attributes
         self.set_metadata(filename)  # Set the simulation date and filename
         self.load_data(datafile, datacols)  # Load the data, if provided
-        self.update_pars(sc.dcp(pars))  # Update the parameters, if provided
+        self.update_pars(sc.dcp(pars))  # Update the parameters, if provided. Use deep copy so that the people/contact layers in the parameters don't interact if the parameters are used for multiple sims
+
+        if self['population'] is None:
+            # Make a random network
+            print('Input parameters did not contain a population - creating a random network')
+            self['population'] = cvpop.Population.random(pars=self.pars)
+
         self.initialized = False
         self.stopped = None  # If the simulation has stopped
         self.results_ready = False  # Whether or not results are ready
@@ -186,10 +191,6 @@ class Sim(cvbase.BaseSim):
 
     def init_people(self):
         ''' Seed infections '''
-        if self['population'] is None:
-            # Make a random network
-            self['population'] = cvpop.Population.random(pars=self.pars)
-
         for i in range(int(self['n_infected'])):
             person = self['population'].get_person(i)
             person.infect(t=0)
@@ -352,7 +353,7 @@ class Sim(cvbase.BaseSim):
                                 target_person = self['population'].get_person(contact_ind)  # Stored by integer
 
                                 # This person was diagnosed last time step: time to flag their contacts
-                                if person.date_diagnosed is not None and person.date_diagnosed == t-1:
+                                if person.date_diagnosed is not None and person.date_diagnosed == t-1 and layer.traceable:
                                     target_person.known_contact = True
 
                                 # Skip people who are not susceptible

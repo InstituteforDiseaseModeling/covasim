@@ -27,6 +27,7 @@ def make_pars():
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
+    pars['n']          = 2000  #: Default number of people to use IF a population instance is not specified
     pars['population'] = None  #: Store a :class:`Population` instance
     pars['n_infected'] = 10 # Number of seed cases
 
@@ -35,6 +36,7 @@ def make_pars():
     pars['window']     = 7 # Integration window for doubling time and R_eff
 
     # Disease transmission
+    pars['beta']         = 0.015
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
     pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
