@@ -56,7 +56,11 @@ cds.drop(['positives_lagged', 'death_lagged', 'active_lagged', 'tests_lagged'], 
 # And save it to the data directory.
 
 here = os.path.abspath(os.path.dirname(__file__))
-path = os.path.join(here, "../data/corona_data_scraper.csv")
+data_home = os.path.join(here, "../data")
+if not os.path.exists(data_home):
+    log.info(f"Creating data directory {data_home}")
+    os.makedirs(data_home)
+path = os.path.join(data_home, "corona_data_scraper.csv")
 log.info(f"Saving to {path}")
 cds.to_csv(path)
 log.info(f"Script complete")
