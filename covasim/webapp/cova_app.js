@@ -121,7 +121,7 @@ var vm = new Vue({
                 if (param.best <= param.max && param.best >= param.min) {
                     this.$delete(this.paramError, key);
                 } else {
-                    this.$set(this.paramError, key, `Please enter number between ${param.min} to ${param.max}`);
+                    this.$set(this.paramError, key, `Please enter a number between ${param.min} and ${param.max}`);
                 }
             };
         },
