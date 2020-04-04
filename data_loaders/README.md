@@ -20,7 +20,7 @@ python data_loaders/load_corona_data_scraper_data.py
 
 This will create a file `corona_data_scraper.csv` in the data directory.
 
-### Data dictonary
+### Data dictionary
 
 The following columns are present in the data:
 
