@@ -13,24 +13,6 @@ import os
 
 from covasim import Sim, parameters
 
-from sciris import objdict
-
-traditional_get_default_prognoses = parameters.get_default_prognoses
-
-def get_default_prognoses_for_test(by_age=False):
-    if not by_age:
-        prog_pars = objdict(dict(
-            symp_prob = 1.0,
-            severe_prob = 1.0,
-            crit_prob = 1.0,
-            death_prob = 1.0
-        ))
-        return prog_pars
-    else:
-        return traditional_get_default_prognoses(by_age=by_age)
-
-parameters.get_default_prognoses = get_default_prognoses_for_test
-
 
 class TestProperties:
     class ParameterKeys:
@@ -185,6 +167,26 @@ class CovaSimTest(unittest.TestCase):
             self.simulation_parameters.update(params_dict)
         pass
 
+    def set_simulation_prognosis_probability(self, params_dict):
+        ProbKeys = TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys
+        supported_probabilities = [
+            ProbKeys.inf_to_symptomatic_probability,
+            ProbKeys.sym_to_severe_probability,
+            ProbKeys.sev_to_critical_probability,
+            ProbKeys.crt_to_death_probability
+        ]
+        for k in params_dict:
+            if k not in supported_probabilities:
+                raise KeyError(f"Key {k} not found in {supported_probabilities}.")
+        if not self.simulation_parameters:
+            self.set_simulation_parameters()
+            pass
+        for k in params_dict:
+            expected_prob = params_dict[k]
+            self.simulation_parameters['prognoses'][k][0] = expected_prob
+            pass
+        pass
+
     def set_duration_distribution_parameters(self, duration_in_question,
                                              par1, par2):
         if not self.simulation_parameters:
@@ -271,11 +273,14 @@ class CovaSimTest(unittest.TestCase):
             num_days: days to simulate (60)
         """
         self.set_everyone_infected(agent_count=num_agents)
-        test_config = {
-            TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: num_days,
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.use_progression_by_age: False,
+        prob_dict = {
             TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 0
         }
+        self.set_simulation_prognosis_probability(prob_dict)
+        test_config = {
+            TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: num_days,
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.use_progression_by_age: False
+            }
         self.set_duration_distribution_parameters(
             duration_in_question=DurationKeys.exposed_to_infectious,
             par1=days_to_infectious,
@@ -293,11 +298,11 @@ class CovaSimTest(unittest.TestCase):
         """
         self.set_everyone_infectious_same_day(num_agents=num_agents,
                                               days_to_infectious=0)
-        everyone_symptomatic_config = {
+        prob_dict = {
             TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 1.0,
             TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sym_to_severe_probability: 0
         }
-        self.set_simulation_parameters(params_dict=everyone_symptomatic_config)
+        self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
             self.set_duration_distribution_parameters(
                 duration_in_question=DurationKeys.infectious_to_symptomatic,
@@ -314,23 +319,26 @@ class CovaSimTest(unittest.TestCase):
         """
         ProbKeys = TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys
         self.set_everyone_infectious_same_day(num_agents=num_agents)
-        everyone_dying_config = {
-            ProbKeys.use_progression_by_age: False,
+        prob_dict = {
             ProbKeys.inf_to_symptomatic_probability: 1,
             ProbKeys.sym_to_severe_probability: 1,
             ProbKeys.sev_to_critical_probability: 1,
             ProbKeys.crt_to_death_probability: 1
+        }
+        self.set_simulation_prognosis_probability(prob_dict)
+        everyone_dying_config = {
+            ProbKeys.use_progression_by_age: False
         }
         self.set_simulation_parameters(params_dict=everyone_dying_config)
         pass
 
     def set_everyone_severe(self, num_agents, constant_delay:int=None):
         self.set_everyone_symptomatic(num_agents=num_agents, constant_delay=constant_delay)
-        everyone_severe_config = {
+        prob_dict = {
             TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sym_to_severe_probability: 1.0,
             TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sev_to_critical_probability: 0.0
         }
-        self.set_simulation_parameters(params_dict=everyone_severe_config)
+        self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
             self.set_duration_distribution_parameters(
                 duration_in_question=DurationKeys.symptomatic_to_severe,
@@ -344,11 +352,11 @@ class CovaSimTest(unittest.TestCase):
         Causes all agents to become critically ill day 1
         """
         self.set_everyone_severe(num_agents=num_agents, constant_delay=constant_delay)
-        everyone_critical_config = {
+        prob_dict = {
             TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sev_to_critical_probability: 1.0,
             TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.crt_to_death_probability: 0.0
         }
-        self.set_simulation_parameters(params_dict=everyone_critical_config)
+        self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
             self.set_duration_distribution_parameters(
                 duration_in_question=DurationKeys.severe_to_critical,
