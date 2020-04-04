@@ -219,7 +219,7 @@ class SimulationParameterTests(CovaSimTest):
             TPKeys.time_limit: 0.5
         }
         med_time_limit = {
-            TPKeys.time_limit: 1.5
+            TPKeys.time_limit: 1.0
         }
         long_time_limit = {
             TPKeys.time_limit: 15.0
