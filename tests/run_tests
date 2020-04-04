@@ -1,3 +1,3 @@
 #!/bin/bash
 # Run the integration tests
-pytest test*.py
+pytest test*.py --durations=0
