@@ -427,7 +427,6 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
             if verbose>=1:
                 print(f'Setting key {key} from {new_sim[key]} to {val}')
                 new_sim[key] = val
-            pass
         else:
             raise KeyError(f'Could not set key {key}: not a valid parameter name')
 

@@ -14,6 +14,10 @@ jobs:
       - name: Set repo owner env variable
         shell: python
         run: print("::set-env name=GITHUB_OWNER::{}".format('${{github.repository}}'.split('/')[0]))
+      - name: Set PYTHONPATH
+        run: |
+          mkdir -p $HOME/.cache/site-packages
+          echo "::set-env name=PYTHONPATH::$HOME/.cache/site-packages"
       - name: Checkout sources
         uses: actions/checkout@v1
       # - name: Checkout synthpops
@@ -26,8 +30,19 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
+      - name: Cache Packages
+        id: cache-packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/ # This path is specific to Ubuntu
+          # Look to see if there is a cache hit for the corresponding requirements file
+          key: packages-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            packages-${{ runner.os }}-${{ matrix.python-version }}-
+      # Pip install first will make setup.py much faster and the cache will make pip install fast
       - name: Install Covasim
-        run: python setup.py develop
+        run: |
+          python setup.py develop --install-dir ~/.cache/site-packages
       # - name: Install synthpops
       #   working-directory: ./synthpops
       #   run: python setup.py develop
@@ -35,8 +50,8 @@ jobs:
         working-directory: ./tests
         run: |
           pip install pytest
-          # pytest test*.py unittests/test*.py --junitxml=test-results.xml # Run actual tests
-          pytest test*.py --junitxml=test-results.xml # Run actual tests
+          pytest test*.py unittests/test*.py --junitxml=test-results.xml # Run actual tests
+          # pytest test*.py --junitxml=test-results.xml # Run actual tests
       - name: Run examples
         working-directory: ./examples
         run: python *.py
