@@ -210,8 +210,15 @@ class BaseSim(ParsObj):
         Returns:
 
         """
-        pardict = self.pars
-        pardict['interventions'] = [intervention.to_json() for intervention in pardict['interventions']]
+        pardict = {}
+        skip = {'population'}
+        for k in self.pars:
+            if k in skip:
+                continue
+            elif k == 'interventions':
+                pardict['interventions'] = [intervention.to_json() for intervention in self.pars['interventions']]
+            else:
+                pardict[k] = self.pars[k]
         return pardict
 
 

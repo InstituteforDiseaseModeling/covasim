@@ -368,7 +368,7 @@ class Scenarios(cvbase.ParsObj):
 
 
 
-def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None, sim_args=None, **kwargs):
+def single_run(sim, ind=0, noise=0.0, noisepar='beta', verbose=None, run_args=None, sim_args=None, **kwargs):
     '''
     Convenience function to perform a single simulation run. Mostly used for
     parallelization, but can also be used directly.
@@ -403,19 +403,20 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
     new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
     new_sim.set_seed()
 
-    # If the noise parameter is not found, guess what it should be
-    if noisepar is None:
-        noisepar = 'beta'
-        if noisepar not in sim.pars.keys():
-            raise KeyError(f'Noise parameter {noisepar} was not found in sim parameters')
-
     # Handle noise -- normally distributed fractional error
     noiseval = noise*np.random.normal()
     if noiseval > 0:
         noisefactor = 1 + noiseval
     else:
         noisefactor = 1/(1-noiseval)
-    new_sim[noisepar] *= noisefactor
+
+    if noisepar == 'beta':
+        for layer in new_sim['population'].contact_layers.values():
+            layer.beta *= noisefactor
+    elif noisepar not in sim.pars.keys():
+        raise KeyError(f'Noise parameter {noisepar} was not found in sim parameters')
+    else:
+        new_sim[noisepar] *= noisefactor
 
     if verbose>=1:
         print(f'Running a simulation using {new_sim["seed"]} seed and {noisefactor} noise')
@@ -436,7 +437,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
     return new_sim
 
 
-def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, combine=False, run_args=None, sim_args=None, **kwargs):
+def multi_run(sim, n_runs=4, noise=0.0, noisepar='beta', iterpars=None, verbose=None, run_args=None, sim_args=None, **kwargs):
     '''
     For running multiple runs in parallel.
 
@@ -486,24 +487,4 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'sim_args':sim_args, 'run_args':run_args}
     sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
 
-    # Usual case -- return a list of sims
-    if not combine:
-        return sims
-
-    # Or, combine them into a single sim with scaled results
-    else:
-        output_sim = sc.dcp(sims[0])
-        output_sim.pars['parallelized'] = n_runs # Store how this was parallelized
-        output_sim.pars['n'] *= n_runs # Restore this since used in later calculations -- a bit hacky, it's true
-        for s,sim in enumerate(sims[1:]): # Skip the first one
-            output_sim.people.update(sim.people)
-            for key in sim.reskeys:
-                this_res = sim.results[key]
-                output_sim.results[key].values += this_res.values
-
-        # For non-count results (scale=False), rescale them
-        for key in output_sim.reskeys:
-            if not output_sim.results[key].scale:
-                output_sim.results[key].values /= len(sims)
-
-        return output_sim
+    return sims

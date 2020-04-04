@@ -14,6 +14,7 @@ import os
 from covasim import Sim, parameters
 
 
+
 class TestProperties:
     class ParameterKeys:
         class SimulationKeys:
