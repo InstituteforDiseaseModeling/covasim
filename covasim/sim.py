@@ -221,8 +221,6 @@ class Sim(cvbase.BaseSim):
     def init_people(self, verbose=None, id_len=None, **kwargs):
         ''' Create the people '''
 
-        print('TEMP init people')
-
         if verbose is None:
             verbose = self['verbose']
 
