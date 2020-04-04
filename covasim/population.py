@@ -163,27 +163,27 @@ class Population(sc.prettyobj):
         raise NotImplementedError
 
     @staticmethod
-    def load(filename, **kwargs):
+    def load(filename, *args, **kwargs):
         '''
         Load the population dictionary from file.
 
         Args:
             filename (str): name of the file to load.
         '''
-        filepath = sc.makefilepath(filename=filename, **kwargs)
+        filepath = sc.makefilepath(filename=filename, *args, **kwargs)
         pop = sc.loadobj(filepath)
         if not isinstance(pop, Population):
             raise TypeError('Loaded file was not a population')
         return pop
 
-    def save(self, filename, **kwargs):
+    def save(self, filename, *args, **kwargs):
         '''
         Save the population dictionary to file.
 
         Args:
             filename (str): name of the file to save to.
         '''
-        filepath = sc.makefilepath(filename=filename, **kwargs)
+        filepath = sc.makefilepath(filename=filename, *args, **kwargs)
         sc.saveobj(filepath, self)
         return filepath
 

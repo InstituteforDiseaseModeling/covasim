@@ -67,10 +67,6 @@ class Sim(cvbase.BaseSim):
         self.results = {}
         return
 
-    @property
-    def people(self):
-        return self['population'].people
-
     def set_metadata(self, filename):
         ''' Set the metadata for the simulation -- creation time and filename '''
         self.created = sc.now()
@@ -196,6 +192,11 @@ class Sim(cvbase.BaseSim):
             person.infect(t=0)
         return
 
+    def load_population(self, filename, *args, **kwargs):
+        self['population'] = cvpop.Population.load(filename, *args, **kwargs)
+
+    def save_population(self, filename, *args, **kwargs):
+        self['population'].save(filename, *args, **kwargs)
 
     def next(self, steps=None, stop=None, initialize=False, finalize=False, verbose=0, **kwargs):
         '''
