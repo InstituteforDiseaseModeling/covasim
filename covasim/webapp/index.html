@@ -80,7 +80,7 @@
             <div :id="key+'-wpr'">
               <label :for="key">{{par.name}}:</label>
               <input :id="key" :disabled="running" class="form-control" v-model="par.best">
-              <span v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
+              <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
             </div>
             <b-tooltip :target="key+'-wpr'">
               {{par.tip}}
@@ -93,7 +93,7 @@
             <div :id="key+'-wpr'">
               <label :for="key">{{par.name}}:</label>
               <input :id="key" :disabled="running" class="form-control" v-model="par.best">
-              <span v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
+              <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
             </div>
             <b-tooltip :target="key+'-wpr'">
               {{par.tip}}
