@@ -100,7 +100,7 @@ var vm = new Vue({
         },
 
         async resetPars() {
-            let response = await sciris.rpc('get_defaults', [this.reset_choice]);
+            const response = await sciris.rpc('get_defaults', [this.reset_choice]);
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
             this.setupFormWatcher('sim_pars');
@@ -127,16 +127,16 @@ var vm = new Vue({
         },
 
         async downloadPars() {
-            var d = new Date();
-            let datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
-            let fileName = `COVASim_parameters_${datestamp}.json`;
+            const d = new Date();
+            const datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
+            const fileName = `COVASim_parameters_${datestamp}.json`;
 
             // Adapted from https://stackoverflow.com/a/45594892 by Gautham
-            let data = {
+            const data = {
                 sim_pars: this.sim_pars,
                 epi_pars: this.epi_pars,
             };
-            let fileToSave = new Blob([JSON.stringify(data, null, 4)], {
+            const fileToSave = new Blob([JSON.stringify(data, null, 4)], {
                 type: 'application/json',
                 name: fileName
             });
@@ -145,7 +145,7 @@ var vm = new Vue({
 
         async uploadPars() {
             try {
-                let response = await sciris.upload('upload_pars');  //, [], {}, '');
+                const response = await sciris.upload('upload_pars');  //, [], {}, '');
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.graphs = [];
@@ -161,14 +161,14 @@ var vm = new Vue({
         },
 
         async downloadExcel() {
-            let res = await fetch(this.result.files.xlsx.content);
-            let blob = await res.blob();
+            const res = await fetch(this.result.files.xlsx.content);
+            const blob = await res.blob();
             saveAs(blob, this.result.files.xlsx.filename);
         },
 
         async downloadJson() {
-            let res = await fetch(this.result.files.json.content);
-            let blob = await res.blob();
+            const res = await fetch(this.result.files.json.content);
+            const blob = await res.blob();
             saveAs(blob, this.result.files.json.filename);
         },
 
