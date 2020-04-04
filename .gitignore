@@ -138,3 +138,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Datasets
+covasim/datasets/sources/population/
+covasim/datasets/sources/lookup.json

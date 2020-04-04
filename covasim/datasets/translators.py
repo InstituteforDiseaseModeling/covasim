@@ -1,8 +1,8 @@
 import json
 import numpy as np
 
-def neherlab_translator(country, json_string):
-    data = json.loads(json_string)[country]
+def neherlab_translator(country, json):
+    data = json[country]
 
     result = []
     total_pop = sum(data.values())

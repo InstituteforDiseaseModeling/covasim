@@ -7,4 +7,5 @@ sciris
 scirisweb
 gunicorn
 plotly_express
-request
+urllib3
+requests

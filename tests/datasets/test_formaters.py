@@ -6,6 +6,7 @@ Test the people class
 import sciris as sc
 import covasim.datasets.translators as cdt
 import numpy as np
+import json
 
 def test_transform_neherlab_data():
     sc.heading('Test the transformation for the neherlab covid19 scenarios dataset')
@@ -46,5 +47,5 @@ def test_transform_neherlab_data():
         [70, 79, 0.015873015873015872],
         [80, 130, 0.005291005291005291],
     ])
-    output = cdt.neherlab_translator("Afghanistan", json_string)
+    output = cdt.neherlab_translator("Afghanistan", json.loads(json_string))
     np.testing.assert_array_equal(output, expected)
