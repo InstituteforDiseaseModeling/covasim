@@ -262,14 +262,16 @@ def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
 
             # Replace contact UIDs with ints...
             uid_mapping = {uid:u for u,uid in enumerate(uids)}
+            key_mapping = {'H':'h', 'S':'s', 'W':'w', 'R':'c'} # Remap keys from old names to new names
             for uid,person in population.items():
                 uid_contacts = person['contacts']
                 int_contacts = {}
                 for key in uid_contacts.keys():
-                    int_contacts[key] = []
+                    new_key = key_mapping[key]
+                    int_contacts[new_key] = []
                     for uid in uid_contacts[key]:
-                        int_contacts[key].append(uid_mapping[uid])
-                    int_contacts[key] = np.array(int_contacts[key], dtype=int)
+                        int_contacts[new_key].append(uid_mapping[uid])
+                    int_contacts[new_key] = np.array(int_contacts[new_key], dtype=int)
                 contacts.append(int_contacts)
 
             popdict = {}

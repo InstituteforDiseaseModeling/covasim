@@ -173,6 +173,12 @@ class Sim(cvbase.BaseSim):
             start_day = sc.readdate(start_day)
         self['start_day'] = start_day # Convert back
 
+        # Handle contacts
+        contacts = self['contacts']
+        if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's community contacts
+            self['contacts']    = {'h':0, 's':0, 'w':0, 'c':contacts}
+            self['beta_layers'] = {'h':0, 's':0, 'w':0, 'c':1.0}
+
         # Handle population data
         popdata_choices = ['random', 'microstructure']
         if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
