@@ -712,3 +712,29 @@ class Sim(cvbase.BaseSim):
             pl.close(fig)
 
         return fig
+
+
+    def plot_result(self, key, fig_args=None, plot_args=None):
+        '''
+        Simple method to plot a single result. Useful for results that aren't
+        standard outputs.
+
+        Args:
+            key (str): the key of the result to plot
+            fig_args (dict): passed to pl.figure()
+            plot_args (dict): passed to pl.plot()
+
+        Example:
+            sim.plot_result('doubling_time')
+        '''
+        fig_args  = sc.mergedicts({'figsize':(16,10)}, fig_args)
+        plot_args = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
+        fig = pl.figure(**fig_args)
+        pl.subplot(111)
+        tvec = self.results['t']
+        res = self.results[key]
+        y = res.values
+        color = res.color
+        pl.plot(tvec, y, c=color, **plot_args)
+        return fig
+
