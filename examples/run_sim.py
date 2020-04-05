@@ -28,9 +28,12 @@ sim = cv.Sim()
 sim.set_seed(seed) # Set seed (can also be done via sim['seed'] = seed)
 sim['n'] = 5000 # Population size
 sim['n_days'] = 180 # Number of days to simulate
-sim['prog_by_age'] = True # Use age-specific mortality etc.
+sim['prog_by_age'] = False # Use age-specific mortality etc.
 sim['usepopdata'] = False # Use realistic population structure (requires synthpops)
-# sim['rel_death_prob'] = 0.0
+sim['rel_symp_prob'] = 500.0
+sim['rel_severe_prob'] = 500.0
+sim['rel_crit_prob'] = 500.0
+sim['rel_death_prob'] = 500.0
 if interv:
     sim['interventions'] = cv.change_beta(days=45, changes=0.5) # Optionally add an intervention
 
