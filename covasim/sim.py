@@ -32,28 +32,28 @@ default_colors = sc.objdict(
 
 # Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines
 default_sim_plots = sc.odict({
-        'Total counts': sc.odict({
-            'cum_infections': 'Cumulative infections',
-            'cum_diagnoses':  'Cumulative diagnoses',
-            'cum_recoveries': 'Cumulative recoveries',
-            # 'cum_tests': 'Cumulative tested',
-            # 'n_susceptible': 'Number susceptible',
-            # 'n_infectious': 'Number of active infections',
-        }),
-        'Daily counts': sc.odict({
-            'new_infections': 'New infections',
-            'new_diagnoses':  'New diagnoses',
-            'new_recoveries': 'New recoveries',
-            'new_deaths':     'New deaths',
-            # 'tests': 'Number of tests',
-        }),
-        'Health outcomes': sc.odict({
-            'cum_severe':   'Cumulative severe cases',
-            'cum_critical': 'Cumulative critical cases',
-            'cum_deaths':   'Cumulative deaths',
-            # 'n_severe':     'Number of severe cases',
-            # 'n_critical':   'Number of critical cases',
-        })
+        'Total counts': [
+            'cum_infections',
+            'cum_diagnoses',
+            'cum_recoveries',
+            # 'cum_tests',
+            # 'n_susceptible',
+            # 'n_infectious',
+        ],
+        'Daily counts': [
+            'new_infections',
+            'new_diagnoses',
+            'new_recoveries',
+            'new_deaths',
+            # 'tests',
+        ],
+        'Health outcomes': [
+            'cum_severe',
+            'cum_critical',
+            'cum_deaths',
+            # 'n_severe',
+            # 'n_critical',
+        ]
 })
 
 
@@ -173,6 +173,12 @@ class Sim(cvbase.BaseSim):
             start_day = sc.readdate(start_day)
         self['start_day'] = start_day # Convert back
 
+        # Handle contacts
+        contacts = self['contacts']
+        if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's community contacts
+            self['contacts']    = {'h':0, 's':0, 'w':0, 'c':contacts}
+            self['beta_layers'] = {'h':0, 's':0, 'w':0, 'c':1.0}
+
         # Handle population data
         popdata_choices = ['random', 'microstructure']
         if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
@@ -218,7 +224,7 @@ class Sim(cvbase.BaseSim):
         # Flows and cumulative flows
         self.result_flows = ['infections', 'tests', 'diagnoses', 'recoveries', 'symptomatic', 'severe', 'critical', 'deaths']
         for key in self.result_flows:
-            suffix = ' cases' if key in ['symptomatic', 'severe', 'critial'] else '' # Since need to say "severe cases" not just "severe"
+            suffix = ' cases' if key in ['symptomatic', 'severe', 'critical'] else '' # Since need to say "severe cases" not just "severe"
             self.results[f'new_{key}'] = init_res(f'Number of new {key}{suffix}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
             self.results[f'cum_{key}'] = init_res(f'Cumulative {key}{suffix}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
 
@@ -358,16 +364,15 @@ class Sim(cvbase.BaseSim):
             new_critical    = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
-            rand_popdata     = (self['usepopdata'] == 'random')
             beta             = self['beta']
             asymp_factor     = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
-            beta_pop         = self['beta_pop']
+            beta_layers      = self['beta_layers']
             n_beds           = self['n_beds']
             bed_constraint   = False
             n_people         = len(self.people)
-            n_comm_contacts  = self['contacts_pop']['R'] # TODO: refactor name
+            n_comm_contacts  = self['contacts']['c'] # Community contacts
 
             # Print progress
             if verbose>=1:
@@ -402,17 +407,19 @@ class Sim(cvbase.BaseSim):
                     new_recovery = person.check_recovery(t)
                     new_recoveries += new_recovery
 
-                    # No recovery: check symptoms
-                    if not new_recovery:
-                        new_symptomatic, n_symptomatic = person.check_symptomatic(t, new_symptomatic, n_symptomatic)
-                        new_severe,      n_severe      = person.check_severe(t,      new_severe,      n_severe)
-                        new_critical,    n_critical    = person.check_critical(t,    new_critical,    n_critical)
-                        if n_severe > n_beds:
-                            bed_constraint = True
-
                     # If the person didn't die or recover, check for onward transmission
                     if not new_death and not new_recovery:
                         n_infectious += 1 # Count this person as infectious
+
+                        # Check symptoms
+                        new_symptomatic += person.check_symptomatic(t)
+                        new_severe      += person.check_severe(t)
+                        new_critical    += person.check_critical(t)
+                        n_symptomatic   += person.symptomatic
+                        n_severe        += person.severe
+                        n_critical      += person.critical
+                        if n_severe > n_beds:
+                            bed_constraint = True
 
                         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                         thisbeta = beta * \
@@ -421,15 +428,12 @@ class Sim(cvbase.BaseSim):
                                    (cont_factor if person.known_contact else 1.)
 
                         # Determine who gets infected
-                        if rand_popdata: # Flat contacts
-                            transmission_inds = cvu.bf(thisbeta, person.contacts)
-                        else: # Dictionary of contacts -- extra loop over layers
-                            transmission_inds = []
-                            community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
-                            person.contacts['R'] = community_contact_inds
-                            for ckey in self.contact_keys:
-                                layer_beta = thisbeta * beta_pop[ckey]
-                                transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
+                        transmission_inds = []
+                        community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
+                        person.contacts['c'] = community_contact_inds
+                        for ckey in self.contact_keys:
+                            layer_beta = thisbeta * beta_layers[ckey]
+                            transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
 
                         # Loop over people who do
                         for contact_ind in transmission_inds:
@@ -606,7 +610,7 @@ class Sim(cvbase.BaseSim):
         for key in self.reskeys:
             summary[key] = self.results[key][-1]
             if key.startswith('cum_'):
-                summary_str += f'   {summary[key]:5.0f} {self.results[key].name}\n'
+                summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
         sc.printv(summary_str, 1, verbose)
 
         return summary
@@ -666,7 +670,8 @@ class Sim(cvbase.BaseSim):
         # Plot everything
         for p,title,keylabels in to_plot.enumitems():
             ax = pl.subplot(len(to_plot),1,p+1)
-            for i,key,label in keylabels.enumitems():
+            for key in keylabels:
+                label = res[key].name
                 this_color = res[key].color
                 y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)

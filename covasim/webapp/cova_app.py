@@ -213,7 +213,8 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         to_plot = sc.dcp(cv.default_sim_plots)
         for p,title,keylabels in to_plot.enumitems():
             fig = go.Figure()
-            for i,key,label in keylabels.enumitems():
+            for key in keylabels:
+                label = sim.results[key].name
                 this_color = sim.results[key].color
                 y = sim.results[key][:]
                 fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
@@ -225,7 +226,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-
+            
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
             d['config'] = {'responsive': True}

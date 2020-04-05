@@ -38,9 +38,8 @@ def make_pars():
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
     pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
-    pars['contacts']     = 20 # Estimated number of contacts
-    pars['beta_pop']     = {'H': 1.7,  'S': 0.8,   'W': 0.8,  'R': 0.3} # Per-population beta weights; relative
-    pars['contacts_pop'] = {'H': 4.11, 'S': 11.41, 'W': 8.07, 'R': 20.0} # default flu-like weights # Number of contacts per person per day, estimated
+    pars['contacts']     = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
+    pars['beta_layers']  = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()
@@ -87,20 +86,20 @@ def get_default_prognoses(by_age=True):
 
     '''
     if not by_age:
-        prog_pars = sc.objdict(dict(
+        prog_pars = sc.objdict(
             symp_prob   = 0.75,
             severe_prob = 0.12,
             crit_prob   = 0.25,
             death_prob  = 0.50,
-        ))
+        )
     else:
-        prog_pars = sc.objdict(dict(
+        prog_pars = sc.objdict(
             age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      120]),     # Age cutoffs
             symp_probs   = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms
             severe_probs = np.array([0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]), # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
             crit_probs   = np.array([0.00004, 0.00011, 0.00050, 0.00123, 0.00214, 0.00800, 0.02750, 0.06000, 0.10333]), # Overall probability of developing critical symptoms (derived from https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm)
             death_probs  = np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]), # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
-        ))
+        )
     return prog_pars
 
 
