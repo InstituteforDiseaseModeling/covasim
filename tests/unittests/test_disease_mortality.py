@@ -62,10 +62,11 @@ class DiseaseMortalityTests(CovaSimTest):
         """
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
-        all_crit_no_dead = {
+        prob_dict = {
             DProgKeys.ProbabilityKeys.crt_to_death_probability: 0.0
         }
-        self.run_sim(all_crit_no_dead)
+        self.set_simulation_prognosis_probability(prob_dict)
+        self.run_sim()
         deaths_at_timestep_channel = self.get_full_result_channel(
             ResKeys.deaths_daily
         )
@@ -105,10 +106,11 @@ class DiseaseMortalityTests(CovaSimTest):
         # old_ratio_sum = 0
         old_cumulative_deaths = 0
         for death_prob in death_probs:
-            test_config = {
+            prob_dict = {
                 DProgKeys.ProbabilityKeys.crt_to_death_probability: death_prob
             }
-            self.run_sim(test_config)
+            self.set_simulation_prognosis_probability(prob_dict)
+            self.run_sim()
             deaths_at_timestep_channel = self.get_full_result_channel(
                 ResKeys.deaths_daily
             )

@@ -182,6 +182,7 @@ class Sim(cvbase.BaseSim):
     def people(self):
         return self['population'].people
 
+
     def get_person(self, *args, **kwargs):
         return self['population'].get_person(*args, **kwargs)
 
