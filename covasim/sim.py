@@ -322,8 +322,6 @@ class Sim(cvbase.BaseSim):
         if initialize:
             self.initialize() # Create people, results, etc.
 
-        self.tmpuids = []
-
         # Main simulation loop
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
         tvec = self.tvec[start:stop]
@@ -409,7 +407,7 @@ class Sim(cvbase.BaseSim):
                         n_infectious += 1 # Count this person as infectious
 
                         # Check symptoms
-                        new_symptomatic += person.check_symptomatic(t, self.tmpuids)
+                        new_symptomatic += person.check_symptomatic(t)
                         new_severe      += person.check_severe(t)
                         new_critical    += person.check_critical(t)
                         n_symptomatic   += person.symptomatic

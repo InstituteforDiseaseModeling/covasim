@@ -144,25 +144,17 @@ class Person(sc.prettyobj):
             self.infected_by = source.uid
             source.infected.append(self.uid)
 
-        infected = 1  # For incrementing counters
-
-        return infected
+        return 1 # For incrementing counters
 
 
-    def check_symptomatic(self, t, tmpuids):
+    def check_symptomatic(self, t):
         ''' Check for new progressions to symptomatic '''
-        print('hiiii')
-        print(tmpuids)
         if not self.symptomatic and self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
             self.symptomatic = True
-            if self.uid not in tmpuids:
-                tmpuids.append(self.uid)
-            else:
-                raise Exception
-            print(tmpuids)
             return 1
         else:
             return 0
+
 
     def check_severe(self, t):
         ''' Check for new progressions to severe '''
@@ -172,6 +164,7 @@ class Person(sc.prettyobj):
         else:
             return 0
 
+
     def check_critical(self, t):
         ''' Check for new progressions to critical '''
         if not self.critical and self.date_critical and t >= self.date_critical: # Person is changing to this state
@@ -179,6 +172,7 @@ class Person(sc.prettyobj):
             return 1
         else:
             return 0
+
 
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
@@ -190,11 +184,9 @@ class Person(sc.prettyobj):
             self.severe      = False
             self.critical    = False
             self.recovered   = True
-            recovery = 1
+            return 1
         else:
-            recovery = 0
-
-        return recovery
+            return 0
 
 
     def check_death(self, t):
@@ -207,22 +199,18 @@ class Person(sc.prettyobj):
             self.critical    = False
             self.recovered   = False
             self.dead        = True
-            death = 1
+            return 1
         else:
-            death = 0
-
-        return death
+            return 0
 
 
     def test(self, t, test_sensitivity):
         if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
             self.diagnosed = True
             self.date_diagnosed = t
-            diagnosed = 1
+            return 1
         else:
-            diagnosed = 0
-        return diagnosed
-
+            return 0
 
 
 def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
