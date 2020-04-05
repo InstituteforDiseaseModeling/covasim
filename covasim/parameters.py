@@ -106,13 +106,13 @@ def get_default_prognoses(by_age=True):
 
 
 
-def load_data(datafile, datacols=None, **kwargs):
+def load_data(filename, columns=None, **kwargs):
     '''
     Load data for comparing to the model output.
 
     Args:
-        datafile (str): the name of the file to load (either Excel or CSV)
-        datacols (list): list of column names (otherwise, load all)
+        filename (str): the name of the file to load (either Excel or CSV)
+        columns (list): list of column names (otherwise, load all)
         kwargs (dict): passed to pd.read_excel()
 
     Returns:
@@ -120,19 +120,21 @@ def load_data(datafile, datacols=None, **kwargs):
     '''
 
     # Load data
-    if datafile.lower().endswith('csv'):
-        raw_data = pd.read_csv(datafile, **kwargs)
-    elif datafile.lower().endswith('xlsx'):
-        raw_data = pd.read_excel(datafile, **kwargs)
+    if filename.lower().endswith('csv'):
+        raw_data = pd.read_csv(filename, **kwargs)
+    elif filename.lower().endswith('xlsx'):
+        raw_data = pd.read_excel(filename, **kwargs)
     else:
-        errormsg = f'Currently only loading from .csv and .xlsx files is supported, not {datafile}'
+        errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {filename}'
         raise NotImplementedError(errormsg)
 
     # Confirm data integrity and simplify
-    if datacols is not None:
-        for col in datacols:
-            assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
-        data = raw_data[datacols]
+    if columns is not None:
+        for col in columns:
+            if col not in raw_data.columns:
+                errormsg = f'Column "{col}" is missing from the loaded data'
+                raise ValueError(errormsg)
+        data = raw_data[columns]
     else:
         data = raw_data
 

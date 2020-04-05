@@ -20,22 +20,28 @@ __all__ = ['default_sim_plots', 'Sim']
 # Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines
 default_sim_plots = sc.odict({
         'Total counts': sc.odict({
-            'cum_exposed': 'Cumulative infections',
-            'cum_deaths': 'Cumulative deaths',
-            'cum_recoveries':'Cumulative recoveries',
-            # 'cum_tested': 'Cumulative tested',
+            'cum_infections': 'Cumulative infections',
+            'cum_recoveries': 'Cumulative recoveries',
+            'cum_diagnoses':  'Cumulative diagnoses',
+            # 'cum_tests': 'Cumulative tested',
             # 'n_susceptible': 'Number susceptible',
             # 'n_infectious': 'Number of active infections',
-            'cum_diagnosed': 'Cumulative diagnosed',
         }),
         'Daily counts': sc.odict({
             'new_infections': 'New infections',
-            'new_deaths': 'New deaths',
+            'new_deaths':     'New deaths',
             'new_recoveries': 'New recoveries',
+            'new_diagnoses':  'New diagnoses',
             # 'tests': 'Number of tests',
-            'new_diagnoses': 'New diagnoses',
+        }),
+        'Health outcomes': sc.odict({
+            'cum_severe':   'Cumulative severe cases',
+            'cum_critical': 'Cumulative critical cases',
+            'cum_deaths':   'Cumulative deaths',
+            # 'n_severe':     'Number of severe cases',
+            # 'n_critical':   'Number of critical cases',
         })
-    })
+})
 
 
 class Sim(cvbase.BaseSim):
@@ -52,8 +58,8 @@ class Sim(cvbase.BaseSim):
 
     def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None):
         # Create the object
-        default_pars =  # Start with default pars
-        super().__init__(cvpars.make_pars()) # Initialize and set the parameters as attributes
+        default_pars = cvpars.make_pars() # Start with default pars
+        super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
         self.created       = None  # The datetime the sim was created
@@ -89,7 +95,7 @@ class Sim(cvbase.BaseSim):
         ''' Load the data to calibrate against, if provided '''
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvpars.load_data(datafile=datafile, datacols=datacols, **kwargs)
+            self.data = cvpars.load_data(filename=datafile, columns=datacols, **kwargs)
         return
 
 
@@ -100,7 +106,7 @@ class Sim(cvbase.BaseSim):
         Args:
             filename (str): name of the file to load
         '''
-        if popfile is not None:
+        if filename is not None:
             filepath = sc.makefilepath(filename=filename, **kwargs)
             self.popdict = sc.loadobj(filepath)
             n_actual = len(self.popdict['uid'])
@@ -192,17 +198,17 @@ class Sim(cvbase.BaseSim):
 
         # Flow variables
         self.results['new_infections'] = init_res('Number of new infections')
-        self.results['new_recoveries'] = init_res('Number of new recoveries')
-        self.results['new_deaths']     = init_res('Number of new deaths')
         self.results['new_tests']      = init_res('Number of new tests')
         self.results['new_diagnoses']  = init_res('Number of new diagnoses')
+        self.results['new_recoveries'] = init_res('Number of new recoveries')
+        self.results['new_deaths']     = init_res('Number of new deaths')
 
         # Cumulative variables
         self.results['cum_exposed']    = init_res('Cumulative number exposed')
         self.results['cum_tested']     = init_res('Cumulative number of tests')
         self.results['cum_diagnosed']  = init_res('Cumulative number diagnosed')
-        self.results['cum_deaths']     = init_res('Cumulative number of deaths')
         self.results['cum_recoveries'] = init_res('Cumulative number recovered')
+        self.results['cum_deaths']     = init_res('Cumulative number of deaths')
 
         # Other variables
         self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
@@ -335,6 +341,9 @@ class Sim(cvbase.BaseSim):
             new_recoveries  = 0
             new_deaths      = 0
             new_infections  = 0
+            new_symptomatic = 0
+            new_severe      = 0
+            new_critical    = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
             rand_popdata     = (self['usepopdata'] == 'random')
@@ -383,10 +392,11 @@ class Sim(cvbase.BaseSim):
 
                     # No recovery: check symptoms
                     if not new_recovery:
-                        n_symptomatic   += person.check_symptomatic(t)
-                        n_severe        += person.check_severe(t)
-                        n_critical      += person.check_critical(t)
-                        if n_severe > n_beds: bed_constraint = True
+                        new_symptomatic, n_symptomatic = person.check_progression(person.symptomatic, person.date_symptomatic, t, new_symptomatic, n_symptomatic)
+                        new_severe,      n_severe      = person.check_progression(person.severe,      person.date_severe,      t, new_severe,      n_severe)
+                        new_critical,    n_critical    = person.check_progression(person.critical,    person.date_critical,    t, new_critical,    n_critical)
+                        if n_severe > n_beds:
+                            bed_constraint = True
 
                     # If the person didn't die or recover, check for onward transmission
                     if not new_death and not new_recovery:
