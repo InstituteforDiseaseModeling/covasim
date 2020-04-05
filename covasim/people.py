@@ -347,10 +347,11 @@ def make_randpop(sim, id_len=6):
     # Make contacts
     contacts = []
     for p in range(n_people):
-        contact_dict = {}
+        contact_dict = {'c':0}
         for key in sim['contacts'].keys():
-            n_contacts = cvu.pt(sim['contacts'][key]) # Draw the number of Poisson contacts for this person
-            contact_dict[key] = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random
+            if key != 'c': # Skip community contacts, these are chosen afresh daily
+                n_contacts = cvu.pt(sim['contacts'][key]) # Draw the number of Poisson contacts for this person
+                contact_dict[key] = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random
         contacts.append(contact_dict)
 
     # Store output; data duplicated as per-person and list-like formats for convenience
