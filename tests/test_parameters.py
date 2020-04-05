@@ -3,6 +3,7 @@ Test that the parameters and data files are being created correctly.
 '''
 
 #%% Imports
+import os
 import pytest
 import sciris as sc
 import covasim as cv # NOTE: this is the only tests script that doesn't use base
@@ -20,7 +21,7 @@ def test_parameters():
 
 def test_data():
     sc.heading('Data loading')
-    data = cv.load_data('example_data.csv')
+    data = cv.load_data(os.path.join(sc.thisdir(__file__), 'example_data.csv'))
     sc.pp(data)
 
     # Check that it is looking for the right file
