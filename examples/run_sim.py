@@ -25,11 +25,13 @@ fig_path = f'{basename}.png'
 print('Making sim...')
 sc.tic()
 sim = cv.Sim()
-sim.set_seed(seed)
-sim['n_days'] = 60
-sim['prog_by_age'] = True
+sim.set_seed(seed) # Set seed (can also be done via sim['seed'] = seed)
+sim['n'] = 5000 # Population size
+sim['n_days'] = 60 # Number of days to simulate
+sim['prog_by_age'] = True # Use age-specific mortality etc.
+sim['usepopdata'] = False # Use realistic population structure (requires synthpops)
 if interv:
-    sim['interventions'] = cv.change_beta(days=45, changes=0.5)
+    sim['interventions'] = cv.change_beta(days=45, changes=0.5) # Optionally add an intervention
 
 print('Running...')
 sim.run(verbose=verbose)
