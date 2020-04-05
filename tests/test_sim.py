@@ -3,14 +3,16 @@ Simple example usage for the Covid-19 agent-based model
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('TkAgg')
 import os
 import pytest
 import sciris as sc
 import covasim as cv
 
-do_plot = 1
+do_plot = 0
 do_save = 0
-do_show = 1
+do_show = 0
 
 #%% Define the tests
 
@@ -196,15 +198,15 @@ def test_start_stop(): # If being run via pytest, turn off
 if __name__ == '__main__':
     T = sc.tic()
 
-    pars  = test_parsobj()
-    sim0  = test_microsim()
+#    pars  = test_parsobj()
+#    sim0  = test_microsim()
     sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2  = test_singlerun()
-    sim3  = test_combine(do_plot=do_plot)
-    sims  = test_multirun(do_plot=do_plot)
-    scens = test_scenarios(do_plot=do_plot)
-    json  = test_fileio()
-    sim   = test_start_stop()
+#    sim2  = test_singlerun()
+#    sim3  = test_combine(do_plot=do_plot)
+#    sims  = test_multirun(do_plot=do_plot)
+#    scens = test_scenarios(do_plot=do_plot)
+#    json  = test_fileio()
+#    sim   = test_start_stop()
 
     sc.toc(T)
 

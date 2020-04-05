@@ -23,7 +23,8 @@ def make_pars():
     # Simulation parameters
     pars['scale']      = 1 # Factor by which to scale results -- e.g. 0.6*100 with n=10e3 assumes 60% of a population of 1m
     pars['n']          = 20e3 # Number ultimately susceptible to CoV
-    pars['n_infected'] = 10 # Number of seed cases
+    pars['n_seed']     = 10 # Number of seed cases
+    pars['n_import']   = 1 # Daily number of imported cases -- WARNING, this can slow things down a lot, importing cases makes for a lot more infections
     pars['start_day']  = dt.datetime(2020, 3, 1) # Start day of the simulation
     pars['n_days']     = 60 # Number of days of run, if end_day isn't used
     pars['seed']       = 1 # Random seed, if None, don't reset
