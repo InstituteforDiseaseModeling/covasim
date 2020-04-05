@@ -3,6 +3,8 @@ Simple script for running the Covid-19 agent-based model
 '''
 
 import sciris as sc
+import os
+import json
 
 print('Importing...')
 sc.tic()
@@ -10,8 +12,9 @@ import covasim as cv
 sc.toc()
 
 do_plot = 1
-do_save = 0
-do_show = 1
+do_save = 1
+do_show = 0
+do_summary = 1
 verbose = 1
 seed    = 4
 interv  = 0
@@ -21,6 +24,7 @@ date     = '2020mar31'
 folder   = 'results'
 basename = f'{folder}/covasim_run_{date}_{version}'
 fig_path = f'{basename}.png'
+summary_path = f'{basename}.json'
 
 print('Making sim...')
 sc.tic()
@@ -37,16 +41,18 @@ if interv:
 print('Running...')
 sim.run(verbose=verbose)
 
+if do_plot || do_summary:
+    # Clean the results dir
+    if os.path.exists(folder):
+        os.rmdir(folder)
+    os.mkdir(folder)
+
 if do_plot:
     print('Plotting...')
     fig = sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
 
-
-
-
-
-
-
-
-
-
+if do_summary:
+    summary = sim.summary_stats(verbose=1)
+    f = open(summary_path, "w")
+    f.write(json.dumps(summary, indent=2, separators=(',', ': ')))
+    f.close()
