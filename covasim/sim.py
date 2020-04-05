@@ -351,10 +351,10 @@ class Sim(cvbase.BaseSim):
             not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
             n_susceptible = len(self.people)
 
-            # Randomly infect some people
-            for i in range(int(self['n_infected'])):
-                person = self.get_person(i, filterby='susceptible')
-                person.infect(t=t)
+            # Randomly infect some people (imported infections)
+            imported_infection_uids = cvppl.choose_people(self.people, self['n_infected'], filterby='susceptible', uids_only=True)
+            for p in imported_infection_uids:
+                self.people[p].infect(t=t)
 
             for person in not_susceptible:
                 n_susceptible -= 1

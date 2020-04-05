@@ -421,3 +421,24 @@ def set_prognoses(sim, popdict):
     popdict.update(prognoses) # Add keys to popdict
 
     return
+
+
+def choose_people(people, n, filterby=None, uids_only=True):
+    '''
+    Randomly choose n people from a people distionary, optionally filtering by state
+    :param people: a people dictionary
+    :param n: number of people to choose
+    :param filterby: filter by some attribute (e.g. susceptible, alive,... )
+    :param uids_only: just return a list of uids, not the actual People
+    :return: these_people: a dictionary of n people meeting the filer condition (if specified)
+    '''
+
+    filtered_people = sc.odict((k,v) for k,v in people.items() if v.__getattribute__(filterby))
+    random_inds = cvu.choose(max_n=len(filtered_people), n=n)
+    uids = [p.uid for p in filtered_people[random_inds]]
+
+    if uids_only:
+        return uids
+    else:
+        these_people = sc.odict((p.uid, p) for p in filtered_people[random_inds])
+        return these_people
