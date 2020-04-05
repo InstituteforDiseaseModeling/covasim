@@ -173,6 +173,12 @@ class Sim(cvbase.BaseSim):
             start_day = sc.readdate(start_day)
         self['start_day'] = start_day # Convert back
 
+        # Handle contacts
+        contacts = self['contacts']
+        if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's community contacts
+            self['contacts']    = {'h':0, 's':0, 'w':0, 'c':contacts}
+            self['beta_layers'] = {'h':0, 's':0, 'w':0, 'c':1.0}
+
         # Handle population data
         popdata_choices = ['random', 'microstructure']
         if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
@@ -358,16 +364,15 @@ class Sim(cvbase.BaseSim):
             new_critical    = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
-            rand_popdata     = (self['usepopdata'] == 'random')
             beta             = self['beta']
             asymp_factor     = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
-            beta_pop         = self['beta_pop']
+            beta_layers      = self['beta_layers']
             n_beds           = self['n_beds']
             bed_constraint   = False
             n_people         = len(self.people)
-            n_comm_contacts  = self['contacts_pop']['R'] # TODO: refactor name
+            n_comm_contacts  = self['contacts']['c'] # Community contacts
 
             # Print progress
             if verbose>=1:
@@ -423,15 +428,12 @@ class Sim(cvbase.BaseSim):
                                    (cont_factor if person.known_contact else 1.)
 
                         # Determine who gets infected
-                        if rand_popdata: # Flat contacts
-                            transmission_inds = cvu.bf(thisbeta, person.contacts)
-                        else: # Dictionary of contacts -- extra loop over layers
-                            transmission_inds = []
-                            community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
-                            person.contacts['R'] = community_contact_inds
-                            for ckey in self.contact_keys:
-                                layer_beta = thisbeta * beta_pop[ckey]
-                                transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
+                        transmission_inds = []
+                        community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
+                        person.contacts['c'] = community_contact_inds
+                        for ckey in self.contact_keys:
+                            layer_beta = thisbeta * beta_layers[ckey]
+                            transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
 
                         # Loop over people who do
                         for contact_ind in transmission_inds:

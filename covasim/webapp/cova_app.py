@@ -213,7 +213,8 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         to_plot = sc.dcp(cv.default_sim_plots)
         for p,title,keylabels in to_plot.enumitems():
             fig = go.Figure()
-            for i,key,label in keylabels.enumitems():
+            for key in keylabels:
+                label = sim.results[key].name
                 this_color = sim.results[key].color
                 y = sim.results[key][:]
                 fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))

@@ -31,7 +31,6 @@ class Person(sc.prettyobj):
         self.durpars     = pars['dur']  # Store duration parameters
 
         # Define state
-        self.alive          = True
         self.susceptible    = True
         self.exposed        = False
         self.infectious     = False
@@ -263,14 +262,16 @@ def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
 
             # Replace contact UIDs with ints...
             uid_mapping = {uid:u for u,uid in enumerate(uids)}
+            key_mapping = {'H':'h', 'S':'s', 'W':'w', 'R':'c'} # Remap keys from old names to new names
             for uid,person in population.items():
                 uid_contacts = person['contacts']
                 int_contacts = {}
                 for key in uid_contacts.keys():
-                    int_contacts[key] = []
+                    new_key = key_mapping[key]
+                    int_contacts[new_key] = []
                     for uid in uid_contacts[key]:
-                        int_contacts[key].append(uid_mapping[uid])
-                    int_contacts[key] = np.array(int_contacts[key], dtype=int)
+                        int_contacts[new_key].append(uid_mapping[uid])
+                    int_contacts[new_key] = np.array(int_contacts[new_key], dtype=int)
                 contacts.append(int_contacts)
 
             popdict = {}
@@ -296,7 +297,7 @@ def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
     sim.popdict = popdict
     sim.uids = popdict['uid'] # Duplication, but used in an innermost loop so make as efficient as possible
     sim.people = people
-    sim.contact_keys = list(sim['contacts_pop'].keys())
+    sim.contact_keys = list(sim['contacts'].keys())
 
     average_age = sum(popdict['age']/n_people)
     sc.printv(f'Created {n_people} people, average age {average_age:0.2f} years', 1, verbose)
@@ -346,9 +347,11 @@ def make_randpop(sim, id_len=6):
     # Make contacts
     contacts = []
     for p in range(n_people):
-        n_contacts = cvu.pt(sim['contacts']) # Draw the number of Poisson contacts for this person
-        contact_inds = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random, assigning to household
-        contacts.append(contact_inds)
+        contact_dict = {}
+        for key in sim['contacts'].keys():
+            n_contacts = cvu.pt(sim['contacts'][key]) # Draw the number of Poisson contacts for this person
+            contact_dict[key] = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random
+        contacts.append(contact_dict)
 
     # Store output; data duplicated as per-person and list-like formats for convenience
     popdict = {}
