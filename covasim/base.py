@@ -74,6 +74,7 @@ class Result(object):
         values (array): array of values corresponding to this result
         npts (int): if values is None, precreate it to be of this length
         scale (bool): whether or not the value scales by population size
+        color (str or array): default color for plotting (hex or RGB notation)
 
     Example:
         import covasim as cv
@@ -84,9 +85,12 @@ class Result(object):
         print(r2)
     '''
 
-    def __init__(self, name=None, values=None, npts=None, scale=True):
-        self.name = name  # Name of this result
-        self.scale = scale  # Whether or not to scale the result by the scale factor
+    def __init__(self, name=None, values=None, npts=None, scale=True, color=None):
+        self.name =  name  # Name of this result
+        self.scale = scale # Whether or not to scale the result by the scale factor
+        if color is None:
+            color = '#000000'
+        self.color = color # Default color
         if values is None:
             if npts is not None:
                 values = np.zeros(int(npts)) # If length is known, use zeros

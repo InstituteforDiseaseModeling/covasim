@@ -14,24 +14,37 @@ from . import people as cvppl
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['default_sim_plots', 'Sim']
+__all__ = ['default_colors', 'default_sim_plots', 'Sim']
 
+# Specify plot colors
+default_colors = sc.objdict(
+    susceptible = '#5e7544',
+    infectious  = '#c78f65',
+    infections  = '#c75649',
+    tests       = '#aaa8ff',
+    diagnoses   = '#6e6bff',
+    recoveries  = '#799956',
+    symptomatic = '#c1ad71',
+    severe      = '#c1981d',
+    critical    = '#b86113',
+    deaths      = '#000000',
+    )
 
 # Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines
 default_sim_plots = sc.odict({
         'Total counts': sc.odict({
             'cum_infections': 'Cumulative infections',
-            'cum_recoveries': 'Cumulative recoveries',
             'cum_diagnoses':  'Cumulative diagnoses',
+            'cum_recoveries': 'Cumulative recoveries',
             # 'cum_tests': 'Cumulative tested',
             # 'n_susceptible': 'Number susceptible',
             # 'n_infectious': 'Number of active infections',
         }),
         'Daily counts': sc.odict({
             'new_infections': 'New infections',
-            'new_deaths':     'New deaths',
-            'new_recoveries': 'New recoveries',
             'new_diagnoses':  'New diagnoses',
+            'new_recoveries': 'New recoveries',
+            'new_deaths':     'New deaths',
             # 'tests': 'Number of tests',
         }),
         'Health outcomes': sc.odict({
@@ -173,39 +186,41 @@ class Sim(cvbase.BaseSim):
 
 
     def init_results(self):
-        ''' Initialize results '''
+        '''
+        Create the main results structure.
+        We differentiate between flows, stocks, and cumulative results
+        The prefix "new" is used for flow variables, i.e. counting new events (infections/deaths/recoveries) on each timestep
+        The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any paticular timestep
+        The prefix "cum_" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
+        Note that, by definition, n_dead is the same as cum_deaths and n_recovered is the same as cum_recoveries, so we only define the cumulative versions
+        '''
 
         def init_res(*args, **kwargs):
             ''' Initialize a single result object '''
             output = cvbase.Result(*args, **kwargs, npts=self.npts)
             return output
 
-        # Create the main results structure.
-        # We differentiate between flows, stocks, and cumulative results
-        # The prefix "new" is used for flow variables, i.e. counting new events (infections/deaths/recoveries) on each timestep
-        # The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any paticular timestep
-        # The prefix "cum_" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
-        # Note that, by definition, n_dead is the same as cum_deaths and n_recovered is the same as cum_recoveries, so we only define the cumulative versions
+        dcols = default_colors # Shorten
 
         # Stock variables
-        self.results['n_susceptible']  = init_res('Number susceptible')
-        self.results['n_exposed']      = init_res('Number exposed')
-        self.results['n_infectious']   = init_res('Number infectious')
-        self.results['n_symptomatic']  = init_res('Number symptomatic')
-        self.results['n_severe']       = init_res('Number with severe symptoms')
-        self.results['n_critical']     = init_res('Number of critical cases')
+        self.results['n_susceptible']  = init_res('Number susceptible',       color=dcols.susceptible)
+        self.results['n_exposed']      = init_res('Number exposed',           color=dcols.infections)
+        self.results['n_infectious']   = init_res('Number infectious',        color=dcols.infectious)
+        self.results['n_symptomatic']  = init_res('Number symptomatic',       color=dcols.symptomatic)
+        self.results['n_severe']       = init_res('Number of severe cases',   color=dcols.severe)
+        self.results['n_critical']     = init_res('Number of critical cases', color=dcols.critical)
         self.results['bed_capacity']   = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
         self.result_flows = ['infections', 'tests', 'diagnoses', 'recoveries', 'symptomatic', 'severe', 'critical', 'deaths']
         for key in self.result_flows:
             suffix = ' cases' if key in ['symptomatic', 'severe', 'critial'] else '' # Since need to say "severe cases" not just "severe"
-            self.results[f'new_{key}'] = init_res(f'Number of new {key}{suffix}') # Flow variables -- e.g. "Number of new infections"
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {key}{suffix}') # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'new_{key}'] = init_res(f'Number of new {key}{suffix}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {key}{suffix}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
 
         # Other variables
-        self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
-        self.results['doubling_time']  = init_res('Doubling time', scale=False)
+        self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
+        self.results['doubling_time'] = init_res('Doubling time', scale=False)
 
         # Populate the rest of the results
         self.results['t'] = self.tvec
@@ -624,7 +639,7 @@ class Sim(cvbase.BaseSim):
         to_plot = sc.odict(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults
-        fig_args     = sc.mergedicts({'figsize':(16,12)}, fig_args)
+        fig_args     = sc.mergedicts({'figsize':(16,14)}, fig_args)
         plot_args    = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
         scatter_args = sc.mergedicts({'s':150, 'marker':'s'}, scatter_args)
         axis_args    = sc.mergedicts({'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}, axis_args)
@@ -638,8 +653,6 @@ class Sim(cvbase.BaseSim):
         res = self.results # Shorten since heavily used
 
         # Plot everything
-
-        colors = sc.gridcolors(max([len(tp) for tp in to_plot.values()]))
 
         # Define the data mapping. Must be here since uses functions
         if self.data is not None and len(self.data):
@@ -659,7 +672,7 @@ class Sim(cvbase.BaseSim):
         for p,title,keylabels in to_plot.enumitems():
             ax = pl.subplot(len(to_plot),1,p+1)
             for i,key,label in keylabels.enumitems():
-                this_color = colors[i]
+                this_color = res[key].color
                 y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if key in data_mapping:
