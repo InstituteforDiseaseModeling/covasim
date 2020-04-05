@@ -208,6 +208,7 @@ class SimulationParameterTests(CovaSimTest):
                              f"be distinct.")
         pass
 
+    @unittest.skip('Disabled to improve test suite speed')
     def test_timelimit(self):
         """
         Start timer, run a simulation with many

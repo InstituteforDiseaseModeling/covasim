@@ -50,8 +50,8 @@ jobs:
         working-directory: ./tests
         run: |
           pip install pytest
-          pytest test*.py unittests/test*.py --junitxml=test-results.xml # Run actual tests
-          # pytest test*.py --junitxml=test-results.xml # Run actual tests
+          pytest test*.py unittests/test*.py --junitxml=test-results.xml --durations=0 # Run actual tests
+          # pytest test*.py --junitxml=test-results.xml --durations=0 # Run actual tests -- use this line instead if unit tests are broken
       - name: Run examples
         working-directory: ./examples
         run: python *.py

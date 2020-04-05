@@ -22,6 +22,9 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
     n_runs = 3
     verbose = 1
 
+    basepars = {'n': 1000}
+    metapars = {'n_runs': n_runs}
+
     sim = cv.Sim()
 
     # Define the scenarios
@@ -51,9 +54,9 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
         },
     }
 
-    metapars = {'n_runs': n_runs}
+    
 
-    scens = cv.Scenarios(sim=sim, metapars=metapars, scenarios=scenarios)
+    scens = cv.Scenarios(sim=sim, basepars=basepars, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose, debug=debug)
 
     if do_plot:

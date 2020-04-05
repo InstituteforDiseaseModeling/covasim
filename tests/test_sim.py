@@ -36,6 +36,13 @@ def test_microsim():
     sc.heading('Minimal sim test')
 
     sim = cv.Sim()
+    pars = {
+        'n': 10,
+        'n_infected': 1,
+        'contacts': 2,
+        'n_days': 10
+        }
+    sim.update_pars(pars)
     sim.run()
 
     return sim
@@ -68,7 +75,31 @@ def test_singlerun():
 
     sim = cv.Sim()
     sim['n_days'] = 20
+    sim['n'] = 1000
     sim = cv.single_run(sim=sim, **iterpars)
+
+    return sim
+
+
+def test_combine(do_plot=False): # If being run via pytest, turn off
+    sc.heading('Combine results test')
+
+    n_runs = 3
+    n = 1000
+    n_infected = 10
+
+    print('Running first sim...')
+    sim = cv.Sim({'n':n, 'n_infected':n_infected})
+    sim = cv.multi_run(sim=sim, n_runs=n_runs, combine=True)
+    assert len(sim.people) == n*n_runs
+
+    print('Running second sim, results should be similar but not identical (stochastic differences)...')
+    sim2 = cv.Sim({'n':n*n_runs, 'n_infected':n_infected*n_runs})
+    sim2.run()
+
+    if do_plot:
+        sim.plot()
+        sim2.plot()
 
     return sim
 
@@ -81,8 +112,9 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
                 'cont_factor': [0.1, 0.5, 0.9],
                 }
 
-    sim = cv.Sim() # Shouldn't be necessary, but is for now
+    sim = cv.Sim()
     sim['n_days'] = 60
+    sim['n'] = 1000
     sims = cv.multi_run(sim=sim, iterpars=iterpars)
 
     if do_plot:
@@ -94,7 +126,8 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
 
 def test_scenarios(do_plot=False):
     sc.heading('Scenarios test')
-    scens = cv.Scenarios()
+    basepars = {'n':1000}
+    scens = cv.Scenarios(basepars=basepars)
     scens.run()
     if do_plot:
         scens.plot()
@@ -110,6 +143,7 @@ def test_fileio():
     # Create and run the simulation
     sim = cv.Sim()
     sim['n_days'] = 20
+    sim['n'] = 1000
     sim.run(verbose=0)
 
     # Create objects
@@ -131,10 +165,9 @@ def test_fileio():
 def test_start_stop(): # If being run via pytest, turn off
     sc.heading('Test starting and stopping')
 
-    # Create and run a basic simulation
-    pars = cv.make_pars()
-    pars['population'] = cv.Population.random(pars)
+    pars = {'n': 1000}
 
+    # Create and run a basic simulation
     sim1 = cv.Sim(pars)
     sim1.run(verbose=0)
 
@@ -167,6 +200,7 @@ if __name__ == '__main__':
     sim0  = test_microsim()
     sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
     sim2  = test_singlerun()
+    sim3  = test_combine(do_plot=do_plot)
     sims  = test_multirun(do_plot=do_plot)
     scens = test_scenarios(do_plot=do_plot)
     json  = test_fileio()
