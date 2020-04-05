@@ -30,7 +30,9 @@ class Person(sc.prettyobj):
         self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
         self.durpars     = pars['dur']  # Store duration parameters
 
-        # Define state
+        # Define states
+        for state in pars['possible_states']:
+            setattr(self, state, False)
         self.susceptible    = True
 
         # Keep track of dates
