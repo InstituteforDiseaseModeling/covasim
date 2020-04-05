@@ -382,15 +382,15 @@ class Sim(cvbase.BaseSim):
                 else:
                     print(string)
 
-            # Randomly infect some people (imported infections): First method
+            # Update each person, skipping people who are susceptible
+            not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
+            n_susceptible   = len(self.people)
+
+            # Randomly infect some people (imported infections)
             s_uids  = [person.uid for person in self.people.values() if person.susceptible]
             if len(s_uids)>self['n_import'] and self['n_import']>0: # Check there are actually susceptibles
                 for i in range(int(self['n_import'])):
                     new_infections += self.people[s_uids[i]].infect(t=t)
-
-            # Update each person, skipping people who are susceptible
-            not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
-            n_susceptible   = len(self.people)
 
             for person in not_susceptible:
                 n_susceptible -= 1
