@@ -1,5 +1,5 @@
 name: Covasim CI workflow
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   install_and_test:
@@ -8,7 +8,7 @@ jobs:
       fail-fast: false
       max-parallel: 8
       matrix:
-        python-version: ['3.7', '3.8']
+        python-version: ['3.7']
     name: Install and test
     steps:
       - name: Set repo owner env variable
@@ -50,8 +50,8 @@ jobs:
         working-directory: ./tests
         run: |
           pip install pytest
-          pytest test*.py unittests/test*.py --junitxml=test-results.xml # Run actual tests
-          # pytest test*.py --junitxml=test-results.xml # Run actual tests
+          pytest test*.py unittests/test*.py --junitxml=test-results.xml --durations=0 # Run actual tests
+          # pytest test*.py --junitxml=test-results.xml --durations=0 # Run actual tests -- use this line instead if unit tests are broken
       - name: Run examples
         working-directory: ./examples
         run: python *.py

@@ -106,29 +106,54 @@ def get_default_prognoses(by_age=True):
 
 
 
-def load_data(datafile, datacols=None, **kwargs):
+def load_data(filename, columns=None, calculate=True, **kwargs):
     '''
     Load data for comparing to the model output.
 
     Args:
-        datafile (str): the name of the file to load
-        datacols (list): list of required column names
+        filename (str): the name of the file to load (either Excel or CSV)
+        columns (list): list of column names (otherwise, load all)
+        calculate (bool): whether or not to calculate cumulative values from daily counts
         kwargs (dict): passed to pd.read_excel()
 
     Returns:
         data (dataframe): pandas dataframe of the loaded data
     '''
 
-    if datacols is None:
-        datacols = ['day', 'date', 'new_tests', 'new_positives']
-
     # Load data
-    raw_data = pd.read_excel(datafile, **kwargs)
+    if filename.lower().endswith('csv'):
+        raw_data = pd.read_csv(filename, **kwargs)
+    elif filename.lower().endswith('xlsx'):
+        raw_data = pd.read_excel(filename, **kwargs)
+    else:
+        errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {filename}'
+        raise NotImplementedError(errormsg)
 
     # Confirm data integrity and simplify
-    for col in datacols:
-        assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
-    data = raw_data[datacols]
+    if columns is not None:
+        for col in columns:
+            if col not in raw_data.columns:
+                errormsg = f'Column "{col}" is missing from the loaded data'
+                raise ValueError(errormsg)
+        data = raw_data[columns]
+    else:
+        data = raw_data
+
+    # Calculate any cumulative columns that are missing
+    if calculate:
+        columns = data.columns
+        for col in columns:
+            if col.startswith('new'):
+                cum_col = col.replace('new_', 'cum_')
+                if cum_col not in columns:
+                    data[cum_col] = np.cumsum(data[col])
+
+    # Ensure required columns are present
+    if 'date' not in data.columns:
+        errormsg = f'Required column "date" not found; columns are {data.columns}'
+        raise ValueError(errormsg)
+    else:
+        data['date'] = pd.to_datetime(data['date'])
 
     return data
 

@@ -23,8 +23,11 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
 
     n_runs = 3
     verbose = 1
+    base_pars = {
+      'n': 1000
+      }
 
-    base_sim = cv.Sim() # create sim object
+    base_sim = cv.Sim(base_pars) # create sim object
     n_people = base_sim['n']
     npts = base_sim.npts
 
