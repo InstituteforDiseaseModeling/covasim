@@ -3,8 +3,6 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
-import matplotlib
-matplotlib.use('TkAgg')
 import sciris as sc
 import covasim as cv
 
@@ -81,18 +79,19 @@ def test_borderclosure(do_plot=False, do_show=True, do_save=False, fig_path=None
     n_runs = 3
     verbose = 1
 
-    basepars = {'n': 20000}
+    basepars = {'n': 1000}
+    basepars = {'n_import': 5}
     metapars = {'n_runs': n_runs}
 
     sim = cv.Sim()
 
     # Define the scenarios
     scenarios = {
-#        'baseline': {
-#            'name': 'No border closures',
-#            'pars': {
-#            }
-#        },
+        'baseline': {
+            'name': 'No border closures',
+            'pars': {
+            }
+        },
         'borderclosures_day1': {
           'name':'Close borders on day 1',
           'pars': {
