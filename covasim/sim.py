@@ -109,6 +109,10 @@ class Sim(cvbase.BaseSim):
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
             self.data = cvpars.load_data(filename=datafile, columns=datacols, **kwargs)
+
+            # Ensure the data are continuous and align with the simulation
+            # data_offset = (self.data.iloc[0]['date'] - self.pars['start_day']).days # TODO: Use df.set_index("A").reindex(new_index).reset_index()
+
         return
 
 
@@ -203,13 +207,13 @@ class Sim(cvbase.BaseSim):
         dcols = default_colors # Shorten
 
         # Stock variables
-        self.results['n_susceptible']  = init_res('Number susceptible',       color=dcols.susceptible)
-        self.results['n_exposed']      = init_res('Number exposed',           color=dcols.infections)
-        self.results['n_infectious']   = init_res('Number infectious',        color=dcols.infectious)
-        self.results['n_symptomatic']  = init_res('Number symptomatic',       color=dcols.symptomatic)
-        self.results['n_severe']       = init_res('Number of severe cases',   color=dcols.severe)
-        self.results['n_critical']     = init_res('Number of critical cases', color=dcols.critical)
-        self.results['bed_capacity']   = init_res('Percentage bed capacity', scale=False)
+        self.results['n_susceptible'] = init_res('Number susceptible',       color=dcols.susceptible)
+        self.results['n_exposed']     = init_res('Number exposed',           color=dcols.infections)
+        self.results['n_infectious']  = init_res('Number infectious',        color=dcols.infectious)
+        self.results['n_symptomatic'] = init_res('Number symptomatic',       color=dcols.symptomatic)
+        self.results['n_severe']      = init_res('Number of severe cases',   color=dcols.severe)
+        self.results['n_critical']    = init_res('Number of critical cases', color=dcols.critical)
+        self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
         self.result_flows = ['infections', 'tests', 'diagnoses', 'recoveries', 'symptomatic', 'severe', 'critical', 'deaths']
@@ -653,30 +657,14 @@ class Sim(cvbase.BaseSim):
         res = self.results # Shorten since heavily used
 
         # Plot everything
-
-        # Define the data mapping. Must be here since uses functions
-        if self.data is not None and len(self.data):
-            # start day of data may not co-incide with simulation
-            data_offset = (self.data.iloc[0]['date'] - self.pars['start_day']).days
-            data_mapping = {
-                'cum_exposed': pl.cumsum(self.data['new_infections']),
-                'cum_diagnosed':  pl.cumsum(self.data['new_positives']),
-                'cum_tested':     pl.cumsum(self.data['new_tests']),
-                'infections':     self.data['new_infections'],
-                'tests':          self.data['new_tests'],
-                'diagnoses':      self.data['new_positives'],
-                }
-        else:
-            data_mapping = {}
-
         for p,title,keylabels in to_plot.enumitems():
             ax = pl.subplot(len(to_plot),1,p+1)
             for i,key,label in keylabels.enumitems():
                 this_color = res[key].color
                 y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
-                if key in data_mapping:
-                    pl.scatter(self.data['day']+data_offset, data_mapping[key], c=[this_color], **scatter_args)
+                if key in self.data:
+                    pl.scatter(self.data['day'], self.data[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
 
