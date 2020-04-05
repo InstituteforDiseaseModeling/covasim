@@ -463,7 +463,7 @@ class Sim(cvbase.BaseSim):
 
     def finalize(self, verbose=None):
         for key in self.result_flows:
-            self.results[f'cum_{key}'].values = np.cumsum(self.results['new_{key}'].values)
+            self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['n_infected'] # Include initially infected people
 
         # Scale the results
@@ -500,7 +500,7 @@ class Sim(cvbase.BaseSim):
             None (modifies results in place)
         '''
         window = self['window']
-        cum_infections = self.results['cum_exposed']
+        cum_infections = self.results['cum_infections'].values
         for t in range(window, self.npts):
             infections_now = cum_infections[t]
             infections_prev = cum_infections[t-window]
@@ -576,20 +576,12 @@ class Sim(cvbase.BaseSim):
             verbose = self['verbose']
 
         summary = sc.objdict()
+        summary_str = 'Summary:\n'
         for key in self.reskeys:
             summary[key] = self.results[key][-1]
-
-        sc.printv(f"""Summary:
-     {summary['n_susceptible']:5.0f} susceptible
-     {summary['n_infectious']:5.0f} infectious
-     {summary['n_symptomatic']:5.0f} symptomatic
-     {summary['n_severe']:5.0f} severe cases
-     {summary['n_critical']:5.0f} critical cases
-     {summary['cum_exposed']:5.0f} total exposed
-     {summary['cum_diagnosed']:5.0f} total diagnosed
-     {summary['cum_deaths']:5.0f} total deaths
-     {summary['cum_recoveries']:5.0f} total recovered
-               """, 1, verbose)
+            if key.startswith('cum_'):
+                summary_str += f'   {summary[key]:5.0f} {self.results[key].name}\n'
+        sc.printv(summary_str, 1, verbose)
 
         return summary
 
