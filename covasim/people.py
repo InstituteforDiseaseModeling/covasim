@@ -165,25 +165,40 @@ class Person(sc.prettyobj):
         return death
 
 
-    def check_progression(self, state, state_date, t, new_state, in_state):
+    def check_symptomatic(self, t, new_state, in_state):
         '''
         Check progression state for symptomatic, severe, and critical.
 
         Args:
-            state: the state to check, e.g. self.symptomatic
-            date: the date by which they change state, e.g. date_symptomatic
             t: the current timestep
             new_state: the counter of people newly entering this state
             in_state: the number of people in this state
-
-        Example:
-            person.check_state(self.symptomatic, self.date_symptomatic, t)
         '''
-        if state: # If they're already in this state, do not add them to new cases but do count them towards this state
+        if self.symptomatic: # If they're already in this state, do not add them to new cases but do count them towards this state
             in_state += 1
         else:
-            if state_date and t >= state_date: # Person is changing to this state
-                state = True
+            if self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
+                self.symptomatic = True
+                new_state += 1
+                in_state += 1
+        return new_state, in_state
+
+    def check_severe(self, t, new_state, in_state):
+        if self.severe: # If they're already in this state, do not add them to new cases but do count them towards this state
+            in_state += 1
+        else:
+            if self.date_severe and t >= self.date_severe: # Person is changing to this state
+                self.severe = True
+                new_state += 1
+                in_state += 1
+        return new_state, in_state
+
+    def check_critical(self, t, new_state, in_state):
+        if self.critical: # If they're already in this state, do not add them to new cases but do count them towards this state
+            in_state += 1
+        else:
+            if self.date_critical and t >= self.date_critical: # Person is changing to this state
+                self.critical = True
                 new_state += 1
                 in_state += 1
         return new_state, in_state

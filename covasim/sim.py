@@ -385,9 +385,9 @@ class Sim(cvbase.BaseSim):
 
                     # No recovery: check symptoms
                     if not new_recovery:
-                        new_symptomatic, n_symptomatic = person.check_progression(person.symptomatic, person.date_symptomatic, t, new_symptomatic, n_symptomatic)
-                        new_severe,      n_severe      = person.check_progression(person.severe,      person.date_severe,      t, new_severe,      n_severe)
-                        new_critical,    n_critical    = person.check_progression(person.critical,    person.date_critical,    t, new_critical,    n_critical)
+                        new_symptomatic, n_symptomatic = person.check_symptomatic(t, new_symptomatic, n_symptomatic)
+                        new_severe,      n_severe      = person.check_severe(t,      new_severe,      n_severe)
+                        new_critical,    n_critical    = person.check_critical(t,    new_critical,    n_critical)
                         if n_severe > n_beds:
                             bed_constraint = True
 
