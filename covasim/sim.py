@@ -99,7 +99,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def load_people(self, filename=None, **kwargs):
+    def load_population(self, filename=None, **kwargs):
         '''
         Load the population dictionary from file.
 
@@ -117,7 +117,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def save_people(self, filename, **kwargs):
+    def save_population(self, filename, **kwargs):
         '''
         Save the population dictionary to file.
 
@@ -552,13 +552,16 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def likelihood(self, verbose=None):
+    def likelihood(self, weights=None, verbose=None):
         '''
         Compute the log-likelihood of the current simulation based on the number
         of new diagnoses.
         '''
         if verbose is None:
             verbose = self['verbose']
+
+        if weights is None:
+            pass
 
         loglike = 0
         if self.data is not None and len(self.data): # Only perform likelihood calculation if data are available

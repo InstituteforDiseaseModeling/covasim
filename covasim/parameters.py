@@ -106,13 +106,15 @@ def get_default_prognoses(by_age=True):
 
 
 
-def load_data(filename, columns=None, **kwargs):
+def load_data(filename=None, columns=None, raw_data=None, calculate=True, **kwargs):
     '''
     Load data for comparing to the model output.
 
     Args:
-        filename (str): the name of the file to load (either Excel or CSV)
+        filename (str): the name of the file to load (either Excel or CSV), if raw_data is not supplied directly
         columns (list): list of column names (otherwise, load all)
+        raw_data (dataframe): if supplying a dataframe directly rather than loading from file
+        calculate (bool): whether or not to calculate cumulative values from daily counts
         kwargs (dict): passed to pd.read_excel()
 
     Returns:
@@ -120,13 +122,14 @@ def load_data(filename, columns=None, **kwargs):
     '''
 
     # Load data
-    if filename.lower().endswith('csv'):
-        raw_data = pd.read_csv(filename, **kwargs)
-    elif filename.lower().endswith('xlsx'):
-        raw_data = pd.read_excel(filename, **kwargs)
-    else:
-        errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {filename}'
-        raise NotImplementedError(errormsg)
+    if raw_data is None:
+        if filename.lower().endswith('csv'):
+            raw_data = pd.read_csv(filename, **kwargs)
+        elif filename.lower().endswith('xlsx'):
+            raw_data = pd.read_excel(filename, **kwargs)
+        else:
+            errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {filename}'
+            raise NotImplementedError(errormsg)
 
     # Confirm data integrity and simplify
     if columns is not None:
@@ -137,6 +140,15 @@ def load_data(filename, columns=None, **kwargs):
         data = raw_data[columns]
     else:
         data = raw_data
+
+    # Calculate any cumulative columns that are missing
+    if calculate:
+        columns = data.columns
+        for col in columns:
+            if col.startswith('new'):
+                cum_col = col.replace('new_', 'cum_')
+                if cum_col not in columns:
+                    data[cum_col] = np.cumsum(data[col])
 
     return data
 
