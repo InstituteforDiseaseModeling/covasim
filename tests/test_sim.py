@@ -3,6 +3,8 @@ Simple example usage for the Covid-19 agent-based model
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('TkAgg')
 import os
 import pytest
 import sciris as sc
@@ -215,16 +217,16 @@ def test_sim_data(do_plot=False, do_show=False):
 if __name__ == '__main__':
     T = sc.tic()
 
-    pars  = test_parsobj()
-    sim0  = test_microsim()
+#    pars  = test_parsobj()
+#    sim0  = test_microsim()
     sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2  = test_singlerun()
-    sim3  = test_combine(do_plot=do_plot)
-    sims  = test_multirun(do_plot=do_plot)
-    scens = test_scenarios(do_plot=do_plot)
-    json  = test_fileio()
-    sim4  = test_start_stop()
-    sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
+#    sim2  = test_singlerun()
+#    sim3  = test_combine(do_plot=do_plot)
+#    sims  = test_multirun(do_plot=do_plot)
+#    scens = test_scenarios(do_plot=do_plot)
+#    json  = test_fileio()
+#    sim4  = test_start_stop()
+#    sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
 
     sc.toc(T)
 
