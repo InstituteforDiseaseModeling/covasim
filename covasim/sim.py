@@ -196,19 +196,12 @@ class Sim(cvbase.BaseSim):
         self.results['n_critical']     = init_res('Number of critical cases')
         self.results['bed_capacity']   = init_res('Percentage bed capacity', scale=False)
 
-        # Flow variables
-        self.results['new_infections'] = init_res('Number of new infections')
-        self.results['new_tests']      = init_res('Number of new tests')
-        self.results['new_diagnoses']  = init_res('Number of new diagnoses')
-        self.results['new_recoveries'] = init_res('Number of new recoveries')
-        self.results['new_deaths']     = init_res('Number of new deaths')
-
-        # Cumulative variables
-        self.results['cum_exposed']    = init_res('Cumulative number exposed')
-        self.results['cum_tested']     = init_res('Cumulative number of tests')
-        self.results['cum_diagnosed']  = init_res('Cumulative number diagnosed')
-        self.results['cum_recoveries'] = init_res('Cumulative number recovered')
-        self.results['cum_deaths']     = init_res('Cumulative number of deaths')
+        # Flows and cumulative flows
+        self.result_flows = ['infections', 'tests', 'diagnoses', 'recoveries', 'symptomatic', 'severe', 'critical', 'deaths']
+        for key in self.result_flows:
+            suffix = ' cases' if key in ['symptomatic', 'severe', 'critial'] else '' # Since need to say "severe cases" not just "severe"
+            self.results[f'new_{key}'] = init_res(f'Number of new {key}{suffix}') # Flow variables -- e.g. "Number of new infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {key}{suffix}') # Cumulative variables -- e.g. "Cumulative infections"
 
         # Other variables
         self.results['r_eff']          = init_res('Effective reproductive number', scale=False)
@@ -450,9 +443,12 @@ class Sim(cvbase.BaseSim):
             self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else None
 
             # Update counts for this time step: flows
-            self.results['new_infections'][t] = new_infections # New infections on this timestep
-            self.results['new_recoveries'][t] = new_recoveries # Tracks new recoveries on this timestep
-            self.results['new_deaths'][t]     = new_deaths
+            self.results['new_infections'][t]  = new_infections # New infections on this timestep
+            self.results['new_recoveries'][t]  = new_recoveries # Tracks new recoveries on this timestep
+            self.results['new_symptomatic'][t] = new_symptomatic
+            self.results['new_severe'][t]      = new_severe
+            self.results['new_critical'][t]    = new_critical
+            self.results['new_deaths'][t]      = new_deaths
 
         # End of time loop; compute cumulative results outside of the time loop
         if finalize:
@@ -466,11 +462,9 @@ class Sim(cvbase.BaseSim):
 
 
     def finalize(self, verbose=None):
-        self.results['cum_exposed'].values    = pl.cumsum(self.results['new_infections'].values) + self['n_infected'] # Include initially infected people
-        self.results['cum_tested'].values     = pl.cumsum(self.results['new_tests'].values)
-        self.results['cum_diagnosed'].values  = pl.cumsum(self.results['new_diagnoses'].values)
-        self.results['cum_deaths'].values     = pl.cumsum(self.results['new_deaths'].values)
-        self.results['cum_recoveries'].values = pl.cumsum(self.results['new_recoveries'].values)
+        for key in self.result_flows:
+            self.results[f'cum_{key}'].values = np.cumsum(self.results['new_{key}'].values)
+        self.results['cum_infections'].values += self['n_infected'] # Include initially infected people
 
         # Scale the results
         for reskey in self.reskeys:
