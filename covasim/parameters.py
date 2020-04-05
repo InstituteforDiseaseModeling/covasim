@@ -111,24 +111,30 @@ def load_data(datafile, datacols=None, **kwargs):
     Load data for comparing to the model output.
 
     Args:
-        datafile (str): the name of the file to load
-        datacols (list): list of required column names
+        datafile (str): the name of the file to load (either Excel or CSV)
+        datacols (list): list of column names (otherwise, load all)
         kwargs (dict): passed to pd.read_excel()
 
     Returns:
         data (dataframe): pandas dataframe of the loaded data
     '''
 
-    if datacols is None:
-        datacols = ['day', 'date', 'new_tests', 'new_positives']
-
     # Load data
-    raw_data = pd.read_excel(datafile, **kwargs)
+    if datafile.lower().endswith('csv'):
+        raw_data = pd.read_csv(datafile, **kwargs)
+    elif datafile.lower().endswith('xlsx'):
+        raw_data = pd.read_excel(datafile, **kwargs)
+    else:
+        errormsg = f'Currently only loading from .csv and .xlsx files is supported, not {datafile}'
+        raise NotImplementedError(errormsg)
 
     # Confirm data integrity and simplify
-    for col in datacols:
-        assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
-    data = raw_data[datacols]
+    if datacols is not None:
+        for col in datacols:
+            assert col in raw_data.columns, f'Column "{col}" is missing from the loaded data'
+        data = raw_data[datacols]
+    else:
+        data = raw_data
 
     return data
 

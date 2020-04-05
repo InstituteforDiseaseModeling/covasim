@@ -50,18 +50,29 @@ class Sim(cvbase.BaseSim):
         filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, filename=None):
-        default_pars = cvpars.make_pars() # Start with default pars
-        super().__init__(default_pars) # Initialize and set the parameters as attributes
-        self.set_metadata(filename) # Set the simulation date and filename
-        self.load_data(datafile, datacols) # Load the data, if provided
-        self.update_pars(pars) # Update the parameters, if provided
-        self.initialized = False
-        self.stopped = None # If the simulation has stopped
+    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None):
+        # Create the object
+        default_pars =  # Start with default pars
+        super().__init__(cvpars.make_pars()) # Initialize and set the parameters as attributes
+
+        # Set attributes
+        self.created       = None  # The datetime the sim was created
+        self.filename      = None  # The filename of the sim
+        self.datafile      = None  # The name of the data file
+        self.data          = None  # The actual data
+        self.popdict       = None  # The population dictionary
+        self.t             = None  # The current time in the simulation
+        self.initialized   = False # Whether or not initialization is complete
+        self.stopped       = None  # If the simulation has stopped
         self.results_ready = False # Whether or not results are ready
-        self.popdict = None
-        self.people = {} # Initialize these here so methods that check their length can see they're empty
-        self.results = {}
+        self.people        = {}    # Initialize these here so methods that check their length can see they're empty
+        self.results       = {}    # For storing results
+
+        # Now update everything
+        self.set_metadata(filename)        # Set the simulation date and filename
+        self.load_data(datafile, datacols) # Load the data, if provided
+        self.load_population(popfile)      # Load the population, if provided
+        self.update_pars(pars)             # Update the parameters, if provided
         return
 
 
@@ -70,8 +81,7 @@ class Sim(cvbase.BaseSim):
         self.created = sc.now()
         if filename is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            filename = f'covasim_{datestr}.sim'
-        self.filename = filename
+            self.filename = f'covasim_{datestr}.sim'
         return
 
 
@@ -80,25 +90,24 @@ class Sim(cvbase.BaseSim):
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
             self.data = cvpars.load_data(datafile=datafile, datacols=datacols, **kwargs)
-        else: # Otherwise, skip
-            self.data = None
         return
 
 
-    def load_people(self, filename, **kwargs):
+    def load_people(self, filename=None, **kwargs):
         '''
         Load the population dictionary from file.
 
         Args:
-            filename (str): name of the file to load.
+            filename (str): name of the file to load
         '''
-        filepath = sc.makefilepath(filename=filename, **kwargs)
-        self.popdict = sc.loadobj(filepath)
-        n_actual = len(self.popdict['uid'])
-        n_expected = self['n']
-        if n_actual != n_expected:
-            errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "n" to match or regenerate the file'
-            raise ValueError(errormsg)
+        if popfile is not None:
+            filepath = sc.makefilepath(filename=filename, **kwargs)
+            self.popdict = sc.loadobj(filepath)
+            n_actual = len(self.popdict['uid'])
+            n_expected = self['n']
+            if n_actual != n_expected:
+                errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "n" to match or regenerate the file'
+                raise ValueError(errormsg)
         return
 
 
