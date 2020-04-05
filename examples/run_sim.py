@@ -26,11 +26,10 @@ print('Making sim...')
 sc.tic()
 sim = cv.Sim()
 sim.set_seed(seed)
-# sim['n'] = 122000
 sim['n'] = 5000
 sim['n_days'] = 60
 sim['prog_by_age'] = True
-# sim['usepopdata'] = True
+sim['usepopdata'] = False
 if interv:
     sim['interventions'] = cv.change_beta(days=45, changes=0.5)
 
