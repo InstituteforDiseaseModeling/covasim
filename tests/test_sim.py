@@ -38,7 +38,7 @@ def test_microsim():
     sim = cv.Sim()
     pars = {
         'n': 10,
-        'n_infected': 1,
+        'n_seed': 1,
         'contacts': 2,
         'n_days': 10
         }
@@ -86,15 +86,15 @@ def test_combine(do_plot=False): # If being run via pytest, turn off
 
     n_runs = 3
     n = 1000
-    n_infected = 10
+    n_seed = 10
 
     print('Running first sim...')
-    sim = cv.Sim({'n':n, 'n_infected':n_infected})
+    sim = cv.Sim({'n':n, 'n_seed':n_seed})
     sim = cv.multi_run(sim=sim, n_runs=n_runs, combine=True)
     assert len(sim.people) == n*n_runs
 
     print('Running second sim, results should be similar but not identical (stochastic differences)...')
-    sim2 = cv.Sim({'n':n*n_runs, 'n_infected':n_infected*n_runs})
+    sim2 = cv.Sim({'n':n*n_runs, 'n_seed':n_seed*n_runs})
     sim2.run()
 
     if do_plot:

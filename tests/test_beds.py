@@ -6,7 +6,7 @@ Testing the effect of testing interventions in Covasim
 import sciris as sc
 import covasim as cv
 
-do_plot   = 1
+do_plot   = 0
 do_show   = 0
 do_save   = 1
 debug     = 1
@@ -32,20 +32,20 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
         'baseline': {
           'name': 'No bed constraints',
           'pars': {
-              'n_infected': 100
+              'n_seed': 100
           }
         },
         'bedconstraint': {
             'name': 'Only 10 beds available',
             'pars': {
-                'n_infected': 100,
+                'n_seed': 100,
                 'n_beds': 10,
             }
         },
         'bedconstraint2': {
             'name': 'Only 1 bed available, people are 10x more likely to die if not hospitalized',
             'pars': {
-                'n_infected': 100,
+                'n_seed': 100,
                 'n_beds': 1,
                 'OR_no_treat': 10.,
             }
@@ -119,7 +119,7 @@ def test_borderclosure(do_plot=False, do_show=True, do_save=False, fig_path=None
 if __name__ == '__main__':
     sc.tic()
 
-#    bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
     border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
 
     sc.toc()
