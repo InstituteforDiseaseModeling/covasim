@@ -15,7 +15,7 @@ __all__ = ['default_scen_plots', 'default_scenario', 'make_metapars', 'Scenarios
 
 
 default_scen_plots = sc.odict({
-            'cum_exposed': 'Cumulative infections',
+            'cum_infections': 'Cumulative infections',
             # 'cum_deaths': 'Cumulative deaths',
             # 'cum_recoveries':'Cumulative recoveries',
             # 'cum_tested': 'Cumulative tested',

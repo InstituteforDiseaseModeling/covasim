@@ -165,34 +165,43 @@ class Person(sc.prettyobj):
         return death
 
 
-    def check_symptomatic(self, t):
-        ''' Check if an infected person has developed symptoms '''
-        if self.date_symptomatic and t >= self.date_symptomatic: # Person is symptomatic - use >= here because we want to know the total number symptomatic at each time step, not new symptomatics
-            self.symptomatic = True
-            symptomatic = 1
+    def check_symptomatic(self, t, new_state, in_state):
+        '''
+        Check progression state for symptomatic, severe, and critical.
+
+        Args:
+            t: the current timestep
+            new_state: the counter of people newly entering this state
+            in_state: the number of people in this state
+        '''
+        if self.symptomatic: # If they're already in this state, do not add them to new cases but do count them towards this state
+            in_state += 1
         else:
-            symptomatic = 0
-        return symptomatic
+            if self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
+                self.symptomatic = True
+                new_state += 1
+                in_state += 1
+        return new_state, in_state
 
-
-    def check_severe(self, t):
-        ''' Check if an infected person has developed severe symptoms requiring hospitalization'''
-        if self.date_severe and t >= self.date_severe: # Symptoms have become bad enough to need hospitalization
-            self.severe = True
-            severe = 1
+    def check_severe(self, t, new_state, in_state):
+        if self.severe: # If they're already in this state, do not add them to new cases but do count them towards this state
+            in_state += 1
         else:
-            severe = 0
-        return severe
+            if self.date_severe and t >= self.date_severe: # Person is changing to this state
+                self.severe = True
+                new_state += 1
+                in_state += 1
+        return new_state, in_state
 
-
-    def check_critical(self, t):
-        ''' Check if an infected person is in need of IC'''
-        if self.date_critical and t >= self.date_critical: # Symptoms have become bad enough to need ICU
-            self.critical = True
-            critical = 1
+    def check_critical(self, t, new_state, in_state):
+        if self.critical: # If they're already in this state, do not add them to new cases but do count them towards this state
+            in_state += 1
         else:
-            critical = 0
-        return critical
+            if self.date_critical and t >= self.date_critical: # Person is changing to this state
+                self.critical = True
+                new_state += 1
+                in_state += 1
+        return new_state, in_state
 
 
     def check_recovery(self, t):

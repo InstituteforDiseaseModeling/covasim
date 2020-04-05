@@ -185,11 +185,30 @@ def test_start_stop(): # If being run via pytest, turn off
     sim3.finalize()
 
     # Compare results
-    key = 'cum_exposed'
+    key = 'cum_infections'
     assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Start-stop values do not match'
     assert (sim1.results[key][:] == sim3.results[key][:]).all(), 'Next values do not match'
 
     return sim2
+
+
+def test_sim_data(do_plot=False, do_show=False):
+    sc.heading('Data test')
+
+    pars = dict(
+        n=2000,
+        start_day = '2020-01-01',
+        )
+
+    # Create and run the simulation
+    sim = cv.Sim(pars=pars, datafile=os.path.join(sc.thisdir(__file__), 'example_data.csv'))
+    sim.run()
+
+    # Optionally plot
+    if do_plot:
+        sim.plot(do_show=do_show)
+
+    return sim
 
 
 #%% Run as a script
@@ -204,7 +223,8 @@ if __name__ == '__main__':
     sims  = test_multirun(do_plot=do_plot)
     scens = test_scenarios(do_plot=do_plot)
     json  = test_fileio()
-    sim   = test_start_stop()
+    sim4  = test_start_stop()
+    sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
 
     sc.toc(T)
 
