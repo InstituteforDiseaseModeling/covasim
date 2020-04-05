@@ -22,7 +22,7 @@ default_colors = sc.objdict(
     infectious  = '#c78f65',
     infections  = '#c75649',
     tests       = '#aaa8ff',
-    diagnoses   = '#6e6bff',
+    diagnoses   = '#8886cc',
     recoveries  = '#799956',
     symptomatic = '#c1ad71',
     severe      = '#c1981d',
@@ -570,17 +570,24 @@ class Sim(cvbase.BaseSim):
             verbose = self['verbose']
 
         if weights is None:
-            pass
+            weights = {}
 
         loglike = 0
-        if self.data is not None and len(self.data): # Only perform likelihood calculation if data are available
-            for d,datum in enumerate(self.data['new_positives']):
-                if not pl.isnan(datum) and d<len(self.results['diagnoses'].values): # TODO: make more flexible # Skip days when no tests were performed
-                    estimate = self.results['diagnoses'][d]
-                    p = cvu.poisson_test(datum, estimate)
-                    logp = pl.log(p)
-                    loglike += logp
-                    sc.printv(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
+        if self.data is not None: # Only perform likelihood calculation if data are available
+            for key in self.reskeys:
+                if key in self.data:
+                    if key in weights:
+                        weight = weights[key]
+                    else:
+                        weight = 1
+                    for d,datum in enumerate(self.data[key]):
+                        if not pl.isnan(datum) and d<len(self.results[key].values):
+                            estimate = self.results[key][d]
+                            if datum and estimate:
+                                p = cvu.poisson_test(datum, estimate)
+                                logp = pl.log(p)
+                                loglike += weight*logp
+                                sc.printv(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
             self.results['likelihood'] = loglike
             sc.printv(f'Likelihood: {loglike}', 1, verbose)
@@ -645,7 +652,7 @@ class Sim(cvbase.BaseSim):
         # Handle input arguments -- merge user input with defaults
         fig_args     = sc.mergedicts({'figsize':(16,14)}, fig_args)
         plot_args    = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
-        scatter_args = sc.mergedicts({'s':150, 'marker':'s'}, scatter_args)
+        scatter_args = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
         axis_args    = sc.mergedicts({'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}, axis_args)
 
         fig = pl.figure(**fig_args)
@@ -663,7 +670,7 @@ class Sim(cvbase.BaseSim):
                 this_color = res[key].color
                 y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
-                if key in self.data:
+                if self.data is not None and key in self.data:
                     pl.scatter(self.data['day'], self.data[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)

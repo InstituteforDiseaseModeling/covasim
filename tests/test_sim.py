@@ -192,19 +192,39 @@ def test_start_stop(): # If being run via pytest, turn off
     return sim2
 
 
+def test_sim_data(do_plot=False, do_show=False):
+    sc.heading('Data test')
+
+    pars = dict(
+        n=2000,
+        start_day = '2020-01-01',
+        )
+
+    # Create and run the simulation
+    sim = cv.Sim(pars=pars, datafile='example_data.csv')
+    sim.run()
+
+    # Optionally plot
+    if do_plot:
+        sim.plot(do_show=do_show)
+
+    return sim
+
+
 #%% Run as a script
 if __name__ == '__main__':
     T = sc.tic()
 
-    pars  = test_parsobj()
-    sim0  = test_microsim()
-    sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2  = test_singlerun()
-    sim3  = test_combine(do_plot=do_plot)
-    sims  = test_multirun(do_plot=do_plot)
-    scens = test_scenarios(do_plot=do_plot)
-    json  = test_fileio()
-    sim   = test_start_stop()
+    # pars  = test_parsobj()
+    # sim0  = test_microsim()
+    # sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim2  = test_singlerun()
+    # sim3  = test_combine(do_plot=do_plot)
+    # sims  = test_multirun(do_plot=do_plot)
+    # scens = test_scenarios(do_plot=do_plot)
+    # json  = test_fileio()
+    # sim4  = test_start_stop()
+    sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
 
     sc.toc(T)
 
