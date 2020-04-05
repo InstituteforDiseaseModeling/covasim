@@ -150,45 +150,29 @@ class Person(sc.prettyobj):
         return infected
 
 
-    def check_symptomatic(self, t, new_state, in_state):
-        '''
-        Check progression state for symptomatic, severe, and critical.
-
-        Args:
-            t: the current timestep
-            new_state: the counter of people newly entering this state
-            in_state: the number of people in this state
-        '''
-        if self.symptomatic: # If they're already in this state, do not add them to new cases but do count them towards this state
-            in_state += 1
+    def check_symptomatic(self, t):
+        ''' Check for new progressions to symptomatic '''
+        if not self.symptomatic and self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
+            self.symptomatic = True
+            return 1
         else:
-            if self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
-                self.symptomatic = True
-                new_state += 1
-                in_state += 1
-                print(f'i am {self.uid} and on {t} i am {new_state}, {in_state}')
-        return new_state, in_state
+            return 0
 
-    def check_severe(self, t, new_state, in_state):
-        if self.severe: # If they're already in this state, do not add them to new cases but do count them towards this state
-            in_state += 1
+    def check_severe(self, t):
+        ''' Check for new progressions to severe '''
+        if not self.severe and self.date_severe and t >= self.date_severe: # Person is changing to this state
+            self.severe = True
+            return 1
         else:
-            if self.date_severe and t >= self.date_severe: # Person is changing to this state
-                self.severe = True
-                new_state += 1
-                in_state += 1
-        return new_state, in_state
+            return 0
 
-    def check_critical(self, t, new_state, in_state):
-        if self.critical: # If they're already in this state, do not add them to new cases but do count them towards this state
-            in_state += 1
+    def check_critical(self, t):
+        ''' Check for new progressions to critical '''
+        if not self.critical and self.date_critical and t >= self.date_critical: # Person is changing to this state
+            self.critical = True
+            return 1
         else:
-            if self.date_critical and t >= self.date_critical: # Person is changing to this state
-                self.critical = True
-                new_state += 1
-                in_state += 1
-        return new_state, in_state
-
+            return 0
 
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
