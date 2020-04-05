@@ -210,13 +210,11 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     # Core plotting
     graphs = []
     try:
-
         to_plot = sc.dcp(cv.default_sim_plots)
         for p,title,keylabels in to_plot.enumitems():
             fig = go.Figure()
-            colors = sc.gridcolors(len(keylabels))
             for i,key,label in keylabels.enumitems():
-                this_color = 'rgb(%d,%d,%d)' % (255*colors[i][0],255*colors[i][1],255*colors[i][2])
+                this_color = sim.results[key].color
                 y = sim.results[key][:]
                 fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
 
@@ -267,7 +265,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         # Summary output
         summary = {
             'days': sim.npts-1,
-            'cases': round(sim.results['cum_exposed'][-1]),
+            'cases': round(sim.results['cum_infections'][-1]),
             'deaths': round(sim.results['cum_deaths'][-1]),
         }
     except Exception as E:
