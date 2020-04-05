@@ -30,10 +30,14 @@ class Person(sc.prettyobj):
         self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
         self.durpars     = pars['dur']  # Store duration parameters
 
+<<<<<<< HEAD
         # Define states
         for state in pars['possible_states']:
             setattr(self, state, False)
         self.alive          = True
+=======
+        # Define state
+>>>>>>> develop
         self.susceptible    = True
 
         # Keep track of dates
@@ -123,6 +127,7 @@ class Person(sc.prettyobj):
                     self.date_critical = self.date_severe + self.dur_sev2crit  # Date they become critical
                     this_death_prob = self.death_prob * (self.OR_no_treat if bed_constraint else 1.) # Probability they'll die
                     death_bool = cvu.bt(this_death_prob)  # Death outcome
+
                     if death_bool:
                         dur_crit2die = cvu.sample(**self.durpars['crit2die'])
                         self.date_died = self.date_critical + dur_crit2die # Date of death
@@ -136,84 +141,73 @@ class Person(sc.prettyobj):
             self.infected_by = source.uid
             source.infected.append(self.uid)
 
-        infected = 1  # For incrementing counters
-
-        return infected
-
-
-    def check_death(self, t):
-        ''' Check whether or not this person died on this timestep  '''
-        if self.date_died and t == self.date_died:
-            self.exposed     = False
-            self.infectious  = False
-            self.symptomatic = False
-            self.severe      = False
-            self.critical    = False
-            self.recovered   = False
-            self.died        = True
-            death = 1
-        else:
-            death = 0
-
-        return death
+        return 1 # For incrementing counters
 
 
     def check_symptomatic(self, t):
-        ''' Check if an infected person has developed symptoms '''
-        if self.date_symptomatic and t >= self.date_symptomatic: # Person is symptomatic - use >= here because we want to know the total number symptomatic at each time step, not new symptomatics
+        ''' Check for new progressions to symptomatic '''
+        if not self.symptomatic and self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
             self.symptomatic = True
-            symptomatic = 1
+            return 1
         else:
-            symptomatic = 0
-        return symptomatic
+            return 0
 
 
     def check_severe(self, t):
-        ''' Check if an infected person has developed severe symptoms requiring hospitalization'''
-        if self.date_severe and t >= self.date_severe: # Symptoms have become bad enough to need hospitalization
+        ''' Check for new progressions to severe '''
+        if not self.severe and self.date_severe and t >= self.date_severe: # Person is changing to this state
             self.severe = True
-            severe = 1
+            return 1
         else:
-            severe = 0
-        return severe
+            return 0
 
 
     def check_critical(self, t):
-        ''' Check if an infected person is in need of IC'''
-        if self.date_critical and t >= self.date_critical: # Symptoms have become bad enough to need ICU
+        ''' Check for new progressions to critical '''
+        if not self.critical and self.date_critical and t >= self.date_critical: # Person is changing to this state
             self.critical = True
-            critical = 1
+            return 1
         else:
-            critical = 0
-        return critical
+            return 0
 
 
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
 
-        if self.date_recovered and t == self.date_recovered: # It's the day they recover
+        if not self.recovered and self.date_recovered and t >= self.date_recovered: # It's the day they recover
             self.exposed     = False
             self.infectious  = False
             self.symptomatic = False
             self.severe      = False
             self.critical    = False
             self.recovered   = True
-            recovery = 1
+            return 1
         else:
-            recovery = 0
+            return 0
 
-        return recovery
+
+    def check_death(self, t):
+        ''' Check whether or not this person died on this timestep  '''
+        if not self.dead and self.date_died and t >= self.date_died:
+            self.exposed     = False
+            self.infectious  = False
+            self.symptomatic = False
+            self.severe      = False
+            self.critical    = False
+            self.recovered   = False
+            self.dead        = True
+            return 1
+        else:
+            return 0
 
 
     def test(self, t, test_sensitivity):
         if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
             self.diagnosed = True
             self.date_diagnosed = t
-            diagnosed = 1
+            return 1
         else:
-            diagnosed = 0
-        return diagnosed
-
+            return 0
 
 
 def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
@@ -266,14 +260,16 @@ def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
 
             # Replace contact UIDs with ints...
             uid_mapping = {uid:u for u,uid in enumerate(uids)}
+            key_mapping = {'H':'h', 'S':'s', 'W':'w', 'R':'c'} # Remap keys from old names to new names
             for uid,person in population.items():
                 uid_contacts = person['contacts']
                 int_contacts = {}
                 for key in uid_contacts.keys():
-                    int_contacts[key] = []
+                    new_key = key_mapping[key]
+                    int_contacts[new_key] = []
                     for uid in uid_contacts[key]:
-                        int_contacts[key].append(uid_mapping[uid])
-                    int_contacts[key] = np.array(int_contacts[key], dtype=int)
+                        int_contacts[new_key].append(uid_mapping[uid])
+                    int_contacts[new_key] = np.array(int_contacts[new_key], dtype=int)
                 contacts.append(int_contacts)
 
             popdict = {}
@@ -299,7 +295,7 @@ def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
     sim.popdict = popdict
     sim.uids = popdict['uid'] # Duplication, but used in an innermost loop so make as efficient as possible
     sim.people = people
-    sim.contact_keys = list(sim['contacts_pop'].keys())
+    sim.contact_keys = list(sim['contacts'].keys())
 
     average_age = sum(popdict['age']/n_people)
     sc.printv(f'Created {n_people} people, average age {average_age:0.2f} years', 1, verbose)
@@ -349,9 +345,12 @@ def make_randpop(sim, id_len=6):
     # Make contacts
     contacts = []
     for p in range(n_people):
-        n_contacts = cvu.pt(sim['contacts']) # Draw the number of Poisson contacts for this person
-        contact_inds = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random, assigning to household
-        contacts.append(contact_inds)
+        contact_dict = {'c':0}
+        for key in sim['contacts'].keys():
+            if key != 'c': # Skip community contacts, these are chosen afresh daily
+                n_contacts = cvu.pt(sim['contacts'][key]) # Draw the number of Poisson contacts for this person
+                contact_dict[key] = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random
+        contacts.append(contact_dict)
 
     # Store output; data duplicated as per-person and list-like formats for convenience
     popdict = {}
@@ -389,9 +388,9 @@ def set_prognoses(sim, popdict):
     # Otherwise, calculate probabilities of symptoms, severe symptoms, and death by age
     else:
         # Conditional probabilities of severe symptoms (given symptomatic) and death (given severe symptoms)
-        severe_if_sym   = np.array([sev/sym  if sym>0 and sev/sym>0  else 0 for (sev,sym)  in zip(prog_pars.severe_probs, prog_pars.symp_probs)]) # Conditional probabilty of developing severe symptoms, given symptomatic
-        crit_if_severe  = np.array([crit/sev if sev>0 and crit/sev>0 else 0 for (crit,sev) in zip(prog_pars.crit_probs,   prog_pars.severe_probs)]) # Conditional probabilty of developing critical symptoms, given severe
-        death_if_crit   = np.array([d/c      if c>0   and d/c>0      else 0 for (d,c)      in zip(prog_pars.death_probs,  prog_pars.crit_probs)])  # Conditional probabilty of dying, given critical
+        severe_if_sym   = np.array([sev/sym  if sym>0  and sev/sym>0  else 0 for (sev,sym)  in zip(prog_pars.severe_probs, prog_pars.symp_probs)]) # Conditional probabilty of developing severe symptoms, given symptomatic
+        crit_if_severe  = np.array([crit/sev if sev>0  and crit/sev>0 else 0 for (crit,sev) in zip(prog_pars.crit_probs,   prog_pars.severe_probs)]) # Conditional probabilty of developing critical symptoms, given severe
+        death_if_crit   = np.array([dth/crit if crit>0 and dth/crit>0 else 0 for (dth,crit) in zip(prog_pars.death_probs,  prog_pars.crit_probs)])  # Conditional probabilty of dying, given critical
 
         symp_probs     = sim['rel_symp_prob']   * prog_pars.symp_probs  # Overall probability of developing symptoms
         severe_if_sym  = sim['rel_severe_prob'] * severe_if_sym         # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
@@ -404,10 +403,10 @@ def set_prognoses(sim, popdict):
         for age in ages:
             # Figure out which probability applies to a person of the specified age
             ind = next((ind for ind, val in enumerate([True if age < cutoff else False for cutoff in age_cutoffs]) if val), -1)
-            this_symp_prob   = symp_probs[ind]    # Probability of developing symptoms
-            this_severe_prob = severe_if_sym[ind] # Probability of developing severe symptoms
+            this_symp_prob   = symp_probs[ind]     # Probability of developing symptoms
+            this_severe_prob = severe_if_sym[ind]  # Probability of developing severe symptoms
             this_crit_prob   = crit_if_severe[ind] # Probability of developing critical symptoms
-            this_death_prob  = death_if_crit[ind] # Probability of dying after developing critical symptoms
+            this_death_prob  = death_if_crit[ind]  # Probability of dying after developing critical symptoms
             symp_prob.append(this_symp_prob)
             severe_prob.append(this_severe_prob)
             crit_prob.append(this_crit_prob)

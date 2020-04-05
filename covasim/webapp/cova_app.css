@@ -107,4 +107,5 @@ header.row, footer.row {
 .chart-frame {
     overflow: hidden auto;
     max-height: 75vh;
+    position: relative;
 }
