@@ -4,7 +4,7 @@ import sys
 import logging
 
 log = logging.getLogger(
-    "ECDC Data Loader")
+    "ECDP Data Loader")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 # Read in the European Centre for Disease Prevention and Control Data into a dataframe.
@@ -46,7 +46,7 @@ data_home = os.path.join(here, "../data")
 if not os.path.exists(data_home):
     log.info(f"Creating data directory {data_home}")
     os.makedirs(data_home)
-path = os.path.join(data_home, "ecdc.csv")
+path = os.path.join(data_home, "ecdp_data.csv")
 log.info(f"Saving to {path}")
 df.to_csv(path)
 log.info(f"Script complete")

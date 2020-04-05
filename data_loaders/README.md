@@ -50,3 +50,23 @@ The following columns are present in the data:
 - `new_tests`: New tests on this date
 
 As of April 4, 2020, There are apparently 3280 data sets.
+
+## 1. European Centre for Disease Prevention and Control 
+
+
+To quote the [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases) web page,
+
+> Since the beginning of the coronavirus pandemic, ECDC’s Epidemic Intelligence team has been collecting the number of COVID-19 cases and deaths, based on reports from health authorities worldwide. This comprehensive and systematic process is carried out on a daily basis. To insure the accuracy and reliability of the data, this process is being constantly refined. This helps to monitor and interpret the dynamics of the COVID-19 pandemic not only in the European Union (EU), the European Economic Area (EEA), but also worldwide.
+
+We transform this data for use in the Covasim parameter format. It is stored
+in CSV-format. 
+
+### Updating
+
+To update the  Corona Data Scraper data,
+
+```bash
+python data_loaders/load_ecdp_data.py 
+```
+
+This will create a file `ecdp_data.csv` in the data directory.
