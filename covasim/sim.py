@@ -322,6 +322,8 @@ class Sim(cvbase.BaseSim):
         if initialize:
             self.initialize() # Create people, results, etc.
 
+        self.tmpuids = []
+
         # Main simulation loop
         self.stopped = False # We've just been asked to run, so ensure we're unstopped
         tvec = self.tvec[start:stop]
@@ -402,9 +404,12 @@ class Sim(cvbase.BaseSim):
                     new_recovery = person.check_recovery(t)
                     new_recoveries += new_recovery
 
-                    # No recovery: check symptoms
-                    if not new_recovery:
-                        new_symptomatic += person.check_symptomatic(t)
+                    # If the person didn't die or recover, check for onward transmission
+                    if not new_death and not new_recovery:
+                        n_infectious += 1 # Count this person as infectious
+
+                        # Check symptoms
+                        new_symptomatic += person.check_symptomatic(t, self.tmpuids)
                         new_severe      += person.check_severe(t)
                         new_critical    += person.check_critical(t)
                         n_symptomatic   += person.symptomatic
@@ -412,10 +417,6 @@ class Sim(cvbase.BaseSim):
                         n_critical      += person.critical
                         if n_severe > n_beds:
                             bed_constraint = True
-
-                    # If the person didn't die or recover, check for onward transmission
-                    if not new_death and not new_recovery:
-                        n_infectious += 1 # Count this person as infectious
 
                         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                         thisbeta = beta * \

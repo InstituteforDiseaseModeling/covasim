@@ -139,7 +139,6 @@ class Person(sc.prettyobj):
                         dur_crit2rec = cvu.sample(**self.durpars['crit2rec'])
                         self.date_recovered = self.date_critical + dur_crit2rec # Date they recover
                         self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2rec  # Store how long this person had COVID-19
-                    print(f'i am death {death_bool} and {self.date_died} and {self.dur_disease} and {self.date_recovered}')
 
         if source:
             self.infected_by = source.uid
@@ -150,10 +149,17 @@ class Person(sc.prettyobj):
         return infected
 
 
-    def check_symptomatic(self, t):
+    def check_symptomatic(self, t, tmpuids):
         ''' Check for new progressions to symptomatic '''
+        print('hiiii')
+        print(tmpuids)
         if not self.symptomatic and self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
             self.symptomatic = True
+            if self.uid not in tmpuids:
+                tmpuids.append(self.uid)
+            else:
+                raise Exception
+            print(tmpuids)
             return 1
         else:
             return 0
