@@ -28,7 +28,7 @@ pars = sc.objdict(
     n_infected  = 1,    # Number of initial infections
     n_days      = 90,   # Number of days to simulate
     prog_by_age = 1,    # Use age-specific mortality etc.
-    usepopdata  = 0,    # Use realistic population structure (requires synthpops)
+    usepopdata  = 1,    # Use realistic population structure (requires synthpops)
     seed        = 1,    # Random seed
     )
 
