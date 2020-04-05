@@ -28,6 +28,10 @@ interv_day = 35
 interv_eff = 0.7
 default_beta = 0.015 # Should match parameters.py
 
+basepars = dict(
+  n = 5000
+)
+
 metapars = dict(
     n_runs = 3, # Number of parallel runs; change to 3 for quick, 11 for real
     noise = 0.1, # Use noise, optionally
@@ -72,7 +76,7 @@ if __name__ == "__main__": # Required for parallel processing on Windows
 
     # If we're rerunning...
     if do_run:
-        scens = cv.Scenarios(metapars=metapars, scenarios=scenarios)
+        scens = cv.Scenarios(basepars=basepars, metapars=metapars, scenarios=scenarios)
         scens.run(verbose=verbose)
         if do_save:
             scens.save(filename=obj_path, keep_sims=keep_sims)
