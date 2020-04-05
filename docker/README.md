@@ -1,7 +1,7 @@
 Covasim Docker
 ==============
 
-This directory contains scripts and files related to building covasim into a Docker container. This is intended as an environment to allow you to build and test the docker image locally using docker only. To test the Kubernetes version, see the [platform](..) folder.
+This directory contains scripts and files related to building covasim into a Docker container. This is intended as an environment to allow you to build and test the docker image locally using docker only. To test the Kubernetes version, see the [platform](../.platform) folder.
 
 # Building Container
  

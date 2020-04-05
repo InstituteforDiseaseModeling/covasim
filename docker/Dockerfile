@@ -19,8 +19,8 @@ RUN /bin/bash -c ". activate && python3 -m pip install -r /app/requirements.txt"
 ADD . /app
 WORKDIR /app
 
-COPY .platform/docker/docker_nginx.conf /etc/nginx/sites-enabled/default
+COPY docker/docker_nginx.conf /etc/nginx/sites-enabled/default
 
 RUN python3 -m pip install .
 
-CMD /etc/init.d/nginx restart && supervisord -c .platform/docker/supervisord.conf
+CMD /etc/init.d/nginx restart && supervisord -c docker/supervisord.conf
