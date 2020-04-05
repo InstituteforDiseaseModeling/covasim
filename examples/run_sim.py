@@ -25,7 +25,7 @@ fig_path = f'{basename}.png'
 print('Making sim...')
 sc.tic()
 sim = cv.Sim()
-sim.set_seed(seed)
+sim.set_seed(seed) # Set seed (can also be done via sim['seed'] = seed)
 sim['n'] = 5000 # Population size
 sim['n_days'] = 60 # Number of days to simulate
 sim['prog_by_age'] = True # Use age-specific mortality etc.
