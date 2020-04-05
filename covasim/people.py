@@ -166,6 +166,7 @@ class Person(sc.prettyobj):
                 self.symptomatic = True
                 new_state += 1
                 in_state += 1
+                print(f'i am {self.uid} and on {t} i am {new_state}, {in_state}')
         return new_state, in_state
 
     def check_severe(self, t, new_state, in_state):
