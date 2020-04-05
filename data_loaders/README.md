@@ -70,3 +70,15 @@ python data_loaders/load_ecdp_data.py
 ```
 
 This will create a file `ecdp_data.csv` in the data directory.
+
+This adds data from 204 countries and territories, including Africa, Asia, the Americas, Europe, and Oceania. More details at: https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases
+
+The following columns are present in the data:
+
+- `countriesAndTerritories`: Unique country or territory name
+- `geoId`: Geo ID of same
+- `countryterritoryCode`: ISO 3-letter code?
+- `date`: Date in yyyy-MM-dd text format
+- `day`: Number of days since first reporting
+- `new_positives`: New positives on this date
+- `new_death`: Number of deaths on this date
