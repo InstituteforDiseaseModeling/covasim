@@ -230,7 +230,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
         else:
             if series is None or series not in sim.reskeys:
                 sc.printv(f"Series not supplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
-                series='cum_exposed'
+                series='cum_infections'
             series = sim.results[series].values
     else:
         series = sc.promotetoarray(series)

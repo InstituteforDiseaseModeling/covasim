@@ -185,7 +185,7 @@ def test_start_stop(): # If being run via pytest, turn off
     sim3.finalize()
 
     # Compare results
-    key = 'cum_exposed'
+    key = 'cum_infections'
     assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Start-stop values do not match'
     assert (sim1.results[key][:] == sim3.results[key][:]).all(), 'Next values do not match'
 
@@ -215,15 +215,15 @@ def test_sim_data(do_plot=False, do_show=False):
 if __name__ == '__main__':
     T = sc.tic()
 
-    # pars  = test_parsobj()
-    # sim0  = test_microsim()
-    # sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim2  = test_singlerun()
-    # sim3  = test_combine(do_plot=do_plot)
-    # sims  = test_multirun(do_plot=do_plot)
-    # scens = test_scenarios(do_plot=do_plot)
-    # json  = test_fileio()
-    # sim4  = test_start_stop()
+    pars  = test_parsobj()
+    sim0  = test_microsim()
+    sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim2  = test_singlerun()
+    sim3  = test_combine(do_plot=do_plot)
+    sims  = test_multirun(do_plot=do_plot)
+    scens = test_scenarios(do_plot=do_plot)
+    json  = test_fileio()
+    sim4  = test_start_stop()
     sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
 
     sc.toc(T)
