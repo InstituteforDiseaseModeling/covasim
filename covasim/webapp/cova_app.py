@@ -226,7 +226,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-
+            
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
             d['config'] = {'responsive': True}
