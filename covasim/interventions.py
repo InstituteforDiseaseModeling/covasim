@@ -35,21 +35,6 @@ class Intervention:
         raise NotImplementedError
 
 
-    def finalize(self, sim: cv.Sim) -> None:
-        """
-        Call function at end of simulation
-
-        This can be used to do things like compute cumulative results
-
-        Args:
-            sim: the Sim instance
-
-        Returns:
-            None
-        """
-        return
-
-
     def plot(self, sim: cv.Sim, ax: pl.Axes) -> None:
         """
         Call function during plotting
@@ -164,22 +149,6 @@ class sequence(Intervention):
     def apply(self, sim: cv.Sim):
         idx = np.argmax(self._cum_days > sim.t)  # Index of the intervention to apply on this day
         self.interventions[idx].apply(sim)
-        return
-
-
-    def finalize(self, sim: cv.Sim, *args, **kwargs):
-        # If any of the sequential interventions write the same quantity to results then
-        # aggregate them
-        for intervention in self.interventions:
-            for label, result in intervention.results.items():
-                if label not in self.results:
-                    self.results[label] = sc.dcp(result)
-                else:
-                    if not result.ispercentage:
-                        self.results[label].values += result.values
-                    else:
-                        raise NotImplementedError # Haven't implemented aggregating by averaging for percentage quantities yet
-        sim.results.update(self.results)
         return
 
 

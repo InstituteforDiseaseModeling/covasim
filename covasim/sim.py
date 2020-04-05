@@ -194,7 +194,7 @@ class Sim(cvbase.BaseSim):
         self.results['n_symptomatic']  = init_res('Number symptomatic')
         self.results['n_severe']       = init_res('Number with severe symptoms')
         self.results['n_critical']     = init_res('Number of critical cases')
-        self.results['bed_capacity']   = init_res('Percentage bed capacity', ispercentage=True)
+        self.results['bed_capacity']   = init_res('Percentage bed capacity', scale=False)
 
         # Flow variables
         self.results['new_infections'] = init_res('Number of new infections')
@@ -471,10 +471,6 @@ class Sim(cvbase.BaseSim):
         self.results['cum_diagnosed'].values  = pl.cumsum(self.results['new_diagnoses'].values)
         self.results['cum_deaths'].values     = pl.cumsum(self.results['new_deaths'].values)
         self.results['cum_recoveries'].values = pl.cumsum(self.results['new_recoveries'].values)
-
-        # Add in the results from the interventions
-        for intervention in self['interventions']:
-            intervention.finalize(self)  # Execute any post-processing
 
         # Scale the results
         for reskey in self.reskeys:

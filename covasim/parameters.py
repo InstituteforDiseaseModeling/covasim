@@ -148,6 +148,13 @@ def load_data(filename, columns=None, calculate=True, **kwargs):
                 if cum_col not in columns:
                     data[cum_col] = np.cumsum(data[col])
 
+    # Ensure required columns are present
+    if 'date' not in data.columns:
+        errormsg = f'Required column "date" not found; columns are {data.columns}'
+        raise ValueError(errormsg)
+    else:
+        data['date'] = pd.to_datetime(data['date'])
+
     return data
 
 

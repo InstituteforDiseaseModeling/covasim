@@ -69,18 +69,23 @@ class Result(object):
     '''
     Stores a single result -- by default, acts like an array.
 
+    Args:
+        name (str): name of this result, e.g. new_infections
+        values (array): array of values corresponding to this result
+        npts (int): if values is None, precreate it to be of this length
+        scale (bool): whether or not the value scales by population size
+
     Example:
-        import covasim as cova
-        r1 = cova.Result(name='test1', npts=10)
+        import covasim as cv
+        r1 = cv.Result(name='test1', npts=10)
         r1[:5] = 20
         print(r2.values)
-        r2 = cova.Result(name='test2', values=range(10))
+        r2 = cv.Result(name='test2', values=range(10))
         print(r2)
     '''
 
-    def __init__(self, name=None, values=None, npts=None, scale=True, ispercentage=False):
+    def __init__(self, name=None, values=None, npts=None, scale=True):
         self.name = name  # Name of this result
-        self.ispercentage = ispercentage  # Whether or not the result is a percentage
         self.scale = scale  # Whether or not to scale the result by the scale factor
         if values is None:
             if npts is not None:
