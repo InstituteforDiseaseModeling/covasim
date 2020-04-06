@@ -31,8 +31,9 @@ sim.run()
 fig = sim.plot()
 
 # Run sim using synthpops with community transmission
-pars = cv.make_pars()
-pars['population'] = cv.Population.synthpops(pars, n_people=5000, n_random_contacts=20)
-sim = cv.Sim(pars=pars)
-sim.run()
-fig = sim.plot()
+if cv.requirements.available['synthpops']:
+    pars = cv.make_pars()
+    pars['population'] = cv.Population.synthpops(pars, n_people=5000, n_random_contacts=20)
+    sim = cv.Sim(pars=pars)
+    sim.run()
+    fig = sim.plot()
