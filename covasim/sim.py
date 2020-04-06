@@ -233,7 +233,7 @@ class Sim(cvbase.BaseSim):
 
         # Populate the rest of the results
         self.results['t'] = self.tvec
-        self.results['date'] = [self['start_day'] + dt.timedelta(days=int(t)) for t in self.tvec]
+        self.results['date'] = self.datevec
         self.results_ready = False
 
         return
@@ -654,7 +654,8 @@ class Sim(cvbase.BaseSim):
                 y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if self.data is not None and key in self.data:
-                    pl.scatter(self.data['day'], self.data[key], c=[this_color], **scatter_args)
+                    data_t = [x.days for x in self.data['date']-self['start_day']] # Convert from data date to model output index based on model start date
+                    pl.scatter(data_t, self.data[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
 
