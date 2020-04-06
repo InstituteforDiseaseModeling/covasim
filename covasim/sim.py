@@ -379,7 +379,7 @@ class Sim(cvbase.BaseSim):
                         person.known_contact = True
 
                     thisbeta = beta * \
-                               (asymp_factor if person.symptomatic else 1.) * \
+                               (asymp_factor if not person.symptomatic else 1.) * \
                                (diag_factor if person.diagnosed else 1.) * \
                                (cont_factor if person.known_contact else 1.)
 
@@ -401,15 +401,12 @@ class Sim(cvbase.BaseSim):
                             sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
                     if person.date_diagnosed is not None and person.date_diagnosed==t-1:
-                        # This person was just diagnosed: time to flag their contacts
-                        contactable_ppl = {}   # Store people that are contactable and how long it takes to contact them
-                        for ckey in self.contact_keys:
-                            new_contact_keys = cvu.bf(layer_trace, person.contacts[ckey])
-                            contactable_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
+                        # This person was just diagnosed: time to trace their contacts
+                        contactable_ppl = person.trace_contacts(trace_probs, trace_time)
 
                         # Loop over people who get contacted
                         for contact_ind, contact_time in contactable_ppl.items():
-                            target_person = self.get_person(contact_ind)  # Stored by integer
+                            target_person = self.get_person(contact_ind)
                             if target_person.date_known_contact is None:
                                 target_person.date_known_contact = t + contact_time
                             else:

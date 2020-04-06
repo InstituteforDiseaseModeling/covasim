@@ -132,17 +132,16 @@ class Person(sc.prettyobj):
         return 1 # For incrementing counters
 
 
-    def find_contacts(self, t):
+    def trace_contacts(self, trace_probs, trace_time):
         '''
         A method to find a person's contacts, i.e. assuming they've been diagnosed and we're doing contact tracing
-        :param t:
-        :return:
         '''
         contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
-        contact_keys = self.contacts.keys()
-        for ckey in self.contact_keys:
-            if ckey != 'c':
-                this_trace_prob = self.trace_probs[ckey]
+        for ckey in self.contacts.keys():
+            if ckey != 'c': # Don't trace community contacts - it's too hard, because they change every timestep
+                this_trace_prob = trace_probs[ckey]
+                new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
+                contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
 
         return contactable_ppl
 
