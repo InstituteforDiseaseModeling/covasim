@@ -34,6 +34,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['n_days']     = 60 # Number of days of run, if end_day isn't used
     pars['rand_seed']  = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
+    pars['resample']   = 0 # Enable dynamic resampling
+    pars['resample_max_pop']   = 100000 # Maximum real population for resampling
 
     # Disease transmission parameters
     pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)

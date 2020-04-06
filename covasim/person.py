@@ -58,6 +58,43 @@ class Person(sc.prettyobj):
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
 
+
+    def make_susceptible(self):
+        """
+        Make person susceptible. This is used during dynamic resampling
+        """
+        # Define state
+        self.susceptible    = True
+        self.exposed        = False
+        self.infectious     = False
+        self.symptomatic    = False
+        self.severe         = False
+        self.critical       = False
+        self.diagnosed      = False
+        self.recovered      = False
+        self.dead           = False
+        self.known_contact  = False # Keep track of whether each person is a contact of a known positive
+
+        # Keep track of dates
+        self.date_exposed      = None
+        self.date_infectious   = None
+        self.date_symptomatic  = None
+        self.date_severe       = None
+        self.date_critical     = None
+        self.date_diagnosed    = None
+        self.date_recovered    = None
+        self.date_died         = None
+
+        # Keep track of durations
+        self.dur_exp2inf  = None # Duration from exposure to infectiousness
+        self.dur_inf2sym  = None # Duration from infectiousness to symptoms
+        self.dur_sym2sev  = None # Duration from symptoms to severe symptoms
+        self.dur_sev2crit = None # Duration from symptoms to severe symptoms
+        self.dur_disease  = None # Total duration of disease, from date of exposure to date of recovery or death
+
+        self.infected = [] #: Record the UIDs of all people this person infected
+        self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
+
         # Set prognoses
         prognoses = pars['prognoses']
         idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
@@ -270,5 +307,3 @@ class Person(sc.prettyobj):
             return 1
         else:
             return 0
-
-

@@ -54,6 +54,15 @@ class Sim(cvbase.BaseSim):
         self.update_pars(pars)             # Update the parameters, if provided
         return
 
+        # if resampling is enabled, make 100k(default) pop size
+        if self["resample"] and self["n"] > self["resample_max_pop"]:
+            self.max_n = self["n"]
+            self["n"] = self["resample_max_pop"]
+
+        # dynamic resampling
+        self.resampling_threshold = 0.5  # Fraction of total pop that isn't susceptible when we trigger scaling
+        self.resampling_factor = 2  # Factor by which we will rescale population
+
 
     def update_pars(self, pars=None, create=False):
         ''' Ensure that metaparameters get used properly before being updated '''
@@ -239,7 +248,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def next(self, verbose=0):
+    def next(self, scale, verbose=0):
         '''
         Step simulation forward in time
 
@@ -381,25 +390,44 @@ class Sim(cvbase.BaseSim):
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
-        self.results['n_susceptible'][t]  = n_susceptible
-        self.results['n_exposed'][t]      = n_exposed
-        self.results['n_infectious'][t]   = n_infectious # Tracks total number infectious at this timestep
-        self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
-        self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
-        self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
-        self.results['n_diagnosed'][t]    = n_diagnosed # Tracks total number of diagnosed cases at this timestep
-        self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else None
+
+        self.results['n_susceptible'][t]  = n_susceptible * scale
+        self.results['n_exposed'][t]      = n_exposed * scale
+        self.results['n_infectious'][t]   = n_infectious * scale # Tracks total number infectious at this timestep
+        self.results['n_symptomatic'][t]  = n_symptomatic * scale # Tracks total number symptomatic at this timestep
+        self.results['n_severe'][t]       = n_severe * scale # Tracks total number of severe cases at this timestep
+        self.results['n_critical'][t]     = n_critical * scale # Tracks total number of critical cases at this timestep
+        self.results['n_diagnosed'][t]    = n_diagnosed * scale # Tracks total number of diagnosed cases at this timestep
+        self.results['bed_capacity'][t]   = (n_severe * scale)/n_beds if n_beds>0 else None
 
         # Update counts for this time step: flows
-        self.results['new_infections'][t]  = new_infections # New infections on this timestep
-        self.results['new_recoveries'][t]  = new_recoveries # Tracks new recoveries on this timestep
-        self.results['new_symptomatic'][t] = new_symptomatic
-        self.results['new_severe'][t]      = new_severe
-        self.results['new_critical'][t]    = new_critical
-        self.results['new_deaths'][t]      = new_deaths
+        self.results['new_infections'][t]  = new_infections * scale # New infections on this timestep
+        self.results['new_recoveries'][t]  = new_recoveries * scale # Tracks new recoveries on this timestep
+        self.results['new_symptomatic'][t] = new_symptomatic * scale
+        self.results['new_severe'][t]      = new_severe * scale
+        self.results['new_critical'][t]    = new_critical * scale
+        self.results['new_deaths'][t]      = new_deaths * scale
+
         self.t += 1
 
-        return
+    def resample(self, current_scale):
+        # Check if max pop was already reached
+        if current_scale * self["n"] >= self.max_n:
+            return current_scale
+        susceptible = list(filter(lambda p: p.susceptible, self.people.values()))
+        # Check if we've reached point when we want to resample and we didn't reach max population
+        if (len(susceptible) / len(self.people)) < self.resampling_threshold:
+            # Check if we've reached max pop
+            if current_scale * self.resampling_factor * self["n"] > self.max_n:
+                # Calculate new resampling_factor to get us close to maxumum population
+                self.resampling_factor = self.max_n / (self["n"] * current_scale)
+            # Pick random list of people to make susceptible again
+            new_susceptible = np.random.choice(list(self.people.keys()), size=round(len(self.people) / self.resampling_factor))
+            for p in new_susceptible:
+                self.people[p].make_susceptible()
+            return current_scale * self.resampling_factor
+        else:
+            return current_scale
 
 
     def run(self, do_plot=False, verbose=None, **kwargs):
@@ -417,6 +445,8 @@ class Sim(cvbase.BaseSim):
 
         T = sc.tic()
 
+        self.scaling_vec = [1.0]
+
         # Reset settings and results
         if not self.initialized:
             self.initialize()
@@ -424,11 +454,15 @@ class Sim(cvbase.BaseSim):
         if verbose is None:
             verbose = self['verbose']
 
+        current_scale = 1.0
         # Main simulation loop
         for t in range(self.npts):
+            # Check if we need to rescale
+            if self["resample"]:
+                current_scale = self.resample(current_scale)
+            self.scaling_vec.append(current_scale)
 
-            # This does all the work!
-            self.next(verbose=verbose)
+            self.next(verbose=verbose, scale=current_scale)
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
@@ -720,4 +754,3 @@ class Sim(cvbase.BaseSim):
         color = res.color
         pl.plot(tvec, y, c=color, **plot_args)
         return fig
-
