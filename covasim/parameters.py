@@ -45,13 +45,13 @@ def make_pars():
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
+    pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']     = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
     pars['beta_layers']  = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
 
     # Contact tracing - done by layer
-    pars['trace_probs']  = {'h': 1.,  's': 0.8, 'w': 0.5, 'c': 0.01} # Probability of being able to trace different types of contacts
-    pars['trace_time']   = {'h': 0,   's': 3,   'w': 3,   'c': 5}    # Number of days it takes to trace a positive's contacts
-    pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
+#    pars['trace_probs']  = {'h': 1.,  's': 0.8, 'w': 0.5, 'c': 0.01} # Probability of being able to trace different types of contacts
+#    pars['trace_time']   = {'h': 0,   's': 3,   'w': 3,   'c': 5}    # Number of days it takes to trace a positive's contacts
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()

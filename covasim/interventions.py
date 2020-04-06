@@ -3,7 +3,7 @@ import pylab as pl
 import numpy as np
 import sciris as sc
 
-__all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'test_historical']
+__all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'test_historical', 'contact_tracing']
 
 
 #%% Generic intervention classes
@@ -264,6 +264,35 @@ class test_num(Intervention):
         for test_ind in test_inds:
             person = sim.get_person(test_ind)
             person.test(t, self.sensitivity, test_delay=self.test_delay)
+
+        return
+
+
+class contact_tracing(Intervention):
+    '''
+    Contact tracing of positives
+    '''
+    def __init__(self, trace_probs, trace_time):
+        super().__init__()
+        self.trace_probs = trace_probs
+        self.trace_time = trace_time
+        return
+
+
+    def apply(self, sim: cv.Sim):
+        t = sim.t
+        for i, person in enumerate(sim.people.values()):
+            if person.date_diagnosed is not None and person.date_diagnosed == t-1:
+                # This person was just diagnosed: time to trace their contacts
+                contactable_ppl = person.trace_contacts(self.trace_probs, self.trace_time)
+
+                # Loop over people who get contacted
+                for contact_ind, contact_time in contactable_ppl.items():
+                    target_person = sim.get_person(contact_ind)
+                    if target_person.date_known_contact is None:
+                        target_person.date_known_contact = t + contact_time
+                    else:
+                        target_person.date_known_contact = min(target_person.date_known_contact, t + contact_time)
 
         return
 

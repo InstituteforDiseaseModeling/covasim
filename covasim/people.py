@@ -146,11 +146,22 @@ class Person(sc.prettyobj):
         return contactable_ppl
 
 
-
-
     def test(self, t, test_sensitivity, loss_prob=0, test_delay=0):
+        '''
+        Method to test a person
+        :param t:
+        :param test_sensitivity:
+        :param loss_prob: probability of loss to follow-up
+        :param test_delay: number of days before test results are ready
+        :return:
+        '''
         self.tested = True
-        self.date_tested = t
+
+        if self.date_tested is None: # First time tested
+            self.date_tested = [t]
+        else:
+            self.date_tested.append(t) # They're been tested before; append new test date. TODO: adjust testing probs based on whether a person's a repeat tester?
+
         if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
             if not cvu.bt(loss_prob): # They're not lost to follow-up
                 self.date_diagnosed = t + test_delay

@@ -310,8 +310,8 @@ class Sim(cvbase.BaseSim):
         diag_factor      = self['diag_factor']
         cont_factor      = self['cont_factor']
         beta_layers      = self['beta_layers']
-        trace_probs      = self['trace_probs']
-        trace_time       = self['trace_time']
+#        trace_probs      = self['trace_probs']
+#        trace_time       = self['trace_time']
         n_beds           = self['n_beds']
         bed_constraint   = False
         n_people         = len(self.people)
@@ -383,14 +383,13 @@ class Sim(cvbase.BaseSim):
                                (diag_factor if person.diagnosed else 1.) * \
                                (cont_factor if person.known_contact else 1.)
 
-                    # Determine who gets infected and contacted
+                    # Determine who gets infected
                     community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
                     person.contacts['c'] = community_contact_inds
                     transmission_inds = []  # Indices of people that get infected
 
                     for ckey in self.contact_keys:
                         layer_beta = thisbeta * beta_layers[ckey]
-                        layer_trace = trace_probs[ckey]
                         transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
 
                     # Loop over people who get infected
@@ -400,17 +399,6 @@ class Sim(cvbase.BaseSim):
                             new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                             sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
-                    if person.date_diagnosed is not None and person.date_diagnosed==t-1:
-                        # This person was just diagnosed: time to trace their contacts
-                        contactable_ppl = person.trace_contacts(trace_probs, trace_time)
-
-                        # Loop over people who get contacted
-                        for contact_ind, contact_time in contactable_ppl.items():
-                            target_person = self.get_person(contact_ind)
-                            if target_person.date_known_contact is None:
-                                target_person.date_known_contact = t + contact_time
-                            else:
-                                target_person.date_known_contact = min(target_person.date_known_contact, t + contact_time)
 
         # End of person loop; apply interventions
         for intervention in self['interventions']:
