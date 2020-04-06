@@ -13,36 +13,39 @@ import os
 dirname = os.path.dirname(__file__)
 
 neherlabs_pop_json_path = os.path.join(dirname, "mock_datasets/population/neher_labs.json")
+test_json_path = os.path.join(dirname, "mock_datasets/population/test.json")
 with open(neherlabs_pop_json_path) as data:
     neherlabs_pop_json = json.load(data)
+
+neher_labs_raw_pop = """{
+"Afghanistan": {
+"0-9": 100,
+"10-19": 200,
+"20-29": 300,
+"30-39": 450,
+"40-49": 500,
+"50-59": 100,
+"60-69": 200,
+"70-79": 30,
+"80+": 10
+},
+"Albania": {
+"0-9": 333832,
+"10-19": 361777,
+"20-29": 472678,
+"30-39": 390771,
+"40-49": 323020,
+"50-59": 386091,
+"60-69": 330244,
+"70-79": 194668,
+"80+": 84716
+}
+}"""
+
 
 def test_transform_neherlab_data():
     sc.heading('Test the transformation for the neherlab covid19 scenarios dataset')
 
-    json_string = """{
-      "Afghanistan": {
-        "0-9": 100,
-        "10-19": 200,
-        "20-29": 300,
-        "30-39": 450,
-        "40-49": 500,
-        "50-59": 100,
-        "60-69": 200,
-        "70-79": 30,
-        "80+": 10
-      },
-      "Albania": {
-        "0-9": 333832,
-        "10-19": 361777,
-        "20-29": 472678,
-        "30-39": 390771,
-        "40-49": 323020,
-        "50-59": 386091,
-        "60-69": 330244,
-        "70-79": 194668,
-        "80+": 84716
-      }
-    }"""
 
     expected = { "Afghanistan": [
         [0, 9, 0.05291005291005291],
@@ -69,7 +72,7 @@ def test_transform_neherlab_data():
     }
 
     translator = cdt.NeherLabPop()
-    output = translator.translate(json.loads(json_string))
+    output = translator.translate(json.loads(neher_labs_raw_pop))
     np.testing.assert_array_equal(output, expected)
 
 def test_get_country_data():
@@ -79,3 +82,17 @@ def test_get_country_data():
 
     expected = neherlabs_pop_json['Albania']
     assert output == expected
+
+def test_load_country_data():
+    translator = cdt.NeherLabPop()
+    json_response = json.loads(neher_labs_raw_pop)
+    translator.fetch_data = MagicMock(return_value=json_response)
+    translator.file_path = MagicMock(return_value=test_json_path)
+    translator.update_data()
+    output = translator.data_for_country("Albania")
+    expected = neherlabs_pop_json['Albania']
+    assert output == expected
+    os.remove(test_json_path)
+
+
+

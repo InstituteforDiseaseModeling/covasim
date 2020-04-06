@@ -9,13 +9,16 @@ class DataLoader:
         pass
 
     def update_data(self):
-        r = requests.get(self.URL)
-        data_json = r.json()
+        data_json = self.fetch_data()
         self.delete_data()
         translated = self.translate(data_json)
         with open(self.file_path(), "a") as outfile:
             json.dump(translated, outfile)
         self.data = data_json
+
+    def fetch_data(self):
+        r = requests.get(self.URL)
+        return r.json()
 
     def delete_data(self):
         if os.path.exists(self.file_path()):
