@@ -199,6 +199,14 @@ class Person(sc.prettyobj):
         else:
             return 0
 
+    def check_diagnosed(self, t):
+        ''' Check for new diagnoses '''
+        if not self.diagnosed and self.date_diagnosed and t >= self.date_diagnosed: # Person is changing to this state
+            self.diagnosed = True
+            return 1
+        else:
+            return 0
+
 
 
 def make_people(sim, verbose=None, id_len=None, die=True, reset=False):

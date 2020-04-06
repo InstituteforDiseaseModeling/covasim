@@ -247,9 +247,7 @@ class test_num(Intervention):
 
         for i, person in enumerate(sim.people.values()):
 
-            if person.date_diagnosed and t == person.date_diagnosed: # Check whether the person got diagnosed
-                person.diagnosed = True
-                new_diagnoses += 1
+            new_diagnoses += person.check_diagnosed(t)
 
             # Adjust testing probability based on what's happened to the person
             # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
