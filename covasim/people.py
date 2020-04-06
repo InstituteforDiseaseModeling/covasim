@@ -118,7 +118,7 @@ class Person(sc.prettyobj):
 
                     if death_bool:
                         dur_crit2die = cvu.sample(**self.durpars['crit2die'])
-                        self.date_died = self.date_critical + dur_crit2die # Date of death
+                        self.date_dead = self.date_critical + dur_crit2die # Date of death
                         self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2die   # Store how long this person had COVID-19
                     else:
                         dur_crit2rec = cvu.sample(**self.durpars['crit2rec'])

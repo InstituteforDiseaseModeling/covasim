@@ -162,6 +162,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
       }
 
     base_sim = cv.Sim(base_pars) # create sim object
+    base_sim['n_days'] = 50
+    base_sim['contacts'] = {'h': 4,   's': 10,  'w': 10,  'c': 0} # Turn off community contacts - not working
+    base_sim['beta'] = 0.02 # Increase beta
     n_people = base_sim['n']
     npts = base_sim.npts
 
@@ -195,6 +198,15 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
                 'trace_probs': {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
                 'trace_time': {'h': 0,   's': 1,   'w': 1,   'c': 5},
                 'cont_factor': 0.1,
+                'interventions': cv.test_num(daily_tests=daily_tests)
+            }
+        },
+        'crazy': {
+            'name': '10% daily testing; same-day contact tracing, 100% of contacts self-isolate',
+            'pars': {
+                'trace_probs': {'h': 1, 's': 1, 'w': 1, 'c': 1},
+                'trace_time': {'h': 0,   's': 0,   'w': 0,   'c': 0},
+                'cont_factor': 0,
                 'interventions': cv.test_num(daily_tests=daily_tests)
             }
         },
