@@ -34,12 +34,5 @@ class DataLoader:
             strdata = json.load(datafile)
         self.data = strdata
 
-    def data_for_country(self, country):
-        self.load_data()
-        return self._for_country(country)
-
-    def _for_country(self, country):
-        raise NotImplementedError
-
     def translate(self, json):
         raise NotImplementedError

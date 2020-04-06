@@ -9,7 +9,8 @@ class NeherLabPop(DataLoader):
     def countries(self):
         return self.data.keys()
 
-    def _for_country(self, country):
+    def data_for_country(self, country):
+        self.load_data()
         return self.data[country]
 
     def translate(self, json=False):
