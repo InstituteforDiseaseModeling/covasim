@@ -191,7 +191,7 @@ class Scenarios(cvbase.ParsObj):
 
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             axis_args=None, fill_args=None, as_dates=True, interval=None, dateformat=None,
+             axis_args=None, fill_args=None, legend_args=None, as_dates=True, interval=None, dateformat=None,
              font_size=18, font_family=None, grid=True, commaticks=True, do_show=True, sep_figs=False,
              verbose=None):
         '''
@@ -205,6 +205,7 @@ class Scenarios(cvbase.ParsObj):
             plot_args   (dict): Dictionary of kwargs to be passed to pl.plot()
             axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between()
+            legend_args (dict): Dictionary of kwargs to be passed to pl.legend()
             as_dates    (bool): Whether to plot the x-axis as dates or time points
             interval    (int):  Interval between tick marks
             dateformat  (str):  Date string format, e.g. '%B %d'
@@ -229,10 +230,11 @@ class Scenarios(cvbase.ParsObj):
         to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults
-        fig_args  = sc.mergedicts({'figsize': (16, 12)}, fig_args)
-        plot_args = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-        axis_args = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}, axis_args)
-        fill_args = sc.mergedicts({'alpha': 0.2}, fill_args)
+        fig_args    = sc.mergedicts({'figsize': (16, 12)}, fig_args)
+        plot_args   = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
+        axis_args   = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}, axis_args)
+        fill_args   = sc.mergedicts({'alpha': 0.2}, fill_args)
+        legend_args = sc.mergedicts({'loc': 'best'}, legend_args)
 
         if sep_figs:
             figs = []
@@ -259,7 +261,7 @@ class Scenarios(cvbase.ParsObj):
                 pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
                 pl.title(title)
                 if rk == 0:
-                    pl.legend(loc='best')
+                    pl.legend(**legend_args)
 
                 pl.grid(grid)
                 if commaticks:
