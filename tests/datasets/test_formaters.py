@@ -17,31 +17,7 @@ test_json_path = os.path.join(dirname, "mock_datasets/population/test.json")
 with open(neherlabs_pop_json_path) as data:
     neherlabs_pop_json = json.load(data)
 
-neher_labs_raw_pop = """{
-"Afghanistan": {
-"0-9": 100,
-"10-19": 200,
-"20-29": 300,
-"30-39": 450,
-"40-49": 500,
-"50-59": 100,
-"60-69": 200,
-"70-79": 30,
-"80+": 10
-},
-"Albania": {
-"0-9": 333832,
-"10-19": 361777,
-"20-29": 472678,
-"30-39": 390771,
-"40-49": 323020,
-"50-59": 386091,
-"60-69": 330244,
-"70-79": 194668,
-"80+": 84716
-}
-}"""
-
+neher_labs_raw_pop = open(neherlabs_pop_json_path, "r").read()
 
 def test_transform_neherlab_data():
     sc.heading('Test the transformation for the neherlab covid19 scenarios dataset')
