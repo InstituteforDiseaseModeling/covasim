@@ -275,8 +275,9 @@ class Scenarios(cvbase.ParsObj):
                     @ticker.FuncFormatter
                     def date_formatter(x, pos):
                         return (self.base_sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
-                    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                     ax.xaxis.set_major_formatter(date_formatter)
+                    if not interval:
+                        ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         # Ensure the figure actually renders or saves
         if do_save:

@@ -577,7 +577,7 @@ class Sim(cvbase.BaseSim):
                         sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
             self.results['likelihood'] = loglike
-            
+
         sc.printv(f'Likelihood: {loglike}', 1, verbose)
         return loglike
 
@@ -680,8 +680,9 @@ class Sim(cvbase.BaseSim):
                 @ticker.FuncFormatter
                 def date_formatter(x, pos):
                     return (self['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
-                ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                 ax.xaxis.set_major_formatter(date_formatter)
+                if not interval:
+                    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
             # Plot interventions
             for intervention in self['interventions']:
