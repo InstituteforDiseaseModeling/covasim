@@ -7,6 +7,7 @@ import numpy as np # Needed for a few things not provided by pl
 import pylab as pl
 import sciris as sc
 import datetime as dt
+import matplotlib.ticker as ticker
 from . import utils as cvu
 from . import base as cvbase
 from . import parameters as cvpars
@@ -170,7 +171,7 @@ class Sim(cvbase.BaseSim):
             start_day = dt.datetime(2020, 1, 1)
         if not isinstance(start_day, dt.datetime):
             start_day = sc.readdate(start_day)
-        self['start_day'] = start_day # Convert back
+        self['start_day'] = start_day.date() # Convert back, keeping date only
 
         # Handle contacts
         contacts = self['contacts']
@@ -543,37 +544,39 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def likelihood(self, weights=None, verbose=None):
+    def likelihood(self, weights=None, verbose=None) -> float:
         '''
         Compute the log-likelihood of the current simulation based on the number
         of new diagnoses.
         '''
+
         if verbose is None:
             verbose = self['verbose']
 
         if weights is None:
             weights = {}
 
+        if self.data is None:
+            return np.nan
+
         loglike = 0
-        if self.data is not None: # Only perform likelihood calculation if data are available
-            for key in self.reskeys:
-                if key in self.data:
-                    if key in weights:
-                        weight = weights[key]
-                    else:
-                        weight = 1
-                    for d,datum in enumerate(self.data[key]):
-                        if not pl.isnan(datum) and d<len(self.results[key].values):
-                            estimate = self.results[key][d]
-                            if datum and estimate:
-                                p = cvu.poisson_test(datum, estimate)
-                                logp = pl.log(p)
-                                loglike += weight*logp
-                                sc.printv(f'  {self.data["date"][d]}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
+
+        model_dates = self.datevec.tolist()
+
+        for key in set(self.reskeys).intersection(self.data.columns): # For keys present in both the results and in the data
+            weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
+            for d, datum in self.data[key].iteritems():
+                if d in model_dates:
+                    estimate = self.results[key][model_dates.index(d)]
+                    if datum and estimate:
+                        p = cvu.poisson_test(datum, estimate)
+                        logp = pl.log(p)
+                        loglike += weight*logp
+                        sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
             self.results['likelihood'] = loglike
-            sc.printv(f'Likelihood: {loglike}', 1, verbose)
-
+            
+        sc.printv(f'Likelihood: {loglike}', 1, verbose)
         return loglike
 
 
@@ -654,7 +657,7 @@ class Sim(cvbase.BaseSim):
                 y = res[key].values
                 pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
                 if self.data is not None and key in self.data:
-                    data_t = [x.days for x in self.data['date']-self['start_day']] # Convert from data date to model output index based on model start date
+                    data_t = (self.data.index-self['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
                     pl.scatter(data_t, self.data[key], c=[this_color], **scatter_args)
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
@@ -672,9 +675,11 @@ class Sim(cvbase.BaseSim):
 
             # Set xticks as dates
             if as_dates:
-                xticks = ax.get_xticks()
-                xticklabels = self.inds2dates(xticks, dateformat=dateformat)
-                ax.set_xticklabels(xticklabels)
+                @ticker.FuncFormatter
+                def date_formatter(x, pos):
+                    return (self['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+                ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+                ax.xaxis.set_major_formatter(date_formatter)
 
             # Plot interventions
             for intervention in self['interventions']:

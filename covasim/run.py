@@ -6,6 +6,8 @@ Functions for running multiple Covasim runs.
 import numpy as np
 import pylab as pl
 import sciris as sc
+import datetime as dt
+import matplotlib.ticker as ticker
 from . import base as cvbase
 from . import sim as cvsim
 
@@ -282,9 +284,11 @@ class Scenarios(cvbase.ParsObj):
 
                 # Set xticks as dates
                 if as_dates:
-                    xticks = ax.get_xticks()
-                    xticklabels = self.base_sim.inds2dates(xticks, dateformat=dateformat)
-                    ax.set_xticklabels(xticklabels)
+                    @ticker.FuncFormatter
+                    def date_formatter(x, pos):
+                        return (self['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+                    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+                    ax.xaxis.set_major_formatter(date_formatter)
 
         # Ensure the figure actually renders or saves
         if do_save:
