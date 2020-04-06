@@ -69,19 +69,28 @@ class Result(object):
     '''
     Stores a single result -- by default, acts like an array.
 
+    Args:
+        name (str): name of this result, e.g. new_infections
+        values (array): array of values corresponding to this result
+        npts (int): if values is None, precreate it to be of this length
+        scale (bool): whether or not the value scales by population size
+        color (str or array): default color for plotting (hex or RGB notation)
+
     Example:
-        import covasim as cova
-        r1 = cova.Result(name='test1', npts=10)
+        import covasim as cv
+        r1 = cv.Result(name='test1', npts=10)
         r1[:5] = 20
         print(r2.values)
-        r2 = cova.Result(name='test2', values=range(10))
+        r2 = cv.Result(name='test2', values=range(10))
         print(r2)
     '''
 
-    def __init__(self, name=None, values=None, npts=None, scale=True, ispercentage=False):
-        self.name = name  # Name of this result
-        self.ispercentage = ispercentage  # Whether or not the result is a percentage
-        self.scale = scale  # Whether or not to scale the result by the scale factor
+    def __init__(self, name=None, values=None, npts=None, scale=True, color=None):
+        self.name =  name  # Name of this result
+        self.scale = scale # Whether or not to scale the result by the scale factor
+        if color is None:
+            color = '#000000'
+        self.color = color # Default color
         if values is None:
             if npts is not None:
                 values = np.zeros(int(npts)) # If length is known, use zeros
@@ -240,12 +249,12 @@ class BaseSim(ParsObj):
         if filename is None:
             output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
         else:
-            output = sc.savejson(filename=filename, obj=d, *args, **kwargs)
+            output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
 
         return output
 
 
-    def to_xlsx(self, filename=None):
+    def to_excel(self, filename=None):
         """
         Export results as XLSX
 

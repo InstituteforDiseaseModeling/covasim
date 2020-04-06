@@ -194,29 +194,24 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     # Core algorithm
     try:
         sim.run(do_plot=False)
+    except TimeoutError:
+        day = sim.t
+        err4 = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
+        err += err4
     except Exception as E:
         err4 = f'Sim run failed! {str(E)}\n'
         print(err4)
         err += err4
 
-    if sim.stopped:
-        try: # Assume it stopped because of the time, but if not, don't worry
-            day = sim.stopped['t']
-            time_exceeded = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
-            err += time_exceeded
-        except:
-            pass
-
     # Core plotting
     graphs = []
     try:
-
         to_plot = sc.dcp(cv.default_sim_plots)
         for p,title,keylabels in to_plot.enumitems():
             fig = go.Figure()
-            colors = sc.gridcolors(len(keylabels))
-            for i,key,label in keylabels.enumitems():
-                this_color = 'rgb(%d,%d,%d)' % (255*colors[i][0],255*colors[i][1],255*colors[i][2])
+            for key in keylabels:
+                label = sim.results[key].name
+                this_color = sim.results[key].color
                 y = sim.results[key][:]
                 fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
 
@@ -227,7 +222,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-
+            
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
             d['config'] = {'responsive': True}
@@ -252,22 +247,22 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
 
 
-        ss = sim.to_xlsx()
+        ss = sim.to_excel()
         files['xlsx'] = {
-            'filename': f'COVASim_results_{datestamp}.xlsx',
+            'filename': f'Covasim_results_{datestamp}.xlsx',
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
         json_string = sim.to_json()
         files['json'] = {
-            'filename': f'COVASim_results_{datestamp}.txt',
+            'filename': f'Covasim_results_{datestamp}.json',
             'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 
         # Summary output
         summary = {
             'days': sim.npts-1,
-            'cases': round(sim.results['cum_exposed'][-1]),
+            'cases': round(sim.results['cum_infections'][-1]),
             'deaths': round(sim.results['cum_deaths'][-1]),
         }
     except Exception as E:

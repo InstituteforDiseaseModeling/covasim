@@ -23,7 +23,6 @@ class Person(sc.prettyobj):
         self.durpars         = pars['dur']  # Store duration parameters
 
         # Define state
-        self.alive          = True
         self.susceptible    = True
         self.exposed        = False
         self.infectious     = False
@@ -131,6 +130,7 @@ class Person(sc.prettyobj):
                     self.date_critical = self.date_severe + self.dur_sev2crit  # Date they become critical
                     this_death_prob = self.death_prob * (self.OR_no_treat if bed_constraint else 1.) # Probability they'll die
                     death_bool = cvu.bt(this_death_prob)  # Death outcome
+
                     if death_bool:
                         dur_crit2die = cvu.sample(**self.durpars['crit2die'])
                         self.date_died = self.date_critical + dur_crit2die # Date of death
@@ -144,81 +144,72 @@ class Person(sc.prettyobj):
             self.infected_by = source.uid
             source.infected.append(self.uid)
 
-        infected = 1  # For incrementing counters
-
-        return infected
-
-
-    def check_death(self, t):
-        ''' Check whether or not this person died on this timestep  '''
-        if self.date_died and t == self.date_died:
-            self.exposed     = False
-            self.infectious  = False
-            self.symptomatic = False
-            self.severe      = False
-            self.critical    = False
-            self.recovered   = False
-            self.died        = True
-            death = 1
-        else:
-            death = 0
-
-        return death
+        return 1 # For incrementing counters
 
 
     def check_symptomatic(self, t):
-        ''' Check if an infected person has developed symptoms '''
-        if self.date_symptomatic and t >= self.date_symptomatic: # Person is symptomatic - use >= here because we want to know the total number symptomatic at each time step, not new symptomatics
+        ''' Check for new progressions to symptomatic '''
+        if not self.symptomatic and self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
             self.symptomatic = True
-            symptomatic = 1
+            return 1
         else:
-            symptomatic = 0
-        return symptomatic
+            return 0
 
 
     def check_severe(self, t):
-        ''' Check if an infected person has developed severe symptoms requiring hospitalization'''
-        if self.date_severe and t >= self.date_severe: # Symptoms have become bad enough to need hospitalization
+        ''' Check for new progressions to severe '''
+        if not self.severe and self.date_severe and t >= self.date_severe: # Person is changing to this state
             self.severe = True
-            severe = 1
+            return 1
         else:
-            severe = 0
-        return severe
+            return 0
 
 
     def check_critical(self, t):
-        ''' Check if an infected person is in need of IC'''
-        if self.date_critical and t >= self.date_critical: # Symptoms have become bad enough to need ICU
+        ''' Check for new progressions to critical '''
+        if not self.critical and self.date_critical and t >= self.date_critical: # Person is changing to this state
             self.critical = True
-            critical = 1
+            return 1
         else:
-            critical = 0
-        return critical
+            return 0
 
 
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
 
-        if self.date_recovered and t == self.date_recovered: # It's the day they recover
+        if not self.recovered and self.date_recovered and t >= self.date_recovered: # It's the day they recover
             self.exposed     = False
             self.infectious  = False
             self.symptomatic = False
             self.severe      = False
             self.critical    = False
             self.recovered   = True
-            recovery = 1
+            return 1
         else:
-            recovery = 0
+            return 0
 
-        return recovery
+
+    def check_death(self, t):
+        ''' Check whether or not this person died on this timestep  '''
+        if not self.dead and self.date_died and t >= self.date_died:
+            self.exposed     = False
+            self.infectious  = False
+            self.symptomatic = False
+            self.severe      = False
+            self.critical    = False
+            self.recovered   = False
+            self.dead        = True
+            return 1
+        else:
+            return 0
 
 
     def test(self, t, test_sensitivity):
         if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
             self.diagnosed = True
             self.date_diagnosed = t
-            diagnosed = 1
+            return 1
         else:
-            diagnosed = 0
-        return diagnosed
+            return 0
+
 
