@@ -331,7 +331,7 @@ class Scenarios(cvbase.ParsObj):
              'results': self.results,
              'basepars': self.basepars,
              'metapars': self.metapars,
-             'simpars': self.basesim._make_pardict(),
+             'simpars': self.base_sim._make_pardict(),
              'scenarios':self.scenarios
              }
         if filename is None:
