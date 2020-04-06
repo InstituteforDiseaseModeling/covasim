@@ -49,6 +49,7 @@ def make_pars():
     pars['cont_time']    = 3 # Number of days it takes to trace a positive's contacts
     pars['contacts']     = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
     pars['beta_layers']  = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
+    pars['traceability'] = {'h': 1.,  's': 0.8, 'w': 0.5, 'c': 0.01} # Probability of being able to trace different types of contacts
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()

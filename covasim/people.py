@@ -132,13 +132,12 @@ class Person(sc.prettyobj):
         return 1 # For incrementing counters
 
 
-    def test(self, t, test_sensitivity, loss_prob=None, test_delay=None):
+    def test(self, t, test_sensitivity, loss_prob=0, test_delay=0):
+        self.tested = True
+        self.date_tested = t
         if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
-            self.tested = True
-            self.date_tested = t
-            if test_delay is not None: # There's a delay between getting tested and getting results
-                if not cvu.bt(loss_prob): # They're not lost to follow-up
-                    self.date_diagnosed = t + test_delay
+            if not cvu.bt(loss_prob): # They're not lost to follow-up
+                self.date_diagnosed = t + test_delay
             return 1
         else:
             return 0

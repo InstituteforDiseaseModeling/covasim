@@ -258,8 +258,8 @@ class test_num(Intervention):
         for test_ind in test_inds:
             person = sim.get_person(test_ind)
             person.test(t, self.sensitivity)
-            if person.diagnosed:
-                sim.results['new_diagnoses'][t] += 1
+#            if person.diagnosed:
+#                sim.results['new_diagnoses'][t] += 1
 
         return
 

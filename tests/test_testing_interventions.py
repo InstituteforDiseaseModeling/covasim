@@ -95,71 +95,6 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     return scens
 
 
-
-def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
-    sc.heading('Test impact of reducing delay time for finding contacts of positives')
-
-    sc.heading('Setting up...')
-
-    sc.tic()
-
-    n_runs = 3
-    verbose = 1
-    base_pars = {
-      'n': 1000
-      }
-
-    base_sim = cv.Sim(base_pars) # create sim object
-    n_people = base_sim['n']
-    npts = base_sim.npts
-
-    # Define overall testing assumptions
-    testing_prop = 0.1 # Assumes we could test 10% of the population daily (way too optimistic!!)
-    daily_tests = [testing_prop*n_people]*npts # Number of daily tests
-
-    # Define the scenarios
-    scenarios = {
-#        'baseline': {
-#          'name':'Status quo, no testing',
-#          'pars': {
-#              'interventions': None,
-#              }
-#          },
-        '7daytrace': {
-          'name': 'Test 10% of population every day; 7 days to find their contacts',
-            'pars': {
-                'cont_time': 7,
-                'interventions': cv.test_num(daily_tests=daily_tests)
-              }
-          },
-        '3daytrace': {
-          'name': 'Test 10% of population every day; 3 days to find their contacts',
-          'pars': {
-              'cont_time': 3,
-              'interventions': cv.test_num(daily_tests=daily_tests)
-              }
-          },
-        '1daytrace': {
-            'name': 'Test 10% of population every day; 1 days to find their contacts',
-            'pars': {
-                'cont_time': 1,
-                'interventions': cv.test_num(daily_tests=daily_tests)
-            }
-        },
-    }
-
-    metapars = {'n_runs': n_runs}
-
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose, debug=debug)
-
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
-
-    return scens
-
-
-
 def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     sc.heading('Test impact of reducing delay time for getting test results')
 
@@ -207,6 +142,73 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'name': 'Symptomatic testing with immediate results',
             'pars': {
                 'test_delay': 0,
+                'interventions': cv.test_num(daily_tests=daily_tests)
+            }
+        },
+    }
+
+    metapars = {'n_runs': n_runs}
+
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run(verbose=verbose, debug=debug)
+
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+
+    return scens
+
+
+
+def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
+    sc.heading('Test impact of reducing delay time for finding contacts of positives')
+
+    sc.heading('Setting up...')
+
+    sc.tic()
+
+    n_runs = 3
+    verbose = 1
+    base_pars = {
+      'n': 20000
+      }
+
+    base_sim = cv.Sim(base_pars) # create sim object
+    n_people = base_sim['n']
+    npts = base_sim.npts
+
+    # Define overall testing assumptions
+    testing_prop = 0.1 # Assumes we could test 10% of the population daily (way too optimistic!!)
+    daily_tests = [testing_prop*n_people]*npts # Number of daily tests
+
+    # Define the scenarios
+    scenarios = {
+#        'baseline': {
+#          'name':'Status quo, no testing',
+#          'pars': {
+#              'interventions': None,
+#              }
+#          },
+        '7daytrace': {
+          'name': 'Test 10% of population every day; 7 days to find their contacts, who then isolate with 50% effectiveness',
+            'pars': {
+                'cont_time': 7,
+                'cont_factor': 0.5,
+                'interventions': cv.test_num(daily_tests=daily_tests)
+              }
+          },
+        '3daytrace': {
+          'name': 'Test 10% of population every day; 3 days to find their contacts, who then isolate with 75% effectiveness',
+          'pars': {
+              'cont_time': 3,
+              'cont_factor': 0.25,
+              'interventions': cv.test_num(daily_tests=daily_tests)
+              }
+          },
+        '1daytrace': {
+            'name': 'Test 10% of population every day; 1 day to find their contacts, who then isolate with 90% effectiveness',
+            'pars': {
+                'cont_time': 1,
+                'cont_factor': 0.1,
                 'interventions': cv.test_num(daily_tests=daily_tests)
             }
         },

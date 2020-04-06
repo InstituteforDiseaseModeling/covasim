@@ -27,6 +27,7 @@ default_colors = sc.objdict(
     symptomatic = '#c1ad71',
     severe      = '#c1981d',
     critical    = '#b86113',
+    confirmed   = '#3443eb',
     deaths      = '#000000',
     )
 
@@ -219,6 +220,7 @@ class Sim(cvbase.BaseSim):
         self.results['n_symptomatic'] = init_res('Number symptomatic',       color=dcols.symptomatic)
         self.results['n_severe']      = init_res('Number of severe cases',   color=dcols.severe)
         self.results['n_critical']    = init_res('Number of critical cases', color=dcols.critical)
+        self.results['n_diagnoses']   = init_res('Number of confirmed cases', color=dcols.confirmed)
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
@@ -354,6 +356,7 @@ class Sim(cvbase.BaseSim):
             n_symptomatic   = 0
             n_severe        = 0
             n_critical      = 0
+            n_diagnoses     = 0
 
             # Zero counts for this time step: flows
             new_recoveries  = 0
@@ -371,6 +374,7 @@ class Sim(cvbase.BaseSim):
             cont_factor      = self['cont_factor']
             cont_time        = self['cont_time']
             beta_layers      = self['beta_layers']
+            traceability     = self['traceability']
             n_beds           = self['n_beds']
             bed_constraint   = False
             n_people         = len(self.people)
@@ -427,7 +431,7 @@ class Sim(cvbase.BaseSim):
                         n_symptomatic   += person.symptomatic
                         n_severe        += person.severe
                         n_critical      += person.critical
-                        n_diagnosed     += person.diagnosed
+                        n_diagnoses     += person.diagnosed
                         if n_severe > n_beds:
                             bed_constraint = True
 
@@ -437,26 +441,32 @@ class Sim(cvbase.BaseSim):
                                    (diag_factor if person.diagnosed else 1.) * \
                                    (cont_factor if person.known_contact else 1.)
 
-                        # Determine who gets infected
-                        transmission_inds = []
+                        # Determine who gets infected and contacted
                         community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
                         person.contacts['c'] = community_contact_inds
+                        transmission_inds = []  # Indices of people that get infected
+                        contactable_inds = []   # Indices of people that are contactable
+
                         for ckey in self.contact_keys:
                             layer_beta = thisbeta * beta_layers[ckey]
+                            layer_trace = traceability[ckey]
                             transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
+                            contactable_inds.extend(cvu.bf(layer_trace, person.contacts[ckey]))
 
-                        # Loop over people who do
+                        # Loop over people who get infected
                         for contact_ind in transmission_inds:
                             target_person = self.get_person(contact_ind) # Stored by integer
-
-                            # This person was diagnosed recently: time to flag their contacts
-                            if person.date_diagnosed is not None and person.date_diagnosed == t-cont_time:
-                                target_person.known_contact = True
-
-                            # Skip people who are not susceptible
-                            if target_person.susceptible:
+                            if target_person.susceptible: # Skip people who are not susceptible
                                 new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                 sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+
+                        # This person was diagnosed recently: time to flag their contacts
+                        # This means we loop over all their contacts, not just the ones where transmission happened
+                        if person.date_diagnosed is not None and person.date_diagnosed == t-cont_time:
+                            # Loop over people who get infected
+                            for contact_ind in contactable_inds:
+                                target_person = self.get_person(contact_ind)  # Stored by integer
+                                target_person.known_contact = True
 
 
             sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)
@@ -473,6 +483,7 @@ class Sim(cvbase.BaseSim):
             self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
             self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
             self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
+            self.results['n_diagnoses'][t]    = n_diagnoses # Tracks total number of diagnosed cases at this timestep
             self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else None
 
             # Update counts for this time step: flows
@@ -481,6 +492,7 @@ class Sim(cvbase.BaseSim):
             self.results['new_symptomatic'][t] = new_symptomatic
             self.results['new_severe'][t]      = new_severe
             self.results['new_critical'][t]    = new_critical
+            self.results['new_diagnoses'][t]   = new_diagnoses
             self.results['new_deaths'][t]      = new_deaths
 
         # End of time loop; compute cumulative results outside of the time loop
