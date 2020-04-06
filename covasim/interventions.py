@@ -243,8 +243,14 @@ class test_num(Intervention):
             return
 
         test_probs = np.ones(sim.n)
+        new_diagnoses = 0
 
         for i, person in enumerate(sim.people.values()):
+
+            if person.date_diagnosed and t == person.date_diagnosed: # Check whether the person got diagnosed
+                person.diagnosed = True
+                new_diagnoses += 1
+
             # Adjust testing probability based on what's happened to the person
             # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
             if person.symptomatic:
@@ -255,6 +261,7 @@ class test_num(Intervention):
                 test_probs[i] = 0.0
 
         test_inds = cv.choose_weighted(probs=test_probs, n=n_tests, normalize=True)
+        sim.results['new_diagnoses'][t] = new_diagnoses
 
         for test_ind in test_inds:
             person = sim.get_person(test_ind)

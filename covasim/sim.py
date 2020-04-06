@@ -27,7 +27,7 @@ default_colors = sc.objdict(
     symptomatic = '#c1ad71',
     severe      = '#c1981d',
     critical    = '#b86113',
-    confirmed   = '#3443eb',
+    diagnosed   = '#3443eb',
     deaths      = '#000000',
     )
 
@@ -220,7 +220,7 @@ class Sim(cvbase.BaseSim):
         self.results['n_symptomatic'] = init_res('Number symptomatic',       color=dcols.symptomatic)
         self.results['n_severe']      = init_res('Number of severe cases',   color=dcols.severe)
         self.results['n_critical']    = init_res('Number of critical cases', color=dcols.critical)
-        self.results['n_diagnoses']   = init_res('Number of confirmed cases', color=dcols.confirmed)
+        self.results['n_diagnosed']   = init_res('Number of confirmed cases', color=dcols.diagnosed)
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
@@ -356,7 +356,7 @@ class Sim(cvbase.BaseSim):
             n_symptomatic   = 0
             n_severe        = 0
             n_critical      = 0
-            n_diagnoses     = 0
+            n_diagnosed     = 0
 
             # Zero counts for this time step: flows
             new_recoveries  = 0
@@ -365,7 +365,6 @@ class Sim(cvbase.BaseSim):
             new_symptomatic = 0
             new_severe      = 0
             new_critical    = 0
-            new_diagnoses   = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
             beta             = self['beta']
@@ -423,15 +422,14 @@ class Sim(cvbase.BaseSim):
                     if not new_death and not new_recovery:
                         n_infectious += 1 # Count this person as infectious
 
-                        # Check symptoms
+                        # Check symptoms and diagnosis
                         new_symptomatic += person.check_symptomatic(t)
                         new_severe      += person.check_severe(t)
                         new_critical    += person.check_critical(t)
-                        new_diagnoses   += person.check_diagnosed(t)
                         n_symptomatic   += person.symptomatic
                         n_severe        += person.severe
                         n_critical      += person.critical
-                        n_diagnoses     += person.diagnosed
+                        n_diagnosed     += person.diagnosed
                         if n_severe > n_beds:
                             bed_constraint = True
 
@@ -469,7 +467,6 @@ class Sim(cvbase.BaseSim):
                                 target_person.known_contact = True
 
 
-            sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)
             # End of person loop; apply interventions
             for intervention in self['interventions']:
                 intervention.apply(self)
@@ -483,7 +480,7 @@ class Sim(cvbase.BaseSim):
             self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
             self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
             self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
-            self.results['n_diagnoses'][t]    = n_diagnoses # Tracks total number of diagnosed cases at this timestep
+            self.results['n_diagnosed'][t]    = n_diagnosed # Tracks total number of diagnosed cases at this timestep
             self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else None
 
             # Update counts for this time step: flows
@@ -492,7 +489,6 @@ class Sim(cvbase.BaseSim):
             self.results['new_symptomatic'][t] = new_symptomatic
             self.results['new_severe'][t]      = new_severe
             self.results['new_critical'][t]    = new_critical
-            self.results['new_diagnoses'][t]   = new_diagnoses
             self.results['new_deaths'][t]      = new_deaths
 
         # End of time loop; compute cumulative results outside of the time loop

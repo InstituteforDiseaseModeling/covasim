@@ -200,16 +200,6 @@ class Person(sc.prettyobj):
             return 0
 
 
-    def check_diagnosed(self, t):
-        ''' Check whether or not this person received their test results on this timestep'''
-        if not self.diagnosed and self.date_diagnosed and t >= self.date_diagnosed: # Person is changing to this state
-            self.diagnosed = True
-            return 1
-        else:
-            return 0
-
-
-
 
 def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
     '''
