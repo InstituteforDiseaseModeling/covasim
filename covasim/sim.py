@@ -316,6 +316,7 @@ class Sim(cvbase.BaseSim):
         bed_constraint   = False
         n_people         = len(self.people)
         n_comm_contacts  = self['contacts']['c'] # Community contacts
+        n_import         = cvu.pt(self['n_import']) # Imported cases
         t = self.t
 
         # Print progress
@@ -333,7 +334,7 @@ class Sim(cvbase.BaseSim):
         # Randomly infect some people (imported infections)
         s_uids  = [person.uid for person in self.people.values() if person.susceptible]
         if len(s_uids)>self['n_import'] and self['n_import']>0: # Check there are actually susceptibles
-            for i in range(int(self['n_import'])):
+            for i in range(int(n_import)):
                 new_infections += self.people[s_uids[i]].infect(t=t)
 
         for person in not_susceptible:
