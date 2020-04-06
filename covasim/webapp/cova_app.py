@@ -247,15 +247,15 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
 
 
-        ss = sim.to_xlsx()
+        ss = sim.to_excel()
         files['xlsx'] = {
-            'filename': f'COVASim_results_{datestamp}.xlsx',
+            'filename': f'Covasim_results_{datestamp}.xlsx',
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
         json_string = sim.to_json()
         files['json'] = {
-            'filename': f'COVASim_results_{datestamp}.txt',
+            'filename': f'Covasim_results_{datestamp}.json',
             'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 
