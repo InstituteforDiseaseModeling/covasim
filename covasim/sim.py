@@ -373,7 +373,9 @@ class Sim(cvbase.BaseSim):
                         bed_constraint = True
 
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                    if not person.known_contact and person.date_known_contact is not None and person.date_known_contact>=t: person.known_contact = True
+                    if not person.known_contact and person.date_known_contact is not None and person.date_known_contact<=t:
+                        person.known_contact = True
+
                     thisbeta = beta * \
                                (asymp_factor if person.symptomatic else 1.) * \
                                (diag_factor if person.diagnosed else 1.) * \
@@ -383,14 +385,11 @@ class Sim(cvbase.BaseSim):
                     community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
                     person.contacts['c'] = community_contact_inds
                     transmission_inds = []  # Indices of people that get infected
-                    contactable_ppl = {}   # Store people that are contactable and how long it takes to contact them
 
                     for ckey in self.contact_keys:
                         layer_beta = thisbeta * beta_layers[ckey]
                         layer_trace = trace_probs[ckey]
                         transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
-                        new_contact_keys = cvu.bf(layer_trace, person.contacts[ckey])
-                        contactable_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
 
                     # Loop over people who get infected
                     for contact_ind in transmission_inds:
@@ -399,10 +398,14 @@ class Sim(cvbase.BaseSim):
                             new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                             sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
-                    # This person was just diagnosed: time to flag their contacts
-                    # This means we loop over all their contacts, not just the ones where transmission happened
                     if person.date_diagnosed is not None and person.date_diagnosed==t-1:
-                        # Loop over people who get infected
+                        # This person was just diagnosed: time to flag their contacts
+                        contactable_ppl = {}   # Store people that are contactable and how long it takes to contact them
+                        for ckey in self.contact_keys:
+                            new_contact_keys = cvu.bf(layer_trace, person.contacts[ckey])
+                            contactable_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
+
+                        # Loop over people who get contacted
                         for contact_ind, contact_time in contactable_ppl.items():
                             target_person = self.get_person(contact_ind)  # Stored by integer
                             target_person.date_known_contact = t + contact_time
@@ -545,8 +548,8 @@ class Sim(cvbase.BaseSim):
             if person.date_exposed is not None: # Skip people who were never exposed
                 if person.date_recovered is not None:
                     outcome_date = person.date_recovered
-                elif person.date_died is not None:
-                    outcome_date = person.date_died
+                elif person.date_dead is not None:
+                    outcome_date = person.date_dead
                 else:
                     errormsg = f'No outcome (death or recovery) can be determined for the following person:\n{person}'
                     raise ValueError(errormsg)
