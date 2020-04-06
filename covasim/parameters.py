@@ -152,7 +152,9 @@ def load_data(filename, columns=None, calculate=True, **kwargs):
         errormsg = f'Required column "date" not found; columns are {data.columns}'
         raise ValueError(errormsg)
     else:
-        data['date'] = pd.to_datetime(data['date'])
+        data['date'] = pd.to_datetime(data['date']).dt.date
+
+    data.set_index('date',inplace=True)
 
     return data
 

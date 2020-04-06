@@ -123,7 +123,7 @@ def test_sim_data(do_plot=False, do_show=False):
 
     pars = dict(
         n=2000,
-        start_day = '2020-01-01',
+        start_day = '2019-12-25',
         )
 
     # Create and run the simulation
