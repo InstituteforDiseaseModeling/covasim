@@ -134,7 +134,7 @@ class Person(sc.prettyobj):
 
     def trace_contacts(self, trace_probs, trace_time):
         '''
-        A method to find a person's contacts, i.e. assuming they've been diagnosed and we're doing contact tracing
+        A method to trace a person's contacts
         '''
         contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
         for ckey in self.contacts.keys():
