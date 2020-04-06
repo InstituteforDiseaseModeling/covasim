@@ -600,7 +600,7 @@ class Sim(cvbase.BaseSim):
 
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
+             scatter_args=None, axis_args=None, legend_args=None, as_dates=True, interval=None, dateformat=None,
              font_size=18, font_family=None, use_grid=True, use_commaticks=True, do_show=True,
              verbose=None):
         '''
@@ -614,6 +614,7 @@ class Sim(cvbase.BaseSim):
             plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            legend_args (dict): Dictionary of kwargs to be passed to pl.legend()
             as_dates (bool): Whether to plot the x-axis as dates or time points
             interval (int): Interval between tick marks
             dateformat (str): Date string format, e.g. '%B %d'
@@ -641,6 +642,7 @@ class Sim(cvbase.BaseSim):
         plot_args    = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
         scatter_args = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
         axis_args    = sc.mergedicts({'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}, axis_args)
+        legend_args  = sc.mergedicts({'loc': 'best'}, legend_args)
 
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
@@ -664,8 +666,9 @@ class Sim(cvbase.BaseSim):
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
 
+            pl.legend(**legend_args)
             pl.grid(use_grid)
-            cvu.fixaxis(self)
+            sc.setylim()
             if use_commaticks:
                 sc.commaticks()
             pl.title(title)
