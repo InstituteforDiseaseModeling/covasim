@@ -202,7 +202,7 @@ class CovaSimTest(unittest.TestCase):
         self.set_simulation_parameters(params_dict=params_dict)
 
 
-    def run_sim(self, params_dict=None, write_results_json=True):
+    def run_sim(self, params_dict=None, write_results_json=False):
         if not self.simulation_parameters or params_dict: # If we need one, or have one here
             self.set_simulation_parameters(params_dict=params_dict)
             pass

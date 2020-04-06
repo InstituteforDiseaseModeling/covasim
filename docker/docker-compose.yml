@@ -1,0 +1,9 @@
+version: "2"
+services:
+  covasim:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    image: jules2689/covasim:latest
+    ports:
+      - 8000:80

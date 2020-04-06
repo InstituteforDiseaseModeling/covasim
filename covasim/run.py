@@ -5,6 +5,7 @@ Functions for running multiple Covasim runs.
 #%% Imports
 import numpy as np
 import pylab as pl
+import pandas as pd
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
@@ -16,20 +17,11 @@ from . import sim as cvsim
 __all__ = ['default_scen_plots', 'default_scenario', 'make_metapars', 'Scenarios', 'single_run', 'multi_run']
 
 
-default_scen_plots = sc.odict({
-            'cum_infections': 'Cumulative infections',
-            # 'cum_deaths': 'Cumulative deaths',
-            # 'cum_recoveries':'Cumulative recoveries',
-            # 'cum_tested': 'Cumulative tested',
-            # 'n_susceptible': 'Number susceptible',
-            'n_infectious': 'Number of active infections',
-            # 'cum_diagnosed': 'Cumulative diagnosed',
-            # 'infections': 'New infections',
-            # 'deaths': 'New deaths',
-            # 'recoveries': 'New recoveries',
-            # 'tests': 'Number of tests',
-            # 'diagnoses': 'New diagnoses',
-    })
+default_scen_plots = [
+            'cum_infections',
+            'n_infectious',
+            'n_severe',
+]
 
 default_scenario = {'baseline':{'name':'Baseline', 'pars':{}}}
 
@@ -81,18 +73,14 @@ class Scenarios(cvbase.ParsObj):
         self.scenarios = scenarios
 
         # Handle metapars
-        if metapars is None:
-            metapars = {}
-        self.metapars = metapars
+        self.metapars = sc.mergedicts({}, metapars)
         self.update_pars(self.metapars)
 
         # Create the simulation and handle basepars
         if sim is None:
             sim = cvsim.Sim()
         self.base_sim = sim
-        if basepars is None:
-            basepars = {}
-        self.basepars = basepars
+        self.basepars = sc.mergedicts({}, basepars)
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
         self.base_sim.init_results()
@@ -104,13 +92,13 @@ class Scenarios(cvbase.ParsObj):
 
         # Create the results object; order is: results key, scenario, best/low/high
         self.sims = sc.objdict()
-        self.allres = sc.objdict()
+        self.results = sc.objdict()
         for reskey in self.reskeys:
-            self.allres[reskey] = sc.objdict()
+            self.results[reskey] = sc.objdict()
             for scenkey in scenarios.keys():
-                self.allres[reskey][scenkey] = sc.objdict()
+                self.results[reskey][scenkey] = sc.objdict()
                 for nblh in ['name', 'best', 'low', 'high']:
-                    self.allres[reskey][scenkey][nblh] = None # This will get populated below
+                    self.results[reskey][scenkey][nblh] = None # This will get populated below
         return
 
 
@@ -182,9 +170,9 @@ class Scenarios(cvbase.ParsObj):
                 scenres.high[reskey] = pl.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
 
             for reskey in reskeys:
-                self.allres[reskey][scenkey]['name'] = scenname
+                self.results[reskey][scenkey]['name'] = scenname
                 for blh in ['best', 'low', 'high']:
-                    self.allres[reskey][scenkey][blh] = scenres[blh][reskey]
+                    self.results[reskey][scenkey][blh] = scenres[blh][reskey]
 
             self.sims[scenkey] = scen_sims
 
@@ -196,7 +184,7 @@ class Scenarios(cvbase.ParsObj):
             for reskey in reskeys:
                 print(f'\n{reskey}')
                 for scenkey in list(self.scenarios.keys()):
-                    print(f'  {scenkey}: {self.allres[reskey][scenkey].best[-1]:0.0f}')
+                    print(f'  {scenkey}: {self.results[reskey][scenkey].best[-1]:0.0f}')
             print() # Add a blank space
 
         return
@@ -238,7 +226,7 @@ class Scenarios(cvbase.ParsObj):
 
         if to_plot is None:
             to_plot = default_scen_plots
-        to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
+        to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults
         fig_args  = sc.mergedicts({'figsize': (16, 12)}, fig_args)
@@ -255,15 +243,15 @@ class Scenarios(cvbase.ParsObj):
         if font_family:
             pl.rcParams['font.family'] = font_family
 
-        # %% Plotting
-        for rk,reskey,title in to_plot.enumitems():
+        for rk,reskey in enumerate(to_plot):
+            title = self.base_sim.results[reskey].name # Get the name of this result from the base simulation
             if sep_figs:
                 figs.append(pl.figure(**fig_args))
                 ax = pl.subplot(111)
             else:
                 ax = pl.subplot(len(to_plot), 1, rk + 1)
 
-            resdata = self.allres[reskey]
+            resdata = self.results[reskey]
 
             for scenkey, scendata in resdata.items():
 
@@ -305,6 +293,58 @@ class Scenarios(cvbase.ParsObj):
         return fig
 
 
+    def to_json(self, filename=None, tostring=True, indent=2, *args, **kwargs):
+        """
+        Export results as JSON.
+
+        Args:
+            filename (str): if None, return string; else, write to file
+
+        Returns:
+            A unicode string containing a JSON representation of the results,
+            or writes the JSON file to disk
+
+        """
+        d = {'t':self.tvec,
+             'results':   self.results,
+             'basepars':  self.basepars,
+             'metapars':  self.metapars,
+             'simpars':   self.base_sim._make_pardict(),
+             'scenarios': self.scenarios
+             }
+        if filename is None:
+            output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
+        else:
+            output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
+
+        return output
+
+
+    def to_excel(self, filename=None):
+        """
+        Export results as XLSX
+
+        Args:
+            filename (str): if None, return string; else, write to file
+
+        Returns:
+            An sc.Spreadsheet with an Excel file, or writes the file to disk
+
+        """
+        spreadsheet = sc.Spreadsheet()
+        spreadsheet.freshbytes()
+        with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
+            for key in self.reskeys:
+                result_df = pd.DataFrame.from_dict(sc.flattendict(self.results[key], sep='_'))
+                result_df.to_excel(writer, sheet_name=key)
+        spreadsheet.load()
+
+        if filename is None:
+            output = spreadsheet
+        else:
+            output = spreadsheet.save(filename)
+
+        return output
 
     def save(self, filename=None, keep_sims=True, keep_people=False, **kwargs):
         '''
