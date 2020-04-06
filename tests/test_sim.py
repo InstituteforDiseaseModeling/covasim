@@ -171,23 +171,16 @@ def test_start_stop(): # If being run via pytest, turn off
     sim1 = cv.Sim(pars)
     sim1.run(verbose=0)
 
-    # Test start and stop
-    stop = 20
-    sim2 = cv.Sim(pars)
-    sim2.run(start=0, stop=stop, verbose=0)
-    sim2.run(start=stop, stop=None, verbose=0)
-
     # Test that next works
-    sim3 = cv.Sim(pars)
-    sim3.initialize()
-    for n in range(sim3.npts):
-        sim3.next(verbose=0)
-    sim3.finalize()
+    sim2 = cv.Sim(pars)
+    sim2.initialize()
+    for n in range(sim2.npts):
+        sim2.next(verbose=0)
+    sim2.finalize()
 
     # Compare results
     key = 'cum_infections'
-    assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Start-stop values do not match'
-    assert (sim1.results[key][:] == sim3.results[key][:]).all(), 'Next values do not match'
+    assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Next values do not match'
 
     return sim2
 
