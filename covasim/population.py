@@ -1,7 +1,7 @@
 import numpy as np  # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
-from .person import Person
+from . import person as cvper
 
 
 class Population(sc.prettyobj):
@@ -85,7 +85,7 @@ class Population(sc.prettyobj):
         ages = age_data_min[age_bins] + age_data_range[age_bins] * np.random.random(n_people)  # Uniformly distribute within this age bin
 
         # Instantiate people
-        self.people = {uid: Person(pars=pars, uid=uid, age=age, sex=sex) for uid, age, sex in zip(uids, ages, sexes)}
+        self.people = {uid: cvper.Person(pars=pars, uid=uid, age=age, sex=sex) for uid, age, sex in zip(uids, ages, sexes)}
         self._uids = {i: x.uid for i, x in enumerate(self.people.values())}
 
         # Make contacts
@@ -132,7 +132,7 @@ class Population(sc.prettyobj):
         # Make people
         self.people = {}
         for uid, person in population.items():
-            self.people[uid] = Person(pars=pars, uid=uid, age=person['age'], sex=person['sex'])
+            self.people[uid] = cvper.Person(pars=pars, uid=uid, age=person['age'], sex=person['sex'])
         self._uids = {i: x.uid for i, x in enumerate(self.people.values())}
 
         # Make contact layers
@@ -143,7 +143,7 @@ class Population(sc.prettyobj):
             contacts = {}
             for uid, person in population.items():
                 contacts[uid] = np.array([uid_to_index[uid] for uid in person['contacts'][layer]], dtype=np.int64)  # match datatype in covasim.utils.bf
-                self.people[uid] = Person(pars=pars, uid=uid, age=person['age'], sex=person['sex'])
+                self.people[uid] = cvper.Person(pars=pars, uid=uid, age=person['age'], sex=person['sex'])
             self.contact_layers[layer] = StaticContactLayer(name=layer, beta=betas[layer], contacts=contacts)
         self.contact_layers['R'] = RandomContactLayer(name='R', beta=betas['R'], max_n=n_people, n=n_random_contacts)
 
