@@ -289,32 +289,6 @@ class Scenarios(cvbase.ParsObj):
         return fig
 
 
-    def _make_resdict(self, for_json=True):
-        """
-        Convert results to dict
-
-        The results written to Excel must have a regular table shape, whereas
-        for the JSON output, arbitrary data shapes are supported.
-
-        Args:
-            for_json (bool): If False, only data associated with Result objects will be included in the converted output
-
-        Returns:
-            resdict: Dictionary representation of the results
-        """
-        resdict = {}
-        resdict['t'] = self.results['t'] # Assume that there is a key for time
-
-        if for_json:
-            resdict['timeseries_keys'] = self.reskeys
-        for key,res in self.results.items():
-            if isinstance(res, cvbase.Result):
-                resdict[key] = res.values
-            elif for_json:
-                resdict[key] = res
-        return resdict
-
-
     def to_json(self, filename=None, tostring=True, indent=2, *args, **kwargs):
         """
         Export results as JSON.
@@ -328,21 +302,21 @@ class Scenarios(cvbase.ParsObj):
 
         """
         d = {'t':self.tvec,
-             'results': self.results,
-             'basepars': self.basepars,
-             'metapars': self.metapars,
-             'simpars': self.base_sim._make_pardict(),
-             'scenarios':self.scenarios
+             'results':   self.results,
+             'basepars':  self.basepars,
+             'metapars':  self.metapars,
+             'simpars':   self.base_sim._make_pardict(),
+             'scenarios': self.scenarios
              }
         if filename is None:
             output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
         else:
-            output = sc.savejson(filename=filename, obj=d, *args, **kwargs)
+            output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
 
         return output
 
 
-    def to_xlsx(self, filename=None):
+    def to_excel(self, filename=None):
         """
         Export results as XLSX
 
@@ -353,19 +327,12 @@ class Scenarios(cvbase.ParsObj):
             An sc.Spreadsheet with an Excel file, or writes the file to disk
 
         """
-        resdict = self._make_resdict(for_json=False)
-        result_df = pd.DataFrame.from_dict(resdict)
-        result_df.index = self.tvec
-        result_df.index.name = 'Day'
-
-        par_df = pd.DataFrame.from_dict(sc.flattendict(self.pars, sep='_'), orient='index', columns=['Value'])
-        par_df.index.name = 'Parameter'
-
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
         with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
-            result_df.to_excel(writer, sheet_name='Results')
-            par_df.to_excel(writer, sheet_name='Parameters')
+            for key in self.reskeys:
+                result_df = pd.DataFrame.from_dict(sc.flattendict(self.results[key], sep='_'))
+                result_df.to_excel(writer, sheet_name=key)
         spreadsheet.load()
 
         if filename is None:

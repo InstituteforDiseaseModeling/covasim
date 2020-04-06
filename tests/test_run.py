@@ -73,10 +73,20 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
 def test_scenarios(do_plot=False):
     sc.heading('Scenarios test')
     basepars = {'n':1000}
+
+    json_path = 'scen_test.json'
+    xlsx_path = 'scen_test.xlsx'
+
     scens = cv.Scenarios(basepars=basepars)
     scens.run()
     if do_plot:
         scens.plot()
+    scens.to_json(json_path)
+    scens.to_excel(xlsx_path)
+
+    for path in [json_path, xlsx_path]:
+        print(f'Removing {path}')
+        os.remove(path)
     return scens
 
 
@@ -85,9 +95,9 @@ def test_scenarios(do_plot=False):
 if __name__ == '__main__':
     T = sc.tic()
 
-    sim2  = test_singlerun()
-    sim3  = test_combine(do_plot=do_plot)
-    sims  = test_multirun(do_plot=do_plot)
+    # sim2  = test_singlerun()
+    # sim3  = test_combine(do_plot=do_plot)
+    # sims  = test_multirun(do_plot=do_plot)
     scens = test_scenarios(do_plot=do_plot)
 
     sc.toc(T)

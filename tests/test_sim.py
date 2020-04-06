@@ -81,12 +81,12 @@ def test_fileio():
 
     # Create objects
     json = sim.to_json()
-    xlsx = sim.to_xlsx()
+    xlsx = sim.to_excel()
     print(xlsx)
 
     # Save files
     sim.to_json(json_path)
-    sim.to_xlsx(xlsx_path)
+    sim.to_excel(xlsx_path)
 
     for path in [json_path, xlsx_path]:
         print(f'Removing {path}')
