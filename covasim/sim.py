@@ -281,7 +281,7 @@ class Sim(cvbase.BaseSim):
         '''
 
         # If we have reached the end of the simulation, then do nothing
-        if self.t == self.npts-1:
+        if self.t == self.npts:
             return
 
         # Zero counts for this time step: stocks
@@ -436,7 +436,7 @@ class Sim(cvbase.BaseSim):
             verbose = self['verbose']
 
         # Main simulation loop
-        for t in self.tvec:
+        for t in range(self.npts):
             self.next(verbose=verbose)
 
             # Check timing and stopping function
@@ -450,7 +450,7 @@ class Sim(cvbase.BaseSim):
             if elapsed > self['timelimit']:
                 raise TimeoutError(f"Time limit ({self['timelimit']} s) exceeded; stopping...")
             elif self['stop_func'] and self['stop_func'](self):
-                raise A("Stopping function terminated the simulation")
+                raise cvu.CancelError("Stopping function terminated the simulation")
 
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results
