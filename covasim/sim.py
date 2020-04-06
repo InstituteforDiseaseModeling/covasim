@@ -404,10 +404,13 @@ class Sim(cvbase.BaseSim):
                     # This person was just diagnosed: time to flag their contacts
                     # This means we loop over all their contacts, not just the ones where transmission happened
                     if person.date_diagnosed is not None and person.date_diagnosed==t-1:
-                        # Loop over people who get infected
+                        # Loop over people who get contacted
                         for contact_ind, contact_time in contactable_ppl.items():
                             target_person = self.get_person(contact_ind)  # Stored by integer
-                            target_person.date_known_contact = t + contact_time
+                            if target_person.date_known_contact is None:
+                                target_person.date_known_contact = t + contact_time
+                            else:
+                                target_person.date_known_contact = min(target_person.date_known_contact, t + contact_time)
 
         # End of person loop; apply interventions
         for intervention in self['interventions']:
