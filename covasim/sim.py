@@ -60,8 +60,8 @@ class Sim(cvbase.BaseSim):
             self["n"] = self["resample_max_pop"]
 
         # dynamic resampling
-        self.resampling_threshold = 0.5  # Fraction of total pop that isn't susceptible when we trigger scaling
-        self.resampling_factor = 2  # Factor by which we will rescale population
+        self.resampe_threshold = self["resample_threshold"]  # Fraction of total pop that isn't susceptible when we trigger scaling
+        self.resample_factor = self["resample_factor"]  # Factor by which we will rescale population
 
 
     def update_pars(self, pars=None, create=False):
@@ -416,16 +416,16 @@ class Sim(cvbase.BaseSim):
             return current_scale
         susceptible = list(filter(lambda p: p.susceptible, self.people.values()))
         # Check if we've reached point when we want to resample and we didn't reach max population
-        if (len(susceptible) / len(self.people)) < self.resampling_threshold:
+        if (len(susceptible) / len(self.people)) < self.resampe_threshold:
             # Check if we've reached max pop
-            if current_scale * self.resampling_factor * self["n"] > self.max_n:
-                # Calculate new resampling_factor to get us close to maxumum population
-                self.resampling_factor = self.max_n / (self["n"] * current_scale)
+            if current_scale * self.resample_factor * self["n"] > self.max_n:
+                # Calculate new resample_factor to get us close to maxumum population
+                self.resample_factor = self.max_n / (self["n"] * current_scale)
             # Pick random list of people to make susceptible again
-            new_susceptible = np.random.choice(list(self.people.keys()), size=round(len(self.people) / self.resampling_factor))
+            new_susceptible = np.random.choice(list(self.people.keys()), size=round(len(self.people) / self.resample_factor))
             for p in new_susceptible:
                 self.people[p].make_susceptible()
-            return current_scale * self.resampling_factor
+            return current_scale * self.resample_factor
         else:
             return current_scale
 
