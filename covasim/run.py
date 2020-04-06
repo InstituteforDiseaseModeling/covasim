@@ -479,7 +479,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
     return new_sim
 
 
-def multi_run(sim, n_runs=4, noise=0.0, noisepar='beta', iterpars=None, verbose=None, run_args=None, sim_args=None, **kwargs):
+def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, run_args=None, sim_args=None, **kwargs):
     '''
     For running multiple runs in parallel.
 

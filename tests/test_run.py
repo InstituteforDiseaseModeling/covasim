@@ -13,6 +13,7 @@ do_show = 1
 
 #%% Define the tests
 
+
 def test_singlerun():
     sc.heading('Single run test')
 
@@ -23,29 +24,6 @@ def test_singlerun():
     sim['n_days'] = 20
     sim['n'] = 1000
     sim = cv.single_run(sim=sim, **iterpars)
-
-    return sim
-
-
-def test_combine(do_plot=False): # If being run via pytest, turn off
-    sc.heading('Combine results test')
-
-    n_runs = 3
-    n = 1000
-    n_infected = 10
-
-    print('Running first sim...')
-    sim = cv.Sim({'n':n, 'n_infected':n_infected})
-    sim = cv.multi_run(sim=sim, n_runs=n_runs, combine=True)
-    assert len(sim.people) == n*n_runs
-
-    print('Running second sim, results should be similar but not identical (stochastic differences)...')
-    sim2 = cv.Sim({'n':n*n_runs, 'n_infected':n_infected*n_runs})
-    sim2.run()
-
-    if do_plot:
-        sim.plot()
-        sim2.plot()
 
     return sim
 

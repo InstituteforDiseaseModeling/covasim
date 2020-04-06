@@ -11,7 +11,7 @@ import datetime as dt
 __all__ = ['make_pars', 'get_default_prognoses', 'load_data']
 
 
-def make_pars():
+def make_pars(by_age=True):
     '''
     Set parameters for the simulation.
 
@@ -28,7 +28,8 @@ def make_pars():
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
     pars['n']          = 20000  #: Default number of people to use IF a population instance is not specified
-    pars['population'] = None  #: Store a :class:`Population` instance
+    pars['contacts']   = 20  #: Default number of daily regular contacts IF a population instance is not specified
+    pars['population'] = None  #: Store a :class:`Population` instance. If provided, `n` and `contacts` will be ignored (as these parameters are used to generate the default population)
     pars['n_infected'] = 10 # Number of seed cases
 
     pars['timelimit']  = 3600 # Time limit for a simulation (seconds)
@@ -56,7 +57,7 @@ def make_pars():
     pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=7, par2=3)  # Duration from critical symptoms to death
 
     # Severity parameters: probabilities of symptom progression
-    pars['prognoses'] = get_default_prognoses()
+    pars['prognoses'] = get_default_prognoses(by_age)
     pars['prognoses']['OR_no_treat']     = 2.0  # Odds ratio for how much more likely people are to die if no treatment available
 
     # Events and interventions
@@ -84,9 +85,9 @@ def get_default_prognoses(by_age=True):
         prog_pars = dict(
             age_cutoffs  = np.array([np.inf]),     # Age cutoffs
             symp_probs   = np.array([ 0.75 ]),
-            severe_probs = np.array([ 0.12 ]),
-            crit_probs   = np.array([ 0.25 ]),
-            death_probs  = np.array([ 0.50 ]),
+            severe_probs = np.array([ 0.2 ]),
+            crit_probs   = np.array([ 0.08 ]),
+            death_probs  = np.array([ 0.02 ]),
         )
     else:
         prog_pars = dict(
