@@ -95,7 +95,7 @@ class Population(sc.prettyobj):
         contacts = {}
         for i, person in enumerate(self.people.values()):
             n_contacts = cvu.pt(n_regular_contacts)  # Draw the number of Poisson contacts for this person
-            contacts[person.uid] = cvu.choose(max_n=n_people, n=n_contacts)  # Choose people at random, assigning to 'household'
+            contacts[person.uid] = cvu.choose(max_n=n_people, n=min(n_contacts, n_people))  # Choose people at random, assigning to 'household'
         layer = StaticContactLayer(name='Household', contacts=contacts)
         self.contact_layers[layer.name] = layer
 
@@ -252,8 +252,8 @@ class RandomContactLayer(ContactLayer):
         """
 
         super().__init__(name, beta, traceable=False)  # nb. cannot trace random contacts e.g. in community
-        self.max_n = max_n
-        self.n = n  #: Number of randomly sampled contacts per timestep
+        self.max_n = max_n  #: Total number of people/indices to select from
+        self.n = min(max_n, n)   #: Number of randomly sampled contacts per timestep
 
     def get_contacts(self, person, sim) -> list:
         return cvu.choose(max_n=self.max_n, n=self.n)

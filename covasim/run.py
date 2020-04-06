@@ -368,7 +368,7 @@ class Scenarios(cvbase.ParsObj):
 
 
 
-def single_run(sim, ind=0, noise=0.0, noisepar='beta', verbose=None, run_args=None, sim_args=None, **kwargs):
+def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None, sim_args=None, **kwargs):
     '''
     Convenience function to perform a single simulation run. Mostly used for
     parallelization, but can also be used directly.
@@ -404,19 +404,17 @@ def single_run(sim, ind=0, noise=0.0, noisepar='beta', verbose=None, run_args=No
     new_sim.set_seed()
 
     # Handle noise -- normally distributed fractional error
+    if noisepar is None:
+        noisepar = 'beta'
+        if noisepar not in sim.pars.keys():
+            raise KeyError(f'Noise parameter {noisepar} was not found in sim parameters')
+
     noiseval = noise*np.random.normal()
     if noiseval > 0:
         noisefactor = 1 + noiseval
     else:
         noisefactor = 1/(1-noiseval)
-
-    if noisepar == 'beta':
-        for layer in new_sim['population'].contact_layers.values():
-            layer.beta *= noisefactor
-    elif noisepar not in sim.pars.keys():
-        raise KeyError(f'Noise parameter {noisepar} was not found in sim parameters')
-    else:
-        new_sim[noisepar] *= noisefactor
+    new_sim[noisepar] *= noisefactor
 
     if verbose>=1:
         print(f'Running a simulation using {new_sim["seed"]} seed and {noisefactor} noise')
@@ -448,16 +446,12 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar='beta', iterpars=None, verbose=
         noisepar (string): the name of the parameter to add noise to
         iterpars (dict): any other parameters to iterate over the runs; see sc.parallelize() for syntax
         verbose (int): detail to print
-        combine (bool): whether or not to combine all results into one sim, rather than return multiple sim objects
         run_args (dict): arguments passed to sim.run()
         sim_args (dict): extra parameters to pass to the sim
         kwargs (dict): also passed to the sim
 
     Returns:
-        if combine:
-            a single sim object with the combined results from each sim
-        else (default):
-            a list of sim objects
+        a list of sim objects
 
     Example:
         import covasim as cv

@@ -55,12 +55,6 @@ class Sim(cvbase.BaseSim):
         self.set_metadata(filename)  # Set the simulation date and filename
         self.load_data(datafile, datacols)  # Load the data, if provided
         self.update_pars(sc.dcp(pars))  # Update the parameters, if provided. Use deep copy so that the people/contact layers in the parameters don't interact if the parameters are used for multiple sims
-
-        if self['population'] is None:
-            # Make a random network
-            print('Input parameters did not contain a population - creating a random network')
-            self['population'] = cvpop.Population.random(pars=self.pars)
-
         self.initialized = False
         self.stopped = None  # If the simulation has stopped
         self.results_ready = False  # Whether or not results are ready
@@ -188,6 +182,12 @@ class Sim(cvbase.BaseSim):
 
     def init_people(self):
         ''' Seed infections '''
+
+        if self['population'] is None:
+            # Make a random network
+            print('Input parameters did not contain a population - creating a random network')
+            self['population'] = cvpop.Population.random(pars=self.pars)
+
         for i in range(int(self['n_infected'])):
             person = self['population'].get_person(i)
             person.infect(t=0)
