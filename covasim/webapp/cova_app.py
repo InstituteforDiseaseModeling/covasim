@@ -194,18 +194,14 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     # Core algorithm
     try:
         sim.run(do_plot=False)
+    except TimeoutError:
+        day = sim.t
+        err4 = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
+        err += err4
     except Exception as E:
         err4 = f'Sim run failed! {str(E)}\n'
         print(err4)
         err += err4
-
-    if sim.stopped:
-        try: # Assume it stopped because of the time, but if not, don't worry
-            day = sim.stopped['t']
-            time_exceeded = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
-            err += time_exceeded
-        except:
-            pass
 
     # Core plotting
     graphs = []
@@ -251,15 +247,15 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
 
 
-        ss = sim.to_xlsx()
+        ss = sim.to_excel()
         files['xlsx'] = {
-            'filename': f'COVASim_results_{datestamp}.xlsx',
+            'filename': f'Covasim_results_{datestamp}.xlsx',
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
         json_string = sim.to_json()
         files['json'] = {
-            'filename': f'COVASim_results_{datestamp}.txt',
+            'filename': f'Covasim_results_{datestamp}.json',
             'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 

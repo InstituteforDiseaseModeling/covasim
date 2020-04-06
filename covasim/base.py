@@ -242,12 +242,12 @@ class BaseSim(ParsObj):
         if filename is None:
             output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
         else:
-            output = sc.savejson(filename=filename, obj=d, *args, **kwargs)
+            output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
 
         return output
 
 
-    def to_xlsx(self, filename=None):
+    def to_excel(self, filename=None):
         """
         Export results as XLSX
 

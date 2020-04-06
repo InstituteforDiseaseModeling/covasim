@@ -67,73 +67,6 @@ def test_sim(do_plot=False, do_save=False, do_show=False): # If being run via py
     return sim
 
 
-def test_singlerun():
-    sc.heading('Single run test')
-
-    iterpars = {'beta': 0.035,
-                }
-
-    sim = cv.Sim()
-    sim['n_days'] = 20
-    sim['n'] = 1000
-    sim = cv.single_run(sim=sim, **iterpars)
-
-    return sim
-
-
-def test_combine(do_plot=False): # If being run via pytest, turn off
-    sc.heading('Combine results test')
-
-    n_runs = 3
-    n = 1000
-    n_seed = 10
-
-    print('Running first sim...')
-    sim = cv.Sim({'n':n, 'n_seed':n_seed})
-    sim = cv.multi_run(sim=sim, n_runs=n_runs, combine=True)
-    assert len(sim.people) == n*n_runs
-
-    print('Running second sim, results should be similar but not identical (stochastic differences)...')
-    sim2 = cv.Sim({'n':n*n_runs, 'n_seed':n_seed*n_runs})
-    sim2.run()
-
-    if do_plot:
-        sim.plot()
-        sim2.plot()
-
-    return sim
-
-
-def test_multirun(do_plot=False): # If being run via pytest, turn off
-    sc.heading('Multirun test')
-
-    # Note: this runs 3 simulations, not 3x3!
-    iterpars = {'beta': [0.015, 0.025, 0.035],
-                'cont_factor': [0.1, 0.5, 0.9],
-                }
-
-    sim = cv.Sim()
-    sim['n_days'] = 60
-    sim['n'] = 1000
-    sims = cv.multi_run(sim=sim, iterpars=iterpars)
-
-    if do_plot:
-        for sim in sims:
-            sim.plot()
-
-    return sims
-
-
-def test_scenarios(do_plot=False):
-    sc.heading('Scenarios test')
-    basepars = {'n':1000}
-    scens = cv.Scenarios(basepars=basepars)
-    scens.run()
-    if do_plot:
-        scens.plot()
-    return scens
-
-
 def test_fileio():
     sc.heading('Test file saving')
 
@@ -148,12 +81,12 @@ def test_fileio():
 
     # Create objects
     json = sim.to_json()
-    xlsx = sim.to_xlsx()
+    xlsx = sim.to_excel()
     print(xlsx)
 
     # Save files
     sim.to_json(json_path)
-    sim.to_xlsx(xlsx_path)
+    sim.to_excel(xlsx_path)
 
     for path in [json_path, xlsx_path]:
         print(f'Removing {path}')
@@ -171,23 +104,16 @@ def test_start_stop(): # If being run via pytest, turn off
     sim1 = cv.Sim(pars)
     sim1.run(verbose=0)
 
-    # Test start and stop
-    stop = 20
-    sim2 = cv.Sim(pars)
-    sim2.run(start=0, stop=stop, verbose=0)
-    sim2.run(start=stop, stop=None, verbose=0)
-
     # Test that next works
-    sim3 = cv.Sim(pars)
-    sim3.initialize()
-    for n in range(sim3.npts):
-        sim3.next(verbose=0)
-    sim3.finalize()
+    sim2 = cv.Sim(pars)
+    sim2.initialize()
+    for n in range(sim2.npts):
+        sim2.next(verbose=0)
+    sim2.finalize()
 
     # Compare results
     key = 'cum_infections'
-    assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Start-stop values do not match'
-    assert (sim1.results[key][:] == sim3.results[key][:]).all(), 'Next values do not match'
+    assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Next values do not match'
 
     return sim2
 
@@ -218,10 +144,6 @@ if __name__ == '__main__':
     pars  = test_parsobj()
     sim0  = test_microsim()
     sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2  = test_singlerun()
-    sim3  = test_combine(do_plot=do_plot)
-    sims  = test_multirun(do_plot=do_plot)
-    scens = test_scenarios(do_plot=do_plot)
     json  = test_fileio()
     sim4  = test_start_stop()
     sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
