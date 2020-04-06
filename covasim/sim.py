@@ -362,6 +362,7 @@ class Sim(cvbase.BaseSim):
             new_symptomatic = 0
             new_severe      = 0
             new_critical    = 0
+            new_diagnoses   = 0
 
             # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
             beta             = self['beta']
@@ -403,7 +404,7 @@ class Sim(cvbase.BaseSim):
                         person.infectious = True
                         sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
 
-                # If infectious, check if anyone gets infected
+                # If infectious, update status according to the course of the infection, and check if anyone gets infected
                 if person.infectious:
 
                     # Check whether the person died on this timestep
@@ -422,9 +423,11 @@ class Sim(cvbase.BaseSim):
                         new_symptomatic += person.check_symptomatic(t)
                         new_severe      += person.check_severe(t)
                         new_critical    += person.check_critical(t)
+                        new_diagnoses   += person.check_diagnosed(t)
                         n_symptomatic   += person.symptomatic
                         n_severe        += person.severe
                         n_critical      += person.critical
+                        n_diagnosed     += person.diagnosed
                         if n_severe > n_beds:
                             bed_constraint = True
 
