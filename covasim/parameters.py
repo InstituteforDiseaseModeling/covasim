@@ -59,6 +59,10 @@ def make_pars(by_age=True):
     # Severity parameters: probabilities of symptom progression
     pars['prognoses'] = get_default_prognoses(by_age)
     pars['prognoses']['OR_no_treat']     = 2.0  # Odds ratio for how much more likely people are to die if no treatment available
+    pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
+    pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
+    pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
+    pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
 
     # Events and interventions
     pars['interventions'] = []  #: List of Intervention instances

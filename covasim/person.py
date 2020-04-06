@@ -56,10 +56,10 @@ class Person(sc.prettyobj):
 
         # Set prognoses
         idx = np.argmax(pars['prognoses']['age_cutoffs'] > self.age)  # Index of the age bin to use
-        self.symp_prob = pars['prognoses']['symp_probs'][idx]# Probability of developing symptoms
-        self.severe_prob = pars['prognoses']['severe_probs'][idx]/self.symp_prob if self.symp_prob > 0 else 0 # Conditional probability of symptoms becoming severe, if symptomatic
-        self.crit_prob   = pars['prognoses']['crit_probs'][idx]/self.severe_prob if self.severe_prob > 0 else 0 # Conditional probability of symptoms becoming critical, if severe
-        self.death_prob  = pars['prognoses']['death_probs'][idx]/self.crit_prob if self.crit_prob > 0 else 0 # Conditional probability of dying, given severe symptoms
+        self.symp_prob =  pars['rel_symp_prob']*pars['prognoses']['symp_probs'][idx]# Probability of developing symptoms
+        self.severe_prob = pars['rel_severe_prob']*pars['prognoses']['severe_probs'][idx]/self.symp_prob if self.symp_prob > 0 else 0 # Conditional probability of symptoms becoming severe, if symptomatic
+        self.crit_prob   = pars['rel_crit_prob']*pars['prognoses']['crit_probs'][idx]/self.severe_prob if self.severe_prob > 0 else 0 # Conditional probability of symptoms becoming critical, if severe
+        self.death_prob  = pars['rel_death_prob']*pars['prognoses']['death_probs'][idx]/self.crit_prob if self.crit_prob > 0 else 0 # Conditional probability of dying, given severe symptoms
         self.OR_no_treat = pars['prognoses']['OR_no_treat']  # Increase in the probability of dying if treatment not available
 
         return
