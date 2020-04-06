@@ -152,15 +152,26 @@ class BaseSim(ParsObj):
         return output
 
     @property
-    def npts(self):
+    def npts(self) -> int:
         ''' Count the number of time points '''
         return int(self['n_days'] + 1)
 
     @property
-    def tvec(self):
+    def tvec(self) -> np.ndarray:
         ''' Create a time vector '''
         return np.arange(self.npts)
 
+    @property
+    def datevec(self) -> np.ndarray:
+        """
+        Create a vector of dates
+
+        Returns:
+            Array of `datetime` instances containing the date associated with each
+            simulation time step
+
+        """
+        return self['start_day'] + self.tvec * dt.timedelta(days=1)
 
     def inds2dates(self, inds, dateformat=None):
         ''' Convert a set of indices to a set of dates '''
