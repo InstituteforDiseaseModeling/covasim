@@ -49,11 +49,11 @@ def make_pars():
     pars['dur']['sev2crit'] = dict(dist='lognormal_int', par1=1, par2=1) # Duration from severe symptoms to requiring ICU
 
     # Duration parameters: time for disease recovery
-    pars['dur']['asym2rec'] = dict(dist='lognormal_int', par1=8, par2=2) # Duration for asymptomatics to recover
-    pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8, par2=2) # Duration from mild symptoms to recovered
+    pars['dur']['asym2rec'] = dict(dist='lognormal_int', par1=8, par2=2)  # Duration for asymptomatics to recover
+    pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8, par2=2)  # Duration from mild symptoms to recovered
     pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=11, par2=3) # Duration from severe symptoms to recovered - leads to mean total disease time of
     pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=17, par2=3) # Duration from critical symptoms to recovered
-    pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=21, par2=4) # Duration from critical symptoms to death
+    pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=7, par2=3)  # Duration from critical symptoms to death
 
     # Severity parameters: probabilities of symptom progression
     pars['prog_by_age']     = True # Whether or not to use age-specific probabilities of prognosis (symptoms/severe symptoms/death)
