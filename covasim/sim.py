@@ -310,8 +310,6 @@ class Sim(cvbase.BaseSim):
         diag_factor      = self['diag_factor']
         cont_factor      = self['cont_factor']
         beta_layers      = self['beta_layers']
-#        trace_probs      = self['trace_probs']
-#        trace_time       = self['trace_time']
         n_beds           = self['n_beds']
         bed_constraint   = False
         n_people         = len(self.people)
