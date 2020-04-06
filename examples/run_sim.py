@@ -3,17 +3,22 @@ Simple script for running the Covid-19 agent-based model
 '''
 
 print('Importing...')
+import os
+import shutil
+import json
 import sciris as sc
 import covasim as cv
 
 print('Configuring...')
 
 # Run options
-do_plot = 1
-do_save = 0
-do_show = 1
-verbose = 1
-interv  = 0
+do_plot = int(os.environ.get('DO_PLOT') or '1')
+do_save = int(os.environ.get('DO_SAVE') or '1')
+do_show = int(os.environ.get('DO_SHOW') or '1')
+do_summary = int(os.environ.get('DO_SUMMARY') or '1')
+verbose = int(os.environ.get('VERBOSE') or '1')
+use_pop_data = int(os.environ.get('USE_POP_DATA') or '1')
+interv  = int(os.environ.get('INTERV') or '0')
 
 # Set filename if saving
 version  = 'v0'
@@ -21,6 +26,7 @@ date     = '2020apr06'
 folder   = 'results'
 basename = f'{folder}/covasim_run_{date}_{version}'
 fig_path = f'{basename}.png'
+summary_path = f'{basename}.json'
 
 # Configure the sim -- can also just use a normal dictionary
 pars = sc.objdict(
@@ -28,7 +34,7 @@ pars = sc.objdict(
     pop_infected = 1,     # Number of initial infections
     n_days       = 180,   # Number of days to simulate
     rand_seed    = 1,     # Random seed
-    )
+)
 
 # Optionally add an intervention
 if interv:
@@ -39,6 +45,13 @@ sim = cv.Sim(pars=pars)
 
 print('Running...')
 sim.run(verbose=verbose)
+
+if do_plot or do_summary:
+    # Clean the results dir
+    if os.path.exists(folder):
+        shutil.rmtree(folder, ignore_errors=True)
+
+    os.mkdir(folder)
 
 if do_plot:
     print('Plotting...')
