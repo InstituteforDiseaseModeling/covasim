@@ -316,11 +316,12 @@ class Sim(cvbase.BaseSim):
         bed_constraint   = False
         n_people         = len(self.people)
         n_comm_contacts  = self['contacts']['c'] # Community contacts
+        t = self.t
 
         # Print progress
-        if verbose>=1:
-            string = f'  Running day {t:0.0f} of {self.pars["n_days"]} ({elapsed:0.2f} s elapsed)...'
-            if verbose>=2:
+        if verbose >= 1:
+            string = f'  Running day {t:0.0f} of {self.pars["n_days"]} ({sc.toc(output=True):0.2f} s elapsed)...'
+            if verbose >= 2:
                 sc.heading(string)
             else:
                 print(string)
