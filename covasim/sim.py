@@ -368,6 +368,7 @@ class Sim(cvbase.BaseSim):
             asymp_factor     = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
+            cont_time        = self['cont_time']
             beta_layers      = self['beta_layers']
             n_beds           = self['n_beds']
             bed_constraint   = False
@@ -445,8 +446,8 @@ class Sim(cvbase.BaseSim):
                         for contact_ind in transmission_inds:
                             target_person = self.get_person(contact_ind) # Stored by integer
 
-                            # This person was diagnosed last time step: time to flag their contacts
-                            if person.date_diagnosed is not None and person.date_diagnosed == t-1:
+                            # This person was diagnosed recently: time to flag their contacts
+                            if person.date_diagnosed is not None and person.date_diagnosed == t-cont_time:
                                 target_person.known_contact = True
 
                             # Skip people who are not susceptible

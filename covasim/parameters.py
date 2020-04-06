@@ -34,15 +34,19 @@ def make_pars():
     pars['stop_func']  = None # A function to call to stop the sim partway through
     pars['window']     = 7 # Integration window for doubling time and R_eff
 
-    # Disease states
-    pars['possible_states'] = ['alive', 'susceptible', 'exposed', 'infectious', 'symptomatic', 'severe', 'critical',
-                               'diagnosed', 'recovered', 'dead', 'known_contact']
+    # Disease states and other states
+    pars['possible_states'] = ['susceptible',
+                               'exposed', 'infectious', 'symptomatic', 'severe', 'critical', # Gradations of exposure and disease
+                               'tested', 'diagnosed',                                        # Testing
+                               'recovered', 'dead',                                          # Possible resolutions
+                               'known_contact']                                              # Whether they know a confirmed case
 
     # Disease transmission
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
     pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
+    pars['cont_time']    = 3 # Number of days it takes to trace a positive's contacts
     pars['contacts']     = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
     pars['beta_layers']  = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
 
@@ -73,7 +77,8 @@ def make_pars():
     pars['interv_func'] = None # Custom intervention function
 
     # Health system parameters
-    pars['n_beds'] = pars['n']  # Baseline assumption is that there's enough beds for the whole population (i.e., no constraints)
+    pars['n_beds']      = pars['n'] # Baseline assumption is that there's enough beds for the whole population (i.e., no constraints)
+    pars['test_delay']  = 0         # Number of days between getting a test a getting the result
 
     return pars
 

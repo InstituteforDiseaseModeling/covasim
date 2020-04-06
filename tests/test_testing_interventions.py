@@ -3,12 +3,14 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('TkAgg')
 import sciris as sc
 import covasim as cv
 
 do_plot   = 1
-do_show   = 1
-do_save   = 0
+do_show   = 0
+do_save   = 1
 debug     = 1
 keep_sims = 0
 fig_path  = 'results/testing_scens.png'
@@ -93,11 +95,79 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     return scens
 
 
+
+def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
+    sc.heading('Test impact of reducing delay time for getting test results')
+
+    sc.heading('Setting up...')
+
+    sc.tic()
+
+    n_runs = 3
+    verbose = 1
+    base_pars = {
+      'n': 1000
+      }
+
+    base_sim = cv.Sim(base_pars) # create sim object
+    n_people = base_sim['n']
+    npts = base_sim.npts
+
+    # Define overall testing assumptions
+    # As the most optimistic case, we assume countries could get to South Korea's testing levels. S Korea has tested
+    # an average of 10000 people/day over March, or 270,000 in total. This is ~200 people per million every day (0.01%).
+    testing_prop = 0.1 # Assumes we could test 10% of the population daily (!!)
+    daily_tests = [testing_prop*n_people]*npts # Number of daily tests
+
+    # Define the scenarios
+    scenarios = {
+        'baseline': {
+          'name':'Status quo, no testing',
+          'pars': {
+              'interventions': None,
+              }
+          },
+        '7dayturnaround': {
+          'name':'Symptomatic testing with 7 days to get results',
+            'pars': {
+                'test_delay': 7,
+                'interventions': cv.test_num(daily_tests=daily_tests)
+              }
+          },
+        '3dayturnaround': {
+          'name':'Symptomatic testing with 3 days to get results',
+          'pars': {
+              'test_delay': 3,
+              'interventions': cv.test_num(daily_tests=daily_tests)
+              }
+          },
+        '0dayturnaround': {
+            'name': 'Symptomatic testing with immediate results',
+            'pars': {
+                'test_delay': 0,
+                'interventions': cv.test_num(daily_tests=daily_tests)
+            }
+        },
+    }
+
+    metapars = {'n_runs': n_runs}
+
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run(verbose=verbose, debug=debug)
+
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+
+    return scens
+
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    scens = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+#    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
 
     sc.toc()
 

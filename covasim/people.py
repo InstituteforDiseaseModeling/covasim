@@ -32,18 +32,10 @@ class Person(sc.prettyobj):
 
         # Define states
         for state in pars['possible_states']:
-            setattr(self, state, False)
-        self.susceptible    = True
-
-        # Keep track of dates
-        self.date_exposed      = None
-        self.date_infectious   = None
-        self.date_symptomatic  = None
-        self.date_severe       = None
-        self.date_critical     = None
-        self.date_diagnosed    = None
-        self.date_recovered    = None
-        self.date_died         = None
+            if state != 'susceptible':
+                setattr(self, state, False)             # Track states - set them all to False initially
+                setattr(self, 'date_'+state, None)      # Track dates - set them all to None initially
+        self.susceptible  = True
 
         # Keep track of durations
         self.dur_exp2inf  = None # Duration from exposure to infectiousness
@@ -57,6 +49,7 @@ class Person(sc.prettyobj):
         return
 
 
+    # Methods to make events occur (infection and diagnosis)
     def infect(self, t, bed_constraint=None, source=None):
         """
         Infect this person and determine their eventual outcomes.
@@ -139,6 +132,19 @@ class Person(sc.prettyobj):
         return 1 # For incrementing counters
 
 
+    def test(self, t, test_sensitivity, loss_prob=None, test_delay=None):
+        if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
+            self.tested = True
+            self.date_tested = t
+            if test_delay is not None: # There's a delay between getting tested and getting results
+                if not cvu.bt(loss_prob): # They're not lost to follow-up
+                    self.date_diagnosed = t + test_delay
+            return 1
+        else:
+            return 0
+
+
+    # Methods to check a person's status
     def check_symptomatic(self, t):
         ''' Check for new progressions to symptomatic '''
         if not self.symptomatic and self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
@@ -168,7 +174,6 @@ class Person(sc.prettyobj):
 
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
-
         if not self.recovered and self.date_recovered and t >= self.date_recovered: # It's the day they recover
             self.exposed     = False
             self.infectious  = False
@@ -183,7 +188,7 @@ class Person(sc.prettyobj):
 
     def check_death(self, t):
         ''' Check whether or not this person died on this timestep  '''
-        if not self.dead and self.date_died and t >= self.date_died:
+        if not self.dead and self.date_dead and t >= self.date_dead:
             self.exposed     = False
             self.infectious  = False
             self.symptomatic = False
@@ -196,13 +201,15 @@ class Person(sc.prettyobj):
             return 0
 
 
-    def test(self, t, test_sensitivity):
-        if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
+    def check_diagnosed(self, t):
+        ''' Check whether or not this person received their test results on this timestep'''
+        if not self.diagnosed and self.date_diagnosed and t >= self.date_diagnosed: # Person is changing to this state
             self.diagnosed = True
-            self.date_diagnosed = t
             return 1
         else:
             return 0
+
+
 
 
 def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
