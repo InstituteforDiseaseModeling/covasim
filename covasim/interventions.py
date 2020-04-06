@@ -215,13 +215,14 @@ class test_num(Intervention):
         Intervention
     """
 
-    def __init__(self, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0):
+    def __init__(self, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0, test_delay=0):
         super().__init__()
 
         self.daily_tests = daily_tests #: Should be a list of length matching time
         self.sympt_test = sympt_test
         self.trace_test = trace_test
         self.sensitivity = sensitivity
+        self.test_delay = test_delay
 
         return
 
@@ -257,9 +258,7 @@ class test_num(Intervention):
 
         for test_ind in test_inds:
             person = sim.get_person(test_ind)
-            person.test(t, self.sensitivity)
-#            if person.diagnosed:
-#                sim.results['new_diagnoses'][t] += 1
+            person.test(t, self.sensitivity, test_delay=self.test_delay)
 
         return
 

@@ -105,7 +105,7 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     n_runs = 3
     verbose = 1
     base_pars = {
-      'n': 1000
+      'n': 20000
       }
 
     base_sim = cv.Sim(base_pars) # create sim object
@@ -118,31 +118,22 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
     # Define the scenarios
     scenarios = {
-        'baseline': {
-          'name':'Status quo, no testing',
-          'pars': {
-              'interventions': None,
-              }
-          },
         '7dayturnaround': {
           'name':'Symptomatic testing with 7 days to get results',
             'pars': {
-                'test_delay': 7,
-                'interventions': cv.test_num(daily_tests=daily_tests)
+                'interventions': cv.test_num(daily_tests=daily_tests, test_delay=7)
               }
           },
         '3dayturnaround': {
           'name':'Symptomatic testing with 3 days to get results',
           'pars': {
-              'test_delay': 3,
-              'interventions': cv.test_num(daily_tests=daily_tests)
+              'interventions': cv.test_num(daily_tests=daily_tests, test_delay=3)
               }
           },
         '0dayturnaround': {
             'name': 'Symptomatic testing with immediate results',
             'pars': {
-                'test_delay': 0,
-                'interventions': cv.test_num(daily_tests=daily_tests)
+                'interventions': cv.test_num(daily_tests=daily_tests, test_delay=0)
             }
         },
     }
@@ -182,12 +173,6 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
     # Define the scenarios
     scenarios = {
-#        'baseline': {
-#          'name':'Status quo, no testing',
-#          'pars': {
-#              'interventions': None,
-#              }
-#          },
         '7daytrace': {
           'name': 'Test 10% of population every day; 7 days to find their contacts, who then isolate with 50% effectiveness',
             'pars': {
@@ -231,8 +216,8 @@ if __name__ == '__main__':
     sc.tic()
 
 #    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
-#    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
-    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+#    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
 
     sc.toc()
 

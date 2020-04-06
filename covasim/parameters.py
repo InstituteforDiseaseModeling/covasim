@@ -79,7 +79,6 @@ def make_pars():
 
     # Health system parameters
     pars['n_beds']      = pars['n'] # Baseline assumption is that there's enough beds for the whole population (i.e., no constraints)
-    pars['test_delay']  = 0         # Number of days between getting a test a getting the result
 
     return pars
 
