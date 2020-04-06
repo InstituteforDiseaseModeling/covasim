@@ -132,6 +132,23 @@ class Person(sc.prettyobj):
         return 1 # For incrementing counters
 
 
+    def find_contacts(self, t):
+        '''
+        A method to find a person's contacts, i.e. assuming they've been diagnosed and we're doing contact tracing
+        :param t:
+        :return:
+        '''
+        contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
+        contact_keys = self.contacts.keys()
+        for ckey in self.contact_keys:
+            if ckey != 'c':
+                this_trace_prob = self.trace_probs[ckey]
+
+        return contactable_ppl
+
+
+
+
     def test(self, t, test_sensitivity, loss_prob=0, test_delay=0):
         self.tested = True
         self.date_tested = t

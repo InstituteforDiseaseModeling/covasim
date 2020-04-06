@@ -385,7 +385,7 @@ class Sim(cvbase.BaseSim):
                     community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
                     person.contacts['c'] = community_contact_inds
                     transmission_inds = []  # Indices of people that get infected
-                    contactable_ppl = {}   # Store people that are contactable and how long it takes to contact them
+                    contactable_ppl   = {}  # Store people that are contactable and how long it takes to contact them
 
                     for ckey in self.contact_keys:
                         layer_beta = thisbeta * beta_layers[ckey]
