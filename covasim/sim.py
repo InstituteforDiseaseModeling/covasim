@@ -371,9 +371,9 @@ class Sim(cvbase.BaseSim):
             asymp_factor     = self['asymp_factor']
             diag_factor      = self['diag_factor']
             cont_factor      = self['cont_factor']
-            cont_time        = self['cont_time']
             beta_layers      = self['beta_layers']
-            traceability     = self['traceability']
+            trace_probs      = self['trace_probs']
+            trace_time       = self['trace_time']
             n_beds           = self['n_beds']
             bed_constraint   = False
             n_people         = len(self.people)
@@ -434,6 +434,7 @@ class Sim(cvbase.BaseSim):
                             bed_constraint = True
 
                         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
+                        if not person.known_contact and person.date_known_contact is not None and person.date_known_contact>=t: person.known_contact = True
                         thisbeta = beta * \
                                    (asymp_factor if person.symptomatic else 1.) * \
                                    (diag_factor if person.diagnosed else 1.) * \
@@ -443,13 +444,14 @@ class Sim(cvbase.BaseSim):
                         community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
                         person.contacts['c'] = community_contact_inds
                         transmission_inds = []  # Indices of people that get infected
-                        contactable_inds = []   # Indices of people that are contactable
+                        contactable_ppl = {}   # Store people that are contactable and how long it takes to contact them
 
                         for ckey in self.contact_keys:
                             layer_beta = thisbeta * beta_layers[ckey]
-                            layer_trace = traceability[ckey]
+                            layer_trace = trace_probs[ckey]
                             transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
-                            contactable_inds.extend(cvu.bf(layer_trace, person.contacts[ckey]))
+                            new_contact_keys = cvu.bf(layer_trace, person.contacts[ckey])
+                            contactable_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
 
                         # Loop over people who get infected
                         for contact_ind in transmission_inds:
@@ -458,14 +460,13 @@ class Sim(cvbase.BaseSim):
                                 new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                 sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
-                        # This person was diagnosed recently: time to flag their contacts
+                        # This person was just diagnosed: time to flag their contacts
                         # This means we loop over all their contacts, not just the ones where transmission happened
-                        if person.date_diagnosed is not None and person.date_diagnosed == t-cont_time:
+                        if person.date_diagnosed is not None and person.date_diagnosed==t-1:
                             # Loop over people who get infected
-                            for contact_ind in contactable_inds:
+                            for contact_ind, contact_time in contactable_ppl.items():
                                 target_person = self.get_person(contact_ind)  # Stored by integer
-                                target_person.known_contact = True
-
+                                target_person.date_known_contact = t + contact_time
 
             # End of person loop; apply interventions
             for intervention in self['interventions']:

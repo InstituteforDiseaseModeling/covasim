@@ -3,12 +3,14 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('Agg')
 import sciris as sc
 import covasim as cv
 
 do_plot   = 1
 do_show   = 0
-do_save   = 0
+do_save   = 1
 debug     = 1
 keep_sims = 0
 fig_path  = [f'results/testing_scen_{i}.png' for i in range(3)]
@@ -171,26 +173,29 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
     # Define the scenarios
     scenarios = {
-        '7daytrace': {
-          'name': 'Test 10% of population every day; 7 days to find their contacts, who then isolate with 50% effectiveness',
+        'lowtrace': {
+          'name': '10% daily testing; poor contact tracing, 50% of contacts self-isolate',
             'pars': {
-                'cont_time': 7,
+                'trace_probs': {'h': 1,   's': 0.8,   'w': 0.5,   'c': 0.01},
+                'trace_time': {'h': 0,   's': 7,   'w': 7,   'c': 14},
                 'cont_factor': 0.5,
                 'interventions': cv.test_num(daily_tests=daily_tests)
               }
           },
-        '3daytrace': {
-          'name': 'Test 10% of population every day; 3 days to find their contacts, who then isolate with 75% effectiveness',
+        'modtrace': {
+          'name': '10% daily testing; moderate contact tracing, 75% of contacts self-isolate',
           'pars': {
-              'cont_time': 3,
+              'trace_probs': {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
+              'trace_time': {'h': 0,   's': 3,   'w': 3,   'c': 8},
               'cont_factor': 0.25,
               'interventions': cv.test_num(daily_tests=daily_tests)
               }
           },
-        '1daytrace': {
-            'name': 'Test 10% of population every day; 1 day to find their contacts, who then isolate with 90% effectiveness',
+        'hightrace': {
+            'name': '10% daily testing; fast contact tracing, 90% of contacts self-isolate',
             'pars': {
-                'cont_time': 1,
+                'trace_probs': {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
+                'trace_time': {'h': 0,   's': 1,   'w': 1,   'c': 5},
                 'cont_factor': 0.1,
                 'interventions': cv.test_num(daily_tests=daily_tests)
             }
@@ -213,7 +218,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 if __name__ == '__main__':
     sc.tic()
 
-    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[0])
+#    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[0])
     scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[1])
     scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[2])
 
