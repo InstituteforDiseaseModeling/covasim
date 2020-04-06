@@ -29,6 +29,7 @@ class Person(sc.prettyobj):
         self.death_prob  = death_prob # Conditional probability of dying, given severe symptoms
         self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
         self.durpars     = pars['dur']  # Store duration parameters
+        self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
 
         # Define states
         for state in pars['possible_states']:
@@ -131,10 +132,19 @@ class Person(sc.prettyobj):
 
         return 1 # For incrementing counters
 
-
-    def trace_contacts(self, trace_probs, trace_time):
+    def trace_dynamic_contacts(self, trace_probs, trace_time):
         '''
-        A method to trace a person's contacts
+        A method to trace a person's dynamic contacts, e.g. community
+        '''
+        ckey = 'c' # Only community
+        this_trace_prob = trace_probs[ckey]
+        new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
+        self.dyn_cont_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
+
+
+    def trace_static_contacts(self, trace_probs, trace_time):
+        '''
+        A method to trace a person's static contacts, e.g. home, school, work
         '''
         contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
         for ckey in self.contacts.keys():
