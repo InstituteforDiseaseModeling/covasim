@@ -274,7 +274,7 @@ class Scenarios(cvbase.ParsObj):
                 if as_dates:
                     @ticker.FuncFormatter
                     def date_formatter(x, pos):
-                        return (self['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+                        return (self.base_sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
                     ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                     ax.xaxis.set_major_formatter(date_formatter)
 
