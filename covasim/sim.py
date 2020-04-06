@@ -284,8 +284,6 @@ class Sim(cvbase.BaseSim):
         if self.t == self.npts-1:
             return
 
-        self.t += 1
-
         # Zero counts for this time step: stocks
         n_susceptible   = 0
         n_exposed       = 0
@@ -413,6 +411,7 @@ class Sim(cvbase.BaseSim):
         self.results['new_critical'][t]    = new_critical
         self.results['new_deaths'][t]      = new_deaths
 
+        self.t += 1
 
     def run(self, do_plot=False, verbose=None, **kwargs):
         '''
@@ -449,9 +448,9 @@ class Sim(cvbase.BaseSim):
             # calling `sim.run()` again (it will resume where it left off)
             elapsed = sc.toc(T, output=True)
             if elapsed > self['timelimit']:
-                raise Exception(f"Time limit ({self['timelimit']} s) exceeded; stopping...")
+                raise TimeoutError(f"Time limit ({self['timelimit']} s) exceeded; stopping...")
             elif self['stop_func'] and self['stop_func'](self):
-                raise Exception("Stopping function terminated the simulation")
+                raise A("Stopping function terminated the simulation")
 
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results

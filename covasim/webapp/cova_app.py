@@ -194,18 +194,14 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     # Core algorithm
     try:
         sim.run(do_plot=False)
+    except TimeoutError:
+        day = sim.t
+        err4 = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
+        err += err4
     except Exception as E:
         err4 = f'Sim run failed! {str(E)}\n'
         print(err4)
         err += err4
-
-    if sim.stopped:
-        try: # Assume it stopped because of the time, but if not, don't worry
-            day = sim.stopped['t']
-            time_exceeded = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
-            err += time_exceeded
-        except:
-            pass
 
     # Core plotting
     graphs = []

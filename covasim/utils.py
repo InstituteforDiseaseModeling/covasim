@@ -9,8 +9,10 @@ import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test']
+__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
 
+class CancelError(Exception):
+    pass
 
 #%% Define helper functions
 
