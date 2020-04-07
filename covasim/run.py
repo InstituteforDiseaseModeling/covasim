@@ -346,14 +346,14 @@ class Scenarios(cvbase.ParsObj):
 
         return output
 
-    def save(self, filename=None, keep_sims=True, keep_people=False, **kwargs):
+    def save(self, filename=None, keep_sims=True, keep_population=False, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
         Args:
             filename (str or None): the name or path of the file to save to; if None, uses stored
             keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object
-            keep_people (bool): whether or not to store the people in the Sim objects (NB, very large)
+            keep_population (bool): whether or not to store the population in the Sim objects (NB, very large)
             keywords: passed to makefilepath()
 
         Returns:
@@ -375,7 +375,7 @@ class Scenarios(cvbase.ParsObj):
         obj = sc.dcp(self) # This should be quick once we've removed the sims
 
         if keep_sims:
-            if keep_people:
+            if keep_population:
                 obj.sims = sims # Just restore the object in full
                 print('Note: saving people, which may produce a large file!')
             else:
