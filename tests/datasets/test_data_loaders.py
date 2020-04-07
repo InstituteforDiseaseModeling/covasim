@@ -59,8 +59,8 @@ def test_get_country_data():
     translator.file_path = MagicMock(return_value=neherlabs_pop_translated_json_path)
     output = translator.data_for_country("Albania")
 
-    expected = neherlabs_pop_translated_json['Albania']
-    assert output == expected
+    expected = np.array(neherlabs_pop_translated_json['Albania'])
+    np.testing.assert_array_equal(output, expected)
 
 def test_load_country_data():
     translator = cdt.NeherLabPop()
@@ -69,8 +69,8 @@ def test_load_country_data():
     translator.file_path = MagicMock(return_value=test_json_path)
     translator.update_data()
     output = translator.data_for_country("Albania")
-    expected = neherlabs_pop_translated_json['Albania']
-    assert output == expected
+    expected = np.array(neherlabs_pop_translated_json['Albania'])
+    np.testing.assert_array_equal(output, expected)
     os.remove(test_json_path)
 
 
