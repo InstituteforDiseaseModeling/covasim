@@ -370,7 +370,7 @@ class Sim(cvbase.BaseSim):
                         bed_constraint = True
 
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                    if not person.known_contact and person.date_known_contact is not None and person.date_known_contact<=t:
+                    if not person.known_contact and person.date_known_contact is not None and t >= person.date_known_contact:
                         person.known_contact = True
 
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
@@ -395,7 +395,8 @@ class Sim(cvbase.BaseSim):
 
                             # See whether we will infect this person
                             infect_this_person = True # By default, infect them...
-                            if target_person.known_contact:
+                            if not target_person.known_contact and target_person.date_known_contact is not None and t >= target_person.date_known_contact:
+                                target_person.known_contact = True # Make them a known contact
                                 infect_this_person = not cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating
                             if infect_this_person:
                                 new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
