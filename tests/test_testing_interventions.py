@@ -116,24 +116,12 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
     # Define the scenarios
     scenarios = {
-        '7dayturnaround': {
-          'name':'Symptomatic testing with 7 days to get results',
+        f'{d}dayturnaround': {
+            'name':f'Symptomatic testing with {d} days to get results',
             'pars': {
-                'interventions': cv.test_num(daily_tests=daily_tests, test_delay=7)
-              }
-          },
-        '3dayturnaround': {
-          'name':'Symptomatic testing with 3 days to get results',
-          'pars': {
-              'interventions': cv.test_num(daily_tests=daily_tests, test_delay=3)
-              }
-          },
-        '0dayturnaround': {
-            'name': 'Symptomatic testing with immediate results',
-            'pars': {
-                'interventions': cv.test_num(daily_tests=daily_tests, test_delay=0)
+                'interventions': cv.test_num(daily_tests=daily_tests, test_delay=d)
             }
-        },
+        } for d in range(1, 7+1)
     }
 
     metapars = {'n_runs': n_runs}
@@ -229,8 +217,8 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 if __name__ == '__main__':
     sc.tic()
 
-#    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[0])
-#    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[1])
+    #scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[0])
+    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[1])
     scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[2])
 
     sc.toc()

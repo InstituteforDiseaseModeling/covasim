@@ -173,7 +173,8 @@ class Person(sc.prettyobj):
             self.date_tested.append(t) # They're been tested before; append new test date. TODO: adjust testing probs based on whether a person's a repeat tester?
 
         if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
-            if not cvu.bt(loss_prob): # They're not lost to follow-up
+            needs_diagnosis = not self.date_diagnosed or self.date_diagnosed and self.date_diagnosed > t+test_delay
+            if needs_diagnosis and not cvu.bt(loss_prob): # They're not lost to follow-up
                 self.date_diagnosed = t + test_delay
             return 1
         else:
