@@ -51,6 +51,7 @@ def make_pars():
     pars['diag_factor']         = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
     pars['quar_trans_factor']   = 1.0 # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
     pars['quar_acq_factor']     = 0.0 # Probability that susceptibles will isolate if they know they've been in contact with a positive - baseline is no isolation
+    pars['quarantine_period']   = 14 # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()

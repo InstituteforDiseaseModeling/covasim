@@ -306,6 +306,7 @@ class Sim(cvbase.BaseSim):
         diag_factor         = self['diag_factor']
         quar_trans_factor   = self['quar_trans_factor']
         quar_acq_factor     = self['quar_acq_factor']
+        quarantine_period   = self['quarantine_period']
         beta_layers         = self['beta_layers']
         n_beds              = self['n_beds']
         bed_constraint      = False
@@ -370,7 +371,7 @@ class Sim(cvbase.BaseSim):
                         bed_constraint = True
 
                     # If they're quarantined, this affects their attack rate
-                    person.check_quarantined(t, 14)
+                    person.check_quarantined(t, quarantine_period)
 
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                     thisbeta = beta * \
@@ -395,12 +396,8 @@ class Sim(cvbase.BaseSim):
                             # See whether we will infect this person
                             infect_this_person = True # By default, infect them...
                             target_person.check_known_contact(t)
-                            target_person.check_quarantined(t, 14)
+                            target_person.check_quarantined(t, quarantine_period)
                             if target_person.quarantined:
-                                import traceback;
-                                traceback.print_exc();
-                                import pdb;
-                                pdb.set_trace()
                                 infect_this_person = not cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating
                             if infect_this_person:
                                 new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
