@@ -4,14 +4,13 @@ Set the parameters for Covasim.
 
 import numpy as np
 import pandas as pd
-import sciris as sc
 import datetime as dt
 
 
 __all__ = ['make_pars', 'get_default_prognoses', 'load_data']
 
 
-def make_pars(prog_by_age=True):
+def make_pars(prog_by_age=True, **kwargs):
     '''
     Set parameters for the simulation.
 
@@ -69,6 +68,9 @@ def make_pars(prog_by_age=True):
 
     # Health system parameters
     pars['n_beds'] = np.inf  # Baseline assumption is that there's no upper limit on the number of beds i.e. there's enough for everyone
+
+    # Update with any supplied parameter values
+    pars.update(kwargs)
 
     return pars
 
