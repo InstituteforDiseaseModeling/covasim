@@ -10,12 +10,8 @@
 #
 # Run with python covasim/datasets/update_sources.py
 #
-import requests
-import os
-import json
 from covasim.datasets.data_loader import load_country_pop
 from covasim.datasets.data_loader import NeherLabPop
-dirname = os.path.dirname(__file__)
 
 def load_sources():
     print("Updating data sources")
