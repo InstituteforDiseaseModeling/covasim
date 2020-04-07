@@ -42,6 +42,8 @@ def test_load_country_data():
     output = translator.data_for_country("Albania")
     expected = np.array(neherlabs_pop_translated_json['Albania'])
     np.testing.assert_array_equal(output, expected)
+    # Set back to the normal stub so we don't break future tests
+    stub_population_data()
     os.remove(test_json_path)
 
 
