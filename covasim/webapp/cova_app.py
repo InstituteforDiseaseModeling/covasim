@@ -124,10 +124,11 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     try:
         # Fix up things that JavaScript mangles
         orig_pars = cv.make_pars()
+        orig_pars['prognoses'] = cv.get_default_prognoses(by_age=False)  # Replace the prognoses with the non age specific default values
+
         defaults = get_defaults(merge=True)
         web_pars = {}
         web_pars['verbose'] = verbose # Control verbosity here
-
 
         for key,entry in {**sim_pars, **epi_pars}.items():
             print(key, entry)
@@ -163,11 +164,16 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
             web_pars['interventions'] = cv.change_beta(days=web_pars.pop('web_int_day'), changes=(1-web_pars.pop('web_int_eff')))
 
         # Handle CFR -- ignore symptoms and set to 1
-        prog_pars = cv.get_default_prognoses(by_age=False)
-        web_pars['rel_symp_prob']   = 1.0/prog_pars.symp_prob
-        web_pars['rel_severe_prob'] = 1.0/prog_pars.severe_prob
-        web_pars['rel_crit_prob']   = 1.0/prog_pars.crit_prob
-        web_pars['rel_death_prob']  = web_pars.pop('web_cfr')/prog_pars.death_prob
+        web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
+        web_pars['rel_symp_prob']   = 1e4 # Arbitrarily large
+        web_pars['rel_severe_prob'] = 1e4
+        web_pars['rel_crit_prob']   = 1e4
+        web_pars['prognoses']['death_probs'][0] = web_pars.pop('web_cfr')
+        if web_pars['seed'] == 0:
+            web_pars['seed'] = None
+        web_pars['timelimit'] = max_time  # Set the time limit
+        web_pars['n'] = int(web_pars['n'])  # Set data type
+        web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
 
     except Exception as E:
         err2 = f'Parameter conversion failed! {str(E)}\n'
@@ -176,12 +182,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
     # Create the sim and update the parameters
     try:
-        sim = cv.Sim()
-        sim['prog_by_age'] = False # So the user can override this value
-        sim['timelimit'] = max_time # Set the time limit
-        if web_pars['seed'] == 0:
-            web_pars['seed'] = None # Reset
-        sim.update_pars(web_pars)
+        sim = cv.Sim(web_pars)
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
@@ -194,29 +195,24 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     # Core algorithm
     try:
         sim.run(do_plot=False)
+    except TimeoutError:
+        day = sim.t
+        err4 = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
+        err += err4
     except Exception as E:
         err4 = f'Sim run failed! {str(E)}\n'
         print(err4)
         err += err4
 
-    if sim.stopped:
-        try: # Assume it stopped because of the time, but if not, don't worry
-            day = sim.stopped['t']
-            time_exceeded = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
-            err += time_exceeded
-        except:
-            pass
-
     # Core plotting
     graphs = []
     try:
-
         to_plot = sc.dcp(cv.default_sim_plots)
         for p,title,keylabels in to_plot.enumitems():
             fig = go.Figure()
-            colors = sc.gridcolors(len(keylabels))
-            for i,key,label in keylabels.enumitems():
-                this_color = 'rgb(%d,%d,%d)' % (255*colors[i][0],255*colors[i][1],255*colors[i][2])
+            for key in keylabels:
+                label = sim.results[key].name
+                this_color = sim.results[key].color
                 y = sim.results[key][:]
                 fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
 
@@ -252,22 +248,22 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
 
 
-        ss = sim.to_xlsx()
+        ss = sim.to_excel()
         files['xlsx'] = {
-            'filename': f'COVASim_results_{datestamp}.xlsx',
+            'filename': f'Covasim_results_{datestamp}.xlsx',
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
         json_string = sim.to_json()
         files['json'] = {
-            'filename': f'COVASim_results_{datestamp}.txt',
+            'filename': f'Covasim_results_{datestamp}.json',
             'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 
         # Summary output
         summary = {
             'days': sim.npts-1,
-            'cases': round(sim.results['cum_exposed'][-1]),
+            'cases': round(sim.results['cum_infections'][-1]),
             'deaths': round(sim.results['cum_deaths'][-1]),
         }
     except Exception as E:
@@ -512,4 +508,4 @@ if __name__ == "__main__":
     else:
         autoreload = 1
 
-    app.run(autoreload=True)
+    app.run(autoreload=autoreload)

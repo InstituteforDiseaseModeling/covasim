@@ -20,6 +20,10 @@ html, body {
     grid-area: header;
 }
 
+.navbar-brand {
+    font-size: 2.2rem;
+}
+
 #app > footer {
     grid-area: footer;
 }
@@ -41,9 +45,13 @@ header.row, footer.row {
     margin-bottom: 1em;
 }
 
+.btn-run {
+    width: 8em;
+}
+
 .green {
-    background-color: #799956;
-    border-color: #799956;
+    background-color: #627F43;
+    border-color: #627F43;
 }
 
 .green:hover, .green:disabled {
@@ -52,8 +60,8 @@ header.row, footer.row {
 }
 
 .blueish {
-    background-color: rgba(114, 145, 181, 0.92);
-    border-color: rgba(114, 145, 181, 0.92);
+    background-color: #56779F;
+    border-color: #56779F;
 }
 
 .blueish:hover, .blueish:disabled {
@@ -94,4 +102,10 @@ header.row, footer.row {
 /* Show the tooltip text when you mouse over the tooltip container */
 .mytooltip:hover .mytooltiptext {
     visibility: visible;
+}
+
+.chart-frame {
+    overflow: hidden auto;
+    max-height: 75vh;
+    position: relative;
 }

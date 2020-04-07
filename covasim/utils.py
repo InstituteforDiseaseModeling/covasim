@@ -9,8 +9,10 @@ import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test']
+__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
 
+class CancelError(Exception):
+    pass
 
 #%% Define helper functions
 
@@ -230,7 +232,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
         else:
             if series is None or series not in sim.reskeys:
                 sc.printv(f"Series not supplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
-                series='cum_exposed'
+                series='cum_infections'
             series = sim.results[series].values
     else:
         series = sc.promotetoarray(series)

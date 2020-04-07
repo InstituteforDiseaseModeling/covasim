@@ -5,7 +5,10 @@ Functions for running multiple Covasim runs.
 #%% Imports
 import numpy as np
 import pylab as pl
+import pandas as pd
 import sciris as sc
+import datetime as dt
+import matplotlib.ticker as ticker
 from . import base as cvbase
 from . import sim as cvsim
 
@@ -14,20 +17,11 @@ from . import sim as cvsim
 __all__ = ['default_scen_plots', 'default_scenario', 'make_metapars', 'Scenarios', 'single_run', 'multi_run']
 
 
-default_scen_plots = sc.odict({
-            'cum_exposed': 'Cumulative infections',
-            # 'cum_deaths': 'Cumulative deaths',
-            # 'cum_recoveries':'Cumulative recoveries',
-            # 'cum_tested': 'Cumulative tested',
-            # 'n_susceptible': 'Number susceptible',
-            'n_infectious': 'Number of active infections',
-            # 'cum_diagnosed': 'Cumulative diagnosed',
-            # 'infections': 'New infections',
-            # 'deaths': 'New deaths',
-            # 'recoveries': 'New recoveries',
-            # 'tests': 'Number of tests',
-            # 'diagnoses': 'New diagnoses',
-    })
+default_scen_plots = [
+            'cum_infections',
+            'n_infectious',
+            'n_severe',
+]
 
 default_scenario = {'baseline':{'name':'Baseline', 'pars':{}}}
 
@@ -79,18 +73,14 @@ class Scenarios(cvbase.ParsObj):
         self.scenarios = scenarios
 
         # Handle metapars
-        if metapars is None:
-            metapars = {}
-        self.metapars = metapars
+        self.metapars = sc.mergedicts({}, metapars)
         self.update_pars(self.metapars)
 
         # Create the simulation and handle basepars
         if sim is None:
             sim = cvsim.Sim()
         self.base_sim = sim
-        if basepars is None:
-            basepars = {}
-        self.basepars = basepars
+        self.basepars = sc.mergedicts({}, basepars)
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
         self.base_sim.init_results()
@@ -102,13 +92,13 @@ class Scenarios(cvbase.ParsObj):
 
         # Create the results object; order is: results key, scenario, best/low/high
         self.sims = sc.objdict()
-        self.allres = sc.objdict()
+        self.results = sc.objdict()
         for reskey in self.reskeys:
-            self.allres[reskey] = sc.objdict()
+            self.results[reskey] = sc.objdict()
             for scenkey in scenarios.keys():
-                self.allres[reskey][scenkey] = sc.objdict()
+                self.results[reskey][scenkey] = sc.objdict()
                 for nblh in ['name', 'best', 'low', 'high']:
-                    self.allres[reskey][scenkey][nblh] = None # This will get populated below
+                    self.results[reskey][scenkey][nblh] = None # This will get populated below
         return
 
 
@@ -180,13 +170,11 @@ class Scenarios(cvbase.ParsObj):
                 scenres.high[reskey] = pl.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
 
             for reskey in reskeys:
-                self.allres[reskey][scenkey]['name'] = scenname
+                self.results[reskey][scenkey]['name'] = scenname
                 for blh in ['best', 'low', 'high']:
-                    self.allres[reskey][scenkey][blh] = scenres[blh][reskey]
+                    self.results[reskey][scenkey][blh] = scenres[blh][reskey]
 
             self.sims[scenkey] = scen_sims
-
-
 
         #%% Print statistics
         if verbose:
@@ -194,14 +182,14 @@ class Scenarios(cvbase.ParsObj):
             for reskey in reskeys:
                 print(f'\n{reskey}')
                 for scenkey in list(self.scenarios.keys()):
-                    print(f'  {scenkey}: {self.allres[reskey][scenkey].best[-1]:0.0f}')
+                    print(f'  {scenkey}: {self.results[reskey][scenkey].best[-1]:0.0f}')
             print() # Add a blank space
 
         return
 
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             axis_args=None, fill_args=None, as_dates=True, interval=None, dateformat=None,
+             axis_args=None, fill_args=None, legend_args=None, as_dates=True, interval=None, dateformat=None,
              font_size=18, font_family=None, grid=True, commaticks=True, do_show=True, sep_figs=False,
              verbose=None):
         '''
@@ -215,6 +203,7 @@ class Scenarios(cvbase.ParsObj):
             plot_args   (dict): Dictionary of kwargs to be passed to pl.plot()
             axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between()
+            legend_args (dict): Dictionary of kwargs to be passed to pl.legend()
             as_dates    (bool): Whether to plot the x-axis as dates or time points
             interval    (int):  Interval between tick marks
             dateformat  (str):  Date string format, e.g. '%B %d'
@@ -236,13 +225,14 @@ class Scenarios(cvbase.ParsObj):
 
         if to_plot is None:
             to_plot = default_scen_plots
-        to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
+        to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults
-        fig_args  = sc.mergedicts({'figsize': (16, 12)}, fig_args)
-        plot_args = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-        axis_args = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}, axis_args)
-        fill_args = sc.mergedicts({'alpha': 0.2}, fill_args)
+        fig_args    = sc.mergedicts({'figsize': (16, 12)}, fig_args)
+        plot_args   = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
+        axis_args   = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.5, 'hspace': 0.25}, axis_args)
+        fill_args   = sc.mergedicts({'alpha': 0.2}, fill_args)
+        legend_args = sc.mergedicts({'loc': 'best'}, legend_args)
 
         if sep_figs:
             figs = []
@@ -253,15 +243,15 @@ class Scenarios(cvbase.ParsObj):
         if font_family:
             pl.rcParams['font.family'] = font_family
 
-        # %% Plotting
-        for rk,reskey,title in to_plot.enumitems():
+        for rk,reskey in enumerate(to_plot):
+            title = self.base_sim.results[reskey].name # Get the name of this result from the base simulation
             if sep_figs:
                 figs.append(pl.figure(**fig_args))
                 ax = pl.subplot(111)
             else:
                 ax = pl.subplot(len(to_plot), 1, rk + 1)
 
-            resdata = self.allres[reskey]
+            resdata = self.results[reskey]
 
             for scenkey, scendata in resdata.items():
 
@@ -269,7 +259,7 @@ class Scenarios(cvbase.ParsObj):
                 pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
                 pl.title(title)
                 if rk == 0:
-                    pl.legend(loc='best')
+                    pl.legend(**legend_args)
 
                 pl.grid(grid)
                 if commaticks:
@@ -282,9 +272,12 @@ class Scenarios(cvbase.ParsObj):
 
                 # Set xticks as dates
                 if as_dates:
-                    xticks = ax.get_xticks()
-                    xticklabels = self.base_sim.inds2dates(xticks, dateformat=dateformat)
-                    ax.set_xticklabels(xticklabels)
+                    @ticker.FuncFormatter
+                    def date_formatter(x, pos):
+                        return (self.base_sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+                    ax.xaxis.set_major_formatter(date_formatter)
+                    if not interval:
+                        ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         # Ensure the figure actually renders or saves
         if do_save:
@@ -301,15 +294,68 @@ class Scenarios(cvbase.ParsObj):
         return fig
 
 
+    def to_json(self, filename=None, tostring=True, indent=2, *args, **kwargs):
+        """
+        Export results as JSON.
 
-    def save(self, filename=None, keep_sims=True, keep_people=False, **kwargs):
+        Args:
+            filename (str): if None, return string; else, write to file
+
+        Returns:
+            A unicode string containing a JSON representation of the results,
+            or writes the JSON file to disk
+
+        """
+        d = {'t':self.tvec,
+             'results':   self.results,
+             'basepars':  self.basepars,
+             'metapars':  self.metapars,
+             'simpars':   self.base_sim._make_pardict(),
+             'scenarios': self.scenarios
+             }
+        if filename is None:
+            output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
+        else:
+            output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
+
+        return output
+
+
+    def to_excel(self, filename=None):
+        """
+        Export results as XLSX
+
+        Args:
+            filename (str): if None, return string; else, write to file
+
+        Returns:
+            An sc.Spreadsheet with an Excel file, or writes the file to disk
+
+        """
+        spreadsheet = sc.Spreadsheet()
+        spreadsheet.freshbytes()
+        with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
+            for key in self.reskeys:
+                result_df = pd.DataFrame.from_dict(sc.flattendict(self.results[key], sep='_'))
+                result_df.to_excel(writer, sheet_name=key)
+        spreadsheet.load()
+
+        if filename is None:
+            output = spreadsheet
+        else:
+            output = spreadsheet.save(filename)
+
+        return output
+
+
+    def save(self, filename=None, keep_sims=True, keep_population=False, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
         Args:
             filename (str or None): the name or path of the file to save to; if None, uses stored
             keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object
-            keep_people (bool): whether or not to store the people in the Sim objects (NB, very large)
+            keep_population (bool): whether or not to store the population in the Sim objects (NB, very large)
             keywords: passed to makefilepath()
 
         Returns:
@@ -331,7 +377,7 @@ class Scenarios(cvbase.ParsObj):
         obj = sc.dcp(self) # This should be quick once we've removed the sims
 
         if keep_sims:
-            if keep_people:
+            if keep_population:
                 obj.sims = sims # Just restore the object in full
                 print('Note: saving people, which may produce a large file!')
             else:
@@ -427,7 +473,6 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
             if verbose>=1:
                 print(f'Setting key {key} from {new_sim[key]} to {val}')
                 new_sim[key] = val
-            pass
         else:
             raise KeyError(f'Could not set key {key}: not a valid parameter name')
 
@@ -494,10 +539,11 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     # Or, combine them into a single sim with scaled results
     else:
         output_sim = sc.dcp(sims[0])
-        output_sim.pars['parallelized'] = n_runs # Store how this was parallelized
-        output_sim.pars['n'] *= n_runs # Restore this since used in later calculations -- a bit hacky, it's true
+        output_sim.pars['parallelized'] = n_runs  # Store how this was parallelized
+        output_sim.pars['n'] = output_sim.n*n_runs  # Record the number of people
+        output_sim.population = None  # Drop population because the microstructure won't be correct if just concatenated (also would need to change indexes in all contact layers)
+
         for s,sim in enumerate(sims[1:]): # Skip the first one
-            output_sim.people.update(sim.people)
             for key in sim.reskeys:
                 this_res = sim.results[key]
                 output_sim.results[key].values += this_res.values

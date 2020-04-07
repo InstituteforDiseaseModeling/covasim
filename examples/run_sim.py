@@ -2,34 +2,40 @@
 Simple script for running the Covid-19 agent-based model
 '''
 
-import sciris as sc
-
 print('Importing...')
-sc.tic()
+import sciris as sc
 import covasim as cv
-sc.toc()
 
+print('Configuring...')
+
+# Run options
 do_plot = 1
 do_save = 0
 do_show = 1
 verbose = 1
-seed    = 4
 interv  = 0
 
+# Set filename if saving
 version  = 'v0'
-date     = '2020mar31'
+date     = '2020apr06'
 folder   = 'results'
 basename = f'{folder}/covasim_run_{date}_{version}'
 fig_path = f'{basename}.png'
 
-print('Making sim...')
-sc.tic()
-sim = cv.Sim()
-sim.set_seed(seed)
-sim['n_days'] = 60
-sim['prog_by_age'] = True
+# Configure the sim -- can also just use a normal dictionary
+pars = sc.objdict(
+    n           = 20000, # Population size
+    n_infected  = 1,    # Number of initial infections
+    n_days      = 180,   # Number of days to simulate
+    seed        = 1,    # Random seed
+    )
+
+# Optionally add an intervention
 if interv:
-    sim['interventions'] = cv.change_beta(days=45, changes=0.5)
+    pars.interventions = cv.change_beta(days=45, changes=0.5) # Optionally add an intervention
+
+print('Making sim...')
+sim = cv.Sim(pars=pars)
 
 print('Running...')
 sim.run(verbose=verbose)
