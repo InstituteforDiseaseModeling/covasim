@@ -10,7 +10,7 @@ import os
 import sys
 import runpy
 from setuptools import setup, find_packages
-from covasim.datasets.update_sources import load_sources
+from pull_demographic_data import load_sources
 
 # Load requirements from txt file
 with open('requirements.txt') as f:

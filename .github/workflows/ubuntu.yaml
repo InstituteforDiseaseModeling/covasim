@@ -54,7 +54,7 @@ jobs:
           # pytest test*.py --junitxml=test-results.xml --durations=0 # Run actual tests -- use this line instead if unit tests are broken
       - name: Import population data
         working-directory: ./
-        run: python covasim/datasets/update_sources.py
+        run: python pull_demographic_data.py
       - name: Run examples
         working-directory: ./examples
         run: python *.py
