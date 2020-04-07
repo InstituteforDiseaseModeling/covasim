@@ -99,7 +99,7 @@ class Population(sc.prettyobj):
         for i, person in enumerate(self.people.values()):
             n_contacts = cvu.pt(n_regular_contacts)  # Draw the number of Poisson contacts for this person
             contacts[person.uid] = cvu.choose(max_n=n_people, n=min(n_contacts, n_people))  # Choose people at random, assigning to 'household'
-        layer = StaticContactLayer(name='Household', contacts=contacts)
+        layer = StaticContactLayer(name='Regular', contacts=contacts)
         self.contact_layers[layer.name] = layer
 
         # Make random contacts
@@ -176,7 +176,7 @@ class Population(sc.prettyobj):
         filepath = sc.makefilepath(filename=filename, *args, **kwargs)
         pop = sc.loadobj(filepath)
         if not isinstance(pop, Population):
-            raise TypeError('Loaded file was not a population')
+            raise TypeError(f'Loaded file was {type(pop)}, not a population')
         return pop
 
     def save(self, filename, *args, **kwargs):
@@ -186,9 +186,7 @@ class Population(sc.prettyobj):
         Args:
             filename (str): name of the file to save to.
         '''
-        filepath = sc.makefilepath(filename=filename, *args, **kwargs)
-        sc.saveobj(filepath, self)
-        return filepath
+        return sc.saveobj(filename=filename, obj=self, *args, **kwargs)
 
 
 class ContactLayer(sc.prettyobj):
@@ -209,11 +207,15 @@ class ContactLayer(sc.prettyobj):
         """
         Get contacts for a person
 
-        :param person:
-        :param sim: The simulation instance
-        :return: List of contact *indexes* e.g. [1,50,295]
+        Args:
+            person: A Person instance
+            sim: The simulation instance
+
+        Returns:
+            List of contact *indexes* e.g. [1,50,295]
 
         """
+
         raise NotImplementedError
 
 

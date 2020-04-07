@@ -66,10 +66,11 @@ class Sim(cvbase.BaseSim):
         pars (dict): parameters to modify from their default values
         datafile (str): filename of (Excel) data file to load, if any
         datacols (list): list of column names of the data file to load
+        population (str, Population instance): Population to use. If it's a string, the population will be loaded from a file
         filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None):
+    def __init__(self, pars=None, datafile=None, datacols=None, population=None, filename=None):
         # Create the object
         default_pars = cvpars.make_pars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
@@ -88,8 +89,12 @@ class Sim(cvbase.BaseSim):
         self.set_metadata(filename)        # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
         self.update_pars(sc.dcp(pars))   # Update the parameters, if provided. Use deep copy so that the people/contact layers in the parameters don't interact if the parameters are used for multiple sims
-        if popfile is not None:
-            self.load_population(popfile)      # Load the population, if provided
+
+        if sc.isstring(population):
+            self.load_population(population)      # Load the population, if provided
+        else:
+            self.population = population
+
         return
 
     def set_metadata(self, filename):
@@ -200,29 +205,29 @@ class Sim(cvbase.BaseSim):
 
     @property
     def people(self):
-        return self['population'].people
+        return self.population.people
 
     def get_person(self, *args, **kwargs):
-        return self['population'].get_person(*args, **kwargs)
+        return self.population.get_person(*args, **kwargs)
 
     def init_people(self):
         ''' Seed infections '''
 
-        if self['population'] is None:
+        if self.population is None:
             # Make a random network
             print('Input parameters did not contain a population - creating a random network')
-            self['population'] = cvpop.Population.random(pars=self.pars)
+            self.population = cvpop.Population.random(pars=self.pars)
 
         for i in range(int(self['n_infected'])):
-            person = self['population'].get_person(i)
+            person = self.population.get_person(i)
             person.infect(t=0)
         return
 
     def load_population(self, filename, *args, **kwargs):
-        self['population'] = cvpop.Population.load(filename, *args, **kwargs)
+        self.population = cvpop.Population.load(filename, *args, **kwargs)
 
     def save_population(self, filename, *args, **kwargs):
-        return self['population'].save(filename, *args, **kwargs)
+        return self.population.save(filename, *args, **kwargs)
 
     def next(self, verbose=0) -> None:
         '''
@@ -319,13 +324,13 @@ class Sim(cvbase.BaseSim):
                                (diag_factor if person.diagnosed else 1.) * \
                                (cont_factor if person.known_contact else 1.)
 
-                    for layer in self['population'].contact_layers.values():
+                    for layer in self.population.contact_layers.values():
                         contacts = layer.get_contacts(person, t)
                         layer_beta = thisbeta * layer.beta
                         transmission_inds = cvu.bf(layer_beta, contacts)
 
                         for contact_ind in transmission_inds:
-                            target_person = self['population'].get_person(contact_ind)  # Stored by integer
+                            target_person = self.population.get_person(contact_ind)  # Stored by integer
 
                             # This person was diagnosed last time step: time to flag their contacts
                             if person.date_diagnosed is not None and person.date_diagnosed == t-1 and layer.traceable:

@@ -231,11 +231,8 @@ class BaseSim(ParsObj):
 
         """
         pardict = {}
-        skip = {'population'}
         for k in self.pars:
-            if k in skip:
-                continue
-            elif k == 'interventions':
+            if k == 'interventions':
                 pardict['interventions'] = [intervention.to_json() for intervention in self.pars['interventions']]
             else:
                 pardict[k] = self.pars[k]

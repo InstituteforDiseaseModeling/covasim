@@ -11,7 +11,7 @@ import datetime as dt
 __all__ = ['make_pars', 'get_default_prognoses', 'load_data']
 
 
-def make_pars(by_age=True):
+def make_pars():
     '''
     Set parameters for the simulation.
 
@@ -57,8 +57,8 @@ def make_pars(by_age=True):
     pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=7, par2=3)  # Duration from critical symptoms to death
 
     # Severity parameters: probabilities of symptom progression
-    pars['prognoses'] = get_default_prognoses(by_age)
-    pars['prognoses']['OR_no_treat']     = 2.0  # Odds ratio for how much more likely people are to die if no treatment available
+    pars['prognoses'] = get_default_prognoses(True) # Default to age-specific prognoses
+    pars['OR_no_treat'] = 2.0  # Odds ratio for how much more likely people are to die if no treatment available
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
     pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
@@ -78,6 +78,8 @@ def get_default_prognoses(by_age=True):
     '''
     Return the default parameter values for prognoses
 
+    The prognosis probabilities are conditional given the previous disease state.
+
     Args:
         by_age (bool): whether or not to use age-specific values
 
@@ -86,7 +88,7 @@ def get_default_prognoses(by_age=True):
 
     '''
     if not by_age:
-        prog_pars = dict(
+        prognoses = dict(
             age_cutoffs  = np.array([np.inf]),     # Age cutoffs
             symp_probs   = np.array([ 0.75 ]),
             severe_probs = np.array([ 0.2 ]),
@@ -94,14 +96,19 @@ def get_default_prognoses(by_age=True):
             death_probs  = np.array([ 0.02 ]),
         )
     else:
-        prog_pars = dict(
+        prognoses = dict(
             age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      np.inf]),     # Age cutoffs
             symp_probs   = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms
             severe_probs = np.array([0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]), # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
             crit_probs   = np.array([0.00004, 0.00011, 0.00050, 0.00123, 0.00214, 0.00800, 0.02750, 0.06000, 0.10333]), # Overall probability of developing critical symptoms (derived from https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm)
             death_probs  = np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]), # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
         )
-    return prog_pars
+
+    prognoses['severe_probs'] /= prognoses['symp_probs']  # Conditional probability of symptoms becoming severe, given symptomatic
+    prognoses['crit_probs'] /= prognoses['severe_probs']  # Conditional probability of symptoms becoming critical, given severe
+    prognoses['death_probs'] /= prognoses['severe_probs']  # Conditional probability of dying, given severe symptoms
+
+    return prognoses
 
 
 def load_data(filename, columns=None, calculate=True, **kwargs):
