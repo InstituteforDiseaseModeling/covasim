@@ -114,11 +114,7 @@ class NeherLabPop(DataLoader):
 # and loads the data for the specified country.
 #
 def load_country_pop(country):
-    with open(mapper_file_path) as f:
-        mapper = json.load(f)
-    mapper = json.loads(mapper)
-    data_loader = eval("{0}".format(mapper[country]))()
-    return data_loader.data_for_country(country)
+    return NeherLabPop().data_for_country(country)
 
 def available_countries():
     # Hmm, I think we will need to support some default settings for the web
