@@ -159,43 +159,44 @@ class change_beta(Intervention):
     Args:
         days (int or array): the day or array of days to apply the interventions
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
-        contact_layer: Optionally change beta only for a specific contact layer
+        layer_name: Optionally change beta only for a specific contact layer (referenced by name)
     Examples:
-        interv = cv.change_beta(contact_layer, 25, 0.3) # On day 25, reduce beta by 70% to 0.3
-        interv = cv.change_beta(contact_layer, [14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
+        interv = cv.change_beta(layer_name, 25, 0.3) # On day 25, reduce beta by 70% to 0.3
+        interv = cv.change_beta(layer_name, [14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
 
     '''
 
-    def __init__(self, days, changes, contact_layer=None):
+    def __init__(self, days, changes, layer_name=None):
         super().__init__()
         self.days = sc.promotetoarray(days)
         self.changes = sc.promotetoarray(changes)
         if len(self.days) != len(self.changes):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
-        self.orig_beta = None
-        self.contact_layer = contact_layer # Reference to contact layer in which to apply change
+        self.layer_name = layer_name  # Reference to contact layer in which to apply change
+        self._orig_beta = None  #: Internal record of the original beta value
+
         return
 
 
     def apply(self, sim: cv.Sim):
 
         # If this is the first time it's being run, store beta
-        if self.orig_beta is None:
-            if self.contact_layer is not None:
-                self.orig_beta = self.contact_layer.beta
+        if self._orig_beta is None:
+            if self.layer_name is not None:
+                self._orig_beta = sim.population.contact_layers[self.layer_name].beta
             else:
-                self.orig_beta = sim['beta']
+                self._orig_beta = sim['beta']
 
         # If this day is found in the list, apply the intervention
         inds = sc.findinds(self.days, sim.t)
         if len(inds):
-            new_beta = self.orig_beta
+            new_beta = self._orig_beta
             for ind in inds:
                 new_beta = new_beta * self.changes[ind]
 
-            if self.contact_layer is not None:
-                self.contact_layer.beta = new_beta
+            if self.layer_name is not None:
+                sim.population.contact_layers[self.layer_name].beta = new_beta
             else:
                 sim['beta'] = new_beta
 

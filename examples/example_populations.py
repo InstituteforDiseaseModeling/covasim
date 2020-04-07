@@ -37,12 +37,14 @@ sim.run()
 fig = sim.plot()
 
 # Change beta only for community contacts
+# Remove regular contacts so the difference is obvious
 pars = cv.make_pars(n=default_n)
-population = cv.Population.random(pars, n_random_contacts=20)
-pars['interventions'] = cv.interventions.change_beta(25, 0.0, population.contact_layers['Community'])
+population = cv.Population.random(pars, n_regular_contacts=0, n_random_contacts=20)
+pars['interventions'] = cv.interventions.change_beta(25, 0.0, 'Community')
 sim = cv.Sim(pars=pars, population=population)
 sim.run()
 fig = sim.plot()
+
 
 # Run sim using synthpops with community transmission
 if cv.requirements.available['synthpops']:
