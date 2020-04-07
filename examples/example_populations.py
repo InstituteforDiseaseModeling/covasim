@@ -3,7 +3,7 @@ import covasim as cv
 default_n = 1000 # Default number of people
 
 # Random network using defaults
-sim = cv.Sim(n_dict)
+sim = cv.Sim({'n':default_n})
 sim.run()
 fig = sim.plot()
 
