@@ -68,6 +68,9 @@ follows:
 
   This shows a more complex example, including running an intervention scenario, plotting uncertainty, and performing a health systems analysis.
 
+## Updating Population Data
+
+The setup phase will pull down population data if you need to update this data either re-run setup or run `python covasim/datasets/update_sources.py`
 
 ## Structure
 
