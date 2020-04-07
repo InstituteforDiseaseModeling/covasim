@@ -165,6 +165,9 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
         # Handle CFR -- ignore symptoms and set to 1
         web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
+        web_pars['rel_symp_prob']   = 1e4 # Arbitrarily large
+        web_pars['rel_severe_prob'] = 1e4
+        web_pars['rel_crit_prob']   = 1e4
         web_pars['prognoses']['death_probs'][0] = web_pars.pop('web_cfr')
         if web_pars['seed'] == 0:
             web_pars['seed'] = None
@@ -220,7 +223,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-            
+
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
             d['config'] = {'responsive': True}

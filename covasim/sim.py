@@ -70,9 +70,9 @@ class Sim(cvbase.BaseSim):
         filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, population=None, filename=None):
+    def __init__(self, pars=None, prog_by_age=True, datafile=None, datacols=None, population=None, filename=None):
         # Create the object
-        default_pars = cvpars.make_pars() # Start with default pars
+        default_pars = cvpars.make_pars(prog_by_age) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
@@ -536,7 +536,7 @@ class Sim(cvbase.BaseSim):
                             sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
             self.results['likelihood'] = loglike
-            
+
         sc.printv(f'Likelihood: {loglike}', 1, verbose)
         return loglike
 

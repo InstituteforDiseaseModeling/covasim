@@ -176,8 +176,6 @@ class Scenarios(cvbase.ParsObj):
 
             self.sims[scenkey] = scen_sims
 
-
-
         #%% Print statistics
         if verbose:
             print('\nResults for final time point in each scenario:')
@@ -345,6 +343,7 @@ class Scenarios(cvbase.ParsObj):
             output = spreadsheet.save(filename)
 
         return output
+
 
     def save(self, filename=None, keep_sims=True, keep_population=False, **kwargs):
         '''
