@@ -276,13 +276,6 @@ class Sim(cvbase.BaseSim):
     def next(self, verbose=0) -> None:
         '''
         Step simulation forward in time
-
-        Args:
-            steps (int): the number of timesteps to run (default: 1)
-            stop (int): alternative to steps, index of the simulation to run until (default: current + 1)
-
-        Returns: None
-
         '''
 
         # If we have reached the end of the simulation, then do nothing
@@ -308,16 +301,17 @@ class Sim(cvbase.BaseSim):
         new_critical    = 0
 
         # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
-        beta             = self['beta']
-        asymp_factor     = self['asymp_factor']
-        diag_factor      = self['diag_factor']
-        cont_factor      = self['cont_factor']
-        beta_layers      = self['beta_layers']
-        n_beds           = self['n_beds']
-        bed_constraint   = False
-        n_people         = len(self.people)
-        n_comm_contacts  = self['contacts']['c'] # Community contacts
-        n_import         = cvu.pt(self['n_import']) # Imported cases
+        beta                = self['beta']
+        asymp_factor        = self['asymp_factor']
+        diag_factor         = self['diag_factor']
+        quar_trans_factor   = self['quar_trans_factor']
+        quar_acq_factor     = self['quar_acq_factor']
+        beta_layers         = self['beta_layers']
+        n_beds              = self['n_beds']
+        bed_constraint      = False
+        n_people            = len(self.people)
+        n_comm_contacts     = self['contacts']['c'] # Community contacts
+        n_import            = cvu.pt(self['n_import']) # Imported cases
         t = self.t
 
         # Print progress
@@ -338,6 +332,7 @@ class Sim(cvbase.BaseSim):
             if len(s_uids)>n_import: # Make sure there are actually susceptibles to infect
                 for i in range(int(n_import)):
                     new_infections += self.people[s_uids[i]].infect(t=t)
+
 
         for person in not_susceptible:
             n_susceptible -= 1
@@ -379,10 +374,11 @@ class Sim(cvbase.BaseSim):
                     if not person.known_contact and person.date_known_contact is not None and person.date_known_contact<=t:
                         person.known_contact = True
 
+                    # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                     thisbeta = beta * \
                                (asymp_factor if not person.symptomatic else 1.) * \
                                (diag_factor if person.diagnosed else 1.) * \
-                               (cont_factor if person.known_contact else 1.)
+                               (quar_trans_factor if person.known_contact else 1.)
 
                     # Determine who gets infected
                     community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
@@ -397,9 +393,13 @@ class Sim(cvbase.BaseSim):
                     for contact_ind in transmission_inds:
                         target_person = self.get_person(contact_ind) # Stored by integer
                         if target_person.susceptible: # Skip people who are not susceptible
-                            new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                            sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
+                            # See whether the target person is quarantining, infect them if not
+                            if target_person.known_contact:
+                                quar_bool = cvu.bt(quar_trans_factor)
+                                if not quar_bool:
+                                    new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                    sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
         # End of person loop; apply interventions
         for intervention in self['interventions']:

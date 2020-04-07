@@ -9,7 +9,7 @@ import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
+__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'listsample', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
 
 class CancelError(Exception):
     pass
@@ -141,6 +141,20 @@ def choose(max_n, n):
         choose(5, 2) will choose 2 out of 5 people with equal probability.
     '''
     return np.random.choice(max_n, n, replace=False)
+
+
+def listsample(whole_list, n=None, p=None):
+    '''
+    Return a randomly selected sample of n items from a list or a proportion p of items in the list
+    '''
+    max_n = len(whole_list)
+    if n is None:
+        if p is None:
+            raise Error("Must supply n or p")
+        else:
+            n = round(p*max_n)
+    return whole_list[choose(max_n, n)]
+
 
 
 # @nb.njit((nb.float64[:], nb.int64, nb.float64))

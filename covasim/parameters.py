@@ -45,9 +45,15 @@ def make_pars():
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
-    pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['contacts']     = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
     pars['beta_layers']  = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
+
+    # Efficacy of protection measures (quarantine, masks...)
+    pars['quar_trans_factor']  = 0.8 # Multiplicative factor for beta: assumes that positives will semi-effectively isolate if they know they've been in contact with a positive, even if they haven't been diagnosed yet
+    pars['quar_acq_factor']    = 0.8 # Probability that susceptibles will isolate if they know they've been in contact with a positive
+
+    # and susceptibles (reduces disease acquisition risk by this amount)
+    pars['masks']               = 0.8 # Mask factor. Applies to both positives (multiplies beta by this amount) and susceptibles (reduces disease acquisition risk by this amount)
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()

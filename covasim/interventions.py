@@ -272,12 +272,12 @@ class contact_tracing(Intervention):
     '''
     Contact tracing of positives
     '''
-    def __init__(self, trace_probs, trace_time):
+    def __init__(self, trace_probs, trace_time, contact_reduction):
         super().__init__()
         self.trace_probs = trace_probs
         self.trace_time = trace_time
+        self.contact_reduction = contact_reduction
         return
-
 
     def apply(self, sim: cv.Sim):
         t = sim.t
@@ -304,6 +304,40 @@ class contact_tracing(Intervention):
                         target_person.date_known_contact = min(target_person.date_known_contact, t + contact_time)
 
         return
+
+
+class self_isolation(Intervention):
+    '''
+    This intervention dictates that people who've been in contact with known positives should self-isolate.
+    The intervention reduces the number of contacts they have, so it acts as a quarantining measure (for those who are
+    already positive) and a protective measure (for those for are susceptible)
+    '''
+    def __init__(self, isolation_factors, isolation_time):
+        super().__init__()
+        self.isolation_factors = isolation_factors
+        self.isolation_time = isolation_time
+        return
+
+    def apply(self, sim: cv.Sim):
+        t = sim.t
+        for i, person in enumerate(sim.people.values()):
+            if person.date_known_contact is not None and person.date_known_contact == t:
+                # This person was just contacted: time to tell them to isolate
+                # NB, we might also get them to test - but this would be handled by the testing interventions
+                # In this intervention we just isolate people
+                for ckey in person.contacts.keys():
+                    person.contacts[ckey] *= 1
+
+                # Loop over people who get contacted
+                for contact_ind, contact_time in contactable_ppl.items():
+                    target_person = sim.get_person(contact_ind)
+                    if target_person.date_known_contact is None:
+                        target_person.date_known_contact = t + contact_time
+                    else:
+                        target_person.date_known_contact = min(target_person.date_known_contact, t + contact_time)
+
+        return
+
 
 
 class test_prob(Intervention):
