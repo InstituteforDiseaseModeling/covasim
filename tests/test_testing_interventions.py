@@ -234,86 +234,6 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     return scens
 
 
-def test_isolation(do_plot=False, do_show=True, do_save=False, fig_path=None):
-    sc.heading('Test impact of different isolation policies for contacts of positives')
-
-    sc.heading('Setting up...')
-
-    sc.tic()
-
-    n_runs = 3
-    verbose = 1
-    base_pars = {
-      'n': 20000
-      }
-
-    base_sim = cv.Sim(base_pars) # create sim object
-    base_sim['n_days'] = 50
-    n_people = base_sim['n']
-    npts = base_sim.npts
-
-    # Define overall testing assumptions
-    testing_prop = 0.1 # Assumes we could test 10% of the population daily (way too optimistic!!)
-    daily_tests = [testing_prop*n_people]*npts # Number of daily tests
-
-    # Define the scenarios
-    scenarios = {
-        'lowisolation': {
-            'name': '10% daily testing; poor contact tracing, poor self-isolation of contacts',
-            'pars': {
-                'interventions': [
-                    cv.test_num(daily_tests=daily_tests),
-                    cv.contact_tracing(trace_probs          = {'h': 1,  's': 0.8, 'w': 0.5, 'c': 0.0},
-                                       trace_time           = {'h': 0,  's': 7,   'w': 7,   'c': 0},
-                                       contact_reduction    = {'h': 1,  's': 0.5, 'w': 0.5, 'c': 0.5})] # Only 50% of people stop going to school/work/shops. NB this all gets rounded to ints, so if a person had 5 contacts and it's reduced by 50% they'll have 3
-            }
-        },
-        'modtrace': {
-            'name': '10% daily testing; moderate contact tracing, moderate self-isolation of contacts',
-            'pars': {
-                'interventions': [
-                    cv.test_num(daily_tests=daily_tests),
-                    cv.contact_tracing(trace_probs          = {'h': 1,  's': 0.8,'w': 0.5, 'c': 0.1},
-                                       trace_time           = {'h': 0,  's': 3,  'w': 3,   'c': 8},
-                                       contact_reduction    = {'h': 1,  's': 0.2,'w': 0.2, 'c': 0.2}
-                                       )]
-            }
-        },
-        'hightrace': {
-            'name': '10% daily testing; fast contact tracing, compliant self-isolation at home',
-            'pars': {
-                'interventions': [
-                    cv.test_num(daily_tests=daily_tests),
-                    cv.contact_tracing(trace_probs          = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
-                                       trace_time           = {'h': 0, 's': 1,   'w': 1,   'c': 5},
-                                       contact_reduction    = {'h': 1, 's': 0.0, 'w': 0.0, 'c': 0.0}
-                                       )]
-            }
-        },
-        'crazy': {
-            'name': '10% daily testing; same-day contact tracing, full self-isolation',
-            'pars': {
-                'cont_factor': 0,
-                'interventions': [
-                    cv.test_num(daily_tests=daily_tests),
-                    cv.contact_tracing(trace_probs          = {'h': 1, 's': 1, 'w': 1, 'c': 1},
-                                       trace_time           = {'h': 0, 's': 0, 'w': 0, 'c': 0},
-                                       contact_reduction    = {'h': 0, 's': 0, 'w': 0, 'c': 0}
-                                       )]
-            }
-        },
-    }
-
-    metapars = {'n_runs': n_runs}
-
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose, debug=debug)
-
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
-
-    return scens
-
 
 
 #%% Run as a script
@@ -322,8 +242,7 @@ if __name__ == '__main__':
 
 #    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[0])
 #    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[1])
-#    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[2])
-    scens4 = test_isolation(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[2])
+    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[2])
 
     sc.toc()
 
