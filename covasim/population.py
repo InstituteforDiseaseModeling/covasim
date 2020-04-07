@@ -27,7 +27,7 @@ class Population(sc.prettyobj):
         return self.people[self._uids[ind]]
 
     @classmethod
-    def random(cls, pars, n_people: int = None, n_regular_contacts: int = 20, n_random_contacts: int = 0, id_len=6):
+    def random(cls, pars, n_people: int = None, n_regular_contacts: int = None, n_random_contacts: int = 0, id_len=6):
         """
         Make a simple random population
 
