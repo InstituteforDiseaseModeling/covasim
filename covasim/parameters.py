@@ -49,10 +49,6 @@ def make_pars():
     pars['contacts']     = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
     pars['beta_layers']  = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
 
-    # Contact tracing - done by layer
-#    pars['trace_probs']  = {'h': 1.,  's': 0.8, 'w': 0.5, 'c': 0.01} # Probability of being able to trace different types of contacts
-#    pars['trace_time']   = {'h': 0,   's': 3,   'w': 3,   'c': 5}    # Number of days it takes to trace a positive's contacts
-
     # Duration parameters: time for disease progression
     pars['dur'] = dict()
     pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4, par2=1) # Duration from exposed to infectious
@@ -164,7 +160,9 @@ def load_data(filename, columns=None, calculate=True, **kwargs):
         errormsg = f'Required column "date" not found; columns are {data.columns}'
         raise ValueError(errormsg)
     else:
-        data['date'] = pd.to_datetime(data['date'])
+        data['date'] = pd.to_datetime(data['date']).dt.date
+
+    data.set_index('date',inplace=True)
 
     return data
 
