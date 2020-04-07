@@ -10,6 +10,7 @@ import os
 import sys
 import runpy
 from setuptools import setup, find_packages
+from covasim.datasets.update_sources import load_sources
 
 # Load requirements from txt file
 with open('requirements.txt') as f:
@@ -70,3 +71,5 @@ setup(
     include_package_data=True,
     install_requires=requirements
 )
+
+load_sources()

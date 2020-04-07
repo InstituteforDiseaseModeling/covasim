@@ -22,5 +22,6 @@ WORKDIR /app
 COPY docker/docker_nginx.conf /etc/nginx/sites-enabled/default
 
 RUN python3 -m pip install .
+RUN python covasim/datasets/update_sources.py
 
 CMD /etc/init.d/nginx restart && supervisord -c docker/supervisord.conf
