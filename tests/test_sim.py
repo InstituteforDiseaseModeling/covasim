@@ -108,7 +108,7 @@ def test_start_stop(): # If being run via pytest, turn off
     sim2 = cv.Sim(pars)
     sim2.initialize()
     for n in range(sim2.npts):
-        sim2.next(verbose=0)
+        sim2.next(verbose=0, scale=1.0)
     sim2.finalize()
 
     # Compare results
@@ -116,6 +116,23 @@ def test_start_stop(): # If being run via pytest, turn off
     assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Next values do not match'
 
     return sim2
+
+
+def test_dynamic_resampling(): # If being run via pytest, turn off
+    sc.heading('Test dunamic resampling')
+
+    pars = pars = {
+        'n_days': 140,
+        'n': 50000,
+        'resample': 1,
+        'resample_max_pop': 10000
+    }
+
+    # Create and run a basic simulation
+    sim = cv.Sim(pars)
+    sim.run(verbose=0)
+    assert sim.results['cum_infections'][-1] > 10000  # infections at the end of sim should be much more than internal pop
+    return sim
 
 
 def test_sim_data(do_plot=False, do_show=False):
