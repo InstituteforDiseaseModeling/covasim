@@ -14,6 +14,7 @@ This file describes the expected behavior of each parameter in the model. Note: 
 * `timelimit`  = Stop simulation if it exceeds this duration. Test: set to a small number (e.g. 1) and choose a large `n`/`n_days`.
 * `stop_func`  = User-defined stopping function (no test).
 * `window`     = Integration window for calculatingthe doubling time; does not affect the simulation otherwise.
+* `country`    = The country for the simulation to run in, used to get age demographic data.
 
 ## Disease transmission
 * `beta`         = Transmissibility per contact. Test: set to 0 for no infections, set to 1 for ≈`contacts` infections per day (will not be exactly equal due to overlap and other effects)

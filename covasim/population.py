@@ -27,7 +27,7 @@ class Population(sc.prettyobj):
         return self.people[self._uids[ind]]
 
     @classmethod
-    def random(cls, pars, n_people: int = None, n_regular_contacts: int = None, n_random_contacts: int = 0, id_len=6, country="United States of America"):
+    def random(cls, pars, n_people: int = None, n_regular_contacts: int = None, n_random_contacts: int = 0, id_len=6):
         """
         Make a simple random population
 
@@ -57,7 +57,7 @@ class Population(sc.prettyobj):
         n_random_contacts = int(n_random_contacts)
 
         # Load age data based on 2018 Seattle demographics
-        age_data =  load_country_pop(country)
+        age_data =  load_country_pop(pars['country'])
 
         # Handle sex and UID
         uids = sc.uuid(which='ascii', n=n_people, length=id_len, tostring=True)
