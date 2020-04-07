@@ -3,12 +3,14 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('Agg')
 import sciris as sc
 import covasim as cv
 
 do_plot   = 1
 do_show   = 0
-do_save   = 0
+do_save   = 1
 debug     = 1
 keep_sims = 0
 fig_path  = [f'results/testing_scen_{i}.png' for i in range(3)]
@@ -163,6 +165,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
     base_sim = cv.Sim(base_pars) # create sim object
     base_sim['n_days'] = 50
+    base_sim['quarantine_period'] = 7
     #base_sim['contacts'] = {'h': 4,   's': 10,  'w': 10,  'c': 0} # Turn off community contacts - not working
     #base_sim['beta'] = 0.02 # Increase beta
     n_people = base_sim['n']
