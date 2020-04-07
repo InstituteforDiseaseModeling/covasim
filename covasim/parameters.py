@@ -49,8 +49,8 @@ def make_pars():
     # Efficacy of protection measures
     pars['asymp_factor']        = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']         = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
-    pars['quar_trans_factor']   = 0.8 # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
-    pars['quar_acq_factor']     = 0.5 # Probability that susceptibles will isolate if they know they've been in contact with a positive
+    pars['quar_trans_factor']   = 1.0 # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+    pars['quar_acq_factor']     = 0.0 # Probability that susceptibles will isolate if they know they've been in contact with a positive - baseline is no isolation
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()

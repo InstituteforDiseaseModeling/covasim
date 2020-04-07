@@ -392,11 +392,19 @@ class Sim(cvbase.BaseSim):
                     for contact_ind in transmission_inds:
                         target_person = self.get_person(contact_ind) # Stored by integer
                         if target_person.susceptible: # Skip people who are not susceptible
-                            if target_person.known_contact: # Are they are known contact? If so they may be isolating
-                                quar_bool = cvu.bt(quar_acq_factor) # See whether the target person is isolating
-                                if not quar_bool: # They're not isolating, so they get infected
-                                    new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                    sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+
+                            # See whether we will infect this person
+                            infect_this_person = True # By default, infect them...
+                            if target_person.known_contact:
+                                import traceback;
+                                traceback.print_exc();
+                                import pdb;
+                                pdb.set_trace()
+
+                                infect_this_person = not cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating
+                            if infect_this_person:
+                                new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
         # End of person loop; apply interventions
         for intervention in self['interventions']:
