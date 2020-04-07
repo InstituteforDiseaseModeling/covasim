@@ -58,6 +58,17 @@ class Person(sc.prettyobj):
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
 
+         # Set prognoses
+        prognoses = pars['prognoses']
+        idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
+        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
+        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
+        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
+        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
+        self.OR_no_treat = pars['OR_no_treat']
+
+        return
+
 
     def make_susceptible(self):
         """
@@ -94,17 +105,6 @@ class Person(sc.prettyobj):
 
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
-
-        # Set prognoses
-        prognoses = pars['prognoses']
-        idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
-        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
-        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
-        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
-        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
-        self.OR_no_treat = pars['OR_no_treat']
-
-        return
 
 
     # Methods to make events occur (infection and diagnosis)
