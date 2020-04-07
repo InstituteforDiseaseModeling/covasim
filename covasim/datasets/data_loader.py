@@ -2,17 +2,34 @@ import requests
 import os
 import json
 import numpy as np
+from pathlib import Path
 dirname = os.path.dirname(__file__)
 mapper_file_path = os.path.join(dirname,"sources/lookup.json")
 
-##
-# DataLoader: Abstract class that formats the common
-# interface for uploading an external data source and
-# translating to the desired format.
-#
-class DataLoader:
+
+class NeherLabPop():
+    URL="https://raw.githubusercontent.com/neherlab/covid19_scenarios/master/src/assets/data/country_age_distribution.json"
+    FILENAME="neherlab"
+
     def __init__(self):
-        pass
+        # Make the file folder if it doesn't exist
+        Path(os.path.dirname(self.file_path())).mkdir(parents=True, exist_ok=True)
+
+    ##
+    # countries: This data source defines its data at the country level
+    # this will return the countries in the source file.
+    #
+    def countries(self):
+        self.load_data()
+        return self.data.keys()
+
+    ##
+    # data_for_country: returns the demographic
+    # age data for the country as a numpy array
+    #
+    def data_for_country(self, country):
+        self.load_data()
+        return np.array(self.data[country])
 
     ##
     # update_data: pull the external data local calls
@@ -58,32 +75,6 @@ class DataLoader:
         with open(self.file_path()) as datafile:
             strdata = json.load(datafile)
         self.data = strdata
-    ##
-    # translate: a function that will take an external data source
-    # and translate it to the desired format.
-    #
-    def translate(self, json):
-        raise NotImplementedError
-
-class NeherLabPop(DataLoader):
-    URL="https://raw.githubusercontent.com/neherlab/covid19_scenarios/master/src/assets/data/country_age_distribution.json"
-    FILENAME="neherlab"
-
-    ##
-    # countries: This data source defines its data at the country level
-    # this will return the countries in the source file.
-    #
-    def countries(self):
-        self.load_data()
-        return self.data.keys()
-
-    ##
-    # data_for_country: returns the demographic
-    # age data for the country as a numpy array
-    #
-    def data_for_country(self, country):
-        self.load_data()
-        return np.array(self.data[country])
 
     ##
     # translate: takes the neherlab formate and turns it

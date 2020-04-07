@@ -17,17 +17,12 @@ from covasim.datasets.data_loader import load_country_pop
 from covasim.datasets.data_loader import NeherLabPop
 dirname = os.path.dirname(__file__)
 
-sources = [
-    NeherLabPop(),
-]
-
 def load_sources():
     countries = {}
-
-    for source in sources:
-        source.update_data()
-        for country in source.countries():
-            countries[country] = source.__class__.__name__
+    source = NeherLabPop()
+    source.update_data()
+    for country in source.countries():
+        countries[country] = source.__class__.__name__
 
 if __name__ == '__main__':
     load_sources()
