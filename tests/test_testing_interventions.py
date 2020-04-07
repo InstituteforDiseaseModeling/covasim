@@ -8,7 +8,7 @@ import covasim as cv
 
 do_plot   = 1
 do_show   = 0
-do_save   = 0
+do_save   = 1
 debug     = 1
 keep_sims = 0
 fig_path  = [f'results/testing_scen_{i}.png' for i in range(3)]

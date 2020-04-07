@@ -30,6 +30,7 @@ class Person(sc.prettyobj):
         self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
         self.durpars     = pars['dur']  # Store duration parameters
         self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
+        self.date_quarantined = {} # For tracking purposes only
 
         # Define states
         for state in pars['possible_states']:
@@ -44,6 +45,8 @@ class Person(sc.prettyobj):
         self.dur_sym2sev  = None # Duration from symptoms to severe symptoms
         self.dur_sev2crit = None # Duration from symptoms to severe symptoms
         self.dur_disease  = None # Total duration of disease, from date of exposure to date of recovery or death
+
+        self.end_quarantine = None # Time as which to release from quarantine
 
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
@@ -180,12 +183,20 @@ class Person(sc.prettyobj):
             return 0
 
 
-    def quarantine(self, t):
+    def quarantine(self, t, quarantine_period):
         '''
         Quarantine a person starting on day t
+        If a person is already quarantined, this will extend their quarantine
         '''
         self.quarantined = True
-        self.date_quarantined = t
+        self.date_quarantined.append( (t, quarantine_period) ) # For tracking purposes only
+
+        new_end_quarantine = t + quarantine_period
+        if self.end_quarantine is None or self.end_quarantine is not None and new_end_quarantine > self.end_quarantine:
+            self.end_quarantine = new_end_quarantine
+
+        sc.printv(f'Person {self.uid} has been quarantined until {self.end_quarantine}', 2, verbose)
+
         return
 
 
@@ -254,20 +265,21 @@ class Person(sc.prettyobj):
             return 0
 
 
-    def check_known_contact(self, t):
+    def check_known_contact(self, t, quarantine_period = None):
         ''' Check for whether someone has been contacted by a positive'''
         if not self.known_contact and self.date_known_contact is not None and t >= self.date_known_contact:
             self.known_contact = True
-            self.quarantine(t)
+            if quarantine_period is not None:
+                self.quarantine(t, quarantine_period)
         return
 
 
-    def check_quarantined(self, t, quarantine_period):
+    def check_quarantined(self, t):
         ''' Check for whether someone is isolating/quarantined'''
-        if self.date_quarantined is not None and t >= self.date_quarantined and t <= self.date_quarantined + quarantine_period:
-            self.quarantined = True
-        else:
-            self.quarantined = False
+        if self.quarantined and self.end_quarantine is not None and t >= self.end_quarantine:
+            self.quarantined = False # Release from quarantine
+            self.end_quarantine = None # Clear end quarantine time
+            sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
         return
 
 

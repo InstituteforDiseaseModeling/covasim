@@ -334,6 +334,10 @@ class Sim(cvbase.BaseSim):
                 for i in range(int(n_import)):
                     new_infections += self.people[s_uids[i]].infect(t=t)
 
+        # If they're quarantined, this affects their attack rate
+        person.check_known_contact(t, quarantine_period) # Set know_contact and go into quarantine
+        person.check_quarantined(t) # Come out of quarantine
+
         for person in not_susceptible:
             n_susceptible -= 1
 
@@ -370,15 +374,11 @@ class Sim(cvbase.BaseSim):
                     if n_severe > n_beds:
                         bed_constraint = True
 
-                    # If they're quarantined, this affects their attack rate
-                    person.check_known_contact(t)
-                    person.check_quarantined(t, quarantine_period)
-
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                     thisbeta = beta * \
                                (asymp_factor if not person.symptomatic else 1.) * \
                                (diag_factor if person.diagnosed else 1.) * \
-                               (quar_trans_factor if person.quarantined else 1.)
+                                 - nice if by layer
 
                     # Determine who gets infected
                     community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
@@ -386,7 +386,10 @@ class Sim(cvbase.BaseSim):
                     transmission_inds = []  # Indices of people that get infected
 
                     for ckey in self.contact_keys:
-                        layer_beta = thisbeta * beta_layers[ckey]
+                        layer_beta = thisbeta \
+                            * beta_layers[ckey] \
+                            * (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
+
                         transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
 
                     # Loop over people who may get infected
@@ -396,8 +399,6 @@ class Sim(cvbase.BaseSim):
 
                             # See whether we will infect this person
                             infect_this_person = True # By default, infect them...
-                            target_person.check_known_contact(t)
-                            target_person.check_quarantined(t, quarantine_period)
                             if target_person.quarantined:
                                 infect_this_person = not cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating
                             if infect_this_person:
