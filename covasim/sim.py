@@ -396,11 +396,6 @@ class Sim(cvbase.BaseSim):
                             # See whether we will infect this person
                             infect_this_person = True # By default, infect them...
                             if target_person.known_contact:
-                                import traceback;
-                                traceback.print_exc();
-                                import pdb;
-                                pdb.set_trace()
-
                                 infect_this_person = not cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating
                             if infect_this_person:
                                 new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
