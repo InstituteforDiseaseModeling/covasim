@@ -4,7 +4,7 @@ Test the people class
 
 #%% Imports and settings
 import sciris as sc
-import covasim.datasets.translators as cdt
+import covasim.datasets.data_loader as cdt
 import numpy as np
 import json
 from unittest.mock import MagicMock
@@ -13,9 +13,12 @@ import os
 dirname = os.path.dirname(__file__)
 
 neherlabs_pop_json_path = os.path.join(dirname, "mock_datasets/population/neher_labs.json")
+neherlabs_pop_translated_json_path = os.path.join(dirname, "mock_datasets/population/neher_labs_translated.json")
 test_json_path = os.path.join(dirname, "mock_datasets/population/test.json")
 with open(neherlabs_pop_json_path) as data:
     neherlabs_pop_json = json.load(data)
+with open(neherlabs_pop_translated_json_path) as data:
+    neherlabs_pop_translated_json = json.load(data)
 
 neher_labs_raw_pop = open(neherlabs_pop_json_path, "r").read()
 
@@ -53,10 +56,10 @@ def test_transform_neherlab_data():
 
 def test_get_country_data():
     translator = cdt.NeherLabPop()
-    translator.file_path = MagicMock(return_value=neherlabs_pop_json_path)
+    translator.file_path = MagicMock(return_value=neherlabs_pop_translated_json_path)
     output = translator.data_for_country("Albania")
 
-    expected = neherlabs_pop_json['Albania']
+    expected = neherlabs_pop_translated_json['Albania']
     assert output == expected
 
 def test_load_country_data():
@@ -66,7 +69,7 @@ def test_load_country_data():
     translator.file_path = MagicMock(return_value=test_json_path)
     translator.update_data()
     output = translator.data_for_country("Albania")
-    expected = neherlabs_pop_json['Albania']
+    expected = neherlabs_pop_translated_json['Albania']
     assert output == expected
     os.remove(test_json_path)
 
