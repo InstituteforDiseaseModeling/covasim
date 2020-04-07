@@ -51,6 +51,11 @@ class Population(sc.prettyobj):
         if n_regular_contacts is None:
             n_regular_contacts = pars['contacts']
 
+        # Handle types
+        n_people = int(n_people)
+        n_regular_contacts = int(n_regular_contacts)
+        n_random_contacts = int(n_random_contacts)
+
         # Load age data based on 2018 Seattle demographics
         age_data = np.array([
             [0, 4, 0.0605],
