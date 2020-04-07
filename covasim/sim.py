@@ -520,13 +520,17 @@ class Sim(cvbase.BaseSim):
         for key in set(self.reskeys).intersection(self.data.columns): # For keys present in both the results and in the data
             weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
             for d, datum in self.data[key].iteritems():
-                if d in model_dates:
-                    estimate = self.results[key][model_dates.index(d)]
-                    if datum and estimate:
-                        p = cvu.poisson_test(datum, estimate)
-                        logp = pl.log(p)
-                        loglike += weight*logp
-                        sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
+                if np.isfinite(datum):
+                    if d in model_dates:
+                        estimate = self.results[key][model_dates.index(d)]
+                        if datum and estimate:
+                            if (datum == 0) and (estimate == 0):
+                                p = 1.0
+                            else:
+                                p = cvu.poisson_test(datum, estimate)
+                            logp = pl.log(p)
+                            loglike += weight*logp
+                            sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
             self.results['likelihood'] = loglike
             
