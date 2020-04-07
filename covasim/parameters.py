@@ -4,14 +4,13 @@ Set the parameters for Covasim.
 
 import numpy as np
 import pandas as pd
-import sciris as sc
 import datetime as dt
 
 
 __all__ = ['make_pars', 'get_default_prognoses', 'load_data']
 
 
-def make_pars():
+def make_pars(prog_by_age=True, **kwargs):
     '''
     Set parameters for the simulation.
 
@@ -22,24 +21,24 @@ def make_pars():
 
     # Simulation parameters
     pars['scale']      = 1 # Factor by which to scale results -- e.g. 0.6*100 with n=10e3 assumes 60% of a population of 1m
-    pars['n']          = 20e3 # Number ultimately susceptible to CoV
-    pars['n_infected'] = 10 # Number of seed cases
     pars['start_day']  = dt.datetime(2020, 3, 1) # Start day of the simulation
     pars['n_days']     = 60 # Number of days of run, if end_day isn't used
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
-    pars['usepopdata'] = 'random' # Whether or not to load actual population data
+
+    pars['n']          = 20000  # Default number of people to use IF a population instance is not specified
+    pars['contacts']   = 20  # Default number of daily regular contacts IF a population instance is not specified
+    pars['n_infected'] = 10  # Number of seed cases
+
     pars['timelimit']  = 3600 # Time limit for a simulation (seconds)
     pars['stop_func']  = None # A function to call to stop the sim partway through
     pars['window']     = 7 # Integration window for doubling time and R_eff
 
     # Disease transmission
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
-    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
-    pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
-    pars['contacts']     = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
-    pars['beta_layers']  = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
+    pars['asymp_factor'] = 0.8  # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']  = 0.0  # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
+    pars['cont_factor']  = 1.0  # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()
@@ -56,27 +55,31 @@ def make_pars():
     pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=7, par2=3)  # Duration from critical symptoms to death
 
     # Severity parameters: probabilities of symptom progression
-    pars['prog_by_age']     = True # Whether or not to use age-specific probabilities of prognosis (symptoms/severe symptoms/death)
-    pars['rel_symp_prob']   = 1.0  # If not using age-specific values: relative proportion of symptomatic cases
-    pars['rel_severe_prob'] = 1.0  # If not using age-specific values: relative proportion of symptomatic cases that become severe
-    pars['rel_crit_prob']   = 1.0  # If not using age-specific values: relative proportion of severe cases that become critical
-    pars['rel_death_prob']  = 1.0  # If not using age-specific values: relative proportion of critical cases that result in death
-    pars['OR_no_treat']     = 2.0  # Odds ratio for how much more likely people are to die if no treatment available
+    pars['prognoses'] = get_default_prognoses(prog_by_age) # Default to age-specific prognoses
+    pars['OR_no_treat'] = 2.0  # Odds ratio for how much more likely people are to die if no treatment available
+    pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
+    pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
+    pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
+    pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
 
     # Events and interventions
     pars['interventions'] = []  #: List of Intervention instances
     pars['interv_func'] = None # Custom intervention function
 
     # Health system parameters
-    pars['n_beds'] = pars['n']  # Baseline assumption is that there's enough beds for the whole population (i.e., no constraints)
+    pars['n_beds'] = np.inf  # Baseline assumption is that there's no upper limit on the number of beds i.e. there's enough for everyone
+
+    # Update with any supplied parameter values
+    pars.update(kwargs)
 
     return pars
-
 
 
 def get_default_prognoses(by_age=True):
     '''
     Return the default parameter values for prognoses
+
+    The prognosis probabilities are conditional given the previous disease state.
 
     Args:
         by_age (bool): whether or not to use age-specific values
@@ -86,23 +89,27 @@ def get_default_prognoses(by_age=True):
 
     '''
     if not by_age:
-        prog_pars = sc.objdict(
-            symp_prob   = 0.75,
-            severe_prob = 0.12,
-            crit_prob   = 0.25,
-            death_prob  = 0.50,
+        prognoses = dict(
+            age_cutoffs  = np.array([np.inf]),     # Age cutoffs
+            symp_probs   = np.array([ 0.75 ]),
+            severe_probs = np.array([ 0.2 ]),
+            crit_probs   = np.array([ 0.08 ]),
+            death_probs  = np.array([ 0.02 ]),
         )
     else:
-        prog_pars = sc.objdict(
-            age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      120]),     # Age cutoffs
+        prognoses = dict(
+            age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      np.inf]),  # Age cutoffs
             symp_probs   = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms
             severe_probs = np.array([0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]), # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
             crit_probs   = np.array([0.00004, 0.00011, 0.00050, 0.00123, 0.00214, 0.00800, 0.02750, 0.06000, 0.10333]), # Overall probability of developing critical symptoms (derived from https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm)
             death_probs  = np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]), # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
         )
-    return prog_pars
 
+    prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given severe symptoms
+    prognoses['crit_probs']   /= prognoses['severe_probs'] # Conditional probability of symptoms becoming critical, given severe
+    prognoses['severe_probs'] /= prognoses['symp_probs']   # Conditional probability of symptoms becoming severe, given symptomatic
 
+    return prognoses
 
 
 def load_data(filename, columns=None, calculate=True, **kwargs):

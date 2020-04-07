@@ -176,8 +176,6 @@ class Scenarios(cvbase.ParsObj):
 
             self.sims[scenkey] = scen_sims
 
-
-
         #%% Print statistics
         if verbose:
             print('\nResults for final time point in each scenario:')
@@ -349,14 +347,15 @@ class Scenarios(cvbase.ParsObj):
 
         return output
 
-    def save(self, filename=None, keep_sims=True, keep_people=False, **kwargs):
+
+    def save(self, filename=None, keep_sims=True, keep_population=False, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
         Args:
             filename (str or None): the name or path of the file to save to; if None, uses stored
             keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object
-            keep_people (bool): whether or not to store the people in the Sim objects (NB, very large)
+            keep_population (bool): whether or not to store the population in the Sim objects (NB, very large)
             keywords: passed to makefilepath()
 
         Returns:
@@ -378,7 +377,7 @@ class Scenarios(cvbase.ParsObj):
         obj = sc.dcp(self) # This should be quick once we've removed the sims
 
         if keep_sims:
-            if keep_people:
+            if keep_population:
                 obj.sims = sims # Just restore the object in full
                 print('Note: saving people, which may produce a large file!')
             else:
@@ -540,10 +539,11 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     # Or, combine them into a single sim with scaled results
     else:
         output_sim = sc.dcp(sims[0])
-        output_sim.pars['parallelized'] = n_runs # Store how this was parallelized
-        output_sim.pars['n'] *= n_runs # Restore this since used in later calculations -- a bit hacky, it's true
+        output_sim.pars['parallelized'] = n_runs  # Store how this was parallelized
+        output_sim.pars['n'] = output_sim.n*n_runs  # Record the number of people
+        output_sim.population = None  # Drop population because the microstructure won't be correct if just concatenated (also would need to change indexes in all contact layers)
+
         for s,sim in enumerate(sims[1:]): # Skip the first one
-            output_sim.people.update(sim.people)
             for key in sim.reskeys:
                 this_res = sim.results[key]
                 output_sim.results[key].values += this_res.values

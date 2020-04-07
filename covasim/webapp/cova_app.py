@@ -124,10 +124,11 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     try:
         # Fix up things that JavaScript mangles
         orig_pars = cv.make_pars()
+        orig_pars['prognoses'] = cv.get_default_prognoses(by_age=False)  # Replace the prognoses with the non age specific default values
+
         defaults = get_defaults(merge=True)
         web_pars = {}
         web_pars['verbose'] = verbose # Control verbosity here
-
 
         for key,entry in {**sim_pars, **epi_pars}.items():
             print(key, entry)
@@ -163,11 +164,16 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
             web_pars['interventions'] = cv.change_beta(days=web_pars.pop('web_int_day'), changes=(1-web_pars.pop('web_int_eff')))
 
         # Handle CFR -- ignore symptoms and set to 1
-        prog_pars = cv.get_default_prognoses(by_age=False)
-        web_pars['rel_symp_prob']   = 1.0/prog_pars.symp_prob
-        web_pars['rel_severe_prob'] = 1.0/prog_pars.severe_prob
-        web_pars['rel_crit_prob']   = 1.0/prog_pars.crit_prob
-        web_pars['rel_death_prob']  = web_pars.pop('web_cfr')/prog_pars.death_prob
+        web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
+        web_pars['rel_symp_prob']   = 1e4 # Arbitrarily large
+        web_pars['rel_severe_prob'] = 1e4
+        web_pars['rel_crit_prob']   = 1e4
+        web_pars['prognoses']['death_probs'][0] = web_pars.pop('web_cfr')
+        if web_pars['seed'] == 0:
+            web_pars['seed'] = None
+        web_pars['timelimit'] = max_time  # Set the time limit
+        web_pars['n'] = int(web_pars['n'])  # Set data type
+        web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
 
     except Exception as E:
         err2 = f'Parameter conversion failed! {str(E)}\n'
@@ -176,12 +182,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
     # Create the sim and update the parameters
     try:
-        sim = cv.Sim()
-        sim['prog_by_age'] = False # So the user can override this value
-        sim['timelimit'] = max_time # Set the time limit
-        if web_pars['seed'] == 0:
-            web_pars['seed'] = None # Reset
-        sim.update_pars(web_pars)
+        sim = cv.Sim(web_pars)
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
@@ -222,7 +223,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-            
+
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
             d['config'] = {'responsive': True}

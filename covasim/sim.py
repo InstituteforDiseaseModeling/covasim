@@ -11,8 +11,7 @@ import matplotlib.ticker as ticker
 from . import utils as cvu
 from . import base as cvbase
 from . import parameters as cvpars
-from . import people as cvppl
-
+from . import population as cvpop
 
 # Specify all externally visible functions this file defines
 __all__ = ['default_colors', 'default_sim_plots', 'Sim']
@@ -67,12 +66,13 @@ class Sim(cvbase.BaseSim):
         pars (dict): parameters to modify from their default values
         datafile (str): filename of (Excel) data file to load, if any
         datacols (list): list of column names of the data file to load
+        population (str, Population instance): Population to use. If it's a string, the population will be loaded from a file
         filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None):
+    def __init__(self, pars=None, prog_by_age=True, datafile=None, datacols=None, population=None, filename=None):
         # Create the object
-        default_pars = cvpars.make_pars() # Start with default pars
+        default_pars = cvpars.make_pars(prog_by_age) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
@@ -80,20 +80,22 @@ class Sim(cvbase.BaseSim):
         self.filename      = None  # The filename of the sim
         self.datafile      = None  # The name of the data file
         self.data          = None  # The actual data
-        self.popdict       = None  # The population dictionary
         self.t             = None  # The current time in the simulation
         self.initialized   = False # Whether or not initialization is complete
         self.results_ready = False # Whether or not results are ready
-        self.people        = {}    # Initialize these here so methods that check their length can see they're empty
         self.results       = {}    # For storing results
 
         # Now update everything
         self.set_metadata(filename)        # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
-        self.load_population(popfile)      # Load the population, if provided
-        self.update_pars(pars)             # Update the parameters, if provided
-        return
+        self.update_pars(sc.dcp(pars))  # Update the parameters, if provided. Use deep copy so that the people/contact layers in the parameters don't interact if the parameters are used for multiple sims
 
+        if sc.isstring(population):
+            self.load_population(population)      # Load the population, if provided
+        else:
+            self.population = population
+
+        return
 
     def set_metadata(self, filename):
         ''' Set the metadata for the simulation -- creation time and filename '''
@@ -102,7 +104,6 @@ class Sim(cvbase.BaseSim):
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             self.filename = f'covasim_{datestr}.sim'
         return
-
 
     def load_data(self, datafile=None, datacols=None, **kwargs):
         ''' Load the data to calibrate against, if provided '''
@@ -115,37 +116,6 @@ class Sim(cvbase.BaseSim):
 
         return
 
-
-    def load_population(self, filename=None, **kwargs):
-        '''
-        Load the population dictionary from file.
-
-        Args:
-            filename (str): name of the file to load
-        '''
-        if filename is not None:
-            filepath = sc.makefilepath(filename=filename, **kwargs)
-            self.popdict = sc.loadobj(filepath)
-            n_actual = len(self.popdict['uid'])
-            n_expected = self['n']
-            if n_actual != n_expected:
-                errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "n" to match or regenerate the file'
-                raise ValueError(errormsg)
-        return
-
-
-    def save_population(self, filename, **kwargs):
-        '''
-        Save the population dictionary to file.
-
-        Args:
-            filename (str): name of the file to save to.
-        '''
-        filepath = sc.makefilepath(filename=filename, **kwargs)
-        sc.saveobj(filepath, self.popdict)
-        return filepath
-
-
     def initialize(self, **kwargs):
         '''
         Perform all initializations.
@@ -156,11 +126,10 @@ class Sim(cvbase.BaseSim):
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
+        self.init_people() # Create the results stucture
         self.init_results() # Create the results stucture
-        self.init_people(**kwargs) # Create all the people (slow)
         self.initialized = True
         return
-
 
     def validate_pars(self):
         ''' Some parameters can take multiple types; this makes them consistent '''
@@ -175,27 +144,10 @@ class Sim(cvbase.BaseSim):
             start_day = start_day.date()
         self['start_day'] = start_day
 
-        # Handle contacts
-        contacts = self['contacts']
-        if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's community contacts
-            self['contacts']    = {'h':0, 's':0, 'w':0, 'c':contacts}
-            self['beta_layers'] = {'h':0, 's':0, 'w':0, 'c':1.0}
-
-        # Handle population data
-        popdata_choices = ['random', 'microstructure']
-        if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
-            self['usepopdata'] = popdata_choices[int(self['usepopdata'])] # Choose one of these
-        if self['usepopdata'] not in popdata_choices:
-            choice = self['usepopdata']
-            choicestr = ', '.join(popdata_choices)
-            errormsg = f'Population data option "{choice}" not available; choices are: {choicestr}'
-            raise ValueError(errormsg)
-
         # Handle interventions
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
 
         return
-
 
     def init_results(self):
         '''
@@ -241,7 +193,6 @@ class Sim(cvbase.BaseSim):
 
         return
 
-
     @property
     def reskeys(self):
         ''' Get the actual results objects, not other things stored in sim.results '''
@@ -252,24 +203,34 @@ class Sim(cvbase.BaseSim):
                 res_keys.append(key)
         return res_keys
 
+    @property
+    def people(self):
+        if self.population:
+            return self.population.people
+        else:
+            return None
 
-    def init_people(self, verbose=None, id_len=None, **kwargs):
-        ''' Create the people '''
+    def get_person(self, *args, **kwargs):
+        return self.population.get_person(*args, **kwargs)
 
-        if verbose is None:
-            verbose = self['verbose']
+    def init_people(self):
+        ''' Seed infections '''
 
-        sc.printv(f'Creating {self["n"]} people...', 1, verbose)
+        if self.population is None:
+            # Make a random network
+            sc.printv('Input parameters did not contain a population - creating a random network', 1)
+            self.population = cvpop.Population.random(pars=self.pars)
 
-        cvppl.make_people(self, verbose=verbose, id_len=id_len, **kwargs)
-
-        # Create the seed infections
         for i in range(int(self['n_infected'])):
-            person = self.get_person(i)
+            person = self.population.get_person(i)
             person.infect(t=0)
-
         return
 
+    def load_population(self, filename, *args, **kwargs):
+        self.population = cvpop.Population.load(filename, *args, **kwargs)
+
+    def save_population(self, filename, *args, **kwargs):
+        return self.population.save(filename, *args, **kwargs)
 
     def next(self, verbose=0) -> None:
         '''
@@ -286,6 +247,8 @@ class Sim(cvbase.BaseSim):
         # If we have reached the end of the simulation, then do nothing
         if self.t == self.npts:
             return
+
+        t = self.t
 
         # Zero counts for this time step: stocks
         n_susceptible   = 0
@@ -308,12 +271,8 @@ class Sim(cvbase.BaseSim):
         asymp_factor     = self['asymp_factor']
         diag_factor      = self['diag_factor']
         cont_factor      = self['cont_factor']
-        beta_layers      = self['beta_layers']
         n_beds           = self['n_beds']
         bed_constraint   = False
-        n_people         = len(self.people)
-        n_comm_contacts  = self['contacts']['c'] # Community contacts
-        t = self.t
 
         # Print progress
         if verbose>=1:
@@ -368,27 +327,22 @@ class Sim(cvbase.BaseSim):
                                (diag_factor if person.diagnosed else 1.) * \
                                (cont_factor if person.known_contact else 1.)
 
-                    # Determine who gets infected
-                    transmission_inds = []
-                    community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
-                    person.contacts['c'] = community_contact_inds
-                    for ckey in self.contact_keys:
-                        layer_beta = thisbeta * beta_layers[ckey]
-                        transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
+                    for layer in self.population.contact_layers.values():
+                        contacts = layer.get_contacts(person, t)
+                        layer_beta = thisbeta * layer.beta
+                        transmission_inds = cvu.bf(layer_beta, contacts)
 
-                    # Loop over people who do
-                    for contact_ind in transmission_inds:
-                        target_person = self.get_person(contact_ind) # Stored by integer
+                        for contact_ind in transmission_inds:
+                            target_person = self.population.get_person(contact_ind)  # Stored by integer
 
-                        # This person was diagnosed last time step: time to flag their contacts
-                        if person.date_diagnosed is not None and person.date_diagnosed == t-1:
-                            target_person.known_contact = True
+                            # This person was diagnosed last time step: time to flag their contacts
+                            if person.date_diagnosed is not None and person.date_diagnosed == t-1 and layer.traceable:
+                                target_person.known_contact = True
 
-                        # Skip people who are not susceptible
-                        if target_person.susceptible:
-                            new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                            sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
-
+                            # Skip people who are not susceptible
+                            if target_person.susceptible:
+                                new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
         sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)
         # End of person loop; apply interventions
@@ -415,6 +369,7 @@ class Sim(cvbase.BaseSim):
         self.results['new_deaths'][t]      = new_deaths
 
         self.t += 1
+
 
     def run(self, do_plot=False, verbose=None, **kwargs):
         '''
@@ -480,8 +435,8 @@ class Sim(cvbase.BaseSim):
         self.compute_r_eff()
         self.likelihood()
 
-        # Convert to an odict to allow e.g. sim.people[25] later, and results to an objdict to allow e.g. sim.results.diagnoses
-        self.people = sc.odict(self.people)
+        # Convert results to an objdict to allow e.g. sim.results.diagnoses
+        # Access people by index using `Sim.get_person(25)`
         self.results = sc.objdict(self.results)
         self.results_ready = True
 

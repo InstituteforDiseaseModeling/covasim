@@ -20,9 +20,6 @@ This file describes the expected behavior of each parameter in the model. Note: 
 * `asymp_factor` = Effect of asymptomaticity on transmission.
 * `diag_factor`  = Effect of diagnosis on transmission.
 * `cont_factor`  = Effect of being a known contact  on transmission.
-* `contacts`     = Number of contacts per person. Test: set to 0 for no infections. Infection rate should scale roughly linearly with this parameter.
-* `beta_pop`     = Transmissibility per contact, population-specific. Dependent on `synthpops`. Test: set all to 0 for no infections. Infection rate should scale roughly linearly with these parameters.
-* `contacts_pop` = Number of contacts per person, population-specific. See `synthpops` documentation for tests.
 
 ## Duration parameters
 * `exp2inf`  = Duration from exposed to infectious
@@ -36,12 +33,12 @@ This file describes the expected behavior of each parameter in the model. Note: 
 * `crit2die` = Duration from critical symptoms to death
 
 ## Severity parameters: probabilities of symptom progression
-* `prog_by_age`     = Whether or not to use age-specific probabilities of prognosis (symptoms/severe symptoms/death)
-* `rel_symp_prob`   = If not using age-specific values: relative proportion of symptomatic cases
-* `rel_severe_prob` = If not using age-specific values: relative proportion of symptomatic cases that become severe
-* `rel_crit_prob`   = If not using age-specific values: relative proportion of severe cases that become critical
-* `rel_death_prob`  = If not using age-specific values: relative proportion of critical cases that result in death
-* `OR_no_treat`     = Odds ratio for how much more likely people are to die if no treatment available
+* `age_cutoffs`  = Age bins for severity parameter values
+* `symp_probs`   = Overall probability of developing symptoms
+* `severe_probs` = Overall probability of developing severe symptoms
+* `crit_probs`   = Overall probability of developing critical symptoms
+* `death_probs`  = Overall probability of dying
+* `OR_no_treat`  = Odds ratio for how much more likely people are to die if no treatment available
 
 ## Events and interventions
 * `interventions` = List of Intervention instances

@@ -43,11 +43,13 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'bedconstraint2': {
-            'name': 'Only 1 bed available, people are 10x more likely to die if not hospitalized',
+            'name': 'Only 1 bed available',
             'pars': {
                 'n_infected': 100,
                 'n_beds': 1,
-                'OR_no_treat': 10.,
+                # 'OR_no_treat': 10., # nb. scenarios cannot currently overwrite nested parameters
+                # This prevents overwriting OR_no_treat due to recent refactoring but more generally
+                # there are other nested parameters eg. all of those under pars['dur']
             }
         },
     }
@@ -60,7 +62,7 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
     if do_plot:
         to_plot = sc.odict({
             'cum_deaths':   'Cumulative deaths',
-#            'bed_capacity': 'People needing beds / beds',
+           'bed_capacity': 'People needing beds / beds',
             'n_severe':     'Number of cases requiring hospitalization',
             'n_critical':   'Number of cases requiring ICU',
         })
