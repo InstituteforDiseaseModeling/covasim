@@ -206,7 +206,7 @@ class change_beta(Intervention):
         ''' Plot vertical lines for when changes in beta '''
         ylims = ax.get_ylim()
         for day in self.days:
-            pl.plot([day]*2, ylims, '--')
+            pl.plot([day]*2, ylims, '--', c=[0,0,0])
         return
 
 
