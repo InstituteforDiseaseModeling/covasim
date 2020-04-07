@@ -10,7 +10,7 @@ import covasim as cv
 
 do_plot   = 1
 do_show   = 0
-do_save   = 0
+do_save   = 1
 debug     = 1
 keep_sims = 0
 fig_path  = [f'results/testing_scen_{i}.png' for i in range(3)]
@@ -172,7 +172,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
 
     # Define overall testing assumptions
-    testing_prop = 0.1 # Assumes we could test 10% of the population daily (way too optimistic!!)
+    testing_prop = 0.01 # Assumes we could test 1% of the population daily (way too optimistic!!)
     daily_tests = [testing_prop*n_people]*npts # Number of daily tests
 
     # Define the scenarios
@@ -192,7 +192,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'name': '10% daily testing; moderate contact tracing, 75% of contacts self-isolate',
             'pars': {
                 'quar_trans_factor': 0.25,
-                'quar_acq_factor': 0.25,
+                'quar_acq_factor': 0.75,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
@@ -203,7 +203,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'name': '10% daily testing; fast contact tracing, 90% of contacts self-isolate',
             'pars': {
                 'quar_trans_factor': 0.1,
-                'quar_acq_factor': 0.1,
+                'quar_acq_factor': 0.9,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
@@ -214,7 +214,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'name': '10% daily testing; same-day contact tracing, 100% of contacts self-isolate',
             'pars': {
                 'quar_trans_factor': 0,
-                'quar_acq_factor': 0,
+                'quar_acq_factor': 1,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1},

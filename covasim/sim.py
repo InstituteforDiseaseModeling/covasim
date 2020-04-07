@@ -333,7 +333,6 @@ class Sim(cvbase.BaseSim):
                 for i in range(int(n_import)):
                     new_infections += self.people[s_uids[i]].infect(t=t)
 
-
         for person in not_susceptible:
             n_susceptible -= 1
 
@@ -389,15 +388,13 @@ class Sim(cvbase.BaseSim):
                         layer_beta = thisbeta * beta_layers[ckey]
                         transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
 
-                    # Loop over people who get infected
+                    # Loop over people who may get infected
                     for contact_ind in transmission_inds:
                         target_person = self.get_person(contact_ind) # Stored by integer
                         if target_person.susceptible: # Skip people who are not susceptible
-
-                            # See whether the target person is quarantining, infect them if not
-                            if target_person.known_contact:
-                                quar_bool = cvu.bt(quar_trans_factor)
-                                if not quar_bool:
+                            if target_person.known_contact: # Are they are known contact? If so they may be isolating
+                                quar_bool = cvu.bt(quar_acq_factor) # See whether the target person is isolating
+                                if not quar_bool: # They're not isolating, so they get infected
                                     new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                     sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
