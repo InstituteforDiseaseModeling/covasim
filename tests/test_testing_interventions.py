@@ -181,7 +181,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'name': '10% daily testing; poor contact tracing, 50% of contacts self-isolate',
             'pars': {
                 'quar_trans_factor': 0.5,
-                'quar_acq_factor': 0.5,
+                'quar_acq_factor': 0,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.0},
@@ -192,7 +192,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'name': '10% daily testing; moderate contact tracing, 75% of contacts self-isolate',
             'pars': {
                 'quar_trans_factor': 0.25,
-                'quar_acq_factor': 0.75,
+                'quar_acq_factor': 0,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
@@ -203,7 +203,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'name': '10% daily testing; fast contact tracing, 90% of contacts self-isolate',
             'pars': {
                 'quar_trans_factor': 0.1,
-                'quar_acq_factor': 0.9,
+                'quar_acq_factor': 0,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
@@ -214,7 +214,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'name': '10% daily testing; same-day contact tracing, 100% of contacts self-isolate',
             'pars': {
                 'quar_trans_factor': 0,
-                'quar_acq_factor': 1,
+                'quar_acq_factor': 0,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1},
