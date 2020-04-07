@@ -11,6 +11,14 @@ sim = cv.Sim({'beta':0.01, 'n':2000})
 sim.run()
 fig = sim.plot()
 
+# Default is to use age-specific progression. Here we modify the parameters to remove
+# age variation
+pars = cv.make_pars()
+pars['prognoses'] = cv.get_default_prognoses(by_age=False) # Replace the prognoses with the non age specific default values
+sim = cv.Sim()
+sim.run()
+fig = sim.plot()
+
 # Make and use a random population (including community transmission)
 pars = cv.make_pars()
 pars['population'] = cv.Population.random(pars, n_random_contacts=20)

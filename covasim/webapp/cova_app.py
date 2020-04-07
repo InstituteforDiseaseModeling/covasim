@@ -123,7 +123,9 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
     try:
         # Fix up things that JavaScript mangles
-        orig_pars = cv.make_pars(by_age=False)
+        orig_pars = cv.make_pars()
+        orig_pars['prognoses'] = cv.get_default_prognoses(by_age=False)  # Replace the prognoses with the non age specific default values
+
         defaults = get_defaults(merge=True)
         web_pars = {}
         web_pars['verbose'] = verbose # Control verbosity here

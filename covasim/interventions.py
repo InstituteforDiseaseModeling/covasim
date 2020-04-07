@@ -315,7 +315,7 @@ class test_prob(Intervention):
                 if person.diagnosed:
                     sim.results['new_diagnoses'][t] += 1
                     if self.trace_prob:
-                        for layer in sim['population'].contact_layers.values():
+                        for layer in sim.population.contact_layers.values():
                             if layer.traceable:
                                 for idx in layer.get_contacts(person, sim):
                                     if cv.bt(self.trace_prob):

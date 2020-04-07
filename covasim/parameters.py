@@ -27,20 +27,19 @@ def make_pars():
     pars['seed']       = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
-    pars['n']          = 20000  #: Default number of people to use IF a population instance is not specified
-    pars['contacts']   = 20  #: Default number of daily regular contacts IF a population instance is not specified
-    pars['population'] = None  #: Store a :class:`Population` instance. If provided, `n` and `contacts` will be ignored (as these parameters are used to generate the default population)
-    pars['n_infected'] = 10 # Number of seed cases
+    pars['n']          = 20000  # Default number of people to use IF a population instance is not specified
+    pars['contacts']   = 20  # Default number of daily regular contacts IF a population instance is not specified
+    pars['n_infected'] = 10  # Number of seed cases
 
     pars['timelimit']  = 3600 # Time limit for a simulation (seconds)
     pars['stop_func']  = None # A function to call to stop the sim partway through
     pars['window']     = 7 # Integration window for doubling time and R_eff
 
     # Disease transmission
-    pars['beta']         = 0.015
-    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
-    pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
+    pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
+    pars['asymp_factor'] = 0.8  # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']  = 0.0  # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
+    pars['cont_factor']  = 1.0  # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()

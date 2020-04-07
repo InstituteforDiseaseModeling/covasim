@@ -39,7 +39,8 @@ def test_microsim():
     pars = {
         'n': 10,
         'n_infected': 1,
-        'n_days': 10
+        'n_days': 10,
+        'contacts': 2,
         }
     sim.update_pars(pars)
     sim.run()
