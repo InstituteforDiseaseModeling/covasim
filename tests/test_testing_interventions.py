@@ -163,7 +163,6 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
     base_sim = cv.Sim(base_pars) # create sim object
     base_sim['n_days'] = 50
-    base_sim['quarantine_period'] = 14
     #base_sim['contacts'] = {'h': 4,   's': 10,  'w': 10,  'c': 0} # Turn off community contacts - not working
     #base_sim['beta'] = 0.02 # Increase beta
     n_people = base_sim['n']
@@ -171,16 +170,17 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
 
     # Define overall testing assumptions
-    testing_prop = 0.1 # Assumes we could test 1% of the population daily (way too optimistic!!)
+    testing_prop = 0.1 # Assumes we could test 10% of the population daily (way too optimistic!!)
     daily_tests = [testing_prop*n_people]*npts # Number of daily tests
 
     # Define the scenarios
     scenarios = {
         'lowtrace': {
-            'name': '10% daily testing; poor contact tracing, 50% of contacts self-isolate',
+            'name': '10% daily testing; poor contact tracing, 50% of contacts self-isolate for 7 days',
             'pars': {
                 'quar_trans_factor': 0.5,
                 'quar_acq_factor': 0.5,
+                'quarantine_period': 7,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.0},
@@ -188,10 +188,11 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'modtrace': {
-            'name': '10% daily testing; moderate contact tracing, 75% of contacts self-isolate',
+            'name': '10% daily testing; moderate contact tracing, 75% of contacts self-isolate for 10 days',
             'pars': {
                 'quar_trans_factor': 0.25,
                 'quar_acq_factor': 0.75,
+                'quarantine_period': 10,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
@@ -199,10 +200,11 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'hightrace': {
-            'name': '10% daily testing; fast contact tracing, 90% of contacts self-isolate',
+            'name': '10% daily testing; fast contact tracing, 90% of contacts self-isolate for 14 days',
             'pars': {
                 'quar_trans_factor': 0.1,
                 'quar_acq_factor': 0.9,
+                'quarantine_period': 14,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
@@ -210,10 +212,11 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'crazy': {
-            'name': '10% daily testing; same-day contact tracing, 100% of contacts self-isolate',
+            'name': '10% daily testing; same-day contact tracing, 100% of contacts self-isolate for 21 days',
             'pars': {
                 'quar_trans_factor': 0,
                 'quar_acq_factor': 1,
+                'quarantine_period': 21,
                 'interventions': [
                     cv.test_num(daily_tests=daily_tests),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1},
