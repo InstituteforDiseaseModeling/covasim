@@ -4,12 +4,11 @@ import json
 import numpy as np
 from pathlib import Path
 dirname = os.path.dirname(__file__)
-mapper_file_path = os.path.join(dirname,"sources/lookup.json")
 
 
 class NeherLabPop():
     URL="https://raw.githubusercontent.com/neherlab/covid19_scenarios/master/src/assets/data/country_age_distribution.json"
-    FILENAME="neherlab"
+    FILENAME="population"
 
     def __init__(self):
         # Make the file folder if it doesn't exist
@@ -64,7 +63,7 @@ class NeherLabPop():
     # file_path: path to the locally stored translated data
     #
     def file_path(self):
-        return os.path.join(dirname,"sources/population/{0}.json".format(self.FILENAME))
+        return os.path.join(dirname,"../../data/{0}.json".format(self.FILENAME))
 
     ##
     # Load the locally stored translated data into cache.

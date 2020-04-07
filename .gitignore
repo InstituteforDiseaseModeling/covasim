@@ -140,5 +140,4 @@ dmypy.json
 .pyre/
 
 # Datasets
-covasim/datasets/sources/population/
-covasim/datasets/sources/lookup.json
+data/
