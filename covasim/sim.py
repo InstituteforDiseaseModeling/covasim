@@ -371,6 +371,7 @@ class Sim(cvbase.BaseSim):
                         bed_constraint = True
 
                     # If they're quarantined, this affects their attack rate
+                    person.check_known_contact(t)
                     person.check_quarantined(t, quarantine_period)
 
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
