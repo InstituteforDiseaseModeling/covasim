@@ -186,7 +186,6 @@ class Person(sc.prettyobj):
         '''
         self.quarantined = True
         self.date_quarantined = t
-        self.date_released = t + quarantine_period
         return
 
 
@@ -259,8 +258,7 @@ class Person(sc.prettyobj):
         ''' Check for whether someone has been contacted by a positive'''
         if not self.known_contact and self.date_known_contact is not None and t >= self.date_known_contact:
             self.known_contact = True
-            self.quarantined = True
-            self.date_quarantined = t
+            self.quarantine(t)
         return
 
 
