@@ -50,11 +50,11 @@ jobs:
         working-directory: ./tests
         run: |
           pip install pytest
-          pytest test*.py unittests/test*.py --junitxml=test-results.xml --durations=0 # Run actual tests
+          pytest test*.py unittests/test*.py dataset/test*.py --junitxml=test-results.xml --durations=0 # Run actual tests
           # pytest test*.py --junitxml=test-results.xml --durations=0 # Run actual tests -- use this line instead if unit tests are broken
       - name: Import population data
-        working-directory: ./covasim/datasets/
-        run: python update_sources.py
+        working-directory: ./
+        run: python covasim/datasets/update_sources.py
       - name: Run examples
         working-directory: ./examples
         run: python *.py
