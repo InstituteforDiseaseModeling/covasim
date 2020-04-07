@@ -259,7 +259,6 @@ class test_num(Intervention):
                 test_probs[i] = 0.0
 
         test_inds = cv.choose_weighted(probs=test_probs, n=n_tests, normalize=True)
-        print(sim.results['new_diagnoses'][t])
         sim.results['new_diagnoses'][t] += new_diagnoses
 
         for test_ind in test_inds:
