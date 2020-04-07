@@ -369,15 +369,14 @@ class Sim(cvbase.BaseSim):
                     if n_severe > n_beds:
                         bed_constraint = True
 
-                    # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                    if not person.known_contact and person.date_known_contact is not None and t >= person.date_known_contact:
-                        person.known_contact = True
+                    # If they're quarantined, this affects their attack rate
+                    person.check_quarantined(t, 14)
 
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                     thisbeta = beta * \
                                (asymp_factor if not person.symptomatic else 1.) * \
                                (diag_factor if person.diagnosed else 1.) * \
-                               (quar_trans_factor if person.known_contact else 1.)
+                               (quar_trans_factor if person.quarantined else 1.)
 
                     # Determine who gets infected
                     community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
@@ -395,8 +394,13 @@ class Sim(cvbase.BaseSim):
 
                             # See whether we will infect this person
                             infect_this_person = True # By default, infect them...
-                            if not target_person.known_contact and target_person.date_known_contact is not None and t >= target_person.date_known_contact:
-                                target_person.known_contact = True # Make them a known contact
+                            target_person.check_known_contact(t)
+                            target_person.check_quarantined(t, 14)
+                            if target_person.quarantined:
+                                import traceback;
+                                traceback.print_exc();
+                                import pdb;
+                                pdb.set_trace()
                                 infect_this_person = not cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating
                             if infect_this_person:
                                 new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them

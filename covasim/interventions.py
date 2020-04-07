@@ -207,10 +207,8 @@ class change_beta(Intervention):
 class test_num(Intervention):
     """
     Test a fixed number of people per day.
-
     Example:
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
-
     Returns:
         Intervention
     """
@@ -281,9 +279,10 @@ class contact_tracing(Intervention):
 
     def apply(self, sim: cv.Sim):
         t = sim.t
-        for i, person in enumerate(sim.people.values()):
-            if not person.infectious:
-                continue
+
+        # Firstly, loop over diagnosed people to trace their contacts
+        diagnosed_ppl = filter(lambda p: p.diagnosed, sim.people.values())
+        for i, person in enumerate(diagnosed_ppl):
 
             # Trace dynamic contact, e.g. the ones that change on every step
             # A sample of community contacts is appended to person.dyn_cont_ppl on each step

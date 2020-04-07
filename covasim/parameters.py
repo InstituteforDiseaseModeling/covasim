@@ -39,7 +39,7 @@ def make_pars():
                                'exposed', 'infectious', 'symptomatic', 'severe', 'critical', # Gradations of exposure and disease
                                'tested', 'diagnosed',                                        # Testing
                                'recovered', 'dead',                                          # Possible resolutions
-                               'known_contact']                                              # Whether they know a confirmed case
+                               'known_contact', 'quarantined']                               # Whether they know a confirmed case, whether they're quarantined
 
     # Basic disease transmission
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
