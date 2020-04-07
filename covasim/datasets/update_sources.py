@@ -15,11 +15,8 @@ from covasim.datasets.data_loader import NeherLabPop
 
 def load_sources():
     print("Updating data sources")
-    countries = {}
     source = NeherLabPop()
     source.update_data()
-    for country in source.countries():
-        countries[country] = source.__class__.__name__
 
 if __name__ == '__main__':
     load_sources()
