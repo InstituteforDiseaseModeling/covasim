@@ -129,11 +129,12 @@ class sequence(Intervention):
     Args:
         days (list): the days on which to apply each intervention
         interventions (list): the interventions to apply on those days
+        WARNING: Will take first intervation after sum(days) days has ellapsed!
 
     Example:
         interv = cv.sequence(days=[10, 51], interventions=[
                     cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
-                    cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002, trace_prob=0.9),
+                    cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002),
                 ])
     """
 
@@ -310,18 +311,19 @@ class test_prob(Intervention):
     Test as many people as required based on test probability.
 
     Example:
-        interv = cv.test_prop(symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
+        interv = cv.test_prob(symptomatic_prob=0.9, asymptomatic_prob=0.0)
 
     Returns:
         Intervention
     """
-    def __init__(self, symptomatic_prob=0.9, asymptomatic_prob=0.01, trace_prob=1.0, test_sensitivity=1.0):
+    def __init__(self, symptomatic_prob=0.9, asymptomatic_prob=0.01, test_sensitivity=1.0):
         """
 
         Args:
             self:
             symptomatic_prob:
-            trace_prob:
+            asymptomatic_prob:
+            test_sensitivity:
 
         Returns:
 
@@ -329,9 +331,7 @@ class test_prob(Intervention):
         super().__init__()
         self.symptomatic_prob = symptomatic_prob
         self.asymptomatic_prob = asymptomatic_prob
-        self.trace_prob = trace_prob # Probability that identified contacts get tested
         self.test_sensitivity = test_sensitivity
-        self.scheduled_tests = set() # Track UIDs of people that are guaranteed to be tested at the next step
         return
 
 
