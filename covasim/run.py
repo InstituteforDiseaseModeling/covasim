@@ -472,9 +472,9 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     # Run
     new_sim.run(**run_args)
 
-    # Shrink the sim to save memory -- NB, could also use sim.shrink() here
+    # Shrink the sim to save memory
     if not keep_people:
-        new_sim.people = None
+        new_sim.shrink(in_place=True)
 
     return new_sim
 

@@ -298,7 +298,7 @@ class BaseSim(ParsObj):
         return output
 
 
-    def shrink(self, skip_attrs=None):
+    def shrink(self, skip_attrs=None, in_place=False):
         '''
         "Shrinks" the simulation by removing the people, and returns
         a copy of the "shrunken" simulation. Used to reduce the memory required
@@ -313,13 +313,17 @@ class BaseSim(ParsObj):
 
         # By default, skip people (~90%) and uids (~9%)
         if skip_attrs is None:
-            skip_attrs = ['people']
+            skip_attrs = ['popdict', 'people']
 
         # Create the new object, and copy original dict, skipping the skipped attributes
-        shrunken_sim = object.__new__(self.__class__)
-        shrunken_sim.__dict__ = {k:(v if k not in skip_attrs else None) for k,v in self.__dict__.items()}
-
-        return shrunken_sim
+        if in_place:
+            for attr in skip_attrs:
+                setattr(self, attr, None)
+            return
+        else:
+            shrunken_sim = object.__new__(self.__class__)
+            shrunken_sim.__dict__ = {k:(v if k not in skip_attrs else None) for k,v in self.__dict__.items()}
+            return shrunken_sim
 
 
     def save(self, filename=None, keep_population=False, skip_attrs=None, **kwargs):
