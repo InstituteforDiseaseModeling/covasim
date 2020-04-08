@@ -84,6 +84,7 @@ class Sim(cvbase.BaseSim):
         self.initialized   = False # Whether or not initialization is complete
         self.results_ready = False # Whether or not results are ready
         self.people        = {}    # Initialize these here so methods that check their length can see they're empty
+        self.contacts      = {}
         self.results       = {}    # For storing results
 
         # Now update everything
@@ -270,7 +271,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def next(self, verbose=0) -> None:
+    def next(self, verbose=0):
         '''
         Step simulation forward in time
 
@@ -282,8 +283,9 @@ class Sim(cvbase.BaseSim):
 
         '''
 
-        # If we have reached the end of the simulation, then do nothing
-        if self.t == self.npts:
+        # Set the time and if we have reached the end of the simulation, then do nothing
+        t = self.t
+        if t >= self.npts:
             return
 
         # Zero counts for this time step: stocks
@@ -314,7 +316,6 @@ class Sim(cvbase.BaseSim):
         n_people         = len(self.people)
         n_comm_contacts  = self['contacts']['c'] # Community contacts
         n_import         = cvu.pt(self['n_import']) # Imported cases
-        t = self.t
 
         # Print progress
         if verbose >= 1:
@@ -380,41 +381,27 @@ class Sim(cvbase.BaseSim):
                                (diag_factor if person.diagnosed else 1.) * \
                                (cont_factor if person.known_contact else 1.)
 
-
-                    for layer in self.population.contact_layers.values():
-                        contacts = layer.get_contacts(person, t)
-                        layer_beta = thisbeta * layer.beta
-                        transmission_inds = cvu.bf(layer_beta, contacts)
-
-                        for contact_ind in transmission_inds:
-                            target_person = self.population.get_person(contact_ind)  # Stored by integer
-
-                            # This person was diagnosed last time step: time to flag their contacts
-                            if person.date_diagnosed is not None and person.date_diagnosed == t-1 and layer.traceable:
-                                target_person.known_contact = True
+                    # Set community contacts
+                    if n_comm_contacts:
+                        community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
+                        person.contacts['c'] = community_contact_inds
 
                     # Determine who gets infected
-                    community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
-                    person.contacts['c'] = community_contact_inds
-                    transmission_inds = []  # Indices of people that get infected
-
                     for ckey in self.contact_keys:
-                        layer_beta = thisbeta * beta_layers[ckey]
-                        transmission_inds.extend(cvu.bf(layer_beta, person.contacts[ckey]))
+                        thesecontacts = person.contacts[ckey]
+                        if thesecontacts:
+                            this_beta_layer = thisbeta*beta_layers[ckey]
+                            transmission_inds = cvu.bf(this_beta_layer, thesecontacts)
+                            for contact_ind in transmission_inds: # Loop over people who get infected
+                                target_person = self.people[contact_ind]
+                                if target_person.susceptible: # Skip people who are not susceptible
+                                    new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                    sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+                                    if target_person.susceptible: # Skip people who are not susceptible
+                                        new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
-                    # Loop over people who get infected
-                    for contact_ind in transmission_inds:
-                        target_person = self.get_person(contact_ind) # Stored by integer
-                        if target_person.susceptible: # Skip people who are not susceptible
-                            new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                            sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
-                            # Skip people who are not susceptible
-                            if target_person.susceptible:
-                                new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
-
-        sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)
         # End of person loop; apply interventions
         for intervention in self['interventions']:
             intervention.apply(self)
@@ -438,8 +425,9 @@ class Sim(cvbase.BaseSim):
         self.results['new_severe'][t]      = new_severe
         self.results['new_critical'][t]    = new_critical
         self.results['new_deaths'][t]      = new_deaths
-
         self.t += 1
+
+        return
 
 
     def run(self, do_plot=False, verbose=None, **kwargs):
@@ -467,19 +455,13 @@ class Sim(cvbase.BaseSim):
         # Main simulation loop
         for t in range(self.npts):
             self.next(verbose=verbose)
-
-            # Check timing and stopping function
-            # Raise an error here because the simulation will be left in an incomplete and potentially
-            # unusable state (it would be necessary to continue stepping the simulation and to finalize)
-            # Also raising the exception means that we won't progress to finalizing the simulation
-            # (which wouldn't make sense if the simulation was terminated anyway)
-            # This error could be caught and then the simulation run could be continued simply by
-            # calling `sim.run()` again (it will resume where it left off)
             elapsed = sc.toc(T, output=True)
             if elapsed > self['timelimit']:
-                raise TimeoutError(f"Time limit ({self['timelimit']} s) exceeded; stopping...")
+                sc.printv(f"Time limit ({self['timelimit']} s) exceeded; stopping...", 1, verbose)
+                break
             elif self['stop_func'] and self['stop_func'](self):
-                raise cvu.CancelError("Stopping function terminated the simulation")
+                sc.printv("Stopping function terminated the simulation", 1, verbose)
+                break
 
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results
@@ -492,6 +474,7 @@ class Sim(cvbase.BaseSim):
 
 
     def finalize(self, verbose=None):
+        ''' Compute final results, likelihood, etc. '''
         for key in self.result_flows:
             self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['n_infected'] # Include initially infected people

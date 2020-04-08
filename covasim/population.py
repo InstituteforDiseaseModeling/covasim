@@ -68,7 +68,6 @@ def make_people(sim, verbose=None, die=True, reset=False):
 
     # Store UIDs and people
     sim.popdict = popdict
-    sim.uids = popdict['uid'] # Duplication, but used in an innermost loop so make as efficient as possible
     sim.people = people
     sim.contact_keys = list(sim['contacts'].keys())
     sim.contacts = popdict['contacts']
@@ -78,12 +77,11 @@ def make_people(sim, verbose=None, die=True, reset=False):
 
     return
 
-def make_randpop(sim, age_data=None):
+
+def make_randpop(sim, age_data=None, sex_ratio=0.5):
     ''' Make a random population, without contacts '''
 
     n_people = int(sim['n']) # Number of people
-
-
 
     # Load age data based on 2018 Seattle demographics
     if age_data is None:
@@ -110,7 +108,7 @@ def make_randpop(sim, age_data=None):
             ])
 
     # Handle sexes and ages
-    sexes = cvu.rbt(0.5, n_people)
+    sexes = cvu.rbt(sex_ratio, n_people)
     age_data_min  = age_data[:,0]
     age_data_max  = age_data[:,1] + 1 # Since actually e.g. 69.999
     age_data_range = age_data_max - age_data_min
@@ -121,8 +119,8 @@ def make_randpop(sim, age_data=None):
 
     # Store output; data duplicated as per-person and list-like formats for convenience
     popdict = {}
-    popdict['age']     = ages
-    popdict['sex']    = sexes
+    popdict['age']      = ages
+    popdict['sex']      = sexes
     popdict['contacts'] = make_random_contacts(sim)
 
     return popdict
