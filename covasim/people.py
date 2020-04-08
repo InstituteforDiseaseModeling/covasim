@@ -269,8 +269,10 @@ class Person(sc.prettyobj):
         if self.date_known_contact is not None and t >= self.date_known_contact:
             if quar_period is not None:
                 # Begin quarantine
+                was_quarantined = self.quarantined
                 self.quarantine(t, quar_period)
-                return 1
+                self.date_known_contact = None # Clear
+                return not was_quarantined
         return 0
 
 

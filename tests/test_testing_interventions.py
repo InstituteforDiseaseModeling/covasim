@@ -28,11 +28,13 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     }
 
     base_sim = cv.Sim(base_pars) # create sim object
+    base_sim['n_seed'] = 1
+    base_sim['beta']   = 0.012
     n_people = base_sim['n']
     npts = base_sim.npts
 
     # Define overall testing assumptions
-    testing = 0.0004
+    testing = 0.005
     daily_tests = [testing*n_people]*npts # Best-case scenario for asymptomatic testing
 
     # Define the scenarios
@@ -47,7 +49,7 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
             'name': f'Assuming {100*testing:.2f}% daily (untargeted); isolate positives 90%',
             'pars': {
                 'diag_factor': 0.1,
-                'interventions': cv.test_num(daily_tests=daily_tests)
+                'interventions': cv.test_num(daily_tests=daily_tests, sympt_test=1)
             }
         },
         'tracing': {
@@ -56,35 +58,32 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
                 'diag_factor': 0.1,
                 # Contact tracing: 100% at home with 0d dela, 80% of school with 3d delay, 50% of work with 3d delay, 10% community with 3d delay
                 'interventions': [
-                    cv.test_num(daily_tests=daily_tests),
+                    cv.test_num(daily_tests=daily_tests, sympt_test=1),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
                                        trace_time  = {'h': 0,  's': 2,  'w': 2,   'c': 3})]
             }
         },
         'floating': {
-            'name': 'Test 3% of symptomatics, {100*testing:.2f}% asymptomatics, contact tracing',
+            'name': f'Test 3% of symptomatics; {100*testing:.2f}% asymptomatics; isolate positives 90%; tracing',
             'pars': {
+                'diag_factor': 0.1,
                 'interventions': [
                     cv.test_prob(symptomatic_prob=0.03, asymptomatic_prob=testing),
                     cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
                                        trace_time  = {'h': 0,  's': 2,  'w': 2,   'c': 3})]
             }
         },
-        'historical': {
-            'name': f'Test a known number of positive cases',
+        'sequence': {
+            'name': f'Historical switching to probability',
             'pars': {
-                'interventions': cv.test_historical(n_tests=[1000]*npts, n_positive = [1]*npts)
+                'diag_factor': 0.1,
+                'interventions': cv.sequence(days=[50, base_sim['n_days']], # Switch at day 20
+                    interventions=[
+                        cv.test_historical(n_tests=[1000] * npts, n_positive=[100] * npts),
+                        cv.test_prob(symptomatic_prob=0.03, asymptomatic_prob=testing),
+                    ])
             }
         },
-        #'sequence': {
-        #    'name': f'Historical switching to probability',
-        #    'pars': {
-        #        'interventions': cv.sequence(days=[10, 51], interventions=[
-        #                cv.test_historical(n_tests=[100] * npts, n_positive=[1] * npts),
-        #                cv.test_prob(symptomatic_prob=0.03, asymptomatic_prob=testing),
-        #        ])
-        #    }
-        #},
 
     }
 

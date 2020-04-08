@@ -309,20 +309,24 @@ class contact_tracing(Intervention):
 class test_prob(Intervention):
     """
     Test as many people as required based on test probability.
+    Probabilities are OR together, so choose wisely.
 
     Example:
-        interv = cv.test_prob(symptomatic_prob=0.9, asymptomatic_prob=0.0)
+        interv = cv.test_prob(symptomatic_prob=0.1, asymptomatic_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
+        interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
 
     Returns:
         Intervention
     """
-    def __init__(self, symptomatic_prob=0.9, asymptomatic_prob=0.01, test_sensitivity=1.0):
+    def __init__(self, symptomatic_prob=0, asymptomatic_prob=0, quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0):
         """
 
         Args:
             self:
             symptomatic_prob:
             asymptomatic_prob:
+            quarantine_prob:
+            symp_quar_prob:
             test_sensitivity:
 
         Returns:
@@ -331,22 +335,29 @@ class test_prob(Intervention):
         super().__init__()
         self.symptomatic_prob = symptomatic_prob
         self.asymptomatic_prob = asymptomatic_prob
+        self.quarantine_prob = quarantine_prob
+        self.symp_quar_prob = symp_quar_prob
         self.test_sensitivity = test_sensitivity
         return
 
 
     def apply(self, sim: cv.Sim):
         ''' Perform testing '''
-
         t = sim.t
 
+        new_tests = 0
         new_diagnoses = 0
         for i, person in enumerate(sim.people.values()):
             new_diagnoses += person.check_diagnosed(t)
-            if (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
-                sim.results['new_tests'][t] += 1
+            if (person.symptomatic and cv.bt(self.symptomatic_prob)) or \
+                (not person.symptomatic and cv.bt(self.asymptomatic_prob)) or \
+                (person.quarantine and cv.bt(self.quarantine_prob)) or \
+                (person.symptomatic and person.quarantine and cv.bt(self.symp_quar_prob)) :
+
+                new_tests += 1
                 person.test(t, self.test_sensitivity)
 
+        sim.results['new_tests'][t] += new_tests
         sim.results['new_diagnoses'][t] += new_diagnoses
 
         return
