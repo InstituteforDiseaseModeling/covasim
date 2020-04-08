@@ -9,8 +9,8 @@ import pandas as pd
 __all__ = ['make_pars', 'set_contacts', 'get_prognoses', 'load_data']
 
 
-def set_contacts(pars, use_layers=False):
-    if use_layers:
+def set_contacts(pars):
+    if pars['use_layers']:
         pars['contacts']    = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
         pars['beta_layers'] = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
     else:
@@ -90,7 +90,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
-    set_contacts(pars, use_layers=pars['use_layers'])
+    set_contacts(pars)
     if set_prognoses:
         pars['prognoses'] = get_prognoses(pars['prog_by_age']) # Default to age-specific prognoses
 

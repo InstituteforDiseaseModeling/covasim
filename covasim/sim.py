@@ -96,10 +96,14 @@ class Sim(cvbase.BaseSim):
 
 
     def update_pars(self, pars=None, create=False):
-        if 'use_layers' in pars:
-            cvpars.set_contacts(pars)
-        super().update_pars(pars=None, create=False) # Call update_pars() for ParsObj
-
+        ''' Ensure that metaparameters get used properly before being updated '''
+        if pars is not None:
+            if 'use_layers' in pars: # Reset layers
+                cvpars.set_contacts(pars)
+            if 'prog_by_age' in pars:
+                pars['prognoses'] = cvpars.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
+            super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
+        return
 
 
     def set_metadata(self, filename):
