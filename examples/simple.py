@@ -1,7 +1,8 @@
 '''
-Rather simple script for running the Covid-19 agent-based model
+Simplest possible Covasim usage example.
 '''
 
-import covasim as cova
-sim = cova.Sim()
-sim.run(do_plot=True)
+import covasim as cv
+sim = cv.Sim()
+sim.run()
+sim.plot()
