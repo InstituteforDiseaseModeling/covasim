@@ -19,7 +19,7 @@ from covasim import Sim, parameters
 class TestProperties:
     class ParameterKeys:
         class SimulationKeys:
-            number_agents = 'n'
+            number_agents = 'pop_size'
             population_scaling_factor = 'pop_scale'
             initial_infected_count = 'pop_infected'
             start_day = 'start_day'
@@ -155,7 +155,7 @@ class CovaSimTest(unittest.TestCase):
 
         """
         if not self.simulation_parameters:
-            self.simulation_parameters = parameters.make_pars()
+            self.simulation_parameters = parameters.make_pars(set_prognoses=True, prog_by_age=True, use_layers=True)
         if params_dict:
             self.simulation_parameters.update(params_dict)
         pass
