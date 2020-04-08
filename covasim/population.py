@@ -111,6 +111,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
         if pop_type == 'random':
             popdict = make_randpop(sim)
         elif pop_type == 'synthpops':
+            sim.update_pars(use_layers=True) # If we use synthpops, we param['use_layers'] should always be True
             popdict = make_synthpop(sim)
         else:
             raise NotImplementedError
