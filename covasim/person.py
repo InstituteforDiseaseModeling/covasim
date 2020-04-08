@@ -11,39 +11,43 @@ from . import utils as cvu
 # Specify all externally visible functions this file defines
 __all__ = ['Person']
 
-
 class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, uid, age, sex):
-        self.uid         = str(uid) # This person's unique identifier
+    def __init__(self, pars, uid, age, sex, contacts):
+        self.uid         = uid # This person's unique identifier
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
+        self.contacts    = contacts # Contacts
         self.durpars     = pars['dur']  # Store duration parameters
         self.loadpars    = pars['viral_distro'] # Store viral load parameters
+        self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
 
-        # Define state
-        self.susceptible    = True
-        self.exposed        = False
-        self.infectious     = False
-        self.symptomatic    = False
-        self.severe         = False
-        self.critical       = False
-        self.diagnosed      = False
-        self.recovered      = False
-        self.dead           = False
-        self.known_contact  = False # Keep track of whether each person is a contact of a known positive
+        # Define states -- listed explicitly for performance reasons
+        self.susceptible   = True
+        self.exposed       = False
+        self.infectious    = False
+        self.symptomatic   = False
+        self.severe        = False
+        self.critical      = False
+        self.tested        = False
+        self.diagnosed     = False
+        self.recovered     = False
+        self.dead          = False
+        self.known_contact = False
 
-        # Keep track of dates
-        self.date_exposed      = None
-        self.date_infectious   = None
-        self.date_symptomatic  = None
-        self.date_severe       = None
-        self.date_critical     = None
-        self.date_diagnosed    = None
-        self.date_recovered    = None
-        self.date_died         = None
+        # Define dates
+        self.date_exposed       = None
+        self.date_infectious    = None
+        self.date_symptomatic   = None
+        self.date_severe        = None
+        self.date_critical      = None
+        self.date_tested        = None
+        self.date_diagnosed     = None
+        self.date_recovered     = None
+        self.date_dead          = None
+        self.date_known_contact = None
 
         # Keep track of durations
         self.dur_exp2inf  = None # Duration from exposure to infectiousness
@@ -52,22 +56,22 @@ class Person(sc.prettyobj):
         self.dur_sev2crit = None # Duration from symptoms to severe symptoms
         self.dur_disease  = None # Total duration of disease, from date of exposure to date of recovery or death
 
-        self.viral_load = {}
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
 
         # Set prognoses
         prognoses = pars['prognoses']
         idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
-        self.symp_prob =  pars['rel_symp_prob']*prognoses['symp_probs'][idx]
-        self.severe_prob = pars['rel_severe_prob']*prognoses['severe_probs'][idx]
-        self.crit_prob   = pars['rel_crit_prob']*prognoses['crit_probs'][idx]
-        self.death_prob  = pars['rel_death_prob']*prognoses['death_probs'][idx]
+        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
+        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
+        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
+        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
         self.OR_no_treat = pars['OR_no_treat']
 
         return
 
 
+    # Methods to make events occur (infection and diagnosis)
     def infect(self, t, bed_constraint=None, source=None):
         """
         Infect this person and determine their eventual outcomes.
@@ -75,12 +79,10 @@ class Person(sc.prettyobj):
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
             * Critical cases either recover or die
-
         Args:
             t: (int) timestep
             bed_constraint: (bool) whether or not there is a bed available for this person
             source: (Person instance), if None, then it was a seed infection
-
         Returns:
             1 (for incrementing counters)
         """
@@ -136,15 +138,15 @@ class Person(sc.prettyobj):
 
                     if death_bool:
                         dur_crit2die = cvu.sample(**self.durpars['crit2die'])
-                        self.date_died = self.date_critical + dur_crit2die # Date of death
+                        self.date_dead = self.date_critical + dur_crit2die # Date of death
                         self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2die   # Store how long this person had COVID-19
                     else:
                         dur_crit2rec = cvu.sample(**self.durpars['crit2rec'])
                         self.date_recovered = self.date_critical + dur_crit2rec # Date they recover
                         self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2rec  # Store how long this person had COVID-19
-
+                        
         self.viral_load = cvu.get_viral_load(self, **self.loadpars)
-        
+
         if source:
             self.infected_by = source.uid
             source.infected.append(self.uid)
@@ -152,6 +154,59 @@ class Person(sc.prettyobj):
         return 1 # For incrementing counters
 
 
+    def trace_dynamic_contacts(self, trace_probs, trace_time, ckey='c'):
+        '''
+        A method to trace a person's dynamic contacts, e.g. community
+        '''
+        if ckey in self.contacts:
+            this_trace_prob = trace_probs[ckey]
+            new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
+            self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
+        return
+
+
+    def trace_static_contacts(self, trace_probs, trace_time):
+        '''
+        A method to trace a person's static contacts, e.g. home, school, work
+        '''
+        contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
+        for ckey in self.contacts.keys():
+            if ckey != 'c': # Don't trace community contacts - it's too hard, because they change every timestep
+                this_trace_prob = trace_probs[ckey]
+                new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
+                contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
+
+        return contactable_ppl
+
+
+    def test(self, t, test_sensitivity, loss_prob=0, test_delay=0):
+        '''
+        Method to test a person.
+        Args:
+            t (int): current timestep
+            test_sensitivity (float): probability of a true positive
+            loss_prob (float): probability of loss to follow-up
+            test_delay (int): number of days before test results are ready
+        Returns:
+            Whether or not this person tested positive
+        '''
+        self.tested = True
+
+        if self.date_tested is None: # First time tested
+            self.date_tested = [t]
+        else:
+            self.date_tested.append(t) # They're been tested before; append new test date. TODO: adjust testing probs based on whether a person's a repeat tester?
+
+        if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
+            needs_diagnosis = not self.date_diagnosed or self.date_diagnosed and self.date_diagnosed > t+test_delay
+            if needs_diagnosis and not cvu.bt(loss_prob): # They're not lost to follow-up
+                self.date_diagnosed = t + test_delay
+            return 1
+        else:
+            return 0
+
+
+    # Methods to check a person's status
     def check_symptomatic(self, t):
         ''' Check for new progressions to symptomatic '''
         if not self.symptomatic and self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
@@ -181,7 +236,6 @@ class Person(sc.prettyobj):
 
     def check_recovery(self, t):
         ''' Check if an infected person has recovered '''
-
         if not self.recovered and self.date_recovered and t >= self.date_recovered: # It's the day they recover
             self.exposed     = False
             self.infectious  = False
@@ -196,7 +250,7 @@ class Person(sc.prettyobj):
 
     def check_death(self, t):
         ''' Check whether or not this person died on this timestep  '''
-        if not self.dead and self.date_died and t >= self.date_died:
+        if not self.dead and self.date_dead and t >= self.date_dead:
             self.exposed     = False
             self.infectious  = False
             self.symptomatic = False
@@ -208,13 +262,10 @@ class Person(sc.prettyobj):
         else:
             return 0
 
-
-    def test(self, t, test_sensitivity):
-        if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
+    def check_diagnosed(self, t):
+        ''' Check for new diagnoses '''
+        if not self.diagnosed and self.date_diagnosed and t >= self.date_diagnosed: # Person is changing to this state
             self.diagnosed = True
-            self.date_diagnosed = t
             return 1
         else:
             return 0
-
-

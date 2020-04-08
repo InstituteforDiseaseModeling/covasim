@@ -85,12 +85,13 @@ running, calculating results, plotting, etc.).
 The structure of the `covasim` folder is as follows:
 
 * `base.py`: The `ParsObj` class, plus basic methods of the `BaseSim` class, and associated functions.
-* `healthsystem.py`: The `HealthSystem` class, for determining hospital capacity and treatment rates.
+* `defaults.py`: The default colors, plots, etc. used by Covasim.
 * `interventions.py`: The `Intervention` class, for adding interventions and dynamically modifying parameters.
 * `parameters.py`: Functions for creating the parameters dictionary and loading the input data.
-* `people.py`: The `Person` class, and functions to create a population of people.
+* `person.py`: The `Person` class.
+* `population.py`: The `People` class, and functions for creating a population of people.
 * `requirements.py`: A simple module to check that imports succeeded, and turn off features if they didn't.
-* `run.py`: Functions for running simulations (e.g. parallel runs and scenarios).
+* `run.py`: Functions for running simulations (e.g. parallel runs and the `Scenarios` class).
 * `sim.py`: The `Sim` class, which performs most of the heavy lifting: initializing the model, running, and plotting.
 * `utils.py`: Functions for choosing random numbers, many based on Numba, plus other helper functions.
 * `version.py`: Version, date, and license information.
@@ -106,8 +107,7 @@ slight variations to the model (`model.py`).
 ### webapp
 
 For running the interactive web application: please see the `README.md` in that
-folder for more information, including information on running locally and Docker
-deployment.
+folder for more information.
 
 
 ## Disclaimer
