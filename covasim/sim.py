@@ -514,7 +514,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def compute_doubling(self, window=7, max_doubling_time=100):
+    def compute_doubling(self, window=7, max_doubling_time=50):
         '''
         Calculate doubling time using exponential approximation -- a more detailed
         approach is in utils.py. Compares infections at time t to infections at time
