@@ -215,12 +215,13 @@ class Sim(cvbase.BaseSim):
         dcols = default_colors # Shorten
 
         # Stock variables
-        self.results['n_susceptible'] = init_res('Number susceptible',       color=dcols.susceptible)
-        self.results['n_exposed']     = init_res('Number exposed',           color=dcols.infections)
-        self.results['n_infectious']  = init_res('Number infectious',        color=dcols.infectious)
-        self.results['n_symptomatic'] = init_res('Number symptomatic',       color=dcols.symptomatic)
-        self.results['n_severe']      = init_res('Number of severe cases',   color=dcols.severe)
-        self.results['n_critical']    = init_res('Number of critical cases', color=dcols.critical)
+        self.results['n_susceptible'] = init_res('Number susceptible',        color=dcols.susceptible)
+        self.results['n_exposed']     = init_res('Number exposed',            color=dcols.infections)
+        self.results['n_infectious']  = init_res('Number infectious',         color=dcols.infectious)
+        self.results['n_symptomatic'] = init_res('Number symptomatic',        color=dcols.symptomatic)
+        self.results['n_severe']      = init_res('Number of severe cases',    color=dcols.severe)
+        self.results['n_critical']    = init_res('Number of critical cases',  color=dcols.critical)
+        self.results['n_diagnosed']   = init_res('Number of confirmed cases', color=dcols.diagnoses)
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
@@ -330,12 +331,12 @@ class Sim(cvbase.BaseSim):
         n_susceptible   = len(self.people)
 
         # Randomly infect some people (imported infections)
-        print('REFACTOR')
-        if n_import>0:
-            s_uids  = [person.uid for person in self.people.values() if person.susceptible]
-            if len(s_uids)>n_import: # Make sure there are actually susceptibles to infect
-                for i in range(int(n_import)):
-                    new_infections += self.people[s_uids[i]].infect(t=t)
+        # print('REFACTOR')
+        # if n_import>0:
+        #     s_uids  = [person.uid for person in self.people.values() if person.susceptible]
+        #     if len(s_uids)>n_import: # Make sure there are actually susceptibles to infect
+        #         for i in range(int(n_import)):
+        #             new_infections += self.people[s_uids[i]].infect(t=t)
 
         for person in not_susceptible:
             n_susceptible -= 1
@@ -383,17 +384,17 @@ class Sim(cvbase.BaseSim):
                                (cont_factor if person.known_contact else 1.)
 
                     # Set community contacts
-                    these_contacts = person.contacts
+                    person_contacts = person.contacts
                     if n_comm_contacts:
                         community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-                        these_contacts['c'] = community_contact_inds
+                        person_contacts['c'] = community_contact_inds
 
                     # Determine who gets infected
                     for ckey in self.contact_keys:
-                        thesecontacts = these_contacts[ckey]
-                        if thesecontacts:
+                        contact_ids = person_contacts[ckey]
+                        if len(contact_ids):
                             this_beta_layer = thisbeta*beta_layers[ckey]
-                            transmission_inds = cvu.bf(this_beta_layer, thesecontacts)
+                            transmission_inds = cvu.bf(this_beta_layer, contact_ids)
                             for contact_ind in transmission_inds: # Loop over people who get infected
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
@@ -456,12 +457,16 @@ class Sim(cvbase.BaseSim):
 
         # Main simulation loop
         for t in range(self.npts):
+
+            # This does all the work!
             self.next(verbose=verbose)
+
+            # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
             if elapsed > self['timelimit']:
-                sc.printv(f"Time limit ({self['timelimit']} s) exceeded; stopping...", 1, verbose)
+                sc.printv(f"Time limit ({self['timelimit']} s) exceeded", 1, verbose)
                 break
-            elif self['stop_func'] and self['stop_func'](self):
+            elif self['stopping_func'] and self['stopping_func'](self):
                 sc.printv("Stopping function terminated the simulation", 1, verbose)
                 break
 
@@ -479,12 +484,12 @@ class Sim(cvbase.BaseSim):
         ''' Compute final results, likelihood, etc. '''
         for key in self.result_flows:
             self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
-        self.results['cum_infections'].values += self['n_infected'] # Include initially infected people
+        self.results['cum_infections'].values += self['pop_infected'] # Include initially infected people
 
         # Scale the results
         for reskey in self.reskeys:
             if self.results[reskey].scale:
-                self.results[reskey].values *= self['scale']
+                self.results[reskey].values *= self['pop_scale']
 
         # Perform calculations on results
         self.compute_doubling()
