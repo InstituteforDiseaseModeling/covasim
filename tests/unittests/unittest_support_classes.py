@@ -233,7 +233,7 @@ class CovaSimTest(unittest.TestCase):
                        datafile=None)
         if not self.simulation_prognoses:
             self.simulation_prognoses = parameters.get_prognoses(
-                self.simulation_parameters[ProbKeys.progression_by_age]
+                self.simulation_parameters[TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.progression_by_age]
             )
             pass
         self.sim['prognoses'] = self.simulation_prognoses
@@ -417,7 +417,7 @@ class TestSupportTests(CovaSimTest):
         are created and json parsable
         """
         self.assertIsNone(self.sim)
-        self.run_sim()
+        self.run_sim(write_results_json=True)
         json_file_found = os.path.isfile(self.expected_result_filename)
         self.assertTrue(json_file_found, msg=f"Expected {self.expected_result_filename} to be found.")
     pass
