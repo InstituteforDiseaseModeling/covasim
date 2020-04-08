@@ -465,7 +465,8 @@ class Sim(cvbase.BaseSim):
         self.compute_r_eff()
         self.likelihood()
 
-        # Convert results to an objdict to allow e.g. sim.results.diagnoses
+        # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
+        self.people = sc.odict({str(p):person for p,person in enumerate(self.people)}) # Convert to an odict for a better repr
         self.results = sc.objdict(self.results)
         self.results_ready = True
 
