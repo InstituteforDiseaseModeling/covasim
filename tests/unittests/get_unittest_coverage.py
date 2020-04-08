@@ -7,18 +7,18 @@ cov.start()
 
 # First, load and run the unittest tests
 from unittest_support_classes import TestSupportTests
-from test_miscellaneous_features import MiscellaneousFeatureTests
+# from test_miscellaneous_features import MiscellaneousFeatureTests  # TODO: find this where I stashed it
 from test_simulation_parameter import SimulationParameterTests
 from test_disease_transmission import DiseaseTransmissionTests
 from test_disease_progression import DiseaseProgressionTests
 from test_disease_mortality import DiseaseMortalityTests
-from test_diagnostic_testing import DiagnosticTestingTests
+# from test_diagnostic_testing import DiagnosticTestingTests
 
 test_classes_to_run = [TestSupportTests,
                        SimulationParameterTests,
                        DiseaseTransmissionTests,
                        DiseaseProgressionTests,
-                       MiscellaneousFeatureTests]
+                       DiseaseMortalityTests]
 
 suites_list = []
 for tc in test_classes_to_run:
