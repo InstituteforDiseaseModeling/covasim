@@ -188,7 +188,7 @@ class Sim(cvbase.BaseSim):
         if self['pop_type'] not in popdata_choices:
             choice = self['pop_type']
             choicestr = ', '.join(popdata_choices)
-            errormsg = f'Population type "{pop_type}" not available; choices are: {choicestr}'
+            errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
 
         # Handle interventions
@@ -311,8 +311,11 @@ class Sim(cvbase.BaseSim):
         n_beds           = self['n_beds']
         bed_constraint   = False
         pop_size         = len(self.people)
-        n_comm_contacts  = self['contacts']['c'] # Community contacts
-        n_import         = cvu.pt(self['n_import']) # Imported cases
+        n_import         = cvu.pt(self['n_imports']) # Imported cases
+        if 'c' in self['contacts']:
+            n_comm_contacts = self['contacts']['c'] # Community contacts
+        else:
+            n_comm_contacts = 0
 
         # Print progress
         if verbose >= 1:

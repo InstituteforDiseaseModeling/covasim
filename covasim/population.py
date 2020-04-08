@@ -58,8 +58,8 @@ def make_people(sim, verbose=None, die=True, reset=False):
             raise NotImplementedError
 
     # Ensure prognoses are set
-    if sim.pars['prognoses'] is None:
-        sim.pars['prognoses'] = cvpars.get_prognoses(pars['prog_by_age'])
+    if sim['prognoses'] is None:
+        sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
     people = [] # List for storing the people
@@ -170,8 +170,8 @@ def make_synthpop(sim):
 def make_random_contacts(sim):
     ''' Make random static contacts '''
     pop_size = int(sim['pop_size']) # Number of people
-    contacts = []
-    contacts = sim['contacts']
+    contacts_list = []
+    contacts = sc.dcp(sim['contacts'])
     contacts.pop('c', None) # Remove community
     contact_keys = contacts.keys()
     for p in range(pop_size):
@@ -179,8 +179,8 @@ def make_random_contacts(sim):
         for key in contact_keys:
             n_contacts = cvu.pt(contacts[key]) # Draw the number of Poisson contacts for this person
             contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
-        contacts.append(contact_dict)
-    return contacts, contact_keys
+        contacts_list.append(contact_dict)
+    return contacts_list, contact_keys
 
 
 def make_microstructured_contacts(sim):
