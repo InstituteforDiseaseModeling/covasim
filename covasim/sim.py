@@ -9,53 +9,13 @@ import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
 from . import utils as cvu
+from . import defaults as cvd
 from . import base as cvbase
 from . import parameters as cvpars
 from . import population as cvpop
 
-# Specify all externally visible functions this file defines
-__all__ = ['default_colors', 'default_sim_plots', 'Sim']
-
-# Specify plot colors
-default_colors = sc.objdict(
-    susceptible = '#5e7544',
-    infectious  = '#c78f65',
-    infections  = '#c75649',
-    tests       = '#aaa8ff',
-    diagnoses   = '#8886cc',
-    recoveries  = '#799956',
-    symptomatic = '#c1ad71',
-    severe      = '#c1981d',
-    critical    = '#b86113',
-    deaths      = '#000000',
-    )
-
-# Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines
-default_sim_plots = sc.odict({
-        'Total counts': [
-            'cum_infections',
-            'cum_diagnoses',
-            'cum_recoveries',
-            # 'cum_tests',
-            # 'n_susceptible',
-            # 'n_infectious',
-        ],
-        'Daily counts': [
-            'new_infections',
-            'new_diagnoses',
-            'new_recoveries',
-            'new_deaths',
-            # 'tests',
-        ],
-        'Health outcomes': [
-            'cum_severe',
-            'cum_critical',
-            'cum_deaths',
-            # 'n_severe',
-            # 'n_critical',
-        ]
-})
-
+# Specify all externally visible things this file defines
+__all__ = ['Sim']
 
 class Sim(cvbase.BaseSim):
     '''
@@ -223,7 +183,7 @@ class Sim(cvbase.BaseSim):
             output = cvbase.Result(*args, **kwargs, npts=self.npts)
             return output
 
-        dcols = default_colors # Shorten
+        dcols = cvd.colors # Shorten
 
         # Stock variables
         self.results['n_susceptible'] = init_res('Number susceptible',        color=dcols.susceptible)
@@ -236,8 +196,7 @@ class Sim(cvbase.BaseSim):
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
-        self.result_flows = ['infections', 'tests', 'diagnoses', 'recoveries', 'symptomatic', 'severe', 'critical', 'deaths']
-        for key in self.result_flows:
+        for key in cvd.result_flows:
             suffix = ' cases' if key in ['symptomatic', 'severe', 'critical'] else '' # Since need to say "severe cases" not just "severe"
             self.results[f'new_{key}'] = init_res(f'Number of new {key}{suffix}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
             self.results[f'cum_{key}'] = init_res(f'Cumulative {key}{suffix}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
@@ -323,7 +282,7 @@ class Sim(cvbase.BaseSim):
         n_beds           = self['n_beds']
         bed_constraint   = False
         pop_size         = len(self.people)
-        n_import         = cvu.pt(self['n_imports']) # Imported cases
+        n_imports        = cvu.pt(self['n_imports']) # Imported cases
         if 'c' in self['contacts']:
             n_comm_contacts = self['contacts']['c'] # Community contacts
         else:
@@ -342,12 +301,11 @@ class Sim(cvbase.BaseSim):
         n_susceptible   = len(self.people)
 
         # Randomly infect some people (imported infections)
-        # print('REFACTOR')
-        # if n_import>0:
-        #     s_uids  = [person.uid for person in self.people.values() if person.susceptible]
-        #     if len(s_uids)>n_import: # Make sure there are actually susceptibles to infect
-        #         for i in range(int(n_import)):
-        #             new_infections += self.people[s_uids[i]].infect(t=t)
+        if n_imports>0:
+            imporation_inds = cvu.choose(max_n=pop_size, n=n_imports)
+            for ind in imporation_inds:
+                person = self.people[ind]
+                new_infections += person.infect(t=t)
 
         for person in not_susceptible:
             n_susceptible -= 1
@@ -663,7 +621,7 @@ class Sim(cvbase.BaseSim):
         sc.printv('Plotting...', 1, verbose)
 
         if to_plot is None:
-            to_plot = default_sim_plots
+            to_plot = cvd.sim_plots
         to_plot = sc.odict(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults

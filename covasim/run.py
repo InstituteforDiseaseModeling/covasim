@@ -9,21 +9,14 @@ import pandas as pd
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
+from . import defaults as cvd
 from . import base as cvbase
 from . import sim as cvsim
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['default_scen_plots', 'default_scenario', 'make_metapars', 'Scenarios', 'single_run', 'multi_run']
+__all__ = ['make_metapars', 'Scenarios', 'single_run', 'multi_run']
 
-
-default_scen_plots = [
-            'cum_infections',
-            'n_infectious',
-            'n_severe',
-]
-
-default_scenario = {'baseline':{'name':'Baseline', 'pars':{}}}
 
 
 def make_metapars():
@@ -69,7 +62,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Handle scenarios -- by default, create a baseline scenario
         if scenarios is None:
-            scenarios = sc.dcp(default_scenario)
+            scenarios = sc.dcp(cvd.default_scenario)
         self.scenarios = scenarios
 
         # Handle metapars
@@ -224,7 +217,7 @@ class Scenarios(cvbase.ParsObj):
         sc.printv('Plotting...', 1, verbose)
 
         if to_plot is None:
-            to_plot = default_scen_plots
+            to_plot = cvd.scen_plots
         to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults
