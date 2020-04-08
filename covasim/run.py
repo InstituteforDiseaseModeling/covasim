@@ -217,7 +217,7 @@ class Scenarios(cvbase.ParsObj):
         sc.printv('Plotting...', 1, verbose)
 
         if to_plot is None:
-            to_plot = cvd.scen_plots
+            to_plot = cvd.default_scen_plots
         to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults

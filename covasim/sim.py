@@ -183,7 +183,7 @@ class Sim(cvbase.BaseSim):
             output = cvbase.Result(*args, **kwargs, npts=self.npts)
             return output
 
-        dcols = cvd.colors # Shorten
+        dcols = cvd.default_colors # Shorten default colors
 
         # Stock variables
         self.results['n_susceptible'] = init_res('Number susceptible',        color=dcols.susceptible)
@@ -621,7 +621,7 @@ class Sim(cvbase.BaseSim):
         sc.printv('Plotting...', 1, verbose)
 
         if to_plot is None:
-            to_plot = cvd.sim_plots
+            to_plot = cvd.default_sim_plots
         to_plot = sc.odict(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults

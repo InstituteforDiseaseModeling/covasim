@@ -90,7 +90,7 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5):
 
     # Load age data based on 2018 Seattle demographics
     if age_data is None:
-        age_data = cvd.age_data
+        age_data = cvd.default_age_data
 
     # Handle sexes and ages
     sexes = cvu.rbt(sex_ratio, pop_size)
