@@ -30,31 +30,31 @@ def make_people(sim, verbose=None, die=True, reset=False):
         None.
     '''
 
-    # Set inputs
-    n_people     = int(sim['n']) # Shorten
-    usepopdata   = sim['usepopdata'] # Shorten
-    use_rand_pop = (usepopdata == 'random') # Whether or not to use a random population (as opposed to synthpops)
-
-    # Set defaults
-    if verbose is None: verbose = sim['verbose']
+    # Set inputs and defaults
+    n_people = int(sim['n']) # Shorten
+    pop_type = sim['pop_type'] # Shorten
+    if verbose is None:
+        verbose = sim['verbose']
 
     # Check which type of population to rpoduce
-    if not use_rand_pop and not cvreqs.available['synthpops']:
-        errormsg = f'You have requested "{usepopdata}" population, but synthpops is not available; please use "random"'
+    if pop_type == 'synthpops' and not cvreqs.available['synthpops']:
+        errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use "random" or "microstructure"'
         if die:
             raise ValueError(errormsg)
         else:
             print(errormsg)
-            usepopdata = 'random'
+            pop_type = 'random'
 
     # Actually create the population
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
     else:
-        if use_rand_pop:
+        if pop_type == 'random':
             popdict = make_randpop(sim)
-        else:
+        elif pop_type == 'synthpops':
             popdict = make_synthpop()
+        else:
+            raise NotImplementedError
 
     # Actually create the people
     people = [] # List for storing the people
