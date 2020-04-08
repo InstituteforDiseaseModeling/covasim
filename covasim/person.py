@@ -152,14 +152,16 @@ class Person(sc.prettyobj):
 
         return 1 # For incrementing counters
 
-    def trace_dynamic_contacts(self, trace_probs, trace_time):
+
+    def trace_dynamic_contacts(self, trace_probs, trace_time, ckey='c'):
         '''
         A method to trace a person's dynamic contacts, e.g. community
         '''
-        ckey = 'c' # Only community
-        this_trace_prob = trace_probs[ckey]
-        new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
-        self.dyn_cont_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
+        if ckey in self.contacts:
+            this_trace_prob = trace_probs[ckey]
+            new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
+            self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
+        return
 
 
     def trace_static_contacts(self, trace_probs, trace_time):

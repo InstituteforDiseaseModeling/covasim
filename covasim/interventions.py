@@ -254,7 +254,7 @@ class test_num(Intervention):
         test_probs = np.ones(sim.n)
         new_diagnoses = 0
 
-        for i, person in enumerate(sim.people.values()):
+        for i,person in enumerate(sim.people):
 
             new_diagnoses += person.check_diagnosed(t)
 
@@ -271,7 +271,7 @@ class test_num(Intervention):
         sim.results['new_diagnoses'][t] += new_diagnoses
 
         for test_ind in test_inds:
-            person = sim.get_person(test_ind)
+            person = sim.people[test_ind]
             person.test(t, self.sensitivity, test_delay=self.test_delay)
 
         return
@@ -281,7 +281,7 @@ class contact_tracing(Intervention):
     '''
     Contact tracing of positives
     '''
-    def __init__(self, trace_probs, trace_time, start_day):
+    def __init__(self, trace_probs, trace_time, start_day=0):
         super().__init__()
         self.trace_probs = trace_probs
         self.trace_time = trace_time
@@ -294,7 +294,7 @@ class contact_tracing(Intervention):
         if t < self.start_day:
             return
 
-        for i, person in enumerate(sim.people.values()):
+        for person in sim.people:
             if not person.infectious:
                 continue
 
@@ -310,7 +310,7 @@ class contact_tracing(Intervention):
 
                 # Loop over people who get contacted
                 for contact_ind, contact_time in contactable_ppl.items():
-                    target_person = sim.get_person(contact_ind)
+                    target_person = sim.people[contact_ind]
                     if target_person.date_known_contact is None:
                         target_person.date_known_contact = t + contact_time
                     else:
@@ -364,7 +364,7 @@ class test_prob(Intervention):
             return
 
         new_diagnoses = 0
-        for i, person in enumerate(sim.people.values()):
+        for person in sim.people:
             new_diagnoses += person.check_diagnosed(t)
 
             if (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
@@ -417,7 +417,7 @@ class test_historical(Intervention):
 
             # Compute weights for people who would test positive or negative
             positive_tests = np.zeros((sim.n,))
-            for i, person in enumerate(sim.people.values()):
+            for i,person in enumerate(sim.people):
                 if person.infectious:
                     positive_tests[i] = 1
             negative_tests = 1-positive_tests
