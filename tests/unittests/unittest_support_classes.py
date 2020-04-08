@@ -61,10 +61,18 @@ class TestProperties:
                 pass
 
             class ProbabilityKeys:
-                inf_to_symptomatic_probability = 'symp_probs'
-                sym_to_severe_probability = 'severe_probs'
-                sev_to_critical_probability = 'crit_probs'
-                crt_to_death_probability = 'death_probs'
+                progression_by_age = 'prog_by_age'
+                class RelativeProbKeys:
+                    inf_to_symptomatic_probability = 'rel_symp_prob'
+                    sym_to_severe_probability = 'rel_severe_prob'
+                    sev_to_critical_probability = 'rel_crit_prob'
+                    crt_to_death_probability = 'rel_death_prob'
+                    pass
+                class PrognosesListKeys:
+                    symptomatic_probabilities = 'symp_probs'
+                    severe_probabilities = 'severe_probs'
+                    critical_probabilities = 'crit_probs'
+                    death_probs = 'death_probs'
             pass
 
         class DiagnosticTestingKeys:
@@ -129,6 +137,7 @@ class CovaSimTest(unittest.TestCase):
         self.is_debugging = False
 
         self.simulation_parameters = None
+        self.simulation_prognoses = None
         self.sim = None
         self.simulation_result = None
         self.expected_result_filename = f"DEBUG_{self.id()}.json"
@@ -166,22 +175,36 @@ class CovaSimTest(unittest.TestCase):
         NOTE: You can only call this once per test or you will overwrite your stuff.
         """
         ProbKeys = TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys
+        RelativeProbabilityKeys = ProbKeys.RelativeProbKeys
         supported_probabilities = [
-            ProbKeys.inf_to_symptomatic_probability,
-            ProbKeys.sym_to_severe_probability,
-            ProbKeys.sev_to_critical_probability,
-            ProbKeys.crt_to_death_probability
+            RelativeProbabilityKeys.inf_to_symptomatic_probability,
+            RelativeProbabilityKeys.sym_to_severe_probability,
+            RelativeProbabilityKeys.sev_to_critical_probability,
+            RelativeProbabilityKeys.crt_to_death_probability
         ]
-        for k in params_dict:
-            if k not in supported_probabilities:
-                raise KeyError(f"Key {k} not found in {supported_probabilities}.")
         if not self.simulation_parameters:
             self.set_simulation_parameters()
             pass
+
+        if not self.simulation_prognoses:
+            self.simulation_prognoses = parameters.get_prognoses(self.simulation_parameters[ProbKeys.progression_by_age])
+
+        PrognosisKeys = ProbKeys.PrognosesListKeys
         for k in params_dict:
+            prognosis_in_question = None
             expected_prob = params_dict[k]
-            old_probs = self.simulation_parameters['prognoses'][k]
-            self.simulation_parameters['prognoses'][k] = np.array([expected_prob] * len(old_probs))
+            if k == RelativeProbabilityKeys.inf_to_symptomatic_probability:
+                prognosis_in_question = PrognosisKeys.symptomatic_probabilities
+            elif k == RelativeProbabilityKeys.sym_to_severe_probability:
+                prognosis_in_question = PrognosisKeys.severe_probabilities
+            elif k == RelativeProbabilityKeys.sev_to_critical_probability:
+                prognosis_in_question = PrognosisKeys.critical_probabilities
+            elif k == RelativeProbabilityKeys.crt_to_death_probability:
+                prognosis_in_question = PrognosisKeys.death_probs
+            else:
+                raise KeyError(f"Key {k} not found in {supported_probabilities}.")
+            old_probs = self.simulation_prognoses[prognosis_in_question]
+            self.simulation_prognoses[prognosis_in_question] = np.array([expected_prob] * len(old_probs))
             pass
         pass
 
@@ -208,9 +231,15 @@ class CovaSimTest(unittest.TestCase):
             pass
         self.sim = Sim(pars=self.simulation_parameters,
                        datafile=None)
+        if not self.simulation_prognoses:
+            self.simulation_prognoses = parameters.get_prognoses(
+                self.simulation_parameters[ProbKeys.progression_by_age]
+            )
+            pass
+        self.sim['prognoses'] = self.simulation_prognoses
         self.sim.run(verbose=0)
         self.simulation_result = self.sim.to_json(tostring=False)
-        if write_results_json:
+        if write_results_json or self.is_debugging:
             with open(self.expected_result_filename, 'w') as outfile:
                 json.dump(self.simulation_result, outfile, indent=4, sort_keys=True)
         pass
@@ -270,7 +299,7 @@ class CovaSimTest(unittest.TestCase):
         """
         self.set_everyone_infected(agent_count=num_agents)
         prob_dict = {
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 0
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         test_config = {
@@ -294,8 +323,8 @@ class CovaSimTest(unittest.TestCase):
         self.set_everyone_infectious_same_day(num_agents=num_agents,
                                               days_to_infectious=0)
         prob_dict = {
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 1.0,
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sym_to_severe_probability: 0
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 1.0,
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.sym_to_severe_probability: 0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
@@ -312,7 +341,7 @@ class CovaSimTest(unittest.TestCase):
         Args:
             num_agents: Number of agents to simulate
         """
-        ProbKeys = TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys
+        ProbKeys = TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys
         self.set_everyone_infectious_same_day(num_agents=num_agents)
         prob_dict = {
             ProbKeys.inf_to_symptomatic_probability: 1,
@@ -326,8 +355,8 @@ class CovaSimTest(unittest.TestCase):
     def set_everyone_severe(self, num_agents, constant_delay:int=None):
         self.set_everyone_symptomatic(num_agents=num_agents, constant_delay=constant_delay)
         prob_dict = {
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sym_to_severe_probability: 1.0,
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sev_to_critical_probability: 0.0
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.sym_to_severe_probability: 1.0,
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.sev_to_critical_probability: 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
@@ -344,8 +373,8 @@ class CovaSimTest(unittest.TestCase):
         """
         self.set_everyone_severe(num_agents=num_agents, constant_delay=constant_delay)
         prob_dict = {
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.sev_to_critical_probability: 1.0,
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.crt_to_death_probability: 0.0
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.sev_to_critical_probability: 1.0,
+            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.crt_to_death_probability: 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
