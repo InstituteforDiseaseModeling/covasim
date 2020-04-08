@@ -323,6 +323,15 @@ class test_prob(Intervention):
     """
     Test as many people as required based on test probability.
 
+    Args:
+        symptomatic_prob (float): Probability of testing a symptomatic person
+        asymptomatic_prob (float): Probability of testing an asymptomatic person
+        test_sensitivity (float): Probability of a true positive
+        loss_prob (float): Probability of loss to follow-up
+        test_delay (int): How long testing takes
+        start_day (int): When to start the intervention
+
+
     Example:
         interv = cv.test_prop(symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
 
@@ -330,20 +339,6 @@ class test_prob(Intervention):
         Intervention
     """
     def __init__(self, symptomatic_prob=0.9, asymptomatic_prob=0.01, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
-        """
-
-        Args:
-            self:
-            symptomatic_prob:
-            asymptomatic_prob:
-            test_sensitivity:
-            loss_prob:
-            test_delay:
-            start_day:
-
-        Returns:
-
-        """
         super().__init__()
         self.symptomatic_prob = symptomatic_prob
         self.asymptomatic_prob = asymptomatic_prob
@@ -428,12 +423,12 @@ class test_historical(Intervention):
 
             # Todo - assess performance and optimize e.g. to reduce dict indexing
             for ind in positive_inds:
-                person = sim.get_person(ind)
+                person = sim.people[ind]
                 person.test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
                 sim.results['new_diagnoses'][t] += 1
 
             for ind in negative_inds:
-                person = sim.get_person(ind)
+                person = sim.people[ind]
                 person.test(t, test_sensitivity=1.0)
 
             sim.results['new_tests'][t] += self.n_tests[t]

@@ -180,12 +180,16 @@ class Person(sc.prettyobj):
 
     def test(self, t, test_sensitivity, loss_prob=0, test_delay=0):
         '''
-        Method to test a person
-        :param t:
-        :param test_sensitivity:
-        :param loss_prob: probability of loss to follow-up
-        :param test_delay: number of days before test results are ready
-        :return:
+        Method to test a person.
+
+        Args:
+            t (int): current timestep
+            test_sensitivity (float): probability of a true positive
+            loss_prob (float): probability of loss to follow-up
+            test_delay (int): number of days before test results are ready
+
+        Returns:
+            Whether or not this person tested positive
         '''
         self.tested = True
 
