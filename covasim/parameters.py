@@ -9,16 +9,6 @@ import pandas as pd
 __all__ = ['make_pars', 'set_contacts', 'get_prognoses', 'load_data']
 
 
-def set_contacts(pars):
-    if pars['use_layers']:
-        pars['contacts']    = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
-        pars['beta_layers'] = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
-    else:
-        pars['contacts']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
-        pars['beta_layers'] = {'a': 1.0} # Per-population beta weights; relative
-    return
-
-
 def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs):
     '''
     Set parameters for the simulation.
@@ -94,6 +84,23 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
         pars['prognoses'] = get_prognoses(pars['prog_by_age']) # Default to age-specific prognoses
 
     return pars
+
+
+def set_contacts(pars):
+    '''
+    Small helper function to set numbers of contacts and beta based on whether
+    or not to use layers. Typically not called by the user.
+
+    Args:
+        pars (dict): the parameters dictionary
+    '''
+    if pars['use_layers']:
+        pars['contacts']    = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
+        pars['beta_layers'] = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
+    else:
+        pars['contacts']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
+        pars['beta_layers'] = {'a': 1.0} # Per-population beta weights; relative
+    return
 
 
 
