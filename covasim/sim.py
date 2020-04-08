@@ -538,7 +538,7 @@ class Sim(cvbase.BaseSim):
         targets = np.zeros(self.npts)
 
         # Loop over each person to pull out the transmission
-        for person in self.people.values():
+        for person in self.people:
             if person.date_exposed is not None: # Skip people who were never exposed
                 if person.date_recovered is not None:
                     outcome_date = person.date_recovered

@@ -9,7 +9,7 @@ import pandas as pd
 __all__ = ['make_pars', 'get_prognoses', 'load_data']
 
 
-def make_pars(set_prognoses=False, prog_by_age=True, use_layers=True, **kwargs):
+def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs):
     '''
     Set parameters for the simulation.
 
