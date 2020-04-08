@@ -23,7 +23,7 @@ class Person(sc.prettyobj):
     Class for a single person.
     '''
     def __init__(self, pars, uid, age, sex):
-        self.uid         = str(uid) # This person's unique identifier
+        self.uid         = uid # This person's unique identifier
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
         self.durpars     = pars['dur']  # Store duration parameters
@@ -49,10 +49,10 @@ class Person(sc.prettyobj):
         # Set prognoses
         prognoses = pars['prognoses']
         idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
-        self.symp_prob =  pars['rel_symp_prob']*prognoses['symp_probs'][idx]
-        self.severe_prob = pars['rel_severe_prob']*prognoses['severe_probs'][idx]
-        self.crit_prob   = pars['rel_crit_prob']*prognoses['crit_probs'][idx]
-        self.death_prob  = pars['rel_death_prob']*prognoses['death_probs'][idx]
+        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
+        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
+        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
+        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
         self.OR_no_treat = pars['OR_no_treat']
 
         return

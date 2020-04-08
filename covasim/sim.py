@@ -83,8 +83,9 @@ class Sim(cvbase.BaseSim):
         self.t             = None  # The current time in the simulation
         self.initialized   = False # Whether or not initialization is complete
         self.results_ready = False # Whether or not results are ready
-        self.people        = {}    # Initialize these here so methods that check their length can see they're empty
-        self.contacts      = {}
+        self.people        = []    # Initialize these here so methods that check their length can see they're empty
+        self.contacts      = []    # Contact networks
+        self.contact_keys  = None  # Keys for contact networks
         self.results       = {}    # For storing results
 
         # Now update everything
@@ -246,10 +247,7 @@ class Sim(cvbase.BaseSim):
     def reskeys(self):
         ''' Get the actual results objects, not other things stored in sim.results '''
         all_keys = list(self.results.keys())
-        res_keys = []
-        for key in all_keys:
-            if isinstance(self.results[key], cvbase.Result):
-                res_keys.append(key)
+        res_keys = [key for key in all_keys if isinstance(self.results[key], cvbase.Result)]
         return res_keys
 
 
@@ -261,7 +259,7 @@ class Sim(cvbase.BaseSim):
 
         sc.printv(f'Creating {self["n"]} people...', 1, verbose)
 
-        cvppl.make_people(self, verbose=verbose, id_len=id_len, **kwargs)
+        cvpop.make_people(self, verbose=verbose, id_len=id_len, **kwargs)
 
         # Create the seed infections
         for i in range(int(self['n_infected'])):
@@ -313,7 +311,7 @@ class Sim(cvbase.BaseSim):
         beta_layers      = self['beta_layers']
         n_beds           = self['n_beds']
         bed_constraint   = False
-        n_people         = len(self.people)
+        pop_size         = len(self.people)
         n_comm_contacts  = self['contacts']['c'] # Community contacts
         n_import         = cvu.pt(self['n_import']) # Imported cases
 
@@ -330,6 +328,7 @@ class Sim(cvbase.BaseSim):
         n_susceptible   = len(self.people)
 
         # Randomly infect some people (imported infections)
+        print('REFACTOR')
         if n_import>0:
             s_uids  = [person.uid for person in self.people.values() if person.susceptible]
             if len(s_uids)>n_import: # Make sure there are actually susceptibles to infect
@@ -383,7 +382,7 @@ class Sim(cvbase.BaseSim):
 
                     # Set community contacts
                     if n_comm_contacts:
-                        community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
+                        community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
                         person.contacts['c'] = community_contact_inds
 
                     # Determine who gets infected
@@ -490,7 +489,6 @@ class Sim(cvbase.BaseSim):
         self.likelihood()
 
         # Convert results to an objdict to allow e.g. sim.results.diagnoses
-        # Access people by index using `Sim.get_person(25)`
         self.results = sc.objdict(self.results)
         self.results_ready = True
 

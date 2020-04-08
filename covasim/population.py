@@ -7,6 +7,7 @@ import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
 from . import requirements as cvreqs
+frim . import parameters as cvpars
 from . import person as cvper
 
 
@@ -31,12 +32,12 @@ def make_people(sim, verbose=None, die=True, reset=False):
     '''
 
     # Set inputs and defaults
-    n_people = int(sim['n']) # Shorten
+    pop_size = int(sim['pop_size']) # Shorten
     pop_type = sim['pop_type'] # Shorten
     if verbose is None:
         verbose = sim['verbose']
 
-    # Check which type of population to rpoduce
+    # Check which type of population to produce
     if pop_type == 'synthpops' and not cvreqs.available['synthpops']:
         errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use "random" or "microstructure"'
         if die:
@@ -56,15 +57,19 @@ def make_people(sim, verbose=None, die=True, reset=False):
         else:
             raise NotImplementedError
 
+    # Ensure prognoses are set
+    if sim.pars['prognoses'] is None:
+        sim.pars['prognoses'] = cvpars.get_prognoses(pars['prog_by_age'])
+
     # Actually create the people
     people = [] # List for storing the people
-    for p in range(n_people): # Loop over each person
+    for p in range(pop_size): # Loop over each person
         keys = ['uid', 'age', 'sex']
         person_args = {}
         for key in keys:
             person_args[key] = popdict[key][p] # Convert from list to dict
         person = cvper.Person(pars=sim.pars, **person_args) # Create the person
-        people[person_args['uid']] = person # Save them to the dictionary
+        people.append(person) # Save them to the dictionary
 
     # Store UIDs and people
     sim.popdict = popdict
@@ -72,8 +77,8 @@ def make_people(sim, verbose=None, die=True, reset=False):
     sim.contact_keys = list(sim['contacts'].keys())
     sim.contacts = popdict['contacts']
 
-    average_age = sum(popdict['age']/n_people)
-    sc.printv(f'Created {n_people} people, average age {average_age:0.2f} years', 1, verbose)
+    average_age = sum(popdict['age']/pop_size)
+    sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 1, verbose)
 
     return
 
@@ -81,7 +86,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
 def make_randpop(sim, age_data=None, sex_ratio=0.5):
     ''' Make a random population, without contacts '''
 
-    n_people = int(sim['n']) # Number of people
+    pop_size = int(sim['n']) # Number of people
 
     # Load age data based on 2018 Seattle demographics
     if age_data is None:
@@ -108,14 +113,14 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5):
             ])
 
     # Handle sexes and ages
-    sexes = cvu.rbt(sex_ratio, n_people)
+    sexes = cvu.rbt(sex_ratio, pop_size)
     age_data_min  = age_data[:,0]
     age_data_max  = age_data[:,1] + 1 # Since actually e.g. 69.999
     age_data_range = age_data_max - age_data_min
     age_data_prob = age_data[:,2]
     age_data_prob /= age_data_prob.sum() # Ensure it sums to 1
-    age_bins = cvu.mt(age_data_prob, n_people) # Choose age bins
-    ages = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(n_people) # Uniformly distribute within this age bin
+    age_bins = cvu.mt(age_data_prob, pop_size) # Choose age bins
+    ages = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(pop_size) # Uniformly distribute within this age bin
 
     # Store output; data duplicated as per-person and list-like formats for convenience
     popdict = {}
@@ -160,14 +165,14 @@ def make_synthpop(sim):
 
 def make_random_contacts(sim):
     # Make contacts
-    n_people = int(sim['n']) # Number of people
+    pop_size = int(sim['n']) # Number of people
     contacts = []
-    for p in range(n_people):
+    for p in range(pop_size):
         contact_dict = {'c':0}
         for key in sim['contacts'].keys():
             if key != 'c': # Skip community contacts, these are chosen afresh daily
                 n_contacts = cvu.pt(sim['contacts'][key]) # Draw the number of Poisson contacts for this person
-                contact_dict[key] = cvu.choose(max_n=n_people, n=n_contacts) # Choose people at random
+                contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
         contacts.append(contact_dict)
     return contacts
 

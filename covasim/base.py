@@ -126,7 +126,7 @@ class BaseSim(ParsObj):
         super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
         return
 
-    def set_seed(self, seed=-1) -> None:
+    def set_seed(self, seed=-1):
         """
         Set the seed for the random number stream from the stored or supplied value
 
@@ -138,8 +138,8 @@ class BaseSim(ParsObj):
         """
         # Unless no seed is supplied, reset it
         if seed != -1:
-            self['seed'] = seed
-        cov_ut.set_seed(self['seed'])
+            self['rand_seed'] = seed
+        cov_ut.set_seed(self['rand_seed'])
         return
 
     @property
@@ -152,17 +152,17 @@ class BaseSim(ParsObj):
         return output
 
     @property
-    def npts(self) -> int:
+    def npts(self):
         ''' Count the number of time points '''
         return int(self['n_days'] + 1)
 
     @property
-    def tvec(self) -> np.ndarray:
+    def tvec(self):
         ''' Create a time vector '''
         return np.arange(self.npts)
 
     @property
-    def datevec(self) -> np.ndarray:
+    def datevec(self):
         """
         Create a vector of dates
 
@@ -172,6 +172,7 @@ class BaseSim(ParsObj):
 
         """
         return self['start_day'] + self.tvec * dt.timedelta(days=1)
+
 
     def inds2dates(self, inds, dateformat=None):
         ''' Convert a set of indices to a set of dates '''
@@ -189,12 +190,7 @@ class BaseSim(ParsObj):
         return dates
 
 
-    def get_person(self, ind):
-        ''' Return a person based on their index'''
-        return self.people[self.uids[int(ind)]]
-
-
-    def _make_resdict(self, for_json: bool = True) -> dict:
+    def _make_resdict(self, for_json=True):
         """
         Convert results to dict
 
@@ -204,7 +200,8 @@ class BaseSim(ParsObj):
         Args:
             for_json: If False, only data associated with Result objects will be included in the converted output
 
-        Returns: Dictionary representation of the results
+        Returns:
+            resdict (dict): Dictionary representation of the results
 
         """
         resdict = {}
@@ -220,7 +217,7 @@ class BaseSim(ParsObj):
         return resdict
 
 
-    def _make_pardict(self) -> dict:
+    def _make_pardict(self):
         """
         Return parameters for JSON export
 
