@@ -78,13 +78,13 @@ def viral_load(person=None, dist=None, par1=None, par2=None, size=None):
             'twolevel'
             ]
     
-    start = person.data_infectious
+    start = person.date_infectious
     end = start + person.dur_disease
-    if dist == 'constat':
+    if dist == 'constant':
         load = dict(zip(np.arange(start, end),\
-                        np.ones(end-start)))
+                        np.ones(int(end-start))))
     elif dist == 'twolevel':
-        level = np.ones(end-start)
+        level = np.ones(int(end-start))
         level[0:round(par1*len(level))] = par2
         level = level/(sum(level)/len(level))
         load = dict(zip(np.arange(start, end),\
