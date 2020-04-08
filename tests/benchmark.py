@@ -1,15 +1,19 @@
 # Benchmark the simulation
 
 import sciris as sc
-import covasim as cova
+import covasim as cv
 
-sim = cova.Sim()
+sim = cv.Sim()
 sim['n_days'] = 60
-to_profile = 'run' # Must be one of the options listed below...currently only 1
+to_profile = 'person' # Must be one of the options listed below...currently only 1
 
-func_options = {'run':        sim.run,
-                'initialize': sim.initialize,
-                'init_people': sim.init_people,
-                }
+func_options = {
+    'person': cv.Person.__init__,
+    'make_people': cv.make_people,
+    'init_people': sim.init_people,
+    'initialize': sim.initialize,
+    'run': sim.run,
+    'next': sim.next,
+}
 
 sc.profile(run=sim.run, follow=func_options[to_profile])

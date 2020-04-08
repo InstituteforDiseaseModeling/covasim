@@ -9,21 +9,14 @@ import pandas as pd
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
+from . import defaults as cvd
 from . import base as cvbase
 from . import sim as cvsim
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['default_scen_plots', 'default_scenario', 'make_metapars', 'Scenarios', 'single_run', 'multi_run']
+__all__ = ['make_metapars', 'Scenarios', 'single_run', 'multi_run']
 
-
-default_scen_plots = [
-            'cum_infections',
-            'n_infectious',
-            'n_severe',
-]
-
-default_scenario = {'baseline':{'name':'Baseline', 'pars':{}}}
 
 
 def make_metapars():
@@ -32,7 +25,7 @@ def make_metapars():
         n_runs    = 3, # Number of parallel runs; change to 3 for quick, 11 for real
         noise     = 0.1, # Use noise, optionally
         noisepar  = 'beta',
-        seed      = 1,
+        rand_seed = 1,
         quantiles = {'low':0.1, 'high':0.9},
         verbose   = 1,
     )
@@ -69,7 +62,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Handle scenarios -- by default, create a baseline scenario
         if scenarios is None:
-            scenarios = sc.dcp(default_scenario)
+            scenarios = sc.dcp(cvd.default_scenario)
         self.scenarios = scenarios
 
         # Handle metapars
@@ -224,7 +217,7 @@ class Scenarios(cvbase.ParsObj):
         sc.printv('Plotting...', 1, verbose)
 
         if to_plot is None:
-            to_plot = default_scen_plots
+            to_plot = cvd.default_scen_plots
         to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults
@@ -294,7 +287,7 @@ class Scenarios(cvbase.ParsObj):
         return fig
 
 
-    def to_json(self, filename=None, tostring=True, indent=2, *args, **kwargs):
+    def to_json(self, filename=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
         """
         Export results as JSON.
 
@@ -314,7 +307,7 @@ class Scenarios(cvbase.ParsObj):
              'scenarios': self.scenarios
              }
         if filename is None:
-            output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
+            output = sc.jsonify(d, tostring=tostring, indent=indent, verbose=verbose, *args, **kwargs)
         else:
             output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
 
@@ -446,7 +439,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
     sim_args = sc.mergedicts(sim_args, kwargs)
     run_args = sc.mergedicts({'verbose':verbose}, run_args)
 
-    new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
+    new_sim['rand_seed'] += ind # Reset the seed, otherwise no point of parallel runs
     new_sim.set_seed()
 
     # If the noise parameter is not found, guess what it should be
@@ -464,7 +457,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
     new_sim[noisepar] *= noisefactor
 
     if verbose>=1:
-        print(f'Running a simulation using {new_sim["seed"]} seed and {noisefactor} noise')
+        print(f'Running a simulation using {new_sim["rand_seed"]} seed and {noisefactor} noise')
 
     # Handle additional arguments
     for key,val in sim_args.items():
@@ -539,9 +532,9 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     # Or, combine them into a single sim with scaled results
     else:
         output_sim = sc.dcp(sims[0])
-        output_sim.pars['parallelized'] = n_runs  # Store how this was parallelized
-        output_sim.pars['n'] = output_sim.n*n_runs  # Record the number of people
-        output_sim.population = None  # Drop population because the microstructure won't be correct if just concatenated (also would need to change indexes in all contact layers)
+        output_sim.parallelized = {'parallelized':True, 'combined':True, 'n_runs':n_runs}  # Store how this was parallelized
+        output_sim['pop_size'] = output_sim.n*n_runs  # Record the number of people
+        output_sim.people = None  # Drop population because the microstructure won't be correct if just concatenated (also would need to change indexes in all contact layers)
 
         for s,sim in enumerate(sims[1:]): # Skip the first one
             for key in sim.reskeys:
