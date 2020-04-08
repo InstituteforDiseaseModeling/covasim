@@ -26,7 +26,6 @@ class Person(sc.prettyobj):
         self.uid         = str(uid) # This person's unique identifier
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
-        self.contacts    = contacts # The contacts this person has
         self.durpars     = pars['dur']  # Store duration parameters
         self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
 
