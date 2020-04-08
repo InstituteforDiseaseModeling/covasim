@@ -38,32 +38,32 @@ def get_defaults(region=None, merge=False):
     regions = {
         'pop_scale': {
             'Example': 1,
-            'Seattle': 25,
+            # 'Seattle': 25,
             # 'Wuhan': 200,
         },
         'pop_size': {
             'Example': 2000,
-            'Seattle': 10000,
+            # 'Seattle': 10000,
             # 'Wuhan': 1,
         },
         'n_days': {
             'Example': 60,
-            'Seattle': 45,
+            # 'Seattle': 45,
             # 'Wuhan': 90,
         },
         'pop_infected': {
             'Example': 100,
-            'Seattle': 4,
+            # 'Seattle': 4,
             # 'Wuhan': 10,
         },
         'web_int_day': {
             'Example': 25,
-            'Seattle': 0,
+            # 'Seattle': 0,
             # 'Wuhan': 1,
         },
         'web_int_eff': {
             'Example': 0.8,
-            'Seattle': 0.0,
+            # 'Seattle': 0.0,
             # 'Wuhan': 0.9,
         },
     }
@@ -415,7 +415,7 @@ def animate_people(sim) -> dict:
         "xanchor": "left",
         "currentvalue": {
             "font": {"size": 20},
-            "prefix": "Day:",
+            "prefix": "Day: ",
             "visible": True,
             "xanchor": "right"
         },
