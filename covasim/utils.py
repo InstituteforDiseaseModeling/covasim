@@ -9,7 +9,7 @@ import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
+__all__ = ['sample', 'viral_load', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
 
 class CancelError(Exception):
     pass
@@ -70,7 +70,33 @@ def sample(dist=None, par1=None, par2=None, size=None):
 
     return samples
 
-
+def viral_load(person=None, dist=None, par1=None, par2=None, size=None):
+    ''' Get the viral load distribution for this person '''
+    
+    choices = [
+            'constant',
+            'twolevel'
+            ]
+    
+    start = person.data_infectious
+    end = start + person.dur_disease
+    if dist == 'constat':
+        load = dict(zip(np.arange(start, end),\
+                        np.ones(end-start)))
+    elif dist == 'twolevel':
+        level = np.ones(end-start)
+        level[0:round(par1*len(level))] = par2
+        level = level/(sum(level)/len(level))
+        load = dict(zip(np.arange(start, end),\
+                        level))
+    else:
+        choicestr = '\n'.join(choices)
+        errormsg = f'The selected viral distribution "{dist}" is not implemented; choices are: {choicestr}'
+        raise NotImplementedError(errormsg)
+            
+    
+    return load
+    
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
 

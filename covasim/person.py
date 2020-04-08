@@ -20,7 +20,8 @@ class Person(sc.prettyobj):
         self.uid         = str(uid) # This person's unique identifier
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
-        self.durpars         = pars['dur']  # Store duration parameters
+        self.durpars     = pars['dur']  # Store duration parameters
+        self.loadpars    = pars['viral_distro'] # Store viral load parameters
 
         # Define state
         self.susceptible    = True
@@ -51,6 +52,7 @@ class Person(sc.prettyobj):
         self.dur_sev2crit = None # Duration from symptoms to severe symptoms
         self.dur_disease  = None # Total duration of disease, from date of exposure to date of recovery or death
 
+        self.viral_load = {}
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
 
@@ -141,6 +143,8 @@ class Person(sc.prettyobj):
                         self.date_recovered = self.date_critical + dur_crit2rec # Date they recover
                         self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2rec  # Store how long this person had COVID-19
 
+        self.viral_load = cvu.viral_load(self, **self.loadpars)
+        
         if source:
             self.infected_by = source.uid
             source.infected.append(self.uid)

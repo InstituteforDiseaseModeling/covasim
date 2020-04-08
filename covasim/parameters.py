@@ -39,6 +39,7 @@ def make_pars(prog_by_age=True, **kwargs):
     pars['asymp_factor'] = 0.8  # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.0  # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
     pars['cont_factor']  = 1.0  # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
+    pars['viral_distro'] = dict(dist='constant') # Viral load distribution
 
     # Duration parameters: time for disease progression
     pars['dur'] = dict()

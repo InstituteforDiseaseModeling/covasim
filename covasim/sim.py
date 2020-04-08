@@ -323,6 +323,7 @@ class Sim(cvbase.BaseSim):
 
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                     thisbeta = beta * \
+                               person.viral_load[t] * \
                                (asymp_factor if person.symptomatic else 1.) * \
                                (diag_factor if person.diagnosed else 1.) * \
                                (cont_factor if person.known_contact else 1.)
