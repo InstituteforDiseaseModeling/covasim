@@ -378,7 +378,7 @@ class Scenarios(cvbase.ParsObj):
                 for key in sims.keys():
                     obj.sims[key] = []
                     for sim in sims[key]:
-                        obj.sims[key].append(sim.shrink())
+                        obj.sims[key].append(sim.shrink(in_place=False))
 
         sc.saveobj(filename=filename, obj=obj) # Actually save
 
@@ -474,7 +474,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
 
     # Shrink the sim to save memory
     if not keep_people:
-        new_sim.shrink(in_place=True)
+        new_sim.shrink()
 
     return new_sim
 

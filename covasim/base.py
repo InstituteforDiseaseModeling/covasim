@@ -298,7 +298,7 @@ class BaseSim(ParsObj):
         return output
 
 
-    def shrink(self, skip_attrs=None, in_place=False):
+    def shrink(self, skip_attrs=None, in_place=True):
         '''
         "Shrinks" the simulation by removing the people, and returns
         a copy of the "shrunken" simulation. Used to reduce the memory required
