@@ -272,15 +272,19 @@ class contact_tracing(Intervention):
     '''
     Contact tracing of positives
     '''
-    def __init__(self, trace_probs, trace_time):
+    def __init__(self, trace_probs, trace_time, start_day):
         super().__init__()
         self.trace_probs = trace_probs
         self.trace_time = trace_time
+        self.start_day = start_day
         return
 
 
     def apply(self, sim: cv.Sim):
         t = sim.t
+        if t < self.start_day:
+            return
+
         for i, person in enumerate(sim.people.values()):
             if not person.infectious:
                 continue
@@ -316,13 +320,17 @@ class test_prob(Intervention):
     Returns:
         Intervention
     """
-    def __init__(self, symptomatic_prob=0.9, asymptomatic_prob=0.01, trace_prob=1.0, test_sensitivity=1.0):
+    def __init__(self, symptomatic_prob=0.9, asymptomatic_prob=0.01, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
         """
 
         Args:
             self:
             symptomatic_prob:
-            trace_prob:
+            asymptomatic_prob:
+            test_sensitivity:
+            loss_prob:
+            test_delay:
+            start_day:
 
         Returns:
 
@@ -330,9 +338,12 @@ class test_prob(Intervention):
         super().__init__()
         self.symptomatic_prob = symptomatic_prob
         self.asymptomatic_prob = asymptomatic_prob
-        self.trace_prob = trace_prob # Probability that identified contacts get tested
         self.test_sensitivity = test_sensitivity
-        self.scheduled_tests = set() # Track UIDs of people that are guaranteed to be tested at the next step
+        #self.scheduled_tests = set() # Track UIDs of people that are guaranteed to be tested at the next step
+        self.loss_prob = loss_prob
+        self.test_delay = test_delay
+
+        self.start_day = start_day
         return
 
 
@@ -340,19 +351,18 @@ class test_prob(Intervention):
         ''' Perform testing '''
 
         t = sim.t
-        new_scheduled_tests = set()
+        if t < self.start_day:
+            return
 
+        new_diagnoses = 0
         for i, person in enumerate(sim.people.values()):
-            if i in self.scheduled_tests or (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
-                sim.results['new_tests'][t] += 1
-                person.test(t, self.test_sensitivity)
-                if person.diagnosed:
-                    sim.results['new_diagnoses'][t] += 1
-                    for idx in person.contacts:
-                        if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
-                            new_scheduled_tests.add(idx)
+            new_diagnoses += person.check_diagnosed(t)
 
-        self.scheduled_tests = new_scheduled_tests
+            if (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
+                sim.results['new_tests'][t] += 1
+                person.test(t, self.test_sensitivity, self.loss_prob, self.test_delay)
+        sim.results['new_diagnoses'][t] += new_diagnoses
+
         return
 
 

@@ -349,6 +349,7 @@ class Sim(cvbase.BaseSim):
                     person.infectious = True
                     sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
 
+            n_diagnosed     += person.diagnosed
             # If infectious, update status according to the course of the infection, and check if anyone gets infected
             if person.infectious:
 
@@ -371,7 +372,6 @@ class Sim(cvbase.BaseSim):
                     n_symptomatic   += person.symptomatic
                     n_severe        += person.severe
                     n_critical      += person.critical
-                    n_diagnosed     += person.diagnosed
                     if n_severe > n_beds:
                         bed_constraint = True
 
