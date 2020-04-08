@@ -7,7 +7,7 @@ import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
 from . import requirements as cvreqs
-frim . import parameters as cvpars
+from . import parameters as cvpars
 from . import person as cvper
 
 
@@ -71,7 +71,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
         person = cvper.Person(pars=sim.pars, **person_args) # Create the person
         people.append(person) # Save them to the dictionary
 
-    # Store UIDs and people
+    # Store people
     sim.popdict = popdict
     sim.people = people
     sim.contact_keys = popdict['contact_keys']
@@ -85,7 +85,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
 def make_randpop(sim, age_data=None, sex_ratio=0.5):
     ''' Make a random population, without contacts '''
 
-    pop_size = int(sim['n']) # Number of people
+    pop_size = int(sim['pop_size']) # Number of people
 
     # Load age data based on 2018 Seattle demographics
     if age_data is None:
@@ -123,12 +123,13 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5):
 
     # Store output; data duplicated as per-person and list-like formats for convenience
     popdict = {}
-    popdict['age']      = ages
-    popdict['sex']      = sexes
+    popdict['uid'] = np.arange(pop_size, dtype=int)
+    popdict['age'] = ages
+    popdict['sex'] = sexes
 
     contacts, contact_keys = make_random_contacts(sim)
     popdict['contacts'] = contacts
-    popdict['contact_keys'] = contact keys
+    popdict['contact_keys'] = contact_keys
 
     return popdict
 
@@ -136,7 +137,7 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5):
 def make_synthpop(sim):
     ''' Make a population using synthpops, including contacts '''
     import synthpops as sp # Optional import
-    population = sp.make_population(n=sim['n'])
+    population = sp.make_population(n=sim['pop_size'])
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)
@@ -168,12 +169,13 @@ def make_synthpop(sim):
 
 def make_random_contacts(sim):
     ''' Make random static contacts '''
-    pop_size = int(sim['n']) # Number of people
+    pop_size = int(sim['pop_size']) # Number of people
     contacts = []
     contacts = sim['contacts']
     contacts.pop('c', None) # Remove community
     contact_keys = contacts.keys()
     for p in range(pop_size):
+        contact_dict = {}
         for key in contact_keys:
             n_contacts = cvu.pt(contacts[key]) # Draw the number of Poisson contacts for this person
             contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random

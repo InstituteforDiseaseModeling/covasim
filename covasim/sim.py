@@ -127,9 +127,9 @@ class Sim(cvbase.BaseSim):
             filepath = sc.makefilepath(filename=filename, **kwargs)
             self.popdict = sc.loadobj(filepath)
             n_actual = len(self.popdict['uid'])
-            n_expected = self['n']
+            n_expected = self['pop_size']
             if n_actual != n_expected:
-                errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "n" to match or regenerate the file'
+                errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "pop_size" to match or regenerate the file'
                 raise ValueError(errormsg)
         return
 
@@ -256,9 +256,9 @@ class Sim(cvbase.BaseSim):
         if verbose is None:
             verbose = self['verbose']
 
-        sc.printv(f'Creating {self["n"]} people...', 1, verbose)
+        sc.printv(f'Creating {self["pop_size"]} people...', 1, verbose)
 
-        cvpop.make_people(self, verbose=verbose, id_len=id_len, **kwargs)
+        cvpop.make_people(self, verbose=verbose, **kwargs)
 
         # Create the seed infections
         for i in range(int(self['pop_infected'])):
