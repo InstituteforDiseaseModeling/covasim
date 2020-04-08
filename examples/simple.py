@@ -1,5 +1,5 @@
 '''
-Rather simple script for running the Covid-19 agent-based model
+Simplest possible Covasim usage example.
 '''
 
 import covasim as cv

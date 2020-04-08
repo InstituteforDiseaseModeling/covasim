@@ -69,9 +69,9 @@ class Sim(cvbase.BaseSim):
         filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None):
+    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None, **kwargs):
         # Create the object
-        default_pars = cvpars.make_pars() # Start with default pars
+        default_pars = cvpars.make_pars(**kwargs) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes

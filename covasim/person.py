@@ -9,38 +9,7 @@ from . import utils as cvu
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['states', 'Person']
-
-states = ['susceptible',
-           'exposed', 'infectious', 'symptomatic', 'severe', 'critical', # Gradations of exposure and disease
-           'tested', 'diagnosed',                                        # Testing
-           'recovered', 'dead',                                          # Possible resolutions
-           'known_contact']                                              # Whether they know a confirmed case
-
-default_states = dict(
-    susceptible   = True,
-    exposed       = False,
-    infectious    = False,
-    symptomatic   = False,
-    severe        = False,
-    critical      = False,
-    tested        = False,
-    diagnosed     = False,
-    recovered     = False,
-    dead          = False,
-    known_contact = False,
-
-    date_exposed       = None,
-    date_infectious    = None,
-    date_symptomatic   = None,
-    date_severe        = None,
-    date_critical      = None,
-    date_tested        = None,
-    date_diagnosed     = None,
-    date_recovered     = None,
-    date_dead          = None,
-    date_known_contact = None,
-)
+__all__ = ['Person']
 
 class Person(sc.prettyobj):
     '''
@@ -54,9 +23,7 @@ class Person(sc.prettyobj):
         self.durpars     = pars['dur']  # Store duration parameters
         self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
 
-        # self.__dict__.update(default_states)
-
-        # Define states
+        # Define states -- listed explicitly for performance reasons
         self.susceptible   = True
         self.exposed       = False
         self.infectious    = False
@@ -80,12 +47,6 @@ class Person(sc.prettyobj):
         self.date_recovered     = None
         self.date_dead          = None
         self.date_known_contact = None
-
-        # for state in states:
-        #     if state != 'susceptible':
-        #         setattr(self, state, False)             # Track states - set them all to False initially
-        #         setattr(self, 'date_'+state, None)      # Track dates - set them all to None initially
-        # self.susceptible  = True
 
         # Keep track of durations
         self.dur_exp2inf  = None # Duration from exposure to infectiousness
