@@ -17,7 +17,7 @@ class Intervention:
         self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
 
 
-    def apply(self, sim: cv.Sim) -> None:
+    def apply(self, sim):
         """
         Apply intervention
 
@@ -35,7 +35,7 @@ class Intervention:
         raise NotImplementedError
 
 
-    def plot(self, sim: cv.Sim, ax: pl.Axes) -> None:
+    def plot(self, sim, ax):
         """
         Call function during plotting
 
@@ -105,7 +105,7 @@ class dynamic_pars(Intervention):
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         ''' Loop over the parameters, and then loop over the days, applying them if any are found '''
         t = sim.t
         for parkey,parval in self.pars.items():
@@ -159,42 +159,51 @@ class change_beta(Intervention):
     Args:
         days (int or array): the day or array of days to apply the interventions
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
+        layers (str or array): the layers in which to change beta
 
     Examples:
-        interv = cv.change_beta(25, 0.3) # On day 25, reduce beta by 70% to 0.3
-        interv = cv.change_beta([14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
+        interv = cv.change_beta(25, 0.3) # On day 25, reduce overall beta by 70% to 0.3
+        interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
 
     '''
 
-    def __init__(self, days, changes):
+    def __init__(self, days, changes, layers=None):
         super().__init__()
         self.days = sc.promotetoarray(days)
         self.changes = sc.promotetoarray(changes)
+        self.layers = sc.promotetolist(layers, keepnone=True)
         if len(self.days) != len(self.changes):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
-        self.orig_beta = None
+        self.orig_betas = None
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
 
         # If this is the first time it's being run, store beta
-        if self.orig_beta is None:
-            self.orig_beta = sim['beta']
+        if self.orig_betas is None:
+            self.orig_betas = {}
+            for layer in self.layers:
+                if layer is None:
+                    self.orig_betas['overall'] = sim['beta']
+                else:
+                    self.orig_betas[layer] = sim['beta_layers'][layer]
 
         # If this day is found in the list, apply the intervention
         inds = sc.findinds(self.days, sim.t)
         if len(inds):
-            new_beta = self.orig_beta
-            for ind in inds:
-                new_beta = new_beta * self.changes[ind]
-            sim['beta'] = new_beta
-
+            for layer,new_beta in self.orig_betas.items():
+                for ind in inds:
+                    new_beta = new_beta * self.changes[ind]
+                if layer == 'overall':
+                    sim['beta'] = new_beta
+                else:
+                    sim['beta_layers'][layer] = new_beta
         return
 
 
-    def plot(self, sim: cv.Sim, ax: pl.Axes):
+    def plot(self, sim, ax):
         ''' Plot vertical lines for when changes in beta '''
         ylims = ax.get_ylim()
         for day in self.days:
@@ -227,7 +236,7 @@ class test_num(Intervention):
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
 
         t = sim.t
 
@@ -280,7 +289,7 @@ class contact_tracing(Intervention):
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         t = sim.t
         if t < self.start_day:
             return
@@ -347,7 +356,7 @@ class test_prob(Intervention):
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         ''' Perform testing '''
 
         t = sim.t
@@ -399,7 +408,7 @@ class test_historical(Intervention):
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         ''' Perform testing '''
 
         t = sim.t
