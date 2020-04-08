@@ -6,11 +6,10 @@ import numpy as np
 import pandas as pd
 
 
-__all__ = ['make_pars', 'set_default_contacts', 'set_default_prognoses', 'get_default_prognoses', 'load_data']
+__all__ = ['make_pars', 'set_contacts', 'get_prognoses', 'load_data']
 
 
-def set_default_contacts(pars, use_layers=False):
-    ''' Set contacts within the layers '''
+def set_contacts(pars, use_layers=False):
     if use_layers:
         pars['contacts']    = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
         pars['beta_layers'] = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
@@ -20,11 +19,7 @@ def set_default_contacts(pars, use_layers=False):
     return
 
 
-def set_default_prognoses(pars, prog_by_age=True):
-    pars['prognoses'] = get_default_prognoses(prog_by_age) # Default to age-specific prognoses
-    return
-
-def make_pars(prog_by_age=True, use_layers=False, **kwargs):
+def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs):
     '''
     Set parameters for the simulation.
 
@@ -57,7 +52,7 @@ def make_pars(prog_by_age=True, use_layers=False, **kwargs):
     pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
     pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['use_layers']   = use_layers
-    pars['contacts']     = None # These are set based on use_layers
+    pars['contacts']     = None
     pars['beta_layers']  = None
 
     # Duration parameters: time for disease progression
@@ -81,8 +76,8 @@ def make_pars(prog_by_age=True, use_layers=False, **kwargs):
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
     pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
     pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
-    pars['prog_by_age'] = prog_by_age
-    pars['prognoses'] = None # Populate this later
+    pars['prog_by_age']     = prog_by_age
+    pars['prognoses']       = None # Populate this later
 
     # Events and interventions
     pars['interventions'] = []  #: List of Intervention instances
@@ -93,16 +88,17 @@ def make_pars(prog_by_age=True, use_layers=False, **kwargs):
     # Health system parameters
     pars['n_beds'] = np.inf  # Baseline assumption is that there's no upper limit on the number of beds i.e. there's enough for everyone
 
-    # Update with any supplied parameter values
+    # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
-
-    # Set
+    set_contacts(pars, use_layers=pars['use_layers'])
+    if set_prognoses:
+        pars['prognoses'] = get_prognoses(pars['prog_by_age']) # Default to age-specific prognoses
 
     return pars
 
 
 
-def get_default_prognoses(by_age=True):
+def get_prognoses(by_age=True):
     '''
     Return the default parameter values for prognoses
 
@@ -120,6 +116,7 @@ def get_default_prognoses(by_age=True):
 
     if not by_age:
         prognoses = dict(
+            by_age       = False,
             age_cutoffs  = np.array([ max_age ]),
             symp_probs   = np.array([ 0.75 ]),
             severe_probs = np.array([ 0.2 ]),
@@ -128,6 +125,7 @@ def get_default_prognoses(by_age=True):
         )
     else:
         prognoses = dict(
+            by_age       = True,
             age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      max_age]), # Age cutoffs
             symp_probs   = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms
             severe_probs = np.array([0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]), # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)

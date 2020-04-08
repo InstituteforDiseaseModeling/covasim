@@ -95,6 +95,13 @@ class Sim(cvbase.BaseSim):
         return
 
 
+    def update_pars(self, pars=None, create=False):
+        if 'use_layers' in pars:
+            cvpars.set_contacts(pars)
+        super().update_pars(pars=None, create=False) # Call update_pars() for ParsObj
+
+
+
     def set_metadata(self, filename):
         ''' Set the metadata for the simulation -- creation time and filename '''
         self.created = sc.now()
