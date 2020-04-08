@@ -213,12 +213,12 @@ class test_num(Intervention):
         Intervention
     """
 
-    def __init__(self, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0, test_delay=0):
+    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0):
         super().__init__()
 
         self.daily_tests = daily_tests #: Should be a list of length matching time
         self.sympt_test = sympt_test
-        self.trace_test = trace_test
+        self.quar_test = quar_test
         self.sensitivity = sensitivity
         self.test_delay = test_delay
 
@@ -251,13 +251,13 @@ class test_num(Intervention):
             # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
             if person.symptomatic:
                 test_probs[i] *= self.sympt_test  # They're symptomatic
-            if person.known_contact:
-                test_probs[i] *= self.trace_test  # They've had contact with a known positive
+            if person.quarantine:
+                test_probs[i] *= self.quar_test  # They're in quarantine
             if person.diagnosed:
                 test_probs[i] = 0.0
 
         test_inds = cv.choose_weighted(probs=test_probs, n=n_tests, normalize=True)
-        sim.results['new_diagnoses'][t] = new_diagnoses
+        sim.results['new_diagnoses'][t] += new_diagnoses
 
         for test_ind in test_inds:
             person = sim.get_person(test_ind)
@@ -339,19 +339,16 @@ class test_prob(Intervention):
         ''' Perform testing '''
 
         t = sim.t
-        new_scheduled_tests = set()
 
+        new_diagnoses = 0
         for i, person in enumerate(sim.people.values()):
-            if i in self.scheduled_tests or (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
+            new_diagnoses += person.check_diagnosed(t)
+            if (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
                 sim.results['new_tests'][t] += 1
                 person.test(t, self.test_sensitivity)
-                if person.diagnosed:
-                    sim.results['new_diagnoses'][t] += 1
-                    for idx in person.contacts:
-                        if person.diagnosed and self.trace_prob and cv.bt(self.trace_prob):
-                            new_scheduled_tests.add(idx)
 
-        self.scheduled_tests = new_scheduled_tests
+        sim.results['new_diagnoses'][t] += new_diagnoses
+
         return
 
 

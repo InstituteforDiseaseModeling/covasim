@@ -29,6 +29,7 @@ default_colors = sc.objdict(
     severe      = '#c1981d',
     critical    = '#b86113',
     diagnosed   = '#3443eb',
+    quarantined = '#5F1914',
     deaths      = '#000000',
     )
 
@@ -222,11 +223,12 @@ class Sim(cvbase.BaseSim):
         self.results['n_symptomatic'] = init_res('Number symptomatic',       color=dcols.symptomatic)
         self.results['n_severe']      = init_res('Number of severe cases',   color=dcols.severe)
         self.results['n_critical']    = init_res('Number of critical cases', color=dcols.critical)
-        self.results['n_diagnosed']   = init_res('Number of confirmed cases', color=dcols.diagnosed)
+        self.results['n_diagnosed']   = init_res('Number of confirmed cases',color=dcols.quarantined)
+        self.results['n_quarantined'] = init_res('Number in quarantine',     color=dcols.diagnosed)
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
-        self.result_flows = ['infections', 'tests', 'diagnoses', 'recoveries', 'symptomatic', 'severe', 'critical', 'deaths']
+        self.result_flows = ['infections', 'tests', 'diagnoses', 'recoveries', 'symptomatic', 'severe', 'critical', 'deaths', 'quarantined']
         for key in self.result_flows:
             suffix = ' cases' if key in ['symptomatic', 'severe', 'critical'] else '' # Since need to say "severe cases" not just "severe"
             self.results[f'new_{key}'] = init_res(f'Number of new {key}{suffix}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
@@ -291,6 +293,7 @@ class Sim(cvbase.BaseSim):
         n_severe        = 0
         n_critical      = 0
         n_diagnosed     = 0
+        n_quarantined   = 0
 
         # Zero counts for this time step: flows
         new_recoveries  = 0
@@ -299,6 +302,7 @@ class Sim(cvbase.BaseSim):
         new_symptomatic = 0
         new_severe      = 0
         new_critical    = 0
+        new_quarantined = 0
 
         # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
         beta                = self['beta']
@@ -306,7 +310,7 @@ class Sim(cvbase.BaseSim):
         diag_factor         = self['diag_factor']
         quar_trans_factor   = self['quar_trans_factor']
         quar_acq_factor     = self['quar_acq_factor']
-        quarantine_period   = self['quarantine_period']
+        quar_period         = self['quar_period']
         beta_layers         = self['beta_layers']
         n_beds              = self['n_beds']
         bed_constraint      = False
@@ -337,8 +341,9 @@ class Sim(cvbase.BaseSim):
 
         for person in susceptible:
             # If they're quarantined, this affects their transmission rate
-            person.check_known_contact(t, quarantine_period) # Set know_contact and go into quarantine
-            person.check_quarantined(t) # Come out of quarantine
+            new_quarantined += person.check_quar_begin(t, quar_period) # Set know_contact and go into quarantine
+            person.check_quar_end(t) # Come out of quarantine
+            n_quarantined += person.quarantined
 
         for person in not_susceptible:
             n_susceptible -= 1
@@ -351,8 +356,9 @@ class Sim(cvbase.BaseSim):
                     sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
 
             # If they're quarantined, this affects their transmission rate
-            person.check_known_contact(t, quarantine_period) # Set know_contact and go into quarantine
-            person.check_quarantined(t) # Come out of quarantine
+            new_quarantined += person.check_quar_begin(t, quar_period) # Set know_contact and go into quarantine
+            person.check_quar_end(t) # Come out of quarantine
+            n_quarantined += person.quarantined
 
             # If infectious, update status according to the course of the infection, and check if anyone gets infected
             if person.infectious:
@@ -424,6 +430,7 @@ class Sim(cvbase.BaseSim):
         self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
         self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
         self.results['n_diagnosed'][t]    = n_diagnosed # Tracks total number of diagnosed cases at this timestep
+        self.results['n_quarantined'][t]   = n_quarantined # Tracks number currently quarantined
         self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else None
 
         # Update counts for this time step: flows
@@ -433,6 +440,7 @@ class Sim(cvbase.BaseSim):
         self.results['new_severe'][t]      = new_severe
         self.results['new_critical'][t]    = new_critical
         self.results['new_deaths'][t]      = new_deaths
+        self.results['new_quarantined'][t] = new_quarantined
 
         self.t += 1
 
@@ -601,7 +609,7 @@ class Sim(cvbase.BaseSim):
                             sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
             self.results['likelihood'] = loglike
-            
+
         sc.printv(f'Likelihood: {loglike}', 1, verbose)
         return loglike
 

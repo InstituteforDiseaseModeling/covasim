@@ -30,7 +30,6 @@ class Person(sc.prettyobj):
         self.OR_no_treat = pars['OR_no_treat']  # Increase in the probability of dying if treatment not available
         self.durpars     = pars['dur']  # Store duration parameters
         self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
-        self.date_quarantined = {} # For tracking purposes only
 
         # Define states
         for state in pars['possible_states']:
@@ -176,26 +175,26 @@ class Person(sc.prettyobj):
             self.date_tested.append(t) # They're been tested before; append new test date. TODO: adjust testing probs based on whether a person's a repeat tester?
 
         if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
-            if not cvu.bt(loss_prob): # They're not lost to follow-up
+            needs_diagnosis = not self.date_diagnosed or self.date_diagnosed and self.date_diagnosed > t+test_delay
+            if needs_diagnosis and not cvu.bt(loss_prob): # They're not lost to follow-up
                 self.date_diagnosed = t + test_delay
             return 1
         else:
             return 0
 
 
-    def quarantine(self, t, quarantine_period):
+    def quarantine(self, t, quar_period):
         '''
         Quarantine a person starting on day t
         If a person is already quarantined, this will extend their quarantine
         '''
         self.quarantined = True
-        self.date_quarantined.append( (t, quarantine_period) ) # For tracking purposes only
 
-        new_end_quarantine = t + quarantine_period
+        new_end_quarantine = t + quar_period
         if self.end_quarantine is None or self.end_quarantine is not None and new_end_quarantine > self.end_quarantine:
             self.end_quarantine = new_end_quarantine
 
-        sc.printv(f'Person {self.uid} has been quarantined until {self.end_quarantine}', 2, verbose)
+        #sc.printv(f'Person {self.uid} has been quarantined until {self.end_quarantine}', 2, self.verbose)
 
         return
 
@@ -265,21 +264,22 @@ class Person(sc.prettyobj):
             return 0
 
 
-    def check_known_contact(self, t, quarantine_period = None):
+    def check_quar_begin(self, t, quar_period = None):
         ''' Check for whether someone has been contacted by a positive'''
-        if not self.known_contact and self.date_known_contact is not None and t >= self.date_known_contact:
-            self.known_contact = True
-            if quarantine_period is not None:
-                self.quarantine(t, quarantine_period)
-        return
+        if self.date_known_contact is not None and t >= self.date_known_contact:
+            if quar_period is not None:
+                # Begin quarantine
+                self.quarantine(t, quar_period)
+                return 1
+        return 0
 
 
-    def check_quarantined(self, t):
+    def check_quar_end(self, t):
         ''' Check for whether someone is isolating/quarantined'''
         if self.quarantined and self.end_quarantine is not None and t >= self.end_quarantine:
             self.quarantined = False # Release from quarantine
             self.end_quarantine = None # Clear end quarantine time
-            sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
+            #sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
         return
 
 
