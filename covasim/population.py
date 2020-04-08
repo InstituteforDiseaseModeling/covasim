@@ -35,7 +35,7 @@ class People(list):
         Example:
             susceptibles = sim.people.filter_in('susceptible')
         '''
-        return filter(lambda p: getattr(p, attr), self)
+        return filter(lambda person: getattr(person, attr), self)
 
 
     def filter_out(self, attr):
@@ -48,7 +48,20 @@ class People(list):
         Example:
             not_susceptibles = sim.people.filter_out('susceptible')
         '''
-        return filter(lambda p: not getattr(p, attr), self)
+        return filter(lambda person: not getattr(person, attr), self)
+
+
+    def extract(self, attr):
+        '''
+        Return a list of a given attribute for every person.
+
+        Args:
+            attr (str): The attribute to extract.
+
+        Example:
+            ages = sim.people.extract('age')
+        '''
+        return [getattr(person, attr) for person in self]
 
 
     def keys(self):
