@@ -10,6 +10,7 @@ from . import defaults as cvd
 from . import requirements as cvreqs
 from . import parameters as cvpars
 from . import person as cvper
+from collections import defaultdict
 
 
 # Specify all externally visible functions this file defines
@@ -109,7 +110,9 @@ def make_people(sim, verbose=None, die=True, reset=False):
         popdict = sim.popdict # Use stored one
     else:
         if pop_type == 'random':
-            popdict = make_randpop(sim)
+            popdict = make_randpop(sim, microstructure=False)
+        elif pop_type == 'microstructure':
+            popdict = make_randpop(sim, microstructure=True)
         elif pop_type == 'synthpops':
             popdict = make_synthpop(sim)
         else:
@@ -140,7 +143,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
     return
 
 
-def make_randpop(sim, age_data=None, sex_ratio=0.5):
+def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
     ''' Make a random population, without contacts '''
 
     pop_size = int(sim['pop_size']) # Number of people
@@ -165,11 +168,77 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5):
     popdict['age'] = ages
     popdict['sex'] = sexes
 
-    contacts, contact_keys = make_random_contacts(sim)
+    if microstructure:
+        contacts, contact_keys = make_microstructured_contacts(sim['pop_size'], sim['contacts'])
+    else:
+        contacts, contact_keys = make_random_contacts(sim['pop_size'], sim['contacts'])
     popdict['contacts'] = contacts
     popdict['contact_keys'] = contact_keys
 
     return popdict
+
+
+def make_random_contacts(pop_size, contacts):
+    ''' Make random static contacts '''
+
+    # Preprocessing
+    pop_size = int(pop_size) # Number of people
+    contacts = sc.dcp(contacts)
+    contacts.pop('c', None) # Remove community
+    contact_keys = list(contacts.keys())
+    contacts_list = []
+
+    # Make contacts
+    for p in range(pop_size):
+        contact_dict = {}
+        for key in contact_keys:
+            n_contacts = cvu.pt(contacts[key]) # Draw the number of Poisson contacts for this person
+            contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
+        contacts_list.append(contact_dict)
+
+    return contacts_list, contact_keys
+
+
+def make_microstructured_contacts(pop_size, contacts):
+    ''' Create microstructured contacts -- i.e. households, schools, etc. '''
+
+    # Preprocessing -- same as above
+    pop_size = int(pop_size) # Number of people
+    contacts = sc.dcp(contacts)
+    contacts.pop('c', None) # Remove community
+    contact_keys = list(contacts.keys())
+    contacts_list = [{c:[] for c in contact_keys} for p in range(pop_size)] # Pre-populate
+
+    for layer_name, cluster_size in contacts.items():
+        # Make clusters - each person belongs to one cluster
+        n_remaining = pop_size
+        contacts_dict = defaultdict(set) # Use defaultdict of sets for convenience while initializing. Could probably change this as part of performance optimization
+
+        while n_remaining > 0:
+
+            # Get the size of this cluster
+            this_cluster =  cvu.pt(cluster_size)  # Sample the cluster size
+            if this_cluster > n_remaining:
+                this_cluster = n_remaining
+
+            # Indices of people in this cluster
+            cluster_indices = (pop_size-n_remaining)+np.arange(this_cluster)
+
+            # Add symmetric pairwise contacts in each cluster. Can probably optimize this
+            for i in cluster_indices:
+                for j in cluster_indices:
+                    if j <= i:
+                        pass
+                    else:
+                        contacts_dict[i].add(j)
+                        contacts_dict[j].add(i)
+
+            n_remaining -= this_cluster
+
+        for key in contacts_dict.keys():
+            contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=int)
+
+    return contacts_list, contact_keys
 
 
 def make_synthpop(sim):
@@ -203,58 +272,3 @@ def make_synthpop(sim):
     popdict['contacts'] = contacts
     popdict['contact_keys'] = list(key_mapping.values())
     return popdict
-
-
-def make_random_contacts(sim):
-    ''' Make random static contacts '''
-    pop_size = int(sim['pop_size']) # Number of people
-    contacts_list = []
-    contacts = sc.dcp(sim['contacts'])
-    contacts.pop('c', None) # Remove community
-    contact_keys = list(contacts.keys())
-    for p in range(pop_size):
-        contact_dict = {}
-        for key in contact_keys:
-            n_contacts = cvu.pt(contacts[key]) # Draw the number of Poisson contacts for this person
-            contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
-        contacts_list.append(contact_dict)
-    return contacts_list, contact_keys
-
-
-def make_microstructured_contacts(sim):
-            # Make contacts
-        self.contact_layers = {}
-
-        # Make static contact matrix
-        for layer_name, cluster_size in layer_cluster_sizes.items():
-            # Make clusters - each person belongs to one cluster
-            n_remaining = n_people
-            contacts = defaultdict(set) # Use defaultdict of sets for convenience while initializing. Could probably change this as part of performance optimization
-
-            while n_remaining > 0:
-
-                # Get the size of this cluster
-                this_cluster =  cvu.pt(cluster_size)  # Sample the cluster size
-                if this_cluster > n_remaining:
-                    this_cluster = n_remaining
-
-                # Indices of people in this cluster
-                cluster_indices = (n_people-n_remaining)+np.arange(this_cluster)
-
-                # Add symmetric pairwise contacts in each cluster. Can probably optimize this
-                for i in cluster_indices:
-                    for j in cluster_indices:
-                        if j <= i:
-                            pass
-                        else:
-                            contacts[self._uids[i]].add(j)
-                            contacts[self._uids[j]].add(i)
-
-                n_remaining -= this_cluster
-
-            contacts = {x:list(y) for x,y in contacts.items()} # Convert to a fixed dict of lists, rather than a defaultdict of sets
-            self.contact_layers[layer_name] = StaticContactLayer(name=layer_name, contacts=contacts)
-
-        # Make random contacts
-        if n_community_contacts > 0:
-            self.contact_layers['C'] = RandomContactLayer(name='C', max_n=n_people, n=int(n_community_contacts))
