@@ -24,11 +24,11 @@ pars = sc.objdict(
 
 def run(pars=pars, 
         interv=False,
-        verbose=True,
         do_plot=True, 
         do_save=False, 
         do_show=False,
-        fig_path=fig_path
+        fig_path=fig_path,
+        verbose=False
         ):
 
     '''
@@ -53,7 +53,7 @@ def run(pars=pars,
         do_save: (bool): If a plot is generated, whether or not to save it.  Defaults to False.
         do_show: (bool): If a plot is generated, whether or not to show it.  Defaults to False.
         fig_path: (str): Path to which save filename.  Defaults to results/covasim_run_{date}_{version}.png
-        verbose: (bool): whether or not turn verbose mode while running simulation
+        verbose: (bool): whether or not turn verbose mode while running simulation.  Defaults to False.
     '''
     if interv: 
         pars.interventions = cv.change_beta(days=45, changes=0.5) # Optionally add an intervention

@@ -38,7 +38,7 @@ def run(do_run=True,
         obj_path=obj_path,
         interv_day=35,
         interv_eff=0.7,
-        verbose=True):
+        verbose=False):
     '''
     Run pre-determined scenarios with the ability to expose certain parameters.
 
@@ -52,7 +52,7 @@ def run(do_run=True,
     > python scenarios.py --interv_day=35 --interv_eff=0.7
 
     To run simulation and save plot to disk:
-    > python scenarios.py -do_save=True
+    > python scenarios.py --do_save=True
 
         Args:
         basepars: (dict): configuration for the sim.  See description for example.  Defaults to "{pop_size: 5000}"
@@ -62,7 +62,7 @@ def run(do_run=True,
         do_show: (bool): If a plot is generated, whether or not to show it.  Defaults to False.
         fig_path: (str): Path to which save filename.  Defaults to results/covasim_run_{date}_{version}.png
         obj_path: (str): Path to which save filename.  Defaults to results/covasim_run_{date}_{version}.scens
-        verbose: (bool): whether or not turn verbose mode while running simulation
+        verbose: (bool): whether or not turn verbose mode while running simulation.  Defaults to False.
     '''
     sc.tic()
 
