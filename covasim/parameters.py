@@ -122,7 +122,6 @@ def get_prognoses(by_age=True):
 
     if not by_age:
         prognoses = dict(
-            by_age       = False,
             age_cutoffs  = np.array([ max_age ]),
             symp_probs   = np.array([ 0.75 ]),
             severe_probs = np.array([ 0.2 ]),
@@ -131,7 +130,6 @@ def get_prognoses(by_age=True):
         )
     else:
         prognoses = dict(
-            by_age       = True,
             age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      max_age]), # Age cutoffs
             symp_probs   = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms
             severe_probs = np.array([0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]), # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
