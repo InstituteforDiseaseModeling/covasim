@@ -32,7 +32,7 @@ def make_metapars():
         n_runs    = 3, # Number of parallel runs; change to 3 for quick, 11 for real
         noise     = 0.1, # Use noise, optionally
         noisepar  = 'beta',
-        seed      = 1,
+        rand_seed = 1,
         quantiles = {'low':0.1, 'high':0.9},
         verbose   = 1,
     )
@@ -446,7 +446,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
     sim_args = sc.mergedicts(sim_args, kwargs)
     run_args = sc.mergedicts({'verbose':verbose}, run_args)
 
-    new_sim['seed'] += ind # Reset the seed, otherwise no point of parallel runs
+    new_sim['rand_seed'] += ind # Reset the seed, otherwise no point of parallel runs
     new_sim.set_seed()
 
     # If the noise parameter is not found, guess what it should be
@@ -464,7 +464,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
     new_sim[noisepar] *= noisefactor
 
     if verbose>=1:
-        print(f'Running a simulation using {new_sim["seed"]} seed and {noisefactor} noise')
+        print(f'Running a simulation using {new_sim["rand_seed"]} seed and {noisefactor} noise')
 
     # Handle additional arguments
     for key,val in sim_args.items():
