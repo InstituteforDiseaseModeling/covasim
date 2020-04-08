@@ -51,7 +51,7 @@ The following columns are present in the data:
 
 As of April 4, 2020, There are apparently 3280 data sets.
 
-## 1. European Centre for Disease Prevention and Control 
+## 2. European Centre for Disease Prevention and Control 
 
 
 To quote the [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases) web page,
@@ -82,3 +82,56 @@ The following columns are present in the data:
 - `day`: Number of days since first reporting
 - `new_positives`: New positives on this date
 - `new_death`: Number of deaths on this date
+
+## 3. The COVID Tracking Project
+
+The COVID Tracking Project "obtains, organizes, and publishes high-quality data required to understand and respond to the COVID-19 outbreak in the United States." The project website is https://covidtracking.com
+
+
+We transform this data for use in the Covasim parameter format. It is stored
+in CSV-format. 
+
+### Updating
+
+To update the COVID Tracking Project data,
+
+```bash
+python data_loaders/load_covid_tracking_project_data.py
+```
+
+This will create a file `covid-tracking-project-data.csv` in the data directory.
+
+This adds data from each of the US states and territories, as well as for the whole of the United States. The following fields are saved:
+
+- `date`
+- `positive`
+- `negative`
+- `pending`
+- `hospitalizedCurrently`
+- `hospitalizedCumulative`
+- `inIcuCurrently`
+- `inIcuCumulative`
+- `onVentilatorCurrently`
+- `onVentilatorCumulative`
+- `recovered`
+- `hash`
+- `dateChecked`
+- `death`
+- `hospitalized`
+- `total`
+- `totalTestResults`
+- `posNeg`
+- `fips`
+- `hospitalizedIncrease`
+- `negativeIncrease`
+- `name`
+- `day`
+- `new_positives`
+- `new_negatives`
+- `new_tests`
+- `new_death`
+- `new_icu`
+- `new_vent`
+
+More details at: https://covidtracking.com/api The `new_` variables are per-day
+changes in the values, in parameter.py format.
