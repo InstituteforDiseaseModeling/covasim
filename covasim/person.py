@@ -143,7 +143,7 @@ class Person(sc.prettyobj):
                         self.date_recovered = self.date_critical + dur_crit2rec # Date they recover
                         self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2rec  # Store how long this person had COVID-19
 
-        self.viral_load = cvu.viral_load(self, **self.loadpars)
+        self.viral_load = cvu.get_viral_load(self, **self.loadpars)
         
         if source:
             self.infected_by = source.uid

@@ -9,7 +9,7 @@ import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 
-__all__ = ['sample', 'viral_load', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
+__all__ = ['sample', 'get_viral_load', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
 
 class CancelError(Exception):
     pass
@@ -70,7 +70,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
 
     return samples
 
-def viral_load(person=None, dist=None, par1=None, par2=None, size=None):
+def get_viral_load(person=None, dist=None, par1=None, par2=None, size=None):
     ''' Get the viral load distribution for this person '''
     
     choices = [
