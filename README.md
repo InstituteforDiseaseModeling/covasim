@@ -89,7 +89,7 @@ The structure of the `covasim` folder is as follows:
 * `interventions.py`: The `Intervention` class, for adding interventions and dynamically modifying parameters.
 * `parameters.py`: Functions for creating the parameters dictionary and loading the input data.
 * `person.py`: The `Person` class.
-* `population.py`: Functions for creating a population of people.
+* `population.py`: The `People` class, and functions for creating a population of people.
 * `requirements.py`: A simple module to check that imports succeeded, and turn off features if they didn't.
 * `run.py`: Functions for running simulations (e.g. parallel runs and the `Scenarios` class).
 * `sim.py`: The `Sim` class, which performs most of the heavy lifting: initializing the model, running, and plotting.

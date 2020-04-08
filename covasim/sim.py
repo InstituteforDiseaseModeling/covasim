@@ -297,7 +297,7 @@ class Sim(cvbase.BaseSim):
                 print(string)
 
         # Update each person, skipping people who are susceptible
-        not_susceptible = filter(lambda p: not p.susceptible, self.people)
+        not_susceptible = self.people.filter_out('susceptible')
         n_susceptible   = len(self.people)
 
         # Randomly infect some people (imported infections)
@@ -466,7 +466,7 @@ class Sim(cvbase.BaseSim):
         self.likelihood()
 
         # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
-        self.people = sc.odict({str(p):person for p,person in enumerate(self.people)}) # Convert to an odict for a better repr
+        # self.people = sc.odict({str(p):person for p,person in enumerate(self.people)}) # Convert to an odict for a better repr
         self.results = sc.objdict(self.results)
         self.results_ready = True
 
