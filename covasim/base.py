@@ -345,7 +345,7 @@ class BaseSim(ParsObj):
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
         if skip_attrs or not keep_population:
-            obj = self.shrink(skip_attrs=skip_attrs)
+            obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
         sc.saveobj(filename=filename, obj=obj)
