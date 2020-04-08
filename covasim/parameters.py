@@ -51,9 +51,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
     pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
-    pars['use_layers']   = use_layers
-    pars['contacts']     = None
-    pars['beta_layers']  = None
+    pars['use_layers']   = use_layers # Whether or not to use different contact layers
+    pars['contacts']     = None # The number of contacts per layer
+    pars['beta_layers']  = None # Transmissibility per layer
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
@@ -70,7 +70,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':7,  'par2':3} # Duration from critical symptoms to death
 
     # Severity parameters: probabilities of symptom progression
-
     pars['OR_no_treat']     = 2.0  # Odds ratio for how much more likely people are to die if no treatment available
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
