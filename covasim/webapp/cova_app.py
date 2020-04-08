@@ -182,6 +182,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
     # Create the sim and update the parameters
     try:
         sim = cv.Sim(web_pars)
+        sim.load_data(datafile='example_web_data.csv')
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
@@ -214,7 +215,11 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                 this_color = sim.results[key].color
                 y = sim.results[key][:]
                 fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
-                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, name=label, line_color=this_color))
+                if key in sim.data:
+                    data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
+                    print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
+                    ydata = sim.data[key]
+                    fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
             if sim['interventions']:
                 interv_day = sim['interventions'][0].days[0]
