@@ -113,7 +113,7 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     n_runs = 3
     verbose = 1
     base_pars = {
-      'n': 20000
+      'n': 5000
     }
 
     base_sim = cv.Sim(base_pars) # create sim object
@@ -161,7 +161,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     n_runs = 3
     verbose = 1
     base_pars = {
-      'n': 20000
+      'n': 5000
     }
 
     base_sim = cv.Sim(base_pars) # create sim object
