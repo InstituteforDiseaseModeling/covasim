@@ -43,13 +43,3 @@ sim.run(verbose=verbose)
 if do_plot:
     print('Plotting...')
     fig = sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
-
-
-
-
-
-
-
-
-
-
