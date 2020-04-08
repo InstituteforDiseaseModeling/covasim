@@ -451,7 +451,7 @@ class Sim(cvbase.BaseSim):
 
     def finalize(self, verbose=None):
         ''' Compute final results, likelihood, etc. '''
-        for key in self.result_flows:
+        for key in cvd.result_flows:
             self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['pop_infected'] # Include initially infected people
 

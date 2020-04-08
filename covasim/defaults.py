@@ -6,9 +6,9 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['result_flows', 'age_data', 'colors', 'sim_plots', 'scen_plots', 'default_scenario']
+__all__ = ['default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots', 'default_scenario']
 
-# The types of result that are counted as flows -- used in sim.py
+# The types of result that are counted as flows -- used in sim.py, does not need to be externally visible
 result_flows = ['infections',
                 'tests',
                 'diagnoses',
@@ -20,7 +20,7 @@ result_flows = ['infections',
 ]
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
-age_data = np.array([
+default_age_data = np.array([
             [ 0,  4, 0.0605],
             [ 5,  9, 0.0607],
             [10, 14, 0.0566],
@@ -42,8 +42,9 @@ age_data = np.array([
             [90, 99, 0.00672],
             ])
 
+
 # Specify plot colors -- used in sim.py
-colors = sc.objdict(
+default_colors = sc.objdict(
     susceptible = '#5e7544',
     infectious  = '#c78f65',
     infections  = '#c75649',
@@ -56,8 +57,9 @@ colors = sc.objdict(
     deaths      = '#000000',
     )
 
+
 # Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines; used in sim.py
-sim_plots = sc.odict({
+default_sim_plots = sc.odict({
         'Total counts': [
             'cum_infections',
             'cum_diagnoses',
@@ -84,11 +86,12 @@ sim_plots = sc.odict({
 
 
 # Default scenario plots -- used in run.py
-scen_plots = [
+default_scen_plots = [
             'cum_infections',
             'n_infectious',
             'n_severe',
 ]
+
 
 # The minimal scenario to run -- used in run.py
 default_scenario = {'baseline':{'name':'Baseline', 'pars':{}}}

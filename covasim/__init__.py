@@ -7,6 +7,7 @@ from . import requirements
 
 #%% Import the actual model
 from .utils import *
+from .defaults import *
 from .base import *
 from .parameters import *
 from .person import *
