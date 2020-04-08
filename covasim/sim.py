@@ -436,7 +436,8 @@ class Sim(cvbase.BaseSim):
         self.likelihood()
 
         # Convert results to an objdict to allow e.g. sim.results.diagnoses
-        # Access people by index using `Sim.get_person(25)`
+        people_dict = sc.odict({str(p):person for p,person in enumerate(self.people)}) # Convert to an odict for better printing
+        self.people = people_dict
         self.results = sc.objdict(self.results)
         self.results_ready = True
 
