@@ -324,6 +324,7 @@ class Sim(cvbase.BaseSim):
                 print(string)
 
         # Update each person, skipping people who are susceptible
+        susceptible = filter(lambda p: p.susceptible, self.people.values())
         not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
         n_susceptible   = len(self.people)
 
@@ -334,9 +335,10 @@ class Sim(cvbase.BaseSim):
                 for i in range(int(n_import)):
                     new_infections += self.people[s_uids[i]].infect(t=t)
 
-        # If they're quarantined, this affects their attack rate
-        person.check_known_contact(t, quarantine_period) # Set know_contact and go into quarantine
-        person.check_quarantined(t) # Come out of quarantine
+        for person in susceptible:
+            # If they're quarantined, this affects their transmission rate
+            person.check_known_contact(t, quarantine_period) # Set know_contact and go into quarantine
+            person.check_quarantined(t) # Come out of quarantine
 
         for person in not_susceptible:
             n_susceptible -= 1
@@ -347,6 +349,10 @@ class Sim(cvbase.BaseSim):
                 if not person.infectious and t == person.date_infectious: # It's the day they become infectious
                     person.infectious = True
                     sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
+
+            # If they're quarantined, this affects their transmission rate
+            person.check_known_contact(t, quarantine_period) # Set know_contact and go into quarantine
+            person.check_quarantined(t) # Come out of quarantine
 
             # If infectious, update status according to the course of the infection, and check if anyone gets infected
             if person.infectious:
@@ -377,8 +383,7 @@ class Sim(cvbase.BaseSim):
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
                     thisbeta = beta * \
                                (asymp_factor if not person.symptomatic else 1.) * \
-                               (diag_factor if person.diagnosed else 1.) * \
-                                 - nice if by layer
+                               (diag_factor if person.diagnosed else 1.)
 
                     # Determine who gets infected
                     community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
@@ -400,7 +405,7 @@ class Sim(cvbase.BaseSim):
                             # See whether we will infect this person
                             infect_this_person = True # By default, infect them...
                             if target_person.quarantined:
-                                infect_this_person = not cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating
+                                infect_this_person = not cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
                             if infect_this_person:
                                 new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                 sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
