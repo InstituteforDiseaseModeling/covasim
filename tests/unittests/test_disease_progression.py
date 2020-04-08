@@ -10,7 +10,6 @@ from unittest_support_classes import CovaSimTest, TestProperties
 ResKeys = TestProperties.ResultsDataKeys
 ParamKeys = TestProperties.ParameterKeys
 
-pytest.skip("Requires update (regression issue)", allow_module_level=True)
 
 class DiseaseProgressionTests(CovaSimTest):
     def setUp(self):
@@ -138,7 +137,7 @@ class DiseaseProgressionTests(CovaSimTest):
                 par2=std_dev
             )
             prob_dict = {
-                TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 0
+                TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 0
             }
             self.set_simulation_prognosis_probability(prob_dict)
             serial_delay = {
@@ -268,7 +267,7 @@ class DiseaseProgressionTests(CovaSimTest):
         self.set_everyone_infectious_same_day(num_agents=total_agents,
                                               days_to_infectious=exposed_delay)
         prob_dict = {
-            ParamKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 0.0
+            ParamKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         infectious_durations = [1, 2, 5, 10, 20] # Keep values in order
@@ -369,7 +368,7 @@ class DiseaseProgressionTests(CovaSimTest):
         total_agents = 500
         self.set_everyone_critical(num_agents=500, constant_delay=0)
         prob_dict = {
-            ParamKeys.ProgressionKeys.ProbabilityKeys.crt_to_death_probability: 1.0
+            ParamKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.crt_to_death_probability: 1.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
 
