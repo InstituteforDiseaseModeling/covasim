@@ -294,7 +294,7 @@ class Scenarios(cvbase.ParsObj):
         return fig
 
 
-    def to_json(self, filename=None, tostring=True, indent=2, *args, **kwargs):
+    def to_json(self, filename=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
         """
         Export results as JSON.
 
@@ -314,7 +314,7 @@ class Scenarios(cvbase.ParsObj):
              'scenarios': self.scenarios
              }
         if filename is None:
-            output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
+            output = sc.jsonify(d, tostring=tostring, indent=indent, verbose=verbose, *args, **kwargs)
         else:
             output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
 
@@ -539,9 +539,9 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     # Or, combine them into a single sim with scaled results
     else:
         output_sim = sc.dcp(sims[0])
-        output_sim.pars['parallelized'] = n_runs  # Store how this was parallelized
-        output_sim.pars['n'] = output_sim.n*n_runs  # Record the number of people
-        output_sim.population = None  # Drop population because the microstructure won't be correct if just concatenated (also would need to change indexes in all contact layers)
+        output_sim.parallelized = {'parallelized':True, 'combined':True, 'n_runs':n_runs}  # Store how this was parallelized
+        output_sim['pop_size'] = output_sim.n*n_runs  # Record the number of people
+        output_sim.people = None  # Drop population because the microstructure won't be correct if just concatenated (also would need to change indexes in all contact layers)
 
         for s,sim in enumerate(sims[1:]): # Skip the first one
             for key in sim.reskeys:

@@ -236,7 +236,7 @@ class BaseSim(ParsObj):
         return pardict
 
 
-    def to_json(self, filename=None, tostring=True, indent=2, *args, **kwargs):
+    def to_json(self, filename=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
         """
         Export results as JSON.
 
@@ -252,7 +252,7 @@ class BaseSim(ParsObj):
         pardict = self._make_pardict()
         d = {'results': resdict, 'parameters': pardict}
         if filename is None:
-            output = sc.jsonify(d, tostring=tostring, indent=indent, *args, **kwargs)
+            output = sc.jsonify(d, tostring=tostring, indent=indent, verbose=verbose, *args, **kwargs)
         else:
             output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
 
