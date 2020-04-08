@@ -4,7 +4,6 @@ Set the parameters for Covasim.
 
 import numpy as np
 import pandas as pd
-import datetime as dt
 
 
 __all__ = ['make_pars', 'set_contacts', 'get_prognoses', 'load_data']
