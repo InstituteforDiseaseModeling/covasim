@@ -123,7 +123,7 @@ def test_dynamic_resampling(): # If being run via pytest, turn off
 
     pars = pars = {
         'n_days': 140,
-        'n': 50000,
+        'pop_size': 50000,
         'resample': 1,
         'resample_max_pop': 10000
     }

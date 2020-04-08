@@ -52,12 +52,12 @@ class Sim(cvbase.BaseSim):
         self.load_data(datafile, datacols) # Load the data, if provided
         self.load_population(popfile)      # Load the population, if provided
         self.update_pars(pars)             # Update the parameters, if provided
-        return
 
         # if resampling is enabled, make 100k(default) pop size
-        if self["resample"] and self["n"] > self["resample_max_pop"]:
-            self.max_n = self["n"]
-            self["n"] = self["resample_max_pop"]
+        if self["resample"] and self["pop_size"] > self["resample_max_pop"]:
+
+            self.max_n = self["pop_size"]
+            self["pop_size"] = self["resample_max_pop"]
 
         # dynamic resampling
         self.resampe_threshold = self["resample_threshold"]  # Fraction of total pop that isn't susceptible when we trigger scaling
@@ -412,15 +412,15 @@ class Sim(cvbase.BaseSim):
 
     def resample(self, current_scale):
         # Check if max pop was already reached
-        if current_scale * self["n"] >= self.max_n:
+        if current_scale * self["pop_size"] >= self.max_n:
             return current_scale
-        susceptible = list(filter(lambda p: p.susceptible, self.people.values()))
+        susceptible = list(self.people.filter_in('susceptible'))
         # Check if we've reached point when we want to resample and we didn't reach max population
         if (len(susceptible) / len(self.people)) < self.resampe_threshold:
             # Check if we've reached max pop
-            if current_scale * self.resample_factor * self["n"] > self.max_n:
+            if current_scale * self.resample_factor * self["pop_size"] > self.max_n:
                 # Calculate new resample_factor to get us close to maxumum population
-                self.resample_factor = self.max_n / (self["n"] * current_scale)
+                self.resample_factor = self.max_n / (self["pop_size"] * current_scale)
             # Pick random list of people to make susceptible again
             new_susceptible = np.random.choice(list(self.people.keys()), size=round(len(self.people) / self.resample_factor))
             for p in new_susceptible:
