@@ -213,7 +213,10 @@ class BaseSim(ParsObj):
             if isinstance(res, Result):
                 resdict[key] = res.values
             elif for_json:
-                resdict[key] = res
+                if key == 'date':
+                    resdict[key] = [str(d) for d in res] # Convert dates to strings
+                else:
+                    resdict[key] = res
         return resdict
 
 
@@ -228,11 +231,13 @@ class BaseSim(ParsObj):
 
         """
         pardict = {}
-        for k in self.pars:
-            if k == 'interventions':
-                pardict['interventions'] = [intervention.to_json() for intervention in self.pars['interventions']]
+        for key in self.pars.keys():
+            if key == 'interventions':
+                pardict[key] = [intervention.to_json() for intervention in self.pars[key]]
+            elif key == 'start_day':
+                pardict[key] = str(self.pars[key])
             else:
-                pardict[k] = self.pars[k]
+                pardict[key] = self.pars[key]
         return pardict
 
 

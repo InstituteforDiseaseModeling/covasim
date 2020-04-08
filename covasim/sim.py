@@ -188,9 +188,9 @@ class Sim(cvbase.BaseSim):
 
         # Handle contacts
         contacts = self['contacts']
-        if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's community contacts
-            self['contacts']    = {'h':0, 's':0, 'w':0, 'c':contacts}
-            self['beta_layers'] = {'h':0, 's':0, 'w':0, 'c':1.0}
+        if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's all contacts
+            self['contacts']    = {'a':contacts}
+            self['beta_layers'] = {'a':1.0}
 
         # Handle population data
         popdata_choices = ['random', 'microstructure', 'synthpops']
