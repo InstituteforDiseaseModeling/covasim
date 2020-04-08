@@ -182,13 +182,13 @@ class Sim(cvbase.BaseSim):
             self['beta_layers'] = {'h':0, 's':0, 'w':0, 'c':1.0}
 
         # Handle population data
-        popdata_choices = ['random', 'microstructure']
-        if sc.isnumber(self['usepopdata']) or isinstance(self['usepopdata'], bool): # Convert e.g. usepopdata=1 to 'bayesian'
-            self['usepopdata'] = popdata_choices[int(self['usepopdata'])] # Choose one of these
-        if self['usepopdata'] not in popdata_choices:
-            choice = self['usepopdata']
+        popdata_choices = ['random', 'microstructure', 'synthpops']
+        if sc.isnumber(self['pop_type']) or isinstance(self['usepopdata'], bool): # Convert e.g. pop_type=1 to 'microstructure'
+            self['pop_type'] = popdata_choices[int(self['pop_type'])] # Choose one of these
+        if self['pop_type'] not in popdata_choices:
+            choice = self['pop_type']
             choicestr = ', '.join(popdata_choices)
-            errormsg = f'Population data option "{choice}" not available; choices are: {choicestr}'
+            errormsg = f'Population type "{pop_type}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
 
         # Handle interventions
