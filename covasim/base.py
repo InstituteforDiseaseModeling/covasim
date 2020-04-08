@@ -230,8 +230,12 @@ class BaseSim(ParsObj):
         Returns:
 
         """
-        pardict = self.pars
-        pardict['interventions'] = [intervention.to_json() for intervention in pardict['interventions']]
+        pardict = {}
+        for k in self.pars:
+            if k == 'interventions':
+                pardict['interventions'] = [intervention.to_json() for intervention in self.pars['interventions']]
+            else:
+                pardict[k] = self.pars[k]
         return pardict
 
 
@@ -294,12 +298,12 @@ class BaseSim(ParsObj):
 
     def shrink(self, skip_attrs=None):
         '''
-        "Shrinks" the simulation by removing the people and UIDs, and returns
+        "Shrinks" the simulation by removing the population, and returns
         a copy of the "shrunken" simulation. Used to reduce the memory required
         for saved files.
 
         Args:
-            skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "people", "popdict", and "uids"
+            skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "population"
 
         Returns:
             shrunken_sim (Sim): a Sim object with the listed attributes removed
@@ -307,7 +311,7 @@ class BaseSim(ParsObj):
 
         # By default, skip people (~90%) and uids (~9%)
         if skip_attrs is None:
-            skip_attrs = ['popdict', 'uids', 'people']
+            skip_attrs = ['population']
 
         # Create the new object, and copy original dict, skipping the skipped attributes
         shrunken_sim = object.__new__(self.__class__)
@@ -316,7 +320,7 @@ class BaseSim(ParsObj):
         return shrunken_sim
 
 
-    def save(self, filename=None, keep_people=False, skip_attrs=None, **kwargs):
+    def save(self, filename=None, keep_population=False, skip_attrs=None, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
@@ -334,7 +338,7 @@ class BaseSim(ParsObj):
             filename = self.filename
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
-        if skip_attrs or not keep_people:
+        if skip_attrs or not keep_population:
             obj = self.shrink(skip_attrs=skip_attrs)
         else:
             obj = self

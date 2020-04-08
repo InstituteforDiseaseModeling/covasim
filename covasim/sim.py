@@ -11,8 +11,7 @@ import matplotlib.ticker as ticker
 from . import utils as cvu
 from . import base as cvbase
 from . import parameters as cvpars
-from . import people as cvppl
-
+from . import population as cvpop
 
 # Specify all externally visible functions this file defines
 __all__ = ['default_colors', 'default_sim_plots', 'Sim']
@@ -28,7 +27,6 @@ default_colors = sc.objdict(
     symptomatic = '#c1ad71',
     severe      = '#c1981d',
     critical    = '#b86113',
-    diagnosed   = '#3443eb',
     deaths      = '#000000',
     )
 
@@ -222,7 +220,6 @@ class Sim(cvbase.BaseSim):
         self.results['n_symptomatic'] = init_res('Number symptomatic',       color=dcols.symptomatic)
         self.results['n_severe']      = init_res('Number of severe cases',   color=dcols.severe)
         self.results['n_critical']    = init_res('Number of critical cases', color=dcols.critical)
-        self.results['n_diagnosed']   = init_res('Number of confirmed cases', color=dcols.diagnosed)
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
@@ -266,7 +263,7 @@ class Sim(cvbase.BaseSim):
         cvppl.make_people(self, verbose=verbose, id_len=id_len, **kwargs)
 
         # Create the seed infections
-        for i in range(int(self['n_seed'])):
+        for i in range(int(self['n_infected'])):
             person = self.get_person(i)
             person.infect(t=0)
 
@@ -288,7 +285,6 @@ class Sim(cvbase.BaseSim):
         # If we have reached the end of the simulation, then do nothing
         if self.t == self.npts:
             return
-
 
         # Zero counts for this time step: stocks
         n_susceptible   = 0
@@ -384,6 +380,19 @@ class Sim(cvbase.BaseSim):
                                (diag_factor if person.diagnosed else 1.) * \
                                (cont_factor if person.known_contact else 1.)
 
+
+                    for layer in self.population.contact_layers.values():
+                        contacts = layer.get_contacts(person, t)
+                        layer_beta = thisbeta * layer.beta
+                        transmission_inds = cvu.bf(layer_beta, contacts)
+
+                        for contact_ind in transmission_inds:
+                            target_person = self.population.get_person(contact_ind)  # Stored by integer
+
+                            # This person was diagnosed last time step: time to flag their contacts
+                            if person.date_diagnosed is not None and person.date_diagnosed == t-1 and layer.traceable:
+                                target_person.known_contact = True
+
                     # Determine who gets infected
                     community_contact_inds = cvu.choose(max_n=n_people, n=n_comm_contacts)
                     person.contacts['c'] = community_contact_inds
@@ -400,7 +409,12 @@ class Sim(cvbase.BaseSim):
                             new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                             sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
+                            # Skip people who are not susceptible
+                            if target_person.susceptible:
+                                new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
+        sc.printv(f'Number of beds available: {n_beds-n_severe}, bed constraint: {bed_constraint}', 2, verbose)
         # End of person loop; apply interventions
         for intervention in self['interventions']:
             intervention.apply(self)
@@ -426,6 +440,7 @@ class Sim(cvbase.BaseSim):
         self.results['new_deaths'][t]      = new_deaths
 
         self.t += 1
+
 
     def run(self, do_plot=False, verbose=None, **kwargs):
         '''
@@ -479,7 +494,7 @@ class Sim(cvbase.BaseSim):
     def finalize(self, verbose=None):
         for key in self.result_flows:
             self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
-        self.results['cum_infections'].values += self['n_seed'] # Include initially infected people
+        self.results['cum_infections'].values += self['n_infected'] # Include initially infected people
 
         # Scale the results
         for reskey in self.reskeys:
@@ -491,8 +506,8 @@ class Sim(cvbase.BaseSim):
         self.compute_r_eff()
         self.likelihood()
 
-        # Convert to an odict to allow e.g. sim.people[25] later, and results to an objdict to allow e.g. sim.results.diagnoses
-        self.people = sc.odict(self.people)
+        # Convert results to an objdict to allow e.g. sim.results.diagnoses
+        # Access people by index using `Sim.get_person(25)`
         self.results = sc.objdict(self.results)
         self.results_ready = True
 
@@ -592,7 +607,7 @@ class Sim(cvbase.BaseSim):
                             sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
 
             self.results['likelihood'] = loglike
-            
+
         sc.printv(f'Likelihood: {loglike}', 1, verbose)
         return loglike
 
@@ -615,7 +630,7 @@ class Sim(cvbase.BaseSim):
 
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             scatter_args=None, axis_args=None, as_dates=True, interval=None, dateformat=None,
+             scatter_args=None, axis_args=None, legend_args=None, as_dates=True, interval=None, dateformat=None,
              font_size=18, font_family=None, use_grid=True, use_commaticks=True, do_show=True,
              verbose=None):
         '''
@@ -629,6 +644,7 @@ class Sim(cvbase.BaseSim):
             plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            legend_args (dict): Dictionary of kwargs to be passed to pl.legend()
             as_dates (bool): Whether to plot the x-axis as dates or time points
             interval (int): Interval between tick marks
             dateformat (str): Date string format, e.g. '%B %d'
@@ -656,6 +672,7 @@ class Sim(cvbase.BaseSim):
         plot_args    = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
         scatter_args = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
         axis_args    = sc.mergedicts({'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}, axis_args)
+        legend_args  = sc.mergedicts({'loc': 'best'}, legend_args)
 
         fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
@@ -679,8 +696,9 @@ class Sim(cvbase.BaseSim):
             if self.data is not None and len(self.data):
                 pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
 
+            pl.legend(**legend_args)
             pl.grid(use_grid)
-            cvu.fixaxis(self)
+            sc.setylim()
             if use_commaticks:
                 sc.commaticks()
             pl.title(title)
@@ -695,8 +713,9 @@ class Sim(cvbase.BaseSim):
                 @ticker.FuncFormatter
                 def date_formatter(x, pos):
                     return (self['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
-                ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                 ax.xaxis.set_major_formatter(date_formatter)
+                if not interval:
+                    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
             # Plot interventions
             for intervention in self['interventions']:

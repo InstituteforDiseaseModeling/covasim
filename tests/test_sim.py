@@ -38,9 +38,9 @@ def test_microsim():
     sim = cv.Sim()
     pars = {
         'n': 10,
-        'n_seed': 1,
+        'n_infected': 1,
+        'n_days': 10,
         'contacts': 2,
-        'n_days': 10
         }
     sim.update_pars(pars)
     sim.run()
