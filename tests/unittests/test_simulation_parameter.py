@@ -92,7 +92,7 @@ class SimulationParameterTests(CovaSimTest):
             self.run_sim(negative_infected_count)
             pass
         error_message = str(context.exception)
-        self.assertIn('n_infected', error_message)
+        self.assertIn('pop_infected', error_message)
         pass
 
     @unittest.skip("Need to construct a population now")

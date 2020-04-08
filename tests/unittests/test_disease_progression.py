@@ -22,7 +22,7 @@ class DiseaseProgressionTests(CovaSimTest):
     def test_exposure_to_infectiousness_delay_deviation_scaling(self):
         """
         Configure exposure to infectiousness delay to 1/2 sim
-        length, and std_dev to 0. Verify that every n_infected
+        length, and std_dev to 0. Verify that every pop_infected
         at start goes infectious on the same day
         """
         total_agents = 500

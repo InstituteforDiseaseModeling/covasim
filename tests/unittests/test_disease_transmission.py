@@ -37,7 +37,7 @@ class DiseaseTransmissionTests(CovaSimTest):
             TestProperties.ResultsDataKeys.exposed_at_timestep
         )
         prev_exposed = exposed_today_channel[0]
-        self.assertEqual(prev_exposed, Hightrans.n_infected,
+        self.assertEqual(prev_exposed, Hightrans.pop_infected,
                          msg="Make sure we have some initial infections")
         for t in range(1, len(exposed_today_channel)):
             today_exposed = exposed_today_channel[t]
@@ -81,7 +81,7 @@ class DiseaseTransmissionTests(CovaSimTest):
             TestProperties.ResultsDataKeys.exposed_at_timestep
         )
         prev_exposed = exposed_today_channel[0]
-        self.assertEqual(prev_exposed, Hightrans.n_infected,
+        self.assertEqual(prev_exposed, Hightrans.pop_infected,
                          msg="Make sure we have some initial infections")
         for t in range(1, len(exposed_today_channel)):
             today_exposed = exposed_today_channel[t]
