@@ -53,7 +53,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
         if pop_type == 'random':
             popdict = make_randpop(sim)
         elif pop_type == 'synthpops':
-            popdict = make_synthpop()
+            popdict = make_synthpop(sim)
         else:
             raise NotImplementedError
 
@@ -146,7 +146,7 @@ def make_synthpop(sim):
 
     # Replace contact UIDs with ints...
     uid_mapping = {uid:u for u,uid in enumerate(uids)}
-    key_mapping = {'H':'h', 'S':'s', 'W':'w', 'R':'c'} # Remap keys from old names to new names
+    key_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
     for uid,person in population.items():
         uid_contacts = person['contacts']
         int_contacts = {}
