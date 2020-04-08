@@ -84,7 +84,6 @@ class Sim(cvbase.BaseSim):
         self.initialized   = False # Whether or not initialization is complete
         self.results_ready = False # Whether or not results are ready
         self.people        = []    # Initialize these here so methods that check their length can see they're empty
-        self.contacts      = []    # Contact networks
         self.contact_keys  = None  # Keys for contact networks
         self.results       = {}    # For storing results
 
@@ -262,8 +261,8 @@ class Sim(cvbase.BaseSim):
         cvpop.make_people(self, verbose=verbose, id_len=id_len, **kwargs)
 
         # Create the seed infections
-        for i in range(int(self['n_infected'])):
-            person = self.get_person(i)
+        for i in range(int(self['pop_infected'])):
+            person = self.people[i]
             person.infect(t=0)
 
         return
@@ -324,7 +323,7 @@ class Sim(cvbase.BaseSim):
                 print(string)
 
         # Update each person, skipping people who are susceptible
-        not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
+        not_susceptible = filter(lambda p: not p.susceptible, self.people)
         n_susceptible   = len(self.people)
 
         # Randomly infect some people (imported infections)
@@ -381,13 +380,14 @@ class Sim(cvbase.BaseSim):
                                (cont_factor if person.known_contact else 1.)
 
                     # Set community contacts
+                    these_contacts = person.contacts
                     if n_comm_contacts:
                         community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-                        person.contacts['c'] = community_contact_inds
+                        these_contacts['c'] = community_contact_inds
 
                     # Determine who gets infected
                     for ckey in self.contact_keys:
-                        thesecontacts = person.contacts[ckey]
+                        thesecontacts = these_contacts[ckey]
                         if thesecontacts:
                             this_beta_layer = thisbeta*beta_layers[ckey]
                             transmission_inds = cvu.bf(this_beta_layer, thesecontacts)

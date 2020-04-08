@@ -64,7 +64,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
     # Actually create the people
     people = [] # List for storing the people
     for p in range(pop_size): # Loop over each person
-        keys = ['uid', 'age', 'sex']
+        keys = ['uid', 'age', 'sex', 'contacts']
         person_args = {}
         for key in keys:
             person_args[key] = popdict[key][p] # Convert from list to dict
@@ -74,8 +74,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
     # Store UIDs and people
     sim.popdict = popdict
     sim.people = people
-    sim.contact_keys = list(sim['contacts'].keys())
-    sim.contacts = popdict['contacts']
+    sim.contact_keys = popdict['contact_keys']
 
     average_age = sum(popdict['age']/pop_size)
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 1, verbose)
@@ -126,13 +125,16 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5):
     popdict = {}
     popdict['age']      = ages
     popdict['sex']      = sexes
-    popdict['contacts'] = make_random_contacts(sim)
+
+    contacts, contact_keys = make_random_contacts(sim)
+    popdict['contacts'] = contacts
+    popdict['contact_keys'] = contact keys
 
     return popdict
 
 
 def make_synthpop(sim):
-    ''' Make a population using synthpops '''
+    ''' Make a population using synthpops, including contacts '''
     import synthpops as sp # Optional import
     population = sp.make_population(n=sim['n'])
     uids, ages, sexes, contacts = [], [], [], []
@@ -160,21 +162,23 @@ def make_synthpop(sim):
     popdict['age']      = np.array(ages)
     popdict['sex']      = np.array(sexes)
     popdict['contacts'] = contacts
+    popdict['contact_keys'] = list(key_mapping.values())
     return popdict
 
 
 def make_random_contacts(sim):
-    # Make contacts
+    ''' Make random static contacts '''
     pop_size = int(sim['n']) # Number of people
     contacts = []
+    contacts = sim['contacts']
+    contacts.pop('c', None) # Remove community
+    contact_keys = contacts.keys()
     for p in range(pop_size):
-        contact_dict = {'c':0}
-        for key in sim['contacts'].keys():
-            if key != 'c': # Skip community contacts, these are chosen afresh daily
-                n_contacts = cvu.pt(sim['contacts'][key]) # Draw the number of Poisson contacts for this person
-                contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
+        for key in contact_keys:
+            n_contacts = cvu.pt(contacts[key]) # Draw the number of Poisson contacts for this person
+            contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
         contacts.append(contact_dict)
-    return contacts
+    return contacts, contact_keys
 
 
 def make_microstructured_contacts(sim):
