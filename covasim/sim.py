@@ -408,7 +408,7 @@ class Sim(cvbase.BaseSim):
                             # See whether we will infect this person
                             infect_this_person = True # By default, infect them...
                             if target_person.quarantined:
-                                infect_this_person = not cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
+                                infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
                             if infect_this_person:
                                 new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                 sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
