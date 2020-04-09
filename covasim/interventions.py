@@ -253,12 +253,11 @@ class test_num(Intervention):
         # Check that there are still tests
         if t < len(self.daily_tests):
             n_tests = self.daily_tests[t]  # Number of tests for this day
-            sim.results['new_tests'][t] += n_tests
+            if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
+                return
+            else:
+                sim.results['new_tests'][t] += n_tests
         else:
-            return
-
-        # If there are no tests today, abort early
-        if not (n_tests and pl.isfinite(n_tests)):
             return
 
         test_probs = np.ones(sim.n)
