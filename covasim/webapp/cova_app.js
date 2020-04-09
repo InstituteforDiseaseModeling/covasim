@@ -97,7 +97,7 @@ var vm = new Vue({
             interventionTableConfig,
             running: false,
             err: '',
-            reset_options: ['Example', 'Seattle'], // , 'Wuhan', 'Global'],
+            reset_options: ['Example'],//, 'Seattle', 'Wuhan', 'Global'],
             reset_choice: 'Example'
         };
     },

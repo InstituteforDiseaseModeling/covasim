@@ -10,7 +10,7 @@ do_plot   = 1
 do_show   = 1
 do_save   = 0
 debug     = 1
-fig_path  = 'results/testing_beds.png'
+fig_path  = 'results/testing_borderclosure.png'
 
 def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
     sc.heading('Test of bed capacity estimation')
@@ -22,7 +22,7 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
     n_runs = 3
     verbose = 1
 
-    basepars = {'n': 1000}
+    basepars = {'pop_size': 1000}
     metapars = {'n_runs': n_runs}
 
     sim = cv.Sim()
@@ -32,20 +32,20 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
         'baseline': {
           'name': 'No bed constraints',
           'pars': {
-              'n_infected': 100
+              'pop_infected': 100
           }
         },
         'bedconstraint': {
             'name': 'Only 10 beds available',
             'pars': {
-                'n_infected': 100,
+                'pop_infected': 100,
                 'n_beds': 10,
             }
         },
         'bedconstraint2': {
             'name': 'Only 1 bed available',
             'pars': {
-                'n_infected': 100,
+                'pop_infected': 100,
                 'n_beds': 1,
                 # 'OR_no_treat': 10., # nb. scenarios cannot currently overwrite nested parameters
                 # This prevents overwriting OR_no_treat due to recent refactoring but more generally
@@ -54,7 +54,7 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
         },
     }
 
-    
+
 
     scens = cv.Scenarios(sim=sim, basepars=basepars, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose, debug=debug)
@@ -71,11 +71,58 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
     return scens
 
 
+def test_borderclosure(do_plot=False, do_show=True, do_save=False, fig_path=None):
+    sc.heading('Test effect of border closures')
+
+    sc.heading('Setting up...')
+
+    sc.tic()
+
+    n_runs = 3
+    verbose = 1
+
+    basepars = {'pop_size': 1000}
+    basepars = {'n_imports': 5}
+    metapars = {'n_runs': n_runs}
+
+    sim = cv.Sim()
+
+    # Define the scenarios
+    scenarios = {
+        'baseline': {
+            'name': 'No border closures',
+            'pars': {
+            }
+        },
+        'borderclosures_day1': {
+          'name':'Close borders on day 1',
+          'pars': {
+              'interventions': [cv.dynamic_pars({'n_imports': {'days': 1, 'vals': 0}})]
+          }
+          },
+        'borderclosures_day10': {
+            'name': 'Close borders on day 10',
+            'pars': {
+                'interventions': [cv.dynamic_pars({'n_imports': {'days': 10, 'vals': 0}})]
+            }
+        },
+    }
+
+    scens = cv.Scenarios(sim=sim, basepars=basepars, metapars=metapars, scenarios=scenarios)
+    scens.run(verbose=verbose, debug=debug)
+
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+
+    return scens
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
 
     sc.toc()
 

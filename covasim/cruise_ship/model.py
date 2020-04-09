@@ -60,7 +60,7 @@ class Sim(cv.BaseSim):
             pars = cova_pars.make_pars()
         super().__init__(pars) # Initialize and set the parameters as attributes
         self.data = cova_pars.load_data(datafile)
-        self.set_seed(self['seed'])
+        self.set_seed(self['rand_seed'])
         self.init_results()
         self.init_people()
         self.interventions = {}
