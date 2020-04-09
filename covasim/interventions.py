@@ -280,7 +280,7 @@ class contact_tracing(Intervention):
     '''
     Contact tracing of positives
     '''
-    def __init__(self, trace_probs, trace_time, contact_reduction=None):
+    def __init__(self, trace_probs, trace_time, start_day=0, contact_reduction=None):
         super().__init__()
         self.trace_probs = trace_probs
         self.trace_time = trace_time

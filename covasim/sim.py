@@ -194,7 +194,7 @@ class Sim(cvbase.BaseSim):
         self.results['n_severe']      = init_res('Number of severe cases',    color=dcols.severe)
         self.results['n_critical']    = init_res('Number of critical cases',  color=dcols.critical)
         self.results['n_diagnosed']   = init_res('Number of confirmed cases', color=dcols.diagnoses)
-        self.results['n_quarantined'] = init_res('Number in quarantine',     color=dcols.diagnosed)
+        self.results['n_quarantined'] = init_res('Number in quarantine',      color=dcols.diagnoses)
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
@@ -296,8 +296,8 @@ class Sim(cvbase.BaseSim):
                 print(string)
 
         # Update each person, skipping people who are susceptible
-        susceptible = filter(lambda p: p.susceptible, self.people.values())
-        not_susceptible = filter(lambda p: not p.susceptible, self.people.values())
+        susceptible = filter(lambda p: p.susceptible, self.people)
+        not_susceptible = filter(lambda p: not p.susceptible, self.people)
         n_susceptible   = len(self.people)
 
         # Randomly infect some people (imported infections)
@@ -369,19 +369,15 @@ class Sim(cvbase.BaseSim):
                     for ckey in self.contact_keys:
                         contact_ids = person_contacts[ckey]
                         if len(contact_ids):
-                            this_beta_layer = thisbeta*\
-                                              beta_layers[ckey]*\
+                            this_beta_layer = thisbeta *\
+                                              beta_layers[ckey] *\
                                               (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
 
                             transmission_inds = cvu.bf(this_beta_layer, contact_ids)
-                            for contact_ind in transmission_inds: # Loop over people who get infected
-                                target_person = self.people[contact_ind]
-                                if target_person.susceptible: # Skip people who are not susceptible
-                                    new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                    sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
-                                    if target_person.susceptible: # Skip people who are not susceptible
-                                        new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+
+                    for contact_ind in transmission_inds: # Loop over people who get infected
+                        target_person = self.people[contact_ind]
+                        if target_person.susceptible: # Skip people who are not susceptible
 
                             # See whether we will infect this person
                             infect_this_person = True # By default, infect them...

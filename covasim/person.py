@@ -49,6 +49,7 @@ class Person(sc.prettyobj):
         self.date_dead          = None
         self.date_known_contact = None
         self.date_quarantined   = None
+        self.end_quarantine     = None  # Time as which to release from quarantine
 
         # Keep track of durations
         self.dur_exp2inf  = None # Duration from exposure to infectiousness
