@@ -43,24 +43,25 @@ jobs:
       - name: Install Covasim
         run: |
           python setup.py develop --install-dir ~/.cache/site-packages
+          pip install pytest
       # - name: Install synthpops
       #   working-directory: ./synthpops
       #   run: python setup.py develop
       - name: Run tests
         working-directory: ./tests
-        run: |
-          pip install pytest
-          pytest test*.py unittests/test*.py --junitxml=test-results.xml --durations=0 # Run actual tests
-          # pytest test*.py --junitxml=test-results.xml --durations=0 # Run actual tests -- use this line instead if unit tests are broken
+        run: pytest test*.py -durations=0 # Run actual tests
+      - name: Run unit tests
+        working-directory: ./tests/unittests
+        run: pytest test*.py --durations=0 # Run actual tests
       - name: Run examples
         working-directory: ./examples
         run: python *.py
       - name: Run cruise ship
         working-directory: ./covasim/cruise_ship
         run: python test*.py
-      - name: Upload test results
-        uses: actions/upload-artifact@v1
-        if: failure()
-        with:
-          name: test_results
-          path: tests/test-results.xml
+      # - name: Upload test results
+      #   uses: actions/upload-artifact@v1
+      #   if: failure()
+      #   with:
+      #     name: test_results
+      #     path: tests/test-results.xml
