@@ -241,21 +241,52 @@ class BaseSim(ParsObj):
         return pardict
 
 
-    def to_json(self, filename=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
+    def to_json(self, filename=None, keys=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
         """
         Export results as JSON.
 
         Args:
             filename (str): if None, return string; else, write to file
+            keys (str or list): attributes to write to json (default: results, parameters, and summary)
+            tostring (bool): if not writing to file, whether to write to string (alternative is sanitized dictionary)
+            indent (int): if writing to file, how many indents to use per nested level
+            verbose (bool): detail to print
+            args (list): passed to savejson()
+            kwargs (dict): passed to savejson()
 
         Returns:
             A unicode string containing a JSON representation of the results,
             or writes the JSON file to disk
 
+        Examples:
+            string = sim.to_json()
+            sim.to_json('results.json')
+            sim.to_json('summary.json', keys='summary')
         """
-        resdict = self._make_resdict()
-        pardict = self._make_pardict()
-        d = {'results': resdict, 'parameters': pardict}
+
+        # Handle keys
+        if keys is None:
+            keys = ['results', 'pars', 'summary']
+        keys = sc.promotetolist(keys)
+
+        # Convert to JSON-compatibleformat
+        d = {}
+        for key in keys:
+            if key == 'results':
+                resdict = self._make_resdict()
+                d['results'] = resdict
+            elif key in ['pars', 'parameters']:
+                pardict = self._make_pardict()
+                d['parameters'] = pardict
+            elif key == 'summary':
+                d['summary'] = dict(sc.dcp(self.summary))
+            else:
+                try:
+                    d[key] = sc.sanitizejson(getattr(self, key))
+                except Exception as E:
+                    errormsg = f'Could not convert {key} to JSON: {str(E)}; continuing...'
+                    print(errormsg)
+
         if filename is None:
             output = sc.jsonify(d, tostring=tostring, indent=indent, verbose=verbose, *args, **kwargs)
         else:

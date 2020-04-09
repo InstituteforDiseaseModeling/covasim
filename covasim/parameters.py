@@ -96,7 +96,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
 
 
 def set_contacts(pars):
-    '''
+    '''r
     Small helper function to set numbers of contacts and beta based on whether
     or not to use layers. Typically not called by the user.
 
@@ -104,8 +104,8 @@ def set_contacts(pars):
         pars (dict): the parameters dictionary
     '''
     if pars['use_layers']:
-        pars['contacts']    = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
-        pars['beta_layers'] = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
+        pars['contacts']    = {'h': 4,   's': 22,  'w': 20,  'c': 20} # Number of contacts per person per day, estimated
+        pars['beta_layers'] = {'h': 1.6, 's': 1.0, 'w': 1.0, 'c': 0.3} # Per-population beta weights; relative
     else:
         pars['contacts']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
         pars['beta_layers'] = {'a': 1.0} # Per-population beta weights; relative
