@@ -18,10 +18,10 @@ import sciris as sc
 
 # Parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("-w", "--workers", type=int,  default=8,     help="number of workers (default 8)")
-parser.add_argument("-p", "--port",    type=int,  default=8097,  help="port to bind to (default 8097)")
-parser.add_argument("-b", "--backend", type=str,  default='agg', help="Matplotlib backend (default agg)")
-parser.add_argument("-r", "--reload",  type=int, default=1,      help="Automatic reload (default true)")
+parser.add_argument("-w", "--workers", type=int, default=8,     help="number of workers (default 8)")
+parser.add_argument("-p", "--port",    type=int, default=8097,  help="port to bind to (default 8097)")
+parser.add_argument("-b", "--backend", type=str, default='agg', help="Matplotlib backend (default agg)")
+parser.add_argument("-r", "--reload",  type=int, default=1,     help="Automatic reload (default true)")
 args = parser.parse_args()
 
 sc.heading(f'Covasim: launching gunicorn with {args.workers} workers on port {args.port} with backend {args.backend}, with reload={args.reload}')
