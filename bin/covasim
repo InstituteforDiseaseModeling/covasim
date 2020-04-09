@@ -1,3 +1,5 @@
+
+#!/usr/bin/env python3
 '''
 Simple script for running the Covid-19 agent-based model
 '''
