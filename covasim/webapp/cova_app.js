@@ -39,7 +39,7 @@ const interventionTableConfig = {
         }
     },
     school_closures: {
-        formTitle: "School closures",
+        formTitle: "School Closures",
         fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
@@ -48,7 +48,7 @@ const interventionTableConfig = {
         }
     },
     symptomatic_testing: {
-        formTitle: "Symptomatic testing",
+        formTitle: "Symptomatic Testing",
         fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}, {label: 'Accuracy', key: 'level', type: 'select', options: [{label: '60% Accuracy', value: '60'}, {label: '90% Accuracy', value: '90'},]}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
@@ -58,7 +58,7 @@ const interventionTableConfig = {
         }
     },
     contract_tracing: {
-        formTitle: "Contract tracing",
+        formTitle: "Contact Tracing",
         fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
@@ -79,6 +79,7 @@ var vm = new Vue({
 
     data() {
         return {
+            title: "COVASim",
             version: 'Unable to connect to server!', // This text will display instead of the version
             panel_open: true,
             history: [],

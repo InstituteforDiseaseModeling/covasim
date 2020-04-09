@@ -18,7 +18,7 @@
   <!-- Avenir is not available -->
 
   <!-- Customization -->
-  <title>Covasim</title>
+  <title>COVASim</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- Remove favicon.ico 404 -->
   <script src="assets/sciris-js.js"></script>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -35,7 +35,7 @@
 <section id="app" class="container-fluid">
   <header class="row no-gutter">
     <nav class="navbar navbar-dark bg-dark">
-      <a class="navbar-brand" href="#">Covasim</a>
+      <a class="navbar-brand" href="#">{{ title }}</a>
       <button type="button" class="btn text-white" data-toggle="modal" data-target="#exampleModal">
         COVID-19 agent-based simulator
       </button>
@@ -47,13 +47,13 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">About Covasim</h5>
+            <h5 class="modal-title" id="exampleModalLabel">About {{ title }}</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
           <div class="modal-body">
-            <p>Covasim is an agent-based model that simulates the transmission of COVID-19 (novel coronavirus, SARS-CoV-2) in a population. Each individual in the model may pass through the following stages of COVID-19 infection: susceptible, exposed, infectious, and recovered (SEIR). The epidemiological parameter values are taken from literature.</p>
+            <p>{{ title }} is an agent-based model that simulates the transmission of COVID-19 (novel coronavirus, SARS-CoV-2) in a population. Each individual in the model may pass through the following stages of COVID-19 infection: susceptible, exposed, infectious, and recovered (SEIR). The epidemiological parameter values are taken from literature.</p>
 
             <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals in neighboring nodes to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.05 and a doubling time of 6-7 days. For more information, please visit the <a href="https://github.com/institutefordiseasemodeling/covasim" target="_blank">GitHub</a> repository.</p>
 
@@ -70,7 +70,7 @@
 
   <div class="content">
 
-    <b-sidebar id="parameters" title="Parameters" :visible="panel_open" no-header-close bg-variant="white" width="47rem" shadow>
+    <b-sidebar id="parameters" title="Campaign Builder" :visible="panel_open" no-header-close bg-variant="white" width="47rem" shadow>
       <div class="px-3">
 
         <!-- Presets -->
@@ -114,10 +114,10 @@
         </div>
 
         <div class="form-group">
-          <label for="n_days">Number of days to simulate:</label>
+          <label for="n_days">Campaign Duration (in days):</label>
           <input id="n_days" type="number" :min="sim_length.min" :max="sim_length.max" :disabled="running" class="form-control" v-model="sim_length.best">
           <span aria-live="assertive" v-if="paramError.sim_length" class="text-danger form-error">{{paramError.sim_length}}</span>
-          
+
           <b-tooltip target="n_days">
             Number of days to run the simulation for
           </b-tooltip>
@@ -125,7 +125,7 @@
 
         <div class="card mb-3">
           <div class="card-header">
-            <button class="btn btn-block" v-b-toggle.intervention>Intervention Scenarios</button>
+            <button class="btn btn-block" v-b-toggle.intervention>Interventions</button>
           </div>
           <b-collapse visible id="intervention">
             <div class="card-body">
@@ -147,7 +147,7 @@
                             </select>
                           </template>
                           <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="submit">Add a scenario</button>
+                            <button class="btn btn-outline-secondary" type="submit">Add intervention</button>
                           </div>
                         </div>
                       </div>
