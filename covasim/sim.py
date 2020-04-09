@@ -413,15 +413,14 @@ class Sim(cvbase.BaseSim):
 
     def rescale(self):
         ''' Dynamically rescale the population '''
-        print('lksdjfldsjkfsdkljdjkl')
         t = self.t
         pop_scale = self['pop_scale']
         current_scale = self.rescale_vec[t]
         if current_scale < pop_scale: # We have room to rescale
-            exposed = list(self.people.filter_in('exposed'))
-            n_exposed = len(exposed)
+            not_sus = list(self.people.filter_out('susceptible'))
+            n_not_sus = len(not_sus)
             n_people = len(self.people)
-            if n_exposed / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
+            if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
                 max_ratio = pop_scale/current_scale # We don't want to exceed this
                 scaling_ratio = min(self['rescale_factor'], max_ratio)
                 self.rescale_vec[t+1:] *= scaling_ratio # Update the rescaling factor from here on
@@ -483,19 +482,18 @@ class Sim(cvbase.BaseSim):
 
     def finalize(self, verbose=None):
         ''' Compute final results, likelihood, etc. '''
-        for key in cvd.result_flows:
-            self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
-        self.results['cum_infections'].values += self['pop_infected'] # Include initially infected people
 
         # Scale the results
         for reskey in self.reskeys:
-            print('a')
             if self.results[reskey].scale == 'dynamic':
-                print('b', self.rescale_vec)
                 self.results[reskey].values *= self.rescale_vec
             elif self.results[reskey].scale == 'static':
-                print('c', self['pop_scale'])
                 self.results[reskey].values *= self['pop_scale']
+
+        # Calculate cumulative results
+        for key in cvd.result_flows:
+            self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
+        self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Perform calculations on results
         self.compute_doubling()

@@ -118,23 +118,6 @@ def test_start_stop(): # If being run via pytest, turn off
     return sim2
 
 
-def test_dynamic_resampling(): # If being run via pytest, turn off
-    sc.heading('Test dunamic resampling')
-
-    pars = pars = {
-        'n_days': 140,
-        'pop_size': 50000,
-        'resample': 1,
-        'resample_max_pop': 10000
-    }
-
-    # Create and run a basic simulation
-    sim = cv.Sim(pars)
-    sim.run(verbose=0)
-    assert sim.results['cum_infections'][-1] > 10000  # infections at the end of sim should be much more than internal pop
-    return sim
-
-
 def test_sim_data(do_plot=False, do_show=False):
     sc.heading('Data test')
 
@@ -154,6 +137,23 @@ def test_sim_data(do_plot=False, do_show=False):
     return sim
 
 
+def test_dynamic_resampling(do_plot=False, do_show=False): # If being run via pytest, turn off
+    sc.heading('Test dynamic resampling')
+
+    pop_size = 1000
+    sim = cv.Sim(pop_size=pop_size, pp_rescale=1, pop_scale=1000, n_days=180, rescale_factor=2)
+    sim.run()
+
+    # Optionally plot
+    if do_plot:
+        sim.plot(do_show=do_show)
+
+    # Create and run a basic simulation
+    assert sim.results['cum_infections'][-1] > pop_size  # infections at the end of sim should be much more than internal pop
+    return sim
+
+
+
 #%% Run as a script
 if __name__ == '__main__':
     T = sc.tic()
@@ -164,6 +164,7 @@ if __name__ == '__main__':
     json  = test_fileio()
     sim4  = test_start_stop()
     sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
+    sim6  = test_dynamic_resampling(do_plot=do_plot)
 
     sc.toc(T)
 
