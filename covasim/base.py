@@ -241,18 +241,27 @@ class BaseSim(ParsObj):
         return pardict
 
 
-    def to_json(self, filename=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
+    def to_json(self, filename=None, keys=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
         """
         Export results as JSON.
 
         Args:
             filename (str): if None, return string; else, write to file
+            keys (str or list): attributes to write to json (default: results, parameters, and summary)
+            tostring (bool): if not writing to file, whether to write to string (alternative is sanitized dictionary)
+            indent (int): if writing to file, how many indents to use per nested level
+            verbose (bool): detail to print
+            args (list): passed to savejson()
+            kwargs (dict): passed to savejson()
 
         Returns:
             A unicode string containing a JSON representation of the results,
             or writes the JSON file to disk
 
         """
+        if keys is None:
+            keys = ['results', 'pars']
+        keys = sc.promotetolist(keys)
         resdict = self._make_resdict()
         pardict = self._make_pardict()
         d = {'results': resdict, 'parameters': pardict}
