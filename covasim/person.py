@@ -23,7 +23,26 @@ class Person(sc.prettyobj):
         self.durpars     = pars['dur']  # Store duration parameters
         self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
 
-        # Define states -- listed explicitly for performance reasons
+        # Set states
+        self.make_susceptible()
+
+         # Set prognoses
+        prognoses = pars['prognoses']
+        idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
+        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
+        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
+        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
+        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
+        self.OR_no_treat = pars['OR_no_treat']
+
+        return
+
+
+    def make_susceptible(self):
+        """
+        Make person susceptible. This is used during initialization and dynamic resampling
+        """
+         # Define states -- listed explicitly for performance reasons
         self.susceptible   = True
         self.exposed       = False
         self.infectious    = False
@@ -57,16 +76,6 @@ class Person(sc.prettyobj):
 
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
-
-        # Set prognoses
-        prognoses = pars['prognoses']
-        idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
-        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
-        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
-        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
-        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
-        self.OR_no_treat = pars['OR_no_treat']
-
         return
 
 
@@ -270,5 +279,3 @@ class Person(sc.prettyobj):
             return 1
         else:
             return 0
-
-

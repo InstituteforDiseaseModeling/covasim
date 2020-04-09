@@ -73,7 +73,7 @@ class Result(object):
         name (str): name of this result, e.g. new_infections
         values (array): array of values corresponding to this result
         npts (int): if values is None, precreate it to be of this length
-        scale (bool): whether or not the value scales by population size
+        scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
         color (str or array): default color for plotting (hex or RGB notation)
 
     Example:
@@ -85,7 +85,7 @@ class Result(object):
         print(r2)
     '''
 
-    def __init__(self, name=None, values=None, npts=None, scale=True, color=None):
+    def __init__(self, name=None, values=None, npts=None, scale='dynamic', color=None):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:

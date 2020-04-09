@@ -52,6 +52,7 @@ class Sim(cvbase.BaseSim):
         self.load_data(datafile, datacols) # Load the data, if provided
         self.load_population(popfile)      # Load the population, if provided
         self.update_pars(pars)             # Update the parameters, if provided
+
         return
 
 
@@ -187,7 +188,7 @@ class Sim(cvbase.BaseSim):
         dcols = cvd.default_colors # Shorten default colors
 
         # Stock variables
-        self.results['n_susceptible'] = init_res('Number susceptible',        color=dcols.susceptible)
+        self.results['n_susceptible'] = init_res('Number susceptible',        color=dcols.susceptible, scale='static')
         self.results['n_exposed']     = init_res('Number exposed',            color=dcols.infections)
         self.results['n_infectious']  = init_res('Number infectious',         color=dcols.infectious)
         self.results['n_symptomatic'] = init_res('Number symptomatic',        color=dcols.symptomatic)
@@ -207,9 +208,14 @@ class Sim(cvbase.BaseSim):
         self.results['doubling_time'] = init_res('Doubling time', scale=False)
 
         # Populate the rest of the results
-        self.results['t'] = self.tvec
+        if self['rescale']:
+            scale = 1
+        else:
+            scale = self['pop_scale']
+        self.rescale_vec   = scale*np.ones(self.npts)
+        self.results['t']    = self.tvec
         self.results['date'] = self.datevec
-        self.results_ready = False
+        self.results_ready   = False
 
         return
 
@@ -297,6 +303,10 @@ class Sim(cvbase.BaseSim):
             else:
                 print(string)
 
+        # Check if we need to rescale
+        if self['rescale']:
+            self.rescale()
+
         # Update each person, skipping people who are susceptible
         not_susceptible = self.people.filter_out('susceptible')
         n_susceptible   = len(self.people)
@@ -308,8 +318,10 @@ class Sim(cvbase.BaseSim):
                 person = self.people[ind]
                 new_infections += person.infect(t=t)
 
+        # Loop over everyone not susceptible
         for person in not_susceptible:
-            n_susceptible -= 1
+            n_susceptible -= 1 # Update number of susceptibles
+            n_diagnosed   += person.diagnosed # And diagnosed people
 
             # If exposed, check if the person becomes infectious
             if person.exposed:
@@ -318,7 +330,6 @@ class Sim(cvbase.BaseSim):
                     person.infectious = True
                     sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
 
-            n_diagnosed     += person.diagnosed
             # If infectious, update status according to the course of the infection, and check if anyone gets infected
             if person.infectious:
 
@@ -370,9 +381,6 @@ class Sim(cvbase.BaseSim):
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                     sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
-                                    if target_person.susceptible: # Skip people who are not susceptible
-                                        new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
 
         # End of person loop; apply interventions
@@ -382,6 +390,7 @@ class Sim(cvbase.BaseSim):
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
+
         self.results['n_susceptible'][t]  = n_susceptible
         self.results['n_exposed'][t]      = n_exposed
         self.results['n_infectious'][t]   = n_infectious # Tracks total number infectious at this timestep
@@ -389,7 +398,7 @@ class Sim(cvbase.BaseSim):
         self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
         self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
         self.results['n_diagnosed'][t]    = n_diagnosed # Tracks total number of diagnosed cases at this timestep
-        self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else None
+        self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else np.nan
 
         # Update counts for this time step: flows
         self.results['new_infections'][t]  = new_infections # New infections on this timestep
@@ -398,8 +407,29 @@ class Sim(cvbase.BaseSim):
         self.results['new_severe'][t]      = new_severe
         self.results['new_critical'][t]    = new_critical
         self.results['new_deaths'][t]      = new_deaths
+
         self.t += 1
 
+
+    def rescale(self):
+        ''' Dynamically rescale the population '''
+        t = self.t
+        pop_scale = self['pop_scale']
+        current_scale = self.rescale_vec[t]
+        if current_scale < pop_scale: # We have room to rescale
+            not_sus = list(self.people.filter_out('susceptible'))
+            n_not_sus = len(not_sus)
+            n_people = len(self.people)
+            if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
+                max_ratio = pop_scale/current_scale # We don't want to exceed this
+                scaling_ratio = min(self['rescale_factor'], max_ratio)
+                self.rescale_vec[t+1:] *= scaling_ratio # Update the rescaling factor from here on
+                n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
+                new_susceptibles = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
+                for p in new_susceptibles: # TODO: only loop over non-susceptibles
+                    person = self.people[p]
+                    if not person.susceptible:
+                        person.make_susceptible()
         return
 
 
@@ -428,7 +458,7 @@ class Sim(cvbase.BaseSim):
         # Main simulation loop
         for t in range(self.npts):
 
-            # This does all the work!
+            # Do the heavy lifting
             self.next(verbose=verbose)
 
             # Check if we were asked to stop
@@ -452,14 +482,18 @@ class Sim(cvbase.BaseSim):
 
     def finalize(self, verbose=None):
         ''' Compute final results, likelihood, etc. '''
-        for key in cvd.result_flows:
-            self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
-        self.results['cum_infections'].values += self['pop_infected'] # Include initially infected people
 
         # Scale the results
         for reskey in self.reskeys:
-            if self.results[reskey].scale:
+            if self.results[reskey].scale == 'dynamic':
+                self.results[reskey].values *= self.rescale_vec
+            elif self.results[reskey].scale == 'static':
                 self.results[reskey].values *= self['pop_scale']
+
+        # Calculate cumulative results
+        for key in cvd.result_flows:
+            self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
+        self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Perform calculations on results
         self.compute_doubling()
@@ -721,4 +755,3 @@ class Sim(cvbase.BaseSim):
         color = res.color
         pl.plot(tvec, y, c=color, **plot_args)
         return fig
-
