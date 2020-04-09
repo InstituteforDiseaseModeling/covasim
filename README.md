@@ -13,6 +13,7 @@ Python >=3.6 (64-bit). (Note: Python 2 is not supported.)
 We also recommend, but do not require, using Python virtual environments. For
 more information, see documentation for [venv](https://docs.python.org/3/tutorial/venv.html) or [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
+
 ## Quick start guide
 
 Install with `pip install covasim`. If everything is working, the following Python commands should bring up a plot:
@@ -109,7 +110,10 @@ slight variations to the model (`model.py`).
 For running the interactive web application: please see the `README.md` in that
 folder for more information.
 
+
 ## Other folders
+
+Please see the readme in each subfolder for more information.
 
 ### bin
 
@@ -118,6 +122,26 @@ This folder contains a command-line interface (CLI) version of Covasim; example 
 ```bash
 covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
 ```
+
+Note: the CLI is currently not compatible with Windows. You will need to add
+this folder to your path to run from other folders.
+
+### docker
+
+This folder contains the `Dockerfile` and other files that allow Covasim to be
+run as a webapp via Docker.
+
+### examples
+
+This folder contains demonstrations of simple Covasim usage.
+
+### licenses
+
+Licensing information and legal notices.
+
+### tests
+
+Integration, development, and unit tests.
 
 
 ## Disclaimer
