@@ -40,7 +40,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['rescale_threshold'] = 0.1 # Fraction susceptible population that will trigger rescaling if rescaling
     pars['rescale_factor']    = 2   # Factor by which we rescale the population
 
-    # Disease transmission parameters
+    # Basic disease transmission
     pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
     pars['use_layers']   = use_layers # Whether or not to use different contact layers

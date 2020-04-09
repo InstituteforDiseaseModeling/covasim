@@ -207,7 +207,7 @@ class Sim(cvbase.BaseSim):
         self.results['n_severe']      = init_res('Number of severe cases',    color=dcols.severe)
         self.results['n_critical']    = init_res('Number of critical cases',  color=dcols.critical)
         self.results['n_diagnosed']   = init_res('Number of confirmed cases', color=dcols.diagnoses)
-        self.results['n_quarantined'] = init_res('Number in quarantine',      color=dcols.diagnoses)
+        self.results['n_quarantined'] = init_res('Number in quarantine',      color=dcols.quarantined)
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows

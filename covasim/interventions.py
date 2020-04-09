@@ -293,8 +293,8 @@ class contact_tracing(Intervention):
         if t < self.start_day:
             return
 
-        infectious_people = sim.people.filter_in('infectious')
-        for person in infectious_people:
+        diagnosed_people = sim.people.filter_in('diagnosed')
+        for person in diagnosed_people:
 
             # Trace dynamic contact, e.g. the ones that change on every step
             # A sample of community contacts is appended to person.dyn_cont_ppl on each step

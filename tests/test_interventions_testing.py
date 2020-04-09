@@ -3,14 +3,12 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
-import matplotlib
-matplotlib.use('Agg')
 import sciris as sc
 import covasim as cv
 
 do_plot   = 1
-do_show   = 0
-do_save   = 1
+do_show   = 1
+do_save   = 0
 debug     = 1
 keep_sims = 0
 fig_paths = [f'results/testing_scen_{i}.png' for i in range(3)]
