@@ -26,7 +26,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     # Population parameters
     pars['pop_size']     = 20e3 # Number ultimately susceptible to CoV
     pars['pop_infected'] = 10 # Number of initial infections
-    pars['pop_scale']    = 1 # Factor by which to scale the population -- e.g. 0.6*100 with n = 10e3 assumes 60% of a population of 1m
     pars['pop_type']     = 'random' # Whether or not to load actual population data
 
     # Simulation parameters
@@ -35,12 +34,15 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['rand_seed']  = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
+    # Rescaling parameters
+    pars['pop_scale']         = 1   # Factor by which to scale the population -- e.g. 1000 with pop_size = 10e3 means a population of 10m
+    pars['rescale']           = 0   # Enable dynamic rescaling of the population
+    pars['rescale_threshold'] = 0.1 # Fraction susceptible population that will trigger rescaling if rescaling
+    pars['rescale_factor']    = 2   # Factor by which we rescale the population
+
     # Disease transmission parameters
     pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
-    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
-    pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['use_layers']   = use_layers # Whether or not to use different contact layers
     pars['contacts']     = None # The number of contacts per layer
     pars['beta_layers']  = None # Transmissibility per layer

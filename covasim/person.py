@@ -23,7 +23,17 @@ class Person(sc.prettyobj):
         self.durpars     = pars['dur']  # Store duration parameters
         self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
 
-        # Define states -- listed explicitly for performance reasons
+        # Set states
+        self.make_susceptible()
+
+        return
+
+
+    def make_susceptible(self):
+        """
+        Make person susceptible. This is used during initialization and dynamic resampling
+        """
+         # Define states -- listed explicitly for performance reasons
         self.susceptible   = True
         self.exposed       = False
         self.infectious    = False

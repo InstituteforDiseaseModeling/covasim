@@ -293,17 +293,15 @@ class contact_tracing(Intervention):
         if t < self.start_day:
             return
 
-        # Firstly, loop over diagnosed people to trace their contacts
-        for person in sim.people:
-            if not person.infectious:
-                continue
+        infectious_people = sim.people.filter_in('infectious')
+        for person in infectious_people:
 
             # Trace dynamic contact, e.g. the ones that change on every step
             # A sample of community contacts is appended to person.dyn_cont_ppl on each step
             person.trace_dynamic_contacts(self.trace_probs, self.trace_time)
 
+            # If a person was just diagnosed,time to trace their (static) contacts
             if person.date_diagnosed is not None and person.date_diagnosed == t-1:
-                # This person was just diagnosed: time to trace their (static) contacts
                 contactable_ppl = person.trace_static_contacts(self.trace_probs, self.trace_time)
                 contactable_ppl.update(person.dyn_cont_ppl)
 
@@ -323,6 +321,15 @@ class test_prob(Intervention):
     """
     Test as many people as required based on test probability.
     Probabilities are OR together, so choose wisely.
+
+    Args:
+        symptomatic_prob (float): Probability of testing a symptomatic person
+        asymptomatic_prob (float): Probability of testing an asymptomatic person
+        test_sensitivity (float): Probability of a true positive
+        loss_prob (float): Probability of loss to follow-up
+        test_delay (int): How long testing takes
+        start_day (int): When to start the intervention
+
 
     Args:
         symptomatic_prob (float): Probability of testing a symptomatic person
