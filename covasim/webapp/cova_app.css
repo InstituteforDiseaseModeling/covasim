@@ -78,6 +78,12 @@ header.row, footer.row {
     padding: 10px;
 }
 
+.card-header .btn {
+    text-align: left;
+    margin: -.75rem -1.25rem;
+    width: calc(100% + 2.5rem);
+}
+
 /* Tooltip container */
 .mytooltip {
     position: relative;
@@ -102,10 +108,4 @@ header.row, footer.row {
 /* Show the tooltip text when you mouse over the tooltip container */
 .mytooltip:hover .mytooltiptext {
     visibility: visible;
-}
-
-.chart-frame {
-    overflow: hidden auto;
-    max-height: 75vh;
-    position: relative;
 }

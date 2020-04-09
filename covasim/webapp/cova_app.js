@@ -80,8 +80,14 @@ var vm = new Vue({
     data() {
         return {
             version: 'Unable to connect to server!', // This text will display instead of the version
+            panel_open: true,
             history: [],
             historyIdx: 0,
+            sim_length: {
+                best: 90,
+                max: 180,
+                min: 1
+            },
             sim_pars: {},
             epi_pars: {},
             intervention_pars: {},
@@ -150,6 +156,11 @@ var vm = new Vue({
             const response = await sciris.rpc('get_gnatt', [this.intervention_pars, this.interventionTableConfig]);
             this.intervention_figs = response.data;
         },
+
+        open_panel() {
+            this.panel_open = true;
+        },
+        
         async get_version() {
             const response = await sciris.rpc('get_version');
             this.version = response.data;
@@ -165,11 +176,14 @@ var vm = new Vue({
 
             // Run a a single sim
             try {
-                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.intervention_pars, this.show_animation]);
+                const sim_pars = {...this.sim_pars};
+                sim_pars.n_days = this.sim_length;
+                const response = await sciris.rpc('run_sim', [sim_pars, this.epi_pars, this.intervention_pars, this.show_animation]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
                 this.err = response.data.err;
+                this.panel_open = !!this.err;
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, result: this.result })));
@@ -198,6 +212,9 @@ var vm = new Vue({
             Object.keys(params).forEach(key => {
                 this.$watch(`${paramKey}.${key}`, this.validateParam(key), { deep: true });
             });
+        },
+        watchSimLengthParam() {
+            this.$watch(`sim_length`, this.validateParam('sim_length'), { deep: true });
         },
         validateParam(key) {
             return (param) => {
