@@ -70,7 +70,7 @@
 
   <div class="content row">
 
-    <b-sidebar id="parameters" title="Parameters" :visible="panel_open" bg-variant="white" width="40rem" shadow>
+    <b-sidebar id="parameters" title="Parameters" :visible="panel_open" no-header-close bg-variant="white" width="40rem" shadow>
       <div class="px-3">
 
         <!-- Presets -->
@@ -182,8 +182,21 @@
           </b-collapse>
         </div>
 
-        <!-- Run button -->
-        <div class="form-inline justify-content-end">
+      </div>
+
+      <!-- Run button -->
+      <template v-slot:footer>
+        
+        <div v-if="err" class="errorbox">
+          <p>During the simulation, the following warning(s) were encountered:</p>
+          <p>{{ err }}</p>
+        </div>
+
+        <div class="form-inline justify-content-end py-2 px-3">
+          <label class="mr-3">
+            <input type="checkbox" v-model="show_animation" />Render animation
+          </label>
+          
           <button v-if="running" class="btn btn-primary btn-lg btn-run green" type="button" disabled>
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             Running...
@@ -204,23 +217,12 @@
           </b-tooltip>
         </div>
 
-        <label>
-          <input type="checkbox" v-model="show_animation" />Render animation
-        </label>
-
-
-
-        <div v-if="err" class="errorbox">
-          <p>During the simulation, the following warning(s) were encountered:</p>
-          <p>{{ err }}</p>
-        </div>
-
-      </div>
+      </template>
     </b-sidebar>
 
     <!-- Show the actual graph -->
     <div id="graphs" class="graphs">
-      <button class="btn" v-b-toggle.parameters>
+      <button class="btn" @click="open_panel">
         Open parameters
       </button>
       <fieldset>
