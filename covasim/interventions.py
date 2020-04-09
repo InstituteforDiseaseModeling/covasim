@@ -293,15 +293,16 @@ class contact_tracing(Intervention):
         if t < self.start_day:
             return
 
-        diagnosed_people = sim.people.filter_in('diagnosed')
-        for person in diagnosed_people:
+        not_sus_people = sim.people.filter_out('susceptible') # Or maybe symptomatic here
+        for person in not_sus_people:
+            # N.B. consider skipping tracing from dead people
 
             # Trace dynamic contact, e.g. the ones that change on every step
             # A sample of community contacts is appended to person.dyn_cont_ppl on each step
             person.trace_dynamic_contacts(self.trace_probs, self.trace_time)
 
             # If a person was just diagnosed,time to trace their (static) contacts
-            if person.date_diagnosed is not None and person.date_diagnosed == t-1:
+            if person.date_diagnosed is not None and person.date_diagnosed == t-1: # TODO: tracing on symptomatic
                 contactable_ppl = person.trace_static_contacts(self.trace_probs, self.trace_time)
                 contactable_ppl.update(person.dyn_cont_ppl)
 

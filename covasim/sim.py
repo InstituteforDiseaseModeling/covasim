@@ -292,9 +292,9 @@ class Sim(cvbase.BaseSim):
         beta             = self['beta']
         asymp_factor     = self['asymp_factor']
         diag_factor      = self['diag_factor']
-        quar_trans_factor   = self['quar_trans_factor']
-        quar_acq_factor     = self['quar_acq_factor']
-        quar_period         = self['quar_period']
+        quar_trans_factor= self['quar_trans_factor']
+        quar_acq_factor  = self['quar_acq_factor']
+        quar_period      = self['quar_period']
         beta_layers      = self['beta_layers']
         n_beds           = self['n_beds']
         bed_constraint   = False
@@ -318,8 +318,8 @@ class Sim(cvbase.BaseSim):
             self.rescale()
 
         # Update each person, skipping people who are susceptible
-        susceptible = filter(lambda p: p.susceptible, self.people)
-        not_susceptible = filter(lambda p: not p.susceptible, self.people)
+        susceptible = self.people.filter_in('susceptible')
+        not_susceptible = self.people.filter_out('susceptible')
         n_susceptible   = len(self.people)
 
         # Randomly infect some people (imported infections)
@@ -337,6 +337,8 @@ class Sim(cvbase.BaseSim):
 
         # Loop over everyone not susceptible
         for person in not_susceptible:
+            # N.B. Recovered and dead people are included here!
+
             n_susceptible -= 1 # Update number of susceptibles
             n_diagnosed   += person.diagnosed # And diagnosed people
 
@@ -351,7 +353,7 @@ class Sim(cvbase.BaseSim):
             new_quarantined += person.check_quar_begin(t, quar_period) # Set know_contact and go into quarantine
             person.check_quar_end(t) # Come out of quarantine
             n_quarantined += person.quarantined
-            n_diagnosed     += person.diagnosed
+            n_diagnosed   += person.diagnosed
 
             # If infectious, update status according to the course of the infection, and check if anyone gets infected
             if person.infectious:
