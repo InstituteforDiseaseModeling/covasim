@@ -1,84 +1,54 @@
 """
-Tests of simulation parameters from
-../../covasim/README.md
+Compare current results to baseline
 """
 
-import os
-import unittest
-import difflib
-import json
 import sciris as sc
 import covasim as cv
 
-from unittest_support_classes import CovaSimTest, TestProperties
+baseline_filename = 'baseline.json'
 
-class BaselineTests(CovaSimTest):
-    def setUp(self):
-        super().setUp()
-        pass
 
-    def tearDown(self):
-        super().tearDown()
-        pass
+def test_baseline():
+    ''' Compare the current default sim against the saved baseline '''
 
-    def assertBaseline(self, name, sim):
-      # Setup to compare against the existing model 
-        path = os.path.join(os.path.dirname(__file__), "../baselines/" + name + ".json")
-        current_baseline = None
-        new_baseline = None
-        updateBaseline = os.environ.get('UPDATE_BASELINE') == '1'
+    # Load existing baseline
+    filepath = sc.makefilepath(filename=baseline_filename, folder=sc.thisdir(__file__))
+    baseline = sc.loadjson(filepath)
+    old = baseline['summary']
 
-        # Gather the summary as a nice JSON file for easy diffing
-        summary = sim.summary_stats(verbose=0)
-        new_baseline = json.dumps(summary, indent=2, separators=(',', ': '))
+    # Calculate new baseline
+    sim = cv.Sim(verbose=0)
+    sim.run()
+    new = sim.summary
 
-        # If the baseline exists, read it. Otherwise, we'll make it
-        if os.path.exists(path):
-          current_baseline = open(path, "r").read()
-        else:
-          updateBaseline = True
+    # Compare keys
+    old_keys = set(old.keys())
+    new_keys = set(new.keys())
+    if old_keys != new_keys:
+        errormsg = f"Keys don't match; old: {old_keys}; new: {new_keys}"
+        raise KeyError(errormsg)
 
-        # Update for the user, if they ask or if the baseline did not exist
-        if updateBaseline:
-          baseline_file = open(path, "w")
-          baseline_file.write(new_baseline)
-          baseline_file.close()
-          current_baseline = new_baseline
+    mismatches = {}
+    for key in old.keys():
+        old_val = old[key]
+        new_val = new[key]
+        if old_val != new_val:
+            mismatches[key] = {'old': old_val, 'new': new_val}
 
-        # Assert the baselines are equal with a nice error message if not :)
-        # We aren't using assertEqual because that messes with the output whereas we want a very clean output for people to review
-        # to achieve the nice output, explicitly fail.
-        if current_baseline != new_baseline:
-          diff = difflib.unified_diff(current_baseline.splitlines(True), new_baseline.splitlines(True))
-          self.fail("""
-The baseline has diverged from the expected value. Please review the changes.
-If these seem accurate to you, please run `UPDATE_BASELINE=1 pytest {file}`
+    if len(mismatches):
+        errormsg = '\nThe following values have changed between old and new!\n'
+        errormsg += 'Please rerun "update_baseline" if this is intentional.\n'
+        for mkey,mval in mismatches.items():
+            errormsg += f'{mkey}: old = {mval["old"]}, new = {mval["new"]}\n'
+        raise ValueError(errormsg)
+    else:
+        print('Baseline matches')
 
-Difference:
-          {diff}
-          """.format(diff=''.join(diff), new_baseline=new_baseline, file=__file__))
+    return new
 
-    def test_baseline_without_intervention(self):
-        pars = sc.objdict(
-          pop_size     = 20000, # Population size
-          pop_infected = 1,     # Number of initial infections
-          n_days       = 180,   # Number of days to simulate
-          rand_seed    = 1,     # Random seed
-        )
-        sim = cv.Sim(pars=pars)
-        sim.run(verbose=0)
-        self.assertBaseline("baseline_without_intervention", sim)
 
-    def test_baseline_with_intervention(self):
-      pars = sc.objdict(
-        pop_size     = 20000, # Population size
-        pop_infected = 1,     # Number of initial infections
-        n_days       = 180,   # Number of days to simulate
-        rand_seed    = 1,     # Random seed
-      )
-      pars.interventions = cv.change_beta(days=45, changes=0.5) # Add intervention
+if __name__ == '__main__':
 
-      sim = cv.Sim(pars=pars)
-      sim.run(verbose=0)
-      self.assertBaseline("baseline_with_intervention", sim)
-        
+    new = test_baseline()
+
+    print('Done.')
