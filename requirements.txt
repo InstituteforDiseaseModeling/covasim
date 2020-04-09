@@ -8,3 +8,4 @@ scirisweb
 gunicorn
 plotly_express
 fire
+wandb
