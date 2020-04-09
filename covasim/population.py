@@ -14,7 +14,9 @@ from collections import defaultdict
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['People', 'make_people', 'make_randpop', 'make_random_contacts', 'make_microstructured_contacts']
+__all__ = ['People', 'make_people', 'make_randpop', 'make_random_contacts',
+           'make_microstructured_contacts', 'make_realistic_contacts',
+           'make_synthpop']
 
 
 class People(list):
@@ -98,7 +100,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
 
     # Check which type of population to produce
     if pop_type == 'synthpops' and not cvreqs.available['synthpops']:
-        errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use "random" or "microstructure"'
+        errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use random, clustered, or realistic'
         if die:
             raise ValueError(errormsg)
         else:
@@ -118,7 +120,8 @@ def make_people(sim, verbose=None, die=True, reset=False):
         elif pop_type == 'synthpops':
             popdict = make_synthpop(sim)
         else:
-            raise NotImplementedError
+            errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, realistic, or synthpops'
+            raise NotImplementedError(errormsg)
 
     # Ensure prognoses are set
     if sim['prognoses'] is None:
@@ -155,6 +158,7 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
         age_data = cvd.default_age_data
 
     # Handle sexes and ages
+    uids = np.arange(pop_size, dtype=int)
     sexes = cvu.rbt(sex_ratio, pop_size)
     age_data_min  = age_data[:,0]
     age_data_max  = age_data[:,1] + 1 # Since actually e.g. 69.999
@@ -166,14 +170,20 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
 
     # Store output; data duplicated as per-person and list-like formats for convenience
     popdict = {}
-    popdict['uid'] = np.arange(pop_size, dtype=int)
+    popdict['uid'] = uids
     popdict['age'] = ages
     popdict['sex'] = sexes
 
-    if microstructure:
-        contacts, contact_keys = make_microstructured_contacts(sim['pop_size'], sim['contacts'])
+    if microstructure == 'random':
+        contacts, contact_keys = make_random_contacts(pop_size, sim['contacts'])
+    elif microstructure == 'clustered':
+        contacts, contact_keys = make_microstructured_contacts(pop_size, sim['contacts'])
+    elif microstructure == 'realistic':
+        contacts, contact_keys = make_realistic_contacts(pop_size, ages, sim['contacts'])
     else:
-        contacts, contact_keys = make_random_contacts(sim['pop_size'], sim['contacts'])
+        errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or realistic'
+        raise NotImplementedError(errormsg)
+
     popdict['contacts'] = contacts
     popdict['contact_keys'] = contact_keys
 
@@ -241,6 +251,23 @@ def make_microstructured_contacts(pop_size, contacts):
             contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=int)
 
     return contacts_list, contact_keys
+
+
+def make_realistic_contacts(pop_size, ages, contacts):
+    pass
+#     '''
+#     Create "realistic" contacts -- microstructured contacts for households and
+#     random contacts for schools and workplaces, both of which have extremely
+#     basic age structure. A combination of both make_random_contacts() and
+#     make_microstructured_contacts().
+#     '''
+
+
+#     if microstructure == 'random':
+#         contacts, contact_keys = make_microstructured_contacts(pop_size, sim['contacts'])
+#     elif microstructure == 'clustered':
+#         contacts, contact_keys = make_random_contacts(pop_size, sim['contacts'])
+
 
 
 def make_synthpop(sim):

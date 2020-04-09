@@ -155,8 +155,8 @@ class Sim(cvbase.BaseSim):
             self['beta_layers'] = {'a':1.0}
 
         # Handle population data
-        popdata_choices = ['random', 'microstructure', 'synthpops']
-        if sc.isnumber(self['pop_type']) or isinstance(self['pop_type'], bool): # Convert e.g. pop_type=1 to 'microstructure'
+        popdata_choices = ['random', 'realistic', 'clustered', 'synthpops']
+        if sc.isnumber(self['pop_type']): # Convert e.g. pop_type=1 to 'realistic'
             self['pop_type'] = popdata_choices[int(self['pop_type'])] # Choose one of these
         if self['pop_type'] not in popdata_choices:
             choice = self['pop_type']
