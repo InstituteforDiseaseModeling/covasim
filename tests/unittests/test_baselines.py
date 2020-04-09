@@ -38,8 +38,12 @@ def test_baseline():
     if len(mismatches):
         errormsg = '\nThe following values have changed between old and new!\n'
         errormsg += 'Please rerun "update_baseline" if this is intentional.\n'
+        errormsg += 'Mismatches:\n'
+        space = ' '*15
         for mkey,mval in mismatches.items():
-            errormsg += f'{mkey}: old = {mval["old"]}, new = {mval["new"]}\n'
+            errormsg += f'{mkey}:\n'
+            errormsg += f'{space}old = {mval["old"]}\n'
+            errormsg += f'{space}new = {mval["new"]}\n'
         raise ValueError(errormsg)
     else:
         print('Baseline matches')
