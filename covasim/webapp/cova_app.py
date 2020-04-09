@@ -162,7 +162,7 @@ def get_gnatt(intervention_pars=None, intervention_config=None):
             level = task + ' ' + str(timeline.get('level', ''))
             df.append(dict(Task=task, Start=timeline['start'], Finish=timeline['end'], Level= level))
 
-    fig = ff.create_gantt(df, index_col='Level', title='Intervention timeline',
+    fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
                         show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
     fig.update_xaxes(type='linear')
     return {'json': fig.to_json(), 'id': 'test'}

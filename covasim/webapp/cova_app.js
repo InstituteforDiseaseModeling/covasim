@@ -39,7 +39,7 @@ const interventionTableConfig = {
         }
     },
     school_closures: {
-        formTitle: "School clousures",
+        formTitle: "School closures",
         fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
