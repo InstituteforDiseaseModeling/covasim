@@ -70,7 +70,7 @@
 
   <div class="content row">
 
-    <b-sidebar id="parameters" title="Parameters" visible bg-variant="white" width="40rem" shadow>
+    <b-sidebar id="parameters" title="Parameters" :visible="panel_open" bg-variant="white" width="40rem" shadow>
       <div class="px-3">
 
         <!-- Presets -->
@@ -219,7 +219,10 @@
     </b-sidebar>
 
     <!-- Show the actual graph -->
-    <div id="graphs" class="graphs col-sm">
+    <div id="graphs" class="graphs">
+      <button class="btn" v-b-toggle.parameters>
+        Open parameters
+      </button>
       <fieldset>
         <legend>Results</legend>
         <!--           <template v-if="running">

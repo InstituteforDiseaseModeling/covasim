@@ -29,6 +29,7 @@ var vm = new Vue({
     data() {
         return {
             version: 'Unable to connect to server!', // This text will display instead of the version
+            panel_open: true,
             history: [],
             historyIdx: 0,
             sim_length: 90,
@@ -44,7 +45,7 @@ var vm = new Vue({
             paramError: {},
             running: false,
             err: '',
-            reset_options: ['Example']//, 'Seattle', 'Wuhan', 'Global'],
+            reset_options: ['Example'],// 'Seattle', 'Wuhan', 'Global'],
             reset_choice: 'Example'
         };
     },
@@ -89,6 +90,7 @@ var vm = new Vue({
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
                 this.err = response.data.err;
+                this.panel_open = !!this.err;
                 this.int_pars = {web_int_day: response.data.sim_pars.web_int_day, web_int_eff: response.data.sim_pars.web_int_eff};
                 delete response.data.sim_pars.web_int_day;
                 delete response.data.sim_pars.web_int_eff;
