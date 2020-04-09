@@ -47,35 +47,32 @@ def get_defaults(region=None, merge=False):
             # 'Seattle': 10000,
             # 'Wuhan': 1,
         },
-        'n_days': {
-            'Example': 60,
-            # 'Seattle': 45,
-            # 'Wuhan': 90,
-        },
+        # 'n_days': {
+        #     'Example': 60,
+        #     # 'Seattle': 45,
+        #     # 'Wuhan': 90,
+        # },
         'pop_infected': {
             'Example': 100,
             # 'Seattle': 4,
             # 'Wuhan': 10,
         },
-        'web_int_day': {
-            'Example': 25,
-            # 'Seattle': 0,
-            # 'Wuhan': 1,
-        },
-        'web_int_eff': {
-            'Example': 0.8,
-            # 'Seattle': 0.0,
-            # 'Wuhan': 0.9,
-        },
+        # 'web_int_day': {
+        #     'Example': 25,
+        #     # 'Seattle': 0,
+        #     # 'Wuhan': 1,
+        # },
+        # 'web_int_eff': {
+        #     'Example': 0.8,
+        #     # 'Seattle': 0.0,
+        #     # 'Wuhan': 0.9,
+        # },
     }
 
     sim_pars = {}
     sim_pars['pop_scale']    = dict(best=1,    min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
     sim_pars['pop_size']     = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
     sim_pars['pop_infected'] = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
-    sim_pars['n_days']       = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
-    sim_pars['web_int_day']  = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (for no intervention, set start day to 0 and effectiveness to 0)')
-    sim_pars['web_int_eff']  = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Fractional reduction in infectiousness due to intervention')
     sim_pars['rand_seed']    = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
 
     epi_pars = {}
@@ -211,8 +208,6 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
 
         # Add the intervention
         web_pars['interventions'] = []
-        if web_pars['web_int_day'] is not None:
-            web_pars['interventions'] = cv.change_beta(days=web_pars.pop('web_int_day'), changes=(1-web_pars.pop('web_int_eff')))
 
         switcher = {
             'social_distance': map_social_distance,
