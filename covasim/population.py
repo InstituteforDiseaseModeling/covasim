@@ -253,20 +253,44 @@ def make_microstructured_contacts(pop_size, contacts):
     return contacts_list, contact_keys
 
 
-def make_realistic_contacts(pop_size, ages, contacts):
-    pass
-#     '''
-#     Create "realistic" contacts -- microstructured contacts for households and
-#     random contacts for schools and workplaces, both of which have extremely
-#     basic age structure. A combination of both make_random_contacts() and
-#     make_microstructured_contacts().
-#     '''
+def make_realistic_contacts(pop_size, ages, contacts, school_ages=None, work_ages=None):
+    '''
+    Create "realistic" contacts -- microstructured contacts for households and
+    random contacts for schools and workplaces, both of which have extremely
+    basic age structure. A combination of both make_random_contacts() and
+    make_microstructured_contacts().
+    '''
 
+    # Handle inputs and defaults
+    contact_keys = ['h', 's', 'w']
+    contacts = sc.mergedicts({'h':4, 's':20, 'w':20}, contacts) # Ensure essential keys are populated
+    if school_ages is None:
+        school_ages = [6, 18]
+    if work_ages is None:
+        work_ages   = [18, 65]
 
-#     if microstructure == 'random':
-#         contacts, contact_keys = make_microstructured_contacts(pop_size, sim['contacts'])
-#     elif microstructure == 'clustered':
-#         contacts, contact_keys = make_random_contacts(pop_size, sim['contacts'])
+    # Create the empty contacts list -- a list of {'h':[], 's':[], 'w':[]}
+    contacts_list = [{key:[] for key in contact_keys} for i in range(pop_size)]
+
+    # Start with the household contacts for each person
+    h_contacts, _ = make_microstructured_contacts(pop_size, {'h':contacts['h']})
+
+    # Get the indices of people in each age bin
+    ages = np.array(ages)
+    s_inds = sc.findinds((ages >= school_ages[0]) * (ages < school_ages[1]))
+    w_inds = sc.findinds((ages >= work_ages[0])   * (ages < work_ages[1]))
+
+    # Create the school and work contacts for each person
+    s_contacts, _ = make_random_contacts(len(s_inds), {'s':contacts['s']})
+    w_contacts, _ = make_random_contacts(len(w_inds),   {'w':contacts['w']})
+
+    # Construct the actual lists of contacts
+    for i     in range(pop_size):   contacts_list[i]['h']   = h_contacts[i]['h'] # Copy over household contacts -- present for everyone
+    for i,ind in enumerate(s_inds): contacts_list[ind]['s'] = s_contacts[i]['s'] # Copy over school contacts
+    for i,ind in enumerate(w_inds): contacts_list[ind]['w'] = w_contacts[i]['w'] # Copy over work contacts
+
+    return contacts_list, contact_keys
+
 
 
 
