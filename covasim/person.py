@@ -35,6 +35,8 @@ class Person(sc.prettyobj):
         self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
         self.OR_no_treat = pars['OR_no_treat']
 
+        self.rel_susceptibility = 1.0
+
         return
 
 
@@ -175,6 +177,12 @@ class Person(sc.prettyobj):
             new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
             self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
         return
+
+
+    def get_susceptibility(self):
+        if self.susceptible:
+            return self.rel_susceptibility
+        return 0.0
 
 
     def trace_static_contacts(self, trace_probs, trace_time):

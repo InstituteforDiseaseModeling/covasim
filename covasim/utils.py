@@ -117,6 +117,11 @@ def bf(prob, arr):
     ''' Bernoulli "filter" -- return entries that passed '''
     return list(arr[(np.random.random(len(arr)) < prob).nonzero()[0]])
 
+@nb.njit((nb.float64[:], nb.int64[:]))
+def bfl(proba, arr):
+    ''' Like bf, only instead of single probability, accept array of probailities '''
+    return list(arr[(np.random.random(len(arr)) < proba).nonzero()[0]])
+
 @nb.njit((nb.float64[:], nb.int64))
 def mt(probs, repeats):
     ''' A multinomial trial '''
