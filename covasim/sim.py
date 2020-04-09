@@ -53,15 +53,7 @@ class Sim(cvbase.BaseSim):
         self.load_population(popfile)      # Load the population, if provided
         self.update_pars(pars)             # Update the parameters, if provided
 
-        # if resampling is enabled, make 100k(default) pop size
-        if self["resample"] and self["pop_size"] > self["resample_max_pop"]:
-
-            self.max_n = self["pop_size"]
-            self["pop_size"] = self["resample_max_pop"]
-
-        # dynamic resampling
-        self.resampe_threshold = self["resample_threshold"]  # Fraction of total pop that isn't susceptible when we trigger scaling
-        self.resample_factor = self["resample_factor"]  # Factor by which we will rescale population
+        return
 
 
     def update_pars(self, pars=None, create=False, **kwargs):
@@ -196,7 +188,7 @@ class Sim(cvbase.BaseSim):
         dcols = cvd.default_colors # Shorten default colors
 
         # Stock variables
-        self.results['n_susceptible'] = init_res('Number susceptible',        color=dcols.susceptible)
+        self.results['n_susceptible'] = init_res('Number susceptible',        color=dcols.susceptible, scale='static')
         self.results['n_exposed']     = init_res('Number exposed',            color=dcols.infections)
         self.results['n_infectious']  = init_res('Number infectious',         color=dcols.infectious)
         self.results['n_symptomatic'] = init_res('Number symptomatic',        color=dcols.symptomatic)
@@ -216,9 +208,14 @@ class Sim(cvbase.BaseSim):
         self.results['doubling_time'] = init_res('Doubling time', scale=False)
 
         # Populate the rest of the results
-        self.results['t'] = self.tvec
+        if self['rescale']:
+            scale = 1
+        else:
+            scale = self['pop_scale']
+        self.rescale_vec   = scale*np.ones(self.npts)
+        self.results['t']    = self.tvec
         self.results['date'] = self.datevec
-        self.results_ready = False
+        self.results_ready   = False
 
         return
 
@@ -249,7 +246,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def next(self, scale, verbose=0):
+    def next(self, verbose=0):
         '''
         Step simulation forward in time
 
@@ -317,8 +314,10 @@ class Sim(cvbase.BaseSim):
                 person = self.people[ind]
                 new_infections += person.infect(t=t)
 
+        # Loop over everyone not susceptible
         for person in not_susceptible:
-            n_susceptible -= 1
+            n_susceptible -= 1 # Update number of susceptibles
+            n_diagnosed   += person.diagnosed # And diagnosed people
 
             # If exposed, check if the person becomes infectious
             if person.exposed:
@@ -327,7 +326,6 @@ class Sim(cvbase.BaseSim):
                     person.infectious = True
                     sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
 
-            n_diagnosed     += person.diagnosed
             # If infectious, update status according to the course of the infection, and check if anyone gets infected
             if person.infectious:
 
@@ -408,24 +406,29 @@ class Sim(cvbase.BaseSim):
 
         self.t += 1
 
-    def resample(self, current_scale):
-        # Check if max pop was already reached
-        if current_scale * self["pop_size"] >= self.max_n:
-            return current_scale
-        susceptible = list(self.people.filter_in('susceptible'))
-        # Check if we've reached point when we want to resample and we didn't reach max population
-        if (len(susceptible) / len(self.people)) < self.resampe_threshold:
-            # Check if we've reached max pop
-            if current_scale * self.resample_factor * self["pop_size"] > self.max_n:
-                # Calculate new resample_factor to get us close to maxumum population
-                self.resample_factor = self.max_n / (self["pop_size"] * current_scale)
-            # Pick random list of people to make susceptible again
-            new_susceptible = np.random.choice(list(self.people.keys()), size=round(len(self.people) / self.resample_factor))
-            for p in new_susceptible:
-                self.people[p].make_susceptible()
-            return current_scale * self.resample_factor
-        else:
-            return current_scale
+
+    def rescale(self):
+        ''' Dynamically rescale the population '''
+
+        if self['rescale']:
+            t = self.t
+            pop_scale = self['pop_scale']
+            current_scale = self.scaling_vec[t]
+            if current_scale < pop_scale: # We have room to rescale
+                exposed = list(self.people.filter_in('exposed'))
+                n_exposed = len(exposed)
+                n_people = len(self.people)
+                if n_exposed / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
+                    max_ratio = pop_scale/current_scale # We don't want to exceed this
+                    scaling_ratio = min(self['rescale_factor'], max_ratio)
+                    self.rescale_vec[t:] *= scaling_ratio # Update the rescaling factor from here on
+                    n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
+                    new_susceptibles = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
+                    for p in new_susceptibles: # TODO: only loop over non-susceptibles
+                        person = self.people[p]
+                        if not person.susceptible:
+                            person.make_susceptible()
+        return
 
 
     def run(self, do_plot=False, verbose=None, **kwargs):
@@ -452,15 +455,13 @@ class Sim(cvbase.BaseSim):
         if verbose is None:
             verbose = self['verbose']
 
-        current_scale = 1.0
         # Main simulation loop
         for t in range(self.npts):
             # Check if we need to rescale
-            if self["resample"]:
-                current_scale = self.resample(current_scale)
-            self.scaling_vec.append(current_scale)
+            self.rescale()
 
-            self.next(verbose=verbose, scale=current_scale)
+            # Do the heavy lifting
+            self.next(verbose=verbose)
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
@@ -489,7 +490,9 @@ class Sim(cvbase.BaseSim):
 
         # Scale the results
         for reskey in self.reskeys:
-            if self.results[reskey].scale:
+            if self.results[reskey].scale == 'dynamic':
+                self.results[reskey].values *= self.rescale_vec
+            elif self.results[reskey].scale == 'static':
                 self.results[reskey].values *= self['pop_scale']
 
         # Perform calculations on results
