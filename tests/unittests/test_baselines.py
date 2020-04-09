@@ -21,30 +21,28 @@ class BaselineTests(CovaSimTest):
         super().tearDown()
         pass
 
-    def test_baseline_without_intervation(self):
-        # Run the base simulation
-        pars = sc.objdict(
-            n           = 20000,  # Population size
-            n_infected  = 1,      # Number of initial infections
-            n_days      = 180,    # Number of days to simulate
-            prog_by_age = 1,      # Use age-specific mortality etc.
-            usepopdata  = 0,      # Use realistic population structure (requires synthpops)
-            seed        = 1,      # Random seed
-        )
-        sim = cv.Sim(pars=pars)
-        sim.run(verbose=0)
+    def assertBaseline(self, name, sim):
+      # Setup to compare against the existing model 
+        path = os.path.join(os.path.dirname(__file__), "../baselines/" + name + ".json")
+        current_baseline = None
+        new_baseline = None
+        updateBaseline = os.environ.get('UPDATE_BASELINE') == '1'
 
-        # Setup to compare against the existing model 
-        path = os.path.join(os.path.dirname(__file__), "../baselines/run_sim.json")
-        current_baseline_file = open(path, "r+")
-        current_baseline = current_baseline_file.read()
+        # Gather the summary as a nice JSON file for easy diffing
         summary = sim.summary_stats(verbose=0)
         new_baseline = json.dumps(summary, indent=2, separators=(',', ': '))
 
-        # Update for the user, if they ask
-        if os.environ.get('UPDATE_BASELINE') == '1':
-          current_baseline_file.write(new_baseline)
-          current_baseline_file.close()
+        # If the baseline exists, read it. Otherwise, we'll make it
+        if os.path.exists(path):
+          current_baseline = open(path, "r").read()
+        else:
+          updateBaseline = True
+
+        # Update for the user, if they ask or if the baseline did not exist
+        if updateBaseline:
+          baseline_file = open(path, "w")
+          baseline_file.write(new_baseline)
+          baseline_file.close()
           current_baseline = new_baseline
 
         # Assert the baselines are equal with a nice error message if not :)
@@ -59,3 +57,32 @@ If these seem accurate to you, please run `UPDATE_BASELINE=1 pytest {file}`
 Difference:
           {diff}
           """.format(diff=''.join(diff), new_baseline=new_baseline, file=__file__))
+
+    def test_baseline_without_intervention(self):
+        pars = sc.objdict(
+            n           = 20000,  # Population size
+            n_infected  = 1,      # Number of initial infections
+            n_days      = 180,    # Number of days to simulate
+            prog_by_age = 1,      # Use age-specific mortality etc.
+            usepopdata  = 0,      # Use realistic population structure (requires synthpops)
+            seed        = 1,      # Random seed
+        )
+        sim = cv.Sim(pars=pars)
+        sim.run(verbose=0)
+        self.assertBaseline("baseline_without_intervention", sim)
+
+    def test_baseline_with_intervention(self):
+      pars = sc.objdict(
+          n           = 20000,  # Population size
+          n_infected  = 1,      # Number of initial infections
+          n_days      = 180,    # Number of days to simulate
+          prog_by_age = 1,      # Use age-specific mortality etc.
+          usepopdata  = 0,      # Use realistic population structure (requires synthpops)
+          seed        = 1,      # Random seed
+      )
+      pars.interventions = cv.change_beta(days=45, changes=0.5) # Add intervention
+
+      sim = cv.Sim(pars=pars)
+      sim.run(verbose=0)
+      self.assertBaseline("baseline_with_intervention", sim)
+        
