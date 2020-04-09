@@ -303,6 +303,10 @@ class Sim(cvbase.BaseSim):
             else:
                 print(string)
 
+        # Check if we need to rescale
+        if self['rescale']:
+            self.rescale()
+
         # Update each person, skipping people who are susceptible
         not_susceptible = self.people.filter_out('susceptible')
         n_susceptible   = len(self.people)
@@ -409,25 +413,24 @@ class Sim(cvbase.BaseSim):
 
     def rescale(self):
         ''' Dynamically rescale the population '''
-
-        if self['rescale']:
-            t = self.t
-            pop_scale = self['pop_scale']
-            current_scale = self.scaling_vec[t]
-            if current_scale < pop_scale: # We have room to rescale
-                exposed = list(self.people.filter_in('exposed'))
-                n_exposed = len(exposed)
-                n_people = len(self.people)
-                if n_exposed / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
-                    max_ratio = pop_scale/current_scale # We don't want to exceed this
-                    scaling_ratio = min(self['rescale_factor'], max_ratio)
-                    self.rescale_vec[t:] *= scaling_ratio # Update the rescaling factor from here on
-                    n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
-                    new_susceptibles = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
-                    for p in new_susceptibles: # TODO: only loop over non-susceptibles
-                        person = self.people[p]
-                        if not person.susceptible:
-                            person.make_susceptible()
+        print('lksdjfldsjkfsdkljdjkl')
+        t = self.t
+        pop_scale = self['pop_scale']
+        current_scale = self.rescale_vec[t]
+        if current_scale < pop_scale: # We have room to rescale
+            exposed = list(self.people.filter_in('exposed'))
+            n_exposed = len(exposed)
+            n_people = len(self.people)
+            if n_exposed / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
+                max_ratio = pop_scale/current_scale # We don't want to exceed this
+                scaling_ratio = min(self['rescale_factor'], max_ratio)
+                self.rescale_vec[t+1:] *= scaling_ratio # Update the rescaling factor from here on
+                n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
+                new_susceptibles = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
+                for p in new_susceptibles: # TODO: only loop over non-susceptibles
+                    person = self.people[p]
+                    if not person.susceptible:
+                        person.make_susceptible()
         return
 
 
@@ -446,8 +449,6 @@ class Sim(cvbase.BaseSim):
 
         T = sc.tic()
 
-        self.scaling_vec = [1.0]
-
         # Reset settings and results
         if not self.initialized:
             self.initialize()
@@ -457,8 +458,6 @@ class Sim(cvbase.BaseSim):
 
         # Main simulation loop
         for t in range(self.npts):
-            # Check if we need to rescale
-            self.rescale()
 
             # Do the heavy lifting
             self.next(verbose=verbose)
@@ -490,9 +489,12 @@ class Sim(cvbase.BaseSim):
 
         # Scale the results
         for reskey in self.reskeys:
+            print('a')
             if self.results[reskey].scale == 'dynamic':
+                print('b', self.rescale_vec)
                 self.results[reskey].values *= self.rescale_vec
             elif self.results[reskey].scale == 'static':
+                print('c', self['pop_scale'])
                 self.results[reskey].values *= self['pop_scale']
 
         # Perform calculations on results
