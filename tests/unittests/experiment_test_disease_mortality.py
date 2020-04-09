@@ -4,11 +4,11 @@ from unittest_support_classes import CovaSimTest
 
 class SimKeys:
     ''' Define mapping to simulation keys '''
-    number_agents = 'n'
-    initial_infected_count = 'n_infected'
+    number_agents = 'pop_size'
+    initial_infected_count = 'pop_infected'
     start_day = 'start_day'
     number_simulated_days = 'n_days'
-    random_seed = 'seed'
+    random_seed = 'rand_seed'
     pass
 
 

@@ -44,7 +44,7 @@ var vm = new Vue({
             paramError: {},
             running: false,
             err: '',
-            reset_options: ['Example', 'Seattle'], // , 'Wuhan', 'Global'],
+            reset_options: ['Example']//, 'Seattle', 'Wuhan', 'Global'],
             reset_choice: 'Example'
         };
     },

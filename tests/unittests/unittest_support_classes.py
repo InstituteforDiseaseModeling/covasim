@@ -19,12 +19,12 @@ from covasim import Sim, parameters
 class TestProperties:
     class ParameterKeys:
         class SimulationKeys:
-            number_agents = 'n'
-            population_scaling_factor = 'scale'
-            initial_infected_count = 'n_infected'
+            number_agents = 'pop_size'
+            population_scaling_factor = 'pop_scale'
+            initial_infected_count = 'pop_infected'
             start_day = 'start_day'
             number_simulated_days = 'n_days'
-            random_seed = 'seed'
+            random_seed = 'rand_seed'
             verbose = 'verbose'
             enable_synthpops = 'usepopdata'
             time_limit = 'timelimit'
@@ -78,13 +78,13 @@ class TestProperties:
     class SpecializedSimulations:
         class Microsim:
             n = 10
-            n_infected = 1
+            pop_infected = 1
             contacts = 2
             n_days = 10
             pass
         class Hightransmission:
             n = 500
-            n_infected = 10
+            pop_infected = 10
             n_days = 30
             contacts = 3
             beta = 0.4
@@ -155,7 +155,7 @@ class CovaSimTest(unittest.TestCase):
 
         """
         if not self.simulation_parameters:
-            self.simulation_parameters = parameters.make_pars()
+            self.simulation_parameters = parameters.make_pars(set_prognoses=True, prog_by_age=True, use_layers=True)
         if params_dict:
             self.simulation_parameters.update(params_dict)
         pass
@@ -244,7 +244,7 @@ class CovaSimTest(unittest.TestCase):
         Micro = TestProperties.SpecializedSimulations.Microsim
         microsim_parameters = {
             Simkeys.number_agents : Micro.n,
-            Simkeys.initial_infected_count: Micro.n_infected,
+            Simkeys.initial_infected_count: Micro.pop_infected,
             Simkeys.number_simulated_days: Micro.n_days
         }
         self.set_simulation_parameters(microsim_parameters)
@@ -367,7 +367,7 @@ class CovaSimTest(unittest.TestCase):
         Hightrans = TestProperties.SpecializedSimulations.Hightransmission
         hightrans_parameters = {
             Simkeys.number_agents : Hightrans.n,
-            Simkeys.initial_infected_count: Hightrans.n_infected,
+            Simkeys.initial_infected_count: Hightrans.pop_infected,
             Simkeys.number_simulated_days: Hightrans.n_days,
             Transkeys.beta : Hightrans.beta
         }
@@ -409,7 +409,7 @@ class TestSupportTests(CovaSimTest):
         self.assertEqual(len(result_data[resultKeys.recovered_at_timestep]),
                          microsimParams.n + 1)
         self.assertEqual(result_data[resultKeys.exposed_at_timestep][0],
-                         microsimParams.n_infected)
+                         microsimParams.pop_infected)
         pass
 
     def test_everyone_infected(self):
