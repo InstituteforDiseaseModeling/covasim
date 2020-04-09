@@ -59,7 +59,7 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
           'name':'Assuming South Korea testing levels of 0.02% daily (with contact tracing); isolate positives',
           'pars': {
               'interventions': [cv.test_num(daily_tests=optimistic_daily_tests),
-                                cv.dynamic_pars({'cont_factor':{'days':20, 'vals':0.1}})] # This means that people who've been in contact with known positives isolate with 90% effectiveness
+                                cv.dynamic_pars({'quar_trans_factor':{'days':20, 'vals':0.1}})] # This means that people who've been in contact with known positives isolate with 90% effectiveness
               }
           },
         'floating': {
@@ -171,7 +171,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
         'lowtrace': {
             'name': '10% daily testing; poor contact tracing, 50% of contacts self-isolate',
             'pars': {
-                'cont_factor': 0.5,
+                'quar_trans_factor': {'h': 1, 's': 0.5, 'w': 0.5, 'c': 0.25},
+                'quar_acq_factor': 0.5,
+                'quar_period': 7,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.0},
                         trace_time  = {'h': 0, 's': 7,   'w': 7,   'c': 0})]
@@ -180,7 +182,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
         'modtrace': {
             'name': '10% daily testing; moderate contact tracing, 75% of contacts self-isolate',
             'pars': {
-                'cont_factor': 0.25,
+                'quar_trans_factor': {'h': 1, 's': 0.25, 'w': 0.25, 'c': 0.1},
+                'quar_acq_factor': 0.75,
+                'quar_period': 10,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
                         trace_time  = {'h': 0,  's': 3,  'w': 3,   'c': 8})]
@@ -189,7 +193,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
         'hightrace': {
             'name': '10% daily testing; fast contact tracing, 90% of contacts self-isolate',
             'pars': {
-                'cont_factor': 0.1,
+                'quar_trans_factor': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
+                'quar_acq_factor': 0.9,
+                'quar_period': 14,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
                         trace_time  = {'h': 0, 's': 1,   'w': 1,   'c': 5})]
@@ -198,7 +204,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
         'crazy': {
             'name': '10% daily testing; same-day contact tracing, 100% of contacts self-isolate',
             'pars': {
-                'cont_factor': 0,
+                'quar_trans_factor': {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0},
+                'quar_acq_factor': 1,
+                'quar_period': 21,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1},
                         trace_time  = {'h': 0, 's': 0, 'w': 0, 'c': 0})]
