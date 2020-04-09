@@ -164,7 +164,7 @@ if __name__ == '__main__':
     json  = test_fileio()
     sim4  = test_start_stop()
     sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
-    sim6  = test_dynamic_resampling(do_plot=do_plot)
+    sim6  = test_dynamic_resampling(do_plot=do_plot, do_show=do_show)
 
     sc.toc(T)
 
