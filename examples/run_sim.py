@@ -28,6 +28,7 @@ pars = sc.objdict(
     pop_infected = 1,     # Number of initial infections
     n_days       = 180,   # Number of days to simulate
     rand_seed    = 1,     # Random seed
+    use_layers   = 0,
     )
 
 # Optionally add an intervention

@@ -73,7 +73,7 @@ class Result(object):
         name (str): name of this result, e.g. new_infections
         values (array): array of values corresponding to this result
         npts (int): if values is None, precreate it to be of this length
-        scale (bool): whether or not the value scales by population size
+        scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
         color (str or array): default color for plotting (hex or RGB notation)
 
     Example:
@@ -85,7 +85,7 @@ class Result(object):
         print(r2)
     '''
 
-    def __init__(self, name=None, values=None, npts=None, scale=True, color=None):
+    def __init__(self, name=None, values=None, npts=None, scale='dynamic', color=None):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
@@ -298,14 +298,14 @@ class BaseSim(ParsObj):
         return output
 
 
-    def shrink(self, skip_attrs=None):
+    def shrink(self, skip_attrs=None, in_place=True):
         '''
-        "Shrinks" the simulation by removing the population, and returns
+        "Shrinks" the simulation by removing the people, and returns
         a copy of the "shrunken" simulation. Used to reduce the memory required
         for saved files.
 
         Args:
-            skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "population"
+            skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "people"
 
         Returns:
             shrunken_sim (Sim): a Sim object with the listed attributes removed
@@ -313,13 +313,17 @@ class BaseSim(ParsObj):
 
         # By default, skip people (~90%) and uids (~9%)
         if skip_attrs is None:
-            skip_attrs = ['population']
+            skip_attrs = ['popdict', 'people']
 
         # Create the new object, and copy original dict, skipping the skipped attributes
-        shrunken_sim = object.__new__(self.__class__)
-        shrunken_sim.__dict__ = {k:(v if k not in skip_attrs else None) for k,v in self.__dict__.items()}
-
-        return shrunken_sim
+        if in_place:
+            for attr in skip_attrs:
+                setattr(self, attr, None)
+            return
+        else:
+            shrunken_sim = object.__new__(self.__class__)
+            shrunken_sim.__dict__ = {k:(v if k not in skip_attrs else None) for k,v in self.__dict__.items()}
+            return shrunken_sim
 
 
     def save(self, filename=None, keep_population=False, skip_attrs=None, **kwargs):
@@ -341,7 +345,7 @@ class BaseSim(ParsObj):
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
         if skip_attrs or not keep_population:
-            obj = self.shrink(skip_attrs=skip_attrs)
+            obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
         sc.saveobj(filename=filename, obj=obj)

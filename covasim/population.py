@@ -111,9 +111,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
         if pop_type == 'random':
             popdict = make_randpop(sim)
         elif pop_type == 'synthpops':
-            # If we use synthpops, we param['use_layers'] should always be True
-            p = {'use_layers': True}
-            sim.update_pars(p)
+            sim.update_pars(use_layers=True) # If we use synthpops, we param['use_layers'] should always be True
             popdict = make_synthpop(sim)
         else:
             raise NotImplementedError
@@ -213,13 +211,13 @@ def make_random_contacts(sim):
     pop_size = int(sim['pop_size']) # Number of people
     contacts_list = []
     contacts = sc.dcp(sim['contacts'])
-    contacts.pop('c', None) # Remove community
     contact_keys = list(contacts.keys())
     for p in range(pop_size):
         contact_dict = {}
         for key in contact_keys:
-            n_contacts = cvu.pt(contacts[key]) # Draw the number of Poisson contacts for this person
-            contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
+            if key != 'c': # Added later
+                n_contacts = cvu.pt(contacts[key]) # Draw the number of Poisson contacts for this person
+                contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
         contacts_list.append(contact_dict)
     return contacts_list, contact_keys
 
