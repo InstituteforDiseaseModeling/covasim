@@ -19,7 +19,7 @@ __all__ = ['People', 'make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-class People(list):
+class People:
     '''
     A tiny class to handle the display of a very large number of people, which is
     prohibitively slow to print to screen. This is really just a list, except with
@@ -27,6 +27,14 @@ class People(list):
     in" (i.e., keeping people with a certain attribute) and "filtering out" (removing
     people with a certain attribute).
     '''
+
+    def __init__(self, people):
+        self.array = np.array(people)  # we will use append
+
+
+    def get_list(self, indices):
+        return self.array[indices]
+
 
     def filter_in(self, attr):
         '''
@@ -39,6 +47,18 @@ class People(list):
             susceptibles = sim.people.filter_in('susceptible')
         '''
         return filter(lambda person: getattr(person, attr), self)
+
+
+    def append(self, item):
+        self.array = np.append(self.array, item)
+
+
+    def __getitem__(self, key):
+        return self.array[key]
+
+
+    def len(self):
+        return self.array.shape[0]
 
 
     def filter_out(self, attr):
@@ -138,7 +158,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
         sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
-    people = People() # List for storing the people
+    people = [] # List for storing the people
     for p in range(pop_size): # Loop over each person
         keys = ['uid', 'age', 'sex', 'contacts']
         person_args = {}
@@ -149,7 +169,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
 
     # Store people
     sim.popdict = popdict
-    sim.people = people
+    sim.people = People(people)
     sim.contact_keys = popdict['contact_keys']
 
     average_age = sum(popdict['age']/pop_size)

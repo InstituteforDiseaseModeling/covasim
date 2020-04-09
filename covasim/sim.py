@@ -284,7 +284,7 @@ class Sim(cvbase.BaseSim):
         beta_layers      = self['beta_layers']
         n_beds           = self['n_beds']
         bed_constraint   = False
-        pop_size         = len(self.people)
+        pop_size         = self.people.len()
         n_imports        = cvu.pt(self['n_imports']) # Imported cases
         if 'c' in self['contacts']:
             n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
@@ -302,6 +302,12 @@ class Sim(cvbase.BaseSim):
         # Check if we need to rescale
         if self['rescale']:
             self.rescale()
+
+        get_rel_susceptibility = np.vectorize(lambda p: p.get_susceptibility(), otypes=[np.float64])
+        rel_susceptibility = get_rel_susceptibility(self.people.array)
+
+        # Update each person, skipping people who are susceptible
+        not_susceptible = self.people[rel_susceptibility == 0]
 
         # Randomly infect some people (imported infections)
         if n_imports>0:
@@ -374,26 +380,26 @@ class Sim(cvbase.BaseSim):
                         community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
                         person_contacts['c'] = community_contact_inds
 
+                    
                     # Determine who gets infected
                     for ckey in self.contact_keys:
                         contact_ids = person_contacts[ckey]
                         if len(contact_ids):
+                            contacts = self.people.get_list(contact_ids)
                             this_beta_layer = thisbeta *\
                                               beta_layers[ckey] *\
                                               (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
-
-                            transmission_inds = cvu.bf(this_beta_layer, contact_ids)
+                            transmission_inds = cvu.bfl(rel_susceptibility[contact_ids] * this_beta_layer, contact_ids)
                             for contact_ind in transmission_inds: # Loop over people who get infected
                                 target_person = self.people[contact_ind]
-                                if target_person.susceptible: # Skip people who are not susceptible
 
-                                    # See whether we will infect this person
-                                    infect_this_person = True # By default, infect them...
-                                    if target_person.quarantined:
-                                        infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
-                                    if infect_this_person:
-                                        new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+                                # See whether we will infect this person
+                                infect_this_person = True # By default, infect them...
+                                if target_person.quarantined:
+                                    infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
+                                if infect_this_person:
+                                    new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                    sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
         # End of person loop; apply interventions
         for intervention in self['interventions']:
@@ -432,7 +438,7 @@ class Sim(cvbase.BaseSim):
         if current_scale < pop_scale: # We have room to rescale
             not_sus = list(self.people.filter_out('susceptible'))
             n_not_sus = len(not_sus)
-            n_people = len(self.people)
+            n_people = self.people.len()
             if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
                 max_ratio = pop_scale/current_scale # We don't want to exceed this
                 scaling_ratio = min(self['rescale_factor'], max_ratio)
