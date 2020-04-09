@@ -31,6 +31,8 @@ var vm = new Vue({
             version: 'Unable to connect to server!', // This text will display instead of the version
             history: [],
             historyIdx: 0,
+            sim_length: 90,
+            int_pars: {},
             sim_pars: {},
             epi_pars: {},
             show_animation: false,
@@ -82,11 +84,14 @@ var vm = new Vue({
 
             // Run a a single sim
             try {
-                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.show_animation]);
+                const response = await sciris.rpc('run_sim', [{...this.sim_pars, ...this.int_pars}, this.epi_pars, this.show_animation]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
                 this.err = response.data.err;
+                this.int_pars = {web_int_day: response.data.sim_pars.web_int_day, web_int_eff: response.data.sim_pars.web_int_eff};
+                delete response.data.sim_pars.web_int_day;
+                delete response.data.sim_pars.web_int_eff;
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, result: this.result })));
@@ -101,6 +106,9 @@ var vm = new Vue({
 
         async resetPars() {
             const response = await sciris.rpc('get_defaults', [this.reset_choice]);
+            this.int_pars = {web_int_day: response.data.sim_pars.web_int_day, web_int_eff: response.data.sim_pars.web_int_eff};
+            delete response.data.sim_pars.web_int_day;
+            delete response.data.sim_pars.web_int_eff;
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
             this.setupFormWatcher('sim_pars');
@@ -146,6 +154,9 @@ var vm = new Vue({
         async uploadPars() {
             try {
                 const response = await sciris.upload('upload_pars');  //, [], {}, '');
+                this.int_pars = {web_int_day: response.data.sim_pars.web_int_day, web_int_eff: response.data.sim_pars.web_int_eff};
+                delete response.data.sim_pars.web_int_day;
+                delete response.data.sim_pars.web_int_eff;
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.graphs = [];
