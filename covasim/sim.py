@@ -379,9 +379,6 @@ class Sim(cvbase.BaseSim):
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
                                     sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
-                                    if target_person.susceptible: # Skip people who are not susceptible
-                                        new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
 
         # End of person loop; apply interventions

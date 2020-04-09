@@ -40,7 +40,7 @@ class Person(sc.prettyobj):
 
     def make_susceptible(self):
         """
-        Make person susceptible. This is used during dynamic resampling
+        Make person susceptible. This is used during initialization and dynamic resampling
         """
          # Define states -- listed explicitly for performance reasons
         self.susceptible   = True
