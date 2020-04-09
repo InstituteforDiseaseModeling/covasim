@@ -176,10 +176,7 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5):
 def make_synthpop(sim):
     ''' Make a population using synthpops, including contacts '''
     import synthpops as sp # Optional import
-    if sim['resample']:  # pop size will differ from actual pop if we're using resampling
-        population = sp.make_population(n=sim['resample_max_pop'])
-    else:
-        population = sp.make_population(n=sim['pop_size'])
+    population = sp.make_population(n=sim['pop_size'])
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)
