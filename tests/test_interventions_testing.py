@@ -213,7 +213,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'crazy': {
-            'name': '10% daily testing; perfect same-day contact tracing; quarantine reduces stops acq; 21d quarantine',
+            'name': '10% daily testing; perfect same-day contact tracing; quarantine stops acq; 21d quarantine',
             'pars': {
                 'quar_trans_factor': {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0},
                 'quar_acq_factor': 1,
