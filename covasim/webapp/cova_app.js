@@ -69,7 +69,17 @@ const interventionTableConfig = {
 
 };
 
+function copyright_year() {
+    const release_year = 2020
+    const current_year = new Date().getFullYear()
+    let range = [release_year]
 
+    if (current_year > release_year){
+        range.push(current_year)
+    }
+
+    return range.join("-")
+}
 var vm = new Vue({
     el: '#app',
 
@@ -81,6 +91,7 @@ var vm = new Vue({
         return {
             title: "COVASim",
             version: 'Unable to connect to server!', // This text will display instead of the version
+            copyright_year: copyright_year(),
             panel_open: true,
             history: [],
             historyIdx: 0,
