@@ -282,7 +282,7 @@ def make_realistic_contacts(pop_size, ages, contacts, school_ages=None, work_age
 
     # Create the school and work contacts for each person
     s_contacts, _ = make_random_contacts(len(s_inds), {'s':contacts['s']})
-    w_contacts, _ = make_random_contacts(len(w_inds),   {'w':contacts['w']})
+    w_contacts, _ = make_random_contacts(len(w_inds), {'w':contacts['w']})
 
     # Construct the actual lists of contacts
     for i     in range(pop_size):   contacts_list[i]['h']   = h_contacts[i]['h'] # Copy over household contacts -- present for everyone
