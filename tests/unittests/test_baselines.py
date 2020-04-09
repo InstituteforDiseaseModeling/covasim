@@ -60,12 +60,10 @@ Difference:
 
     def test_baseline_without_intervention(self):
         pars = sc.objdict(
-            n           = 20000,  # Population size
-            n_infected  = 1,      # Number of initial infections
-            n_days      = 180,    # Number of days to simulate
-            prog_by_age = 1,      # Use age-specific mortality etc.
-            usepopdata  = 0,      # Use realistic population structure (requires synthpops)
-            seed        = 1,      # Random seed
+          pop_size     = 20000, # Population size
+          pop_infected = 1,     # Number of initial infections
+          n_days       = 180,   # Number of days to simulate
+          rand_seed    = 1,     # Random seed
         )
         sim = cv.Sim(pars=pars)
         sim.run(verbose=0)
@@ -73,12 +71,10 @@ Difference:
 
     def test_baseline_with_intervention(self):
       pars = sc.objdict(
-          n           = 20000,  # Population size
-          n_infected  = 1,      # Number of initial infections
-          n_days      = 180,    # Number of days to simulate
-          prog_by_age = 1,      # Use age-specific mortality etc.
-          usepopdata  = 0,      # Use realistic population structure (requires synthpops)
-          seed        = 1,      # Random seed
+        pop_size     = 20000, # Population size
+        pop_infected = 1,     # Number of initial infections
+        n_days       = 180,   # Number of days to simulate
+        rand_seed    = 1,     # Random seed
       )
       pars.interventions = cv.change_beta(days=45, changes=0.5) # Add intervention
 
