@@ -88,7 +88,9 @@ var vm = new Vue({
 
             // Run a a single sim
             try {
-                const response = await sciris.rpc('run_sim', [{...this.sim_pars, ...this.int_pars}, this.epi_pars, this.show_animation]);
+                const sim_pars = {...this.sim_pars, ...this.int_pars};
+                sim_pars.n_days.best = this.sim_length;
+                const response = await sciris.rpc('run_sim', [sim_pars, this.epi_pars, this.show_animation]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;

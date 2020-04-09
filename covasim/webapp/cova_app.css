@@ -109,9 +109,3 @@ header.row, footer.row {
 .mytooltip:hover .mytooltiptext {
     visibility: visible;
 }
-
-.chart-frame {
-    overflow: hidden auto;
-    max-height: 75vh;
-    position: relative;
-}
