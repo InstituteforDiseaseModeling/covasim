@@ -17,7 +17,7 @@ class Intervention:
         self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
 
 
-    def apply(self, sim: cv.Sim) -> None:
+    def apply(self, sim):
         """
         Apply intervention
 
@@ -35,7 +35,7 @@ class Intervention:
         raise NotImplementedError
 
 
-    def plot(self, sim: cv.Sim, ax: pl.Axes) -> None:
+    def plot(self, sim, ax):
         """
         Call function during plotting
 
@@ -105,7 +105,7 @@ class dynamic_pars(Intervention):
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         ''' Loop over the parameters, and then loop over the days, applying them if any are found '''
         t = sim.t
         for parkey,parval in self.pars.items():
@@ -160,46 +160,55 @@ class change_beta(Intervention):
     Args:
         days (int or array): the day or array of days to apply the interventions
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
+        layers (str or array): the layers in which to change beta
 
     Examples:
-        interv = cv.change_beta(25, 0.3) # On day 25, reduce beta by 70% to 0.3
-        interv = cv.change_beta([14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
+        interv = cv.change_beta(25, 0.3) # On day 25, reduce overall beta by 70% to 0.3
+        interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
 
     '''
 
-    def __init__(self, days, changes):
+    def __init__(self, days, changes, layers=None):
         super().__init__()
         self.days = sc.promotetoarray(days)
         self.changes = sc.promotetoarray(changes)
+        self.layers = sc.promotetolist(layers, keepnone=True)
         if len(self.days) != len(self.changes):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
-        self.orig_beta = None
+        self.orig_betas = None
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
 
         # If this is the first time it's being run, store beta
-        if self.orig_beta is None:
-            self.orig_beta = sim['beta']
+        if self.orig_betas is None:
+            self.orig_betas = {}
+            for layer in self.layers:
+                if layer is None:
+                    self.orig_betas['overall'] = sim['beta']
+                else:
+                    self.orig_betas[layer] = sim['beta_layers'][layer]
 
         # If this day is found in the list, apply the intervention
         inds = sc.findinds(self.days, sim.t)
         if len(inds):
-            new_beta = self.orig_beta
-            for ind in inds:
-                new_beta = new_beta * self.changes[ind]
-            sim['beta'] = new_beta
-
+            for layer,new_beta in self.orig_betas.items():
+                for ind in inds:
+                    new_beta = new_beta * self.changes[ind]
+                if layer == 'overall':
+                    sim['beta'] = new_beta
+                else:
+                    sim['beta_layers'][layer] = new_beta
         return
 
 
-    def plot(self, sim: cv.Sim, ax: pl.Axes):
+    def plot(self, sim, ax):
         ''' Plot vertical lines for when changes in beta '''
         ylims = ax.get_ylim()
         for day in self.days:
-            pl.plot([day]*2, ylims, '--')
+            pl.plot([day]*2, ylims, '--', c=[0,0,0])
         return
 
 
@@ -226,7 +235,7 @@ class test_num(Intervention):
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
 
         t = sim.t
 
@@ -244,7 +253,7 @@ class test_num(Intervention):
         test_probs = np.ones(sim.n)
         new_diagnoses = 0
 
-        for i, person in enumerate(sim.people.values()):
+        for i,person in enumerate(sim.people):
 
             new_diagnoses += person.check_diagnosed(t)
 
@@ -261,7 +270,7 @@ class test_num(Intervention):
         sim.results['new_diagnoses'][t] += new_diagnoses
 
         for test_ind in test_inds:
-            person = sim.get_person(test_ind)
+            person = sim.people[test_ind]
             person.test(t, self.sensitivity, test_delay=self.test_delay)
 
         return
@@ -276,14 +285,18 @@ class contact_tracing(Intervention):
         self.trace_probs = trace_probs
         self.trace_time = trace_time
         self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
+        self.start_day = start_day
         return
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         t = sim.t
+        if t < self.start_day:
+            return
 
         # Firstly, loop over diagnosed people to trace their contacts
-        diagnosed_ppl = filter(lambda p: p.diagnosed, sim.people.values())
-        for i, person in enumerate(diagnosed_ppl):
+        for person in sim.people:
+            if not person.infectious:
+                continue
 
             # Trace dynamic contact, e.g. the ones that change on every step
             # A sample of community contacts is appended to person.dyn_cont_ppl on each step
@@ -296,7 +309,7 @@ class contact_tracing(Intervention):
 
                 # Loop over people who get contacted
                 for contact_ind, contact_time in contactable_ppl.items():
-                    target_person = sim.get_person(contact_ind)
+                    target_person = sim.people[contact_ind]
                     if target_person.date_known_contact is None:
                         target_person.date_known_contact = t + contact_time
                     else:
@@ -311,6 +324,15 @@ class test_prob(Intervention):
     Test as many people as required based on test probability.
     Probabilities are OR together, so choose wisely.
 
+    Args:
+        symptomatic_prob (float): Probability of testing a symptomatic person
+        asymptomatic_prob (float): Probability of testing an asymptomatic person
+        test_sensitivity (float): Probability of a true positive
+        loss_prob (float): Probability of loss to follow-up
+        test_delay (int): How long testing takes
+        start_day (int): When to start the intervention
+
+
     Example:
         interv = cv.test_prob(symptomatic_prob=0.1, asymptomatic_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
@@ -318,36 +340,29 @@ class test_prob(Intervention):
     Returns:
         Intervention
     """
-    def __init__(self, symptomatic_prob=0, asymptomatic_prob=0, quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0):
-        """
-
-        Args:
-            self:
-            symptomatic_prob:
-            asymptomatic_prob:
-            quarantine_prob:
-            symp_quar_prob:
-            test_sensitivity:
-
-        Returns:
-
-        """
+    def __init__(self, symptomatic_prob=0, asymptomatic_prob=0, quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
         super().__init__()
         self.symptomatic_prob = symptomatic_prob
         self.asymptomatic_prob = asymptomatic_prob
         self.quarantine_prob = quarantine_prob
         self.symp_quar_prob = symp_quar_prob
         self.test_sensitivity = test_sensitivity
+        self.loss_prob = loss_prob
+        self.test_delay = test_delay
+        self.start_day = start_day
+
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         ''' Perform testing '''
         t = sim.t
+        if t < self.start_day:
+            return
 
         new_tests = 0
         new_diagnoses = 0
-        for i, person in enumerate(sim.people.values()):
+        for person in sim.people:
             new_diagnoses += person.check_diagnosed(t)
             if (person.symptomatic and cv.bt(self.symptomatic_prob)) or \
                 (not person.symptomatic and cv.bt(self.asymptomatic_prob)) or \
@@ -355,7 +370,7 @@ class test_prob(Intervention):
                 (person.symptomatic and person.quarantine and cv.bt(self.symp_quar_prob)) :
 
                 new_tests += 1
-                person.test(t, self.test_sensitivity)
+                person.test(t, self.test_sensitivity, self.loss_prob, self.test_delay)
 
         sim.results['new_tests'][t] += new_tests
         sim.results['new_diagnoses'][t] += new_diagnoses
@@ -396,7 +411,7 @@ class test_historical(Intervention):
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         ''' Perform testing '''
 
         t = sim.t
@@ -405,7 +420,7 @@ class test_historical(Intervention):
 
             # Compute weights for people who would test positive or negative
             positive_tests = np.zeros((sim.n,))
-            for i, person in enumerate(sim.people.values()):
+            for i,person in enumerate(sim.people):
                 if person.infectious:
                     positive_tests[i] = 1
             negative_tests = 1-positive_tests
@@ -416,12 +431,12 @@ class test_historical(Intervention):
 
             # Todo - assess performance and optimize e.g. to reduce dict indexing
             for ind in positive_inds:
-                person = sim.get_person(ind)
+                person = sim.people[ind]
                 person.test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
                 sim.results['new_diagnoses'][t] += 1
 
             for ind in negative_inds:
-                person = sim.get_person(ind)
+                person = sim.people[ind]
                 person.test(t, test_sensitivity=1.0)
 
             sim.results['new_tests'][t] += self.n_tests[t]

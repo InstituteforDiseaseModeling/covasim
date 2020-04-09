@@ -3,6 +3,7 @@ Tests of simulation parameters from
 ../../covasim/README.md
 """
 import unittest
+import pytest
 
 from unittest_support_classes import CovaSimTest, TestProperties
 
@@ -10,6 +11,7 @@ DProgKeys = TestProperties.ParameterKeys.ProgressionKeys
 TransKeys = TestProperties.ParameterKeys.TransmissionKeys
 TSimKeys = TestProperties.ParameterKeys.SimulationKeys
 ResKeys = TestProperties.ResultsDataKeys
+
 
 class DiseaseMortalityTests(CovaSimTest):
     def setUp(self):
@@ -25,7 +27,6 @@ class DiseaseMortalityTests(CovaSimTest):
         Infect lots of people with cfr one and short time to die
         duration. Verify that everyone dies, no recoveries.
         """
-        self.is_debugging = True
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
         self.run_sim()
@@ -60,12 +61,14 @@ class DiseaseMortalityTests(CovaSimTest):
         duration. Verify that no one dies.
         Depends on default_cfr_one
         """
+        self.is_debugging = True
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
-        all_crit_no_dead = {
-            DProgKeys.ProbabilityKeys.crt_to_death_probability: 0.0
+        prob_dict = {
+            DProgKeys.ProbabilityKeys.RelativeProbKeys.crt_to_death_probability: 0.0
         }
-        self.run_sim(all_crit_no_dead)
+        self.set_simulation_prognosis_probability(prob_dict)
+        self.run_sim()
         deaths_at_timestep_channel = self.get_full_result_channel(
             ResKeys.deaths_daily
         )
@@ -80,8 +83,8 @@ class DiseaseMortalityTests(CovaSimTest):
             for t in range(len(c)):
                 self.assertEqual(c[t], 0,
                                  msg=f"There should be no deaths"
-                                     f"with critical to death probability 0.0. Channel {c} had "
-                                     f"bad data at t: {t}")
+                                     f" with critical to death probability 0.0. Channel {c} had"
+                                     f" bad data at t: {t}")
                 pass
             pass
         cumulative_recoveries = self.get_day_final_channel_value(
@@ -105,10 +108,11 @@ class DiseaseMortalityTests(CovaSimTest):
         # old_ratio_sum = 0
         old_cumulative_deaths = 0
         for death_prob in death_probs:
-            test_config = {
-                DProgKeys.ProbabilityKeys.crt_to_death_probability: death_prob
+            prob_dict = {
+                DProgKeys.ProbabilityKeys.RelativeProbKeys.crt_to_death_probability: death_prob
             }
-            self.run_sim(test_config)
+            self.set_simulation_prognosis_probability(prob_dict)
+            self.run_sim()
             deaths_at_timestep_channel = self.get_full_result_channel(
                 ResKeys.deaths_daily
             )

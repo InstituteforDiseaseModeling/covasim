@@ -13,6 +13,7 @@ do_show = 1
 
 #%% Define the tests
 
+
 def test_singlerun():
     sc.heading('Single run test')
 
@@ -21,31 +22,8 @@ def test_singlerun():
 
     sim = cv.Sim()
     sim['n_days'] = 20
-    sim['n'] = 1000
+    sim['pop_size'] = 1000
     sim = cv.single_run(sim=sim, **iterpars)
-
-    return sim
-
-
-def test_combine(do_plot=False): # If being run via pytest, turn off
-    sc.heading('Combine results test')
-
-    n_runs = 3
-    n = 1000
-    n_infected = 10
-
-    print('Running first sim...')
-    sim = cv.Sim({'n':n, 'n_infected':n_infected})
-    sim = cv.multi_run(sim=sim, n_runs=n_runs, combine=True)
-    assert len(sim.people) == n*n_runs
-
-    print('Running second sim, results should be similar but not identical (stochastic differences)...')
-    sim2 = cv.Sim({'n':n*n_runs, 'n_infected':n_infected*n_runs})
-    sim2.run()
-
-    if do_plot:
-        sim.plot()
-        sim2.plot()
 
     return sim
 
@@ -60,7 +38,7 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
 
     sim = cv.Sim()
     sim['n_days'] = 60
-    sim['n'] = 1000
+    sim['pop_size'] = 1000
     sims = cv.multi_run(sim=sim, iterpars=iterpars)
 
     if do_plot:
@@ -72,7 +50,7 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
 
 def test_scenarios(do_plot=False):
     sc.heading('Scenarios test')
-    basepars = {'n':1000}
+    basepars = {'pop_size':1000}
 
     json_path = 'scen_test.json'
     xlsx_path = 'scen_test.xlsx'
@@ -90,14 +68,37 @@ def test_scenarios(do_plot=False):
     return scens
 
 
+def test_combine(do_plot=False): # If being run via pytest, turn off
+    sc.heading('Combine results test')
+
+    n_runs = 3
+    pop_size = 1000
+    pop_infected = 10
+
+    print('Running first sim...')
+    sim = cv.Sim({'pop_size':pop_size, 'pop_infected':pop_infected})
+    sim = cv.multi_run(sim=sim, n_runs=n_runs, combine=True, keep_people=True)
+    assert sim['pop_size'] == pop_size*n_runs
+
+    print('Running second sim, results should be similar but not identical (stochastic differences)...')
+    sim2 = cv.Sim({'pop_size':pop_size*n_runs, 'pop_infected':pop_infected*n_runs})
+    sim2.run()
+
+    if do_plot:
+        sim.plot()
+        sim2.plot()
+
+    return sim
+
 
 #%% Run as a script
 if __name__ == '__main__':
     T = sc.tic()
 
-    # sim2  = test_singlerun()
-    # sim3  = test_combine(do_plot=do_plot)
-    # sims  = test_multirun(do_plot=do_plot)
+    sim1  = test_singlerun()
+    sim2  = test_combine(do_plot=do_plot)
+    sims1  = test_multirun(do_plot=do_plot)
+    sims2 = test_combine(do_plot=do_plot)
     scens = test_scenarios(do_plot=do_plot)
 
     sc.toc(T)

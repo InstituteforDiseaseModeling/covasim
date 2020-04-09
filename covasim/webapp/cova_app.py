@@ -36,46 +36,46 @@ def get_defaults(region=None, merge=False):
         region = 'Example'
 
     regions = {
-        'scale': {
+        'pop_scale': {
             'Example': 1,
-            'Seattle': 25,
+            # 'Seattle': 25,
             # 'Wuhan': 200,
         },
-        'n': {
+        'pop_size': {
             'Example': 2000,
-            'Seattle': 10000,
+            # 'Seattle': 10000,
             # 'Wuhan': 1,
         },
         'n_days': {
             'Example': 60,
-            'Seattle': 45,
+            # 'Seattle': 45,
             # 'Wuhan': 90,
         },
-        'n_infected': {
+        'pop_infected': {
             'Example': 100,
-            'Seattle': 4,
+            # 'Seattle': 4,
             # 'Wuhan': 10,
         },
         'web_int_day': {
             'Example': 25,
-            'Seattle': 0,
+            # 'Seattle': 0,
             # 'Wuhan': 1,
         },
         'web_int_eff': {
             'Example': 0.8,
-            'Seattle': 0.0,
+            # 'Seattle': 0.0,
             # 'Wuhan': 0.9,
         },
     }
 
     sim_pars = {}
-    sim_pars['scale']       = dict(best=1,    min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
-    sim_pars['n']           = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
-    sim_pars['n_infected']  = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
-    sim_pars['n_days']      = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
-    sim_pars['web_int_day'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (for no intervention, set start day to 0 and effectiveness to 0)')
-    sim_pars['web_int_eff'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Fractional reduction in infectiousness due to intervention')
-    sim_pars['seed']        = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
+    sim_pars['pop_scale']    = dict(best=1,    min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
+    sim_pars['pop_size']     = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
+    sim_pars['pop_infected'] = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
+    sim_pars['n_days']       = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
+    sim_pars['web_int_day']  = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (for no intervention, set start day to 0 and effectiveness to 0)')
+    sim_pars['web_int_eff']  = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Fractional reduction in infectiousness due to intervention')
+    sim_pars['rand_seed']    = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
@@ -123,11 +123,11 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
     try:
         # Fix up things that JavaScript mangles
-        orig_pars = cv.make_pars()
+        orig_pars = cv.make_pars(set_prognoses=True, prog_by_age=False, use_layers=False)
+
         defaults = get_defaults(merge=True)
         web_pars = {}
         web_pars['verbose'] = verbose # Control verbosity here
-
 
         for key,entry in {**sim_pars, **epi_pars}.items():
             print(key, entry)
@@ -163,11 +163,16 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
             web_pars['interventions'] = cv.change_beta(days=web_pars.pop('web_int_day'), changes=(1-web_pars.pop('web_int_eff')))
 
         # Handle CFR -- ignore symptoms and set to 1
-        prog_pars = cv.get_default_prognoses(by_age=False)
-        web_pars['rel_symp_prob']   = 1.0/prog_pars.symp_prob
-        web_pars['rel_severe_prob'] = 1.0/prog_pars.severe_prob
-        web_pars['rel_crit_prob']   = 1.0/prog_pars.crit_prob
-        web_pars['rel_death_prob']  = web_pars.pop('web_cfr')/prog_pars.death_prob
+        web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
+        web_pars['rel_symp_prob']   = 1e4 # Arbitrarily large
+        web_pars['rel_severe_prob'] = 1e4
+        web_pars['rel_crit_prob']   = 1e4
+        web_pars['prognoses']['death_probs'][0] = web_pars.pop('web_cfr')
+        if web_pars['rand_seed'] == 0:
+            web_pars['rand_seed'] = None
+        web_pars['timelimit'] = max_time  # Set the time limit
+        web_pars['pop_size'] = int(web_pars['pop_size'])  # Set data type
+        web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
 
     except Exception as E:
         err2 = f'Parameter conversion failed! {str(E)}\n'
@@ -176,12 +181,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
     # Create the sim and update the parameters
     try:
-        sim = cv.Sim()
-        sim['prog_by_age'] = False # So the user can override this value
-        sim['timelimit'] = max_time # Set the time limit
-        if web_pars['seed'] == 0:
-            web_pars['seed'] = None # Reset
-        sim.update_pars(web_pars)
+        sim = cv.Sim(web_pars)
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
@@ -222,7 +222,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-            
+
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
             d['config'] = {'responsive': True}
@@ -253,7 +253,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
-        json_string = sim.to_json()
+        json_string = sim.to_json(verbose=False)
         files['json'] = {
             'filename': f'Covasim_results_{datestamp}.json',
             'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
@@ -282,7 +282,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
 
 def get_individual_states(sim, order=True):
-    people = sim.people.values()
+    people = sim.people
     if order:
         people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
 
@@ -310,7 +310,7 @@ def get_individual_states(sim, order=True):
          'value': 4
          },
         {'name': 'Dead',
-         'quantity': 'date_died',
+         'quantity': 'date_dead',
          'color': '#000000',
          'value': 5
          },
@@ -415,7 +415,7 @@ def animate_people(sim) -> dict:
         "xanchor": "left",
         "currentvalue": {
             "font": {"size": 20},
-            "prefix": "Day:",
+            "prefix": "Day: ",
             "visible": True,
             "xanchor": "right"
         },

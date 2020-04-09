@@ -37,10 +37,10 @@ def test_microsim():
 
     sim = cv.Sim()
     pars = {
-        'n': 10,
-        'n_seed': 1,
+        'pop_size': 10,
+        'pop_infected': 1,
+        'n_days': 10,
         'contacts': 2,
-        'n_days': 10
         }
     sim.update_pars(pars)
     sim.run()
@@ -76,7 +76,7 @@ def test_fileio():
     # Create and run the simulation
     sim = cv.Sim()
     sim['n_days'] = 20
-    sim['n'] = 1000
+    sim['pop_size'] = 1000
     sim.run(verbose=0)
 
     # Create objects
@@ -98,7 +98,7 @@ def test_fileio():
 def test_start_stop(): # If being run via pytest, turn off
     sc.heading('Test starting and stopping')
 
-    pars = {'n': 1000}
+    pars = {'pop_size': 1000}
 
     # Create and run a basic simulation
     sim1 = cv.Sim(pars)
@@ -122,7 +122,7 @@ def test_sim_data(do_plot=False, do_show=False):
     sc.heading('Data test')
 
     pars = dict(
-        n=2000,
+        pop_size = 2000,
         start_day = '2019-12-25',
         )
 

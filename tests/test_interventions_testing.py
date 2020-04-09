@@ -3,8 +3,6 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
-import matplotlib
-matplotlib.use('Agg')
 import sciris as sc
 import covasim as cv
 
@@ -13,7 +11,8 @@ do_show   = 0
 do_save   = 1
 debug     = 0
 keep_sims = 0
-fig_path  = [f'results/testing_scen_{i}.png' for i in range(3)]
+fig_paths = [f'results/testing_scen_{i}.png' for i in range(3)]
+
 
 def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None):
     sc.heading('Test of testing interventions')
@@ -24,13 +23,12 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     n_runs = 3
     verbose = 1
     base_pars = {
-      'n': 10000
-    }
+      'pop_size': 1000,
+      'use_layers': True,
+      }
 
     base_sim = cv.Sim(base_pars) # create sim object
-    base_sim['n_seed'] = 1
-    base_sim['beta']   = 0.012
-    n_people = base_sim['n']
+    n_people = base_sim['pop_size']
     npts = base_sim.npts
 
     # Define overall testing assumptions
@@ -82,7 +80,7 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
                         cv.test_historical(n_tests=[1000] * npts, n_positive=[100] * npts),
                         cv.test_prob(symptomatic_prob=0.03, asymptomatic_prob=testing),
                     ])
-            }
+           }
         },
 
     }
@@ -113,11 +111,12 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     n_runs = 3
     verbose = 1
     base_pars = {
-      'n': 5000
-    }
+      'pop_size': 5000,
+      'use_layers': True,
+      }
 
     base_sim = cv.Sim(base_pars) # create sim object
-    n_people = base_sim['n']
+    n_people = base_sim['pop_size']
     npts = base_sim.npts
 
     # Define overall testing assumptions
@@ -150,7 +149,6 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     return scens
 
 
-
 def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     sc.heading('Test impact of reducing delay time for finding contacts of positives')
 
@@ -161,12 +159,15 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     n_runs = 3
     verbose = 1
     base_pars = {
-      'n': 5000
-    }
+      'pop_size': 5000,
+      'use_layers': True,
+      }
 
     base_sim = cv.Sim(base_pars) # create sim object
     base_sim['n_days'] = 50
-    n_people = base_sim['n']
+    #base_sim['contacts'] = {'h': 4,   's': 10,  'w': 10,  'c': 0} # Turn off community contacts - not working
+    #base_sim['beta'] = 0.02 # Increase beta
+    n_people = base_sim['pop_size']
     npts = base_sim.npts
 
     # Define overall testing assumptions
@@ -247,9 +248,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 if __name__ == '__main__':
     sc.tic()
 
-    #scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[0])
-    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[1])
-    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path[2])
+    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
+    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
+    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
 
     sc.toc()
 
