@@ -62,7 +62,7 @@ follows:
 
 * `python examples/run_sim.py`
 
-  This shows a slighly more detailed example, including creating an intervention and saving to disk.
+  This shows a slightly more detailed example, including creating an intervention and saving to disk.
 
 * `python examples/run_scenarios.py`
 
@@ -108,6 +108,16 @@ slight variations to the model (`model.py`).
 
 For running the interactive web application: please see the `README.md` in that
 folder for more information.
+
+## Other folders
+
+### bin
+
+This folder contains a command-line interface (CLI) version of Covasim; example usage:
+
+```bash
+covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
+```
 
 
 ## Disclaimer
