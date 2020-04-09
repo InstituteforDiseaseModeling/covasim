@@ -100,7 +100,52 @@
             </b-tooltip>
           </div>
         </fieldset>
-
+        <fieldset class="col-md-12">
+          <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
+          <legend>Intervention Scenarios</legend>
+          <ul class="nav nav-tabs">
+            <li v-for="(scenario, scenarioKey, index) in interventionTableConfig" class="nav-item"><a data-toggle="tab" class="nav-link" v-bind:class="[index === 0 ? 'active' : '']" :href="'#' + scenarioKey">{{scenario.formTitle}}</a></li>
+          </ul>
+          <div class="tab-content">
+            <div :id="scenarioKey" class="tab-pane fade" v-bind:class="[index === 0 ? 'active show' : '']" v-for="(scenario, scenarioKey, index) in interventionTableConfig">
+              <div>
+                <legend>{{scenario.formTitle}}</legend>
+                <form @submit.prevent="(e) => addIntervention(scenarioKey, e)">
+                  <div class="form-group">
+                    <div class="input-group mb-3">
+                      <template v-for="field in scenario.fields">
+                        <input max="180" min="1" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type" >
+                        <select class="form-control" :name="field.key" v-else>
+                            <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
+                        </select>
+                      </template>
+                      <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="submit">Add a scenario</button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+                <span aria-live="assertive" v-if="scenarioError[scenarioKey]" class="text-danger form-error">{{scenarioError[scenarioKey]}}</span>
+                <div v-if="intervention_pars[scenarioKey] && intervention_pars[scenarioKey].length > 0">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th scope="col" v-for="field in scenario.fields">{{field.label}}</th>
+                        <th scope="col"> </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(intervention, index) in intervention_pars[scenarioKey]">
+                        <th v-for="field in scenario.fields" scope="row">{{intervention[field.key]}}</th>
+                        <td><button @click="deleteIntervention(scenarioKey, index)" class="btn btn-outline-secondary" type="button">Delete</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </fieldset>
       </div>
 
       <!-- Run button -->
