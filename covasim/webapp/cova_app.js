@@ -16,6 +16,57 @@ const PlotlyChart = {
         }
         );
     },
+    updated() {
+        this.$nextTick(function () {
+            let x = JSON.parse(this.graph.json);
+            x.responsive = true;
+            Plotly.react(this.graph.id, x);
+        });
+    }
+};
+
+const interventionTableConfig = {
+    social_distance: {
+        formTitle: "Social Distancing",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'},
+            {key: 'end', type: 'number', label: 'End Day'},
+            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive Effectiveness', value: 'aggressive'}, {label: 'Moderate Effectiveness', value: 'moderate'}, {label: 'Mild Effectiveness', value: 'mild'}]}],
+        handleSubmit: function(event) {
+            const start = parseInt(event.target.elements.start.value);
+            const end = parseInt(event.target.elements.end.value);
+            const level = event.target.elements.level.value;
+            return {start, end, level};
+        }
+    },
+    school_closures: {
+        formTitle: "School clousures",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
+        handleSubmit: function(event) {
+            const start = parseInt(event.target.elements.start.value);
+            const end = parseInt(event.target.elements.end.value);
+            return {start, end};
+        }
+    },
+    symptomatic_testing: {
+        formTitle: "Symptomatic testing",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}, {label: 'Accuracy', key: 'level', type: 'select', options: [{label: '60% Accuracy', value: '60'}, {label: '90% Accuracy', value: '90'},]}],
+        handleSubmit: function(event) {
+            const start = parseInt(event.target.elements.start.value);
+            const end = parseInt(event.target.elements.end.value);
+            const level = parseInt(event.target.elements.level.value);
+            return {start, end, level};
+        }
+    },
+    contract_tracing: {
+        formTitle: "Contract tracing",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
+        handleSubmit: function(event) {
+            const start = parseInt(event.target.elements.start.value);
+            const end = parseInt(event.target.elements.end.value);
+            return {start, end};
+        }
+  }
+
 };
 
 
@@ -33,6 +84,8 @@ var vm = new Vue({
             historyIdx: 0,
             sim_pars: {},
             epi_pars: {},
+            intervention_pars: {},
+            intervention_figs: {},
             show_animation: false,
             result: { // Store currently displayed results
                 graphs: [],
@@ -40,6 +93,8 @@ var vm = new Vue({
                 files: {},
             },
             paramError: {},
+            scenarioError: {},
+            interventionTableConfig,
             running: false,
             err: '',
             reset_options: ['Example', 'Seattle'], // , 'Wuhan', 'Global'],
@@ -66,7 +121,35 @@ var vm = new Vue({
     },
 
     methods: {
+        async addIntervention(scenarioKey, event) {
+            const intervention = this.interventionTableConfig[scenarioKey].handleSubmit(event);
+            const key = scenarioKey;
+            if (!this.intervention_pars[key]) {
+                this.$set(this.intervention_pars, key, []);
+            }
+            // validate intervention
+            const notValid = !intervention.end || !intervention.start || intervention.end <= intervention.start || this.intervention_pars[key].some(({start, end}) => {
+                return start <= intervention.start && end >= intervention.start ||
+                    start <= intervention.end && end >= intervention.end ||
+                    intervention.start <= start && intervention.end >= end;
+            });
+            if (notValid) {
+                this.$set(this.scenarioError, scenarioKey, `Please enter a valid day range`);
+                return;
+            }
+            this.$set(this.scenarioError, scenarioKey, '');
 
+            this.intervention_pars[key].push(intervention);
+            const result = this.intervention_pars[key].sort((a, b) => a.start - b.start);
+            this.$set(this.intervention_pars, key, result);
+            const response = await sciris.rpc('get_gnatt', [this.intervention_pars, this.interventionTableConfig]);
+            this.intervention_figs = response.data;
+        },
+        async deleteIntervention(scenarioKey, index) {
+            this.$delete(this.intervention_pars[scenarioKey], index);
+            const response = await sciris.rpc('get_gnatt', [this.intervention_pars, this.interventionTableConfig]);
+            this.intervention_figs = response.data;
+        },
         async get_version() {
             const response = await sciris.rpc('get_version');
             this.version = response.data;
@@ -82,7 +165,7 @@ var vm = new Vue({
 
             // Run a a single sim
             try {
-                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.show_animation]);
+                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.intervention_pars, this.show_animation]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;

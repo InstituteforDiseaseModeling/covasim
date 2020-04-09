@@ -8,6 +8,7 @@ import os
 import sys
 import numpy as np
 import plotly.graph_objects as go
+import plotly.figure_factory as ff
 import sciris as sc
 import base64 # Download/upload-specific import
 import json
@@ -97,6 +98,44 @@ def get_defaults(region=None, merge=False):
 
     return output
 
+def map_social_distance(scenario, web_pars):
+    '''map social distance to intervention'''
+    interventions = []
+    for timeline in scenario:
+        start = timeline['start']
+        end = timeline['end']
+        level = timeline['level'] # aggressive, moderate, mild
+
+    web_pars['interventions'] = None
+
+def map_school_closures(scenario, web_pars):
+    '''map social distance to intervention'''
+    interventions = []
+    for timeline in scenario:
+        start = timeline['start']
+        end = timeline['end']
+
+    web_pars['interventions'] = None
+
+def map_symptomatic_testing(scenario, web_pars):
+    '''map social distance to intervention'''
+    interventions = []
+    for timeline in scenario:
+        start = timeline['start']
+        end = timeline['end']
+        level = timeline['level'] # 60, 90
+
+    web_pars['interventions'] = None
+
+def map_contract_tracing(scenario, web_pars):
+    '''map social distance to intervention'''
+    interventions = []
+    for timeline in scenario:
+        start = timeline['start']
+        end = timeline['end']
+        level = timeline['level'] # 60, 90
+
+    web_pars['interventions'] = None
 
 @app.register_RPC()
 def get_version():
@@ -114,9 +153,22 @@ def upload_pars(fname):
         raise KeyError(f'Parameters file must have keys "sim_pars" and "epi_pars", not {parameters.keys()}')
     return parameters
 
+@app.register_RPC()
+def get_gnatt(intervention_pars=None, intervention_config=None):
+    df = []
+    for key,scenario in intervention_pars.items():
+        for timeline in scenario:
+            task = intervention_config[key]['formTitle']
+            level = task + ' ' + str(timeline.get('level', ''))
+            df.append(dict(Task=task, Start=timeline['start'], Finish=timeline['end'], Level= level))
+
+    fig = ff.create_gantt(df, index_col='Level', title='Intervention timeline',
+                        show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
+    fig.update_xaxes(type='linear')
+    return {'json': fig.to_json(), 'id': 'test'}
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation=False, verbose=True):
     ''' Create, run, and plot everything '''
 
     err = ''
@@ -162,6 +214,18 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         web_pars['interventions'] = []
         if web_pars['web_int_day'] is not None:
             web_pars['interventions'] = cv.change_beta(days=web_pars.pop('web_int_day'), changes=(1-web_pars.pop('web_int_eff')))
+
+        switcher = {
+            'social_distance': map_social_distance,
+            'school_closures': map_school_closures,
+            'symptomatic_testing': map_symptomatic_testing,
+            'contract_tracing': map_contract_tracing
+        }
+        if intervention_pars is not None:
+            for key,scenario in intervention_pars.items():
+                func = switcher.get(key)
+                func(scenario, web_pars)
+
 
         # Handle CFR -- ignore symptoms and set to 1
         web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
