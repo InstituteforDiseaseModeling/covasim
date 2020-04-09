@@ -70,104 +70,153 @@
 
   <div class="content row">
 
-    <div id="parameters" class="col-sm">
+    <b-sidebar id="parameters" title="Parameters" visible bg-variant="white" width="40rem" shadow>
+      <div class="px-3">
 
-      <div class="row">
-
-        <fieldset class="col-md-6">
-          <legend>Simulation parameters</legend>
-          <div v-for="(par, key) in sim_pars" class="form-group">
-            <div :id="key+'-wpr'">
-              <label :for="key">{{par.name}}:</label>
-              <input :id="key" :disabled="running" class="form-control" v-model="par.best">
-              <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
-            </div>
-            <b-tooltip :target="key+'-wpr'">
-              {{par.tip}}
+        <!-- Presets -->
+        <div class="form-row mb-3">
+          <div class="col">
+            <select :disabled="running" id="examples" v-model="reset_choice" @change="resetPars()" class="form-control" aria-label="Example Presets">
+              <option v-for="(item, index) in reset_options" :value="item">
+                {{ item }}
+              </option>
+            </select>
+            <b-tooltip target="examples">
+              Example parameter configurations
             </b-tooltip>
           </div>
-        </fieldset>
-        <fieldset class="col-md-6">
-          <legend>Epidemiological parameters</legend>
-          <div v-for="(par, key) in epi_pars" class="form-group">
-            <div :id="key+'-wpr'">
-              <label :for="key">{{par.name}}:</label>
-              <input :id="key" :disabled="running" class="form-control" v-model="par.best">
-              <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
-            </div>
-            <b-tooltip :target="key+'-wpr'">
-              {{par.tip}}
+          <div class="col-auto">
+            <button id="reset_btn" :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
+              Reset
+            </button>
+            <b-tooltip target="reset_btn">
+              Reset parameters to default values
             </b-tooltip>
           </div>
-        </fieldset>
-
-      </div>
-
-      <!-- Run button -->
-      <div class="d-flex align-items-center flex-wrap">
-        <button v-if="running" class="btn btn-primary btn-lg btn-run green" type="button" disabled>
-          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          Running...
-        </button>
-        <button v-else id="run_btn" :disabled="isRunDisabled" class="btn btn-primary btn-lg btn-run green" type="button" @click="runSim">
-          Run
-        </button>
-        <button id="reset_btn" :disabled="running" class="btn btn-primary btn-lg ml-2 mr-2 blueish" type="button" @click="resetPars">
-          Reset
-        </button>
-        <b-tooltip target="reset_btn">
-          Reset parameters to default values
-        </b-tooltip>
-
-        <select :disabled="running" id="examples" v-model="reset_choice" @change="resetPars()" class="mr-2" aria-label="Example Presets">
-          <option v-for="(item, index) in reset_options" :value="item">
-            {{ item }}
-          </option>
-        </select>
-        <b-tooltip target="examples">
-          Example parameter configurations
-        </b-tooltip>
-
-        <button id="download-parameters-button" :disabled="running" class="btn btn-primary mr-2 blueish" type="button" @click="downloadPars">
-          <span class="ti-download"/>
-          <span class="sr-only"> Download parameters </span>
-        </button>
-        <b-tooltip target="download-parameters-button">
-          Download parameters
-        </b-tooltip>
-
-        <button id="upload-parameters-button" :disabled="running" class="btn btn-primary mr-2 blueish" type="button" @click="uploadPars">
-          <span class="ti-upload"/>
-          <span class="sr-only"> Upload parameters </span>
-        </button>
-        <b-tooltip target="upload-parameters-button">
-          Upload parameters
-        </b-tooltip>
-
-        <div id="history">
-          <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">
-            <option v-for="(item, index) in history" :value="index">
-              {{ index }}
-            </option>
-          </select>
+          <div class="col-auto">
+            <button id="download-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="downloadPars">
+              <span class="ti-download"/>
+              <span class="sr-only"> Download parameters </span>
+            </button>
+            <b-tooltip target="download-parameters-button">
+              Download parameters
+            </b-tooltip>
+          </div>
+          <div class="col-auto">
+            <button id="upload-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="uploadPars">
+              <span class="ti-upload"/>
+              <span class="sr-only"> Upload parameters </span>
+            </button>
+            <b-tooltip target="upload-parameters-button">
+              Upload parameters
+            </b-tooltip>
+          </div>
         </div>
-        <b-tooltip target="history">
-          History of parameters used in this session
-        </b-tooltip>
+
+        <div class="form-group">
+          <label for="n_days">Number of days to simulate:</label>
+          <input id="n_days" type="number" min="1" max="180" :disabled="running" class="form-control" v-model="sim_length">
+          <span aria-live="assertive" v-if="paramError.n_days" class="text-danger form-error">{{paramError.n_days}}</span>
+          
+          <b-tooltip target="n_days">
+            Number of days to run the simulation for
+          </b-tooltip>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header">
+            <button class="btn btn-block" v-b-toggle.intervention>Interventions</button>
+          </div>
+          <b-collapse visible id="intervention">
+            <div class="card-body">
+              <div v-for="(par, key) in int_pars" class="form-group">
+                <div :id="key+'-wpr'">
+                  <label :for="key">{{par.name}}:</label>
+                  <input :id="key" :disabled="running" class="form-control" v-model="par.best">
+                  <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
+                </div>
+                <b-tooltip :target="key+'-wpr'">
+                  {{par.tip}}
+                </b-tooltip>
+              </div>
+            </div>
+          </b-collapse>
+        </div>
+        <div class="card mb-3">
+          <div class="card-header">
+            <button class="btn btn-block" v-b-toggle.advanced>Advanced</button>
+          </div>
+          <b-collapse id="advanced">
+            <div class="card-body">
+              <div class="row">
+
+                <fieldset class="col-md-6">
+                  <legend>Population parameters</legend>
+                  <div v-for="(par, key) in sim_pars" class="form-group">
+                    <div :id="key+'-wpr'">
+                      <label :for="key">{{par.name}}:</label>
+                      <input :id="key" :disabled="running" class="form-control" v-model="par.best">
+                      <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
+                    </div>
+                    <b-tooltip :target="key+'-wpr'">
+                      {{par.tip}}
+                    </b-tooltip>
+                  </div>
+                </fieldset>
+                <fieldset class="col-md-6">
+                  <legend>Epidemiological parameters</legend>
+                  <div v-for="(par, key) in epi_pars" class="form-group">
+                    <div :id="key+'-wpr'">
+                      <label :for="key">{{par.name}}:</label>
+                      <input :id="key" :disabled="running" class="form-control" v-model="par.best">
+                      <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
+                    </div>
+                    <b-tooltip :target="key+'-wpr'">
+                      {{par.tip}}
+                    </b-tooltip>
+                  </div>
+                </fieldset>
+
+              </div>
+            </div>
+          </b-collapse>
+        </div>
+
+        <!-- Run button -->
+        <div class="form-inline justify-content-end">
+          <button v-if="running" class="btn btn-primary btn-lg btn-run green" type="button" disabled>
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Running...
+          </button>
+          <button v-else id="run_btn" :disabled="isRunDisabled" class="btn btn-primary btn-lg btn-run green" type="button" @click="runSim">
+            Run
+          </button>
+
+          <div class="form-group ml-3" id="history">
+            <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">
+              <option v-for="(item, index) in history" :value="index">
+                {{ index }}
+              </option>
+            </select>
+          </div>
+          <b-tooltip target="history">
+            History of parameters used in this session
+          </b-tooltip>
+        </div>
+
+        <label>
+          <input type="checkbox" v-model="show_animation" />Render animation
+        </label>
+
+
+
+        <div v-if="err" class="errorbox">
+          <p>During the simulation, the following warning(s) were encountered:</p>
+          <p>{{ err }}</p>
+        </div>
+
       </div>
-
-      <label>
-         <input type="checkbox" v-model="show_animation" />Render animation
-      </label>
-
-
-
-      <div v-if="err" class="errorbox">
-        <p>During the simulation, the following warning(s) were encountered:</p>
-        <p>{{ err }}</p>
-      </div>
-
-    </div>
+    </b-sidebar>
 
     <!-- Show the actual graph -->
     <div id="graphs" class="graphs col-sm">

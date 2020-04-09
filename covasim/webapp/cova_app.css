@@ -78,6 +78,12 @@ header.row, footer.row {
     padding: 10px;
 }
 
+.card-header .btn {
+    text-align: left;
+    margin: -.75rem -1.25rem;
+    width: calc(100% + 2.5rem);
+}
+
 /* Tooltip container */
 .mytooltip {
     position: relative;
