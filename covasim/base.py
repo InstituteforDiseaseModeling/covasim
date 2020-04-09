@@ -258,13 +258,35 @@ class BaseSim(ParsObj):
             A unicode string containing a JSON representation of the results,
             or writes the JSON file to disk
 
+        Examples:
+            string = sim.to_json()
+            sim.to_json('results.json')
+            sim.to_json('summary.json', keys='summary')
         """
+
+        # Handle keys
         if keys is None:
-            keys = ['results', 'pars']
+            keys = ['results', 'pars', 'summary']
         keys = sc.promotetolist(keys)
-        resdict = self._make_resdict()
-        pardict = self._make_pardict()
-        d = {'results': resdict, 'parameters': pardict}
+
+        # Convert to JSON-compatibleformat
+        d = {}
+        for key in keys:
+            if key == 'results':
+                resdict = self._make_resdict()
+                d['results'] = resdict
+            elif key in ['pars', 'parameters']:
+                pardict = self._make_pardict()
+                d['parameters'] = pardict
+            elif key == 'summary':
+                d['summary'] = dict(sc.dcp(self.summary))
+            else:
+                try:
+                    d[key] = sc.sanitizejson(getattr(self, key))
+                except Exception as E:
+                    errormsg = f'Could not convert {key} to JSON: {str(E)}; continuing...'
+                    print(errormsg)
+
         if filename is None:
             output = sc.jsonify(d, tostring=tostring, indent=indent, verbose=verbose, *args, **kwargs)
         else:
