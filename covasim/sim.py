@@ -389,22 +389,22 @@ class Sim(cvbase.BaseSim):
 
         # Update counts for this time step: stocks
 
-        self.results['n_susceptible'][t]  = n_susceptible * scale
-        self.results['n_exposed'][t]      = n_exposed * scale
-        self.results['n_infectious'][t]   = n_infectious * scale # Tracks total number infectious at this timestep
-        self.results['n_symptomatic'][t]  = n_symptomatic * scale # Tracks total number symptomatic at this timestep
-        self.results['n_severe'][t]       = n_severe * scale # Tracks total number of severe cases at this timestep
-        self.results['n_critical'][t]     = n_critical * scale # Tracks total number of critical cases at this timestep
-        self.results['n_diagnosed'][t]    = n_diagnosed * scale # Tracks total number of diagnosed cases at this timestep
-        self.results['bed_capacity'][t]   = (n_severe * scale)/n_beds if n_beds>0 else None
+        self.results['n_susceptible'][t]  = n_susceptible
+        self.results['n_exposed'][t]      = n_exposed
+        self.results['n_infectious'][t]   = n_infectious # Tracks total number infectious at this timestep
+        self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
+        self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
+        self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
+        self.results['n_diagnosed'][t]    = n_diagnosed # Tracks total number of diagnosed cases at this timestep
+        self.results['bed_capacity'][t]   = (n_severe)/n_beds if n_beds>0 else None
 
         # Update counts for this time step: flows
-        self.results['new_infections'][t]  = new_infections * scale # New infections on this timestep
-        self.results['new_recoveries'][t]  = new_recoveries * scale # Tracks new recoveries on this timestep
-        self.results['new_symptomatic'][t] = new_symptomatic * scale
-        self.results['new_severe'][t]      = new_severe * scale
-        self.results['new_critical'][t]    = new_critical * scale
-        self.results['new_deaths'][t]      = new_deaths * scale
+        self.results['new_infections'][t]  = new_infections # New infections on this timestep
+        self.results['new_recoveries'][t]  = new_recoveries # Tracks new recoveries on this timestep
+        self.results['new_symptomatic'][t] = new_symptomatic
+        self.results['new_severe'][t]      = new_severe
+        self.results['new_critical'][t]    = new_critical
+        self.results['new_deaths'][t]      = new_deaths
 
         self.t += 1
 
