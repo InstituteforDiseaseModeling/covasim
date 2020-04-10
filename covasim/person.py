@@ -21,7 +21,6 @@ class Person(sc.prettyobj):
         self.sex         = int(sex) # Female (0) or male (1)
         self.contacts    = contacts # Contacts
         self.durpars     = pars['dur']  # Store duration parameters
-        self.loadpars    = pars['viral_distro'] # Store viral load parameters
         self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
 
         # Define states -- listed explicitly for performance reasons
@@ -144,8 +143,6 @@ class Person(sc.prettyobj):
                         dur_crit2rec = cvu.sample(**self.durpars['crit2rec'])
                         self.date_recovered = self.date_critical + dur_crit2rec # Date they recover
                         self.dur_disease = self.dur_exp2inf + self.dur_inf2sym + self.dur_sym2sev + self.dur_sev2crit + dur_crit2rec  # Store how long this person had COVID-19
-                        
-        self.viral_load = cvu.get_viral_load(self, **self.loadpars)
 
         if source:
             self.infected_by = source.uid
@@ -153,7 +150,43 @@ class Person(sc.prettyobj):
 
         return 1 # For incrementing counters
 
-
+    def get_rel_beta(self, t, dist=None, frac=None, ratio=None):
+        ''' Get the viral load distribution for this person as
+        part of the relative beta
+        
+        Args:
+            t: (int) timestep
+            dist: (string) distribution from which to pull viral load
+            frac: (float) None for 'constant', frac of time in high
+                load for 'twolevel'
+            ratio: (float) ratio for high to low viral load
+        Returns:
+            (float) multipler for the infectivity (beta)'''
+    
+        choices = [
+                'constant',
+                'twolevel'
+                ]
+        
+        start = self.date_infectious
+        end = start + self.dur_disease
+        if dist == 'constant':
+            # Since this should only be called when the person
+            # is infected so this could just be load = 1
+            load = (1 if t>=start and t<end else 0.)
+        elif dist == 'twolevel':
+            if (t-self.date_infectious)/(end-start) < frac:
+                load = ratio/(1+frac*(ratio-1))
+            elif (t-self.date_infectious)/(end-start) >= frac:
+                load = 1/(1+frac*(ratio-1))
+        else:
+            choicestr = '\n'.join(choices)
+            errormsg = f'The selected viral distribution "{dist}" is not implemented; choices are: {choicestr}'
+            raise NotImplementedError(errormsg)
+                
+        # Will be adding to this to be the relative beta for this person
+        return load
+        
     def trace_dynamic_contacts(self, trace_probs, trace_time, ckey='c'):
         '''
         A method to trace a person's dynamic contacts, e.g. community

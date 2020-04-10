@@ -342,7 +342,7 @@ class Sim(cvbase.BaseSim):
                         person.known_contact = True
 
                     thisbeta = beta * \
-                               person.viral_load[t] * \
+                               person.get_rel_beta(t, **self.pars['viral_distro']) * \
                                (asymp_factor if not person.symptomatic else 1.) * \
                                (diag_factor if person.diagnosed else 1.) * \
                                (cont_factor if person.known_contact else 1.)

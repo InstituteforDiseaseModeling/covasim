@@ -42,7 +42,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['use_layers']   = use_layers # Whether or not to use different contact layers
     pars['contacts']     = None # The number of contacts per layer
     pars['beta_layers']  = None # Transmissibility per layer
-    pars['viral_distro'] = {} # The time varying viral load (transmissibility)
+    pars['viral_distro'] = {'dist':'twolevel', 'par1':.5, 'par2':2} # The time varying viral load (transmissibility)
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
