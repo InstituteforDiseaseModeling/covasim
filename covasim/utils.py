@@ -9,7 +9,7 @@ import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'listsample', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
+__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
 
 class CancelError(Exception):
     pass
@@ -143,22 +143,8 @@ def choose(max_n, n):
     return np.random.choice(max_n, n, replace=False)
 
 
-def listsample(whole_list, n=None, p=None):
-    '''
-    Return a randomly selected sample of n items from a list or a proportion p of items in the list
-    '''
-    max_n = len(whole_list)
-    if n is None:
-        if p is None:
-            raise Error("Must supply n or p")
-        else:
-            n = round(p*max_n)
-    return whole_list[choose(max_n, n)]
-
-
-
 # @nb.njit((nb.float64[:], nb.int64, nb.float64))
-def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False):
+def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False, unique=True):
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
     Overshoot handles the case where there are repeats.
@@ -170,6 +156,7 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
         eps (float): how close to check that probabilities sum to 1
         max_tries (int): maximum number of times to try to pick samples without replacement
         normalize (bool): whether or not to normalize probs to always sum to 1
+        unique (bool): whether or not to ensure unique indices
 
     Example:
         choose_weighted([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
@@ -179,6 +166,8 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     '''
 
     # Ensure it's the right type and optionally normalize
+    if not unique:
+        overshoot = 1
     probs = np.array(probs, dtype=np.float64)
     n_people = len(probs)
     n_samples = int(n)
@@ -204,6 +193,8 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     while len(unique_inds)<n_samples and tries<max_tries:
         tries += 1
         raw_inds = mt(probs, int(n_samples*overshoot)) # Return raw indices, with replacement
+        if not unique:
+            return raw_inds
         mixed_inds = np.hstack((unique_inds, raw_inds))
         unique_inds = pd.unique(mixed_inds) # Or np.unique(mixed_inds, return_index=True) with another step
     if tries == max_tries:
