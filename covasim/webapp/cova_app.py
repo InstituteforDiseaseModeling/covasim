@@ -163,7 +163,7 @@ def get_gnatt(intervention_pars=None, intervention_config=None):
     return {'json': fig.to_json(), 'id': 'test'}
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation=False, verbose=True, n_days=90):
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation=False, n_days=90, verbose=True):
     ''' Create, run, and plot everything '''
 
     err = ''
