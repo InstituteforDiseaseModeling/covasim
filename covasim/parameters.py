@@ -146,9 +146,9 @@ def get_prognoses(by_age=True):
             death_probs  = np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]), # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
         )
 
-    prognoses['death_probs']  = prognoses['death_probs'] / prognoses['crit_probs']   # Conditional probability of dying, given critical symptoms
-    prognoses['crit_probs']   = prognoses['crit_probs'] / prognoses['severe_probs'] # Conditional probability of symptoms becoming critical, given severe
-    prognoses['severe_probs'] = prognoses['severe_probs'] / prognoses['symp_probs']   # Conditional probability of symptoms becoming severe, given symptomatic
+    prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given severe symptoms
+    prognoses['crit_probs']   /= prognoses['severe_probs'] # Conditional probability of symptoms becoming critical, given severe
+    prognoses['severe_probs'] /= prognoses['symp_probs']   # Conditional probability of symptoms becoming severe, given symptomatic
 
     return prognoses
 
