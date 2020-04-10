@@ -56,12 +56,22 @@ class People(list):
 
     def count_in(self, attr):
         ''' Simple method to count people in '''
-        return len(list(self.filter_in(attr)))
+        return len([1 for person in self.filter_in(attr)])
 
 
     def count_out(self, attr):
         ''' Simple method to count people out '''
-        return len(list(self.filter_out(attr)))
+        return len([1 for person in self.filter_out(attr)])
+
+
+    def uids_in(self, attr):
+        ''' Simple method to count people in '''
+        return [person.uid for person in self.filter_in(attr)]
+
+
+    def uids_out(self, attr):
+        ''' Simple method to count people out '''
+        return [person.uid for person in self.filter_out(attr)]
 
 
     def extract(self, attr):
