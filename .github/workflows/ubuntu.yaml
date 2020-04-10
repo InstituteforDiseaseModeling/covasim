@@ -44,7 +44,7 @@ jobs:
         run: pytest test*.py --durations=0 # Run actual tests
       - name: Run examples
         working-directory: ./examples
-        run: python *.py
+        run: pytest *.py
       - name: Run cruise ship
         working-directory: ./covasim/cruise_ship
-        run: python test*.py
+        run: pytest test*.py
