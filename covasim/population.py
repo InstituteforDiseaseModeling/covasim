@@ -29,7 +29,7 @@ class People:
     '''
 
     def __init__(self, people):
-        self.array = np.array(people)  # we will use append
+        self.array = np.array(people)
 
 
     def get_list(self, indices):
@@ -49,13 +49,18 @@ class People:
         return filter(lambda person: getattr(person, attr), self)
 
 
-    def append(self, item):
-        self.array = np.append(self.array, item)
-
-
     def __getitem__(self, key):
         return self.array[key]
 
+    
+    def __iadd__(self, other):
+        return People(np.concatenate([self.array, other.array]))
+
+    def __iter__(self):
+        return self.array.__iter__()
+    
+    def __next__(self):
+        return self.array.__next__()
 
     def len(self):
         return self.array.shape[0]
