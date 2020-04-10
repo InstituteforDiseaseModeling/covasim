@@ -180,9 +180,11 @@ class Person(sc.prettyobj):
         contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
         for ckey in self.contacts.keys():
             if ckey != 'c': # Don't trace community contacts - it's too hard, because they change every timestep
-                this_trace_prob = trace_probs[ckey]
-                new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
-                contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
+                these_contacts = self.contacts[ckey]
+                if len(these_contacts):
+                    this_trace_prob = trace_probs[ckey]
+                    new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
+                    contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
 
         return contactable_ppl
 

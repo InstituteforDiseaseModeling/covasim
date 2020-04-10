@@ -54,6 +54,16 @@ class People(list):
         return filter(lambda person: not getattr(person, attr), self)
 
 
+    def count_in(self, attr):
+        ''' Simple method to count people in '''
+        return len(list(self.filter_in(attr)))
+
+
+    def count_out(self, attr):
+        ''' Simple method to count people out '''
+        return len(list(self.filter_out(attr)))
+
+
     def extract(self, attr):
         '''
         Return a list of a given attribute for every person.
@@ -108,12 +118,12 @@ def make_people(sim, verbose=None, die=True, reset=False):
             pop_type = 'random'
 
     # Actually create the population
+    if pop_type in ['realistic', 'synthpops']:
+        sim.update_pars(use_layers=True) # These two population types require layers
+
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
     else:
-        if pop_type in ['realistic', 'synthpops']:
-            sim.update_pars(use_layers=True) # These two population types require layers
-
         # Create the population
         if pop_type in ['random', 'clustered', 'realistic']:
             popdict = make_randpop(sim, microstructure=pop_type)

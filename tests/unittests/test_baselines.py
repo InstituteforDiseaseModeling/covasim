@@ -5,7 +5,23 @@ Compare current results to baseline
 import sciris as sc
 import covasim as cv
 
-baseline_filename = 'baseline.json'
+do_save = True
+baseline_filename  = 'baseline.json'
+benchmark_filename = 'benchmark.json'
+baseline_key = 'summary'
+
+
+def save_baseline(do_save=do_save):
+    ''' Refresh the baseline results '''
+    print('Updating baseline values...')
+
+    sim = cv.Sim(verbose=0)
+    sim.run()
+    sim.to_json(filename=baseline_filename, keys=baseline_key)
+
+    print('Done.')
+
+    return sim
 
 
 def test_baseline():
@@ -14,7 +30,7 @@ def test_baseline():
     # Load existing baseline
     filepath = sc.makefilepath(filename=baseline_filename, folder=sc.thisdir(__file__))
     baseline = sc.loadjson(filepath)
-    old = baseline['summary']
+    old = baseline[baseline_key]
 
     # Calculate new baseline
     sim = cv.Sim(verbose=0)
@@ -51,8 +67,50 @@ def test_baseline():
     return new
 
 
+def test_benchmark(do_save=do_save):
+    ''' Compare benchmark performance '''
+
+    print('Updating benchmark...')
+
+    # Create the sim
+    sim = cv.Sim(verbose=0)
+
+    # Time initialization
+    t0 = sc.tic()
+    sim.initialize()
+    t_init = sc.toc(t0, output=True)
+
+    # Time running
+    t0 = sc.tic()
+    sim.run()
+    t_run = sc.toc(t0, output=True)
+
+    # Construct json
+    n_decimals = 3
+    json = {'time': {
+                'initialize': round(t_init, n_decimals),
+                'run':        round(t_run,  n_decimals),
+                },
+            'parameters': {
+                'pop_size': sim['pop_size'],
+                'pop_type': sim['pop_type'],
+                'n_days':   sim['n_days'],
+                },
+            }
+
+    if do_save:
+        sc.savejson(filename=benchmark_filename, obj=json, indent=2)
+
+    print('Done.')
+
+    return json
+
+
+
+
 if __name__ == '__main__':
 
-    new = test_baseline()
+    new  = test_baseline()
+    json = test_benchmark(do_save=do_save)
 
     print('Done.')
