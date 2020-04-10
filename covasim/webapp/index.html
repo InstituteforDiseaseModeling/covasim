@@ -246,17 +246,6 @@
           <button v-else id="run_btn" :disabled="isRunDisabled" class="btn btn-primary btn-lg btn-run green" type="button" @click="runSim">
             Run
           </button>
-
-          <div class="form-group ml-3" id="history">
-            <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">
-              <option v-for="(item, index) in history" :value="index">
-                {{ index }}
-              </option>
-            </select>
-          </div>
-          <b-tooltip target="history">
-            History of parameters used in this session
-          </b-tooltip>
         </div>
 
       </template>
@@ -264,9 +253,24 @@
 
     <!-- Show the actual graph -->
     <div id="graphs" class="graphs">
-      <button class="btn btn-primary blueish" @click="open_panel">
-        Open parameters
-      </button>
+      <div class="form-inline">
+        <button class="btn btn-primary blueish" @click="open_panel">
+          Open parameters
+        </button>
+
+        <div class="form-group ml-3" id="history-wpr">
+          <label for="history"> History: </label>
+          <select id="history" :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">
+            <option v-for="(item, index) in history" :value="index">
+              {{ index }}
+            </option>
+          </select>
+          <b-tooltip target="history-wpr">
+            History of campaign runs used in this session
+          </b-tooltip>
+        </div>
+      </div>
+
       <fieldset>
         <legend>Results</legend>
         <!--           <template v-if="running">
