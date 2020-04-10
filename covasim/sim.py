@@ -317,11 +317,6 @@ class Sim(cvbase.BaseSim):
         if self['rescale']:
             self.rescale()
 
-        # Update each person, skipping people who are susceptible
-        susceptible = self.people.filter_in('susceptible')
-        not_susceptible = self.people.filter_out('susceptible')
-        n_susceptible   = len(self.people)
-
         # Randomly infect some people (imported infections)
         if n_imports>0:
             imporation_inds = cvu.choose(max_n=pop_size, n=n_imports)
@@ -329,18 +324,20 @@ class Sim(cvbase.BaseSim):
                 person = self.people[ind]
                 new_infections += person.infect(t=t)
 
+
+        susceptible = self.people.filter_in('susceptible')
+        n_susceptible = 0
         for person in susceptible:
+            n_susceptible += 1 # Update number of susceptibles
+
             # If they're quarantined, this affects their transmission rate
             new_quarantined += person.check_quar_begin(t, quar_period) # Set know_contact and go into quarantine
-            person.check_quar_end(t) # Come out of quarantine
-            n_quarantined += person.quarantined
+            n_quarantined += person.check_quar_end(t) # Come out of quarantine, and count quarantine state
 
         # Loop over everyone not susceptible
+        not_susceptible = self.people.filter_out('susceptible')
         for person in not_susceptible:
             # N.B. Recovered and dead people are included here!
-
-            n_susceptible -= 1 # Update number of susceptibles
-            n_diagnosed   += person.diagnosed # And diagnosed people
 
             # If exposed, check if the person becomes infectious
             if person.exposed:

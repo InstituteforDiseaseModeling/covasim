@@ -54,7 +54,7 @@ default_colors = sc.objdict(
     recoveries  = '#799956',
     symptomatic = '#c1ad71',
     severe      = '#c1981d',
-    quarantined ='#5F1914',
+    quarantined = '#5f1914',
     critical    = '#b86113',
     deaths      = '#000000',
     )

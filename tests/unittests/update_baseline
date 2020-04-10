@@ -4,15 +4,10 @@
 Run this script to regenerate the baseline.
 '''
 
-import covasim as cv
+import test_baselines as tb
 
-filename = 'baseline.json'
-keys = 'summary'
+tb.save_baseline()
+tb.test_benchmark()
 
-print('Updating baseline values...')
 
-sim = cv.Sim(verbose=0)
-sim.run()
-sim.to_json(filename=filename, keys=keys)
 
-print('Done.')

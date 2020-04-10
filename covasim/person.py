@@ -293,6 +293,7 @@ class Person(sc.prettyobj):
         else:
             return 0
 
+
     def check_diagnosed(self, t):
         ''' Check for new diagnoses '''
         if not self.diagnosed and self.date_diagnosed and t >= self.date_diagnosed: # Person is changing to this state
@@ -302,7 +303,7 @@ class Person(sc.prettyobj):
             return 0
 
 
-    def check_quar_begin(self, t, quar_period = None):
+    def check_quar_begin(self, t, quar_period=None):
         ''' Check for whether someone has been contacted by a positive'''
         if self.date_known_contact is not None and t >= self.date_known_contact:
             if quar_period is not None:
@@ -320,4 +321,4 @@ class Person(sc.prettyobj):
             self.quarantined = False # Release from quarantine
             self.end_quarantine = None # Clear end quarantine time
             #sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
-        return
+        return self.quarantined
