@@ -142,6 +142,7 @@ var vm = new Vue({
         async addIntervention(scenarioKey, event) {
             const intervention = this.interventionTableConfig[scenarioKey].handleSubmit(event);
             const key = scenarioKey;
+            const self = this
             if (!this.intervention_pars[key]) {
                 this.$set(this.intervention_pars, key, []);
             }
@@ -153,6 +154,14 @@ var vm = new Vue({
             });
             if (notValid) {
                 this.$set(this.scenarioError, scenarioKey, `Please enter a valid day range`);
+                return;
+            }
+            // Check that
+            const outOfBounds = intervention.start > this.sim_length.best || intervention.end > this.sim_length.best || this.intervention_pars[key].some(({start, end}) => {
+                return start > self.sim_length.best || end > self.sim_length.best
+            })
+            if (outOfBounds){
+                this.$set(this.scenarioError, scenarioKey, `Intervention cannot start or end after the campaign duration.`)
                 return;
             }
             this.$set(this.scenarioError, scenarioKey, '');
