@@ -201,10 +201,10 @@ def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
     if 'date' not in data.columns:
         errormsg = f'Required column "date" not found; columns are {data.columns}'
         raise ValueError(errormsg)
-    else:
-        data['date'] = pd.to_datetime(data['date']).dt.date
+    # else:
+    #     data['date'] = pd.to_datetime(data['date']).dt.date
 
-    data.set_index('date', inplace=True)
+    # data.set_index('date', inplace=True)
 
     return data
 

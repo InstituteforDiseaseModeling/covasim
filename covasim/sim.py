@@ -3,8 +3,9 @@ Defines the Sim class, Covasim's core class.
 '''
 
 #%% Imports
-import numpy as np # Needed for a few things not provided by pl
+import numpy as np
 import pylab as pl
+import pandas as pd
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
@@ -147,6 +148,13 @@ class Sim(cvbase.BaseSim):
         if isinstance(start_day,dt.datetime):
             start_day = start_day.date()
         self['start_day'] = start_day
+        if self.data is not None: # Update the data
+            self.data['date'] = pd.to_datetime(self.data['date']).dt.date
+            end_day = self.data['date'].iloc[-1]
+            dateindex = pd.date_range(start_day, end_day)
+            self.data = self.data.reindex(dateindex)
+            # self.data['date'] = pd.to_datetime(self.data['date']).dt.date
+            # self.data.set_index('date', inplace=True)
 
         # Handle contacts
         contacts = self['contacts']

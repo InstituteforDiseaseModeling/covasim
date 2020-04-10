@@ -243,12 +243,12 @@ class test_num(Intervention):
 
         t = sim.t
 
-        # Process daily tests -- has to be here rather than init so have access to the sim object
-        if isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
-            start_date = sim['start_day']
-            end_date = self.daily_tests.index[-1]
-            dateindex = pd.date_range(start_date, end_date)
-            self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
+        # # Process daily tests -- has to be here rather than init so have access to the sim object
+        # if isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
+        #     start_date = sim['start_day']
+        #     end_date = self.daily_tests.index[-1]
+        #     dateindex = pd.date_range(start_date, end_date)
+        #     self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
 
         # Check that there are still tests
         if t < len(self.daily_tests):
