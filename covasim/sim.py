@@ -549,7 +549,8 @@ class Sim(cvbase.BaseSim):
 
 
     def compute_r_eff(self):
-        ''' Effective reproductive number based on number still susceptible -- TODO: use data instead '''
+        ''' Effective reproductive number based on number of people each
+        person infected '''
 
         # Initialize arrays to hold sources and targets infected each day
         sources = np.zeros(self.npts)
@@ -577,6 +578,40 @@ class Sim(cvbase.BaseSim):
         self.results['r_eff'].values[inds] = r_eff
         return
 
+    def compute_gen_time(self, method='true'):
+        ''' Calculate the generation time (or serial interval) there are two 
+        ways to do this calculation. The 'true' interval (exposure time to 
+        exposure time) or 'clinical' (symptom onset to symptom onset) '''
+        
+        choicestr = [
+                'true',
+                'clinical']
+        gen_time = None
+        not_susceptible = self.people.filter_out('susceptible')
+        intervals = np.zeros(int(self.summary['cum_infections']))
+        pos = 0
+        if method == 'true':
+            for source in not_susceptible:
+                if source.date_exposed is not None and len(source.infected)>0:
+                    for target in source.infected:
+                        intervals[pos] = self.people[target].date_exposed - source.date_exposed
+                        pos += 1
+        elif method == 'clinical':
+            for source in not_susceptible:
+                if source.date_exposed is not None and len(source.infected)>0 \
+                and source.date_symptomatic is not None:
+                    for target in source.infected:
+                        if self.people[target].date_symptomatic is not None:
+                            intervals[pos] = self.people[target].date_symptomatic - source.date_symptomatic
+                            pos += 1
+        else:
+            errormsg = f'The provided method: "{method}" is not implemented; choices are: {choicestr}'
+            raise NotImplementedError(errormsg)
+
+                
+        gen_time = np.mean(intervals[:pos])
+        # should we also return the std?
+        return intervals[:pos]
 
     def likelihood(self, weights=None, verbose=None) -> float:
         '''
