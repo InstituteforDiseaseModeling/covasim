@@ -1,7 +1,9 @@
-import covasim as cv
-import pylab as pl
 import numpy as np
+import pandas as pd
+import pylab as pl
 import sciris as sc
+import covasim as cv
+
 
 __all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'test_historical', 'contact_tracing']
 
@@ -217,8 +219,10 @@ class change_beta(Intervention):
 class test_num(Intervention):
     """
     Test a fixed number of people per day.
+
     Example:
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
+
     Returns:
         Intervention
     """
@@ -239,15 +243,21 @@ class test_num(Intervention):
 
         t = sim.t
 
+        # Process daily tests -- has to be here rather than init so have access to the sim object
+        if isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
+            start_date = sim['start_day']
+            end_date = self.daily_tests.index[-1]
+            dateindex = pd.date_range(start_date, end_date)
+            self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
+
         # Check that there are still tests
         if t < len(self.daily_tests):
             n_tests = self.daily_tests[t]  # Number of tests for this day
-            sim.results['new_tests'][t] += n_tests
+            if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
+                return
+            else:
+                sim.results['new_tests'][t] += n_tests
         else:
-            return
-
-        # If there are no tests today, abort early
-        if not (n_tests and pl.isfinite(n_tests)):
             return
 
         test_probs = np.ones(sim.n)
