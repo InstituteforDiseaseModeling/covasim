@@ -70,9 +70,15 @@
 
   <div class="content">
 
-    <b-sidebar id="parameters" title="Campaign Builder" :visible="panel_open" no-header-close bg-variant="white" width="47rem" shadow>
+    <b-sidebar id="parameters" :visible="panel_open" no-header bg-variant="white" width="47rem" shadow>
       <div class="px-3">
-
+        <header class="d-flex justify-content-between">
+          <h4 class="my-2">Campaign Builder</h4>
+          <button class="close" @click="close_panel" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </header>
+        
         <!-- Presets -->
         <div class="form-row mb-3">
           <div class="col">

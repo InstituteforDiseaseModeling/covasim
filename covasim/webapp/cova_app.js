@@ -172,6 +172,9 @@ var vm = new Vue({
         open_panel() {
             this.panel_open = true;
         },
+        close_panel() {
+            this.panel_open = false;
+        },
         
         async get_version() {
             const response = await sciris.rpc('get_version');
