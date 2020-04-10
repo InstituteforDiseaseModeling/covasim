@@ -188,20 +188,15 @@ class Sim(cvbase.BaseSim):
         dcols = cvd.default_colors # Shorten default colors
 
         # Stock variables
-        self.results['n_susceptible'] = init_res('Number susceptible',        color=dcols.susceptible, scale='static')
-        self.results['n_exposed']     = init_res('Number exposed',            color=dcols.infections)
-        self.results['n_infectious']  = init_res('Number infectious',         color=dcols.infectious)
-        self.results['n_symptomatic'] = init_res('Number symptomatic',        color=dcols.symptomatic)
-        self.results['n_severe']      = init_res('Number of severe cases',    color=dcols.severe)
-        self.results['n_critical']    = init_res('Number of critical cases',  color=dcols.critical)
-        self.results['n_diagnosed']   = init_res('Number of confirmed cases', color=dcols.diagnoses)
+        for key,label in cvd.result_stocks.items():
+            self.results[f'n_{key}'] = init_res(label, color=dcols[key])
+        self.results['n_susceptible'].scale = 'static'
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
-        for key in cvd.result_flows:
-            suffix = ' cases' if key in ['symptomatic', 'severe', 'critical'] else '' # Since need to say "severe cases" not just "severe"
-            self.results[f'new_{key}'] = init_res(f'Number of new {key}{suffix}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {key}{suffix}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
+        for key,label in cvd.result_flows.items():
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
 
         # Other variables
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
@@ -263,15 +258,6 @@ class Sim(cvbase.BaseSim):
         if t >= self.npts:
             return
 
-        # Zero counts for this time step: stocks
-        n_susceptible   = 0
-        n_exposed       = 0
-        n_infectious    = 0
-        n_symptomatic   = 0
-        n_severe        = 0
-        n_critical      = 0
-        n_diagnosed     = 0
-
         # Zero counts for this time step: flows
         new_recoveries  = 0
         new_deaths      = 0
@@ -279,6 +265,7 @@ class Sim(cvbase.BaseSim):
         new_symptomatic = 0
         new_severe      = 0
         new_critical    = 0
+        n_severe        = self.results['n_severe'][t-1] # TODO: handle this better
 
         # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
         beta             = self['beta']
@@ -291,7 +278,7 @@ class Sim(cvbase.BaseSim):
         pop_size         = len(self.people)
         n_imports        = cvu.pt(self['n_imports']) # Imported cases
         if 'c' in self['contacts']:
-            n_comm_contacts = self['contacts']['c'] # Community contacts
+            n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
         else:
             n_comm_contacts = 0
 
@@ -309,7 +296,6 @@ class Sim(cvbase.BaseSim):
 
         # Update each person, skipping people who are susceptible
         not_susceptible = self.people.filter_out('susceptible')
-        n_susceptible   = len(self.people)
 
         # Randomly infect some people (imported infections)
         if n_imports>0:
@@ -320,12 +306,9 @@ class Sim(cvbase.BaseSim):
 
         # Loop over everyone not susceptible
         for person in not_susceptible:
-            n_susceptible -= 1 # Update number of susceptibles
-            n_diagnosed   += person.diagnosed # And diagnosed people
 
             # If exposed, check if the person becomes infectious
             if person.exposed:
-                n_exposed += 1
                 if not person.infectious and t == person.date_infectious: # It's the day they become infectious
                     person.infectious = True
                     sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
@@ -343,15 +326,11 @@ class Sim(cvbase.BaseSim):
 
                 # If the person didn't die or recover, check for onward transmission
                 if not new_death and not new_recovery:
-                    n_infectious += 1 # Count this person as infectious
 
                     # Check symptoms and diagnosis
                     new_symptomatic += person.check_symptomatic(t)
                     new_severe      += person.check_severe(t)
                     new_critical    += person.check_critical(t)
-                    n_symptomatic   += person.symptomatic
-                    n_severe        += person.severe
-                    n_critical      += person.critical
                     if n_severe > n_beds:
                         bed_constraint = True
 
@@ -390,15 +369,9 @@ class Sim(cvbase.BaseSim):
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
-
-        self.results['n_susceptible'][t]  = n_susceptible
-        self.results['n_exposed'][t]      = n_exposed
-        self.results['n_infectious'][t]   = n_infectious # Tracks total number infectious at this timestep
-        self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
-        self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
-        self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
-        self.results['n_diagnosed'][t]    = n_diagnosed # Tracks total number of diagnosed cases at this timestep
-        self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else np.nan
+        for key in cvd.result_stocks.keys():
+            self.results[f'n_{key}'][t] = self.people.filter_in(key)
+        self.results['bed_capacity'][t] = self.results['n_severe'][t]/n_beds if n_beds>0 else np.nan
 
         # Update counts for this time step: flows
         self.results['new_infections'][t]  = new_infections # New infections on this timestep
@@ -491,7 +464,7 @@ class Sim(cvbase.BaseSim):
                 self.results[reskey].values *= self['pop_scale']
 
         # Calculate cumulative results
-        for key in cvd.result_flows:
+        for key in cvd.result_flows.keys():
             self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
