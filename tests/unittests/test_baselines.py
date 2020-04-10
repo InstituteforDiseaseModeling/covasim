@@ -5,7 +5,9 @@ Compare current results to baseline
 import sciris as sc
 import covasim as cv
 
-baseline_filename = 'baseline.json'
+do_save = True
+baseline_filename  = 'baseline.json'
+benchmark_filename = 'benchmark.json'
 
 
 def test_baseline():
@@ -51,8 +53,46 @@ def test_baseline():
     return new
 
 
+def test_benchmark(do_save=True):
+    ''' Compare benchmark performance '''
+
+    # Create the sim
+    sim = cv.Sim(verbose=0)
+
+    # Time initialization
+    t0 = sc.tic()
+    sim.initialize()
+    t_init = sc.toc(t0, output=True)
+
+    # Time running
+    t0 = sc.tic()
+    sim.run()
+    t_run = sc.toc(t0, output=True)
+
+    # Construct json
+    n_decimals = 3
+    json = {'time': {
+                'initialize': round(t_init, n_decimals),
+                'run':        round(t_run,  n_decimals),
+                },
+            'parameters': {
+                'pop_size': sim['pop_size'],
+                'pop_type': sim['pop_type'],
+                'n_days':   sim['n_days'],
+                },
+            }
+
+    if do_save:
+        sc.savejson(filename=benchmark_filename, obj=json, indent=2)
+
+    return json
+
+
+
+
 if __name__ == '__main__':
 
-    new = test_baseline()
+    new  = test_baseline()
+    json = test_benchmark()
 
     print('Done.')
