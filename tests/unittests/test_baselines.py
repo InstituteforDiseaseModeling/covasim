@@ -8,6 +8,20 @@ import covasim as cv
 do_save = True
 baseline_filename  = 'baseline.json'
 benchmark_filename = 'benchmark.json'
+baseline_key = 'summary'
+
+
+def save_baseline(do_save=do_save):
+    ''' Refresh the baseline results '''
+    print('Updating baseline values...')
+
+    sim = cv.Sim(verbose=0)
+    sim.run()
+    sim.to_json(filename=baseline_filename, keys=baseline_key)
+
+    print('Done.')
+
+    return sim
 
 
 def test_baseline():
@@ -16,7 +30,7 @@ def test_baseline():
     # Load existing baseline
     filepath = sc.makefilepath(filename=baseline_filename, folder=sc.thisdir(__file__))
     baseline = sc.loadjson(filepath)
-    old = baseline['summary']
+    old = baseline[baseline_key]
 
     # Calculate new baseline
     sim = cv.Sim(verbose=0)
@@ -53,8 +67,10 @@ def test_baseline():
     return new
 
 
-def test_benchmark(do_save=True):
+def test_benchmark(do_save=do_save):
     ''' Compare benchmark performance '''
+
+    print('Updating benchmark...')
 
     # Create the sim
     sim = cv.Sim(verbose=0)
@@ -85,6 +101,8 @@ def test_benchmark(do_save=True):
     if do_save:
         sc.savejson(filename=benchmark_filename, obj=json, indent=2)
 
+    print('Done.')
+
     return json
 
 
@@ -93,6 +111,6 @@ def test_benchmark(do_save=True):
 if __name__ == '__main__':
 
     new  = test_baseline()
-    json = test_benchmark()
+    json = test_benchmark(do_save=do_save)
 
     print('Done.')
