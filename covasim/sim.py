@@ -294,9 +294,6 @@ class Sim(cvbase.BaseSim):
         if self['rescale']:
             self.rescale()
 
-        # Update each person, skipping people who are susceptible
-        not_susceptible = self.people.filter_out('susceptible')
-
         # Randomly infect some people (imported infections)
         if n_imports>0:
             imporation_inds = cvu.choose(max_n=pop_size, n=n_imports)
@@ -304,62 +301,61 @@ class Sim(cvbase.BaseSim):
                 person = self.people[ind]
                 new_infections += person.infect(t=t)
 
-        # Loop over everyone not susceptible
-        for person in not_susceptible:
+        # Loop over exposed people
+        exposed_people = self.people.filter_in('exposed')
+        for person in exposed_people:
+            if not person.infectious and t == person.date_infectious: # It's the day they become infectious
+                person.infectious = True
+                sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
 
-            # If exposed, check if the person becomes infectious
-            if person.exposed:
-                if not person.infectious and t == person.date_infectious: # It's the day they become infectious
-                    person.infectious = True
-                    sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
+        # If infectious, update status according to the course of the infection, and check if anyone gets infected
+        infectious_people = self.people.filter_in('infectious')
+        for person in infectious_people:
 
-            # If infectious, update status according to the course of the infection, and check if anyone gets infected
-            if person.infectious:
+            # Check whether the person died on this timestep
+            new_death = person.check_death(t)
+            new_deaths += new_death
 
-                # Check whether the person died on this timestep
-                new_death = person.check_death(t)
-                new_deaths += new_death
+            # Check whether the person recovered on this timestep
+            new_recovery = person.check_recovery(t)
+            new_recoveries += new_recovery
 
-                # Check whether the person recovered on this timestep
-                new_recovery = person.check_recovery(t)
-                new_recoveries += new_recovery
+            # If the person didn't die or recover, check for onward transmission
+            if not new_death and not new_recovery:
 
-                # If the person didn't die or recover, check for onward transmission
-                if not new_death and not new_recovery:
+                # Check symptoms and diagnosis
+                new_symptomatic += person.check_symptomatic(t)
+                new_severe      += person.check_severe(t)
+                new_critical    += person.check_critical(t)
+                if n_severe > n_beds:
+                    bed_constraint = True
 
-                    # Check symptoms and diagnosis
-                    new_symptomatic += person.check_symptomatic(t)
-                    new_severe      += person.check_severe(t)
-                    new_critical    += person.check_critical(t)
-                    if n_severe > n_beds:
-                        bed_constraint = True
+                # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
+                if not person.known_contact and person.date_known_contact is not None and person.date_known_contact<=t:
+                    person.known_contact = True
 
-                    # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                    if not person.known_contact and person.date_known_contact is not None and person.date_known_contact<=t:
-                        person.known_contact = True
+                thisbeta = beta * \
+                           (asymp_factor if not person.symptomatic else 1.) * \
+                           (diag_factor if person.diagnosed else 1.) * \
+                           (cont_factor if person.known_contact else 1.)
 
-                    thisbeta = beta * \
-                               (asymp_factor if not person.symptomatic else 1.) * \
-                               (diag_factor if person.diagnosed else 1.) * \
-                               (cont_factor if person.known_contact else 1.)
+                # Set community contacts
+                person_contacts = person.contacts
+                if n_comm_contacts:
+                    community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
+                    person_contacts['c'] = community_contact_inds
 
-                    # Set community contacts
-                    person_contacts = person.contacts
-                    if n_comm_contacts:
-                        community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-                        person_contacts['c'] = community_contact_inds
-
-                    # Determine who gets infected
-                    for ckey in self.contact_keys:
-                        contact_ids = person_contacts[ckey]
-                        if len(contact_ids):
-                            this_beta_layer = thisbeta*beta_layers[ckey]
-                            transmission_inds = cvu.bf(this_beta_layer, contact_ids)
-                            for contact_ind in transmission_inds: # Loop over people who get infected
-                                target_person = self.people[contact_ind]
-                                if target_person.susceptible: # Skip people who are not susceptible
-                                    new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                    sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+                # Determine who gets infected
+                for ckey in self.contact_keys:
+                    contact_ids = person_contacts[ckey]
+                    if len(contact_ids):
+                        this_beta_layer = thisbeta*beta_layers[ckey]
+                        transmission_inds = cvu.bf(this_beta_layer, contact_ids)
+                        for contact_ind in transmission_inds: # Loop over people who get infected
+                            target_person = self.people[contact_ind]
+                            if target_person.susceptible: # Skip people who are not susceptible
+                                new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
 
         # End of person loop; apply interventions
@@ -369,9 +365,9 @@ class Sim(cvbase.BaseSim):
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
-        for key in cvd.result_stocks.keys():
-            self.results[f'n_{key}'][t] = self.people.count_in(key)
-        self.results['bed_capacity'][t] = self.results['n_severe'][t]/n_beds if n_beds>0 else np.nan
+        # for key in cvd.result_stocks.keys():
+        #     self.results[f'n_{key}'][t] = self.people.count_in(key)
+        # self.results['bed_capacity'][t] = self.results['n_severe'][t]/n_beds if n_beds>0 else np.nan
 
         # Update counts for this time step: flows
         self.results['new_infections'][t]  = new_infections # New infections on this timestep
