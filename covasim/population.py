@@ -54,6 +54,16 @@ class People(list):
         return filter(lambda person: not getattr(person, attr), self)
 
 
+    def count_in(self, attr):
+        ''' Simple method to count people in '''
+        return len(list(self.filter_in(attr)))
+
+
+    def count_out(self, attr):
+        ''' Simple method to count people out '''
+        return len(list(self.filter_out(attr)))
+
+
     def extract(self, attr):
         '''
         Return a list of a given attribute for every person.
