@@ -387,17 +387,17 @@ class Sim(cvbase.BaseSim):
 
                             transmission_inds = cvu.bf(this_beta_layer, contact_ids)
 
-                    for contact_ind in transmission_inds: # Loop over people who get infected
-                        target_person = self.people[contact_ind]
-                        if target_person.susceptible: # Skip people who are not susceptible
+                            for contact_ind in transmission_inds: # Loop over people who get infected
+                                target_person = self.people[contact_ind]
+                                if target_person.susceptible: # Skip people who are not susceptible
 
-                            # See whether we will infect this person
-                            infect_this_person = True # By default, infect them...
-                            if target_person.quarantined:
-                                infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
-                            if infect_this_person:
-                                new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+                                    # See whether we will infect this person
+                                    infect_this_person = True # By default, infect them...
+                                    if target_person.quarantined:
+                                        infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
+                                    if infect_this_person:
+                                        new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
         # End of person loop; apply interventions
         for intervention in self['interventions']:
