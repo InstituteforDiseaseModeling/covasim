@@ -87,9 +87,10 @@ def get_defaults(region=None, merge=False):
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict[region]
-
+    n_days_default = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
     if merge:
         output = {**sim_pars, **epi_pars}
+        output['n_days'] = n_days_default
     else:
         output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
 
