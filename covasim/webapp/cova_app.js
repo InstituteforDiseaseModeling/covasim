@@ -114,7 +114,6 @@ var vm = new Vue({
             scenarioError: {},
             interventionTableConfig,
             running: false,
-            sidebarWidth: "47rem",
             err: '',
             reset_options: ['Example'],//, 'Seattle', 'Wuhan', 'Global'],
             reset_choice: 'Example'
