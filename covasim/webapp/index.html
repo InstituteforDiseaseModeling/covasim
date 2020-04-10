@@ -32,7 +32,7 @@
 <!-- BODY -->
 <body>
 
-<section id="app" class="container-fluid">
+<section id="app" class="container-fluid" @mousemove="resize_apply" @mouseup="resize_end">
   <header class="row no-gutter">
     <nav class="navbar navbar-dark bg-dark">
       <a class="navbar-brand" href="#">{{ title }}</a>
@@ -70,7 +70,7 @@
 
   <div class="content">
 
-    <b-sidebar id="parameters" :visible="panel_open" no-header bg-variant="white" width="47rem" shadow>
+    <b-sidebar id="parameters" :visible="panel_open" no-header bg-variant="white" :width="panel_width+'vw'" shadow>
       <div class="px-3">
         <header class="d-flex justify-content-between">
           <h4 class="my-2">Campaign Builder</h4>
@@ -222,6 +222,9 @@
         </div>
 
       </div>
+
+      <!-- Resize handle -->
+      <div id="resize-handle" @mousedown="resize_start"></div>
 
       <!-- Run button -->
       <template v-slot:footer>
