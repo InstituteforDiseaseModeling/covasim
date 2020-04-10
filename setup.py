@@ -10,7 +10,6 @@ import os
 import sys
 import runpy
 from setuptools import setup, find_packages
-from pull_demographic_data import load_sources
 
 # Load requirements from txt file
 with open('requirements.txt') as f:
@@ -72,4 +71,3 @@ setup(
     install_requires=requirements
 )
 
-load_sources()

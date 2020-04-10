@@ -70,7 +70,7 @@ follows:
 
 ## Updating Population Data
 
-The setup phase will pull down population data if you need to update this data either re-run setup or run `python pull_demographic_data.py`.
+To down population data run `python pull_demographic_data.py`.
 
 ## Structure
 
