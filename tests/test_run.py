@@ -33,7 +33,7 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
 
     # Note: this runs 3 simulations, not 3x3!
     iterpars = {'beta': [0.015, 0.025, 0.035],
-                'cont_factor': [0.1, 0.5, 0.9],
+                'diag_factor': [0.1, 0.5, 0.9],
                 }
 
     sim = cv.Sim()

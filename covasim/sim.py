@@ -3,8 +3,9 @@ Defines the Sim class, Covasim's core class.
 '''
 
 #%% Imports
-import numpy as np # Needed for a few things not provided by pl
+import numpy as np
 import pylab as pl
+import pandas as pd
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
@@ -244,13 +245,6 @@ class Sim(cvbase.BaseSim):
     def next(self, verbose=0):
         '''
         Step simulation forward in time
-
-        Args:
-            steps (int): the number of timesteps to run (default: 1)
-            stop (int): alternative to steps, index of the simulation to run until (default: current + 1)
-
-        Returns: None
-
         '''
 
         # Set the time and if we have reached the end of the simulation, then do nothing
@@ -266,6 +260,7 @@ class Sim(cvbase.BaseSim):
         n_severe        = 0
         n_critical      = 0
         n_diagnosed     = 0
+        n_quarantined   = 0
 
         # Zero counts for this time step: flows
         new_recoveries  = 0
@@ -274,12 +269,15 @@ class Sim(cvbase.BaseSim):
         new_symptomatic = 0
         new_severe      = 0
         new_critical    = 0
+        new_quarantined = 0
 
         # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
         beta             = self['beta']
         asymp_factor     = self['asymp_factor']
         diag_factor      = self['diag_factor']
-        cont_factor      = self['cont_factor']
+        quar_trans_factor= self['quar_trans_factor']
+        quar_acq_factor  = self['quar_acq_factor']
+        quar_period      = self['quar_period']
         beta_layers      = self['beta_layers']
         n_beds           = self['n_beds']
         bed_constraint   = False
@@ -302,10 +300,6 @@ class Sim(cvbase.BaseSim):
         if self['rescale']:
             self.rescale()
 
-        # Update each person, skipping people who are susceptible
-        not_susceptible = self.people.filter_out('susceptible')
-        n_susceptible   = len(self.people)
-
         # Randomly infect some people (imported infections)
         if n_imports>0:
             imporation_inds = cvu.choose(max_n=pop_size, n=n_imports)
@@ -313,10 +307,20 @@ class Sim(cvbase.BaseSim):
                 person = self.people[ind]
                 new_infections += person.infect(t=t)
 
+
+        susceptible = self.people.filter_in('susceptible')
+        n_susceptible = 0
+        for person in susceptible:
+            n_susceptible += 1 # Update number of susceptibles
+
+            # If they're quarantined, this affects their transmission rate
+            new_quarantined += person.check_quar_begin(t, quar_period) # Set know_contact and go into quarantine
+            n_quarantined += person.check_quar_end(t) # Come out of quarantine, and count quarantine state
+
         # Loop over everyone not susceptible
+        not_susceptible = self.people.filter_out('susceptible')
         for person in not_susceptible:
-            n_susceptible -= 1 # Update number of susceptibles
-            n_diagnosed   += person.diagnosed # And diagnosed people
+            # N.B. Recovered and dead people are included here!
 
             # If exposed, check if the person becomes infectious
             if person.exposed:
@@ -324,6 +328,12 @@ class Sim(cvbase.BaseSim):
                 if not person.infectious and t == person.date_infectious: # It's the day they become infectious
                     person.infectious = True
                     sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
+
+            # If they're quarantined, this affects their transmission rate
+            new_quarantined += person.check_quar_begin(t, quar_period) # Set know_contact and go into quarantine
+            person.check_quar_end(t) # Come out of quarantine
+            n_quarantined += person.quarantined
+            n_diagnosed   += person.diagnosed
 
             # If infectious, update status according to the course of the infection, and check if anyone gets infected
             if person.infectious:
@@ -351,13 +361,9 @@ class Sim(cvbase.BaseSim):
                         bed_constraint = True
 
                     # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                    if not person.known_contact and person.date_known_contact is not None and person.date_known_contact<=t:
-                        person.known_contact = True
-
                     thisbeta = beta * \
                                (asymp_factor if not person.symptomatic else 1.) * \
-                               (diag_factor if person.diagnosed else 1.) * \
-                               (cont_factor if person.known_contact else 1.)
+                               (diag_factor if person.diagnosed else 1.)
 
                     # Set community contacts
                     person_contacts = person.contacts
@@ -369,14 +375,22 @@ class Sim(cvbase.BaseSim):
                     for ckey in self.contact_keys:
                         contact_ids = person_contacts[ckey]
                         if len(contact_ids):
-                            this_beta_layer = thisbeta*beta_layers[ckey]
+                            this_beta_layer = thisbeta *\
+                                              beta_layers[ckey] *\
+                                              (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
+
                             transmission_inds = cvu.bf(this_beta_layer, contact_ids)
                             for contact_ind in transmission_inds: # Loop over people who get infected
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
-                                    new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                    sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
+                                    # See whether we will infect this person
+                                    infect_this_person = True # By default, infect them...
+                                    if target_person.quarantined:
+                                        infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
+                                    if infect_this_person:
+                                        new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
         # End of person loop; apply interventions
         for intervention in self['interventions']:
@@ -392,6 +406,7 @@ class Sim(cvbase.BaseSim):
         self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
         self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
         self.results['n_diagnosed'][t]    = n_diagnosed # Tracks total number of diagnosed cases at this timestep
+        self.results['n_quarantined'][t]   = n_quarantined # Tracks number currently quarantined
         self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else np.nan
 
         # Update counts for this time step: flows
@@ -401,6 +416,7 @@ class Sim(cvbase.BaseSim):
         self.results['new_severe'][t]      = new_severe
         self.results['new_critical'][t]    = new_critical
         self.results['new_deaths'][t]      = new_deaths
+        self.results['new_quarantined'][t] = new_quarantined
 
         self.t += 1
 

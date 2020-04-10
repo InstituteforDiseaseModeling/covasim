@@ -40,15 +40,19 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['rescale_threshold'] = 0.1 # Fraction susceptible population that will trigger rescaling if rescaling
     pars['rescale_factor']    = 2   # Factor by which we rescale the population
 
-    # Disease transmission parameters
+    # Basic disease transmission
     pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
-    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
-    pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['use_layers']   = use_layers # Whether or not to use different contact layers
     pars['contacts']     = None # The number of contacts per layer
     pars['beta_layers']  = None # Transmissibility per layer
+
+    # Efficacy of protection measures
+    pars['asymp_factor']        = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']         = 0.2 # Multiply beta by this factor for diganosed cases
+    pars['quar_trans_factor']   = {'h': 0.8, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+    pars['quar_acq_factor']     = 0.2 # Acquisition multiplier on exposure for quarantined individual
+    pars['quar_period']         = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
