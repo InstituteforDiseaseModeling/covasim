@@ -279,7 +279,6 @@ var vm = new Vue({
         },
 
         loadPars() {
-            this.panel_open = false;
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
             this.result = this.history[this.historyIdx].result;
