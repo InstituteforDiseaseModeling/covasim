@@ -544,7 +544,7 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
 
         for s,sim in enumerate(sims[1:]): # Skip the first one
             if keep_people:
-                output_sim.people += sim.people
+                output_sim.people.append(sim.people)
             for key in sim.reskeys:
                 this_res = sim.results[key]
                 output_sim.results[key].values += this_res.values

@@ -283,7 +283,7 @@ class Sim(cvbase.BaseSim):
         beta_layers      = self['beta_layers']
         n_beds           = self['n_beds']
         bed_constraint   = False
-        pop_size         = self.people.len()
+        pop_size         = len(self.people)
         n_imports        = cvu.pt(self['n_imports']) # Imported cases
         if 'c' in self['contacts']:
             n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
@@ -303,7 +303,7 @@ class Sim(cvbase.BaseSim):
             self.rescale()
 
         get_rel_susceptibility = np.vectorize(lambda p: p.get_susceptibility(), otypes=[np.float64])
-        rel_susceptibility = get_rel_susceptibility(self.people.array)
+        rel_susceptibility = get_rel_susceptibility(self.people.values)
 
         # Update each person, skipping people who are susceptible
         not_susceptible = self.people[rel_susceptibility == 0]
@@ -437,7 +437,7 @@ class Sim(cvbase.BaseSim):
         if current_scale < pop_scale: # We have room to rescale
             not_sus = list(self.people.filter_out('susceptible'))
             n_not_sus = len(not_sus)
-            n_people = self.people.len()
+            n_people = len(self.people)
             if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
                 max_ratio = pop_scale/current_scale # We don't want to exceed this
                 scaling_ratio = min(self['rescale_factor'], max_ratio)
