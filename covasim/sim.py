@@ -385,8 +385,7 @@ class Sim(cvbase.BaseSim):
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
-
-        self.results['n_susceptible'][t]  = n_susceptible
+        self.results['n_susceptible'][t]  = n_susceptible - new_infections
         self.results['n_exposed'][t]      = n_exposed
         self.results['n_infectious'][t]   = n_infectious # Tracks total number infectious at this timestep
         self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
