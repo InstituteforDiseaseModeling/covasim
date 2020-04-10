@@ -1,10 +1,14 @@
+''' Test/example for changing from a constant viral
+load to a simple time varying viral load.'''
 import sciris as sc
 import covasim as cv
 import numpy as np
+from scipy.special import kl_div
 
 runs = 301
 r0_const = np.zeros(runs)
 r0_twolevel = np.zeros(runs)
+r0_twolevel2 = np.zeros(runs)
 base_pars = sc.objdict(
         n_days       = 12,   # Number of days to simulate
         asymp_factor = 1, # Multiply beta by this factor for asymptomatic cases
@@ -36,23 +40,37 @@ base_pars['prog_by_age']     = False
 for i in range(runs):
     # Configure the sim -- can also just use a normal dictionary
     pars = base_pars
-    pars['rand_seed'] = i
+    pars['rand_seed'] = i*np.random.rand()
+    pars['viral_distro'] = {'dist':'constant'}
     print('Making sim ', i, '...')
     sim1 = cv.Sim(pars=pars)
     sim1.run()
     r0_const[i] = len(sim1.people[0].infected)
-    pars = base_pars
-    pars['rand_seed'] = i
+    pars['rand_seed'] = i*np.random.rand()
     pars['viral_distro'] = {'dist':'twolevel', 'frac':.5, 'ratio':2}
     sim2 = cv.Sim(pars=pars)
     sim2.run()
     r0_twolevel[i] = len(sim2.people[0].infected)
+    pars['rand_seed'] = i*np.random.rand()
+    pars['viral_distro'] = {'dist':'twolevel', 'frac':.3, 'ratio':3}
+    sim3 = cv.Sim(pars=pars)
+    sim3.run()
+    r0_twolevel2[i] = len(sim3.people[0].infected)
 
 print('R0 constant viral load: ', np.mean(r0_const), ' +- ', np.std(r0_const))
 print('R0 two level viral load: ', np.mean(r0_twolevel), ' +- ', np.std(r0_twolevel))
+print('R0 two level diff params: ', np.mean(r0_twolevel2), ' +- ', np.std(r0_twolevel2))
 
 import matplotlib.pyplot as plt
-hist1 = plt.hist(r0_const, bins=np.arange(-0.5, 11.5))
-hist2 = plt.hist(r0_twolevel, bins=np.arange(-0.5, 11.5))
+hist1 = plt.hist(r0_const, bins=np.arange(-0.5, 11.5), density=True)
+hist2 = plt.hist(r0_twolevel, bins=np.arange(-0.5, 11.5), density=True)
+hist3 = plt.hist(r0_twolevel2, bins=np.arange(-0.5, 11.5), density=True)
 plt.show()
-print(abs(hist1[0]-hist2[0])/hist1[0])
+assert(abs(np.mean(r0_const)-np.mean(r0_twolevel))<np.std(r0_const))
+assert(abs(np.mean(r0_const)-np.mean(r0_twolevel2))<np.std(r0_const))
+assert(abs(np.mean(r0_twolevel)-np.mean(r0_twolevel2))<np.std(r0_twolevel))
+# taking the min because if the second distribution has a 0 where the first
+# does not kl_div gives inf.
+assert(min(sum(kl_div(hist1[0], hist2[0])), sum(kl_div(hist2[0], hist1[0])))<1)
+assert(min(sum(kl_div(hist1[0], hist3[0])), sum(kl_div(hist3[0], hist1[0])))<1)
+assert(min(sum(kl_div(hist2[0], hist3[0])), sum(kl_div(hist3[0], hist2[0])))<1)
