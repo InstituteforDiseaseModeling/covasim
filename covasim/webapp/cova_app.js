@@ -93,6 +93,8 @@ var vm = new Vue({
             version: 'Unable to connect to server!', // This text will display instead of the version
             copyright_year: copyright_year(),
             panel_open: true,
+            panel_width: null,
+            resizing: false,
             history: [],
             historyIdx: 0,
             sim_length: {
@@ -183,6 +185,20 @@ var vm = new Vue({
         },
         close_panel() {
             this.panel_open = false;
+        },
+        resize_start() {
+            this.resizing = true;
+        },
+        resize_end() {
+            this.resizing = false;
+        },
+        resize_apply(e) {
+            if (this.resizing) {
+                // Prevent highlighting
+                e.stopPropagation();
+                e.preventDefault();
+                this.panel_width = (e.clientX / window.innerWidth) * 100;
+            }
         },
 
         async get_version() {
