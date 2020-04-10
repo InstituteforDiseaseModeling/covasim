@@ -87,10 +87,8 @@ def get_defaults(region=None, merge=False):
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict[region]
-    n_days_default = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
     if merge:
         output = {**sim_pars, **epi_pars}
-        output['n_days'] = n_days_default
     else:
         output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
 
@@ -165,7 +163,7 @@ def get_gnatt(intervention_pars=None, intervention_config=None):
     return {'json': fig.to_json(), 'id': 'test'}
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation=False, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation=False, verbose=True, n_days=90):
     ''' Create, run, and plot everything '''
 
     err = ''
@@ -205,6 +203,9 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
         web_dur = web_pars.pop('web_dur')
         for key in ['asym2rec', 'mild2rec', 'sev2rec', 'crit2rec']:
             web_pars['dur'][key]['par1'] = web_dur
+
+        # Add n_days
+        web_pars['n_days'] = n_days
 
         # Add the intervention
         web_pars['interventions'] = []
