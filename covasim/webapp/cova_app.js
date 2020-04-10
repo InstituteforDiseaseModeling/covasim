@@ -57,7 +57,7 @@ const interventionTableConfig = {
             return {start, end, level};
         }
     },
-    contract_tracing: {
+    contact_tracing: {
         formTitle: "Contact Tracing",
         fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
         handleSubmit: function(event) {
@@ -184,7 +184,7 @@ var vm = new Vue({
         close_panel() {
             this.panel_open = false;
         },
-        
+
         async get_version() {
             const response = await sciris.rpc('get_version');
             this.version = response.data;

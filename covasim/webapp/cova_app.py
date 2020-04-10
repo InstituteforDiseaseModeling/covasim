@@ -125,13 +125,12 @@ def map_symptomatic_testing(scenario, web_pars):
 
     web_pars['interventions'] = None
 
-def map_contract_tracing(scenario, web_pars):
+def map_contact_tracing(scenario, web_pars):
     '''map social distance to intervention'''
     interventions = []
     for timeline in scenario:
         start = timeline['start']
         end = timeline['end']
-        level = timeline['level'] # 60, 90
 
     web_pars['interventions'] = None
 
@@ -214,7 +213,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
             'social_distance': map_social_distance,
             'school_closures': map_school_closures,
             'symptomatic_testing': map_symptomatic_testing,
-            'contract_tracing': map_contract_tracing
+            'contact_tracing': map_contact_tracing
         }
         if intervention_pars is not None:
             for key,scenario in intervention_pars.items():
