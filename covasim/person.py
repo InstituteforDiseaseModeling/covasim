@@ -305,19 +305,18 @@ class Person(sc.prettyobj):
 
     def check_quar_begin(self, t, quar_period=None):
         ''' Check for whether someone has been contacted by a positive'''
-        if self.date_known_contact is not None and t >= self.date_known_contact:
-            if quar_period is not None:
-                # Begin quarantine
-                was_quarantined = self.quarantined
-                self.quarantine(t, quar_period)
-                self.date_known_contact = None # Clear
-                return not was_quarantined
+        if (quar_period is not None) and (self.date_known_contact is not None) and (t >= self.date_known_contact):
+            # Begin quarantine
+            was_quarantined = self.quarantined
+            self.quarantine(t, quar_period)
+            self.date_known_contact = None # Clear
+            return not was_quarantined
         return 0
 
 
     def check_quar_end(self, t):
         ''' Check for whether someone is isolating/quarantined'''
-        if self.quarantined and self.end_quarantine is not None and t >= self.end_quarantine:
+        if self.quarantined and (self.end_quarantine is not None) and (t >= self.end_quarantine):
             self.quarantined = False # Release from quarantine
             self.end_quarantine = None # Clear end quarantine time
             #sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
