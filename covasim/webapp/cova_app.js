@@ -16,9 +16,70 @@ const PlotlyChart = {
         }
         );
     },
+    updated() {
+        this.$nextTick(function () {
+            let x = JSON.parse(this.graph.json);
+            x.responsive = true;
+            Plotly.react(this.graph.id, x);
+        });
+    }
 };
 
+const interventionTableConfig = {
+    social_distance: {
+        formTitle: "Social Distancing",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'},
+            {key: 'end', type: 'number', label: 'End Day'},
+            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive Effectiveness', value: 'aggressive'}, {label: 'Moderate Effectiveness', value: 'moderate'}, {label: 'Mild Effectiveness', value: 'mild'}]}],
+        handleSubmit: function(event) {
+            const start = parseInt(event.target.elements.start.value);
+            const end = parseInt(event.target.elements.end.value);
+            const level = event.target.elements.level.value;
+            return {start, end, level};
+        }
+    },
+    school_closures: {
+        formTitle: "School Closures",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
+        handleSubmit: function(event) {
+            const start = parseInt(event.target.elements.start.value);
+            const end = parseInt(event.target.elements.end.value);
+            return {start, end};
+        }
+    },
+    symptomatic_testing: {
+        formTitle: "Symptomatic Testing",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}, {label: 'Accuracy', key: 'level', type: 'select', options: [{label: '60% Accuracy', value: '60'}, {label: '90% Accuracy', value: '90'},]}],
+        handleSubmit: function(event) {
+            const start = parseInt(event.target.elements.start.value);
+            const end = parseInt(event.target.elements.end.value);
+            const level = parseInt(event.target.elements.level.value);
+            return {start, end, level};
+        }
+    },
+    contact_tracing: {
+        formTitle: "Contact Tracing",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
+        handleSubmit: function(event) {
+            const start = parseInt(event.target.elements.start.value);
+            const end = parseInt(event.target.elements.end.value);
+            return {start, end};
+        }
+  }
 
+};
+
+function copyright_year() {
+    const release_year = 2020
+    const current_year = new Date().getFullYear()
+    let range = [release_year]
+
+    if (current_year > release_year){
+        range.push(current_year)
+    }
+
+    return range.join("-")
+}
 var vm = new Vue({
     el: '#app',
 
@@ -28,11 +89,21 @@ var vm = new Vue({
 
     data() {
         return {
+            title: "COVASim",
             version: 'Unable to connect to server!', // This text will display instead of the version
+            copyright_year: copyright_year(),
+            panel_open: true,
             history: [],
             historyIdx: 0,
+            sim_length: {
+                best: 90,
+                max: 180,
+                min: 1
+            },
             sim_pars: {},
             epi_pars: {},
+            intervention_pars: {},
+            intervention_figs: {},
             show_animation: false,
             result: { // Store currently displayed results
                 graphs: [],
@@ -40,6 +111,8 @@ var vm = new Vue({
                 files: {},
             },
             paramError: {},
+            scenarioError: {},
+            interventionTableConfig,
             running: false,
             err: '',
             reset_options: ['Example'],//, 'Seattle', 'Wuhan', 'Global'],
@@ -66,6 +139,51 @@ var vm = new Vue({
     },
 
     methods: {
+        async addIntervention(scenarioKey, event) {
+            const intervention = this.interventionTableConfig[scenarioKey].handleSubmit(event);
+            const key = scenarioKey;
+            const self = this
+            if (!this.intervention_pars[key]) {
+                this.$set(this.intervention_pars, key, []);
+            }
+            // validate intervention
+            const notValid = !intervention.end || !intervention.start || intervention.end <= intervention.start || this.intervention_pars[key].some(({start, end}) => {
+                return start <= intervention.start && end >= intervention.start ||
+                    start <= intervention.end && end >= intervention.end ||
+                    intervention.start <= start && intervention.end >= end;
+            });
+            if (notValid) {
+                this.$set(this.scenarioError, scenarioKey, `Please enter a valid day range`);
+                return;
+            }
+            // Check that
+            const outOfBounds = intervention.start > this.sim_length.best || intervention.end > this.sim_length.best || this.intervention_pars[key].some(({start, end}) => {
+                return start > self.sim_length.best || end > self.sim_length.best
+            })
+            if (outOfBounds){
+                this.$set(this.scenarioError, scenarioKey, `Intervention cannot start or end after the campaign duration.`)
+                return;
+            }
+            this.$set(this.scenarioError, scenarioKey, '');
+
+            this.intervention_pars[key].push(intervention);
+            const result = this.intervention_pars[key].sort((a, b) => a.start - b.start);
+            this.$set(this.intervention_pars, key, result);
+            const response = await sciris.rpc('get_gnatt', [this.intervention_pars, this.interventionTableConfig]);
+            this.intervention_figs = response.data;
+        },
+        async deleteIntervention(scenarioKey, index) {
+            this.$delete(this.intervention_pars[scenarioKey], index);
+            const response = await sciris.rpc('get_gnatt', [this.intervention_pars, this.interventionTableConfig]);
+            this.intervention_figs = response.data;
+        },
+
+        open_panel() {
+            this.panel_open = true;
+        },
+        close_panel() {
+            this.panel_open = false;
+        },
 
         async get_version() {
             const response = await sciris.rpc('get_version');
@@ -82,11 +200,14 @@ var vm = new Vue({
 
             // Run a a single sim
             try {
-                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.show_animation]);
+                const sim_pars = {...this.sim_pars};
+                sim_pars.n_days = this.sim_length;
+                const response = await sciris.rpc('run_sim', [sim_pars, this.epi_pars, this.intervention_pars, this.show_animation]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
                 this.err = response.data.err;
+                this.panel_open = !!this.err;
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, result: this.result })));
@@ -115,6 +236,9 @@ var vm = new Vue({
             Object.keys(params).forEach(key => {
                 this.$watch(`${paramKey}.${key}`, this.validateParam(key), { deep: true });
             });
+        },
+        watchSimLengthParam() {
+            this.$watch(`sim_length`, this.validateParam('sim_length'), { deep: true });
         },
         validateParam(key) {
             return (param) => {
