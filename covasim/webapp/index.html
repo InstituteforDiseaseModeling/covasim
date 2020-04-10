@@ -225,7 +225,7 @@
 
       <!-- Run button -->
       <template v-slot:footer>
-        
+
         <div v-if="err" class="errorbox">
           <p>During the simulation, the following warning(s) were encountered:</p>
           <p>{{ err }}</p>
@@ -235,7 +235,7 @@
           <label class="mr-3">
             <input type="checkbox" v-model="show_animation" />Render animation
           </label>
-          
+
           <button v-if="running" class="btn btn-primary btn-lg btn-run green" type="button" disabled>
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             Running...
@@ -261,7 +261,7 @@
 
     <!-- Show the actual graph -->
     <div id="graphs" class="graphs">
-      <button class="btn" @click="open_panel">
+      <button class="btn btn-primary blueish" @click="open_panel">
         Open parameters
       </button>
       <fieldset>
