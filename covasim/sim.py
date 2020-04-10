@@ -655,9 +655,9 @@ class Sim(cvbase.BaseSim):
 
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             scatter_args=None, axis_args=None, legend_args=None, as_dates=True, interval=None, dateformat=None,
-             font_size=18, font_family=None, use_grid=True, use_commaticks=True, do_show=True,
-             verbose=None):
+             scatter_args=None, axis_args=None, legend_args=None, as_dates=True, dateformat=None,
+             interval=None, n_cols=1, font_size=18, font_family=None, use_grid=True, use_commaticks=True,
+             do_show=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -671,8 +671,9 @@ class Sim(cvbase.BaseSim):
             axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             legend_args (dict): Dictionary of kwargs to be passed to pl.legend()
             as_dates (bool): Whether to plot the x-axis as dates or time points
-            interval (int): Interval between tick marks
             dateformat (str): Date string format, e.g. '%B %d'
+            interval (int): Interval between tick marks
+            n_cols (int): Number of columns of subpanels to use for subplot
             font_size (int): Size of the font
             font_family (str): Font face
             use_grid (bool): Whether or not to plot gridlines
@@ -708,8 +709,9 @@ class Sim(cvbase.BaseSim):
         res = self.results # Shorten since heavily used
 
         # Plot everything
+        n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
         for p,title,keylabels in to_plot.enumitems():
-            ax = pl.subplot(len(to_plot),1,p+1)
+            ax = pl.subplot(n_rows, n_cols, p+1)
             for key in keylabels:
                 label = res[key].name
                 this_color = res[key].color

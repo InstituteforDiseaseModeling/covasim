@@ -218,14 +218,15 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     scens.run(verbose=verbose, debug=debug)
 
     if do_plot:
-        to_plot = default_scen_plots = [
+        to_plot = [
             'cum_infections',
             'cum_recoveries',
             'new_infections',
             'n_quarantined',
             'new_quarantined'
         ]
-        scens.plot(do_save=do_save, do_show=do_show, to_plot=to_plot, fig_path=fig_path)
+        fig_args = dict(figsize=(24,16))
+        scens.plot(do_save=do_save, do_show=do_show, to_plot=to_plot, fig_path=fig_path, n_cols=2, fig_args=fig_args)
 
     return scens
 
