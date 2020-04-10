@@ -370,7 +370,7 @@ class Sim(cvbase.BaseSim):
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
-            self.results[f'n_{key}'][t] = self.people.filter_in(key)
+            self.results[f'n_{key}'][t] = len(self.people.filter_in(key))
         self.results['bed_capacity'][t] = self.results['n_severe'][t]/n_beds if n_beds>0 else np.nan
 
         # Update counts for this time step: flows
