@@ -189,21 +189,15 @@ class Sim(cvbase.BaseSim):
         dcols = cvd.default_colors # Shorten default colors
 
         # Stock variables
-        self.results['n_susceptible'] = init_res('Number susceptible',        color=dcols.susceptible, scale='static')
-        self.results['n_exposed']     = init_res('Number exposed',            color=dcols.infections)
-        self.results['n_infectious']  = init_res('Number infectious',         color=dcols.infectious)
-        self.results['n_symptomatic'] = init_res('Number symptomatic',        color=dcols.symptomatic)
-        self.results['n_severe']      = init_res('Number of severe cases',    color=dcols.severe)
-        self.results['n_critical']    = init_res('Number of critical cases',  color=dcols.critical)
-        self.results['n_diagnosed']   = init_res('Number of confirmed cases', color=dcols.diagnoses)
-        self.results['n_quarantined'] = init_res('Number in quarantine',      color=dcols.quarantined)
+        for key,label in cvd.result_stocks.items():
+            self.results[f'n_{key}'] = init_res(label, color=dcols[key])
+        self.results['n_susceptible'].scale = 'static'
         self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
-        for key in cvd.result_flows:
-            suffix = ' cases' if key in ['symptomatic', 'severe', 'critical'] else '' # Since need to say "severe cases" not just "severe"
-            self.results[f'new_{key}'] = init_res(f'Number of new {key}{suffix}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {key}{suffix}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
+        for key,label in cvd.result_flows.items():
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
 
         # Other variables
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
@@ -290,7 +284,7 @@ class Sim(cvbase.BaseSim):
         pop_size         = len(self.people)
         n_imports        = cvu.pt(self['n_imports']) # Imported cases
         if 'c' in self['contacts']:
-            n_comm_contacts = self['contacts']['c'] # Community contacts
+            n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
         else:
             n_comm_contacts = 0
 
@@ -386,7 +380,6 @@ class Sim(cvbase.BaseSim):
                                               (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
 
                             transmission_inds = cvu.bf(this_beta_layer, contact_ids)
-
                             for contact_ind in transmission_inds: # Loop over people who get infected
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
@@ -406,8 +399,7 @@ class Sim(cvbase.BaseSim):
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
-
-        self.results['n_susceptible'][t]  = n_susceptible
+        self.results['n_susceptible'][t]  = n_susceptible - new_infections
         self.results['n_exposed'][t]      = n_exposed
         self.results['n_infectious'][t]   = n_infectious # Tracks total number infectious at this timestep
         self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
@@ -509,7 +501,7 @@ class Sim(cvbase.BaseSim):
                 self.results[reskey].values *= self['pop_scale']
 
         # Calculate cumulative results
-        for key in cvd.result_flows:
+        for key in cvd.result_flows.keys():
             self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 

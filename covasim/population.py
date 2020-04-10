@@ -54,6 +54,16 @@ class People(list):
         return filter(lambda person: not getattr(person, attr), self)
 
 
+    def count_in(self, attr):
+        ''' Simple method to count people in '''
+        return len(list(self.filter_in(attr)))
+
+
+    def count_out(self, attr):
+        ''' Simple method to count people out '''
+        return len(list(self.filter_out(attr)))
+
+
     def extract(self, attr):
         '''
         Return a list of a given attribute for every person.
@@ -248,7 +258,7 @@ def make_microstructured_contacts(pop_size, contacts):
             n_remaining -= this_cluster
 
         for key in contacts_dict.keys():
-            contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=int)
+            contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=np.int64)
 
     return contacts_list, contact_keys
 
@@ -315,7 +325,7 @@ def make_synthpop(sim):
             int_contacts[new_key] = []
             for uid in uid_contacts[key]:
                 int_contacts[new_key].append(uid_mapping[uid])
-            int_contacts[new_key] = np.array(int_contacts[new_key], dtype=int)
+            int_contacts[new_key] = np.array(int_contacts[new_key], dtype=np.int64)
         contacts.append(int_contacts)
 
     popdict = {}
