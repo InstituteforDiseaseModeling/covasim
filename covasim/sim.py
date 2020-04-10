@@ -9,6 +9,7 @@ import pandas as pd
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
+from . import version as cvv
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvbase
@@ -72,6 +73,8 @@ class Sim(cvbase.BaseSim):
     def set_metadata(self, filename):
         ''' Set the metadata for the simulation -- creation time and filename '''
         self.created = sc.now()
+        self.version = cvv.__version__
+        self.git_info = cvu.git_info()
         if filename is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             self.filename = f'covasim_{datestr}.sim'

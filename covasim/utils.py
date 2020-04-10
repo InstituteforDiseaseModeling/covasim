@@ -8,8 +8,9 @@ import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
+from . import version as cvver
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
+__all__ = ['CancelError', 'sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
 
 class CancelError(Exception):
     pass
@@ -203,6 +204,59 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     inds = unique_inds[:int(n)]
 
     return inds
+
+
+def check_version(expected, die=False, verbose=True, **kwargs):
+    '''
+    Get current git information and optionally write it to disk.
+
+    Args:
+        expected (str): expected version information
+        die (bool): whether or not to raise an exception if the check fails
+    '''
+    version = cvver.__version__
+    compare = sc.compareversions(version, expected) # Returns -1, 0, or 1
+    relation = ['older', '', 'newer'][compare+1] # Picks the right string
+    if relation: # Not empty, print warning
+        string = f'Note: Covasim is {relation} than expected ({version} vs. {expected})'
+        if die:
+            raise ValueError(string)
+        elif verbose:
+            print(string)
+    return compare
+
+
+def git_info(filename=None, check=False, old_info=None, die=False, verbose=True, **kwargs):
+    '''
+    Get current git information and optionally write it to disk.
+
+    Args:
+        filename (str): name of the file to write to or read from
+        check (bool): whether or not to compare two git versions
+        old_info (dict): dictionary of information to check against
+        die (bool): whether or not to raise an exception if the check fails
+
+    Example:
+        cv.git_info('covasim_version.json') # Writes to disk
+        cv.git_info('covasim_version.json', check=True) # Checks that current version matches saved file
+    '''
+    info = sc.gitinfo(__file__)
+    if not check: # Just get information
+        if filename is not None:
+            output = sc.savejson(filename, info, **kwargs)
+        else:
+            output = info
+    else:
+        if filename is not None:
+            old_info = sc.loadjson(filename, **kwargs)
+        string = ''
+        if info != old_info:
+            string = f'Git information differs: {info} vs. {old_info}'
+            if die:
+                raise ValueError(string)
+            elif verbose:
+                print(string)
+    return output
 
 
 def fixaxis(sim, useSI=True, boxoff=False):
