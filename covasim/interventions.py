@@ -263,7 +263,7 @@ class test_num(Intervention):
         test_probs = np.ones(sim.n)
         new_diagnoses = 0
 
-        for i,person in enumerate(sim.people.array):
+        for i,person in enumerate(sim.people):
 
             new_diagnoses += person.check_diagnosed(t)
 
@@ -437,8 +437,8 @@ class test_historical(Intervention):
         if self.n_tests[t]:
 
             # Compute weights for people who would test positive or negative
-            positive_tests = np.zeros((sim.people.len(),))
-            for i,person in enumerate(sim.people.array):
+            positive_tests = np.zeros((len(sim.people),))
+            for i,person in enumerate(sim.people):
                 if person.infectious:
                     positive_tests[i] = 1
             negative_tests = 1-positive_tests

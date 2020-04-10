@@ -4,6 +4,7 @@ Defines functions for making the population.
 
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
+import pandas as pd
 import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
@@ -19,7 +20,7 @@ __all__ = ['People', 'make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-class People:
+class People(pd.Series):
     '''
     A tiny class to handle the display of a very large number of people, which is
     prohibitively slow to print to screen. This is really just a list, except with
@@ -28,12 +29,8 @@ class People:
     people with a certain attribute).
     '''
 
-    def __init__(self, people):
-        self.array = np.array(people)
-
-
     def get_list(self, indices):
-        return self.array[indices]
+        return self.values[indices]
 
 
     def filter_in(self, attr):
@@ -47,23 +44,6 @@ class People:
             susceptibles = sim.people.filter_in('susceptible')
         '''
         return filter(lambda person: getattr(person, attr), self)
-
-
-    def __getitem__(self, key):
-        return self.array[key]
-
-    
-    def __iadd__(self, other):
-        return People(np.concatenate([self.array, other.array]))
-
-    def __iter__(self):
-        return self.array.__iter__()
-    
-    def __next__(self):
-        return self.array.__next__()
-
-    def len(self):
-        return self.array.shape[0]
 
 
     def filter_out(self, attr):
