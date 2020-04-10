@@ -17,6 +17,7 @@ result_stocks = {
         'severe':      'Number of severe cases',
         'critical':    'Number of critical cases',
         'diagnosed':   'Number of confirmed cases',
+        'quarantined': 'Number in quarantined',
 }
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix
@@ -28,6 +29,7 @@ result_flows = {'infections':  'infections',
                 'severe':      'severe cases',
                 'critical':    'critical cases',
                 'deaths':      'deaths',
+                'quarantined': 'quarantined people',
 }
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
@@ -67,6 +69,7 @@ default_colors = sc.objdict(
     recovered   = '#799956', # Duplicate
     symptomatic = '#c1ad71',
     severe      = '#c1981d',
+    quarantined = '#5f1914',
     critical    = '#b86113',
     deaths      = '#000000',
     dead        = '#000000', # Duplicate
