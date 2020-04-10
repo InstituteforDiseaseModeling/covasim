@@ -248,7 +248,7 @@ def make_microstructured_contacts(pop_size, contacts):
             n_remaining -= this_cluster
 
         for key in contacts_dict.keys():
-            contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=int)
+            contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=np.int64)
 
     return contacts_list, contact_keys
 
@@ -315,7 +315,7 @@ def make_synthpop(sim):
             int_contacts[new_key] = []
             for uid in uid_contacts[key]:
                 int_contacts[new_key].append(uid_mapping[uid])
-            int_contacts[new_key] = np.array(int_contacts[new_key], dtype=int)
+            int_contacts[new_key] = np.array(int_contacts[new_key], dtype=np.int64)
         contacts.append(int_contacts)
 
     popdict = {}
