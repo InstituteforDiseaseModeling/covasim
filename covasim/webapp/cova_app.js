@@ -93,6 +93,8 @@ var vm = new Vue({
             version: 'Unable to connect to server!', // This text will display instead of the version
             copyright_year: copyright_year(),
             panel_open: true,
+            panel_width: null,
+            resizing: false,
             history: [],
             historyIdx: 0,
             sim_length: {
@@ -184,6 +186,20 @@ var vm = new Vue({
         close_panel() {
             this.panel_open = false;
         },
+        resize_start() {
+            this.resizing = true;
+        },
+        resize_end() {
+            this.resizing = false;
+        },
+        resize_apply(e) {
+            if (this.resizing) {
+                // Prevent highlighting
+                e.stopPropagation();
+                e.preventDefault();
+                this.panel_width = (e.clientX / window.innerWidth) * 100;
+            }
+        },
 
         async get_version() {
             const response = await sciris.rpc('get_version');
@@ -200,9 +216,7 @@ var vm = new Vue({
 
             // Run a a single sim
             try {
-                const sim_pars = {...this.sim_pars};
-                sim_pars.n_days = this.sim_length;
-                const response = await sciris.rpc('run_sim', [sim_pars, this.epi_pars, this.intervention_pars, this.show_animation]);
+                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.intervention_pars, this.show_animation, this.sim_length.best]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
