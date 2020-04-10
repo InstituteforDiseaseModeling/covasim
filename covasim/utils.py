@@ -9,7 +9,7 @@ import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test', 'CancelError']
+__all__ = ['CancelError', 'sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'gitinfo', 'fixaxis', 'get_doubling_time', 'poisson_test']
 
 class CancelError(Exception):
     pass
@@ -203,6 +203,16 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     inds = unique_inds[:int(n)]
 
     return inds
+
+
+def gitinfo(filename=None, **kwargs):
+    ''' Get current git information and optionally write it to disk '''
+    info = sc.gitinfo(__file__)
+    if filename is not None:
+        output = sc.savejson(filename, info, **kwargs)
+    else:
+        output = info
+    return output
 
 
 def fixaxis(sim, useSI=True, boxoff=False):
