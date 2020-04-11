@@ -1,10 +1,11 @@
 ''' Test/example for calculating the generation time. '''
-import sciris as sc
 import covasim as cv
 
 pars = {}
 pars['n_days'] = 250
 pars['pop_infected'] = 1
+pars['asymp_factor'] = 1 # Multiply beta by this factor for asymptomatic cases
+pars['diag_factor']  = 0 # Multiply beta by this factor for diganosed cases
 pars['dur'] = {}
 pars['dur']['exp2inf']  = {'dist':'normal_int', 'par1':4, 'par2':0} # Duration from exposed to infectious
 pars['dur']['inf2sym']  = {'dist':'normal_int', 'par1':0, 'par2':0} # Duration from infectious to symptomatic
@@ -27,7 +28,20 @@ pars['prog_by_age']     = False
     
 pars['rand_seed'] = 1
 
-print('Making sim...')
-sim1 = cv.Sim(pars=pars)
-sim1.run()
-sim1.plot()
+print('Testing true vs clinical (should use the same)...')
+sim = cv.Sim(pars=pars)
+sim.run()
+sim.compute_gen_time()
+assert(sim.results['gen_time']['gen_time']==sim.results['gen_time']['gen_time_clinical'])
+assert(sim.results['gen_time']['gen_time_std']==sim.results['gen_time']['gen_time_clinical_std'])
+
+print('Testing with asympotmatic and sympotmatic...')
+pars['rel_symp_prob']   = 0.5  # Scale factor for proportion of symptomatic cases
+pars['dur']['asym2rec'] = {'dist':'normal_int', 'par1':4,  'par2':0} # Duration for asymptomatics to recover
+pars['dur']['mild2rec'] = {'dist':'normal_int', 'par1':8,  'par2':0} # Duration from mild symptoms to recovered
+sim = cv.Sim(pars=pars)
+sim.run()
+sim.compute_gen_time()
+print('true gen_time: ', sim.results['gen_time']['gen_time'])
+print('clinical gen_time: ', sim.results['gen_time']['gen_time_clinical'])
+assert(sim.results['gen_time']['gen_time']<sim.results['gen_time']['gen_time_clinical'])

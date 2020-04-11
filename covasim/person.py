@@ -119,7 +119,6 @@ class Person(sc.prettyobj):
             dur_asym2rec = cvu.sample(**self.durpars['asym2rec'])
             self.date_recovered = self.date_infectious + dur_asym2rec  # Date they recover
             self.dur_disease = self.dur_exp2inf + dur_asym2rec  # Store how long this person had COVID-19
-            print("I am here somehow. ", self.uid)
 
         # CASE 2: Symptomatic: can either be mild, severe, or critical
         else:

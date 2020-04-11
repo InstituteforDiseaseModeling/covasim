@@ -578,40 +578,33 @@ class Sim(cvbase.BaseSim):
         self.results['r_eff'].values[inds] = r_eff
         return
 
-    def compute_gen_time(self, method='true'):
+    def compute_gen_time(self):
         ''' Calculate the generation time (or serial interval) there are two 
         ways to do this calculation. The 'true' interval (exposure time to 
         exposure time) or 'clinical' (symptom onset to symptom onset) '''
         
-        choicestr = [
-                'true',
-                'clinical']
-        gen_time = None
         not_susceptible = self.people.filter_out('susceptible')
         intervals = np.zeros(int(self.summary['cum_infections']))
+        intervals2 = intervals.copy()
         pos = 0
-        if method == 'true':
-            for source in not_susceptible:
-                if source.date_exposed is not None and len(source.infected)>0:
-                    for target in source.infected:
-                        intervals[pos] = self.people[target].date_exposed - source.date_exposed
-                        pos += 1
-        elif method == 'clinical':
-            for source in not_susceptible:
-                if source.date_exposed is not None and len(source.infected)>0 \
-                and source.date_symptomatic is not None:
+        pos2 = 0
+        for source in not_susceptible:
+            if len(source.infected)>0:
+                for target in source.infected:
+                    intervals[pos] = self.people[target].date_exposed - source.date_exposed
+                    pos += 1
+                if source.date_symptomatic is not None:
                     for target in source.infected:
                         if self.people[target].date_symptomatic is not None:
-                            intervals[pos] = self.people[target].date_symptomatic - source.date_symptomatic
-                            pos += 1
-        else:
-            errormsg = f'The provided method: "{method}" is not implemented; choices are: {choicestr}'
-            raise NotImplementedError(errormsg)
-
+                            intervals2[pos2] = self.people[target].date_symptomatic - source.date_symptomatic
+                            pos2 += 1
                 
-        gen_time = np.mean(intervals[:pos])
-        # should we also return the std?
-        return intervals[:pos]
+        self.results['gen_time'] = {
+                'gen_time':np.mean(intervals[:pos]),
+                'gen_time_std':np.std(intervals[:pos]),
+                'gen_time_clinical':np.mean(intervals2[:pos2]),
+                'gen_time_clinical_std':np.std(intervals2[:pos2])}
+        return
 
     def likelihood(self, weights=None, verbose=None) -> float:
         '''
