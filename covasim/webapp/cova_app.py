@@ -12,6 +12,7 @@ import plotly.figure_factory as ff
 import sciris as sc
 import base64 # Download/upload-specific import
 import json
+import tempfile
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -148,6 +149,17 @@ def upload_pars(fname):
         raise KeyError(f'Parameters file must have keys "sim_pars" and "epi_pars", not {parameters.keys()}')
     return parameters
 
+@app.register_RPC(call_type='upload')
+def upload_file(file):
+    stem, ext = os.path.splitext(file)
+    data = sc.loadtext(file)
+    fd, path = tempfile.mkstemp(suffix=ext, prefix="input_", dir=tempfile.mkdtemp())
+    with open(path, mode='w', encoding="utf-8", newline="\n") as fd:
+        fd.write(data)
+        fd.flush()
+        fd.close()
+    return path
+
 @app.register_RPC()
 def get_gnatt(intervention_pars=None, intervention_config=None):
     df = []
@@ -163,7 +175,7 @@ def get_gnatt(intervention_pars=None, intervention_config=None):
     return {'json': fig.to_json(), 'id': 'test'}
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation=False, n_days=90, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
     ''' Create, run, and plot everything '''
 
     err = ''
@@ -241,7 +253,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
 
     # Create the sim and update the parameters
     try:
-        sim = cv.Sim(web_pars)
+        sim = cv.Sim(pars=web_pars,datafile=datafile)
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
@@ -309,13 +321,13 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
 
         ss = sim.to_excel()
         files['xlsx'] = {
-            'filename': f'Covasim_results_{datestamp}.xlsx',
+            'filename': f'covasim_results_{datestamp}.xlsx',
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
         json_string = sim.to_json(verbose=False)
         files['json'] = {
-            'filename': f'Covasim_results_{datestamp}.json',
+            'filename': f'covasim_results_{datestamp}.json',
             'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 

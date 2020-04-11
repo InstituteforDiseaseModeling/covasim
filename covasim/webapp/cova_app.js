@@ -80,6 +80,44 @@ function copyright_year() {
 
     return range.join("-")
 }
+
+function generate_upload_file_handler(onsuccess, onerror) {
+    return function(e){
+            let files = e.target.files;
+            if (files.length > 0){
+                const data = new FormData();
+                data.append('uploadfile', files[0])
+                data.append('funcname', 'upload_file')
+                data.append('args', undefined)
+                data.append('kwargs', undefined)
+                fetch("/api/rpcs", {
+                  "body": data,
+                  "method": "POST",
+                  "mode": "cors",
+                  "credentials": "include"
+                }).then(response => {
+                    if(!response.ok){
+                        throw new Error(response.json())
+                    }
+                    return response.text()
+                }).then(data => {
+                    remote_filepath = data.trim()
+                                        .replace(/["]/g, "")
+                    onsuccess(remote_filepath)
+                })
+                .catch(error => {
+                    if (onerror){
+                        sciris.fail(this, "Could not upload file.", error)
+                    } else {
+                        onerror(error)
+                    }
+                })
+            } else {
+                console.warn("No input file selected.")
+            }
+        }
+}
+
 var vm = new Vue({
     el: '#app',
 
@@ -104,6 +142,10 @@ var vm = new Vue({
             },
             sim_pars: {},
             epi_pars: {},
+            input: {
+                blob: null,
+                remote_file: null
+            },
             intervention_pars: {},
             intervention_figs: {},
             show_animation: false,
@@ -216,7 +258,10 @@ var vm = new Vue({
 
             // Run a a single sim
             try {
-                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.intervention_pars, this.show_animation, this.sim_length.best]);
+                if(this.input.blob === null){
+                    this.input.remote_file = null
+                }
+                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.intervention_pars, this.input.remote_file, this.show_animation, this.sim_length.best]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
@@ -241,6 +286,10 @@ var vm = new Vue({
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
             this.graphs = [];
+            this.input = {
+                blob: null,
+                remote_file: null
+            }
         },
         setupFormWatcher(paramKey) {
             const params = this[paramKey];
@@ -291,7 +340,15 @@ var vm = new Vue({
                 sciris.fail(this, 'Could not upload parameters', error);
             }
         },
-
+        upload_input_data: generate_upload_file_handler(function(filepath){
+            vm.input.remote_file = filepath
+        }),
+        clear_input_data() {
+            this.input = {
+                blob: null,
+                remote_file: null
+            }
+        },
         loadPars() {
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
