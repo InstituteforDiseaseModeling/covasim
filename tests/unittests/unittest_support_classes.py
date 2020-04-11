@@ -12,7 +12,7 @@ import json
 import os
 import numpy as np
 
-from covasim import Sim, parameters
+from covasim import Sim, parameters, change_beta
 
 
 
@@ -143,6 +143,7 @@ class CovaSimTest(unittest.TestCase):
         self.simulation_prognoses = None
         self.sim = None
         self.simulation_result = None
+        self.interventions = None
         self.expected_result_filename = f"DEBUG_{self.id()}.json"
         if os.path.isfile(self.expected_result_filename):
             os.unlink(self.expected_result_filename)
@@ -232,6 +233,9 @@ class CovaSimTest(unittest.TestCase):
         if not self.simulation_parameters or params_dict: # If we need one, or have one here
             self.set_simulation_parameters(params_dict=params_dict)
             pass
+
+        self.simulation_parameters['interventions'] = self.interventions
+
         self.sim = Sim(pars=self.simulation_parameters,
                        datafile=None)
         if not self.simulation_prognoses:
@@ -239,6 +243,7 @@ class CovaSimTest(unittest.TestCase):
                 self.simulation_parameters[TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.progression_by_age]
             )
             pass
+
         self.sim['prognoses'] = self.simulation_prognoses
         if population_type:
             self.sim.update_pars(pop_type=population_type)
@@ -270,6 +275,17 @@ class CovaSimTest(unittest.TestCase):
     def get_day_final_channel_value(self, channel):
         channel = self.get_full_result_channel(channel=channel)
         return channel[-1]
+    # endregion
+
+    # region interventions support
+    def intervention_set_changebeta(self,
+                                    days_array,
+                                    multiplier_array,
+                                    layers = None):
+        self.interventions = change_beta(days=days_array,
+                                         changes=multiplier_array,
+                                         layers=layers)
+        pass
     # endregion
 
     # region specialized simulation methods
