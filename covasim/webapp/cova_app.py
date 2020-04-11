@@ -12,6 +12,7 @@ import plotly.figure_factory as ff
 import sciris as sc
 import base64 # Download/upload-specific import
 import json
+import tempfile
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -87,10 +88,8 @@ def get_defaults(region=None, merge=False):
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict[region]
-    n_days_default = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
     if merge:
         output = {**sim_pars, **epi_pars}
-        output['n_days'] = n_days_default
     else:
         output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
 
@@ -150,6 +149,17 @@ def upload_pars(fname):
         raise KeyError(f'Parameters file must have keys "sim_pars" and "epi_pars", not {parameters.keys()}')
     return parameters
 
+@app.register_RPC(call_type='upload')
+def upload_file(file):
+    stem, ext = os.path.splitext(file)
+    data = sc.loadtext(file)
+    fd, path = tempfile.mkstemp(suffix=ext, prefix="input_", dir=tempfile.mkdtemp())
+    with open(path, mode='w', encoding="utf-8", newline="\n") as fd:
+        fd.write(data)
+        fd.flush()
+        fd.close()
+    return path
+
 @app.register_RPC()
 def get_gnatt(intervention_pars=None, intervention_config=None):
     df = []
@@ -165,7 +175,7 @@ def get_gnatt(intervention_pars=None, intervention_config=None):
     return {'json': fig.to_json(), 'id': 'test'}
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation=False, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
     ''' Create, run, and plot everything '''
 
     err = ''
@@ -206,6 +216,9 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
         for key in ['asym2rec', 'mild2rec', 'sev2rec', 'crit2rec']:
             web_pars['dur'][key]['par1'] = web_dur
 
+        # Add n_days
+        web_pars['n_days'] = n_days
+
         # Add the intervention
         web_pars['interventions'] = []
 
@@ -240,7 +253,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
 
     # Create the sim and update the parameters
     try:
-        sim = cv.Sim(web_pars)
+        sim = cv.Sim(pars=web_pars,datafile=datafile)
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
@@ -272,7 +285,12 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
                 label = sim.results[key].name
                 this_color = sim.results[key].color
                 y = sim.results[key][:]
-                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
+                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
+                if sim.data is not None and key in sim.data:
+                    data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
+                    print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
+                    ydata = sim.data[key]
+                    fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
             if sim['interventions']:
                 interv_day = sim['interventions'][0].days[0]
@@ -308,13 +326,13 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
 
         ss = sim.to_excel()
         files['xlsx'] = {
-            'filename': f'Covasim_results_{datestamp}.xlsx',
+            'filename': f'covasim_results_{datestamp}.xlsx',
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
         json_string = sim.to_json(verbose=False)
         files['json'] = {
-            'filename': f'Covasim_results_{datestamp}.json',
+            'filename': f'covasim_results_{datestamp}.json',
             'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 

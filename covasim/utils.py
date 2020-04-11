@@ -381,7 +381,6 @@ From: https://stackoverflow.com/questions/33944914/implementation-of-e-test-for-
 
 Date: 2020feb24
 '''
-
 def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
                       method='score', alternative='2-sided'):
     '''test for ratio of two sample Poisson intensities

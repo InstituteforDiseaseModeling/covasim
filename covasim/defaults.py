@@ -17,7 +17,7 @@ result_stocks = {
         'severe':      'Number of severe cases',
         'critical':    'Number of critical cases',
         'diagnosed':   'Number of confirmed cases',
-        'quarantined': 'Number in quarantined',
+        'quarantined': 'Number in quarantine',
 }
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix

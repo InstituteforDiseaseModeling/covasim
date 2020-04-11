@@ -2,6 +2,7 @@
 from .version import __version__, __versiondate__, __license__
 print(__license__)
 
+
 #%% Check that requirements are met
 from . import requirements
 

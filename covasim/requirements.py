@@ -5,7 +5,7 @@ or errors if not.
 
 #%% Housekeeping
 
-__all__ = ['available', 'min_versions', 'check_sciris', 'check_scirisweb', 'check_extra_libs']
+__all__ = ['available', 'min_versions', 'check_sciris', 'check_scirisweb', 'check_synthpops']
 
 
 available = {} # Make this available at the module level
@@ -65,30 +65,22 @@ def check_scirisweb(die=False):
     return
 
 
-def check_extra_libs():
-    ''' Check whether optional dependencies are available '''
+def check_synthpops(verbose=False, die=False):
+    ''' Check whether synthpops is available '''
 
     # Check synthpops -- optional dependency
     try:
         import synthpops # noqa
-        available['synthpops'] = True
+        return synthpops
     except ImportError as E:
-        import_error = f'Note: synthpops (for detailed demographic data) is not available ({str(E)})\n'
-        available['synthpops'] = False
-        print(import_error)
-
-    # # Check parestlib -- optional dependency -- not currently implemented
-    # try:
-    #     import parestlib as _parest_available # noqa
-    #     available['parestlib'] = True
-    # except ImportError as E:
-    #     import_error = f'Note: parestlib (for automatic calibration) is not available ({str(E)})\n'
-    #     available['parestlib'] = True
-    #     print(import_error)
+        import_error = f'Synthpops (for detailed demographic data) is not available ({str(E)})\n'
+        if die:
+            raise ImportError(import_error)
+        elif verbose:
+            print(import_error)
+        return False
 
     return
 
 # Perform the version checks on import
 check_sciris()
-check_scirisweb(die=False)
-check_extra_libs()
