@@ -16,7 +16,7 @@ from collections import defaultdict
 
 # Specify all externally visible functions this file defines
 __all__ = ['People', 'make_people', 'make_randpop', 'make_random_contacts',
-           'make_microstructured_contacts', 'make_realistic_contacts',
+           'make_microstructured_contacts', 'make_hybrid_contacts',
            'make_synthpop']
 
 
@@ -112,7 +112,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
     # Check which type of population to produce
     if pop_type == 'synthpops':
         if not cvreq.check_synthpops():
-            errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use random, clustered, or realistic'
+            errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use random, clustered, or hybrid'
             if die:
                 raise ValueError(errormsg)
             else:
@@ -120,19 +120,19 @@ def make_people(sim, verbose=None, die=True, reset=False):
                 pop_type = 'random'
 
     # Actually create the population
-    if pop_type in ['realistic', 'synthpops']:
+    if pop_type in ['hybrid', 'synthpops']:
         sim.update_pars(use_layers=True) # These two population types require layers
 
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
     else:
         # Create the population
-        if pop_type in ['random', 'clustered', 'realistic']:
+        if pop_type in ['random', 'clustered', 'hybrid']:
             popdict = make_randpop(sim, microstructure=pop_type)
         elif pop_type == 'synthpops':
             popdict = make_synthpop(sim)
         else:
-            errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, realistic, or synthpops'
+            errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
             raise NotImplementedError(errormsg)
 
     # Ensure prognoses are set
@@ -196,10 +196,10 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
         contacts, contact_keys = make_random_contacts(pop_size, sim['contacts'])
     elif microstructure == 'clustered':
         contacts, contact_keys = make_microstructured_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'realistic':
-        contacts, contact_keys = make_realistic_contacts(pop_size, ages, sim['contacts'])
+    elif microstructure == 'hybrid':
+        contacts, contact_keys = make_hybrid_contacts(pop_size, ages, sim['contacts'])
     else:
-        errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or realistic'
+        errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
         raise NotImplementedError(errormsg)
 
     popdict['contacts'] = contacts
@@ -271,9 +271,9 @@ def make_microstructured_contacts(pop_size, contacts):
     return contacts_list, contact_keys
 
 
-def make_realistic_contacts(pop_size, ages, contacts, school_ages=None, work_ages=None):
+def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=None):
     '''
-    Create "realistic" contacts -- microstructured contacts for households and
+    Create "hybrid" contacts -- microstructured contacts for households and
     random contacts for schools and workplaces, both of which have extremely
     basic age structure. A combination of both make_random_contacts() and
     make_microstructured_contacts().
