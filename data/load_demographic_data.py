@@ -2,8 +2,9 @@ import requests
 import os
 import json
 import numpy as np
+import sciris as sc
 from pathlib import Path
-dirname = os.path.dirname(__file__)
+dirname = sc.thisdir(__file__)
 
 
 class NeherLabPop():
