@@ -26,7 +26,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     # Population parameters
     pars['pop_size']     = 20e3 # Number ultimately susceptible to CoV
     pars['pop_infected'] = 10 # Number of initial infections
-    pars['pop_type']     = 'random' # What type of population data to use -- random (fastest), synthpops (best), realistic (compromise), or clustered (not recommended)
+    pars['pop_type']     = 'random' # What type of population data to use -- random (fastest), synthpops (best), hybrid (compromise), or clustered (not recommended)
+    pars['location']     = None # What location to load data from -- default Seattle
 
     # Simulation parameters
     pars['start_day']  = '2020-03-01' # Start day of the simulation

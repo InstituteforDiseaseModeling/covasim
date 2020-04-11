@@ -147,3 +147,12 @@ This adds data from each of the US states and territories, as well as for the wh
 
 More details at: https://covidtracking.com/api The `new_` variables are per-day
 changes in the values, in parameter.py format.
+
+
+## 4. Demographic data scraper
+
+To scrape demographic data, run
+
+```bash
+python data/load_demographic_data.py
+```
