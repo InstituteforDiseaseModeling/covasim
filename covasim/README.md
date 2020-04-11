@@ -7,7 +7,6 @@ This file describes the expected behavior of each parameter in the model. Note: 
 * `pop_size`     = Nmber of people in the simulation. Test: `len(sim.people)` should equal this number.
 * `pop_infected` = Initial number of people infected. Test: if 0, there should be no infections; if equals `n`, should be no _new_ infections.
 * `pop_type`   = Whether or not to use the `synthpops` library for contact matrices. Consult that library's documentation for tests.
-* `country`    = The country for the simulation to run in, used to get age demographic data.
 
 ## Simulation parameters
 * `start_day`    = The calendar date of the start day of the simulation.
