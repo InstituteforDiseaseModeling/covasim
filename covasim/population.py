@@ -11,7 +11,6 @@ from . import requirements as cvreqs
 from . import parameters as cvpars
 from . import person as cvper
 from collections import defaultdict
-from covasim.datasets.data_loader import load_country_pop
 
 
 # Specify all externally visible functions this file defines
@@ -164,10 +163,9 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
 
     pop_size = int(sim['pop_size']) # Number of people
 
-
-    # Load age data based on country set in the sym
+    # Load age data based on 2018 Seattle demographics
     if age_data is None:
-        age_data = load_country_pop(sim['country'])
+        age_data = cvd.default_age_data
 
     # Handle sexes and ages
     uids = np.arange(pop_size, dtype=int)
