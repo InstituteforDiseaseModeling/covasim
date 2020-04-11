@@ -5,6 +5,24 @@ Covasim is a stochastic agent-based simulator designed to be used for COVID-19
 indicators such as numbers of infections and peak hospital demand. Covasim can
 also be used to explore the potential impact of different interventions.
 
+<!--ts-->
+* [Requirements](#Requirements)
+* [Quick start guide](#quick-start-guide)
+* [Detailed installation instructions](#detailed-installation-instructions)
+* [Detailed usage](#detailed-usage)
+* [Module structure](#module-structure)
+  * [cruise_ship](#cruise_ship)
+  * [webapp](#webapp)
+* [Other folders](#other-folders)
+	* [bin](#bin)
+	* [docker](#docker)
+	* [examples](#examples)
+	* [licenses](#licenses)
+	* [tests](#tests)
+	* [sweep](#sweep)
+* [Disclaimer](#disclaimer)
+<!--te-->
+
 
 ## Requirements
 
@@ -73,7 +91,7 @@ follows:
 
 To down population data run `python pull_demographic_data.py`.
 
-## Structure
+## Module structure
 
 All core model code is located in the `covasim` subfolder; standard usage is
 `import covasim as cv`. The other subfolders, `cruise_ship` and `webapp`, are
@@ -82,9 +100,6 @@ also described below.
 The model consists of two core classes: the `Person` class (which contains
 information on health state), and the `Sim` class (which contains methods for
 running, calculating results, plotting, etc.).
-
-
-### covasim
 
 The structure of the `covasim` folder is as follows:
 
@@ -110,13 +125,13 @@ slight variations to the model (`model.py`).
 
 ### webapp
 
-For running the interactive web application: please see the `README.md` in that
-folder for more information.
+For running the interactive web application. See the [webapp readme](./covasim/webapp) for more information.
 
 
 ## Other folders
 
 Please see the readme in each subfolder for more information.
+
 
 ### bin
 
@@ -129,7 +144,12 @@ covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
 Note: the CLI is currently not compatible with Windows. You will need to add
 this folder to your path to run from other folders.
 
-### docker
+### data
+
+Scripts to automatically scrape data (including demographics and COVID epidemiology data),
+and the data files themselves (which are not part of the repository).
+
+###  docker
 
 This folder contains the `Dockerfile` and other files that allow Covasim to be
 run as a webapp via Docker.
@@ -145,6 +165,10 @@ Licensing information and legal notices.
 ### tests
 
 Integration, development, and unit tests.
+
+### sweep
+
+Utilites for hyperparameter sweeps, using [Weights and Biases](https://www.wandb.com/). See the [sweep readme](./sweep) for more information.
 
 
 ## Disclaimer

@@ -285,7 +285,12 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
                 label = sim.results[key].name
                 this_color = sim.results[key].color
                 y = sim.results[key][:]
-                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
+                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
+                if sim.data is not None and key in sim.data:
+                    data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
+                    print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
+                    ydata = sim.data[key]
+                    fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
             if sim['interventions']:
                 interv_day = sim['interventions'][0].days[0]
