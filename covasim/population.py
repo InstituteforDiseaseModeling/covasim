@@ -160,17 +160,20 @@ def make_people(sim, verbose=None, die=True, reset=False):
     return
 
 
-def make_randpop(sim, location=None, age_data=None, sex_ratio=0.5, microstructure=False):
+def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
     ''' Make a random population, without contacts '''
 
     pop_size = int(sim['pop_size']) # Number of people
 
     # Load age data based on 2018 Seattle demographics by default
-    if age_data is None:
-        if location is not None:
+    location = sim['location']
+    if location is not None:
+        try:
             age_data = cvdata.loaders.get_age_distribution(location)
-        else:
-            age_data = cvd.default_age_data
+        except ValueError as E:
+            print(f'Could not load data for requested location "{location}" ({str(E)}), using default')
+    if age_data is None:
+        age_data = cvd.default_age_data
 
     # Handle sexes and ages
     uids = np.arange(pop_size, dtype=int)

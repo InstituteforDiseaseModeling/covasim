@@ -26,7 +26,7 @@ def get_age_distribution(location=None):
     countries = [entry["country"] for entry in json] # Pull out available countries
 
     # Set parameters
-    max_age = 120
+    max_age = 99
     if location is None:
         location = countries
     else:
