@@ -6,18 +6,31 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots', 'default_scenario']
+__all__ = ['result_stocks', 'result_flows', 'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots', 'default_scenario']
 
-# The types of result that are counted as flows -- used in sim.py, does not need to be externally visible
-result_flows = ['infections',
-                'tests',
-                'diagnoses',
-                'recoveries',
-                'symptomatic',
-                'severe',
-                'critical',
-                'deaths'
-]
+
+result_stocks = {
+        'susceptible': 'Number susceptible',
+        'exposed':     'Number exposed',
+        'infectious':  'Number infectious',
+        'symptomatic': 'Number symptomatic',
+        'severe':      'Number of severe cases',
+        'critical':    'Number of critical cases',
+        'diagnosed':   'Number of confirmed cases',
+        'quarantined': 'Number in quarantine',
+}
+
+# The types of result that are counted as flows -- used in sim.py; value is the label suffix
+result_flows = {'infections':  'infections',
+                'tests':       'tests',
+                'diagnoses':   'diagnoses',
+                'recoveries':  'recoveries',
+                'symptomatic': 'symptomatic cases',
+                'severe':      'severe cases',
+                'critical':    'critical cases',
+                'deaths':      'deaths',
+                'quarantined': 'quarantined people',
+}
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([
@@ -43,18 +56,23 @@ default_age_data = np.array([
             ])
 
 
-# Specify plot colors -- used in sim.py
+# Specify plot colors -- used in sim.py -- NB, includes duplicates since stocks and flows are named differently
 default_colors = sc.objdict(
     susceptible = '#5e7544',
     infectious  = '#c78f65',
     infections  = '#c75649',
+    exposed     = '#c75649', # Duplicate
     tests       = '#aaa8ff',
     diagnoses   = '#8886cc',
+    diagnosed   = '#8886cc', # Duplicate
     recoveries  = '#799956',
+    recovered   = '#799956', # Duplicate
     symptomatic = '#c1ad71',
     severe      = '#c1981d',
+    quarantined = '#5f1914',
     critical    = '#b86113',
     deaths      = '#000000',
+    dead        = '#000000', # Duplicate
     )
 
 

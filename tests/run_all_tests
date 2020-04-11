@@ -14,4 +14,4 @@ echo "STEP 2: RUNNING UNIT TESTS"
 pytest tests/unittests/test*.py
 
 echo "STEP 3: RUNNING EXAMPLES"
-python3 examples/*.py
+pytest ./examples/*.py ./covasim/cruise_ship/test*.py
