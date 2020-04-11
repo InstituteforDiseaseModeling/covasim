@@ -24,10 +24,12 @@ fig_path = f'{basename}.png'
 
 # Configure the sim -- can also just use a normal dictionary
 pars = sc.objdict(
-    n           = 20000, # Population size
-    n_infected  = 1,    # Number of initial infections
-    n_days      = 180,   # Number of days to simulate
-    seed        = 1,    # Random seed
+    pop_size     = 20000, # Population size
+    pop_infected = 1,     # Number of initial infections
+    n_days       = 60,   # Number of days to simulate
+    rand_seed    = 1,     # Random seed
+    pop_type     = 'random',
+    use_layers   = True,
     )
 
 # Optionally add an intervention
@@ -43,13 +45,3 @@ sim.run(verbose=verbose)
 if do_plot:
     print('Plotting...')
     fig = sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
-
-
-
-
-
-
-
-
-
-

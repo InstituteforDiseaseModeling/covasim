@@ -37,8 +37,8 @@ def test_microsim():
 
     sim = cv.Sim()
     pars = {
-        'n': 10,
-        'n_infected': 1,
+        'pop_size': 10,
+        'pop_infected': 1,
         'n_days': 10,
         'contacts': 2,
         }
@@ -76,7 +76,7 @@ def test_fileio():
     # Create and run the simulation
     sim = cv.Sim()
     sim['n_days'] = 20
-    sim['n'] = 1000
+    sim['pop_size'] = 1000
     sim.run(verbose=0)
 
     # Create objects
@@ -98,7 +98,7 @@ def test_fileio():
 def test_start_stop(): # If being run via pytest, turn off
     sc.heading('Test starting and stopping')
 
-    pars = {'n': 1000}
+    pars = {'pop_size': 1000}
 
     # Create and run a basic simulation
     sim1 = cv.Sim(pars)
@@ -122,7 +122,7 @@ def test_sim_data(do_plot=False, do_show=False):
     sc.heading('Data test')
 
     pars = dict(
-        n=2000,
+        pop_size = 2000,
         start_day = '2019-12-25',
         )
 
@@ -137,6 +137,23 @@ def test_sim_data(do_plot=False, do_show=False):
     return sim
 
 
+def test_dynamic_resampling(do_plot=False, do_show=False): # If being run via pytest, turn off
+    sc.heading('Test dynamic resampling')
+
+    pop_size = 1000
+    sim = cv.Sim(pop_size=pop_size, pp_rescale=1, pop_scale=1000, n_days=180, rescale_factor=2)
+    sim.run()
+
+    # Optionally plot
+    if do_plot:
+        sim.plot(do_show=do_show)
+
+    # Create and run a basic simulation
+    assert sim.results['cum_infections'][-1] > pop_size  # infections at the end of sim should be much more than internal pop
+    return sim
+
+
+
 #%% Run as a script
 if __name__ == '__main__':
     T = sc.tic()
@@ -147,6 +164,7 @@ if __name__ == '__main__':
     json  = test_fileio()
     sim4  = test_start_stop()
     sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
+    sim6  = test_dynamic_resampling(do_plot=do_plot, do_show=do_show)
 
     sc.toc(T)
 

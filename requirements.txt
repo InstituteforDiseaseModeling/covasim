@@ -9,3 +9,4 @@ gunicorn
 plotly_express
 urllib3
 requests
+fire
