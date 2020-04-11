@@ -26,8 +26,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     # Population parameters
     pars['pop_size']     = 20e3 # Number ultimately susceptible to CoV
     pars['pop_infected'] = 10 # Number of initial infections
-    pars['pop_scale']    = 1 # Factor by which to scale the population -- e.g. 0.6*100 with n = 10e3 assumes 60% of a population of 1m
-    pars['pop_type']     = 'random' # Whether or not to load actual population data
+    pars['pop_type']     = 'random' # What type of population data to use -- random (fastest), synthpops (best), realistic (compromise), or clustered (not recommended)
 
     # Simulation parameters
     pars['start_day']  = '2020-03-01' # Start day of the simulation
@@ -35,15 +34,25 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['rand_seed']  = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
-    # Disease transmission parameters
+    # Rescaling parameters
+    pars['pop_scale']         = 1   # Factor by which to scale the population -- e.g. 1000 with pop_size = 10e3 means a population of 10m
+    pars['rescale']           = 0   # Enable dynamic rescaling of the population
+    pars['rescale_threshold'] = 0.1 # Fraction susceptible population that will trigger rescaling if rescaling
+    pars['rescale_factor']    = 2   # Factor by which we rescale the population
+
+    # Basic disease transmission
     pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
-    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']  = 0.0 # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
-    pars['cont_factor']  = 1.0 # Multiply beta by this factor for people who've been in contact with known positives  -- baseline assumes no isolation
     pars['use_layers']   = use_layers # Whether or not to use different contact layers
     pars['contacts']     = None # The number of contacts per layer
     pars['beta_layers']  = None # Transmissibility per layer
+
+    # Efficacy of protection measures
+    pars['asymp_factor']        = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']         = 0.2 # Multiply beta by this factor for diganosed cases
+    pars['quar_trans_factor']   = {'h': 0.8, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+    pars['quar_acq_factor']     = 0.2 # Acquisition multiplier on exposure for quarantined individual
+    pars['quar_period']         = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
@@ -87,7 +96,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
 
 
 def set_contacts(pars):
-    '''
+    '''r
     Small helper function to set numbers of contacts and beta based on whether
     or not to use layers. Typically not called by the user.
 
@@ -95,8 +104,8 @@ def set_contacts(pars):
         pars (dict): the parameters dictionary
     '''
     if pars['use_layers']:
-        pars['contacts']    = {'h': 4,   's': 10,  'w': 10,  'c': 20} # Number of contacts per person per day, estimated
-        pars['beta_layers'] = {'h': 1.7, 's': 0.8, 'w': 0.8, 'c': 0.3} # Per-population beta weights; relative
+        pars['contacts']    = {'h': 4,   's': 22,  'w': 20,  'c': 20} # Number of contacts per person per day, estimated
+        pars['beta_layers'] = {'h': 1.6, 's': 1.0, 'w': 1.0, 'c': 0.3} # Per-population beta weights; relative
     else:
         pars['contacts']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
         pars['beta_layers'] = {'a': 1.0} # Per-population beta weights; relative

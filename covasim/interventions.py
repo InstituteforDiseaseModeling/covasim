@@ -1,7 +1,9 @@
-import covasim as cv
-import pylab as pl
 import numpy as np
+import pandas as pd
+import pylab as pl
 import sciris as sc
+import covasim as cv
+
 
 __all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'test_historical', 'contact_tracing']
 
@@ -129,11 +131,12 @@ class sequence(Intervention):
     Args:
         days (list): the days on which to apply each intervention
         interventions (list): the interventions to apply on those days
+        WARNING: Will take first intervation after sum(days) days has ellapsed!
 
     Example:
         interv = cv.sequence(days=[10, 51], interventions=[
                     cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
-                    cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002, trace_prob=0.9),
+                    cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002),
                 ])
     """
 
@@ -224,12 +227,12 @@ class test_num(Intervention):
         Intervention
     """
 
-    def __init__(self, daily_tests, sympt_test=100.0, trace_test=1.0, sensitivity=1.0, test_delay=0):
+    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0):
         super().__init__()
 
         self.daily_tests = daily_tests #: Should be a list of length matching time
         self.sympt_test = sympt_test
-        self.trace_test = trace_test
+        self.quar_test = quar_test
         self.sensitivity = sensitivity
         self.test_delay = test_delay
 
@@ -240,15 +243,21 @@ class test_num(Intervention):
 
         t = sim.t
 
+        # Process daily tests -- has to be here rather than init so have access to the sim object
+        if isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
+            start_date = sim['start_day']
+            end_date = self.daily_tests.index[-1]
+            dateindex = pd.date_range(start_date, end_date)
+            self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
+
         # Check that there are still tests
         if t < len(self.daily_tests):
             n_tests = self.daily_tests[t]  # Number of tests for this day
-            sim.results['new_tests'][t] += n_tests
+            if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
+                return
+            else:
+                sim.results['new_tests'][t] += n_tests
         else:
-            return
-
-        # If there are no tests today, abort early
-        if not (n_tests and pl.isfinite(n_tests)):
             return
 
         test_probs = np.ones(sim.n)
@@ -262,12 +271,12 @@ class test_num(Intervention):
             # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
             if person.symptomatic:
                 test_probs[i] *= self.sympt_test  # They're symptomatic
-            if person.known_contact:
-                test_probs[i] *= self.trace_test  # They've had contact with a known positive
+            if person.quarantine:
+                test_probs[i] *= self.quar_test  # They're in quarantine
             if person.diagnosed:
                 test_probs[i] = 0.0
 
-        test_inds = cv.choose_weighted(probs=test_probs, n=n_tests, normalize=True)
+        test_inds = cv.choose_weighted(probs=test_probs, n=n_tests, normalize=True, unique=False)
         sim.results['new_diagnoses'][t] += new_diagnoses
 
         for test_ind in test_inds:
@@ -281,31 +290,30 @@ class contact_tracing(Intervention):
     '''
     Contact tracing of positives
     '''
-    def __init__(self, trace_probs, trace_time, start_day=0):
+    def __init__(self, trace_probs, trace_time, start_day=0, contact_reduction=None):
         super().__init__()
         self.trace_probs = trace_probs
         self.trace_time = trace_time
+        self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
         self.start_day = start_day
         return
-
 
     def apply(self, sim):
         t = sim.t
         if t < self.start_day:
             return
 
-        for person in sim.people:
-            if not person.infectious:
-                continue
+        not_sus_people = sim.people.filter_out('susceptible') # Or maybe symptomatic here
+        for person in not_sus_people:
+            # N.B. consider skipping tracing from dead people
 
             # Trace dynamic contact, e.g. the ones that change on every step
             # A sample of community contacts is appended to person.dyn_cont_ppl on each step
             person.trace_dynamic_contacts(self.trace_probs, self.trace_time)
 
-            if person.date_diagnosed is not None and person.date_diagnosed == t-1:
-                # This person was just diagnosed: time to trace their (static) contacts
+            # If a person was just diagnosed,time to trace their (static) contacts
+            if person.date_diagnosed is not None and person.date_diagnosed == t-1: # TODO: tracing on symptomatic
                 contactable_ppl = person.trace_static_contacts(self.trace_probs, self.trace_time)
-
                 contactable_ppl.update(person.dyn_cont_ppl)
 
                 # Loop over people who get contacted
@@ -319,9 +327,20 @@ class contact_tracing(Intervention):
         return
 
 
+
 class test_prob(Intervention):
     """
     Test as many people as required based on test probability.
+    Probabilities are OR together, so choose wisely.
+
+    Args:
+        symptomatic_prob (float): Probability of testing a symptomatic person
+        asymptomatic_prob (float): Probability of testing an asymptomatic person
+        test_sensitivity (float): Probability of a true positive
+        loss_prob (float): Probability of loss to follow-up
+        test_delay (int): How long testing takes
+        start_day (int): When to start the intervention
+
 
     Args:
         symptomatic_prob (float): Probability of testing a symptomatic person
@@ -333,38 +352,45 @@ class test_prob(Intervention):
 
 
     Example:
-        interv = cv.test_prop(symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
+        interv = cv.test_prob(symptomatic_prob=0.1, asymptomatic_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
+        interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
 
     Returns:
         Intervention
     """
-    def __init__(self, symptomatic_prob=0.9, asymptomatic_prob=0.01, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
+    def __init__(self, symptomatic_prob=0, asymptomatic_prob=0, quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
         super().__init__()
         self.symptomatic_prob = symptomatic_prob
         self.asymptomatic_prob = asymptomatic_prob
+        self.quarantine_prob = quarantine_prob
+        self.symp_quar_prob = symp_quar_prob
         self.test_sensitivity = test_sensitivity
-        #self.scheduled_tests = set() # Track UIDs of people that are guaranteed to be tested at the next step
         self.loss_prob = loss_prob
         self.test_delay = test_delay
-
         self.start_day = start_day
+
         return
 
 
     def apply(self, sim):
         ''' Perform testing '''
-
         t = sim.t
         if t < self.start_day:
             return
 
+        new_tests = 0
         new_diagnoses = 0
         for person in sim.people:
             new_diagnoses += person.check_diagnosed(t)
+            if (person.symptomatic and cv.bt(self.symptomatic_prob)) or \
+                (not person.symptomatic and cv.bt(self.asymptomatic_prob)) or \
+                (person.quarantine and cv.bt(self.quarantine_prob)) or \
+                (person.symptomatic and person.quarantine and cv.bt(self.symp_quar_prob)) :
 
-            if (person.symptomatic and cv.bt(self.symptomatic_prob)) or (not person.symptomatic and cv.bt(self.asymptomatic_prob)):
-                sim.results['new_tests'][t] += 1
+                new_tests += 1
                 person.test(t, self.test_sensitivity, self.loss_prob, self.test_delay)
+
+        sim.results['new_tests'][t] += new_tests
         sim.results['new_diagnoses'][t] += new_diagnoses
 
         return

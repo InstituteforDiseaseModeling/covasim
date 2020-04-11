@@ -23,7 +23,26 @@ class Person(sc.prettyobj):
         self.durpars     = pars['dur']  # Store duration parameters
         self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
 
-        # Define states -- listed explicitly for performance reasons
+        # Set states
+        self.make_susceptible()
+
+        # Set prognoses
+        prognoses = pars['prognoses']
+        idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
+        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
+        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
+        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
+        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
+        self.OR_no_treat = pars['OR_no_treat']
+
+        return
+
+
+    def make_susceptible(self):
+        """
+        Make person susceptible. This is used during initialization and dynamic resampling
+        """
+         # Define states -- listed explicitly for performance reasons
         self.susceptible   = True
         self.exposed       = False
         self.infectious    = False
@@ -35,6 +54,7 @@ class Person(sc.prettyobj):
         self.recovered     = False
         self.dead          = False
         self.known_contact = False
+        self.quarantined   = False
 
         # Define dates
         self.date_exposed       = None
@@ -47,6 +67,8 @@ class Person(sc.prettyobj):
         self.date_recovered     = None
         self.date_dead          = None
         self.date_known_contact = None
+        self.date_quarantined   = None
+        self.end_quarantine     = None  # Time at which to release from quarantine
 
         # Keep track of durations
         self.dur_exp2inf  = None # Duration from exposure to infectiousness
@@ -57,15 +79,6 @@ class Person(sc.prettyobj):
 
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
-
-        # Set prognoses
-        prognoses = pars['prognoses']
-        idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
-        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
-        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
-        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
-        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
-        self.OR_no_treat = pars['OR_no_treat']
 
         return
 
@@ -171,9 +184,11 @@ class Person(sc.prettyobj):
         contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
         for ckey in self.contacts.keys():
             if ckey != 'c': # Don't trace community contacts - it's too hard, because they change every timestep
-                this_trace_prob = trace_probs[ckey]
-                new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
-                contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
+                these_contacts = self.contacts[ckey]
+                if len(these_contacts):
+                    this_trace_prob = trace_probs[ckey]
+                    new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
+                    contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
 
         return contactable_ppl
 
@@ -206,6 +221,21 @@ class Person(sc.prettyobj):
         else:
             return 0
 
+
+    def quarantine(self, t, quar_period):
+        '''
+        Quarantine a person starting on day t
+        If a person is already quarantined, this will extend their quarantine
+        '''
+        self.quarantined = True
+
+        new_end_quarantine = t + quar_period
+        if self.end_quarantine is None or self.end_quarantine is not None and new_end_quarantine > self.end_quarantine:
+            self.end_quarantine = new_end_quarantine
+
+        #sc.printv(f'Person {self.uid} has been quarantined until {self.end_quarantine}', 2, self.verbose)
+
+        return
 
     # Methods to check a person's status
     def check_symptomatic(self, t):
@@ -263,6 +293,7 @@ class Person(sc.prettyobj):
         else:
             return 0
 
+
     def check_diagnosed(self, t):
         ''' Check for new diagnoses '''
         if not self.diagnosed and self.date_diagnosed and t >= self.date_diagnosed: # Person is changing to this state
@@ -272,3 +303,21 @@ class Person(sc.prettyobj):
             return 0
 
 
+    def check_quar_begin(self, t, quar_period=None):
+        ''' Check for whether someone has been contacted by a positive'''
+        if (quar_period is not None) and (self.date_known_contact is not None) and (t >= self.date_known_contact):
+            # Begin quarantine
+            was_quarantined = self.quarantined
+            self.quarantine(t, quar_period)
+            self.date_known_contact = None # Clear
+            return not was_quarantined
+        return 0
+
+
+    def check_quar_end(self, t):
+        ''' Check for whether someone is isolating/quarantined'''
+        if self.quarantined and (self.end_quarantine is not None) and (t >= self.end_quarantine):
+            self.quarantined = False # Release from quarantine
+            self.end_quarantine = None # Clear end quarantine time
+            #sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
+        return self.quarantined
