@@ -90,5 +90,5 @@ def check_extra_libs():
 
 # Perform the version checks on import
 check_sciris()
-check_scirisweb(die=False)
-check_extra_libs()
+# check_scirisweb(die=False)
+# check_extra_libs()
