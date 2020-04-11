@@ -1,7 +1,9 @@
-# Data Loaders
+# Data loaders
+
+These scripts pull data from various sources for use in Covasim.
+
 
 ## 1. Corona Data Scraper
-
 
 To quote the [Corona Data Scraper](https://coronadatascraper.com) web page,
 
@@ -10,15 +12,17 @@ To quote the [Corona Data Scraper](https://coronadatascraper.com) web page,
 We transform this data for use in the Covasim parameter format. It is stored
 in CSV-format. 
 
+
 ### Updating
 
 To update the  Corona Data Scraper data,
 
 ```bash
-python data_loaders/load_corona_data_scraper_data.py 
+python data/load_corona_data_scraper_data.py 
 ```
 
-This will create a file `corona_data_scraper.csv` in the data directory.
+This will create a file `corona_data_scraper.csv` in the `data/epi_data` directory.
+
 
 ### Data dictionary
 
@@ -49,10 +53,11 @@ The following columns are present in the data:
 - `new_death`: Number of deaths on this date
 - `new_tests`: New tests on this date
 
-As of April 4, 2020, There are apparently 3280 data sets.
+As of April 4, 2020, there are apparently 3280 data sets.
+
+
 
 ## 2. European Centre for Disease Prevention and Control 
-
 
 To quote the [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases) web page,
 
@@ -61,15 +66,16 @@ To quote the [European Centre for Disease Prevention and Control ](https://www.e
 We transform this data for use in the Covasim parameter format. It is stored
 in CSV-format. 
 
+
 ### Updating
 
-To update the  Corona Data Scraper data,
+To update the Corona Data Scraper data,
 
 ```bash
-python data_loaders/load_ecdp_data.py 
+python data/load_ecdp_data.py 
 ```
 
-This will create a file `ecdp_data.csv` in the data directory.
+This will create a file `ecdp_data.csv` in the `data/epi_data` directory.
 
 This adds data from 204 countries and territories (as of April 5, 2020), including Africa, Asia, the Americas, Europe, and Oceania. More details at: https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases
 
@@ -83,20 +89,22 @@ The following columns are present in the data:
 - `new_positives`: New positives on this date
 - `new_death`: Number of deaths on this date
 
+
+
 ## 3. The COVID Tracking Project
 
 The COVID Tracking Project "obtains, organizes, and publishes high-quality data required to understand and respond to the COVID-19 outbreak in the United States." The project website is https://covidtracking.com
 
-
 We transform this data for use in the Covasim parameter format. It is stored
 in CSV-format. 
+
 
 ### Updating
 
 To update the COVID Tracking Project data,
 
 ```bash
-python data_loaders/load_covid_tracking_project_data.py
+python data/load_covid_tracking_project_data.py
 ```
 
 This will create a file `covid-tracking-project-data.csv` in the data directory.

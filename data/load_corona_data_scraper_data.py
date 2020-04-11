@@ -1,13 +1,21 @@
-import pandas as pd
-import os.path
+'''
+This script creates a single file containing all the scraped 
+data from the Corona Data Scraper.
+'''
+
+import os
 import sys
 import logging
+import pandas as pd
+import sciris as sc
+
+subfolder = 'epi_data'
+outputfile = 'corona_data_scraper.csv'
 
 log = logging.getLogger("Corona Data Scraper Data Loader")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 # Read in the Corona Data Scraper Data into a dataframe.
-
 log.info("Loading timeseries data from coronadatascraper.com")
 cds = pd.read_csv("https://coronadatascraper.com/timeseries.csv")
 log.info(f"Loaded {len(cds)} records; now transforming data")
@@ -26,7 +34,6 @@ cds['day'] = g['date'].transform(lambda x: (pd.to_datetime(
 
 # We'll 'rename' some of the columns to be consistent
 # with the parameters file.
-
 cds['positives'] = cds.cases
 cds['death'] = cds.deaths
 cds['tests'] = cds.tested
@@ -54,13 +61,9 @@ cds['new_tests'] = cds.tests.sub(cds.tests_lagged).fillna(cds.tests)
 cds.drop(['positives_lagged', 'death_lagged', 'active_lagged', 'tests_lagged'], inplace=True, axis=1)
 
 # And save it to the data directory.
-
-here = os.path.abspath(os.path.dirname(__file__))
-data_home = os.path.join(here, "../data")
-if not os.path.exists(data_home):
-    log.info(f"Creating data directory {data_home}")
-    os.makedirs(data_home)
-path = os.path.join(data_home, "corona_data_scraper.csv")
-log.info(f"Saving to {path}")
-cds.to_csv(path)
+here = sc.thisdir(__file__)
+data_home = os.path.join(here, subfolder)
+filepath = sc.makefilepath(filename=outputfile, folder=data_home)
+log.info(f"Saving to {filepath}")
+cds.to_csv(filepath)
 log.info(f"Script complete")
