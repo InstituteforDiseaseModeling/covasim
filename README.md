@@ -160,7 +160,7 @@ Integration, development, and unit tests.
 
 ### sweep
 
-Utilites for hyperparameter sweeps, using [Weights and Biases](https://www.wandb.com/). See the [sweeps readme](./sweeps) for more information.
+Utilites for hyperparameter sweeps, using [Weights and Biases](https://www.wandb.com/). See the [sweep readme](./sweep) for more information.
 
 
 ## Disclaimer
