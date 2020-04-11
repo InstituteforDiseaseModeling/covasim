@@ -23,7 +23,7 @@ def get_age_distribution(location=None):
 
     # Load the raw data
     json = cad.get_country_age_distributions()
-    countries = [entry["country"] for entry in json] # Pull out available countries
+    countries = [entry["country"].lower() for entry in json] # Pull out available countries
 
     # Set parameters
     max_age = 99
@@ -32,10 +32,43 @@ def get_age_distribution(location=None):
     else:
         location = sc.promotetolist(location)
 
+    # Define a mapping for common mistakes
+    mapping = {
+       'Bolivia':        'Bolivia (Plurinational State of)',
+       'Burkina':        'Burkina Faso',
+       'Cape Verde':     'Cabo Verdeo',
+       'Hong Kong':      'China, Hong Kong Special Administrative Region',
+       'Macao':          'China, Macao Special Administrative Region',
+       "Cote d'Ivore":   'Côte d’Ivoire',
+       'DRC':            'Democratic Republic of the Congo',
+       'Iran':           'Iran (Islamic Republic of)',
+       'Laos':           "Lao People's Democratic Republic",
+       'Micronesia':     'Micronesia (Federated States of)',
+       'Korea':          'Republic of Korea',
+       'South Korea':    'Republic of Korea',
+       'Moldova':        'Republic of Moldova',
+       'Russia':         'Russian Federation',
+       'Palestine':      'State of Palestine',
+       'Syria':          'Syrian Arab Republic',
+       'Taiwan':         'Taiwan Province of China',
+       'Macedonia':      'The former Yugoslav Republic of Macedonia',
+       'UK':             'United Kingdom of Great Britain and Northern Ireland',
+       'United Kingdom': 'United Kingdom of Great Britain and Northern Ireland',
+       'Tanzania':       'United Republic of Tanzania',
+       'USA':            'United States of America',
+       'United States':  'United States of America',
+       'Venezuela':      'Venezuela (Bolivarian Republic of)',
+       'Vietnam':        'Viet Nam',
+        }
+    mapping = {key.lower():val.lower() for key,val in mapping.items()} # Convert to lowercase
+
     result = {}
     for loc in location:
+        loc = loc.lower()
+        if loc in mapping:
+            loc = mapping[loc]
         try:
-            ind = countries.index(loc)
+            ind = countries.index(loc.lower())
             entry = json[ind]
         except ValueError:
             suggestions = sc.suggest(loc, countries, n=4)
