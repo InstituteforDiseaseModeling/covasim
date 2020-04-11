@@ -141,6 +141,11 @@ covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
 Note: the CLI is currently not compatible with Windows. You will need to add
 this folder to your path to run from other folders.
 
+### data
+
+Scripts to automatically scrape data (including demographics and COVID epidemiology data),
+and the data files themselves (which are not part of the repository).
+
 ###  docker
 
 This folder contains the `Dockerfile` and other files that allow Covasim to be
