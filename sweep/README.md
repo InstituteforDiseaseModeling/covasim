@@ -8,7 +8,7 @@ To begin a sweep follow these steps:
    > pip install wandb
 2. Login to wandb: 
     > wandb login
-3. Initialize wandb
+3. Initialize wandb (optional)
     > wandb init
 4. When asked to choose a project make sure you  select `covasim`.  If you don't see a project with this name, instead select `Create New` and name your project **`covasim`**.
 5. From the **root of this repo**, initialize a sweep.
