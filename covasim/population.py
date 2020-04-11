@@ -6,6 +6,7 @@ Defines functions for making the population.
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 from . import utils as cvu
+from . import data as cvdata
 from . import defaults as cvd
 from . import requirements as cvreqs
 from . import parameters as cvpars
@@ -158,14 +159,17 @@ def make_people(sim, verbose=None, die=True, reset=False):
     return
 
 
-def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
+def make_randpop(sim, location=None, age_data=None, sex_ratio=0.5, microstructure=False):
     ''' Make a random population, without contacts '''
 
     pop_size = int(sim['pop_size']) # Number of people
 
-    # Load age data based on 2018 Seattle demographics
+    # Load age data based on 2018 Seattle demographics by default
     if age_data is None:
-        age_data = cvd.default_age_data
+        if location is not None:
+            age_data = cvdata.loaders.get_age_distribution(location)
+        else:
+            age_data = cvd.default_age_data
 
     # Handle sexes and ages
     uids = np.arange(pop_size, dtype=int)
