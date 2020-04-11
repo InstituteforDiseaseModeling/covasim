@@ -138,6 +138,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-# Datasets
-data/
