@@ -1,8 +1,17 @@
-import pandas as pd
-import os.path
+'''
+This script creates a single file containing all the scraped 
+data from the COVID tracking project.
+'''
+
+import os
 import sys
 import logging
 import datetime as dt
+import pandas as pd
+import sciris as sc
+
+subfolder = 'epi_data'
+outputfile = 'covid-tracking-project-data.csv'
 
 log = logging.getLogger("Covid Tracking Project Loader")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
@@ -19,15 +28,11 @@ df_us['name'] = 'US'
 df_us.drop(['states'], inplace=True, axis=1)
 
 # Put them together
-
 df = pd.concat([df_states, df_us], ignore_index=True, sort=False)
 
 # Convert integer date to a datetime date
-
-
 def covid_tracking_date_to_date(d):
     return dt.date((d // 10000), ((d % 1000) // 100), (d % 1000) % 100)
-
 
 df.date = df.date.apply(covid_tracking_date_to_date)
 
@@ -65,13 +70,9 @@ df['new_vent'] = df.onVentilatorCurrently.sub(
 df.drop(['icu_lagged', 'vent_lagged'], inplace=True, axis=1)
 
 # And save it to the data directory.
-
-here = os.path.abspath(os.path.dirname(__file__))
-data_home = os.path.join(here, "../data")
-if not os.path.exists(data_home):
-    log.info(f"Creating data directory {data_home}")
-    os.makedirs(data_home)
-path = os.path.join(data_home, "covid-tracking-project-data.csv")
-log.info(f"Saving to {path}")
-df.to_csv(path)
+here = sc.thisdir(__file__)
+data_home = os.path.join(here, subfolder)
+filepath = sc.makefilepath(filename=outputfile, folder=data_home)
+log.info(f"Saving to {filepath}")
+df.to_csv(filepath)
 log.info(f"Script complete")

@@ -1,17 +1,23 @@
-import pandas as pd
-import os.path
+'''
+This script creates a single file containing all the 
+European Centre for Disease Prevention and Control data.
+'''
+
+import os
 import sys
 import logging
+import pandas as pd
+import sciris as sc
 
-log = logging.getLogger(
-    "ECDP Data Loader")
+subfolder = 'epi_data'
+outputfile = 'ecdp_data.csv'
+
+log = logging.getLogger("ECDP Data Loader")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 # Read in the European Centre for Disease Prevention and Control Data into a dataframe.
-
 log.info("Loading European Centre for Disease Prevention and Control timeseries data from opendata.ecdc.europa.eu")
-df = pd.read_csv(
-    "https://opendata.ecdc.europa.eu/covid19/casedistribution/csv")
+df = pd.read_csv("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv")
 log.info(f"Loaded {len(df)} records; now transforming data")
 
 # Use internal data to create dates; only keep `date` column
@@ -29,10 +35,8 @@ g = df.groupby('countriesAndTerritories')
 # day of data collection for the group.
 df['day'] = g['date'].transform(lambda x: (x - min(x))).apply(lambda x: x.days)
 
-
 # We'll 'rename' some of the columns to be consistent
 # with the parameters file.
-
 df['new_positives'] = df.cases
 df['new_death'] = df.deaths
 df['population'] = df.popData2018
@@ -40,13 +44,9 @@ df.drop(['cases', 'deaths', 'popData2018'], inplace=True, axis=1)
 
 
 # And save it to the data directory.
-
-here = os.path.abspath(os.path.dirname(__file__))
-data_home = os.path.join(here, "../data")
-if not os.path.exists(data_home):
-    log.info(f"Creating data directory {data_home}")
-    os.makedirs(data_home)
-path = os.path.join(data_home, "ecdp_data.csv")
-log.info(f"Saving to {path}")
-df.to_csv(path)
+here = sc.thisdir(__file__)
+data_home = os.path.join(here, subfolder)
+filepath = sc.makefilepath(filename=outputfile, folder=data_home)
+log.info(f"Saving to {filepath}")
+df.to_csv(filepath)
 log.info(f"Script complete")

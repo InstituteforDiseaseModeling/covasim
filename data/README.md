@@ -1,7 +1,11 @@
-# Data loaders
+# Data scrapers
 
-These scripts pull data from various sources for use in Covasim.
+These scripts pull data from various sources for use in Covasim. To run all scrapers,
+simply type
 
+```bash
+./run_scrapers 
+```
 
 ## 1. Corona Data Scraper
 
