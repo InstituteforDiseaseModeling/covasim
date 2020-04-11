@@ -36,15 +36,15 @@ jobs:
         run: |
           python setup.py develop --install-dir ~/.cache/site-packages
           pip install pytest
+      - name: Import population data
+        working-directory: ./
+        run: python pull_demographic_data.py
       - name: Run tests
         working-directory: ./tests
         run: pytest test*.py datasets/test*.py --durations=0 # Run actual tests
       - name: Run unit tests
         working-directory: ./tests/unittests
         run: pytest test*.py --durations=0 # Run actual tests
-      - name: Import population data
-        working-directory: ./
-        run: python pull_demographic_data.py
       - name: Run other examples
         working-directory: ./
         run: pytest ./examples/*.py ./covasim/cruise_ship/test*.py
