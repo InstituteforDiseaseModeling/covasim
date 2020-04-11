@@ -5,7 +5,6 @@ Testing the effect of testing interventions in Covasim
 #%% Imports and settings
 import sciris as sc
 import covasim as cv
-from .datasets.dataset_helper import *
 
 do_plot   = 1
 do_show   = 1
@@ -13,9 +12,7 @@ do_save   = 0
 debug     = 1
 fig_path  = 'results/testing_borderclosure.png'
 
-
 def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
-    stub_population_data()
     sc.heading('Test of bed capacity estimation')
 
     sc.heading('Setting up...')
