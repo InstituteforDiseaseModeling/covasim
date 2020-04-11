@@ -8,9 +8,9 @@ also be used to explore the potential impact of different interventions.
 <!--ts-->
 * [Requirements](#Requirements)
 * [Quick start guide](#quick-start-guide)
-* [Detailed installation instructions](#Installation)
+* [Detailed installation instructions](#detailed-installation-instructions)
 * [Detailed usage](#Usage)
-* [Structure](#Structure)
+* [Module structure](#module-tructure)
   * [covasim](#covasim)
   * [cruise_ship](#cruise_ship)
   * [webapp](#webapp)
@@ -45,7 +45,7 @@ sim.plot()
 ```
 
 
-##  3. <a name="Installation"></a>Detailed installation instructions
+## Detailed installation instructions
 
 1.  Clone a copy of the repository. If you intend to make changes to the code,
     we recommend that you fork it first.
@@ -71,7 +71,7 @@ sim.plot()
     The module should then be importable via `import covasim`.
 
 
-##  4. <a name="Usage"></a>Detailed usage
+## Detailed usage
 
 There are several examples in the `examples` directory. These can be run as
 follows:
@@ -89,7 +89,7 @@ follows:
   This shows a more complex example, including running an intervention scenario, plotting uncertainty, and performing a health systems analysis.
 
 
-##  5. <a name="Structure"></a>Structure
+## Module structure
 
 All core model code is located in the `covasim` subfolder; standard usage is
 `import covasim as cv`. The other subfolders, `cruise_ship` and `webapp`, are
@@ -98,9 +98,6 @@ also described below.
 The model consists of two core classes: the `Person` class (which contains
 information on health state), and the `Sim` class (which contains methods for
 running, calculating results, plotting, etc.).
-
-
-###  5.1. <a name="covasim"></a>covasim
 
 The structure of the `covasim` folder is as follows:
 
@@ -117,23 +114,24 @@ The structure of the `covasim` folder is as follows:
 * `version.py`: Version, date, and license information.
 
 
-###  5.2. <a name="cruise_ship"></a>cruise_ship
+### cruise_ship
 
 A version of the Covasim model specifically adapted for modeling the Diamond
 Princess cruise ship. It uses its own parameters file (`parameters.py`) and has
 slight variations to the model (`model.py`).
 
 
-###  5.3. <a name="webapp"></a>webapp
+### webapp
 
 For running the interactive web application. See the [webapp readme](./covasim/webapp) for more information.
 
 
-##  6. <a name="Otherfolders"></a>Other folders
+## Other folders
 
 Please see the readme in each subfolder for more information.
 
-###  6.1. <a name="bin"></a>bin
+
+### bin
 
 This folder contains a command-line interface (CLI) version of Covasim; example usage:
 
@@ -144,29 +142,29 @@ covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
 Note: the CLI is currently not compatible with Windows. You will need to add
 this folder to your path to run from other folders.
 
-###  6.2. <a name="docker"></a>docker
+###  docker
 
 This folder contains the `Dockerfile` and other files that allow Covasim to be
 run as a webapp via Docker.
 
-###  6.3. <a name="examples"></a>examples
+### examples
 
 This folder contains demonstrations of simple Covasim usage.
 
-###  6.4. <a name="licenses"></a>licenses
+### licenses
 
 Licensing information and legal notices.
 
-###  6.5. <a name="tests"></a>tests
+### tests
 
 Integration, development, and unit tests.
 
-###  6.6. <a name="sweep"></a>sweep
+### sweep
 
 Utilites for hyperparameter sweeps, using [Weights and Biases](https://www.wandb.com/). See the [sweeps readme](./sweeps) for more information.
 
 
-##  7. <a name="Disclaimer"></a>Disclaimer
+## Disclaimer
 
 The code in this repository was developed by IDM to support our research in
 disease transmission and managing epidemics. We’ve made it publicly available
