@@ -1,3 +1,7 @@
+'''
+Plot age distributions for Sweden and Somalia as a test.
+'''
+
 import covasim as cv
 import pylab as pl
 
