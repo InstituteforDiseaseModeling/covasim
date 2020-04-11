@@ -9,19 +9,18 @@ also be used to explore the potential impact of different interventions.
 * [Requirements](#Requirements)
 * [Quick start guide](#quick-start-guide)
 * [Detailed installation instructions](#detailed-installation-instructions)
-* [Detailed usage](#Usage)
-* [Module structure](#module-tructure)
-  * [covasim](#covasim)
+* [Detailed usage](#detailed-usage)
+* [Module structure](#module-structure)
   * [cruise_ship](#cruise_ship)
   * [webapp](#webapp)
-* [Other folders](#Other)
+* [Other folders](#other-folders)
 	* [bin](#bin)
 	* [docker](#docker)
 	* [examples](#examples)
 	* [licenses](#licenses)
 	* [tests](#tests)
 	* [sweep](#sweep)
-* [Disclaimer](#Disclaimer)
+* [Disclaimer](#disclaimer)
 <!--te-->
 
 
