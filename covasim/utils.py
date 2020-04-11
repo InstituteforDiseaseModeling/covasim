@@ -2,22 +2,13 @@
 Utilities for running the COVID-ABM
 '''
 
-import sciris as sc
-
-sc.toc()
-print('h')
-
 import numba  as nb # For faster computations
-sc.toc()
 import numpy  as np # For numerics
-sc.toc()
 import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 from . import version as cvver
-sc.toc()
-print('k')
 
 __all__ = ['CancelError', 'sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
 
@@ -102,9 +93,6 @@ def set_seed(seed=None):
 
     return
 
-
-sc.toc()
-print(15)
 
 @nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
 def bt(prob):
@@ -217,9 +205,6 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
 
     return inds
 
-
-sc.toc()
-print('slkd')
 
 def check_version(expected, die=False, verbose=True, **kwargs):
     '''
@@ -512,6 +497,3 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         return zstat_generic2(stat, 1, alternative)
     else:
         return pvalue#, stat
-
-sc.toc()
-print(243)

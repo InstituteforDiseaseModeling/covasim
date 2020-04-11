@@ -8,7 +8,6 @@ import sciris as sc
 from . import utils as cvu
 from . import data as cvdata
 from . import defaults as cvd
-from . import requirements as cvreqs
 from . import parameters as cvpars
 from . import person as cvper
 from collections import defaultdict
@@ -110,13 +109,16 @@ def make_people(sim, verbose=None, die=True, reset=False):
         verbose = sim['verbose']
 
     # Check which type of population to produce
-    if pop_type == 'synthpops' and not cvreqs.available['synthpops']:
-        errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use random, clustered, or realistic'
-        if die:
-            raise ValueError(errormsg)
-        else:
-            print(errormsg)
-            pop_type = 'random'
+    if pop_type == 'synthpops':
+        try:
+            import synthpops # noqa
+        except ImportError:
+            errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use random, clustered, or realistic'
+            if die:
+                raise ValueError(errormsg)
+            else:
+                print(errormsg)
+                pop_type = 'random'
 
     # Actually create the population
     if pop_type in ['realistic', 'synthpops']:
