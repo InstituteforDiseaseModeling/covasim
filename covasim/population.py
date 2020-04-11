@@ -5,6 +5,7 @@ Defines functions for making the population.
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
+from . import requirements as cvreq
 from . import utils as cvu
 from . import data as cvdata
 from . import defaults as cvd
@@ -110,9 +111,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
 
     # Check which type of population to produce
     if pop_type == 'synthpops':
-        try:
-            import synthpops # noqa
-        except ImportError:
+        if not cvreq.check_synthpops():
             errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use random, clustered, or realistic'
             if die:
                 raise ValueError(errormsg)
