@@ -167,6 +167,7 @@ var vm = new Vue({
     async created() {
         this.get_version();
         this.resetPars();
+        this.watchSimLengthParam();
     },
 
     filters: {
@@ -301,7 +302,7 @@ var vm = new Vue({
             });
         },
         watchSimLengthParam() {
-            this.$watch(`sim_length`, this.validateParam('sim_length'), { deep: true });
+            this.$watch('sim_length', this.validateParam('sim_length'), { deep: true });
         },
         validateParam(key) {
             return (param) => {
