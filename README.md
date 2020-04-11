@@ -5,25 +5,27 @@ Covasim is a stochastic agent-based simulator designed to be used for COVID-19
 indicators such as numbers of infections and peak hospital demand. Covasim can
 also be used to explore the potential impact of different interventions.
 
-1. [Requirements](#Requirements)
-2. [Quick start guide](#Quickstart)
-3. [Detailed installation instructions](#Installation)
-4. [Detailed usage](#Usage)
-5. [Structure](#Structure)
-  5.1. [covasim](#covasim)
-  5.2. [cruise_ship](#cruise_ship)
-  5.3. [webapp](#webapp)
-6. [Other folders](#Other)
-	6.1. [bin](#bin)
-	6.2. [docker](#docker)
-	6.3. [examples](#examples)
-	6.4. [licenses](#licenses)
-	6.5. [tests](#tests)
-	6.6. [sweep](#sweep)
-7. [Disclaimer](#Disclaimer)
+<!--ts-->
+* [Requirements](#Requirements)
+* [Quick start guide](#quick-start-guide)
+* [Detailed installation instructions](#Installation)
+* [Detailed usage](#Usage)
+* [Structure](#Structure)
+  * [covasim](#covasim)
+  * [cruise_ship](#cruise_ship)
+  * [webapp](#webapp)
+* [Other folders](#Other)
+	* [bin](#bin)
+	* [docker](#docker)
+	* [examples](#examples)
+	* [licenses](#licenses)
+	* [tests](#tests)
+	* [sweep](#sweep)
+* [Disclaimer](#Disclaimer)
+<!--te-->
 
 
-##  1. <a name="Requirements"></a>Requirements
+## Requirements
 
 Python >=3.6 (64-bit). (Note: Python 2 is not supported.)
 
@@ -31,7 +33,7 @@ We also recommend, but do not require, using Python virtual environments. For
 more information, see documentation for [venv](https://docs.python.org/3/tutorial/venv.html) or [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
 
-##  2. <a name="Quickstart"></a>Quick start guide
+## Quick start guide
 
 Install with `pip install covasim`. If everything is working, the following Python commands should bring up a plot:
 
