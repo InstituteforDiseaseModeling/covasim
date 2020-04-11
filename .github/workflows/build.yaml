@@ -11,11 +11,16 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
+
+      - name: Set lowercase repo env variable
+        shell: python
+        run: print("::set-env name=LOWER_REPO::{}".format('${{github.repository}}'.lower()))
       - name: Build Docker
-        run: docker build -f docker/Dockerfile -t docker.pkg.github.com/${{ github.repository }}/covasim:latest .
+        run: |
+          docker build -f docker/Dockerfile -t docker.pkg.github.com/${LOWER_REPO}/covasim:latest .
       - name: Push the image to GPR
         run: |
           docker login docker.pkg.github.com -u publisher -p "${GITHUB_PACKAGE_REGISTRY_TOKEN}"
-          docker push docker.pkg.github.com/${{ github.repository }}/covasim:latest
+          docker push docker.pkg.github.com/${LOWER_REPO}/covasim:latest
         env:
           GITHUB_PACKAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
