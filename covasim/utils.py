@@ -29,7 +29,9 @@ def sample(dist=None, par1=None, par2=None, size=None):
     Returns:
         A length N array of samples
 
-    Examples:
+    **Examples**
+    ::
+
         sample() # returns Unif(0,1)
         sample(dist='normal', par1=3, par2=0.5) # returns Normal(μ=3, σ=0.5)
 
@@ -137,7 +139,9 @@ def choose(max_n, n):
         max_n (int): the total number of items
         n (int): the number of items to choose
 
-    Example:
+    **Example**
+    ::
+
         choose(5, 2) will choose 2 out of 5 people with equal probability.
     '''
     return np.random.choice(max_n, n, replace=False)
@@ -157,7 +161,9 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
         max_tries (int): maximum number of times to try to pick samples without replacement
         normalize (bool): whether or not to normalize probs to always sum to 1
 
-    Example:
+    **Example**
+    ::
+
         choose_weighted([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
 
     NB: unfortunately pd.unique() is not supported by Numba, nor is
@@ -215,8 +221,10 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
     '''
     Method to calculate doubling time
     Can be used in various ways:
+
         1. get_doubling_time(sim, interval=[3,30]) returns the doubling time over the given interval (single float)
         2. get_doubling_time(sim, interval=[3,30], moving_window=3) returns doubling times calculated over moving windows (array)
+
     Instead of an interval, can pass in the start and end days (as integers - TODO, change this to accept dates)
     Can pass in a series or the name of a result
     '''
@@ -329,67 +337,52 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
 
     If the two Poisson rates are g1 and g2, then the Null hypothesis is
 
-    H0: g1 / g2 = ratio_null
+    * H0: g1 / g2 = ratio_null
 
     against one of the following alternatives
 
-    H1_2-sided: g1 / g2 != ratio_null
-    H1_larger: g1 / g2 > ratio_null
-    H1_smaller: g1 / g2 < ratio_null
+    * H1_2-sided: g1 / g2 != ratio_null
+    * H1_larger: g1 / g2 > ratio_null
+    * H1_smaller: g1 / g2 < ratio_null
 
-    Parameters
-    ----------
-    count1: int
-        Number of events in first sample
-    exposure1: float
-        Total exposure (time * subjects) in first sample
-    count2: int
-        Number of events in first sample
-    exposure2: float
-        Total exposure (time * subjects) in first sample
-    ratio: float
-        ratio of the two Poisson rates under the Null hypothesis. Default is 1.
-    method: string
-        Method for the test statistic and the p-value. Defaults to `'score'`.
-        Current Methods are based on Gu et. al 2008
-        Implemented are 'wald', 'score' and 'sqrt' based asymptotic normal
-        distribution, and the exact conditional test 'exact-cond', and its mid-point
-        version 'cond-midp', see Notes
-    alternative : string
-        The alternative hypothesis, H1, has to be one of the following
+    Args:
+        count1 (int): Number of events in first sample
+        exposure1 (float): Total exposure (time * subjects) in first sample
+        count2 (int): Number of events in first sample
+        exposure2 (float): Total exposure (time * subjects) in first sample
+        ratio (float): Ratio of the two Poisson rates under the Null hypothesis. Default is 1.
+        method (string): Method for the test statistic and the p-value. Defaults to `'score'`.
+            Current Methods are based on Gu et. al 2008
+            Implemented are 'wald', 'score' and 'sqrt' based asymptotic normal
+            distribution, and the exact conditional test 'exact-cond', and its mid-point
+            version 'cond-midp', see Notes
+        alternative (string): The alternative hypothesis, H1, has to be one of the following
 
-           'two-sided': H1: ratio of rates is not equal to ratio_null (default)
-           'larger' :   H1: ratio of rates is larger than ratio_null
-           'smaller' :  H1: ratio of rates is smaller than ratio_null
+           * 'two-sided': H1: ratio of rates is not equal to ratio_null (default)
+           * 'larger' :   H1: ratio of rates is larger than ratio_null
+           * 'smaller' :  H1: ratio of rates is smaller than ratio_null
 
-    Returns
-    -------
-    pvalue two-sided # stat
+    Returns:
+        A two-sided p-value.
 
-    not yet
-    #results : Results instance
-    #    The resulting test statistics and p-values are available as attributes.
-
-
-    Notes
-    -----
-    'wald': method W1A, wald test, variance based on separate estimates
-    'score': method W2A, score test, variance based on estimate under Null
-    'wald-log': W3A
-    'score-log' W4A
-    'sqrt': W5A, based on variance stabilizing square root transformation
-    'exact-cond': exact conditional test based on binomial distribution
-    'cond-midp': midpoint-pvalue of exact conditional test
+    Notes:
+        * 'wald': method W1A, wald test, variance based on separate estimates
+        * 'score': method W2A, score test, variance based on estimate under Null
+        * 'wald-log': W3A
+        * 'score-log' W4A
+        * 'sqrt': W5A, based on variance stabilizing square root transformation
+        * 'exact-cond': exact conditional test based on binomial distribution
+        * 'cond-midp': midpoint-pvalue of exact conditional test
 
     The latter two are only verified for one-sided example.
 
-    References
-    ----------
-    Gu, Ng, Tang, Schucany 2008: Testing the Ratio of Two Poisson Rates,
-    Biometrical Journal 50 (2008) 2, 2008
+    References:
+        Gu, Ng, Tang, Schucany 2008: Testing the Ratio of Two Poisson Rates,
+        Biometrical Journal 50 (2008) 2, 2008
 
     '''
-
+    #results : Results instance
+    #    The resulting test statistics and p-values are available as attributes.
     # Copied from statsmodels.stats.weightstats
     def zstat_generic2(value, std_diff, alternative):
         '''generic (normal) z-test to save typing

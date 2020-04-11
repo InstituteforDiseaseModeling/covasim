@@ -44,7 +44,7 @@ class Scenarios(cvbase.ParsObj):
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
 
     Args:
-        sim (Sim or None): if supplied, use a pre-created simulation as the basis for the scenarios
+        sim (~covasim.sim.Sim or None): if supplied, use a pre-created simulation as the basis for the scenarios
         metapars (dict): meta-parameters for the run, e.g. number of runs; see make_metapars() for structure
         scenarios (dict): a dictionary defining the scenarios; see default_scenario for structure
         basepars (dict): a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
@@ -359,7 +359,9 @@ class Scenarios(cvbase.ParsObj):
         Returns:
             filename (str): the validated absolute path to the saved file
 
-        Example:
+        **Example**
+        ::
+
             scens.save() # Saves to a .scens file with the date and time of creation by default
 
         '''
@@ -401,9 +403,11 @@ class Scenarios(cvbase.ParsObj):
             keywords: passed to makefilepath()
 
         Returns:
-            scens (Scenarios): the loaded scenarios object
+            scens (~covasim.run.Scenarios): the loaded scenarios object
 
-        Example:
+        **Example**
+        ::
+
             sim = cv.Scenarios.load('my-scenarios.scens')
         '''
         filename = sc.makefilepath(filename=filename, **kwargs)
@@ -418,7 +422,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
     parallelization, but can also be used directly.
 
     Args:
-        sim (Sim): the sim instance to be run
+        sim (~covasim.sim.Sim): the sim instance to be run
         ind (int): the index of this sim
         noise (float): the amount of noise to add to each run
         noisepar (string): the name of the parameter to add noise to
@@ -428,9 +432,11 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, run_args=None
         kwargs (dict): also passed to the sim
 
     Returns:
-        sim (Sim): a single sim object with results
+        sim (~covasim.sim.Sim): a single sim object with results
 
-    Example:
+    **Example**
+    ::
+
         import covasim as cv
         sim = cv.Sim() # Create a default simulation
         sim = cv.single_run(sim) # Run it, equivalent(ish) to sim.run()
@@ -485,7 +491,7 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     For running multiple runs in parallel.
 
     Args:
-        sim (Sim): the sim instance to be run
+        sim (~covasim.sim.Sim): the sim instance to be run
         n_runs (int): the number of parallel runs
         noise (float): the amount of noise to add to each run
         noisepar (string): the name of the parameter to add noise to
@@ -497,12 +503,12 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
         kwargs (dict): also passed to the sim
 
     Returns:
-        if combine:
-            a single sim object with the combined results from each sim
-        else (default):
-            a list of sim objects
+        If combine is True, a single sim object with the combined results from each sim.
+        Otherwise, a list of sim objects (default).
 
-    Example:
+    **Example**
+    ::
+
         import covasim as cv
         sim = cv.Sim()
         sims = cv.multi_run(sim, n_runs=6, noise=0.2)

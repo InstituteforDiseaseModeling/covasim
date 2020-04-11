@@ -67,6 +67,7 @@ class Person(sc.prettyobj):
     def infect(self, t, bed_constraint=None, source=None):
         """
         Infect this person and determine their eventual outcomes.
+
             * Every infected person can infect other people, regardless of whether they develop symptoms
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
@@ -217,7 +218,7 @@ def make_people(sim, verbose=None, id_len=None, die=True, reset=False):
     Make the actual people for the simulation.
 
     Args:
-        sim (Sim): the simulation object
+        sim (~covasim.sim.Sim): the simulation object
         verbose (bool): level of detail to print
         id_len (int): length of ID for each person (default: calculate required length based on the number of people)
         die (bool): whether or not to fail if synthetic populations are requested but not available

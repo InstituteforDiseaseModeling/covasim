@@ -61,7 +61,8 @@ class Intervention:
         However, if an intervention itself contains non-standard variables as
         attributes, then its `to_json` method will need to handle those
 
-        Returns: JSON-serializable representation (typically a dict, but could be anything else)
+        Returns:
+            JSON-serializable representation (typically a dict, but could be anything else)
 
         """
         d = sc.dcp(self.__dict__)
@@ -82,7 +83,9 @@ class dynamic_pars(Intervention):
     Args:
         pars (dict): described above
 
-    Examples:
+    **Examples**
+    ::
+
         interv = cv.dynamic_pars({'diag_factor':{'days':30, 'vals':0.5}, 'cont_factor':{'days':30, 'vals':0.5}}) # Starting day 30, make diagnosed people and people with contacts half as likely to transmit
         interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}}) # On day 14, change beta to 0.005, and on day 28 change it back to 0.015
     '''
@@ -130,11 +133,14 @@ class sequence(Intervention):
         days (list): the days on which to apply each intervention
         interventions (list): the interventions to apply on those days
 
-    Example:
+    **Example**
+    ::
+
         interv = cv.sequence(days=[10, 51], interventions=[
                     cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
                     cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002, trace_prob=0.9),
                 ])
+
     """
 
     def __init__(self, days, interventions):
@@ -160,7 +166,9 @@ class change_beta(Intervention):
         days (int or array): the day or array of days to apply the interventions
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
 
-    Examples:
+    **Examples**
+    ::
+
         interv = cv.change_beta(25, 0.3) # On day 25, reduce beta by 70% to 0.3
         interv = cv.change_beta([14, 28], [0.7, 1]) # On day 14, reduce beta by 30%, and on day 28, return to 1
 
@@ -208,7 +216,9 @@ class test_num(Intervention):
     """
     Test a fixed number of people per day.
 
-    Example:
+    **Example**
+    ::
+
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
 
     Returns:
@@ -268,7 +278,9 @@ class test_prob(Intervention):
     """
     Test as many people as required based on test probability.
 
-    Example:
+    **Example**
+    ::
+
         interv = cv.test_prop(symptomatic_prob=0.9, asymptomatic_prob=0.0, trace_prob=0.9)
 
     Returns:

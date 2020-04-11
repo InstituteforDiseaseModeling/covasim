@@ -6,69 +6,6 @@ indicators such as numbers of infections and peak hospital demand. Covasim can
 also be used to explore the potential impact of different interventions.
 
 
-## Requirements
-
-Python >=3.6 (64-bit). (Note: Python 2 is not supported.)
-
-We also recommend, but do not require, using Python virtual environments. For
-more information, see documentation for [venv](https://docs.python.org/3/tutorial/venv.html) or [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
-
-## Quick start guide
-
-Install with `pip install covasim`. If everything is working, the following Python commands should bring up a plot:
-
-```python
-import covasim as cv
-sim = cv.Sim()
-sim.run()
-sim.plot()
-```
-
-
-## Detailed installation instructions
-
-1.  Clone a copy of the repository. If you intend to make changes to the code,
-    we recommend that you fork it first.
-
-2.  (Optional) Create and activate a virtual environment.
-
-3.  Navigate to the root of the repository and install the Covasim Python package
-    using one of the following options:
-
-    *   To install with webapp support (recommended):
-
-        `python setup.py develop`
-
-    *   To install as a standalone Python model without webapp support:
-
-        `python setup.py develop nowebapp`
-
-    *   To install Covasim and optional dependencies (be aware this may fail
-        since it relies on private packages), enter:
-
-        `python setup.py develop full`
-
-    The module should then be importable via `import covasim`.
-
-
-## Detailed usage
-
-There are several examples in the `examples` directory. These can be run as
-follows:
-
-* `python examples/simple.py`
-
-  This example creates a figure using default parameter values.
-
-* `python examples/run_sim.py`
-
-  This shows a slighly more detailed example, including creating an intervention and saving to disk.
-
-* `python examples/run_scenarios.py`
-
-  This shows a more complex example, including running an intervention scenario, plotting uncertainty, and performing a health systems analysis.
-
-
 ## Structure
 
 All core model code is located in the `covasim` subfolder; standard usage is

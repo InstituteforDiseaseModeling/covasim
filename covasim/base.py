@@ -76,7 +76,9 @@ class Result(object):
         scale (bool): whether or not the value scales by population size
         color (str or array): default color for plotting (hex or RGB notation)
 
-    Example:
+    **Example**
+    ::
+
         import covasim as cv
         r1 = cv.Result(name='test1', npts=10)
         r1[:5] = 20
@@ -302,7 +304,7 @@ class BaseSim(ParsObj):
             skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "people", "popdict", and "uids"
 
         Returns:
-            shrunken_sim (Sim): a Sim object with the listed attributes removed
+            shrunken_sim (~covasim.sim.Sim): a Sim object with the listed attributes removed
         '''
 
         # By default, skip people (~90%) and uids (~9%)
@@ -327,7 +329,9 @@ class BaseSim(ParsObj):
         Returns:
             filename (str): the validated absolute path to the saved file
 
-        Example:
+        **Example**
+        ::
+
             sim.save() # Saves to a .sim file with the date and time of creation by default
         '''
         if filename is None:
@@ -352,9 +356,11 @@ class BaseSim(ParsObj):
             keywords: passed to makefilepath()
 
         Returns:
-            sim (Sim): the loaded simulation object
+            sim (~covasim.sim.Sim): the loaded simulation object
 
-        Example:
+        **Example**
+        ::
+
             sim = cv.Sim.load('my-simulation.sim')
         '''
         filename = sc.makefilepath(filename=filename, **kwargs)
