@@ -8,9 +8,12 @@ import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
+from . import version as cvver
 
-__all__ = ['sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'fixaxis', 'get_doubling_time', 'poisson_test']
+__all__ = ['CancelError', 'sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
 
+class CancelError(Exception):
+    pass
 
 #%% Define helper functions
 
@@ -142,7 +145,7 @@ def choose(max_n, n):
 
 
 # @nb.njit((nb.float64[:], nb.int64, nb.float64))
-def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False):
+def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False, unique=True):
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
     Overshoot handles the case where there are repeats.
@@ -154,6 +157,7 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
         eps (float): how close to check that probabilities sum to 1
         max_tries (int): maximum number of times to try to pick samples without replacement
         normalize (bool): whether or not to normalize probs to always sum to 1
+        unique (bool): whether or not to ensure unique indices
 
     Example:
         choose_weighted([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
@@ -163,6 +167,8 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     '''
 
     # Ensure it's the right type and optionally normalize
+    if not unique:
+        overshoot = 1
     probs = np.array(probs, dtype=np.float64)
     n_people = len(probs)
     n_samples = int(n)
@@ -188,6 +194,8 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     while len(unique_inds)<n_samples and tries<max_tries:
         tries += 1
         raw_inds = mt(probs, int(n_samples*overshoot)) # Return raw indices, with replacement
+        if not unique:
+            return raw_inds
         mixed_inds = np.hstack((unique_inds, raw_inds))
         unique_inds = pd.unique(mixed_inds) # Or np.unique(mixed_inds, return_index=True) with another step
     if tries == max_tries:
@@ -196,6 +204,59 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     inds = unique_inds[:int(n)]
 
     return inds
+
+
+def check_version(expected, die=False, verbose=True, **kwargs):
+    '''
+    Get current git information and optionally write it to disk.
+
+    Args:
+        expected (str): expected version information
+        die (bool): whether or not to raise an exception if the check fails
+    '''
+    version = cvver.__version__
+    compare = sc.compareversions(version, expected) # Returns -1, 0, or 1
+    relation = ['older', '', 'newer'][compare+1] # Picks the right string
+    if relation: # Not empty, print warning
+        string = f'Note: Covasim is {relation} than expected ({version} vs. {expected})'
+        if die:
+            raise ValueError(string)
+        elif verbose:
+            print(string)
+    return compare
+
+
+def git_info(filename=None, check=False, old_info=None, die=False, verbose=True, **kwargs):
+    '''
+    Get current git information and optionally write it to disk.
+
+    Args:
+        filename (str): name of the file to write to or read from
+        check (bool): whether or not to compare two git versions
+        old_info (dict): dictionary of information to check against
+        die (bool): whether or not to raise an exception if the check fails
+
+    Example:
+        cv.git_info('covasim_version.json') # Writes to disk
+        cv.git_info('covasim_version.json', check=True) # Checks that current version matches saved file
+    '''
+    info = sc.gitinfo(__file__)
+    if not check: # Just get information
+        if filename is not None:
+            output = sc.savejson(filename, info, **kwargs)
+        else:
+            output = info
+    else:
+        if filename is not None:
+            old_info = sc.loadjson(filename, **kwargs)
+        string = ''
+        if info != old_info:
+            string = f'Git information differs: {info} vs. {old_info}'
+            if die:
+                raise ValueError(string)
+            elif verbose:
+                print(string)
+    return output
 
 
 def fixaxis(sim, useSI=True, boxoff=False):
@@ -230,7 +291,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
         else:
             if series is None or series not in sim.reskeys:
                 sc.printv(f"Series not supplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
-                series='cum_exposed'
+                series='cum_infections'
             series = sim.results[series].values
     else:
         series = sc.promotetoarray(series)
