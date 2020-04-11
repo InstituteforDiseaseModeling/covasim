@@ -548,8 +548,9 @@ class Sim(cvbase.BaseSim):
 
 
     def compute_r_eff(self):
-        ''' Effective reproductive number based on number of people each
-        person infected '''
+        '''
+        Effective reproductive number based on number of people each person infected.
+        '''
 
         # Initialize arrays to hold sources and targets infected each day
         sources = np.zeros(self.npts)
@@ -575,7 +576,9 @@ class Sim(cvbase.BaseSim):
         inds = sc.findinds(sources>0)
         r_eff = targets[inds]/sources[inds]
         self.results['r_eff'].values[inds] = r_eff
+
         return
+
 
     def compute_gen_time(self):
         '''
