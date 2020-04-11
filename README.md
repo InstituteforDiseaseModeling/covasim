@@ -87,9 +87,6 @@ follows:
 
   This shows a more complex example, including running an intervention scenario, plotting uncertainty, and performing a health systems analysis.
 
-## Updating Population Data
-
-To down population data run `python pull_demographic_data.py`.
 
 ## Module structure
 
