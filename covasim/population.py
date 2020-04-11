@@ -10,7 +10,7 @@ from . import utils as cvu
 from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpars
-from . import person as cvper
+from . import people as cvper
 from collections import defaultdict
 
 
