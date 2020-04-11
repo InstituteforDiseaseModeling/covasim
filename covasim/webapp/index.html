@@ -32,7 +32,7 @@
 <!-- BODY -->
 <body>
 
-<section id="app" class="container-fluid">
+<section id="app" class="container-fluid" @mousemove="resize_apply" @mouseup="resize_end">
   <header class="row no-gutter">
     <nav class="navbar navbar-dark bg-dark">
       <a class="navbar-brand" href="#">{{ title }}</a>
@@ -70,7 +70,7 @@
 
   <div class="content">
 
-    <b-sidebar id="parameters" :visible="panel_open" no-header bg-variant="white" width="47rem" shadow>
+    <b-sidebar id="parameters" :visible="panel_open" no-header bg-variant="white" :width="panel_width+'vw'" shadow>
       <div class="px-3">
         <header class="d-flex justify-content-between">
           <h4 class="my-2">Campaign Builder</h4>
@@ -78,7 +78,7 @@
             <span aria-hidden="true">&times;</span>
           </button>
         </header>
-        
+
         <!-- Presets -->
         <div class="form-row mb-3">
           <div class="col">
@@ -121,7 +121,7 @@
 
         <div class="form-group">
           <label for="n_days">Campaign Duration (in days):</label>
-          <input id="n_days" type="number" :min="sim_length.min" :max="sim_length.max" :disabled="running" class="form-control" v-model="sim_length.best">
+          <input id="n_days" type="number" :min="sim_length.min" :max="sim_length.max" :disabled="running" class="form-control" v-model.number="sim_length.best">
           <span aria-live="assertive" v-if="paramError.sim_length" class="text-danger form-error">{{paramError.sim_length}}</span>
 
           <b-tooltip target="n_days">
@@ -237,6 +237,9 @@
 
       </div>
 
+      <!-- Resize handle -->
+      <div id="resize-handle" @mousedown="resize_start"></div>
+
       <!-- Run button -->
       <template v-slot:footer>
 
@@ -257,17 +260,6 @@
           <button v-else id="run_btn" :disabled="isRunDisabled" class="btn btn-primary btn-lg btn-run green" type="button" @click="runSim">
             Run
           </button>
-
-          <div class="form-group ml-3" id="history">
-            <select :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">
-              <option v-for="(item, index) in history" :value="index">
-                {{ index }}
-              </option>
-            </select>
-          </div>
-          <b-tooltip target="history">
-            History of parameters used in this session
-          </b-tooltip>
         </div>
 
       </template>
@@ -275,9 +267,24 @@
 
     <!-- Show the actual graph -->
     <div id="graphs" class="graphs">
-      <button class="btn btn-primary blueish" @click="open_panel">
-        Open parameters
-      </button>
+      <div class="form-inline">
+        <button class="btn btn-primary blueish" @click="open_panel">
+          Open parameters
+        </button>
+
+        <div class="form-group ml-3" id="history-wpr">
+          <label for="history"> History: </label>
+          <select id="history" :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">
+            <option v-for="(item, index) in history" :value="index">
+              {{ index }}
+            </option>
+          </select>
+          <b-tooltip target="history-wpr">
+            History of campaign runs used in this session
+          </b-tooltip>
+        </div>
+      </div>
+
       <fieldset>
         <legend>Results</legend>
         <!--           <template v-if="running">
