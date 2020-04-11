@@ -13,9 +13,8 @@ base_pars = sc.objdict(
         n_days       = 12,   # Number of days to simulate
         asymp_factor = 1, # Multiply beta by this factor for asymptomatic cases
         diag_factor  = 1, # Multiply beta by this factor for diganosed cases -- baseline assumes complete isolation
-        cont_factor  = 1.0,
         verbose = 0,
-        pop_infected = 10
+        pop_infected = 1
 )
 base_pars['dur'] = {}
 base_pars['dur']['exp2inf']  = {'dist':'normal_int', 'par1':4, 'par2':0} # Duration from exposed to infectious
@@ -31,7 +30,7 @@ base_pars['dur']['crit2rec'] = {'dist':'normal_int', 'par1':0, 'par2':0} # Durat
 base_pars['dur']['crit2die'] = {'dist':'normal_int', 'par1':0,  'par2':0} # Duration from critical symptoms to death
 
 base_pars['OR_no_treat']     = 1.0  # Odds ratio for how much more likely people are to die if no treatment available
-base_pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
+base_pars['rel_symp_prob']   = 2.0  # Scale factor for proportion of symptomatic cases
 base_pars['rel_severe_prob'] = 0  # Scale factor for proportion of symptomatic cases that become severe
 base_pars['rel_crit_prob']   = 0  # Scale factor for proportion of severe cases that become critical
 base_pars['rel_death_prob']  = 0  # Scale factor for proportion of critical cases that result in death

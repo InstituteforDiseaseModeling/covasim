@@ -163,16 +163,16 @@ class Person(sc.prettyobj):
 
         return 1 # For incrementing counters
 
-    def get_rel_beta(self, t, dist=None, frac=None, ratio=None):
+    def get_rel_beta(self, t, dist=None, par1=None, par2=None):
         ''' Get the viral load distribution for this person as
         part of the relative beta
         
         Args:
             t: (int) timestep
             dist: (string) distribution from which to pull viral load
-            frac: (float) None for 'constant', frac of time in high
+            par1: (float) None for 'constant', frac of time in high
                 load for 'twolevel'
-            ratio: (float) ratio for high to low viral load
+            par2: (float) ratio for high to low viral load
         Returns:
             (float) multipler for the infectivity (beta)'''
     
@@ -188,10 +188,10 @@ class Person(sc.prettyobj):
             # is infected so this could just be load = 1
             load = (1 if t>=start and t<end else 0.)
         elif dist == 'twolevel':
-            if (t-self.date_infectious)/(end-start) < frac:
-                load = ratio/(1+frac*(ratio-1))
-            elif (t-self.date_infectious)/(end-start) >= frac:
-                load = 1/(1+frac*(ratio-1))
+            if (t-self.date_infectious)/(end-start) < par1:
+                load = par2/(1+par1*(par2-1))
+            elif (t-self.date_infectious)/(end-start) >= par1:
+                load = 1/(1+par1*(par2-1))
         else:
             choicestr = '\n'.join(choices)
             errormsg = f'The selected viral distribution "{dist}" is not implemented; choices are: {choicestr}'
