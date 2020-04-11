@@ -5,7 +5,6 @@ Defines the Sim class, Covasim's core class.
 #%% Imports
 import numpy as np
 import pylab as pl
-import pandas as pd
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
@@ -549,7 +548,9 @@ class Sim(cvbase.BaseSim):
 
 
     def compute_r_eff(self):
-        ''' Effective reproductive number based on number still susceptible -- TODO: use data instead '''
+        '''
+        Effective reproductive number based on number of people each person infected.
+        '''
 
         # Initialize arrays to hold sources and targets infected each day
         sources = np.zeros(self.npts)
@@ -575,8 +576,39 @@ class Sim(cvbase.BaseSim):
         inds = sc.findinds(sources>0)
         r_eff = targets[inds]/sources[inds]
         self.results['r_eff'].values[inds] = r_eff
+
         return
 
+
+    def compute_gen_time(self):
+        '''
+        Calculate the generation time (or serial interval) there are two
+        ways to do this calculation. The 'true' interval (exposure time to
+        exposure time) or 'clinical' (symptom onset to symptom onset).
+        '''
+
+        not_susceptible = self.people.filter_out('susceptible')
+        intervals = np.zeros(int(self.summary['cum_infections']))
+        intervals2 = intervals.copy()
+        pos = 0
+        pos2 = 0
+        for source in not_susceptible:
+            if len(source.infected)>0:
+                for target in source.infected:
+                    intervals[pos] = self.people[target].date_exposed - source.date_exposed
+                    pos += 1
+                if source.date_symptomatic is not None:
+                    for target in source.infected:
+                        if self.people[target].date_symptomatic is not None:
+                            intervals2[pos2] = self.people[target].date_symptomatic - source.date_symptomatic
+                            pos2 += 1
+
+        self.results['gen_time'] = {
+                'true':         np.mean(intervals[:pos]),
+                'true_std':     np.std(intervals[:pos]),
+                'clinical':     np.mean(intervals2[:pos2]),
+                'clinical_std': np.std(intervals2[:pos2])}
+        return
 
     def likelihood(self, weights=None, verbose=None) -> float:
         '''
