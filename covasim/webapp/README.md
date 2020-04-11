@@ -70,4 +70,4 @@ Note that for local development, the `--reload` flag to the `gunicorn` command a
 
 ## Docker
 
-See [Docker Readme](../../docker)
+See the [Docker readme](../../docker).
