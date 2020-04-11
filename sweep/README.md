@@ -1,6 +1,6 @@
 # Sweep
 
-Utilites for hyperparameter sweeps, using [Weights and Biases](https://www.wandb.com/). These instructions are a minimial subset of [these docs](https://docs.wandb.com/sweeps)
+Utilites for hyperparameter sweeps, using [Weights and Biases](https://www.wandb.com/). These instructions are a minimial subset of [these docs](https://docs.wandb.com/sweeps).
 
 To begin a sweep follow these steps:
 
