@@ -5,7 +5,6 @@ Defines the Sim class, Covasim's core class.
 #%% Imports
 import numpy as np
 import pylab as pl
-import pandas as pd
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
@@ -579,10 +578,12 @@ class Sim(cvbase.BaseSim):
         return
 
     def compute_gen_time(self):
-        ''' Calculate the generation time (or serial interval) there are two 
-        ways to do this calculation. The 'true' interval (exposure time to 
-        exposure time) or 'clinical' (symptom onset to symptom onset) '''
-        
+        '''
+        Calculate the generation time (or serial interval) there are two
+        ways to do this calculation. The 'true' interval (exposure time to
+        exposure time) or 'clinical' (symptom onset to symptom onset).
+        '''
+
         not_susceptible = self.people.filter_out('susceptible')
         intervals = np.zeros(int(self.summary['cum_infections']))
         intervals2 = intervals.copy()
@@ -598,12 +599,12 @@ class Sim(cvbase.BaseSim):
                         if self.people[target].date_symptomatic is not None:
                             intervals2[pos2] = self.people[target].date_symptomatic - source.date_symptomatic
                             pos2 += 1
-                
+
         self.results['gen_time'] = {
-                'gen_time':np.mean(intervals[:pos]),
-                'gen_time_std':np.std(intervals[:pos]),
-                'gen_time_clinical':np.mean(intervals2[:pos2]),
-                'gen_time_clinical_std':np.std(intervals2[:pos2])}
+                'true':         np.mean(intervals[:pos]),
+                'true_std':     np.std(intervals[:pos]),
+                'clinical':     np.mean(intervals2[:pos2]),
+                'clinical_std': np.std(intervals2[:pos2])}
         return
 
     def likelihood(self, weights=None, verbose=None) -> float:
