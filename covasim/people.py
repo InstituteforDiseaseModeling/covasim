@@ -5,7 +5,7 @@ Defines the Person class and functions associated with making people.
 #%% Imports
 import numpy as np
 from . import utils as cvu
-# from . import defaults as cvd
+from . import defaults as cvd
 from . import base as cvb
 
 
@@ -71,23 +71,23 @@ class People(cvb.BasePeople):
         return
 
 
-    # def update(self, t):
-    #     ''' Perform all state updates '''
+    def update_states(self, t):
+        ''' Perform all state updates '''
 
-    #     counts = {}
+        counts = {key:0 for key in cvd.results_flows}
 
-    #     if self.count('severe') > n_beds:
-    #         bed_constraint = True
+        # if self.count('severe') > n_beds:
+        #     bed_constraint = True
 
-    #     new_infectious  += people.check_infectious(t=t) # For epople who are exposed and not infectious, check if they begin being infectious
-    #     new_quarantined += people.check_quar(t=t) # Update if they're quarantined
-    #     new_symptomatic += person.check_symptomatic(t)
-    #     new_severe      += person.check_severe(t)
-    #     new_critical    += person.check_critical(t)
-    #     new_deaths      += people.check_death(t=t)
-    #     new_recoveries  += person.check_recovery(t)
+        # new_infectious  += people.check_infectious(t=t) # For epople who are exposed and not infectious, check if they begin being infectious
+        # new_quarantined += people.check_quar(t=t) # Update if they're quarantined
+        # new_symptomatic += person.check_symptomatic(t)
+        # new_severe      += person.check_severe(t)
+        # new_critical    += person.check_critical(t)
+        # new_deaths      += people.check_death(t=t)
+        # new_recoveries  += person.check_recovery(t)
 
-    #     return counts
+        return counts
 
 
     # def update_contacts(self, t):
