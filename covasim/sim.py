@@ -244,7 +244,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def next(self, verbose=0):
+    def step(self, verbose=0):
         '''
         Step simulation forward in time
         '''
@@ -311,50 +311,42 @@ class Sim(cvbase.BaseSim):
         # Update the state of everyone
         counts = people.update(t=t)
 
-        new_infectious  += people.check_infectious(t=t) # For epople who are exposed and not infectious, check if they begin being infectious
-        new_quarantined += people.check_quar(t=t) # Update if they're quarantined
-        new_symptomatic += person.check_symptomatic(t)
-        new_severe      += person.check_severe(t)
-        new_critical    += person.check_critical(t)
-        new_deaths      += people.check_death(t=t)
-        new_recoveries  += person.check_recovery(t)
 
-            # Check symptoms and diagnosis
 
-            if n_severe > n_beds:
-                bed_constraint = True
+        # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
 
-            # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-            thisbeta = beta * \
-                       (asymp_factor if not person.symptomatic else 1.) * \
-                       (diag_factor if person.diagnosed else 1.)
 
-            # Set community contacts
-            person_contacts = person.contacts
-            if n_comm_contacts:
-                community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-                person_contacts['c'] = community_contact_inds
 
-            # Determine who gets infected
-            for ckey in self.contact_keys:
-                contact_ids = person_contacts[ckey]
-                if len(contact_ids):
-                    this_beta_layer = thisbeta *\
-                                      beta_layers[ckey] *\
-                                      (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
+thisbeta = beta * \
+                   (asymp_factor if not person.symptomatic else 1.) * \
+                   (diag_factor if person.diagnosed else 1.)
 
-                    transmission_inds = cvu.bf(this_beta_layer, contact_ids)
-                    for contact_ind in transmission_inds: # Loop over people who get infected
-                        target_person = self.people[contact_ind]
-                        if target_person.susceptible: # Skip people who are not susceptible
+        # Set community contacts
+        person_contacts = person.contacts
+        if n_comm_contacts:
+            community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
+            person_contacts['c'] = community_contact_inds
 
-                            # See whether we will infect this person
-                            infect_this_person = True # By default, infect them...
-                            if target_person.quarantined:
-                                infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
-                            if infect_this_person:
-                                new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+        # Determine who gets infected
+        for ckey in self.contact_keys:
+            contact_ids = person_contacts[ckey]
+            if len(contact_ids):
+                this_beta_layer = thisbeta *\
+                                  beta_layers[ckey] *\
+                                  (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
+
+                transmission_inds = cvu.bf(this_beta_layer, contact_ids)
+                for contact_ind in transmission_inds: # Loop over people who get infected
+                    target_person = self.people[contact_ind]
+                    if target_person.susceptible: # Skip people who are not susceptible
+
+                        # See whether we will infect this person
+                        infect_this_person = True # By default, infect them...
+                        if target_person.quarantined:
+                            infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
+                        if infect_this_person:
+                            new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                            sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
         # End of person loop; apply interventions
         for intervention in self['interventions']:
@@ -433,7 +425,7 @@ class Sim(cvbase.BaseSim):
         for t in range(self.npts):
 
             # Do the heavy lifting
-            self.next(verbose=verbose)
+            self.step(verbose=verbose)
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)

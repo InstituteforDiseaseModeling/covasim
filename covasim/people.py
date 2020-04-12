@@ -12,72 +12,33 @@ from . import utils as cvu
 __all__ = ['People', 'Person']
 
 
-class People(list):
+class People(sc.prettyobj):
     '''
-    A tiny class to handle the display of a very large number of people, which is
-    prohibitively slow to print to screen. This is really just a list, except with
-    the repr of an odict, and with a keys() method. It also has shortcuts for "filtering
-    in" (i.e., keeping people with a certain attribute) and "filtering out" (removing
-    people with a certain attribute).
+    A class to perform all the operations on the people.
     '''
 
-    def filter_in(self, attr):
-        '''
-        Filter in based on an attribute.
+    def __init__(self):
+        self.counts = {}
 
-        Args:
-            attr (str): The attribute to filter on.
+    def update(t):
+        ''' Perform all state updates '''
 
-        Example:
-            susceptibles = sim.people.filter_in('susceptible')
-        '''
-        return filter(lambda person: getattr(person, attr), self)
+        counts = {}
 
+        if self.count('severe') > n_beds:
+            bed_constraint = True
 
-    def filter_out(self, attr):
-        '''
-        Filter out based on an attribute.
+        new_infectious  += people.check_infectious(t=t) # For epople who are exposed and not infectious, check if they begin being infectious
+        new_quarantined += people.check_quar(t=t) # Update if they're quarantined
+        new_symptomatic += person.check_symptomatic(t)
+        new_severe      += person.check_severe(t)
+        new_critical    += person.check_critical(t)
+        new_deaths      += people.check_death(t=t)
+        new_recoveries  += person.check_recovery(t)
 
-        Args:
-            attr (str): The attribute to filter on.
-
-        Example:
-            not_susceptibles = sim.people.filter_out('susceptible')
-        '''
-        return filter(lambda person: not getattr(person, attr), self)
+        return counts
 
 
-    def count_in(self, attr):
-        ''' Simple method to count people in '''
-        return len(list(self.filter_in(attr)))
-
-
-    def count_out(self, attr):
-        ''' Simple method to count people out '''
-        return len(list(self.filter_out(attr)))
-
-
-    def extract(self, attr):
-        '''
-        Return a list of a given attribute for every person.
-
-        Args:
-            attr (str): The attribute to extract.
-
-        Example:
-            ages = sim.people.extract('age')
-        '''
-        return [getattr(person, attr) for person in self]
-
-
-    def keys(self):
-        ''' Convenience method to list the "keys" of the list '''
-        return list(range(len(self)))
-
-
-    def __repr__(self, *args, **kwargs):
-        ''' Why this class exists: better repr than a regular list '''
-        return sc.odict.__repr__(self) # Use the odict repr to skip large numbers of people
 
 class Person(sc.prettyobj):
     '''
