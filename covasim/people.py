@@ -188,7 +188,7 @@ class People(cvb.BasePeople):
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_inds)
-        self.date_infectious[inds] = self.dur_exp2inf + t
+        self.date_infectious[inds] = self.dur_exp2inf[inds] + t
 
         # Use prognosis probabilities to determine what happens to them
         is_symp = cvu.binomial_arr(self.symp_prob[inds]) # Determine if they develop symptoms
