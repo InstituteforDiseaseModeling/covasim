@@ -421,7 +421,6 @@ class BasePeople(sc.prettyobj):
     def __init__(self, pars=None, pop_size=None, *args, **kwargs):
 
 
-
         # Handle pars and population size
         self.pars = pars
         if pop_size is None:
@@ -434,7 +433,7 @@ class BasePeople(sc.prettyobj):
 
         # Other initialization
         self._lock = False
-        self._keys = []
+        self.keylist = cvd.PeopleKeys()
         self._default_dtype = np.float32 # For performance -- 2x faster than float64, the default
         self.init_contacts() # Initialize the contacts
 
@@ -501,9 +500,12 @@ class BasePeople(sc.prettyobj):
         return self[key]
 
 
-    def keys(self):
+    def keys(self, which=None):
         ''' Returns the name of the states '''
-        return self._keys[:]
+        if which is None:
+            return self.keylist.all_states[:]
+        else:
+            return getattr(self.keylist, which)[:]
 
 
     def indices(self):
@@ -559,7 +561,7 @@ class BasePeople(sc.prettyobj):
     def person(self, ind):
         ''' Method to create person from the people '''
         p = Person()
-        for key in cvd.all_person_states:
+        for key in self.keys('all_person_states'):
             setattr(p, key, self[key][ind])
         return p
 
@@ -591,7 +593,7 @@ class BasePeople(sc.prettyobj):
 
     def init_contacts(self, output=False):
         ''' Initialize the contacts dataframe with the correct columns and data types '''
-        arr = np.empty((0,), dtype=list(cvd.contact_props.items()))
+        arr = np.empty((0,), dtype=list(self.keylist.contacts.items()))
         df = pd.DataFrame(arr)
         if output:
             return df

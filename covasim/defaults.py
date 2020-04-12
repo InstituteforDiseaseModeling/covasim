@@ -6,60 +6,64 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['person_props', 'person_states', 'person_dates', 'person_durs', 'all_person_states',
-           'contact_props', 'result_stocks', 'result_flows', 'default_age_data',
+__all__ = ['PeopleKeys', 'result_stocks', 'result_flows', 'default_age_data',
            'default_colors', 'default_sim_plots', 'default_scen_plots']
 
-# Set the properties of a person
-person_props = [
-    'uid',         # Any (int or str, usually)
-    'age',         # Float
-    'sex',         # Int
-    'symp_prob',   # Float
-    'severe_prob', # Float
-    'crit_prob',   # Float
-    'death_prob',  # Float
-]
+class PeopleKeys(sc.prettyobj):
+    ''' For storing all the keys relating to a person and people '''
 
-# Set the states that a person can be in: these are all booleans per person -- used in people.py
-person_states = [
-    'susceptible',
-    'exposed',
-    'infectious',
-    'symptomatic',
-    'severe',
-    'critical',
-    'tested',
-    'diagnosed',
-    'recovered',
-    'dead',
-    'known_contact',
-    'quarantined',
-]
+    # Set the properties of a persocn
+    person = [
+        'uid',         # Any (int or str, usually)
+        'age',         # Float
+        'sex',         # Int
+        'symp_prob',   # Float
+        'severe_prob', # Float
+        'crit_prob',   # Float
+        'death_prob',  # Float
+    ]
 
-# Set the dates various events took place: these are floats per person -- used in people.py
-person_dates = [f'date_{state}' for state in person_states]
-person_dates.append('date_quarantined_end')
+    # Set the states that a person can be in: these are all booleans per person -- used in people.py
+    states = [
+        'susceptible',
+        'exposed',
+        'infectious',
+        'symptomatic',
+        'severe',
+        'critical',
+        'tested',
+        'diagnosed',
+        'recovered',
+        'dead',
+        'known_contact',
+        'quarantined',
+    ]
 
-# Duration of different states: these are floats per person -- used in people.py
-person_durs = [
-    'dur_exp2inf',
-    'dur_inf2sym',
-    'dur_sym2sev',
-    'dur_sev2crit',
-    'dur_disease',
-]
+    # Set the dates various events took place: these are floats per person -- used in people.py
+    dates = [f'date_{state}' for state in states]
+    dates.append('date_quarantined_end')
 
-all_person_states = person_props + person_states + person_dates + person_durs
+    # Duration of different states: these are floats per person -- used in people.py
+    durs = [
+        'dur_exp2inf',
+        'dur_inf2sym',
+        'dur_sym2sev',
+        'dur_sev2crit',
+        'dur_disease',
+    ]
 
-# Properties of contacts
-contact_props = {
-    'p1':      np.int32, # Person 1
-    'p2':      np.int32,  # Person 2
-    'layer':   str, # The layer by which the people are connected
-    'beta':    np.float32, # Default transmissibility for this contact type
-    'dynamic': bool, # Whether or not this contact is dynamic
-}
+    all_states = person + states + dates + durs
+
+    # Properties of contacts
+    contacts = {
+        'p1':      np.int32, # Person 1
+        'p2':      np.int32,  # Person 2
+        'layer':   str, # The layer by which the people are connected
+        'beta':    np.float32, # Default transmissibility for this contact type
+        'dynamic': bool, # Whether or not this contact is dynamic
+    }
+
+
 
 # A subset of the above states are used for results
 result_stocks = {

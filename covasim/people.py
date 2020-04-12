@@ -5,7 +5,7 @@ Defines the Person class and functions associated with making people.
 #%% Imports
 import numpy as np
 from . import utils as cvu
-from . import defaults as cvd
+# from . import defaults as cvd
 from . import base as cvb
 
 
@@ -23,7 +23,7 @@ class People(cvb.BasePeople):
         super().__init__(pars, pop_size)
 
         # Set person properties -- mostly floats
-        for key in cvd.person_props:
+        for key in self.keylist.person:
             self._keys.append(key)
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=object)
@@ -31,7 +31,7 @@ class People(cvb.BasePeople):
                 self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
 
         # Set health states -- only susceptible is true by default -- booleans
-        for key in cvd.person_states:
+        for key in self.keylist.states:
             self._keys.append(key)
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
@@ -39,7 +39,7 @@ class People(cvb.BasePeople):
                 self[key] = np.full(self.pop_size, False, dtype=bool)
 
         # Set dates and durations -- both floats
-        for key in cvd.person_dates + cvd.person_durs:
+        for key in self.keylist.dates + self.keylist.durs:
             self._keys.append(key)
             self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
 
@@ -147,10 +147,12 @@ class People(cvb.BasePeople):
 
 
 
-    def make_susceptible(self):
+    def make_susceptible(self, inds):
         """
         Make person susceptible. This is used during initialization and dynamic resampling
         """
+        for key in self.keys():
+            self[key][inds] =
 
         return
 
