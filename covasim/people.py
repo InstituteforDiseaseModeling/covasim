@@ -4,7 +4,6 @@ Defines the Person class and functions associated with making people.
 
 #%% Imports
 import numpy as np
-import pandas as pd
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
@@ -60,11 +59,15 @@ class People(cvb.BasePeople):
     def set_prognoses(self, pars):
         ''' Set the prognoses for each person based on age '''
         prognoses = pars['prognoses']
-        idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
-        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
-        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
-        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
-        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
+
+        def find_cutoff(age):
+            return np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
+
+        inds = np.apply_along_axis(self.age)
+        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
+        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
+        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
+        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][inds]
         return
 
 
