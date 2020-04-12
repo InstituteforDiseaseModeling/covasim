@@ -615,8 +615,8 @@ class BasePeople(sc.prettyobj):
                 new_df[key] = value
 
         # Actually include them, and update properties if supplied
-        self.contacts = self.contacts.append(new_df)
-
+        self.contacts = self.contacts.append(new_df, sort=False)
+        self.contacts.reset_index(inplace=True)
 
         return
 

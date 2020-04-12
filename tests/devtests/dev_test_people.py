@@ -2,6 +2,9 @@ import sciris as sc
 import covasim as cv
 
 
+import warnings
+warnings.simplefilter("error")
+
 if __name__ == '__main__':
 
     sc.tic()
