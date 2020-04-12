@@ -102,17 +102,21 @@ def false(arr):
     ''' Retrurns the indices of the values of the array that are false '''
     return (~arr).nonzero()[0]
 
-def mask(arr, mask_arr):
-    ''' Retrurns the values of the array that are true '''
-    return arr[mask_arr]
+def true_inds(arr, inds):
+    ''' Retrurns the indices of the values of the array that are true '''
+    return inds[arr[inds].nonzero()[0]]
+
+def false_inds(arr, inds):
+    ''' Retrurns the indices of the values of the array that are false '''
+    return inds[(~arr[inds]).nonzero()[0]]
 
 def defined(arr):
     ''' Retrurns the indices of the values of the array that are not-nan '''
-    return arr[~np.isnan(arr)]
-
-def defined_inds(arr):
-    ''' Retrurns the indices of the values of the array that are not-nan '''
     return (~np.isnan(arr)).nonzero()[0]
+
+def defined_inds(arr, inds):
+    ''' Retrurns the indices of the values of the array that are not-nan '''
+    return inds[(~np.isnan(arr[inds])).nonzero()[0]]
 
 
 @nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
