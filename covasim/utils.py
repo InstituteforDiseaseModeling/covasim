@@ -158,7 +158,7 @@ def choose(max_n, n):
     return np.random.choice(max_n, n, replace=False)
 
 
-@nb.njit((nb.float64[:], nb.int64, nb.float64))
+# @nb.njit((nb.float64[:], nb.int64, nb.float64))
 def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False, unique=True):
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
