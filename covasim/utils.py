@@ -107,6 +107,19 @@ def defined(arr):
     return (~np.isnan(arr)).nonzero()[0]
 
 
+def true_inds(inds, arr):
+    ''' Retrurns the indices of the values of the array that are true '''
+    return inds[arr]
+
+def false_inds(inds, arr):
+    ''' Retrurns the indices of the values of the array that are false '''
+    return inds[~arr]
+
+def defined_inds(inds, arr):
+    ''' Retrurns the indices of the values of the array that are not-nan '''
+    return inds[~np.isnan(arr)]
+
+
 @nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
 def binomial(prob):
     ''' A simple Bernoulli (binomial) trial '''

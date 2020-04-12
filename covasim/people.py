@@ -80,16 +80,16 @@ class People(cvb.BasePeople):
         #     bed_constraint = True
 
         # For storing the interim values since used in every subsequent calculation
-        self._is_exposed = cvu.true(self.exposed)
+        self._isexp = cvu.true(self.exposed)
         self.t = t
         self.verbose = True # TODO
 
         counts['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
         counts['new_symptomatic'] += self.check_symptomatic()
-        counts['new_severe']      += self.check_severe()
-        counts['new_critical']    += self.check_critical()
-        counts['new_deaths']      += self.check_death()
-        counts['new_recoveries']  += self.check_recovery()
+        # counts['new_severe']      += self.check_severe()
+        # counts['new_critical']    += self.check_critical()
+        # counts['new_deaths']      += self.check_death()
+        # counts['new_recoveries']  += self.check_recovery()
         # counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
 
         return counts
@@ -169,10 +169,10 @@ class People(cvb.BasePeople):
 
     def check_infectious(self):
         ''' Check if they become infectious '''
-        not_infectious     = cvu.false(self.infectious[self._is_exposed])
-        becomes_infectious = cvu.defined(self.date_symptomatic[not_infectious])
-        infectious_inds    = cvu.true(self.t >= self.date_infectious[becomes_infectious])
-        self.infectious[infectious_inds] = True
+        ni_inds  = cvu.false_inds(self._isexp, self.infectious[self._isexp])
+        bi_inds  = cvu.defined_inds(ni_inds, self.date_symptomatic[ni_inds])
+        inf_inds = cvu.true_inds(bi_inds, self.t >= self.date_infectious[bi_inds])
+        self.infectious[inf_inds] = True
         if self.verbose:
             print('i am infec')
             print('exp', self._is_exposed)
@@ -186,9 +186,9 @@ class People(cvb.BasePeople):
 
     def check_symptomatic(self):
         ''' Check for new progressions to symptomatic '''
-        not_symptomatic     = cvu.false(self.symptomatic[self._is_exposed])
-        becomes_symptomatic = cvu.defined(self.date_symptomatic[not_symptomatic])
-        symptomatic_inds    = cvu.true(self.t >= self.date_symptomatic[becomes_symptomatic])
+        not_symptomatic     = self._is_exposed[cvu.false(self.symptomatic[self._is_exposed])]
+        becomes_symptomatic = not_symptomatic[cvu.defined(self.date_symptomatic[not_symptomatic])]
+        symptomatic_inds    = becomes_symptomatic[cvu.true(self.t >= self.date_symptomatic[becomes_symptomatic])]
         self.symptomatic[symptomatic_inds] = True
         if self.verbose:
             print('i am symp')
