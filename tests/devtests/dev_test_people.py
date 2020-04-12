@@ -18,7 +18,7 @@ sc.toc(label='from people')
 
 ppl3 = people + ppl2
 
-sim = cv.Sim(pop_type='random', pop_size=1000)
+sim = cv.Sim(pop_type='random', pop_size=20000)
 cv.make_people(sim)
 ppl4 = sim.people
 
