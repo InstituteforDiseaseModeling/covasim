@@ -82,7 +82,7 @@ class People(sc.prettyobj):
         ''' Combine two people arrays '''
         newpeople = sc.dcp(self)
         for key in self.keys():
-            newpeople.set(key, np.concatenate([newpeople[key], people2[key]]))
+            newpeople.set(key, np.concatenate([newpeople[key], people2[key]]), die=False) # Allow size mismatch
 
         # Validate
         newpeople.pop_size += people2.pop_size
@@ -121,16 +121,16 @@ class People(sc.prettyobj):
 
 
     def validate(self, die=True, verbose=False):
-        expected = len(self)
-        for key in self.keys:
-            actual = len(self[key])
-            if actual != expected:
+        expected_len = len(self)
+        for key in self.keys():
+            actual_len = len(self[key])
+            if actual_len != expected_len:
                 if die:
-                    errormsg = f'Length of key {key} did not match population size ({actual} vs. {expected})'
+                    errormsg = f'Length of key {key} did not match population size ({actual_len} vs. {expected_len})'
                     raise IndexError(errormsg)
                 else:
                     if verbose:
-                        print(f'Resizing {key} from {actual} to {expected}')
+                        print(f'Resizing {key} from {actual_len} to {expected_len}')
                     self.resize(keys=key)
         return
 
@@ -139,6 +139,7 @@ class People(sc.prettyobj):
         ''' Resize arrays if any mismatches are found '''
         if pop_size is None:
             pop_size = len(self)
+        self.pop_size = pop_size
         if keys is None:
             keys = self.keys()
         keys = sc.promotetolist(keys)
