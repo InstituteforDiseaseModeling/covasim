@@ -4,6 +4,7 @@ Defines the Person class and functions associated with making people.
 
 #%% Imports
 import numpy as np
+import pandas as pd
 import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
@@ -18,27 +19,41 @@ class People(sc.prettyobj):
     A class to perform all the operations on the people.
     '''
 
-    def __init__(self, pop_size=None):
+    def __init__(self, pop_size=None, **kwargs):
 
+        # Handle population size
+        if pop_size is None:
+            pop_size = 0
+        pop_size = int(pop_size)
+        self.pop_size = pop_size
+
+        # Other initialization
+        self._keys = []
         default_dtype = np.float32 # For performance -- 2x faster than float64, the default
 
         # Set person properties -- mostly floats
         for key in cvd.person_props:
+            self._keys.append(key)
             if key == 'uid':
                 self[key] = np.arange(pop_size, dtype=object)
             else:
                 self[key] = np.full(pop_size, np.nan, dtype=default_dtype)
 
-        # Set health states -- only susceptible is true by default
+        # Set health states -- only susceptible is true by default -- booleans
         for key in cvd.person_states:
+            self._keys.append(key)
             if key == 'susceptible':
                 self[key] = np.full(pop_size, True, dtype=bool)
             else:
                 self[key] = np.full(pop_size, False, dtype=bool)
 
-        # Everything else is a float
+        # Set dates and durations -- both floats
         for key in cvd.person_dates + cvd.person_durs:
+            self._keys.append(key)
             self[key] = np.full(pop_size, np.nan, dtype=default_dtype)
+
+        # Store the dtypes used
+        self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
 
         return
 
@@ -53,11 +68,123 @@ class People(sc.prettyobj):
         self.__dict__[key] = value
         return
 
+
+    def __len__(self):
+        ''' This is just a scalar, but validate() and resize() make sure it's right '''
+        return self.pop_size
+
+
+    def __iter__(self):
+        ''' Define the iterator to just be the indices of the array '''
+        return iter(range(len(self)))
+
+    def __add__(self, people2):
+        ''' Combine two people arrays '''
+        newpeople = sc.dcp(self)
+        for key in self.keys():
+            newpeople.set(key, np.concatenate([newpeople[key], people2[key]]))
+
+        # Validate
+        newpeople.pop_size += people2.pop_size
+        newpeople.validate()
+
+        # Reassign UIDs so they're unique
+        newpeople.set('uid', np.arange(len(newpeople)))
+
+        return newpeople
+
+
+    def set(self, key, value, die=True):
+        ''' Ensure sizes and dtypes match '''
+        current = self[key]
+        value = np.array(value, dtype=self._dtypes[key]) # Ensure it's the right type
+        if die and len(value) != len(current):
+            errormsg = f'Length of new array does not match current ({len(value)} vs. {len(current)})'
+            raise IndexError(errormsg)
+        self[key] = value
+        return
+
+
+    def get(self, key):
+        ''' Convenience method '''
+        return self[key]
+
+
+    def keys(self):
+        ''' Returns the name of the states '''
+        return self._keys[:]
+
+
+    def indices(self):
+        ''' The indices of the array '''
+        return np.arange(len(self))
+
+
+    def validate(self, die=True, verbose=False):
+        expected = len(self)
+        for key in self.keys:
+            actual = len(self[key])
+            if actual != expected:
+                if die:
+                    errormsg = f'Length of key {key} did not match population size ({actual} vs. {expected})'
+                    raise IndexError(errormsg)
+                else:
+                    if verbose:
+                        print(f'Resizing {key} from {actual} to {expected}')
+                    self.resize(keys=key)
+        return
+
+
+    def resize(self, pop_size=None, keys=None):
+        ''' Resize arrays if any mismatches are found '''
+        if pop_size is None:
+            pop_size = len(self)
+        if keys is None:
+            keys = self.keys()
+        keys = sc.promotetolist(keys)
+        for key in keys:
+            self[key].resize(pop_size, refcheck=False)
+        return
+
+
+    def to_df(self):
+        ''' Convert to a Pandas dataframe '''
+        df = pd.DataFrame.from_dict({key:self[key] for key in self.keys()})
+        return df
+
+
     def person(self, ind):
+        ''' Method to create person from the people '''
         p = Person()
         for key in cvd.all_person_states:
             setattr(p, key, self[key][ind])
         return p
+
+    def to_people(self):
+        ''' Return all people as a list '''
+        people = []
+        for p in self:
+            person = self.person(p)
+            people.append(person)
+        return people
+
+    def from_people(self, people, resize=True):
+        ''' Convert a list of people back into a People object '''
+
+        # Handle population size
+        pop_size = len(people)
+        if resize:
+            self.resize(pop_size=pop_size)
+
+        # Iterate over people -- slow!
+        for p,person in enumerate(people):
+            for key in self.keys():
+                self[key][p] = getattr(person, key)
+
+        return
+
+
+
 
 
 

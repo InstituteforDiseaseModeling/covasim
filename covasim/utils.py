@@ -2,7 +2,7 @@
 Utilities for running the COVID-ABM
 '''
 
-import numba  as nb # For faster computations
+# import numba  as nb # For faster computations
 import numpy  as np # For numerics
 import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
@@ -77,7 +77,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
 
-    @nb.njit((nb.int64,))
+    # @nb.njit((nb.int64,))
     def set_seed_numba(seed):
         return np.random.seed(seed)
 
@@ -96,51 +96,51 @@ def set_seed(seed=None):
     return
 
 
-@nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
+# @nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
 def binomial(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
-@nb.njit((nb.int64, nb.float64))
+# @nb.njit((nb.int64, nb.float64))
 def n_binomial(n, prob):
     ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
     return (np.random.random(n) < prob).nonzero()[0]
 
-@nb.njit((nb.float64[:],))
+# @nb.njit((nb.float64[:],))
 def binomial_arr(prob_arr):
     ''' Bernoulli trial array -- return boolean '''
     return np.random.random(len(prob_arr)) < prob_arr
 
-@nb.njit((nb.float64[:],))
+# @nb.njit((nb.float64[:],))
 def binomial_inds(prob_arr):
     ''' Bernoulli trial array -- return indices that passed '''
     return binomial_arr(prob_arr).nonzero()[0]
 
 
-@nb.njit((nb.float64, nb.int64))
+# @nb.njit((nb.float64, nb.int64))
 def repeated_binomial(prob, n):
     ''' A repeated Bernoulli (binomial) trial '''
     return np.random.binomial(1, prob, n)
 
 
-@nb.njit((nb.float64, nb.int64[:]))
+# @nb.njit((nb.float64, nb.int64[:]))
 def bernoulli_filter(prob, arr):
     ''' Bernoulli "filter" -- return entries that passed '''
     return arr[n_binomial(len(arr), prob).nonzero()[0]]
 
-@nb.njit((nb.float64[:], nb.int64))
+# @nb.njit((nb.float64[:], nb.int64))
 def multinomial(probs, repeats):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
-@nb.njit((nb.int64,))
+# @nb.njit((nb.int64,))
 def poisson(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
 
-@nb.njit((nb.int64, nb.int64))
+# @nb.njit((nb.int64, nb.int64))
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replace.

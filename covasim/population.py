@@ -85,7 +85,6 @@ def make_people(sim, verbose=None, die=True, reset=False):
     #     people.append(person) # Save them to the dictionary
 
     # Store people
-    sim.popdict = popdict
     sim.people = people
     sim.contact_keys = popdict['contact_keys']
 
