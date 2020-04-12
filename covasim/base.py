@@ -36,10 +36,10 @@ class ParsObj(sc.prettyobj):
         else:
             suggestion = sc.suggest(key, self.pars.keys())
             if suggestion:
-                errormsg = f'Key {key} not found; did you mean "{suggestion}"?'
+                errormsg = f'Key "{key}" not found; did you mean "{suggestion}"?'
             else:
                 all_keys = '\n'.join(list(self.pars.keys()))
-                errormsg = f'Key {key} not found; available keys:\n{all_keys}'
+                errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise KeyError(errormsg)
         return
 
@@ -293,7 +293,7 @@ class BaseSim(ParsObj):
                 try:
                     d[key] = sc.sanitizejson(getattr(self, key))
                 except Exception as E:
-                    errormsg = f'Could not convert {key} to JSON: {str(E)}; continuing...'
+                    errormsg = f'Could not convert "{key}" to JSON: {str(E)}; continuing...'
                     print(errormsg)
 
         if filename is None:
@@ -414,16 +414,40 @@ class BaseSim(ParsObj):
 
 class BasePeople(sc.prettyobj):
     '''
-    A class to handle all the boilerplate for people.
+    A class to handle all the boilerplate for people -- note that everything
+    interesting happens in the People class.
     '''
+
+    def __init__(self, pop_size, *args, **kwargs):
+
+        # Handle population size
+        if pop_size is None:
+            pop_size = 0
+        pop_size = int(pop_size)
+        self.pop_size = pop_size
+
+        # Other initialization
+        self._lock = False
+        self._keys = []
+        self._default_dtype = np.float32 # For performance -- 2x faster than float64, the default
+
+        return
+
 
     def __getitem__(self, key):
         ''' Allow people['attr'] instead of getattr(people, 'attr') '''
-        return self.__dict__[key]
+        if key in self.__dict__:
+            return self.__dict__[key]
+        else:
+            errormsg = f'Key "{key}" is not a valid attribute of people'
+            raise AttributeError(errormsg)
 
 
     def __setitem__(self, key, value):
         ''' Ditto '''
+        if self._lock and key not in self.__dict__:
+            errormsg = f'Key "{key}" is not a valid attribute of people'
+            raise AttributeError(errormsg)
         self.__dict__[key] = value
         return
 
@@ -436,6 +460,7 @@ class BasePeople(sc.prettyobj):
     def __iter__(self):
         ''' Define the iterator to just be the indices of the array '''
         return iter(range(len(self)))
+
 
     def __add__(self, people2):
         ''' Combine two people arrays '''
@@ -485,11 +510,11 @@ class BasePeople(sc.prettyobj):
             actual_len = len(self[key])
             if actual_len != expected_len:
                 if die:
-                    errormsg = f'Length of key {key} did not match population size ({actual_len} vs. {expected_len})'
+                    errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
                     raise IndexError(errormsg)
                 else:
                     if verbose:
-                        print(f'Resizing {key} from {actual_len} to {expected_len}')
+                        print(f'Resizing "{key}" from {actual_len} to {expected_len}')
                     self.resize(keys=key)
         return
 
@@ -531,6 +556,7 @@ class BasePeople(sc.prettyobj):
             setattr(p, key, self[key][ind])
         return p
 
+
     def to_people(self):
         ''' Return all people as a list '''
         people = []
@@ -538,6 +564,7 @@ class BasePeople(sc.prettyobj):
             person = self.person(p)
             people.append(person)
         return people
+
 
     def from_people(self, people, resize=True):
         ''' Convert a list of people back into a People object '''

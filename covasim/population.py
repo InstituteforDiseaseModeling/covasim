@@ -72,17 +72,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
         sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
-    people = cvppl.People(pop_size) # List for storing the people
-    for key in ['uid', 'age', 'sex']:
-        people[key] = popdict[key]
-
-    # for p in range(pop_size): # Loop over each person
-    #     keys = ['uid', 'age', 'sex', 'contacts']
-    #     person_args = {}
-    #     for key in keys:
-    #         person_args[key] = popdict[key][p] # Convert from list to dict
-    #     person = cvppl.Person(pars=sim.pars, **person_args) # Create the person
-    #     people.append(person) # Save them to the dictionary
+    people = cvppl.People(pop_size, **popdict) # List for storing the people
 
     # Store people
     sim.people = people

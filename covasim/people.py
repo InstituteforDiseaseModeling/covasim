@@ -4,6 +4,7 @@ Defines the Person class and functions associated with making people.
 
 #%% Imports
 import numpy as np
+import pandas as pd
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
@@ -20,40 +21,39 @@ class People(cvb.BasePeople):
     '''
 
     def __init__(self, pop_size=None, **kwargs):
-
-        # Handle population size
-        if pop_size is None:
-            pop_size = 0
-        pop_size = int(pop_size)
-        self.pop_size = pop_size
-
-        # Other initialization
-        self._keys = []
-        default_dtype = np.float32 # For performance -- 2x faster than float64, the default
+        super().__init__(pop_size)
 
         # Set person properties -- mostly floats
         for key in cvd.person_props:
             self._keys.append(key)
             if key == 'uid':
-                self[key] = np.arange(pop_size, dtype=object)
+                self[key] = np.arange(self.pop_size, dtype=object)
             else:
-                self[key] = np.full(pop_size, np.nan, dtype=default_dtype)
+                self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
 
         # Set health states -- only susceptible is true by default -- booleans
         for key in cvd.person_states:
             self._keys.append(key)
             if key == 'susceptible':
-                self[key] = np.full(pop_size, True, dtype=bool)
+                self[key] = np.full(self.pop_size, True, dtype=bool)
             else:
-                self[key] = np.full(pop_size, False, dtype=bool)
+                self[key] = np.full(self.pop_size, False, dtype=bool)
 
         # Set dates and durations -- both floats
         for key in cvd.person_dates + cvd.person_durs:
             self._keys.append(key)
-            self[key] = np.full(pop_size, np.nan, dtype=default_dtype)
+            self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
 
         # Store the dtypes used
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
+        self._lock = True # Stop further attributes from being set
+
+        # Store contacts
+        self.contacts = pd.DataFrame(columns=cvd.contact_props)
+
+        # Set any values, if supplied
+        for key,value in kwargs.items():
+            self.set(key, value)
 
         return
 

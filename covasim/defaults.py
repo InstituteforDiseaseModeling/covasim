@@ -7,7 +7,7 @@ import sciris as sc
 
 # Specify all externally visible functions this file defines
 __all__ = ['person_props', 'person_states', 'person_dates', 'person_durs', 'all_person_states',
-           'result_stocks', 'result_flows', 'default_age_data',
+           'contact_props', 'result_stocks', 'result_flows', 'default_age_data',
            'default_colors', 'default_sim_plots', 'default_scen_plots']
 
 # Set the properties of a person
@@ -51,6 +51,15 @@ person_durs = [
 ]
 
 all_person_states = person_props + person_states + person_dates + person_durs
+
+# Properties of contacts
+contact_props = [
+    'p1', # Person 1
+    'p2'  # Person 2
+    'layer', # The layer by which the people are connected
+    'static', # Whether or not this
+    'beta',
+    ]
 
 # A subset of the above states are used for results
 result_stocks = {

@@ -269,7 +269,7 @@ class Sim(cvbase.BaseSim):
         flow_counts = people.update_states(t=t)
 
         # Compute new contacts
-        contacts = people.update_contacts(t=t)
+        people.update_contacts(t=t)
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
@@ -278,8 +278,8 @@ class Sim(cvbase.BaseSim):
             flow_counts['new_infections'] += people.infect(inds=imporation_inds, t=t)
 
         # Compute the probability of transmission
-        sources     = contacts[:, people.source_ind]
-        targets     = contacts[:, people.target_ind]
+        sources     = people.contacts[:, people.source_ind]
+        targets     = people.contacts[:, people.target_ind]
         layer_betas = contacts[:, people.beta_ind]
         betas   = self['beta'] * people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
 
