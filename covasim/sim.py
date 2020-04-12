@@ -281,10 +281,10 @@ class Sim(cvbase.BaseSim):
         sources     = contacts[:, people.source_ind]
         targets     = contacts[:, people.target_ind]
         layer_betas = contacts[:, people.beta_ind]
-        rel_betas   = self['beta'] * people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
+        betas   = self['beta'] * people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
 
         # Calculate actual transmission
-        transmission_inds = cvu.binomial_inds(rel_betas)
+        transmission_inds = cvu.binomial_inds(betas)
         flow_counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
 
         # Apply interventions

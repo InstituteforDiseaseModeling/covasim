@@ -6,6 +6,7 @@ Defines the Person class and functions associated with making people.
 import numpy as np
 import sciris as sc
 from . import utils as cvu
+from . import defaults as cvd
 
 
 # Specify all externally visible functions this file defines
@@ -17,78 +18,118 @@ class People(sc.prettyobj):
     A class to perform all the operations on the people.
     '''
 
-    def __init__(self):
-        self.counts = {}
+    def __init__(self, pop_size=None):
 
-    def update(self, t):
-        ''' Perform all state updates '''
+        default_dtype = np.float32 # For performance -- 2x faster than float64, the default
 
-        counts = {}
+        # Set person properties -- mostly floats
+        for key in cvd.person_props:
+            if key == 'uid':
+                self[key] = np.arange(pop_size, dtype=object)
+            else:
+                self[key] = np.full(pop_size, np.nan, dtype=default_dtype)
 
-        if self.count('severe') > n_beds:
-            bed_constraint = True
+        # Set health states -- only susceptible is true by default
+        for key in cvd.person_states:
+            if key == 'susceptible':
+                self[key] = np.full(pop_size, True, dtype=bool)
+            else:
+                self[key] = np.full(pop_size, False, dtype=bool)
 
-        new_infectious  += people.check_infectious(t=t) # For epople who are exposed and not infectious, check if they begin being infectious
-        new_quarantined += people.check_quar(t=t) # Update if they're quarantined
-        new_symptomatic += person.check_symptomatic(t)
-        new_severe      += person.check_severe(t)
-        new_critical    += person.check_critical(t)
-        new_deaths      += people.check_death(t=t)
-        new_recoveries  += person.check_recovery(t)
+        # Everything else is a float
+        for key in cvd.person_dates + cvd.person_durs:
+            self[key] = np.full(pop_size, np.nan, dtype=default_dtype)
 
-        return counts
-
-
-    def update_contacts(self, t):
-        # Set community contacts
-
-                if 'c' in self['contacts']:
-            n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
-        else:
-            n_comm_contacts = 0
-
-        person_contacts = person.contacts
-        if n_comm_contacts:
-            community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-            person_contacts['c'] = community_contact_inds
+        return
 
 
-    def stuff():
-        thisbeta = beta * \
-                   (asymp_factor if not person.symptomatic else 1.) * \
-                   (diag_factor if person.diagnosed else 1.)
-
-                       this_beta_layer = thisbeta *\
-                                  beta_layers[ckey] *\
-                                  (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
+    def __getitem__(self, key):
+        ''' Allow people['attr'] instead of getattr(people, 'attr') '''
+        return self.__dict__[key]
 
 
-        # Determine who gets infected
-        for ckey in self.contact_keys:
-            contact_ids = person_contacts[ckey]
-            if len(contact_ids):
+    def __setitem__(self, key, value):
+        ''' Ditto '''
+        self.__dict__[key] = value
+        return
 
-                transmission_inds = cvu.bf(this_beta_layer, contact_ids)
-                for contact_ind in transmission_inds: # Loop over people who get infected
-                    target_person = self.people[contact_ind]
-                    if target_person.susceptible: # Skip people who are not susceptible
+    def person(self, ind):
+        p = Person()
+        for key in cvd.all_person_states:
+            setattr(p, key, self[key][ind])
+        return p
 
-                        # See whether we will infect this person
-                        infect_this_person = True # By default, infect them...
-                        if target_person.quarantined:
-                            infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
-                        if infect_this_person:
-                            new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                            sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
-    asymp_factor     = self['asymp_factor']
-        diag_factor      = self['diag_factor']
-        quar_trans_factor= self['quar_trans_factor']
-        quar_acq_factor  = self['quar_acq_factor']
-        quar_period      = self['quar_period']
-        beta_layers      = self['beta_layers']
-        n_beds           = self['n_beds']
-        bed_constraint   = False
+
+    # def update(self, t):
+    #     ''' Perform all state updates '''
+
+    #     counts = {}
+
+    #     if self.count('severe') > n_beds:
+    #         bed_constraint = True
+
+    #     new_infectious  += people.check_infectious(t=t) # For epople who are exposed and not infectious, check if they begin being infectious
+    #     new_quarantined += people.check_quar(t=t) # Update if they're quarantined
+    #     new_symptomatic += person.check_symptomatic(t)
+    #     new_severe      += person.check_severe(t)
+    #     new_critical    += person.check_critical(t)
+    #     new_deaths      += people.check_death(t=t)
+    #     new_recoveries  += person.check_recovery(t)
+
+    #     return counts
+
+
+    # def update_contacts(self, t):
+    #     # Set community contacts
+
+    #             if 'c' in self['contacts']:
+    #         n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
+    #     else:
+    #         n_comm_contacts = 0
+
+    #     person_contacts = person.contacts
+    #     if n_comm_contacts:
+    #         community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
+    #         person_contacts['c'] = community_contact_inds
+
+
+    # def stuff():
+    #     thisbeta = beta * \
+    #                (asymp_factor if not person.symptomatic else 1.) * \
+    #                (diag_factor if person.diagnosed else 1.)
+
+    #                    this_beta_layer = thisbeta *\
+    #                               beta_layers[ckey] *\
+    #                               (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
+
+
+    #     # Determine who gets infected
+    #     for ckey in self.contact_keys:
+    #         contact_ids = person_contacts[ckey]
+    #         if len(contact_ids):
+
+    #             transmission_inds = cvu.bf(this_beta_layer, contact_ids)
+    #             for contact_ind in transmission_inds: # Loop over people who get infected
+    #                 target_person = self.people[contact_ind]
+    #                 if target_person.susceptible: # Skip people who are not susceptible
+
+    #                     # See whether we will infect this person
+    #                     infect_this_person = True # By default, infect them...
+    #                     if target_person.quarantined:
+    #                         infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
+    #                     if infect_this_person:
+    #                         new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+    #                         sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+
+    # asymp_factor     = self['asymp_factor']
+    #     diag_factor      = self['diag_factor']
+    #     quar_trans_factor= self['quar_trans_factor']
+    #     quar_acq_factor  = self['quar_acq_factor']
+    #     quar_period      = self['quar_period']
+    #     beta_layers      = self['beta_layers']
+    #     n_beds           = self['n_beds']
+    #     bed_constraint   = False
 
 
 
@@ -96,25 +137,27 @@ class Person(sc.prettyobj):
     '''
     Class for a single person.
     '''
-    def __init__(self, pars, uid, age, sex, contacts):
+    def __init__(self, pars=None, uid=None, age=-1, sex=-1, contacts=None):
         self.uid         = uid # This person's unique identifier
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
         self.contacts    = contacts # Contacts
-        self.durpars     = pars['dur']  # Store duration parameters
         self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
 
         # Set states
-        self.make_susceptible()
+        self.infected = [] #: Record the UIDs of all people this person infected
+        self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
 
         # Set prognoses
-        prognoses = pars['prognoses']
-        idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
-        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
-        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
-        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
-        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
-        self.OR_no_treat = pars['OR_no_treat']
+        if pars:
+            self.durpars = pars['dur']  # Store duration parameters
+            prognoses = pars['prognoses']
+            idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
+            self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
+            self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
+            self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
+            self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
+            self.OR_no_treat = pars['OR_no_treat']
 
         return
 
@@ -123,43 +166,6 @@ class Person(sc.prettyobj):
         """
         Make person susceptible. This is used during initialization and dynamic resampling
         """
-         # Define states -- listed explicitly for performance reasons
-        self.susceptible   = True
-        self.exposed       = False
-        self.infectious    = False
-        self.symptomatic   = False
-        self.severe        = False
-        self.critical      = False
-        self.tested        = False
-        self.diagnosed     = False
-        self.recovered     = False
-        self.dead          = False
-        self.known_contact = False
-        self.quarantined   = False
-
-        # Define dates
-        self.date_exposed       = None
-        self.date_infectious    = None
-        self.date_symptomatic   = None
-        self.date_severe        = None
-        self.date_critical      = None
-        self.date_tested        = None
-        self.date_diagnosed     = None
-        self.date_recovered     = None
-        self.date_dead          = None
-        self.date_known_contact = None
-        self.date_quarantined   = None
-        self.end_quarantine     = None  # Time at which to release from quarantine
-
-        # Keep track of durations
-        self.dur_exp2inf  = None # Duration from exposure to infectiousness
-        self.dur_inf2sym  = None # Duration from infectiousness to symptoms
-        self.dur_sym2sev  = None # Duration from symptoms to severe symptoms
-        self.dur_sev2crit = None # Duration from symptoms to severe symptoms
-        self.dur_disease  = None # Total duration of disease, from date of exposure to date of recovery or death
-
-        self.infected = [] #: Record the UIDs of all people this person infected
-        self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
 
         return
 

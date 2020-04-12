@@ -10,7 +10,9 @@ import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 from . import version as cvver
 
-__all__ = ['CancelError', 'sample', 'set_seed', 'bt', 'mt', 'pt', 'choose', 'choose_weighted', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
+__all__ = ['CancelError', 'sample', 'set_seed', 'binomial', 'multinomial', 'poisson',
+           'choose', 'choose_weighted', 'check_version', 'git_info', 'fixaxis',
+           'get_doubling_time', 'poisson_test']
 
 class CancelError(Exception):
     pass
@@ -102,7 +104,7 @@ def binomial(prob):
 @nb.njit((nb.int64, nb.float64))
 def n_binomial(n, prob):
     ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
-    return list((np.random.random(n) < prob).nonzero()[0])
+    return (np.random.random(n) < prob).nonzero()[0]
 
 @nb.njit((nb.float64[:],))
 def binomial_arr(prob_arr):
@@ -124,7 +126,7 @@ def repeated_binomial(prob, n):
 @nb.njit((nb.float64, nb.int64[:]))
 def bernoulli_filter(prob, arr):
     ''' Bernoulli "filter" -- return entries that passed '''
-    return arr[(n_binomial(len(arr), prob)).nonzero()[0]]
+    return arr[n_binomial(len(arr), prob).nonzero()[0]]
 
 @nb.njit((nb.float64[:], nb.int64))
 def multinomial(probs, repeats):

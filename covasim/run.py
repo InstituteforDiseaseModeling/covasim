@@ -62,7 +62,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Handle scenarios -- by default, create a baseline scenario
         if scenarios is None:
-            scenarios = sc.dcp(cvd.default_scenario)
+            scenarios = {'baseline':{'name':'Baseline', 'pars':{}}}
         self.scenarios = scenarios
 
         # Handle metapars

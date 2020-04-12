@@ -6,9 +6,53 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['result_stocks', 'result_flows', 'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots', 'default_scenario']
+__all__ = ['person_props', 'person_states', 'person_dates', 'person_durs', 'all_person_states',
+           'result_stocks', 'result_flows', 'default_age_data',
+           'default_colors', 'default_sim_plots', 'default_scen_plots']
 
+# Set the properties of a person
+person_props = [
+    'uid',         # Any (int or str, usually)
+    'age',         # Float
+    'sex',         # Int
+    'symp_prob',   # Float
+    'severe_prob', # Float
+    'crit_prob',   # Float
+    'death_prob',  # Float
+]
 
+# Set the states that a person can be in: these are all booleans per person -- used in people.py
+person_states = [
+    'susceptible',
+    'exposed',
+    'infectious',
+    'symptomatic',
+    'severe',
+    'critical',
+    'tested',
+    'diagnosed',
+    'recovered',
+    'dead',
+    'known_contact',
+    'quarantined',
+]
+
+# Set the dates various events took place: these are floats per person -- used in people.py
+person_dates = [f'date_{state}' for state in person_states]
+person_dates.append('date_quarantined_end')
+
+# Duration of different states: these are floats per person -- used in people.py
+person_durs = [
+    'dur_exp2inf',
+    'dur_inf2sym',
+    'dur_sym2sev',
+    'dur_sev2crit',
+    'dur_disease',
+]
+
+all_person_states = person_props + person_states + person_dates + person_durs
+
+# A subset of the above states are used for results
 result_stocks = {
         'susceptible': 'Number susceptible',
         'exposed':     'Number exposed',
@@ -109,7 +153,3 @@ default_scen_plots = [
             'n_infectious',
             'n_severe',
 ]
-
-
-# The minimal scenario to run -- used in run.py
-default_scenario = {'baseline':{'name':'Baseline', 'pars':{}}}
