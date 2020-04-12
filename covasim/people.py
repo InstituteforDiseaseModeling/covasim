@@ -79,13 +79,16 @@ class People(cvb.BasePeople):
         # if self.count('severe') > n_beds:
         #     bed_constraint = True
 
+        # For storing the interim values since used in every subsequent calculation
+        self._is_exposed = cvu.true(self.exposed)
+
         counts['new_infectious']  += self.check_infectious(t=t) # For people who are exposed and not infectious, check if they begin being infectious
-        counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
-        counts['new_symptomatic'] += self.check_symptomatic(t=t)
-        counts['new_severe']      += self.check_severe(t=t)
-        counts['new_critical']    += self.check_critical(t=t)
-        counts['new_deaths']      += self.check_death(t=t)
-        counts['new_recoveries']  += self.check_recovery(t=t)
+        # counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
+        # counts['new_symptomatic'] += self.check_symptomatic(t=t)
+        # counts['new_severe']      += self.check_severe(t=t)
+        # counts['new_critical']    += self.check_critical(t=t)
+        # counts['new_deaths']      += self.check_death(t=t)
+        # counts['new_recoveries']  += self.check_recovery(t=t)
 
         return counts
 
@@ -160,7 +163,102 @@ class People(cvb.BasePeople):
         return
 
 
-    # Methods to make events occur (infection and diagnosis)
+    #%% Methods for updating state
+
+    def check_infectious(self, t):
+        ''' Check if they become infectious '''
+        not_infectious  = cvu.false(self.infectious[self._is_exposed])
+        infectious_inds = cvu.true(t >= self.date_infectious[not_infectious])
+        self.infectious[infectious_inds] = True
+        return len(infectious_inds)
+
+
+    def check_symptomatic(self, t):
+        ''' Check for new progressions to symptomatic '''
+        not_symptomatic     = cvu.false(self.symptomatic[self._is_exposed])
+        becomes_symptomatic = cvu.defined(self.date_symptomatic[not_symptomatic])
+        symptomatic_inds    = cvu.true(t >= self.date_symptomatic[becomes_symptomatic])
+        self.symptomatic[symptomatic_inds] = True
+        return len(symptomatic_inds)
+
+
+    def check_severe(self, t):
+        ''' Check for new progressions to severe '''
+        not_severe     = cvu.false(self.severe[self._is_exposed])
+        becomes_severe = cvu.defined(self.date_severe[not_severe])
+        severe_inds    = cvu.true(t >= self.date_severe[becomes_severe])
+        self.severe[severe_inds] = True
+        return len(severe_inds)
+
+
+    def check_critical(self, t):
+        ''' Check for new progressions to critical '''
+        not_critical     = cvu.false(self.critical[self._is_exposed])
+        becomes_critical = cvu.defined(self.date_critical[not_critical])
+        critical_inds    = cvu.true(t >= self.date_critical[becomes_critical])
+        self.critical[critical_inds] = True
+        return len(critical_inds)
+
+
+    def check_recovery(self, t):
+        ''' Check if an infected person has recovered '''
+        will_recover   = cvu.defined(self.date_recovered[self._is_exposed])
+        recovered_inds = cvu.true(t >= self.date_recovered[will_recover])
+        self.exposed[recovered_inds]     = False
+        self.infectious[recovered_inds]  = False
+        self.symptomatic[recovered_inds] = False
+        self.severe[recovered_inds]      = False
+        self.critical[recovered_inds]    = False
+        self.recovered[recovered_inds]   = True
+        return len(recovered_inds)
+
+
+    def check_death(self, t):
+        ''' Check whether or not this person died on this timestep  '''
+        will_die   = cvu.defined(self.date_dead[self._is_exposed])
+        dead_inds = cvu.true(t >= self.date_dead[will_die])
+        self.exposed[dead_inds]     = False
+        self.infectious[dead_inds]  = False
+        self.symptomatic[dead_inds] = False
+        self.severe[dead_inds]      = False
+        self.critical[dead_inds]    = False
+        self.recovered[dead_inds]   = False
+        self.dead[dead_inds]        = True
+        return len(dead_inds)
+
+
+    def check_diagnosed(self, t):
+        ''' Check for new diagnoses '''
+        not_diagnosed     = cvu.false(self.diagnosed[self._is_exposed])
+        becomes_diagnosed = cvu.defined(self.date_diagnosed[not_diagnosed])
+        diagnosed_inds    = cvu.true(t >= self.date_diagnosed[becomes_diagnosed])
+        self.diagnosed[diagnosed_inds] = True
+        return len(diagnosed_inds)
+
+
+    def check_quar_begin(self, t, quar_period=None):
+        ''' Check for whether someone has been contacted by a positive'''
+        if (quar_period is not None) and (self.date_known_contact is not None) and (t >= self.date_known_contact):
+            # Begin quarantine
+            was_quarantined = self.quarantined
+            self.quarantine(t, quar_period)
+            self.date_known_contact = None # Clear
+            return not was_quarantined
+        return 0
+
+
+    def check_quar_end(self, t):
+        ''' Check for whether someone is isolating/quarantined'''
+        if self.quarantined and (self.end_quarantine is not None) and (t >= self.end_quarantine):
+            self.quarantined = False # Release from quarantine
+            self.end_quarantine = None # Clear end quarantine time
+            #sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
+        return self.quarantined
+
+
+
+    #%% Methods to make events occur (infection and diagnosis)
+
     def infect(self, inds, t, bed_constraint=None, source=None, verbose=True):
         """
         Infect this person and determine their eventual outcomes.
@@ -329,87 +427,3 @@ class People(cvb.BasePeople):
         return
 
 
-    def check_symptomatic(self, t):
-        ''' Check for new progressions to symptomatic '''
-        not_symptomatic       = ~self.symptomatic
-        becomes_symptomatic   = self.date_symptomatic > 0
-        past_date_symptomatic = t >= self.date_symptomatic
-        inds = not_symptomatic * becomes_symptomatic * past_date_symptomatic # Person is changing to this state
-        self.symptomatic[inds] = True
-        return inds.sum()
-
-
-    def check_severe(self, t):
-        ''' Check for new progressions to severe '''
-        if not self.severe and self.date_severe and t >= self.date_severe: # Person is changing to this state
-            self.severe = True
-            return 1
-        else:
-            return 0
-
-
-    def check_critical(self, t):
-        ''' Check for new progressions to critical '''
-        if not self.critical and self.date_critical and t >= self.date_critical: # Person is changing to this state
-            self.critical = True
-            return 1
-        else:
-            return 0
-
-
-    def check_recovery(self, t):
-        ''' Check if an infected person has recovered '''
-        if not self.recovered and self.date_recovered and t >= self.date_recovered: # It's the day they recover
-            self.exposed     = False
-            self.infectious  = False
-            self.symptomatic = False
-            self.severe      = False
-            self.critical    = False
-            self.recovered   = True
-            return 1
-        else:
-            return 0
-
-
-    def check_death(self, t):
-        ''' Check whether or not this person died on this timestep  '''
-        if not self.dead and self.date_dead and t >= self.date_dead:
-            self.exposed     = False
-            self.infectious  = False
-            self.symptomatic = False
-            self.severe      = False
-            self.critical    = False
-            self.recovered   = False
-            self.dead        = True
-            return 1
-        else:
-            return 0
-
-
-    def check_diagnosed(self, t):
-        ''' Check for new diagnoses '''
-        if not self.diagnosed and self.date_diagnosed and t >= self.date_diagnosed: # Person is changing to this state
-            self.diagnosed = True
-            return 1
-        else:
-            return 0
-
-
-    def check_quar_begin(self, t, quar_period=None):
-        ''' Check for whether someone has been contacted by a positive'''
-        if (quar_period is not None) and (self.date_known_contact is not None) and (t >= self.date_known_contact):
-            # Begin quarantine
-            was_quarantined = self.quarantined
-            self.quarantine(t, quar_period)
-            self.date_known_contact = None # Clear
-            return not was_quarantined
-        return 0
-
-
-    def check_quar_end(self, t):
-        ''' Check for whether someone is isolating/quarantined'''
-        if self.quarantined and (self.end_quarantine is not None) and (t >= self.end_quarantine):
-            self.quarantined = False # Release from quarantine
-            self.end_quarantine = None # Clear end quarantine time
-            #sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
-        return self.quarantined

@@ -442,9 +442,9 @@ class BasePeople(sc.prettyobj):
 
     def __getitem__(self, key):
         ''' Allow people['attr'] instead of getattr(people, 'attr') '''
-        if key in self.__dict__:
+        try:
             return self.__dict__[key]
-        else:
+        except:
             errormsg = f'Key "{key}" is not a valid attribute of people'
             raise AttributeError(errormsg)
 
@@ -500,6 +500,16 @@ class BasePeople(sc.prettyobj):
         return self[key]
 
 
+    def true(self, key):
+        ''' Return indices matching the condition '''
+        return self[key].nonzero()[0]
+
+
+    def false(self, key):
+        ''' Return indices not matching the condition '''
+        return ~self[key].nonzero()[0]
+
+
     def keys(self, which=None):
         ''' Returns the name of the states '''
         if which is None:
@@ -508,7 +518,7 @@ class BasePeople(sc.prettyobj):
             return getattr(self.keylist, which)[:]
 
 
-    def indices(self):
+    def index(self):
         ''' The indices of the array '''
         return np.arange(len(self))
 
