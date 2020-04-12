@@ -15,55 +15,58 @@ outputfile = 'corona_data_scraper.csv'
 log = logging.getLogger("Corona Data Scraper Data Loader")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
+
 # Read in the Corona Data Scraper Data into a dataframe.
 log.info("Loading timeseries data from coronadatascraper.com")
-cds = pd.read_csv("https://coronadatascraper.com/timeseries.csv")
-log.info(f"Loaded {len(cds)} records; now transforming data")
+df = pd.read_csv("https://coronadatascraper.com/timeseries.csv")
+log.info(f"Loaded {len(df)} records; now transforming data")
+
+# We'll rename some of the columns to be consistent
+# with the parameters file.
+# Add change the 'name' field to 'key'
+df = df.rename(columns={'name': 'key', 'cases': 'positives',
+                        'deaths': 'death', 'tested': 'tests'})
+
 
 # Just to be safe, let's sort by name and date. Probably not 
 # necessary but better safe than sorry!.
-cds = cds.sort_values(['name', 'date'])
+df = df.sort_values(['key', 'date'])
 
 # Each data set has a unique name. Let's create groups.
-g = cds.groupby('name')
+g = df.groupby('key')
 
 # The parameter 'day' is the number of days since the first 
 # day of data collection for the group.
-cds['day'] = g['date'].transform(lambda x: (pd.to_datetime(
+df['day'] = g['date'].transform(lambda x: (pd.to_datetime(
     x) - min(pd.to_datetime(x)))).apply(lambda x: x.days)
 
-# We'll 'rename' some of the columns to be consistent
-# with the parameters file.
-cds['positives'] = cds.cases
-cds['death'] = cds.deaths
-cds['tests'] = cds.tested
-cds.drop(['cases', 'deaths', 'tested'], inplace=True, axis=1)
 
 # The Corona Data Scraper Data contains cumulative totals
 # for each group. We want _new_ amounts per the previous
 # (reporting) day. So we 'shift' or lag the data by
 # one.
-cds["positives_lagged"] = g.positives.shift(1)
-cds["death_lagged"] = g.death.shift(1)
-cds['active_lagged'] = g.active.shift(1)
-cds['tests_lagged'] = g.tests.shift(1)
+df["positives_lagged"] = g.positives.shift(1)
+df["death_lagged"] = g.death.shift(1)
+df['active_lagged'] = g.active.shift(1)
+df['tests_lagged'] = g.tests.shift(1)
 
 # And subtract the current number from the previous reported
 # day, filling in the first number with data from the first
 # row of the group. Other N/As will remain N/A.
-cds['new_positives'] = cds.positives.sub(
-    cds.positives_lagged).fillna(cds.positives)
-cds['new_active'] = cds.active.sub(cds.active_lagged).fillna(cds.active)
-cds['new_death'] = cds.death.sub(cds.death_lagged).fillna(cds.death)
-cds['new_tests'] = cds.tests.sub(cds.tests_lagged).fillna(cds.tests)
+df['new_positives'] = df.positives.sub(
+    df.positives_lagged).fillna(df.positives)
+df['new_active'] = df.active.sub(df.active_lagged).fillna(df.active)
+df['new_death'] = df.death.sub(df.death_lagged).fillna(df.death)
+df['new_tests'] = df.tests.sub(df.tests_lagged).fillna(df.tests)
 
 # We'll drop the unneeded lag data.
-cds.drop(['positives_lagged', 'death_lagged', 'active_lagged', 'tests_lagged'], inplace=True, axis=1)
+df.drop(['positives_lagged', 'death_lagged', 'active_lagged', 'tests_lagged'], inplace=True, axis=1)
+ 
 
 # And save it to the data directory.
 here = sc.thisdir(__file__)
 data_home = os.path.join(here, subfolder)
 filepath = sc.makefilepath(filename=outputfile, folder=data_home)
 log.info(f"Saving to {filepath}")
-cds.to_csv(filepath)
+df.to_csv(filepath)
 log.info(f"Script complete")
