@@ -102,7 +102,15 @@ def false(arr):
     ''' Retrurns the indices of the values of the array that are false '''
     return (~arr).nonzero()[0]
 
+def mask(arr, mask_arr):
+    ''' Retrurns the values of the array that are true '''
+    return arr[mask_arr]
+
 def defined(arr):
+    ''' Retrurns the indices of the values of the array that are not-nan '''
+    return arr[~np.isnan(arr)]
+
+def defined_inds(arr):
     ''' Retrurns the indices of the values of the array that are not-nan '''
     return (~np.isnan(arr)).nonzero()[0]
 
