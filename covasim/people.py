@@ -56,6 +56,18 @@ class People(cvb.BasePeople):
 
         return
 
+
+    def set_prognoses(self, pars):
+        ''' Set the prognoses for each person based on age '''
+        prognoses = pars['prognoses']
+        idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
+        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
+        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
+        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
+        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
+        return
+
+
     # def update(self, t):
     #     ''' Perform all state updates '''
 
