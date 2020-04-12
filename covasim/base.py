@@ -610,7 +610,7 @@ class BasePeople(sc.prettyobj):
                 raise TypeError(errormsg)
 
         # Ensure the columns are right and add values if supplied
-        for key,value in {'layer':layer, 'dynamic':dynamic, 'beta':beta}:
+        for key,value in {'layer':layer, 'dynamic':dynamic, 'beta':beta}.items():
             if value is not None:
                 new_df[key] = value
 
@@ -627,18 +627,41 @@ class BasePeople(sc.prettyobj):
         into an edge list.
         '''
 
-        p1s = [] # Person 1 of the contact pair
-        p2s = [] # Person 2 of the contact pair
-        for p,p_contacts in enumerate(contacts):
-            p1s.extend([p]*len(p_contacts)) # e.g. [4, 4, 4, 4]
-            p2s.extend(p_contacts) # e.g. [243, 4538, 7,19]
+        p1    = [] # Person 1 of the contact pair
+        p2    = [] # Person 2 of the contact pair
+        layer = [] # Layers
+        for p,cdict in enumerate(contacts):
+            for key,p_contacts in cdict.items():
+                n = len(p_contacts) # Number of contacts
+                p1.extend([p]*n) # e.g. [4, 4, 4, 4]
+                p2.extend(p_contacts) # e.g. [243, 4538, 7,19]
+                layer.extend([key]*n) # e.g. ['h', 'h', 'h', 'h']
 
         # Turn into a dataframe
-        new_df = self.init_contacts()
-        new_df['p1'] = p1s
-        new_df['p2'] = p2s
+        new_df = self.init_contacts(output=True)
+        new_df['p1']    = p1
+        new_df['p2']    = p2
+        new_df['layer'] = layer
+
+        # Sort and remove duplicates
+        new_df = self.remove_duplicates(new_df)
 
         return new_df
+
+
+    @staticmethod
+    def remove_duplicates(df):
+        ''' Sort the dataframe and remove duplicates '''
+        p1 = df[['p1', 'p2']].values.min(1) # Reassign p1 to be the lower-valued of the two contacts
+        p2 = df[['p1', 'p2']].values.max(1) # Reassign p2 to be the higher-valued of the two contacts
+        df['p1'] = p1
+        df['p2'] = p2
+        df.sort_values(['p1', 'p2'], inplace=True, sort=False) # Sort by p1, then by p2
+        df.drop_duplicates(['p1', 'p2'], inplace=True) # Remove duplicates
+        df = df[df['p1'] != df['p2']] # Remove self connections
+        df.reset_index(inplace=True)
+        return df
+
 
 
 

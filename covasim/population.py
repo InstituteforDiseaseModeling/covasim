@@ -72,11 +72,9 @@ def make_people(sim, verbose=None, die=True, reset=False):
         sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
+    sim.contact_keys = popdict.pop('contact_keys')
     people = cvppl.People(pop_size, **popdict) # List for storing the people
-
-    # Store people
     sim.people = people
-    sim.contact_keys = popdict['contact_keys']
 
     average_age = sum(popdict['age']/pop_size)
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 1, verbose)

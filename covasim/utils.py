@@ -75,7 +75,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
 
-    # @nb.njit((nb.int64,))
+    @nb.njit((nb.int64,))
     def set_seed_numba(seed):
         return np.random.seed(seed)
 

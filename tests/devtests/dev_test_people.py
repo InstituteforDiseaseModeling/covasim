@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     ppl3 = people + ppl2
 
-    sim = cv.Sim()
+    sim = cv.Sim(pop_type='synthpops')
     cv.make_people(sim)
     ppl4 = sim.people
 
