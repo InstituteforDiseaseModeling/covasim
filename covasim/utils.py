@@ -10,12 +10,10 @@ import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
 from . import version as cvver
 
-__all__ = ['CancelError', 'sample', 'set_seed', 'binomial', 'multinomial', 'poisson',
+__all__ = ['sample', 'set_seed', 'binomial', 'multinomial', 'poisson',
            'choose', 'choose_weighted', 'check_version', 'git_info', 'fixaxis',
            'get_doubling_time', 'poisson_test']
 
-class CancelError(Exception):
-    pass
 
 #%% Define helper functions
 

@@ -582,6 +582,24 @@ class BasePeople(sc.prettyobj):
         return
 
 
+    def add_contacts(self, new_contacts):
+        ''' Add new contacts to the array '''
+        if not isinstance(new_contacts, pd.DataFrame):
+            if sc.checktype(new_contacts, 'array'):
+                ncols = new_contacts.shape[1]
+                new_df = pd.DataFrame(data=new_contacts, columns=self.contacts.columns[:ncols])
+            elif isinstance(new_contacts, dict):
+                new_df = pd.DataFrame.from_dict(new_contacts)
+            else:
+                errormsg = f'Cannot understand contacts of type {type(new_contacts)}; expecting dataframe, array, or dict'
+                raise TypeError(errormsg)
+        self.contacts = self.contacts.append(new_df)
+        return
+
+
+
+
+
 class Person(sc.prettyobj):
     '''
     Class for a single person.

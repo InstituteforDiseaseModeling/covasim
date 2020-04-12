@@ -52,6 +52,8 @@ class People(cvb.BasePeople):
         self.contacts = pd.DataFrame(columns=cvd.contact_props)
 
         # Set any values, if supplied
+        if 'contacts' in kwargs:
+            self.add_contacts(kwargs.pop('contacts'))
         for key,value in kwargs.items():
             self.set(key, value)
 
