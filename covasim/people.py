@@ -169,32 +169,32 @@ class People(cvb.BasePeople):
 
     def check_infectious(self):
         ''' Check if they become infectious '''
-        ni_inds  = cvu.false_inds(self._isexp, self.infectious[self._isexp])
-        bi_inds  = cvu.defined_inds(ni_inds, self.date_symptomatic[ni_inds])
-        inf_inds = cvu.true_inds(bi_inds, self.t >= self.date_infectious[bi_inds])
+        ni_inds  = cvu.ifalse(self.infectious, self._isexp)
+        bi_inds  = cvu.idefined(self.date_symptomatic, ni_inds)
+        inf_inds = cvu.itrue(self.t >= self.date_infectious, bi_inds)
         self.infectious[inf_inds] = True
         if self.verbose:
             print('i am infec')
-            print('exp', self._is_exposed)
-            print('not', not_infectious)
-            print('date', self.date_symptomatic[not_infectious])
-            print('become', becomes_infectious)
-            print(len(infectious_inds))
-            print(infectious_inds)
-        return len(infectious_inds)
+            print('exp', self._isexp)
+            print('not', ni_inds)
+            print('date', self.date_symptomatic[ni_inds])
+            print('become', bi_inds)
+            print(len(inf_inds))
+            print(inf_inds)
+        return len(inf_inds)
 
 
     def check_symptomatic(self):
         ''' Check for new progressions to symptomatic '''
-        not_symptomatic     = self._is_exposed[cvu.false(self.symptomatic[self._is_exposed])]
-        becomes_symptomatic = not_symptomatic[cvu.defined(self.date_symptomatic[not_symptomatic])]
-        symptomatic_inds    = becomes_symptomatic[cvu.true(self.t >= self.date_symptomatic[becomes_symptomatic])]
-        self.symptomatic[symptomatic_inds] = True
+        ns_inds   = cvu.ifalse(self.symptomatic, self._isexp)
+        bs_inds   = cvu.idefined(self.date_symptomatic, ns_inds)
+        symp_inds = cvu.itrue(self.t >= self.date_symptomatic, bs_inds)
+        self.symptomatic[symp_inds] = True
         if self.verbose:
             print('i am symp')
-            print(len(symptomatic_inds))
-            print(symptomatic_inds)
-        return len(symptomatic_inds)
+            print(len(symp_inds))
+            print(symp_inds)
+        return len(symp_inds)
 
 
     def check_severe(self):
