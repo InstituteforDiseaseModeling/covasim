@@ -7,6 +7,8 @@ import pylab as pl
 import sciris as sc
 import numba as nb
 
+import dask.array as da
+
 # Set Numpy and Numba types (must match)
 nptype = np.float32
 nbtype = nb.float32
@@ -33,8 +35,8 @@ class NumbaTests(sc.prettyobj):
         self.n = int(n)
         self.npts = npts
         self.keys = keys
-        self.states = {key:np.array(np.random.random(self.n), dtype=nptype) for key in self.keys}
-        self.results = np.zeros(self.npts)
+        self.states = {key:da.array(da.random.random(self.n), dtype=nptype) for key in self.keys}
+        self.results = da.zeros(self.npts)
 
     @property
     def a(self):
@@ -75,6 +77,9 @@ if __name__ == '__main__':
     ns = (1+np.arange(10))*100e3
 
     fig = pl.figure(figsize=(14,22))
+
+    from dask import distributed
+    client = distributed.Client(processes=True, threads_per_worker=2, n_workers=4, memory_limit='2GB')
 
     count = 0
     for which in ['mult', 'cond']:
