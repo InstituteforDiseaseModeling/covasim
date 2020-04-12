@@ -169,9 +169,9 @@ class People(cvb.BasePeople):
 
     def check_infectious(self):
         ''' Check if they become infectious '''
-        not_infectious     = cvu.false_inds(self.infectious, self._is_exposed)
-        becomes_infectious = cvu.defined_inds(self.date_symptomatic, not_infectious)
-        infectious_inds    = cvu.true_inds(self.t >= self.date_infectious[becomes_infectious])
+        not_infectious     = cvu.false(self.infectious[self._is_exposed])
+        becomes_infectious = cvu.defined(self.date_symptomatic[not_infectious])
+        infectious_inds    = cvu.true(self.t >= self.date_infectious[becomes_infectious])
         self.infectious[infectious_inds] = True
         if self.verbose:
             print('i am infec')

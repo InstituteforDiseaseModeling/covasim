@@ -102,21 +102,9 @@ def false(arr):
     ''' Retrurns the indices of the values of the array that are false '''
     return (~arr).nonzero()[0]
 
-def true_inds(arr, inds):
-    ''' Retrurns the indices of the values of the array that are true '''
-    return inds[arr[inds].nonzero()[0]]
-
-def false_inds(arr, inds):
-    ''' Retrurns the indices of the values of the array that are false '''
-    return inds[(~arr[inds]).nonzero()[0]]
-
 def defined(arr):
     ''' Retrurns the indices of the values of the array that are not-nan '''
     return (~np.isnan(arr)).nonzero()[0]
-
-def defined_inds(arr, inds):
-    ''' Retrurns the indices of the values of the array that are not-nan '''
-    return inds[(~np.isnan(arr[inds])).nonzero()[0]]
 
 
 @nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
