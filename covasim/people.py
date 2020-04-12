@@ -58,27 +58,17 @@ class People(cvb.BasePeople):
 
     def set_prognoses(self, pars):
         ''' Set the prognoses for each person based on age '''
-        
         prognoses = pars['prognoses']
+
+        def find_cutoff(age_cutoffs, age):
+            return np.argmax(age_cutoffs > age)  # Index of the age bin to use
+
         age_cutoffs = prognoses['age_cutoffs']
-        
-        rel_symp_prob   = pars['rel_symp_prob']
-        rel_severe_prob = pars['rel_severe_prob']
-        rel_crit_prob   = pars['rel_crit_prob']
-        rel_death_prob  = pars['rel_death_prob']
-
-        symp_probs   = prognoses['symp_probs']
-        severe_probs = prognoses['severe_probs']
-        crit_probs   = prognoses['crit_probs']
-        death_probs  = prognoses['death_probs']
-
-        for age in self.age:
-            ind = np.argmax(age_cutoffs > age)
-            self.symp_prob[ind]   = rel_symp_prob   * symp_probs[ind]
-            self.severe_prob[ind] = rel_severe_prob * severe_probs[ind]
-            self.crit_prob[ind]   = rel_crit_prob   * crit_probs[ind]
-            self.death_prob[ind]  = rel_death_prob  * death_probs[ind]
-            
+        inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=np.int32, count=len(self))
+        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
+        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
+        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
+        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][inds]
         return
 
 
