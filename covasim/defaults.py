@@ -53,13 +53,13 @@ person_durs = [
 all_person_states = person_props + person_states + person_dates + person_durs
 
 # Properties of contacts
-contact_props = [
-    'p1', # Person 1
-    'p2'  # Person 2
-    'layer', # The layer by which the people are connected
-    'static', # Whether or not this
-    'beta',
-    ]
+contact_props = {
+    'p1':      np.int32, # Person 1
+    'p2':      np.int32,  # Person 2
+    'layer':   str, # The layer by which the people are connected
+    'beta':    np.float32, # Default transmissibility for this contact type
+    'dynamic': bool, # Whether or not this contact is dynamic
+}
 
 # A subset of the above states are used for results
 result_stocks = {

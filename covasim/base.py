@@ -430,6 +430,7 @@ class BasePeople(sc.prettyobj):
         self._lock = False
         self._keys = []
         self._default_dtype = np.float32 # For performance -- 2x faster than float64, the default
+        self.init_contacts() # Initialize the contacts
 
         return
 
@@ -582,19 +583,73 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    def add_contacts(self, new_contacts):
+    def init_contacts(self, output=False):
+        ''' Initialize the contacts dataframe with the correct columns and data types '''
+        arr = np.empty((0,), dtype=list(cvd.contact_props.items()))
+        df = pd.DataFrame(arr)
+        if output:
+            return df
+        else:
+            self.contacts = df
+            return
+
+
+    def add_contacts(self, new_contacts, layer=None, dynamic=None, beta=None):
         ''' Add new contacts to the array '''
+
+        # Validate the supplied contacts
         if not isinstance(new_contacts, pd.DataFrame):
             if sc.checktype(new_contacts, 'array'):
-                ncols = new_contacts.shape[1]
-                new_df = pd.DataFrame(data=new_contacts, columns=self.contacts.columns[:ncols])
+                new_df = pd.DataFrame(data=new_contacts)
             elif isinstance(new_contacts, dict):
                 new_df = pd.DataFrame.from_dict(new_contacts)
+            elif isinstance(new_contacts, list): # Assume it's a list of contacts by person, not an edgelist
+                new_df = self.make_edgelist(new_contacts)
             else:
                 errormsg = f'Cannot understand contacts of type {type(new_contacts)}; expecting dataframe, array, or dict'
                 raise TypeError(errormsg)
+
+        # Ensure the columns are right and add values if supplied
+        for key,value in {'layer':layer, 'dynamic':dynamic, 'beta':beta}:
+            if value is not None:
+                new_df[key] = value
+
+        # Actually include them, and update properties if supplied
         self.contacts = self.contacts.append(new_df)
+
+
         return
+
+
+    def make_edgelist(self, contacts):
+        '''
+        Parse a list of people with a list of contacts per person and turn it
+        into an edge list.
+        '''
+
+        p1s = [] # Person 1 of the contact pair
+        p2s = [] # Person 2 of the contact pair
+        for p,p_contacts in enumerate(contacts):
+            p1s.extend([p]*len(p_contacts)) # e.g. [4, 4, 4, 4]
+            p2s.extend(p_contacts) # e.g. [243, 4538, 7,19]
+
+        # Turn into a dataframe
+        new_df = self.init_contacts()
+        new_df['p1'] = p1s
+        new_df['p2'] = p2s
+
+        return new_df
+
+
+
+
+
+
+    def remove_dynamic_contacts(self):
+        ''' Remove all contacts labeled as dynamic '''
+        self.contacts = self.contacts[~self.contacts['dynamic']]
+        return
+
 
 
 

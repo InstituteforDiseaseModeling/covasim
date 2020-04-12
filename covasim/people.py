@@ -48,9 +48,6 @@ class People(cvb.BasePeople):
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
         self._lock = True # Stop further attributes from being set
 
-        # Store contacts
-        self.contacts = pd.DataFrame(columns=cvd.contact_props)
-
         # Set any values, if supplied
         if 'contacts' in kwargs:
             self.add_contacts(kwargs.pop('contacts'))
