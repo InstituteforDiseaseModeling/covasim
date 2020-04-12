@@ -154,6 +154,17 @@ class People(sc.prettyobj):
         return df
 
 
+    def to_arr(self):
+        ''' Return as numpy array '''
+        arr = np.empty((len(self), len(self.keys())), dtype=np.float32)
+        for k,key in enumerate(self.keys()):
+            if key == 'uid':
+                arr[:,k] = np.arange(len(self))
+            else:
+                arr[:,k] = self[key]
+        return arr
+
+
     def person(self, ind):
         ''' Method to create person from the people '''
         p = Person()

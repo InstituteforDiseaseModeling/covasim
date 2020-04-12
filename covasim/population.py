@@ -111,13 +111,13 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
 
     # Handle sexes and ages
     uids = np.arange(pop_size, dtype=int)
-    sexes = cvu.rbt(sex_ratio, pop_size)
+    sexes = cvu.repeated_binomial(sex_ratio, pop_size)
     age_data_min  = age_data[:,0]
     age_data_max  = age_data[:,1] + 1 # Since actually e.g. 69.999
     age_data_range = age_data_max - age_data_min
     age_data_prob = age_data[:,2]
     age_data_prob /= age_data_prob.sum() # Ensure it sums to 1
-    age_bins = cvu.mt(age_data_prob, pop_size) # Choose age bins
+    age_bins = cvu.multinomial(age_data_prob, pop_size) # Choose age bins
     ages = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(pop_size) # Uniformly distribute within this age bin
 
     # Store output; data duplicated as per-person and list-like formats for convenience
@@ -156,7 +156,7 @@ def make_random_contacts(pop_size, contacts):
     for p in range(pop_size):
         contact_dict = {}
         for key in contact_keys:
-            n_contacts = cvu.pt(contacts[key]) # Draw the number of Poisson contacts for this person
+            n_contacts = cvu.poisson(contacts[key]) # Draw the number of Poisson contacts for this person
             contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
         contacts_list.append(contact_dict)
 
