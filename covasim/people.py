@@ -19,8 +19,8 @@ class People(cvb.BasePeople):
     A class to perform all the operations on the people.
     '''
 
-    def __init__(self, pop_size=None, **kwargs):
-        super().__init__(pop_size)
+    def __init__(self, pars=None, pop_size=None, **kwargs):
+        super().__init__(pars, pop_size)
 
         # Set person properties -- mostly floats
         for key in cvd.person_props:
@@ -56,16 +56,18 @@ class People(cvb.BasePeople):
         return
 
 
-    def set_prognoses(self, pars):
+    def set_prognoses(self, pars=None):
         ''' Set the prognoses for each person based on age '''
-        prognoses = pars['prognoses']
+        if pars is None:
+            pars = self.pars
 
         def find_cutoff(age_cutoffs, age):
             return np.argmax(age_cutoffs > age)  # Index of the age bin to use
 
+        prognoses = pars['prognoses']
         age_cutoffs = prognoses['age_cutoffs']
         inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=np.int32, count=len(self))
-        self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
+        self.symp_prob   = self.pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
         self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
         self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
         self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][inds]

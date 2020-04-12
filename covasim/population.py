@@ -73,7 +73,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
 
     # Actually create the people
     sim.contact_keys = popdict.pop('contact_keys')
-    people = cvppl.People(pop_size, **popdict) # List for storing the people
+    people = cvppl.People(sim.pars, **popdict) # List for storing the people
     sim.people = people
 
     average_age = sum(popdict['age']/pop_size)

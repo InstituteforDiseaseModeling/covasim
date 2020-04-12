@@ -418,11 +418,17 @@ class BasePeople(sc.prettyobj):
     interesting happens in the People class.
     '''
 
-    def __init__(self, pop_size, *args, **kwargs):
+    def __init__(self, pars=None, pop_size=None, *args, **kwargs):
 
-        # Handle population size
+
+
+        # Handle pars and population size
+        self.pars = pars
         if pop_size is None:
-            pop_size = 0
+            if pars is not None:
+                pop_size = pars['pop_size']
+            else:
+                pop_size = 0
         pop_size = int(pop_size)
         self.pop_size = pop_size
 
