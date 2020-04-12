@@ -309,21 +309,18 @@ class Sim(cvbase.BaseSim):
             new_infections += people.infect(inds=imporation_inds, t=t)
 
         # Update the state of everyone
-        people.update(t=t)
+        counts = people.update(t=t)
 
-        people.check_infectious(t=t) # For epople who are exposed and not infectious, check if they begin being infectious
+        new_infectious  += people.check_infectious(t=t) # For epople who are exposed and not infectious, check if they begin being infectious
         new_quarantined += people.check_quar(t=t) # Update if they're quarantined
-        new_deaths += people.check_death(t=t)
-        new_recoveries += person.check_recovery(t)
-
-        # Check whether the person recovered on this timestep
-        new_recovery =
-
+        new_symptomatic += person.check_symptomatic(t)
+        new_severe      += person.check_severe(t)
+        new_critical    += person.check_critical(t)
+        new_deaths      += people.check_death(t=t)
+        new_recoveries  += person.check_recovery(t)
 
             # Check symptoms and diagnosis
-            new_symptomatic += person.check_symptomatic(t)
-            new_severe      += person.check_severe(t)
-            new_critical    += person.check_critical(t)
+
             if n_severe > n_beds:
                 bed_constraint = True
 

@@ -9,7 +9,75 @@ from . import utils as cvu
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['Person']
+__all__ = ['People', 'Person']
+
+
+class People(list):
+    '''
+    A tiny class to handle the display of a very large number of people, which is
+    prohibitively slow to print to screen. This is really just a list, except with
+    the repr of an odict, and with a keys() method. It also has shortcuts for "filtering
+    in" (i.e., keeping people with a certain attribute) and "filtering out" (removing
+    people with a certain attribute).
+    '''
+
+    def filter_in(self, attr):
+        '''
+        Filter in based on an attribute.
+
+        Args:
+            attr (str): The attribute to filter on.
+
+        Example:
+            susceptibles = sim.people.filter_in('susceptible')
+        '''
+        return filter(lambda person: getattr(person, attr), self)
+
+
+    def filter_out(self, attr):
+        '''
+        Filter out based on an attribute.
+
+        Args:
+            attr (str): The attribute to filter on.
+
+        Example:
+            not_susceptibles = sim.people.filter_out('susceptible')
+        '''
+        return filter(lambda person: not getattr(person, attr), self)
+
+
+    def count_in(self, attr):
+        ''' Simple method to count people in '''
+        return len(list(self.filter_in(attr)))
+
+
+    def count_out(self, attr):
+        ''' Simple method to count people out '''
+        return len(list(self.filter_out(attr)))
+
+
+    def extract(self, attr):
+        '''
+        Return a list of a given attribute for every person.
+
+        Args:
+            attr (str): The attribute to extract.
+
+        Example:
+            ages = sim.people.extract('age')
+        '''
+        return [getattr(person, attr) for person in self]
+
+
+    def keys(self):
+        ''' Convenience method to list the "keys" of the list '''
+        return list(range(len(self)))
+
+
+    def __repr__(self, *args, **kwargs):
+        ''' Why this class exists: better repr than a regular list '''
+        return sc.odict.__repr__(self) # Use the odict repr to skip large numbers of people
 
 class Person(sc.prettyobj):
     '''
