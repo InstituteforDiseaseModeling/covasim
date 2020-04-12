@@ -18,17 +18,19 @@ class NumbaTests(sc.prettyobj):
     def __init__(self, n=400e3, npts=1000):
         self.n = int(n)
         self.npts = npts
-        self.keys = ['a','b']
-        self.states = {key:np.random.random(self.n) for key in self.keys}
-        self.results = np.zeros(self.npts)
+        self.a = np.random.random(n)
+        self.b = np.random.random(n)
+        # self.keys = ['a','b']
+        # self.states = {key:np.random.random(self.n) for key in self.keys}
+        self.results = np.zeros(npts)
 
-    @property
-    def a(self):
-        return self.states['a']
+    # @property
+    # def a(self):
+    #     return self.states['a']
 
-    @property
-    def b(self):
-        return self.states['b']
+    # @property
+    # def b(self):
+    #     return self.states['b']
 
     def next_mult(self, t):
         self.results[t] += (self.a * self.b).sum()
