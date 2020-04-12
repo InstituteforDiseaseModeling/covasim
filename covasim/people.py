@@ -74,7 +74,7 @@ class People(cvb.BasePeople):
     def update_states(self, t):
         ''' Perform all state updates '''
 
-        counts = {key:0 for key in cvd.results_flows}
+        counts = {key:0 for key in cvd.new_result_flows}
 
         # if self.count('severe') > n_beds:
         #     bed_constraint = True

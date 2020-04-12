@@ -6,8 +6,8 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['PeopleKeys', 'result_stocks', 'result_flows', 'default_age_data',
-           'default_colors', 'default_sim_plots', 'default_scen_plots']
+__all__ = ['PeopleKeys', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
+           'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots']
 
 class PeopleKeys(sc.prettyobj):
     ''' For storing all the keys relating to a person and people '''
@@ -88,6 +88,10 @@ result_flows = {'infections':  'infections',
                 'deaths':      'deaths',
                 'quarantined': 'quarantined people',
 }
+
+# Define these here as well
+new_result_flows = [f'new_{key}' for key in result_flows.keys()]
+cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([

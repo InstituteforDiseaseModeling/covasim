@@ -284,7 +284,7 @@ class Sim(cvbase.BaseSim):
 
         # Calculate actual transmission
         # transmission_inds = cvu.binomial_inds(betas)
-        transmission_inds = cvu.bernoulli_filter(self['beta'], targets)
+        transmission_inds = cvu.bernoulli_filter(np.float32(self['beta']), np.int32(targets))
         flow_counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
 
         # Apply interventions
@@ -294,12 +294,12 @@ class Sim(cvbase.BaseSim):
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
-        for key in cvd.results_stocks.keys():
-            self.results[key][t] = people.count(key)
+        for key in cvd.result_stocks.keys():
+            self.results[f'n_{key}'][t] = people[key].sum()
         self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds']>0 else np.nan
 
         # Update counts for this time step: flows
-        for key,count in flow_counts:
+        for key,count in flow_counts.items():
             self.results[key][t] = count
 
         self.t += 1
