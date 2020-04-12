@@ -158,7 +158,7 @@ class People(cvb.BasePeople):
                 self[key][inds] = False
 
         for key in self.keylist.dates + self.keylist.durs:
-            self[key][inds] = None
+            self[key][inds] = np.nan
 
         return
 
@@ -236,24 +236,24 @@ class People(cvb.BasePeople):
         return len(diagnosed_inds)
 
 
-    def check_quar_begin(self, t, quar_period=None):
-        ''' Check for whether someone has been contacted by a positive'''
-        if (quar_period is not None) and (self.date_known_contact is not None) and (t >= self.date_known_contact):
-            # Begin quarantine
-            was_quarantined = self.quarantined
-            self.quarantine(t, quar_period)
-            self.date_known_contact = None # Clear
-            return not was_quarantined
-        return 0
+    # def check_quar_begin(self, t, quar_period=None):
+    #     ''' Check for whether someone has been contacted by a positive'''
+    #     if (quar_period is not None) and (self.date_known_contact is not None) and (t >= self.date_known_contact):
+    #         # Begin quarantine
+    #         was_quarantined = self.quarantined
+    #         self.quarantine(t, quar_period)
+    #         self.date_known_contact = None # Clear
+    #         return not was_quarantined
+    #     return 0
 
 
-    def check_quar_end(self, t):
-        ''' Check for whether someone is isolating/quarantined'''
-        if self.quarantined and (self.end_quarantine is not None) and (t >= self.end_quarantine):
-            self.quarantined = False # Release from quarantine
-            self.end_quarantine = None # Clear end quarantine time
-            #sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
-        return self.quarantined
+    # def check_quar_end(self, t):
+    #     ''' Check for whether someone is isolating/quarantined'''
+    #     if self.quarantined and (self.end_quarantine is not None) and (t >= self.end_quarantine):
+    #         self.quarantined = False # Release from quarantine
+    #         self.end_quarantine = None # Clear end quarantine time
+    #         #sc.printv(f'Released {self.uid} from quarantine', 2, verbose)
+    #     return self.quarantined
 
 
 
@@ -355,75 +355,75 @@ class People(cvb.BasePeople):
         return n_infections # For incrementing counters
 
 
-    def trace_dynamic_contacts(self, trace_probs, trace_time, ckey='c'):
-        '''
-        A method to trace a person's dynamic contacts, e.g. community
-        '''
-        if ckey in self.contacts:
-            this_trace_prob = trace_probs[ckey]
-            new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
-            self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
-        return
+    # def trace_dynamic_contacts(self, trace_probs, trace_time, ckey='c'):
+    #     '''
+    #     A method to trace a person's dynamic contacts, e.g. community
+    #     '''
+    #     if ckey in self.contacts:
+    #         this_trace_prob = trace_probs[ckey]
+    #         new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
+    #         self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
+    #     return
 
 
-    def trace_static_contacts(self, trace_probs, trace_time):
-        '''
-        A method to trace a person's static contacts, e.g. home, school, work
-        '''
-        contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
-        for ckey in self.contacts.keys():
-            if ckey != 'c': # Don't trace community contacts - it's too hard, because they change every timestep
-                these_contacts = self.contacts[ckey]
-                if len(these_contacts):
-                    this_trace_prob = trace_probs[ckey]
-                    new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
-                    contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
+    # def trace_static_contacts(self, trace_probs, trace_time):
+    #     '''
+    #     A method to trace a person's static contacts, e.g. home, school, work
+    #     '''
+    #     contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
+    #     for ckey in self.contacts.keys():
+    #         if ckey != 'c': # Don't trace community contacts - it's too hard, because they change every timestep
+    #             these_contacts = self.contacts[ckey]
+    #             if len(these_contacts):
+    #                 this_trace_prob = trace_probs[ckey]
+    #                 new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
+    #                 contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
 
-        return contactable_ppl
-
-
-    def test(self, t, test_sensitivity, loss_prob=0, test_delay=0):
-        '''
-        Method to test a person.
-
-        Args:
-            t (int): current timestep
-            test_sensitivity (float): probability of a true positive
-            loss_prob (float): probability of loss to follow-up
-            test_delay (int): number of days before test results are ready
-
-        Returns:
-            Whether or not this person tested positive
-        '''
-        self.tested = True
-
-        if self.date_tested is None: # First time tested
-            self.date_tested = [t]
-        else:
-            self.date_tested.append(t) # They're been tested before; append new test date. TODO: adjust testing probs based on whether a person's a repeat tester?
-
-        if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
-            needs_diagnosis = not self.date_diagnosed or self.date_diagnosed and self.date_diagnosed > t+test_delay
-            if needs_diagnosis and not cvu.bt(loss_prob): # They're not lost to follow-up
-                self.date_diagnosed = t + test_delay
-            return 1
-        else:
-            return 0
+    #     return contactable_ppl
 
 
-    def quarantine(self, t, quar_period):
-        '''
-        Quarantine a person starting on day t
-        If a person is already quarantined, this will extend their quarantine
-        '''
-        self.quarantined = True
+    # def test(self, t, test_sensitivity, loss_prob=0, test_delay=0):
+    #     '''
+    #     Method to test a person.
 
-        new_end_quarantine = t + quar_period
-        if self.end_quarantine is None or self.end_quarantine is not None and new_end_quarantine > self.end_quarantine:
-            self.end_quarantine = new_end_quarantine
+    #     Args:
+    #         t (int): current timestep
+    #         test_sensitivity (float): probability of a true positive
+    #         loss_prob (float): probability of loss to follow-up
+    #         test_delay (int): number of days before test results are ready
 
-        #sc.printv(f'Person {self.uid} has been quarantined until {self.end_quarantine}', 2, self.verbose)
+    #     Returns:
+    #         Whether or not this person tested positive
+    #     '''
+    #     self.tested = True
 
-        return
+    #     if self.date_tested is None: # First time tested
+    #         self.date_tested = [t]
+    #     else:
+    #         self.date_tested.append(t) # They're been tested before; append new test date. TODO: adjust testing probs based on whether a person's a repeat tester?
+
+    #     if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
+    #         needs_diagnosis = not self.date_diagnosed or self.date_diagnosed and self.date_diagnosed > t+test_delay
+    #         if needs_diagnosis and not cvu.bt(loss_prob): # They're not lost to follow-up
+    #             self.date_diagnosed = t + test_delay
+    #         return 1
+    #     else:
+    #         return 0
+
+
+    # def quarantine(self, t, quar_period):
+    #     '''
+    #     Quarantine a person starting on day t
+    #     If a person is already quarantined, this will extend their quarantine
+    #     '''
+    #     self.quarantined = True
+
+    #     new_end_quarantine = t + quar_period
+    #     if self.end_quarantine is None or self.end_quarantine is not None and new_end_quarantine > self.end_quarantine:
+    #         self.end_quarantine = new_end_quarantine
+
+    #     #sc.printv(f'Person {self.uid} has been quarantined until {self.end_quarantine}', 2, self.verbose)
+
+    #     return
 
 
