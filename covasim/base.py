@@ -656,8 +656,8 @@ class BasePeople(sc.prettyobj):
         p2 = df[['p1', 'p2']].values.max(1) # Reassign p2 to be the higher-valued of the two contacts
         df['p1'] = p1
         df['p2'] = p2
-        df = df.sort_values(['p1', 'p2']) # Sort by p1, then by p2
-        df = df.drop_duplicates(['p1', 'p2']) # Remove duplicates
+        df.sort_values(['p1', 'p2'], inplace=True) # Sort by p1, then by p2
+        df.drop_duplicates(['p1', 'p2'], inplace=True) # Remove duplicates
         df = df[df['p1'] != df['p2']] # Remove self connections
         df.reset_index(inplace=True)
         return df
