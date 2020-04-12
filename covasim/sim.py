@@ -254,42 +254,11 @@ class Sim(cvbase.BaseSim):
         if t >= self.npts:
             return
 
-        # Zero counts for this time step: stocks
-        n_susceptible   = 0
-        n_exposed       = 0
-        n_infectious    = 0
-        n_symptomatic   = 0
-        n_severe        = 0
-        n_critical      = 0
-        n_diagnosed     = 0
-        n_quarantined   = 0
-
-        # Zero counts for this time step: flows
-        new_recoveries  = 0
-        new_deaths      = 0
-        new_infections  = 0
-        new_symptomatic = 0
-        new_severe      = 0
-        new_critical    = 0
-        new_quarantined = 0
-
         # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
         people           = self.people
-        pop_size         = people.len()
+        pop_size         = people.n
         beta             = self['beta']
-        asymp_factor     = self['asymp_factor']
-        diag_factor      = self['diag_factor']
-        quar_trans_factor= self['quar_trans_factor']
-        quar_acq_factor  = self['quar_acq_factor']
-        quar_period      = self['quar_period']
-        beta_layers      = self['beta_layers']
-        n_beds           = self['n_beds']
-        bed_constraint   = False
-        n_imports        = cvu.pt(self['n_imports']) # Imported cases
-        if 'c' in self['contacts']:
-            n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
-        else:
-            n_comm_contacts = 0
+        n_imports        = cvu.poisson(self['n_imports']) # Imported cases
 
         # Print progress
         if verbose >= 1:
@@ -303,67 +272,39 @@ class Sim(cvbase.BaseSim):
         if self['rescale']:
             self.rescale()
 
-        # Randomly infect some people (imported infections)
-        if n_imports>0:
-            imporation_inds = cvu.choose(max_n=pop_size, n=n_imports)
-            new_infections += people.infect(inds=imporation_inds, t=t)
-
         # Update the state of everyone
-        counts = people.update(t=t)
+        counts = people.update_states(t=t)
 
         # Compute new contacts
         contacts = people.update_contacts(t=t)
+
+        # Randomly infect some people (imported infections)
+        if n_imports>0:
+            imporation_inds = cvu.choose(max_n=pop_size, n=n_imports)
+            counts['new_infections'] += people.infect(inds=imporation_inds, t=t)
 
         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
         sources     = contacts[:,0]
         targets     = contacts[:,1]
         layer_betas = contacts[:,2]
-        rel_betas  = people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
+        rel_betas  = beta * people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
+        transmission_inds = cvu.binomial_inds(rel_betas)
+        counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
 
-
-        # Determine who gets infected
-        for ckey in self.contact_keys:
-            contact_ids = person_contacts[ckey]
-            if len(contact_ids):
-
-                transmission_inds = cvu.bf(this_beta_layer, contact_ids)
-                for contact_ind in transmission_inds: # Loop over people who get infected
-                    target_person = self.people[contact_ind]
-                    if target_person.susceptible: # Skip people who are not susceptible
-
-                        # See whether we will infect this person
-                        infect_this_person = True # By default, infect them...
-                        if target_person.quarantined:
-                            infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
-                        if infect_this_person:
-                            new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                            sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
-
-        # End of person loop; apply interventions
+        # Apply interventions
         for intervention in self['interventions']:
             intervention.apply(self)
         if self['interv_func'] is not None: # Apply custom intervention function
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
-        self.results['n_susceptible'][t]  = n_susceptible - new_infections
-        self.results['n_exposed'][t]      = n_exposed
-        self.results['n_infectious'][t]   = n_infectious # Tracks total number infectious at this timestep
-        self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
-        self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
-        self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
-        self.results['n_diagnosed'][t]    = n_diagnosed # Tracks total number of diagnosed cases at this timestep
-        self.results['n_quarantined'][t]  = n_quarantined # Tracks number currently quarantined
-        self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else np.nan
+        for key in cvd.results_stocks:
+            self.results[key][t] = people.count(key)
+        self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds']>0 else np.nan
 
         # Update counts for this time step: flows
-        self.results['new_infections'][t]  = new_infections # New infections on this timestep
-        self.results['new_recoveries'][t]  = new_recoveries # Tracks new recoveries on this timestep
-        self.results['new_symptomatic'][t] = new_symptomatic
-        self.results['new_severe'][t]      = new_severe
-        self.results['new_critical'][t]    = new_critical
-        self.results['new_deaths'][t]      = new_deaths
-        self.results['new_quarantined'][t] = new_quarantined
+        for key,val in counts:
+            self.results[key][t]  = val
 
         self.t += 1
 

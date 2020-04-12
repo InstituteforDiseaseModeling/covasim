@@ -95,39 +95,45 @@ def set_seed(seed=None):
 
 
 @nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
-def bt(prob):
+def binomial(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
-def bta(n, prob_arr):
-    ''' Bernoulli trial array -- return entries that passed '''
-    return np.random.random(n) < prob_arr
+@nb.njit((nb.int64, nb.float64))
+def n_binomial(n, prob):
+    ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
+    return list((np.random.random(n) < prob).nonzero()[0])
+
+@nb.njit((nb.float64[:],))
+def binomial_arr(prob_arr):
+    ''' Bernoulli trial array -- return boolean '''
+    return np.random.random(len(prob_arr)) < prob_arr
+
+@nb.njit((nb.float64[:],))
+def binomial_inds(prob_arr):
+    ''' Bernoulli trial array -- return indices that passed '''
+    return binomial_arr(prob_arr).nonzero()[0]
+
 
 @nb.njit((nb.float64, nb.int64))
-def rbt(prob, n):
+def repeated_binomial(prob, n):
     ''' A repeated Bernoulli (binomial) trial '''
     return np.random.binomial(1, prob, n)
 
 
-@nb.njit((nb.float64, nb.int64))
-def mbt(prob, n):
-    ''' Multiple Bernoulli (binomial) trials -- return indices that passed '''
-    return list((np.random.random(n) < prob).nonzero()[0])
-
-
 @nb.njit((nb.float64, nb.int64[:]))
-def bf(prob, arr):
+def bernoulli_filter(prob, arr):
     ''' Bernoulli "filter" -- return entries that passed '''
-    return list(arr[(np.random.random(len(arr)) < prob).nonzero()[0]])
+    return arr[(n_binomial(len(arr), prob)).nonzero()[0]]
 
 @nb.njit((nb.float64[:], nb.int64))
-def mt(probs, repeats):
+def multinomial(probs, repeats):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
 @nb.njit((nb.int64,))
-def pt(rate):
+def poisson(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
@@ -196,7 +202,7 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     tries = 0
     while len(unique_inds)<n_samples and tries<max_tries:
         tries += 1
-        raw_inds = mt(probs, int(n_samples*overshoot)) # Return raw indices, with replacement
+        raw_inds = multinomial(probs, int(n_samples*overshoot)) # Return raw indices, with replacement
         if not unique:
             return raw_inds
         mixed_inds = np.hstack((unique_inds, raw_inds))

@@ -41,6 +41,12 @@ class People(sc.prettyobj):
 
     def update_contacts(self, t):
         # Set community contacts
+
+                if 'c' in self['contacts']:
+            n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
+        else:
+            n_comm_contacts = 0
+
         person_contacts = person.contacts
         if n_comm_contacts:
             community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
@@ -55,6 +61,34 @@ class People(sc.prettyobj):
                        this_beta_layer = thisbeta *\
                                   beta_layers[ckey] *\
                                   (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
+
+
+        # Determine who gets infected
+        for ckey in self.contact_keys:
+            contact_ids = person_contacts[ckey]
+            if len(contact_ids):
+
+                transmission_inds = cvu.bf(this_beta_layer, contact_ids)
+                for contact_ind in transmission_inds: # Loop over people who get infected
+                    target_person = self.people[contact_ind]
+                    if target_person.susceptible: # Skip people who are not susceptible
+
+                        # See whether we will infect this person
+                        infect_this_person = True # By default, infect them...
+                        if target_person.quarantined:
+                            infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
+                        if infect_this_person:
+                            new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+                            sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
+
+    asymp_factor     = self['asymp_factor']
+        diag_factor      = self['diag_factor']
+        quar_trans_factor= self['quar_trans_factor']
+        quar_acq_factor  = self['quar_acq_factor']
+        quar_period      = self['quar_period']
+        beta_layers      = self['beta_layers']
+        n_beds           = self['n_beds']
+        bed_constraint   = False
 
 
 
