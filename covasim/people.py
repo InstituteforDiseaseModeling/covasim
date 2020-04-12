@@ -60,10 +60,11 @@ class People(cvb.BasePeople):
         ''' Set the prognoses for each person based on age '''
         prognoses = pars['prognoses']
 
-        def find_cutoff(age):
-            return np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
+        def find_cutoff(age_cutoffs, age):
+            return np.argmax(age_cutoffs > age)  # Index of the age bin to use
 
-        inds = np.apply_along_axis(self.age)
+        age_cutoffs = prognoses['age_cutoffs']
+        inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=np.int32, count=len(self))
         self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
         self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
         self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]

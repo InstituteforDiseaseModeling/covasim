@@ -1,38 +1,36 @@
 import sciris as sc
 import covasim as cv
 
+sc.tic()
 
-import warnings
-warnings.simplefilter("error")
+people = cv.People(pop_size=2000)
 
-if __name__ == '__main__':
+sc.toc(label='default')
 
-    sc.tic()
+plist = people.to_people()
 
-    people = cv.People(pop_size=20000)
+sc.toc(label='to people')
 
-    sc.toc(label='default')
+ppl2 = cv.People()
+ppl2.from_people(plist)
 
-    plist = people.to_people()
+sc.toc(label='from people')
 
-    sc.toc(label='to people')
+ppl3 = people + ppl2
 
-    ppl2 = cv.People()
-    ppl2.from_people(plist)
+sim = cv.Sim(pop_type='random', pop_size=1000)
+cv.make_people(sim)
+ppl4 = sim.people
 
-    sc.toc(label='from people')
+sc.toc(label='as sim')
 
-    ppl3 = people + ppl2
+df = ppl4.to_df()
+arr = ppl4.to_arr()
 
-    sim = cv.Sim(pop_type='synthpops')
-    cv.make_people(sim)
-    ppl4 = sim.people
+sc.toc(label='to df/arr')
 
-    sc.toc(label='as sim')
+sc.toc()
 
-    df = ppl4.to_df()
-    arr = ppl4.to_arr()
+sim.people.set_prognoses(sim.pars)
 
-    sc.toc(label='to df/arr')
-
-    sc.toc()
+sc.toc(label='prognoses')
