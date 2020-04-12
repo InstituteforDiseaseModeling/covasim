@@ -284,7 +284,7 @@ class Sim(cvbase.BaseSim):
 
         # Calculate actual transmission
         # transmission_inds = cvu.binomial_inds(betas)
-        transmission_inds = cvu.bernoulli_filter(np.float32(self['beta']), np.int32(targets))
+        transmission_inds = cvu.bernoulli_filter(np.float64(self['beta']), np.int64(targets))
         flow_counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
 
         # Apply interventions
