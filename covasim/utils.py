@@ -25,7 +25,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
         dist (str): the distribution to sample from
         par1 (float): the "main" distribution parameter (e.g. mean)
         par2 (float): the "secondary" distribution parameter (e.g. std)
-        n (int): the number of samples (default=1)
+        size (int): the number of samples (default=1)
 
     Returns:
         A length N array of samples
@@ -94,39 +94,44 @@ def set_seed(seed=None):
     return
 
 
-# @nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
+@nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
 def binomial(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
-# @nb.njit((nb.int64, nb.float64))
+@nb.njit((nb.int64, nb.float64))
 def n_binomial(n, prob):
+    ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
+    return (np.random.random(n) < prob)
+
+@nb.njit((nb.int64, nb.float64))
+def n_binomial_inds(n, prob):
     ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
     return (np.random.random(n) < prob).nonzero()[0]
 
-# @nb.njit((nb.float64[:],))
+@nb.njit((nb.float64[:],))
 def binomial_arr(prob_arr):
     ''' Bernoulli trial array -- return boolean '''
     return np.random.random(len(prob_arr)) < prob_arr
 
-# @nb.njit((nb.float64[:],))
-def binomial_inds(prob_arr):
+@nb.njit((nb.float64[:],))
+def binomial_arr_inds(prob_arr):
     ''' Bernoulli trial array -- return indices that passed '''
     return binomial_arr(prob_arr).nonzero()[0]
 
 
-# @nb.njit((nb.float64, nb.int64))
+@nb.njit((nb.float64, nb.int64))
 def repeated_binomial(prob, n):
     ''' A repeated Bernoulli (binomial) trial '''
     return np.random.binomial(1, prob, n)
 
 
-# @nb.njit((nb.float64, nb.int64[:]))
+@nb.njit((nb.float64, nb.int64[:]))
 def bernoulli_filter(prob, arr):
     ''' Bernoulli "filter" -- return entries that passed '''
     return arr[n_binomial(len(arr), prob).nonzero()[0]]
 
-# @nb.njit((nb.float64[:], nb.int64))
+@nb.njit((nb.float64[:], nb.int64))
 def multinomial(probs, repeats):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
@@ -153,7 +158,7 @@ def choose(max_n, n):
     return np.random.choice(max_n, n, replace=False)
 
 
-# @nb.njit((nb.float64[:], nb.int64, nb.float64))
+@nb.njit((nb.float64[:], nb.int64, nb.float64))
 def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False, unique=True):
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
