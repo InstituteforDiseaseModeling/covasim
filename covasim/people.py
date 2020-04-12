@@ -79,13 +79,13 @@ class People(cvb.BasePeople):
         # if self.count('severe') > n_beds:
         #     bed_constraint = True
 
-        # new_infectious  += people.check_infectious(t=t) # For epople who are exposed and not infectious, check if they begin being infectious
-        # new_quarantined += people.check_quar(t=t) # Update if they're quarantined
-        # new_symptomatic += person.check_symptomatic(t)
-        # new_severe      += person.check_severe(t)
-        # new_critical    += person.check_critical(t)
-        # new_deaths      += people.check_death(t=t)
-        # new_recoveries  += person.check_recovery(t)
+        counts['new_infectious']  += self.check_infectious(t=t) # For people who are exposed and not infectious, check if they begin being infectious
+        counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
+        counts['new_symptomatic'] += self.check_symptomatic(t=t)
+        counts['new_severe']      += self.check_severe(t=t)
+        counts['new_critical']    += self.check_critical(t=t)
+        counts['new_deaths']      += self.check_death(t=t)
+        counts['new_recoveries']  += self.check_recovery(t=t)
 
         return counts
 
@@ -161,7 +161,7 @@ class People(cvb.BasePeople):
 
 
     # Methods to make events occur (infection and diagnosis)
-    def infect(self, inds, t, bed_constraint=None, source=None):
+    def infect(self, inds, t, bed_constraint=None, source=None, verbose=True):
         """
         Infect this person and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
@@ -170,14 +170,15 @@ class People(cvb.BasePeople):
             * Critical cases either recover or die
 
         Args:
-            t: (int) timestep
+            inds (array): array of people to infect
+            t (int): current timestep
             bed_constraint: (bool) whether or not there is a bed available for this person
             source: (Person instance), if None, then it was a seed infection
 
         Returns:
-            1 (for incrementing counters)
+            count (int): number of people infected
         """
-        n_inds = len(inds)
+        n_infections = len(inds)
         durpars = self.pars['dur']
         self.susceptible[inds]    = False
         self.exposed[inds]        = True
@@ -187,7 +188,7 @@ class People(cvb.BasePeople):
         if bed_constraint is None: bed_constraint = False
 
         # Calculate how long before this person can infect other people
-        self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_inds)
+        self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)
         self.date_infectious[inds] = self.dur_exp2inf[inds] + t
 
         # Use prognosis probabilities to determine what happens to them
@@ -208,24 +209,24 @@ class People(cvb.BasePeople):
         sev_inds = symp_inds[is_sev]
         mild_inds = symp_inds[~is_sev] # Not severe
 
-        # CASE 2a: Mild symptoms, no hospitalization required and no probaility of death
+        # CASE 2.1: Mild symptoms, no hospitalization required and no probaility of death
         dur_mild2rec = cvu.sample(**durpars['mild2rec'], size=len(mild_inds))
         self.date_recovered[mild_inds] = self.date_symptomatic[mild_inds] + dur_mild2rec  # Date they recover
         self.dur_disease[mild_inds] = self.dur_exp2inf[mild_inds] + self.dur_inf2sym[mild_inds] + dur_mild2rec  # Store how long this person had COVID-19
 
-        # CASE 2b: Severe cases: hospitalization required, may become critical
+        # CASE 2.2: Severe cases: hospitalization required, may become critical
         self.dur_sym2sev[sev_inds] = cvu.sample(**durpars['sym2sev'], size=len(sev_inds)) # Store how long this person took to develop severe symptoms
         self.date_severe[sev_inds] = self.date_symptomatic[sev_inds] + self.dur_sym2sev[sev_inds]  # Date symptoms become severe
         is_crit = cvu.binomial_arr(self.crit_prob[sev_inds])  # See if they're a critical case
         crit_inds = sev_inds[is_crit]
         non_crit_inds = sev_inds[~is_crit]
 
-        # Not critical - they will recover
+        # CASE 2.2.1 Not critical - they will recover
         dur_sev2rec = cvu.sample(**durpars['sev2rec'], size=len(non_crit_inds))
         self.date_recovered[non_crit_inds] = self.date_severe[non_crit_inds] + dur_sev2rec  # Date they recover
         self.dur_disease[non_crit_inds] = self.dur_exp2inf[non_crit_inds] + self.dur_inf2sym[non_crit_inds] + self.dur_sym2sev[non_crit_inds] + dur_sev2rec  # Store how long this person had COVID-19
 
-        # CASE 2c: Critical cases: ICU required, may die
+        # CASE 2.2.2: Critical cases: ICU required, may die
         self.dur_sev2crit[crit_inds] = cvu.sample(**durpars['sev2crit'], size=len(crit_inds))
         self.date_critical[crit_inds] = self.date_severe[crit_inds] + self.dur_sev2crit[crit_inds]  # Date they become critical
         this_death_prob = self.death_prob[crit_inds] * (self.pars['OR_no_treat'] if bed_constraint else 1.) # Probability they'll die
@@ -233,21 +234,27 @@ class People(cvb.BasePeople):
         death_inds = crit_inds[is_dead]
         alive_inds = crit_inds[~is_dead]
 
-        # Did not die
+        # CASE 2.2.2.1: Did not die
         dur_crit2rec = cvu.sample(**durpars['crit2rec'], size=len(alive_inds))
         self.date_recovered[alive_inds] = self.date_critical[alive_inds] + dur_crit2rec # Date they recover
         self.dur_disease[alive_inds] = self.dur_exp2inf[alive_inds] + self.dur_inf2sym[alive_inds] + self.dur_sym2sev[alive_inds] + self.dur_sev2crit[alive_inds] + dur_crit2rec  # Store how long this person had COVID-19
 
-        # Did die
+        # CASE 2.2.2.2: Did die
         dur_crit2die = cvu.sample(**durpars['crit2die'], size=len(death_inds))
         self.date_dead[death_inds] = self.date_critical[death_inds] + dur_crit2die # Date of death
         self.dur_disease[death_inds] = self.dur_exp2inf[death_inds] + self.dur_inf2sym[death_inds] + self.dur_sym2sev[death_inds] + self.dur_sev2crit[death_inds] + dur_crit2die   # Store how long this person had COVID-19
+
+        if verbose:
+            print(len(inds))
+            print(inds)
+            print(self.exposed.sum())
+            print(self.infectious.sum())
 
         # if source:
         #     self.infected_by = source.uid
         #     source.infected.append(self.uid)
 
-        return 1 # For incrementing counters
+        return n_infections # For incrementing counters
 
 
     def trace_dynamic_contacts(self, trace_probs, trace_time, ckey='c'):
@@ -321,14 +328,15 @@ class People(cvb.BasePeople):
 
         return
 
-    # Methods to check a person's status
+
     def check_symptomatic(self, t):
         ''' Check for new progressions to symptomatic '''
-        if not self.symptomatic and self.date_symptomatic and t >= self.date_symptomatic: # Person is changing to this state
-            self.symptomatic = True
-            return 1
-        else:
-            return 0
+        not_symptomatic       = ~self.symptomatic
+        becomes_symptomatic   = self.date_symptomatic > 0
+        past_date_symptomatic = t >= self.date_symptomatic
+        inds = not_symptomatic * becomes_symptomatic * past_date_symptomatic # Person is changing to this state
+        self.symptomatic[inds] = True
+        return inds.sum()
 
 
     def check_severe(self, t):
