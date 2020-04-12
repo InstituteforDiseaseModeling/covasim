@@ -431,30 +431,30 @@ class Sim(cvbase.BaseSim):
         Effective reproductive number based on number of people each person infected.
         '''
 
-        # Initialize arrays to hold sources and targets infected each day
-        sources = np.zeros(self.npts)
-        targets = np.zeros(self.npts)
+        # # Initialize arrays to hold sources and targets infected each day
+        # sources = np.zeros(self.npts)
+        # targets = np.zeros(self.npts)
 
-        # Loop over each person to pull out the transmission
-        for person in self.people:
-            if person.date_exposed is not None: # Skip people who were never exposed
-                if person.date_recovered is not None:
-                    outcome_date = person.date_recovered
-                elif person.date_dead is not None:
-                    outcome_date = person.date_dead
-                else:
-                    errormsg = f'No outcome (death or recovery) can be determined for the following person:\n{person}'
-                    raise ValueError(errormsg)
+        # # Loop over each person to pull out the transmission
+        # for person in self.people:
+        #     if person.date_exposed is not None: # Skip people who were never exposed
+        #         if person.date_recovered is not None:
+        #             outcome_date = person.date_recovered
+        #         elif person.date_dead is not None:
+        #             outcome_date = person.date_dead
+        #         else:
+        #             errormsg = f'No outcome (death or recovery) can be determined for the following person:\n{person}'
+        #             raise ValueError(errormsg)
 
-                if outcome_date is not None and outcome_date<self.npts:
-                    outcome_date = int(outcome_date)
-                    sources[outcome_date] += 1
-                    targets[outcome_date] += len(person.infected)
+        #         if outcome_date is not None and outcome_date<self.npts:
+        #             outcome_date = int(outcome_date)
+        #             sources[outcome_date] += 1
+        #             targets[outcome_date] += len(person.infected)
 
-        # Populate the array -- to avoid divide-by-zero, skip indices that are 0
-        inds = sc.findinds(sources>0)
-        r_eff = targets[inds]/sources[inds]
-        self.results['r_eff'].values[inds] = r_eff
+        # # Populate the array -- to avoid divide-by-zero, skip indices that are 0
+        # inds = sc.findinds(sources>0)
+        # r_eff = targets[inds]/sources[inds]
+        # self.results['r_eff'].values[inds] = r_eff
 
         return
 
