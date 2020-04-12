@@ -13,11 +13,11 @@ def mult(a, b):
 def cond(a, b):
     return np.logical_and(a>0.5, b>0.5).sum()
 
-@nb.njit((nb.float64[:], nb.float64[:]))
+@nb.njit((nb.float32[:], nb.float32[:]))
 def mult_jit(a, b):
     return (a * b).sum()
 
-@nb.njit((nb.float64[:], nb.float64[:]))
+@nb.njit((nb.float32[:], nb.float32[:]))
 def cond_jit(a, b):
     return np.logical_and(a>0.5, b>0.5).sum()
 
@@ -29,7 +29,7 @@ class NumbaTests(sc.prettyobj):
         self.n = int(n)
         self.npts = npts
         self.keys = keys
-        self.states = {key:np.random.random(self.n) for key in self.keys}
+        self.states = {key:np.array(np.random.random(self.n), dtype=np.float32) for key in self.keys}
         self.results = np.zeros(self.npts)
 
     @property
