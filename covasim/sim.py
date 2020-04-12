@@ -246,7 +246,7 @@ class Sim(cvbase.BaseSim):
 
     def step(self, verbose=0):
         '''
-        Step simulation forward in time
+        Step the simulation forward in time
         '''
 
         # Set the time and if we have reached the end of the simulation, then do nothing
@@ -254,42 +254,38 @@ class Sim(cvbase.BaseSim):
         if t >= self.npts:
             return
 
-        # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
-        people           = self.people
-        pop_size         = people.n
-        beta             = self['beta']
-        n_imports        = cvu.poisson(self['n_imports']) # Imported cases
-
         # Print progress
         if verbose >= 1:
-            string = f'  Running day {t:0.0f} of {self.pars["n_days"]} ({sc.toc(output=True):0.2f} s elapsed)...'
-            if verbose >= 2:
-                sc.heading(string)
-            else:
-                print(string)
+            elapsed = sc.toc(output=True)
+            string = f'  Running day {t:0.0f} of {self.pars["n_days"]} ({elapsed:0.2f} s elapsed)...'
+            if verbose >= 2: sc.heading(string)
+            else:            print(string)
 
         # Check if we need to rescale
-        if self['rescale']:
-            self.rescale()
+        self.rescale()
 
         # Update the state of everyone
-        counts = people.update_states(t=t)
+        people = self.people
+        flow_counts = people.update_states(t=t)
 
         # Compute new contacts
         contacts = people.update_contacts(t=t)
 
         # Randomly infect some people (imported infections)
+        n_imports = cvu.poisson(self['n_imports']) # Imported cases
         if n_imports>0:
-            imporation_inds = cvu.choose(max_n=pop_size, n=n_imports)
-            counts['new_infections'] += people.infect(inds=imporation_inds, t=t)
+            imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
+            flow_counts['new_infections'] += people.infect(inds=imporation_inds, t=t)
 
-        # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-        sources     = contacts[:,0]
-        targets     = contacts[:,1]
-        layer_betas = contacts[:,2]
-        rel_betas  = beta * people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
+        # Compute the probability of transmission
+        sources     = contacts[:, people.source_ind]
+        targets     = contacts[:, people.target_ind]
+        layer_betas = contacts[:, people.beta_ind]
+        rel_betas   = self['beta'] * people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
+
+        # Calculate actual transmission
         transmission_inds = cvu.binomial_inds(rel_betas)
-        counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
+        flow_counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
 
         # Apply interventions
         for intervention in self['interventions']:
@@ -298,36 +294,33 @@ class Sim(cvbase.BaseSim):
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
-        for key in cvd.results_stocks:
+        for key in cvd.results_stocks.keys():
             self.results[key][t] = people.count(key)
         self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds']>0 else np.nan
 
         # Update counts for this time step: flows
-        for key,val in counts:
-            self.results[key][t]  = val
+        for key,count in flow_counts:
+            self.results[key][t] = count
 
         self.t += 1
 
 
     def rescale(self):
         ''' Dynamically rescale the population '''
-        t = self.t
-        pop_scale = self['pop_scale']
-        current_scale = self.rescale_vec[t]
-        if current_scale < pop_scale: # We have room to rescale
-            not_sus = list(self.people.filter_out('susceptible'))
-            n_not_sus = len(not_sus)
-            n_people = len(self.people)
-            if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
-                max_ratio = pop_scale/current_scale # We don't want to exceed this
-                scaling_ratio = min(self['rescale_factor'], max_ratio)
-                self.rescale_vec[t+1:] *= scaling_ratio # Update the rescaling factor from here on
-                n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
-                new_susceptibles = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
-                for p in new_susceptibles: # TODO: only loop over non-susceptibles
-                    person = self.people[p]
-                    if not person.susceptible:
-                        person.make_susceptible()
+        if self['rescale']:
+            t = self.t
+            pop_scale = self['pop_scale']
+            current_scale = self.rescale_vec[t]
+            if current_scale < pop_scale: # We have room to rescale
+                n_not_sus = self.people.count_not('susceptible')
+                n_people = len(self.people)
+                if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
+                    max_ratio = pop_scale/current_scale # We don't want to exceed this
+                    scaling_ratio = min(self['rescale_factor'], max_ratio)
+                    self.rescale_vec[t+1:] *= scaling_ratio # Update the rescaling factor from here on
+                    n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
+                    new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
+                    self.people.make_susceptible(new_sus_inds)
         return
 
 
