@@ -24,7 +24,6 @@ class People(cvb.BasePeople):
 
         # Set person properties -- mostly floats
         for key in self.keylist.person:
-            self._keys.append(key)
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=object)
             else:
@@ -32,7 +31,6 @@ class People(cvb.BasePeople):
 
         # Set health states -- only susceptible is true by default -- booleans
         for key in self.keylist.states:
-            self._keys.append(key)
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
             else:
@@ -40,7 +38,6 @@ class People(cvb.BasePeople):
 
         # Set dates and durations -- both floats
         for key in self.keylist.dates + self.keylist.durs:
-            self._keys.append(key)
             self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
 
         # Store the dtypes used
@@ -149,10 +146,16 @@ class People(cvb.BasePeople):
 
     def make_susceptible(self, inds):
         """
-        Make person susceptible. This is used during initialization and dynamic resampling
+        Make person susceptible. This is used during dynamic resampling
         """
-        for key in self.keys():
-            self[key][inds] =
+        for key in self.keylist.states:
+            if key == 'susceptible':
+                self[key][inds] = True
+            else:
+                self[key][inds] = False
+
+        for key in self.keylist.dates + self.keylist.durs:
+            self[key][inds] = None
 
         return
 

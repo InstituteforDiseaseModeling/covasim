@@ -561,7 +561,7 @@ class BasePeople(sc.prettyobj):
     def person(self, ind):
         ''' Method to create person from the people '''
         p = Person()
-        for key in self.keys('all_person_states'):
+        for key in self.keylist.all_states:
             setattr(p, key, self[key][ind])
         return p
 
