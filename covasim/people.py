@@ -80,7 +80,7 @@ class People(cvb.BasePeople):
         #     bed_constraint = True
 
         # For storing the interim values since used in every subsequent calculation
-        self._isexp = cvu.true(self.exposed)
+        self.is_exp = cvu.true(self.exposed)
         self.t = t
         self.verbose = True # TODO
 
@@ -91,6 +91,8 @@ class People(cvb.BasePeople):
         # counts['new_deaths']      += self.check_death()
         # counts['new_recoveries']  += self.check_recovery()
         # counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
+
+        del self.is_exp # Tidy up
 
         return counts
 
@@ -167,108 +169,81 @@ class People(cvb.BasePeople):
 
     #%% Methods for updating state
 
-    def check_infectious(self):
-        ''' Check if they become infectious '''
-        ni_inds  = cvu.ifalse(self.infectious, self._isexp)
-        bi_inds  = cvu.idefined(self.date_symptomatic, ni_inds)
-        inf_inds = cvu.itrue(self.t >= self.date_infectious, bi_inds)
-        self.infectious[inf_inds] = True
+    def check_inds(self, current, date, filter_inds=None):
+        ''' Return indices for which the current state is false nad which meet the date criterion '''
+        if filter_inds is None:
+            filter_inds = self.is_exp
+        not_current = cvu.ifalse(current, filter_inds)
+        has_date = cvu.idefined(date, not_current)
+        inds     = cvu.true_inds(self.t >= date[has_date], has_date)
         if self.verbose:
             print('i am infec')
-            print('exp', self._isexp)
-            print('not', ni_inds)
-            print('date', self.date_symptomatic[ni_inds])
-            print('become', bi_inds)
-            print(len(inf_inds))
-            print(inf_inds)
-        return len(inf_inds)
+            print('exp', filter_inds)
+            print('not', not_current)
+            print('date', self.date_symptomatic[not_current])
+            print('become', has_date)
+            print(len(inds))
+            print(inds)
+        return inds
+
+    def check_infectious(self):
+        ''' Check if they become infectious '''
+        inds = self.check_inds(self.infectious, self.date_infectious)
+        self.infectious[inds] = True
+        return len(inds)
 
 
     def check_symptomatic(self):
         ''' Check for new progressions to symptomatic '''
-        ns_inds   = cvu.ifalse(self.symptomatic, self._isexp)
-        bs_inds   = cvu.idefined(self.date_symptomatic, ns_inds)
-        symp_inds = cvu.itrue(self.t >= self.date_symptomatic, bs_inds)
-        self.symptomatic[symp_inds] = True
-        if self.verbose:
-            print('i am symp')
-            print(len(symp_inds))
-            print(symp_inds)
-        return len(symp_inds)
+        inds = self.check_inds(self.symptomatic, self.date_symptomatic)
+        self.symptomatic[inds] = True
+        return len(inds)
 
 
     def check_severe(self):
         ''' Check for new progressions to severe '''
-        not_severe     = cvu.false(self.severe[self._is_exposed])
-        becomes_severe = cvu.defined(self.date_severe[not_severe])
-        severe_inds    = cvu.true(self.t >= self.date_severe[becomes_severe])
-        self.severe[severe_inds] = True
-        if self.verbose:
-            print('i am sev')
-            print(len(severe_inds))
-            print(severe_inds)
-        return len(severe_inds)
+        inds = self.check_inds(self.severe, self.date_severe)
+        self.severe[inds] = True
+        return len(inds)
 
 
     def check_critical(self):
         ''' Check for new progressions to critical '''
-        not_critical     = cvu.false(self.critical[self._is_exposed])
-        becomes_critical = cvu.defined(self.date_critical[not_critical])
-        critical_inds    = cvu.true(self.t >= self.date_critical[becomes_critical])
-        self.critical[critical_inds] = True
-        if self.verbose:
-            print('i am crit')
-            print(len(critical_inds))
-            print(critical_inds)
-        return len(critical_inds)
+        inds = self.check_inds(self.critical, self.date_critical)
+        self.critical[inds] = True
+        return len(inds)
 
 
     def check_recovery(self):
-        ''' Check if an infected person has recovered '''
-        will_recover   = cvu.defined(self.date_recovered[self._is_exposed])
-        recovered_inds = cvu.true(self.t >= self.date_recovered[will_recover])
-        self.exposed[recovered_inds]     = False
-        self.infectious[recovered_inds]  = False
-        self.symptomatic[recovered_inds] = False
-        self.severe[recovered_inds]      = False
-        self.critical[recovered_inds]    = False
-        self.recovered[recovered_inds]   = True
-        if self.verbose:
-            print('i am recov')
-            print(len(recovered_inds))
-            print(recovered_inds)
-        return len(recovered_inds)
+        ''' Check for recovery '''
+        inds = self.check_inds(self.recovered, self.date_recovered)
+        self.exposed[inds]     = False
+        self.infectious[inds]  = False
+        self.symptomatic[inds] = False
+        self.severe[inds]      = False
+        self.critical[inds]    = False
+        self.recovered[inds]   = True
+        return len(inds)
 
 
     def check_death(self):
         ''' Check whether or not this person died on this timestep  '''
-        will_die   = cvu.defined(self.date_dead[self._is_exposed])
-        dead_inds = cvu.true(self.t >= self.date_dead[will_die])
-        self.exposed[dead_inds]     = False
-        self.infectious[dead_inds]  = False
-        self.symptomatic[dead_inds] = False
-        self.severe[dead_inds]      = False
-        self.critical[dead_inds]    = False
-        self.recovered[dead_inds]   = False
-        self.dead[dead_inds]        = True
-        if self.verbose:
-            print('i am dead')
-            print(len(dead_inds))
-            print(dead_inds)
-        return len(dead_inds)
+        inds = self.check_inds(self.dead, self.date_dead)
+        self.exposed[inds]     = False
+        self.infectious[inds]  = False
+        self.symptomatic[inds] = False
+        self.severe[inds]      = False
+        self.critical[inds]    = False
+        self.recovered[inds]   = False
+        self.dead[inds]        = True
+        return len(inds)
 
 
     def check_diagnosed(self):
         ''' Check for new diagnoses '''
-        not_diagnosed     = cvu.false(self.diagnosed[self._is_exposed])
-        becomes_diagnosed = cvu.defined(self.date_diagnosed[not_diagnosed])
-        diagnosed_inds    = cvu.true(self.t >= self.date_diagnosed[becomes_diagnosed])
-        self.diagnosed[diagnosed_inds] = True
-        if self.verbose:
-            print('i am diag')
-            print(len(diagnosed_inds))
-            print(diagnosed_inds)
-        return len(diagnosed_inds)
+        inds = self.check_inds(self.diagnosed, self.date_diagnosed)
+        self.diagnosed[inds] = True
+        return len(inds)
 
 
     # def check_quar_begin(self, quar_period=None):
