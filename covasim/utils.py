@@ -2,7 +2,7 @@
 Utilities for running the COVID-ABM
 '''
 
-# import numba  as nb # For faster computations
+import numba  as nb # For faster computations
 import numpy  as np # For numerics
 import pandas as pd # Used for pd.unique() (better than np.unique())
 import pylab  as pl # Used by fixaxis()
@@ -134,13 +134,13 @@ def multinomial(probs, repeats):
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
-# @nb.njit((nb.int64,))
+@nb.njit((nb.int64,)) # This hugely increases performance
 def poisson(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
 
-# @nb.njit((nb.int64, nb.int64))
+@nb.njit((nb.int64, nb.int64)) # This hugely increases performance
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replace.
