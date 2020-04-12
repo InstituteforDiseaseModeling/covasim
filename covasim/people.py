@@ -81,14 +81,15 @@ class People(cvb.BasePeople):
 
         # For storing the interim values since used in every subsequent calculation
         self._is_exposed = cvu.true(self.exposed)
+        self.t = t
 
-        counts['new_infectious']  += self.check_infectious(t=t) # For people who are exposed and not infectious, check if they begin being infectious
+        counts['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
+        counts['new_symptomatic'] += self.check_symptomatic()
+        counts['new_severe']      += self.check_severe()
+        counts['new_critical']    += self.check_critical()
+        counts['new_deaths']      += self.check_death()
+        counts['new_recoveries']  += self.check_recovery()
         # counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
-        # counts['new_symptomatic'] += self.check_symptomatic(t=t)
-        # counts['new_severe']      += self.check_severe(t=t)
-        # counts['new_critical']    += self.check_critical(t=t)
-        # counts['new_deaths']      += self.check_death(t=t)
-        # counts['new_recoveries']  += self.check_recovery(t=t)
 
         return counts
 
@@ -167,8 +168,9 @@ class People(cvb.BasePeople):
 
     def check_infectious(self, t):
         ''' Check if they become infectious '''
-        not_infectious  = cvu.false(self.infectious[self._is_exposed])
-        infectious_inds = cvu.true(t >= self.date_infectious[not_infectious])
+        not_infectious     = cvu.false(self.infectious[self._is_exposed])
+        becomes_infectious = cvu.defined(self.date_symptomatic[not_infectious])
+        infectious_inds    = cvu.true(t >= self.date_infectious[becomes_infectious])
         self.infectious[infectious_inds] = True
         return len(infectious_inds)
 
