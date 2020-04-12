@@ -20,7 +20,7 @@ class People(sc.prettyobj):
     def __init__(self):
         self.counts = {}
 
-    def update(t):
+    def update(self, t):
         ''' Perform all state updates '''
 
         counts = {}
@@ -37,6 +37,24 @@ class People(sc.prettyobj):
         new_recoveries  += person.check_recovery(t)
 
         return counts
+
+
+    def update_contacts(self, t):
+        # Set community contacts
+        person_contacts = person.contacts
+        if n_comm_contacts:
+            community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
+            person_contacts['c'] = community_contact_inds
+
+
+    def stuff():
+        thisbeta = beta * \
+                   (asymp_factor if not person.symptomatic else 1.) * \
+                   (diag_factor if person.diagnosed else 1.)
+
+                       this_beta_layer = thisbeta *\
+                                  beta_layers[ckey] *\
+                                  (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
 
 
 

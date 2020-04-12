@@ -99,6 +99,9 @@ def bt(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
+def bta(n, prob_arr):
+    ''' Bernoulli trial array -- return entries that passed '''
+    return np.random.random(n) < prob_arr
 
 @nb.njit((nb.float64, nb.int64))
 def rbt(prob, n):

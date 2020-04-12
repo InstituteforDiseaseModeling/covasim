@@ -311,29 +311,20 @@ class Sim(cvbase.BaseSim):
         # Update the state of everyone
         counts = people.update(t=t)
 
-
+        # Compute new contacts
+        contacts = people.update_contacts(t=t)
 
         # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
+        sources     = contacts[:,0]
+        targets     = contacts[:,1]
+        layer_betas = contacts[:,2]
+        rel_betas  = people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
 
-
-
-thisbeta = beta * \
-                   (asymp_factor if not person.symptomatic else 1.) * \
-                   (diag_factor if person.diagnosed else 1.)
-
-        # Set community contacts
-        person_contacts = person.contacts
-        if n_comm_contacts:
-            community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-            person_contacts['c'] = community_contact_inds
 
         # Determine who gets infected
         for ckey in self.contact_keys:
             contact_ids = person_contacts[ckey]
             if len(contact_ids):
-                this_beta_layer = thisbeta *\
-                                  beta_layers[ckey] *\
-                                  (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
 
                 transmission_inds = cvu.bf(this_beta_layer, contact_ids)
                 for contact_ind in transmission_inds: # Loop over people who get infected
