@@ -237,9 +237,8 @@ class Sim(cvbase.BaseSim):
         cvpop.make_people(self, verbose=verbose, **kwargs)
 
         # Create the seed infections
-        for i in range(int(self['pop_infected'])):
-            person = self.people[i]
-            person.infect(t=0)
+        inds = np.arange(int(self['pop_infected']))
+        self.people.infect(inds=inds, t=0)
 
         return
 
