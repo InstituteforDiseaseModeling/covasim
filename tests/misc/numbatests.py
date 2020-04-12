@@ -7,66 +7,98 @@ import pylab as pl
 import sciris as sc
 import numba as nb
 
-spec = [
-    ('n', nb.int32),
-    ('npts', nb.int32),
+def mult(a, b):
+    return (a * b).sum()
 
-]
+def cond(a, b):
+    return np.logical_and(a>0.5, b>0.5).sum()
 
-@nb.jitclass(spec)
+@nb.njit((nb.float64[:], nb.float64[:]))
+def mult_jit(a, b):
+    return (a * b).sum()
+
+@nb.njit((nb.float64[:], nb.float64[:]))
+def cond_jit(a, b):
+    return np.logical_and(a>0.5, b>0.5).sum()
+
+
 class NumbaTests(sc.prettyobj):
-    def __init__(self, n=400e3, npts=1000):
+    def __init__(self, n=400e3, npts=1000, keys=None):
+        if keys is None:
+            keys = ['a','b']
         self.n = int(n)
         self.npts = npts
-        self.a = np.random.random(n)
-        self.b = np.random.random(n)
-        # self.keys = ['a','b']
-        # self.states = {key:np.random.random(self.n) for key in self.keys}
-        self.results = np.zeros(npts)
+        self.keys = keys
+        self.states = {key:np.random.random(self.n) for key in self.keys}
+        self.results = np.zeros(self.npts)
 
-    # @property
-    # def a(self):
-    #     return self.states['a']
+    @property
+    def a(self):
+        return self.states['a']
 
-    # @property
-    # def b(self):
-    #     return self.states['b']
+    @property
+    def b(self):
+        return self.states['b']
 
     def next_mult(self, t):
-        self.results[t] += (self.a * self.b).sum()
+        self.results[t] += mult(self.a, self.b)
         return
 
     def next_cond(self, t):
-        self.results[t] += np.logical_and(self.a>0.5, self.b>0.5).sum()
+        self.results[t] += cond(self.a, self.b)
         return
 
-    def run(self):
+    def next_mult_jit(self, t):
+        self.results[t] += mult_jit(self.a, self.b)
+        return
+
+    def next_cond_jit(self, t):
+        self.results[t] += cond_jit(self.a, self.b)
+        return
+
+    def run(self, which='mult', jit=True):
         for t in range(self.npts):
-            self.next_cond(t)
+            if   which=='mult' and     jit: self.next_mult_jit(t)
+            elif which=='mult' and not jit: self.next_mult(t)
+            elif which=='cond' and     jit: self.next_cond_jit(t)
+            elif which=='cond' and not jit: self.next_cond(t)
+            else: raise Exception
         return
 
 
 if __name__ == '__main__':
 
-    ns = (1+np.arange(15))*100e3
+    ns = (1+np.arange(10))*100e3
 
-    ts = []
-    for n in ns:
-        nt = NumbaTests(n=n)
-        sc.tic()
-        nt.run()
-        t = sc.toc(output=True)
-        ts.append(t)
-        print(n, t)
+    fig = pl.figure(figsize=(14,22))
 
-    pl.subplot(2,1,1)
-    pl.scatter(ns/1e6, ts)
-    sc.setylim()
-    pl.xlabel('Number of points (millions)')
-    pl.ylabel('Calculation time')
+    count = 0
+    for which in ['mult', 'cond']:
+        for jit in [0,1]:
+            print(which, jit)
 
-    pl.subplot(2,1,2)
-    pl.scatter(ns/1e6, np.array(ts)/ns*1e6)
-    sc.setylim()
-    pl.xlabel('Number of points (millions)')
-    pl.ylabel('Calculation time per point (μs)')
+            ts = []
+            for n in ns:
+                nt = NumbaTests(n=n)
+                sc.tic()
+                nt.run(which=which, jit=jit)
+                t = sc.toc(output=True)
+                ts.append(t)
+                print(n, t)
+
+            count += 1
+            pl.subplot(4,2,count)
+            pl.scatter(ns/1e6, ts)
+            sc.setylim()
+            pl.xlabel('Number of points (millions)')
+            pl.ylabel('Calculation time')
+            pl.title(f'Which = {which}, jit={jit}')
+
+            count += 1
+            pl.subplot(4,2,count)
+            pl.scatter(ns/1e6, np.array(ts)/ns*1e6)
+            sc.setylim()
+            pl.xlabel('Number of points (millions)')
+            pl.ylabel('Calculation time per point (ns)')
+
+    pl.show()
