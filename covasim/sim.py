@@ -278,13 +278,14 @@ class Sim(cvbase.BaseSim):
             flow_counts['new_infections'] += people.infect(inds=imporation_inds, t=t)
 
         # Compute the probability of transmission
-        sources     = people.contacts['p1'].values
+        # sources     = people.contacts['p1'].values
         targets     = people.contacts['p2'].values
-        layer_betas = people.contacts['beta'].values
-        betas   = self['beta'] * people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
+        # layer_betas = people.contacts['beta'].values
+        # betas   = self['beta'] * people.rel_trans[sources] * people.rel_sus[targets] * layer_betas
 
         # Calculate actual transmission
-        transmission_inds = cvu.binomial_inds(betas)
+        # transmission_inds = cvu.binomial_inds(betas)
+        transmission_inds = cvu.bernoulli_filter(self['beta'], targets)
         flow_counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
 
         # Apply interventions
