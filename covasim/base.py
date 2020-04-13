@@ -646,7 +646,7 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    def make_edgelist(self, contacts):
+    def make_edgelist(self, contacts, remove_duplicates=False):
         '''
         Parse a list of people with a list of contacts per person and turn it
         into an edge list.
@@ -667,7 +667,8 @@ class BasePeople(sc.prettyobj):
         new_df = self.init_contacts(output=True)
         for key,value in {'p1':p1, 'p2':p2, 'layer':layer}.items():
             new_df[key] = np.array(value, dtype=self.keylist.contacts[key])
-        new_df = self.remove_duplicates(new_df) # Sort and remove duplicates
+        if remove_duplicates:
+            new_df = self.remove_duplicates(new_df) # Sort and remove duplicates
 
         return new_df
 
