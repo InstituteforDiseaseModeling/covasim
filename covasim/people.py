@@ -4,13 +4,13 @@ Defines the Person class and functions associated with making people.
 
 #%% Imports
 import numpy as np
+import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 
 
 __all__ = ['People']
-
 
 
 class People(cvb.BasePeople):
@@ -129,20 +129,34 @@ class People(cvb.BasePeople):
         return counts
 
 
-    def update_contacts(self):
-        # Set community contacts
+    def update_contacts(self, dynamic_keys='c'):
+        ''' Set dynamic contacts, by default, community ('c') '''
 
+        # Remove existing dynamic contacts
         self.remove_dynamic_contacts()
 
-        n_comm_contacts = 0
-        if 'c' in self.pars['contacts']:
-            n_comm_contacts = self.pars['contacts']['c'] # Community contacts; TODO: make less ugly
+        # Figure out if anything needs to be done
+        dynamic_keys = sc.promotetolist(dynamic_keys)
+        for dynamic_key in dynamic_keys:
+            if dynamic_key in self.pars['contacts']:
+                pop_size   = len(self)
+                n_contacts = self.pars['contacts'][dynamic_key] # Community contacts; TODO: make less ugly
+                beta       = self.pars['beta_layer'][dynamic_key]
 
+                # Loop over people; TODO: vectorize
+                new_contacts = {key:[] for key in self.contacts.columns} # Initialize as a dict
+                for p in range(pop_size):
+                    contact_inds = cvu.choose(max_n=pop_size, n=n_contacts)
+                    new_contacts['p1'] += [p]*n_contacts
+                    new_contacts['p2'] += contact_inds
 
-        person_contacts = person.contacts
-        if n_comm_contacts:
-            community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-            person_contacts['c'] = community_contact_inds
+                # Set the things for the entire list
+                new_contacts['layer']   = [dynamic_key]*pop_size
+                new_contacts['beta']    = [beta]*pop_size
+                new_contacts['dynamic'] = [True]*pop_size
+
+                # Add to contacts
+                self.add_contacts(new_contacts)
 
         return
 
