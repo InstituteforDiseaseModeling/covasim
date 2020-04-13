@@ -267,14 +267,17 @@ class Sim(cvbase.BaseSim):
         people = self.people
         flow_counts = people.update_states(t=t)
 
+        # Check for a bed constraint
+        bed_max = people.count('severe') > self['n_beds']
+
         # Compute new contacts
-        people.update_contacts(t=t)
+        # people.update_contacts(t=t)
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
         if n_imports>0:
             imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
-            flow_counts['new_infections'] += people.infect(inds=imporation_inds, t=t)
+            flow_counts['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max, t=t)
 
         # Compute the probability of transmission
         sources     = people.contacts['p1'].values
@@ -296,7 +299,7 @@ class Sim(cvbase.BaseSim):
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
-            self.results[f'n_{key}'][t] = people[key].sum()
+            self.results[f'n_{key}'][t] = people.count(key)
         self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds']>0 else np.nan
 
         # Update counts for this time step: flows
@@ -436,26 +439,26 @@ class Sim(cvbase.BaseSim):
         sources = np.zeros(self.npts)
         targets = np.zeros(self.npts)
 
-        # Loop over each person to pull out the transmission
-        for person in self.people:
-            if person.date_exposed is not None: # Skip people who were never exposed
-                if person.date_recovered is not None:
-                    outcome_date = person.date_recovered
-                elif person.date_dead is not None:
-                    outcome_date = person.date_dead
-                else:
-                    errormsg = f'No outcome (death or recovery) can be determined for the following person:\n{person}'
-                    raise ValueError(errormsg)
+        # # Loop over each person to pull out the transmission
+        # for person in self.people:
+        #     if person.date_exposed is not None: # Skip people who were never exposed
+        #         if person.date_recovered is not None:
+        #             outcome_date = person.date_recovered
+        #         elif person.date_dead is not None:
+        #             outcome_date = person.date_dead
+        #         else:
+        #             errormsg = f'No outcome (death or recovery) can be determined for the following person:\n{person}'
+        #             raise ValueError(errormsg)
 
-                if outcome_date is not None and outcome_date<self.npts:
-                    outcome_date = int(outcome_date)
-                    sources[outcome_date] += 1
-                    targets[outcome_date] += len(person.infected)
+        #         if outcome_date is not None and outcome_date<self.npts:
+        #             outcome_date = int(outcome_date)
+        #             sources[outcome_date] += 1
+        #             targets[outcome_date] += len(person.infected)
 
-        # Populate the array -- to avoid divide-by-zero, skip indices that are 0
-        inds = sc.findinds(sources>0)
-        r_eff = targets[inds]/sources[inds]
-        self.results['r_eff'].values[inds] = r_eff
+        # # Populate the array -- to avoid divide-by-zero, skip indices that are 0
+        # inds = sc.findinds(sources>0)
+        # r_eff = targets[inds]/sources[inds]
+        # self.results['r_eff'].values[inds] = r_eff
 
         return
 

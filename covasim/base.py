@@ -510,6 +510,11 @@ class BasePeople(sc.prettyobj):
         return ~self[key].nonzero()[0]
 
 
+    def count(self,key):
+        ''' Count the number of people for a given key '''
+        return (self[key]>0).sum()
+
+
     def keys(self, which=None):
         ''' Returns the name of the states '''
         if which is None:

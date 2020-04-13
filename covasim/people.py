@@ -62,6 +62,7 @@ class People(cvb.BasePeople):
 
     def set_prognoses(self, pars=None):
         ''' Set the prognoses for each person based on age '''
+
         if pars is None:
             pars = self.pars
 
@@ -71,12 +72,12 @@ class People(cvb.BasePeople):
         prognoses = pars['prognoses']
         age_cutoffs = prognoses['age_cutoffs']
         inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=np.int32, count=len(self))
-        self.symp_prob[:]    = self.pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
-        self.severe_prob[:]  = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
-        self.crit_prob[:]    = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
-        self.death_prob[:]   = pars['rel_death_prob']  * prognoses['death_probs'][inds]
-        self.rel_sus[:]   = 1.0 # By default: is susceptible
-        self.rel_trans[:] = 0.0 # By default: cannot transmit
+        self.symp_prob[:]   = pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
+        self.severe_prob[:] = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
+        self.crit_prob[:]   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
+        self.death_prob[:]  = pars['rel_death_prob']  * prognoses['death_probs'][inds]
+        self.rel_sus[:]     = 1.0 # By default: is susceptible
+        self.rel_trans[:]   = 0.0 # By default: cannot transmit
 
         return
 
@@ -107,13 +108,24 @@ class People(cvb.BasePeople):
         return
 
 
+    # def update_contacts(self, t):
+    #     # Set community contacts
+
+    #             if 'c' in self['contacts']:
+    #         n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
+    #     else:
+    #         n_comm_contacts = 0
+
+    #     person_contacts = person.contacts
+    #     if n_comm_contacts:
+    #         community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
+    #         person_contacts['c'] = community_contact_inds
+
+
     def update_states(self, t):
         ''' Perform all state updates '''
 
         counts = {key:0 for key in cvd.new_result_flows}
-
-        # if self.count('severe') > n_beds:
-        #     bed_constraint = True
 
         # For storing the interim values since used in every subsequent calculation
         self.is_exp = cvu.true(self.exposed)
@@ -130,20 +142,6 @@ class People(cvb.BasePeople):
         del self.is_exp # Tidy up
 
         return counts
-
-
-    # def update_contacts(self, t):
-    #     # Set community contacts
-
-    #             if 'c' in self['contacts']:
-    #         n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
-    #     else:
-    #         n_comm_contacts = 0
-
-    #     person_contacts = person.contacts
-    #     if n_comm_contacts:
-    #         community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-    #         person_contacts['c'] = community_contact_inds
 
 
     # def stuff():
@@ -171,7 +169,7 @@ class People(cvb.BasePeople):
     #                     if target_person.quarantined:
     #                         infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
     #                     if infect_this_person:
-    #                         new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
+    #                         new_infections += target_person.infect(t, bed_max, source=person) # Actually infect them
     #                         sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
 
     # asymp_factor     = self['asymp_factor']
@@ -181,7 +179,7 @@ class People(cvb.BasePeople):
     #     quar_period      = self['quar_period']
     #     beta_layers      = self['beta_layers']
     #     n_beds           = self['n_beds']
-    #     bed_constraint   = False
+    #     bed_max   = False
 
 
 
@@ -298,7 +296,7 @@ class People(cvb.BasePeople):
 
     #%% Methods to make events occur (infection and diagnosis)
 
-    def infect(self, inds, t, bed_constraint=None, source=None, verbose=True):
+    def infect(self, inds, t, bed_max=None, source=None, verbose=True):
         """
         Infect this person and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
@@ -307,10 +305,10 @@ class People(cvb.BasePeople):
             * Critical cases either recover or die
 
         Args:
-            inds (array): array of people to infect
-            t (int): current timestep
-            bed_constraint: (bool) whether or not there is a bed available for this person
-            source: (Person instance), if None, then it was a seed infection
+            inds    (array):  array of people to infect
+            t       (int):    current timestep
+            bed_max (bool):   whether or not there is a bed available for this person
+            source  (Person): if None, then it was a seed infection
 
         Returns:
             count (int): number of people infected
@@ -328,7 +326,7 @@ class People(cvb.BasePeople):
         self.date_exposed[inds]   = t
 
         # Deal with bed constraint if applicable
-        if bed_constraint is None: bed_constraint = False
+        if bed_max is None: bed_max = False
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)
@@ -372,7 +370,7 @@ class People(cvb.BasePeople):
         # CASE 2.2.2: Critical cases: ICU required, may die
         self.dur_sev2crit[crit_inds] = cvu.sample(**durpars['sev2crit'], size=len(crit_inds))
         self.date_critical[crit_inds] = self.date_severe[crit_inds] + self.dur_sev2crit[crit_inds]  # Date they become critical
-        this_death_prob = self.death_prob[crit_inds] * (self.pars['OR_no_treat'] if bed_constraint else 1.) # Probability they'll die
+        this_death_prob = self.death_prob[crit_inds] * (self.pars['OR_no_treat'] if bed_max else 1.) # Probability they'll die
         is_dead = cvu.binomial_arr(this_death_prob)  # Death outcome
         dead_inds = crit_inds[is_dead]
         alive_inds = crit_inds[~is_dead]
