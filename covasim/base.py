@@ -657,9 +657,8 @@ class BasePeople(sc.prettyobj):
 
         # Turn into a dataframe
         new_df = self.init_contacts(output=True)
-        new_df['p1']    = p1
-        new_df['p2']    = p2
-        new_df['layer'] = layer
+        for key,value in {'p1':p1, 'p2':p2, 'layer':layer}.items():
+            new_df[key] = np.array(value, dtype=self.keylist.contacts[key])
 
         # Sort and remove duplicates
         new_df = self.remove_duplicates(new_df)

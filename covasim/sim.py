@@ -10,6 +10,7 @@ import datetime as dt
 import matplotlib.ticker as ticker
 from . import version as cvv
 from . import utils as cvu
+from . import misc as cvm
 from . import defaults as cvd
 from . import base as cvbase
 from . import parameters as cvpars
@@ -73,7 +74,7 @@ class Sim(cvbase.BaseSim):
         ''' Set the metadata for the simulation -- creation time and filename '''
         self.created = sc.now()
         self.version = cvv.__version__
-        self.git_info = cvu.git_info()
+        self.git_info = cvm.git_info()
         if filename is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             self.filename = f'covasim_{datestr}.sim'
@@ -283,19 +284,12 @@ class Sim(cvbase.BaseSim):
         sources     = people.contacts['p1'].values
         targets     = people.contacts['p2'].values
         layer_betas = people.contacts['beta'].values
-
-        # betas   = self['beta'] * layer_betas  * people.rel_trans[sources] * people.rel_sus[targets]
-        # nonzero_inds = betas.nonzero()[0]
-        # nonzero_betas = betas[nonzero_inds]
-        # nonzero_targets = targets[nonzero_inds]
-
-        beta = np.float32(self['beta'])
-        transmission_inds = cvu.compute_targets(beta, np.array(sources, dtype=np.int32), np.array(targets, dtype=np.int32), layer_betas, people.rel_trans, people.rel_sus)
-        # transmission_inds = np.array([], dtype=np.int32)
+        rel_trans   = people.rel_trans
+        rel_sus     = people.rel_sus
 
         # Calculate actual transmission
-
-        # transmission_inds = cvu.bernoulli_filter(np.float32(self['beta']), np.int32(targets))
+        beta = np.float32(self['beta'])
+        transmission_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus)
         flow_counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
 
         # Apply interventions
@@ -531,7 +525,7 @@ class Sim(cvbase.BaseSim):
                             if (datum == 0) and (estimate == 0):
                                 p = 1.0
                             else:
-                                p = cvu.poisson_test(datum, estimate)
+                                p = cvm.poisson_test(datum, estimate)
                             logp = pl.log(p)
                             loglike += weight*logp
                             sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)

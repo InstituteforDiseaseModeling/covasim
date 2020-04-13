@@ -8,6 +8,7 @@ from . import requirements
 
 #%% Import the actual model
 from .utils         import *
+from .misc          import *
 from .defaults      import *
 from .base          import *
 from .parameters    import *
