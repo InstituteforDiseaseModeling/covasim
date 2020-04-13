@@ -65,7 +65,7 @@ class Scraper(sc.prettyobj):
             self.df = self. df.rename(columns=self.renames)
 
     def create_date(self):
-        pass
+        self.df['date'] = pd.to_datetime(self.df.date)
 
     def group_data(self):
         assert 'key' in self.df.columns, 'No column named "key"; do you need to rename?'
