@@ -284,13 +284,10 @@ class Sim(cvbase.BaseSim):
         targets     = people.contacts['p2'].values
         layer_betas = people.contacts['beta'].values
 
-        nonzero_source_inds = people.rel_trans[sources].nonzero()[0]
-        nonzero_sources = people.rel_trans[sources[nonzero_source_inds]]
-
-        betas   = self['beta'] * layer_betas[nonzero_source_inds]  * nonzero_sources # * people.rel_sus[targets]
+        betas   = self['beta'] * layer_betas  * people.rel_trans[sources] * people.rel_sus[targets]
         nonzero_inds = betas.nonzero()[0]
         nonzero_betas = betas[nonzero_inds]
-        nonzero_targets = targets[nonzero_source_inds[nonzero_inds]]
+        nonzero_targets = targets[nonzero_inds]
 
         # Calculate actual transmission
         transmissions = cvu.binomial_arr_inds(nonzero_betas)
