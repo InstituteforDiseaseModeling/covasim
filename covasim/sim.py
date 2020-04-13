@@ -275,11 +275,15 @@ class Sim(cvbase.BaseSim):
 
         # Compute the probability of transmission
         beta        = np.float32(self['beta'])
+        asymp_factor
+        diag_factor
+        quar_trans_factor
         sources     = contacts['p1'].values
         targets     = contacts['p2'].values
         layer_betas = contacts['beta'].values
         rel_trans   = people.rel_trans
         rel_sus     = people.rel_sus
+        rel_trans, rel_sus = cvu.compute_probs(people.rel_trans, people.rel_sus, )
 
         # Calculate actual transmission
         target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!

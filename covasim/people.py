@@ -161,6 +161,8 @@ class People(cvb.BasePeople):
         return self.contacts
 
 
+
+
     # def stuff():
     #     thisbeta = beta * \
     #                (asymp_factor if not person.symptomatic else 1.) * \
