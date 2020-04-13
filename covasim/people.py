@@ -410,14 +410,10 @@ class People(cvb.BasePeople):
         Quarantine a person starting on the current day. If a person is already
         quarantined, this will extend their quarantine.
         '''
-
         self.quarantined[inds] = True
-
-        new_end_quarantine = self.t + self.pars['quar_period']
-        if self.end_quarantine is None or self.end_quarantine is not None and new_end_quarantine > self.end_quarantine:
-            self.end_quarantine = new_end_quarantine
-
+        self.date_end_quarantine[inds] = self.t + self.pars['quar_period']
         return
+
 
     # def trace_dynamic_contacts(self, trace_probs, trace_time, ckey='c'):
     #     '''
