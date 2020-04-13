@@ -86,10 +86,10 @@ class People(cvb.BasePeople):
 
         counts['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
         counts['new_symptomatic'] += self.check_symptomatic()
-        # counts['new_severe']      += self.check_severe()
-        # counts['new_critical']    += self.check_critical()
-        # counts['new_deaths']      += self.check_death()
-        # counts['new_recoveries']  += self.check_recovery()
+        counts['new_severe']      += self.check_severe()
+        counts['new_critical']    += self.check_critical()
+        counts['new_deaths']      += self.check_death()
+        counts['new_recoveries']  += self.check_recovery()
         # counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
 
         del self.is_exp # Tidy up
@@ -169,7 +169,7 @@ class People(cvb.BasePeople):
 
     #%% Methods for updating state
 
-    def check_inds(self, current, date, filter_inds=None):
+    def check_inds(self, current, date, filter_inds=None, label=None):
         ''' Return indices for which the current state is false nad which meet the date criterion '''
         if filter_inds is None:
             filter_inds = self.is_exp
@@ -177,46 +177,47 @@ class People(cvb.BasePeople):
         has_date = cvu.idefined(date, not_current)
         inds     = cvu.true_inds(self.t >= date[has_date], has_date)
         if self.verbose:
-            print('i am infec')
-            print('exp', filter_inds)
-            print('not', not_current)
-            print('date', self.date_symptomatic[not_current])
-            print('become', has_date)
-            print(len(inds))
-            print(inds)
+            print(f'i am {label}')
+            print('filter_inds', filter_inds)
+            print('not_current', not_current)
+            print('has_date', has_date)
+            print('date', date[has_date])
+            print('inds', inds)
+            print('len inds', len(inds))
+            print(f'done {label}\n\n')
         return inds
 
     def check_infectious(self):
         ''' Check if they become infectious '''
-        inds = self.check_inds(self.infectious, self.date_infectious)
+        inds = self.check_inds(self.infectious, self.date_infectious, label='inf')
         self.infectious[inds] = True
         return len(inds)
 
 
     def check_symptomatic(self):
         ''' Check for new progressions to symptomatic '''
-        inds = self.check_inds(self.symptomatic, self.date_symptomatic)
+        inds = self.check_inds(self.symptomatic, self.date_symptomatic, label='symp')
         self.symptomatic[inds] = True
         return len(inds)
 
 
     def check_severe(self):
         ''' Check for new progressions to severe '''
-        inds = self.check_inds(self.severe, self.date_severe)
+        inds = self.check_inds(self.severe, self.date_severe, label='sev')
         self.severe[inds] = True
         return len(inds)
 
 
     def check_critical(self):
         ''' Check for new progressions to critical '''
-        inds = self.check_inds(self.critical, self.date_critical)
+        inds = self.check_inds(self.critical, self.date_critical, label='crit')
         self.critical[inds] = True
         return len(inds)
 
 
     def check_recovery(self):
         ''' Check for recovery '''
-        inds = self.check_inds(self.recovered, self.date_recovered)
+        inds = self.check_inds(self.recovered, self.date_recovered, label='recov')
         self.exposed[inds]     = False
         self.infectious[inds]  = False
         self.symptomatic[inds] = False
@@ -228,7 +229,7 @@ class People(cvb.BasePeople):
 
     def check_death(self):
         ''' Check whether or not this person died on this timestep  '''
-        inds = self.check_inds(self.dead, self.date_dead)
+        inds = self.check_inds(self.dead, self.date_dead, label='dead')
         self.exposed[inds]     = False
         self.infectious[inds]  = False
         self.symptomatic[inds] = False
@@ -241,7 +242,7 @@ class People(cvb.BasePeople):
 
     def check_diagnosed(self):
         ''' Check for new diagnoses '''
-        inds = self.check_inds(self.diagnosed, self.date_diagnosed)
+        inds = self.check_inds(self.diagnosed, self.date_diagnosed, label='diag')
         self.diagnosed[inds] = True
         return len(inds)
 
