@@ -96,7 +96,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
 
-    @nb.njit((nb.int32,))
+    @nb.njit((nb.int64,))
     def set_seed_numba(seed):
         return np.random.seed(seed)
 
@@ -154,56 +154,56 @@ def defined_inds(arr, inds):
     return inds[~np.isnan(arr)]
 
 
-@nb.njit((nb.float32,)) # These types can also be declared as a dict, but performance is much slower...?
+@nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
 def binomial(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
-@nb.njit((nb.int32, nb.float32))
+@nb.njit((nb.int64, nb.float64))
 def n_binomial(n, prob):
     ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
     return (np.random.random(n) < prob)
 
-@nb.njit((nb.int32, nb.float32))
+@nb.njit((nb.int64, nb.float64))
 def n_binomial_inds(n, prob):
     ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
     return (np.random.random(n) < prob).nonzero()[0]
 
-@nb.njit((nb.float32[:],))
+@nb.njit((nb.float64[:],))
 def binomial_arr(prob_arr):
     ''' Bernoulli trial array -- return boolean '''
     return np.random.random(len(prob_arr)) < prob_arr
 
-@nb.njit((nb.float32[:],))
+@nb.njit((nb.float64[:],))
 def binomial_arr_inds(prob_arr):
     ''' Bernoulli trial array -- return indices that passed '''
     return binomial_arr(prob_arr).nonzero()[0]
 
 
-@nb.njit((nb.float32, nb.int32))
+@nb.njit((nb.float64, nb.int64))
 def repeated_binomial(prob, n):
     ''' A repeated Bernoulli (binomial) trial '''
     return np.random.binomial(1, prob, n)
 
 
-@nb.njit((nb.float32, nb.int32[:]))
+@nb.njit((nb.float64, nb.int64[:]))
 def bernoulli_filter(prob, arr):
     ''' Bernoulli "filter" -- return entries that passed '''
     return arr[n_binomial(len(arr), prob).nonzero()[0]]
 
-@nb.njit((nb.float32[:], nb.int32))
+@nb.njit((nb.float64[:], nb.int64))
 def multinomial(probs, repeats):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
-@nb.njit((nb.int32,)) # This hugely increases performance
+@nb.njit((nb.int64,)) # This hugely increases performance
 def poisson(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
 
-@nb.njit((nb.int32, nb.int32)) # This hugely increases performance
+@nb.njit((nb.int64, nb.int64)) # This hugely increases performance
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replace.
@@ -218,7 +218,7 @@ def choose(max_n, n):
     return np.random.choice(max_n, n, replace=False)
 
 
-# @nb.njit((nb.float32[:], nb.int32, nb.float32))
+# @nb.njit((nb.float64[:], nb.int64, nb.float64))
 def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False, unique=True):
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
@@ -243,7 +243,7 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     # Ensure it's the right type and optionally normalize
     if not unique:
         overshoot = 1
-    probs = np.array(probs, dtype=np.float32)
+    probs = np.array(probs, dtype=np.float64)
     n_people = len(probs)
     n_samples = int(n)
     if normalize:
@@ -280,7 +280,7 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     return inds
 
 
-@nb.njit((nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))
+@nb.njit((nb.float64, nb.int64[:], nb.int64[:], nb.float64[:], nb.float64[:], nb.float64[:]))
 def compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus):
     # print(type(beta))
     # print(sources.dtype)

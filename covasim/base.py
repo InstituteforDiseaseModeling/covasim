@@ -434,7 +434,7 @@ class BasePeople(sc.prettyobj):
         # Other initialization
         self._lock = False
         self.keylist = cvd.PeopleKeys()
-        self._default_dtype = np.float32 # For performance -- 2x faster than float32, the default
+        self._default_dtype = np.float64 # For performance -- 2x faster than float64, the default
         self.init_contacts() # Initialize the contacts
 
         return
@@ -559,7 +559,7 @@ class BasePeople(sc.prettyobj):
 
     def to_arr(self):
         ''' Return as numpy array '''
-        arr = np.empty((len(self), len(self.keys())), dtype=np.float32)
+        arr = np.empty((len(self), len(self.keys())), dtype=np.float64)
         for k,key in enumerate(self.keys()):
             if key == 'uid':
                 arr[:,k] = np.arange(len(self))
