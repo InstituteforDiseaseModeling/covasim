@@ -31,7 +31,7 @@ def compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus):
     # nonzero_targets = targets[nonzero_inds]
     # transmissions = binomial_arr_inds(nonzero_betas)
     # transmission_inds = nonzero_targets[transmissions]
-    output = np.array([], dtype=np.int32)
+    output = [0]
     return output # transmission_inds
 
 
