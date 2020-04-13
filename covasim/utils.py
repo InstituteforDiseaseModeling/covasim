@@ -86,82 +86,57 @@ def set_seed(seed=None):
     return
 
 
-# def true(arr):
-#     ''' Retrurns the indices of the values of the array that are true '''
-#     return arr.nonzero()[0]
+# @nb.njit((nb.boolean[:],))
+def true(arr):
+    ''' Retrurns the indices of the values of the array that are true '''
+    return arr.nonzero()[0]
 
-# def false(arr):
-#     ''' Retrurns the indices of the values of the array that are false '''
-#     return (~arr).nonzero()[0]
-
-# def defined(arr):
-#     ''' Retrurns the indices of the values of the array that are not-nan '''
-#     return (~np.isnan(arr)).nonzero()[0]
-
-
-# def itrue(arr, inds):
-#     ''' Retrurns the indices of the values of the array that are true '''
-#     return inds[arr[inds]]
-
-# def ifalse(arr, inds):
-#     ''' Retrurns the indices of the values of the array that are false '''
-#     return inds[~arr[inds]]
-
-# def idefined(arr, inds):
-#     ''' Retrurns the indices of the values of the array that are not-nan '''
-#     return inds[~np.isnan(arr[inds])]
-
-
-# def true_inds(arr, inds):
-#     ''' Retrurns the indices of the values of the array that are true '''
-#     return inds[arr]
-
-# def false_inds(arr, inds):
-#     ''' Retrurns the indices of the values of the array that are false '''
-#     return inds[~arr]
-
-# def defined_inds(arr, inds):
-#     ''' Retrurns the indices of the values of the array that are not-nan '''
-#     return inds[~np.isnan(arr)]
-
-
-# @nb.njit((nb.float32,)) # These types can also be declared as a dict, but performance is much slower...?
-# def binomial(prob):
-#     ''' A simple Bernoulli (binomial) trial '''
-#     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
-
-# @nb.njit((nb.int32, nb.float32))
-# def n_binomial(n, prob):
-#     ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
-#     return (np.random.random(n) < prob)
-
-# @nb.njit((nb.int32, nb.float32))
-# def n_binomial_inds(n, prob):
-#     ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
-#     return (np.random.random(n) < prob).nonzero()[0]
+# @nb.njit((nb.boolean[:],))
+def false(arr):
+    ''' Retrurns the indices of the values of the array that are false '''
+    return (~arr).nonzero()[0]
 
 # @nb.njit((nb.float32[:],))
-# def binomial_arr(prob_arr):
-#     ''' Bernoulli trial array -- return boolean '''
-#     return np.random.random(len(prob_arr)) < prob_arr
+def defined(arr):
+    ''' Retrurns the indices of the values of the array that are not-nan '''
+    return (~np.isnan(arr)).nonzero()[0]
+
+def itrue(arr, inds):
+    ''' Retrurns the indices of the values of the array that are true '''
+    return inds[arr[inds]]
+
+def ifalse(arr, inds):
+    ''' Retrurns the indices of the values of the array that are false '''
+    return inds[~arr[inds]]
+
+def idefined(arr, inds):
+    ''' Retrurns the indices of the values of the array that are not-nan '''
+    return inds[~np.isnan(arr[inds])]
+
+def true_inds(arr, inds):
+    ''' Retrurns the indices of the values of the array that are true '''
+    return inds[arr]
+
+def false_inds(arr, inds):
+    ''' Retrurns the indices of the values of the array that are false '''
+    return inds[~arr]
+
+def defined_inds(arr, inds):
+    ''' Retrurns the indices of the values of the array that are not-nan '''
+    return inds[~np.isnan(arr)]
 
 # @nb.njit((nb.float32[:],))
-# def binomial_arr_inds(prob_arr):
-#     ''' Bernoulli trial array -- return indices that passed '''
-#     return binomial_arr(prob_arr).nonzero()[0]
+def binomial_arr(prob_arr):
+    ''' Bernoulli trial array -- return boolean '''
+    return np.random.random(len(prob_arr)) < prob_arr
 
 # @nb.njit((nb.float32, nb.int32))
-# def repeated_binomial(prob, n):
-#     ''' A repeated Bernoulli (binomial) trial '''
-#     return np.random.binomial(1, prob, n)
+def repeated_binomial(prob, n):
+    ''' A repeated Bernoulli (binomial) trial '''
+    return np.random.binomial(1, prob, n)
 
 
-# @nb.njit((nb.float32, nb.int32[:]))
-# def bernoulli_filter(prob, arr):
-#     ''' Bernoulli "filter" -- return entries that passed '''
-#     return arr[n_binomial(len(arr), prob).nonzero()[0]]
-
-@nb.njit((nb.float32[:], nb.int32))
+# @nb.njit((nb.float32[:], nb.int32))
 def multinomial(probs, repeats):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
@@ -188,7 +163,6 @@ def choose(max_n, n):
     return np.random.choice(max_n, n, replace=False)
 
 
-# @nb.njit((nb.float32[:], nb.int32, nb.float32))
 def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False, unique=True):
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
@@ -252,6 +226,7 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
 
 @nb.njit((nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))
 def compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus):
+    ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas   = beta * layer_betas  * rel_trans[sources] * rel_sus[targets]
     nonzero_inds = betas.nonzero()[0]
     nonzero_betas = betas[nonzero_inds]
