@@ -289,8 +289,8 @@ class Sim(cvbase.BaseSim):
         # nonzero_betas = betas[nonzero_inds]
         # nonzero_targets = targets[nonzero_inds]
 
-        beta = self['beta']
-        transmission_inds = cvu.compute_targets(beta, sources, targets, layer_betas, people.rel_trans, people.rel_sus)
+        beta = np.float32(self['beta'])
+        transmission_inds = cvu.compute_targets(beta, np.array(sources, dtype=np.int32), np.array(targets, dtype=np.int32), layer_betas, people.rel_trans, people.rel_sus)
         # transmission_inds = np.array([], dtype=np.int32)
 
         # Calculate actual transmission
