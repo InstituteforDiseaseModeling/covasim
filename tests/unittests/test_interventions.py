@@ -14,6 +14,7 @@ class InterventionTests(CovaSimTest):
         super().tearDown()
         pass
 
+    # region change beta
     def test_brutal_change_beta_intervention(self):
         params = {
             SimKeys.number_agents: 10000,
@@ -44,7 +45,6 @@ class InterventionTests(CovaSimTest):
             self.assertEqual(new_infections_channel[d],
                              0,
                              msg=f"expected 0 infections on day {d}, got {new_infections_channel[d]}.")
-
 
     def test_change_beta_days(self):
         params = {
@@ -125,3 +125,73 @@ class InterventionTests(CovaSimTest):
                                msg=f"Expected more infections with multiplier {my_multiplier} "
                                    f"(with {total_infections[my_multiplier]} infections) than {next_multiplier} "
                                    f"(with {total_infections[next_multiplier]} infections)")
+    # endregion
+
+    # region test_prob
+    def test_brutal_sympto_test_prob(self):
+        self.is_debugging = True
+        params = {
+            SimKeys.number_agents: 10000,
+            SimKeys.number_simulated_days: 60
+        }
+        self.set_simulation_parameters(params_dict=params)
+
+        symptomatic_probability_of_test = 1.0
+        test_sensitivity = 1.0
+        test_delay = 0
+        start_day = 30
+
+        self.intervention_set_test_prob(symptomatic_prob=symptomatic_probability_of_test,
+                                        test_sensitivity=test_sensitivity,
+                                        test_delay=test_delay,
+                                        start_day=start_day)
+        self.run_sim()
+        new_tests = self.get_full_result_channel(
+            channel=ResultsKeys.tests_at_timestep
+        )
+        new_diagnoses = self.get_full_result_channel(
+            channel=ResultsKeys.diagnoses_at_timestep
+        )
+        symptomatic_count = self.get_full_result_channel(
+            channel=ResultsKeys.symptomatic_at_timestep
+        )
+        new_symptomatic = self.get_full_result_channel(
+            channel=ResultsKeys.symptomatic_new_timestep
+        )
+        pre_test_days = range(0, start_day)
+        for d in pre_test_days:
+            self.assertEqual(new_tests[d],
+                             0,
+                             msg=f"Should be no testing before day {start_day}. Got some at {d}")
+            self.assertEqual(new_diagnoses[d],
+                             0,
+                             msg=f"Should be no diagnoses before day {start_day}. Got some at {d}")
+            pass
+
+        self.assertEqual(new_tests[start_day + 1],
+                         symptomatic_count[start_day + 1],
+                         msg=f"Should have each of the {symptomatic_count[start_day]} symptomatics"
+                             f" get tested at day {start_day + 1}. Got {new_tests[start_day]} instead.")
+        self.assertEqual(new_diagnoses[start_day + 1],
+                         symptomatic_count[start_day + 1],
+                         msg=f"Should have each of the {symptomatic_count[start_day + 1]} symptomatics "
+                             f"get diagnosed at day {start_day + 1} with sensitivity {test_sensitivity}. "
+                             f"Got {new_diagnoses[start_day + 1]} instead.")
+        post_test_days = range(start_day + 1, len(new_tests))
+        for d in post_test_days:
+            symp_today = new_symptomatic[d]
+            diag_today = new_diagnoses[d]
+            test_today = new_tests[d]
+
+            self.assertEqual(symp_today,
+                             test_today,
+                             msg=f"Should have each of the {symp_today} newly symptomatics get"
+                                 f" tested on day {d}. Got {test_today} instead.")
+            self.assertEqual(symp_today,
+                             diag_today,
+                             msg=f"Should have each of the {symp_today} newly symptomatics get"
+                                 f" diagnosed on day {d} with sensitivity {test_sensitivity}."
+                                 f" Got {test_today} instead.")
+
+
+    # endregion
