@@ -235,7 +235,7 @@ class Sim(cvbase.BaseSim):
         sc.printv(f'Creating {self["pop_size"]} people...', 1, verbose)
 
         cvpop.make_people(self, verbose=verbose, **kwargs)
-        self.people.set_prognoses() # TODO: should this be here?
+        self.people.initialize() # Not sure this is the best place for it
 
         # Create the seed infections
         inds = np.arange(int(self['pop_infected']))

@@ -53,6 +53,14 @@ class People(cvb.BasePeople):
         return
 
 
+    def initialize(self, pars=None, dynamic_keys=None):
+        ''' Perform initializations '''
+        self.set_prognoses(pars)
+        self.set_betas(pars)
+        self.set_dynamic(dynamic_keys)
+        return
+
+
     def set_prognoses(self, pars=None):
         ''' Set the prognoses for each person based on age '''
         if pars is None:
@@ -69,6 +77,34 @@ class People(cvb.BasePeople):
         self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
         self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][inds]
         return
+
+
+    def set_betas(self, pars=None):
+        ''' Set betas for each layer '''
+        if pars is None:
+            pars = self.pars
+
+        df = self.contacts
+        for key,value in pars['beta_layers'].items():
+            df.loc[(df['beta'].isna()) & (df['layer']==key), 'beta'] = value
+
+        return
+
+
+    def set_dynamic(self, dynamic_keys=None):
+        ''' Flag dynamic contacts as being dynamic '''
+        if dynamic_keys is None:
+            dynamic_keys = ['c']
+
+        # Set dynamic keys to True
+        df = self.contacts
+        for key in dynamic_keys:
+            df.loc[(df['dynamic'].isna()) & (df['layer']==key), 'dynamic'] = True
+        df.loc[(df['dynamic'].isna()), 'dynamic'] = False # Set all else to False
+
+        return
+
+
 
 
     def update_states(self, t):

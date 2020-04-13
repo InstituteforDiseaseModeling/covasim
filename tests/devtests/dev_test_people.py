@@ -31,6 +31,8 @@ sc.toc(label='to df/arr')
 
 sc.toc()
 
-sim.people.set_prognoses(sim.pars)
+sim.people.initialize()
+
+df = sim.people.contacts
 
 sc.toc(label='prognoses')

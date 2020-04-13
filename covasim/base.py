@@ -634,7 +634,7 @@ class BasePeople(sc.prettyobj):
 
         # Actually include them, and update properties if supplied
         self.contacts = self.contacts.append(new_df, sort=False)
-        self.contacts.reset_index(inplace=True)
+        self.contacts.reset_index(inplace=True, drop=True)
 
         return
 
@@ -677,7 +677,7 @@ class BasePeople(sc.prettyobj):
         df.sort_values(['p1', 'p2'], inplace=True) # Sort by p1, then by p2
         df.drop_duplicates(['p1', 'p2'], inplace=True) # Remove duplicates
         df = df[df['p1'] != df['p2']] # Remove self connections
-        df.reset_index(inplace=True)
+        df.reset_index(inplace=True, drop=True)
         return df
 
 
