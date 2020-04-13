@@ -351,7 +351,7 @@ class Sim(cvbase.BaseSim):
             verbose = self['verbose']
 
         # Main simulation loop
-        for t in range(self.npts):
+        for t in self.tvec:
 
             # Do the heavy lifting
             self.step(verbose=verbose)
@@ -439,21 +439,17 @@ class Sim(cvbase.BaseSim):
         sources = np.zeros(self.npts)
         targets = np.zeros(self.npts)
 
-        # # Loop over each person to pull out the transmission
-        # for person in self.people:
-        #     if person.date_exposed is not None: # Skip people who were never exposed
-        #         if person.date_recovered is not None:
-        #             outcome_date = person.date_recovered
-        #         elif person.date_dead is not None:
-        #             outcome_date = person.date_dead
-        #         else:
-        #             errormsg = f'No outcome (death or recovery) can be determined for the following person:\n{person}'
-        #             raise ValueError(errormsg)
+        # for t in self.tvec:
 
-        #         if outcome_date is not None and outcome_date<self.npts:
-        #             outcome_date = int(outcome_date)
-        #             sources[outcome_date] += 1
-        #             targets[outcome_date] += len(person.infected)
+        #     # Sources are easy -- count up the arrays
+        #     recov_inds = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
+        #     dead_inds = cvu.true(t == self.people.date_died)  # Find people who died on this timestep
+        #     outcome_inds = np.concatenate((recov_inds, dead_inds))
+        #     sources[t] = len(outcome_inds)
+
+        #     # Targets are hard -- loop over the transmission tree
+        #     for ind in outcome_inds:
+        #         targets[t] += len(self.people.transtree_targets[ind])
 
         # # Populate the array -- to avoid divide-by-zero, skip indices that are 0
         # inds = sc.findinds(sources>0)
