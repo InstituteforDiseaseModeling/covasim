@@ -610,6 +610,7 @@ class BasePeople(sc.prettyobj):
 
     def init_contacts(self, output=False):
         ''' Initialize the contacts dataframe with the correct columns and data types '''
+        contacts = Contacts()
         arr = np.empty((0,), dtype=list(self.keylist.contacts.items()))
         df = pd.DataFrame(arr)
         if output:
@@ -714,6 +715,10 @@ class Person(sc.prettyobj):
 
         return
 
+
+class Contacts(dict):
+    '''
+    '''
 
 
 class TransTree(sc.prettyobj):
