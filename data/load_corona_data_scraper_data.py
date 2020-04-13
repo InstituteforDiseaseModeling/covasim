@@ -4,8 +4,6 @@ data from the Corona Data Scraper.
 '''
 
 from data.scraper import Scraper
-import pandas as pd
-import os
 import toml
 
 parameter_definitions = f"""
