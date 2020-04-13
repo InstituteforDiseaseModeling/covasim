@@ -9,6 +9,6 @@ if debug:
     import warnings
     warnings.simplefilter("error")
 
-sim = cv.Sim(beta=0.01, pop_size=10000, pop_infected=50, n_days=90)
+sim = cv.Sim(pop_size=20000, pop_infected=50, n_days=90)
 sim.run()
 sim.plot()
