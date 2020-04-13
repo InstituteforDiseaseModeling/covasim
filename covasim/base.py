@@ -421,7 +421,6 @@ class BasePeople(sc.prettyobj):
 
     def __init__(self, pars=None, pop_size=None, *args, **kwargs):
 
-
         # Handle pars and population size
         self.pars = pars
         if pop_size is None:
@@ -433,11 +432,12 @@ class BasePeople(sc.prettyobj):
         self.pop_size = pop_size
 
         # Other initialization
-        self._lock = False
-        self.keylist = cvd.PeopleKeys()
+        self.t = 0 # Keep current simulation time
+        self._lock = False # Prevent further modification of keys
         self._default_dtype = np.float32 # For performance -- 2x faster than float32, the default
+        self.keylist = cvd.PeopleKeys() # Store list of keys and dtypes
         self.init_contacts() # Initialize the contacts
-        self.transtree = TransTree(pop_size=pop_size)
+        self.transtree = TransTree(pop_size=pop_size) # Initialize the transmission tree
 
         return
 

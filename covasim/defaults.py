@@ -42,8 +42,8 @@ class PeopleKeys(sc.prettyobj):
     ]
 
     # Set the dates various events took place: these are floats per person -- used in people.py
-    dates = [f'date_{state}' for state in states]
-    dates.append('date_quarantined_end')
+    dates = [f'date_{state}' for state in states] # Convert each state into a date
+    dates.append('date_end_quarantine') # This one is not like the others...
 
     # Duration of different states: these are floats per person -- used in people.py
     durs = [

@@ -238,7 +238,7 @@ class Sim(cvbase.BaseSim):
 
         # Create the seed infections
         inds = np.arange(int(self['pop_infected']))
-        self.people.infect(inds=inds, t=0)
+        self.people.infect(inds=inds)
 
         return
 
@@ -283,7 +283,7 @@ class Sim(cvbase.BaseSim):
 
         # Calculate actual transmission
         target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
-        flows['new_infections'] += people.infect(inds=target_inds, t=t) # Actually infect people
+        flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
 
         # Store the transmission tree
         for ind in edge_inds:
