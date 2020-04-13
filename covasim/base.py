@@ -610,13 +610,18 @@ class BasePeople(sc.prettyobj):
 
     def init_contacts(self, output=False):
         ''' Initialize the contacts dataframe with the correct columns and data types '''
+
+        # Create the contacts dictionary
         contacts = Contacts()
-        arr = np.empty((0,), dtype=list(self.keylist.contacts.items()))
-        df = pd.DataFrame(arr)
+        for key in self.pars['contact_keys']:
+            arr = np.empty((0,), dtype=list(self.keylist.contacts.items()))
+            df = pd.DataFrame(arr)
+            contacts[key] = df
+
         if output:
-            return df
+            return contacts
         else:
-            self.contacts = df
+            self.contacts = contacts
             return
 
 
@@ -718,7 +723,16 @@ class Person(sc.prettyobj):
 
 class Contacts(dict):
     '''
+    A simple (for now) class for storing different contact layers.
     '''
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        return
+
+    def __repr__(self):
+        ''' Use odict repr'''
+        return sc.odict.__repr__(self)
+
 
 
 class TransTree(sc.prettyobj):
