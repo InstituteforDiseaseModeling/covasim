@@ -288,11 +288,15 @@ class Sim(cvbase.BaseSim):
 
         # Calculate actual transmission
         beta = np.float32(self['beta'])
-        transmission_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus)
-        flow_counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
+        target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus)
+        flow_counts['new_infections'] += people.infect(inds=target_inds, t=t)
 
         # Store the transmission tree
-
+        for ind in edge_inds:
+            source = sources[ind]
+            target = targets[ind]
+            self.people.transtree.sources[target] = source
+            self.people.transtree.targets[source].append(target)
 
         # Apply interventions
         for intervention in self['interventions']:
@@ -445,10 +449,10 @@ class Sim(cvbase.BaseSim):
         for t in self.tvec:
 
             # Sources are easy -- count up the arrays
-            recov_inds = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
-            dead_inds = cvu.true(t == self.people.date_died)  # Find people who died on this timestep
+            recov_inds   = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
+            dead_inds    = cvu.true(t == self.people.date_dead)  # Find people who died on this timestep
             outcome_inds = np.concatenate((recov_inds, dead_inds))
-            sources[t] = len(outcome_inds)
+            sources[t]   = len(outcome_inds)
 
             # Targets are hard -- loop over the transmission tree
             for ind in outcome_inds:

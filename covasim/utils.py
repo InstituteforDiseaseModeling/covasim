@@ -243,6 +243,7 @@ def compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus):
     nonzero_betas   = betas[nonzero_inds] # Remove zero entries from beta
     nonzero_targets = targets[nonzero_inds] # Remove zero entries from the targets
     transmissions   = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
-    trans_inds      = nonzero_targets[transmissions] # Filter the targets on the actual infections
-    trans_inds      = np.unique(trans_inds) # Ensure the targets are unique
-    return trans_inds
+    edge_inds       = nonzero_inds[transmissions] # The index of the contact responsible for the transmission
+    target_inds     = nonzero_targets[transmissions] # Filter the targets on the actual infections
+    target_inds     = np.unique(target_inds) # Ensure the targets are unique
+    return target_inds, edge_inds

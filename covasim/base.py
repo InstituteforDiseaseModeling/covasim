@@ -749,9 +749,9 @@ class TransTree(sc.prettyobj):
             if pop_size is None:
                 targets = []
             else:
-                targets = [[]]*pop_size # Make a list of empty lists
+                targets = [[] for p in range(pop_size)] # Make a list of empty lists
 
         # Assign
         self.sources = sources
-        self.targets = sources
+        self.targets = targets
         return
