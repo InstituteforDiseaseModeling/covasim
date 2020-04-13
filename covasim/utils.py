@@ -6,8 +6,7 @@ import numba  as nb # For faster computations
 import numpy  as np # For numerics
 import pandas as pd # Used for pd.unique() (better than np.unique())
 
-__all__ = ['sample', 'set_seed', 'binomial', 'multinomial', 'poisson',
-           'choose', 'choose_weighted']
+# __all__ = ['sample', 'set_seed', 'binomial', 'multinomial', 'poisson', 'choose', 'choose_weighted']
 
 
 def sample(dist=None, par1=None, par2=None, size=None):
@@ -87,81 +86,80 @@ def set_seed(seed=None):
     return
 
 
-def true(arr):
-    ''' Retrurns the indices of the values of the array that are true '''
-    return arr.nonzero()[0]
+# def true(arr):
+#     ''' Retrurns the indices of the values of the array that are true '''
+#     return arr.nonzero()[0]
 
-def false(arr):
-    ''' Retrurns the indices of the values of the array that are false '''
-    return (~arr).nonzero()[0]
+# def false(arr):
+#     ''' Retrurns the indices of the values of the array that are false '''
+#     return (~arr).nonzero()[0]
 
-def defined(arr):
-    ''' Retrurns the indices of the values of the array that are not-nan '''
-    return (~np.isnan(arr)).nonzero()[0]
-
-
-def itrue(arr, inds):
-    ''' Retrurns the indices of the values of the array that are true '''
-    return inds[arr[inds]]
-
-def ifalse(arr, inds):
-    ''' Retrurns the indices of the values of the array that are false '''
-    return inds[~arr[inds]]
-
-def idefined(arr, inds):
-    ''' Retrurns the indices of the values of the array that are not-nan '''
-    return inds[~np.isnan(arr[inds])]
+# def defined(arr):
+#     ''' Retrurns the indices of the values of the array that are not-nan '''
+#     return (~np.isnan(arr)).nonzero()[0]
 
 
-def true_inds(arr, inds):
-    ''' Retrurns the indices of the values of the array that are true '''
-    return inds[arr]
+# def itrue(arr, inds):
+#     ''' Retrurns the indices of the values of the array that are true '''
+#     return inds[arr[inds]]
 
-def false_inds(arr, inds):
-    ''' Retrurns the indices of the values of the array that are false '''
-    return inds[~arr]
+# def ifalse(arr, inds):
+#     ''' Retrurns the indices of the values of the array that are false '''
+#     return inds[~arr[inds]]
 
-def defined_inds(arr, inds):
-    ''' Retrurns the indices of the values of the array that are not-nan '''
-    return inds[~np.isnan(arr)]
-
-
-@nb.njit((nb.float32,)) # These types can also be declared as a dict, but performance is much slower...?
-def binomial(prob):
-    ''' A simple Bernoulli (binomial) trial '''
-    return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
-
-@nb.njit((nb.int32, nb.float32))
-def n_binomial(n, prob):
-    ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
-    return (np.random.random(n) < prob)
-
-@nb.njit((nb.int32, nb.float32))
-def n_binomial_inds(n, prob):
-    ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
-    return (np.random.random(n) < prob).nonzero()[0]
-
-@nb.njit((nb.float32[:],))
-def binomial_arr(prob_arr):
-    ''' Bernoulli trial array -- return boolean '''
-    return np.random.random(len(prob_arr)) < prob_arr
-
-@nb.njit((nb.float32[:],))
-def binomial_arr_inds(prob_arr):
-    ''' Bernoulli trial array -- return indices that passed '''
-    return binomial_arr(prob_arr).nonzero()[0]
+# def idefined(arr, inds):
+#     ''' Retrurns the indices of the values of the array that are not-nan '''
+#     return inds[~np.isnan(arr[inds])]
 
 
-@nb.njit((nb.float32, nb.int32))
-def repeated_binomial(prob, n):
-    ''' A repeated Bernoulli (binomial) trial '''
-    return np.random.binomial(1, prob, n)
+# def true_inds(arr, inds):
+#     ''' Retrurns the indices of the values of the array that are true '''
+#     return inds[arr]
+
+# def false_inds(arr, inds):
+#     ''' Retrurns the indices of the values of the array that are false '''
+#     return inds[~arr]
+
+# def defined_inds(arr, inds):
+#     ''' Retrurns the indices of the values of the array that are not-nan '''
+#     return inds[~np.isnan(arr)]
 
 
-@nb.njit((nb.float32, nb.int32[:]))
-def bernoulli_filter(prob, arr):
-    ''' Bernoulli "filter" -- return entries that passed '''
-    return arr[n_binomial(len(arr), prob).nonzero()[0]]
+# @nb.njit((nb.float32,)) # These types can also be declared as a dict, but performance is much slower...?
+# def binomial(prob):
+#     ''' A simple Bernoulli (binomial) trial '''
+#     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
+
+# @nb.njit((nb.int32, nb.float32))
+# def n_binomial(n, prob):
+#     ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
+#     return (np.random.random(n) < prob)
+
+# @nb.njit((nb.int32, nb.float32))
+# def n_binomial_inds(n, prob):
+#     ''' Multiple Bernoulli (binomial) trials with a scalar probability -- return indices that passed '''
+#     return (np.random.random(n) < prob).nonzero()[0]
+
+# @nb.njit((nb.float32[:],))
+# def binomial_arr(prob_arr):
+#     ''' Bernoulli trial array -- return boolean '''
+#     return np.random.random(len(prob_arr)) < prob_arr
+
+# @nb.njit((nb.float32[:],))
+# def binomial_arr_inds(prob_arr):
+#     ''' Bernoulli trial array -- return indices that passed '''
+#     return binomial_arr(prob_arr).nonzero()[0]
+
+# @nb.njit((nb.float32, nb.int32))
+# def repeated_binomial(prob, n):
+#     ''' A repeated Bernoulli (binomial) trial '''
+#     return np.random.binomial(1, prob, n)
+
+
+# @nb.njit((nb.float32, nb.int32[:]))
+# def bernoulli_filter(prob, arr):
+#     ''' Bernoulli "filter" -- return entries that passed '''
+#     return arr[n_binomial(len(arr), prob).nonzero()[0]]
 
 @nb.njit((nb.float32[:], nb.int32))
 def multinomial(probs, repeats):
@@ -254,16 +252,10 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
 
 @nb.njit((nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))
 def compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus):
-    # print(type(beta))
-    # print(sources.dtype)
-    # print(targets.dtype)
-    # print(layer_betas.dtype)
-    # print(rel_trans.dtype)
-    # print(rel_sus.dtype)
     betas   = beta * layer_betas  * rel_trans[sources] * rel_sus[targets]
     nonzero_inds = betas.nonzero()[0]
     nonzero_betas = betas[nonzero_inds]
     nonzero_targets = targets[nonzero_inds]
-    transmissions = binomial_arr_inds(nonzero_betas)
+    transmissions = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0]
     transmission_inds = nonzero_targets[transmissions]
     return transmission_inds
