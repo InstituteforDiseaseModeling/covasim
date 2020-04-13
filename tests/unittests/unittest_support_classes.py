@@ -12,7 +12,7 @@ import json
 import os
 import numpy as np
 
-from covasim import Sim, parameters, change_beta
+from covasim import Sim, parameters, change_beta, test_prob
 
 
 
@@ -113,19 +113,20 @@ class TestProperties:
     class ResultsDataKeys:
         deaths_cumulative = 'cum_deaths'
         deaths_daily = 'new_deaths'
-        diagnoses_cumulative = 'cum_diagnosed'
-        diagnoses_at_timestep = 'diagnoses'
-        diagnostics_at_timestep = 'tests'
-        diagnostics_cumulative = 'cum_tested'
+        diagnoses_cumulative = 'cum_diagnoses'
+        diagnoses_at_timestep = 'new_diagnoses'
         exposed_at_timestep = 'n_exposed'
         susceptible_at_timestep = 'n_susceptible'
         infectious_at_timestep = 'n_infectious'
         symptomatic_at_timestep = 'n_symptomatic'
         symptomatic_cumulative = 'cum_symptomatic'
+        symptomatic_new_timestep = 'new_symptomatic'
         recovered_at_timestep = 'new_recoveries'
         recovered_cumulative = 'cum_recoveries'
         infections_at_timestep = 'new_infections'
         infections_cumulative = 'cum_infections'
+        tests_at_timestep = 'new_tests'
+        tests_cumulative = 'cum_tests'
         GUESS_doubling_time_at_timestep = 'doubling_time'
         GUESS_r_effective_at_timestep = 'r_eff'
 
@@ -286,6 +287,19 @@ class CovaSimTest(unittest.TestCase):
                                          changes=multiplier_array,
                                          layers=layers)
         pass
+
+    def intervention_set_test_prob(self, symptomatic_prob=0, asymptomatic_prob=0,
+                                   quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0,
+                                   loss_prob=0.0, test_delay=1, start_day=0):
+        self.interventions = test_prob(symptomatic_prob=symptomatic_prob,
+                                       asymptomatic_prob=asymptomatic_prob,
+                                       quarantine_prob=quarantine_prob,
+                                       symp_quar_prob=symp_quar_prob,
+                                       test_sensitivity=test_sensitivity,
+                                       loss_prob=loss_prob,
+                                       test_delay=test_delay,
+                                       start_day=start_day)
+
     # endregion
 
     # region specialized simulation methods
