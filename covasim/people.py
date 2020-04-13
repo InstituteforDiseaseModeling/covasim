@@ -76,6 +76,8 @@ class People(cvb.BasePeople):
         self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
         self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
         self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][inds]
+        self.rel_trans   = 1.0 # By default: susceptible
+        self.rel_sus     = 0.0 # By default: cannot transmit
         return
 
 
@@ -227,6 +229,7 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious, label='inf')
         self.infectious[inds] = True
+        self.rel_trans[inds]  = 1.0 # TODO: make this dynamic
         return len(inds)
 
 
@@ -327,6 +330,7 @@ class People(cvb.BasePeople):
         durpars = self.pars['dur']
         self.susceptible[inds]    = False
         self.exposed[inds]        = True
+        self.rel_sus[inds]        = 0.0 # Not susceptible after becoming infected
         self.date_exposed[inds]   = t
 
         # Deal with bed constraint if applicable
