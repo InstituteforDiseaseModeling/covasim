@@ -593,6 +593,7 @@ class Sim(cvbase.BaseSim):
         if self.data is None:
             return np.nan
 
+        pLowest = 1e-20  # This will be considered a 0 for p (so that log(p)>-inf)
         loglike = 0
 
         model_dates = self.datevec.tolist()
@@ -608,6 +609,9 @@ class Sim(cvbase.BaseSim):
                                 p = 1.0
                             else:
                                 p = cvu.poisson_test(datum, estimate)
+
+                            p = max( p, pLowest )  # Make sure p>0 to get finite logarithms
+
                             logp = pl.log(p)
                             loglike += weight*logp
                             sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
