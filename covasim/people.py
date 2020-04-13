@@ -72,12 +72,13 @@ class People(cvb.BasePeople):
         prognoses = pars['prognoses']
         age_cutoffs = prognoses['age_cutoffs']
         inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=np.int32, count=len(self))
-        self.symp_prob   = self.pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
-        self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
-        self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
-        self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][inds]
-        self.rel_trans   = 1.0 # By default: susceptible
-        self.rel_sus     = 0.0 # By default: cannot transmit
+        self.symp_prob    = self.pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
+        self.severe_prob  = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
+        self.crit_prob    = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
+        self.death_prob   = pars['rel_death_prob']  * prognoses['death_probs'][inds]
+        self.rel_sus[:]   = 1.0 # By default: susceptible
+        self.rel_trans[:] = 0.0 # By default: cannot transmit
+
         return
 
 
@@ -328,6 +329,10 @@ class People(cvb.BasePeople):
         """
         n_infections = len(inds)
         durpars = self.pars['dur']
+        if not self.susceptible[inds].all():
+            raise Exception
+        if self.exposed[inds].any():
+            raise Exception
         self.susceptible[inds]    = False
         self.exposed[inds]        = True
         self.rel_sus[inds]        = 0.0 # Not susceptible after becoming infected
