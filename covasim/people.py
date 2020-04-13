@@ -267,6 +267,7 @@ class People(cvb.BasePeople):
         self.severe[inds]      = False
         self.critical[inds]    = False
         self.recovered[inds]   = True
+        self.rel_trans[inds]   = 0.0
         return len(inds)
 
 
@@ -280,6 +281,7 @@ class People(cvb.BasePeople):
         self.critical[inds]    = False
         self.recovered[inds]   = False
         self.dead[inds]        = True
+        self.rel_trans[inds]   = 0.0
         return len(inds)
 
 
