@@ -2,7 +2,6 @@
 Base classes for Covasim.
 '''
 
-#%% Imports
 import datetime as dt
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
@@ -10,12 +9,13 @@ import pandas as pd
 from . import utils as cvu
 from . import defaults as cvd
 
-# Specify all externally visible functions this file defines
+# Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'TransTree']
 
 
 
-#%% Define classes
+#%% Define simulation classes
+
 class ParsObj(sc.prettyobj):
     '''
     A class based around performing operations on a self.pars dict.
@@ -412,6 +412,8 @@ class BaseSim(ParsObj):
         return sim
 
 
+#%% Define people classes
+
 class BasePeople(sc.prettyobj):
     '''
     A class to handle all the boilerplate for people -- note that everything
@@ -651,6 +653,7 @@ class BasePeople(sc.prettyobj):
         into an edge list.
         '''
 
+        # Parse the list
         p1    = [] # Person 1 of the contact pair
         p2    = [] # Person 2 of the contact pair
         layer = [] # Layers
@@ -665,9 +668,7 @@ class BasePeople(sc.prettyobj):
         new_df = self.init_contacts(output=True)
         for key,value in {'p1':p1, 'p2':p2, 'layer':layer}.items():
             new_df[key] = np.array(value, dtype=self.keylist.contacts[key])
-
-        # Sort and remove duplicates
-        new_df = self.remove_duplicates(new_df)
+        new_df = self.remove_duplicates(new_df) # Sort and remove duplicates
 
         return new_df
 
@@ -693,12 +694,10 @@ class BasePeople(sc.prettyobj):
 
 
 
-
-
-
 class Person(sc.prettyobj):
     '''
-    Class for a single person.
+    Class for a single person. Note: this is largely deprecated since sim.people
+    is now based on arrays rather than being a list of people.
     '''
     def __init__(self, pars=None, uid=None, age=-1, sex=-1, contacts=None):
         self.uid         = uid # This person's unique identifier
@@ -711,18 +710,8 @@ class Person(sc.prettyobj):
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
 
-        # Set prognoses
-        if pars:
-            self.durpars = pars['dur']  # Store duration parameters
-            prognoses = pars['prognoses']
-            idx = np.argmax(prognoses['age_cutoffs'] > self.age)  # Index of the age bin to use
-            self.symp_prob   = pars['rel_symp_prob']   * prognoses['symp_probs'][idx]
-            self.severe_prob = pars['rel_severe_prob'] * prognoses['severe_probs'][idx]
-            self.crit_prob   = pars['rel_crit_prob']   * prognoses['crit_probs'][idx]
-            self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
-            self.OR_no_treat = pars['OR_no_treat']
-
         return
+
 
 
 class TransTree(sc.prettyobj):
@@ -755,3 +744,7 @@ class TransTree(sc.prettyobj):
         self.sources = sources
         self.targets = targets
         return
+
+
+    def plot(self):
+        raise NotImplementedError('Transmission tree plotting is not yet available')
