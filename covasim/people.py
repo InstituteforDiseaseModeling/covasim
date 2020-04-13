@@ -50,6 +50,8 @@ class People(cvb.BasePeople):
         for key,value in kwargs.items():
             self.set(key, value)
 
+        self.verbose = 2 # TODO remove
+
         return
 
 
@@ -121,7 +123,6 @@ class People(cvb.BasePeople):
         # For storing the interim values since used in every subsequent calculation
         self.is_exp = cvu.true(self.exposed)
         self.t = t
-        self.verbose = True # TODO
 
         counts['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
         counts['new_symptomatic'] += self.check_symptomatic()
@@ -347,26 +348,29 @@ class People(cvb.BasePeople):
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)
         self.date_infectious[inds] = self.dur_exp2inf[inds] + t
-        print('hiiiii infectiuos dates')
-        print(inds)
-        print(self.dur_exp2inf)
-        print(self.date_infectious)
+        if self.verbose>2:
+            print('hiiiii infectiuos dates')
+            print(inds)
+            print(self.dur_exp2inf)
+            print(self.date_infectious)
 
         # Use prognosis probabilities to determine what happens to them
         is_symp = cvu.binomial_arr(self.symp_prob[inds]) # Determine if they develop symptoms
         symp_inds = inds[is_symp]
         asymp_inds = inds[~is_symp] # Asymptomatic
-        print('hiiiii2 symptomatic')
-        print(symp_inds) # TODO WHY EMPTY
-        print(asymp_inds)
+        if self.verbose>2:
+            print('hiiiii2 symptomatic')
+            print(symp_inds) # TODO WHY EMPTY
+            print(asymp_inds)
 
         # CASE 1: Asymptomatic: may infect others, but have no symptoms and do not die
         dur_asym2rec = cvu.sample(**durpars['asym2rec'], size=len(asymp_inds))
         self.date_recovered[asymp_inds] = self.date_infectious[asymp_inds] + dur_asym2rec  # Date they recover
         self.dur_disease[asymp_inds] = self.dur_exp2inf[asymp_inds] + dur_asym2rec  # Store how long this person had COVID-19
-        print('hiiiii3 asymptomatic')
-        print(self.date_recovered)
-        print(self.dur_disease)
+        if self.verbose>2:
+            print('hiiiii3 asymptomatic')
+            print(self.date_recovered)
+            print(self.dur_disease)
 
         # CASE 2: Symptomatic: can either be mild, severe, or critical
         n_symp_inds = len(symp_inds)
@@ -375,17 +379,19 @@ class People(cvb.BasePeople):
         is_sev = cvu.binomial_arr(self.severe_prob[symp_inds]) # See if they're a severe or mild case
         sev_inds = symp_inds[is_sev]
         mild_inds = symp_inds[~is_sev] # Not severe
-        print('hiiiii4 sev/mild')
-        print(sev_inds)
-        print(mild_inds)
+        if self.verbose>2:
+            print('hiiiii4 sev/mild')
+            print(sev_inds)
+            print(mild_inds)
 
         # CASE 2.1: Mild symptoms, no hospitalization required and no probaility of death
         dur_mild2rec = cvu.sample(**durpars['mild2rec'], size=len(mild_inds))
         self.date_recovered[mild_inds] = self.date_symptomatic[mild_inds] + dur_mild2rec  # Date they recover
         self.dur_disease[mild_inds] = self.dur_exp2inf[mild_inds] + self.dur_inf2sym[mild_inds] + dur_mild2rec  # Store how long this person had COVID-19
-        print('hiiiii5 mild recovery')
-        print(self.date_recovered)
-        print(self.dur_disease)
+        if self.verbose>2:
+            print('hiiiii5 mild recovery')
+            print(self.date_recovered)
+            print(self.dur_disease)
 
 
         # CASE 2.2: Severe cases: hospitalization required, may become critical
@@ -394,17 +400,19 @@ class People(cvb.BasePeople):
         is_crit = cvu.binomial_arr(self.crit_prob[sev_inds])  # See if they're a critical case
         crit_inds = sev_inds[is_crit]
         non_crit_inds = sev_inds[~is_crit]
-        print('hiiiii6 crit/noncrit')
-        print(crit_inds)
-        print(non_crit_inds)
+        if self.verbose>2:
+            print('hiiiii6 crit/noncrit')
+            print(crit_inds)
+            print(non_crit_inds)
 
         # CASE 2.2.1 Not critical - they will recover
         dur_sev2rec = cvu.sample(**durpars['sev2rec'], size=len(non_crit_inds))
         self.date_recovered[non_crit_inds] = self.date_severe[non_crit_inds] + dur_sev2rec  # Date they recover
         self.dur_disease[non_crit_inds] = self.dur_exp2inf[non_crit_inds] + self.dur_inf2sym[non_crit_inds] + self.dur_sym2sev[non_crit_inds] + dur_sev2rec  # Store how long this person had COVID-19
-        print('hiiiii7 crit recovery')
-        print(self.date_recovered)
-        print(self.dur_disease)
+        if self.verbose>2:
+            print('hiiiii7 crit recovery')
+            print(self.date_recovered)
+            print(self.dur_disease)
 
 
         # CASE 2.2.2: Critical cases: ICU required, may die
@@ -414,27 +422,30 @@ class People(cvb.BasePeople):
         is_dead = cvu.binomial_arr(this_death_prob)  # Death outcome
         dead_inds = crit_inds[is_dead]
         alive_inds = crit_inds[~is_dead]
-        print('hiiiii8 alive/dead')
-        print(dead_inds)
-        print(alive_inds)
+        if self.verbose>2:
+            print('hiiiii8 alive/dead')
+            print(dead_inds)
+            print(alive_inds)
 
         # CASE 2.2.2.1: Did not die
         dur_crit2rec = cvu.sample(**durpars['crit2rec'], size=len(alive_inds))
         self.date_recovered[alive_inds] = self.date_critical[alive_inds] + dur_crit2rec # Date they recover
         self.dur_disease[alive_inds] = self.dur_exp2inf[alive_inds] + self.dur_inf2sym[alive_inds] + self.dur_sym2sev[alive_inds] + self.dur_sev2crit[alive_inds] + dur_crit2rec  # Store how long this person had COVID-19
-        print('hiiiii9 did not die')
-        print(self.date_recovered)
-        print(self.dur_disease)
+        if self.verbose>2:
+            print('hiiiii9 did not die')
+            print(self.date_recovered)
+            print(self.dur_disease)
 
         # CASE 2.2.2.2: Did die
         dur_crit2die = cvu.sample(**durpars['crit2die'], size=len(dead_inds))
         self.date_dead[dead_inds] = self.date_critical[dead_inds] + dur_crit2die # Date of death
         self.dur_disease[dead_inds] = self.dur_exp2inf[dead_inds] + self.dur_inf2sym[dead_inds] + self.dur_sym2sev[dead_inds] + self.dur_sev2crit[dead_inds] + dur_crit2die   # Store how long this person had COVID-19
-        print('hiiiii10 died')
-        print(self.date_dead)
-        print(self.dur_disease)
+        if self.verbose>2:
+            print('hiiiii10 died')
+            print(self.date_dead)
+            print(self.dur_disease)
 
-        if verbose:
+        if self.verbose>2:
             print(len(inds))
             print(inds)
             print(self.exposed.sum())
