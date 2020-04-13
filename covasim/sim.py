@@ -249,7 +249,7 @@ class Sim(cvbase.BaseSim):
         Step the simulation forward in time
         '''
 
-        verbose = 2
+        # verbose = 2
 
         # Set the time and if we have reached the end of the simulation, then do nothing
         t = self.t
@@ -303,8 +303,8 @@ class Sim(cvbase.BaseSim):
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people[key].sum()
-            if verbose:
-                print(key, self.results[f'n_{key}'][t])
+            # if verbose:
+            #     print(key, self.results[f'n_{key}'][t])
         self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds']>0 else np.nan
 
         # Update counts for this time step: flows
