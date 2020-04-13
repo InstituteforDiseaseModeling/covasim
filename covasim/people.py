@@ -158,7 +158,7 @@ class People(cvb.BasePeople):
                 # Add to contacts
                 self.add_contacts(new_contacts)
 
-        return
+        return self.contacts
 
 
     # def stuff():

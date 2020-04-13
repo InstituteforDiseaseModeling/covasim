@@ -686,9 +686,11 @@ class BasePeople(sc.prettyobj):
         return df
 
 
-    def remove_dynamic_contacts(self):
+    def remove_dynamic_contacts(self, dynamic_keys='c'):
         ''' Remove all contacts labeled as dynamic '''
-        self.contacts = self.contacts[~self.contacts['dynamic']]
+        dynamic_keys = sc.promotetolist(dynamic_keys)
+        if len([key for key in dynamic_keys if key in self.pars['contacts']]): # TODO: refactor based on self.contact_keys
+            self.contacts = self.contacts[~self.contacts['dynamic']]
         return
 
 
