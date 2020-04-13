@@ -6,7 +6,10 @@ import numba  as nb # For faster computations
 import numpy  as np # For numerics
 import pandas as pd # Used for pd.unique() (better than np.unique())
 
-# __all__ = ['sample', 'set_seed', 'binomial', 'multinomial', 'poisson', 'choose', 'choose_weighted']
+
+#%% Sampling and seed methods
+
+__all__ = ['sample', 'set_seed']
 
 
 def sample(dist=None, par1=None, par2=None, size=None):
@@ -86,57 +89,69 @@ def set_seed(seed=None):
     return
 
 
+#%% Simple array operations
+__all__ += ['true', 'false', 'defined',
+            'itrue', 'ifalse', 'idefined',
+            'itruei', 'ifalsei', 'idefinedi',
+            ]
+
+
 # @nb.njit((nb.boolean[:],))
 def true(arr):
-    ''' Retrurns the indices of the values of the array that are true '''
+    ''' Returns the indices of the values of the array that are true '''
     return arr.nonzero()[0]
 
 # @nb.njit((nb.boolean[:],))
 def false(arr):
-    ''' Retrurns the indices of the values of the array that are false '''
+    ''' Returns the indices of the values of the array that are false '''
     return (~arr).nonzero()[0]
 
 # @nb.njit((nb.float32[:],))
 def defined(arr):
-    ''' Retrurns the indices of the values of the array that are not-nan '''
+    ''' Returns the indices of the values of the array that are not-nan '''
     return (~np.isnan(arr)).nonzero()[0]
 
 def itrue(arr, inds):
-    ''' Retrurns the indices of the values of the array that are true '''
-    return inds[arr[inds]]
-
-def ifalse(arr, inds):
-    ''' Retrurns the indices of the values of the array that are false '''
-    return inds[~arr[inds]]
-
-def idefined(arr, inds):
-    ''' Retrurns the indices of the values of the array that are not-nan '''
-    return inds[~np.isnan(arr[inds])]
-
-def true_inds(arr, inds):
-    ''' Retrurns the indices of the values of the array that are true '''
+    ''' Returns the indices that are true in the array -- name is short for indices[true] '''
     return inds[arr]
 
-def false_inds(arr, inds):
-    ''' Retrurns the indices of the values of the array that are false '''
+def ifalse(arr, inds):
+    ''' Returns the indices that are true in the array -- name is short for indices[false] '''
     return inds[~arr]
 
-def defined_inds(arr, inds):
-    ''' Retrurns the indices of the values of the array that are not-nan '''
+def idefined(arr, inds):
+    ''' Returns the indices that are true in the array -- name is short for indices[defined] '''
     return inds[~np.isnan(arr)]
 
-# @nb.njit((nb.float32[:],))
+def itruei(arr, inds):
+    ''' Returns the indices that are true in the array -- name is short for indices[true[indices]] '''
+    return inds[arr[inds]]
+
+def ifalsei(arr, inds):
+    ''' Returns the indices that are false in the array -- name is short for indices[false[indices]] '''
+    return inds[~arr[inds]]
+
+def idefinedi(arr, inds):
+    ''' Returns the indices that are defined in the array -- name is short for indices[defined[indices]] '''
+    return inds[~np.isnan(arr[inds])]
+
+
+
+#%% Probabilities -- not jitted since performance gain is minimal
+
+__all__ += ['binomial_arr', 'repeated_binomial', 'multinomial', 'poisson', 'choose', 'choose_weighted']
+
+
 def binomial_arr(prob_arr):
     ''' Bernoulli trial array -- return boolean '''
     return np.random.random(len(prob_arr)) < prob_arr
 
-# @nb.njit((nb.float32, nb.int32))
+
 def repeated_binomial(prob, n):
     ''' A repeated Bernoulli (binomial) trial '''
     return np.random.binomial(1, prob, n)
 
 
-# @nb.njit((nb.float32[:], nb.int32))
 def multinomial(probs, repeats):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
@@ -223,6 +238,7 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
 
     return inds
 
+#%% The core Covasim function -- compute the infections
 
 @nb.njit((nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))
 def compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus):
