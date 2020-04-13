@@ -107,8 +107,6 @@ class People(cvb.BasePeople):
         return
 
 
-
-
     def update_states(self, t):
         ''' Perform all state updates '''
 
@@ -214,6 +212,7 @@ class People(cvb.BasePeople):
         has_date    = cvu.idefinedi(date, not_current)
         inds        = cvu.itrue(self.t >= date[has_date], has_date)
         return inds
+
 
     def check_infectious(self):
         ''' Check if they become infectious '''
