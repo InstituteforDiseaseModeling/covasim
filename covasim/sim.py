@@ -285,13 +285,13 @@ class Sim(cvbase.BaseSim):
         layer_betas = people.contacts['beta'].values
 
         betas   = self['beta'] * layer_betas  * people.rel_trans[sources] * people.rel_sus[targets]
-        nonzero_inds = betas.nonzero()[0]
-        nonzero_betas = betas[nonzero_inds]
-        nonzero_targets = targets[nonzero_inds]
+        # nonzero_inds = betas.nonzero()[0]
+        # nonzero_betas = betas[nonzero_inds]
+        # nonzero_targets = targets[nonzero_inds]
 
         # Calculate actual transmission
-        transmissions = cvu.binomial_arr_inds(nonzero_betas)
-        transmission_inds = nonzero_targets[transmissions]
+        transmissions = cvu.binomial_arr_inds(betas)
+        transmission_inds = targets[transmissions]
         # transmission_inds = cvu.bernoulli_filter(np.float32(self['beta']), np.int32(targets))
         flow_counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
 
