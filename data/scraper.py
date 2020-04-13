@@ -30,11 +30,11 @@ class Scraper(sc.prettyobj):
 
         self.log = logging.getLogger(__name__)
         logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
-        if parameters.get("and_run", True):
-            self.run()
+        if parameters.get("scape_on_init", False):
+            self.scrape()
 
 
-    def run(self):
+    def scrape(self):
         self.load()
         self.transform()
         self.test_quality()

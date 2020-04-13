@@ -40,6 +40,5 @@ class ECDPScraper(Scraper):
 
 
 parameters = toml.loads(parameter_definitions)
-ECDPScraper(parameters)
-
+ECDPScraper(parameters).scrape()
 
