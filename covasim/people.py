@@ -315,7 +315,6 @@ class People(cvb.BasePeople):
         """
 
         # Handle inputs
-        inds         = np.unique(inds) # TOOD: should this be here?
         n_infections = len(inds)
         durpars      = self.pars['dur']
 

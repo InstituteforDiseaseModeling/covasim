@@ -291,6 +291,9 @@ class Sim(cvbase.BaseSim):
         transmission_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus)
         flow_counts['new_infections'] += people.infect(inds=transmission_inds, t=t)
 
+        # Store the transmission tree
+
+
         # Apply interventions
         for intervention in self['interventions']:
             intervention.apply(self)
@@ -439,22 +442,22 @@ class Sim(cvbase.BaseSim):
         sources = np.zeros(self.npts)
         targets = np.zeros(self.npts)
 
-        # for t in self.tvec:
+        for t in self.tvec:
 
-        #     # Sources are easy -- count up the arrays
-        #     recov_inds = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
-        #     dead_inds = cvu.true(t == self.people.date_died)  # Find people who died on this timestep
-        #     outcome_inds = np.concatenate((recov_inds, dead_inds))
-        #     sources[t] = len(outcome_inds)
+            # Sources are easy -- count up the arrays
+            recov_inds = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
+            dead_inds = cvu.true(t == self.people.date_died)  # Find people who died on this timestep
+            outcome_inds = np.concatenate((recov_inds, dead_inds))
+            sources[t] = len(outcome_inds)
 
-        #     # Targets are hard -- loop over the transmission tree
-        #     for ind in outcome_inds:
-        #         targets[t] += len(self.people.transtree_targets[ind])
+            # Targets are hard -- loop over the transmission tree
+            for ind in outcome_inds:
+                targets[t] += len(self.people.transtree.targets[ind])
 
-        # # Populate the array -- to avoid divide-by-zero, skip indices that are 0
-        # inds = sc.findinds(sources>0)
-        # r_eff = targets[inds]/sources[inds]
-        # self.results['r_eff'].values[inds] = r_eff
+        # Populate the array -- to avoid divide-by-zero, skip indices that are 0
+        inds = sc.findinds(sources>0)
+        r_eff = targets[inds]/sources[inds]
+        self.results['r_eff'].values[inds] = r_eff
 
         return
 

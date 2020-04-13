@@ -217,8 +217,8 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
         raise Exception(errormsg)
 
     # Choose samples
-    unique_inds = np.array([], dtype=np.int)
     tries = 0
+    unique_inds = np.array([], dtype=np.int32)
     while len(unique_inds)<n_samples and tries<max_tries:
         tries += 1
         raw_inds = multinomial(probs, int(n_samples*overshoot)) # Return raw indices, with replacement
@@ -238,10 +238,11 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
 @nb.njit((nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))
 def compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
-    betas   = beta * layer_betas  * rel_trans[sources] * rel_sus[targets]
-    nonzero_inds = betas.nonzero()[0]
-    nonzero_betas = betas[nonzero_inds]
-    nonzero_targets = targets[nonzero_inds]
-    transmissions = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0]
-    transmission_inds = nonzero_targets[transmissions]
-    return transmission_inds
+    betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
+    nonzero_inds    = betas.nonzero()[0] # Find nonzero entries
+    nonzero_betas   = betas[nonzero_inds] # Remove zero entries from beta
+    nonzero_targets = targets[nonzero_inds] # Remove zero entries from the targets
+    transmissions   = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
+    trans_inds      = nonzero_targets[transmissions] # Filter the targets on the actual infections
+    trans_inds      = np.unique(trans_inds) # Ensure the targets are unique
+    return trans_inds

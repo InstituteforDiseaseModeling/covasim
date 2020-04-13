@@ -11,7 +11,7 @@ from . import utils as cvu
 from . import defaults as cvd
 
 # Specify all externally visible functions this file defines
-__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person']
+__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'TransTree']
 
 
 
@@ -436,6 +436,7 @@ class BasePeople(sc.prettyobj):
         self.keylist = cvd.PeopleKeys()
         self._default_dtype = np.float32 # For performance -- 2x faster than float32, the default
         self.init_contacts() # Initialize the contacts
+        self.transtree = TransTree(pop_size=pop_size)
 
         return
 
@@ -685,11 +686,6 @@ class BasePeople(sc.prettyobj):
         return df
 
 
-
-
-
-
-
     def remove_dynamic_contacts(self):
         ''' Remove all contacts labeled as dynamic '''
         self.contacts = self.contacts[~self.contacts['dynamic']]
@@ -726,4 +722,36 @@ class Person(sc.prettyobj):
             self.death_prob  = pars['rel_death_prob']  * prognoses['death_probs'][idx]
             self.OR_no_treat = pars['OR_no_treat']
 
+        return
+
+
+class TransTree(sc.prettyobj):
+    '''
+    A class for holding a transmission tree. Sources and targets are both lists
+    of the same length as the population size. Sources has one entry for people who
+    have been infected, zero for those who haven't. Targets is a list of lists,
+    with the length of the list being the number of people that person infected.
+
+    Args:
+        sources (list): the person who infected this person
+        targets (list): the people this person infected
+    '''
+
+    def __init__(self, pop_size=None, sources=None, targets=None):
+
+        # Handle inputs and preallocate if a size is given
+        if sources is None:
+            if pop_size is None:
+                sources = []
+            else:
+                sources = [None]*pop_size
+        if targets is None:
+            if pop_size is None:
+                targets = []
+            else:
+                targets = [[]]*pop_size # Make a list of empty lists
+
+        # Assign
+        self.sources = sources
+        self.targets = sources
         return
