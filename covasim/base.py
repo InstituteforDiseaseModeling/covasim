@@ -13,7 +13,6 @@ from . import defaults as cvd
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'TransTree']
 
 
-
 #%% Define simulation classes
 
 class ParsObj(sc.prettyobj):
@@ -128,7 +127,7 @@ class BaseSim(ParsObj):
         return
 
     def set_seed(self, seed=-1):
-        """
+        '''
         Set the seed for the random number stream from the stored or supplied value
 
         Args:
@@ -136,7 +135,7 @@ class BaseSim(ParsObj):
 
         Returns:
             None
-        """
+        '''
         # Unless no seed is supplied, reset it
         if seed != -1:
             self['rand_seed'] = seed
@@ -169,14 +168,14 @@ class BaseSim(ParsObj):
 
     @property
     def datevec(self):
-        """
+        '''
         Create a vector of dates
 
         Returns:
             Array of `datetime` instances containing the date associated with each
             simulation time step
 
-        """
+        '''
         try:
             return self['start_day'] + self.tvec * dt.timedelta(days=1)
         except:
@@ -200,7 +199,7 @@ class BaseSim(ParsObj):
 
 
     def _make_resdict(self, for_json=True):
-        """
+        '''
         Convert results to dict
 
         The results written to Excel must have a regular table shape, whereas
@@ -212,7 +211,7 @@ class BaseSim(ParsObj):
         Returns:
             resdict (dict): Dictionary representation of the results
 
-        """
+        '''
         resdict = {}
         resdict['t'] = self.results['t'] # Assume that there is a key for time
 
@@ -230,7 +229,7 @@ class BaseSim(ParsObj):
 
 
     def _make_pardict(self):
-        """
+        '''
         Return parameters for JSON export
 
         This method is required so that interventions can specify
@@ -238,7 +237,7 @@ class BaseSim(ParsObj):
 
         Returns:
 
-        """
+        '''
         pardict = {}
         for key in self.pars.keys():
             if key == 'interventions':
@@ -251,7 +250,7 @@ class BaseSim(ParsObj):
 
 
     def to_json(self, filename=None, keys=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
-        """
+        '''
         Export results as JSON.
 
         Args:
@@ -271,7 +270,7 @@ class BaseSim(ParsObj):
             string = sim.to_json()
             sim.to_json('results.json')
             sim.to_json('summary.json', keys='summary')
-        """
+        '''
 
         # Handle keys
         if keys is None:
@@ -305,7 +304,7 @@ class BaseSim(ParsObj):
 
 
     def to_excel(self, filename=None):
-        """
+        '''
         Export results as XLSX
 
         Args:
@@ -314,7 +313,7 @@ class BaseSim(ParsObj):
         Returns:
             An sc.Spreadsheet with an Excel file, or writes the file to disk
 
-        """
+        '''
         resdict = self._make_resdict(for_json=False)
         result_df = pd.DataFrame.from_dict(resdict)
         result_df.index = self.tvec

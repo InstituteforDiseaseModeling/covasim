@@ -108,20 +108,6 @@ class People(cvb.BasePeople):
         return
 
 
-    # def update_contacts(self, t):
-    #     # Set community contacts
-
-    #             if 'c' in self['contacts']:
-    #         n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
-    #     else:
-    #         n_comm_contacts = 0
-
-    #     person_contacts = person.contacts
-    #     if n_comm_contacts:
-    #         community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-    #         person_contacts['c'] = community_contact_inds
-
-
     def update_states(self, t):
         ''' Perform all state updates '''
 
@@ -138,10 +124,27 @@ class People(cvb.BasePeople):
         counts['new_deaths']      += self.check_death()
         counts['new_recoveries']  += self.check_recovery()
         # counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
-
         del self.is_exp # Tidy up
 
         return counts
+
+
+    def update_contacts(self):
+        # Set community contacts
+
+        self.remove_dynamic_contacts()
+
+        n_comm_contacts = 0
+        if 'c' in self.pars['contacts']:
+            n_comm_contacts = self.pars['contacts']['c'] # Community contacts; TODO: make less ugly
+
+
+        person_contacts = person.contacts
+        if n_comm_contacts:
+            community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
+            person_contacts['c'] = community_contact_inds
+
+        return
 
 
     # def stuff():
@@ -185,9 +188,9 @@ class People(cvb.BasePeople):
 
 
     def make_susceptible(self, inds):
-        """
+        '''
         Make person susceptible. This is used during dynamic resampling
-        """
+        '''
         for key in self.keylist.states:
             if key == 'susceptible':
                 self[key][inds] = True
@@ -297,7 +300,7 @@ class People(cvb.BasePeople):
     #%% Methods to make events occur (infection and diagnosis)
 
     def infect(self, inds, t, bed_max=None, source=None, verbose=True):
-        """
+        '''
         Infect this person and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
@@ -312,7 +315,7 @@ class People(cvb.BasePeople):
 
         Returns:
             count (int): number of people infected
-        """
+        '''
 
         # Handle inputs
         n_infections = len(inds)

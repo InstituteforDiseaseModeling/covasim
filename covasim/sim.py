@@ -260,36 +260,30 @@ class Sim(cvbase.BaseSim):
             if verbose >= 2: sc.heading(string)
             else:            print(string)
 
-        # Check if we need to rescale
-        self.rescale()
-
-        # Update the state of everyone
-        people = self.people
-        flow_counts = people.update_states(t=t)
-
-        # Check for a bed constraint
-        bed_max = people.count('severe') > self['n_beds']
-
-        # Compute new contacts
-        # people.update_contacts(t=t)
+        # Perform initial operations
+        self.rescale() # Check if we need to rescale
+        people    = self.people # Shorten this for later use
+        flows     = people.update_states(t=t) # Update the state of everyone and count the flows
+        contacts  = people.update_contacts() # Compute new contacts
+        bed_max   = people.count('severe') > self['n_beds'] # Check for a bed constraint
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
         if n_imports>0:
             imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
-            flow_counts['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max, t=t)
+            flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max, t=t)
 
         # Compute the probability of transmission
-        sources     = people.contacts['p1'].values
-        targets     = people.contacts['p2'].values
-        layer_betas = people.contacts['beta'].values
+        beta        = np.float32(self['beta'])
+        sources     = contacts['p1'].values
+        targets     = contacts['p2'].values
+        layer_betas = contacts['beta'].values
         rel_trans   = people.rel_trans
         rel_sus     = people.rel_sus
 
         # Calculate actual transmission
-        beta = np.float32(self['beta'])
-        target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus)
-        flow_counts['new_infections'] += people.infect(inds=target_inds, t=t)
+        target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
+        flows['new_infections'] += people.infect(inds=target_inds, t=t) # Actually infect people
 
         # Store the transmission tree
         for ind in edge_inds:
@@ -310,7 +304,7 @@ class Sim(cvbase.BaseSim):
         self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds']>0 else np.nan
 
         # Update counts for this time step: flows
-        for key,count in flow_counts.items():
+        for key,count in flows.items():
             self.results[key][t] = count
 
         # Tidy up
@@ -403,7 +397,6 @@ class Sim(cvbase.BaseSim):
         self.likelihood()
 
         # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
-        # self.people = sc.odict({str(p):person for p,person in enumerate(self.people)}) # Convert to an odict for a better repr
         self.results = sc.objdict(self.results)
         self.results_ready = True
 

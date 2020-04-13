@@ -11,16 +11,16 @@ __all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num'
 #%% Generic intervention classes
 
 class Intervention:
-    """
+    '''
     Abstract class for interventions
 
-    """
+    '''
     def __init__(self):
         self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
 
 
     def apply(self, sim):
-        """
+        '''
         Apply intervention
 
         Function signature matches existing intervention definition
@@ -33,12 +33,12 @@ class Intervention:
 
         Returns:
             None
-        """
+        '''
         raise NotImplementedError
 
 
     def plot(self, sim, ax):
-        """
+        '''
         Call function during plotting
 
         This can be used to do things like add vertical lines on days when interventions take place
@@ -49,12 +49,12 @@ class Intervention:
 
         Returns:
             None
-        """
+        '''
         return
 
 
     def to_json(self):
-        """
+        '''
         Return JSON-compatible representation
 
         Custom classes can't be directly represented in JSON. This method is a
@@ -63,9 +63,9 @@ class Intervention:
         However, if an intervention itself contains non-standard variables as
         attributes, then its `to_json` method will need to handle those
 
-        Returns: JSON-serializable representation (typically a dict, but could be anything else)
-
-        """
+        Returns:
+            JSON-serializable representation (typically a dict, but could be anything else)
+        '''
         d = sc.dcp(self.__dict__)
         d['InterventionType'] = self.__class__.__name__
         return d
@@ -125,7 +125,7 @@ class dynamic_pars(Intervention):
 
 
 class sequence(Intervention):
-    """
+    '''
     This is an example of a meta-intervention which switches between a sequence of interventions.
 
     Args:
@@ -138,7 +138,7 @@ class sequence(Intervention):
                     cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
                     cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002),
                 ])
-    """
+    '''
 
     def __init__(self, days, interventions):
         super().__init__()
@@ -167,7 +167,6 @@ class change_beta(Intervention):
     Examples:
         interv = cv.change_beta(25, 0.3) # On day 25, reduce overall beta by 70% to 0.3
         interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
-
     '''
 
     def __init__(self, days, changes, layers=None):
@@ -217,7 +216,7 @@ class change_beta(Intervention):
 #%% Testing interventions
 
 class test_num(Intervention):
-    """
+    '''
     Test a fixed number of people per day.
 
     Example:
@@ -225,7 +224,7 @@ class test_num(Intervention):
 
     Returns:
         Intervention
-    """
+    '''
 
     def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0):
         super().__init__()
@@ -329,7 +328,7 @@ class contact_tracing(Intervention):
 
 
 class test_prob(Intervention):
-    """
+    '''
     Test as many people as required based on test probability.
     Probabilities are OR together, so choose wisely.
 
@@ -357,7 +356,7 @@ class test_prob(Intervention):
 
     Returns:
         Intervention
-    """
+    '''
     def __init__(self, symptomatic_prob=0, asymptomatic_prob=0, quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
         super().__init__()
         self.symptomatic_prob = symptomatic_prob
@@ -397,7 +396,7 @@ class test_prob(Intervention):
 
 
 class test_historical(Intervention):
-    """
+    '''
     Test a known number of positive cases
 
     This can be used to simulate historical data containing the number of tests performed and the
@@ -413,16 +412,14 @@ class test_historical(Intervention):
     returned a false negative result would not be tested at all - instead, a non-infectious individual would
     be tested. At the moment this would not affect model dynamics because a false negative is equivalent to
     not performing the test at all.
-
-    """
+    '''
 
     def __init__(self, n_tests, n_positive):
-        """
-
+        '''
         Args:
             n_tests: Number of tests per day. If this is a scalar or an array with length less than npts, it will be zero-padded
             n_positive: Number of positive tests (confirmed cases) per day. If this is a scalar or an array with length less than npts, it will be zero-padded
-        """
+        '''
         super().__init__()
         self.n_tests    = sc.promotetoarray(n_tests)
         self.n_positive = sc.promotetoarray(n_positive)

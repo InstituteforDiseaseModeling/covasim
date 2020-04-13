@@ -290,7 +290,7 @@ class Scenarios(cvbase.ParsObj):
 
 
     def to_json(self, filename=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
-        """
+        '''
         Export results as JSON.
 
         Args:
@@ -300,7 +300,7 @@ class Scenarios(cvbase.ParsObj):
             A unicode string containing a JSON representation of the results,
             or writes the JSON file to disk
 
-        """
+        '''
         d = {'t':self.tvec,
              'results':   self.results,
              'basepars':  self.basepars,
@@ -317,7 +317,7 @@ class Scenarios(cvbase.ParsObj):
 
 
     def to_excel(self, filename=None):
-        """
+        '''
         Export results as XLSX
 
         Args:
@@ -326,7 +326,7 @@ class Scenarios(cvbase.ParsObj):
         Returns:
             An sc.Spreadsheet with an Excel file, or writes the file to disk
 
-        """
+        '''
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
         with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
