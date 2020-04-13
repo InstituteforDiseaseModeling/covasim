@@ -17,10 +17,10 @@ def sample(dist=None, par1=None, par2=None, size=None):
     Draw a sample from the distribution specified by the input.
 
     Args:
-        dist (str): the distribution to sample from
+        dist (str):   the distribution to sample from
         par1 (float): the "main" distribution parameter (e.g. mean)
         par2 (float): the "secondary" distribution parameter (e.g. std)
-        size (int): the number of samples (default=1)
+        size (int):   the number of samples (default=1)
 
     Returns:
         A length N array of samples
@@ -31,10 +31,8 @@ def sample(dist=None, par1=None, par2=None, size=None):
 
     Notes:
         Lognormal distributions are parameterized with reference to the underlying normal distribution (see:
-        https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.random.lognormal.html), but this function assumes
-        the user wants to specify the mean and variance of the lognormal distribution
-
-
+        https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.random.lognormal.html), but this
+        function assumes the user wants to specify the mean and variance of the lognormal distribution.
     '''
 
     choices = [
@@ -96,17 +94,14 @@ __all__ += ['true', 'false', 'defined',
             ]
 
 
-# @nb.njit((nb.boolean[:],))
 def true(arr):
     ''' Returns the indices of the values of the array that are true '''
     return arr.nonzero()[0]
 
-# @nb.njit((nb.boolean[:],))
 def false(arr):
     ''' Returns the indices of the values of the array that are false '''
     return (~arr).nonzero()[0]
 
-# @nb.njit((nb.float32[:],))
 def defined(arr):
     ''' Returns the indices of the values of the array that are not-nan '''
     return (~np.isnan(arr)).nonzero()[0]
@@ -137,7 +132,7 @@ def idefinedi(arr, inds):
 
 
 
-#%% Probabilities -- not jitted since performance gain is minimal
+#%% Probabilities -- mostly not jitted since performance gain is minimal
 
 __all__ += ['binomial_arr', 'repeated_binomial', 'multinomial', 'poisson', 'choose', 'choose_weighted']
 

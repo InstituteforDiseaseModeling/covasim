@@ -9,7 +9,6 @@ from . import defaults as cvd
 from . import base as cvb
 
 
-# Specify all externally visible functions this file defines
 __all__ = ['People']
 
 
@@ -76,7 +75,7 @@ class People(cvb.BasePeople):
         self.severe_prob[:]  = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
         self.crit_prob[:]    = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
         self.death_prob[:]   = pars['rel_death_prob']  * prognoses['death_probs'][inds]
-        self.rel_sus[:]   = 1.0 # By default: susceptible
+        self.rel_sus[:]   = 1.0 # By default: is susceptible
         self.rel_trans[:] = 0.0 # By default: cannot transmit
 
         return
