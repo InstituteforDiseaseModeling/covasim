@@ -327,12 +327,15 @@ class People(cvb.BasePeople):
         Returns:
             count (int): number of people infected
         """
+        inds = np.unique(inds) # TOOD: should this be here?
         n_infections = len(inds)
         durpars = self.pars['dur']
-        if not self.susceptible[inds].all():
-            raise Exception
-        if self.exposed[inds].any():
-            raise Exception
+        # if not self.susceptible[inds].all():
+        #     raise Exception
+        # if self.exposed[inds].any():
+        #     raise Exception
+        # if len(np.unique(inds)) != len(inds):
+        #     raise Exception
         self.susceptible[inds]    = False
         self.exposed[inds]        = True
         self.rel_sus[inds]        = 0.0 # Not susceptible after becoming infected
