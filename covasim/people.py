@@ -123,7 +123,7 @@ class People(cvb.BasePeople):
         counts['new_critical']    += self.check_critical()
         counts['new_deaths']      += self.check_death()
         counts['new_recoveries']  += self.check_recovery()
-        # counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
+        counts['new_quarantined'] += self.check_quar(t=t) # Update if they're quarantined
         del self.is_exp # Tidy up
 
         return counts
