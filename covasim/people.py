@@ -50,8 +50,6 @@ class People(cvb.BasePeople):
         for key,value in kwargs.items():
             self.set(key, value)
 
-        self.verbose = 0 # TODO remove
-
         return
 
 
