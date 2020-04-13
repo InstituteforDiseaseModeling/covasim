@@ -17,6 +17,42 @@ __all__ = ['sample', 'set_seed', 'binomial', 'multinomial', 'poisson',
 
 #%% Define helper functions
 
+@nb.njit((nb.float64, nb.int64[:], nb.int64[:], nb.float32[:], nb.float32[:], nb.float32[:]))
+def compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus):
+    # print(type(beta))
+    # print(sources.dtype)
+    # print(targets.dtype)
+    # print(layer_betas.dtype)
+    # print(rel_trans.dtype)
+    # print(rel_sus.dtype)
+    # betas   = beta * layer_betas  * rel_trans[sources] * rel_sus[targets]
+    # nonzero_inds = betas.nonzero()[0]
+    # nonzero_betas = betas[nonzero_inds]
+    # nonzero_targets = targets[nonzero_inds]
+    # transmissions = binomial_arr_inds(nonzero_betas)
+    # transmission_inds = nonzero_targets[transmissions]
+    output = np.array([], dtype=np.int32)
+    return output # transmission_inds
+
+
+# @nb.njit((nb.float64, ))
+# def compute_targets(beta,):
+#     print(type(beta))
+    # print(sources.dtype)
+    # print(targets.dtype)
+    # print(layer_betas.dtype)
+    # print(rel_trans.dtype)
+    # print(rel_sus.dtype)
+    # betas   = beta * layer_betas  * rel_trans[sources] * rel_sus[targets]
+    # nonzero_inds = betas.nonzero()[0]
+    # nonzero_betas = betas[nonzero_inds]
+    # nonzero_targets = targets[nonzero_inds]
+    # transmissions = binomial_arr_inds(nonzero_betas)
+    # transmission_inds = nonzero_targets[transmissions]
+    # return
+
+
+
 def sample(dist=None, par1=None, par2=None, size=None):
     '''
     Draw a sample from the distribution specified by the input.
