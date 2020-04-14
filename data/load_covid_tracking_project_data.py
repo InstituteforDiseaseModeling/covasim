@@ -1,6 +1,7 @@
 '''
 This script creates a single file containing all the scraped 
-data from the Covide Data Project Data Scraper.
+data from the Covid Data Project Data Scraper.
+https://covidtracking.com
 '''
 
 from data.scraper import Scraper
