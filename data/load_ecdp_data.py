@@ -14,7 +14,7 @@ parameters['load_path'] = 'https://opendata.ecdc.europa.eu/covid19/casedistribut
 # parameters['load_path'] =  '/Users/willf/github/covasim/data/epi_data/input/ecdp-input.csv'
 
 parameters['output_folder'] = 'epi_data'
-parameters['output_filename'] = 'ecdp-data.csv'
+parameters['output_folder'] = 'epi_data/european-centre-for-disease-prevention-and-control'
 
 parameters['renames'] = dict()
 parameters['renames']['countriesAndTerritories'] = 'key'
