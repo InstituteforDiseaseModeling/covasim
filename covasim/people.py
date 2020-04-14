@@ -56,7 +56,6 @@ class People(cvb.BasePeople):
         ''' Perform initializations '''
         self.set_prognoses(pars)
         self.set_betas(pars)
-        self.set_dynamic(dynamic_keys)
         return
 
 
@@ -90,20 +89,6 @@ class People(cvb.BasePeople):
         df = self.contacts
         for key,value in pars['beta_layers'].items():
             df.loc[(df['beta'].isna()) & (df['layer']==key), 'beta'] = value
-
-        return
-
-
-    def set_dynamic(self, dynamic_keys=None):
-        ''' Flag dynamic contacts as being dynamic '''
-        if dynamic_keys is None:
-            dynamic_keys = ['c']
-
-        # Set dynamic keys to True
-        df = self.contacts
-        for key in dynamic_keys:
-            df.loc[(df['dynamic'].isna()) & (df['layer']==key), 'dynamic'] = True
-        df.loc[(df['dynamic'].isna()), 'dynamic'] = False # Set all else to False
 
         return
 

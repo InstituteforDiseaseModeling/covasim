@@ -629,28 +629,45 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    def init_contacts(self, output=False):
+    def new_contacts_df(self):
+        ''' Convenience method for creating a new dataframe of the correct type for storing contacts '''
+        arr = np.empty((0,), dtype=list(self.keylist.contacts.items()))
+        df = pd.DataFrame(arr)
+        return df
+
+
+    def init_contacts(self, output=False, keys=None, reset=False):
         ''' Initialize the contacts dataframe with the correct columns and data types '''
+
+        # Handle keys -- by default, all
+        if keys is None:
+            keys = self.contact_keys()
+        keys = sc.promotetolist(keys)
 
         # Create the contacts dictionary
         contacts = Contacts()
-        for key in self.pars['contact_keys']:
-            arr = np.empty((0,), dtype=list(self.keylist.contacts.items()))
-            df = pd.DataFrame(arr)
-            contacts[key] = df
+        for key in keys:
+            contacts[key] = self.new_contacts_df()
 
+        # Handle output
         if output:
             return contacts
         else:
-            self.contacts = contacts
-            return
+            if reset: # Reset all
+                self.contacts = contacts
+            else: # Only replace specified keys
+                for key,df in contacts.items():
+                    self.contacts[key] = df
+        return
 
 
-    def add_contacts(self, new_contacts, key=None, layer=None, dynamic=None, beta=None):
+    def add_contacts(self, new_contacts, key=None, dynamic=None, beta=None):
         ''' Add new contacts to the array '''
 
         if key is None:
             key = self.contact_keys[0]
+        if dynamic is None:
+            dynamic = False
 
         # Validate the supplied contacts
         if not isinstance(new_contacts, pd.DataFrame):
@@ -665,12 +682,12 @@ class BasePeople(sc.prettyobj):
                 raise TypeError(errormsg)
 
         # Ensure the columns are right and add values if supplied
-        for key,value in {'layer':layer, 'dynamic':dynamic, 'beta':beta}.items():
-            if value is not None:
-                new_df[key] = value
+        new_df['layer'][:]   = key
+        new_df['beta'][:]    = self.pars['beta_layers'][key]
+        new_df['dynamic'][:] = dynamic
 
         # Actually include them, and update properties if supplied
-        self.contacts[key] = self.contacts.append(new_df, sort=False)
+        self.contacts[key] = self.contacts[key].append(new_df, sort=False)
         self.contacts[key].reset_index(inplace=True, drop=True)
 
         return
