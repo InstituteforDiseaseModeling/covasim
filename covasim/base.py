@@ -661,6 +661,8 @@ class BasePeople(sc.prettyobj):
 
         if key is None:
             key = self.contact_keys()[0]
+        if key not in self.contacts:
+            self.contacts[key] = Layer(layer_info=self.layer_info)
 
         # Validate the supplied contacts
         if isinstance(new_contacts, Layer):
@@ -678,7 +680,7 @@ class BasePeople(sc.prettyobj):
         # Ensure the columns are right and add values if supplied
         n = len(new_df['p1'])
         new_df['layer']   = np.array([key]*n)
-        if 'beta' not in new_df:
+        if 'beta' not in new_df or len(new_df['beta']) != n:
             if beta is None:
                 beta = self.pars['beta_layer'][key]
             beta = np.float32(beta)
@@ -687,6 +689,7 @@ class BasePeople(sc.prettyobj):
         # Actually include them, and update properties if supplied
         for col in self.layer_info.keys():
             self.contacts[key][col] = np.concatenate([self.contacts[key][col], new_df[col]])
+        self.contacts[key].validate()
 
         return
 
@@ -792,11 +795,12 @@ class Layer(dict):
         ''' Check the integrity of the layer: right types, right lengths '''
         n = None
         for key,dtype in self.layer_info.items():
-            assert self[key].dtype == dtype
+            if dtype:
+                assert self[key].dtype == dtype
             if n is None:
-                n = len(self.key)
+                n = len(self[key])
             else:
-                assert n == len(self.key)
+                assert n == len(self[key])
         return
 
 

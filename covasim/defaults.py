@@ -60,7 +60,7 @@ class PeopleKeys(sc.prettyobj):
     contacts = {
         'p1':      np.int32, # Person 1
         'p2':      np.int32,  # Person 2
-        'layer':   str, # The layer by which the people are connected
+        'layer':   None, # The layer by which the people are connected
         'beta':    np.float32, # Default transmissibility for this contact type
     }
 

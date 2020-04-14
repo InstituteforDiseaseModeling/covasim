@@ -130,18 +130,22 @@ class People(cvb.BasePeople):
                 beta       = self.pars['beta_layer'][dynamic_key]
 
                 # Loop over people; TODO: vectorize
-                new_contacts = cvb.Layer(layer_info=self.layer_info) # Initialize
+                new_contacts = {'p1':[], 'p2':[]} # Initialize
                 for p in range(pop_size):
-                    contact_inds = cvu.choose(max_n=pop_size, n=n_contacts)
-                    new_contacts['p1'] = np.array(np.concatenate([new_contacts['p1'], [p]*n_contacts]), dtype=np.int32)
-                    new_contacts['p2'] = np.array(np.concatenate([new_contacts['p2'], contact_inds]), dtype=np.int32)
+                    contact_inds = list(cvu.choose(max_n=pop_size, n=n_contacts))
+                    new_contacts['p1'] += [p]*n_contacts
+                    new_contacts['p2'] += contact_inds
 
                 # Set the things for the entire list
-                new_contacts['layer']   = [dynamic_key]*pop_size
-                new_contacts['beta']    = [beta]*pop_size
+                n_new = len(new_contacts['p1'])
+                new_contacts['p1']    = np.array(new_contacts['p1'], dtype=np.int32)
+                new_contacts['p2']    = np.array(new_contacts['p1'], dtype=np.int32)
+                new_contacts['layer'] = np.array([dynamic_key]*n_new)
+                new_contacts['beta']  = np.array([beta]*n_new, dtype=np.float32)
 
                 # Add to contacts
                 self.add_contacts(new_contacts, key=dynamic_key)
+                self.contacts[dynamic_key].validate()
 
         return self.contacts
 
