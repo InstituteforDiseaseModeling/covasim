@@ -134,17 +134,16 @@ def idefinedi(arr, inds):
 
 #%% Probabilities -- mostly not jitted since performance gain is minimal
 
-__all__ += ['binomial_arr', 'repeated_binomial', 'multinomial', 'poisson', 'choose', 'choose_weighted']
+__all__ += ['binomial_arr', 'multinomial', 'poisson', 'choose', 'choose_weighted']
 
+
+def n_binomial(prob, n):
+    ''' Perform n binomial (Bernolli) trials -- return boolean array '''
+    return np.random.random(n) < prob
 
 def binomial_arr(prob_arr):
-    ''' Bernoulli trial array -- return boolean '''
+    ''' Binomial (Bernoulli) trials each with different probabilities -- return boolean array '''
     return np.random.random(len(prob_arr)) < prob_arr
-
-
-def repeated_binomial(prob, n):
-    ''' A repeated Bernoulli (binomial) trial '''
-    return np.random.binomial(1, prob, n)
 
 
 def multinomial(probs, repeats):

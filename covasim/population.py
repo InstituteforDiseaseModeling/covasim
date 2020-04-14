@@ -99,7 +99,7 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
 
     # Handle sexes and ages
     uids = np.arange(pop_size, dtype=int)
-    sexes = cvu.repeated_binomial(sex_ratio, pop_size)
+    sexes = np.random.binomial(1, sex_ratio, pop_size)
     age_data_min  = age_data[:,0]
     age_data_max  = age_data[:,1] + 1 # Since actually e.g. 69.999
     age_data_range = age_data_max - age_data_min
