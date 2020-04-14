@@ -688,7 +688,7 @@ class BasePeople(sc.prettyobj):
         # Ensure the columns are right and add values if supplied
         n = len(new_df['p1'])
         new_df['layer']   = np.array([key]*n)
-        new_df['beta']    = np.ones(n)*np.float32(self.pars['beta_layers'][key])
+        new_df['beta']    = np.ones(n, dtype=np.float32)*np.float32(self.pars['beta_layers'][key])
 
         # Actually include them, and update properties if supplied
         for col in self.layer_info.keys():
