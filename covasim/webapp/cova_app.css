@@ -35,6 +35,9 @@ html, body {
 #parameters {
     width: 47rem;
     min-width: 26rem;
+    top: 4.9rem;
+    bottom: 3.5rem;
+    height: auto !important;
 }
 
 #resize-handle {
