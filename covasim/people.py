@@ -352,6 +352,55 @@ class People(cvb.BasePeople):
         return n_infections # For incrementing counters
 
 
+    def test(self, inds, test_sensitivity, loss_prob=0, test_delay=0):
+        '''
+        Method to test a person.
+
+        Args:
+            t (int): current timestep
+            test_sensitivity (float): probability of a true positive
+            loss_prob (float): probability of loss to follow-up
+            test_delay (int): number of days before test results are ready
+
+        Returns:
+            Whether or not this person tested positive
+        '''
+        self.tested[inds] = True
+        self.date_tested[inds] = self.t # Only keep the last time they tested
+
+        is_infectious = cvu.itruei(self.infectious, inds)
+        pos_test = np.array(cvu.repeated_binomial(test_sensitivity, len(is_infectious)), dtype=bool)
+        is_inf_pos = is_infectious[pos_test]
+
+        not_diagnosed = ~cvu.defined(self.date_diagnosed)
+        is_diagnosed  =  cvu.defined(self.date_diagnosed)
+        past_date     =  cvu.itrue(self.date_diagnosed[is_diagnosed] > self.t+test_delay)
+        inds = np.concatenate([not_diagnosed, ])
+
+
+
+
+
+
+
+
+def check_inds(self, current, date, filter_inds=None):
+        ''' Return indices for which the current state is false nad which meet the date criterion '''
+        if filter_inds is None:
+            filter_inds = self.is_exp
+        not_current = cvu.ifalsei(current, filter_inds)
+        has_date    = cvu.idefinedi(date, not_current)
+        inds        = cvu.itrue(self.t >= date[has_date], has_date)
+
+
+            needs_diagnosis = not self.date_diagnosed or self.date_diagnosed and self.date_diagnosed > t+test_delay
+            if needs_diagnosis and not cvu.bt(loss_prob): # They're not lost to follow-up
+                self.date_diagnosed = t + test_delay
+            return 1
+        else:
+            return 0
+
+
     def quarantine(self, inds):
         '''
         Quarantine a person starting on the current day. If a person is already
@@ -389,33 +438,7 @@ class People(cvb.BasePeople):
     #     return contactable_ppl
 
 
-    # def test(self, t, test_sensitivity, loss_prob=0, test_delay=0):
-    #     '''
-    #     Method to test a person.
 
-    #     Args:
-    #         t (int): current timestep
-    #         test_sensitivity (float): probability of a true positive
-    #         loss_prob (float): probability of loss to follow-up
-    #         test_delay (int): number of days before test results are ready
-
-    #     Returns:
-    #         Whether or not this person tested positive
-    #     '''
-    #     self.tested = True
-
-    #     if self.date_tested is None: # First time tested
-    #         self.date_tested = [t]
-    #     else:
-    #         self.date_tested.append(t) # They're been tested before; append new test date. TODO: adjust testing probs based on whether a person's a repeat tester?
-
-    #     if self.infectious and cvu.bt(test_sensitivity):  # Person was tested and is true-positive
-    #         needs_diagnosis = not self.date_diagnosed or self.date_diagnosed and self.date_diagnosed > t+test_delay
-    #         if needs_diagnosis and not cvu.bt(loss_prob): # They're not lost to follow-up
-    #             self.date_diagnosed = t + test_delay
-    #         return 1
-    #     else:
-    #         return 0
 
 
 
