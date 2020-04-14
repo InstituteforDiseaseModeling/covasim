@@ -684,7 +684,7 @@ class BasePeople(sc.prettyobj):
             if beta is None:
                 beta = self.pars['beta_layer'][key]
             beta = np.float32(beta)
-            new_df['beta']    = np.ones(n, dtype=np.float32)*beta
+            new_df['beta'] = np.ones(n, dtype=np.float32)*beta
 
         # Actually include them, and update properties if supplied
         for col in self.layer_info.keys():
