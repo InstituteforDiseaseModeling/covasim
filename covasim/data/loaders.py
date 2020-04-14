@@ -5,8 +5,8 @@ Load data
 #%% Housekeeping
 import numpy as np
 import sciris as sc
-import pandas as p
 from . import country_age_distributions as cad
+from . import state_age_distributions as sad
 
 __all__ = ['get_age_distribution', 'get_us_state_age_distribution']
 
@@ -105,23 +105,20 @@ def get_us_state_age_distribution(state):
         age_data (dataframe): Pandas data frame of age distributions
     '''
 
-    data = p.read_pickle('data/us_census.pickle')
-    data['State'] = data['State'].str.lower()
-
-    states = data.State.values
+    data = sad.state_age_distributions()
+    states = data.keys()
 
     if state is None:
         state = states
     else:
         state = sc.promotetolist(state)
 
-    age_groups = ["0-5", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-29", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85+"]
     result = {}
     for loc in state:
-        state_data = data.loc[data['State'] == loc.lower()]
+        state_data = data[loc.lower()]
         local_pop = []
-        for age in age_groups:
-            percent = state_data[age].values[0]
+        for age in state_data:
+            percent = state_data[age]
             if age[-1] == '+':
                 val = [int(age[:-1]), 99, percent]
             else:
