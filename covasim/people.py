@@ -139,7 +139,6 @@ class People(cvb.BasePeople):
                 # Set the things for the entire list
                 new_contacts['layer']   = [dynamic_key]*pop_size
                 new_contacts['beta']    = [beta]*pop_size
-                new_contacts['dynamic'] = [True]*pop_size
 
                 # Add to contacts
                 self.add_contacts(new_contacts, key=dynamic_key)

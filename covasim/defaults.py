@@ -62,7 +62,6 @@ class PeopleKeys(sc.prettyobj):
         'p2':      np.int32,  # Person 2
         'layer':   str, # The layer by which the people are connected
         'beta':    np.float32, # Default transmissibility for this contact type
-        'dynamic': bool, # Whether or not this contact is dynamic
     }
 
 

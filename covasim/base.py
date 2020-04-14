@@ -448,6 +448,7 @@ class BasePeople(sc.prettyobj):
         self._lock = False # Prevent further modification of keys
         self._default_dtype = np.float32 # For performance -- 2x faster than float32, the default
         self.keylist = cvd.PeopleKeys() # Store list of keys and dtypes
+        self.layer_info = self.keylist.contacts
         self.contacts = None
         self.init_contacts() # Initialize the contacts
         self.transtree = TransTree(pop_size=pop_size) # Initialize the transmission tree
@@ -630,11 +631,11 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    def new_contacts_df(self):
-        ''' Convenience method for creating a new dataframe of the correct type for storing contacts '''
-        arr = np.empty((0,), dtype=list(self.keylist.contacts.items()))
-        df = pd.DataFrame(arr)
-        return df
+    # def new_contacts_df(self):
+    #     ''' Convenience method for creating a new dataframe of the correct type for storing contacts '''
+    #     arr = np.empty((0,), dtype=list(self.keylist.contacts.items()))
+    #     df = pd.DataFrame(arr)
+    #     return df
 
 
     def init_contacts(self, output=False, keys=None):
@@ -648,7 +649,7 @@ class BasePeople(sc.prettyobj):
         # Create the contacts dictionary
         contacts = Contacts()
         for key in keys:
-            contacts[key] = self.new_contacts_df()
+            contacts[key] = Layer(layer_info=self.layer_info)
 
         # Handle output
         if output:
@@ -657,8 +658,8 @@ class BasePeople(sc.prettyobj):
             if self.contacts is None: # Reset all
                 self.contacts = contacts
             else: # Only replace specified keys
-                for key,df in contacts.items():
-                    self.contacts[key] = df
+                for key,layer in contacts.items():
+                    self.contacts[key] = layer
         return
 
 
@@ -685,13 +686,13 @@ class BasePeople(sc.prettyobj):
                 raise TypeError(errormsg)
 
         # Ensure the columns are right and add values if supplied
-        new_df['layer']   = key
-        new_df['beta']    = np.float32(self.pars['beta_layers'][key])
-        new_df['dynamic'] = dynamic
+        n = len(new_df['p1'])
+        new_df['layer']   = np.array([key]*n)
+        new_df['beta']    = np.ones(n)*np.float32(self.pars['beta_layers'][key])
 
         # Actually include them, and update properties if supplied
-        self.contacts[key] = self.contacts[key].append(new_df, sort=False, ignore_index=True)
-        self.contacts[key].reset_index(inplace=True, drop=True)
+        for col in self.layer_info.keys():
+            self.contacts[key][col] = np.concatenate([self.contacts[key][col], new_df[col]])
 
         return
 
@@ -714,7 +715,7 @@ class BasePeople(sc.prettyobj):
                 layer.extend([key]*n) # e.g. ['h', 'h', 'h', 'h']
 
         # Turn into a dataframe
-        new_df = self.new_contacts_df()
+        new_df = Layer(layer_info=self.layer_info)
         for key,value in {'p1':p1, 'p2':p2, 'layer':layer}.items():
             new_df[key] = np.array(value, dtype=self.keylist.contacts[key])
         if remove_duplicates:
@@ -777,6 +778,24 @@ class Contacts(dict):
     def __repr__(self):
         ''' Use odict repr'''
         return sc.odict.__repr__(self)
+
+
+class Layer(dict):
+    ''' A tiny class holding a single layer of contacts '''
+
+    def __init__(self, layer_info, **kwargs):
+        for key,dtype in layer_info.items():
+            self[key] = np.empty((0,), dtype=dtype)
+
+        for key,value in kwargs.items():
+            self[key] = value
+
+        return
+
+    def to_df(self):
+        df = pd.DataFrame.from_dict(self)
+        return df
+
 
 
 
