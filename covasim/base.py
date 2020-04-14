@@ -205,8 +205,8 @@ class BaseSim(ParsObj):
 
 
     def contact_keys(self):
-        ''' Get the available contact keys -- set by beta_layers rather than contacts since only the former is required '''
-        keys = list(self['beta_layers'].keys())
+        ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
+        keys = list(self['beta_layer'].keys())
         return keys
 
 
@@ -540,9 +540,9 @@ class BasePeople(sc.prettyobj):
 
 
     def contact_keys(self):
-        ''' Get the available contact keys -- set by beta_layers rather than contacts since only the former is required '''
+        ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
         try:
-            keys = list(self.pars['beta_layers'].keys())
+            keys = list(self.pars['beta_layer'].keys())
         except: # If not initialized
             keys = []
         return keys
@@ -681,7 +681,7 @@ class BasePeople(sc.prettyobj):
         # Ensure the columns are right and add values if supplied
         n = len(new_df['p1'])
         new_df['layer']   = np.array([key]*n)
-        new_df['beta']    = np.ones(n, dtype=np.float32)*np.float32(self.pars['beta_layers'][key])
+        new_df['beta']    = np.ones(n, dtype=np.float32)*np.float32(self.pars['beta_layer'][key])
 
         # Actually include them, and update properties if supplied
         for col in self.layer_info.keys():

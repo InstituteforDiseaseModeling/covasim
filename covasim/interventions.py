@@ -190,7 +190,7 @@ class change_beta(Intervention):
                 if layer is None:
                     self.orig_betas['overall'] = sim['beta']
                 else:
-                    self.orig_betas[layer] = sim['beta_layers'][layer]
+                    self.orig_betas[layer] = sim['beta_layer'][layer]
 
         # If this day is found in the list, apply the intervention
         inds = sc.findinds(self.days, sim.t)
@@ -201,7 +201,7 @@ class change_beta(Intervention):
                 if layer == 'overall':
                     sim['beta'] = new_beta
                 else:
-                    sim['beta_layers'][layer] = new_beta
+                    sim['beta_layer'][layer] = new_beta
         return
 
 

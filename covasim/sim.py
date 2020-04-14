@@ -153,7 +153,7 @@ class Sim(cvbase.BaseSim):
         contacts = self['contacts']
         if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's all contacts
             self['contacts']    = {'a':contacts}
-            self['beta_layers'] = {'a':1.0}
+            self['beta_layer'] = {'a':1.0}
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']

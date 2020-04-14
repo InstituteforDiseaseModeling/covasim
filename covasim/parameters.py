@@ -45,7 +45,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
     pars['use_layers']   = use_layers # Whether or not to use different contact layers
     pars['contacts']     = None # The number of contacts per layer; set below
-    pars['beta_layers']  = None # Transmissibility per layer
+    pars['beta_layer']  = None # Transmissibility per layer
     pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
 
     # Efficacy of protection measures
@@ -105,11 +105,11 @@ def set_contacts(pars):
     '''
     if pars['use_layers']:
         pars['contacts']    = {'h': 4,   's': 22,  'w': 20,  'c': 20} # Number of contacts per person per day, estimated
-        pars['beta_layers'] = {'h': 1.6, 's': 1.0, 'w': 1.0, 'c': 0.3} # Per-population beta weights; relative
+        pars['beta_layer'] = {'h': 1.6, 's': 1.0, 'w': 1.0, 'c': 0.3} # Per-population beta weights; relative
         pars['quar_eff']    = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
     else:
         pars['contacts']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
-        pars['beta_layers'] = {'a': 1.0} # Per-population beta weights; relative
+        pars['beta_layer'] = {'a': 1.0} # Per-population beta weights; relative
         pars['quar_eff']    = {'a': 0.3} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
     return
 
