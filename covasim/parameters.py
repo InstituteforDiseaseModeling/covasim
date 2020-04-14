@@ -51,8 +51,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     # Efficacy of protection measures
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.2 # Multiply beta by this factor for diganosed cases
-    pars['quar_trans']   = None # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
-    pars['quar_sus']     = 0.2 # Acquisition multiplier on exposure for quarantined individual
+    pars['quar_eff']     = None # Quarantine multiplier on transmissibility and susceptibility; set below
     pars['quar_period']  = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
 
     # Duration parameters: time for disease progression
@@ -107,11 +106,11 @@ def set_contacts(pars):
     if pars['use_layers']:
         pars['contacts']    = {'h': 4,   's': 22,  'w': 20,  'c': 20} # Number of contacts per person per day, estimated
         pars['beta_layers'] = {'h': 1.6, 's': 1.0, 'w': 1.0, 'c': 0.3} # Per-population beta weights; relative
-        pars['quar_trans']  = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+        pars['quar_eff']    = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
     else:
         pars['contacts']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
         pars['beta_layers'] = {'a': 1.0} # Per-population beta weights; relative
-        pars['quar_trans']  = {'a': 0.3} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+        pars['quar_eff']    = {'a': 0.3} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
     return
 
 

@@ -268,7 +268,6 @@ class Sim(cvbase.BaseSim):
         beta         = np.float32(self['beta'])
         asymp_factor = np.float32(self['asymp_factor'])
         diag_factor  = np.float32(self['diag_factor'])
-        quar_sus     = np.float32(self['quar_sus'])
 
         for key,layer in contacts.items():
             sources     = layer['p1']
@@ -281,8 +280,8 @@ class Sim(cvbase.BaseSim):
             symp      = people.symptomatic
             diag      = people.diagnosed
             quar      = people.quarantined
-            quar_trans   = np.float32(self['quar_trans'][key])
-            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, symp, diag, quar, asymp_factor, diag_factor, quar_trans, quar_sus)
+            quar_eff  = np.float32(self['quar_eff'][key])
+            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
             # Calculate actual transmission
             target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
