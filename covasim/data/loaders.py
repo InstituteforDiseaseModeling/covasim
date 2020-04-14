@@ -34,7 +34,7 @@ def get_age_distribution(location=None):
         location = sc.promotetolist(location)
 
     # Define a mapping for common mistakes
-    country_mappings = get_country_mappings()
+    mapping = get_country_mappings()
     mapping = {key.lower(): val.lower() for key, val in mapping.items()}
 
     result = {}
