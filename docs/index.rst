@@ -15,6 +15,8 @@ also be used to explore the potential impact of different interventions.
    installation
    docker
    examples
+   sweep
+   data
    tests
    modules
    parameters

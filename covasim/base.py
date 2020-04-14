@@ -349,7 +349,7 @@ class BaseSim(ParsObj):
             skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "people"
 
         Returns:
-            shrunken_sim (~covasim.sim.Sim): a Sim object with the listed attributes removed
+            shrunken_sim (Sim): a Sim object with the listed attributes removed
         '''
 
         # By default, skip people (~90%) and uids (~9%)
@@ -405,7 +405,7 @@ class BaseSim(ParsObj):
             keywords: passed to makefilepath()
 
         Returns:
-            sim (~covasim.sim.Sim): the loaded simulation object
+            sim (Sim): the loaded simulation object
 
         **Example**
         ::

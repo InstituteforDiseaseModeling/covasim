@@ -14,6 +14,7 @@ Subpackages
    :maxdepth: 4
 
    covasim.cruise_ship
+   covasim.data
    covasim.webapp
 
 covasim submodules
@@ -43,10 +44,18 @@ covasim.parameters module
    :undoc-members:
    :show-inheritance:
 
-covasim.people module
+covasim.person module
 ---------------------
 
-.. automodule:: covasim.people
+.. automodule:: covasim.person
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+covasim.population module
+-------------------------
+
+.. automodule:: covasim.population
    :members:
    :undoc-members:
    :show-inheritance:

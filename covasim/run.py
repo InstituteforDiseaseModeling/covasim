@@ -37,7 +37,7 @@ class Scenarios(cvbase.ParsObj):
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
 
     Args:
-        sim (~covasim.sim.Sim or None): if supplied, use a pre-created simulation as the basis for the scenarios
+        sim (Sim or None): if supplied, use a pre-created simulation as the basis for the scenarios
         metapars (dict): meta-parameters for the run, e.g. number of runs; see make_metapars() for structure
         scenarios (dict): a dictionary defining the scenarios; see default_scenario for structure
         basepars (dict): a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
@@ -400,7 +400,7 @@ class Scenarios(cvbase.ParsObj):
             keywords: passed to makefilepath()
 
         Returns:
-            scens (~covasim.run.Scenarios): the loaded scenarios object
+            scens (Scenarios): the loaded scenarios object
 
         **Example**
         ::
@@ -419,7 +419,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     parallelization, but can also be used directly.
 
     Args:
-        sim (~covasim.sim.Sim): the sim instance to be run
+        sim (Sim): the sim instance to be run
         ind (int): the index of this sim
         noise (float): the amount of noise to add to each run
         noisepar (string): the name of the parameter to add noise to
@@ -429,7 +429,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
         kwargs (dict): also passed to the sim
 
     Returns:
-        sim (~covasim.sim.Sim): a single sim object with results
+        sim (Sim): a single sim object with results
 
     **Example**
     ::
@@ -492,7 +492,7 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     For running multiple runs in parallel.
 
     Args:
-        sim (~covasim.sim.Sim): the sim instance to be run
+        sim (Sim): the sim instance to be run
         n_runs (int): the number of parallel runs
         noise (float): the amount of noise to add to each run
         noisepar (string): the name of the parameter to add noise to

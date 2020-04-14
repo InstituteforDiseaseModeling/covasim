@@ -78,7 +78,7 @@ author = u'Institute for Disease Modeling'
 # built documents.
 #
 # The short X.Y version.
-version = '0.23'
+version = ''
 # The full version, including alpha/beta/rc tags.
 # release = u'1.0'
 
@@ -103,7 +103,9 @@ language = None
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-# suppress_warnings = ['ref.python']
+# suppress warnings for multiple possible Python references in the namespace
+suppress_warnings = ['ref.python']
+
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
 #

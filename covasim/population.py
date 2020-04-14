@@ -36,7 +36,9 @@ class People(list):
         Args:
             attr (str): The attribute to filter on.
 
-        Example:
+        **Example**
+        ::
+
             susceptibles = sim.people.filter_in('susceptible')
         '''
         return filter(lambda person: getattr(person, attr), self)
@@ -49,7 +51,9 @@ class People(list):
         Args:
             attr (str): The attribute to filter on.
 
-        Example:
+        **Example**
+        ::
+
             not_susceptibles = sim.people.filter_out('susceptible')
         '''
         return filter(lambda person: not getattr(person, attr), self)
@@ -72,7 +76,9 @@ class People(list):
         Args:
             attr (str): The attribute to extract.
 
-        Example:
+        **Example**
+        ::
+
             ages = sim.people.extract('age')
         '''
         return [getattr(person, attr) for person in self]
