@@ -47,6 +47,7 @@ class Scraper(sc.prettyobj):
         self.log.info(f"Loading data from {self.load_path}")
         self.df = pd.read_csv(self.load_path)
         self.log.info(f"Loaded {len(self.df)} records.")
+        self.log.info(f"Original columns: {', '.join(self.df.columns)}")
 
     ## TRANSFORM DATA
 
@@ -54,6 +55,7 @@ class Scraper(sc.prettyobj):
     def transform(self):
         self.rename_fields()
         self.create_date()
+        self.create_key()
         self.group_data()
         self.create_day()
         self.convert_cumulative_fields()
@@ -66,6 +68,9 @@ class Scraper(sc.prettyobj):
 
     def create_date(self):
         self.df['date'] = pd.to_datetime(self.df.date)
+
+    def create_key(self):
+        pass
 
     def group_data(self):
         assert 'key' in self.df.columns, 'No column named "key"; do you need to rename?'
@@ -121,6 +126,7 @@ class Scraper(sc.prettyobj):
     ## OUTPUT DATA
 
     def output(self):
+        self.log.info(f"Final columns: {', '.join(self.df.columns)}")
         self.log.info("First rows of data:")
         self.log.info(self.df.head())
         here = sc.thisdir(__file__)
