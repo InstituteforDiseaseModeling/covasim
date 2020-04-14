@@ -262,7 +262,7 @@ class Sim(cvbase.BaseSim):
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
         if n_imports>0:
             imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
-            flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max, t=t)
+            flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max)
 
         # Compute the probability of transmission
         beta         = np.float32(self['beta'])
