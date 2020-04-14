@@ -393,38 +393,3 @@ class People(cvb.BasePeople):
         self.quarantined[inds] = True
         self.date_end_quarantine[inds] = self.t + self.pars['quar_period']
         return
-
-
-    # def trace_dynamic_contacts(self, trace_probs, trace_time, ckey='c'):
-    #     '''
-    #     A method to trace a person's dynamic contacts, e.g. community
-    #     '''
-    #     if ckey in self.contacts:
-    #         this_trace_prob = trace_probs[ckey]
-    #         new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
-    #         self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
-    #     return
-
-
-    # def trace_static_contacts(self, trace_probs, trace_time):
-    #     '''
-    #     A method to trace a person's static contacts, e.g. home, school, work
-    #     '''
-    #     contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
-    #     for ckey in self.contacts.keys():
-    #         if ckey != 'c': # Don't trace community contacts - it's too hard, because they change every timestep
-    #             these_contacts = self.contacts[ckey]
-    #             if len(these_contacts):
-    #                 this_trace_prob = trace_probs[ckey]
-    #                 new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
-    #                 contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
-
-    #     return contactable_ppl
-
-
-
-
-
-
-
-

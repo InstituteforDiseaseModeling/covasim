@@ -302,6 +302,34 @@ class contact_tracing(Intervention):
         if t < self.start_day:
             return
 
+
+    def trace_contacts(self, trace_probs, trace_time):
+        '''
+        A method to trace a person's contacts
+        '''
+        if lkey,layer in self.contacts.items():
+            this_trace_prob = trace_probs[lkey]
+            new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
+            self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
+        return
+
+
+    def trace_contacts(self, inds, trace_probs, trace_time):
+        '''
+        A method to trace a person's contacts
+        '''
+        contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
+        if lkey,layer in self.contacts.items():
+            if len(layer):
+                this_trace_prob = trace_probs[ckey]
+                these_contacts = layer['p2'][layer['p1']==
+                new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
+                contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
+
+        return contactable_ppl
+
+
+
         not_sus_people = sim.people.filter_out('susceptible') # Or maybe symptomatic here
         for person in not_sus_people:
             # N.B. consider skipping tracing from dead people
