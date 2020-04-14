@@ -12,6 +12,12 @@ __all__ = ['get_age_distribution', 'get_us_state_age_distribution']
 
 
 def get_age_distribution(location=None):
+    if location is None or not location.startswith('USA-'):
+        return get_country_age_distribution(location)
+
+    return get_us_state_age_distribution(location)
+
+def get_country_age_distribution(location=None):
     '''
     Load age distribution for a given country or countries.
 
