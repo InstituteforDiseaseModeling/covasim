@@ -124,17 +124,17 @@ class People(cvb.BasePeople):
         # Figure out if anything needs to be done
         dynamic_keys = sc.promotetolist(dynamic_keys)
         for dynamic_key in dynamic_keys:
-            if dynamic_key in self.pars['contacts']:
+            if dynamic_key in self.contact_keys():
                 pop_size   = len(self)
-                n_contacts = self.pars['contacts'][dynamic_key] # Community contacts; TODO: make less ugly
+                n_contacts = self.pars['contacts'][dynamic_key]
                 beta       = self.pars['beta_layer'][dynamic_key]
 
                 # Loop over people; TODO: vectorize
-                new_contacts = {key:[] for key in self.contacts.columns} # Initialize as a dict
+                new_contacts = cvb.Layer(layer_info=self.layer_info) # Initialize
                 for p in range(pop_size):
                     contact_inds = cvu.choose(max_n=pop_size, n=n_contacts)
-                    new_contacts['p1'] += [p]*n_contacts
-                    new_contacts['p2'] += contact_inds
+                    new_contacts['p1'] = np.array(np.concatenate([new_contacts['p1'], [p]*n_contacts]), dtype=np.int32)
+                    new_contacts['p2'] = np.array(np.concatenate([new_contacts['p2'], contact_inds]), dtype=np.int32)
 
                 # Set the things for the entire list
                 new_contacts['layer']   = [dynamic_key]*pop_size

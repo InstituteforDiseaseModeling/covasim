@@ -656,32 +656,33 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    def add_contacts(self, new_contacts, key=None, dynamic=None, beta=None):
+    def add_contacts(self, new_contacts, key=None, beta=None):
         ''' Add new contacts to the array '''
 
         if key is None:
             key = self.contact_keys()[0]
-        if dynamic is None:
-            dynamic = False
 
         # Validate the supplied contacts
-        if isinstance(new_contacts, pd.DataFrame):
+        if isinstance(new_contacts, Layer):
             new_df = new_contacts
+        elif sc.checktype(new_contacts, 'array'):
+            new_df = pd.DataFrame(data=new_contacts)
+        elif isinstance(new_contacts, dict):
+            new_df = pd.DataFrame.from_dict(new_contacts)
+        elif isinstance(new_contacts, list): # Assume it's a list of contacts by person, not an edgelist
+            new_df = self.make_edgelist(new_contacts)
         else:
-            if sc.checktype(new_contacts, 'array'):
-                new_df = pd.DataFrame(data=new_contacts)
-            elif isinstance(new_contacts, dict):
-                new_df = pd.DataFrame.from_dict(new_contacts)
-            elif isinstance(new_contacts, list): # Assume it's a list of contacts by person, not an edgelist
-                new_df = self.make_edgelist(new_contacts)
-            else:
-                errormsg = f'Cannot understand contacts of type {type(new_contacts)}; expecting dataframe, array, or dict'
-                raise TypeError(errormsg)
+            errormsg = f'Cannot understand contacts of type {type(new_contacts)}; expecting dataframe, array, or dict'
+            raise TypeError(errormsg)
 
         # Ensure the columns are right and add values if supplied
         n = len(new_df['p1'])
         new_df['layer']   = np.array([key]*n)
-        new_df['beta']    = np.ones(n, dtype=np.float32)*np.float32(self.pars['beta_layer'][key])
+        if 'beta' not in new_df:
+            if beta is None:
+                beta = self.pars['beta_layer'][key]
+            beta = np.float32(beta)
+            new_df['beta']    = np.ones(n, dtype=np.float32)*beta
 
         # Actually include them, and update properties if supplied
         for col in self.layer_info.keys():
