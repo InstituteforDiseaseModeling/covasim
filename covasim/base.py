@@ -631,13 +631,6 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    # def new_contacts_df(self):
-    #     ''' Convenience method for creating a new dataframe of the correct type for storing contacts '''
-    #     arr = np.empty((0,), dtype=list(self.keylist.contacts.items()))
-    #     df = pd.DataFrame(arr)
-    #     return df
-
-
     def init_contacts(self, output=False, keys=None):
         ''' Initialize the contacts dataframe with the correct columns and data types '''
 
@@ -784,7 +777,8 @@ class Layer(dict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, layer_info, **kwargs):
-        for key,dtype in layer_info.items():
+        self.layer_info = layer_info
+        for key,dtype in self.layer_info.items():
             self[key] = np.empty((0,), dtype=dtype)
 
         for key,value in kwargs.items():
@@ -792,10 +786,30 @@ class Layer(dict):
 
         return
 
+
+    def validate(self):
+        ''' Check the integrity of the layer: right types, right lengths '''
+        n = None
+        for key,dtype in self.layer_info.items():
+            assert self[key].dtype == dtype
+            if n is None:
+                n = len(self.key)
+            else:
+                assert n == len(self.key)
+        return
+
+
     def to_df(self):
+        ''' Convert to dataframe '''
         df = pd.DataFrame.from_dict(self)
         return df
 
+
+    def from_df(self, df):
+        ''' Convert from dataframe '''
+        for key in self.layer_info.keys():
+            self[key] = df[key]
+        return
 
 
 
