@@ -13,6 +13,7 @@ also be used to explore the potential impact of different interventions.
    :titlesonly:
 
    installation
+   docker
    examples
    tests
    modules
