@@ -8,4 +8,3 @@ scirisweb
 gunicorn
 plotly_express
 fire
-toml
