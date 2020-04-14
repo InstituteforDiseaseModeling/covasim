@@ -3,7 +3,7 @@ import sys
 import logging
 import pandas as pd
 import sciris as sc
-
+from pathvalidate import sanitize_filename
 
 class Scraper(sc.prettyobj):
     '''
@@ -18,9 +18,6 @@ class Scraper(sc.prettyobj):
             "output_folder", "epi_data")
 
 
-        assert parameters.get(
-            "output_filename", False), "Must provide output_filename"
-        self.output_filename = parameters["output_filename"]
         self.renames = parameters.get("renames")
         self.fields_to_drop = parameters.get("fields_to_drop")
         self.cumulative_fields = parameters.get("cumulative_fields")
@@ -35,10 +32,16 @@ class Scraper(sc.prettyobj):
 
 
     def scrape(self):
+        self.preload()
         self.load()
         self.transform()
         self.test_quality()
         self.output()
+
+    ## PRELOAD
+
+    def preload(self):
+        pass
 
     ## LOAD DATA
 
@@ -131,10 +134,15 @@ class Scraper(sc.prettyobj):
         self.log.info(self.df.head())
         here = sc.thisdir(__file__)
         data_home = os.path.join(here, self.output_folder)
-        filepath = sc.makefilepath(
-            filename=self.output_filename, folder=data_home)
-        self.log.info(f"Saving to {filepath}")
-        self.df.to_csv(filepath)
+
+        for g in self.grouping:
+            key_value = g[0]
+            filename = f'{sanitize_filename(key_value, platform="universal")}.csv'
+            filepath = sc.makefilepath(filename=filename, folder=data_home)
+            self.log.info(f'Creating {filepath}')
+            mini_df = self.df[self.df.key == key_value]
+            mini_df.to_csv(filepath)
+        
         self.log.info(
             f"There are {len(self.grouping)} entities in this dataset.")
         self.log.info(f"Saved {len(self.df)} records.")
