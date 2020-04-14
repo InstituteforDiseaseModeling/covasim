@@ -2,6 +2,7 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
+import numpy as np
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
 import scipy.stats as sps # Used by poisson_test()
