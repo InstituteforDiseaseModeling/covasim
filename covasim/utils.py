@@ -239,11 +239,11 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
 @nb.njit((    nb.float32[:], nb.float32[:], nb.bool_[:], nb.bool_[:], nb.bool_[:],   nb.float32,  nb.float32, nb.float32))
 def compute_probs(rel_trans,       rel_sus,        symp,        diag,        quar, asymp_factor, diag_factor, quar_trans):
     ''' Calculate relative transmissibility and susceptibility '''
-    f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
-    f_diag     = ~diag +  diag  * diag_factor
-    f_quar_eff = ~quar +  quar  * quar_trans
-    rel_trans  = rel_trans * f_asymp * f_diag * f_quar_eff
-    rel_sus    = rel_sus * f_quar_eff
+    f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
+    f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
+    f_quar_eff = ~quar +  quar * quar_trans # Quarantine
+    rel_trans  = rel_trans * f_quar_eff * f_asymp * f_diag # Recalulate transmisibility
+    rel_sus    = rel_sus   * f_quar_eff # Recalulate susceptibility
     return rel_trans, rel_sus
 
 
