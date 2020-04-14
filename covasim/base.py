@@ -448,6 +448,7 @@ class BasePeople(sc.prettyobj):
         self._lock = False # Prevent further modification of keys
         self._default_dtype = np.float32 # For performance -- 2x faster than float32, the default
         self.keylist = cvd.PeopleKeys() # Store list of keys and dtypes
+        self.contacts = None
         self.init_contacts() # Initialize the contacts
         self.transtree = TransTree(pop_size=pop_size) # Initialize the transmission tree
 
@@ -636,7 +637,7 @@ class BasePeople(sc.prettyobj):
         return df
 
 
-    def init_contacts(self, output=False, keys=None, reset=False):
+    def init_contacts(self, output=False, keys=None):
         ''' Initialize the contacts dataframe with the correct columns and data types '''
 
         # Handle keys -- by default, all
@@ -653,7 +654,7 @@ class BasePeople(sc.prettyobj):
         if output:
             return contacts
         else:
-            if reset: # Reset all
+            if self.contacts is None: # Reset all
                 self.contacts = contacts
             else: # Only replace specified keys
                 for key,df in contacts.items():
@@ -665,7 +666,7 @@ class BasePeople(sc.prettyobj):
         ''' Add new contacts to the array '''
 
         if key is None:
-            key = self.contact_keys[0]
+            key = self.contact_keys()[0]
         if dynamic is None:
             dynamic = False
 
@@ -682,12 +683,12 @@ class BasePeople(sc.prettyobj):
                 raise TypeError(errormsg)
 
         # Ensure the columns are right and add values if supplied
-        new_df['layer'][:]   = key
-        new_df['beta'][:]    = self.pars['beta_layers'][key]
-        new_df['dynamic'][:] = dynamic
+        new_df['layer']   = key
+        new_df['beta']    = self.pars['beta_layers'][key]
+        new_df['dynamic'] = dynamic
 
         # Actually include them, and update properties if supplied
-        self.contacts[key] = self.contacts[key].append(new_df, sort=False)
+        self.contacts[key] = self.contacts[key].append(new_df, sort=False, ignore_index=True)
         self.contacts[key].reset_index(inplace=True, drop=True)
 
         return

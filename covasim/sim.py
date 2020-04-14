@@ -266,26 +266,28 @@ class Sim(cvbase.BaseSim):
 
         # Compute the probability of transmission
         beta        = np.float32(self['beta'])
-        asymp_factor
-        diag_factor
-        quar_trans_factor
-        sources     = contacts['p1'].values
-        targets     = contacts['p2'].values
-        layer_betas = contacts['beta'].values
+        # asymp_factor
+        # diag_factor
+        # quar_trans_factor
         rel_trans   = people.rel_trans
         rel_sus     = people.rel_sus
-        rel_trans, rel_sus = cvu.compute_probs(people.rel_trans, people.rel_sus, )
+        for key,layer in contacts.items():
+            sources     = layer['p1'].values
+            targets     = layer['p2'].values
+            layer_betas = layer['beta'].values
 
-        # Calculate actual transmission
-        target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
-        flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
+            # rel_trans, rel_sus = cvu.compute_probs(people.rel_trans, people.rel_sus, )
 
-        # Store the transmission tree
-        for ind in edge_inds:
-            source = sources[ind]
-            target = targets[ind]
-            self.people.transtree.sources[target] = source
-            self.people.transtree.targets[source].append(target)
+            # Calculate actual transmission
+            target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
+            flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
+
+            # Store the transmission tree
+            for ind in edge_inds:
+                source = sources[ind]
+                target = targets[ind]
+                self.people.transtree.sources[target] = source
+                self.people.transtree.targets[source].append(target)
 
         # Apply interventions
         for intervention in self['interventions']:

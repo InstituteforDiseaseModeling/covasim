@@ -86,9 +86,10 @@ class People(cvb.BasePeople):
         if pars is None:
             pars = self.pars
 
-        df = self.contacts
+
         for key,value in pars['beta_layers'].items():
-            df.loc[(df['beta'].isna()) & (df['layer']==key), 'beta'] = value
+            df = self.contacts[key]
+            df.loc['beta'] = value
 
         return
 
