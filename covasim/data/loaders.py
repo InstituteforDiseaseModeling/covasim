@@ -121,7 +121,13 @@ def get_us_state_age_distribution(state):
 
     result = {}
     for loc in state:
-        state_data = data[loc.lower()]
+        try:
+            state_data = data[loc.lower()]
+        except KeyError:
+            suggestions = sc.suggest(loc.lower(), states, n=4)
+            errormsg = f'Location "{loc}" not recognized, did you mean {suggestions}?'
+            raise KeyError(errormsg)
+
         local_pop = []
         for age in state_data:
             percent = state_data[age]
