@@ -671,7 +671,9 @@ class BasePeople(sc.prettyobj):
             dynamic = False
 
         # Validate the supplied contacts
-        if not isinstance(new_contacts, pd.DataFrame):
+        if isinstance(new_contacts, pd.DataFrame):
+            new_df = new_contacts
+        else:
             if sc.checktype(new_contacts, 'array'):
                 new_df = pd.DataFrame(data=new_contacts)
             elif isinstance(new_contacts, dict):
@@ -684,7 +686,7 @@ class BasePeople(sc.prettyobj):
 
         # Ensure the columns are right and add values if supplied
         new_df['layer']   = key
-        new_df['beta']    = self.pars['beta_layers'][key]
+        new_df['beta']    = np.float32(self.pars['beta_layers'][key])
         new_df['dynamic'] = dynamic
 
         # Actually include them, and update properties if supplied
@@ -712,7 +714,7 @@ class BasePeople(sc.prettyobj):
                 layer.extend([key]*n) # e.g. ['h', 'h', 'h', 'h']
 
         # Turn into a dataframe
-        new_df = self.init_contacts(output=True)
+        new_df = self.new_contacts_df()
         for key,value in {'p1':p1, 'p2':p2, 'layer':layer}.items():
             new_df[key] = np.array(value, dtype=self.keylist.contacts[key])
         if remove_duplicates:
