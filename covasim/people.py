@@ -89,7 +89,7 @@ class People(cvb.BasePeople):
 
         for key,value in pars['beta_layers'].items():
             df = self.contacts[key]
-            df.loc['beta'] = value
+            df['beta'][:] = value
 
         return
 

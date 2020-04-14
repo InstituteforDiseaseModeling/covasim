@@ -272,9 +272,9 @@ class Sim(cvbase.BaseSim):
         rel_trans   = people.rel_trans
         rel_sus     = people.rel_sus
         for key,layer in contacts.items():
-            sources     = layer['p1'].values
-            targets     = layer['p2'].values
-            layer_betas = layer['beta'].values
+            sources     = layer['p1']
+            targets     = layer['p2']
+            layer_betas = layer['beta']
 
             # rel_trans, rel_sus = cvu.compute_probs(people.rel_trans, people.rel_sus, )
 
