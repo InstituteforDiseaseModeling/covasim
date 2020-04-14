@@ -47,7 +47,6 @@ class Sim(cvbase.BaseSim):
         self.initialized   = False # Whether or not initialization is complete
         self.results_ready = False # Whether or not results are ready
         self.people        = []    # Initialize these here so methods that check their length can see they're empty
-        self.contact_keys  = None  # Keys for contact networks
         self.results       = {}    # For storing results
 
         # Now update everything
@@ -217,14 +216,6 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    @property
-    def reskeys(self):
-        ''' Get the actual results objects, not other things stored in sim.results '''
-        all_keys = list(self.results.keys())
-        res_keys = [key for key in all_keys if isinstance(self.results[key], cvbase.Result)]
-        return res_keys
-
-
     def init_people(self, verbose=None, id_len=None, **kwargs):
         ''' Create the people '''
 
@@ -384,7 +375,7 @@ class Sim(cvbase.BaseSim):
         ''' Compute final results, likelihood, etc. '''
 
         # Scale the results
-        for reskey in self.reskeys:
+        for reskey in self.result_keys():
             if self.results[reskey].scale == 'dynamic':
                 self.results[reskey].values *= self.rescale_vec
             elif self.results[reskey].scale == 'static':
@@ -513,7 +504,7 @@ class Sim(cvbase.BaseSim):
 
         model_dates = self.datevec.tolist()
 
-        for key in set(self.reskeys).intersection(self.data.columns): # For keys present in both the results and in the data
+        for key in set(self.result_keys()).intersection(self.data.columns): # For keys present in both the results and in the data
             weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
             for d, datum in self.data[key].iteritems():
                 if np.isfinite(datum):
@@ -542,7 +533,7 @@ class Sim(cvbase.BaseSim):
 
         summary = sc.objdict()
         summary_str = 'Summary:\n'
-        for key in self.reskeys:
+        for key in self.result_keys():
             summary[key] = self.results[key][-1]
             if key.startswith('cum_'):
                 summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'

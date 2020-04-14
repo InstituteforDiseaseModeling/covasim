@@ -42,18 +42,18 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['rescale_factor']    = 2   # Factor by which we rescale the population
 
     # Basic disease transmission
-    pars['n_imports']  = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta']       = 0.015 # Beta per symptomatic contact; absolute
-    pars['use_layers'] = use_layers # Whether or not to use different contact layers
-    pars['layer_n']    = None # The number of contacts per layer
-    pars['layer_beta'] = None # Transmissibility per layer
+    pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
+    pars['use_layers']   = use_layers # Whether or not to use different contact layers
+    pars['contacts']     = None # The number of contacts per layer; set below
+    pars['beta_layers']  = None # Transmissibility per layer
+    pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
 
     # Efficacy of protection measures
-    pars['asymp_factor']        = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']         = 0.2 # Multiply beta by this factor for diganosed cases
-    pars['quar_trans_factor']   = {'h': 0.8, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
-    pars['quar_acq_factor']     = 0.2 # Acquisition multiplier on exposure for quarantined individual
-    pars['quar_period']         = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
+    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']  = 0.2 # Multiply beta by this factor for diganosed cases
+    pars['quar_trans']   = {'h': 0.8, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+    pars['quar_acq']     = 0.2 # Acquisition multiplier on exposure for quarantined individual
+    pars['quar_period']  = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
@@ -90,7 +90,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
     set_contacts(pars)
-    if set_prognoses:
+    if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age']) # Default to age-specific prognoses
 
     return pars
@@ -105,11 +105,11 @@ def set_contacts(pars):
         pars (dict): the parameters dictionary
     '''
     if pars['use_layers']:
-        pars['layer_n']    = {'h': 4,   's': 22,  'w': 20,  'c': 20} # Number of contacts per person per day, estimated
-        pars['layer_beta'] = {'h': 1.6, 's': 1.0, 'w': 1.0, 'c': 0.3} # Per-population beta weights; relative
+        pars['contacts']    = {'h': 4,   's': 22,  'w': 20,  'c': 20} # Number of contacts per person per day, estimated
+        pars['beta_layers'] = {'h': 1.6, 's': 1.0, 'w': 1.0, 'c': 0.3} # Per-population beta weights; relative
     else:
-        pars['layer_n']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
-        pars['layer_beta'] = {'a': 1.0} # Per-population beta weights; relative
+        pars['contacts']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
+        pars['beta_layers'] = {'a': 1.0} # Per-population beta weights; relative
     return
 
 

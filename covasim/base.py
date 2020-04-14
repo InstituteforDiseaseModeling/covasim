@@ -198,6 +198,18 @@ class BaseSim(ParsObj):
         return dates
 
 
+    def result_keys(self):
+        ''' Get the actual results objects, not other things stored in sim.results '''
+        keys = [key for key in self.results.keys() if isinstance(self.results[key], Result)]
+        return keys
+
+
+    def contact_keys(self):
+        ''' Get the available contact keys -- set by beta_layers rather than contacts since only the former is required '''
+        keys = list(self['beta_layers'].keys())
+        return keys
+
+
     def _make_resdict(self, for_json=True):
         '''
         Convert results to dict
@@ -216,7 +228,7 @@ class BaseSim(ParsObj):
         resdict['t'] = self.results['t'] # Assume that there is a key for time
 
         if for_json:
-            resdict['timeseries_keys'] = self.reskeys
+            resdict['timeseries_keys'] = self.result_keys()
         for key,res in self.results.items():
             if isinstance(res, Result):
                 resdict[key] = res.values
@@ -486,11 +498,6 @@ class BasePeople(sc.prettyobj):
         return newpeople
 
 
-    def contact_keys(self):
-        ''' Return a list of available contacts '''
-        return sc.dcp(list(self.pars['contacts'].keys()))
-
-
     def set(self, key, value, die=True):
         ''' Ensure sizes and dtypes match '''
         current = self[key]
@@ -528,6 +535,15 @@ class BasePeople(sc.prettyobj):
             return self.keylist.all_states[:]
         else:
             return getattr(self.keylist, which)[:]
+
+
+    def contact_keys(self):
+        ''' Get the available contact keys -- set by beta_layers rather than contacts since only the former is required '''
+        try:
+            keys = list(self.pars['beta_layers'].keys())
+        except: # If not initialized
+            keys = []
+        return keys
 
 
     def index(self):

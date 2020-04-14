@@ -94,7 +94,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
         if not sim.results_ready:
             raise Exception(f"Results not ready, cannot calculate doubling time")
         else:
-            if series is None or series not in sim.reskeys:
+            if series is None or series not in sim.result_keys():
                 sc.printv(f"Series not supplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
                 series='cum_infections'
             series = sim.results[series].values

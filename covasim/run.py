@@ -81,18 +81,27 @@ class Scenarios(cvbase.ParsObj):
         # Copy quantities from the base sim to the main object
         self.npts = self.base_sim.npts
         self.tvec = self.base_sim.tvec
-        self.reskeys = self.base_sim.reskeys
 
         # Create the results object; order is: results key, scenario, best/low/high
         self.sims = sc.objdict()
         self.results = sc.objdict()
-        for reskey in self.reskeys:
+        for reskey in self.result_keys():
             self.results[reskey] = sc.objdict()
             for scenkey in scenarios.keys():
                 self.results[reskey][scenkey] = sc.objdict()
                 for nblh in ['name', 'best', 'low', 'high']:
                     self.results[reskey][scenkey][nblh] = None # This will get populated below
         return
+
+
+    def result_keys(self):
+        ''' Attempt to retrieve the results keys from the base sim '''
+        try:
+            keys = self.base_sim.result_keys()
+        except Exception as E:
+            errormsg = f'Could not retrieve result keys since base sim not accessible: {str(E)}'
+            raise ValueError(errormsg)
+        return keys
 
 
     def run(self, debug=False, verbose=None, **kwargs):
@@ -119,7 +128,7 @@ class Scenarios(cvbase.ParsObj):
                 print(string)
             return
 
-        reskeys = self.reskeys # Shorten since used extensively
+        reskeys = self.result_keys() # Shorten since used extensively
 
         # Loop over scenarios
         for scenkey,scen in self.scenarios.items():
@@ -330,7 +339,7 @@ class Scenarios(cvbase.ParsObj):
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
         with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
-            for key in self.reskeys:
+            for key in self.result_keys():
                 result_df = pd.DataFrame.from_dict(sc.flattendict(self.results[key], sep='_'))
                 result_df.to_excel(writer, sheet_name=key)
         spreadsheet.load()
@@ -545,12 +554,12 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
         for s,sim in enumerate(sims[1:]): # Skip the first one
             if keep_people:
                 output_sim.people += sim.people
-            for key in sim.reskeys:
+            for key in sim.result_keys():
                 this_res = sim.results[key]
                 output_sim.results[key].values += this_res.values
 
         # For non-count results (scale=False), rescale them
-        for key in output_sim.reskeys:
+        for key in output_sim.result_keys():
             if not output_sim.results[key].scale:
                 output_sim.results[key].values /= len(sims)
 
