@@ -486,6 +486,11 @@ class BasePeople(sc.prettyobj):
         return newpeople
 
 
+    def contact_keys(self):
+        ''' Return a list of available contacts '''
+        return sc.dcp(list(self.pars['contacts'].keys()))
+
+
     def set(self, key, value, die=True):
         ''' Ensure sizes and dtypes match '''
         current = self[key]
@@ -625,8 +630,11 @@ class BasePeople(sc.prettyobj):
             return
 
 
-    def add_contacts(self, new_contacts, layer=None, dynamic=None, beta=None):
+    def add_contacts(self, new_contacts, key=None, layer=None, dynamic=None, beta=None):
         ''' Add new contacts to the array '''
+
+        if key is None:
+            key = self.contact_keys[0]
 
         # Validate the supplied contacts
         if not isinstance(new_contacts, pd.DataFrame):
@@ -646,8 +654,8 @@ class BasePeople(sc.prettyobj):
                 new_df[key] = value
 
         # Actually include them, and update properties if supplied
-        self.contacts = self.contacts.append(new_df, sort=False)
-        self.contacts.reset_index(inplace=True, drop=True)
+        self.contacts[key] = self.contacts.append(new_df, sort=False)
+        self.contacts[key].reset_index(inplace=True, drop=True)
 
         return
 
@@ -696,8 +704,9 @@ class BasePeople(sc.prettyobj):
     def remove_dynamic_contacts(self, dynamic_keys='c'):
         ''' Remove all contacts labeled as dynamic '''
         dynamic_keys = sc.promotetolist(dynamic_keys)
-        if len([key for key in dynamic_keys if key in self.pars['contacts']]): # TODO: refactor based on self.contact_keys
-            self.contacts = self.contacts[~self.contacts['dynamic']]
+        for key in dynamic_keys:
+         if key in self.pars['contacts']:
+            self.contacts.pop(key)
         return
 
 

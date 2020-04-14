@@ -156,7 +156,7 @@ class People(cvb.BasePeople):
                 new_contacts['dynamic'] = [True]*pop_size
 
                 # Add to contacts
-                self.add_contacts(new_contacts)
+                self.add_contacts(new_contacts, key=dynamic_key)
 
         return self.contacts
 
