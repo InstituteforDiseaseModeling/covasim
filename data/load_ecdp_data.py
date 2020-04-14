@@ -1,32 +1,6 @@
 from data.scraper import Scraper
 import pandas as pd
 import os
-import toml
-
-parameter_definitions = f"""
-
-title = "European Centre for Disease Prevention and Control Covid-19 Data Scraper"
-load_path = "https://opendata.ecdc.europa.eu/covid19/casedistribution/csv"
-# load_path = "/Users/willf/github/covasim/data/epi_data/epi_test.csv"
-
-output_folder = "epi_data"
-output_filename = "ecdp_data.csv"
-
-renames.countriesAndTerritories = "key"
-renames.cases = "new_positives"
-renames.deaths = "new_death"
-renames.popData2018 = "population"
-
-fields_to_drop = [
-    "dateRep", 
-    "month",
-    "year",  
-    "geoId", 
-    "countryterritoryCode"
-    ]
-
-"""
-
 
 
 class ECDPScraper(Scraper):
@@ -34,6 +8,27 @@ class ECDPScraper(Scraper):
         self.df["date"] = pd.to_datetime(self.df[["year", "month", "day"]])
 
 
-parameters = toml.loads(parameter_definitions)
+parameters = dict()
+parameters['title'] = 'European Centre for Disease Prevention and Control Covid-19 Data Scraper'
+parameters['load_path'] = 'https://opendata.ecdc.europa.eu/covid19/casedistribution/csv'
+# parameters['load_path'] =  '/Users/willf/github/covasim/data/epi_data/epi_test.csv'
+
+parameters['output_folder'] = 'epi_data'
+parameters['output_filename'] = 'ecdp_data.csv'
+
+parameters['renames'] = dict()
+parameters['renames']['countriesAndTerritories'] = 'key'
+parameters['renames']['cases'] = 'new_positives'
+parameters['renames']['deaths'] = 'new_death'
+parameters['renames']['popData2018'] = 'population'
+
+parameters['fields_to_drop'] = [
+    'dateRep',
+    'month',
+    'year',
+    'geoId',
+    'countryterritoryCode'
+]
+
 ECDPScraper(parameters).scrape()
 

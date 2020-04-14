@@ -20,33 +20,32 @@ class CovidUSTrackingProjectScraper(CovidTrackingProjectScraper):
         self.df['key'] = 'US'
 
 
-
 ## Set up parameters 
 p = dict()
-p['title'] = "Covid Tracking Project Scraper for US states"
-p['load_path'] = "https://covidtracking.com/api/v1/states/daily.csv"
-# p['load_path'] = "/Users/willf/github/covasim/data/epi_data/ctp_input.csv"
+parameters_state['title'] = "Covid Tracking Project Scraper for US states"
+parameters_state['load_path'] = "https://covidtracking.com/api/v1/states/daily.csv"
+# parameters_state['load_path'] = "/Users/willf/github/covasim/data/epi_data/ctp_input.csv"
 
-p['output_folder'] = "epi_data"
-p['output_filename'] = "covid-tracking-project-us-state-data.csv"
+parameters_state['output_folder'] = "epi_data"
+parameters_state['output_filename'] = "covid-tracking-project-us-state-data.csv"
 
-p['renames'] = dict()
-p['renames']['state'] = "key"
-p['renames']['positiveIncrease'] = "new_positives"
-p['renames']['negativeIncrease'] = "new_negatives"
-p['renames']['totalTestResultsIncrease'] = "new_tests"
-p['renames']['hospitalizedIncrease'] = "new_hospitalized"
-p['renames']['deathIncrease'] = "new_death"
-p['renames']['inIcuCumulative'] = "cum_in_icu"
-p['renames']['hospitalizedCumulative'] = "cum_hospitalized"
-p['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
+parameters_state['renames'] = dict()
+parameters_state['renames']['state'] = "key"
+parameters_state['renames']['positiveIncrease'] = "new_positives"
+parameters_state['renames']['negativeIncrease'] = "new_negatives"
+parameters_state['renames']['totalTestResultsIncrease'] = "new_tests"
+parameters_state['renames']['hospitalizedIncrease'] = "new_hospitalized"
+parameters_state['renames']['deathIncrease'] = "new_death"
+parameters_state['renames']['inIcuCumulative'] = "cum_in_icu"
+parameters_state['renames']['hospitalizedCumulative'] = "cum_hospitalized"
+parameters_state['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
 
-p['cumulative_fields'] = dict()
-p['cumulative_fields']['cum_in_icu'] = "num_icu"
-p['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
+parameters_state['cumulative_fields'] = dict()
+parameters_state['cumulative_fields']['cum_in_icu'] = "num_icu"
+parameters_state['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
 
 
-p['fields_to_drop'] = [
+parameters_state['fields_to_drop'] = [
     "hash",
     "dateChecked",
     "fips",
@@ -106,7 +105,7 @@ parameter_us['fields_to_drop'] = [
 ]
 
 # Scrape states
-CovidTrackingProjectScraper(p).scrape()
+CovidTrackingProjectScraper(parameters_state).scrape()
 # Scrape US
 CovidUSTrackingProjectScraper(parameter_us).scrape()
 

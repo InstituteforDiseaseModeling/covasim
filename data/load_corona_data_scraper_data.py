@@ -8,6 +8,8 @@ from data.scraper import Scraper
 class CoronaDataScraperScraper(Scraper):
     pass
 
+# Set up parameters
+
 parameters = dict()
 parameters['title'] = 'Corona Data Scraper Project Scraper'
 parameters['load_path'] = 'https://coronadatascraper.com/timeseries.csv'
