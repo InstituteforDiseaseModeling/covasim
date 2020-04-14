@@ -11,10 +11,10 @@ class ECDPScraper(Scraper):
 parameters = dict()
 parameters['title'] = 'European Centre for Disease Prevention and Control Covid-19 Data Scraper'
 parameters['load_path'] = 'https://opendata.ecdc.europa.eu/covid19/casedistribution/csv'
-# parameters['load_path'] =  '/Users/willf/github/covasim/data/epi_data/epi_test.csv'
+# parameters['load_path'] =  '/Users/willf/github/covasim/data/epi_data/input/ecdp-input.csv'
 
 parameters['output_folder'] = 'epi_data'
-parameters['output_filename'] = 'ecdp_data.csv'
+parameters['output_filename'] = 'ecdp-data.csv'
 
 parameters['renames'] = dict()
 parameters['renames']['countriesAndTerritories'] = 'key'

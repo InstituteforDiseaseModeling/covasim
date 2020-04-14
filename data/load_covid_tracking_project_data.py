@@ -21,10 +21,10 @@ class CovidUSTrackingProjectScraper(CovidTrackingProjectScraper):
 
 
 ## Set up parameters 
-p = dict()
+parameters_state = dict()
 parameters_state['title'] = "Covid Tracking Project Scraper for US states"
 parameters_state['load_path'] = "https://covidtracking.com/api/v1/states/daily.csv"
-# parameters_state['load_path'] = "/Users/willf/github/covasim/data/epi_data/ctp_input.csv"
+# parameters_state['load_path'] = "/Users/willf/github/covasim/data/epi_data/input/ctp-state-input.csv"
 
 parameters_state['output_folder'] = "epi_data"
 parameters_state['output_filename'] = "covid-tracking-project-us-state-data.csv"
@@ -66,7 +66,7 @@ parameters_state['fields_to_drop'] = [
 parameter_us = dict()
 parameter_us['title'] = "Covid Tracking Project Scraper for US states"
 parameter_us['load_path'] = "https://covidtracking.com/api/v1/us/daily.csv"
-# parameter_us['load_path'] = "/Users/willf/github/covasim/data/epi_data/ctp_us_input.csv"
+# parameter_us['load_path'] = "/Users/willf/github/covasim/data/epi_data/ctp-us-input.csv"
 
 parameter_us['output_folder'] = "epi_data"
 parameter_us['output_filename'] = "covid-tracking-project-us-data.csv"

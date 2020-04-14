@@ -13,10 +13,10 @@ class CoronaDataScraperScraper(Scraper):
 parameters = dict()
 parameters['title'] = 'Corona Data Scraper Project Scraper'
 parameters['load_path'] = 'https://coronadatascraper.com/timeseries.csv'
-parameters['load_path'] = '/Users/willf/github/covasim/data/epi_data/cds_input.csv'
+# parameters['load_path'] = '/Users/willf/github/covasim/data/epi_data/input/cds-input.csv'
 
 parameters['output_folder'] = 'epi_data'
-parameters['output_filename'] = 'corona_data_scraper.csv'
+parameters['output_filename'] = 'corona-data-scraper.csv'
 
 parameters['renames'] = dict()
 parameters['renames']['name'] = 'key'
