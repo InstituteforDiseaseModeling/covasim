@@ -265,18 +265,24 @@ class Sim(cvbase.BaseSim):
             flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max, t=t)
 
         # Compute the probability of transmission
-        beta        = np.float32(self['beta'])
-        # asymp_factor
-        # diag_factor
-        # quar_trans_factor
-        rel_trans   = people.rel_trans
-        rel_sus     = people.rel_sus
+        beta         = np.float32(self['beta'])
+        asymp_factor = np.float32(self['asymp_factor'])
+        diag_factor  = np.float32(self['diag_factor'])
+        quar_sus     = np.float32(self['quar_sus'])
+
         for key,layer in contacts.items():
             sources     = layer['p1']
             targets     = layer['p2']
             layer_betas = layer['beta']
 
-            # rel_trans, rel_sus = cvu.compute_probs(people.rel_trans, people.rel_sus, )
+            # Compute relative transmission and susceptibility
+            rel_trans = people.rel_trans
+            rel_sus   = people.rel_sus
+            symp      = people.symptomatic
+            diag      = people.diagnosed
+            quar      = people.quarantined
+            quar_trans   = np.float32(self['quar_trans'][key])
+            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, symp, diag, quar, asymp_factor, diag_factor, quar_trans, quar_sus)
 
             # Calculate actual transmission
             target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!

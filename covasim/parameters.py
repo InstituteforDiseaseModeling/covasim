@@ -52,7 +52,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.2 # Multiply beta by this factor for diganosed cases
     pars['quar_trans']   = {'h': 0.8, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
-    pars['quar_acq']     = 0.2 # Acquisition multiplier on exposure for quarantined individual
+    pars['quar_sus']     = 0.2 # Acquisition multiplier on exposure for quarantined individual
     pars['quar_period']  = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
 
     # Duration parameters: time for disease progression
