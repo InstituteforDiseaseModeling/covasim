@@ -18,6 +18,7 @@ class SimulationParameterTests(CovaSimTest):
         super().tearDown()
         pass
 
+    @unittest.skip("Need to construct a population now")
     def test_population_size(self):
         """
         Set population size to vanilla (1234)
@@ -91,9 +92,10 @@ class SimulationParameterTests(CovaSimTest):
             self.run_sim(negative_infected_count)
             pass
         error_message = str(context.exception)
-        self.assertIn('n_infected', error_message)
+        self.assertIn('pop_infected', error_message)
         pass
 
+    @unittest.skip("Need to construct a population now")
     def test_population_scaling(self):
         """
         Scale population vanilla (x10) compare
@@ -218,7 +220,7 @@ class SimulationParameterTests(CovaSimTest):
             TPKeys.time_limit: 0.5
         }
         med_time_limit = {
-            TPKeys.time_limit: 1.5
+            TPKeys.time_limit: 1.0
         }
         long_time_limit = {
             TPKeys.time_limit: 15.0

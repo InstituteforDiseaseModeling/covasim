@@ -1,0 +1,11 @@
+{
+  "time": {
+    "initialize": 0.304,
+    "run": 1.046
+  },
+  "parameters": {
+    "pop_size": 20000.0,
+    "pop_type": "random",
+    "n_days": 60
+  }
+}

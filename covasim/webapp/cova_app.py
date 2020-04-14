@@ -8,9 +8,11 @@ import os
 import sys
 import numpy as np
 import plotly.graph_objects as go
+import plotly.figure_factory as ff
 import sciris as sc
 import base64 # Download/upload-specific import
 import json
+import tempfile
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -36,46 +38,43 @@ def get_defaults(region=None, merge=False):
         region = 'Example'
 
     regions = {
-        'scale': {
+        'pop_scale': {
             'Example': 1,
-            'Seattle': 25,
+            # 'Seattle': 25,
             # 'Wuhan': 200,
         },
-        'n': {
+        'pop_size': {
             'Example': 2000,
-            'Seattle': 10000,
+            # 'Seattle': 10000,
             # 'Wuhan': 1,
         },
-        'n_days': {
-            'Example': 60,
-            'Seattle': 45,
-            # 'Wuhan': 90,
-        },
-        'n_infected': {
+        # 'n_days': {
+        #     'Example': 60,
+        #     # 'Seattle': 45,
+        #     # 'Wuhan': 90,
+        # },
+        'pop_infected': {
             'Example': 100,
-            'Seattle': 4,
+            # 'Seattle': 4,
             # 'Wuhan': 10,
         },
-        'web_int_day': {
-            'Example': 25,
-            'Seattle': 0,
-            # 'Wuhan': 1,
-        },
-        'web_int_eff': {
-            'Example': 0.8,
-            'Seattle': 0.0,
-            # 'Wuhan': 0.9,
-        },
+        # 'web_int_day': {
+        #     'Example': 25,
+        #     # 'Seattle': 0,
+        #     # 'Wuhan': 1,
+        # },
+        # 'web_int_eff': {
+        #     'Example': 0.8,
+        #     # 'Seattle': 0.0,
+        #     # 'Wuhan': 0.9,
+        # },
     }
 
     sim_pars = {}
-    sim_pars['scale']       = dict(best=1,    min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
-    sim_pars['n']           = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
-    sim_pars['n_infected']  = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
-    sim_pars['n_days']      = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
-    sim_pars['web_int_day'] = dict(best=20,   min=0, max=max_days, name='Intervention start day',     tip='Start day of the intervention (for no intervention, set start day to 0 and effectiveness to 0)')
-    sim_pars['web_int_eff'] = dict(best=0.9,  min=0, max=1.0,      name='Intervention effectiveness', tip='Fractional reduction in infectiousness due to intervention')
-    sim_pars['seed']        = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
+    sim_pars['pop_scale']    = dict(best=1,    min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
+    sim_pars['pop_size']     = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
+    sim_pars['pop_infected'] = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
+    sim_pars['rand_seed']    = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
@@ -89,7 +88,6 @@ def get_defaults(region=None, merge=False):
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict[region]
-
     if merge:
         output = {**sim_pars, **epi_pars}
     else:
@@ -97,6 +95,43 @@ def get_defaults(region=None, merge=False):
 
     return output
 
+def map_social_distance(scenario, web_pars):
+    '''map social distance to intervention'''
+    interventions = []
+    for timeline in scenario:
+        start = timeline['start']
+        end = timeline['end']
+        level = timeline['level'] # aggressive, moderate, mild
+
+    web_pars['interventions'] = None
+
+def map_school_closures(scenario, web_pars):
+    '''map social distance to intervention'''
+    interventions = []
+    for timeline in scenario:
+        start = timeline['start']
+        end = timeline['end']
+
+    web_pars['interventions'] = None
+
+def map_symptomatic_testing(scenario, web_pars):
+    '''map social distance to intervention'''
+    interventions = []
+    for timeline in scenario:
+        start = timeline['start']
+        end = timeline['end']
+        level = timeline['level'] # 60, 90
+
+    web_pars['interventions'] = None
+
+def map_contact_tracing(scenario, web_pars):
+    '''map social distance to intervention'''
+    interventions = []
+    for timeline in scenario:
+        start = timeline['start']
+        end = timeline['end']
+
+    web_pars['interventions'] = None
 
 @app.register_RPC()
 def get_version():
@@ -114,20 +149,44 @@ def upload_pars(fname):
         raise KeyError(f'Parameters file must have keys "sim_pars" and "epi_pars", not {parameters.keys()}')
     return parameters
 
+@app.register_RPC(call_type='upload')
+def upload_file(file):
+    stem, ext = os.path.splitext(file)
+    data = sc.loadtext(file)
+    fd, path = tempfile.mkstemp(suffix=ext, prefix="input_", dir=tempfile.mkdtemp())
+    with open(path, mode='w', encoding="utf-8", newline="\n") as fd:
+        fd.write(data)
+        fd.flush()
+        fd.close()
+    return path
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
+def get_gnatt(intervention_pars=None, intervention_config=None):
+    df = []
+    for key,scenario in intervention_pars.items():
+        for timeline in scenario:
+            task = intervention_config[key]['formTitle']
+            level = task + ' ' + str(timeline.get('level', ''))
+            df.append(dict(Task=task, Start=timeline['start'], Finish=timeline['end'], Level= level))
+
+    fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
+                        show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
+    fig.update_xaxes(type='linear')
+    return {'json': fig.to_json(), 'id': 'test'}
+
+@app.register_RPC()
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
     ''' Create, run, and plot everything '''
 
     err = ''
 
     try:
         # Fix up things that JavaScript mangles
-        orig_pars = cv.make_pars()
+        orig_pars = cv.make_pars(set_prognoses=True, prog_by_age=False, use_layers=False)
+
         defaults = get_defaults(merge=True)
         web_pars = {}
         web_pars['verbose'] = verbose # Control verbosity here
-
 
         for key,entry in {**sim_pars, **epi_pars}.items():
             print(key, entry)
@@ -157,17 +216,35 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
         for key in ['asym2rec', 'mild2rec', 'sev2rec', 'crit2rec']:
             web_pars['dur'][key]['par1'] = web_dur
 
+        # Add n_days
+        web_pars['n_days'] = n_days
+
         # Add the intervention
         web_pars['interventions'] = []
-        if web_pars['web_int_day'] is not None:
-            web_pars['interventions'] = cv.change_beta(days=web_pars.pop('web_int_day'), changes=(1-web_pars.pop('web_int_eff')))
+
+        switcher = {
+            'social_distance': map_social_distance,
+            'school_closures': map_school_closures,
+            'symptomatic_testing': map_symptomatic_testing,
+            'contact_tracing': map_contact_tracing
+        }
+        if intervention_pars is not None:
+            for key,scenario in intervention_pars.items():
+                func = switcher.get(key)
+                func(scenario, web_pars)
+
 
         # Handle CFR -- ignore symptoms and set to 1
-        prog_pars = cv.get_default_prognoses(by_age=False)
-        web_pars['rel_symp_prob']   = 1.0/prog_pars.symp_prob
-        web_pars['rel_severe_prob'] = 1.0/prog_pars.severe_prob
-        web_pars['rel_crit_prob']   = 1.0/prog_pars.crit_prob
-        web_pars['rel_death_prob']  = web_pars.pop('web_cfr')/prog_pars.death_prob
+        web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
+        web_pars['rel_symp_prob']   = 1e4 # Arbitrarily large
+        web_pars['rel_severe_prob'] = 1e4
+        web_pars['rel_crit_prob']   = 1e4
+        web_pars['prognoses']['death_probs'][0] = web_pars.pop('web_cfr')
+        if web_pars['rand_seed'] == 0:
+            web_pars['rand_seed'] = None
+        web_pars['timelimit'] = max_time  # Set the time limit
+        web_pars['pop_size'] = int(web_pars['pop_size'])  # Set data type
+        web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
 
     except Exception as E:
         err2 = f'Parameter conversion failed! {str(E)}\n'
@@ -176,12 +253,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
     # Create the sim and update the parameters
     try:
-        sim = cv.Sim()
-        sim['prog_by_age'] = False # So the user can override this value
-        sim['timelimit'] = max_time # Set the time limit
-        if web_pars['seed'] == 0:
-            web_pars['seed'] = None # Reset
-        sim.update_pars(web_pars)
+        sim = cv.Sim(pars=web_pars,datafile=datafile)
     except Exception as E:
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
@@ -213,7 +285,12 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                 label = sim.results[key].name
                 this_color = sim.results[key].color
                 y = sim.results[key][:]
-                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
+                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
+                if sim.data is not None and key in sim.data:
+                    data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
+                    print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
+                    ydata = sim.data[key]
+                    fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
             if sim['interventions']:
                 interv_day = sim['interventions'][0].days[0]
@@ -222,7 +299,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
             fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-            
+
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
             d['config'] = {'responsive': True}
@@ -249,13 +326,13 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
         ss = sim.to_excel()
         files['xlsx'] = {
-            'filename': f'Covasim_results_{datestamp}.xlsx',
+            'filename': f'covasim_results_{datestamp}.xlsx',
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
-        json_string = sim.to_json()
+        json_string = sim.to_json(verbose=False)
         files['json'] = {
-            'filename': f'Covasim_results_{datestamp}.json',
+            'filename': f'covasim_results_{datestamp}.json',
             'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 
@@ -282,7 +359,7 @@ def run_sim(sim_pars=None, epi_pars=None, show_animation=False, verbose=True):
 
 
 def get_individual_states(sim, order=True):
-    people = sim.people.values()
+    people = sim.people
     if order:
         people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
 
@@ -310,7 +387,7 @@ def get_individual_states(sim, order=True):
          'value': 4
          },
         {'name': 'Dead',
-         'quantity': 'date_died',
+         'quantity': 'date_dead',
          'color': '#000000',
          'value': 5
          },
@@ -415,7 +492,7 @@ def animate_people(sim) -> dict:
         "xanchor": "left",
         "currentvalue": {
             "font": {"size": 20},
-            "prefix": "Day:",
+            "prefix": "Day: ",
             "visible": True,
             "xanchor": "right"
         },

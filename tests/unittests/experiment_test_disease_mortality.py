@@ -4,20 +4,21 @@ from unittest_support_classes import CovaSimTest
 
 class SimKeys:
     ''' Define mapping to simulation keys '''
-    number_agents = 'n'
-    initial_infected_count = 'n_infected'
+    number_agents = 'pop_size'
+    initial_infected_count = 'pop_infected'
     start_day = 'start_day'
     number_simulated_days = 'n_days'
-    random_seed = 'seed'
+    random_seed = 'rand_seed'
     pass
 
 
 class DiseaseKeys:
     ''' Define mapping to keys associated with disease progression '''
     modify_progression_by_age = 'prog_by_age'
-    probability_of_infected_developing_symptoms = 'default_symp_prob'
-    probability_of_symptoms_developing_severe = 'default_severe_prob'
-    probability_of_severe_developing_death = 'default_death_prob'
+    scale_probability_of_infected_developing_symptoms = 'rel_symp_prob'
+    scale_probability_of_symptoms_developing_severe = 'rel_severe_prob'
+    scale_probability_of_severe_developing_critical = 'rel_crit_prob'
+    scale_probability_of_critical_developing_death = 'rel_death_prob'
     pass
 
 
@@ -57,7 +58,7 @@ class ExperimentalDiseaseMortalityTests(CovaSimTest):
         # Define test-secific configurations
         test_parameters = {
             DiseaseKeys.modify_progression_by_age: False, # Otherwise these parameters have no effect
-            DiseaseKeys.probability_of_severe_developing_death: 0 # Change mortality rate to 0
+            DiseaseKeys.scale_probability_of_critical_developing_death: 0 # Change mortality rate to 0
             }
 
         # Run the simulation
@@ -80,13 +81,20 @@ class ExperimentalDiseaseMortalityTests(CovaSimTest):
         # Create the sim
         sim = BaseSim()
 
+        # reminder: these are the defaults for when "no_age" is used
+        # symp_probs = np.array([0.75]),
+        # severe_probs = np.array([0.2]),
+        # crit_probs = np.array([0.08]),
+        # death_probs = np.array([0.02]),
+
         # Define test-secific configurations
         test_parameters = {
             SimKeys.initial_infected_count: sim[SimKeys.number_agents], # Ensure everyone is infected
-            DiseaseKeys.modify_progression_by_age: False, # Otherwise these parameters have no effect
-            DiseaseKeys.probability_of_infected_developing_symptoms: 1, # Everyone infected gets symptoms
-            DiseaseKeys.probability_of_symptoms_developing_severe: 1, # Everyone with symptoms has severe disease
-            DiseaseKeys.probability_of_severe_developing_death: 1, # Everyone with severe disease dies
+            DiseaseKeys.modify_progression_by_age: False,  # Otherwise use age-specific values, but we want simple
+            DiseaseKeys.scale_probability_of_infected_developing_symptoms: 1.0/0.75, # Scale factor for proportion of symptomatic cases
+            DiseaseKeys.scale_probability_of_symptoms_developing_severe: 1.0/0.2,  # Scale factor for proportion of symptomatic cases that become severe
+            DiseaseKeys.scale_probability_of_severe_developing_critical: 1.0/0.08, # Scale factor for proportion of severe cases that become critical
+            DiseaseKeys.scale_probability_of_critical_developing_death: 1.0/0.02 #Scale factor for proportion of critical cases that result in death
         }
 
         # Run the simulation

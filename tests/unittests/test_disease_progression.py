@@ -3,11 +3,13 @@ Tests of simulation parameters from
 ../../covasim/README.md
 """
 import unittest
+import pytest
 
 from unittest_support_classes import CovaSimTest, TestProperties
 
 ResKeys = TestProperties.ResultsDataKeys
 ParamKeys = TestProperties.ParameterKeys
+
 
 class DiseaseProgressionTests(CovaSimTest):
     def setUp(self):
@@ -22,7 +24,7 @@ class DiseaseProgressionTests(CovaSimTest):
     def test_exposure_to_infectiousness_delay_deviation_scaling(self):
         """
         Configure exposure to infectiousness delay to 1/2 sim
-        length, and std_dev to 0. Verify that every n_infected
+        length, and std_dev to 0. Verify that every pop_infected
         at start goes infectious on the same day
         """
         total_agents = 500
@@ -134,10 +136,12 @@ class DiseaseProgressionTests(CovaSimTest):
                 par1=exposed_delay,
                 par2=std_dev
             )
+            prob_dict = {
+                TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 0
+            }
+            self.set_simulation_prognosis_probability(prob_dict)
             serial_delay = {
-                TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: sim_dur,
-                TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.use_progression_by_age: False,
-                TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 0
+                TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: sim_dur
             }
             self.run_sim(serial_delay)
             infectious_channel = self.get_full_result_channel(
@@ -262,10 +266,10 @@ class DiseaseProgressionTests(CovaSimTest):
         exposed_delay = 1
         self.set_everyone_infectious_same_day(num_agents=total_agents,
                                               days_to_infectious=exposed_delay)
-        only_mild_infections = {
-            ParamKeys.ProgressionKeys.ProbabilityKeys.inf_to_symptomatic_probability: 0.0
+        prob_dict = {
+            ParamKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 0.0
         }
-        self.set_simulation_parameters()
+        self.set_simulation_prognosis_probability(prob_dict)
         infectious_durations = [1, 2, 5, 10, 20] # Keep values in order
         infectious_duration_stddev = 0
         for TEST_dur in infectious_durations:
@@ -275,7 +279,7 @@ class DiseaseProgressionTests(CovaSimTest):
                 par1=TEST_dur,
                 par2=infectious_duration_stddev
             )
-            self.run_sim(params_dict=only_mild_infections)
+            self.run_sim()
             recoveries_channel = self.get_full_result_channel(
                 TestProperties.ResultsDataKeys.recovered_at_timestep
             )
@@ -363,9 +367,10 @@ class DiseaseProgressionTests(CovaSimTest):
     def test_time_to_die_duration_scaling(self):
         total_agents = 500
         self.set_everyone_critical(num_agents=500, constant_delay=0)
-        all_critical_to_die = {
-            ParamKeys.ProgressionKeys.ProbabilityKeys.crt_to_death_probability: 1.0
+        prob_dict = {
+            ParamKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.crt_to_death_probability: 1.0
         }
+        self.set_simulation_prognosis_probability(prob_dict)
 
         time_to_die_durations = [1, 2, 5, 10, 20]
         time_to_die_stddev = 0
@@ -376,7 +381,7 @@ class DiseaseProgressionTests(CovaSimTest):
                 par1=TEST_dur,
                 par2=time_to_die_stddev
             )
-            self.run_sim(params_dict=all_critical_to_die)
+            self.run_sim()
             deaths_today_channel = self.get_full_result_channel(
                 TestProperties.ResultsDataKeys.deaths_daily
             )
