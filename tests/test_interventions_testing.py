@@ -134,8 +134,11 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose, debug=debug)
 
+    to_plot = ['cum_infections', 'n_infectious', 'new_tests', 'new_diagnoses']
+    fig_args = dict(figsize=(20, 24))
+
     if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path, interval=7, fig_args=fig_args, to_plot=to_plot)
 
     return scens
 
