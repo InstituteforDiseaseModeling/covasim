@@ -517,9 +517,4 @@ Author: Will Fitzgerald, GitHub
 License: BSD-3
 
 '''
-def load_neherlab_case_file(path):
-    df = pd.read_csv(
-        f'https://raw.githubusercontent.com/neherlab/covid19_scenarios/master/data/case-counts/{path}', delimiter='\t', comment='#', header=0)
-    df = df.rename(columns={'time': 'date', 'cases': 'cum_cases', 'deaths': 'cum_death',
-                            'hospitalized': 'cum_hospitalized', 'icu': 'cum_icu', 'recovered': 'cum_recovered'})
-    return df
+
