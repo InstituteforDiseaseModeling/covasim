@@ -307,7 +307,8 @@ class Sim(cvbase.BaseSim):
 
         # Update counts for this time step: flows
         for key,count in flows.items():
-            self.results[key][t] = count
+            if key != 'new_tests': # tests are updated separately, as part of interventions
+                self.results[key][t] = count
 
         # Tidy up
         self.t += 1

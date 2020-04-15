@@ -110,6 +110,8 @@ class People(cvb.BasePeople):
         counts['new_deaths']      += self.check_death()
         counts['new_recoveries']  += self.check_recovery()
         counts['new_quarantined'] += self.check_quar() # Update if they're quarantined
+        counts['new_diagnoses']   += self.check_diagnosed()
+        counts['new_tests']       += self.check_tested()
         del self.is_exp # Tidy up
 
         return counts
@@ -229,6 +231,13 @@ class People(cvb.BasePeople):
         self.recovered[inds]   = False
         self.dead[inds]        = True
         self.rel_trans[inds]   = 0.0
+        return len(inds)
+
+
+    def check_tested(self):
+        ''' Check for new tests '''
+        inds = self.check_inds(self.tested, self.date_tested)
+        self.tested[inds] = True
         return len(inds)
 
 
