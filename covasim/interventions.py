@@ -99,7 +99,7 @@ class dynamic_pars(Intervention):
                 if subkey not in pars[parkey].keys():
                     errormsg = f'Parameter {parkey} is missing subkey {subkey}'
                     raise KeyError(errormsg)
-                if not sc.isiterable(pars[parkey][subkey]):
+                if sc.isnumber(pars[parkey][subkey]): # Allow scalar values or dicts, but leave everything else unchanged
                     pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
             len_days = len(pars[parkey]['days'])
             len_vals = len(pars[parkey]['vals'])
@@ -115,10 +115,12 @@ class dynamic_pars(Intervention):
         for parkey,parval in self.pars.items():
             inds = sc.findinds(parval['days'], t) # Look for matches
             if len(inds):
+
                 if len(inds)>1:
                     raise ValueError(f'Duplicate days are not allowed for Dynamic interventions (day={t}, indices={inds})')
                 else:
-                    val = parval['vals'][inds[0]]
+                    match = inds[0]
+                    val = parval['vals'][match]
                     if isinstance(val, dict):
                         sim[parkey].update(val) # Set the parameter if a nested dict
                     else:
@@ -269,7 +271,7 @@ class test_num(Intervention):
         test_probs[symp_inds] *= self.sympt_test
         test_probs[quar_inds] *= self.quar_test
         test_probs[diag_inds] = 0.
-        test_inds = cv.choose_weighted(probs=test_probs, n=n_tests, normalize=True, unique=False)
+        test_inds = cvu.choose_weighted(probs=test_probs, n=n_tests, normalize=True, unique=False)
 
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
@@ -309,7 +311,8 @@ class contact_tracing(Intervention):
         '''
         A method to trace a person's contacts
         '''
-        contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
+        raise NotImplementedError
+        # contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
         # for lkey,layer in self.contacts.items():
         #     if len(layer):
         #         this_trace_prob = trace_probs[ckey]
@@ -317,7 +320,7 @@ class contact_tracing(Intervention):
         #         new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
         #         contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
 
-        return contactable_ppl
+        # return contactable_ppl
 
 
 
@@ -376,12 +379,12 @@ class test_prob(Intervention):
     Returns:
         Intervention
     '''
-    def __init__(self, symptomatic_prob=0, asymptomatic_prob=0, quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
+    def __init__(self, symp_prob=0, asymp_prob=0, asymp_quar_prob=None, symp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
         super().__init__()
-        self.symptomatic_prob = symptomatic_prob
-        self.asymptomatic_prob = asymptomatic_prob
-        self.quarantine_prob = quarantine_prob
-        self.symp_quar_prob = symp_quar_prob
+        self.symp_prob = symp_prob
+        self.asymp_prob = asymp_prob
+        self.symp_quar_prob = symp_quar_prob if symp_quar_prob is not None else symp_prob
+        self.asymp_quar_prob = asymp_quar_prob if asymp_quar_prob is not None else asymp_prob
         self.test_sensitivity = test_sensitivity
         self.loss_prob = loss_prob
         self.test_delay = test_delay
@@ -396,20 +399,22 @@ class test_prob(Intervention):
         if t < self.start_day:
             return
 
-        new_tests = 0
-        new_diagnoses = 0
-        for person in sim.people:
-            new_diagnoses += person.check_diagnosed(t)
-            if (person.symptomatic and cv.bt(self.symptomatic_prob)) or \
-                (not person.symptomatic and cv.bt(self.asymptomatic_prob)) or \
-                (person.quarantine and cv.bt(self.quarantine_prob)) or \
-                (person.symptomatic and person.quarantine and cv.bt(self.symp_quar_prob)) :
+        symp_inds       = cvu.true(sim.people.symptomatic)
+        asymp_inds      = cvu.false(sim.people.symptomatic)
+        quar_inds       = cvu.true(sim.people.quarantined)
+        symp_quar_inds  = quar_inds[cvu.true(sim.people.symptomatic[quar_inds])]
+        asymp_quar_inds = quar_inds[cvu.false(sim.people.symptomatic[quar_inds])]
+        diag_inds       = cvu.true(sim.people.diagnosed)
 
-                new_tests += 1
-                person.test(t, self.test_sensitivity, self.loss_prob, self.test_delay)
+        test_probs = np.zeros(sim.n) # Begin by assigning equal tesitng probability to everyone
+        test_probs[symp_inds]       = self.asymp_prob
+        test_probs[asymp_inds]      = self.asymp_prob
+        test_probs[symp_quar_inds]  = self.symp_quar_prob
+        test_probs[asymp_quar_inds] = self.asymp_quar_prob
+        test_probs[diag_inds]       = 0.
+        test_inds = cvu.binomial_arr(test_probs)
 
-        sim.results['new_tests'][t] += new_tests
-        sim.results['new_diagnoses'][t] += new_diagnoses
+        sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return
 
