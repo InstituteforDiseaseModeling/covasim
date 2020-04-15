@@ -418,6 +418,8 @@ class People(cvb.BasePeople):
             p1inds = np.where(np.isin(np.array(sim.people.contacts[layer]['p1']),inds))[0] # E
             p2inds = np.unique(np.array(sim.people.contacts[layer]['p2'][p1inds]))
 
+
+
             # contact_inds = cvu.n_binomial(this_trace_prob, len(p2inds))
 
             # contact_inds = cvu.binomial_inds(this_trace_prob, p2inds)
