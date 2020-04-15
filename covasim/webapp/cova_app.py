@@ -75,6 +75,7 @@ def get_defaults(region=None, merge=False):
     sim_pars['pop_size']     = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
     sim_pars['pop_infected'] = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
     sim_pars['rand_seed']    = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
+    sim_pars['n_days']       = dict(best=90,   min=1, max=max_days, name="Campaign Duration",          tip='')
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
@@ -161,7 +162,7 @@ def upload_file(file):
     return path
 
 @app.register_RPC()
-def get_gnatt(intervention_pars=None, intervention_config=None):
+def get_gantt(intervention_pars=None, intervention_config=None):
     df = []
     for key,scenario in intervention_pars.items():
         for timeline in scenario:
@@ -204,8 +205,11 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
                 print(err1)
                 err += err1
                 web_pars[key] = best
-            if key in sim_pars: sim_pars[key]['best'] = web_pars[key]
-            else:               epi_pars[key]['best'] = web_pars[key]
+
+            if key in sim_pars:
+                sim_pars[key]['best'] = web_pars[key]
+            else:
+                epi_pars[key]['best'] = web_pars[key]
 
         # Convert durations
         web_pars['dur'] = sc.dcp(orig_pars['dur']) # This is complicated, so just copy it

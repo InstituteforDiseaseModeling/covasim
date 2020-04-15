@@ -114,15 +114,15 @@
           </b-tooltip>
         </div>
         <div class="form-row mb-3">
-          <label for="input_file" class="col-12">Upload Data</label>
+          <label for="datafile" class="col-12">Upload Data</label>
           <div class="col">
-            <b-form-file id="input_file" name="input_file" accept=".csv, .xlsx" placeholder="Use IDM's data" v-model="input.blob" @change="upload_input_data" :disabled="running"></b-form-file>
+            <b-form-file id="datafile" name="datafile" accept=".csv, .xlsx" placeholder="Use IDM's data" v-model="datafile.local_path" @change="upload_datafile" :disabled="running"></b-form-file>
           </div>
           <div class="col-auto">
-            <button id="clear_input_file" :disabled="running" class="btn btn-primary blueish" type="button" @click="clear_input_data">
+            <button id="reset-datafile" :disabled="running" class="btn btn-primary blueish" type="button" @click="reset_datafile">
               Clear
             </button>
-            <b-tooltip target="clear_input_file">
+            <b-tooltip target="reset-datafile">
               Remove the input data file from the campaign.
             </b-tooltip>
           </div>
@@ -191,12 +191,12 @@
                 <fieldset class="col-md-6">
                   <legend>Population parameters</legend>
                   <div v-for="(par, key) in sim_pars" class="form-group">
-                    <div :id="key+'-wpr'">
+                    <div :id="key+'-wpr'" v-if="key !== 'n_days'">
                       <label :for="key">{{par.name}}:</label>
                       <input :id="key" :disabled="running" class="form-control" v-model="par.best">
                       <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
                     </div>
-                    <b-tooltip :target="key+'-wpr'">
+                    <b-tooltip :target="key+'-wpr'" v-if="key !== 'n_days'">
                       {{par.tip}}
                     </b-tooltip>
                   </div>
@@ -272,10 +272,12 @@
 
       <fieldset>
         <legend>Results</legend>
-        <!--           <template v-if="running">
-                    <p><i>Please wait, running model...</i></p>
-                    <b-spinner />
-                  </template> -->
+        <!--
+        <template v-if="running">
+          <p><i>Please wait, running model...</i></p>
+            <b-spinner />
+        </template>
+        -->
         <template v-if="result.graphs.length === 0">
           <p><i>Click "Run" to display graphs</i></p>
         </template>
@@ -314,7 +316,7 @@
   <footer class="row no-gutter">
     <b-navbar type="dark" variant="dark" toggleable="false">
       <span class="navbar-text text-white">
-        &copy; {{ app.copyright_year }} <a href="http://idmod.org" target="_blank">Institute for Disease Modeling</a>
+        &copy; {{ app.copyright_year }} <a href="{{ app.org_url }}" target="_blank">Institute for Disease Modeling</a>
       </span>
       <a href="{{ app.github_url }}" target="_blank" class="navbar-text">
         <span class="sr-only">View this project on GitHub</span>

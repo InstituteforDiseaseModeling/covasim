@@ -131,7 +131,8 @@ var vm = new Vue({
                 title: "COVASim",
                 version: 'Unable to connect to server!', // This text will display instead of the version
                 copyright_year: copyright_year(),
-                github_url: "https://github.com/institutefordiseasemodeling/covasim"
+                github_url: "https://github.com/institutefordiseasemodeling/covasim",
+                org_url: "https://idmod.org"
             },
             panel_open: true,
             panel_width: null,
@@ -145,9 +146,9 @@ var vm = new Vue({
             },
             sim_pars: {},
             epi_pars: {},
-            input: {
-                blob: null,
-                remote_file: null
+            datafile: {
+                local_path: null,
+                server_path: null
             },
             intervention_pars: {},
             intervention_figs: {},
@@ -217,15 +218,14 @@ var vm = new Vue({
             this.intervention_pars[key].push(intervention);
             const result = this.intervention_pars[key].sort((a, b) => a.start - b.start);
             this.$set(this.intervention_pars, key, result);
-            const response = await sciris.rpc('get_gnatt', [this.intervention_pars, this.interventionTableConfig]);
+            const response = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
             this.intervention_figs = response.data;
         },
         async deleteIntervention(scenarioKey, index) {
             this.$delete(this.intervention_pars[scenarioKey], index);
-            const response = await sciris.rpc('get_gnatt', [this.intervention_pars, this.interventionTableConfig]);
+            const response = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
             this.intervention_figs = response.data;
         },
-
         open_panel() {
             this.panel_open = true;
         },
@@ -257,15 +257,23 @@ var vm = new Vue({
             // this.graphs = this.$options.data().graphs; // Uncomment this to clear the graphs on each run
             this.err = this.$options.data().err;
 
-            console.log(this.status);
-            console.log(this.sim_pars, this.epi_pars);
+            console.log('status:', this.status);
 
             // Run a a single sim
             try {
-                if(this.input.blob === null){
-                    this.input.remote_file = null
+                if(this.datafile.local_path === null){
+                    this.reset_datafile()
                 }
-                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.intervention_pars, this.input.remote_file, this.show_animation, this.sim_length.best]);
+                const kwargs = {
+                    sim_pars: this.sim_pars,
+                    epi_pars: this.epi_pars,
+                    intervention_pars: this.intervention_pars,
+                    datafile: this.datafile.server_path,
+                    show_animation: this.show_animation,
+                    n_days: this.sim_length.best
+                }
+                console.log('run_sim: ', kwargs);
+                const response = await sciris.rpc('run_sim', undefined, kwargs);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
@@ -290,10 +298,7 @@ var vm = new Vue({
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
             this.graphs = [];
-            this.input = {
-                blob: null,
-                remote_file: null
-            }
+            this.reset_datafile()
         },
         setupFormWatcher(paramKey) {
             const params = this[paramKey];
@@ -344,13 +349,13 @@ var vm = new Vue({
                 sciris.fail(this, 'Could not upload parameters', error);
             }
         },
-        upload_input_data: generate_upload_file_handler(function(filepath){
-            vm.input.remote_file = filepath
+        upload_datafile: generate_upload_file_handler(function(filepath){
+            vm.datafile.server_path = filepath
         }),
-        clear_input_data() {
-            this.input = {
-                blob: null,
-                remote_file: null
+        reset_datafile() {
+            this.datafile = {
+                local_path: null,
+                server_path: null
             }
         },
         loadPars() {
