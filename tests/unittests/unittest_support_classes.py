@@ -12,7 +12,7 @@ import json
 import os
 import numpy as np
 
-from covasim import Sim, parameters, change_beta, test_prob
+from covasim import Sim, parameters, change_beta, test_prob, contact_tracing
 
 
 
@@ -299,6 +299,14 @@ class CovaSimTest(unittest.TestCase):
                                        loss_prob=loss_prob,
                                        test_delay=test_delay,
                                        start_day=start_day)
+        pass
+
+    def intervention_set_contact_tracing(self,
+                                         trace_probabilities,
+                                         trace_time,
+                                         start_day):
+        self.interventions = contact_tracing(trace_probs=trace_probabilities,
+                                             trace_time=trace_time)
 
     # endregion
 

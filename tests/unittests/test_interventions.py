@@ -1,5 +1,7 @@
 from unittest_support_classes import CovaSimTest
 from unittest_support_classes import TestProperties
+from math import sqrt
+import numpy as np
 
 import unittest
 
@@ -17,7 +19,7 @@ class InterventionTests(CovaSimTest):
     # region change beta
     def test_brutal_change_beta_intervention(self):
         params = {
-            SimKeys.number_agents: 10000,
+            SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 60
         }
         self.set_simulation_parameters(params_dict=params)
@@ -96,7 +98,7 @@ class InterventionTests(CovaSimTest):
 
     def test_change_beta_multipliers(self):
         params = {
-            SimKeys.number_agents: 10000,
+            SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 40
         }
         self.set_simulation_parameters(params_dict=params)
@@ -128,10 +130,103 @@ class InterventionTests(CovaSimTest):
     # endregion
 
     # region test_prob
-    def test_brutal_sympto_test_prob(self):
+    def verify_perfect_test_prob(self, start_day, test_delay, test_sensitivity,
+                                 target_pop_count_channel,
+                                 target_pop_new_channel):
+        if test_sensitivity < 1.0:
+            raise ValueError("This test method only works with perfect test "
+                             f"sensitivity. {test_sensitivity} won't cut it.")
+        new_tests = self.get_full_result_channel(
+            channel=ResultsKeys.tests_at_timestep
+        )
+        new_diagnoses = self.get_full_result_channel(
+            channel=ResultsKeys.diagnoses_at_timestep
+        )
+        target_count = target_pop_count_channel
+        target_new = target_pop_new_channel
+        pre_test_days = range(0, start_day)
+        for d in pre_test_days:
+            self.assertEqual(new_tests[d],
+                             0,
+                             msg=f"Should be no testing before day {start_day}. Got some at {d}")
+            self.assertEqual(new_diagnoses[d],
+                             0,
+                             msg=f"Should be no diagnoses before day {start_day}. Got some at {d}")
+            pass
+        if self.is_debugging:
+            print("DEBUGGING")
+            print(f"Start day is {start_day}")
+            print(f"new tests before, on, and after start day: {new_tests[start_day-1:start_day+2]}")
+            print(f"new diagnoses before, on, after start day: {new_diagnoses[start_day-1:start_day+2]}")
+            print(f"target count before, on, after start day: {target_count[start_day-1:start_day+2]}")
+            pass
+        self.assertEqual(new_tests[start_day],
+                         target_count[start_day],
+                         msg=f"Should have each of the {target_count[start_day]} targets"
+                             f" get tested at day {start_day}. Got {new_tests[start_day]} instead.")
+        self.assertEqual(new_diagnoses[start_day + test_delay],
+                         target_count[start_day],
+                         msg=f"Should have each of the {target_count[start_day]} targets "
+                             f"get diagnosed at day {start_day + test_delay} with sensitivity {test_sensitivity} "
+                             f"and delay {test_delay}. Got {new_diagnoses[start_day + test_delay]} instead.")
+        post_test_days = range(start_day + 1, len(new_tests))
+        if target_pop_new_channel:
+            for d in post_test_days:
+                symp_today = target_new[d]
+                diag_today = new_diagnoses[d + test_delay]
+                test_today = new_tests[d]
+
+                self.assertEqual(symp_today,
+                                 test_today,
+                                 msg=f"Should have each of the {symp_today} newly symptomatics get"
+                                     f" tested on day {d}. Got {test_today} instead.")
+                self.assertEqual(symp_today,
+                                 diag_today,
+                                 msg=f"Should have each of the {symp_today} newly symptomatics get"
+                                     f" diagnosed on day {d + test_delay} with sensitivity {test_sensitivity}."
+                                     f" Got {test_today} instead.")
+            pass
+        pass
+
+    @unittest.skip("Don't know how to calc asymptomatic yet")
+    def test_test_prob_perfect_asymptomatic(self):
         self.is_debugging = True
         params = {
-            SimKeys.number_agents: 10000,
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 60
+        }
+        self.set_simulation_parameters(params_dict=params)
+
+        asymptomatic_probability_of_test = 1.0
+        test_sensitivity = 1.0
+        test_delay = 2
+        start_day = 30
+
+        self.intervention_set_test_prob(asymptomatic_prob=asymptomatic_probability_of_test,
+                                        test_sensitivity=test_sensitivity,
+                                        test_delay=test_delay,
+                                        start_day=start_day)
+        self.run_sim()
+        symptomatic_count_channel = self.get_full_result_channel(
+            ResultsKeys.symptomatic_at_timestep
+        )
+        population_channel = [5000] * len(symptomatic_count_channel)
+        susceptible_count_channel = self.get_full_result_channel(
+            ResultsKeys.susceptible_at_timestep
+        )
+        asymptomatic_count_channel = list(np.subtract(population_channel,
+                                                      symptomatic_count_channel))
+        asymptomatic_count_channel = list(np.subtract(asymptomatic_count_channel,
+                                                      ))
+        self.verify_perfect_test_prob(start_day=start_day,
+                                      test_delay=test_delay,
+                                      test_sensitivity=test_sensitivity,
+                                      target_pop_count_channel=asymptomatic_count_channel,
+                                      target_pop_new_channel=None)
+
+    def test_test_prob_perfect_symptomatic(self):
+        params = {
+            SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 60
         }
         self.set_simulation_parameters(params_dict=params)
@@ -146,52 +241,137 @@ class InterventionTests(CovaSimTest):
                                         test_delay=test_delay,
                                         start_day=start_day)
         self.run_sim()
-        new_tests = self.get_full_result_channel(
-            channel=ResultsKeys.tests_at_timestep
+        symptomatic_count_channel = self.get_full_result_channel(
+            ResultsKeys.symptomatic_at_timestep
         )
-        new_diagnoses = self.get_full_result_channel(
-            channel=ResultsKeys.diagnoses_at_timestep
+        symptomatic_new_channel = self.get_full_result_channel(
+            ResultsKeys.symptomatic_new_timestep
         )
-        symptomatic_count = self.get_full_result_channel(
-            channel=ResultsKeys.symptomatic_at_timestep
-        )
-        new_symptomatic = self.get_full_result_channel(
-            channel=ResultsKeys.symptomatic_new_timestep
-        )
-        pre_test_days = range(0, start_day)
-        for d in pre_test_days:
-            self.assertEqual(new_tests[d],
-                             0,
-                             msg=f"Should be no testing before day {start_day}. Got some at {d}")
-            self.assertEqual(new_diagnoses[d],
-                             0,
-                             msg=f"Should be no diagnoses before day {start_day}. Got some at {d}")
+        self.verify_perfect_test_prob(start_day=start_day,
+                                      test_delay=test_delay,
+                                      test_sensitivity=test_sensitivity,
+                                      target_pop_count_channel=symptomatic_count_channel,
+                                      target_pop_new_channel=symptomatic_new_channel
+                                      )
+        pass
+
+    def test_test_prob_sensitivity(self):
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 31
+        }
+        self.set_simulation_parameters(params_dict=params)
+
+        symptomatic_probability_of_test = 1.0
+        test_sensitivities = [0.9, 0.7, 0.6, 0.2]
+        test_delay = 0
+        start_day = 30
+
+        for sensitivity in test_sensitivities:
+            self.intervention_set_test_prob(symptomatic_prob=symptomatic_probability_of_test,
+                                            test_sensitivity=sensitivity,
+                                            test_delay=test_delay,
+                                            start_day=start_day)
+            self.run_sim()
+            first_day_diagnoses = self.get_full_result_channel(
+                channel=ResultsKeys.diagnoses_at_timestep
+            )[start_day + 1]
+            target_count = self.get_full_result_channel(
+                channel=ResultsKeys.symptomatic_at_timestep
+            )[start_day]
+            ideal_diagnoses = target_count * sensitivity
+            standard_deviation = sqrt(sensitivity * (1 - sensitivity) * target_count)
+            # 95% confidence interval
+            min_tolerable_diagnoses = ideal_diagnoses - 2 * standard_deviation
+            max_tolerable_diagnoses = ideal_diagnoses + 2 * standard_deviation
+            if self.is_debugging:
+                print(f"Max: {max_tolerable_diagnoses} "
+                      f"Min: {min_tolerable_diagnoses} "
+                      f"Target: {target_count} "
+                      f"Ideal: {ideal_diagnoses} "
+                      f"Sensitivity: {sensitivity} "
+                      f"Actual diagnoses: {first_day_diagnoses}")
+            self.assertGreaterEqual(first_day_diagnoses, min_tolerable_diagnoses,
+                                    msg=f"Expected at least {min_tolerable_diagnoses} diagnoses with {target_count}"
+                                        f" symptomatic and {sensitivity} sensitivity. Got {first_day_diagnoses}"
+                                        f" diagnoses, which is too low.")
+            self.assertLessEqual(first_day_diagnoses, max_tolerable_diagnoses,
+                                 msg=f"Expected no more than {max_tolerable_diagnoses} diagnoses with {target_count}"
+                                     f" symptomatic and {sensitivity} sensitivity. Got {first_day_diagnoses}"
+                                     f" diagnoses, which is too high.")
             pass
+        pass
 
-        self.assertEqual(new_tests[start_day + 1],
-                         symptomatic_count[start_day + 1],
-                         msg=f"Should have each of the {symptomatic_count[start_day]} symptomatics"
-                             f" get tested at day {start_day + 1}. Got {new_tests[start_day]} instead.")
-        self.assertEqual(new_diagnoses[start_day + 1],
-                         symptomatic_count[start_day + 1],
-                         msg=f"Should have each of the {symptomatic_count[start_day + 1]} symptomatics "
-                             f"get diagnosed at day {start_day + 1} with sensitivity {test_sensitivity}. "
-                             f"Got {new_diagnoses[start_day + 1]} instead.")
-        post_test_days = range(start_day + 1, len(new_tests))
-        for d in post_test_days:
-            symp_today = new_symptomatic[d]
-            diag_today = new_diagnoses[d]
-            test_today = new_tests[d]
+    def test_test_prob_symptomatic_prob_of_test(self):
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 31
+        }
+        self.set_simulation_parameters(params_dict=params)
 
-            self.assertEqual(symp_today,
-                             test_today,
-                             msg=f"Should have each of the {symp_today} newly symptomatics get"
-                                 f" tested on day {d}. Got {test_today} instead.")
-            self.assertEqual(symp_today,
-                             diag_today,
-                             msg=f"Should have each of the {symp_today} newly symptomatics get"
-                                 f" diagnosed on day {d} with sensitivity {test_sensitivity}."
-                                 f" Got {test_today} instead.")
+        symptomatic_probabilities_of_test = [0.9, 0.7, 0.6, 0.2]
+        test_sensitivity = 1.0
+        test_delay = 0
+        start_day = 30
 
+        for s_p_o_t in symptomatic_probabilities_of_test:
+            self.intervention_set_test_prob(symptomatic_prob=s_p_o_t,
+                                            test_sensitivity=test_sensitivity,
+                                            test_delay=test_delay,
+                                            start_day=start_day)
+            self.run_sim()
+            first_day_tests = self.get_full_result_channel(
+                channel=ResultsKeys.tests_at_timestep
+            )[start_day]
+            target_count = self.get_full_result_channel(
+                channel=ResultsKeys.symptomatic_at_timestep
+            )[start_day]
+            ideal_test_count = target_count * s_p_o_t
+            standard_deviation = sqrt(s_p_o_t * (1 - s_p_o_t) * target_count)
+            # 95% confidence interval
+            min_tolerable_tests = ideal_test_count - 2 * standard_deviation
+            max_tolerable_tests = ideal_test_count + 2 * standard_deviation
+            if self.is_debugging:
+                print(f"Max: {max_tolerable_tests} "
+                      f"Min: {min_tolerable_tests} "
+                      f"Target: {target_count} "
+                      f"Ideal: {ideal_test_count} "
+                      f"Probability of test: {s_p_o_t} "
+                      f"Standard deviation: {standard_deviation} "
+                      f"Actual tests: {first_day_tests}")
+            self.assertGreaterEqual(first_day_tests, min_tolerable_tests,
+                                    msg=f"Expected at least {min_tolerable_tests} tests with {target_count}"
+                                        f" symptomatic and {s_p_o_t} sensitivity. Got {first_day_tests}"
+                                        f" diagnoses, which is too low.")
+            self.assertLessEqual(first_day_tests, max_tolerable_tests,
+                                 msg=f"Expected no more than {max_tolerable_tests} tests with {target_count}"
+                                     f" symptomatic and {s_p_o_t} sensitivity. Got {first_day_tests}"
+                                     f" diagnoses, which is too high.")
+            pass
+        pass
+
+
+    # endregion
+
+    # region contact tracing
+    @unittest.skip("NYI: Don't know how to use this")
+    def test_brutal_contact_tracing(self):
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 60
+        }
+        self.set_simulation_parameters(params_dict=params)
+
+        symptomatic_probability_of_test = 1.0
+        test_sensitivity = 1.0
+        test_delay = 0
+        start_day = 30
+
+        self.intervention_set_test_prob(symptomatic_prob=symptomatic_probability_of_test,
+                                        test_sensitivity=test_sensitivity,
+                                        test_delay=test_delay,
+                                        start_day=start_day)
+
+        pass
 
     # endregion
