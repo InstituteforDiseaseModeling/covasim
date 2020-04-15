@@ -307,10 +307,10 @@ class contact_tracing(Intervention):
         '''
         A method to trace a person's contacts
         '''
-        if lkey,layer in self.contacts.items():
-            this_trace_prob = trace_probs[lkey]
-            new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
-            self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
+#        if lkey,layer in self.contacts.items():
+#            this_trace_prob = trace_probs[lkey]
+#            new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
+#            self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
         return
 
 
@@ -319,12 +319,12 @@ class contact_tracing(Intervention):
         A method to trace a person's contacts
         '''
         contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
-        if lkey,layer in self.contacts.items():
-            if len(layer):
-                this_trace_prob = trace_probs[ckey]
-                these_contacts = layer['p2'][layer['p1']==
-                new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
-                contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
+#        if lkey,layer in self.contacts.items():
+#            if len(layer):
+#                this_trace_prob = trace_probs[ckey]
+#                these_contacts = layer['p2'][layer['p1']==
+#                new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
+#                contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
 
         return contactable_ppl
 
