@@ -163,7 +163,7 @@ var vm = new Vue({
             scenarioError: {},
             interventionTableConfig,
             running: false,
-            err: '',
+            errs: [],
             reset_options: ['Example'],//, 'Seattle', 'Wuhan', 'Global'],
             reset_choice: 'Example'
         };
@@ -259,7 +259,7 @@ var vm = new Vue({
         async runSim() {
             this.running = true;
             // this.graphs = this.$options.data().graphs; // Uncomment this to clear the graphs on each run
-            this.err = this.$options.data().err;
+            this.errs = this.$options.data().errs;
 
             console.log('status:', this.status);
 
@@ -281,15 +281,18 @@ var vm = new Vue({
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
-                this.err = response.data.err;
-                this.panel_open = !!this.err;
+                this.errs = response.data.errs;
+                this.panel_open = this.errs.length > 0;
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, result: this.result })));
                 this.historyIdx = this.history.length - 1;
 
             } catch (e) {
-                this.err = 'Error running model: ' + e;
+                this.errs.push({
+                    message: 'Unable to submit model.',
+                    exception: e
+                })
             }
             this.running = false;
 

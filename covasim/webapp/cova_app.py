@@ -13,6 +13,7 @@ import sciris as sc
 import base64 # Download/upload-specific import
 import json
 import tempfile
+from traceback import TracebackException
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -178,9 +179,7 @@ def get_gantt(intervention_pars=None, intervention_config=None):
 @app.register_RPC()
 def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
     ''' Create, run, and plot everything '''
-
-    err = ''
-
+    errs = []
     try:
         # Fix up things that JavaScript mangles
         orig_pars = cv.make_pars(set_prognoses=True, prog_by_age=False, use_layers=False)
@@ -198,12 +197,11 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
 
             try:
                 web_pars[key] = np.clip(float(entry['best']), minval, maxval)
-            except Exception:
+            except Exception as ex:
                 user_key = entry['name']
                 user_val = entry['best']
-                err1 = f'Could not convert parameter "{user_key}", value "{user_val}"; using default value instead\n'
-                print(err1)
-                err += err1
+                err = f'Could not convert parameter "{user_key}" from value "{user_val}"; using default value instead.'
+                errs.append(log_err(err, ex))
                 web_pars[key] = best
 
             if key in sim_pars:
@@ -251,17 +249,13 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
 
     except Exception as E:
-        err2 = f'Parameter conversion failed! {str(E)}\n'
-        print(err2)
-        err += err2
+        errs.append(log_err('Parameter conversion failed!', E))
 
     # Create the sim and update the parameters
     try:
         sim = cv.Sim(pars=web_pars,datafile=datafile)
     except Exception as E:
-        err3 = f'Sim creation failed! {str(E)}\n'
-        print(err3)
-        err += err3
+        errs.append(log_err('Sim creation failed!', E))
 
     if verbose:
         print('Input parameters:')
@@ -270,14 +264,11 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     # Core algorithm
     try:
         sim.run(do_plot=False)
-    except TimeoutError:
-        day = sim.t
-        err4 = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
-        err += err4
+    except TimeoutError as te:
+        err = f"The simulation stopped on day {sim.t} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
+        errs.append(log_err(err, te))
     except Exception as E:
-        err4 = f'Sim run failed! {str(E)}\n'
-        print(err4)
-        err += err4
+        errs.append(log_err('Sim run failed!', E))
 
     # Core plotting
     graphs = []
@@ -316,9 +307,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
             graphs.append(animate_people(sim))
 
     except Exception as E:
-        err5 = f'Plotting failed! {str(E)}\n'
-        print(err5)
-        err += err5
+        errs.append(log_err('Plotting failed!', E))
 
 
     # Create and send output files (base64 encoded content)
@@ -347,12 +336,10 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
             'deaths': round(sim.results['cum_deaths'][-1]),
         }
     except Exception as E:
-        err6 = f'File saving failed! {str(E)}\n'
-        print(err6)
-        err += err6
+        errs.append(log_err('Unable to save output files!', E))
 
     output = {}
-    output['err']      = err
+    output['errs']     = errs
     output['sim_pars'] = sim_pars
     output['epi_pars'] = epi_pars
     output['graphs']   = graphs
