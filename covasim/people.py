@@ -129,12 +129,10 @@ class People(cvb.BasePeople):
                 n_contacts = self.pars['contacts'][dynamic_key]
                 beta       = self.pars['beta_layer'][dynamic_key]
 
-                # Loop over people; TODO: vectorize
-                new_contacts = {'p1':[], 'p2':[]} # Initialize
-                for p in range(pop_size):
-                    contact_inds = list(cvu.choose(max_n=pop_size, n=n_contacts))
-                    new_contacts['p1'] += [p]*n_contacts
-                    new_contacts['p2'] += contact_inds
+                # Create new contacts
+                new_contacts = {} # Initialize
+                new_contacts['p1'] = cvu.choose_r(max_n=pop_size, n=n_contacts*pop_size)
+                new_contacts['p2'] = cvu.choose_r(max_n=pop_size, n=n_contacts*pop_size)
 
                 # Set the things for the entire list
                 n_new = len(new_contacts['p1'])
