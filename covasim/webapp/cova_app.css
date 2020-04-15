@@ -1,5 +1,5 @@
 body {
-    font-family: 'Quicksand', Helvetica, Arial, sans-serif;
+    font-family: 'Roboto', Helvetica, Arial, sans-serif;
 }
 html, body {
     height: 100%;
@@ -20,6 +20,10 @@ html, body {
     grid-area: header;
 }
 
+.navbar-brand {
+    font-size: 2.2rem;
+}
+
 #app > footer {
     grid-area: footer;
 }
@@ -28,6 +32,23 @@ html, body {
     margin: 1em 0;
 }
 
+#parameters {
+    width: 47rem;
+    min-width: 26rem;
+    top: 4.9rem;
+    bottom: 3.5rem;
+    height: auto !important;
+}
+
+#resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 1rem;
+    margin-right: -.5rem;
+    cursor: col-resize;
+}
 
 fieldset > legend {
     border-bottom: 1px gainsboro solid;
@@ -41,9 +62,13 @@ header.row, footer.row {
     margin-bottom: 1em;
 }
 
+.btn-run {
+    width: 8em;
+}
+
 .green {
-    background-color: #799956;
-    border-color: #799956;
+    background-color: #627F43;
+    border-color: #627F43;
 }
 
 .green:hover, .green:disabled {
@@ -52,8 +77,8 @@ header.row, footer.row {
 }
 
 .blueish {
-    background-color: rgba(114, 145, 181, 0.92);
-    border-color: rgba(114, 145, 181, 0.92);
+    background-color: #56779F;
+    border-color: #56779F;
 }
 
 .blueish:hover, .blueish:disabled {
@@ -68,6 +93,12 @@ header.row, footer.row {
 .errorbox {
     background-color: #ffcaa2;
     padding: 10px;
+}
+
+.card-header .btn {
+    text-align: left;
+    margin: -.75rem -1.25rem;
+    width: calc(100% + 2.5rem);
 }
 
 /* Tooltip container */
