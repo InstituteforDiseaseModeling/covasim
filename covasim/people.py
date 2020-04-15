@@ -385,7 +385,7 @@ class People(cvb.BasePeople):
 
     def quarantine(self, inds):
         '''
-        Quarantine a person starting on the current day. If a person is already
+        Quarantine selected people starting on the current day. If a person is already
         quarantined, this will extend their quarantine.
         Args:
             inds (array): indices of who to quarantine
@@ -406,8 +406,11 @@ class People(cvb.BasePeople):
         # Extract the indices of the people who'll be contacted
         for layer in self.contact_keys():
             this_trace_prob = trace_probs[layer]
-            p1inds = np.where(np.isin(np.array(sim.people.contacts[layer]['p1']),inds))[0]
+            p1inds = np.where(np.isin(np.array(sim.people.contacts[layer]['p1']),inds))[0] # E
             p2inds = np.unique(np.array(sim.people.contacts[layer]['p2'][p1inds]))
+
+            contact_inds = cvu.n_binomial(this_trace_prob, len(p2inds))
+
             contact_inds = cvu.bf(this_trace_prob, p2inds)
             self.known_contact[contact_inds] = True
 

@@ -3,12 +3,14 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
+import matplotlib
+matplotlib.use('Agg')
 import sciris as sc
 import covasim as cv
 
 do_plot   = 1
-do_show   = 1
-do_save   = 0
+do_show   = 0
+do_save   = 1
 debug     = 1
 keep_sims = 0
 fig_paths = [f'results/testing_scen_{i}.png' for i in range(3)]
@@ -124,7 +126,7 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'pars': {
                 'interventions': cv.test_num(daily_tests=daily_tests, test_delay=d)
             }
-        } for d in range(1, 7+1, 2)
+        } for d in range(1, 3+1, 2)
     }
 
     metapars = {'n_runs': n_runs}
@@ -233,8 +235,8 @@ if __name__ == '__main__':
     sc.tic()
 
     #scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
-#    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
-    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
+    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
+#    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
 
     sc.toc()
 
