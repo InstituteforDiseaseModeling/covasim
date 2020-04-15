@@ -303,15 +303,15 @@ class contact_tracing(Intervention):
             return
 
 
-    def trace_contacts(self, trace_probs, trace_time):
-        '''
-        A method to trace a person's contacts
-        '''
-        if lkey,layer in self.contacts.items():
-            this_trace_prob = trace_probs[lkey]
-            new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
-            self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
-        return
+    # def trace_contacts(self, trace_probs, trace_time):
+    #     '''
+    #     A method to trace a person's contacts
+    #     '''
+    #     for lkey,layer in self.contacts.items():
+    #         this_trace_prob = trace_probs[lkey]
+    #         new_contact_keys = cvu.bf(this_trace_prob, self.contacts[ckey])
+    #         self.dyn_cont_ppl.update({nck:trace_time[ckey] for nck in new_contact_keys})
+    #     return
 
 
     def trace_contacts(self, inds, trace_probs, trace_time):
@@ -319,39 +319,39 @@ class contact_tracing(Intervention):
         A method to trace a person's contacts
         '''
         contactable_ppl = {}  # Store people that are contactable and how long it takes to contact them
-        if lkey,layer in self.contacts.items():
-            if len(layer):
-                this_trace_prob = trace_probs[ckey]
-                these_contacts = layer['p2'][layer['p1']==
-                new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
-                contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
+        # for lkey,layer in self.contacts.items():
+        #     if len(layer):
+        #         this_trace_prob = trace_probs[ckey]
+        #         these_contacts = layer['p2'][layer['p1'] # ==
+        #         new_contact_keys = cvu.bf(this_trace_prob, these_contacts)
+        #         contactable_ppl.update({nck: trace_time[ckey] for nck in new_contact_keys})
 
         return contactable_ppl
 
 
 
-        not_sus_people = sim.people.filter_out('susceptible') # Or maybe symptomatic here
-        for person in not_sus_people:
-            # N.B. consider skipping tracing from dead people
+        # not_sus_people = sim.people.filter_out('susceptible') # Or maybe symptomatic here
+        # for person in not_sus_people:
+        #     # N.B. consider skipping tracing from dead people
 
-            # Trace dynamic contact, e.g. the ones that change on every step
-            # A sample of community contacts is appended to person.dyn_cont_ppl on each step
-            person.trace_dynamic_contacts(self.trace_probs, self.trace_time)
+        #     # Trace dynamic contact, e.g. the ones that change on every step
+        #     # A sample of community contacts is appended to person.dyn_cont_ppl on each step
+        #     person.trace_dynamic_contacts(self.trace_probs, self.trace_time)
 
-            # If a person was just diagnosed,time to trace their (static) contacts
-            if person.date_diagnosed is not None and person.date_diagnosed == t-1: # TODO: tracing on symptomatic
-                contactable_ppl = person.trace_static_contacts(self.trace_probs, self.trace_time)
-                contactable_ppl.update(person.dyn_cont_ppl)
+        #     # If a person was just diagnosed,time to trace their (static) contacts
+        #     if person.date_diagnosed is not None and person.date_diagnosed == t-1: # TODO: tracing on symptomatic
+        #         contactable_ppl = person.trace_static_contacts(self.trace_probs, self.trace_time)
+        #         contactable_ppl.update(person.dyn_cont_ppl)
 
-                # Loop over people who get contacted
-                for contact_ind, contact_time in contactable_ppl.items():
-                    target_person = sim.people[contact_ind]
-                    if target_person.date_known_contact is None:
-                        target_person.date_known_contact = t + contact_time
-                    else:
-                        target_person.date_known_contact = min(target_person.date_known_contact, t + contact_time)
+        #         # Loop over people who get contacted
+        #         for contact_ind, contact_time in contactable_ppl.items():
+        #             target_person = sim.people[contact_ind]
+        #             if target_person.date_known_contact is None:
+        #                 target_person.date_known_contact = t + contact_time
+        #             else:
+        #                 target_person.date_known_contact = min(target_person.date_known_contact, t + contact_time)
 
-        return
+        # return
 
 
 
