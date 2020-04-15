@@ -412,18 +412,29 @@ class People(cvb.BasePeople):
             trace_probs (dict): probability of being able to trace people at each contact layer - should have the same keys as contacts
             trace_time (dict): # days it'll take to trace people at each contact layer - should have the same keys as contacts
         '''
+        # Figure out who has been contacted in the past
+        never_been_contacted = cvu.true(np.isnan(self.date_known_contact))  # Indices of people who've never been contacted
+
         # Extract the indices of the people who'll be contacted
         for layer in self.contact_keys():
             this_trace_prob = trace_probs[layer]
-            p1inds = np.where(np.isin(np.array(sim.people.contacts[layer]['p1']),inds))[0] # E
-            p2inds = np.unique(np.array(sim.people.contacts[layer]['p2'][p1inds]))
+            this_trace_time = trace_time[layer]
 
-
-
-            # contact_inds = cvu.n_binomial(this_trace_prob, len(p2inds))
-
-            # contact_inds = cvu.binomial_inds(this_trace_prob, p2inds)
+            p1inds = np.where(np.isin(np.array(self.contacts[layer]['p1']),inds))[0] # Get all the indices of the pairs that each person is in
+            p2inds = np.unique(np.array(self.contacts[layer]['p2'][p1inds])) # Find their pairing partner
+            contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
             self.known_contact[contact_inds] = True
+
+            # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?
+            first_time_contacted_inds   = np.intersect1d(never_been_contacted, contact_inds) # indices of people getting contacted for the first time
+            contacted_before_inds       = np.setdiff1d(contact_inds, first_time_contacted_inds) # indices of people who've been contacted before
+
+            if len(first_time_contacted_inds):
+                self.date_known_contact[first_time_contacted_inds]  = self.t + this_trace_time # Store when they were contacted
+            if len(contacted_before_inds):
+                self.date_known_contact[contacted_before_inds]  = np.minimum(self.date_known_contact[contacted_before_inds], self.t + this_trace_time)
+
+        return
 
 
 

@@ -273,6 +273,8 @@ class test_num(Intervention):
         test_probs[diag_inds] = 0.
         test_inds = cvu.choose_weighted(probs=test_probs, n=n_tests, normalize=True, unique=False)
 
+        test_inds = np.minimum(test_inds, sim.n-1) # TEMPORARY!! -- to ensure we don't look for someone not there
+
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return
@@ -366,11 +368,10 @@ class contact_tracing(Intervention):
             return
 
         just_diagnsed_inds = cvu.true(sim.people.diagnosed & (sim.people.date_diagnosed == t-1)) # Diagnosed last time step, time to trace
-        sim.people.trace(just_diagnsed_inds, self.trace_probs, self.trace_time)
+        if len(just_diagnsed_inds): # If there are any just-diagnosed people, go trace their contacts
+            sim.people.trace(just_diagnsed_inds, self.trace_probs, self.trace_time)
 
         return
-
-
 
 
 

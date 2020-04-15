@@ -134,7 +134,7 @@ def idefinedi(arr, inds):
 
 #%% Probabilities -- mostly not jitted since performance gain is minimal
 
-__all__ += ['binomial_arr', 'multinomial', 'poisson', 'choose', 'choose_r', 'choose_weighted']
+__all__ += ['binomial_arr', 'multinomial', 'poisson', 'binomial_filter', 'choose', 'choose_r', 'choose_weighted']
 
 
 def n_binomial(prob, n):
@@ -155,6 +155,12 @@ def multinomial(probs, repeats):
 def poisson(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
+
+
+#@nb.njit((nb.float64, nb.int64[:]))
+def binomial_filter(prob, arr):
+    ''' Binomial "filter" -- return entries that passed '''
+    return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]
 
 
 @nb.njit((nb.int32, nb.int32)) # This hugely increases performance

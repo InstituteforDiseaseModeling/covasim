@@ -3,14 +3,12 @@ Testing the effect of testing interventions in Covasim
 '''
 
 #%% Imports and settings
-import matplotlib
-matplotlib.use('Agg')
 import sciris as sc
 import covasim as cv
 
 do_plot   = 1
-do_show   = 0
-do_save   = 1
+do_show   = 1
+do_save   = 0
 debug     = 1
 keep_sims = 0
 fig_paths = [f'results/testing_scen_{i}.png' for i in range(3)]
@@ -172,7 +170,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     # Define the scenarios
     scenarios = {
         'lowtrace': {
-            'name': '10% daily testing; poor contact tracing; 7d quarantine; 50% acquision reduction',
+            'name': 'Poor contact tracing; 7d quarantine; 50% acquision reduction',
             'pars': {
                 'quar_eff': {'h': 1, 's': 0.5, 'w': 0.5, 'c': 0.25},
                 'quar_period': 7,
@@ -182,9 +180,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'modtrace': {
-            'name': '10% daily testing; moderate contact tracing; 10d quarantine; 75% acquision reduction',
+            'name': 'Moderate contact tracing; 10d quarantine; 75% acquision reduction',
             'pars': {
-                'quar_eff': {'h': 1, 's': 0.25, 'w': 0.25, 'c': 0.1},
+                'quar_eff': {'h': 0.75, 's': 0.25, 'w': 0.25, 'c': 0.1},
                 'quar_period': 10,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
@@ -192,7 +190,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'hightrace': {
-            'name': '10% daily testing; fast contact tracing; 14d quarantine; 90% acquision reduction',
+            'name': 'Fast contact tracing; 14d quarantine; 90% acquision reduction',
             'pars': {
                 'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
                 'quar_period': 14,
@@ -202,7 +200,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'alltrace': {
-            'name': '10% daily testing; same-day contact tracing; 21d quarantine; 100% acquision reduction',
+            'name': 'Same-day contact tracing; 21d quarantine; 100% acquision reduction',
             'pars': {
                 'quar_eff': {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0},
                 'quar_period': 21,
@@ -237,8 +235,8 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 if __name__ == '__main__':
     sc.tic()
 
-    #scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
-    #scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
+    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
+    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
     scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
 
     sc.toc()
