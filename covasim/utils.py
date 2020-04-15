@@ -497,3 +497,29 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         return zstat_generic2(stat, 1, alternative)
     else:
         return pvalue#, stat
+
+'''
+To load a single case file from the Neher Lab COVID-19 cases corpus, stored on GitHub.
+The repository is https://github.com/neherlab/covid19_scenarios/tree/master/data/case-counts
+
+It returns a Pandas DataFrame with the following columns:
+
+- cum_cases
+- cum_death
+- cum_hospitalized
+- cum_icu
+- cum_recovered
+
+The pathname should be something like 'brazil/BRA-Acre.tsv'; for example:
+>>> df = load_neherlab_case_file('brazil/BRA-Acre.tsv')
+
+Author: Will Fitzgerald, GitHub
+License: BSD-3
+
+'''
+def load_neherlab_case_file(path):
+    df = pd.read_csv(
+        f'https://raw.githubusercontent.com/neherlab/covid19_scenarios/master/data/case-counts/{path}', delimiter='\t', comment='#', header=0)
+    df = df.rename(columns={'time': 'date', 'cases': 'cum_cases', 'deaths': 'cum_death',
+                            'hospitalized': 'cum_hospitalized', 'icu': 'cum_icu', 'recovered': 'cum_recovered'})
+    return df
