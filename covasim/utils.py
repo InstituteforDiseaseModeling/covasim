@@ -134,7 +134,7 @@ def idefinedi(arr, inds):
 
 #%% Probabilities -- mostly not jitted since performance gain is minimal
 
-__all__ += ['binomial_arr', 'multinomial', 'poisson', 'choose', 'choose_weighted']
+__all__ += ['binomial_arr', 'multinomial', 'poisson', 'choose', 'choose_r', 'choose_weighted']
 
 
 def n_binomial(prob, n):
@@ -160,7 +160,7 @@ def poisson(rate):
 @nb.njit((nb.int32, nb.int32)) # This hugely increases performance
 def choose(max_n, n):
     '''
-    Choose a subset of items (e.g., people) without replace.
+    Choose a subset of items (e.g., people) without replacement.
 
     Args:
         max_n (int): the total number of items
@@ -170,6 +170,21 @@ def choose(max_n, n):
         choose(5, 2) will choose 2 out of 5 people with equal probability.
     '''
     return np.random.choice(max_n, n, replace=False)
+
+
+@nb.njit((nb.int32, nb.int32)) # This hugely increases performance
+def choose_r(max_n, n):
+    '''
+    Choose a subset of items (e.g., people), with replacement.
+
+    Args:
+        max_n (int): the total number of items
+        n (int): the number of items to choose
+
+    Example:
+        choose(5, 2) will choose 2 out of 5 people with equal probability.
+    '''
+    return np.random.choice(max_n, n, replace=True)
 
 
 def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False, unique=True):
