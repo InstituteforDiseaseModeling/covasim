@@ -102,7 +102,7 @@ function generate_upload_file_handler(onsuccess, onerror) {
                     return response.text()
                 }).then(data => {
                     remote_filepath = data.trim()
-                                        .replace(/["]/g, "")
+                                          .replace(/["]/g, "")
                     onsuccess(remote_filepath)
                 })
                 .catch(error => {
