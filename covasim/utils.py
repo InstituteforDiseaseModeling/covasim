@@ -261,25 +261,15 @@ def compute_probs(rel_trans,       rel_sus,        symp,        diag,        qua
     return rel_trans, rel_sus
 
 
-# @nb.njit((    nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))
-# def compute_targets(beta,     sources,     targets,   layer_betas,     rel_trans,       rel_sus):
-#     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
-#     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
-#     nonzero_inds    = betas.nonzero()[0] # Find nonzero entries
-#     nonzero_betas   = betas[nonzero_inds] # Remove zero entries from beta
-#     nonzero_targets = targets[nonzero_inds] # Remove zero entries from the targets
-#     transmissions   = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
-#     edge_inds       = nonzero_inds[transmissions] # The index of the contact responsible for the transmission
-#     target_inds     = nonzero_targets[transmissions] # Filter the targets on the actual infections
-#     target_inds     = np.unique(target_inds) # Ensure the targets are unique
-#     return target_inds, edge_inds
-
-
 @nb.njit((    nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))
 def compute_targets(beta,     sources,     targets,   layer_betas,     rel_trans,       rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
-    transmissions   = (np.random.random(len(betas)) < betas).nonzero()[0] # Compute the actual infections!
-    target_inds     = targets[transmissions] # Filter the targets on the actual infections
+    nonzero_inds    = betas.nonzero()[0] # Find nonzero entries
+    nonzero_betas   = betas[nonzero_inds] # Remove zero entries from beta
+    nonzero_targets = targets[nonzero_inds] # Remove zero entries from the targets
+    transmissions   = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
+    edge_inds       = nonzero_inds[transmissions] # The index of the contact responsible for the transmission
+    target_inds     = nonzero_targets[transmissions] # Filter the targets on the actual infections
     target_inds     = np.unique(target_inds) # Ensure the targets are unique
-    return target_inds, transmissions
+    return target_inds, edge_inds
