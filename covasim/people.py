@@ -363,7 +363,7 @@ class People(cvb.BasePeople):
         return n_infections # For incrementing counters
 
 
-    def test(self, inds, test_sensitivity, loss_prob=0, test_delay=0):
+    def test(self, inds, test_sensitivity=1.0, loss_prob=0.0, test_delay=0):
         '''
         Method to test people
 
@@ -418,9 +418,9 @@ class People(cvb.BasePeople):
             p1inds = np.where(np.isin(np.array(sim.people.contacts[layer]['p1']),inds))[0] # E
             p2inds = np.unique(np.array(sim.people.contacts[layer]['p2'][p1inds]))
 
-            contact_inds = cvu.n_binomial(this_trace_prob, len(p2inds))
+            # contact_inds = cvu.n_binomial(this_trace_prob, len(p2inds))
 
-            contact_inds = cvu.bf(this_trace_prob, p2inds)
+            # contact_inds = cvu.binomial_inds(this_trace_prob, p2inds)
             self.known_contact[contact_inds] = True
 
 

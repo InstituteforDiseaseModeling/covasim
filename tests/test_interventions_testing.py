@@ -63,21 +63,21 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
         'floating': {
             'name': 'Test with constant probability based on symptoms',
             'pars': {
-                'interventions': cv.test_prob(symptomatic_prob=max_optimistic_testing, asymptomatic_prob=0.0)
+                'interventions': cv.test_prob(symp_prob=max_optimistic_testing, asymp_prob=0.0)
                 }
         },
-        'historical': {
-            'name': 'Test a known number of positive cases',
-            'pars': {
-                'interventions': cv.test_historical(n_tests=[100]*npts, n_positive = [1]*npts)
-            }
-        },
+        # 'historical': {
+        #     'name': 'Test a known number of positive cases',
+        #     'pars': {
+        #         'interventions': cv.test_historical(n_tests=[100]*npts, n_positive = [1]*npts)
+        #     }
+        # },
         'sequence': {
             'name': 'Historical switching to probability',
             'pars': {
                 'interventions': cv.sequence(days=[10, 51], interventions=[
-                    cv.test_historical(n_tests=[100] * npts, n_positive=[1] * npts),
-                    cv.test_prob(symptomatic_prob=0.2, asymptomatic_prob=0.002),
+                    cv.test_num(daily_tests=[1000]*npts),
+                    cv.test_prob(symp_prob=0.2, asymp_prob=0.002),
                 ])
             }
         },
