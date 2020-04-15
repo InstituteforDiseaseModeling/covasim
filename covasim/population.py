@@ -169,7 +169,7 @@ def make_microstructured_contacts(pop_size, contacts):
         while n_remaining > 0:
 
             # Get the size of this cluster
-            this_cluster =  cvu.pt(cluster_size)  # Sample the cluster size
+            this_cluster =  cvu.poisson(cluster_size)  # Sample the cluster size
             if this_cluster > n_remaining:
                 this_cluster = n_remaining
 

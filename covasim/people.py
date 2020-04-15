@@ -110,6 +110,8 @@ class People(cvb.BasePeople):
         counts['new_deaths']      += self.check_death()
         counts['new_recoveries']  += self.check_recovery()
         counts['new_quarantined'] += self.check_quar() # Update if they're quarantined
+        counts['new_diagnoses']   += self.check_diagnosed()
+        counts['new_tests']       += self.check_tested()
         del self.is_exp # Tidy up
 
         return counts
@@ -232,6 +234,13 @@ class People(cvb.BasePeople):
         return len(inds)
 
 
+    def check_tested(self):
+        ''' Check for new tests '''
+        inds = self.check_inds(self.tested, self.date_tested)
+        self.tested[inds] = True
+        return len(inds)
+
+
     def check_diagnosed(self):
         ''' Check for new diagnoses '''
         inds = self.check_inds(self.diagnosed, self.date_diagnosed)
@@ -266,7 +275,7 @@ class People(cvb.BasePeople):
 
     def infect(self, inds, bed_max=None, verbose=True):
         '''
-        Infect this person and determine their eventual outcomes.
+        Infect people and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
@@ -356,10 +365,10 @@ class People(cvb.BasePeople):
 
     def test(self, inds, test_sensitivity, loss_prob=0, test_delay=0):
         '''
-        Method to test a person.
+        Method to test people
 
         Args:
-            t (int): current timestep
+            inds: indices of who to test
             test_sensitivity (float): probability of a true positive
             loss_prob (float): probability of loss to follow-up
             test_delay (int): number of days before test results are ready
@@ -385,9 +394,34 @@ class People(cvb.BasePeople):
 
     def quarantine(self, inds):
         '''
-        Quarantine a person starting on the current day. If a person is already
+        Quarantine selected people starting on the current day. If a person is already
         quarantined, this will extend their quarantine.
+        Args:
+            inds (array): indices of who to quarantine
         '''
         self.quarantined[inds] = True
         self.date_end_quarantine[inds] = self.t + self.pars['quar_period']
         return
+
+
+    def trace(self, inds, trace_probs, trace_time):
+        '''
+        Trace the contacts of the people provided
+        Args:
+            inds (array): indices of whose contacts to trace
+            trace_probs (dict): probability of being able to trace people at each contact layer - should have the same keys as contacts
+            trace_time (dict): # days it'll take to trace people at each contact layer - should have the same keys as contacts
+        '''
+        # Extract the indices of the people who'll be contacted
+        for layer in self.contact_keys():
+            this_trace_prob = trace_probs[layer]
+            p1inds = np.where(np.isin(np.array(sim.people.contacts[layer]['p1']),inds))[0] # E
+            p2inds = np.unique(np.array(sim.people.contacts[layer]['p2'][p1inds]))
+
+            contact_inds = cvu.n_binomial(this_trace_prob, len(p2inds))
+
+            contact_inds = cvu.bf(this_trace_prob, p2inds)
+            self.known_contact[contact_inds] = True
+
+
+

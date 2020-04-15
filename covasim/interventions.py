@@ -3,6 +3,8 @@ import pandas as pd
 import pylab as pl
 import sciris as sc
 import covasim as cv
+from . import utils as cvu
+
 
 
 __all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'test_historical', 'contact_tracing']
@@ -226,7 +228,7 @@ class test_num(Intervention):
         Intervention
     '''
 
-    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0):
+    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0, loss_prob=0):
         super().__init__()
 
         self.daily_tests = daily_tests #: Should be a list of length matching time
@@ -234,6 +236,7 @@ class test_num(Intervention):
         self.quar_test = quar_test
         self.sensitivity = sensitivity
         self.test_delay = test_delay
+        self.loss_prob = loss_prob
 
         return
 
@@ -259,28 +262,16 @@ class test_num(Intervention):
         else:
             return
 
-        test_probs = np.ones(sim.n)
-        new_diagnoses = 0
-
-        for i,person in enumerate(sim.people):
-
-            new_diagnoses += person.check_diagnosed(t)
-
-            # Adjust testing probability based on what's happened to the person
-            # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
-            if person.symptomatic:
-                test_probs[i] *= self.sympt_test  # They're symptomatic
-            if person.quarantine:
-                test_probs[i] *= self.quar_test  # They're in quarantine
-            if person.diagnosed:
-                test_probs[i] = 0.0
-
+        test_probs = np.ones(sim.n) # Begin by assigning equal tesitng probability to everyone
+        symp_inds = cvu.true(sim.people.symptomatic)
+        quar_inds = cvu.true(sim.people.quarantined)
+        diag_inds = cvu.true(sim.people.diagnosed)
+        test_probs[symp_inds] *= self.sympt_test
+        test_probs[quar_inds] *= self.quar_test
+        test_probs[diag_inds] = 0.
         test_inds = cv.choose_weighted(probs=test_probs, n=n_tests, normalize=True, unique=False)
-        sim.results['new_diagnoses'][t] += new_diagnoses
 
-        for test_ind in test_inds:
-            person = sim.people[test_ind]
-            person.test(t, self.sensitivity, test_delay=self.test_delay)
+        sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return
 

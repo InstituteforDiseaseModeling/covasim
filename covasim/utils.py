@@ -157,6 +157,10 @@ def poisson(rate):
     return np.random.poisson(rate, 1)[0]
 
 
+def bf(prob, arr):
+    ''' Bernoulli "filter" -- return entries that passed '''
+    return list(arr[(np.random.random(len(arr)) < prob).nonzero()[0]])
+
 @nb.njit((nb.int32, nb.int32)) # This hugely increases performance
 def choose(max_n, n):
     '''

@@ -124,7 +124,7 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'pars': {
                 'interventions': cv.test_num(daily_tests=daily_tests, test_delay=d)
             }
-        } for d in range(1, 7+1, 2)
+        } for d in range(1, 3+1, 2)
     }
 
     metapars = {'n_runs': n_runs}
@@ -132,8 +132,11 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose, debug=debug)
 
+    to_plot = ['cum_infections', 'n_infectious', 'new_tests', 'new_diagnoses']
+    fig_args = dict(figsize=(20, 24))
+
     if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path, interval=7, fig_args=fig_args, to_plot=to_plot)
 
     return scens
 
@@ -233,8 +236,8 @@ if __name__ == '__main__':
     sc.tic()
 
     #scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
-#    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
-    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
+    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
+#    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
 
     sc.toc()
 
