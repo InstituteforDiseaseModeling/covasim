@@ -7,6 +7,9 @@ simply type::
 
     ./run_scrapers
 
+.. contents:: Contents
+   :local:
+   :depth: 1
 
 1. Corona Data Scraper
 ======================
@@ -23,7 +26,7 @@ in CSV format.
 Updating
 --------
 
-To update the  Corona Data Scraper data::
+To update the Corona Data Scraper data::
 
     python data/load_corona_data_scraper_data.py
 

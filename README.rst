@@ -7,6 +7,8 @@ Covasim is a stochastic agent-based simulator designed to be used for COVID-19
 indicators such as numbers of infections and peak hospital demand. Covasim can
 also be used to explore the potential impact of different interventions.
 
+Questions or comments can be directed to covasim@idmod.org.
+
 .. contents:: Contents
    :local:
    :depth: 2
@@ -115,7 +117,9 @@ slight variations to the model (`model.py`).
 webapp
 ------
 
-For running the interactive web application. See the [webapp readme](./covasim/webapp) for more information.
+For running the interactive web application. See the `webapp README`_ for more information.
+
+.. _webapp README: ./covasim/webapp
 
 Other folders
 =============
@@ -162,9 +166,10 @@ Integration, development, and unit tests.
 sweep
 -----
 
-Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the [sweep readme](./sweep) for more information.
+Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `sweep README`_ for more information.
 
 .. _Weights and Biases: https://www.wandb.com/
+.. _sweep README: ./sweep
 
 Disclaimer
 ==========
@@ -177,4 +182,8 @@ build upon it for their own work. We make no representations that the code works
 as intended or that we will provide support, address issues that are found, or
 accept pull requests. You are welcome to create your own fork and modify the
 code to suit your own modeling needs as contemplated under the Creative Commons
-Attribution-Noncommercial-ShareAlike 4.0 License.
+Attribution-Noncommercial-ShareAlike 4.0 License. See the `contributing`_ and `code of conduct`_
+READMEs for more information.
+
+.. _contributing: .CONTRIBUTING.rst
+.. _code of conduct: CODE_OF_CONDUCT.rst
