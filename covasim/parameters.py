@@ -96,7 +96,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
 
 
 def set_contacts(pars):
-    '''r
+    '''
     Small helper function to set numbers of contacts and beta based on whether
     or not to use layers. Typically not called by the user.
 
