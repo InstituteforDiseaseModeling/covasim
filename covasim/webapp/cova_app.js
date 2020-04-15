@@ -285,7 +285,8 @@ var vm = new Vue({
                 this.panel_open = this.errs.length > 0;
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
-                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, result: this.result })));
+                this.intervention_pars = response.data.intervention_pars;
+                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, intervention_pars: this.intervention_pars, result: this.result })));
                 this.historyIdx = this.history.length - 1;
 
             } catch (e) {
@@ -302,6 +303,7 @@ var vm = new Vue({
             const response = await sciris.rpc('get_defaults', [this.reset_choice]);
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
+            this.intervention_pars = {};
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
             this.graphs = [];
@@ -338,6 +340,7 @@ var vm = new Vue({
             const data = {
                 sim_pars: this.sim_pars,
                 epi_pars: this.epi_pars,
+                intervention_pars: this.intervention_pars
             };
             const fileToSave = new Blob([JSON.stringify(data, null, 4)], {
                 type: 'application/json',
@@ -351,7 +354,15 @@ var vm = new Vue({
                 const response = await sciris.upload('upload_pars');  //, [], {}, '');
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
+                this.intervention_pars = response.data.intervention_pars;
                 this.graphs = [];
+                this.intervention_figs = {}
+
+                if (this.intervention_pars){
+                    const gantt = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
+                    this.intervention_figs = gantt.data;
+                }
+
             } catch (error) {
                 sciris.fail(this, 'Could not upload parameters', error);
             }
@@ -368,6 +379,7 @@ var vm = new Vue({
         loadPars() {
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
+            this.intervention_pars = this.history[this.historyIdx].intervention_pars;
             this.result = this.history[this.historyIdx].result;
         },
 

@@ -342,6 +342,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     output['errs']     = errs
     output['sim_pars'] = sim_pars
     output['epi_pars'] = epi_pars
+    output['intervention_pars'] = intervention_pars
     output['graphs']   = graphs
     output['files']    = files
     output['summary']  = summary
