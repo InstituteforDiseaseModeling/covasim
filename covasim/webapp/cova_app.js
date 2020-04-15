@@ -127,6 +127,7 @@ var vm = new Vue({
 
     data() {
         return {
+            debug: false,
             app: {
                 title: "COVASim",
                 version: 'Unable to connect to server!', // This text will display instead of the version
@@ -184,6 +185,9 @@ var vm = new Vue({
         isRunDisabled: function () {
             console.log(this.paramError);
             return this.paramError && Object.keys(this.paramError).length > 0;
+        },
+        is_debug: function () {
+            return this.debug || /debug=true/i.test(window.location.search)
         }
     },
 
