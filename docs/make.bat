@@ -87,6 +87,7 @@ if "%1" == "generate-api" (
 )
 
 if "%1" == "external" (
+    make.bat generate-api
 	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	if errorlevel 1 exit /b 1
 	%INDEXBUILD% -i %BUILDDIR%/html -o %BUILDDIR%/html/_static/tipuesearch/tipuesearch_content.js -u %URLPREFIX%
