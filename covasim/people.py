@@ -132,14 +132,12 @@ class People(cvb.BasePeople):
                 beta       = self.pars['beta_layer'][dynamic_key]
 
                 # Create new contacts
+                n_new = n_contacts*pop_size
                 new_contacts = {} # Initialize
-                new_contacts['p1'] = cvu.choose_r(max_n=pop_size, n=n_contacts*pop_size)
-                new_contacts['p2'] = cvu.choose_r(max_n=pop_size, n=n_contacts*pop_size)
+                new_contacts['p1'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=np.int32)
+                new_contacts['p2'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=np.int32)
 
                 # Set the things for the entire list
-                n_new = len(new_contacts['p1'])
-                new_contacts['p1']    = np.array(new_contacts['p1'], dtype=np.int32)
-                new_contacts['p2']    = np.array(new_contacts['p2'], dtype=np.int32)
                 new_contacts['layer'] = np.array([dynamic_key]*n_new)
                 new_contacts['beta']  = np.array([beta]*n_new, dtype=np.float32)
 
