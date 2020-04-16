@@ -89,7 +89,7 @@ if "%1" == "external" (
 )
 
 if "%1" == "html" (
-    sphinx-apidoc --tocfile modules -o . ../modules/
+    sphinx-apidoc --tocfile modules -o . ../covasim
 	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %INTERNALOPTS% %BUILDDIR%/html
 	if errorlevel 1 exit /b 1
 	%INDEXBUILD% -i %BUILDDIR%/html -o %BUILDDIR%/html/_static/tipuesearch/tipuesearch_content.js -u %URLPREFIX%

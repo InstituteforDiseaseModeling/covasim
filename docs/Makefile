@@ -64,7 +64,7 @@ external:
 .PHONY: html
 html:
 	rm -rf temp
-	sphinx-apidoc --tocfile modules -o . ../modules
+	sphinx-apidoc --tocfile modules -o . ../covasim
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(INTERNALOPTS) $(BUILDDIR)/html
 	$(INDEXBUILD) -i $(BUILDDIR)/html -o $(BUILDDIR)/html/_static/tipuesearch/tipuesearch_content.js -u $(URLPREFIX)
 	@echo
