@@ -126,7 +126,7 @@ class People(cvb.BasePeople):
         # Figure out if anything needs to be done
         dynamic_keys = sc.promotetolist(dynamic_keys)
         for dynamic_key in dynamic_keys:
-            if dynamic_key in self.contact_keys():
+            if dynamic_key in self.layer_keys():
                 pop_size   = len(self)
                 n_contacts = self.pars['contacts'][dynamic_key]
                 beta       = self.pars['beta_layer'][dynamic_key]
@@ -416,7 +416,7 @@ class People(cvb.BasePeople):
         never_been_contacted = cvu.true(np.isnan(self.date_known_contact))  # Indices of people who've never been contacted
 
         # Extract the indices of the people who'll be contacted
-        for layer in self.contact_keys():
+        for layer in self.layer_keys():
             this_trace_prob = trace_probs[layer]
             this_trace_time = trace_time[layer]
 

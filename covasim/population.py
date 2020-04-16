@@ -72,7 +72,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
         sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
-    sim.contact_keys = popdict.pop('contact_keys')
+    sim.layer_keys = popdict.pop('layer_keys')
     people = cvppl.People(sim.pars, **popdict) # List for storing the people
     sim.people = people
 
@@ -115,17 +115,17 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
     popdict['sex'] = sexes
 
     if microstructure == 'random':
-        contacts, contact_keys = make_random_contacts(pop_size, sim['contacts'])
+        contacts, layer_keys = make_random_contacts(pop_size, sim['contacts'])
     elif microstructure == 'clustered':
-        contacts, contact_keys = make_microstructured_contacts(pop_size, sim['contacts'])
+        contacts, layer_keys = make_microstructured_contacts(pop_size, sim['contacts'])
     elif microstructure == 'hybrid':
-        contacts, contact_keys = make_hybrid_contacts(pop_size, ages, sim['contacts'])
+        contacts, layer_keys = make_hybrid_contacts(pop_size, ages, sim['contacts'])
     else:
         errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
         raise NotImplementedError(errormsg)
 
     popdict['contacts'] = contacts
-    popdict['contact_keys'] = contact_keys
+    popdict['layer_keys'] = layer_keys
 
     return popdict
 
@@ -137,18 +137,18 @@ def make_random_contacts(pop_size, contacts):
     pop_size = int(pop_size) # Number of people
     contacts = sc.dcp(contacts)
     contacts.pop('c', None) # Remove community
-    contact_keys = list(contacts.keys())
+    layer_keys = list(contacts.keys())
     contacts_list = []
 
     # Make contacts
     for p in range(pop_size):
         contact_dict = {}
-        for key in contact_keys:
+        for key in layer_keys:
             n_contacts = cvu.poisson(contacts[key]) # Draw the number of Poisson contacts for this person
             contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
         contacts_list.append(contact_dict)
 
-    return contacts_list, contact_keys
+    return contacts_list, layer_keys
 
 
 def make_microstructured_contacts(pop_size, contacts):
@@ -158,8 +158,8 @@ def make_microstructured_contacts(pop_size, contacts):
     pop_size = int(pop_size) # Number of people
     contacts = sc.dcp(contacts)
     contacts.pop('c', None) # Remove community
-    contact_keys = list(contacts.keys())
-    contacts_list = [{c:[] for c in contact_keys} for p in range(pop_size)] # Pre-populate
+    layer_keys = list(contacts.keys())
+    contacts_list = [{c:[] for c in layer_keys} for p in range(pop_size)] # Pre-populate
 
     for layer_name, cluster_size in contacts.items():
         # Make clusters - each person belongs to one cluster
@@ -190,7 +190,7 @@ def make_microstructured_contacts(pop_size, contacts):
         for key in contacts_dict.keys():
             contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=np.int32)
 
-    return contacts_list, contact_keys
+    return contacts_list, layer_keys
 
 
 def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=None):
@@ -202,7 +202,7 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     '''
 
     # Handle inputs and defaults
-    contact_keys = ['h', 's', 'w']
+    layer_keys = ['h', 's', 'w']
     contacts = sc.mergedicts({'h':4, 's':20, 'w':20}, contacts) # Ensure essential keys are populated
     if school_ages is None:
         school_ages = [6, 18]
@@ -210,7 +210,7 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
         work_ages   = [18, 65]
 
     # Create the empty contacts list -- a list of {'h':[], 's':[], 'w':[]}
-    contacts_list = [{key:[] for key in contact_keys} for i in range(pop_size)]
+    contacts_list = [{key:[] for key in layer_keys} for i in range(pop_size)]
 
     # Start with the household contacts for each person
     h_contacts, _ = make_microstructured_contacts(pop_size, {'h':contacts['h']})
@@ -229,7 +229,7 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     for i,ind in enumerate(s_inds): contacts_list[ind]['s'] = s_contacts[i]['s'] # Copy over school contacts
     for i,ind in enumerate(w_inds): contacts_list[ind]['w'] = w_contacts[i]['w'] # Copy over work contacts
 
-    return contacts_list, contact_keys
+    return contacts_list, layer_keys
 
 
 
@@ -263,5 +263,5 @@ def make_synthpop(sim):
     popdict['age']      = np.array(ages)
     popdict['sex']      = np.array(sexes)
     popdict['contacts'] = contacts
-    popdict['contact_keys'] = list(key_mapping.values())
+    popdict['layer_keys'] = list(key_mapping.values())
     return popdict

@@ -204,7 +204,7 @@ class BaseSim(ParsObj):
         return keys
 
 
-    def contact_keys(self):
+    def layer_keys(self):
         ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
         keys = list(self['beta_layer'].keys())
         return keys
@@ -539,7 +539,7 @@ class BasePeople(sc.prettyobj):
             return getattr(self.keylist, which)[:]
 
 
-    def contact_keys(self):
+    def layer_keys(self):
         ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
         try:
             keys = list(self.pars['beta_layer'].keys())
@@ -636,7 +636,7 @@ class BasePeople(sc.prettyobj):
 
         # Handle keys -- by default, all
         if keys is None:
-            keys = self.contact_keys()
+            keys = self.layer_keys()
         keys = sc.promotetolist(keys)
 
         # Create the contacts dictionary
@@ -660,7 +660,7 @@ class BasePeople(sc.prettyobj):
         ''' Add new contacts to the array '''
 
         if key is None:
-            key = self.contact_keys()[0]
+            key = self.layer_keys()[0]
         if key not in self.contacts:
             self.contacts[key] = Layer(layer_info=self.layer_info)
 
