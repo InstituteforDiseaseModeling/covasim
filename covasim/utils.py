@@ -148,18 +148,7 @@ def binomial_arr(prob_arr):
 
 def multinomial(probs, repeats):
     ''' A multinomial trial '''
-    print('hiii')
-    print(len(probs))
-    print(probs.sum())
-    print(repeats)
-    fanuk = np.random.random(repeats)
-    out = np.searchsorted(np.cumsum(probs), fanuk)
-    print('ummmm', out.max())
-
-    if out.max() >= len(probs):
-        print('hhghghghgh')
-        raise Exception
-    return out
+    return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
 @nb.njit((nb.int32,)) # This hugely increases performance
@@ -214,7 +203,6 @@ def choose_weighted(probs, n, overshoot=1.5, max_tries=10, unique=True):
         n (int): number of samples to choose
         overshoot (float): number of extra samples to generate, expecting duplicates
         max_tries (int): maximum number of times to try to pick samples without replacement
-        normalize (bool): whether or not to normalize probs to always sum to 1
         unique (bool): whether or not to ensure unique indices
 
     Example:
@@ -235,38 +223,33 @@ def choose_weighted(probs, n, overshoot=1.5, max_tries=10, unique=True):
         probs /= probs_sum
     else: # Weights are all zero, choose uniformly
         probs = np.ones(n_people)/n_people
-    probs[-1] += 1.0 - probs.sum() # Ensure that
 
     # Perform checks
-    if abs(probs.sum() - 1) > eps:
-        raise Exception('Probabilities should sum to 1')
-    if n_people == n_samples: # It's everyone
-        return np.arange(len(probs))
-    if n_people < n_samples: # It's more than everyone
-        errormsg = f'Number of samples requested ({n_samples}) is greater than the number of people ({n_people})'
-        raise Exception(errormsg)
+    if unique:
+        if n_samples == n_people: # It's everyone
+            return np.arange(len(probs))
+        if n_samples > n_people: # It's more than everyone
+            errormsg = f'Number of samples requested ({n_samples}) is greater than the number of people ({n_people})'
+            raise Exception(errormsg)
 
     # Choose samples
     tries = 0
     unique_inds = np.array([], dtype=np.int32)
+    cum_probs = np.cumsum(probs)
+    cum_probs[-1] = 1.0 # To avoid any possibility of underflow/overflow errors
+    repeats = int(n_samples*overshoot)
     while len(unique_inds)<n_samples and tries<max_tries:
         tries += 1
-        raw_inds = multinomial(probs, int(n_samples*overshoot)) # Return raw indices, with replacement
-        print('ok')
-        print(raw_inds.max(), len(probs))
-        if raw_inds.max()>=len(probs):
-            raise Exception
-
+        np.searchsorted(cum_probs, np.random.random(repeats))
+        raw_inds = multinomial(probs, repeats) # Compute new indices
         if not unique:
-            return raw_inds
+            return raw_inds # Return raw indices, with replacement
         mixed_inds = np.hstack((unique_inds, raw_inds))
         unique_inds = pd.unique(mixed_inds) # Or np.unique(mixed_inds, return_index=True) with another step
     if tries == max_tries:
         errormsg = f'Unable to choose {n_samples} unique samples from {n_people} people after {max_tries} tries'
         raise RuntimeError(errormsg)
     inds = unique_inds[:int(n)]
-
-
 
     return inds
 
