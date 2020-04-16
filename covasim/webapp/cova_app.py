@@ -39,7 +39,7 @@ def log_err(message:str, ex:Exception):
     print(out, file=sys.stderr)
     return {
         "message": message,
-        "exception": ''.join(stacktrace.format())
+        "exception": ''.join(list(stacktrace.format()))
     }
 
 @app.register_RPC()
