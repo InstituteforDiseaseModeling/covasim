@@ -29,6 +29,7 @@ flask_app = app.flask_app
 max_pop  = 10e3 # Maximum population size
 max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
+die      = False # Whether or not to raise exceptions instead of continuing
 
 @app.register_RPC()
 def get_defaults(region=None, merge=False):
@@ -204,6 +205,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
                 print(err1)
                 err += err1
                 web_pars[key] = best
+                if die: raise
             if key in sim_pars: sim_pars[key]['best'] = web_pars[key]
             else:               epi_pars[key]['best'] = web_pars[key]
 
@@ -250,6 +252,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         err2 = f'Parameter conversion failed! {str(E)}\n'
         print(err2)
         err += err2
+        if die: raise
 
     # Create the sim and update the parameters
     try:
@@ -258,6 +261,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         err3 = f'Sim creation failed! {str(E)}\n'
         print(err3)
         err += err3
+        if die: raise
 
     if verbose:
         print('Input parameters:')
@@ -270,10 +274,12 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         day = sim.t
         err4 = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
         err += err4
+        if die: raise
     except Exception as E:
         err4 = f'Sim run failed! {str(E)}\n'
         print(err4)
         err += err4
+        if die: raise
 
     # Core plotting
     graphs = []
@@ -315,6 +321,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         err5 = f'Plotting failed! {str(E)}\n'
         print(err5)
         err += err5
+        if die: raise
 
 
     # Create and send output files (base64 encoded content)
@@ -346,6 +353,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         err6 = f'File saving failed! {str(E)}\n'
         print(err6)
         err += err6
+        if die: raise
 
     output = {}
     output['err']      = err
@@ -360,8 +368,9 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
 
 def get_individual_states(sim, order=True):
     people = sim.people
-    if order:
-        people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
+    # if order:
+        # print('Note: ordering of people for the animation is currently not supported')
+        # people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
 
     # Order these in order of precedence
     # The last matching quantity will be used
@@ -394,13 +403,12 @@ def get_individual_states(sim, order=True):
     ]
 
     z = np.zeros((len(people), sim.npts))
-
-    for i, p in enumerate(people):
-        for state in states:
-            if state['quantity'] is None:
-                continue
-            elif getattr(p, state['quantity']) is not None:
-                z[i, int(getattr(p, state['quantity'])):] = state['value']
+    for state in states:
+        date = state['quantity']
+        if date is not None:
+            inds = cv.defined(people[date])
+            for ind in inds:
+                z[ind, int(people[date][ind]):] = state['value']
 
     return z, states
 

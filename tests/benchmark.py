@@ -5,7 +5,7 @@ import covasim as cv
 
 sim = cv.Sim()
 sim['n_days'] = 180
-to_profile = 'next' # Must be one of the options listed below...currently only 1
+to_profile = 'step' # Must be one of the options listed below...currently only 1
 
 func_options = {
     'person':      cv.Person.__init__,
@@ -13,7 +13,7 @@ func_options = {
     'init_people': sim.init_people,
     'initialize':  sim.initialize,
     'run':         sim.run,
-    'next':        sim.next,
+    'step':        sim.step,
 }
 
 sc.profile(run=sim.run, follow=func_options[to_profile])

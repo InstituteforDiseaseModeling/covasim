@@ -42,18 +42,17 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['rescale_factor']    = 2   # Factor by which we rescale the population
 
     # Basic disease transmission
-    pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
     pars['use_layers']   = use_layers # Whether or not to use different contact layers
-    pars['contacts']     = None # The number of contacts per layer
-    pars['beta_layers']  = None # Transmissibility per layer
+    pars['contacts']     = None # The number of contacts per layer; set below
+    pars['beta_layer']  = None # Transmissibility per layer
+    pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
 
     # Efficacy of protection measures
-    pars['asymp_factor']        = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']         = 0.2 # Multiply beta by this factor for diganosed cases
-    pars['quar_trans_factor']   = {'h': 0.8, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
-    pars['quar_acq_factor']     = 0.2 # Acquisition multiplier on exposure for quarantined individual
-    pars['quar_period']         = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
+    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']  = 0.2 # Multiply beta by this factor for diganosed cases
+    pars['quar_eff']     = None # Quarantine multiplier on transmissibility and susceptibility; set below
+    pars['quar_period']  = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
@@ -90,14 +89,14 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
     set_contacts(pars)
-    if set_prognoses:
+    if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age']) # Default to age-specific prognoses
 
     return pars
 
 
 def set_contacts(pars):
-    '''r
+    '''
     Small helper function to set numbers of contacts and beta based on whether
     or not to use layers. Typically not called by the user.
 
@@ -105,11 +104,13 @@ def set_contacts(pars):
         pars (dict): the parameters dictionary
     '''
     if pars['use_layers']:
-        pars['contacts']    = {'h': 4,   's': 22,  'w': 20,  'c': 20} # Number of contacts per person per day, estimated
-        pars['beta_layers'] = {'h': 1.6, 's': 1.0, 'w': 1.0, 'c': 0.3} # Per-population beta weights; relative
+        if pars.get('contacts',   None) is None: pars['contacts']   = {'h': 4,   's': 20,  'w': 20,  'c': 10}   # Number of contacts per person per day, estimated
+        if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'h': 2.0, 's': 1.0, 'w': 1.0, 'c': 0.5}  # Per-population beta weights; relative
+        if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
     else:
-        pars['contacts']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
-        pars['beta_layers'] = {'a': 1.0} # Per-population beta weights; relative
+        if pars.get('contacts',   None) is None: pars['contacts']   = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
+        if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'a': 1.0} # Per-population beta weights; relative
+        if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'a': 0.3} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
     return
 
 

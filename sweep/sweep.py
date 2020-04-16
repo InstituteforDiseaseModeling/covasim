@@ -1,9 +1,7 @@
-import os, pickle
 import sciris as sc
 import covasim as cv
 import fire
 import wandb
-from pathlib import Path
 
 def train(beta:float=0.015, 
           pop_infected: int=10, 
@@ -16,7 +14,7 @@ def train(beta:float=0.015,
     Perform hyperparameter sweep with Weights and Biases
     https://docs.wandb.com/sweeps
     """
-    assert Path(datafile).exists(), f'Not able to find file: {datafile}'
+    sc.makefilepath(datafile, checkexists=True)
 
     pars = dict(
         beta = beta,
@@ -40,10 +38,9 @@ def train(beta:float=0.015,
     wandb.log({'likelihood': likelihood})
     sim.plot(do_show=False, 
              do_save=True, 
-             fig_path=str(os.path.join(wandb.run.dir, f'{run_id}.png')))
+             fig_path=sc.makefilepath(folder=wandb.run.dir, filename=f'{run_id}.png'))
     wandb.save(datafile)
-    with open(os.path.join(wandb.run.dir, f'pars_{run_id}.pkl'), 'wb') as f:
-        pickle.dump(sim.pars, f)
+    sc.saveobj(folder=wandb.run.dir, filename=f'pars_{run_id}.pkl', f)
     
 if __name__ == '__main__':
     fire.Fire(train)

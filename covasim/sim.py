@@ -10,6 +10,7 @@ import datetime as dt
 import matplotlib.ticker as ticker
 from . import version as cvv
 from . import utils as cvu
+from . import misc as cvm
 from . import defaults as cvd
 from . import base as cvbase
 from . import parameters as cvpars
@@ -17,6 +18,7 @@ from . import population as cvpop
 
 # Specify all externally visible things this file defines
 __all__ = ['Sim']
+
 
 class Sim(cvbase.BaseSim):
     '''
@@ -30,12 +32,13 @@ class Sim(cvbase.BaseSim):
         filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None, **kwargs):
+    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None, label=None, **kwargs):
         # Create the object
         default_pars = cvpars.make_pars(**kwargs) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
+        self.label         = None  # The label/name of the simulation
         self.created       = None  # The datetime the sim was created
         self.filename      = None  # The filename of the sim
         self.datafile      = None  # The name of the data file
@@ -45,11 +48,10 @@ class Sim(cvbase.BaseSim):
         self.initialized   = False # Whether or not initialization is complete
         self.results_ready = False # Whether or not results are ready
         self.people        = []    # Initialize these here so methods that check their length can see they're empty
-        self.contact_keys  = None  # Keys for contact networks
         self.results       = {}    # For storing results
 
         # Now update everything
-        self.set_metadata(filename)        # Set the simulation date and filename
+        self.set_metadata(filename, label) # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
         self.load_population(popfile)      # Load the population, if provided
         self.update_pars(pars)             # Update the parameters, if provided
@@ -69,14 +71,16 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def set_metadata(self, filename):
+    def set_metadata(self, filename, label):
         ''' Set the metadata for the simulation -- creation time and filename '''
         self.created = sc.now()
         self.version = cvv.__version__
-        self.git_info = cvu.git_info()
+        self.git_info = cvm.git_info()
         if filename is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             self.filename = f'covasim_{datestr}.sim'
+        if label is not None:
+            self.label = label
         return
 
 
@@ -85,9 +89,6 @@ class Sim(cvbase.BaseSim):
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
             self.data = cvpars.load_data(filename=datafile, columns=datacols, **kwargs)
-
-            # Ensure the data are continuous and align with the simulation
-            # data_offset = (self.data.iloc[0]['date'] - self.pars['start_day']).days # TODO: Use df.set_index("A").reindex(new_index).reset_index()
 
         return
 
@@ -155,7 +156,7 @@ class Sim(cvbase.BaseSim):
         contacts = self['contacts']
         if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's all contacts
             self['contacts']    = {'a':contacts}
-            self['beta_layers'] = {'a':1.0}
+            self['beta_layer'] = {'a':1.0}
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
@@ -218,35 +219,28 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    @property
-    def reskeys(self):
-        ''' Get the actual results objects, not other things stored in sim.results '''
-        all_keys = list(self.results.keys())
-        res_keys = [key for key in all_keys if isinstance(self.results[key], cvbase.Result)]
-        return res_keys
-
-
     def init_people(self, verbose=None, id_len=None, **kwargs):
         ''' Create the people '''
 
         if verbose is None:
             verbose = self['verbose']
 
-        sc.printv(f'Creating {self["pop_size"]} people...', 1, verbose)
+        if verbose:
+            print(f'Initializing sim with {self["pop_size"]:0n} people for {self["n_days"]} days')
 
         cvpop.make_people(self, verbose=verbose, **kwargs)
+        self.people.initialize() # Not sure this is the best place for it
 
         # Create the seed infections
-        for i in range(int(self['pop_infected'])):
-            person = self.people[i]
-            person.infect(t=0)
+        inds = np.arange(int(self['pop_infected']))
+        self.people.infect(inds=inds)
 
         return
 
 
-    def next(self, verbose=0):
+    def step(self):
         '''
-        Step simulation forward in time
+        Step the simulation forward in time
         '''
 
         # Set the time and if we have reached the end of the simulation, then do nothing
@@ -254,194 +248,86 @@ class Sim(cvbase.BaseSim):
         if t >= self.npts:
             return
 
-        # Zero counts for this time step: stocks
-        n_susceptible   = 0
-        n_exposed       = 0
-        n_infectious    = 0
-        n_symptomatic   = 0
-        n_severe        = 0
-        n_critical      = 0
-        n_diagnosed     = 0
-        n_quarantined   = 0
-
-        # Zero counts for this time step: flows
-        new_recoveries  = 0
-        new_deaths      = 0
-        new_infections  = 0
-        new_symptomatic = 0
-        new_severe      = 0
-        new_critical    = 0
-        new_quarantined = 0
-
-        # Extract these for later use. The values do not change in the person loop and the dictionary lookup is expensive.
-        beta             = self['beta']
-        asymp_factor     = self['asymp_factor']
-        diag_factor      = self['diag_factor']
-        quar_trans_factor= self['quar_trans_factor']
-        quar_acq_factor  = self['quar_acq_factor']
-        quar_period      = self['quar_period']
-        beta_layers      = self['beta_layers']
-        n_beds           = self['n_beds']
-        bed_constraint   = False
-        pop_size         = len(self.people)
-        n_imports        = cvu.pt(self['n_imports']) # Imported cases
-        if 'c' in self['contacts']:
-            n_comm_contacts = self['contacts']['c'] # Community contacts; TODO: make less ugly
-        else:
-            n_comm_contacts = 0
-
-        # Print progress
-        if verbose >= 1:
-            string = f'  Running day {t:0.0f} of {self.pars["n_days"]} ({sc.toc(output=True):0.2f} s elapsed)...'
-            if verbose >= 2:
-                sc.heading(string)
-            else:
-                print(string)
-
-        # Check if we need to rescale
-        if self['rescale']:
-            self.rescale()
+        # Perform initial operations
+        self.rescale() # Check if we need to rescale
+        people   = self.people # Shorten this for later use
+        flows    = people.update_states(t=t) # Update the state of everyone and count the flows
+        contacts = people.update_contacts() # Compute new contacts
+        bed_max  = people.count('severe') > self['n_beds'] # Check for a bed constraint
 
         # Randomly infect some people (imported infections)
+        n_imports = cvu.poisson(self['n_imports']) # Imported cases
         if n_imports>0:
-            imporation_inds = cvu.choose(max_n=pop_size, n=n_imports)
-            for ind in imporation_inds:
-                person = self.people[ind]
-                new_infections += person.infect(t=t)
+            imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
+            flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max)
 
+        # Compute the probability of transmission
+        beta         = np.float32(self['beta'])
+        asymp_factor = np.float32(self['asymp_factor'])
+        diag_factor  = np.float32(self['diag_factor'])
 
-        susceptible = self.people.filter_in('susceptible')
-        n_susceptible = 0
-        for person in susceptible:
-            n_susceptible += 1 # Update number of susceptibles
+        for key,layer in contacts.items():
+            sources     = layer['p1']
+            targets     = layer['p2']
+            layer_betas = layer['beta']
 
-            # If they're quarantined, this affects their transmission rate
-            new_quarantined += person.check_quar_begin(t, quar_period) # Set know_contact and go into quarantine
-            n_quarantined += person.check_quar_end(t) # Come out of quarantine, and count quarantine state
+            # Compute relative transmission and susceptibility
+            rel_trans = people.rel_trans
+            rel_sus   = people.rel_sus
+            symp      = people.symptomatic
+            diag      = people.diagnosed
+            quar      = people.quarantined
+            quar_eff  = np.float32(self['quar_eff'][key])
+            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
-        # Loop over everyone not susceptible
-        not_susceptible = self.people.filter_out('susceptible')
-        for person in not_susceptible:
-            # N.B. Recovered and dead people are included here!
+            # Calculate actual transmission
+            target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
+            flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
 
-            # If exposed, check if the person becomes infectious
-            if person.exposed:
-                n_exposed += 1
-                if not person.infectious and t == person.date_infectious: # It's the day they become infectious
-                    person.infectious = True
-                    sc.printv(f'      Person {person.uid} became infectious!', 2, verbose)
+            # Store the transmission tree
+            for ind in edge_inds:
+                source = sources[ind]
+                target = targets[ind]
+                self.people.transtree.sources[target] = source
+                self.people.transtree.targets[source].append(target)
 
-            # If they're quarantined, this affects their transmission rate
-            new_quarantined += person.check_quar_begin(t, quar_period) # Set know_contact and go into quarantine
-            person.check_quar_end(t) # Come out of quarantine
-            n_quarantined += person.quarantined
-            n_diagnosed   += person.diagnosed
-
-            # If infectious, update status according to the course of the infection, and check if anyone gets infected
-            if person.infectious:
-
-                # Check whether the person died on this timestep
-                new_death = person.check_death(t)
-                new_deaths += new_death
-
-                # Check whether the person recovered on this timestep
-                new_recovery = person.check_recovery(t)
-                new_recoveries += new_recovery
-
-                # If the person didn't die or recover, check for onward transmission
-                if not new_death and not new_recovery:
-                    n_infectious += 1 # Count this person as infectious
-
-                    # Check symptoms and diagnosis
-                    new_symptomatic += person.check_symptomatic(t)
-                    new_severe      += person.check_severe(t)
-                    new_critical    += person.check_critical(t)
-                    n_symptomatic   += person.symptomatic
-                    n_severe        += person.severe
-                    n_critical      += person.critical
-                    if n_severe > n_beds:
-                        bed_constraint = True
-
-                    # Calculate transmission risk based on whether they're asymptomatic/diagnosed/have been isolated
-                    thisbeta = beta * \
-                               (asymp_factor if not person.symptomatic else 1.) * \
-                               (diag_factor if person.diagnosed else 1.)
-
-                    # Set community contacts
-                    person_contacts = person.contacts
-                    if n_comm_contacts:
-                        community_contact_inds = cvu.choose(max_n=pop_size, n=n_comm_contacts)
-                        person_contacts['c'] = community_contact_inds
-
-                    # Determine who gets infected
-                    for ckey in self.contact_keys:
-                        contact_ids = person_contacts[ckey]
-                        if len(contact_ids):
-                            this_beta_layer = thisbeta *\
-                                              beta_layers[ckey] *\
-                                              (quar_trans_factor[ckey] if person.quarantined else 1.) # Reduction in onward transmission due to quarantine
-
-                            transmission_inds = cvu.bf(this_beta_layer, contact_ids)
-                            for contact_ind in transmission_inds: # Loop over people who get infected
-                                target_person = self.people[contact_ind]
-                                if target_person.susceptible: # Skip people who are not susceptible
-
-                                    # See whether we will infect this person
-                                    infect_this_person = True # By default, infect them...
-                                    if target_person.quarantined:
-                                        infect_this_person = cvu.bt(quar_acq_factor) # ... but don't infect them if they're isolating # DJK - should be layer dependent!
-                                    if infect_this_person:
-                                        new_infections += target_person.infect(t, bed_constraint, source=person) # Actually infect them
-                                        sc.printv(f'        Person {person.uid} infected person {target_person.uid}!', 2, verbose)
-
-        # End of person loop; apply interventions
+        # Apply interventions
         for intervention in self['interventions']:
             intervention.apply(self)
         if self['interv_func'] is not None: # Apply custom intervention function
             self =self['interv_func'](self)
 
         # Update counts for this time step: stocks
-        self.results['n_susceptible'][t]  = n_susceptible - new_infections
-        self.results['n_exposed'][t]      = n_exposed
-        self.results['n_infectious'][t]   = n_infectious # Tracks total number infectious at this timestep
-        self.results['n_symptomatic'][t]  = n_symptomatic # Tracks total number symptomatic at this timestep
-        self.results['n_severe'][t]       = n_severe # Tracks total number of severe cases at this timestep
-        self.results['n_critical'][t]     = n_critical # Tracks total number of critical cases at this timestep
-        self.results['n_diagnosed'][t]    = n_diagnosed # Tracks total number of diagnosed cases at this timestep
-        self.results['n_quarantined'][t]   = n_quarantined # Tracks number currently quarantined
-        self.results['bed_capacity'][t]   = n_severe/n_beds if n_beds>0 else np.nan
+        for key in cvd.result_stocks.keys():
+            self.results[f'n_{key}'][t] = people.count(key)
+        self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds']>0 else np.nan
 
         # Update counts for this time step: flows
-        self.results['new_infections'][t]  = new_infections # New infections on this timestep
-        self.results['new_recoveries'][t]  = new_recoveries # Tracks new recoveries on this timestep
-        self.results['new_symptomatic'][t] = new_symptomatic
-        self.results['new_severe'][t]      = new_severe
-        self.results['new_critical'][t]    = new_critical
-        self.results['new_deaths'][t]      = new_deaths
-        self.results['new_quarantined'][t] = new_quarantined
+        for key,count in flows.items():
+            if key != 'new_tests': # tests are updated separately, as part of interventions
+                self.results[key][t] = count
 
+        # Tidy up
         self.t += 1
+        return
 
 
     def rescale(self):
         ''' Dynamically rescale the population '''
-        t = self.t
-        pop_scale = self['pop_scale']
-        current_scale = self.rescale_vec[t]
-        if current_scale < pop_scale: # We have room to rescale
-            not_sus = list(self.people.filter_out('susceptible'))
-            n_not_sus = len(not_sus)
-            n_people = len(self.people)
-            if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
-                max_ratio = pop_scale/current_scale # We don't want to exceed this
-                scaling_ratio = min(self['rescale_factor'], max_ratio)
-                self.rescale_vec[t+1:] *= scaling_ratio # Update the rescaling factor from here on
-                n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
-                new_susceptibles = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
-                for p in new_susceptibles: # TODO: only loop over non-susceptibles
-                    person = self.people[p]
-                    if not person.susceptible:
-                        person.make_susceptible()
+        if self['rescale']:
+            t = self.t
+            pop_scale = self['pop_scale']
+            current_scale = self.rescale_vec[t]
+            if current_scale < pop_scale: # We have room to rescale
+                n_not_sus = self.people.count_not('susceptible')
+                n_people = len(self.people)
+                if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
+                    max_ratio = pop_scale/current_scale # We don't want to exceed this
+                    scaling_ratio = min(self['rescale_factor'], max_ratio)
+                    self.rescale_vec[t+1:] *= scaling_ratio # Update the rescaling factor from here on
+                    n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
+                    new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
+                    self.people.make_susceptible(new_sus_inds)
         return
 
 
@@ -458,20 +344,28 @@ class Sim(cvbase.BaseSim):
             results: the results object (also modifies in-place)
         '''
 
+        # Initialize
         T = sc.tic()
-
-        # Reset settings and results
         if not self.initialized:
             self.initialize()
-
         if verbose is None:
             verbose = self['verbose']
 
         # Main simulation loop
-        for t in range(self.npts):
+        for t in self.tvec:
 
-            # Do the heavy lifting
-            self.next(verbose=verbose)
+            # Print progress
+            if verbose >= 1:
+                elapsed = sc.toc(output=True)
+                simlabel = f'"{self.label}": ' if self.label else ''
+                string = f'  Running {simlabel}day {t:2.0f}/{self.pars["n_days"]} ({elapsed:0.2f} s) '
+                if verbose >= 2:
+                    sc.heading(string)
+                elif verbose == 1:
+                    cvm.progressbar(t+1, self.npts, label=string, newline=True)
+
+            # Do the heavy lifting -- actually run the model!
+            self.step()
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
@@ -484,7 +378,7 @@ class Sim(cvbase.BaseSim):
 
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results
-        sc.printv(f'\nRun finished after {elapsed:0.1f} s.\n', 1, verbose)
+        sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
         self.summary = self.summary_stats(verbose=verbose)
         if do_plot: # Optionally plot
             self.plot(**kwargs)
@@ -496,7 +390,7 @@ class Sim(cvbase.BaseSim):
         ''' Compute final results, likelihood, etc. '''
 
         # Scale the results
-        for reskey in self.reskeys:
+        for reskey in self.result_keys():
             if self.results[reskey].scale == 'dynamic':
                 self.results[reskey].values *= self.rescale_vec
             elif self.results[reskey].scale == 'static':
@@ -513,9 +407,9 @@ class Sim(cvbase.BaseSim):
         self.likelihood()
 
         # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
-        # self.people = sc.odict({str(p):person for p,person in enumerate(self.people)}) # Convert to an odict for a better repr
         self.results = sc.objdict(self.results)
         self.results_ready = True
+        self.initialized = False # To enable re-running
 
         return
 
@@ -556,21 +450,17 @@ class Sim(cvbase.BaseSim):
         sources = np.zeros(self.npts)
         targets = np.zeros(self.npts)
 
-        # Loop over each person to pull out the transmission
-        for person in self.people:
-            if person.date_exposed is not None: # Skip people who were never exposed
-                if person.date_recovered is not None:
-                    outcome_date = person.date_recovered
-                elif person.date_dead is not None:
-                    outcome_date = person.date_dead
-                else:
-                    errormsg = f'No outcome (death or recovery) can be determined for the following person:\n{person}'
-                    raise ValueError(errormsg)
+        for t in self.tvec:
 
-                if outcome_date is not None and outcome_date<self.npts:
-                    outcome_date = int(outcome_date)
-                    sources[outcome_date] += 1
-                    targets[outcome_date] += len(person.infected)
+            # Sources are easy -- count up the arrays
+            recov_inds   = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
+            dead_inds    = cvu.true(t == self.people.date_dead)  # Find people who died on this timestep
+            outcome_inds = np.concatenate((recov_inds, dead_inds))
+            sources[t]   = len(outcome_inds)
+
+            # Targets are hard -- loop over the transmission tree
+            for ind in outcome_inds:
+                targets[t] += len(self.people.transtree.targets[ind])
 
         # Populate the array -- to avoid divide-by-zero, skip indices that are 0
         inds = sc.findinds(sources>0)
@@ -587,28 +477,30 @@ class Sim(cvbase.BaseSim):
         exposure time) or 'clinical' (symptom onset to symptom onset).
         '''
 
-        not_susceptible = self.people.filter_out('susceptible')
-        intervals = np.zeros(int(self.summary['cum_infections']))
-        intervals2 = intervals.copy()
-        pos = 0
+        intervals1 = np.zeros(len(self.people))
+        intervals2 = np.zeros(len(self.people))
+        pos1 = 0
         pos2 = 0
-        for source in not_susceptible:
-            if len(source.infected)>0:
-                for target in source.infected:
-                    intervals[pos] = self.people[target].date_exposed - source.date_exposed
-                    pos += 1
-                if source.date_symptomatic is not None:
-                    for target in source.infected:
-                        if self.people[target].date_symptomatic is not None:
-                            intervals2[pos2] = self.people[target].date_symptomatic - source.date_symptomatic
+        targets = self.people.transtree.targets
+        date_exposed = self.people.date_exposed
+        date_symptomatic = self.people.date_symptomatic
+        for p in range(len(self.people)):
+            if len(targets[p])>0:
+                for target_ind in targets[p]:
+                    intervals1[pos1] = date_exposed[target_ind] - date_exposed[p]
+                    pos1 += 1
+                    if not np.isnan(date_symptomatic[p]):
+                        if not np.isnan(date_symptomatic[target_ind]):
+                            intervals2[pos2] = date_symptomatic[target_ind] - date_symptomatic[p]
                             pos2 += 1
 
         self.results['gen_time'] = {
-                'true':         np.mean(intervals[:pos]),
-                'true_std':     np.std(intervals[:pos]),
+                'true':         np.mean(intervals1[:pos1]),
+                'true_std':     np.std(intervals1[:pos1]),
                 'clinical':     np.mean(intervals2[:pos2]),
                 'clinical_std': np.std(intervals2[:pos2])}
         return
+
 
     def likelihood(self, weights=None, verbose=None) -> float:
         '''
@@ -629,7 +521,7 @@ class Sim(cvbase.BaseSim):
 
         model_dates = self.datevec.tolist()
 
-        for key in set(self.reskeys).intersection(self.data.columns): # For keys present in both the results and in the data
+        for key in set(self.result_keys()).intersection(self.data.columns): # For keys present in both the results and in the data
             weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
             for d, datum in self.data[key].iteritems():
                 if np.isfinite(datum):
@@ -639,7 +531,7 @@ class Sim(cvbase.BaseSim):
                             if (datum == 0) and (estimate == 0):
                                 p = 1.0
                             else:
-                                p = cvu.poisson_test(datum, estimate)
+                                p = cvm.poisson_test(datum, estimate)
                             logp = pl.log(p)
                             loglike += weight*logp
                             sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
@@ -658,7 +550,7 @@ class Sim(cvbase.BaseSim):
 
         summary = sc.objdict()
         summary_str = 'Summary:\n'
-        for key in self.reskeys:
+        for key in self.result_keys():
             summary[key] = self.results[key][-1]
             if key.startswith('cum_'):
                 summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
