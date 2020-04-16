@@ -57,12 +57,12 @@ When opening an issue for a bug report, explain the problem and include addition
 
 ## Submitting a pull request
 
-1. [Fork][fork] and clone the repository
+1. [Fork](fork) and clone the repository
 1. Configure and install the dependencies as outline in the [README](https://github.com/InstituteforDiseaseModeling/covasim#detailed-installation-instructions)
 1. Make sure the [tests pass on your machine](https://github.com/InstituteforDiseaseModeling/covasim/tree/master/tests#pytest).
 1. Create a new branch: `git checkout -b my-branch-name`
 1. Make your change, add tests, and make sure the tests still pass
-1. Push to your fork and [submit a pull request][pr]
+1. Push to your fork and [submit a pull request](pr)
 1. Pat your self on the back and wait for your pull request to be reviewed and merged.
 
 We obviously can't make any promises about whether or not PRs will be accepted, here are a few things you can do that will increase the likelihood of your pull request being accepted:
