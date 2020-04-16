@@ -8,6 +8,7 @@ import pylab as pl
 import pandas as pd
 import sciris as sc
 import datetime as dt
+from collections import defaultdict
 import matplotlib.ticker as ticker
 from . import defaults as cvd
 from . import base as cvbase
@@ -62,7 +63,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Handle scenarios -- by default, create a baseline scenario
         if scenarios is None:
-            scenarios = sc.dcp(cvd.default_scenario)
+            scenarios = {'baseline':{'name':'Baseline', 'pars':{}}}
         self.scenarios = scenarios
 
         # Handle metapars
@@ -81,18 +82,27 @@ class Scenarios(cvbase.ParsObj):
         # Copy quantities from the base sim to the main object
         self.npts = self.base_sim.npts
         self.tvec = self.base_sim.tvec
-        self.reskeys = self.base_sim.reskeys
 
         # Create the results object; order is: results key, scenario, best/low/high
         self.sims = sc.objdict()
         self.results = sc.objdict()
-        for reskey in self.reskeys:
+        for reskey in self.result_keys():
             self.results[reskey] = sc.objdict()
             for scenkey in scenarios.keys():
                 self.results[reskey][scenkey] = sc.objdict()
                 for nblh in ['name', 'best', 'low', 'high']:
                     self.results[reskey][scenkey][nblh] = None # This will get populated below
         return
+
+
+    def result_keys(self):
+        ''' Attempt to retrieve the results keys from the base sim '''
+        try:
+            keys = self.base_sim.result_keys()
+        except Exception as E:
+            errormsg = f'Could not retrieve result keys since base sim not accessible: {str(E)}'
+            raise ValueError(errormsg)
+        return keys
 
 
     def run(self, debug=False, verbose=None, **kwargs):
@@ -119,7 +129,7 @@ class Scenarios(cvbase.ParsObj):
                 print(string)
             return
 
-        reskeys = self.reskeys # Shorten since used extensively
+        reskeys = self.result_keys() # Shorten since used extensively
 
         # Loop over scenarios
         for scenkey,scen in self.scenarios.items():
@@ -135,6 +145,7 @@ class Scenarios(cvbase.ParsObj):
 
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
+            scen_sim.label = scenkey
             scen_sim.update_pars(scenpars)
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], verbose=verbose)
             if debug:
@@ -158,7 +169,7 @@ class Scenarios(cvbase.ParsObj):
             scenres.low = {}
             scenres.high = {}
             for reskey in reskeys:
-                scenres.best[reskey] = pl.mean(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
+                scenres.best[reskey] = pl.median(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
                 scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
                 scenres.high[reskey] = pl.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
 
@@ -171,12 +182,18 @@ class Scenarios(cvbase.ParsObj):
 
         #%% Print statistics
         if verbose:
-            print('\nResults for final time point in each scenario:')
-            for reskey in reskeys:
-                print(f'\n{reskey}')
-                for scenkey in list(self.scenarios.keys()):
-                    print(f'  {scenkey}: {self.results[reskey][scenkey].best[-1]:0.0f}')
-            print() # Add a blank space
+            sc.heading('Results for last day in each scenario:')
+            x = defaultdict(dict)
+            scenkeys = list(self.scenarios.keys())
+            for scenkey in scenkeys:
+                for reskey in reskeys:
+                    val = self.results[reskey][scenkey].best[-1]
+                    if reskey not in ['r_eff', 'doubling_time']:
+                        val = int(val)
+                    x[scenkey][reskey] = val
+            df = pd.DataFrame.from_dict(x).astype(object)
+            print(df)
+            print()
 
         return
 
@@ -290,7 +307,7 @@ class Scenarios(cvbase.ParsObj):
 
 
     def to_json(self, filename=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
-        """
+        '''
         Export results as JSON.
 
         Args:
@@ -300,7 +317,7 @@ class Scenarios(cvbase.ParsObj):
             A unicode string containing a JSON representation of the results,
             or writes the JSON file to disk
 
-        """
+        '''
         d = {'t':self.tvec,
              'results':   self.results,
              'basepars':  self.basepars,
@@ -317,7 +334,7 @@ class Scenarios(cvbase.ParsObj):
 
 
     def to_excel(self, filename=None):
-        """
+        '''
         Export results as XLSX
 
         Args:
@@ -326,11 +343,11 @@ class Scenarios(cvbase.ParsObj):
         Returns:
             An sc.Spreadsheet with an Excel file, or writes the file to disk
 
-        """
+        '''
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
         with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
-            for key in self.reskeys:
+            for key in self.result_keys():
                 result_df = pd.DataFrame.from_dict(sc.flattendict(self.results[key], sep='_'))
                 result_df.to_excel(writer, sheet_name=key)
         spreadsheet.load()
@@ -545,12 +562,12 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
         for s,sim in enumerate(sims[1:]): # Skip the first one
             if keep_people:
                 output_sim.people += sim.people
-            for key in sim.reskeys:
+            for key in sim.result_keys():
                 this_res = sim.results[key]
                 output_sim.results[key].values += this_res.values
 
         # For non-count results (scale=False), rescale them
-        for key in output_sim.reskeys:
+        for key in output_sim.result_keys():
             if not output_sim.results[key].scale:
                 output_sim.results[key].values /= len(sims)
 

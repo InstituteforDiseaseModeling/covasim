@@ -60,12 +60,12 @@ scenarios = {'baseline': {
                   'interventions': cv.change_beta(days=interv_day, changes=interv_eff)
                   }
               },
-            # 'distance2': { # With noise = 0.0, this should be identical to the above
-            #   'name':'Social distancing, version 2',
-            #   'pars': {
-            #       'interventions': cv.dynamic_pars({'beta':dict(days=interv_day, vals=interv_eff*default_beta)})
-            #       }
-            #   },
+            'distance2': { # With noise = 0.0, this should be identical to the above
+              'name':'Social distancing, version 2',
+              'pars': {
+                  'interventions': cv.dynamic_pars({'beta':dict(days=interv_day, vals=interv_eff*default_beta)})
+                  }
+              },
              }
 
 

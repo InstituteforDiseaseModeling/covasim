@@ -80,6 +80,44 @@ function copyright_year() {
 
     return range.join("-")
 }
+
+function generate_upload_file_handler(onsuccess, onerror) {
+    return function(e){
+            let files = e.target.files;
+            if (files.length > 0){
+                const data = new FormData();
+                data.append('uploadfile', files[0])
+                data.append('funcname', 'upload_file')
+                data.append('args', undefined)
+                data.append('kwargs', undefined)
+                fetch("/api/rpcs", {
+                  "body": data,
+                  "method": "POST",
+                  "mode": "cors",
+                  "credentials": "include"
+                }).then(response => {
+                    if(!response.ok){
+                        throw new Error(response.json())
+                    }
+                    return response.text()
+                }).then(data => {
+                    remote_filepath = data.trim()
+                                        .replace(/["]/g, "")
+                    onsuccess(remote_filepath)
+                })
+                .catch(error => {
+                    if (onerror){
+                        sciris.fail(this, "Could not upload file.", error)
+                    } else {
+                        onerror(error)
+                    }
+                })
+            } else {
+                console.warn("No input file selected.")
+            }
+        }
+}
+
 var vm = new Vue({
     el: '#app',
 
@@ -89,10 +127,15 @@ var vm = new Vue({
 
     data() {
         return {
-            title: "COVASim",
-            version: 'Unable to connect to server!', // This text will display instead of the version
-            copyright_year: copyright_year(),
+            app: {
+                title: "COVASim",
+                version: 'Unable to connect to server!', // This text will display instead of the version
+                copyright_year: copyright_year(),
+                github_url: "https://github.com/institutefordiseasemodeling/covasim"
+            },
             panel_open: true,
+            panel_width: null,
+            resizing: false,
             history: [],
             historyIdx: 0,
             sim_length: {
@@ -102,6 +145,10 @@ var vm = new Vue({
             },
             sim_pars: {},
             epi_pars: {},
+            input: {
+                blob: null,
+                remote_file: null
+            },
             intervention_pars: {},
             intervention_figs: {},
             show_animation: false,
@@ -123,6 +170,7 @@ var vm = new Vue({
     async created() {
         this.get_version();
         this.resetPars();
+        this.watchSimLengthParam();
     },
 
     filters: {
@@ -184,10 +232,24 @@ var vm = new Vue({
         close_panel() {
             this.panel_open = false;
         },
+        resize_start() {
+            this.resizing = true;
+        },
+        resize_end() {
+            this.resizing = false;
+        },
+        resize_apply(e) {
+            if (this.resizing) {
+                // Prevent highlighting
+                e.stopPropagation();
+                e.preventDefault();
+                this.panel_width = (e.clientX / window.innerWidth) * 100;
+            }
+        },
 
         async get_version() {
             const response = await sciris.rpc('get_version');
-            this.version = response.data;
+            this.app.version = response.data;
         },
 
         async runSim() {
@@ -200,9 +262,10 @@ var vm = new Vue({
 
             // Run a a single sim
             try {
-                const sim_pars = {...this.sim_pars};
-                sim_pars.n_days = this.sim_length;
-                const response = await sciris.rpc('run_sim', [sim_pars, this.epi_pars, this.intervention_pars, this.show_animation]);
+                if(this.input.blob === null){
+                    this.input.remote_file = null
+                }
+                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.intervention_pars, this.input.remote_file, this.show_animation, this.sim_length.best]);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
@@ -227,6 +290,10 @@ var vm = new Vue({
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
             this.graphs = [];
+            this.input = {
+                blob: null,
+                remote_file: null
+            }
         },
         setupFormWatcher(paramKey) {
             const params = this[paramKey];
@@ -238,7 +305,7 @@ var vm = new Vue({
             });
         },
         watchSimLengthParam() {
-            this.$watch(`sim_length`, this.validateParam('sim_length'), { deep: true });
+            this.$watch('sim_length', this.validateParam('sim_length'), { deep: true });
         },
         validateParam(key) {
             return (param) => {
@@ -277,7 +344,15 @@ var vm = new Vue({
                 sciris.fail(this, 'Could not upload parameters', error);
             }
         },
-
+        upload_input_data: generate_upload_file_handler(function(filepath){
+            vm.input.remote_file = filepath
+        }),
+        clear_input_data() {
+            this.input = {
+                blob: null,
+                remote_file: null
+            }
+        },
         loadPars() {
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;

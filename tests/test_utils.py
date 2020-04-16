@@ -8,7 +8,7 @@ import numpy as np
 import numba as nb
 import pylab as pl
 import sciris as sc
-import covasim as cova
+import covasim as cv
 
 
 doplot = 0
@@ -25,7 +25,7 @@ def test_rand():
         return np.random.rand()
 
     # Check that two consecutive numbers don't match
-    cova.set_seed(default_seed)
+    cv.set_seed(default_seed)
     a = np.random.rand()
     b = np.random.rand()
     v = numba_rand()
@@ -34,17 +34,17 @@ def test_rand():
     assert v != w
 
     # Check that after resetting the seed, they do
-    cova.set_seed(default_seed)
+    cv.set_seed(default_seed)
     c = np.random.rand()
     x = numba_rand()
     assert a == c
     assert v == x
 
     # Check that resetting with no argument, they don't again
-    cova.set_seed()
+    cv.set_seed()
     d = np.random.rand()
     y = numba_rand()
-    cova.set_seed()
+    cv.set_seed()
     e = np.random.rand()
     z = numba_rand()
     assert d != e
@@ -55,9 +55,9 @@ def test_rand():
 
 def test_poisson():
     sc.heading('Poisson distribution')
-    s1 = cova.poisson_test(10, 10)
-    s2 = cova.poisson_test(10, 15)
-    s3 = cova.poisson_test(0, 100)
+    s1 = cv.poisson_test(10, 10)
+    s2 = cv.poisson_test(10, 15)
+    s3 = cv.poisson_test(0, 100)
     l1 = 1.0
     l2 = 0.05
     l3 = 1e-9
@@ -105,7 +105,7 @@ def test_samples(doplot=False):
         else:
             par1 = 0
             par2 = 5
-        results[choice] = cova.sample(dist=choice, par1=par1, par2=par2, size=n)
+        results[choice] = cv.sample(dist=choice, par1=par1, par2=par2, size=n)
 
         if doplot:
             pl.subplot(nsqr, nsqr, c+1)
@@ -113,7 +113,7 @@ def test_samples(doplot=False):
             pl.title(f'dist={choice}, par1={par1}, par2={par2}')
 
     with pytest.raises(NotImplementedError):
-        cova.sample(dist='not_found')
+        cv.sample(dist='not_found')
 
     return results
 
@@ -121,30 +121,28 @@ def test_samples(doplot=False):
 
 def test_choose():
     sc.heading('Choose people')
-    x1 = cova.choose(10, 5)
+    x1 = cv.choose(10, 5)
     with pytest.raises(Exception):
-        cova.choose_weighted(10, 5) # Requesting mroe people than are available
+        cv.choose_w(10, 5) # Requesting mroe people than are available
     print(f'Uniform sample from 0-9: {x1}')
     return x1
 
 
-def test_choose_weighted():
+def test_choose_w():
     sc.heading('Choose weighted people')
     n = 100
     samples = 5
     lin = np.arange(n)
     lin = lin/lin.sum()
-    x0 = cova.choose_weighted([0.01]*n, samples)
-    x1 = cova.choose_weighted(lin, samples)
-    x2 = cova.choose_weighted([1, 0, 0, 0, 0], 1)
-    x3 = cova.choose_weighted([0.5, 0.5, 0, 0, 0], 1)
+    x0 = cv.choose_w([0.01]*n, samples)
+    x1 = cv.choose_w(lin, samples)
+    x2 = cv.choose_w([1, 0, 0, 0, 0], 1)
+    x3 = cv.choose_w([0.5, 0.5, 0, 0, 0], 1)
     assert x2[0] == 0
     assert x3[0] in [0,1]
     assert len(x0) == len(x1) == samples
     with pytest.raises(Exception):
-        cova.choose_weighted([0.5, 0, 0, 0, 0], 1) # Probabilities don't sum to 1
-    with pytest.raises(Exception):
-        cova.choose_weighted([0.5, 0.5], 10) # Requesting mroe people than are available
+        cv.choose_w([0.5, 0.5], 10) # Requesting mroe people than are available
     print(f'Uniform sample 0-99: x0 = {x0}, mean {x0.mean()}')
     print(f'Weighted sample 0-99: x1 = {x1}, mean {x1.mean()}')
     print(f'All weight on 0: x2 = {x2}')
@@ -154,20 +152,20 @@ def test_choose_weighted():
 
 def test_doubling_time():
 
-    sim = cova.Sim()
+    sim = cv.Sim()
     sim.run(verbose=0)
 
     d = sc.objdict()
 
     # Test doubling time
-    d.t1 = cova.get_doubling_time(sim, interval=[3,sim['n_days']+10], verbose=2) # should reset end date to sim['n_days']
-    d.t2 = cova.get_doubling_time(sim, start_day=3,end_day=sim['n_days'])
-    d.t3 = cova.get_doubling_time(sim, interval=[3,sim['n_days']], exp_approx=True)
-    d.t4 = cova.get_doubling_time(sim, start_day=3, end_day=sim['n_days'], moving_window=4) # should return array
-    d.t5 = cova.get_doubling_time(sim, series=np.power(1.03, range(100)), interval=[3,30], moving_window=3) # Should be a series with values = 23.44977..
-    d.t6 = cova.get_doubling_time(sim, start_day=9, end_day=20, moving_window=1, series="cum_infections") # Should recast window to 2 then return a series with 100s in it
+    d.t1 = cv.get_doubling_time(sim, interval=[3,sim['n_days']+10], verbose=2) # should reset end date to sim['n_days']
+    d.t2 = cv.get_doubling_time(sim, start_day=3,end_day=sim['n_days'])
+    d.t3 = cv.get_doubling_time(sim, interval=[3,sim['n_days']], exp_approx=True)
+    d.t4 = cv.get_doubling_time(sim, start_day=3, end_day=sim['n_days'], moving_window=4) # should return array
+    d.t5 = cv.get_doubling_time(sim, series=np.power(1.03, range(100)), interval=[3,30], moving_window=3) # Should be a series with values = 23.44977..
+    d.t6 = cv.get_doubling_time(sim, start_day=9, end_day=20, moving_window=1, series="cum_infections") # Should recast window to 2 then return a series with 100s in it
     with pytest.raises(ValueError):
-        d.t7 = cova.get_doubling_time(sim, start_day=3, end_day=20, moving_window=4, series="cum_deaths") # Should fail, no growth in deaths
+        d.t7 = cv.get_doubling_time(sim, start_day=3, end_day=20, moving_window=4, series="cum_deaths") # Should fail, no growth in deaths
 
     print('NOTE: this test prints some warnings; these are intended.')
     return d
@@ -181,7 +179,7 @@ if __name__ == '__main__':
     rnd2    = test_poisson()
     samples = test_samples(doplot=doplot)
     people1 = test_choose()
-    people2 = test_choose_weighted()
+    people2 = test_choose_w()
     dt = test_doubling_time()
 
     print('\n'*2)

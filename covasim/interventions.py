@@ -3,24 +3,26 @@ import pandas as pd
 import pylab as pl
 import sciris as sc
 import covasim as cv
+from . import utils as cvu
 
 
-__all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'test_historical', 'contact_tracing']
+
+__all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'contact_tracing']
 
 
 #%% Generic intervention classes
 
 class Intervention:
-    """
+    '''
     Abstract class for interventions
 
-    """
+    '''
     def __init__(self):
         self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
 
 
     def apply(self, sim):
-        """
+        '''
         Apply intervention
 
         Function signature matches existing intervention definition
@@ -33,12 +35,12 @@ class Intervention:
 
         Returns:
             None
-        """
+        '''
         raise NotImplementedError
 
 
     def plot(self, sim, ax):
-        """
+        '''
         Call function during plotting
 
         This can be used to do things like add vertical lines on days when interventions take place
@@ -49,12 +51,12 @@ class Intervention:
 
         Returns:
             None
-        """
+        '''
         return
 
 
     def to_json(self):
-        """
+        '''
         Return JSON-compatible representation
 
         Custom classes can't be directly represented in JSON. This method is a
@@ -63,9 +65,9 @@ class Intervention:
         However, if an intervention itself contains non-standard variables as
         attributes, then its `to_json` method will need to handle those
 
-        Returns: JSON-serializable representation (typically a dict, but could be anything else)
-
-        """
+        Returns:
+            JSON-serializable representation (typically a dict, but could be anything else)
+        '''
         d = sc.dcp(self.__dict__)
         d['InterventionType'] = self.__class__.__name__
         return d
@@ -97,7 +99,7 @@ class dynamic_pars(Intervention):
                 if subkey not in pars[parkey].keys():
                     errormsg = f'Parameter {parkey} is missing subkey {subkey}'
                     raise KeyError(errormsg)
-                if not sc.isiterable(pars[parkey][subkey]):
+                if sc.isnumber(pars[parkey][subkey]): # Allow scalar values or dicts, but leave everything else unchanged
                     pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
             len_days = len(pars[parkey]['days'])
             len_vals = len(pars[parkey]['vals'])
@@ -113,10 +115,12 @@ class dynamic_pars(Intervention):
         for parkey,parval in self.pars.items():
             inds = sc.findinds(parval['days'], t) # Look for matches
             if len(inds):
+
                 if len(inds)>1:
                     raise ValueError(f'Duplicate days are not allowed for Dynamic interventions (day={t}, indices={inds})')
                 else:
-                    val = parval['vals'][inds[0]]
+                    match = inds[0]
+                    val = parval['vals'][match]
                     if isinstance(val, dict):
                         sim[parkey].update(val) # Set the parameter if a nested dict
                     else:
@@ -125,7 +129,7 @@ class dynamic_pars(Intervention):
 
 
 class sequence(Intervention):
-    """
+    '''
     This is an example of a meta-intervention which switches between a sequence of interventions.
 
     Args:
@@ -138,7 +142,7 @@ class sequence(Intervention):
                     cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
                     cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002),
                 ])
-    """
+    '''
 
     def __init__(self, days, interventions):
         super().__init__()
@@ -167,7 +171,6 @@ class change_beta(Intervention):
     Examples:
         interv = cv.change_beta(25, 0.3) # On day 25, reduce overall beta by 70% to 0.3
         interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
-
     '''
 
     def __init__(self, days, changes, layers=None):
@@ -191,7 +194,7 @@ class change_beta(Intervention):
                 if layer is None:
                     self.orig_betas['overall'] = sim['beta']
                 else:
-                    self.orig_betas[layer] = sim['beta_layers'][layer]
+                    self.orig_betas[layer] = sim['beta_layer'][layer]
 
         # If this day is found in the list, apply the intervention
         inds = sc.findinds(self.days, sim.t)
@@ -202,7 +205,7 @@ class change_beta(Intervention):
                 if layer == 'overall':
                     sim['beta'] = new_beta
                 else:
-                    sim['beta_layers'][layer] = new_beta
+                    sim['beta_layer'][layer] = new_beta
         return
 
 
@@ -217,7 +220,7 @@ class change_beta(Intervention):
 #%% Testing interventions
 
 class test_num(Intervention):
-    """
+    '''
     Test a fixed number of people per day.
 
     Example:
@@ -225,9 +228,9 @@ class test_num(Intervention):
 
     Returns:
         Intervention
-    """
+    '''
 
-    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0):
+    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0, loss_prob=0):
         super().__init__()
 
         self.daily_tests = daily_tests #: Should be a list of length matching time
@@ -235,6 +238,7 @@ class test_num(Intervention):
         self.quar_test = quar_test
         self.sensitivity = sensitivity
         self.test_delay = test_delay
+        self.loss_prob = loss_prob
 
         return
 
@@ -260,76 +264,23 @@ class test_num(Intervention):
         else:
             return
 
-        test_probs = np.ones(sim.n)
-        new_diagnoses = 0
+        test_probs = np.ones(sim.n) # Begin by assigning equal tesitng probability to everyone
+        symp_inds = cvu.true(sim.people.symptomatic)
+        quar_inds = cvu.true(sim.people.quarantined)
+        diag_inds = cvu.true(sim.people.diagnosed)
+        test_probs[symp_inds] *= self.sympt_test
+        test_probs[quar_inds] *= self.quar_test
+        test_probs[diag_inds] = 0.
 
-        for i,person in enumerate(sim.people):
+        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=False)
 
-            new_diagnoses += person.check_diagnosed(t)
-
-            # Adjust testing probability based on what's happened to the person
-            # NB, these need to be separate if statements, because a person can be both diagnosed and infectious/symptomatic
-            if person.symptomatic:
-                test_probs[i] *= self.sympt_test  # They're symptomatic
-            if person.quarantine:
-                test_probs[i] *= self.quar_test  # They're in quarantine
-            if person.diagnosed:
-                test_probs[i] = 0.0
-
-        test_inds = cv.choose_weighted(probs=test_probs, n=n_tests, normalize=True, unique=False)
-        sim.results['new_diagnoses'][t] += new_diagnoses
-
-        for test_ind in test_inds:
-            person = sim.people[test_ind]
-            person.test(t, self.sensitivity, test_delay=self.test_delay)
+        sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return
-
-
-class contact_tracing(Intervention):
-    '''
-    Contact tracing of positives
-    '''
-    def __init__(self, trace_probs, trace_time, start_day=0, contact_reduction=None):
-        super().__init__()
-        self.trace_probs = trace_probs
-        self.trace_time = trace_time
-        self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
-        self.start_day = start_day
-        return
-
-    def apply(self, sim):
-        t = sim.t
-        if t < self.start_day:
-            return
-
-        not_sus_people = sim.people.filter_out('susceptible') # Or maybe symptomatic here
-        for person in not_sus_people:
-            # N.B. consider skipping tracing from dead people
-
-            # Trace dynamic contact, e.g. the ones that change on every step
-            # A sample of community contacts is appended to person.dyn_cont_ppl on each step
-            person.trace_dynamic_contacts(self.trace_probs, self.trace_time)
-
-            # If a person was just diagnosed,time to trace their (static) contacts
-            if person.date_diagnosed is not None and person.date_diagnosed == t-1: # TODO: tracing on symptomatic
-                contactable_ppl = person.trace_static_contacts(self.trace_probs, self.trace_time)
-                contactable_ppl.update(person.dyn_cont_ppl)
-
-                # Loop over people who get contacted
-                for contact_ind, contact_time in contactable_ppl.items():
-                    target_person = sim.people[contact_ind]
-                    if target_person.date_known_contact is None:
-                        target_person.date_known_contact = t + contact_time
-                    else:
-                        target_person.date_known_contact = min(target_person.date_known_contact, t + contact_time)
-
-        return
-
 
 
 class test_prob(Intervention):
-    """
+    '''
     Test as many people as required based on test probability.
     Probabilities are OR together, so choose wisely.
 
@@ -357,13 +308,13 @@ class test_prob(Intervention):
 
     Returns:
         Intervention
-    """
-    def __init__(self, symptomatic_prob=0, asymptomatic_prob=0, quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
+    '''
+    def __init__(self, symp_prob=0, asymp_prob=0, asymp_quar_prob=None, symp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
         super().__init__()
-        self.symptomatic_prob = symptomatic_prob
-        self.asymptomatic_prob = asymptomatic_prob
-        self.quarantine_prob = quarantine_prob
-        self.symp_quar_prob = symp_quar_prob
+        self.symp_prob = symp_prob
+        self.asymp_prob = asymp_prob
+        self.symp_quar_prob = symp_quar_prob if symp_quar_prob is not None else symp_prob
+        self.asymp_quar_prob = asymp_quar_prob if asymp_quar_prob is not None else asymp_prob
         self.test_sensitivity = test_sensitivity
         self.loss_prob = loss_prob
         self.test_delay = test_delay
@@ -378,85 +329,111 @@ class test_prob(Intervention):
         if t < self.start_day:
             return
 
-        new_tests = 0
-        new_diagnoses = 0
-        for person in sim.people:
-            new_diagnoses += person.check_diagnosed(t)
-            if (person.symptomatic and cv.bt(self.symptomatic_prob)) or \
-                (not person.symptomatic and cv.bt(self.asymptomatic_prob)) or \
-                (person.quarantine and cv.bt(self.quarantine_prob)) or \
-                (person.symptomatic and person.quarantine and cv.bt(self.symp_quar_prob)) :
+        symp_inds       = cvu.true(sim.people.symptomatic)
+        asymp_inds      = cvu.false(sim.people.symptomatic)
+        quar_inds       = cvu.true(sim.people.quarantined)
+        symp_quar_inds  = quar_inds[cvu.true(sim.people.symptomatic[quar_inds])]
+        asymp_quar_inds = quar_inds[cvu.false(sim.people.symptomatic[quar_inds])]
+        diag_inds       = cvu.true(sim.people.diagnosed)
 
-                new_tests += 1
-                person.test(t, self.test_sensitivity, self.loss_prob, self.test_delay)
+        test_probs = np.zeros(sim.n) # Begin by assigning equal tesitng probability to everyone
+        test_probs[symp_inds]       = self.asymp_prob
+        test_probs[asymp_inds]      = self.asymp_prob
+        test_probs[symp_quar_inds]  = self.symp_quar_prob
+        test_probs[asymp_quar_inds] = self.asymp_quar_prob
+        test_probs[diag_inds]       = 0.
+        test_inds = cvu.binomial_arr(test_probs).nonzero()[0]
 
-        sim.results['new_tests'][t] += new_tests
-        sim.results['new_diagnoses'][t] += new_diagnoses
+        sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return
 
 
-class test_historical(Intervention):
-    """
-    Test a known number of positive cases
-
-    This can be used to simulate historical data containing the number of tests performed and the
-    number of cases identified as a result.
-
-    This intervention will actually test all individuals. At the moment, testing someone who is negative
-    has no effect, so they don't really need to be tested. However, it's possible that in the future
-    a negative test may still have an impact (e.g. make it less likely for an individual to re-test even
-    if they become symptomatic). Therefore to remain as accurate as possible, `Person.test()` is guaranteed
-    to be called for every person tested.
-
-    One minor limitation of this intervention is that symptomatic individuals that are tested and in reality
-    returned a false negative result would not be tested at all - instead, a non-infectious individual would
-    be tested. At the moment this would not affect model dynamics because a false negative is equivalent to
-    not performing the test at all.
-
-    """
-
-    def __init__(self, n_tests, n_positive):
-        """
-
-        Args:
-            n_tests: Number of tests per day. If this is a scalar or an array with length less than npts, it will be zero-padded
-            n_positive: Number of positive tests (confirmed cases) per day. If this is a scalar or an array with length less than npts, it will be zero-padded
-        """
+class contact_tracing(Intervention):
+    '''
+    Contact tracing of positives
+    '''
+    def __init__(self, trace_probs, trace_time, start_day=0, contact_reduction=None):
         super().__init__()
-        self.n_tests    = sc.promotetoarray(n_tests)
-        self.n_positive = sc.promotetoarray(n_positive)
+        self.trace_probs = trace_probs
+        self.trace_time = trace_time
+        self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
+        self.start_day = start_day
         return
-
 
     def apply(self, sim):
-        ''' Perform testing '''
-
         t = sim.t
+        if t < self.start_day:
+            return
 
-        if self.n_tests[t]:
-
-            # Compute weights for people who would test positive or negative
-            positive_tests = np.zeros((sim.n,))
-            for i,person in enumerate(sim.people):
-                if person.infectious:
-                    positive_tests[i] = 1
-            negative_tests = 1-positive_tests
-
-            # Select the people to test in each category
-            positive_inds = cv.choose_weighted(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]), normalize=True)
-            negative_inds = cv.choose_weighted(probs=negative_tests, n=min(sum(negative_tests), self.n_tests[t]-len(positive_inds)), normalize=True)
-
-            # Todo - assess performance and optimize e.g. to reduce dict indexing
-            for ind in positive_inds:
-                person = sim.people[ind]
-                person.test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
-                sim.results['new_diagnoses'][t] += 1
-
-            for ind in negative_inds:
-                person = sim.people[ind]
-                person.test(t, test_sensitivity=1.0)
-
-            sim.results['new_tests'][t] += self.n_tests[t]
+        just_diagnsed_inds = cvu.true(sim.people.diagnosed & (sim.people.date_diagnosed == t-1)) # Diagnosed last time step, time to trace
+        if len(just_diagnsed_inds): # If there are any just-diagnosed people, go trace their contacts
+            sim.people.trace(just_diagnsed_inds, self.trace_probs, self.trace_time)
 
         return
+
+
+
+
+# class test_historical(Intervention):
+#     '''
+#     Test a known number of positive cases
+
+#     This can be used to simulate historical data containing the number of tests performed and the
+#     number of cases identified as a result.
+
+#     This intervention will actually test all individuals. At the moment, testing someone who is negative
+#     has no effect, so they don't really need to be tested. However, it's possible that in the future
+#     a negative test may still have an impact (e.g. make it less likely for an individual to re-test even
+#     if they become symptomatic). Therefore to remain as accurate as possible, `Person.test()` is guaranteed
+#     to be called for every person tested.
+
+#     One minor limitation of this intervention is that symptomatic individuals that are tested and in reality
+#     returned a false negative result would not be tested at all - instead, a non-infectious individual would
+#     be tested. At the moment this would not affect model dynamics because a false negative is equivalent to
+#     not performing the test at all.
+#     '''
+
+#     def __init__(self, n_tests, n_positive):
+#         '''
+#         Args:
+#             n_tests: Number of tests per day. If this is a scalar or an array with length less than npts, it will be zero-padded
+#             n_positive: Number of positive tests (confirmed cases) per day. If this is a scalar or an array with length less than npts, it will be zero-padded
+#         '''
+#         super().__init__()
+#         self.n_tests    = sc.promotetoarray(n_tests)
+#         self.n_positive = sc.promotetoarray(n_positive)
+#         return
+
+
+#     def apply(self, sim):
+#         ''' Perform testing '''
+
+#         t = sim.t
+
+#         if self.n_tests[t]:
+
+#             # Compute weights for people who would test positive or negative
+#             positive_tests = np.zeros((sim.n,))
+#             for i,person in enumerate(sim.people):
+#                 if person.infectious:
+#                     positive_tests[i] = 1
+#             negative_tests = 1-positive_tests
+
+#             # Select the people to test in each category
+#             positive_inds = cv.choose_w(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]), normalize=True)
+#             negative_inds = cv.choose_w(probs=negative_tests, n=min(sum(negative_tests), self.n_tests[t]-len(positive_inds)), normalize=True)
+
+#             # Todo - assess performance and optimize e.g. to reduce dict indexing
+#             for ind in positive_inds:
+#                 person = sim.people[ind]
+#                 person.test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
+#                 sim.results['new_diagnoses'][t] += 1
+
+#             for ind in negative_inds:
+#                 person = sim.people[ind]
+#                 person.test(t, test_sensitivity=1.0)
+
+#             sim.results['new_tests'][t] += self.n_tests[t]
+
+#         return
