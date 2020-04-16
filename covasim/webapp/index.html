@@ -134,10 +134,10 @@
           </div>
           <b-collapse visible id="intervention">
             <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
-            <b-card no-body>
-              <b-tabs fill>
+            <b-card no-body class="border-0 rounded-0">
+              <b-tabs fill card>
                 <template v-for="(intervention, name, index) in interventionTableConfig">
-                  <b-tab :class="[index === 0? 'active' : '']" id="intervention-{{ name }}">
+                  <b-tab :class="[index === 0? 'active' : '']" :id="'intervention-'+name">
                     <template v-slot:title>
                       {{ intervention.formTitle }}
                     </template>
@@ -147,7 +147,7 @@
                         <div class="form-group">
                           <div class="input-group mb-3">
                             <template v-for="field in intervention.fields">
-                              <input max="{{sim_length.max}}}" min="{{sim_length.min}}" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type">
+                              <input :max="sim_length.max" :min="sim_length.min" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type">
                               <select class="form-control" :name="field.key" v-else>
                                 <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
                               </select>
