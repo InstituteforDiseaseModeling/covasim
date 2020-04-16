@@ -13,7 +13,7 @@ import sciris as sc
 import base64 # Download/upload-specific import
 import json
 import tempfile
-from traceback import TracebackException
+import traceback
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -34,12 +34,12 @@ die      = False # Whether or not to raise exceptions instead of continuing
 
 
 def log_err(message:str, ex:Exception):
-    stacktrace = TracebackException.from_exception(ex)
-    out = f"{message} Error: {stacktrace.format_exception_only()}"
-    print(out, file=sys.stderr)
+    tex = traceback.TracebackException.from_exception(ex)
+    out = f"{message} {traceback.format_exception_only(tex.exc_type, tex)}"
+    print(f"{message}\n", )
     return {
         "message": message,
-        "exception": ''.join(list(stacktrace.format()))
+        "exception": ''.join(traceback.format_exception(tex.exc_type, tex, tex.exc_traceback))
     }
 
 @app.register_RPC()

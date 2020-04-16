@@ -288,7 +288,7 @@ var vm = new Vue({
             } catch (e) {
                 this.errs.push({
                     message: 'Unable to submit model.',
-                    exception: e
+                    exception: `${e.constructor.name}: ${e.message}`
                 })
             }
             this.running = false;
