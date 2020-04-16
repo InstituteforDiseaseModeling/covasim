@@ -139,7 +139,7 @@ class People(cvb.BasePeople):
                 # Set the things for the entire list
                 n_new = len(new_contacts['p1'])
                 new_contacts['p1']    = np.array(new_contacts['p1'], dtype=np.int32)
-                new_contacts['p2']    = np.array(new_contacts['p1'], dtype=np.int32)
+                new_contacts['p2']    = np.array(new_contacts['p2'], dtype=np.int32)
                 new_contacts['layer'] = np.array([dynamic_key]*n_new)
                 new_contacts['beta']  = np.array([beta]*n_new, dtype=np.float32)
 

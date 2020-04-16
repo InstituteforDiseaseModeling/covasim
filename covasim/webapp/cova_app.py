@@ -408,7 +408,7 @@ def get_individual_states(sim, order=True):
         if date is not None:
             inds = cv.defined(people[date])
             for ind in inds:
-                z[ind, int(people[date][ind])] = state['value']
+                z[ind, int(people[date][ind]):] = state['value']
 
     return z, states
 
