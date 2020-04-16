@@ -5,7 +5,10 @@ Simple example usage for the Covid-19 agent-based model
 #%% Imports and settings
 import sciris as sc
 import covasim.webapp as cw
+from typing import Dict
 
+def has_errs(output:Dict = None):
+    return output and output['errs'] and len(output['errs'])
 
 #%% Define the tests
 
@@ -22,13 +25,13 @@ def test_webapp():
 
     pars = cw.get_defaults()
     output = cw.run_sim(sim_pars=pars['sim_pars'], epi_pars=pars['epi_pars'])
-    if output['errs']:
+    if has_errs(output):
         errormsg = 'Webapp encountered an error:\n'
         errormsg += str(output['errs'])
         raise Exception(errormsg)
 
-    cw.run_sim(sim_pars='invalid', epi_pars='invalid')
-    if not output['errs']:
+    output = cw.run_sim(sim_pars='invalid', epi_pars='invalid')
+    if not has_errs(output):
         errormsg = 'Invalid parameters failed to raise an error'
         raise Exception(errormsg)
 
