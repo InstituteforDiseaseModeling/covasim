@@ -27,6 +27,11 @@ def test_webapp():
         errormsg += str(output['errs'])
         raise Exception(errormsg)
 
+    cw.run_sim(sim_pars='invalid', epi_pars='invalid')
+    if not output['errs']:
+        errormsg = 'Invalid parameters failed to raise an error'
+        raise Exception(errormsg)
+
     return output
 
 
