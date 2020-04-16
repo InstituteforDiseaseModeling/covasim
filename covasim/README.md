@@ -6,7 +6,8 @@ This file describes the expected behavior of each parameter in the model. Note: 
 * `pop_scale`    = Multiplicative scale for results. Test: run 2 sims, set to 10, `sim.results['cum_exposed']` in 2nd sim should be 10x higher than first.
 * `pop_size`     = Nmber of people in the simulation. Test: `len(sim.people)` should equal this number.
 * `pop_infected` = Initial number of people infected. Test: if 0, there should be no infections; if equals `n`, should be no _new_ infections.
-* `pop_type`   = Whether or not to use the `synthpops` library for contact matrices. Consult that library's documentation for tests.
+* `pop_type`   = The type of population structure to use with the model; default `'random'`, using Seattle demographics; other options are `'hybrid'` (structured households and random school, work, and community contacts), `'clustered'` (all clustered contacts), and `'synthpops'` (requires the `synthpops` library, but uses data-based population structure)
+* `location`   = Which country or state to load demographic data from (optional)
 
 ## Simulation parameters
 * `start_day`    = The calendar date of the start day of the simulation.

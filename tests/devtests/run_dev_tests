@@ -1,0 +1,4 @@
+#!/bin/bash
+# Run development tests
+
+pytest dev_test*.py
