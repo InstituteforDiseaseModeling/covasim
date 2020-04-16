@@ -77,7 +77,7 @@ def fixaxis(sim, useSI=True, boxoff=False):
 
 
 def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newline=False):
-    """
+    '''
     Call in a loop to create terminal progress bar.
 
     Args:
@@ -88,14 +88,16 @@ def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newli
         empty (str): character for empty steps
         full (str): character for empty steps
 
-    Example:
+    **Example**
+    ::
+
         import pylab as pl
         for i in range(100):
             progressbar(i+1, 100)
             pl.pause(0.05)
 
     Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
-    """
+    '''
     ending = None if newline else '\r'
     pct = i/maxiters*100
     percent = f'{pct:0.0f}%'
@@ -108,14 +110,15 @@ def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newli
 
 def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=None, moving_window=None, exp_approx=False, max_doubling_time=100, eps=1e-3, verbose=None):
     '''
-    Method to calculate doubling time
-    Can be used in various ways:
-        1. get_doubling_time(sim, interval=[3,30]) returns the doubling time over the given interval (single float)
-        2. get_doubling_time(sim, interval=[3,30], moving_window=3) returns doubling times calculated over moving windows (array)
-    Instead of an interval, can pass in the start and end days (as integers - TODO, change this to accept dates)
-    Can pass in a series or the name of a result
-    '''
+    Method to calculate doubling time.
 
+    **Examples**
+    ::
+
+        get_doubling_time(sim, interval=[3,30]) # returns the doubling time over the given interval (single float)
+        get_doubling_time(sim, interval=[3,30], moving_window=3) # returns doubling times calculated over moving windows (array)
+    '''
+    
     # Set verbose level
     if verbose is None:
         verbose = sim['verbose']

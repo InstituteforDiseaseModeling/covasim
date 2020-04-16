@@ -29,7 +29,7 @@ covasim.base module
    :show-inheritance:
 
 covasim.defaults module
--------------------
+-----------------------
 
 .. automodule:: covasim.defaults
    :members:
@@ -45,7 +45,7 @@ covasim.interventions module
    :show-inheritance:
 
 covasim.misc module
-----------------------------
+-------------------
 
 .. automodule:: covasim.misc
    :members:
