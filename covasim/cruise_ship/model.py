@@ -216,7 +216,7 @@ class Sim(cv.BaseSim):
                     self.results['tests'][t] = n_tests # Store the number of tests
                     test_probs = pl.array(list(test_probs.values()))
                     test_probs /= test_probs.sum()
-                    test_inds = cv.choose_weighted(probs=test_probs, n=n_tests)
+                    test_inds = cv.choose_w(probs=test_probs, n=n_tests)
                     uids_to_pop = []
                     for test_ind in test_inds:
                         tested_person = self.people[test_ind]
