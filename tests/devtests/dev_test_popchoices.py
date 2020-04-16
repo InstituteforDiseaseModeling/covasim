@@ -16,20 +16,22 @@ doplot = 1
 def test_pop_options(doplot=False): # If being run via pytest, turn off
     sc.heading('Basic populations tests')
 
-    popchoices = ['random', 'hybrid', 'synthpops']
+    # Define population choices and betas
+    popchoices = {'random':0.015, 'hybrid':0.015, 'synthpops':0.020}
 
     basepars = {
         'pop_size': 5000,
         'pop_infected': 10,
-        'n_days': 90
+        'n_days': 90,
         }
 
     sims = sc.objdict()
-    for popchoice in popchoices:
+    for popchoice,beta in popchoices.items():
         sc.heading(f'Running {popchoice}')
         sims[popchoice] = cv.Sim()
         sims[popchoice].update_pars(basepars)
         sims[popchoice]['pop_type'] = popchoice
+        sims[popchoice]['beta'] = beta
         sims[popchoice].run()
 
     if doplot:

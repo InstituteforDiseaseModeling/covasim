@@ -104,8 +104,8 @@ def set_contacts(pars):
         pars (dict): the parameters dictionary
     '''
     if pars['use_layers']:
-        if pars.get('contacts',   None) is None: pars['contacts']   = {'h': 4,   's': 20,  'w': 20,  'c': 10} # Number of contacts per person per day, estimated
-        if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'h': 1.0, 's': 0.4, 'w': 0.4, 'c': 0.2} # Per-population beta weights; relative
+        if pars.get('contacts',   None) is None: pars['contacts']   = {'h': 4,   's': 20,  'w': 20,  'c': 10}   # Number of contacts per person per day, estimated
+        if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'h': 2.0, 's': 1.0, 'w': 1.0, 'c': 0.5}  # Per-population beta weights; relative
         if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
     else:
         if pars.get('contacts',   None) is None: pars['contacts']   = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
