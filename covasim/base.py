@@ -776,6 +776,17 @@ class Contacts(dict):
         ''' Use odict repr'''
         return sc.odict.__repr__(self)
 
+    def __getitem__(self, key):
+        ''' Lightweight odict -- allow indexing by number '''
+        try:
+            return super().__getitem__(key)
+        except KeyError as KE:
+            try: # Assume it's an integer
+                dictkey = list(self.keys())[key]
+                return self[dictkey]
+            except:
+                raise KE # This is the original error
+
 
 class Layer(dict):
     ''' A tiny class holding a single layer of contacts '''
