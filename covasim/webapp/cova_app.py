@@ -32,6 +32,16 @@ max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
 die      = False # Whether or not to raise exceptions instead of continuing
 
+
+def log_err(message:str, ex:Exception):
+    stacktrace = TracebackException.from_exception(ex)
+    out = f"{message} Error: {stacktrace.format_exception_only()}"
+    print(out, file=sys.stderr)
+    return {
+        "message": message,
+        "exception": ''.join(stacktrace.format())
+    }
+
 @app.register_RPC()
 def get_defaults(region=None, merge=False):
     ''' Get parameter defaults '''
