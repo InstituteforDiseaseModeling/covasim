@@ -12,7 +12,7 @@ import json
 import os
 import numpy as np
 
-from covasim import Sim, parameters, change_beta, test_prob, contact_tracing
+from covasim import Sim, parameters, change_beta, test_prob, contact_tracing, sequence
 
 
 
@@ -289,11 +289,11 @@ class CovaSimTest(unittest.TestCase):
         pass
 
     def intervention_set_test_prob(self, symptomatic_prob=0, asymptomatic_prob=0,
-                                   quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0,
+                                   asymptomatic_quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0,
                                    loss_prob=0.0, test_delay=1, start_day=0):
-        self.interventions = test_prob(symptomatic_prob=symptomatic_prob,
-                                       asymptomatic_prob=asymptomatic_prob,
-                                       quarantine_prob=quarantine_prob,
+        self.interventions = test_prob(symp_prob=symptomatic_prob,
+                                       asymp_prob=asymptomatic_prob,
+                                       asymp_quar_prob=asymptomatic_quarantine_prob,
                                        symp_quar_prob=symp_quar_prob,
                                        test_sensitivity=test_sensitivity,
                                        loss_prob=loss_prob,
@@ -302,12 +302,30 @@ class CovaSimTest(unittest.TestCase):
         pass
 
     def intervention_set_contact_tracing(self,
-                                         trace_probabilities,
-                                         trace_time,
-                                         start_day):
+                                         start_day,
+                                         trace_probabilities=None,
+                                         trace_times=None):
+        #  see ../tests/test_interventions_testing.test_tracedelay
+        #  trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1}
+        #  trace_time = {'h': 0, 's': 1, 'w': 1, 'c': 2}
+        #  pars.quar_eff = {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0}
+        #  pars.quar_period = 60 # 60 days
+        if not trace_probabilities:
+            trace_probabilities = {'h': 1, 's': 1, 'w': 1, 'c': 1}
+            pass
+        if not trace_times:
+            trace_times = {'h': 1, 's': 1, 'w': 1, 'c': 1}
         self.interventions = contact_tracing(trace_probs=trace_probabilities,
-                                             trace_time=trace_time)
+                                             trace_time=trace_times,
+                                             start_day=start_day)
+        pass
 
+    def intervention_build_sequence(self,
+                                    day_list,
+                                    intervention_list):
+        my_sequence = sequence(days=day_list,
+                               interventions=intervention_list)
+        self.interventions = my_sequence
     # endregion
 
     # region specialized simulation methods

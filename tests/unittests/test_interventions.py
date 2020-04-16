@@ -225,6 +225,7 @@ class InterventionTests(CovaSimTest):
                                       target_pop_new_channel=None)
 
     def test_test_prob_perfect_symptomatic(self):
+        self.is_debugging = True
         params = {
             SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 60
@@ -354,13 +355,18 @@ class InterventionTests(CovaSimTest):
     # endregion
 
     # region contact tracing
-    @unittest.skip("NYI: Don't know how to use this")
     def test_brutal_contact_tracing(self):
+        # Contact tracing traces people who have been diagnosed, so need brutal diagnosis first
+        # So I need a sequence here
+        self.is_debugging = True
         params = {
             SimKeys.number_agents: 5000,
-            SimKeys.number_simulated_days: 60
+            SimKeys.number_simulated_days: 55
         }
         self.set_simulation_parameters(params_dict=params)
+
+        intervention_days = []
+        intervention_list = []
 
         symptomatic_probability_of_test = 1.0
         test_sensitivity = 1.0
@@ -371,6 +377,33 @@ class InterventionTests(CovaSimTest):
                                         test_sensitivity=test_sensitivity,
                                         test_delay=test_delay,
                                         start_day=start_day)
+        intervention_days.append(start_day)
+        intervention_list.append(self.interventions)
+
+        trace_probability = 1.0
+        trace_delay = 1
+        trace_probabilities = {
+            'h': trace_probability,
+            's': trace_probability,
+            'w': trace_probability,
+            'c': trace_probability
+        }
+
+        trace_delays = {
+            'h': trace_delay,
+            's': trace_delay,
+            'w': trace_delay,
+            'c': trace_delay
+        }
+
+        self.intervention_set_contact_tracing(start_day=start_day,
+                                              trace_probabilities=trace_probabilities,
+                                              trace_times=trace_delays)
+        intervention_days.append(start_day)
+        intervention_list.append(self.interventions)
+        self.intervention_build_sequence(day_list=intervention_days,
+                                         intervention_list=intervention_list)
+        self.run_sim()
 
         pass
 
