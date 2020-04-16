@@ -99,31 +99,33 @@ def get_country_household_size_average(country):
     countries = [ name.lower() for name in data.keys()]
 
     mapping = {
-        'bolivia': 'bolivia (plurinational state of)',
-        'burkina': 'burkina faso',
-        "cote d'ivore": "côte d'ivoire"
+        "bolivia": "bolivia (plurinational state of)",
+        "burkina": "burkina faso",
+        "cote d'ivore": "côte d'ivoire",
         "drc": "dem. republic of the congo",
-        "hong kong": 'china, hong kong sar',
-        'iran': 'iran (islamic republic of)',
+        "hong kong": "china, hong kong sar",
+        "iran": "iran (islamic republic of)",
         "laos": "lao people's dem. republic",
-        "korea": 'republic of korea',
+        "korea": "republic of korea",
         "north korea": "dem. people's rep. of korea",
-        "south korea": 'republic of korea',
-        'macao': "china, macao sar",
-        "melodova": 'republic of moldova',
+        "south korea": "republic of korea",
+        "macao": "china, macao sar",
+        "melodova": "republic of moldova",
         "saint-martin": "saint-martin (french part)",
-        "sint maarten":"sint maarten (dutch part)"
-        "russia": 'russian federation',
-        "palestine": 'state of palestine',
+        "sint maarten": "sint maarten (dutch part)",
+        "russia": "russian federation",
+        "palestine": "state of palestine",
         "usa": "united states of america",
         "united states": "united states of america",
-        'venezula': 'venezuela (bolivarian republic of)',
-        'vietnam': 'viet nam',
+        "venezula": "venezuela (bolivarian republic of)",
+        "vietnam": "viet nam",
     }
 
     # Not every country is available return none if not found
     size = None
     try:
         size = data[country.lower()]
+    except KeyError:
+        print("No household size data for country")
 
     return size
