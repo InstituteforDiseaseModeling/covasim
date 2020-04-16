@@ -469,9 +469,9 @@ class Sim(cvbase.BaseSim):
         exposure time) or 'clinical' (symptom onset to symptom onset).
         '''
 
-        intervals = np.zeros(int(self.summary['cum_infections']))
-        intervals2 = intervals.copy()
-        pos = 0
+        intervals1 = np.zeros(len(self.people))
+        intervals2 = np.zeros(len(self.people))
+        pos1 = 0
         pos2 = 0
         targets = self.people.transtree.targets
         date_exposed = self.people.date_exposed
@@ -479,16 +479,16 @@ class Sim(cvbase.BaseSim):
         for p in range(len(self.people)):
             if len(targets[p])>0:
                 for target_ind in targets[p]:
-                    intervals[pos] = date_exposed[target_ind] - date_exposed[p]
-                    pos += 1
-                    if date_symptomatic[p] is not None:
-                        if date_symptomatic[target_ind] is not None:
+                    intervals1[pos1] = date_exposed[target_ind] - date_exposed[p]
+                    pos1 += 1
+                    if not np.isnan(date_symptomatic[p]):
+                        if not np.isnan(date_symptomatic[target_ind]):
                             intervals2[pos2] = date_symptomatic[target_ind] - date_symptomatic[p]
                             pos2 += 1
 
         self.results['gen_time'] = {
-                'true':         np.mean(intervals[:pos]),
-                'true_std':     np.std(intervals[:pos]),
+                'true':         np.mean(intervals1[:pos1]),
+                'true_std':     np.std(intervals1[:pos1]),
                 'clinical':     np.mean(intervals2[:pos2]),
                 'clinical_std': np.std(intervals2[:pos2])}
         return
