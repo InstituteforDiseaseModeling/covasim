@@ -94,42 +94,42 @@ def set_seed(seed=None):
     return
 
 
-@nb.njit((nb.float64,)) # These types can also be declared as a dict, but performance is much slower...?
+@nb.njit((nb.float64,), cache=True) # These types can also be declared as a dict, but performance is much slower...?
 def bt(prob):
     ''' A simple Bernoulli (binomial) trial '''
     return np.random.random() < prob # Or rnd.random() < prob, np.random.binomial(1, prob), which seems slower
 
 
-@nb.njit((nb.float64, nb.int64))
+@nb.njit((nb.float64, nb.int64), cache=True)
 def rbt(prob, n):
     ''' A repeated Bernoulli (binomial) trial '''
     return np.random.binomial(1, prob, n)
 
 
-@nb.njit((nb.float64, nb.int64))
+@nb.njit((nb.float64, nb.int64), cache=True)
 def mbt(prob, n):
     ''' Multiple Bernoulli (binomial) trials -- return indices that passed '''
     return list((np.random.random(n) < prob).nonzero()[0])
 
 
-@nb.njit((nb.float64, nb.int64[:]))
+@nb.njit((nb.float64, nb.int64[:]), cache=True)
 def bf(prob, arr):
     ''' Bernoulli "filter" -- return entries that passed '''
     return list(arr[(np.random.random(len(arr)) < prob).nonzero()[0]])
 
-@nb.njit((nb.float64[:], nb.int64))
+@nb.njit((nb.float64[:], nb.int64), cache=True)
 def mt(probs, repeats):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
-@nb.njit((nb.int64,))
+@nb.njit((nb.int64,), cache=True)
 def pt(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
 
-@nb.njit((nb.int64, nb.int64))
+@nb.njit((nb.int64, nb.int64), cache=True)
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replace.
