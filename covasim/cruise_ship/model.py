@@ -8,7 +8,8 @@ Version: 2020mar20
 '''
 
 #%% Imports
-import numpy as np # Needed for a few things not provided by pl
+import numba as nb
+import numpy as np
 import pylab as pl
 import sciris as sc
 import covasim as cv
@@ -17,7 +18,6 @@ from . import parameters as cova_pars
 
 # Specify all externally visible functions this file defines
 __all__ = ['Person', 'Sim']
-
 
 
 #%% Define classes
@@ -184,10 +184,10 @@ class Sim(cv.BaseSim):
                         self.results['recoveries'][t] += 1
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
-                        n_contacts = cv.pt(person.contacts) # Draw the number of Poisson contacts for this person
+                        n_contacts = pt(person.contacts) # Draw the number of Poisson contacts for this person
                         contact_inds = cv.choose(max_n=len(self.people), n=n_contacts) # Choose people at random
                         for contact_ind in contact_inds:
-                            exposure = cv.bt(self['r_contact']) # Check for exposure per person
+                            exposure = bt(self['r_contact']) # Check for exposure per person
                             if exposure:
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
@@ -216,11 +216,11 @@ class Sim(cv.BaseSim):
                     self.results['tests'][t] = n_tests # Store the number of tests
                     test_probs = pl.array(list(test_probs.values()))
                     test_probs /= test_probs.sum()
-                    test_inds = cv.choose_weighted(probs=test_probs, n=n_tests)
+                    test_inds = cv.choose_w(probs=test_probs, n=n_tests)
                     uids_to_pop = []
                     for test_ind in test_inds:
                         tested_person = self.people[test_ind]
-                        if tested_person.infectious and cv.bt(self['sensitivity']): # Person was tested and is true-positive
+                        if tested_person.infectious and bt(self['sensitivity']): # Person was tested and is true-positive
                             self.results['diagnoses'][t] += 1
                             tested_person.diagnosed = True
                             if self['evac_positives']:
@@ -260,7 +260,7 @@ class Sim(cv.BaseSim):
                     uids_to_pop = []
                     for evac_ind in evac_inds:
                         evac_person = self.people[evac_ind]
-                        if evac_person.infectious and cv.bt(self['sensitivity']):
+                        if evac_person.infectious and bt(self['sensitivity']):
                             self.results['evac_diagnoses'][t] += 1
                         uids_to_pop.append(evac_person.uid)
                     for uid in uids_to_pop: # Remove people from the ship once they're diagnosed
@@ -413,3 +413,16 @@ class Sim(cv.BaseSim):
     def plot_people(self):
         ''' Use imshow() to show all individuals as rows, with time as columns, one pixel per timestep per person '''
         raise NotImplementedError
+
+
+#%% Define helper functions, with Numba for performance
+
+@nb.njit((nb.float64,))
+def pt(rate):
+    ''' A Poisson trial '''
+    return np.random.poisson(rate, 1)[0]
+
+@nb.njit((nb.float64,))
+def bt(prob):
+    ''' Perform a binomial (Bernolli) trial '''
+    return np.random.random() < prob

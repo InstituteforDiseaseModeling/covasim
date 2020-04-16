@@ -30,6 +30,7 @@ flask_app = app.flask_app
 max_pop  = 10e3 # Maximum population size
 max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
+die      = False # Whether or not to raise exceptions instead of continuing
 
 @app.register_RPC()
 def get_defaults(region=None, merge=False):
@@ -197,12 +198,13 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
 
             try:
                 web_pars[key] = np.clip(float(entry['best']), minval, maxval)
-            except Exception as ex:
+            except Exception as E:
                 user_key = entry['name']
                 user_val = entry['best']
                 err = f'Could not convert parameter "{user_key}" from value "{user_val}"; using default value instead.'
-                errs.append(log_err(err, ex))
+                errs.append(log_err(err, E))
                 web_pars[key] = best
+                if die: raise
 
             if key in sim_pars:
                 sim_pars[key]['best'] = web_pars[key]
@@ -250,12 +252,14 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
 
     except Exception as E:
         errs.append(log_err('Parameter conversion failed!', E))
+        if die: raise
 
     # Create the sim and update the parameters
     try:
         sim = cv.Sim(pars=web_pars,datafile=datafile)
     except Exception as E:
         errs.append(log_err('Sim creation failed!', E))
+        if die: raise
 
     if verbose:
         print('Input parameters:')
@@ -264,11 +268,13 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     # Core algorithm
     try:
         sim.run(do_plot=False)
-    except TimeoutError as te:
+    except TimeoutError as TE:
         err = f"The simulation stopped on day {sim.t} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
-        errs.append(log_err(err, te))
+        errs.append(log_err(err, TE))
+        if die: raise
     except Exception as E:
         errs.append(log_err('Sim run failed!', E))
+        if die: raise
 
     # Core plotting
     graphs = []
@@ -308,6 +314,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
 
     except Exception as E:
         errs.append(log_err('Plotting failed!', E))
+        if die: raise
 
 
     # Create and send output files (base64 encoded content)
@@ -337,6 +344,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         }
     except Exception as E:
         errs.append(log_err('Unable to save output files!', E))
+        if die: raise
 
     output = {}
     output['errs']     = errs
@@ -352,8 +360,9 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
 
 def get_individual_states(sim, order=True):
     people = sim.people
-    if order:
-        people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
+    # if order:
+        # print('Note: ordering of people for the animation is currently not supported')
+        # people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
 
     # Order these in order of precedence
     # The last matching quantity will be used
@@ -386,13 +395,12 @@ def get_individual_states(sim, order=True):
     ]
 
     z = np.zeros((len(people), sim.npts))
-
-    for i, p in enumerate(people):
-        for state in states:
-            if state['quantity'] is None:
-                continue
-            elif getattr(p, state['quantity']) is not None:
-                z[i, int(getattr(p, state['quantity'])):] = state['value']
+    for state in states:
+        date = state['quantity']
+        if date is not None:
+            inds = cv.defined(people[date])
+            for ind in inds:
+                z[ind, int(people[date][ind]):] = state['value']
 
     return z, states
 
