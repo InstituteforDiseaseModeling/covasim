@@ -14,6 +14,7 @@ basepars = sc.objdict(
     pop_infected = 10,     # Number of initial infections
     n_days       = 90,   # Number of days to simulate
     rand_seed    = 1,     # Random seed
+    verbose      = 0,
 )
 
 
@@ -30,7 +31,7 @@ sim1.run(do_plot=do_plot)
 
 
 #%% With layers
-sc.heading('Default options')
+sc.heading('With layers options')
 
 pars = sc.objdict(
     pop_type     = 'random',
@@ -39,3 +40,7 @@ pars = sc.objdict(
 
 sim2 = cv.Sim(pars=sc.mergedicts(basepars, pars))
 sim2.run(do_plot=do_plot)
+
+for label,sim in {'Default':sim1, 'With layers':sim2}.items():
+    for key in sim1.people.contact_keys():
+        print(f'{label}: layer {key} of length {len(sim.people.contacts[key])}')

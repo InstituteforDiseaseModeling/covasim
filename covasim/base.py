@@ -792,6 +792,7 @@ class Layer(dict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, layer_info, **kwargs):
+        self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
         self.layer_info = layer_info
         for key,dtype in self.layer_info.items():
             self[key] = np.empty((0,), dtype=dtype)
@@ -802,16 +803,20 @@ class Layer(dict):
         return
 
 
+    def __len__(self):
+        try:
+            return len(self[self.basekey])
+        except:
+            return 0
+
+
     def validate(self):
         ''' Check the integrity of the layer: right types, right lengths '''
-        n = None
+        n = len(self[self.basekey])
         for key,dtype in self.layer_info.items():
             if dtype:
                 assert self[key].dtype == dtype
-            if n is None:
-                n = len(self[key])
-            else:
-                assert n == len(self[key])
+            assert n == len(self[key])
         return
 
 
