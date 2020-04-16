@@ -696,6 +696,8 @@ class BasePeople(sc.prettyobj):
         into an edge list.
         '''
 
+
+
         # Parse the list
         lkeys = self.layer_keys()
         new_contacts = Contacts(layer_keys=lkeys)
@@ -705,17 +707,17 @@ class BasePeople(sc.prettyobj):
             new_contacts[lkey]['layer'] = [] # Layers
 
         for p,cdict in enumerate(contacts):
-            for key,p_contacts in cdict.items():
+            for lkey,p_contacts in cdict.items():
                 n = len(p_contacts) # Number of contacts
                 new_contacts[lkey]['p1'].extend([p]*n) # e.g. [4, 4, 4, 4]
                 new_contacts[lkey]['p2'].extend(p_contacts) # e.g. [243, 4538, 7,19]
-                new_contacts[lkey]['layer'].extend([key]*n) # e.g. ['h', 'h', 'h', 'h']
+                new_contacts[lkey]['layer'].extend([lkey]*n) # e.g. ['h', 'h', 'h', 'h']
 
         # Turn into a dataframe
         for lkey in lkeys:
             new_layer = Layer(layer_info=self.layer_info)
-            for key,value in new_contacts[lkey].items():
-                new_layer[key] = np.array(value, dtype=self.keylist.contacts[key])
+            for ckey,value in new_contacts[lkey].items():
+                new_layer[ckey] = np.array(value, dtype=self.keylist.contacts[ckey])
             new_contacts[lkey] = new_layer
 
         return new_contacts
@@ -776,9 +778,9 @@ class Contacts(dict):
 
 
     def __repr__(self):
-        ''' Use odict repr'''
-        output = 'Covasim Contacts() object\n'
-        output += sc.odict.__repr__(self)
+        ''' Use slightly customized repr'''
+        output = 'Contacts(): '
+        output += super().__repr__()
         return output
 
 
@@ -820,9 +822,9 @@ class Layer(dict):
 
 
     def __repr__(self):
-        ''' Use odict repr'''
-        output = 'Covasim Layer() object\n'
-        output += sc.odict.__repr__(self)
+        ''' Use slightly customized repr'''
+        output = 'Layer():'
+        output += super().__repr__()
         return output
 
 
