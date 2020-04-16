@@ -19,13 +19,13 @@ basepars = sc.objdict(
 
 
 #%% Default
-# pars = sc.objdict(
-#     pop_type     = 'random',
-#     use_layers   = False,
-# )
+pars = sc.objdict(
+    pop_type     = 'random',
+    use_layers   = False,
+)
 
-# sim1 = cv.Sim(pars=sc.mergedicts(basepars, pars))
-# sim1.run(do_plot=do_plot)
+sim1 = cv.Sim(pars=sc.mergedicts(basepars, pars))
+sim1.run(do_plot=do_plot)
 
 
 #%% With layers
@@ -43,5 +43,5 @@ sim2.run(do_plot=do_plot)
 sc.heading('Numbers of contacts')
 
 for label,sim in {'Default':sim1, 'With layers':sim2}.items():
-    for key in sim.people.contact_keys():
+    for key in sim.people.layer_keys():
         print(f'{label}: layer {key} of length {len(sim.people.contacts[key])}')

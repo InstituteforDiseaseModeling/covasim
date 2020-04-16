@@ -631,28 +631,17 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    def init_contacts(self, output=False, keys=None):
+    def init_contacts(self, reset=False):
         ''' Initialize the contacts dataframe with the correct columns and data types '''
 
-        # Handle keys -- by default, all
-        if keys is None:
-            keys = self.layer_keys()
-        keys = sc.promotetolist(keys)
-
         # Create the contacts dictionary
-        contacts = Contacts()
-        for key in keys:
-            contacts[key] = Layer(layer_info=self.layer_info)
+        contacts = Contacts(layer_keys=self.layer_keys())
 
-        # Handle output
-        if output:
-            return contacts
-        else:
-            if self.contacts is None: # Reset all
-                self.contacts = contacts
-            else: # Only replace specified keys
-                for key,layer in contacts.items():
-                    self.contacts[key] = layer
+        if self.contacts is None or reset: # Reset all
+            self.contacts = contacts
+        else: # Only replace specified keys
+            for key,layer in contacts.items():
+                self.contacts[key] = layer
         return
 
 
@@ -708,8 +697,8 @@ class BasePeople(sc.prettyobj):
         '''
 
         # Parse the list
-        new_contacts = Contacts()
-        lkeys = list(contacts[0].keys()) # Get the key list from the first contact
+        lkeys = self.layer_keys()
+        new_contacts = Contacts(layer_keys=lkeys)
         for lkey in lkeys:
             new_contacts[lkey]['p1']    = [] # Person 1 of the contact pair
             new_contacts[lkey]['p2']    = [] # Person 2 of the contact pair
@@ -779,13 +768,19 @@ class Contacts(dict):
     '''
     A simple (for now) class for storing different contact layers.
     '''
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, layer_keys):
+        # Initialize with the right layers
+        for key in layer_keys:
+            self[key] = Layer()
         return
+
 
     def __repr__(self):
         ''' Use odict repr'''
-        return sc.odict.__repr__(self)
+        output = 'Covasim Contacts() object\n'
+        output += sc.odict.__repr__(self)
+        return output
+
 
     def __getitem__(self, key):
         ''' Lightweight odict -- allow indexing by number '''
@@ -802,11 +797,14 @@ class Contacts(dict):
 class Layer(dict):
     ''' A tiny class holding a single layer of contacts '''
 
-    def __init__(self, layer_info, **kwargs):
-        self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
-        self.layer_info = layer_info
+    def __init__(self, **kwargs):
+        self.layer_info = sc.dcp(cvd.PeopleKeys.contacts)
+
+        # Initialize the keys of the layer
         for key,dtype in self.layer_info.items():
             self[key] = np.empty((0,), dtype=dtype)
+        self.keylist = list(self.keys())
+        self.basekey = self.keylist[0] # Assign a base key for calculating lengths and performing other operations
 
         for key,value in kwargs.items():
             self[key] = value
@@ -819,6 +817,13 @@ class Layer(dict):
             return len(self[self.basekey])
         except:
             return 0
+
+
+    def __repr__(self):
+        ''' Use odict repr'''
+        output = 'Covasim Layer() object\n'
+        output += sc.odict.__repr__(self)
+        return output
 
 
     def validate(self):
