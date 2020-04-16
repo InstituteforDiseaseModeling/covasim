@@ -8,6 +8,7 @@ import pylab as pl
 import pandas as pd
 import sciris as sc
 import datetime as dt
+from collections import defaultdict
 import matplotlib.ticker as ticker
 from . import defaults as cvd
 from . import base as cvbase
@@ -181,23 +182,13 @@ class Scenarios(cvbase.ParsObj):
 
         #%% Print statistics
         if verbose:
-            print('\nResults for final time point in each scenario:')
-            for reskey in reskeys:
-                print(f'\n{reskey}')
-                for scenkey in list(self.scenarios.keys()):
-                    print(f'  {scenkey}: {self.results[reskey][scenkey].best[-1]:0.0f}')
-            print() # Add a blank space
-
-            print('\nResults for final time point in each scenario:')
+            print('\nResults for last day in each scenario:\n')
+            x = defaultdict(dict)
             scenkeys = list(self.scenarios.keys())
-            df = pd.DataFrame(columns=['label'] + scenkeys)
-            for reskey in reskeys:
-                thisrow = {}
-                thisrow['Result'] = reskey
-                for scenkey in scenkeys:
-                    thisrow[scenkey] = self.results[reskey][scenkey].best[-1]
-                df = df.append(thisrow, ignore_index=True)
-            df = df.set_index('Result')
+            for scenkey in scenkeys:
+                for reskey in reskeys:
+                    x[scenkey][reskey] = int(self.results[reskey][scenkey].best[-1])
+            df = pd.DataFrame.from_dict(x)
             print(df)
 
 
