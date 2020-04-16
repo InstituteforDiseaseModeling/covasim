@@ -6,6 +6,7 @@ Load data
 import numpy as np
 import sciris as sc
 from . import country_age_distributions as cad
+from . import country_household_sizes as chs
 
 __all__ = ['get_age_distribution']
 
@@ -91,3 +92,38 @@ def get_age_distribution(location=None):
         result = result[loc]
 
     return result
+
+def get_country_household_size_average(country):
+    country = country.lower()
+    data = chs.get_country_household_sizes()
+    countries = [ name.lower() for name in data.keys()]
+
+    mapping = {
+        'bolivia': 'bolivia (plurinational state of)',
+        'burkina': 'burkina faso',
+        "cote d'ivore": "côte d'ivoire"
+        "drc": "dem. republic of the congo",
+        "hong kong": 'china, hong kong sar',
+        'iran': 'iran (islamic republic of)',
+        "laos": "lao people's dem. republic",
+        "korea": 'republic of korea',
+        "north korea": "dem. people's rep. of korea",
+        "south korea": 'republic of korea',
+        'macao': "china, macao sar",
+        "melodova": 'republic of moldova',
+        "saint-martin": "saint-martin (french part)",
+        "sint maarten":"sint maarten (dutch part)"
+        "russia": 'russian federation',
+        "palestine": 'state of palestine',
+        "usa": "united states of america",
+        "united states": "united states of america",
+        'venezula': 'venezuela (bolivarian republic of)',
+        'vietnam': 'viet nam',
+    }
+
+    # Not every country is available return none if not found
+    size = None
+    try:
+        size = data[country.lower()]
+
+    return size
