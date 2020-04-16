@@ -29,7 +29,7 @@ flask_app = app.flask_app
 max_pop  = 10e3 # Maximum population size
 max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
-die      = True # Whether or not to raise exceptions instead of continuing
+die      = False # Whether or not to raise exceptions instead of continuing
 
 @app.register_RPC()
 def get_defaults(region=None, merge=False):
