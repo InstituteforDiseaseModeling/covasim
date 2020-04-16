@@ -195,7 +195,7 @@ class Sim(cvbase.BaseSim):
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
         self.results['n_susceptible'].scale = 'static'
-        self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False, dtype=np.float32)
+        self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
@@ -203,8 +203,8 @@ class Sim(cvbase.BaseSim):
             self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
 
         # Other variables
-        self.results['r_eff']         = init_res('Effective reproductive number', scale=False, dtype=np.float32)
-        self.results['doubling_time'] = init_res('Doubling time', scale=False, dtype=np.float32)
+        self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
+        self.results['doubling_time'] = init_res('Doubling time', scale=False)
 
         # Populate the rest of the results
         if self['rescale']:

@@ -182,16 +182,18 @@ class Scenarios(cvbase.ParsObj):
 
         #%% Print statistics
         if verbose:
-            print('\nResults for last day in each scenario:\n')
+            sc.heading('Results for last day in each scenario:')
             x = defaultdict(dict)
             scenkeys = list(self.scenarios.keys())
             for scenkey in scenkeys:
                 for reskey in reskeys:
-                    dtype = self.base_sim.results[reskey].dtype
-                    x[scenkey][reskey] = dtype(self.results[reskey][scenkey].best[-1])
-            df = pd.DataFrame.from_dict(x)
+                    val = self.results[reskey][scenkey].best[-1]
+                    if reskey not in ['r_eff', 'doubling_time']:
+                        val = int(val)
+                    x[scenkey][reskey] = val
+            df = pd.DataFrame.from_dict(x).astype(object)
             print(df)
-
+            print()
 
         return
 
