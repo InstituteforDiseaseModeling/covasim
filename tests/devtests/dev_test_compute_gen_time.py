@@ -5,7 +5,7 @@ pars = {}
 
 pars['n_days']       = 180
 pars['pop_size']     = 5000
-pars['pop_infected'] = 1
+pars['pop_infected'] = 10
 pars['rand_seed']    = 1
 pars['asymp_factor'] = 1 # Multiply beta by this factor for asymptomatic cases
 pars['diag_factor']  = 0 # Multiply beta by this factor for diganosed cases

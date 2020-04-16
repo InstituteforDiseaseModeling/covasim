@@ -9,7 +9,7 @@ __all__ = ['available', 'min_versions', 'check_sciris', 'check_scirisweb', 'chec
 
 
 available = {} # Make this available at the module level
-min_versions = {'sciris':'0.16.7', 'scirisweb':'0.16.0'}
+min_versions = {'sciris':'0.16.8', 'scirisweb':'0.16.0'}
 
 
 #%% Check dependencies

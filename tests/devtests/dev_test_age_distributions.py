@@ -14,8 +14,8 @@ sim2 = cv.Sim(location=loc2)
 sim1.initialize()
 sim2.initialize()
 
-ages1 = sim1.people.extract('age')
-ages2 = sim2.people.extract('age')
+ages1 = sim1.people.age
+ages2 = sim2.people.age
 
 n = 100
 fig = pl.figure()
