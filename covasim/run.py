@@ -260,6 +260,10 @@ class Scenarios(cvbase.ParsObj):
                 if commaticks:
                     sc.commaticks()
 
+                if self.base_sim.data is not None and reskey in self.base_sim.data:
+                    data_t = np.array((self.base_sim.data.index-self.base_sim['start_day'])/np.timedelta64(1,'D'))
+                    pl.plot(data_t, self.base_sim.data[reskey], 'sk', **plot_args)
+                    
                 # Optionally reset tick marks (useful for e.g. plotting weeks/months)
                 if interval:
                     xmin,xmax = ax.get_xlim()
