@@ -140,11 +140,7 @@ var vm = new Vue({
             resizing: false,
             history: [],
             historyIdx: 0,
-            sim_length: {
-                best: 90,
-                max: 180,
-                min: 1
-            },
+            sim_length: {},
             sim_pars: {},
             epi_pars: {},
             datafile: {
@@ -303,6 +299,7 @@ var vm = new Vue({
             const response = await sciris.rpc('get_defaults', [this.reset_choice]);
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
+            this.sim_length = {...this.sim_pars['n_days']}
             this.intervention_pars = {};
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');

@@ -110,7 +110,7 @@
           <span aria-live="assertive" v-if="paramError.sim_length" class="text-danger form-error">{{paramError.sim_length}}</span>
 
           <b-tooltip target="n_days">
-            Number of days to run the simulation for
+            {{sim_length.tip}}
           </b-tooltip>
         </div>
         <div class="form-row mb-3">

@@ -87,7 +87,7 @@ def get_defaults(region=None, merge=False):
     sim_pars['pop_size']     = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
     sim_pars['pop_infected'] = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
     sim_pars['rand_seed']    = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
-    sim_pars['n_days']       = dict(best=90,   min=1, max=max_days, name="Campaign Duration",          tip='')
+    sim_pars['n_days']       = dict(best=90,   min=1, max=max_days, name="Simulation Duration",        tip='Total duration (in days) of the simulation')
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
