@@ -271,9 +271,13 @@ class test_num(Intervention):
         test_probs[symp_inds] *= self.sympt_test
         test_probs[quar_inds] *= self.quar_test
         test_probs[diag_inds] = 0.
+
+        print('ahahahah')
         test_inds = cvu.choose_weighted(probs=test_probs, n=n_tests, normalize=True, unique=False)
 
-        test_inds = np.minimum(test_inds, sim.n-1) # TEMPORARY!! -- to ensure we don't look for someone not there
+        # test_inds = np.minimum(test_inds, sim.n-1) # TEMPORARY!! -- to ensure we don't look for someone not there
+
+        print('sdlkfjsdlkf')
 
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 

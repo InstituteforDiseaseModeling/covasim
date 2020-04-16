@@ -148,7 +148,18 @@ def binomial_arr(prob_arr):
 
 def multinomial(probs, repeats):
     ''' A multinomial trial '''
-    return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
+    print('hiii')
+    print(len(probs))
+    print(probs.sum())
+    print(repeats)
+    fanuk = np.random.random(repeats)
+    out = np.searchsorted(np.cumsum(probs), fanuk)
+    print('ummmm', out.max())
+
+    if out.max() >= len(probs):
+        print('hhghghghgh')
+        raise Exception
+    return out
 
 
 @nb.njit((nb.int32,)) # This hugely increases performance
@@ -193,7 +204,7 @@ def choose_r(max_n, n):
     return np.random.choice(max_n, n, replace=True)
 
 
-def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=False, unique=True):
+def choose_weighted(probs, n, overshoot=1.5, max_tries=10, unique=True):
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
     Overshoot handles the case where there are repeats.
@@ -202,7 +213,6 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
         probs (array): list of probabilities, should sum to 1
         n (int): number of samples to choose
         overshoot (float): number of extra samples to generate, expecting duplicates
-        eps (float): how close to check that probabilities sum to 1
         max_tries (int): maximum number of times to try to pick samples without replacement
         normalize (bool): whether or not to normalize probs to always sum to 1
         unique (bool): whether or not to ensure unique indices
@@ -220,12 +230,12 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     probs = np.array(probs, dtype=np.float32)
     n_people = len(probs)
     n_samples = int(n)
-    if normalize:
-        probs_sum = probs.sum()
-        if probs_sum: # Weight is nonzero, rescale
-            probs /= probs_sum
-        else: # Weights are all zero, choose uniformly
-            probs = np.ones(n_people)/n_people
+    probs_sum = probs.sum()
+    if probs_sum: # Weight is nonzero, rescale
+        probs /= probs_sum
+    else: # Weights are all zero, choose uniformly
+        probs = np.ones(n_people)/n_people
+    probs[-1] += 1.0 - probs.sum() # Ensure that
 
     # Perform checks
     if abs(probs.sum() - 1) > eps:
@@ -242,6 +252,11 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
     while len(unique_inds)<n_samples and tries<max_tries:
         tries += 1
         raw_inds = multinomial(probs, int(n_samples*overshoot)) # Return raw indices, with replacement
+        print('ok')
+        print(raw_inds.max(), len(probs))
+        if raw_inds.max()>=len(probs):
+            raise Exception
+
         if not unique:
             return raw_inds
         mixed_inds = np.hstack((unique_inds, raw_inds))
@@ -250,6 +265,8 @@ def choose_weighted(probs, n, overshoot=1.5, eps=1e-6, max_tries=10, normalize=F
         errormsg = f'Unable to choose {n_samples} unique samples from {n_people} people after {max_tries} tries'
         raise RuntimeError(errormsg)
     inds = unique_inds[:int(n)]
+
+
 
     return inds
 
