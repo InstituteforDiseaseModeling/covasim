@@ -469,20 +469,21 @@ class Sim(cvbase.BaseSim):
         exposure time) or 'clinical' (symptom onset to symptom onset).
         '''
 
-        not_susceptible = self.people.filter_out('susceptible')
         intervals = np.zeros(int(self.summary['cum_infections']))
         intervals2 = intervals.copy()
         pos = 0
         pos2 = 0
-        for source in not_susceptible:
-            if len(source.infected)>0:
-                for target in source.infected:
-                    intervals[pos] = self.people[target].date_exposed - source.date_exposed
+        targets = self.people.transtree.targets
+        date_exposed = self.people.date_exposed
+        date_symptomatic = self.people.date_symptomatic
+        for p in range(len(self.people)):
+            if len(targets[p])>0:
+                for target_ind in targets[p]:
+                    intervals[pos] = date_exposed[target_ind] - date_exposed[p]
                     pos += 1
-                if source.date_symptomatic is not None:
-                    for target in source.infected:
-                        if self.people[target].date_symptomatic is not None:
-                            intervals2[pos2] = self.people[target].date_symptomatic - source.date_symptomatic
+                    if date_symptomatic[p] is not None:
+                        if date_symptomatic[target_ind] is not None:
+                            intervals2[pos2] = date_symptomatic[target_ind] - date_symptomatic[p]
                             pos2 += 1
 
         self.results['gen_time'] = {

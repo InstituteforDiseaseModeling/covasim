@@ -45,6 +45,6 @@ contacts_list, contact_keys = cv.make_random_contacts(100, {'a':10, 'b':20})
 #%% Test layers
 
 sim2 = cv.Sim(pop_type='random', use_layers=True, pop_size=500)
-popdict = make_randpop(sim2, microstructure=sim['pop_type'])
+popdict = cv.make_randpop(sim2, microstructure=sim['pop_type'])
 cv.make_people(sim2)
 ppl5 = sim2.people
