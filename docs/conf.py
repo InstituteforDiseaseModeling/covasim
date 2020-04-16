@@ -292,7 +292,14 @@ latex_elements = {
 
     # Additional stuff for the LaTeX preamble.
     #
-    # 'preamble': '',
+    'preamble': '%XeLaTeX packages'
+                '\usepackage{xltxtra}'
+                '\usepackage{fontspec} %Font package'
+                '\usepackage{xunicode}'
+                '%Select fonts'
+                '\setmainfont[Mapping=tex-text]{nimbusserif}'
+                '\setsansfont[Mapping=tex-text]{nimbussans}'
+                '\setmonofont{nimbusmono}',
 
     # Latex figure (float) alignment
     #
