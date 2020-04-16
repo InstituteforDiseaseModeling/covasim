@@ -17,7 +17,7 @@ interv  = 0
 
 # Set filename if saving
 version  = 'v0'
-date     = '2020apr06'
+date     = '2020apr15'
 folder   = 'results'
 basename = f'{folder}/covasim_run_{date}_{version}'
 fig_path = f'{basename}.png'

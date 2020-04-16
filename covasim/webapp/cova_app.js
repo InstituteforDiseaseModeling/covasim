@@ -127,9 +127,12 @@ var vm = new Vue({
 
     data() {
         return {
-            title: "COVASim",
-            version: 'Unable to connect to server!', // This text will display instead of the version
-            copyright_year: copyright_year(),
+            app: {
+                title: "COVASim",
+                version: 'Unable to connect to server!', // This text will display instead of the version
+                copyright_year: copyright_year(),
+                github_url: "https://github.com/institutefordiseasemodeling/covasim"
+            },
             panel_open: true,
             panel_width: null,
             resizing: false,
@@ -167,6 +170,7 @@ var vm = new Vue({
     async created() {
         this.get_version();
         this.resetPars();
+        this.watchSimLengthParam();
     },
 
     filters: {
@@ -245,7 +249,7 @@ var vm = new Vue({
 
         async get_version() {
             const response = await sciris.rpc('get_version');
-            this.version = response.data;
+            this.app.version = response.data;
         },
 
         async runSim() {
@@ -301,7 +305,7 @@ var vm = new Vue({
             });
         },
         watchSimLengthParam() {
-            this.$watch(`sim_length`, this.validateParam('sim_length'), { deep: true });
+            this.$watch('sim_length', this.validateParam('sim_length'), { deep: true });
         },
         validateParam(key) {
             return (param) => {

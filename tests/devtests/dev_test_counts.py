@@ -23,8 +23,8 @@ sim.run()
 
 d = sc.objdict()
 for state in states:
-    n_in = len(list(sim.people.filter_in(state)))
-    n_out = len(list(sim.people.filter_out(state)))
+    n_in = len(cv.true(sim.people[state]))
+    n_out = len(cv.false(sim.people[state]))
     d[state] = n_in
     assert n_in + n_out == sim['pop_size']
 
