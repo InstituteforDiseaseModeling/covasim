@@ -272,7 +272,7 @@ class test_num(Intervention):
         test_probs[quar_inds] *= self.quar_test
         test_probs[diag_inds] = 0.
 
-        test_inds = cvu.choose_weighted(probs=test_probs, n=n_tests, unique=False)
+        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=False)
 
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
@@ -421,8 +421,8 @@ class contact_tracing(Intervention):
 #             negative_tests = 1-positive_tests
 
 #             # Select the people to test in each category
-#             positive_inds = cv.choose_weighted(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]), normalize=True)
-#             negative_inds = cv.choose_weighted(probs=negative_tests, n=min(sum(negative_tests), self.n_tests[t]-len(positive_inds)), normalize=True)
+#             positive_inds = cv.choose_w(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]), normalize=True)
+#             negative_inds = cv.choose_w(probs=negative_tests, n=min(sum(negative_tests), self.n_tests[t]-len(positive_inds)), normalize=True)
 
 #             # Todo - assess performance and optimize e.g. to reduce dict indexing
 #             for ind in positive_inds:

@@ -134,7 +134,7 @@ def idefinedi(arr, inds):
 
 #%% Probabilities -- mostly not jitted since performance gain is minimal
 
-__all__ += ['binomial_arr', 'multinomial', 'poisson', 'binomial_filter', 'choose', 'choose_r', 'choose_weighted']
+__all__ += ['binomial_arr', 'multinomial', 'poisson', 'binomial_filter', 'choose', 'choose_r', 'choose_w']
 
 
 def n_binomial(prob, n):
@@ -193,65 +193,27 @@ def choose_r(max_n, n):
     return np.random.choice(max_n, n, replace=True)
 
 
-def choose_weighted(probs, n, overshoot=1.5, max_tries=10, unique=True):
+def choose_w(probs, n, unique=True):
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
-    Overshoot handles the case where there are repeats.
 
     Args:
         probs (array): list of probabilities, should sum to 1
         n (int): number of samples to choose
-        overshoot (float): number of extra samples to generate, expecting duplicates
-        max_tries (int): maximum number of times to try to pick samples without replacement
         unique (bool): whether or not to ensure unique indices
 
     Example:
-        choose_weighted([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
-
-    NB: unfortunately pd.unique() is not supported by Numba, nor is
-    np.unique(return_index=True), hence why this function is not jitted.
+        choose_w([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
     '''
-
-    # Ensure it's the right type and optionally normalize
-    if not unique:
-        overshoot = 1
     probs = np.array(probs, dtype=np.float32)
-    n_people = len(probs)
+    n_choices = len(probs)
     n_samples = int(n)
     probs_sum = probs.sum()
     if probs_sum: # Weight is nonzero, rescale
         probs /= probs_sum
     else: # Weights are all zero, choose uniformly
-        probs = np.ones(n_people)/n_people
-
-    # Perform checks
-    if unique:
-        if n_samples == n_people: # It's everyone
-            return np.arange(len(probs))
-        if n_samples > n_people: # It's more than everyone
-            errormsg = f'Number of samples requested ({n_samples}) is greater than the number of people ({n_people})'
-            raise Exception(errormsg)
-
-    # Choose samples
-    tries = 0
-    unique_inds = np.array([], dtype=np.int32)
-    cum_probs = np.cumsum(probs)
-    cum_probs[-1] = 1.0 # To avoid any possibility of underflow/overflow errors
-    repeats = int(n_samples*overshoot)
-    while len(unique_inds)<n_samples and tries<max_tries:
-        tries += 1
-        np.searchsorted(cum_probs, np.random.random(repeats))
-        raw_inds = multinomial(probs, repeats) # Compute new indices
-        if not unique:
-            return raw_inds # Return raw indices, with replacement
-        mixed_inds = np.hstack((unique_inds, raw_inds))
-        unique_inds = pd.unique(mixed_inds) # Or np.unique(mixed_inds, return_index=True) with another step
-    if tries == max_tries:
-        errormsg = f'Unable to choose {n_samples} unique samples from {n_people} people after {max_tries} tries'
-        raise RuntimeError(errormsg)
-    inds = unique_inds[:int(n)]
-
-    return inds
+        probs = np.ones(n_choices)/n_choices
+    return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
 
 
 #%% The core Covasim functions -- compute the infections
