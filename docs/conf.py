@@ -78,7 +78,8 @@ author = u'Institute for Disease Modeling'
 # built documents.
 #
 # The short X.Y version.
-version = ''
+import covasim
+version = covasim.__version__
 # The full version, including alpha/beta/rc tags.
 # release = u'1.0'
 
