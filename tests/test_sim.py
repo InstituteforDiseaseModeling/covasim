@@ -108,7 +108,7 @@ def test_start_stop(): # If being run via pytest, turn off
     sim2 = cv.Sim(pars)
     sim2.initialize()
     for n in range(sim2.npts):
-        sim2.step(verbose=0)
+        sim2.step()
     sim2.finalize()
 
     # Compare results
