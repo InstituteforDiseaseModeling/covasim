@@ -19,13 +19,13 @@ basepars = sc.objdict(
 
 
 #%% Default
-pars = sc.objdict(
-    pop_type     = 'random',
-    use_layers   = False,
-)
+# pars = sc.objdict(
+#     pop_type     = 'random',
+#     use_layers   = False,
+# )
 
-sim1 = cv.Sim(pars=sc.mergedicts(basepars, pars))
-sim1.run(do_plot=do_plot)
+# sim1 = cv.Sim(pars=sc.mergedicts(basepars, pars))
+# sim1.run(do_plot=do_plot)
 
 
 #%% With layers

@@ -656,7 +656,7 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    def add_contacts(self, new_contacts, key=None, beta=None):
+    def add_contacts(self, contacts, key=None, beta=None):
         ''' Add new contacts to the array '''
 
         if key is None:
@@ -665,60 +665,71 @@ class BasePeople(sc.prettyobj):
             self.contacts[key] = Layer(layer_info=self.layer_info)
 
         # Validate the supplied contacts
-        if isinstance(new_contacts, Layer):
-            new_df = new_contacts
-        elif sc.checktype(new_contacts, 'array'):
-            new_df = pd.DataFrame(data=new_contacts)
-        elif isinstance(new_contacts, dict):
-            new_df = pd.DataFrame.from_dict(new_contacts)
-        elif isinstance(new_contacts, list): # Assume it's a list of contacts by person, not an edgelist
-            new_df = self.make_edgelist(new_contacts)
+        if isinstance(contacts, Contacts):
+            new_contacts = contacts
+        if isinstance(contacts, Layer):
+            new_contacts = {}
+            new_contacts[key] = contacts
+        elif sc.checktype(contacts, 'array'):
+            new_contacts = {}
+            new_contacts[key] = pd.DataFrame(data=contacts)
+        elif isinstance(contacts, dict):
+            new_contacts = {}
+            new_contacts[key] = pd.DataFrame.from_dict(contacts)
+        elif isinstance(contacts, list): # Assume it's a list of contacts by person, not an edgelist
+            new_contacts = self.make_edgelist(contacts) # Assume contains key info
         else:
-            errormsg = f'Cannot understand contacts of type {type(new_contacts)}; expecting dataframe, array, or dict'
+            errormsg = f'Cannot understand contacts of type {type(contacts)}; expecting dataframe, array, or dict'
             raise TypeError(errormsg)
 
         # Ensure the columns are right and add values if supplied
-        n = len(new_df['p1'])
-        new_df['layer']   = np.array([key]*n)
-        if 'beta' not in new_df or len(new_df['beta']) != n:
-            if beta is None:
-                beta = self.pars['beta_layer'][key]
-            beta = np.float32(beta)
-            new_df['beta'] = np.ones(n, dtype=np.float32)*beta
+        for lkey, new_layer in new_contacts.items():
+            n = len(new_layer['p1'])
+            if 'layer' not in new_layer:
+                new_layer['layer'] = np.array([key]*n)
+            if 'beta' not in new_layer or len(new_layer['beta']) != n:
+                if beta is None:
+                    beta = self.pars['beta_layer'][key]
+                beta = np.float32(beta)
+                new_layer['beta'] = np.ones(n, dtype=np.float32)*beta
 
-        # Actually include them, and update properties if supplied
-        for col in self.layer_info.keys():
-            self.contacts[key][col] = np.concatenate([self.contacts[key][col], new_df[col]])
-        self.contacts[key].validate()
+            # Actually include them, and update properties if supplied
+            for col in self.layer_info.keys():
+                self.contacts[lkey][col] = np.concatenate([self.contacts[lkey][col], new_layer[col]])
+            self.contacts[lkey].validate()
 
         return
 
 
-    def make_edgelist(self, contacts, remove_duplicates=False):
+    def make_edgelist(self, contacts):
         '''
         Parse a list of people with a list of contacts per person and turn it
         into an edge list.
         '''
 
         # Parse the list
-        p1    = [] # Person 1 of the contact pair
-        p2    = [] # Person 2 of the contact pair
-        layer = [] # Layers
+        new_contacts = Contacts()
+        lkeys = list(contacts[0].keys()) # Get the key list from the first contact
+        for lkey in lkeys:
+            new_contacts[lkey]['p1']    = [] # Person 1 of the contact pair
+            new_contacts[lkey]['p2']    = [] # Person 2 of the contact pair
+            new_contacts[lkey]['layer'] = [] # Layers
+
         for p,cdict in enumerate(contacts):
             for key,p_contacts in cdict.items():
                 n = len(p_contacts) # Number of contacts
-                p1.extend([p]*n) # e.g. [4, 4, 4, 4]
-                p2.extend(p_contacts) # e.g. [243, 4538, 7,19]
-                layer.extend([key]*n) # e.g. ['h', 'h', 'h', 'h']
+                new_contacts[lkey]['p1'].extend([p]*n) # e.g. [4, 4, 4, 4]
+                new_contacts[lkey]['p2'].extend(p_contacts) # e.g. [243, 4538, 7,19]
+                new_contacts[lkey]['layer'].extend([key]*n) # e.g. ['h', 'h', 'h', 'h']
 
         # Turn into a dataframe
-        new_df = Layer(layer_info=self.layer_info)
-        for key,value in {'p1':p1, 'p2':p2, 'layer':layer}.items():
-            new_df[key] = np.array(value, dtype=self.keylist.contacts[key])
-        if remove_duplicates:
-            new_df = self.remove_duplicates(new_df) # Sort and remove duplicates
+        for lkey in lkeys:
+            new_layer = Layer(layer_info=self.layer_info)
+            for key,value in new_contacts[lkey].items():
+                new_layer[key] = np.array(value, dtype=self.keylist.contacts[key])
+            new_contacts[lkey] = new_layer
 
-        return new_df
+        return new_contacts
 
 
     @staticmethod
