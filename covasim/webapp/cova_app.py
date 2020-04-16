@@ -3,7 +3,9 @@ Sciris app to run the web interface.
 '''
 
 # Key imports
+
 import covasim as cv
+import flask
 import os
 import sys
 import numpy as np
@@ -29,6 +31,13 @@ flask_app = app.flask_app
 max_pop  = 10e3 # Maximum population size
 max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
+
+
+# Define a get API for readiness in kubernetes
+@app.route('/healthcheck')
+def healthcheck():
+    return flask.jsonify(dict(status="ok"))
+
 
 @app.register_RPC()
 def get_defaults(region=None, merge=False):
