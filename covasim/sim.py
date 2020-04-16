@@ -32,12 +32,13 @@ class Sim(cvbase.BaseSim):
         filename (str): the filename for this simulation, if it's saved (default: creation date)
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None, **kwargs):
+    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None, label=None, **kwargs):
         # Create the object
         default_pars = cvpars.make_pars(**kwargs) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
+        self.label         = None  # The label/name of the simulation
         self.created       = None  # The datetime the sim was created
         self.filename      = None  # The filename of the sim
         self.datafile      = None  # The name of the data file
@@ -50,7 +51,7 @@ class Sim(cvbase.BaseSim):
         self.results       = {}    # For storing results
 
         # Now update everything
-        self.set_metadata(filename)        # Set the simulation date and filename
+        self.set_metadata(filename, label) # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
         self.load_population(popfile)      # Load the population, if provided
         self.update_pars(pars)             # Update the parameters, if provided
@@ -70,7 +71,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def set_metadata(self, filename):
+    def set_metadata(self, filename, label):
         ''' Set the metadata for the simulation -- creation time and filename '''
         self.created = sc.now()
         self.version = cvv.__version__
@@ -78,6 +79,8 @@ class Sim(cvbase.BaseSim):
         if filename is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             self.filename = f'covasim_{datestr}.sim'
+        if label is not None:
+            self.label = label
         return
 
 
@@ -222,7 +225,8 @@ class Sim(cvbase.BaseSim):
         if verbose is None:
             verbose = self['verbose']
 
-        sc.printv(f'Creating {self["pop_size"]} people...', 1, verbose)
+        if verbose:
+            print(f'Initializing sim with {self["pop_size"]:0n} people for {self["n_days"]} days')
 
         cvpop.make_people(self, verbose=verbose, **kwargs)
         self.people.initialize() # Not sure this is the best place for it
@@ -234,7 +238,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def step(self, verbose=0):
+    def step(self):
         '''
         Step the simulation forward in time
         '''
@@ -243,13 +247,6 @@ class Sim(cvbase.BaseSim):
         t = self.t
         if t >= self.npts:
             return
-
-        # Print progress
-        if verbose >= 1:
-            elapsed = sc.toc(output=True)
-            string = f'  Running day {t:0.0f} of {self.pars["n_days"]} ({elapsed:0.2f} s elapsed)...'
-            if verbose >= 2: sc.heading(string)
-            else:            print(string)
 
         # Perform initial operations
         self.rescale() # Check if we need to rescale
@@ -357,8 +354,18 @@ class Sim(cvbase.BaseSim):
         # Main simulation loop
         for t in self.tvec:
 
-            # Do the heavy lifting
-            self.step(verbose=verbose)
+            # Print progress
+            if verbose >= 1:
+                elapsed = sc.toc(output=True)
+                simlabel = f'"{self.label}": ' if self.label else ''
+                string = f'  Running {simlabel}day {t:2.0f}/{self.pars["n_days"]} ({elapsed:0.2f} s) '
+                if verbose >= 2:
+                    sc.heading(string)
+                elif verbose == 1:
+                    cvm.progressbar(t+1, self.npts, label=string, newline=True)
+
+            # Do the heavy lifting -- actually run the model!
+            self.step()
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
@@ -371,7 +378,7 @@ class Sim(cvbase.BaseSim):
 
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results
-        sc.printv(f'\nRun finished after {elapsed:0.1f} s.\n', 1, verbose)
+        sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
         self.summary = self.summary_stats(verbose=verbose)
         if do_plot: # Optionally plot
             self.plot(**kwargs)
@@ -402,6 +409,7 @@ class Sim(cvbase.BaseSim):
         # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
         self.results = sc.objdict(self.results)
         self.results_ready = True
+        self.initialized = False # To enable re-running
 
         return
 

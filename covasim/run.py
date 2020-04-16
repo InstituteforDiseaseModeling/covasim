@@ -144,6 +144,7 @@ class Scenarios(cvbase.ParsObj):
 
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
+            scen_sim.label = scenkey
             scen_sim.update_pars(scenpars)
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], verbose=verbose)
             if debug:
@@ -167,7 +168,7 @@ class Scenarios(cvbase.ParsObj):
             scenres.low = {}
             scenres.high = {}
             for reskey in reskeys:
-                scenres.best[reskey] = pl.mean(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
+                scenres.best[reskey] = pl.median(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
                 scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
                 scenres.high[reskey] = pl.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
 
@@ -186,6 +187,19 @@ class Scenarios(cvbase.ParsObj):
                 for scenkey in list(self.scenarios.keys()):
                     print(f'  {scenkey}: {self.results[reskey][scenkey].best[-1]:0.0f}')
             print() # Add a blank space
+
+            print('\nResults for final time point in each scenario:')
+            scenkeys = list(self.scenarios.keys())
+            df = pd.DataFrame(columns=['label'] + scenkeys)
+            for reskey in reskeys:
+                thisrow = {}
+                thisrow['Result'] = reskey
+                for scenkey in scenkeys:
+                    thisrow[scenkey] = self.results[reskey][scenkey].best[-1]
+                df = df.append(thisrow, ignore_index=True)
+            df = df.set_index('Result')
+            print(df)
+
 
         return
 

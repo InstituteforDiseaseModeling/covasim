@@ -77,7 +77,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
     sim.people = people
 
     average_age = sum(popdict['age']/pop_size)
-    sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 1, verbose)
+    sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
 
     return
 
