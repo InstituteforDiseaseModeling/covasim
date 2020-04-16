@@ -129,7 +129,7 @@ var vm = new Vue({
         return {
             debug: false,
             app: {
-                title: "COVASim",
+                title: "Covasim",
                 version: 'Unable to connect to server!', // This text will display instead of the version
                 copyright_year: copyright_year(),
                 github_url: "https://github.com/institutefordiseasemodeling/covasim",
@@ -334,7 +334,7 @@ var vm = new Vue({
         async downloadPars() {
             const d = new Date();
             const datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
-            const fileName = `COVASim_parameters_${datestamp}.json`;
+            const fileName = `covasim_parameters_${datestamp}.json`;
 
             // Adapted from https://stackoverflow.com/a/45594892 by Gautham
             const data = {
