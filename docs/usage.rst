@@ -10,6 +10,6 @@ transmission. We provide some out-of-the-box examples to aid in getting started.
    :titlesonly:
 
    examples
-   sweep
    data
-
+   sweep
+   docs

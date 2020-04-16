@@ -28,10 +28,26 @@ covasim.base module
    :undoc-members:
    :show-inheritance:
 
+covasim.defaults module
+-----------------------
+
+.. automodule:: covasim.defaults
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 covasim.interventions module
 ----------------------------
 
 .. automodule:: covasim.interventions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+covasim.misc module
+-------------------
+
+.. automodule:: covasim.misc
    :members:
    :undoc-members:
    :show-inheritance:
@@ -44,10 +60,10 @@ covasim.parameters module
    :undoc-members:
    :show-inheritance:
 
-covasim.person module
+covasim.people module
 ---------------------
 
-.. automodule:: covasim.person
+.. automodule:: covasim.people
    :members:
    :undoc-members:
    :show-inheritance:
