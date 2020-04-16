@@ -5,7 +5,6 @@ Defines the Sim class, Covasim's core class.
 #%% Imports
 import numpy as np
 import pylab as pl
-import pandas as pd
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
@@ -159,8 +158,8 @@ class Sim(cvbase.BaseSim):
             self['beta_layers'] = {'a':1.0}
 
         # Handle population data
-        popdata_choices = ['random', 'realistic', 'clustered', 'synthpops']
-        if sc.isnumber(self['pop_type']): # Convert e.g. pop_type=1 to 'realistic'
+        popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
+        if sc.isnumber(self['pop_type']): # Convert e.g. pop_type=1 to 'hybrid'
             self['pop_type'] = popdata_choices[int(self['pop_type'])] # Choose one of these
         if self['pop_type'] not in popdata_choices:
             choice = self['pop_type']
@@ -549,7 +548,9 @@ class Sim(cvbase.BaseSim):
 
 
     def compute_r_eff(self):
-        ''' Effective reproductive number based on number still susceptible -- TODO: use data instead '''
+        '''
+        Effective reproductive number based on number of people each person infected.
+        '''
 
         # Initialize arrays to hold sources and targets infected each day
         sources = np.zeros(self.npts)
@@ -575,8 +576,66 @@ class Sim(cvbase.BaseSim):
         inds = sc.findinds(sources>0)
         r_eff = targets[inds]/sources[inds]
         self.results['r_eff'].values[inds] = r_eff
+
+
+        # store the number of people contributing to the r_eff estimate for each daily estimate
+        self.results['r_eff'].weights = np.zeros(self.npts) + np.NaN
+        self.results['r_eff'].weights[inds] = sources[inds]
+
         return
 
+    def compute_avg_r_eff(self, n):
+        """Compute r_eff using n previous days, includes weights for number of sources"""
+
+        # Compute r_eff per day
+        self.compute_r_eff()
+
+        # use stored weights calculate the moving average over the window of timesteps, n
+        num = np.nancumsum(self.results['r_eff'].values * self.results['r_eff'].weights)
+        num[n:] = num[n:] - num[:-n]
+        den = np.nancumsum(self.results['r_eff'].weights)
+        den[n:] = den[n:] - den[:-n]
+
+        # avoid dividing by zero
+        values = np.zeros(num.shape)
+        ind = den > 0
+        values[ind] = num[ind]/den[ind]
+
+        # save results
+        w_reff = cvbase.Result(name='avg_r_eff', values=values)
+        w_reff.n_days = n
+
+        return w_reff
+
+    def compute_gen_time(self):
+        '''
+        Calculate the generation time (or serial interval) there are two
+        ways to do this calculation. The 'true' interval (exposure time to
+        exposure time) or 'clinical' (symptom onset to symptom onset).
+        '''
+
+        not_susceptible = self.people.filter_out('susceptible')
+        intervals = np.zeros(int(self.summary['cum_infections']))
+        intervals2 = intervals.copy()
+        pos = 0
+        pos2 = 0
+        for source in not_susceptible:
+            if len(source.infected)>0:
+                for target in source.infected:
+                    intervals[pos] = self.people[target].date_exposed - source.date_exposed
+                    pos += 1
+                if source.date_symptomatic is not None:
+                    for target in source.infected:
+                        if self.people[target].date_symptomatic is not None:
+                            intervals2[pos2] = self.people[target].date_symptomatic - source.date_symptomatic
+                            pos2 += 1
+
+        self.results['gen_time'] = {
+                'true':         np.mean(intervals[:pos]),
+                'true_std':     np.std(intervals[:pos]),
+                'clinical':     np.mean(intervals2[:pos2]),
+                'clinical_std': np.std(intervals2[:pos2])}
+        return
 
     def likelihood(self, weights=None, verbose=None) -> float:
         '''
@@ -593,7 +652,7 @@ class Sim(cvbase.BaseSim):
         if self.data is None:
             return np.nan
 
-        pLowest = 1e-20  # This will be considered a 0 for p (so that log(p)>-inf)
+        pLowest = 1e-20    # This will be considered a 0 for p (so that log(p)>-inf)
         loglike = 0
 
         model_dates = self.datevec.tolist()
@@ -604,13 +663,14 @@ class Sim(cvbase.BaseSim):
                 if np.isfinite(datum):
                     if d in model_dates:
                         estimate = self.results[key][model_dates.index(d)]
-                        if datum and estimate:
+                        #if datum and estimate:
+                        if np.isfinite(datum) and np.isfinite(estimate):
                             if (datum == 0) and (estimate == 0):
                                 p = 1.0
                             else:
                                 p = cvu.poisson_test(datum, estimate)
 
-                            p = max( p, pLowest )  # Make sure p>0 to get finite logarithms
+                            p = max( p, pLowest )
 
                             logp = pl.log(p)
                             loglike += weight*logp
