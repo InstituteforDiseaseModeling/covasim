@@ -22,9 +22,9 @@ def test_webapp():
 
     pars = cw.get_defaults()
     output = cw.run_sim(sim_pars=pars['sim_pars'], epi_pars=pars['epi_pars'])
-    if output['err']:
+    if output['errs']:
         errormsg = 'Webapp encountered an error:\n'
-        errormsg += output['err']
+        errormsg += str(output['errs'])
         raise Exception(errormsg)
 
     return output
