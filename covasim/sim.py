@@ -61,7 +61,11 @@ class Sim(cvbase.BaseSim):
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
-        pars = sc.mergedicts(pars, kwargs)
+        if hasattr(self, 'pars'): # TODO: FIX
+            sim_pars = self.pars
+        else:
+            sim_pars = {}
+        pars = sc.mergedicts(sim_pars, pars, kwargs)
         if pars:
             if 'use_layers' in pars: # Reset layers
                 cvpars.set_contacts(pars)
