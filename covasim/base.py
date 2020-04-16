@@ -85,7 +85,7 @@ class Result(object):
         print(r2)
     '''
 
-    def __init__(self, name=None, values=None, npts=None, scale='dynamic', color=None):
+    def __init__(self, name=None, values=None, npts=None, scale='dynamic', color=None, dtype=None):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
@@ -96,7 +96,9 @@ class Result(object):
                 values = np.zeros(int(npts)) # If length is known, use zeros
             else:
                 values = [] # Otherwise, empty
-        self.values = np.array(values, dtype=float) # Ensure it's an array
+        if dtype is None:
+            dtype = np.int32
+        self.values = np.array(values, dtype=dtype) # Ensure it's an array
         return
 
     def __repr__(self, *args, **kwargs):

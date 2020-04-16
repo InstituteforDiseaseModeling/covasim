@@ -187,7 +187,8 @@ class Scenarios(cvbase.ParsObj):
             scenkeys = list(self.scenarios.keys())
             for scenkey in scenkeys:
                 for reskey in reskeys:
-                    x[scenkey][reskey] = int(self.results[reskey][scenkey].best[-1])
+                    dtype = self.base_sim.results[reskey].dtype
+                    x[scenkey][reskey] = dtype(self.results[reskey][scenkey].best[-1])
             df = pd.DataFrame.from_dict(x)
             print(df)
 
