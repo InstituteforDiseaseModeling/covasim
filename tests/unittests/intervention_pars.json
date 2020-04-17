@@ -1,0 +1,131 @@
+{
+    "sim_pars": {
+        "pop_scale": {
+            "best": 1,
+            "min": 1,
+            "max": 1000000,
+            "name": "Population scale factor",
+            "tip": "Multiplier for results (to approximate large populations)"
+        },
+        "pop_size": {
+            "best": 2000,
+            "min": 1,
+            "max": 10000,
+            "name": "Population size",
+            "tip": "Number of agents simulated in the model"
+        },
+        "pop_infected": {
+            "best": 100,
+            "min": 1,
+            "max": 10000,
+            "name": "Initial infections",
+            "tip": "Number of initial seed infections in the model"
+        },
+        "rand_seed": {
+            "best": 0,
+            "min": 0,
+            "max": 100,
+            "name": "Random seed",
+            "tip": "Random number seed (set to 0 for different results each time)"
+        },
+        "n_days": {
+            "best": 90,
+            "max": 180,
+            "min": 1
+        }
+    },
+    "epi_pars": {
+        "beta": {
+            "best": 0.015,
+            "min": 0,
+            "max": 0.2,
+            "name": "Beta (infectiousness)",
+            "tip": "Probability of infection per contact per day"
+        },
+        "contacts": {
+            "best": 20,
+            "min": 0,
+            "max": 50,
+            "name": "Number of contacts",
+            "tip": "Average number of people each person is in contact with each day"
+        },
+        "web_exp2inf": {
+            "best": 4,
+            "min": 1,
+            "max": 30,
+            "name": "Time to infectiousness (days)",
+            "tip": "Average number of days between exposure and being infectious"
+        },
+        "web_inf2sym": {
+            "best": 1,
+            "min": 1,
+            "max": 30,
+            "name": "Asymptomatic period (days)",
+            "tip": "Average number of days between exposure and developing symptoms"
+        },
+        "web_dur": {
+            "best": 10,
+            "min": 1,
+            "max": 30,
+            "name": "Infection duration (days)",
+            "tip": "Average number of days between infection and recovery (viral shedding period)"
+        },
+        "web_timetodie": {
+            "best": 22,
+            "min": 1,
+            "max": 60,
+            "name": "Time until death (days)",
+            "tip": "Average number of days between infection and death"
+        },
+        "web_cfr": {
+            "best": 0.02,
+            "min": 0,
+            "max": 1,
+            "name": "Case fatality rate",
+            "tip": "Proportion of people who become infected who die"
+        }
+    },
+    "intervention_pars":  {
+        "social_distance": [
+            {
+                "start": 1,
+                "end": 60,
+                "level": "aggressive"
+            },
+            {
+                "start": 61,
+                "end": 75,
+                "level": "moderate"
+            },
+            {
+                "start": 76,
+                "end": 90,
+                "level": "mild"
+            }
+        ],
+        "school_closures": [
+            {
+                "start": 30,
+                "end": 90
+            }
+        ],
+        "symptomatic_testing": [
+            {
+                "start": 1,
+                "end": 60,
+                "level": 60
+            },
+            {
+                "start": 61,
+                "end": 90,
+                "level": 90
+            }
+        ],
+        "contact_tracing": [
+            {
+                "start": 1,
+                "end": 30
+            }
+        ]
+    }
+}

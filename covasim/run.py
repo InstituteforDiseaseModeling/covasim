@@ -377,7 +377,9 @@ class Scenarios(cvbase.ParsObj):
         Returns:
             filename (str): the validated absolute path to the saved file
 
-        Example:
+        **Example**
+        ::
+
             scens.save() # Saves to a .scens file with the date and time of creation by default
 
         '''
@@ -421,7 +423,9 @@ class Scenarios(cvbase.ParsObj):
         Returns:
             scens (Scenarios): the loaded scenarios object
 
-        Example:
+        **Example**
+        ::
+
             sim = cv.Scenarios.load('my-scenarios.scens')
         '''
         filename = sc.makefilepath(filename=filename, **kwargs)
@@ -448,7 +452,9 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     Returns:
         sim (Sim): a single sim object with results
 
-    Example:
+    **Example**
+    ::
+
         import covasim as cv
         sim = cv.Sim() # Create a default simulation
         sim = cv.single_run(sim) # Run it, equivalent(ish) to sim.run()
@@ -520,12 +526,12 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
         kwargs (dict): also passed to the sim
 
     Returns:
-        if combine:
-            a single sim object with the combined results from each sim
-        else (default):
-            a list of sim objects
+        If combine is True, a single sim object with the combined results from each sim.
+        Otherwise, a list of sim objects (default).
 
-    Example:
+    **Example**
+    ::
+
         import covasim as cv
         sim = cv.Sim()
         sims = cv.multi_run(sim, n_runs=6, noise=0.2)

@@ -1,0 +1,79 @@
+.wy-table-responsive table td, .wy-table-responsive table th {
+    white-space: normal;
+}
+
+.wy-table-responsive table td p {
+    font-size: 100%;
+}
+
+footer p {
+    font-size: 14px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.wy-nav-content {
+    max-width: none;
+}
+
+.wy-side-nav-search {
+    background-color: #0073a3;
+}
+
+h1, h2, .rst-content .toctree-wrapper p.caption, h3, h4, h5, h6, legend {
+    font-family: "Montserrat", "Lato", "Open Sans", sans-serif;
+}
+
+.wy-menu p.caption {
+    color: #e3e3e3;
+}
+
+.section li p.first {
+    margin-top: 8px;
+    margin-bottom: 3px;
+}
+
+div.document span.search-highlight {
+    background-color: yellow;
+}
+
+img.math {
+    width: auto;
+}
+
+.btn {
+    margin-bottom: 10px;
+}
+
+.highlight-json::before {
+    content: "↕ Click to expand JSON example";
+    padding: 8px 0 8px 10px;
+}
+
+.highlight-json .highlight {
+    display: none;
+}
+
+.highlight-json.expanded::before {
+    content: "↕ Click to collapse JSON example";
+    padding: 8px 0 8px 10px;
+}
+
+.highlight-json.expanded {
+    height: auto;
+    border-bottom: 1px solid !important;
+}
+
+.highlight-json.expanded > .highlight {
+    display: block;
+}
+
+.highlight-json {
+    height: 35px; /* Collapsed by default */
+    overflow: hidden;
+    background-color: #f3f6f6 !important;
+    position: relative;
+    border-bottom: 3px solid !important;
+    border-bottom-color: #ced3d3 !important;
+    padding-top: 5px !important;
+}

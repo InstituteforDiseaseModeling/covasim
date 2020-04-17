@@ -8,10 +8,11 @@
   "author": "Institute for Disease Modeling",
   "license": "CC-BY-SA-4.0",
   "dependencies": {
+    "bootstrap": "4.4.1",
     "bootstrap-vue": "2.11.0",
     "file-saver": "2.0.2",
     "plotly.js-dist": "1.53.0",
     "sciris-js": "0.2.18",
-    "vue": "^2.6.11"
+    "vue": "2.6.11"
   }
 }
