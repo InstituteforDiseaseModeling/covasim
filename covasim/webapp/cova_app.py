@@ -176,16 +176,19 @@ def upload_file(file):
 @app.register_RPC()
 def get_gantt(intervention_pars=None, intervention_config=None):
     df = []
+    response = {'id': 'test'}
     for key,scenario in intervention_pars.items():
         for timeline in scenario:
             task = intervention_config[key]['formTitle']
             level = task + ' ' + str(timeline.get('level', ''))
             df.append(dict(Task=task, Start=timeline['start'], Finish=timeline['end'], Level= level))
+    if len(df) > 0:
+        fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
+                            show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
+        fig.update_xaxes(type='linear')
+        response['json'] = fig.to_json()
 
-    fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
-                        show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
-    fig.update_xaxes(type='linear')
-    return {'json': fig.to_json(), 'id': 'test'}
+    return response
 
 @app.register_RPC()
 def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
