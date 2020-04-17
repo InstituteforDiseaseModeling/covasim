@@ -9,14 +9,13 @@ import pandas as pd
 __all__ = ['make_pars', 'set_contacts', 'get_prognoses', 'load_data']
 
 
-def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs):
+def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     '''
     Set parameters for the simulation.
 
     Args:
         Set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
         prog_by_age (bool): whether or not to use age-based severity, mortality etc.
-        use_layers (bool): whether or not to use household, school, etc. contact layers
 
     Returns:
         pars (dict): the parameters of the simulation
@@ -42,11 +41,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['rescale_factor']    = 2   # Factor by which we rescale the population
 
     # Basic disease transmission
-    pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
-    pars['use_layers']   = use_layers # Whether or not to use different contact layers
-    pars['contacts']     = None # The number of contacts per layer; set below
-    pars['beta_layer']  = None # Transmissibility per layer
-    pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['beta']       = 0.015 # Beta per symptomatic contact; absolute
+    pars['contacts']   = None # The number of contacts per layer; set below
+    pars['beta_layer'] = None # Transmissibility per layer
+    pars['n_imports']  = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
@@ -103,14 +101,14 @@ def set_contacts(pars):
     Args:
         pars (dict): the parameters dictionary
     '''
-    if pars['use_layers']:
-        if pars.get('contacts',   None) is None: pars['contacts']   = {'h': 4,   's': 20,  'w': 20,  'c': 10}   # Number of contacts per person per day, estimated
-        if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'h': 2.0, 's': 1.0, 'w': 1.0, 'c': 0.5}  # Per-population beta weights; relative
-        if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
-    else:
+    if pars['pop_type'] == 'random':
         if pars.get('contacts',   None) is None: pars['contacts']   = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
         if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'a': 1.0} # Per-population beta weights; relative
         if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'a': 0.3} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+    else:
+        if pars.get('contacts',   None) is None: pars['contacts']   = {'h': 4,   's': 20,  'w': 20,  'c': 0}    # Number of contacts per person per day, estimated
+        if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'h': 2.0, 's': 1.0, 'w': 1.0, 'c': 0.5}  # Per-population beta weights; relative
+        if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor
     return
 
 
