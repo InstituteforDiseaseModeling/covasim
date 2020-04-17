@@ -7,7 +7,7 @@ on:
 jobs:
   docs:
     runs-on: ubuntu-latest
-    if: github.repository == 'jules2689/covasim'
+    if: github.repository == 'InstituteforDiseaseModeling/covasim'
     strategy:
       fail-fast: false
       max-parallel: 8
@@ -43,9 +43,9 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/.cache/ # This path is specific to Ubuntu
-          key: packages-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }} # Look to see if there is a cache hit for the corresponding requirements file
+          key: docs-packages-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}--${{ hashFiles('docs/requirements.txt') }} # Look to see if there is a cache hit for the corresponding requirements file
           restore-keys: |
-            packages-${{ runner.os }}-${{ matrix.python-version }}- # Pip install first will make setup.py much faster and the cache will make pip install fast
+            docs-packages-${{ runner.os }}-${{ matrix.python-version }}- # Pip install first will make setup.py much faster and the cache will make pip install fast
       - name: Install Covasim
         run: |
           pushd covasim
