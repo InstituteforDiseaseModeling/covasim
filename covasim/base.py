@@ -563,7 +563,7 @@ class BasePeople(sc.prettyobj):
 
         # Check that the keys match
         contact_layer_keys = set(self.contacts.keys())
-        beta_layer_keys = set(self.pars['beta_layer'].keys())
+        beta_layer_keys    = set(self.pars['beta_layer'].keys())
         if contact_layer_keys != beta_layer_keys:
             errormsg = f'Parameters layers {beta_layer_keys} are not consistent with contact layers {contact_layer_keys}'
             raise ValueError(errormsg)
@@ -778,10 +778,11 @@ class Contacts(sc.objdict):
     '''
     A simple (for now) class for storing different contact layers.
     '''
-    def __init__(self, layer_keys):
+    def __init__(self, layer_keys=None):
         # Initialize with the right layers
-        for key in layer_keys:
-            self[key] = Layer()
+        if layer_keys is not None:
+            for key in layer_keys:
+                self[key] = Layer()
         return
 
     # def __repr__(self):

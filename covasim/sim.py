@@ -164,10 +164,8 @@ class Sim(cvb.BaseSim):
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
-        if sc.isnumber(self['pop_type']): # Convert e.g. pop_type=1 to 'hybrid'
-            self['pop_type'] = popdata_choices[int(self['pop_type'])] # Choose one of these
-        if self['pop_type'] not in popdata_choices:
-            choice = self['pop_type']
+        choice = self['pop_type']
+        if choice not in popdata_choices:
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)

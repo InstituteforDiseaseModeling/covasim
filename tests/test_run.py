@@ -96,9 +96,8 @@ if __name__ == '__main__':
     T = sc.tic()
 
     sim1  = test_singlerun()
-    sim2  = test_combine(do_plot=do_plot)
-    sims1  = test_multirun(do_plot=do_plot)
-    sims2 = test_combine(do_plot=do_plot)
+    sims2 = test_multirun(do_plot=do_plot)
+    sims3 = test_combine(do_plot=do_plot)
     scens = test_scenarios(do_plot=do_plot)
 
     sc.toc(T)

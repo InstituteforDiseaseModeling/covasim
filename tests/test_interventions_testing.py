@@ -26,7 +26,7 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     verbose = 1
     base_pars = {
       'pop_size': 1000,
-      'use_layers': True,
+      'pop_type': 'hybrid',
       }
 
     base_sim = cv.Sim(base_pars) # create sim object
@@ -102,7 +102,7 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     verbose = 1
     base_pars = {
       'pop_size': 5000,
-      'use_layers': True,
+      'pop_type': 'hybrid',
       }
 
     base_sim = cv.Sim(base_pars) # create sim object
@@ -147,8 +147,8 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     n_runs = 3
     verbose = 1
     base_pars = {
-      'pop_size': 5000,
-      'use_layers': True,
+      'pop_size': 2000,
+      'use_layers': 'hybrid',
       }
 
     base_sim = cv.Sim(base_pars) # create sim object
