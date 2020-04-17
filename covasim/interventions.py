@@ -309,7 +309,7 @@ class test_prob(Intervention):
     Returns:
         Intervention
     '''
-    def __init__(self, symp_prob=0, asymp_prob=0, asymp_quar_prob=None, symp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
+    def __init__(self, symp_prob=0, asymp_prob=0, asymp_quar_prob=None, symp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None):
         super().__init__()
         self.symp_prob = symp_prob
         self.asymp_prob = asymp_prob
@@ -319,6 +319,7 @@ class test_prob(Intervention):
         self.loss_prob = loss_prob
         self.test_delay = test_delay
         self.start_day = start_day
+        self.end_day = end_day
 
         return
 
@@ -328,6 +329,9 @@ class test_prob(Intervention):
         t = sim.t
         if t < self.start_day:
             return
+        if self.end_day:
+            if t > end_day:
+                return  # no more testing now
 
         symp_inds       = cvu.true(sim.people.symptomatic)
         asymp_inds      = cvu.false(sim.people.symptomatic)
@@ -353,18 +357,22 @@ class contact_tracing(Intervention):
     '''
     Contact tracing of positives
     '''
-    def __init__(self, trace_probs, trace_time, start_day=0, contact_reduction=None):
+    def __init__(self, trace_probs, trace_time, start_day=0, contact_reduction=None, end_day=None):
         super().__init__()
         self.trace_probs = trace_probs
         self.trace_time = trace_time
         self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
         self.start_day = start_day
+        self.end_day = end_day
         return
 
     def apply(self, sim):
         t = sim.t
         if t < self.start_day:
             return
+        if self.end_day:
+            if t > end_day:
+                return # no more testing now
 
         just_diagnsed_inds = cvu.true(sim.people.diagnosed & (sim.people.date_diagnosed == t-1)) # Diagnosed last time step, time to trace
         if len(just_diagnsed_inds): # If there are any just-diagnosed people, go trace their contacts
