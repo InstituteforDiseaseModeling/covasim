@@ -113,8 +113,9 @@ def set_contacts(pars):
         if household_size is not None:
             pars['contacts']['h'] = household_size
             # we need to be in hybrid mode to use the house hold size
-            print('Changing pop type to hybrid')
-            pars['pop_type'] = 'hybrid'
+            if pars['pop_type'] != 'hybrid':
+                print('Changing pop type to hybrid to allow for household size use')
+                pars['pop_type'] = 'hybrid'
     else:
         if pars.get('contacts',   None) is None: pars['contacts']   = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
         if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'a': 1.0} # Per-population beta weights; relative
