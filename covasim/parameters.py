@@ -4,6 +4,7 @@ Set the parameters for Covasim.
 
 import numpy as np
 import pandas as pd
+from . import data as cvdata
 
 
 __all__ = ['make_pars', 'set_contacts', 'get_prognoses', 'load_data']
@@ -111,6 +112,10 @@ def set_contacts(pars):
         if pars.get('contacts',   None) is None: pars['contacts']   = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
         if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'a': 1.0} # Per-population beta weights; relative
         if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'a': 0.3} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+        # Set the household size
+        household_size = cvdata.loaders.get_country_household_size_average(pars['location'])
+        if household_size is not None:
+            pars['contacts']['h']
     return
 
 

@@ -94,6 +94,8 @@ def get_age_distribution(location=None):
     return result
 
 def get_country_household_size_average(country):
+    if country is None:
+        return None
     country = country.lower()
     data = chs.get_country_household_sizes()
     countries = [ name.lower() for name in data.keys()]
