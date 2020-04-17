@@ -451,10 +451,10 @@ class BasePeople(sc.prettyobj):
 
         # Other initialization
         self.t = 0 # Keep current simulation time
+        self.dynamic_keys = ['c'] # List of keys to treat as being dynamic
         self._lock = False # Prevent further modification of keys
         self._ddtype = np.float32 # For performance -- 2x faster than float32, the default
         self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
-        self.layer_info = self.meta.contacts
         self.contacts = None
         self.init_contacts() # Initialize the contacts
         self.transtree = TransTree(pop_size=pop_size) # Initialize the transmission tree
@@ -651,26 +651,26 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    def add_contacts(self, contacts, key=None, beta=None):
+    def add_contacts(self, contacts, lkey=None, beta=None):
         ''' Add new contacts to the array '''
 
-        if key is None:
+        if lkey is None:
             key = self.layer_keys()[0]
-        if key not in self.contacts:
-            self.contacts[key] = Layer(layer_info=self.layer_info)
+        if lkey not in self.contacts:
+            self.contacts[lkey] = Layer()
 
         # Validate the supplied contacts
         if isinstance(contacts, Contacts):
             new_contacts = contacts
         if isinstance(contacts, Layer):
             new_contacts = {}
-            new_contacts[key] = contacts
+            new_contacts[lkey] = contacts
         elif sc.checktype(contacts, 'array'):
             new_contacts = {}
-            new_contacts[key] = pd.DataFrame(data=contacts)
+            new_contacts[lkey] = pd.DataFrame(data=contacts)
         elif isinstance(contacts, dict):
             new_contacts = {}
-            new_contacts[key] = pd.DataFrame.from_dict(contacts)
+            new_contacts[lkey] = pd.DataFrame.from_dict(contacts)
         elif isinstance(contacts, list): # Assume it's a list of contacts by person, not an edgelist
             new_contacts = self.make_edgelist(contacts) # Assume contains key info
         else:
@@ -689,7 +689,7 @@ class BasePeople(sc.prettyobj):
                 new_layer['beta'] = np.ones(n, dtype=np.float32)*beta
 
             # Actually include them, and update properties if supplied
-            for col in self.layer_info.keys():
+            for col in self.contacts[lkey].keys():
                 self.contacts[lkey][col] = np.concatenate([self.contacts[lkey][col], new_layer[col]])
             self.contacts[lkey].validate()
 
@@ -701,8 +701,6 @@ class BasePeople(sc.prettyobj):
         Parse a list of people with a list of contacts per person and turn it
         into an edge list.
         '''
-
-
 
         # Parse the list
         lkeys = self.layer_keys()
@@ -721,9 +719,9 @@ class BasePeople(sc.prettyobj):
 
         # Turn into a dataframe
         for lkey in lkeys:
-            new_layer = Layer(layer_info=self.layer_info)
+            new_layer = Layer()
             for ckey,value in new_contacts[lkey].items():
-                new_layer[ckey] = np.array(value, dtype=self.meta.contacts[ckey])
+                new_layer[ckey] = np.array(value, dtype=new_layer.layer_info[ckey])
             new_contacts[lkey] = new_layer
 
         return new_contacts
@@ -743,10 +741,9 @@ class BasePeople(sc.prettyobj):
         return df
 
 
-    def remove_dynamic_contacts(self, dynamic_keys='c'):
+    def remove_dynamic_contacts(self):
         ''' Remove all contacts labeled as dynamic '''
-        dynamic_keys = sc.promotetolist(dynamic_keys)
-        for key in dynamic_keys:
+        for key in self.dynamic_keys:
          if key in self.pars['contacts']:
             self.contacts.pop(key)
         return
@@ -763,12 +760,8 @@ class Person(sc.prettyobj):
         self.age         = float(age) # Age of the person (in years)
         self.sex         = int(sex) # Female (0) or male (1)
         self.contacts    = contacts # Contacts
-        self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
-
-        # Set states
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
-
         return
 
 
