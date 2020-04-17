@@ -348,7 +348,7 @@ class test_prob(Intervention):
         diag_inds       = cvu.true(sim.people.diagnosed)
 
         test_probs = np.zeros(sim.n) # Begin by assigning equal tesitng probability to everyone
-        test_probs[symp_inds]       = self.asymp_prob
+        test_probs[symp_inds]       = self.symp_prob
         test_probs[asymp_inds]      = self.asymp_prob
         test_probs[symp_quar_inds]  = self.symp_quar_prob
         test_probs[asymp_quar_inds] = self.asymp_quar_prob
@@ -356,6 +356,8 @@ class test_prob(Intervention):
         test_inds = cvu.binomial_arr(test_probs).nonzero()[0]
 
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
+
+        sim.results['new_tests'][t] += len(test_inds)
 
         return
 
