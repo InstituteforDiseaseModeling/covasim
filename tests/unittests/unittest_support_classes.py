@@ -164,7 +164,7 @@ class CovaSimTest(unittest.TestCase):
 
         """
         if not self.simulation_parameters:
-            self.simulation_parameters = parameters.make_pars(set_prognoses=True, prog_by_age=True, use_layers=True)
+            self.simulation_parameters = parameters.make_pars(set_prognoses=True, prog_by_age=True)
         if params_dict:
             self.simulation_parameters.update(params_dict)
         pass

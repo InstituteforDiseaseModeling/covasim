@@ -74,7 +74,7 @@ If you notice unexpected behavior or a limitation in Covasim, follow the steps b
     team gauge interest without the noise of comments, which trigger notifications to all watchers.
     Comments should be used only if you have new and useful information to share.
 
-.. _documentation: https://institutefordiseasemodeling.github.io/covasim/index.html
+.. _documentation: https://institutefordiseasemodeling.github.io/covasim-docs
 
 .. _issues: https://github.com/InstituteforDiseaseModeling/covasim/issues
 

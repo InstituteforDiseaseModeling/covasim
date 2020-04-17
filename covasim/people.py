@@ -22,24 +22,24 @@ class People(cvb.BasePeople):
         super().__init__(pars, pop_size)
 
         # Set person properties -- mostly floats
-        for key in self.keylist.person:
+        for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=object)
             else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
+                self[key] = np.full(self.pop_size, np.nan, dtype=self._ddtype)
 
         # Set health states -- only susceptible is true by default -- booleans
-        for key in self.keylist.states:
+        for key in self.meta.states:
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
             else:
                 self[key] = np.full(self.pop_size, False, dtype=bool)
 
         # Set dates and durations -- both floats
-        for key in self.keylist.dates + self.keylist.durs:
-            self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
+        for key in self.meta.dates + self.meta.durs:
+            self[key] = np.full(self.pop_size, np.nan, dtype=self._ddtype)
 
-        # Store the dtypes used
+        # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
         self._lock = True # Stop further attributes from being set
 
@@ -58,6 +58,7 @@ class People(cvb.BasePeople):
         self.set_betas(pars)
         self.pars['viral_dist']['par1'] = self._default_dtype(self.pars['viral_dist']['par1'])
         self.pars['viral_dist']['par2'] = self._default_dtype(self.pars['viral_dist']['par2'])
+        self.validate()
         return
 
 
@@ -142,7 +143,7 @@ class People(cvb.BasePeople):
                 new_contacts['beta']  = np.array([beta]*n_new, dtype=np.float32)
 
                 # Add to contacts
-                self.add_contacts(new_contacts, key=dynamic_key)
+                self.add_contacts(new_contacts, lkey=dynamic_key)
                 self.contacts[dynamic_key].validate()
 
         return self.contacts
@@ -152,13 +153,13 @@ class People(cvb.BasePeople):
         '''
         Make person susceptible. This is used during dynamic resampling
         '''
-        for key in self.keylist.states:
+        for key in self.meta.states:
             if key == 'susceptible':
                 self[key][inds] = True
             else:
                 self[key][inds] = False
 
-        for key in self.keylist.dates + self.keylist.durs:
+        for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
         return

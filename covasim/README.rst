@@ -29,7 +29,6 @@ Disease transmission parameters
 * ``asymp_factor`` = Effect of asymptomaticity on transmission.
 * ``diag_factor``  = Effect of diagnosis on transmission.
 * ``cont_factor``  = Effect of being a known contact  on transmission.
-* ``use_layers``   = Whether or not to use different contact layers
 * ``contacts``     = The number of contacts per layer
 * ``beta_layers``  = Transmissibility per layer
 

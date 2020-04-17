@@ -6,10 +6,10 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['PeopleKeys', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
+__all__ = ['PeopleMeta', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
            'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots']
 
-class PeopleKeys(sc.prettyobj):
+class PeopleMeta(sc.prettyobj):
     ''' For storing all the keys relating to a person and people '''
 
     # Set the properties of a persocn
@@ -55,15 +55,6 @@ class PeopleKeys(sc.prettyobj):
     ]
 
     all_states = person + states + dates + durs
-
-    # Properties of contacts
-    contacts = {
-        'p1':      np.int32, # Person 1
-        'p2':      np.int32,  # Person 2
-        'layer':   None, # The layer by which the people are connected
-        'beta':    np.float32, # Default transmissibility for this contact type
-    }
-
 
 
 # A subset of the above states are used for results
@@ -145,23 +136,17 @@ default_sim_plots = sc.odict({
             'cum_infections',
             'cum_diagnoses',
             'cum_recoveries',
-            # 'cum_tests',
-            # 'n_susceptible',
-            # 'n_infectious',
         ],
         'Daily counts': [
             'new_infections',
             'new_diagnoses',
             'new_recoveries',
             'new_deaths',
-            # 'tests',
         ],
         'Health outcomes': [
             'cum_severe',
             'cum_critical',
             'cum_deaths',
-            # 'n_severe',
-            # 'n_critical',
         ]
 })
 
