@@ -142,3 +142,5 @@ dmypy.json
 
 # Node.js and NPM
 node_modules
+docs/covasim.*
+docs/modules.rst
