@@ -774,36 +774,67 @@ class Person(sc.prettyobj):
         return
 
 
-class Contacts(sc.objdict):
+class FlexDict(dict):
+    '''
+    A dict that allows more flexible element access: in addition to obj['a'],
+    also allow obj[0]. Lightweight implementation of the Sciris odict class.
+    '''
+
+    def __getitem__(self, key):
+        ''' Lightweight odict -- allow indexing by number, with low performance '''
+        try:
+            return super().__getitem__(key)
+        except KeyError as KE:
+            try: # Assume it's an integer
+                dictkey = self.keys()[key]
+                return self[dictkey]
+            except:
+                raise KE # This is the original errors
+
+    def keys(self):
+        return list(super().keys())
+
+    def values(self):
+        return list(super().values())
+
+    def items(self):
+        return list(super().items())
+
+
+class Contacts(FlexDict):
     '''
     A simple (for now) class for storing different contact layers.
     '''
     def __init__(self, layer_keys=None):
-        # Initialize with the right layers
         if layer_keys is not None:
             for key in layer_keys:
                 self[key] = Layer()
         return
 
-    # def __repr__(self):
-    #     ''' Use slightly customized repr'''
-    #     keys_str = ', '.join(self.keys())
-    #     output = f'Contacts({keys_str}): '
-    #     output += super().__repr__()
-    #     return output
+    def __repr__(self):
+        ''' Use slightly customized repr'''
+        keys_str = ', '.join(self.keys())
+        output = f'Contacts({keys_str}): '
+        output += super().__repr__()
+        return output
 
 
 
-class Layer(sc.objdict):
+class Layer(FlexDict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, **kwargs):
-        setattr(self, 'meta', sc.dcp(cvd.meta))
+        self.meta = {
+            'p1':    np.int32, # Person 1
+            'p2':    np.int32,  # Person 2
+            'layer': None, # The layer by which the people are connected
+            'beta':  np.float32, # Default transmissibility for this contact type
+        }
+        self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
 
         # Initialize the keys of the layers
         for key,dtype in self.meta.items():
             self[key] = np.empty((0,), dtype=dtype)
-        self.basekey = self.keys()[0] # Assign a base key for calculating lengths and performing other operations
 
         # Set data, if provided
         for key,value in kwargs.items():
@@ -825,11 +856,6 @@ class Layer(sc.objdict):
     #     output = f'Layer({keys_str}): '
     #     output += self.to_df().__repr__()
     #     return output
-
-
-    def __setattr__(self, name, value):
-        return dict.__setattr__(self, name, value)
-
 
 
     def validate(self):

@@ -143,7 +143,7 @@ class People(cvb.BasePeople):
                 new_contacts['beta']  = np.array([beta]*n_new, dtype=np.float32)
 
                 # Add to contacts
-                self.add_contacts(new_contacts, key=dynamic_key)
+                self.add_contacts(new_contacts, lkey=dynamic_key)
                 self.contacts[dynamic_key].validate()
 
         return self.contacts

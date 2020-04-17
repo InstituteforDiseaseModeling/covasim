@@ -148,7 +148,7 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     verbose = 1
     base_pars = {
       'pop_size': 2000,
-      'use_layers': 'hybrid',
+      'pop_type': 'hybrid',
       }
 
     base_sim = cv.Sim(base_pars) # create sim object
