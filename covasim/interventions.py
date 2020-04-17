@@ -294,22 +294,14 @@ class test_prob(Intervention):
     Probabilities are OR together, so choose wisely.
 
     Args:
-        symptomatic_prob (float): Probability of testing a symptomatic person
-        asymptomatic_prob (float): Probability of testing an asymptomatic person
+        symp_prob (float): Probability of testing a symptomatic (unquarantined) person
+        asymp_prob (float): Probability of testing an asymptomatic (unquarantined) person
+        symp_quar_prob (float): Probability of testing a symptomatic quarantined person
+        asymp_quar_prob (float): Probability of testing an asymptomatic quarantined person
         test_sensitivity (float): Probability of a true positive
         loss_prob (float): Probability of loss to follow-up
         test_delay (int): How long testing takes
         start_day (int): When to start the intervention
-
-
-    Args:
-        symptomatic_prob (float): Probability of testing a symptomatic person
-        asymptomatic_prob (float): Probability of testing an asymptomatic person
-        test_sensitivity (float): Probability of a true positive
-        loss_prob (float): Probability of loss to follow-up
-        test_delay (int): How long testing takes
-        start_day (int): When to start the intervention
-
 
     **Example**
     ::
@@ -320,16 +312,16 @@ class test_prob(Intervention):
     Returns:
         Intervention
     '''
-    def __init__(self, symp_prob=0, asymp_prob=0, asymp_quar_prob=None, symp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
+    def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
         super().__init__()
-        self.symp_prob = symp_prob
-        self.asymp_prob = asymp_prob
-        self.symp_quar_prob = symp_quar_prob if symp_quar_prob is not None else symp_prob
-        self.asymp_quar_prob = asymp_quar_prob if asymp_quar_prob is not None else asymp_prob
+        self.symp_prob        = symp_prob
+        self.asymp_prob       = asymp_prob
+        self.symp_quar_prob   = symp_quar_prob  if  symp_quar_prob is not None else  symp_prob
+        self.asymp_quar_prob  = asymp_quar_prob if asymp_quar_prob is not None else asymp_prob
         self.test_sensitivity = test_sensitivity
-        self.loss_prob = loss_prob
-        self.test_delay = test_delay
-        self.start_day = start_day
+        self.loss_prob        = loss_prob
+        self.test_delay       = test_delay
+        self.start_day        = start_day
 
         return
 
