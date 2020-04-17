@@ -61,9 +61,8 @@ class Sim(cvb.BaseSim):
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
-        pars = sc.mergedicts(pars, kwargs)
         if pars:
-            if 'use_layers' in pars: # Reset layers
+            if 'pop_type' in pars:
                 cvpars.set_contacts(pars)
             if 'prog_by_age' in pars:
                 pars['prognoses'] = cvpars.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
@@ -156,14 +155,19 @@ class Sim(cvb.BaseSim):
         contacts = self['contacts']
         if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's all contacts
             self['contacts']    = {'a':contacts}
-            self['beta_layer'] = {'a':1.0}
+
+        # Handle key mismaches
+        beta_layer_keys = set(self.pars['beta_layer'].keys())
+        contacts_keys   = set(self.pars['contacts'].keys())
+        quar_eff_keys   = set(self.pars['quar_eff'].keys())
+        if not(beta_layer_keys == contacts_keys == quar_eff_keys):
+            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} are not consistent'
+            raise ValueError(errormsg)
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
-        if sc.isnumber(self['pop_type']): # Convert e.g. pop_type=1 to 'hybrid'
-            self['pop_type'] = popdata_choices[int(self['pop_type'])] # Choose one of these
-        if self['pop_type'] not in popdata_choices:
-            choice = self['pop_type']
+        choice = self['pop_type']
+        if choice not in popdata_choices:
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)

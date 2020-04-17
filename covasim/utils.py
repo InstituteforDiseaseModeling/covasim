@@ -4,7 +4,6 @@ Numerical utilities for running Covasim
 
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
-import pandas as pd # Used for pd.unique() (better than np.unique())
 
 
 #%% Sampling and seed methods
@@ -159,7 +158,6 @@ def poisson(rate):
     return np.random.poisson(rate, 1)[0]
 
 
-#@nb.njit((nb.float64, nb.int64[:]))
 def binomial_filter(prob, arr):
     ''' Binomial "filter" -- return entries that passed '''
     return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]

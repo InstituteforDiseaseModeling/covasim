@@ -16,6 +16,7 @@ import base64 # Download/upload-specific import
 import json
 import tempfile
 import traceback
+from pathlib import Path
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -23,7 +24,6 @@ import scirisweb as sw
 
 # Create the app
 app = sw.ScirisApp(__name__, name="Covasim")
-app.sessions = dict() # For storing user data
 flask_app = app.flask_app
 
 #%% Define the API
@@ -42,7 +42,6 @@ def healthcheck():
 
 def log_err(message:str, ex:Exception):
     tex = traceback.TracebackException.from_exception(ex)
-    out = f"{message} {traceback.format_exception_only(tex.exc_type, tex)}"
     print(f"{message}\n", )
     return {
         "message": message,
@@ -159,6 +158,17 @@ def get_version():
     output = f'Version {cv.__version__} ({cv.__versiondate__})'
     return output
 
+@app.register_RPC()
+def get_licenses():
+    cwd = Path(__file__).parent
+    repo = cwd.joinpath('../..')
+    license = repo.joinpath('LICENSE').read_text(encoding='utf-8')
+    notice = repo.joinpath('licenses/NOTICE').read_text(encoding='utf-8')
+
+    return {
+        'license': license,
+        'notice': notice
+    }
 
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
