@@ -2,7 +2,7 @@ numpy
 pandas
 scipy
 matplotlib
-numba
+numba==0.48
 sciris
 scirisweb
 gunicorn
