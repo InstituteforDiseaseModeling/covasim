@@ -214,7 +214,7 @@ class change_beta(Intervention):
                 else:
                     sim['beta_layer'][layer] = new_beta
 
-            sim.people.set_beta(sim)
+            sim.people.set_betas(sim)
         return
 
 
