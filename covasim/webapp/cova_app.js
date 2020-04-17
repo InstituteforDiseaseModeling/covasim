@@ -139,7 +139,10 @@ var vm = new Vue({
                 version: 'Unable to connect to server!', // This text will display instead of the version
                 copyright_year: copyright_year(),
                 github_url: "https://github.com/institutefordiseasemodeling/covasim",
-                org_url: "https://idmod.org"
+                org_url: "https://idmod.org",
+                docs_url: "https://institutefordiseasemodeling.github.io/covasim/index.html",
+                license: 'Loading...',
+                notice: 'Loading...'
             },
             panel_open: true,
             panel_width: null,
@@ -175,6 +178,7 @@ var vm = new Vue({
         this.get_version();
         this.resetPars();
         this.watchSimLengthParam();
+        this.get_licenses();
     },
 
     filters: {
@@ -263,7 +267,11 @@ var vm = new Vue({
             const response = await sciris.rpc('get_version');
             this.app.version = response.data;
         },
-
+        async get_licenses(){
+            const response = await sciris.rpc('get_licenses');
+            this.app.license = response.data.license;
+            this.app.notice = response.data.notice;
+        },
         async runSim() {
             this.running = true;
             // this.graphs = this.$options.data().graphs; // Uncomment this to clear the graphs on each run

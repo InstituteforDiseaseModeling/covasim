@@ -14,6 +14,7 @@ import base64 # Download/upload-specific import
 import json
 import tempfile
 import traceback
+from pathlib import Path
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -152,6 +153,17 @@ def get_version():
     output = f'Version {cv.__version__} ({cv.__versiondate__})'
     return output
 
+@app.register_RPC()
+def get_licenses():
+    cwd = Path(__file__).parent
+    repo = cwd.joinpath('../..')
+    license = repo.joinpath('LICENSE').read_text(encoding='utf-8')
+    notice = repo.joinpath('licenses/NOTICE').read_text(encoding='utf-8')
+
+    return {
+        'license': license,
+        'notice': notice
+    }
 
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
