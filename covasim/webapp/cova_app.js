@@ -1,6 +1,6 @@
 import './cova_app.css';
 import Vue from 'vue';
-import { CardPlugin, NavbarPlugin, ButtonPlugin, SidebarPlugin, ModalPlugin, TooltipPlugin, TabsPlugin, FormFilePlugin } from 'bootstrap-vue';
+import { FormCheckboxPlugin, CardPlugin, FormPlugin, NavbarPlugin, ButtonPlugin, SidebarPlugin, ModalPlugin, TooltipPlugin, TabsPlugin, FormFilePlugin } from 'bootstrap-vue';
 import sciris from 'sciris-js';
 import { saveAs } from 'file-saver';
 import Plotly from 'plotly';
@@ -13,6 +13,8 @@ Vue.use(SidebarPlugin);
 Vue.use(ModalPlugin);
 Vue.use(TooltipPlugin);
 Vue.use(FormFilePlugin);
+Vue.use(FormPlugin);
+Vue.use(FormCheckboxPlugin);
 
 const PlotlyChart = {
     props: ['graph'],
@@ -26,7 +28,7 @@ const PlotlyChart = {
 
     mounted() {
         this.$nextTick(function () {
-            if (this.graph['json']){
+            if (this.graph['json']) {
                 let x = JSON.parse(this.graph.json);
                 x.responsive = true;
                 Plotly.react(this.graph.id, x);
@@ -36,7 +38,7 @@ const PlotlyChart = {
     },
     updated() {
         this.$nextTick(function () {
-            if (this.graph['json']){
+            if (this.graph['json']) {
                 let x = JSON.parse(this.graph.json);
                 x.responsive = true;
                 Plotly.react(this.graph.id, x);
@@ -50,44 +52,44 @@ const PlotlyChart = {
 const interventionTableConfig = {
     social_distance: {
         formTitle: "Social Distancing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'},
-            {key: 'end', type: 'number', label: 'End Day'},
-            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive Effectiveness', value: 'aggressive'}, {label: 'Moderate Effectiveness', value: 'moderate'}, {label: 'Mild Effectiveness', value: 'mild'}]}],
-        handleSubmit: function(event) {
+        fields: [{ key: 'start', type: 'number', label: 'Start Day' },
+        { key: 'end', type: 'number', label: 'End Day' },
+        { label: 'Effectiveness', key: 'level', type: 'select', options: [{ label: 'Aggressive Effectiveness', value: 'aggressive' }, { label: 'Moderate Effectiveness', value: 'moderate' }, { label: 'Mild Effectiveness', value: 'mild' }] }],
+        handleSubmit: function (event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
             const level = event.target.elements.level.value;
-            return {start, end, level};
+            return { start, end, level };
         }
     },
     school_closures: {
         formTitle: "School Closures",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
-        handleSubmit: function(event) {
+        fields: [{ key: 'start', type: 'number', label: 'Start Day' }, { key: 'end', type: 'number', label: 'End Day' }],
+        handleSubmit: function (event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
-            return {start, end};
+            return { start, end };
         }
     },
     symptomatic_testing: {
         formTitle: "Symptomatic Testing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}, {label: 'Accuracy', key: 'level', type: 'select', options: [{label: '60% Accuracy', value: '60'}, {label: '90% Accuracy', value: '90'},]}],
-        handleSubmit: function(event) {
+        fields: [{ key: 'start', type: 'number', label: 'Start Day' }, { key: 'end', type: 'number', label: 'End Day' }, { label: 'Accuracy', key: 'level', type: 'select', options: [{ label: '60% Accuracy', value: '60' }, { label: '90% Accuracy', value: '90' },] }],
+        handleSubmit: function (event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
             const level = parseInt(event.target.elements.level.value);
-            return {start, end, level};
+            return { start, end, level };
         }
     },
     contact_tracing: {
         formTitle: "Contact Tracing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
-        handleSubmit: function(event) {
+        fields: [{ key: 'start', type: 'number', label: 'Start Day' }, { key: 'end', type: 'number', label: 'End Day' }],
+        handleSubmit: function (event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
-            return {start, end};
+            return { start, end };
         }
-  }
+    }
 
 };
 
@@ -96,7 +98,7 @@ function copyright_year() {
     const current_year = new Date().getFullYear()
     let range = [release_year]
 
-    if (current_year > release_year){
+    if (current_year > release_year) {
         range.push(current_year)
     }
 
@@ -104,40 +106,40 @@ function copyright_year() {
 }
 
 function generate_upload_file_handler(onsuccess, onerror) {
-    return function(e){
-            let files = e.target.files;
-            if (files.length > 0){
-                const data = new FormData();
-                data.append('uploadfile', files[0])
-                data.append('funcname', 'upload_file')
-                data.append('args', undefined)
-                data.append('kwargs', undefined)
-                fetch("/api/rpcs", {
-                  "body": data,
-                  "method": "POST",
-                  "mode": "cors",
-                  "credentials": "include"
-                }).then(response => {
-                    if(!response.ok){
-                        throw new Error(response.json())
-                    }
-                    return response.text()
-                }).then(data => {
-                    remote_filepath = data.trim()
-                                          .replace(/["]/g, "")
-                    onsuccess(remote_filepath)
-                })
+    return function (e) {
+        let files = e.target.files;
+        if (files.length > 0) {
+            const data = new FormData();
+            data.append('uploadfile', files[0])
+            data.append('funcname', 'upload_file')
+            data.append('args', undefined)
+            data.append('kwargs', undefined)
+            fetch("/api/rpcs", {
+                "body": data,
+                "method": "POST",
+                "mode": "cors",
+                "credentials": "include"
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error(response.json())
+                }
+                return response.text()
+            }).then(data => {
+                remote_filepath = data.trim()
+                    .replace(/["]/g, "")
+                onsuccess(remote_filepath)
+            })
                 .catch(error => {
-                    if (onerror){
+                    if (onerror) {
                         sciris.fail(this, "Could not upload file.", error)
                     } else {
                         onerror(error)
                     }
                 })
-            } else {
-                console.warn("No input file selected.")
-            }
+        } else {
+            console.warn("No input file selected.")
         }
+    }
 }
 
 var vm = new Vue({
@@ -228,20 +230,20 @@ var vm = new Vue({
                 return;
             }
 
-            const overlaps = this.intervention_pars[key].some(({start, end}) => {
+            const overlaps = this.intervention_pars[key].some(({ start, end }) => {
                 return start <= intervention.start && end >= intervention.start ||
                     start <= intervention.end && end >= intervention.end ||
                     intervention.start <= start && intervention.end >= end;
             })
-            if (overlaps){
+            if (overlaps) {
                 this.$set(this.scenarioError, scenarioKey, `Interventions of the same type cannot have overlapping day ranges.`)
-                return ;
+                return;
             }
 
-            const outOfBounds = intervention.start > this.sim_length.best || intervention.end > this.sim_length.best || this.intervention_pars[key].some(({start, end}) => {
+            const outOfBounds = intervention.start > this.sim_length.best || intervention.end > this.sim_length.best || this.intervention_pars[key].some(({ start, end }) => {
                 return start > self.sim_length.best || end > self.sim_length.best
             })
-            if (outOfBounds){
+            if (outOfBounds) {
                 this.$set(this.scenarioError, scenarioKey, `Intervention cannot start or end after the campaign duration.`)
                 return;
             }
@@ -250,12 +252,12 @@ var vm = new Vue({
             this.intervention_pars[key].push(intervention);
             const result = this.intervention_pars[key].sort((a, b) => a.start - b.start);
             this.$set(this.intervention_pars, key, result);
-            const response = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
+            const response = await sciris.rpc('get_gantt', undefined, { intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig });
             this.intervention_figs = response.data;
         },
         async deleteIntervention(scenarioKey, index) {
             this.$delete(this.intervention_pars[scenarioKey], index);
-            const response = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
+            const response = await sciris.rpc('get_gantt', undefined, { intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig });
             this.intervention_figs = response.data;
         },
         open_panel() {
@@ -283,7 +285,7 @@ var vm = new Vue({
             const response = await sciris.rpc('get_version');
             this.app.version = response.data;
         },
-        async get_licenses(){
+        async get_licenses() {
             const response = await sciris.rpc('get_licenses');
             this.app.license = response.data.license;
             this.app.notice = response.data.notice;
@@ -297,7 +299,7 @@ var vm = new Vue({
 
             // Run a a single sim
             try {
-                if(this.datafile.local_path === null){
+                if (this.datafile.local_path === null) {
                     this.reset_datafile()
                 }
                 const kwargs = {
@@ -335,7 +337,7 @@ var vm = new Vue({
             const response = await sciris.rpc('get_defaults', [this.reset_choice]);
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
-            this.sim_length = {...this.sim_pars['n_days']}
+            this.sim_length = { ...this.sim_pars['n_days'] }
             this.intervention_pars = {};
             this.intervention_figs = {};
             this.setupFormWatcher('sim_pars');
@@ -392,8 +394,8 @@ var vm = new Vue({
                 this.graphs = [];
                 this.intervention_figs = {}
 
-                if (this.intervention_pars){
-                    const gantt = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
+                if (this.intervention_pars) {
+                    const gantt = await sciris.rpc('get_gantt', undefined, { intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig });
                     this.intervention_figs = gantt.data;
                 }
 
@@ -401,7 +403,7 @@ var vm = new Vue({
                 sciris.fail(this, 'Could not upload parameters', error);
             }
         },
-        upload_datafile: generate_upload_file_handler(function(filepath){
+        upload_datafile: generate_upload_file_handler(function (filepath) {
             vm.datafile.server_path = filepath
         }),
         reset_datafile() {
