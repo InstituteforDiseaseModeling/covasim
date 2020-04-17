@@ -12,6 +12,8 @@ import plotly.figure_factory as ff
 import sciris as sc
 import base64 # Download/upload-specific import
 import json
+import tempfile
+import traceback
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -28,6 +30,17 @@ flask_app = app.flask_app
 max_pop  = 10e3 # Maximum population size
 max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
+die      = False # Whether or not to raise exceptions instead of continuing
+
+
+def log_err(message:str, ex:Exception):
+    tex = traceback.TracebackException.from_exception(ex)
+    out = f"{message} {traceback.format_exception_only(tex.exc_type, tex)}"
+    print(f"{message}\n", )
+    return {
+        "message": message,
+        "exception": ''.join(traceback.format_exception(tex.exc_type, tex, tex.exc_traceback))
+    }
 
 @app.register_RPC()
 def get_defaults(region=None, merge=False):
@@ -74,6 +87,7 @@ def get_defaults(region=None, merge=False):
     sim_pars['pop_size']     = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
     sim_pars['pop_infected'] = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
     sim_pars['rand_seed']    = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
+    sim_pars['n_days']       = dict(best=90,   min=1, max=max_days, name="Simulation Duration",        tip='Total duration (in days) of the simulation')
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
@@ -87,10 +101,8 @@ def get_defaults(region=None, merge=False):
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict[region]
-    n_days_default = dict(best=90,   min=1, max=max_days, name='Number of days to simulate', tip='Number of days to run the simulation for')
     if merge:
         output = {**sim_pars, **epi_pars}
-        output['n_days'] = n_days_default
     else:
         output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
 
@@ -150,26 +162,38 @@ def upload_pars(fname):
         raise KeyError(f'Parameters file must have keys "sim_pars" and "epi_pars", not {parameters.keys()}')
     return parameters
 
+@app.register_RPC(call_type='upload')
+def upload_file(file):
+    stem, ext = os.path.splitext(file)
+    data = sc.loadtext(file)
+    fd, path = tempfile.mkstemp(suffix=ext, prefix="input_", dir=tempfile.mkdtemp())
+    with open(path, mode='w', encoding="utf-8", newline="\n") as fd:
+        fd.write(data)
+        fd.flush()
+        fd.close()
+    return path
+
 @app.register_RPC()
-def get_gnatt(intervention_pars=None, intervention_config=None):
+def get_gantt(intervention_pars=None, intervention_config=None):
     df = []
+    response = {'id': 'test'}
     for key,scenario in intervention_pars.items():
         for timeline in scenario:
             task = intervention_config[key]['formTitle']
             level = task + ' ' + str(timeline.get('level', ''))
             df.append(dict(Task=task, Start=timeline['start'], Finish=timeline['end'], Level= level))
+    if len(df) > 0:
+        fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
+                            show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
+        fig.update_xaxes(type='linear')
+        response['json'] = fig.to_json()
 
-    fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
-                        show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
-    fig.update_xaxes(type='linear')
-    return {'json': fig.to_json(), 'id': 'test'}
+    return response
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation=False, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
     ''' Create, run, and plot everything '''
-
-    err = ''
-
+    errs = []
     try:
         # Fix up things that JavaScript mangles
         orig_pars = cv.make_pars(set_prognoses=True, prog_by_age=False, use_layers=False)
@@ -187,15 +211,18 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
 
             try:
                 web_pars[key] = np.clip(float(entry['best']), minval, maxval)
-            except Exception:
+            except Exception as E:
                 user_key = entry['name']
                 user_val = entry['best']
-                err1 = f'Could not convert parameter "{user_key}", value "{user_val}"; using default value instead\n'
-                print(err1)
-                err += err1
+                err = f'Could not convert parameter "{user_key}" from value "{user_val}"; using default value instead.'
+                errs.append(log_err(err, E))
                 web_pars[key] = best
-            if key in sim_pars: sim_pars[key]['best'] = web_pars[key]
-            else:               epi_pars[key]['best'] = web_pars[key]
+                if die: raise
+
+            if key in sim_pars:
+                sim_pars[key]['best'] = web_pars[key]
+            else:
+                epi_pars[key]['best'] = web_pars[key]
 
         # Convert durations
         web_pars['dur'] = sc.dcp(orig_pars['dur']) # This is complicated, so just copy it
@@ -205,6 +232,9 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
         web_dur = web_pars.pop('web_dur')
         for key in ['asym2rec', 'mild2rec', 'sev2rec', 'crit2rec']:
             web_pars['dur'][key]['par1'] = web_dur
+
+        # Add n_days
+        web_pars['n_days'] = n_days
 
         # Add the intervention
         web_pars['interventions'] = []
@@ -234,17 +264,15 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
         web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
 
     except Exception as E:
-        err2 = f'Parameter conversion failed! {str(E)}\n'
-        print(err2)
-        err += err2
+        errs.append(log_err('Parameter conversion failed!', E))
+        if die: raise
 
     # Create the sim and update the parameters
     try:
-        sim = cv.Sim(web_pars)
+        sim = cv.Sim(pars=web_pars,datafile=datafile)
     except Exception as E:
-        err3 = f'Sim creation failed! {str(E)}\n'
-        print(err3)
-        err += err3
+        errs.append(log_err('Sim creation failed!', E))
+        if die: raise
 
     if verbose:
         print('Input parameters:')
@@ -253,14 +281,13 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
     # Core algorithm
     try:
         sim.run(do_plot=False)
-    except TimeoutError:
-        day = sim.t
-        err4 = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
-        err += err4
+    except TimeoutError as TE:
+        err = f"The simulation stopped on day {sim.t} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
+        errs.append(log_err(err, TE))
+        if die: raise
     except Exception as E:
-        err4 = f'Sim run failed! {str(E)}\n'
-        print(err4)
-        err += err4
+        errs.append(log_err('Sim run failed!', E))
+        if die: raise
 
     # Core plotting
     graphs = []
@@ -272,7 +299,12 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
                 label = sim.results[key].name
                 this_color = sim.results[key].color
                 y = sim.results[key][:]
-                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y,mode='lines',name=label,line_color=this_color))
+                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
+                if sim.data is not None and key in sim.data:
+                    data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
+                    print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
+                    ydata = sim.data[key]
+                    fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
             if sim['interventions']:
                 interv_day = sim['interventions'][0].days[0]
@@ -294,9 +326,8 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
             graphs.append(animate_people(sim))
 
     except Exception as E:
-        err5 = f'Plotting failed! {str(E)}\n'
-        print(err5)
-        err += err5
+        errs.append(log_err('Plotting failed!', E))
+        if die: raise
 
 
     # Create and send output files (base64 encoded content)
@@ -308,13 +339,13 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
 
         ss = sim.to_excel()
         files['xlsx'] = {
-            'filename': f'Covasim_results_{datestamp}.xlsx',
+            'filename': f'covasim_results_{datestamp}.xlsx',
             'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
         }
 
         json_string = sim.to_json(verbose=False)
         files['json'] = {
-            'filename': f'Covasim_results_{datestamp}.json',
+            'filename': f'covasim_results_{datestamp}.json',
             'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
         }
 
@@ -325,14 +356,14 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
             'deaths': round(sim.results['cum_deaths'][-1]),
         }
     except Exception as E:
-        err6 = f'File saving failed! {str(E)}\n'
-        print(err6)
-        err += err6
+        errs.append(log_err('Unable to save output files!', E))
+        if die: raise
 
     output = {}
-    output['err']      = err
+    output['errs']     = errs
     output['sim_pars'] = sim_pars
     output['epi_pars'] = epi_pars
+    output['intervention_pars'] = intervention_pars
     output['graphs']   = graphs
     output['files']    = files
     output['summary']  = summary
@@ -342,8 +373,9 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, show_animation
 
 def get_individual_states(sim, order=True):
     people = sim.people
-    if order:
-        people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
+    # if order:
+        # print('Note: ordering of people for the animation is currently not supported')
+        # people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
 
     # Order these in order of precedence
     # The last matching quantity will be used
@@ -376,13 +408,12 @@ def get_individual_states(sim, order=True):
     ]
 
     z = np.zeros((len(people), sim.npts))
-
-    for i, p in enumerate(people):
-        for state in states:
-            if state['quantity'] is None:
-                continue
-            elif getattr(p, state['quantity']) is not None:
-                z[i, int(getattr(p, state['quantity'])):] = state['value']
+    for state in states:
+        date = state['quantity']
+        if date is not None:
+            inds = cv.defined(people[date])
+            for ind in inds:
+                z[ind, int(people[date][ind]):] = state['value']
 
     return z, states
 

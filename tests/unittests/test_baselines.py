@@ -6,8 +6,8 @@ import sciris as sc
 import covasim as cv
 
 do_save = True
-baseline_filename  = 'baseline.json'
-benchmark_filename = 'benchmark.json'
+baseline_filename  = sc.thisdir(__file__, 'baseline.json')
+benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
 baseline_key = 'summary'
 
 
