@@ -62,6 +62,8 @@ class Sim(cvb.BaseSim):
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
         if pars:
+            if 'pop_type' in pars:
+                cvpars.set_contacts(pars)
             if 'prog_by_age' in pars:
                 pars['prognoses'] = cvpars.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
