@@ -10,7 +10,7 @@ from . import utils as cvu
 from . import defaults as cvd
 
 # Specify all externally visible classes this file defines
-__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'TransTree']
+__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer', 'TransTree']
 
 
 #%% Define simulation classes
@@ -814,8 +814,10 @@ class Contacts(FlexDict):
     def __repr__(self):
         ''' Use slightly customized repr'''
         keys_str = ', '.join(self.keys())
-        output = f'Contacts({keys_str}): '
-        output += super().__repr__()
+        output = f'Contacts({keys_str})\n'
+        for key in self.keys():
+            output += f'\n"{key}": '
+            output += self[key].__repr__() + '\n'
         return output
 
 
@@ -849,12 +851,12 @@ class Layer(FlexDict):
             return 0
 
 
-    # def __repr__(self):
-    #     ''' Convert to a dataframe for printing '''
-    #     keys_str = ', '.join(self.keys())
-    #     output = f'Layer({keys_str}): '
-    #     output += self.to_df().__repr__()
-    #     return output
+    def __repr__(self):
+        ''' Convert to a dataframe for printing '''
+        keys_str = ', '.join(self.keys())
+        output = f'Layer({keys_str})\n'
+        output += self.to_df().__repr__()
+        return output
 
 
     def validate(self):
