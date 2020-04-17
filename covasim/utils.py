@@ -138,18 +138,15 @@ def idefinedi(arr, inds):
 __all__ += ['binomial_arr', 'multinomial', 'poisson', 'binomial_filter', 'choose', 'choose_r', 'choose_w']
 
 
-@nb.njit((nb.float64, nb.int64), cache=True)
 def n_binomial(prob, n):
     ''' Perform n binomial (Bernolli) trials -- return boolean array '''
     return np.random.random(n) < prob
 
-@nb.njit((nb.float32[:],), cache=True)
 def binomial_arr(prob_arr):
     ''' Binomial (Bernoulli) trials each with different probabilities -- return boolean array '''
     return np.random.random(len(prob_arr)) < prob_arr
 
 
-@nb.njit((nb.float32[:], nb.int32), cache=True)
 def multinomial(probs, repeats):
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
@@ -161,7 +158,6 @@ def poisson(rate):
     return np.random.poisson(rate, 1)[0]
 
 
-@nb.njit((nb.float64, nb.int64[:]), cache=True)
 def binomial_filter(prob, arr):
     ''' Binomial "filter" -- return entries that passed '''
     return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]
