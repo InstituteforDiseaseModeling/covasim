@@ -49,10 +49,11 @@ def make_pars():
 def get_age_sex(is_crew=False, min_age=18, max_age=99, crew_age=35, crew_std=5, guest_age=68, guest_std=8):
     '''
     Define age-sex distributions. Passenger age distribution based on:
-        https://www.nytimes.com/reuters/2020/02/12/world/asia/12reuters-china-health-japan.html
 
-        "About 80% of the passengers were aged 60 or over [=2130], with 215 in their 80s and 11 in the 90s,
-        the English-language Japan Times newspaper reported."
+    https://www.nytimes.com/reuters/2020/02/12/world/asia/12reuters-china-health-japan.html
+
+    "About 80% of the passengers were aged 60 or over [=2130], with 215 in their 80s and 11 in the 90s,
+    the English-language Japan Times newspaper reported."
     '''
 
     # Define female (0) or male (1) -- evenly distributed

@@ -8,7 +8,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap@4.4.1/dist/css/bootstrap.min.css"/>
   <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@2.11.0/dist/bootstrap-vue.min.css"/>
   <link type="text/css" rel="stylesheet" href="assets/themify-icons.css"/>
   <script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=es2015%2CIntersectionObserver"></script>
@@ -18,7 +18,7 @@
   <!-- Avenir is not available -->
 
   <!-- Customization -->
-  <title>COVASim</title>
+  <title>Covasim</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- Remove favicon.ico 404 -->
   <script src="https://unpkg.com/sciris-js@0.2.18/dist/sciris-js.js"></script>
   <script src="https://cdn.plot.ly/plotly-1.53.0.min.js"></script>
@@ -34,12 +34,15 @@
 
 <section id="app" class="container-fluid" @mousemove="resize_apply" @mouseup="resize_end">
   <header class="row no-gutter">
-    <b-navbar type="dark" variant="dark" toggleable="false">
+    <b-navbar type="dark" variant="dark">
       <b-navbar-brand href="#">{{ app.title }}</b-navbar-brand>
-      <b-button v-b-modal.about class="btn text-white">
-        COVID-19 agent-based simulator
-      </b-button>
-      <span class="navbar-text"><a href="{{ app.github_url }}" target="_blank">{{ app.version }}</a></span>
+      <b-navbar-nav>
+        <b-nav-item :href="app.docs_url" target="_blank">Documentation</b-nav-item>
+        <b-nav-item v-b-modal.about>About</b-nav-item>
+      </b-navbar-nav>
+      <b-navbar-nav class="ml-auto">
+        <b-nav-item :href="app.github_url" target="_blank">{{app.version}}</b-nav-item>
+      </b-navbar-nav>
     </b-navbar>
 
     <!-- About modal -->
@@ -110,19 +113,19 @@
           <span aria-live="assertive" v-if="paramError.sim_length" class="text-danger form-error">{{paramError.sim_length}}</span>
 
           <b-tooltip target="n_days">
-            Number of days to run the simulation for
+            {{sim_length.tip}}
           </b-tooltip>
         </div>
         <div class="form-row mb-3">
-          <label for="input_file" class="col-12">Upload Data</label>
+          <label for="datafile" class="col-12">Upload Data</label>
           <div class="col">
-            <b-form-file id="input_file" name="input_file" accept=".csv, .xlsx" placeholder="Use IDM's data" v-model="input.blob" @change="upload_input_data" :disabled="running"></b-form-file>
+            <b-form-file id="datafile" name="datafile" accept=".csv, .xlsx" placeholder="Use IDM's data" v-model="datafile.local_path" @change="upload_datafile" :disabled="running"></b-form-file>
           </div>
           <div class="col-auto">
-            <button id="clear_input_file" :disabled="running" class="btn btn-primary blueish" type="button" @click="clear_input_data">
+            <button id="reset-datafile" :disabled="running" class="btn btn-primary blueish" type="button" @click="reset_datafile">
               Clear
             </button>
-            <b-tooltip target="clear_input_file">
+            <b-tooltip target="reset-datafile">
               Remove the input data file from the campaign.
             </b-tooltip>
           </div>
@@ -133,51 +136,55 @@
             <button class="btn btn-block" v-b-toggle.intervention>Interventions</button>
           </div>
           <b-collapse visible id="intervention">
-            <div class="card-body">
-              <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
-              <ul class="nav nav-tabs">
-                <li v-for="(scenario, scenarioKey, index) in interventionTableConfig" class="nav-item"><a data-toggle="tab" class="nav-link" v-bind:class="[index === 0 ? 'active' : '']" :href="'#' + scenarioKey">{{scenario.formTitle}}</a></li>
-              </ul>
-              <div class="tab-content">
-                <div :id="scenarioKey" class="tab-pane fade" v-bind:class="[index === 0 ? 'active show' : '']" v-for="(scenario, scenarioKey, index) in interventionTableConfig">
-                  <fieldset>
-                    <legend>{{scenario.formTitle}}</legend>
-                    <form @submit.prevent="(e) => addIntervention(scenarioKey, e)">
-                      <div class="form-group">
-                        <div class="input-group mb-3">
-                          <template v-for="field in scenario.fields">
-                            <input max="180" min="1" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type" >
-                            <select class="form-control" :name="field.key" v-else>
+            <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
+            <b-card no-body class="border-0 rounded-0">
+              <b-tabs fill card>
+                <template v-for="(intervention, name, index) in interventionTableConfig">
+                  <b-tab :class="[index === 0? 'active' : '']" :id="'intervention-'+name">
+                    <template v-slot:title>
+                      {{ intervention.formTitle }}
+                    </template>
+                    <fieldset>
+                      <legend>{{intervention.formTitle}}</legend>
+                      <form @submit.prevent="(e) => addIntervention(name, e)">
+                        <div class="form-group">
+                          <div class="input-group mb-3">
+                            <template v-for="field in intervention.fields">
+                              <input :max="sim_length.max" :min="sim_length.min" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type">
+                              <select class="form-control" :name="field.key" v-else>
                                 <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
-                            </select>
-                          </template>
-                          <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="submit">Add intervention</button>
+                              </select>
+                            </template>
+                            <div class="input-group-append">
+                              <button class="btn btn-outline-secondary" type="submit">Add intervention</button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </form>
-                    <span aria-live="assertive" v-if="scenarioError[scenarioKey]" class="text-danger form-error">{{scenarioError[scenarioKey]}}</span>
-                    <div v-if="intervention_pars[scenarioKey] && intervention_pars[scenarioKey].length > 0">
-                      <table class="table">
-                        <thead>
+                      </form>
+                      <span aria-live="assertive" v-if="scenarioError[name]" class="text-danger form-error">{{scenarioError[name]}}</span>
+                      <div v-if="intervention_pars && intervention_pars[name] && intervention_pars[name].length > 0">
+                        <table class="table">
+                          <thead>
                           <tr>
-                            <th scope="col" v-for="field in scenario.fields">{{field.label}}</th>
-                            <th scope="col"> </th>
+                            <th scope="col" v-for="field in intervention.fields">{{field.label}}</th>
+                            <th scope="col"></th>
                           </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="(intervention, index) in intervention_pars[scenarioKey]">
-                            <th v-for="field in scenario.fields" scope="row">{{intervention[field.key]}}</th>
-                            <td><button @click="deleteIntervention(scenarioKey, index)" class="btn btn-outline-secondary" type="button">Delete</button></td>
+                          </thead>
+                          <tbody>
+                          <tr v-for="(par, index) in intervention_pars[name]">
+                            <th v-for="field in intervention.fields" scope="row">{{par[field.key]}}</th>
+                            <td>
+                              <button @click="deleteIntervention(name, index)" class="btn btn-outline-secondary" type="button">Delete</button>
+                            </td>
                           </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </fieldset>
-                </div>
-              </div>
-            </div>
+                          </tbody>
+                        </table>
+                      </div>
+                    </fieldset>
+                  </b-tab>
+                </template>
+              </b-tabs>
+            </b-card>
           </b-collapse>
         </div>
         <div class="card mb-3">
@@ -191,12 +198,12 @@
                 <fieldset class="col-md-6">
                   <legend>Population parameters</legend>
                   <div v-for="(par, key) in sim_pars" class="form-group">
-                    <div :id="key+'-wpr'">
+                    <div :id="key+'-wpr'" v-if="key !== 'n_days'">
                       <label :for="key">{{par.name}}:</label>
                       <input :id="key" :disabled="running" class="form-control" v-model="par.best">
                       <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
                     </div>
-                    <b-tooltip :target="key+'-wpr'">
+                    <b-tooltip :target="key+'-wpr'" v-if="key !== 'n_days'">
                       {{par.tip}}
                     </b-tooltip>
                   </div>
@@ -225,28 +232,25 @@
       <!-- Resize handle -->
       <div id="resize-handle" @mousedown="resize_start"></div>
 
-      <!-- Run button -->
+      <!-- Sidebar Footer: Run buttons -->
       <template v-slot:footer>
-
-        <div v-if="err" class="errorbox">
+        <div v-if="errs.length > 0" class="errorbox" role="tablist">
           <p>During the simulation, the following warning(s) were encountered:</p>
-          <p>{{ err }}</p>
+          <b-card v-for="(err, index) in errs" :value="err">
+            <b-card-text>{{err.message}}</b-card-text>
+            <pre v-if="is_debug">{{ err.exception }}</pre>
+          </b-card>
         </div>
-
-        <div class="form-inline justify-content-end py-2 px-3">
-          <label class="mr-3">
-            <input type="checkbox" v-model="show_animation" />Render animation
-          </label>
-
-          <button v-if="running" class="btn btn-primary btn-lg btn-run green" type="button" disabled>
+        <b-form inline class="justify-content-end py-2 px-3">
+          <b-form-checkbox class="mr-3" v-model="show_animation">Animate</b-form-checkbox>
+          <b-button v-if="running" variant="success" size="lg" class="btn-run green" type="button" disabled>
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             Running...
-          </button>
-          <button v-else id="run_btn" :disabled="isRunDisabled" class="btn btn-primary btn-lg btn-run green" type="button" @click="runSim">
+          </b-button>
+          <b-button v-else id="run_btn" :disabled="isRunDisabled" variant="success" size="lg" class="btn-run green" type="button" @click="runSim">
             Run
-          </button>
-        </div>
-
+          </b-button>
+        </b-form>
       </template>
     </b-sidebar>
 
@@ -272,10 +276,12 @@
 
       <fieldset>
         <legend>Results</legend>
-        <!--           <template v-if="running">
-                    <p><i>Please wait, running model...</i></p>
-                    <b-spinner />
-                  </template> -->
+        <!--
+        <template v-if="running">
+          <p><i>Please wait, running model...</i></p>
+            <b-spinner />
+        </template>
+        -->
         <template v-if="result.graphs.length === 0">
           <p><i>Click "Run" to display graphs</i></p>
         </template>
@@ -312,19 +318,38 @@
   </div>
 
   <footer class="row no-gutter">
-    <b-navbar type="dark" variant="dark" toggleable="false">
+    <b-navbar type="dark" variant="dark">
       <span class="navbar-text text-white">
-        &copy; {{ app.copyright_year }} <a href="http://idmod.org" target="_blank">Institute for Disease Modeling</a>
+        &copy; {{ app.copyright_year }} <a :href="app.org_url" target="_blank">Institute for Disease Modeling</a>
       </span>
-      <a href="{{ app.github_url }}" target="_blank" class="navbar-text">
-        <span class="sr-only">View this project on GitHub</span>
-        <svg height="16" viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true">
-          <path fill-rule="evenodd" fill="currentColor"
-                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-        </svg>
-      </a>
+      <b-navbar-nav class="ml-auto">
+        <b-nav-item :href="app.github_url" target="_blank">
+          <svg viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true" style="vertical-align: text-bottom">
+            <path fill-rule="evenodd" fill="currentColor"
+                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+          </svg>
+          <span class="sr-only">View this project on GitHub</span>
+        </b-nav-item>
+        <b-nav-item v-b-modal.licenses>License</b-nav-item>
+        <b-nav-item :href="app.org_url + '/terms'" target="_blank">Terms</b-nav-item>
+        <b-nav-item :href="app.org_url + '/privacy'" target="_blank">Privacy</b-nav-item>
+      </b-navbar-nav>
     </b-navbar>
   </footer>
+  <b-modal id="licenses" ok-only ok-variant="secondary" ok-title="Close" title="Licenses" scrollable hide-footer size="lg" dialog-class="w-fit">
+    <b-tabs>
+      <b-tab title="Our License" active>
+        <b-card-body>
+          <pre><code>{{ app.license }}</code></pre>
+        </b-card-body>
+      </b-tab>
+      <b-tab title="Library Licenses">
+        <b-card-body>
+          <pre><code>{{ app.notice }}</code></pre>
+        </b-card-body>
+      </b-tab>
+    </b-tabs>
+  </b-modal>
 </section>
 </body>
 

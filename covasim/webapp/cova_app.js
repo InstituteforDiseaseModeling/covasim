@@ -10,17 +10,23 @@ const PlotlyChart = {
 
     mounted() {
         this.$nextTick(function () {
-            let x = JSON.parse(this.graph.json);
-            x.responsive = true;
-            Plotly.react(this.graph.id, x);
+            if (this.graph['json']){
+                let x = JSON.parse(this.graph.json);
+                x.responsive = true;
+                Plotly.react(this.graph.id, x);
+            }
         }
         );
     },
     updated() {
         this.$nextTick(function () {
-            let x = JSON.parse(this.graph.json);
-            x.responsive = true;
-            Plotly.react(this.graph.id, x);
+            if (this.graph['json']){
+                let x = JSON.parse(this.graph.json);
+                x.responsive = true;
+                Plotly.react(this.graph.id, x);
+            } else {
+                Plotly.purge(this.graph.id)
+            }
         });
     }
 };
@@ -102,7 +108,7 @@ function generate_upload_file_handler(onsuccess, onerror) {
                     return response.text()
                 }).then(data => {
                     remote_filepath = data.trim()
-                                        .replace(/["]/g, "")
+                                          .replace(/["]/g, "")
                     onsuccess(remote_filepath)
                 })
                 .catch(error => {
@@ -127,27 +133,28 @@ var vm = new Vue({
 
     data() {
         return {
+            debug: false,
             app: {
-                title: "COVASim",
+                title: "Covasim",
                 version: 'Unable to connect to server!', // This text will display instead of the version
                 copyright_year: copyright_year(),
-                github_url: "https://github.com/institutefordiseasemodeling/covasim"
+                github_url: "https://github.com/institutefordiseasemodeling/covasim",
+                org_url: "https://idmod.org",
+                docs_url: "https://institutefordiseasemodeling.github.io/covasim-docs",
+                license: 'Loading...',
+                notice: 'Loading...'
             },
             panel_open: true,
             panel_width: null,
             resizing: false,
             history: [],
             historyIdx: 0,
-            sim_length: {
-                best: 90,
-                max: 180,
-                min: 1
-            },
+            sim_length: {},
             sim_pars: {},
             epi_pars: {},
-            input: {
-                blob: null,
-                remote_file: null
+            datafile: {
+                local_path: null,
+                server_path: null
             },
             intervention_pars: {},
             intervention_figs: {},
@@ -161,7 +168,7 @@ var vm = new Vue({
             scenarioError: {},
             interventionTableConfig,
             running: false,
-            err: '',
+            errs: [],
             reset_options: ['Example'],//, 'Seattle', 'Wuhan', 'Global'],
             reset_choice: 'Example'
         };
@@ -171,6 +178,7 @@ var vm = new Vue({
         this.get_version();
         this.resetPars();
         this.watchSimLengthParam();
+        this.get_licenses();
     },
 
     filters: {
@@ -183,6 +191,9 @@ var vm = new Vue({
         isRunDisabled: function () {
             console.log(this.paramError);
             return this.paramError && Object.keys(this.paramError).length > 0;
+        },
+        is_debug: function () {
+            return this.debug || /debug=true/i.test(window.location.search)
         }
     },
 
@@ -195,16 +206,22 @@ var vm = new Vue({
                 this.$set(this.intervention_pars, key, []);
             }
             // validate intervention
-            const notValid = !intervention.end || !intervention.start || intervention.end <= intervention.start || this.intervention_pars[key].some(({start, end}) => {
-                return start <= intervention.start && end >= intervention.start ||
-                    start <= intervention.end && end >= intervention.end ||
-                    intervention.start <= start && intervention.end >= end;
-            });
+            const notValid = !intervention.end || !intervention.start || intervention.end <= intervention.start
             if (notValid) {
                 this.$set(this.scenarioError, scenarioKey, `Please enter a valid day range`);
                 return;
             }
-            // Check that
+
+            const overlaps = this.intervention_pars[key].some(({start, end}) => {
+                return start <= intervention.start && end >= intervention.start ||
+                    start <= intervention.end && end >= intervention.end ||
+                    intervention.start <= start && intervention.end >= end;
+            })
+            if (overlaps){
+                this.$set(this.scenarioError, scenarioKey, `Interventions of the same type cannot have overlapping day ranges.`)
+                return ;
+            }
+
             const outOfBounds = intervention.start > this.sim_length.best || intervention.end > this.sim_length.best || this.intervention_pars[key].some(({start, end}) => {
                 return start > self.sim_length.best || end > self.sim_length.best
             })
@@ -217,15 +234,14 @@ var vm = new Vue({
             this.intervention_pars[key].push(intervention);
             const result = this.intervention_pars[key].sort((a, b) => a.start - b.start);
             this.$set(this.intervention_pars, key, result);
-            const response = await sciris.rpc('get_gnatt', [this.intervention_pars, this.interventionTableConfig]);
+            const response = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
             this.intervention_figs = response.data;
         },
         async deleteIntervention(scenarioKey, index) {
             this.$delete(this.intervention_pars[scenarioKey], index);
-            const response = await sciris.rpc('get_gnatt', [this.intervention_pars, this.interventionTableConfig]);
+            const response = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
             this.intervention_figs = response.data;
         },
-
         open_panel() {
             this.panel_open = true;
         },
@@ -251,33 +267,49 @@ var vm = new Vue({
             const response = await sciris.rpc('get_version');
             this.app.version = response.data;
         },
-
+        async get_licenses(){
+            const response = await sciris.rpc('get_licenses');
+            this.app.license = response.data.license;
+            this.app.notice = response.data.notice;
+        },
         async runSim() {
             this.running = true;
             // this.graphs = this.$options.data().graphs; // Uncomment this to clear the graphs on each run
-            this.err = this.$options.data().err;
+            this.errs = this.$options.data().errs;
 
-            console.log(this.status);
-            console.log(this.sim_pars, this.epi_pars);
+            console.log('status:', this.status);
 
             // Run a a single sim
             try {
-                if(this.input.blob === null){
-                    this.input.remote_file = null
+                if(this.datafile.local_path === null){
+                    this.reset_datafile()
                 }
-                const response = await sciris.rpc('run_sim', [this.sim_pars, this.epi_pars, this.intervention_pars, this.input.remote_file, this.show_animation, this.sim_length.best]);
+                const kwargs = {
+                    sim_pars: this.sim_pars,
+                    epi_pars: this.epi_pars,
+                    intervention_pars: this.intervention_pars,
+                    datafile: this.datafile.server_path,
+                    show_animation: this.show_animation,
+                    n_days: this.sim_length.best
+                }
+                console.log('run_sim: ', kwargs);
+                const response = await sciris.rpc('run_sim', undefined, kwargs);
                 this.result.graphs = response.data.graphs;
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
-                this.err = response.data.err;
-                this.panel_open = !!this.err;
+                this.errs = response.data.errs;
+                this.panel_open = this.errs.length > 0;
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
-                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, result: this.result })));
+                this.intervention_pars = response.data.intervention_pars;
+                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, intervention_pars: this.intervention_pars, result: this.result })));
                 this.historyIdx = this.history.length - 1;
 
             } catch (e) {
-                this.err = 'Error running model: ' + e;
+                this.errs.push({
+                    message: 'Unable to submit model.',
+                    exception: `${e.constructor.name}: ${e.message}`
+                })
             }
             this.running = false;
 
@@ -287,13 +319,13 @@ var vm = new Vue({
             const response = await sciris.rpc('get_defaults', [this.reset_choice]);
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
+            this.sim_length = {...this.sim_pars['n_days']}
+            this.intervention_pars = {};
+            this.intervention_figs = {};
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
             this.graphs = [];
-            this.input = {
-                blob: null,
-                remote_file: null
-            }
+            this.reset_datafile()
         },
         setupFormWatcher(paramKey) {
             const params = this[paramKey];
@@ -320,12 +352,13 @@ var vm = new Vue({
         async downloadPars() {
             const d = new Date();
             const datestamp = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
-            const fileName = `COVASim_parameters_${datestamp}.json`;
+            const fileName = `covasim_parameters_${datestamp}.json`;
 
             // Adapted from https://stackoverflow.com/a/45594892 by Gautham
             const data = {
                 sim_pars: this.sim_pars,
                 epi_pars: this.epi_pars,
+                intervention_pars: this.intervention_pars
             };
             const fileToSave = new Blob([JSON.stringify(data, null, 4)], {
                 type: 'application/json',
@@ -339,23 +372,32 @@ var vm = new Vue({
                 const response = await sciris.upload('upload_pars');  //, [], {}, '');
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
+                this.intervention_pars = response.data.intervention_pars;
                 this.graphs = [];
+                this.intervention_figs = {}
+
+                if (this.intervention_pars){
+                    const gantt = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
+                    this.intervention_figs = gantt.data;
+                }
+
             } catch (error) {
                 sciris.fail(this, 'Could not upload parameters', error);
             }
         },
-        upload_input_data: generate_upload_file_handler(function(filepath){
-            vm.input.remote_file = filepath
+        upload_datafile: generate_upload_file_handler(function(filepath){
+            vm.datafile.server_path = filepath
         }),
-        clear_input_data() {
-            this.input = {
-                blob: null,
-                remote_file: null
+        reset_datafile() {
+            this.datafile = {
+                local_path: null,
+                server_path: null
             }
         },
         loadPars() {
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
+            this.intervention_pars = this.history[this.historyIdx].intervention_pars;
             this.result = this.history[this.historyIdx].result;
         },
 

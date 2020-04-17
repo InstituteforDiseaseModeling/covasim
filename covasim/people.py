@@ -22,24 +22,24 @@ class People(cvb.BasePeople):
         super().__init__(pars, pop_size)
 
         # Set person properties -- mostly floats
-        for key in self.keylist.person:
+        for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=object)
             else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
+                self[key] = np.full(self.pop_size, np.nan, dtype=self._ddtype)
 
         # Set health states -- only susceptible is true by default -- booleans
-        for key in self.keylist.states:
+        for key in self.meta.states:
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
             else:
                 self[key] = np.full(self.pop_size, False, dtype=bool)
 
         # Set dates and durations -- both floats
-        for key in self.keylist.dates + self.keylist.durs:
-            self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
+        for key in self.meta.dates + self.meta.durs:
+            self[key] = np.full(self.pop_size, np.nan, dtype=self._ddtype)
 
-        # Store the dtypes used
+        # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
         self._lock = True # Stop further attributes from being set
 
@@ -56,6 +56,7 @@ class People(cvb.BasePeople):
         ''' Perform initializations '''
         self.set_prognoses(pars)
         self.set_betas(pars)
+        self.validate()
         return
 
 
@@ -142,7 +143,7 @@ class People(cvb.BasePeople):
                 new_contacts['beta']  = np.array([beta]*n_new, dtype=np.float32)
 
                 # Add to contacts
-                self.add_contacts(new_contacts, key=dynamic_key)
+                self.add_contacts(new_contacts, lkey=dynamic_key)
                 self.contacts[dynamic_key].validate()
 
         return self.contacts
@@ -152,13 +153,13 @@ class People(cvb.BasePeople):
         '''
         Make person susceptible. This is used during dynamic resampling
         '''
-        for key in self.keylist.states:
+        for key in self.meta.states:
             if key == 'susceptible':
                 self[key][inds] = True
             else:
                 self[key][inds] = False
 
-        for key in self.keylist.dates + self.keylist.durs:
+        for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
         return
@@ -414,8 +415,8 @@ class People(cvb.BasePeople):
         never_been_contacted = cvu.true(np.isnan(self.date_known_contact))  # Indices of people who've never been contacted
 
         # Extract the indices of the people who'll be contacted
-        for layer in self.layer_keys():
-            this_trace_prob = trace_probs[layer]
+        traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
+        for layer,this_trace_prob in traceable_layers.items():
             this_trace_time = trace_time[layer]
 
             p1inds = np.where(np.isin(np.array(self.contacts[layer]['p1']),inds))[0] # Get all the indices of the pairs that each person is in
