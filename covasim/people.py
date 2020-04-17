@@ -446,8 +446,8 @@ class People(cvb.BasePeople):
         never_been_contacted = cvu.true(np.isnan(self.date_known_contact))  # Indices of people who've never been contacted
 
         # Extract the indices of the people who'll be contacted
-        for layer in self.layer_keys():
-            this_trace_prob = trace_probs[layer]
+        traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
+        for layer,this_trace_prob in traceable_layers.items():
             this_trace_time = trace_time[layer]
 
             p1inds = np.where(np.isin(np.array(self.contacts[layer]['p1']),inds))[0] # Get all the indices of the pairs that each person is in

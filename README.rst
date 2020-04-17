@@ -1,50 +1,43 @@
-# Covasim
+=======
+Covasim
+=======
 
 Covasim is a stochastic agent-based simulator designed to be used for COVID-19
 (novel coronavirus, SARS-CoV-2) epidemic analyses. These include projections of
 indicators such as numbers of infections and peak hospital demand. Covasim can
 also be used to explore the potential impact of different interventions.
 
-<!--ts-->
-* [Requirements](#Requirements)
-* [Quick start guide](#quick-start-guide)
-* [Detailed installation instructions](#detailed-installation-instructions)
-* [Detailed usage](#detailed-usage)
-* [Module structure](#module-structure)
-  * [cruise_ship](#cruise_ship)
-  * [webapp](#webapp)
-* [Other folders](#other-folders)
-	* [bin](#bin)
-	* [docker](#docker)
-	* [examples](#examples)
-	* [licenses](#licenses)
-	* [tests](#tests)
-	* [sweep](#sweep)
-* [Disclaimer](#disclaimer)
-<!--te-->
+Questions or comments can be directed to covasim@idmod.org.
+
+.. contents:: Contents
+   :local:
+   :depth: 2
 
 
-## Requirements
+Requirements
+============
 
 Python >=3.6 (64-bit). (Note: Python 2 is not supported.)
 
 We also recommend, but do not require, using Python virtual environments. For
-more information, see documentation for [venv](https://docs.python.org/3/tutorial/venv.html) or [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
+more information, see documentation for venv_ or Anaconda_.
+
+.. _venv: https://docs.python.org/3/tutorial/venv.html
+.. _Anaconda: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+
+Quick start guide
+==================
+
+Install with ``pip install covasim``. If everything is working, the following Python commands should bring up a plot::
+
+  import covasim as cv
+  sim = cv.Sim()
+  sim.run()
+  sim.plot()
 
 
-## Quick start guide
-
-Install with `pip install covasim`. If everything is working, the following Python commands should bring up a plot:
-
-```python
-import covasim as cv
-sim = cv.Sim()
-sim.run()
-sim.plot()
-```
-
-
-## Detailed installation instructions
+Detailed installation instructions
+==================================
 
 1.  Clone a copy of the repository. If you intend to make changes to the code,
     we recommend that you fork it first.
@@ -54,41 +47,43 @@ sim.plot()
 3.  Navigate to the root of the repository and install the Covasim Python package
     using one of the following options:
 
-    *   To install with webapp support (recommended):
+    *   To install with web app support (recommended)::
 
-        `python setup.py develop`
+          python setup.py develop
 
-    *   To install as a standalone Python model without webapp support:
+    *   To install as a standalone Python model without webapp support::
 
-        `python setup.py develop nowebapp`
+          python setup.py develop nowebapp
 
     *   To install Covasim and optional dependencies (be aware this may fail
-        since it relies on private packages), enter:
+        since it relies on private packages), enter::
 
-        `python setup.py develop full`
+          python setup.py develop full
 
-    The module should then be importable via `import covasim`.
+    The module should then be importable via ``import covasim``.
 
 
-## Detailed usage
+Usage examples
+==============
 
 There are several examples in the `examples` directory. These can be run as
 follows:
 
-* `python examples/simple.py`
+* ``python examples/simple.py``
 
   This example creates a figure using default parameter values.
 
-* `python examples/run_sim.py`
+* ``python examples/run_sim.py``
 
   This shows a slightly more detailed example, including creating an intervention and saving to disk.
 
-* `python examples/run_scenarios.py`
+* ``python examples/run_scenarios.py``
 
   This shows a more complex example, including running an intervention scenario, plotting uncertainty, and performing a health systems analysis.
 
 
-## Module structure
+Module structure
+================
 
 All core model code is located in the `covasim` subfolder; standard usage is
 `import covasim as cv`. The other subfolders, `cruise_ship` and `webapp`, are
@@ -112,63 +107,72 @@ The structure of the `covasim` folder is as follows:
 * `utils.py`: Functions for choosing random numbers, many based on Numba, plus other helper functions.
 * `version.py`: Version, date, and license information.
 
-
-### cruise_ship
+cruise_ship
+-----------
 
 A version of the Covasim model specifically adapted for modeling the Diamond
 Princess cruise ship. It uses its own parameters file (`parameters.py`) and has
 slight variations to the model (`model.py`).
 
+webapp
+------
 
-### webapp
+For running the interactive web application. See the `webapp README`_ for more information.
 
-For running the interactive web application. See the [webapp readme](./covasim/webapp) for more information.
+.. _webapp README: ./covasim/webapp
 
-
-## Other folders
+Other folders
+=============
 
 Please see the readme in each subfolder for more information.
 
+bin
+---
 
-### bin
+This folder contains a command-line interface (CLI) version of Covasim; example usage::
 
-This folder contains a command-line interface (CLI) version of Covasim; example usage:
-
-```bash
-covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
-```
+  covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
 
 Note: the CLI is currently not compatible with Windows. You will need to add
 this folder to your path to run from other folders.
 
-### data
+data
+----
 
 Scripts to automatically scrape data (including demographics and COVID epidemiology data),
 and the data files themselves (which are not part of the repository).
 
-###  docker
+docker
+------
 
 This folder contains the `Dockerfile` and other files that allow Covasim to be
 run as a webapp via Docker.
 
-### examples
+examples
+--------
 
 This folder contains demonstrations of simple Covasim usage.
 
-### licenses
+licenses
+--------
 
 Licensing information and legal notices.
 
-### tests
+tests
+-----
 
 Integration, development, and unit tests.
 
-### sweep
+sweep
+-----
 
-Utilites for hyperparameter sweeps, using [Weights and Biases](https://www.wandb.com/). See the [sweep readme](./sweep) for more information.
+Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `sweep README`_ for more information.
 
+.. _Weights and Biases: https://www.wandb.com/
+.. _sweep README: ./sweep
 
-## Disclaimer
+Disclaimer
+==========
 
 The code in this repository was developed by IDM to support our research in
 disease transmission and managing epidemics. We’ve made it publicly available
@@ -178,4 +182,8 @@ build upon it for their own work. We make no representations that the code works
 as intended or that we will provide support, address issues that are found, or
 accept pull requests. You are welcome to create your own fork and modify the
 code to suit your own modeling needs as contemplated under the Creative Commons
-Attribution-Noncommercial-ShareAlike 4.0 License.
+Attribution-Noncommercial-ShareAlike 4.0 License. See the `contributing`_ and `code of conduct`_
+READMEs for more information.
+
+.. _contributing: .CONTRIBUTING.rst
+.. _code of conduct: CODE_OF_CONDUCT.rst
