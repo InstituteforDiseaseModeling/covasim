@@ -34,12 +34,15 @@
 
 <section id="app" class="container-fluid" @mousemove="resize_apply" @mouseup="resize_end">
   <header class="row no-gutter">
-    <b-navbar type="dark" variant="dark" toggleable="false">
+    <b-navbar type="dark" variant="dark">
       <b-navbar-brand href="#">{{ app.title }}</b-navbar-brand>
-      <b-link v-b-modal.about class="text-white">
-        COVID-19 agent-based simulator
-      </b-link>
-      <b-link :href="app.github_url" target="_blank" class="text-white">{{app.version}}</b-link>
+      <b-navbar-nav>
+        <b-nav-item :href="app.docs_url" target="_blank">Documentation</b-nav-item>
+        <b-nav-item v-b-modal.about>About</b-nav-item>
+      </b-navbar-nav>
+      <b-navbar-nav class="ml-auto">
+        <b-nav-item :href="app.github_url" target="_blank">{{app.version}}</b-nav-item>
+      </b-navbar-nav>
     </b-navbar>
 
     <!-- About modal -->
