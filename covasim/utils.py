@@ -163,7 +163,7 @@ def binomial_filter(prob, arr):
     return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]
 
 
-# @nb.njit((nb.int32, nb.int32), cache=True) # This hugely increases performance
+@nb.njit((nb.int32, nb.int32), cache=True) # This hugely increases performance
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replacement.
