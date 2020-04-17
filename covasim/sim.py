@@ -179,8 +179,8 @@ class Sim(cvbase.BaseSim):
         Create the main results structure.
         We differentiate between flows, stocks, and cumulative results
         The prefix "new" is used for flow variables, i.e. counting new events (infections/deaths/recoveries) on each timestep
-        The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any paticular timestep
-        The prefix "cum_" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
+        The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any particular timestep
+        The prefix "cum\_" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
         Note that, by definition, n_dead is the same as cum_deaths and n_recovered is the same as cum_recoveries, so we only define the cumulative versions
         '''
 
@@ -699,7 +699,9 @@ class Sim(cvbase.BaseSim):
             fig_args (dict): passed to pl.figure()
             plot_args (dict): passed to pl.plot()
 
-        Example:
+        **Example**
+        ::
+
             sim.plot_result('doubling_time')
         '''
         fig_args  = sc.mergedicts({'figsize':(16,10)}, fig_args)

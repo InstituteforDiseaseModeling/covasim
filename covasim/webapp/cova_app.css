@@ -100,7 +100,9 @@ header.row, footer.row {
     margin: -.75rem -1.25rem;
     width: calc(100% + 2.5rem);
 }
-
+.tabs .card-header {
+    background-color: transparent;
+}
 /* Tooltip container */
 .mytooltip {
     position: relative;
