@@ -250,6 +250,7 @@ class Sim(cvbase.BaseSim):
         flows    = people.update_states(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
         bed_max  = people.count('severe') > self['n_beds'] # Check for a bed constraint
+        people.update_rel_trans() # update the relative transmission based on changing viral load
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases

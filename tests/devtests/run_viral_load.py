@@ -16,6 +16,7 @@ base_pars = sc.objdict(
         verbose = 0,
         pop_infected = 1
 )
+base_pars['beta_distro']  = {'dist':'lognormal', 'par1':1, 'par2':0}
 base_pars['dur'] = {}
 base_pars['dur']['exp2inf']  = {'dist':'normal_int', 'par1':4, 'par2':0} # Duration from exposed to infectious
 base_pars['dur']['inf2sym']  = {'dist':'normal_int', 'par1':0, 'par2':0} # Duration from infectious to symptomatic
@@ -44,32 +45,38 @@ for i in range(runs):
     print('Making sim ', i, '...')
     sim1 = cv.Sim(pars=pars)
     sim1.run()
-    r0_const[i] = len(sim1.people[0].infected)
+    r0_const[i] = len(sim1.people.transtree.targets[0])
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_distro'] = {'dist':'twolevel', 'frac':.5, 'ratio':2}
+    pars['viral_distro'] = {'dist':'twolevel', 'par1':.5, 'par2':2}
     sim2 = cv.Sim(pars=pars)
     sim2.run()
-    r0_twolevel[i] = len(sim2.people[0].infected)
+    r0_twolevel[i] = len(sim2.people.transtree.targets[0])
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_distro'] = {'dist':'twolevel', 'frac':.3, 'ratio':3}
+    pars['viral_distro'] = {'dist':'twolevel', 'par1':.3, 'par2':3}
     sim3 = cv.Sim(pars=pars)
     sim3.run()
-    r0_twolevel2[i] = len(sim3.people[0].infected)
+    r0_twolevel2[i] = len(sim3.people.transtree.targets[0])
 
 print('R0 constant viral load: ', np.mean(r0_const), ' +- ', np.std(r0_const))
 print('R0 two level viral load: ', np.mean(r0_twolevel), ' +- ', np.std(r0_twolevel))
 print('R0 two level diff params: ', np.mean(r0_twolevel2), ' +- ', np.std(r0_twolevel2))
 
 import matplotlib.pyplot as plt
-hist1 = plt.hist(r0_const, bins=np.arange(-0.5, 11.5), density=True)
-hist2 = plt.hist(r0_twolevel, bins=np.arange(-0.5, 11.5), density=True)
-hist3 = plt.hist(r0_twolevel2, bins=np.arange(-0.5, 11.5), density=True)
+hist1 = plt.hist(r0_const, bins=np.arange(-0.5, 10.5), density=True)
+hist2 = plt.hist(r0_twolevel, bins=np.arange(-0.5, 10.5), density=True)
+hist3 = plt.hist(r0_twolevel2, bins=np.arange(-0.5, 10.5), density=True)
 plt.show()
 assert(abs(np.mean(r0_const)-np.mean(r0_twolevel))<np.std(r0_const))
 assert(abs(np.mean(r0_const)-np.mean(r0_twolevel2))<np.std(r0_const))
 assert(abs(np.mean(r0_twolevel)-np.mean(r0_twolevel2))<np.std(r0_twolevel))
-# taking the min because if the second distribution has a 0 where the first
-# does not kl_div gives inf.
-assert(min(sum(kl_div(hist1[0], hist2[0])), sum(kl_div(hist2[0], hist1[0])))<1)
-assert(min(sum(kl_div(hist1[0], hist3[0])), sum(kl_div(hist3[0], hist1[0])))<1)
-assert(min(sum(kl_div(hist2[0], hist3[0])), sum(kl_div(hist3[0], hist2[0])))<1)
+# adding some sudo counts to distribution because a 0 in the second distribution
+# where there isn't a 0 in the first distribution gives inf
+hist1[0][hist1[0]==0] = 1e-10
+hist1[0][:] = hist1[0]/sum(hist1[0])
+hist2[0][hist2[0]==0] = 1e-10
+hist2[0][:] = hist2[0]/sum(hist2[0])
+hist3[0][hist3[0]==0] = 1e-10
+hist3[0][:] = hist3[0]/sum(hist3[0])
+assert(sum(kl_div(hist1[0], hist2[0]))<1)
+assert(sum(kl_div(hist1[0], hist3[0]))<1)
+assert(sum(kl_div(hist2[0], hist3[0]))<1)

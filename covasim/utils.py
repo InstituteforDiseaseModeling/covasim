@@ -5,7 +5,7 @@ Numerical utilities for running Covasim
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
 import pandas as pd # Used for pd.unique() (better than np.unique())
-
+#from scipy.stats import lognorm
 
 #%% Sampling and seed methods
 
@@ -227,6 +227,29 @@ def compute_probs(rel_trans,       rel_sus,        symp,        diag,        qua
     rel_trans  = rel_trans * f_quar_eff * f_asymp * f_diag # Recalulate transmisibility
     rel_sus    = rel_sus   * f_quar_eff # Recalulate susceptibility
     return rel_trans, rel_sus
+
+@nb.njit((        nb.int64, nb.float32, nb.float32, nb.int32, nb.float32[:], nb.float32[:], nb.float32[:], nb.bool_[:]))
+def compute_rel_trans(dist,    par1,       par2,     t,        rel_beta,      time_start,     time_stop,   infectious):
+    ''' Calculate relative transmissibility from viral load 
+            t: (int) timestep
+            dist: (string) distribution from which to pull viral load
+            par1: (float) None for 'constant', frac of time in high
+                load for 'twolevel'
+            par2: (float) ratio for high to low viral load
+        Returns:
+            (float) multipler for the infectivity (beta)'''
+            
+    load = np.ones(len(rel_beta), dtype=np.float32)
+    if dist == 1:
+        # Since this should only be called when the person
+        # is infected so this could just be load = 1
+        load *= t>=time_start
+        load *= t<time_stop
+    elif dist == 2:
+        early = (t-time_start)/(time_stop-time_start) < par1
+        load = (par2 * early + load * ~early)/(load+par1*(par2-load))
+            
+    return load * rel_beta * infectious
 
 
 @nb.njit((    nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))

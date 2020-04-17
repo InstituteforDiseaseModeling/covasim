@@ -8,6 +8,7 @@ import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
+import warnings
 
 
 __all__ = ['People']
@@ -82,10 +83,13 @@ class People(cvb.BasePeople):
 
 
     def set_betas(self, pars=None):
-        ''' Set betas for each layer '''
+        ''' Set betas for each layer and person '''
         if pars is None:
             pars = self.pars
 
+        self['rel_beta'] = self._default_dtype(cvu.sample(pars['beta_distro']['dist'], \
+            pars['beta_distro']['par1'], pars['beta_distro']['par2'],\
+            size=int(pars['pop_size'])))
 
         for key,value in pars['beta_layer'].items():
             df = self.contacts[key]
@@ -115,6 +119,34 @@ class People(cvb.BasePeople):
         del self.is_exp # Tidy up
 
         return counts
+    
+    def update_rel_trans(self):
+        viral_distro = self.pars['viral_distro']
+        dist = 1
+        
+        choices = [
+        'constant',
+        'twolevel'
+        ]
+    
+        if viral_distro['dist'] == 'constant':
+            dist = 1
+        elif viral_distro['dist'] == 'twolevel':
+            dist = 2
+        else:
+            choicestr = '\n'.join(choices)
+            errormsg = f'The selected viral distribution "{dist}" is not implemented; choices are: {choicestr}'
+            raise NotImplementedError(errormsg)
+            
+        warnings.simplefilter("ignore")
+        date_end = np.nanmax(np.stack((self.date_recovered, self.date_dead)),axis=0)
+        load = cvu.compute_rel_trans(dist,\
+                      self._default_dtype(viral_distro.get('par1',1)),\
+                      self._default_dtype(viral_distro.get('par2',2)),\
+                      np.int32(self.t), self.rel_beta, self.date_infectious,\
+                      date_end, self.infectious)
+        self.rel_trans = load
+        return 
 
 
     def update_contacts(self, dynamic_keys='c'):
@@ -180,9 +212,9 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious)
         self.infectious[inds] = True
-        self.rel_trans[inds]  = 1.0 # TODO: make this dynamic
+        self.rel_trans[inds]  = 1.0
         return len(inds)
-
+    
 
     def check_symptomatic(self):
         ''' Check for new progressions to symptomatic '''

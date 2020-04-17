@@ -45,6 +45,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['contacts']     = None # The number of contacts per layer
     pars['beta_layers']  = None # Transmissibility per layer
     pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['beta_distro']  = {'dist':'lognormal', 'par1':1, 'par2':0} # distribution for drawing individual infectivity from. par1 should be 1 so beta means what we think it means
     pars['viral_distro'] = {'dist':'constant'} # The time varying viral load (transmissibility)
 
 
