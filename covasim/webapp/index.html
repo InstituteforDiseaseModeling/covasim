@@ -113,6 +113,18 @@
             Number of days to run the simulation for
           </b-tooltip>
         </div>
+        <div class="form-group">
+          <label for="country">Demographic:</label>
+          <select :disabled="running" id="country" v-model="country" class="form-control">
+            <option v-for="item in country_options" :value="item">
+              {{ item }}
+            </option>
+          </select>
+
+          <b-tooltip target="country">
+            This will use the latest age distribution data for the selected country
+          </b-tooltip>
+        </div>
         <div class="form-row mb-3">
           <label for="input_file" class="col-12">Upload Data</label>
           <div class="col">

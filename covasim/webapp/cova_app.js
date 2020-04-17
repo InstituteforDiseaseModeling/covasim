@@ -143,6 +143,8 @@ var vm = new Vue({
                 max: 180,
                 min: 1
             },
+            country: null,
+            country_options: [],
             sim_pars: {},
             epi_pars: {},
             input: {
@@ -169,7 +171,7 @@ var vm = new Vue({
 
     async created() {
         this.get_version();
-        this.get_preset_options();
+        this.get_country_options();
         this.resetPars();
         this.watchSimLengthParam();
     },
@@ -253,9 +255,9 @@ var vm = new Vue({
             this.app.version = response.data;
         },
 
-        async get_preset_options() {
+        async get_country_options() {
             let response = await sciris.rpc('get_country_options');
-            this.reset_options.push(...response.data)
+            this.country_options = response.data;
         },
 
         async runSim() {

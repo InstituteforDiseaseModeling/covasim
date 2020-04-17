@@ -13,6 +13,7 @@ import sciris as sc
 import base64 # Download/upload-specific import
 import json
 import tempfile
+from covasim.data import country_age_distributions as cad
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -141,15 +142,11 @@ def get_version():
 
 
 @app.register_RPC()
-def get_preset_options():
+def get_country_options():
     ''' Get the list of options for the location select '''
-    # TODO import locations from datasets/translators.py that @@gwincr11 is working on
-    datasetsTranslator = {
-        'Seattle': 'somePlace'
-        # etc. 'usa': 'sources/johnhopkins.json'
-    }
-    output = list(datasetsTranslator.keys())
-    return output
+    json = cad.get_country_age_distributions()
+    countries = [entry["country"] for entry in json]
+    return countries
 
 
 @app.register_RPC(call_type='upload')
