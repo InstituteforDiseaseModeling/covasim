@@ -35,7 +35,7 @@ class Sim(cvb.BaseSim):
     def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None, label=None, **kwargs):
         # Create the object
         default_pars = cvpars.make_pars(**kwargs) # Start with default pars
-        super().__init__(default_pars) # Initialize and set the parameters as attributes
+        super().update_pars(default_pars, create=True) # Initialize and set the parameters as attributes
 
         # Set attributes
         self.label         = None  # The label/name of the simulation
@@ -61,11 +61,7 @@ class Sim(cvb.BaseSim):
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
-        if hasattr(self, 'pars'): # TODO: FIX
-            sim_pars = self.pars
-        else:
-            sim_pars = {}
-        pars = sc.mergedicts(sim_pars, pars, kwargs)
+        pars = sc.mergedicts(self.pars, pars, kwargs)
         if pars:
             if 'use_layers' in pars: # Reset layers
                 cvpars.set_contacts(pars)
