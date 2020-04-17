@@ -37,7 +37,24 @@ spec:
         name: covasim
         ports:
         - containerPort: 80
-        resources: {}
-      restartPolicy: Always
+        readinessProbe:
+          exec:
+            command:
+            - curl
+            - --max-time
+            - "10"
+            - http://127.0.0.1:8097/healthcheck
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          failureThreshold: 30
+        livenessProbe:
+          exec:
+            command:
+            - curl
+            - --max-time
+            - "10"
+            - http://127.0.0.1:8097/healthcheck
+          initialDelaySeconds: 240
+          periodSeconds: 5
 status: {}
 

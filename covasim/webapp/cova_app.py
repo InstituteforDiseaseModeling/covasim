@@ -3,18 +3,18 @@ Sciris app to run the web interface.
 '''
 
 # Key imports
+import numpy as np
+import sciris as sc
 import covasim as cv
 import os
 import sys
-import numpy as np
-import plotly.graph_objects as go
-import plotly.figure_factory as ff
-import sciris as sc
-import base64 # Download/upload-specific import
 import json
+import base64
 import tempfile
 import traceback
 from pathlib import Path
+import plotly.graph_objects as go
+import plotly.figure_factory as ff
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -33,7 +33,14 @@ max_time = 10   # Maximum of seconds for a run
 die      = False # Whether or not to raise exceptions instead of continuing
 
 
-def log_err(message:str, ex:Exception):
+# Define a get API for readiness in kubernetes
+@app.route('/healthcheck')
+def healthcheck():
+    ''' Check that the server is up '''
+    return sw.robustjsonify({'status':'ok'})
+
+def log_err(message, ex):
+    ''' Compile error messages to send to the frontend '''
     tex = traceback.TracebackException.from_exception(ex)
     print(f"{message}\n", )
     return {
