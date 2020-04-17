@@ -452,9 +452,9 @@ class BasePeople(sc.prettyobj):
         # Other initialization
         self.t = 0 # Keep current simulation time
         self._lock = False # Prevent further modification of keys
-        self._default_dtype = np.float32 # For performance -- 2x faster than float32, the default
-        self.keylist = cvd.PeopleKeys() # Store list of keys and dtypes
-        self.layer_info = self.keylist.contacts
+        self._ddtype = np.float32 # For performance -- 2x faster than float32, the default
+        self.meta = cvd.PeopleKeys() # Store list of keys and dtypes
+        self.layer_info = self.meta.contacts
         self.contacts = None
         self.init_contacts() # Initialize the contacts
         self.transtree = TransTree(pop_size=pop_size) # Initialize the transmission tree
@@ -540,9 +540,9 @@ class BasePeople(sc.prettyobj):
     def keys(self, which=None):
         ''' Returns the name of the states '''
         if which is None:
-            return self.keylist.all_states[:]
+            return self.meta.all_states[:]
         else:
-            return getattr(self.keylist, which)[:]
+            return getattr(self.meta, which)[:]
 
 
     def layer_keys(self):
@@ -607,7 +607,7 @@ class BasePeople(sc.prettyobj):
     def person(self, ind):
         ''' Method to create person from the people '''
         p = Person()
-        for key in self.keylist.all_states:
+        for key in self.meta.all_states:
             setattr(p, key, self[key][ind])
         return p
 
@@ -723,7 +723,7 @@ class BasePeople(sc.prettyobj):
         for lkey in lkeys:
             new_layer = Layer(layer_info=self.layer_info)
             for ckey,value in new_contacts[lkey].items():
-                new_layer[ckey] = np.array(value, dtype=self.keylist.contacts[ckey])
+                new_layer[ckey] = np.array(value, dtype=self.meta.contacts[ckey])
             new_contacts[lkey] = new_layer
 
         return new_contacts
@@ -811,8 +811,8 @@ class Layer(dict):
         # Initialize the keys of the layer
         for key,dtype in self.layer_info.items():
             self[key] = np.empty((0,), dtype=dtype)
-        self.keylist = list(self.keys())
-        self.basekey = self.keylist[0] # Assign a base key for calculating lengths and performing other operations
+        self.meta = list(self.keys())
+        self.basekey = self.meta[0] # Assign a base key for calculating lengths and performing other operations
 
         for key,value in kwargs.items():
             self[key] = value
