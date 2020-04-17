@@ -10,17 +10,23 @@ const PlotlyChart = {
 
     mounted() {
         this.$nextTick(function () {
-            let x = JSON.parse(this.graph.json);
-            x.responsive = true;
-            Plotly.react(this.graph.id, x);
+            if (this.graph['json']){
+                let x = JSON.parse(this.graph.json);
+                x.responsive = true;
+                Plotly.react(this.graph.id, x);
+            }
         }
         );
     },
     updated() {
         this.$nextTick(function () {
-            let x = JSON.parse(this.graph.json);
-            x.responsive = true;
-            Plotly.react(this.graph.id, x);
+            if (this.graph['json']){
+                let x = JSON.parse(this.graph.json);
+                x.responsive = true;
+                Plotly.react(this.graph.id, x);
+            } else {
+                Plotly.purge(this.graph.id)
+            }
         });
     }
 };
@@ -196,16 +202,22 @@ var vm = new Vue({
                 this.$set(this.intervention_pars, key, []);
             }
             // validate intervention
-            const notValid = !intervention.end || !intervention.start || intervention.end <= intervention.start || this.intervention_pars[key].some(({start, end}) => {
-                return start <= intervention.start && end >= intervention.start ||
-                    start <= intervention.end && end >= intervention.end ||
-                    intervention.start <= start && intervention.end >= end;
-            });
+            const notValid = !intervention.end || !intervention.start || intervention.end <= intervention.start
             if (notValid) {
                 this.$set(this.scenarioError, scenarioKey, `Please enter a valid day range`);
                 return;
             }
-            // Check that
+
+            const overlaps = this.intervention_pars[key].some(({start, end}) => {
+                return start <= intervention.start && end >= intervention.start ||
+                    start <= intervention.end && end >= intervention.end ||
+                    intervention.start <= start && intervention.end >= end;
+            })
+            if (overlaps){
+                this.$set(this.scenarioError, scenarioKey, `Interventions of the same type cannot have overlapping day ranges.`)
+                return ;
+            }
+
             const outOfBounds = intervention.start > this.sim_length.best || intervention.end > this.sim_length.best || this.intervention_pars[key].some(({start, end}) => {
                 return start > self.sim_length.best || end > self.sim_length.best
             })
@@ -301,6 +313,7 @@ var vm = new Vue({
             this.epi_pars = response.data.epi_pars;
             this.sim_length = {...this.sim_pars['n_days']}
             this.intervention_pars = {};
+            this.intervention_figs = {};
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
             this.graphs = [];
