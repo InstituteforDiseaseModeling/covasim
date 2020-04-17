@@ -13,6 +13,6 @@ To build the docs, follow these steps:
 
 2.  Make the documents; there are many build options, but most convenient is::
 
-        > make dirhtml
+        > make html
 
 3.  The built documents will be in `./_build/html`.
