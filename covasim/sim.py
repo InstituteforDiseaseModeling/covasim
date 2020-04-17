@@ -12,7 +12,7 @@ from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
-from . import base as cvbase
+from . import base as cvb
 from . import parameters as cvpars
 from . import population as cvpop
 
@@ -20,7 +20,7 @@ from . import population as cvpop
 __all__ = ['Sim']
 
 
-class Sim(cvbase.BaseSim):
+class Sim(cvb.BaseSim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
@@ -186,7 +186,7 @@ class Sim(cvbase.BaseSim):
 
         def init_res(*args, **kwargs):
             ''' Initialize a single result object '''
-            output = cvbase.Result(*args, **kwargs, npts=self.npts)
+            output = cvb.Result(*args, **kwargs, npts=self.npts)
             return output
 
         dcols = cvd.default_colors # Shorten default colors
@@ -430,6 +430,7 @@ class Sim(cvbase.BaseSim):
             None (modifies results in place)
         '''
         cum_infections = self.results['cum_infections'].values
+        self.results['doubling_time'][:window] = np.nan
         for t in range(window, self.npts):
             infections_now = cum_infections[t]
             infections_prev = cum_infections[t-window]
@@ -441,14 +442,19 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def compute_r_eff(self):
+    def compute_r_eff(self, window=7):
         '''
         Effective reproductive number based on number of people each person infected.
+
+        Args:
+            window (int): the size of the window used (larger values are more accurate but less precise)
+
         '''
 
         # Initialize arrays to hold sources and targets infected each day
         sources = np.zeros(self.npts)
         targets = np.zeros(self.npts)
+        window = int(window)
 
         for t in self.tvec:
 
@@ -464,8 +470,21 @@ class Sim(cvbase.BaseSim):
 
         # Populate the array -- to avoid divide-by-zero, skip indices that are 0
         inds = sc.findinds(sources>0)
-        r_eff = targets[inds]/sources[inds]
-        self.results['r_eff'].values[inds] = r_eff
+        r_eff = np.zeros(self.npts)*np.nan
+        r_eff[inds] = targets[inds]/sources[inds]
+
+        # use stored weights calculate the moving average over the window of timesteps, n
+        num = np.nancumsum(r_eff * sources)
+        num[window:] = num[window:] - num[:-window]
+        den = np.cumsum(sources)
+        den[window:] = den[window:] - den[:-window]
+
+        # avoid dividing by zero
+        values = np.zeros(num.shape)*np.nan
+        ind = den > 0
+        values[ind] = num[ind]/den[ind]
+
+        self.results['r_eff'].values = values
 
         return
 
