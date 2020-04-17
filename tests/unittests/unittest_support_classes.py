@@ -445,7 +445,6 @@ class TestSupportTests(CovaSimTest):
         """
         All agents start infected
         """
-        self.is_debugging = True
 
         total_agents = 500
         self.set_everyone_infected(agent_count=total_agents)
@@ -461,7 +460,6 @@ class TestSupportTests(CovaSimTest):
         Verifies that there are lots of infections in
         a short time.
         """
-        self.is_debugging = True
         self.assertIsNone(self.simulation_parameters)
         self.assertIsNone(self.sim)
         self.set_smallpop_hightransmission()
