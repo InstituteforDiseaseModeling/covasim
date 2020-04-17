@@ -16,7 +16,7 @@
 
 .. |IDM_l| replace:: Institute for Disease Modeling (IDM)
 .. |IDM_s| replace:: IDM
-.. |Cov_l| replace:: COVID-10 Agent-based Simulator (Covasim)
+.. |Cov_l| replace:: COVID-19 Agent-based Simulator (Covasim)
 .. |Cov_s| replace:: Covasim
 .. |Python_supp| replace:: Python >= 3.6 (64-bit)
 

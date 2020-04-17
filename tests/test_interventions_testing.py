@@ -26,7 +26,7 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     verbose = 1
     base_pars = {
       'pop_size': 1000,
-      'use_layers': True,
+      'pop_type': 'hybrid',
       }
 
     base_sim = cv.Sim(base_pars) # create sim object
@@ -34,9 +34,9 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     npts = base_sim.npts
 
     # Define overall testing assumptions
-    # As the most optimistic case, we assume countries could get to South Korea's testing levels. S Korea has tested
-    # an average of 10000 people/day over March, or 270,000 in total. This is ~200 people per million every day (0.02%).
-    max_optimistic_testing = 0.0002
+    # Remember that this is the daily % of the population that gets tested. S Korea (one of the highest-testing places) tested
+    # an average of 10000 people/day over March, or 270,000 in total. This is ~200 people per million every day (0.02%)....
+    max_optimistic_testing = 0.1 # ... which means that this is an artificially high number, for testing purposes only!!
     optimistic_daily_tests = [max_optimistic_testing*n_people]*npts # Very best-case scenario for asymptomatic testing
 
     # Define the scenarios
@@ -51,13 +51,6 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
           'name':'Assuming South Korea testing levels of 0.02% daily (untargeted); isolate positives',
           'pars': {
               'interventions': cv.test_num(daily_tests=optimistic_daily_tests)
-              }
-          },
-        'tracing': {
-          'name':'Assuming South Korea testing levels of 0.02% daily (with contact tracing); isolate positives',
-          'pars': {
-              'interventions': [cv.test_num(daily_tests=optimistic_daily_tests),
-                                cv.dynamic_pars({'quar_eff':{'days':20, 'vals':[{'h':0.1, 's':0.1, 'w':0.1, 'c':0.1}]}})] # This means that people who've been in contact with known positives isolate with 90% effectiveness
               }
           },
         'floating': {
@@ -76,7 +69,7 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
             'name': 'Historical switching to probability',
             'pars': {
                 'interventions': cv.sequence(days=[10, 51], interventions=[
-                    cv.test_num(daily_tests=[1000]*npts),
+                    cv.test_num(daily_tests=optimistic_daily_tests),
                     cv.test_prob(symp_prob=0.2, asymp_prob=0.002),
                 ])
             }
@@ -89,8 +82,11 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose, debug=debug)
 
+    to_plot = ['cum_infections', 'n_infectious', 'new_tests', 'new_diagnoses']
+    fig_args = dict(figsize=(20, 24))
+
     if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path, interval=7, fig_args=fig_args, to_plot=to_plot)
 
     return scens
 
@@ -106,7 +102,7 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     verbose = 1
     base_pars = {
       'pop_size': 5000,
-      'use_layers': True,
+      'pop_type': 'hybrid',
       }
 
     base_sim = cv.Sim(base_pars) # create sim object
@@ -151,8 +147,8 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     n_runs = 3
     verbose = 1
     base_pars = {
-      'pop_size': 5000,
-      'use_layers': True,
+      'pop_size': 2000,
+      'pop_type': 'hybrid',
       }
 
     base_sim = cv.Sim(base_pars) # create sim object

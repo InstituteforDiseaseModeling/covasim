@@ -18,4 +18,5 @@ also be used to explore the potential impact of different interventions.
    modules
    parameters
    contributing
+   whatsnew
 

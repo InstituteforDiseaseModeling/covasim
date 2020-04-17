@@ -19,7 +19,7 @@ Simulation parameters
 * ``start_day``    = The calendar date of the start day of the simulation.
 * ``n_days``       = The number of days to simulate. Test: ``len(sim.results['t.values'])`` should equal this.
 * ``rand_seed``    = Random seed for the simulation. Test: two simulations with the same seed should produce identical results *except for* person UIDs; otherwise, different.
-* ``verbose``      = Level of detail to print (no test).
+* ``verbose``      = Level of detail to print.
 
 Disease transmission parameters
 ===============================
@@ -29,7 +29,6 @@ Disease transmission parameters
 * ``asymp_factor`` = Effect of asymptomaticity on transmission.
 * ``diag_factor``  = Effect of diagnosis on transmission.
 * ``cont_factor``  = Effect of being a known contact  on transmission.
-* ``use_layers``   = Whether or not to use different contact layers
 * ``contacts``     = The number of contacts per layer
 * ``beta_layers``  = Transmissibility per layer
 
