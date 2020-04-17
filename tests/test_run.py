@@ -31,18 +31,25 @@ def test_singlerun():
 def test_multirun(do_plot=False): # If being run via pytest, turn off
     sc.heading('Multirun test')
 
-    # Note: this runs 3 simulations, not 3x3!
+    n_days = 60
+    pop_size= 1000
+
+    # Method 1 -- Note: this runs 3 simulations, not 3x3!
     iterpars = {'beta': [0.015, 0.025, 0.035],
                 'diag_factor': [0.1, 0.5, 0.9],
                 }
-
-    sim = cv.Sim()
-    sim['n_days'] = 60
-    sim['pop_size'] = 1000
+    sim = cv.Sim(n_days=n_days, pop_size=pop_size)
     sims = cv.multi_run(sim=sim, iterpars=iterpars)
 
+    # Method 2 -- run a list of sims
+    simlist = []
+    for i in range(len(iterpars['beta'])):
+        sim = cv.Sim(n_days=n_days, pop_size=pop_size, beta=iterpars['beta'][i], diag_factor=iterpars['diag_factor'][i])
+        simlist.append(sim)
+    sims2 = cv.multi_run(sim=simlist)
+
     if do_plot:
-        for sim in sims:
+        for sim in sims + sims2:
             sim.plot()
 
     return sims
@@ -95,11 +102,10 @@ def test_combine(do_plot=False): # If being run via pytest, turn off
 if __name__ == '__main__':
     T = sc.tic()
 
-    sim1  = test_singlerun()
-    sim2  = test_combine(do_plot=do_plot)
-    sims1  = test_multirun(do_plot=do_plot)
-    sims2 = test_combine(do_plot=do_plot)
-    scens = test_scenarios(do_plot=do_plot)
+    # sim1  = test_singlerun()
+    sims2 = test_multirun(do_plot=do_plot)
+    # sims3 = test_combine(do_plot=do_plot)
+    # scens = test_scenarios(do_plot=do_plot)
 
     sc.toc(T)
 
