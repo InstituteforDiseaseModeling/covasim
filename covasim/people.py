@@ -39,7 +39,7 @@ class People(cvb.BasePeople):
         for key in self.keylist.dates + self.keylist.durs:
             self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
 
-        # Store the dtypes used
+        # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
         self._lock = True # Stop further attributes from being set
 
