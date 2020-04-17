@@ -4,7 +4,6 @@ Numerical utilities for running Covasim
 
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
-import pandas as pd # Used for pd.unique() (better than np.unique())
 
 #%% Sampling and seed methods
 
@@ -68,7 +67,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
 
-    @nb.njit((nb.int32,))
+    @nb.njit((nb.int32,), cache=True)
     def set_seed_numba(seed):
         return np.random.seed(seed)
 
@@ -151,19 +150,18 @@ def multinomial(probs, repeats):
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
-@nb.njit((nb.int32,)) # This hugely increases performance
+@nb.njit((nb.int32,), cache=True) # This hugely increases performance
 def poisson(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
 
-#@nb.njit((nb.float64, nb.int64[:]))
 def binomial_filter(prob, arr):
     ''' Binomial "filter" -- return entries that passed '''
     return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]
 
 
-@nb.njit((nb.int32, nb.int32)) # This hugely increases performance
+@nb.njit((nb.int32, nb.int32), cache=True) # This hugely increases performance
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replacement.
@@ -180,7 +178,7 @@ def choose(max_n, n):
     return np.random.choice(max_n, n, replace=False)
 
 
-@nb.njit((nb.int32, nb.int32)) # This hugely increases performance
+@nb.njit((nb.int32, nb.int32), cache=True) # This hugely increases performance
 def choose_r(max_n, n):
     '''
     Choose a subset of items (e.g., people), with replacement.
@@ -221,7 +219,7 @@ def choose_w(probs, n, unique=True):
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit((    nb.float32[:], nb.float32[:], nb.bool_[:], nb.bool_[:], nb.bool_[:],   nb.float32,  nb.float32, nb.float32))
+@nb.njit((    nb.float32[:], nb.float32[:], nb.bool_[:], nb.bool_[:], nb.bool_[:],   nb.float32,  nb.float32, nb.float32), cache=True)
 def compute_probs(rel_trans,       rel_sus,        symp,        diag,        quar, asymp_factor, diag_factor, quar_trans):
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
@@ -252,7 +250,7 @@ def compute_rel_trans(t,       rel_beta,    time_start,     time_stop,   infecti
     return load * rel_beta * infectious
 
 
-@nb.njit((    nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))
+@nb.njit((    nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]), cache=True)
 def compute_targets(beta,     sources,     targets,   layer_betas,     rel_trans,       rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities

@@ -103,6 +103,11 @@ header.row, footer.row {
 .tabs .card-header {
     background-color: transparent;
 }
+
+.w-fit {
+    width: fit-content !important;
+}
+
 /* Tooltip container */
 .mytooltip {
     position: relative;
