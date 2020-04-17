@@ -819,7 +819,6 @@ class Contacts(FlexDict):
         return output
 
 
-
 class Layer(FlexDict):
     ''' A tiny class holding a single layer of contacts '''
 
