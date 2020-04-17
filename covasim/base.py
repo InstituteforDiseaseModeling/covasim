@@ -453,7 +453,7 @@ class BasePeople(sc.prettyobj):
         self.t = 0 # Keep current simulation time
         self._lock = False # Prevent further modification of keys
         self._ddtype = np.float32 # For performance -- 2x faster than float32, the default
-        self.meta = cvd.PeopleKeys() # Store list of keys and dtypes
+        self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
         self.layer_info = self.meta.contacts
         self.contacts = None
         self.init_contacts() # Initialize the contacts
@@ -772,7 +772,7 @@ class Person(sc.prettyobj):
         return
 
 
-class Contacts(dict):
+class Contacts(sc.objdict):
     '''
     A simple (for now) class for storing different contact layers.
     '''
@@ -782,31 +782,20 @@ class Contacts(dict):
             self[key] = Layer()
         return
 
-
     def __repr__(self):
         ''' Use slightly customized repr'''
-        output = 'Contacts(): '
+        keys_str = ', '.join(self.keys())
+        output = f'Contacts({keys_str}): '
         output += super().__repr__()
         return output
 
 
-    def __getitem__(self, key):
-        ''' Lightweight odict -- allow indexing by number '''
-        try:
-            return super().__getitem__(key)
-        except KeyError as KE:
-            try: # Assume it's an integer
-                dictkey = list(self.keys())[key]
-                return self[dictkey]
-            except:
-                raise KE # This is the original error
 
-
-class Layer(dict):
+class Layer(sc.objdict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, **kwargs):
-        self.layer_info = sc.dcp(cvd.PeopleKeys.contacts)
+        self.layer_info = sc.dcp(cvd.PeopleMeta.contacts)
 
         # Initialize the keys of the layer
         for key,dtype in self.layer_info.items():

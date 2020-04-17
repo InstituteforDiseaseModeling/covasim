@@ -6,10 +6,10 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['PeopleKeys', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
+__all__ = ['PeopleMeta', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
            'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots']
 
-class PeopleKeys(sc.prettyobj):
+class PeopleMeta(sc.prettyobj):
     ''' For storing all the keys relating to a person and people '''
 
     # Set the properties of a persocn
