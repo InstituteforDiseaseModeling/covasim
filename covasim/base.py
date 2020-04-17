@@ -560,6 +560,15 @@ class BasePeople(sc.prettyobj):
 
 
     def validate(self, die=True, verbose=False):
+
+        # Check that the keys match
+        contact_layer_keys = set(self.contacts.keys())
+        beta_layer_keys = set(self.pars['beta_layer'].keys())
+        if contact_layer_keys != beta_layer_keys:
+            errormsg = f'Parameters layers {beta_layer_keys} are not consistent with contact layers {contact_layer_keys}'
+            raise ValueError(errormsg)
+
+        # Check that the length of each array is consistent
         expected_len = len(self)
         for key in self.keys():
             actual_len = len(self[key])
@@ -681,10 +690,10 @@ class BasePeople(sc.prettyobj):
         for lkey, new_layer in new_contacts.items():
             n = len(new_layer['p1'])
             if 'layer' not in new_layer:
-                new_layer['layer'] = np.array([key]*n)
+                new_layer['layer'] = np.array([lkey]*n)
             if 'beta' not in new_layer or len(new_layer['beta']) != n:
                 if beta is None:
-                    beta = self.pars['beta_layer'][key]
+                    beta = self.pars['beta_layer'][lkey]
                 beta = np.float32(beta)
                 new_layer['beta'] = np.ones(n, dtype=np.float32)*beta
 
@@ -692,10 +701,6 @@ class BasePeople(sc.prettyobj):
             for col in self.contacts[lkey].keys():
                 self.contacts[lkey][col] = np.concatenate([self.contacts[lkey][col], new_layer[col]])
             self.contacts[lkey].validate()
-
-        print('lsdlkfjslkfjd')
-        print(self.contacts.keys())
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         return
 

@@ -56,6 +56,7 @@ class People(cvb.BasePeople):
         ''' Perform initializations '''
         self.set_prognoses(pars)
         self.set_betas(pars)
+        self.validate()
         return
 
 

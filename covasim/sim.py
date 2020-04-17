@@ -153,7 +153,14 @@ class Sim(cvb.BaseSim):
         contacts = self['contacts']
         if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's all contacts
             self['contacts']    = {'a':contacts}
-            self['beta_layer'] = {'a':1.0}
+
+        # Handle key mismaches
+        beta_layer_keys = set(self.pars['beta_layer'].keys())
+        contacts_keys   = set(self.pars['contacts'].keys())
+        quar_eff_keys   = set(self.pars['quar_eff'].keys())
+        if not(beta_layer_keys == contacts_keys == quar_eff_keys):
+            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} are not consistent'
+            raise ValueError(errormsg)
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']

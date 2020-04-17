@@ -29,8 +29,7 @@ pars = sc.objdict(
     n_days       = 60,   # Number of days to simulate
     rand_seed    = 1,     # Random seed
     pop_type     = 'random',
-    use_layers   = True,
-    )
+)
 
 # Optionally add an intervention
 if interv:
