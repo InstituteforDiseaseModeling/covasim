@@ -8,7 +8,6 @@ import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
-import warnings
 
 
 __all__ = ['People']
@@ -57,6 +56,8 @@ class People(cvb.BasePeople):
         ''' Perform initializations '''
         self.set_prognoses(pars)
         self.set_betas(pars)
+        self.pars['viral_dist']['par1'] = self._default_dtype(self.pars['viral_dist']['par1'])
+        self.pars['viral_dist']['par2'] = self._default_dtype(self.pars['viral_dist']['par2'])
         return
 
 
@@ -87,9 +88,7 @@ class People(cvb.BasePeople):
         if pars is None:
             pars = self.pars
 
-        self['rel_beta'] = self._default_dtype(cvu.sample(pars['beta_distro']['dist'], \
-            pars['beta_distro']['par1'], pars['beta_distro']['par2'],\
-            size=int(pars['pop_size'])))
+        self['rel_beta'] = self._default_dtype(cvu.sample(**pars['beta_dist'], size=int(pars['pop_size'])))
 
         for key,value in pars['beta_layer'].items():
             df = self.contacts[key]
@@ -121,31 +120,20 @@ class People(cvb.BasePeople):
         return counts
     
     def update_rel_trans(self):
-        viral_distro = self.pars['viral_distro']
-        dist = 1
-        
-        choices = [
-        'constant',
-        'twolevel'
-        ]
-    
-        if viral_distro['dist'] == 'constant':
-            dist = 1
-        elif viral_distro['dist'] == 'twolevel':
-            dist = 2
-        else:
-            choicestr = '\n'.join(choices)
-            errormsg = f'The selected viral distribution "{dist}" is not implemented; choices are: {choicestr}'
-            raise NotImplementedError(errormsg)
+        viral_dist = self.pars['viral_dist'].copy()
             
-        warnings.simplefilter("ignore")
-        date_end = np.nanmax(np.stack((self.date_recovered, self.date_dead)),axis=0)
-        load = cvu.compute_rel_trans(dist,\
-                      self._default_dtype(viral_distro.get('par1',1)),\
-                      self._default_dtype(viral_distro.get('par2',2)),\
-                      np.int32(self.t), self.rel_beta, self.date_infectious,\
-                      date_end, self.infectious)
-        self.rel_trans = load
+        date_end = self.date_dead
+        inds = ~np.isnan(self.date_recovered)
+        date_end[inds] = self.date_recovered[inds]
+        rel_trans = cvu.compute_rel_trans(\
+                            np.int32(self.t),\
+                            self.rel_beta,\
+                            self.date_infectious,\
+                            date_end,\
+                            self.infectious,\
+                            viral_dist['par1'],\
+                            viral_dist['par2'])
+        self.rel_trans = rel_trans
         return 
 
 

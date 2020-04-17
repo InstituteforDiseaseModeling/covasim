@@ -529,7 +529,6 @@ class Sim(cvb.BaseSim):
         if self.data is None:
             return np.nan
 
-        pLowest = 1e-20
         loglike = 0
 
         model_dates = self.datevec.tolist()

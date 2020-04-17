@@ -16,7 +16,7 @@ base_pars = sc.objdict(
         verbose = 0,
         pop_infected = 1
 )
-base_pars['beta_distro']  = {'dist':'lognormal', 'par1':1, 'par2':0}
+base_pars['beta_dist']  = {'dist':'lognormal', 'par1':1, 'par2':0}
 base_pars['dur'] = {}
 base_pars['dur']['exp2inf']  = {'dist':'normal_int', 'par1':4, 'par2':0} # Duration from exposed to infectious
 base_pars['dur']['inf2sym']  = {'dist':'normal_int', 'par1':0, 'par2':0} # Duration from infectious to symptomatic
@@ -41,18 +41,18 @@ for i in range(runs):
     # Configure the sim -- can also just use a normal dictionary
     pars = base_pars
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_distro'] = {'dist':'constant'}
+    pars['viral_dist'] = {'dist':'twolevel', 'par1':1, 'par2':1}
     print('Making sim ', i, '...')
     sim1 = cv.Sim(pars=pars)
     sim1.run()
     r0_const[i] = len(sim1.people.transtree.targets[0])
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_distro'] = {'dist':'twolevel', 'par1':.5, 'par2':2}
+    pars['viral_dist'] = {'dist':'twolevel', 'par1':.5, 'par2':2}
     sim2 = cv.Sim(pars=pars)
     sim2.run()
     r0_twolevel[i] = len(sim2.people.transtree.targets[0])
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_distro'] = {'dist':'twolevel', 'par1':.3, 'par2':3}
+    pars['viral_dist'] = {'dist':'twolevel', 'par1':.3, 'par2':3}
     sim3 = cv.Sim(pars=pars)
     sim3.run()
     r0_twolevel2[i] = len(sim3.people.transtree.targets[0])
@@ -66,6 +66,7 @@ hist1 = plt.hist(r0_const, bins=np.arange(-0.5, 10.5), density=True)
 hist2 = plt.hist(r0_twolevel, bins=np.arange(-0.5, 10.5), density=True)
 hist3 = plt.hist(r0_twolevel2, bins=np.arange(-0.5, 10.5), density=True)
 plt.show()
+# Test that the R0 did not change substantially, though the std is large
 assert(abs(np.mean(r0_const)-np.mean(r0_twolevel))<np.std(r0_const))
 assert(abs(np.mean(r0_const)-np.mean(r0_twolevel2))<np.std(r0_const))
 assert(abs(np.mean(r0_twolevel)-np.mean(r0_twolevel2))<np.std(r0_twolevel))
@@ -77,6 +78,8 @@ hist2[0][hist2[0]==0] = 1e-10
 hist2[0][:] = hist2[0]/sum(hist2[0])
 hist3[0][hist3[0]==0] = 1e-10
 hist3[0][:] = hist3[0]/sum(hist3[0])
+# Test the KL diverage of the distributions of R0. Since std is large this is
+# likely a stronger test than the above R0 comparisons.
 assert(sum(kl_div(hist1[0], hist2[0]))<1)
 assert(sum(kl_div(hist1[0], hist3[0]))<1)
 assert(sum(kl_div(hist2[0], hist3[0]))<1)
