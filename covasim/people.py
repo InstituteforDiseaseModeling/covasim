@@ -87,9 +87,9 @@ class People(cvb.BasePeople):
         if pars is None:
             pars = self.pars
 
-        self['rel_beta'][:] = self._default_dtype(1.0)#self._default_dtype(cvu.sample(pars['beta_distro']['dist'], \
-            #pars['beta_distro']['par1'], pars['beta_distro']['par2'],\
-            #size=int(pars['pop_size'])))
+        self['rel_beta'] = self._default_dtype(cvu.sample(pars['beta_distro']['dist'], \
+            pars['beta_distro']['par1'], pars['beta_distro']['par2'],\
+            size=int(pars['pop_size'])))
 
         for key,value in pars['beta_layer'].items():
             df = self.contacts[key]
