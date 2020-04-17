@@ -9,9 +9,10 @@ adheres to `Semantic
 Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
 
-Version 0.27.5 (2020-04-17)
+Version 0.27.6 (2020-04-17)
 ---------------------------
 - Caches Numba functions, reducing load time from 2.5 to 0.5 seconds
+- Pins Numba to 0.48, which is 10x faster than 0.49
 - Fixed issue with saving populations in scenarios
 - Refactored how populations are handled, removing ``use_layers`` parameter (use ``pop_type`` instead)
 
