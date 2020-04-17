@@ -257,7 +257,7 @@ class InterventionTests(CovaSimTest):
         pass
 
     def test_test_prob_sensitivity(self, subtract_today_recoveries=False):
-        self.is_debugging = True
+        self.is_debugging = False
         params = {
             SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 31
