@@ -75,6 +75,7 @@ db.sqlite3-journal
 # Flask stuff:
 instance/
 .webassets-cache
+*.out
 
 # Scrapy stuff:
 .scrapy
@@ -141,3 +142,5 @@ dmypy.json
 
 # Node.js and NPM
 node_modules
+docs/covasim.*
+docs/modules.rst

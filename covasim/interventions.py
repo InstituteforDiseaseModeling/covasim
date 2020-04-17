@@ -86,7 +86,9 @@ class dynamic_pars(Intervention):
     Args:
         pars (dict): described above
 
-    Examples:
+    **Examples**
+    ::
+
         interv = cv.dynamic_pars({'diag_factor':{'days':30, 'vals':0.5}, 'cont_factor':{'days':30, 'vals':0.5}}) # Starting day 30, make diagnosed people and people with contacts half as likely to transmit
         interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}}) # On day 14, change beta to 0.005, and on day 28 change it back to 0.015
     '''
@@ -137,7 +139,9 @@ class sequence(Intervention):
         interventions (list): the interventions to apply on those days
         WARNING: Will take first intervation after sum(days) days has ellapsed!
 
-    Example:
+    **Example**
+    ::
+
         interv = cv.sequence(days=[10, 51], interventions=[
                     cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
                     cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002),
@@ -168,7 +172,10 @@ class change_beta(Intervention):
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
         layers (str or array): the layers in which to change beta
 
-    Examples:
+
+    **Examples**
+    ::
+
         interv = cv.change_beta(25, 0.3) # On day 25, reduce overall beta by 70% to 0.3
         interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
     '''
@@ -223,7 +230,9 @@ class test_num(Intervention):
     '''
     Test a fixed number of people per day.
 
-    Example:
+    **Example**
+    ::
+
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
 
     Returns:
@@ -302,7 +311,9 @@ class test_prob(Intervention):
         start_day (int): When to start the intervention
 
 
-    Example:
+    **Example**
+    ::
+
         interv = cv.test_prob(symptomatic_prob=0.1, asymptomatic_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
 
