@@ -23,7 +23,6 @@ class PeopleKeys(sc.prettyobj):
         'death_prob',  # Float
         'rel_trans',   # Float
         'rel_sus',     # Float
-        'rel_beta',    # Float
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py

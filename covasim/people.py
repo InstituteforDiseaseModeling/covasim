@@ -88,8 +88,6 @@ class People(cvb.BasePeople):
         if pars is None:
             pars = self.pars
 
-        self['rel_beta'] = self._default_dtype(cvu.sample(**pars['beta_dist'], size=int(pars['pop_size'])))
-
         for key,value in pars['beta_layer'].items():
             df = self.contacts[key]
             df['beta'][:] = value
@@ -118,24 +116,6 @@ class People(cvb.BasePeople):
         del self.is_exp # Tidy up
 
         return counts
-    
-    def update_rel_trans(self):
-        viral_dist = self.pars['viral_dist'].copy()
-            
-        date_end = self.date_dead
-        inds = ~np.isnan(self.date_recovered)
-        date_end[inds] = self.date_recovered[inds]
-        rel_trans = cvu.compute_rel_trans(\
-                            np.int32(self.t),\
-                            self.rel_beta,\
-                            self.date_infectious,\
-                            date_end,\
-                            self.infectious,\
-                            viral_dist['par1'],\
-                            viral_dist['par2'])
-        self.rel_trans = rel_trans
-        return 
-
 
     def update_contacts(self, dynamic_keys='c'):
         ''' Set dynamic contacts, by default, community ('c') '''

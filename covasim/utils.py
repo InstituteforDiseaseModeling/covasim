@@ -221,35 +221,41 @@ def choose_w(probs, n, unique=True):
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit((    nb.float32[:], nb.float32[:], nb.bool_[:], nb.bool_[:], nb.bool_[:],   nb.float32,  nb.float32, nb.float32))
-def compute_probs(rel_trans,       rel_sus,        symp,        diag,        quar, asymp_factor, diag_factor, quar_trans):
+@nb.njit((    nb.float32[:], nb.float32[:], nb.float32[:], nb.bool_[:], nb.bool_[:], nb.bool_[:],   nb.float32,  nb.float32, nb.float32))
+def compute_probs(rel_trans,       rel_sus,    viral_load,        symp,        diag,        quar, asymp_factor, diag_factor, quar_trans):
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
     f_quar_eff = ~quar +  quar * quar_trans # Quarantine
-    rel_trans  = rel_trans * f_quar_eff * f_asymp * f_diag # Recalulate transmisibility
+    rel_trans  = rel_trans * viral_load * f_quar_eff * f_asymp * f_diag # Recalulate transmisibility
     rel_sus    = rel_sus   * f_quar_eff # Recalulate susceptibility
     return rel_trans, rel_sus
 
-@nb.njit((        nb.int32, nb.float32[:], nb.float32[:], nb.float32[:], nb.bool_[:], nb.float32, nb.float32))
-def compute_rel_trans(t,       rel_beta,    time_start,     time_stop,   infectious,    par1,       par2):
+@nb.njit((      nb.int32, nb.float32[:],  nb.float32[:], nb.float32[:], nb.float32, nb.float32))
+def compute_viral_load(t,    time_start, time_recovered,     time_dead,       par1,       par2):
     ''' Calculate relative transmissibility for time t. Includes time varying
         viral load, pre/asymptomatic factor, diagonsis factor, etc.
             t: (int) timestep
-            rel_beta: (float[]) individuals' beta parameter
             time_start: (float[]) individuals' infectious date
-            time_stop: (float[]) individuals' end date (dead or recovered)
-            infectious: (bool[]) is the individual infectious?
+            time_recovered: (float[]) individuals' recovered date
+            time_dead: (float[]) individuals' death date
             par1: (float) frac of time in high load
             par2: (float) ratio for high to low viral load
         Returns:
             (float[]) rel_trans)'''
-            
-    load = np.ones(len(rel_beta), dtype=np.float32)
+    
+    # get the end date from recover or death
+    time_stop = time_dead
+    inds = ~np.isnan(time_recovered)
+    time_stop[inds] = time_recovered[inds]
+    # allocate an array of ones with the correct dtype
+    load = np.ones(len(time_start), dtype=np.float32)
+    # are we in the early or late phase
     early = (t-time_start)/(time_stop-time_start) < par1
+    # calculate load
     load = (par2 * early + load * ~early)/(load+par1*(par2-load))
             
-    return load * rel_beta * infectious
+    return load
 
 
 @nb.njit((    nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]))

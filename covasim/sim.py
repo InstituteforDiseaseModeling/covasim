@@ -250,7 +250,6 @@ class Sim(cvb.BaseSim):
         flows    = people.update_states(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
         bed_max  = people.count('severe') > self['n_beds'] # Check for a bed constraint
-        people.update_rel_trans() # update the relative transmission based on changing viral load
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
@@ -262,6 +261,11 @@ class Sim(cvb.BaseSim):
         beta         = np.float32(self['beta'])
         asymp_factor = np.float32(self['asymp_factor'])
         diag_factor  = np.float32(self['diag_factor'])
+        load_switch_point = self['viral_dist']['par1']
+        load_change_ratio = self['viral_dist']['par2']
+        viral_load = cvu.compute_viral_load(t, people.date_infectious,\
+                                            people.date_recovered, people.date_dead,\
+                                            load_switch_point, load_change_ratio)
 
         for key,layer in contacts.items():
             sources     = layer['p1']
@@ -275,7 +279,7 @@ class Sim(cvb.BaseSim):
             diag      = people.diagnosed
             quar      = people.quarantined
             quar_eff  = np.float32(self['quar_eff'][key])
-            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
+            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
             # Calculate actual transmission
             target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
