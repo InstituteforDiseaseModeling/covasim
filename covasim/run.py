@@ -559,7 +559,7 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
                 n_runs = new_n
 
     # Run the sims
-    if isinstance(sim, cvb.Sim): # Normal case: one sim
+    if isinstance(sim, cvs.Sim): # Normal case: one sim
         iterkwargs = {'ind':np.arange(n_runs)}
         iterkwargs.update(iterpars)
         kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'keep_people':keep_people, 'sim_args':sim_args, 'run_args':run_args}
