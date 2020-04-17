@@ -11,8 +11,8 @@ import datetime as dt
 from collections import defaultdict
 import matplotlib.ticker as ticker
 from . import defaults as cvd
-from . import base as cvbase
-from . import sim as cvsim
+from . import base as cvb
+from . import sim as cvs
 
 
 # Specify all externally visible functions this file defines
@@ -33,7 +33,7 @@ def make_metapars():
     return metapars
 
 
-class Scenarios(cvbase.ParsObj):
+class Scenarios(cvb.ParsObj):
     '''
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
 
@@ -72,7 +72,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Create the simulation and handle basepars
         if sim is None:
-            sim = cvsim.Sim()
+            sim = cvs.Sim()
         self.base_sim = sim
         self.basepars = sc.mergedicts({}, basepars)
         self.base_sim.update_pars(self.basepars)
@@ -514,10 +514,11 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
 
 def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, combine=False, keep_people=None, run_args=None, sim_args=None, **kwargs):
     '''
-    For running multiple runs in parallel.
+    For running multiple runs in parallel. If the first argument is a list of sims,
+    exactly these will be run and most other arguments will be ignored.
 
     Args:
-        sim (Sim): the sim instance to be run
+        sim (Sim or list): the sim instance to be run, or a list of sims.
         n_runs (int): the number of parallel runs
         noise (float): the amount of noise to add to each run
         noisepar (string): the name of the parameter to add noise to
@@ -557,11 +558,19 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
             else:
                 n_runs = new_n
 
-    # Copy the simulations
-    iterkwargs = {'ind':np.arange(n_runs)}
-    iterkwargs.update(iterpars)
-    kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'keep_people':keep_people, 'sim_args':sim_args, 'run_args':run_args}
-    sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
+    # Run the sims
+    if isinstance(sim, cvb.Sim): # Normal case: one sim
+        iterkwargs = {'ind':np.arange(n_runs)}
+        iterkwargs.update(iterpars)
+        kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'keep_people':keep_people, 'sim_args':sim_args, 'run_args':run_args}
+        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
+    elif isinstance(sim, list): # List of sims
+        iterkwargs = {'sim':sim}
+        kwargs = {'verbose':verbose, 'keep_people':keep_people, 'sim_args':sim_args, 'run_args':run_args}
+        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
+    else:
+        errormsg = f'Must be Sim object or list, not {type(sim)}'
+        raise TypeError(errormsg)
 
     # Usual case -- return a list of sims
     if not combine:
