@@ -52,9 +52,6 @@ def make_people(sim, verbose=None, die=True, reset=False):
                 pop_type = 'random'
 
     # Actually create the population
-    if pop_type in ['hybrid', 'synthpops']:
-        sim.update_pars(use_layers=True) # These two population types require layers
-
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
     else:
