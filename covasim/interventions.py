@@ -143,8 +143,8 @@ class sequence(Intervention):
     ::
 
         interv = cv.sequence(days=[10, 51], interventions=[
-                    cv.test_historical(npts, n_tests=[100] * npts, n_positive=[1] * npts),
-                    cv.test_prob(npts, symptomatic_prob=0.2, asymptomatic_prob=0.002),
+                    cv.test_num(n_tests=[100]*npts),
+                    cv.test_prob(symptomatic_prob=0.2, asymptomatic_prob=0.002),
                 ])
     '''
 
@@ -376,69 +376,3 @@ class contact_tracing(Intervention):
             sim.people.trace(just_diagnsed_inds, self.trace_probs, self.trace_time)
 
         return
-
-
-
-
-# class test_historical(Intervention):
-#     '''
-#     Test a known number of positive cases
-
-#     This can be used to simulate historical data containing the number of tests performed and the
-#     number of cases identified as a result.
-
-#     This intervention will actually test all individuals. At the moment, testing someone who is negative
-#     has no effect, so they don't really need to be tested. However, it's possible that in the future
-#     a negative test may still have an impact (e.g. make it less likely for an individual to re-test even
-#     if they become symptomatic). Therefore to remain as accurate as possible, `Person.test()` is guaranteed
-#     to be called for every person tested.
-
-#     One minor limitation of this intervention is that symptomatic individuals that are tested and in reality
-#     returned a false negative result would not be tested at all - instead, a non-infectious individual would
-#     be tested. At the moment this would not affect model dynamics because a false negative is equivalent to
-#     not performing the test at all.
-#     '''
-
-#     def __init__(self, n_tests, n_positive):
-#         '''
-#         Args:
-#             n_tests: Number of tests per day. If this is a scalar or an array with length less than npts, it will be zero-padded
-#             n_positive: Number of positive tests (confirmed cases) per day. If this is a scalar or an array with length less than npts, it will be zero-padded
-#         '''
-#         super().__init__()
-#         self.n_tests    = sc.promotetoarray(n_tests)
-#         self.n_positive = sc.promotetoarray(n_positive)
-#         return
-
-
-#     def apply(self, sim):
-#         ''' Perform testing '''
-
-#         t = sim.t
-
-#         if self.n_tests[t]:
-
-#             # Compute weights for people who would test positive or negative
-#             positive_tests = np.zeros((sim.n,))
-#             for i,person in enumerate(sim.people):
-#                 if person.infectious:
-#                     positive_tests[i] = 1
-#             negative_tests = 1-positive_tests
-
-#             # Select the people to test in each category
-#             positive_inds = cv.choose_w(probs=positive_tests, n=min(sum(positive_tests), self.n_positive[t]), normalize=True)
-#             negative_inds = cv.choose_w(probs=negative_tests, n=min(sum(negative_tests), self.n_tests[t]-len(positive_inds)), normalize=True)
-
-#             # Todo - assess performance and optimize e.g. to reduce dict indexing
-#             for ind in positive_inds:
-#                 person = sim.people[ind]
-#                 person.test(t, test_sensitivity=1.0) # Sensitivity is 1 because the person is guaranteed to test positive
-#                 sim.results['new_diagnoses'][t] += 1
-
-#             for ind in negative_inds:
-#                 person = sim.people[ind]
-#                 person.test(t, test_sensitivity=1.0)
-
-#             sim.results['new_tests'][t] += self.n_tests[t]
-
-#         return
