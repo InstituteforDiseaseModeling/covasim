@@ -104,11 +104,11 @@ def test_start_stop(): # If being run via pytest, turn off
     sim1 = cv.Sim(pars)
     sim1.run(verbose=0)
 
-    # Test that next works
+    # Test that step works
     sim2 = cv.Sim(pars)
     sim2.initialize()
     for n in range(sim2.npts):
-        sim2.next(verbose=0)
+        sim2.step()
     sim2.finalize()
 
     # Compare results
@@ -123,7 +123,7 @@ def test_sim_data(do_plot=False, do_show=False):
 
     pars = dict(
         pop_size = 2000,
-        start_day = '2019-12-25',
+        start_day = '2020-02-25',
         )
 
     # Create and run the simulation

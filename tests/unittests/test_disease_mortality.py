@@ -61,7 +61,6 @@ class DiseaseMortalityTests(CovaSimTest):
         duration. Verify that no one dies.
         Depends on default_cfr_one
         """
-        self.is_debugging = False
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
         prob_dict = {
@@ -100,7 +99,6 @@ class DiseaseMortalityTests(CovaSimTest):
         duration. Verify that no one dies.
         Depends on default_cfr_one
         """
-        self.is_debugging = False
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
         end_sample_size = 10 # last few days most interesting

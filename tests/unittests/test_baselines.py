@@ -6,8 +6,8 @@ import sciris as sc
 import covasim as cv
 
 do_save = True
-baseline_filename  = 'baseline.json'
-benchmark_filename = 'benchmark.json'
+baseline_filename  = sc.thisdir(__file__, 'baseline.json')
+benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
 baseline_key = 'summary'
 
 
@@ -58,7 +58,9 @@ def test_baseline():
             mismatches[key] = {'old': old_val, 'new': new_val}
 
     if len(mismatches):
-        errormsg += '\nMismatches:\n'
+        errormsg = '\nThe following values have changed between old and new!\n'
+        errormsg += 'Please rerun "tests/unittests/update_baseline" if this is intentional.\n'
+        errormsg += 'Mismatches:\n'
         space = ' '*17
         for mkey,mval in mismatches.items():
             errormsg += f'  {mkey}:\n'
