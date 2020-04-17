@@ -12,7 +12,7 @@ from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
-from . import base as cvbase
+from . import base as cvb
 from . import parameters as cvpars
 from . import population as cvpop
 
@@ -20,7 +20,7 @@ from . import population as cvpop
 __all__ = ['Sim']
 
 
-class Sim(cvbase.BaseSim):
+class Sim(cvb.BaseSim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
@@ -183,14 +183,14 @@ class Sim(cvbase.BaseSim):
         Create the main results structure.
         We differentiate between flows, stocks, and cumulative results
         The prefix "new" is used for flow variables, i.e. counting new events (infections/deaths/recoveries) on each timestep
-        The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any paticular timestep
-        The prefix "cum_" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
+        The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any particular timestep
+        The prefix "cum\_" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
         Note that, by definition, n_dead is the same as cum_deaths and n_recovered is the same as cum_recoveries, so we only define the cumulative versions
         '''
 
         def init_res(*args, **kwargs):
             ''' Initialize a single result object '''
-            output = cvbase.Result(*args, **kwargs, npts=self.npts)
+            output = cvb.Result(*args, **kwargs, npts=self.npts)
             return output
 
         dcols = cvd.default_colors # Shorten default colors
@@ -434,6 +434,7 @@ class Sim(cvbase.BaseSim):
             None (modifies results in place)
         '''
         cum_infections = self.results['cum_infections'].values
+        self.results['doubling_time'][:window] = np.nan
         for t in range(window, self.npts):
             infections_now = cum_infections[t]
             infections_prev = cum_infections[t-window]
@@ -445,14 +446,19 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def compute_r_eff(self):
+    def compute_r_eff(self, window=7):
         '''
         Effective reproductive number based on number of people each person infected.
+
+        Args:
+            window (int): the size of the window used (larger values are more accurate but less precise)
+
         '''
 
         # Initialize arrays to hold sources and targets infected each day
         sources = np.zeros(self.npts)
         targets = np.zeros(self.npts)
+        window = int(window)
 
         for t in self.tvec:
 
@@ -468,8 +474,21 @@ class Sim(cvbase.BaseSim):
 
         # Populate the array -- to avoid divide-by-zero, skip indices that are 0
         inds = sc.findinds(sources>0)
-        r_eff = targets[inds]/sources[inds]
-        self.results['r_eff'].values[inds] = r_eff
+        r_eff = np.zeros(self.npts)*np.nan
+        r_eff[inds] = targets[inds]/sources[inds]
+
+        # use stored weights calculate the moving average over the window of timesteps, n
+        num = np.nancumsum(r_eff * sources)
+        num[window:] = num[window:] - num[:-window]
+        den = np.cumsum(sources)
+        den[window:] = den[window:] - den[:-window]
+
+        # avoid dividing by zero
+        values = np.zeros(num.shape)*np.nan
+        ind = den > 0
+        values[ind] = num[ind]/den[ind]
+
+        self.results['r_eff'].values = values
 
         return
 
@@ -506,7 +525,7 @@ class Sim(cvbase.BaseSim):
         return
 
 
-    def likelihood(self, weights=None, verbose=None) -> float:
+    def likelihood(self, weights=None, verbose=None, eps=1e-16):
         '''
         Compute the log-likelihood of the current simulation based on the number
         of new diagnoses.
@@ -531,11 +550,12 @@ class Sim(cvbase.BaseSim):
                 if np.isfinite(datum):
                     if d in model_dates:
                         estimate = self.results[key][model_dates.index(d)]
-                        if datum and estimate:
+                        if np.isfinite(datum) and np.isfinite(estimate):
                             if (datum == 0) and (estimate == 0):
                                 p = 1.0
                             else:
                                 p = cvm.poisson_test(datum, estimate)
+                            p = max(p, eps)
                             logp = pl.log(p)
                             loglike += weight*logp
                             sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
@@ -685,7 +705,9 @@ class Sim(cvbase.BaseSim):
             fig_args (dict): passed to pl.figure()
             plot_args (dict): passed to pl.plot()
 
-        Example:
+        **Example**
+        ::
+
             sim.plot_result('doubling_time')
         '''
         fig_args  = sc.mergedicts({'figsize':(16,10)}, fig_args)
