@@ -13,6 +13,7 @@ import sciris as sc
 import base64 # Download/upload-specific import
 import json
 import tempfile
+import traceback
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -30,6 +31,16 @@ max_pop  = 10e3 # Maximum population size
 max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
 die      = False # Whether or not to raise exceptions instead of continuing
+
+
+def log_err(message:str, ex:Exception):
+    tex = traceback.TracebackException.from_exception(ex)
+    out = f"{message} {traceback.format_exception_only(tex.exc_type, tex)}"
+    print(f"{message}\n", )
+    return {
+        "message": message,
+        "exception": ''.join(traceback.format_exception(tex.exc_type, tex, tex.exc_traceback))
+    }
 
 @app.register_RPC()
 def get_defaults(region=None, merge=False):
@@ -76,6 +87,7 @@ def get_defaults(region=None, merge=False):
     sim_pars['pop_size']     = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
     sim_pars['pop_infected'] = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
     sim_pars['rand_seed']    = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
+    sim_pars['n_days']       = dict(best=90,   min=1, max=max_days, name="Simulation Duration",        tip='Total duration (in days) of the simulation')
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
@@ -162,7 +174,7 @@ def upload_file(file):
     return path
 
 @app.register_RPC()
-def get_gnatt(intervention_pars=None, intervention_config=None):
+def get_gantt(intervention_pars=None, intervention_config=None):
     df = []
     for key,scenario in intervention_pars.items():
         for timeline in scenario:
@@ -178,9 +190,7 @@ def get_gnatt(intervention_pars=None, intervention_config=None):
 @app.register_RPC()
 def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
     ''' Create, run, and plot everything '''
-
-    err = ''
-
+    errs = []
     try:
         # Fix up things that JavaScript mangles
         orig_pars = cv.make_pars(set_prognoses=True, prog_by_age=False, use_layers=False)
@@ -198,16 +208,18 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
 
             try:
                 web_pars[key] = np.clip(float(entry['best']), minval, maxval)
-            except Exception:
+            except Exception as E:
                 user_key = entry['name']
                 user_val = entry['best']
-                err1 = f'Could not convert parameter "{user_key}", value "{user_val}"; using default value instead\n'
-                print(err1)
-                err += err1
+                err = f'Could not convert parameter "{user_key}" from value "{user_val}"; using default value instead.'
+                errs.append(log_err(err, E))
                 web_pars[key] = best
                 if die: raise
-            if key in sim_pars: sim_pars[key]['best'] = web_pars[key]
-            else:               epi_pars[key]['best'] = web_pars[key]
+
+            if key in sim_pars:
+                sim_pars[key]['best'] = web_pars[key]
+            else:
+                epi_pars[key]['best'] = web_pars[key]
 
         # Convert durations
         web_pars['dur'] = sc.dcp(orig_pars['dur']) # This is complicated, so just copy it
@@ -249,18 +261,14 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
 
     except Exception as E:
-        err2 = f'Parameter conversion failed! {str(E)}\n'
-        print(err2)
-        err += err2
+        errs.append(log_err('Parameter conversion failed!', E))
         if die: raise
 
     # Create the sim and update the parameters
     try:
         sim = cv.Sim(pars=web_pars,datafile=datafile)
     except Exception as E:
-        err3 = f'Sim creation failed! {str(E)}\n'
-        print(err3)
-        err += err3
+        errs.append(log_err('Sim creation failed!', E))
         if die: raise
 
     if verbose:
@@ -270,15 +278,12 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     # Core algorithm
     try:
         sim.run(do_plot=False)
-    except TimeoutError:
-        day = sim.t
-        err4 = f"The simulation stopped on day {day} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
-        err += err4
+    except TimeoutError as TE:
+        err = f"The simulation stopped on day {sim.t} because run time limit ({sim['timelimit']} seconds) was exceeded. Please reduce the population size and/or number of days simulated."
+        errs.append(log_err(err, TE))
         if die: raise
     except Exception as E:
-        err4 = f'Sim run failed! {str(E)}\n'
-        print(err4)
-        err += err4
+        errs.append(log_err('Sim run failed!', E))
         if die: raise
 
     # Core plotting
@@ -318,9 +323,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
             graphs.append(animate_people(sim))
 
     except Exception as E:
-        err5 = f'Plotting failed! {str(E)}\n'
-        print(err5)
-        err += err5
+        errs.append(log_err('Plotting failed!', E))
         if die: raise
 
 
@@ -350,15 +353,14 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
             'deaths': round(sim.results['cum_deaths'][-1]),
         }
     except Exception as E:
-        err6 = f'File saving failed! {str(E)}\n'
-        print(err6)
-        err += err6
+        errs.append(log_err('Unable to save output files!', E))
         if die: raise
 
     output = {}
-    output['err']      = err
+    output['errs']     = errs
     output['sim_pars'] = sim_pars
     output['epi_pars'] = epi_pars
+    output['intervention_pars'] = intervention_pars
     output['graphs']   = graphs
     output['files']    = files
     output['summary']  = summary
