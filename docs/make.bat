@@ -84,10 +84,11 @@ if "%1" == "generate-api" (
     sphinx-apidoc -f --tocfile dummy -o . ../covasim
     del dummy.rst >nul 2>&1
     REN covasim.rst modules.rst
+	goto end
 )
 
 if "%1" == "external" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	if errorlevel 1 exit /b 1
 	%INDEXBUILD% -i %BUILDDIR%/html -o %BUILDDIR%/html/_static/tipuesearch/tipuesearch_content.js -u %URLPREFIX%
@@ -97,7 +98,7 @@ if "%1" == "external" (
 )
 
 if "%1" == "html" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %INTERNALOPTS% %BUILDDIR%/html
 	if errorlevel 1 exit /b 1
 	%INDEXBUILD% -i %BUILDDIR%/html -o %BUILDDIR%/html/_static/tipuesearch/tipuesearch_content.js -u %URLPREFIX%
@@ -114,7 +115,7 @@ if "%1" == "tipuesearch" (
 )
 
 if "%1" == "dirhtml" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b dirhtml %ALLSPHINXOPTS% %BUILDDIR%/dirhtml
 	if errorlevel 1 exit /b 1
 	echo.
@@ -123,7 +124,7 @@ if "%1" == "dirhtml" (
 )
 
 if "%1" == "singlehtml" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b singlehtml %ALLSPHINXOPTS% %BUILDDIR%/singlehtml
 	if errorlevel 1 exit /b 1
 	echo.
@@ -132,7 +133,7 @@ if "%1" == "singlehtml" (
 )
 
 if "%1" == "pickle" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b pickle %ALLSPHINXOPTS% %BUILDDIR%/pickle
 	if errorlevel 1 exit /b 1
 	echo.
@@ -141,7 +142,7 @@ if "%1" == "pickle" (
 )
 
 if "%1" == "json" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b json %ALLSPHINXOPTS% %BUILDDIR%/json
 	if errorlevel 1 exit /b 1
 	echo.
@@ -150,7 +151,7 @@ if "%1" == "json" (
 )
 
 if "%1" == "htmlhelp" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b htmlhelp %ALLSPHINXOPTS% %BUILDDIR%/htmlhelp
 	if errorlevel 1 exit /b 1
 	echo.
@@ -160,7 +161,7 @@ if "%1" == "htmlhelp" (
 )
 
 if "%1" == "qthelp" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b qthelp %ALLSPHINXOPTS% %BUILDDIR%/qthelp
 	if errorlevel 1 exit /b 1
 	echo.
@@ -173,7 +174,7 @@ if "%1" == "qthelp" (
 )
 
 if "%1" == "devhelp" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b devhelp %ALLSPHINXOPTS% %BUILDDIR%/devhelp
 	if errorlevel 1 exit /b 1
 	echo.
@@ -182,7 +183,7 @@ if "%1" == "devhelp" (
 )
 
 if "%1" == "epub" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b epub %ALLSPHINXOPTS% %BUILDDIR%/epub
 	if errorlevel 1 exit /b 1
 	echo.
@@ -191,7 +192,7 @@ if "%1" == "epub" (
 )
 
 if "%1" == "epub3" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b epub3 %ALLSPHINXOPTS% %BUILDDIR%/epub3
 	if errorlevel 1 exit /b 1
 	echo.
@@ -200,7 +201,7 @@ if "%1" == "epub3" (
 )
 
 if "%1" == "latex" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b latex %ALLSPHINXOPTS% %BUILDDIR%/latex
 	if errorlevel 1 exit /b 1
 	echo.
@@ -209,7 +210,7 @@ if "%1" == "latex" (
 )
 
 if "%1" == "latexpdf" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b latex %ALLSPHINXOPTS% %BUILDDIR%/latex
 	cd %BUILDDIR%/latex
 	make all-pdf
@@ -220,7 +221,7 @@ if "%1" == "latexpdf" (
 )
 
 if "%1" == "latexpdfja" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b latex %ALLSPHINXOPTS% %BUILDDIR%/latex
 	cd %BUILDDIR%/latex
 	make all-pdf-ja
@@ -231,7 +232,7 @@ if "%1" == "latexpdfja" (
 )
 
 if "%1" == "text" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b text %ALLSPHINXOPTS% %BUILDDIR%/text
 	if errorlevel 1 exit /b 1
 	echo.
@@ -240,7 +241,7 @@ if "%1" == "text" (
 )
 
 if "%1" == "man" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b man %ALLSPHINXOPTS% %BUILDDIR%/man
 	if errorlevel 1 exit /b 1
 	echo.
@@ -249,7 +250,7 @@ if "%1" == "man" (
 )
 
 if "%1" == "texinfo" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b texinfo %ALLSPHINXOPTS% %BUILDDIR%/texinfo
 	if errorlevel 1 exit /b 1
 	echo.
@@ -258,7 +259,7 @@ if "%1" == "texinfo" (
 )
 
 if "%1" == "gettext" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b gettext %I18NSPHINXOPTS% %BUILDDIR%/locale
 	if errorlevel 1 exit /b 1
 	echo.
@@ -267,7 +268,7 @@ if "%1" == "gettext" (
 )
 
 if "%1" == "changes" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b changes %ALLSPHINXOPTS% %BUILDDIR%/changes
 	if errorlevel 1 exit /b 1
 	echo.
@@ -276,7 +277,7 @@ if "%1" == "changes" (
 )
 
 if "%1" == "linkcheck" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b linkcheck %ALLSPHINXOPTS% %BUILDDIR%/linkcheck
 	if errorlevel 1 exit /b 1
 	echo.
@@ -286,7 +287,7 @@ or in %BUILDDIR%/linkcheck/output.txt.
 )
 
 if "%1" == "doctest" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b doctest %ALLSPHINXOPTS% %BUILDDIR%/doctest
 	if errorlevel 1 exit /b 1
 	echo.
@@ -296,7 +297,7 @@ results in %BUILDDIR%/doctest/output.txt.
 )
 
 if "%1" == "coverage" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b coverage %ALLSPHINXOPTS% %BUILDDIR%/coverage
 	if errorlevel 1 exit /b 1
 	echo.
@@ -306,7 +307,7 @@ results in %BUILDDIR%/coverage/python.txt.
 )
 
 if "%1" == "xml" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b xml %ALLSPHINXOPTS% %BUILDDIR%/xml
 	if errorlevel 1 exit /b 1
 	echo.
@@ -315,7 +316,7 @@ if "%1" == "xml" (
 )
 
 if "%1" == "pseudoxml" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b pseudoxml %ALLSPHINXOPTS% %BUILDDIR%/pseudoxml
 	if errorlevel 1 exit /b 1
 	echo.
@@ -324,7 +325,7 @@ if "%1" == "pseudoxml" (
 )
 
 if "%1" == "dummy" (
-    make.bat generate-api
+    call make.bat generate-api
 	%SPHINXBUILD% -b dummy %ALLSPHINXOPTS% %BUILDDIR%/dummy
 	if errorlevel 1 exit /b 1
 	echo.
