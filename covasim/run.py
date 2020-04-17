@@ -195,6 +195,9 @@ class Scenarios(cvbase.ParsObj):
             print(df)
             print()
 
+        # Save details about the run
+        self._kept_people = keep_people
+
         return
 
 
@@ -394,6 +397,9 @@ class Scenarios(cvbase.ParsObj):
 
         if keep_sims:
             if keep_people:
+                if not obj._kept_people:
+                    print('Warning: there are no people because they were not saved during the run. '
+                          'If you want people, please rerun with keep_people=True.')
                 obj.sims = sims # Just restore the object in full
                 print('Note: saving people, which may produce a large file!')
             else:
