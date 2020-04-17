@@ -56,8 +56,8 @@ class People(cvb.BasePeople):
         ''' Perform initializations '''
         self.set_prognoses(pars)
         self.set_betas(pars)
-        self.pars['viral_dist']['par1'] = self._default_dtype(self.pars['viral_dist']['par1'])
-        self.pars['viral_dist']['par2'] = self._default_dtype(self.pars['viral_dist']['par2'])
+        self.pars['viral_dist']['par1'] = self._ddtype(self.pars['viral_dist']['par1'])
+        self.pars['viral_dist']['par2'] = self._ddtype(self.pars['viral_dist']['par2'])
         self.validate()
         return
 
