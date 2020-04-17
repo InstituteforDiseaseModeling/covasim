@@ -105,7 +105,7 @@ class Scenarios(cvbase.ParsObj):
         return keys
 
 
-    def run(self, debug=False, verbose=None, **kwargs):
+    def run(self, debug=False, keep_people=False, verbose=None, **kwargs):
         '''
         Run the actual scenarios
 
@@ -147,7 +147,7 @@ class Scenarios(cvbase.ParsObj):
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
             scen_sim.update_pars(scenpars)
-            run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], verbose=verbose)
+            run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:
                 print('Running in debug mode (not parallelized)')
                 run_args.pop('n_runs', None) # Remove n_runs argument, not used for a single run
@@ -360,14 +360,14 @@ class Scenarios(cvbase.ParsObj):
         return output
 
 
-    def save(self, filename=None, keep_sims=True, keep_population=False, **kwargs):
+    def save(self, filename=None, keep_sims=True, keep_people=False, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
         Args:
             filename (str or None): the name or path of the file to save to; if None, uses stored
             keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object
-            keep_population (bool): whether or not to store the population in the Sim objects (NB, very large)
+            keep_people (bool): whether or not to store the population in the Sim objects (NB, very large)
             keywords: passed to makefilepath()
 
         Returns:
@@ -389,9 +389,11 @@ class Scenarios(cvbase.ParsObj):
         self.sims = None # Remove for now
 
         obj = sc.dcp(self) # This should be quick once we've removed the sims
+        if not keep_people:
+            obj.base_sim.shrink(in_place=True)
 
         if keep_sims:
-            if keep_population:
+            if keep_people:
                 obj.sims = sims # Just restore the object in full
                 print('Note: saving people, which may produce a large file!')
             else:
