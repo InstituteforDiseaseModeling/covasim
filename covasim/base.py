@@ -730,7 +730,7 @@ class BasePeople(sc.prettyobj):
         for lkey in lkeys:
             new_layer = Layer()
             for ckey,value in new_contacts[lkey].items():
-                new_layer[ckey] = np.array(value, dtype=new_layer.layer_info[ckey])
+                new_layer[ckey] = np.array(value, dtype=new_layer.meta[ckey])
             new_contacts[lkey] = new_layer
 
         return new_contacts
@@ -798,10 +798,10 @@ class Layer(sc.objdict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, **kwargs):
-        setattr(self, 'layer_info', sc.dcp(cvd.layer_info))
+        setattr(self, 'meta', sc.dcp(cvd.meta))
 
         # Initialize the keys of the layers
-        for key,dtype in self.layer_info.items():
+        for key,dtype in self.meta.items():
             self[key] = np.empty((0,), dtype=dtype)
         self.basekey = self.keys()[0] # Assign a base key for calculating lengths and performing other operations
 
@@ -835,7 +835,7 @@ class Layer(sc.objdict):
     def validate(self):
         ''' Check the integrity of the layer: right types, right lengths '''
         n = len(self[self.basekey])
-        for key,dtype in self.layer_info.items():
+        for key,dtype in self.meta.items():
             if dtype:
                 assert self[key].dtype == dtype
             assert n == len(self[key])
@@ -850,7 +850,7 @@ class Layer(sc.objdict):
 
     def from_df(self, df):
         ''' Convert from dataframe '''
-        for key in self.layer_info.keys():
+        for key in self.meta.keys():
             self[key] = df[key]
         return
 
