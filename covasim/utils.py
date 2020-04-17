@@ -25,7 +25,9 @@ def sample(dist=None, par1=None, par2=None, size=None):
     Returns:
         A length N array of samples
 
-    Examples:
+    **Examples**
+    ::
+
         sample() # returns Unif(0,1)
         sample(dist='normal', par1=3, par2=0.5) # returns Normal(μ=3, σ=0.5)
 
@@ -172,7 +174,9 @@ def choose(max_n, n):
         max_n (int): the total number of items
         n (int): the number of items to choose
 
-    Example:
+    **Example**
+    ::
+
         choose(5, 2) will choose 2 out of 5 people with equal probability.
     '''
     return np.random.choice(max_n, n, replace=False)
@@ -188,7 +192,7 @@ def choose_r(max_n, n):
         n (int): the number of items to choose
 
     Example:
-        choose(5, 2) will choose 2 out of 5 people with equal probability.
+        ``choose(5, 2)`` will choose 2 out of 5 people with equal probability.
     '''
     return np.random.choice(max_n, n, replace=True)
 
@@ -203,7 +207,7 @@ def choose_w(probs, n, unique=True):
         unique (bool): whether or not to ensure unique indices
 
     Example:
-        choose_w([0.2, 0.5, 0.1, 0.1, 0.1], 2) will choose 2 out of 5 people with nonequal probability.
+        ``choose_w([0.2, 0.5, 0.1, 0.1, 0.1], 2)`` will choose 2 out of 5 people with nonequal probability.
     '''
     probs = np.array(probs, dtype=np.float32)
     n_choices = len(probs)

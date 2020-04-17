@@ -76,7 +76,9 @@ class Result(object):
         scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
         color (str or array): default color for plotting (hex or RGB notation)
 
-    Example:
+    **Example**
+    ::
+
         import covasim as cv
         r1 = cv.Result(name='test1', npts=10)
         r1[:5] = 20
@@ -388,7 +390,9 @@ class BaseSim(ParsObj):
         Returns:
             filename (str): the validated absolute path to the saved file
 
-        Example:
+        **Example**
+        ::
+
             sim.save() # Saves to a .sim file with the date and time of creation by default
         '''
         if filename is None:
@@ -415,7 +419,9 @@ class BaseSim(ParsObj):
         Returns:
             sim (Sim): the loaded simulation object
 
-        Example:
+        **Example**
+        ::
+
             sim = cv.Sim.load('my-simulation.sim')
         '''
         filename = sc.makefilepath(filename=filename, **kwargs)
