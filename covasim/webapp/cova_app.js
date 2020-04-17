@@ -10,17 +10,23 @@ const PlotlyChart = {
 
     mounted() {
         this.$nextTick(function () {
-            let x = JSON.parse(this.graph.json);
-            x.responsive = true;
-            Plotly.react(this.graph.id, x);
+            if (this.graph['json']){
+                let x = JSON.parse(this.graph.json);
+                x.responsive = true;
+                Plotly.react(this.graph.id, x);
+            }
         }
         );
     },
     updated() {
         this.$nextTick(function () {
-            let x = JSON.parse(this.graph.json);
-            x.responsive = true;
-            Plotly.react(this.graph.id, x);
+            if (this.graph['json']){
+                let x = JSON.parse(this.graph.json);
+                x.responsive = true;
+                Plotly.react(this.graph.id, x);
+            } else {
+                Plotly.purge(this.graph.id)
+            }
         });
     }
 };
@@ -307,6 +313,7 @@ var vm = new Vue({
             this.epi_pars = response.data.epi_pars;
             this.sim_length = {...this.sim_pars['n_days']}
             this.intervention_pars = {};
+            this.intervention_figs = {};
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
             this.graphs = [];
