@@ -256,7 +256,8 @@ class InterventionTests(CovaSimTest):
                                       )
         pass
 
-    def test_test_prob_sensitivity(self):
+    def test_test_prob_sensitivity(self, subtract_today_recoveries=False):
+        self.is_debugging = True
         params = {
             SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 31
@@ -280,18 +281,24 @@ class InterventionTests(CovaSimTest):
             target_count = self.get_full_result_channel(
                 channel=ResultsKeys.symptomatic_at_timestep
             )[start_day]
+            if subtract_today_recoveries:
+                recoveries_today = self.get_full_result_channel(
+                    channel=ResultsKeys.recovered_at_timestep
+                )[start_day]
+                target_count = target_count - recoveries_today
             ideal_diagnoses = target_count * sensitivity
             standard_deviation = sqrt(sensitivity * (1 - sensitivity) * target_count)
             # 95% confidence interval
             min_tolerable_diagnoses = ideal_diagnoses - 2 * standard_deviation
             max_tolerable_diagnoses = ideal_diagnoses + 2 * standard_deviation
             if self.is_debugging:
-                print(f"Max: {max_tolerable_diagnoses} "
-                      f"Min: {min_tolerable_diagnoses} "
-                      f"Target: {target_count} "
-                      f"Ideal: {ideal_diagnoses} "
-                      f"Sensitivity: {sensitivity} "
-                      f"Actual diagnoses: {first_day_diagnoses}")
+                print(f"\tMax: {max_tolerable_diagnoses} \n"
+                      f"\tMin: {min_tolerable_diagnoses} \n"
+                      f"\tTarget: {target_count} \n"
+                      f"\tPrevious day Target: {self.get_full_result_channel(channel=ResultsKeys.symptomatic_at_timestep)[start_day -1 ]} \n"
+                      f"\tSensitivity: {sensitivity} \n"
+                      f"\tIdeal: {ideal_diagnoses} \n"
+                      f"\tActual diagnoses: {first_day_diagnoses}\n")
             self.assertGreaterEqual(first_day_diagnoses, min_tolerable_diagnoses,
                                     msg=f"Expected at least {min_tolerable_diagnoses} diagnoses with {target_count}"
                                         f" symptomatic and {sensitivity} sensitivity. Got {first_day_diagnoses}"
