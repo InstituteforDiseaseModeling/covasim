@@ -30,6 +30,15 @@ def test_data():
 
     return data
 
+def test_population_location_sets_housesize_and_population():
+    sc.heading('Population settings')
+
+    pars = cv.make_pars()
+    pars['location'] = 'USA'
+    pars['use_layers'] = True
+    cv.set_contacts(pars)
+    assert pars['contacts']['h'] == 2.49113173309193
+    assert pars['pop_type'] == 'hybrid'
 
 #%% Run as a script
 if __name__ == '__main__':

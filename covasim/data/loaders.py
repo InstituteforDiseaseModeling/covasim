@@ -126,6 +126,8 @@ def get_country_household_size_average(country):
     # Not every country is available return none if not found
     size = None
     try:
+        if country in mapping.keys():
+            country = mapping[country]
         size = data[country.lower()]
     except KeyError:
         print("No household size data for country")

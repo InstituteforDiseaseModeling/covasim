@@ -108,14 +108,17 @@ def set_contacts(pars):
         if pars.get('contacts',   None) is None: pars['contacts']   = {'h': 4,   's': 20,  'w': 20,  'c': 10}   # Number of contacts per person per day, estimated
         if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'h': 2.0, 's': 1.0, 'w': 1.0, 'c': 0.5}  # Per-population beta weights; relative
         if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+        # Set the household size
+        household_size = cvdata.loaders.get_country_household_size_average(pars['location'])
+        if household_size is not None:
+            pars['contacts']['h'] = household_size
+            # we need to be in hybrid mode to use the house hold size
+            print('Changing pop type to hybrid')
+            pars['pop_type'] = 'hybrid'
     else:
         if pars.get('contacts',   None) is None: pars['contacts']   = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
         if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'a': 1.0} # Per-population beta weights; relative
         if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'a': 0.3} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
-        # Set the household size
-        household_size = cvdata.loaders.get_country_household_size_average(pars['location'])
-        if household_size is not None:
-            pars['contacts']['h']
     return
 
 
