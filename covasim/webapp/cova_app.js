@@ -208,7 +208,7 @@ var vm = new Vue({
                     intervention.start <= start && intervention.end >= end;
             })
             if (overlaps){
-                this.$set(this.scenarioError, scenarioKey, `Intervention day ranges cannot overlap.`)
+                this.$set(this.scenarioError, scenarioKey, `Interventions of the same type cannot have overlapping day ranges.`)
                 return ;
             }
 
