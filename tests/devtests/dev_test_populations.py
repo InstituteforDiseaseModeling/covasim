@@ -37,7 +37,7 @@ sim = cv.Sim(pars)
 sim.run(do_plot=do_plot)
 
 # Run sim using synthpops with community transmission
-if cv.requirements.available['synthpops']:
+try:
     pars = dict(
         pop_size = 5000,
         pop_type = 'synthpops',
@@ -45,3 +45,5 @@ if cv.requirements.available['synthpops']:
         )
     sim = cv.Sim(pars)
     sim.run(do_plot=do_plot)
+except Exception as E:
+    print(f'Could not use synthpops: {str(E)})')

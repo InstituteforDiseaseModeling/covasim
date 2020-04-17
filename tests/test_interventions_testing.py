@@ -57,27 +57,27 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
           'name':'Assuming South Korea testing levels of 0.02% daily (with contact tracing); isolate positives',
           'pars': {
               'interventions': [cv.test_num(daily_tests=optimistic_daily_tests),
-                                cv.dynamic_pars({'quar_trans_factor':{'days':20, 'vals':0.1}})] # This means that people who've been in contact with known positives isolate with 90% effectiveness
+                                cv.dynamic_pars({'quar_eff':{'days':20, 'vals':[{'h':0.1, 's':0.1, 'w':0.1, 'c':0.1}]}})] # This means that people who've been in contact with known positives isolate with 90% effectiveness
               }
           },
         'floating': {
             'name': 'Test with constant probability based on symptoms',
             'pars': {
-                'interventions': cv.test_prob(symptomatic_prob=max_optimistic_testing, asymptomatic_prob=0.0)
+                'interventions': cv.test_prob(symp_prob=max_optimistic_testing, asymp_prob=0.0)
                 }
         },
-        'historical': {
-            'name': 'Test a known number of positive cases',
-            'pars': {
-                'interventions': cv.test_historical(n_tests=[100]*npts, n_positive = [1]*npts)
-            }
-        },
+        # 'historical': {
+        #     'name': 'Test a known number of positive cases',
+        #     'pars': {
+        #         'interventions': cv.test_historical(n_tests=[100]*npts, n_positive = [1]*npts)
+        #     }
+        # },
         'sequence': {
             'name': 'Historical switching to probability',
             'pars': {
                 'interventions': cv.sequence(days=[10, 51], interventions=[
-                    cv.test_historical(n_tests=[100] * npts, n_positive=[1] * npts),
-                    cv.test_prob(symptomatic_prob=0.2, asymptomatic_prob=0.002),
+                    cv.test_num(daily_tests=[1000]*npts),
+                    cv.test_prob(symp_prob=0.2, asymp_prob=0.002),
                 ])
             }
         },
@@ -124,7 +124,7 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
             'pars': {
                 'interventions': cv.test_num(daily_tests=daily_tests, test_delay=d)
             }
-        } for d in range(1, 7+1, 2)
+        } for d in range(1, 3+1, 2)
     }
 
     metapars = {'n_runs': n_runs}
@@ -132,8 +132,11 @@ def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose, debug=debug)
 
+    to_plot = ['cum_infections', 'n_infectious', 'new_tests', 'new_diagnoses']
+    fig_args = dict(figsize=(20, 24))
+
     if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path, interval=7, fig_args=fig_args, to_plot=to_plot)
 
     return scens
 
@@ -167,10 +170,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     # Define the scenarios
     scenarios = {
         'lowtrace': {
-            'name': '10% daily testing; poor contact tracing; 7d quarantine; 50% acquision reduction',
+            'name': 'Poor contact tracing; 7d quarantine; 50% acquision reduction',
             'pars': {
-                'quar_trans_factor': {'h': 1, 's': 0.5, 'w': 0.5, 'c': 0.25},
-                'quar_acq_factor': 0.5,
+                'quar_eff': {'h': 1, 's': 0.5, 'w': 0.5, 'c': 0.25},
                 'quar_period': 7,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 0, 's': 0, 'w': 0, 'c': 0},
@@ -178,10 +180,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'modtrace': {
-            'name': '10% daily testing; moderate contact tracing; 10d quarantine; 75% acquision reduction',
+            'name': 'Moderate contact tracing; 10d quarantine; 75% acquision reduction',
             'pars': {
-                'quar_trans_factor': {'h': 1, 's': 0.25, 'w': 0.25, 'c': 0.1},
-                'quar_acq_factor': 0.75,
+                'quar_eff': {'h': 0.75, 's': 0.25, 'w': 0.25, 'c': 0.1},
                 'quar_period': 10,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
@@ -189,10 +190,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'hightrace': {
-            'name': '10% daily testing; fast contact tracing; 14d quarantine; 90% acquision reduction',
+            'name': 'Fast contact tracing; 14d quarantine; 90% acquision reduction',
             'pars': {
-                'quar_trans_factor': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
-                'quar_acq_factor': 0.9,
+                'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
                 'quar_period': 14,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
@@ -200,10 +200,9 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
             }
         },
         'alltrace': {
-            'name': '10% daily testing; same-day contact tracing; 21d quarantine; 100% acquision reduction',
+            'name': 'Same-day contact tracing; 21d quarantine; 100% acquision reduction',
             'pars': {
-                'quar_trans_factor': {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0},
-                'quar_acq_factor': 0,
+                'quar_eff': {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0},
                 'quar_period': 21,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1},
@@ -236,8 +235,8 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
 if __name__ == '__main__':
     sc.tic()
 
-    #scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
-#    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
+    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
+    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
     scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
 
     sc.toc()
