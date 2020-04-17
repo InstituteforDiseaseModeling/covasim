@@ -717,14 +717,12 @@ class BasePeople(sc.prettyobj):
         for lkey in lkeys:
             new_contacts[lkey]['p1']    = [] # Person 1 of the contact pair
             new_contacts[lkey]['p2']    = [] # Person 2 of the contact pair
-            new_contacts[lkey]['layer'] = [] # Layers
 
         for p,cdict in enumerate(contacts):
             for lkey,p_contacts in cdict.items():
                 n = len(p_contacts) # Number of contacts
                 new_contacts[lkey]['p1'].extend([p]*n) # e.g. [4, 4, 4, 4]
                 new_contacts[lkey]['p2'].extend(p_contacts) # e.g. [243, 4538, 7,19]
-                new_contacts[lkey]['layer'].extend([lkey]*n) # e.g. ['h', 'h', 'h', 'h']
 
         # Turn into a dataframe
         for lkey in lkeys:
@@ -828,7 +826,6 @@ class Layer(FlexDict):
         self.meta = {
             'p1':    np.int32, # Person 1
             'p2':    np.int32,  # Person 2
-            'layer': None, # The layer by which the people are connected
             'beta':  np.float32, # Default transmissibility for this contact type
         }
         self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
