@@ -655,7 +655,7 @@ class BasePeople(sc.prettyobj):
         ''' Add new contacts to the array '''
 
         if lkey is None:
-            key = self.layer_keys()[0]
+            lkey = self.layer_keys()[0]
         if lkey not in self.contacts:
             self.contacts[lkey] = Layer()
 
@@ -692,6 +692,10 @@ class BasePeople(sc.prettyobj):
             for col in self.contacts[lkey].keys():
                 self.contacts[lkey][col] = np.concatenate([self.contacts[lkey][col], new_layer[col]])
             self.contacts[lkey].validate()
+
+        print('lsdlkfjslkfjd')
+        print(self.contacts.keys())
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         return
 
@@ -775,12 +779,12 @@ class Contacts(sc.objdict):
             self[key] = Layer()
         return
 
-    def __repr__(self):
-        ''' Use slightly customized repr'''
-        keys_str = ', '.join(self.keys())
-        output = f'Contacts({keys_str}): '
-        output += super().__repr__()
-        return output
+    # def __repr__(self):
+    #     ''' Use slightly customized repr'''
+    #     keys_str = ', '.join(self.keys())
+    #     output = f'Contacts({keys_str}): '
+    #     output += super().__repr__()
+    #     return output
 
 
 
@@ -788,9 +792,9 @@ class Layer(sc.objdict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, **kwargs):
-        self.layer_info = sc.dcp(cvd.layer_info)
+        setattr(self, 'layer_info', sc.dcp(cvd.layer_info))
 
-        # Initialize the keys of the layer
+        # Initialize the keys of the layers
         for key,dtype in self.layer_info.items():
             self[key] = np.empty((0,), dtype=dtype)
         self.basekey = self.keys()[0] # Assign a base key for calculating lengths and performing other operations
@@ -809,12 +813,17 @@ class Layer(sc.objdict):
             return 0
 
 
-    def __repr__(self):
-        ''' Convert to a dataframe for printing '''
-        keys_str = ', '.join(self.keys())
-        output = f'Layer({keys_str}): '
-        output += self.to_df().__repr__()
-        return output
+    # def __repr__(self):
+    #     ''' Convert to a dataframe for printing '''
+    #     keys_str = ', '.join(self.keys())
+    #     output = f'Layer({keys_str}): '
+    #     output += self.to_df().__repr__()
+    #     return output
+
+
+    def __setattr__(self, name, value):
+        return dict.__setattr__(self, name, value)
+
 
 
     def validate(self):
