@@ -795,14 +795,14 @@ class Layer(sc.objdict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, **kwargs):
-        self.layer_info = sc.dcp(cvd.PeopleMeta.contacts)
+        self.layer_info = sc.dcp(cvd.layer_info)
 
         # Initialize the keys of the layer
         for key,dtype in self.layer_info.items():
             self[key] = np.empty((0,), dtype=dtype)
-        self.meta = list(self.keys())
-        self.basekey = self.meta[0] # Assign a base key for calculating lengths and performing other operations
+        self.basekey = self.keys()[0] # Assign a base key for calculating lengths and performing other operations
 
+        # Set data, if provided
         for key,value in kwargs.items():
             self[key] = value
 
@@ -817,9 +817,10 @@ class Layer(sc.objdict):
 
 
     def __repr__(self):
-        ''' Use slightly customized repr'''
-        output = 'Layer():'
-        output += super().__repr__()
+        ''' Convert to a dataframe for printing '''
+        keys_str = ', '.join(self.keys())
+        output = f'Layer({keys_str}): '
+        output += self.to_df().__repr__()
         return output
 
 

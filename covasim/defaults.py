@@ -6,7 +6,7 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['PeopleMeta', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
+__all__ = ['PeopleMeta', 'layer_info', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
            'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots']
 
 class PeopleMeta(sc.prettyobj):
@@ -56,13 +56,13 @@ class PeopleMeta(sc.prettyobj):
 
     all_states = person + states + dates + durs
 
-    # Properties of contacts
-    contacts = {
-        'p1':      np.int32, # Person 1
-        'p2':      np.int32,  # Person 2
-        'layer':   None, # The layer by which the people are connected
-        'beta':    np.float32, # Default transmissibility for this contact type
-    }
+# Properties of contacts
+layer_info = {
+    'p1':    np.int32, # Person 1
+    'p2':    np.int32,  # Person 2
+    'layer': None, # The layer by which the people are connected
+    'beta':  np.float32, # Default transmissibility for this contact type
+}
 
 
 
