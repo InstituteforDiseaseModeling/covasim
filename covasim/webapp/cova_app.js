@@ -1,3 +1,19 @@
+import './cova_app.css';
+import Vue from 'vue';
+import { CardPlugin, NavbarPlugin, ButtonPlugin, SidebarPlugin, ModalPlugin, TooltipPlugin, TabsPlugin, FormFilePlugin } from 'bootstrap-vue';
+import sciris from 'sciris-js';
+import { saveAs } from 'file-saver';
+import Plotly from 'plotly';
+
+Vue.use(CardPlugin);
+Vue.use(TabsPlugin);
+Vue.use(NavbarPlugin);
+Vue.use(ButtonPlugin);
+Vue.use(SidebarPlugin);
+Vue.use(ModalPlugin);
+Vue.use(TooltipPlugin);
+Vue.use(FormFilePlugin);
+
 const PlotlyChart = {
     props: ['graph'],
     render(h) {

@@ -12,20 +12,19 @@
   <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@2.11.0/dist/bootstrap-vue.min.css"/>
   <link type="text/css" rel="stylesheet" href="assets/themify-icons.css"/>
   <script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=es2015%2CIntersectionObserver"></script>
-  <script src="https://unpkg.com/vue@2.6.11/dist/vue.min.js"></script>
-  <script src="https://unpkg.com/bootstrap-vue@2.11.0/dist/bootstrap-vue.min.js"></script>
   <link href="https://fonts.googleapis.com/css?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <!-- Avenir is not available -->
 
   <!-- Customization -->
   <title>COVASim</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- Remove favicon.ico 404 -->
-  <script src="https://unpkg.com/sciris-js@0.2.18/dist/sciris-js.js"></script>
   <script src="https://cdn.plot.ly/plotly-1.53.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
 
+
+<!-- SCRIPTS -->
   <!-- Define styles -->
-  <link rel="stylesheet" href="cova_app.css" type="text/css">
+  <link rel="stylesheet" href="dist/app.css" type="text/css">
+  <link rel="stylesheet" href="dist/vendor.css" type="text/css">
 </head>
 
 
@@ -135,48 +134,45 @@
           <b-collapse visible id="intervention">
             <div class="card-body">
               <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
-              <ul class="nav nav-tabs">
-                <li v-for="(scenario, scenarioKey, index) in interventionTableConfig" class="nav-item"><a data-toggle="tab" class="nav-link" v-bind:class="[index === 0 ? 'active' : '']" :href="'#' + scenarioKey">{{scenario.formTitle}}</a></li>
-              </ul>
-              <div class="tab-content">
-                <div :id="scenarioKey" class="tab-pane fade" v-bind:class="[index === 0 ? 'active show' : '']" v-for="(scenario, scenarioKey, index) in interventionTableConfig">
-                  <fieldset>
-                    <legend>{{scenario.formTitle}}</legend>
-                    <form @submit.prevent="(e) => addIntervention(scenarioKey, e)">
-                      <div class="form-group">
-                        <div class="input-group mb-3">
-                          <template v-for="field in scenario.fields">
-                            <input max="180" min="1" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type" >
-                            <select class="form-control" :name="field.key" v-else>
-                                <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
-                            </select>
-                          </template>
-                          <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="submit">Add intervention</button>
+              <b-tabs content-class="mt-3" fill>
+                <b-tab no-body :title="scenario.formTitle" v-for="(scenario, scenarioKey, index) in interventionTableConfig">
+                    <b-card-title>{{scenario.formTitle}}</b-card-title>
+                    <template>
+                        <form @submit.prevent="(e) => addIntervention(scenarioKey, e)">
+                            <div class="form-group">
+                              <div class="input-group mb-3">
+                                <template v-for="field in scenario.fields">
+                                  <input max="180" min="1" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type" >
+                                  <select class="form-control" :name="field.key" v-else>
+                                      <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
+                                  </select>
+                                </template>
+                                <div class="input-group-append">
+                                  <button class="btn btn-outline-secondary" type="submit">Add intervention</button>
+                                </div>
+                              </div>
+                            </div>
+                          </form>
+                          <span aria-live="assertive" v-if="scenarioError[scenarioKey]" class="text-danger form-error">{{scenarioError[scenarioKey]}}</span>
+                          <div v-if="intervention_pars[scenarioKey] && intervention_pars[scenarioKey].length > 0">
+                            <table class="table">
+                              <thead>
+                                <tr>
+                                  <th scope="col" v-for="field in scenario.fields">{{field.label}}</th>
+                                  <th scope="col"> </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr v-for="(intervention, index) in intervention_pars[scenarioKey]">
+                                  <th v-for="field in scenario.fields" scope="row">{{intervention[field.key]}}</th>
+                                  <td><button @click="deleteIntervention(scenarioKey, index)" class="btn btn-outline-secondary" type="button">Delete</button></td>
+                                </tr>
+                              </tbody>
+                            </table>
                           </div>
-                        </div>
-                      </div>
-                    </form>
-                    <span aria-live="assertive" v-if="scenarioError[scenarioKey]" class="text-danger form-error">{{scenarioError[scenarioKey]}}</span>
-                    <div v-if="intervention_pars[scenarioKey] && intervention_pars[scenarioKey].length > 0">
-                      <table class="table">
-                        <thead>
-                          <tr>
-                            <th scope="col" v-for="field in scenario.fields">{{field.label}}</th>
-                            <th scope="col"> </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="(intervention, index) in intervention_pars[scenarioKey]">
-                            <th v-for="field in scenario.fields" scope="row">{{intervention[field.key]}}</th>
-                            <td><button @click="deleteIntervention(scenarioKey, index)" class="btn btn-outline-secondary" type="button">Delete</button></td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </fieldset>
-                </div>
-              </div>
+                    </template>
+                </b-tab>
+              </b-tabs>
             </div>
           </b-collapse>
         </div>
@@ -327,8 +323,7 @@
   </footer>
 </section>
 </body>
+<script src="dist/vendor.js" type="text/javascript"></script>
+<script src="dist/app.js" type="text/javascript"></script>
 
-
-<!-- SCRIPTS -->
-<script src="cova_app.js" type="text/javascript"></script>
 </html>
