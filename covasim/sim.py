@@ -521,7 +521,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def likelihood(self, weights=None, verbose=None) -> float:
+    def likelihood(self, weights=None, verbose=None, eps=1e-16):
         '''
         Compute the log-likelihood of the current simulation based on the number
         of new diagnoses.
@@ -546,11 +546,12 @@ class Sim(cvb.BaseSim):
                 if np.isfinite(datum):
                     if d in model_dates:
                         estimate = self.results[key][model_dates.index(d)]
-                        if datum and estimate:
+                        if np.isfinite(datum) and np.isfinite(estimate):
                             if (datum == 0) and (estimate == 0):
                                 p = 1.0
                             else:
                                 p = cvm.poisson_test(datum, estimate)
+                            p = max(p, eps)
                             logp = pl.log(p)
                             loglike += weight*logp
                             sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
