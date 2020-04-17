@@ -22,7 +22,6 @@ import scirisweb as sw
 
 # Create the app
 app = sw.ScirisApp(__name__, name="Covasim")
-app.sessions = dict() # For storing user data
 flask_app = app.flask_app
 
 #%% Define the API
@@ -36,7 +35,6 @@ die      = False # Whether or not to raise exceptions instead of continuing
 
 def log_err(message:str, ex:Exception):
     tex = traceback.TracebackException.from_exception(ex)
-    out = f"{message} {traceback.format_exception_only(tex.exc_type, tex)}"
     print(f"{message}\n", )
     return {
         "message": message,
