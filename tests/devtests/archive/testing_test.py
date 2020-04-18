@@ -1,5 +1,6 @@
 import covasim as cv
 import sciris as sc
+import numpy as np
 
 do_plot = 1
 
@@ -16,6 +17,9 @@ pars = sc.objdict(
 
 sim = cv.Sim(pars, datafile=datafile)
 
+orig = sim.data['new_tests']
+randomized = 2*np.random.random(len(orig)).round()
+sim.data['new_tests'] = orig * randomized
 
 choice = 2
 if choice == 1:
@@ -25,4 +29,6 @@ elif choice == 2:
 
 sim.update_pars(interventions=[testnum])
 
-sim.run(do_plot=do_plot)
+to_plot = sc.dcp(cv.default_sim_plots)
+to_plot['Daily counts'].append('new_tests')
+sim.run(do_plot=do_plot, to_plot=to_plot)
