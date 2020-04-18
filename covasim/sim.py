@@ -47,7 +47,7 @@ class Sim(cvb.BaseSim):
         self.t             = None  # The current time in the simulation
         self.initialized   = False # Whether or not initialization is complete
         self.results_ready = False # Whether or not results are ready
-        self.people        = []    # Initialize these here so methods that check their length can see they're empty
+        self.people        = None    # Initialize these here so methods that check their length can see they're empty
         self.results       = {}    # For storing results
 
         # Now update everything
@@ -63,7 +63,7 @@ class Sim(cvb.BaseSim):
         ''' Ensure that metaparameters get used properly before being updated '''
         if pars:
             if 'pop_type' in pars:
-                cvpars.set_contacts(pars)
+                cvpars.reset_layer_pars(pars)
             if 'prog_by_age' in pars:
                 pars['prognoses'] = cvpars.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
@@ -138,6 +138,21 @@ class Sim(cvb.BaseSim):
         return
 
 
+    def reset_layer_pars(self, force=True):
+        '''
+        Reset the parameters to match the population.
+
+        Args:
+            force (bool): reset the pars even if they already exist
+        '''
+        if self.people is not None:
+            layer_keys = self.people.contacts.keys()
+        else:
+            layer_keys = None
+        cvpars.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
+        return
+
+
     def validate_pars(self):
         ''' Some parameters can take multiple types; this makes them consistent '''
 
@@ -161,8 +176,13 @@ class Sim(cvb.BaseSim):
         contacts_keys   = set(self.pars['contacts'].keys())
         quar_eff_keys   = set(self.pars['quar_eff'].keys())
         if not(beta_layer_keys == contacts_keys == quar_eff_keys):
-            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} are not consistent'
+            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} have inconsistent keys'
             raise ValueError(errormsg)
+        if self.people is not None:
+            pop_keys = set(self.people.contacts.keys())
+            if pop_keys != beta_layer_keys:
+                errormsg = f'Please update your parameter keys {beta_layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
+                raise ValueError(errormsg)
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
