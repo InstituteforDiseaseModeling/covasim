@@ -259,6 +259,8 @@ class Sim(cvb.BaseSim):
         # Create the seed infections
         inds = np.arange(int(self['pop_infected']))
         self.people.infect(inds=inds)
+        for ind in inds:
+            self.people.transtree.seeds.append({'person':ind, 'date':self.t, 'layer':None})
 
         return
 
@@ -285,36 +287,39 @@ class Sim(cvb.BaseSim):
         if n_imports>0:
             imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
             flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max)
+            for ind in imporation_inds:
+                self.people.transtree.seeds.append({'person':ind, 'date':self.t, 'layer':None})
 
         # Compute the probability of transmission
         beta         = np.float32(self['beta'])
         asymp_factor = np.float32(self['asymp_factor'])
         diag_factor  = np.float32(self['diag_factor'])
 
-        for key,layer in contacts.items():
-            sources     = layer['p1']
-            targets     = layer['p2']
-            layer_betas = layer['beta']
+        for lkey,layer in contacts.items():
+            sources = layer['p1']
+            targets = layer['p2']
+            betas   = layer['beta']
 
             # Compute relative transmission and susceptibility
-            rel_trans = people.rel_trans
-            rel_sus   = people.rel_sus
-            symp      = people.symptomatic
-            diag      = people.diagnosed
-            quar      = people.quarantined
-            quar_eff  = np.float32(self['quar_eff'][key])
-            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
+            rel_trans  = people.rel_trans
+            rel_sus    = people.rel_sus
+            symp       = people.symptomatic
+            diag       = people.diagnosed
+            quar       = people.quarantined
+            quar_eff   = np.float32(self['quar_eff'][lkey])
+            beta_layer = np.float32(self['beta_layer'][lkey])
+            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, beta_layer, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
             # Calculate actual transmission
-            target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
+            target_inds, edge_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
             flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
 
             # Store the transmission tree
             for ind in edge_inds:
                 source = sources[ind]
                 target = targets[ind]
-                self.people.transtree.sources[target] = source
-                self.people.transtree.targets[source].append(target)
+                self.people.transtree.sources[target] = {'source':source, 'target':target, 'date':self.t, 'layer':lkey}
+                self.people.transtree.targets[source].append({'source':source, 'target':target, 'date':self.t, 'layer':lkey})
 
         # Apply interventions
         for intervention in self['interventions']:

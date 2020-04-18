@@ -55,7 +55,6 @@ class People(cvb.BasePeople):
     def initialize(self, pars=None, dynamic_keys=None):
         ''' Perform initializations '''
         self.set_prognoses(pars)
-        self.set_betas(pars)
         self.validate()
         return
 
@@ -78,19 +77,6 @@ class People(cvb.BasePeople):
         self.death_prob[:]  = pars['rel_death_prob']  * prognoses['death_probs'][inds]
         self.rel_sus[:]     = 1.0 # By default: is susceptible
         self.rel_trans[:]   = 0.0 # By default: cannot transmit
-
-        return
-
-
-    def set_betas(self, pars=None):
-        ''' Set betas for each layer '''
-        if pars is None:
-            pars = self.pars
-
-
-        for key,value in pars['beta_layer'].items():
-            df = self.contacts[key]
-            df['beta'][:] = value
 
         return
 
