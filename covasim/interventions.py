@@ -185,7 +185,7 @@ class change_beta(Intervention):
         super().__init__()
         self.days = sc.promotetoarray(days)
         self.changes = sc.promotetoarray(changes)
-        self.layers = sc.promotetolist(layers, keepnone=True)
+        self.layer_keys = sc.promotetolist(layers, keepnone=True)
         if len(self.days) != len(self.changes):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
@@ -198,7 +198,7 @@ class change_beta(Intervention):
         # If this is the first time it's being run, store beta
         if self.orig_betas is None:
             self.orig_betas = {}
-            for lkey in self.layers.keys():
+            for lkey in self.layer_keys:
                 if lkey is None:
                     self.orig_betas['overall'] = sim['beta']
                 else:

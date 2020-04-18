@@ -521,8 +521,14 @@ class BasePeople(sc.prettyobj):
 
 
     def get(self, key):
-        ''' Convenience method '''
-        return self[key]
+        ''' Convenience method -- key can be string or list of strings '''
+        if isinstance(key, str):
+            return self[key]
+        elif isinstance(key, list):
+            arr = np.zeros((len(self), len(key)))
+            for k,ky in enumerate(key):
+                arr[:,k] = self[ky]
+            return arr
 
 
     def true(self, key):
@@ -532,12 +538,27 @@ class BasePeople(sc.prettyobj):
 
     def false(self, key):
         ''' Return indices not matching the condition '''
-        return ~self[key].nonzero()[0]
+        return (~self[key]).nonzero()[0]
 
 
-    def count(self,key):
+    def defined(self, key):
+        ''' Return indices of people who are not-nan '''
+        return (~np.isnan(self[key])).nonzero()[0]
+
+
+    def not_defined(self, key):
+        ''' Return indices of people who are nan '''
+        return (~np.isnan(self[key])).nonzero()[0]
+
+
+    def count(self, key):
         ''' Count the number of people for a given key '''
         return (self[key]>0).sum()
+
+
+    def count_not(self, key):
+        ''' Count the number of people who do not have a property for a given key '''
+        return (self[key]==0).sum()
 
 
     def keys(self, which=None):
