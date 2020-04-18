@@ -42,6 +42,7 @@ class Sim(cvb.BaseSim):
         self.created       = None  # The datetime the sim was created
         self.filename      = None  # The filename of the sim
         self.datafile      = None  # The name of the data file
+        self.popfile       = None  # The population file
         self.data          = None  # The actual data
         self.popdict       = None  # The population dictionary
         self.t             = None  # The current time in the simulation
@@ -93,13 +94,15 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def load_population(self, filename=None, **kwargs):
+    def load_population(self, filename=None, die=True, **kwargs):
         '''
         Load the population dictionary from file.
 
         Args:
             filename (str): name of the file to load
         '''
+        if filename is None and self.popfile is not None:
+            filename = self.popfile
         if filename is not None:
             filepath = sc.makefilepath(filename=filename, **kwargs)
             self.popdict = sc.loadobj(filepath)
@@ -123,11 +126,12 @@ class Sim(cvb.BaseSim):
         return filepath
 
 
-    def initialize(self, **kwargs):
+    def initialize(self, save_population=False, load_population=False, popfile=None, **kwargs):
         '''
         Perform all initializations.
 
         Args:
+            save_population (None or )
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
