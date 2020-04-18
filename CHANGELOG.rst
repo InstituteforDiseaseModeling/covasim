@@ -6,7 +6,7 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive. 
 
 
-Version 0.27.8 (2020-04-17)
+Version 0.27.9 (2020-04-17)
 ---------------------------
 - Caches Numba functions, reducing load time from 2.5 to 0.5 seconds
 - Pins Numba to 0.48, which is 10x faster than 0.49
@@ -14,6 +14,7 @@ Version 0.27.8 (2020-04-17)
 - Refactored how populations are handled, removing ``use_layers`` parameter (use ``pop_type`` instead)
 - Removed layer key from layer object, reducing total sim memory footprint by 3x
 - Improved handling of mismatches between loaded population layers and simulation parameters
+- Added custom key errors to handle multiline error messages
 - Added `documentation <https://institutefordiseasemodeling.github.io/covasim-docs/>`__
 
 
