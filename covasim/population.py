@@ -54,6 +54,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
     # Actually create the population
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
+        layer_keys = list(popdict['contacts'][0].keys()) # Assume there's at least one contact!
     else:
         # Create the population
         if pop_type in ['random', 'clustered', 'hybrid']:
