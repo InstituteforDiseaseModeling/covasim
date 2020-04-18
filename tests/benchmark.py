@@ -5,7 +5,7 @@ import covasim as cv
 
 sim = cv.Sim()
 sim['n_days'] = 180
-to_profile = 'make_contacts' # Must be one of the options listed below...currently only 1
+to_profile = 'step' # Must be one of the options listed below...currently only 1
 
 func_options = {
     'make_contacts': cv.make_random_contacts,
