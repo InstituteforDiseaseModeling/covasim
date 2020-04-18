@@ -408,8 +408,9 @@ class InterventionTests(CovaSimTest):
                                               trace_times=trace_delays)
         intervention_days.append(start_day)
         intervention_list.append(self.interventions)
-        self.intervention_build_sequence(day_list=intervention_days,
-                                         intervention_list=intervention_list)
+        # self.intervention_build_sequence(day_list=intervention_days,
+        #                                  intervention_list=intervention_list)
+        self.interventions = [intervention_list]
         self.run_sim()
 
         pass
