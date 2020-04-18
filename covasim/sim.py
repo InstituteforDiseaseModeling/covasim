@@ -176,13 +176,13 @@ class Sim(cvb.BaseSim):
         contacts_keys   = set(self.pars['contacts'].keys())
         quar_eff_keys   = set(self.pars['quar_eff'].keys())
         if not(beta_layer_keys == contacts_keys == quar_eff_keys):
-            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} are not consistent'
+            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} have inconsistent keys'
             raise ValueError(errormsg)
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
             if pop_keys != beta_layer_keys:
                 errormsg = f'Please update your parameter keys {beta_layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
-                raise KeyError(errormsg)
+                raise ValueError(errormsg)
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
