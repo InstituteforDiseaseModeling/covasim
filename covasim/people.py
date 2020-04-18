@@ -26,7 +26,7 @@ class People(cvb.BasePeople):
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=object)
             else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=self._ddtype)
+                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
         # Set health states -- only susceptible is true by default -- booleans
         for key in self.meta.states:
@@ -37,7 +37,7 @@ class People(cvb.BasePeople):
 
         # Set dates and durations -- both floats
         for key in self.meta.dates + self.meta.durs:
-            self[key] = np.full(self.pop_size, np.nan, dtype=self._ddtype)
+            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
         # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
@@ -70,7 +70,7 @@ class People(cvb.BasePeople):
 
         prognoses = pars['prognoses']
         age_cutoffs = prognoses['age_cutoffs']
-        inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=np.int32, count=len(self))
+        inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=cvd.default_int, count=len(self))
         self.symp_prob[:]   = pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
         self.severe_prob[:] = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
         self.crit_prob[:]   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
@@ -121,12 +121,12 @@ class People(cvb.BasePeople):
                 # Create new contacts
                 n_new = n_contacts*pop_size
                 new_contacts = {} # Initialize
-                new_contacts['p1'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=np.int32)
-                new_contacts['p2'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=np.int32)
+                new_contacts['p1'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
+                new_contacts['p2'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
 
                 # Set the things for the entire list
                 new_contacts['layer'] = np.array([dynamic_key]*n_new)
-                new_contacts['beta']  = np.array([beta]*n_new, dtype=np.float32)
+                new_contacts['beta']  = np.array([beta]*n_new, dtype=cvd.default_float)
 
                 # Add to contacts
                 self.add_contacts(new_contacts, lkey=dynamic_key)

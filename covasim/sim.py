@@ -291,9 +291,9 @@ class Sim(cvb.BaseSim):
                 self.people.transtree.seeds.append({'person':ind, 'date':self.t, 'layer':None})
 
         # Compute the probability of transmission
-        beta         = np.float32(self['beta'])
-        asymp_factor = np.float32(self['asymp_factor'])
-        diag_factor  = np.float32(self['diag_factor'])
+        beta         = cvd.default_float(self['beta'])
+        asymp_factor = cvd.default_float(self['asymp_factor'])
+        diag_factor  = cvd.default_float(self['diag_factor'])
 
         for lkey,layer in contacts.items():
             sources = layer['p1']
@@ -306,8 +306,8 @@ class Sim(cvb.BaseSim):
             symp       = people.symptomatic
             diag       = people.diagnosed
             quar       = people.quarantined
-            quar_eff   = np.float32(self['quar_eff'][lkey])
-            beta_layer = np.float32(self['beta_layer'][lkey])
+            quar_eff   = cvd.default_float(self['quar_eff'][lkey])
+            beta_layer = cvd.default_float(self['beta_layer'][lkey])
             rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, beta_layer, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
             # Calculate actual transmission

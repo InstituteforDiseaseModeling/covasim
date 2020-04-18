@@ -214,22 +214,9 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
 
 
 
-
-'''
-Test for ratio of Poisson intensities in two independent samples
-
-Author: Josef Perktold
-License: BSD-3
-
-destination statsmodels
-
-From: https://stackoverflow.com/questions/33944914/implementation-of-e-test-for-poisson-in-python
-
-Date: 2020feb24
-'''
 def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
                       method='score', alternative='2-sided'):
-    '''test for ratio of two sample Poisson intensities
+    '''Test for ratio of two sample Poisson intensities
 
     If the two Poisson rates are g1 and g2, then the Null hypothesis is
 
@@ -241,39 +228,32 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
     H1_larger: g1 / g2 > ratio_null
     H1_smaller: g1 / g2 < ratio_null
 
-    Parameters
-    ----------
-    count1: int
-        Number of events in first sample
-    exposure1: float
-        Total exposure (time * subjects) in first sample
-    count2: int
-        Number of events in first sample
-    exposure2: float
-        Total exposure (time * subjects) in first sample
-    ratio: float
-        ratio of the two Poisson rates under the Null hypothesis. Default is 1.
-    method: string
-        Method for the test statistic and the p-value. Defaults to `'score'`.
-        Current Methods are based on Gu et. al 2008
-        Implemented are 'wald', 'score' and 'sqrt' based asymptotic normal
-        distribution, and the exact conditional test 'exact-cond', and its mid-point
-        version 'cond-midp', see Notes
-    alternative : string
-        The alternative hypothesis, H1, has to be one of the following
+    Args:
+        count1: int
+            Number of events in first sample
+        exposure1: float
+            Total exposure (time * subjects) in first sample
+        count2: int
+            Number of events in first sample
+        exposure2: float
+            Total exposure (time * subjects) in first sample
+        ratio: float
+            ratio of the two Poisson rates under the Null hypothesis. Default is 1.
+        method: string
+            Method for the test statistic and the p-value. Defaults to `'score'`.
+            Current Methods are based on Gu et. al 2008
+            Implemented are 'wald', 'score' and 'sqrt' based asymptotic normal
+            distribution, and the exact conditional test 'exact-cond', and its mid-point
+            version 'cond-midp', see Notes
+        alternative : string
+            The alternative hypothesis, H1, has to be one of the following
 
-           'two-sided': H1: ratio of rates is not equal to ratio_null (default)
-           'larger' :   H1: ratio of rates is larger than ratio_null
-           'smaller' :  H1: ratio of rates is smaller than ratio_null
+               'two-sided': H1: ratio of rates is not equal to ratio_null (default)
+               'larger' :   H1: ratio of rates is larger than ratio_null
+               'smaller' :  H1: ratio of rates is smaller than ratio_null
 
-    Returns
-    -------
-    pvalue two-sided # stat
-
-    not yet
-    #results : Results instance
-    #    The resulting test statistics and p-values are available as attributes.
-
+    Returns:
+        pvalue two-sided # stat
 
     Notes
     -----
@@ -292,6 +272,14 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
     Gu, Ng, Tang, Schucany 2008: Testing the Ratio of Two Poisson Rates,
     Biometrical Journal 50 (2008) 2, 2008
 
+    Author: Josef Perktold
+    License: BSD-3
+
+    destination statsmodels
+
+    From: https://stackoverflow.com/questions/33944914/implementation-of-e-test-for-poisson-in-python
+
+    Date: 2020feb24
     '''
 
     # Copied from statsmodels.stats.weightstats
