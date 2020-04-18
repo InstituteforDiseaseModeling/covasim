@@ -292,21 +292,22 @@ class Sim(cvb.BaseSim):
         diag_factor  = np.float32(self['diag_factor'])
 
         for key,layer in contacts.items():
-            sources     = layer['p1']
-            targets     = layer['p2']
-            layer_betas = layer['beta']
+            sources = layer['p1']
+            targets = layer['p2']
+            betas   = layer['beta']
 
             # Compute relative transmission and susceptibility
-            rel_trans = people.rel_trans
-            rel_sus   = people.rel_sus
-            symp      = people.symptomatic
-            diag      = people.diagnosed
-            quar      = people.quarantined
-            quar_eff  = np.float32(self['quar_eff'][key])
-            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
+            rel_trans  = people.rel_trans
+            rel_sus    = people.rel_sus
+            symp       = people.symptomatic
+            diag       = people.diagnosed
+            quar       = people.quarantined
+            quar_eff   = np.float32(self['quar_eff'][key])
+            beta_layer = np.float32(self['beta_layer'][key])
+            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, beta_layer, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
             # Calculate actual transmission
-            target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
+            target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
             flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
 
             # Store the transmission tree
