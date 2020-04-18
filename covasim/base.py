@@ -898,9 +898,10 @@ class TransTree(sc.prettyobj):
     Args:
         sources (list): the person who infected this person
         targets (list): the people this person infected
+        seeds   (list): whether this person was a seed infection (initial or importation)
     '''
 
-    def __init__(self, pop_size=None, sources=None, targets=None):
+    def __init__(self, pop_size=None, sources=None, targets=None, seeds=None):
 
         # Handle inputs and preallocate if a size is given
         if sources is None:
@@ -913,10 +914,13 @@ class TransTree(sc.prettyobj):
                 targets = []
             else:
                 targets = [[] for p in range(pop_size)] # Make a list of empty lists
+        if seeds is None:
+            seeds = []
 
         # Assign
         self.sources = sources
         self.targets = targets
+        self.seeds   = seeds
         return
 
 
