@@ -34,7 +34,7 @@ Elapsed time: 230 s
 '''
 >>> import sciris as sc
 >>> import covasim as cv
-Covasim 0.27.11 (2020-04-17) — © 2020 by IDM
+Covasim 0.27.12 (2020-04-17) — © 2020 by IDM
 >>> sim = cv.Sim(pop_size=1e6)
 >>> sc.tic(); sim.initialize(); sc.toc()
 1587191076.600737

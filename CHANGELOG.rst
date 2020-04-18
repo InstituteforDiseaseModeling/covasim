@@ -3,7 +3,12 @@ What's new
 
 All major changes to the codebase are documented in this file. Note: in many cases,
 changes from multiple patch versions are grouped together, so numbering will not be
-strictly consecutive. 
+strictly consecutive.
+
+
+Version 0.27.13 (2020-04-18)
+---------------------------
+- Refactored data types
 
 
 Version 0.27.12 (2020-04-17)
