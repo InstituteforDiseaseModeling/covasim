@@ -451,7 +451,6 @@ class BasePeople(sc.prettyobj):
 
         # Other initialization
         self.t = 0 # Keep current simulation time
-        self.dynamic_keys = ['c'] # List of keys to treat as being dynamic
         self._lock = False # Prevent further modification of keys
         self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
         self.contacts = None
@@ -771,15 +770,6 @@ class BasePeople(sc.prettyobj):
         df = df[df['p1'] != df['p2']] # Remove self connections
         df.reset_index(inplace=True, drop=True)
         return df
-
-
-    def remove_dynamic_contacts(self):
-        ''' Remove all contacts labeled as dynamic '''
-        for key in self.dynamic_keys:
-         if key in self.pars['contacts']:
-            self.contacts.pop(key)
-        return
-
 
 
 class Person(sc.prettyobj):

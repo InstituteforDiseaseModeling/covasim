@@ -52,7 +52,7 @@ class People(cvb.BasePeople):
         return
 
 
-    def initialize(self, pars=None, dynamic_keys=None):
+    def initialize(self, pars=None):
         ''' Perform initializations '''
         self.set_prognoses(pars)
         self.validate()
@@ -104,33 +104,29 @@ class People(cvb.BasePeople):
         return counts
 
 
-    def update_contacts(self, dynamic_keys='c'):
-        ''' Set dynamic contacts, by default, community ('c') '''
+    def update_contacts(self):
+        ''' Refresh dynamic contacts, e.g. community '''
 
-        # Remove existing dynamic contacts
-        self.remove_dynamic_contacts()
+        # Figure out if anything needs to be done -- e.g. {'h':False, 'c':True}
+        dynam_keys = [lkey for lkey,is_dynam in self.pars['dynam_layer'] if is_dynam]
 
-        # Figure out if anything needs to be done
-        dynamic_keys = sc.promotetolist(dynamic_keys)
-        for dynamic_key in dynamic_keys:
-            if dynamic_key in self.layer_keys():
-                pop_size   = len(self)
-                n_contacts = self.pars['contacts'][dynamic_key]
-                beta       = self.pars['beta_layer'][dynamic_key]
+        # Loop over dynamic keys
+        for lkey in dynam_keys:
+            # Remove existing contacts
+            self.contacts.pop(lkey)
 
-                # Create new contacts
-                n_new = n_contacts*pop_size
-                new_contacts = {} # Initialize
-                new_contacts['p1'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
-                new_contacts['p2'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
+            # Create new contacts
+            pop_size   = len(self)
+            n_contacts = self.pars['contacts'][lkey]
+            n_new = n_contacts*pop_size
+            new_contacts = {} # Initialize
+            new_contacts['p1']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
+            new_contacts['p2']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
+            new_contacts['beta'] = np.ones(n_new, dtype=cvd.default_float)
 
-                # Set the things for the entire list
-                new_contacts['layer'] = np.array([dynamic_key]*n_new)
-                new_contacts['beta']  = np.array([beta]*n_new, dtype=cvd.default_float)
-
-                # Add to contacts
-                self.add_contacts(new_contacts, lkey=dynamic_key)
-                self.contacts[dynamic_key].validate()
+            # Add to contacts
+            self.add_contacts(new_contacts, lkey=lkey)
+            self.contacts[lkey].validate()
 
         return self.contacts
 
