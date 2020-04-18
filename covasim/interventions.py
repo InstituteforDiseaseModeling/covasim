@@ -4,6 +4,7 @@ import pylab as pl
 import sciris as sc
 import covasim as cv
 from . import utils as cvu
+from . import misc as cvm
 
 
 
@@ -100,7 +101,7 @@ class dynamic_pars(Intervention):
             for subkey in subkeys:
                 if subkey not in pars[parkey].keys():
                     errormsg = f'Parameter {parkey} is missing subkey {subkey}'
-                    raise KeyError(errormsg)
+                    raise cvm.KeyNotFoundError(errormsg)
                 if sc.isnumber(pars[parkey][subkey]): # Allow scalar values or dicts, but leave everything else unchanged
                     pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
             len_days = len(pars[parkey]['days'])
