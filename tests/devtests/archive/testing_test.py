@@ -2,11 +2,11 @@ import covasim as cv
 import sciris as sc
 import numpy as np
 
+cv.check_version('0.27.9')
+
 do_plot = 1
 
 datafile = sc.thisdir(__file__, '../../example_data.csv')
-
-
 
 pars = sc.objdict(
     diag_factor = 1.0,
