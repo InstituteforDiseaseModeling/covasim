@@ -23,6 +23,6 @@ if choice == 1:
 elif choice == 2:
     testnum = cv.test_num(daily_tests=sim.data['new_tests'])
 
-sim.update_pars(interventions=testnum)
+sim.update_pars(interventions=[testnum])
 
 sim.run(do_plot=do_plot)
