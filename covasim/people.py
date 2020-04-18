@@ -383,7 +383,7 @@ class People(cvb.BasePeople):
         is_inf_pos    = is_infectious[pos_test]
 
         not_diagnosed = is_inf_pos[np.isnan(self.date_diagnosed[is_inf_pos])]
-        not_lost      = cvu.n_binomial(loss_prob, len(not_diagnosed))
+        not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
         inds          = not_diagnosed[not_lost]
 
         self.date_diagnosed[inds] = self.t + test_delay

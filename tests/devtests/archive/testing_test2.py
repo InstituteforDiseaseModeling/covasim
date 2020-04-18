@@ -16,7 +16,7 @@ pars = sc.objdict(
 
 sim = cv.Sim(pars, datafile=datafile)
 
-case = 4
+case = 3
 if case == 0: # works, no diagnoses
     testprob = cv.test_prob(symp_prob=0, asymp_prob=0, test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0)
 elif case == 1: # works, most diagnosed, slight mismatch due to new infections that day
