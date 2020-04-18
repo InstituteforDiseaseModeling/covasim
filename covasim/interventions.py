@@ -198,24 +198,23 @@ class change_beta(Intervention):
         # If this is the first time it's being run, store beta
         if self.orig_betas is None:
             self.orig_betas = {}
-            for layer in self.layers:
-                if layer is None:
+            for lkey in self.layers.keys():
+                if lkey is None:
                     self.orig_betas['overall'] = sim['beta']
                 else:
-                    self.orig_betas[layer] = sim['beta_layer'][layer]
+                    self.orig_betas[lkey] = sim['beta_layer'][lkey]
 
         # If this day is found in the list, apply the intervention
         inds = sc.findinds(self.days, sim.t)
         if len(inds):
-            for layer,new_beta in self.orig_betas.items():
+            for lkey,new_beta in self.orig_betas.items():
                 for ind in inds:
                     new_beta = new_beta * self.changes[ind]
-                if layer == 'overall':
+                if lkey == 'overall':
                     sim['beta'] = new_beta
                 else:
-                    sim['beta_layer'][layer] = new_beta
+                    sim['beta_layer'][lkey] = new_beta
 
-            sim.people.set_betas(sim)
         return
 
 
