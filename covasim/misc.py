@@ -49,7 +49,8 @@ def git_info(filename=None, check=False, old_info=None, die=False, verbose=True,
         old_info (dict): dictionary of information to check against
         die (bool): whether or not to raise an exception if the check fails
 
-    Example:
+    **Examples**::
+
         cv.git_info('covasim_version.json') # Writes to disk
         cv.git_info('covasim_version.json', check=True) # Checks that current version matches saved file
     '''
@@ -95,8 +96,7 @@ def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newli
         empty (str): character for empty steps
         full (str): character for empty steps
 
-    **Example**
-    ::
+    **Example**::
 
         import pylab as pl
         for i in range(100):
@@ -119,8 +119,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
     '''
     Method to calculate doubling time.
 
-    **Examples**
-    ::
+    **Examples**::
 
         get_doubling_time(sim, interval=[3,30]) # returns the doubling time over the given interval (single float)
         get_doubling_time(sim, interval=[3,30], moving_window=3) # returns doubling times calculated over moving windows (array)

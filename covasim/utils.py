@@ -208,7 +208,8 @@ def choose_r(max_n, n):
         max_n (int): the total number of items
         n (int): the number of items to choose
 
-    Example:
+    **Example**::
+
         ``choose(5, 2)`` will choose 2 out of 5 people with equal probability.
     '''
     return np.random.choice(max_n, n, replace=True)
@@ -223,7 +224,8 @@ def choose_w(probs, n, unique=True):
         n (int): number of samples to choose
         unique (bool): whether or not to ensure unique indices
 
-    Example:
+    **Example**::
+    
         ``choose_w([0.2, 0.5, 0.1, 0.1, 0.1], 2)`` will choose 2 out of 5 people with nonequal probability.
     '''
     probs = np.array(probs)
