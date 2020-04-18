@@ -29,10 +29,19 @@ class Sim(cvb.BaseSim):
         pars (dict): parameters to modify from their default values
         datafile (str): filename of (Excel) data file to load, if any
         datacols (list): list of column names of the data file to load
-        filename (str): the filename for this simulation, if it's saved (default: creation date)
+        label (str): the name of the simulation (useful to distinguish in batch runs)
+        simfile (str): the filename for this simulation, if it's saved (default: creation date)
+        popfile (str): the filename to load/save the population for this simulation
+        load_pop (bool): whether or not to load the population from the named file
+        kwargs (dict): passed to make_pars()
+
+    **Examples**::
+
+        sim = cv.Sim()
+        sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None, label=None, **kwargs):
+    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, **kwargs):
         # Create the object
         default_pars = cvpars.make_pars(**kwargs) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
@@ -40,22 +49,23 @@ class Sim(cvb.BaseSim):
         # Set attributes
         self.label         = None  # The label/name of the simulation
         self.created       = None  # The datetime the sim was created
-        self.filename      = None  # The filename of the sim
+        self.simfile       = None  # The filename of the sim
         self.datafile      = None  # The name of the data file
         self.popfile       = None  # The population file
         self.data          = None  # The actual data
         self.popdict       = None  # The population dictionary
         self.t             = None  # The current time in the simulation
+        self.people        = None  # Initialize these here so methods that check their length can see they're empty
+        self.results       = None  # For storing results
         self.initialized   = False # Whether or not initialization is complete
         self.results_ready = False # Whether or not results are ready
-        self.people        = None    # Initialize these here so methods that check their length can see they're empty
-        self.results       = {}    # For storing results
 
         # Now update everything
-        self.set_metadata(filename, label) # Set the simulation date and filename
+        self.set_metadata(simfile, label) # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
-        self.load_population(popfile)      # Load the population, if provided
         self.update_pars(pars)             # Update the parameters, if provided
+        if load_pop:
+            self.load_population(popfile)      # Load the population, if provided
 
         return
 
@@ -735,8 +745,7 @@ class Sim(cvb.BaseSim):
             fig_args (dict): passed to pl.figure()
             plot_args (dict): passed to pl.plot()
 
-        **Example**
-        ::
+        **Examples**::
 
             sim.plot_result('doubling_time')
         '''

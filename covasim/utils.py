@@ -37,8 +37,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
     Returns:
         A length N array of samples
 
-    **Examples**
-    ::
+    **Examples**::
 
         sample() # returns Unif(0,1)
         sample(dist='normal', par1=3, par2=0.5) # returns Normal(μ=3, σ=0.5)

@@ -31,7 +31,7 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.githubpages',
     'sphinx.ext.autodoc',
-    'sphinxcontrib.napoleon',
+    'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'plantweb.directive'
 ]
