@@ -127,7 +127,7 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
     return popdict
 
 
-def make_random_contacts(pop_size, contacts):
+def make_random_contacts(pop_size, contacts, overshoot=1.2):
     ''' Make random static contacts '''
 
     # Preprocessing
@@ -137,12 +137,22 @@ def make_random_contacts(pop_size, contacts):
     layer_keys = list(contacts.keys())
     contacts_list = []
 
+    # Precalculate contacts
+    n_across_layers = np.prod(list(contacts.values()))
+    n_all_contacts  = int(pop_size*n_across_layers*overshoot)
+    all_contacts    = cvu.choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
+    p_counts = {}
+    for lkey in layer_keys:
+        p_counts[lkey] = cvu.n_poisson(contacts[lkey], pop_size)  # Draw the number of Poisson contacts for this person
+
     # Make contacts
+    count = 0
     for p in range(pop_size):
         contact_dict = {}
-        for key in layer_keys:
-            n_contacts = cvu.poisson(contacts[key]) # Draw the number of Poisson contacts for this person
-            contact_dict[key] = cvu.choose(max_n=pop_size, n=n_contacts) # Choose people at random
+        for lkey in layer_keys:
+            n_contacts = p_counts[lkey][p]
+            contact_dict[lkey] = all_contacts[count:count+n_contacts] # Assign people
+            count += n_contacts
         contacts_list.append(contact_dict)
 
     return contacts_list, layer_keys
