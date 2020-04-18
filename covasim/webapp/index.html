@@ -8,23 +8,18 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap@4.4.1/dist/css/bootstrap.min.css"/>
-  <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@2.11.0/dist/bootstrap-vue.min.css"/>
-  <link type="text/css" rel="stylesheet" href="assets/themify-icons.css"/>
-  <script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=es2015%2CIntersectionObserver"></script>
   <link href="https://fonts.googleapis.com/css?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <!-- Avenir is not available -->
 
   <!-- Customization -->
   <title>Covasim</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- Remove favicon.ico 404 -->
-  <script src="https://cdn.plot.ly/plotly-1.53.0.min.js"></script>
 
 
 <!-- SCRIPTS -->
   <!-- Define styles -->
-  <link rel="stylesheet" href="dist/app.css" type="text/css">
   <link rel="stylesheet" href="dist/vendor.css" type="text/css">
+  <link rel="stylesheet" href="dist/app.css" type="text/css">
 </head>
 
 
@@ -88,7 +83,7 @@
           </div>
           <div class="col-auto">
             <button id="download-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="downloadPars">
-              <span class="ti-download"/>
+              <b-icon-download />
               <span class="sr-only"> Download parameters </span>
             </button>
             <b-tooltip target="download-parameters-button">
@@ -97,7 +92,7 @@
           </div>
           <div class="col-auto">
             <button id="upload-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="uploadPars">
-              <span class="ti-upload"/>
+              <b-icon-upload />
               <span class="sr-only"> Upload parameters </span>
             </button>
             <b-tooltip target="upload-parameters-button">
@@ -295,10 +290,11 @@
 
             <div class="text-center">
               <button id="download_xlsx" class="btn btn-primary blueish" type="button" @click="downloadExcel">
-                <span class="sr-only">Download</span> XLSX <span class="ti-download"/>
+                <span class="sr-only">Download</span> XLSX <b-icon-download />
               </button>
               <button id="download_json" class="btn btn-primary blueish" type="button" @click="downloadJson">
-                <span class="sr-only">Download</span> JSON <span class="ti-download"/>
+                <span class="sr-only">Download</span> JSON <b-icon-download />
+
               </button>
               <b-tooltip target="download_xlsx">
                 Download results as an XLSX file

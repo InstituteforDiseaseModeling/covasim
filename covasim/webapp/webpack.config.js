@@ -3,6 +3,8 @@ const webpack = require('webpack');
 const { VueLoaderPlugin } = require('vue-loader')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
     entry: { app: './cova_app.js' },
@@ -31,6 +33,8 @@ module.exports = {
     },
     optimization: {
         chunkIds: "named",
+        usedExports: true,
+        sideEffects: true,
         splitChunks: {
             cacheGroups: {
                 common: {
@@ -41,7 +45,8 @@ module.exports = {
                     enforce: true
                 }
             }
-        }
+        },
+        minimizer: [new TerserPlugin({sourceMap: true,}), new OptimizeCSSAssetsPlugin({})],
     },
     plugins: [
         new CleanWebpackPlugin(),
@@ -56,8 +61,5 @@ module.exports = {
     output: {
         filename: '[name].js',
         path: path.resolve(__dirname, 'dist'),
-    },
-    externals: {
-        "plotly": "Plotly"
     }
 };
