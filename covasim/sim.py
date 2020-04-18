@@ -63,7 +63,7 @@ class Sim(cvb.BaseSim):
         ''' Ensure that metaparameters get used properly before being updated '''
         if pars:
             if 'pop_type' in pars:
-                cvpars.set_contacts(pars)
+                cvpars.reset_layer_pars(pars)
             if 'prog_by_age' in pars:
                 pars['prognoses'] = cvpars.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
@@ -163,6 +163,11 @@ class Sim(cvb.BaseSim):
         if not(beta_layer_keys == contacts_keys == quar_eff_keys):
             errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} are not consistent'
             raise ValueError(errormsg)
+        pop_keys = set(self.people.contacts.keys())
+        if pop_keys != beta_layer_keys:
+            errormsg = f'Please update your parameter keys {beta_layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
+            raise KeyError(errormsg)
+
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
