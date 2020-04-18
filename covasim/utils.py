@@ -221,7 +221,7 @@ def choose_w(probs, n, unique=True):
 #%% The core Covasim functions -- compute the infections
 
 @nb.njit((    nb.float32[:], nb.float32[:], nb.float32, nb.bool_[:], nb.bool_[:], nb.bool_[:],   nb.float32,  nb.float32, nb.float32), cache=True)
-def compute_probs(rel_trans,       rel_sus, beta_layer,        symp,        diag,        quar, asymp_factor, diag_factor, quar_trans):
+def compute_trans_sus(rel_trans,       rel_sus, beta_layer,        symp,        diag,        quar, asymp_factor, diag_factor, quar_trans):
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
@@ -232,7 +232,7 @@ def compute_probs(rel_trans,       rel_sus, beta_layer,        symp,        diag
 
 
 @nb.njit((    nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]), cache=True)
-def compute_targets(beta,     sources,     targets,   layer_betas,     rel_trans,       rel_sus):
+def compute_infections(beta,     sources,     targets,   layer_betas,     rel_trans,       rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
     nonzero_inds    = betas.nonzero()[0] # Find nonzero entries
