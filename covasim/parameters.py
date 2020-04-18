@@ -93,7 +93,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     return pars
 
 
-def reset_layer_pars(pars, pop_keys=None):
+def reset_layer_pars(pars, layer_keys=None, force=False):
     '''
     Small helper function to set numbers of contacts and beta based on whether
     or not to use layers.
@@ -101,23 +101,24 @@ def reset_layer_pars(pars, pop_keys=None):
     Args:
         pars (dict): the parameters dictionary
         pop_keys (list): the known keys of the population, if available
+        force (bool): reset the pars even if they already exist
     '''
     d_contacts   = 20 # Default contacts
     d_beta_layer = 1.0
     d_quar_eff   = 0.3
-    if pop_keys is not None: # Create based on known population keys
-        pars['contacts']   = {key:d_contacts   for key in pop_keys}
-        pars['beta_layer'] = {key:d_beta_layer for key in pop_keys}
-        pars['quar_eff']   = {key:d_quar_eff   for key in pop_keys}
+    if layer_keys is not None: # Create based on known population keys
+        pars['contacts']   = {lkey:d_contacts   for lkey in layer_keys}
+        pars['beta_layer'] = {lkey:d_beta_layer for lkey in layer_keys}
+        pars['quar_eff']   = {lkey:d_quar_eff   for lkey in layer_keys}
     else: # Guess based on population type
         if pars['pop_type'] == 'random':
-            if pars.get('contacts',   None) is None: pars['contacts']   = {'a': d_contacts}   # Number of contacts per person per day -- 'a' for 'all'
-            if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'a': d_beta_layer} # Per-population beta weights; relative
-            if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'a': d_quar_eff}   # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+            if pars.get('contacts',   None) is None or force: pars['contacts']   = {'a': d_contacts}   # Number of contacts per person per day -- 'a' for 'all'
+            if pars.get('beta_layer', None) is None or force: pars['beta_layer'] = {'a': d_beta_layer} # Per-population beta weights; relative
+            if pars.get('quar_eff',   None) is None or force: pars['quar_eff']   = {'a': d_quar_eff}   # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
         else:
-            if pars.get('contacts',   None) is None: pars['contacts']   = {'h': 4,   's': 20,  'w': 20,  'c': 0}    # Number of contacts per person per day, estimated
-            if pars.get('beta_layer', None) is None: pars['beta_layer'] = {'h': 2.0, 's': 1.0, 'w': 1.0, 'c': 0.5}  # Per-population beta weights; relative
-            if pars.get('quar_eff',   None) is None: pars['quar_eff']   = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor
+            if pars.get('contacts',   None) is None or force: pars['contacts']   = {'h': 4,   's': 20,  'w': 20,  'c': 0}    # Number of contacts per person per day, estimated
+            if pars.get('beta_layer', None) is None or force: pars['beta_layer'] = {'h': 2.0, 's': 1.0, 'w': 1.0, 'c': 0.5}  # Per-population beta weights; relative
+            if pars.get('quar_eff',   None) is None or force: pars['quar_eff']   = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor
     return
 
 
