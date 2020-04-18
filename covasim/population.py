@@ -57,9 +57,9 @@ def make_people(sim, verbose=None, die=True, reset=False):
     else:
         # Create the population
         if pop_type in ['random', 'clustered', 'hybrid']:
-            popdict = make_randpop(sim, microstructure=pop_type)
+            popdict, layer_keys = make_randpop(sim, microstructure=pop_type)
         elif pop_type == 'synthpops':
-            popdict = make_synthpop(sim)
+            popdict, layer_keys = make_synthpop(sim)
         else:
             errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
             raise NotImplementedError(errormsg)
@@ -69,9 +69,10 @@ def make_people(sim, verbose=None, die=True, reset=False):
         sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
-    sim.layer_keys = popdict.pop('layer_keys')
+    sim.layer_keys = layer_keys
     people = cvppl.People(sim.pars, **popdict) # List for storing the people
     sim.people = people
+    sim.popdict = popdict
 
     average_age = sum(popdict['age']/pop_size)
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
@@ -122,9 +123,8 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
         raise NotImplementedError(errormsg)
 
     popdict['contacts'] = contacts
-    popdict['layer_keys'] = layer_keys
 
-    return popdict
+    return popdict, layer_keys
 
 
 def make_random_contacts(pop_size, contacts, overshoot=1.2):
@@ -254,8 +254,9 @@ def make_synthpop(sim):
     # Replace contact UIDs with ints...
     uid_mapping = {uid:u for u,uid in enumerate(uids)}
     key_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
-    for uid,person in population.items():
-        uid_contacts = person['contacts']
+    for uid in uids:
+        person = population.pop(uid)
+        uid_contacts = sc.dcp(person['contacts'])
         int_contacts = {}
         for key in uid_contacts.keys():
             new_key = key_mapping[key]
@@ -266,9 +267,10 @@ def make_synthpop(sim):
         contacts.append(int_contacts)
 
     popdict = {}
-    popdict['uid']      = uids
+    popdict['uid']      = sc.dcp(uids)
     popdict['age']      = np.array(ages)
     popdict['sex']      = np.array(sexes)
-    popdict['contacts'] = contacts
-    popdict['layer_keys'] = list(key_mapping.values())
-    return popdict
+    popdict['contacts'] = sc.dcp(contacts)
+    layer_keys = list(key_mapping.values())
+
+    return popdict, layer_keys

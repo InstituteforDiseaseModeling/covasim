@@ -847,6 +847,17 @@ class Contacts(FlexDict):
         return output
 
 
+    def __len__(self):
+        ''' The length of the contacts is the length of all the layers '''
+        output = 0
+        for key in self.keys():
+            try:
+                output += len(self[key])
+            except:
+                pass
+        return output
+
+
 class Layer(FlexDict):
     ''' A tiny class holding a single layer of contacts '''
 
