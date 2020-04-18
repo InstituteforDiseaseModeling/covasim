@@ -6,7 +6,7 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive. 
 
 
-Version 0.27.11 (2020-04-17)
+Version 0.27.12 (2020-04-17)
 ---------------------------
 - Caches Numba functions, reducing load time from 2.5 to 0.5 seconds
 - Pins Numba to 0.48, which is 10x faster than 0.49
@@ -18,6 +18,7 @@ Version 0.27.11 (2020-04-17)
 - Fix several issues with probability-based testing
 - Changed how layer betas are applied (inside the sim rather than statically)
 - Added more detail to the transmission tree
+- Refactored random population calculation, speeding up large populations (>100k) by a factor of 10
 - Added `documentation <https://institutefordiseasemodeling.github.io/covasim-docs/>`__
 
 
