@@ -19,7 +19,7 @@ jobs:
           mkdir -p $HOME/.cache/site-packages
           echo "::set-env name=PYTHONPATH::$HOME/.cache/site-packages"
       - name: Checkout sources
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - uses: actions/setup-python@master
         with:
           python-version: ${{ matrix.python-version }}
