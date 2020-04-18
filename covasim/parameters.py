@@ -41,10 +41,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['rescale_factor']    = 2   # Factor by which we rescale the population
 
     # Basic disease transmission
-    pars['beta']       = 0.015 # Beta per symptomatic contact; absolute
-    pars['contacts']   = None # The number of contacts per layer; set below
-    pars['beta_layer'] = None # Transmissibility per layer
-    pars['n_imports']  = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['beta']        = 0.015 # Beta per symptomatic contact; absolute
+    pars['contacts']    = None # The number of contacts per layer; set below
+    pars['dynam_layer'] = None # Which layers are dynamic; set below
+    pars['beta_layer']  = None # Transmissibility per layer; set below
+    pars['n_imports']   = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
@@ -103,22 +104,27 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
         pop_keys (list): the known keys of the population, if available
         force (bool): reset the pars even if they already exist
     '''
-    d_contacts   = 20 # Default contacts
-    d_beta_layer = 1.0
-    d_quar_eff   = 0.3
+    d_contacts    = 20  # Default number of contacts
+    d_dynam_layer = 0   # Do not use dynamic layers by default
+    d_beta_layer  = 1.0 # No change in beta
+    d_quar_eff    = 0.3 # Assumed quarantine effectiveness
+
     if layer_keys is not None: # Create based on known population keys
-        pars['contacts']   = {lkey:d_contacts   for lkey in layer_keys}
-        pars['beta_layer'] = {lkey:d_beta_layer for lkey in layer_keys}
-        pars['quar_eff']   = {lkey:d_quar_eff   for lkey in layer_keys}
+        pars['contacts']    = {lkey:d_contacts    for lkey in layer_keys}
+        pars['dynam_layer'] = {lkey:d_dynam_layer for lkey in layer_keys}
+        pars['beta_layer']  = {lkey:d_beta_layer  for lkey in layer_keys}
+        pars['quar_eff']    = {lkey:d_quar_eff    for lkey in layer_keys}
     else: # Guess based on population type
         if pars['pop_type'] == 'random':
-            if pars.get('contacts',   None) is None or force: pars['contacts']   = {'a': d_contacts}   # Number of contacts per person per day -- 'a' for 'all'
-            if pars.get('beta_layer', None) is None or force: pars['beta_layer'] = {'a': d_beta_layer} # Per-population beta weights; relative
-            if pars.get('quar_eff',   None) is None or force: pars['quar_eff']   = {'a': d_quar_eff}   # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+            if pars.get('contacts',    None) is None or force: pars['contacts']    = {'a': d_contacts}   # Number of contacts per person per day -- 'a' for 'all'
+            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = {'a': d_beta_layer} # Which layers are dynamic
+            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = {'a': d_beta_layer} # Per-population beta weights; relative
+            if pars.get('quar_eff',    None) is None or force: pars['quar_eff']    = {'a': d_quar_eff}   # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
         else:
-            if pars.get('contacts',   None) is None or force: pars['contacts']   = {'h': 4,   's': 20,  'w': 20,  'c': 0}    # Number of contacts per person per day, estimated
-            if pars.get('beta_layer', None) is None or force: pars['beta_layer'] = {'h': 2.0, 's': 1.0, 'w': 1.0, 'c': 0.5}  # Per-population beta weights; relative
-            if pars.get('quar_eff',   None) is None or force: pars['quar_eff']   = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor
+            if pars.get('contacts',    None) is None or force: pars['contacts']    = {'h': 4,   's': 20,  'w': 20,  'c': 20}    # Number of contacts per person per day, estimated
+            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = {'h': 0,   's': 0,   'w': 0,   'c': 0}    # Which layers are dynamic -- none by defaul
+            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = {'h': 2.0, 's':1.0,  'w': 1.0, 'c': 0.3}  # Per-population beta weights; relative
+            if pars.get('quar_eff',    None) is None or force: pars['quar_eff']    = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor
     return
 
 
