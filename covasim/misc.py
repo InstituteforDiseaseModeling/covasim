@@ -9,7 +9,14 @@ import scipy.stats as sps # Used by poisson_test()
 from . import version as cvver
 
 
-__all__ = ['check_version', 'git_info', 'fixaxis', 'progressbar', 'get_doubling_time', 'poisson_test']
+__all__ = ['KeyNotFoundError', 'check_version', 'git_info', 'fixaxis', 'progressbar', 'get_doubling_time', 'poisson_test']
+
+
+class KeyNotFoundError(KeyError):
+    ''' A tiny class to fix repr for KeyErrors '''
+
+    def __str__(self):
+        return Exception.__str__(self)
 
 
 def check_version(expected, die=False, verbose=True, **kwargs):
@@ -118,7 +125,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
         get_doubling_time(sim, interval=[3,30]) # returns the doubling time over the given interval (single float)
         get_doubling_time(sim, interval=[3,30], moving_window=3) # returns doubling times calculated over moving windows (array)
     '''
-    
+
     # Set verbose level
     if verbose is None:
         verbose = sim['verbose']

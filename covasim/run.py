@@ -10,6 +10,7 @@ import sciris as sc
 import datetime as dt
 from collections import defaultdict
 import matplotlib.ticker as ticker
+from . import misc as cvm
 from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
@@ -479,7 +480,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     if noisepar is None:
         noisepar = 'beta'
         if noisepar not in sim.pars.keys():
-            raise KeyError(f'Noise parameter {noisepar} was not found in sim parameters')
+            raise cvm.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
 
     # Handle noise -- normally distributed fractional error
     noiseval = noise*np.random.normal()
@@ -500,7 +501,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
                 print(f'Setting key {key} from {new_sim[key]} to {val}')
                 new_sim[key] = val
         else:
-            raise KeyError(f'Could not set key {key}: not a valid parameter name')
+            raise cvm.KeyNotFoundError(f'Could not set key {key}: not a valid parameter name')
 
     # Run
     new_sim.run(**run_args)

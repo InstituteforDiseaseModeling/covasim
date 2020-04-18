@@ -7,6 +7,7 @@ import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 import pandas as pd
 from . import utils as cvu
+from . import misc as cvm
 from . import defaults as cvd
 
 # Specify all externally visible classes this file defines
@@ -26,20 +27,22 @@ class ParsObj(sc.prettyobj):
 
     def __getitem__(self, key):
         ''' Allow sim['par_name'] instead of sim.pars['par_name'] '''
-        return self.pars[key]
+        try:
+            return self.pars[key]
+        except:
+            all_keys = '\n'.join(list(self.pars.keys()))
+            errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
+            raise cvm.KeyNotFoundError(errormsg)
+            return
 
     def __setitem__(self, key, value):
         ''' Ditto '''
         if key in self.pars:
             self.pars[key] = value
         else:
-            suggestion = sc.suggest(key, self.pars.keys())
-            if suggestion:
-                errormsg = f'Key "{key}" not found; did you mean "{suggestion}"?'
-            else:
-                all_keys = '\n'.join(list(self.pars.keys()))
-                errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
-            raise KeyError(errormsg)
+            all_keys = '\n'.join(list(self.pars.keys()))
+            errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
+            raise cvm.KeyNotFoundError(errormsg)
         return
 
     def update_pars(self, pars=None, create=False):
@@ -48,7 +51,7 @@ class ParsObj(sc.prettyobj):
 
         Args:
             pars (dict): the parameters to update (if None, do nothing)
-            create (bool): if create is False, then raise a KeyError if the key does not already exist
+            create (bool): if create is False, then raise a KeyNotFoundError if the key does not already exist
         '''
         if pars is not None:
             if not isinstance(pars, dict):
@@ -60,7 +63,7 @@ class ParsObj(sc.prettyobj):
                 mismatches = [key for key in pars.keys() if key not in available_keys]
                 if len(mismatches):
                     errormsg = f'Key(s) {mismatches} not found; available keys are {available_keys}'
-                    raise KeyError(errormsg)
+                    raise cvm.KeyNotFoundError(errormsg)
             self.pars.update(pars)
         return
 
@@ -727,7 +730,7 @@ class BasePeople(sc.prettyobj):
         except KeyError:
             lkeystr = ', '.join(lkeys)
             errormsg = f'Layer "{lkey}" could not be loaded since it was not among parameter keys "{lkeystr}". Please update manually or via sim.reset_layer_pars().'
-            raise KeyError(errormsg)
+            raise cvm.KeyNotFoundError(errormsg)
 
         # Turn into a dataframe
         for lkey in lkeys:
