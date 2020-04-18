@@ -61,6 +61,7 @@ class Sim(cvb.BaseSim):
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
+        pars = sc.mergedicts(pars, kwargs)
         if pars:
             if 'pop_type' in pars:
                 cvpars.reset_layer_pars(pars)
