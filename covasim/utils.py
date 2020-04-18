@@ -147,7 +147,7 @@ def binomial_arr(prob_arr):
     return np.random.random(len(prob_arr)) < prob_arr
 
 
-def multinomial(probs, repeats):
+def multinomial(probs, repeats): # No speed gain from Numba
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
@@ -164,7 +164,7 @@ def n_poisson(rate, n):
     return np.random.poisson(rate, n)
 
 
-def binomial_filter(prob, arr):
+def binomial_filter(prob, arr): # No speed gain from Numba
     ''' Binomial "filter" -- return entries that passed '''
     return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]
 
