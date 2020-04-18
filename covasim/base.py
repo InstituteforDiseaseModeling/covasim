@@ -101,7 +101,7 @@ class Result(object):
                 values = np.zeros(int(npts)) # If length is known, use zeros
             else:
                 values = [] # Otherwise, empty
-        self.values = np.array(values, dtype=cvd.default_float) # Ensure it's an array
+        self.values = np.array(values, dtype=cvd.result_float) # Ensure it's an array
         return
 
     def __repr__(self, *args, **kwargs):

@@ -6,13 +6,14 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['default_precision', 'default_float', 'default_int', 'PeopleMeta', 'result_stocks',
-           'result_flows', 'new_result_flows', 'cum_result_flows',
+__all__ = ['default_precision', 'result_float', 'default_float', 'default_int',
+           'PeopleMeta', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
            'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots']
 
 #%% Specify what data types to use
 
 default_precision = 32 # Use this by default for speed and memory efficiency
+result_float = np.float64 # Always use float64 for results, for simplicity
 if default_precision == 32:
     default_float = np.float32
     default_int   = np.int32

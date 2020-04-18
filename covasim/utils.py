@@ -232,7 +232,7 @@ def choose_w(probs, n, unique=True):
     n_samples = int(n)
     probs_sum = probs.sum()
     if probs_sum: # Weight is nonzero, rescale
-        probs /= probs_sum
+        probs = probs/probs_sum
     else: # Weights are all zero, choose uniformly
         probs = np.ones(n_choices)/n_choices
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
