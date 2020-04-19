@@ -316,6 +316,12 @@ class Sim(cvb.BaseSim):
         beta         = cvd.default_float(self['beta'])
         asymp_factor = cvd.default_float(self['asymp_factor'])
         diag_factor  = cvd.default_float(self['diag_factor'])
+        switch_point = cvd.default_float(self['viral_dist']['par1'])
+        change_ratio = cvd.default_float(self['viral_dist']['par2'])
+        date_inf  = people.date_infectious
+        date_rec  = people.date_recovered
+        date_dead = people.date_dead
+        viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, switch_point, change_ratio)
 
         for lkey,layer in contacts.items():
             sources = layer['p1']
@@ -330,7 +336,7 @@ class Sim(cvb.BaseSim):
             quar       = people.quarantined
             quar_eff   = cvd.default_float(self['quar_eff'][lkey])
             beta_layer = cvd.default_float(self['beta_layer'][lkey])
-            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
+            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
             # Calculate actual transmission
             target_inds, edge_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
