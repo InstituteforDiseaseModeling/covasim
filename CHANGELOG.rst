@@ -10,6 +10,7 @@ Version 0.27.14 (2020-04-18)
 ----------------------------
 - Refactored data types
 - Changed how populations are handled, including adding a ``dynam_layer`` parameter to specify which layers are dynamic
+- Disease progression duration parameters were updated to be longer
 
 
 Version 0.27.12 (2020-04-17)
