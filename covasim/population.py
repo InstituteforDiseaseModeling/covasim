@@ -20,7 +20,7 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-def make_people(sim, verbose=None, die=True, reset=False):
+def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset=False):
     '''
     Make the actual people for the simulation.
 
@@ -55,6 +55,7 @@ def make_people(sim, verbose=None, die=True, reset=False):
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
         layer_keys = list(popdict['contacts'][0].keys()) # Assume there's at least one contact!
+        sim.popdict = None # Once loaded, remove
     else:
         # Create the population
         if pop_type in ['random', 'clustered', 'hybrid']:
@@ -73,10 +74,12 @@ def make_people(sim, verbose=None, die=True, reset=False):
     sim.layer_keys = layer_keys
     people = cvppl.People(sim.pars, **popdict) # List for storing the people
     sim.people = people
-    sim.popdict = popdict
 
     average_age = sum(popdict['age']/pop_size)
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
+
+    if save_pop:
+
 
     return
 

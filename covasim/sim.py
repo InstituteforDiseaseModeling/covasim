@@ -104,51 +104,21 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def load_population(self, filename=None, **kwargs):
-        '''
-        Load the population dictionary from file.
-
-        Args:
-            filename (str): name of the file to load
-        '''
-        if filename is None and self.popfile is not None:
-            filename = self.popfile
-        if filename is not None:
-            filepath = sc.makefilepath(filename=filename, **kwargs)
-            self.popdict = sc.loadobj(filepath)
-            n_actual = len(self.popdict['uid'])
-            n_expected = self['pop_size']
-            if n_actual != n_expected:
-                errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "pop_size" to match or regenerate the file'
-                raise ValueError(errormsg)
-        return
-
-
-    def save_population(self, filename, **kwargs):
-        '''
-        Save the population dictionary to file.
-
-        Args:
-            filename (str): name of the file to save to.
-        '''
-        filepath = sc.makefilepath(filename=filename, **kwargs)
-        sc.saveobj(filepath, self.popdict)
-        return filepath
-
-
-    def initialize(self, save_population=False, load_population=False, popfile=None, **kwargs):
+    def initialize(self, save_pop=False, load_pop=False, popfile=None, **kwargs):
         '''
         Perform all initializations.
 
         Args:
-            save_population (None or )
+            save_pop (bool): if true, save the population to popfile
+            load_pop (bool): if true, load the population from popfile
+            popfile (str): filename to load/save the population
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
-        self.init_people(**kwargs) # Create all the people (slow)
+        self.init_people(save_pop=save_pop, load_pop=load_pop, popfile=popfile, **kwargs) # Create all the people (slow)
         self.initialized = True
         return
 
@@ -258,17 +228,49 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_people(self, verbose=None, id_len=None, **kwargs):
-        ''' Create the people '''
+    def load_population(self, popfile=None, **kwargs):
+        '''
+        Load the population dictionary from file -- typically done automatically
+        as part of sim.initialize(load_pop=True).
 
+        Args:
+            popfile (str): name of the file to load
+        '''
+        if popfile is None and self.popfile is not None:
+            popfile = self.popfile
+        if popfile is not None:
+            filepath = sc.makefilepath(filename=popfile, **kwargs)
+            self.popdict = sc.loadobj(filepath)
+            n_actual = len(self.popdict['uid'])
+            n_expected = self['pop_size']
+            if n_actual != n_expected:
+                errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "pop_size" to match or regenerate the file'
+                raise ValueError(errormsg)
+        return
+
+
+    def init_people(self, save_pop=False, load_pop=False, popfile=None, verbose=None, **kwargs):
+        '''
+        Create the people.
+
+        Args:
+            save_pop (bool): if true, save the population to popfile
+            load_pop (bool): if true, load the population from popfile
+            popfile (str): filename to load/save the population
+            verbose (int): detail to prnt
+        '''
+
+        # Handle inputs
         if verbose is None:
             verbose = self['verbose']
-
         if verbose:
             print(f'Initializing sim with {self["pop_size"]:0n} people for {self["n_days"]} days')
+        if load_pop and self.popdict is None:
+            self.load_population(popfile=popfile)
 
-        cvpop.make_people(self, verbose=verbose, **kwargs)
-        self.people.initialize() # Not sure this is the best place for it
+        # Actually make the people
+        cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
+        self.people.initialize()
 
         # Create the seed infections
         inds = np.arange(int(self['pop_infected']))
