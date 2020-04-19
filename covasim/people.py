@@ -235,22 +235,21 @@ class People(cvb.BasePeople):
         ''' Check for whether someone has been contacted by a positive'''
 
         if self.pars['quar_period'] is not None:
-            not_diagnosed_inds = self.false('diagnosed')
-            print('hiiii')
-            print(len(not_diagnosed_inds))
+            not_diagnosed_inds = cvu.false(self.diagnosed)
             all_inds = np.arange(len(self)) # Do dead people come out of quarantine?
 
             # Perform quarantine - on all who have a date_known_contact (Filter to those not already diagnosed?)
             inds = self.check_inds(self.quarantined, self.date_known_contact, filter_in=not_diagnosed_inds) # Check who is quarantined, not_diagnosed_inds?
-            print(self.quarantined[not_diagnosed_inds])
-            print(self.date_known_contact[not_diagnosed_inds])
-            print(len(inds))
-            print('done')
+            if np.any(inds):
+                print(self.t, 'IN:', inds)
             self.quarantine(inds) # Put people in quarantine
             self.date_known_contact[inds] = np.nan # Clear date
 
             # Check for the end of quarantine - on all who are quarantined
             end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_in=all_inds) # Note the double-negative here
+            if np.any(end_inds):
+                print(self.t, 'OUT:', end_inds)
+            assert all(self.quarantined[inds]) # DJK
             self.quarantined[end_inds] = False # Release from quarantine
             self.date_end_quarantine[end_inds] = np.nan # Clear end quarantine time
 
