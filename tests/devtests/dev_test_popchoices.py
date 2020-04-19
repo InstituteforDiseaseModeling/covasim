@@ -20,8 +20,8 @@ def test_pop_options(doplot=False): # If being run via pytest, turn off
     popchoices = {'random':0.015, 'hybrid':0.015, 'synthpops':0.020}
 
     basepars = {
-        'pop_size': 5000,
-        'pop_infected': 10,
+        'pop_size': 10000,
+        'pop_infected': 20,
         'n_days': 90,
         }
 
@@ -29,9 +29,7 @@ def test_pop_options(doplot=False): # If being run via pytest, turn off
     for popchoice,beta in popchoices.items():
         sc.heading(f'Running {popchoice}')
         sims[popchoice] = cv.Sim()
-        sims[popchoice].update_pars(basepars)
-        sims[popchoice]['pop_type'] = popchoice
-        sims[popchoice]['beta'] = beta
+        sims[popchoice].update_pars(basepars, pop_type=popchoice, beta=beta)
         sims[popchoice].run()
 
     if doplot:
@@ -50,7 +48,7 @@ def test_pop_options(doplot=False): # If being run via pytest, turn off
 if __name__ == '__main__':
     sc.tic()
 
-    sims1 = test_pop_options(doplot=doplot)
+    sims = test_pop_options(doplot=doplot)
 
     sc.toc()
 

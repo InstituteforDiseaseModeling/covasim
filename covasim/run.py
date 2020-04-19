@@ -10,9 +10,10 @@ import sciris as sc
 import datetime as dt
 from collections import defaultdict
 import matplotlib.ticker as ticker
+from . import misc as cvm
 from . import defaults as cvd
-from . import base as cvbase
-from . import sim as cvsim
+from . import base as cvb
+from . import sim as cvs
 
 
 # Specify all externally visible functions this file defines
@@ -33,7 +34,7 @@ def make_metapars():
     return metapars
 
 
-class Scenarios(cvbase.ParsObj):
+class Scenarios(cvb.ParsObj):
     '''
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
 
@@ -42,13 +43,13 @@ class Scenarios(cvbase.ParsObj):
         metapars (dict): meta-parameters for the run, e.g. number of runs; see make_metapars() for structure
         scenarios (dict): a dictionary defining the scenarios; see default_scenario for structure
         basepars (dict): a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
-        filename (str): a filename for saving (defaults to the creation date)
+        scenfile (str): a filename for saving (defaults to the creation date)
 
     Returns:
         scens: a Scenarios object
     '''
 
-    def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, filename=None):
+    def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, scenfile=None):
 
         # For this object, metapars are the foundation
         default_pars = make_metapars() # Start with default pars
@@ -56,10 +57,10 @@ class Scenarios(cvbase.ParsObj):
 
         # Handle filename
         self.created = sc.now()
-        if filename is None:
+        if scenfile is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            filename = f'covasim_scenarios_{datestr}.scens'
-        self.filename = filename
+            scenfile = f'covasim_scenarios_{datestr}.scens'
+        self.scenfile = scenfile
 
         # Handle scenarios -- by default, create a baseline scenario
         if scenarios is None:
@@ -72,7 +73,7 @@ class Scenarios(cvbase.ParsObj):
 
         # Create the simulation and handle basepars
         if sim is None:
-            sim = cvsim.Sim()
+            sim = cvs.Sim()
         self.base_sim = sim
         self.basepars = sc.mergedicts({}, basepars)
         self.base_sim.update_pars(self.basepars)
@@ -105,7 +106,7 @@ class Scenarios(cvbase.ParsObj):
         return keys
 
 
-    def run(self, debug=False, verbose=None, **kwargs):
+    def run(self, debug=False, keep_people=False, verbose=None, **kwargs):
         '''
         Run the actual scenarios
 
@@ -147,7 +148,7 @@ class Scenarios(cvbase.ParsObj):
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
             scen_sim.update_pars(scenpars)
-            run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], verbose=verbose)
+            run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:
                 print('Running in debug mode (not parallelized)')
                 run_args.pop('n_runs', None) # Remove n_runs argument, not used for a single run
@@ -194,6 +195,9 @@ class Scenarios(cvbase.ParsObj):
             df = pd.DataFrame.from_dict(x).astype(object)
             print(df)
             print()
+
+        # Save details about the run
+        self._kept_people = keep_people
 
         return
 
@@ -364,38 +368,42 @@ class Scenarios(cvbase.ParsObj):
         return output
 
 
-    def save(self, filename=None, keep_sims=True, keep_population=False, **kwargs):
+    def save(self, scenfile=None, keep_sims=True, keep_people=False, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
         Args:
-            filename (str or None): the name or path of the file to save to; if None, uses stored
+            scenfile (str or None): the name or path of the file to save to; if None, uses stored
             keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object
-            keep_population (bool): whether or not to store the population in the Sim objects (NB, very large)
+            keep_people (bool): whether or not to store the population in the Sim objects (NB, very large)
             keywords: passed to makefilepath()
 
         Returns:
-            filename (str): the validated absolute path to the saved file
+            scenfile (str): the validated absolute path to the saved file
 
-        **Example**
-        ::
+        **Example**::
 
             scens.save() # Saves to a .scens file with the date and time of creation by default
 
         '''
-        if filename is None:
-            filename = self.filename
-        filename = sc.makefilepath(filename=filename, **kwargs)
-        self.filename = filename # Store the actual saved filename
+        if scenfile is None:
+            scenfile = self.scenfile
+        scenfile = sc.makefilepath(filename=scenfile, **kwargs)
+        self.scenfile = scenfile # Store the actual saved filename
 
         # Store sims seperately
         sims = self.sims
         self.sims = None # Remove for now
 
         obj = sc.dcp(self) # This should be quick once we've removed the sims
+        if not keep_people:
+            obj.base_sim.shrink(in_place=True)
 
         if keep_sims:
-            if keep_population:
+            if keep_people:
+                if not obj._kept_people:
+                    print('Warning: there are no people because they were not saved during the run. '
+                          'If you want people, please rerun with keep_people=True.')
                 obj.sims = sims # Just restore the object in full
                 print('Note: saving people, which may produce a large file!')
             else:
@@ -405,31 +413,30 @@ class Scenarios(cvbase.ParsObj):
                     for sim in sims[key]:
                         obj.sims[key].append(sim.shrink(in_place=False))
 
-        sc.saveobj(filename=filename, obj=obj) # Actually save
+        sc.saveobj(filename=scenfile, obj=obj) # Actually save
 
         self.sims = sims # Restore
-        return filename
+        return scenfile
 
 
     @staticmethod
-    def load(filename, **kwargs):
+    def load(scenfile, **kwargs):
         '''
         Load from disk from a gzipped pickle.
 
         Args:
-            filename (str): the name or path of the file to save to
+            scenfile (str): the name or path of the file to save to
             keywords: passed to makefilepath()
 
         Returns:
             scens (Scenarios): the loaded scenarios object
 
-        **Example**
-        ::
+        **Example**::
 
             sim = cv.Scenarios.load('my-scenarios.scens')
         '''
-        filename = sc.makefilepath(filename=filename, **kwargs)
-        scens = sc.loadobj(filename=filename)
+        scenfile = sc.makefilepath(filename=scenfile, **kwargs)
+        scens = sc.loadobj(filename=scenfile)
         return scens
 
 
@@ -452,8 +459,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     Returns:
         sim (Sim): a single sim object with results
 
-    **Example**
-    ::
+    **Example**::
 
         import covasim as cv
         sim = cv.Sim() # Create a default simulation
@@ -475,7 +481,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     if noisepar is None:
         noisepar = 'beta'
         if noisepar not in sim.pars.keys():
-            raise KeyError(f'Noise parameter {noisepar} was not found in sim parameters')
+            raise cvm.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
 
     # Handle noise -- normally distributed fractional error
     noiseval = noise*np.random.normal()
@@ -496,7 +502,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
                 print(f'Setting key {key} from {new_sim[key]} to {val}')
                 new_sim[key] = val
         else:
-            raise KeyError(f'Could not set key {key}: not a valid parameter name')
+            raise cvm.KeyNotFoundError(f'Could not set key {key}: not a valid parameter name')
 
     # Run
     new_sim.run(**run_args)
@@ -510,10 +516,11 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
 
 def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, combine=False, keep_people=None, run_args=None, sim_args=None, **kwargs):
     '''
-    For running multiple runs in parallel.
+    For running multiple runs in parallel. If the first argument is a list of sims,
+    exactly these will be run and most other arguments will be ignored.
 
     Args:
-        sim (Sim): the sim instance to be run
+        sim (Sim or list): the sim instance to be run, or a list of sims.
         n_runs (int): the number of parallel runs
         noise (float): the amount of noise to add to each run
         noisepar (string): the name of the parameter to add noise to
@@ -529,8 +536,7 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
         If combine is True, a single sim object with the combined results from each sim.
         Otherwise, a list of sim objects (default).
 
-    **Example**
-    ::
+    **Example**::
 
         import covasim as cv
         sim = cv.Sim()
@@ -553,11 +559,19 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
             else:
                 n_runs = new_n
 
-    # Copy the simulations
-    iterkwargs = {'ind':np.arange(n_runs)}
-    iterkwargs.update(iterpars)
-    kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'keep_people':keep_people, 'sim_args':sim_args, 'run_args':run_args}
-    sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
+    # Run the sims
+    if isinstance(sim, cvs.Sim): # Normal case: one sim
+        iterkwargs = {'ind':np.arange(n_runs)}
+        iterkwargs.update(iterpars)
+        kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'keep_people':keep_people, 'sim_args':sim_args, 'run_args':run_args}
+        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
+    elif isinstance(sim, list): # List of sims
+        iterkwargs = {'sim':sim}
+        kwargs = {'verbose':verbose, 'keep_people':keep_people, 'sim_args':sim_args, 'run_args':run_args}
+        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
+    else:
+        errormsg = f'Must be Sim object or list, not {type(sim)}'
+        raise TypeError(errormsg)
 
     # Usual case -- return a list of sims
     if not combine:

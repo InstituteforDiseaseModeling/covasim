@@ -74,7 +74,7 @@ If you notice unexpected behavior or a limitation in Covasim, follow the steps b
     team gauge interest without the noise of comments, which trigger notifications to all watchers.
     Comments should be used only if you have new and useful information to share.
 
-.. _documentation: https://institutefordiseasemodeling.github.io/covasim/index.html
+.. _documentation: https://institutefordiseasemodeling.github.io/covasim-docs
 
 .. _issues: https://github.com/InstituteforDiseaseModeling/covasim/issues
 
@@ -107,7 +107,7 @@ Submit a pull request
 To contribute directly to Covasim code, do the following:
 
 1.  Fork and clone the Covasim repository.
-2.  Install Covasim on your machine. See :doc:`installation` or the `project README`_.
+2.  Install Covasim on your machine. See the `project README`_.
 3.  Create a new branch::
 
         git checkout -b my-branch-name

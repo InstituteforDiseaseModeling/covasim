@@ -3,17 +3,18 @@ Sciris app to run the web interface.
 '''
 
 # Key imports
+import numpy as np
+import sciris as sc
 import covasim as cv
 import os
 import sys
-import numpy as np
-import plotly.graph_objects as go
-import plotly.figure_factory as ff
-import sciris as sc
-import base64 # Download/upload-specific import
 import json
+import base64
 import tempfile
 import traceback
+from pathlib import Path
+import plotly.graph_objects as go
+import plotly.figure_factory as ff
 
 # Check requirements, and if met, import scirisweb
 cv.requirements.check_scirisweb(die=True)
@@ -21,7 +22,6 @@ import scirisweb as sw
 
 # Create the app
 app = sw.ScirisApp(__name__, name="Covasim")
-app.sessions = dict() # For storing user data
 flask_app = app.flask_app
 
 #%% Define the API
@@ -33,9 +33,15 @@ max_time = 10   # Maximum of seconds for a run
 die      = False # Whether or not to raise exceptions instead of continuing
 
 
-def log_err(message:str, ex:Exception):
+# Define a get API for readiness in kubernetes
+@app.route('/healthcheck')
+def healthcheck():
+    ''' Check that the server is up '''
+    return sw.robustjsonify({'status':'ok'})
+
+def log_err(message, ex):
+    ''' Compile error messages to send to the frontend '''
     tex = traceback.TracebackException.from_exception(ex)
-    out = f"{message} {traceback.format_exception_only(tex.exc_type, tex)}"
     print(f"{message}\n", )
     return {
         "message": message,
@@ -43,7 +49,7 @@ def log_err(message:str, ex:Exception):
     }
 
 @app.register_RPC()
-def get_defaults(region=None, merge=False):
+def get_defaults(region=None, merge=False, die=die):
     ''' Get parameter defaults '''
 
     if region is None:
@@ -152,6 +158,17 @@ def get_version():
     output = f'Version {cv.__version__} ({cv.__versiondate__})'
     return output
 
+@app.register_RPC()
+def get_licenses():
+    cwd = Path(__file__).parent
+    repo = cwd.joinpath('../..')
+    license = repo.joinpath('LICENSE').read_text(encoding='utf-8')
+    notice = repo.joinpath('licenses/NOTICE').read_text(encoding='utf-8')
+
+    return {
+        'license': license,
+        'notice': notice
+    }
 
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
@@ -191,7 +208,7 @@ def get_gantt(intervention_pars=None, intervention_config=None):
     return response
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True, die=die):
     ''' Create, run, and plot everything '''
     errs = []
     try:

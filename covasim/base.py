@@ -7,10 +7,11 @@ import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 import pandas as pd
 from . import utils as cvu
+from . import misc as cvm
 from . import defaults as cvd
 
 # Specify all externally visible classes this file defines
-__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'TransTree']
+__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer', 'TransTree']
 
 
 #%% Define simulation classes
@@ -26,20 +27,22 @@ class ParsObj(sc.prettyobj):
 
     def __getitem__(self, key):
         ''' Allow sim['par_name'] instead of sim.pars['par_name'] '''
-        return self.pars[key]
+        try:
+            return self.pars[key]
+        except:
+            all_keys = '\n'.join(list(self.pars.keys()))
+            errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
+            raise cvm.KeyNotFoundError(errormsg)
+            return
 
     def __setitem__(self, key, value):
         ''' Ditto '''
         if key in self.pars:
             self.pars[key] = value
         else:
-            suggestion = sc.suggest(key, self.pars.keys())
-            if suggestion:
-                errormsg = f'Key "{key}" not found; did you mean "{suggestion}"?'
-            else:
-                all_keys = '\n'.join(list(self.pars.keys()))
-                errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
-            raise KeyError(errormsg)
+            all_keys = '\n'.join(list(self.pars.keys()))
+            errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
+            raise cvm.KeyNotFoundError(errormsg)
         return
 
     def update_pars(self, pars=None, create=False):
@@ -48,7 +51,7 @@ class ParsObj(sc.prettyobj):
 
         Args:
             pars (dict): the parameters to update (if None, do nothing)
-            create (bool): if create is False, then raise a KeyError if the key does not already exist
+            create (bool): if create is False, then raise a KeyNotFoundError if the key does not already exist
         '''
         if pars is not None:
             if not isinstance(pars, dict):
@@ -60,7 +63,7 @@ class ParsObj(sc.prettyobj):
                 mismatches = [key for key in pars.keys() if key not in available_keys]
                 if len(mismatches):
                     errormsg = f'Key(s) {mismatches} not found; available keys are {available_keys}'
-                    raise KeyError(errormsg)
+                    raise cvm.KeyNotFoundError(errormsg)
             self.pars.update(pars)
         return
 
@@ -76,8 +79,7 @@ class Result(object):
         scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
         color (str or array): default color for plotting (hex or RGB notation)
 
-    **Example**
-    ::
+    **Example**::
 
         import covasim as cv
         r1 = cv.Result(name='test1', npts=10)
@@ -98,7 +100,7 @@ class Result(object):
                 values = np.zeros(int(npts)) # If length is known, use zeros
             else:
                 values = [] # Otherwise, empty
-        self.values = np.array(values, dtype=float) # Ensure it's an array
+        self.values = np.array(values, dtype=cvd.result_float) # Ensure it's an array
         return
 
     def __repr__(self, *args, **kwargs):
@@ -181,7 +183,7 @@ class BaseSim(ParsObj):
         try:
             return self['start_day'] + self.tvec * dt.timedelta(days=1)
         except:
-            return []
+            return np.arange([])
 
 
     def inds2dates(self, inds, dateformat=None):
@@ -390,13 +392,12 @@ class BaseSim(ParsObj):
         Returns:
             filename (str): the validated absolute path to the saved file
 
-        **Example**
-        ::
+        **Example**::
 
             sim.save() # Saves to a .sim file with the date and time of creation by default
         '''
         if filename is None:
-            filename = self.filename
+            filename = self.simfile
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
         if skip_attrs or not keep_population:
@@ -419,8 +420,7 @@ class BaseSim(ParsObj):
         Returns:
             sim (Sim): the loaded simulation object
 
-        **Example**
-        ::
+        **Example**::
 
             sim = cv.Sim.load('my-simulation.sim')
         '''
@@ -452,9 +452,7 @@ class BasePeople(sc.prettyobj):
         # Other initialization
         self.t = 0 # Keep current simulation time
         self._lock = False # Prevent further modification of keys
-        self._default_dtype = np.float32 # For performance -- 2x faster than float32, the default
-        self.keylist = cvd.PeopleKeys() # Store list of keys and dtypes
-        self.layer_info = self.keylist.contacts
+        self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
         self.contacts = None
         self.init_contacts() # Initialize the contacts
         self.transtree = TransTree(pop_size=pop_size) # Initialize the transmission tree
@@ -518,8 +516,14 @@ class BasePeople(sc.prettyobj):
 
 
     def get(self, key):
-        ''' Convenience method '''
-        return self[key]
+        ''' Convenience method -- key can be string or list of strings '''
+        if isinstance(key, str):
+            return self[key]
+        elif isinstance(key, list):
+            arr = np.zeros((len(self), len(key)))
+            for k,ky in enumerate(key):
+                arr[:,k] = self[ky]
+            return arr
 
 
     def true(self, key):
@@ -529,20 +533,35 @@ class BasePeople(sc.prettyobj):
 
     def false(self, key):
         ''' Return indices not matching the condition '''
-        return ~self[key].nonzero()[0]
+        return (~self[key]).nonzero()[0]
 
 
-    def count(self,key):
+    def defined(self, key):
+        ''' Return indices of people who are not-nan '''
+        return (~np.isnan(self[key])).nonzero()[0]
+
+
+    def not_defined(self, key):
+        ''' Return indices of people who are nan '''
+        return (~np.isnan(self[key])).nonzero()[0]
+
+
+    def count(self, key):
         ''' Count the number of people for a given key '''
         return (self[key]>0).sum()
+
+
+    def count_not(self, key):
+        ''' Count the number of people who do not have a property for a given key '''
+        return (self[key]==0).sum()
 
 
     def keys(self, which=None):
         ''' Returns the name of the states '''
         if which is None:
-            return self.keylist.all_states[:]
+            return self.meta.all_states[:]
         else:
-            return getattr(self.keylist, which)[:]
+            return getattr(self.meta, which)[:]
 
 
     def layer_keys(self):
@@ -560,6 +579,15 @@ class BasePeople(sc.prettyobj):
 
 
     def validate(self, die=True, verbose=False):
+
+        # Check that the keys match
+        contact_layer_keys = set(self.contacts.keys())
+        beta_layer_keys    = set(self.pars['beta_layer'].keys())
+        if contact_layer_keys != beta_layer_keys:
+            errormsg = f'Parameters layers {beta_layer_keys} are not consistent with contact layers {contact_layer_keys}'
+            raise ValueError(errormsg)
+
+        # Check that the length of each array is consistent
         expected_len = len(self)
         for key in self.keys():
             actual_len = len(self[key])
@@ -595,7 +623,7 @@ class BasePeople(sc.prettyobj):
 
     def to_arr(self):
         ''' Return as numpy array '''
-        arr = np.empty((len(self), len(self.keys())), dtype=np.float32)
+        arr = np.empty((len(self), len(self.keys())), dtype=cvd.default_float)
         for k,key in enumerate(self.keys()):
             if key == 'uid':
                 arr[:,k] = np.arange(len(self))
@@ -607,7 +635,7 @@ class BasePeople(sc.prettyobj):
     def person(self, ind):
         ''' Method to create person from the people '''
         p = Person()
-        for key in self.keylist.all_states:
+        for key in self.meta.all_states:
             setattr(p, key, self[key][ind])
         return p
 
@@ -651,26 +679,26 @@ class BasePeople(sc.prettyobj):
         return
 
 
-    def add_contacts(self, contacts, key=None, beta=None):
+    def add_contacts(self, contacts, lkey=None, beta=None):
         ''' Add new contacts to the array '''
 
-        if key is None:
-            key = self.layer_keys()[0]
-        if key not in self.contacts:
-            self.contacts[key] = Layer(layer_info=self.layer_info)
+        if lkey is None:
+            lkey = self.layer_keys()[0]
+        if lkey not in self.contacts:
+            self.contacts[lkey] = Layer()
 
         # Validate the supplied contacts
         if isinstance(contacts, Contacts):
             new_contacts = contacts
         if isinstance(contacts, Layer):
             new_contacts = {}
-            new_contacts[key] = contacts
+            new_contacts[lkey] = contacts
         elif sc.checktype(contacts, 'array'):
             new_contacts = {}
-            new_contacts[key] = pd.DataFrame(data=contacts)
+            new_contacts[lkey] = pd.DataFrame(data=contacts)
         elif isinstance(contacts, dict):
             new_contacts = {}
-            new_contacts[key] = pd.DataFrame.from_dict(contacts)
+            new_contacts[lkey] = pd.DataFrame.from_dict(contacts)
         elif isinstance(contacts, list): # Assume it's a list of contacts by person, not an edgelist
             new_contacts = self.make_edgelist(contacts) # Assume contains key info
         else:
@@ -681,15 +709,15 @@ class BasePeople(sc.prettyobj):
         for lkey, new_layer in new_contacts.items():
             n = len(new_layer['p1'])
             if 'layer' not in new_layer:
-                new_layer['layer'] = np.array([key]*n)
+                new_layer['layer'] = np.array([lkey]*n)
             if 'beta' not in new_layer or len(new_layer['beta']) != n:
                 if beta is None:
-                    beta = self.pars['beta_layer'][key]
-                beta = np.float32(beta)
-                new_layer['beta'] = np.ones(n, dtype=np.float32)*beta
+                    beta = self.pars['beta_layer'][lkey]
+                beta = cvd.default_float(beta)
+                new_layer['beta'] = np.ones(n, dtype=cvd.default_float)*beta
 
             # Actually include them, and update properties if supplied
-            for col in self.layer_info.keys():
+            for col in self.contacts[lkey].keys():
                 self.contacts[lkey][col] = np.concatenate([self.contacts[lkey][col], new_layer[col]])
             self.contacts[lkey].validate()
 
@@ -702,28 +730,29 @@ class BasePeople(sc.prettyobj):
         into an edge list.
         '''
 
-
-
         # Parse the list
         lkeys = self.layer_keys()
         new_contacts = Contacts(layer_keys=lkeys)
         for lkey in lkeys:
             new_contacts[lkey]['p1']    = [] # Person 1 of the contact pair
             new_contacts[lkey]['p2']    = [] # Person 2 of the contact pair
-            new_contacts[lkey]['layer'] = [] # Layers
 
-        for p,cdict in enumerate(contacts):
-            for lkey,p_contacts in cdict.items():
-                n = len(p_contacts) # Number of contacts
-                new_contacts[lkey]['p1'].extend([p]*n) # e.g. [4, 4, 4, 4]
-                new_contacts[lkey]['p2'].extend(p_contacts) # e.g. [243, 4538, 7,19]
-                new_contacts[lkey]['layer'].extend([lkey]*n) # e.g. ['h', 'h', 'h', 'h']
+        try:
+            for p,cdict in enumerate(contacts):
+                for lkey,p_contacts in cdict.items():
+                    n = len(p_contacts) # Number of contacts
+                    new_contacts[lkey]['p1'].extend([p]*n) # e.g. [4, 4, 4, 4]
+                    new_contacts[lkey]['p2'].extend(p_contacts) # e.g. [243, 4538, 7,19]
+        except KeyError:
+            lkeystr = ', '.join(lkeys)
+            errormsg = f'Layer "{lkey}" could not be loaded since it was not among parameter keys "{lkeystr}". Please update manually or via sim.reset_layer_pars().'
+            raise cvm.KeyNotFoundError(errormsg)
 
         # Turn into a dataframe
         for lkey in lkeys:
-            new_layer = Layer(layer_info=self.layer_info)
+            new_layer = Layer()
             for ckey,value in new_contacts[lkey].items():
-                new_layer[ckey] = np.array(value, dtype=self.keylist.contacts[ckey])
+                new_layer[ckey] = np.array(value, dtype=new_layer.meta[ckey])
             new_contacts[lkey] = new_layer
 
         return new_contacts
@@ -743,16 +772,6 @@ class BasePeople(sc.prettyobj):
         return df
 
 
-    def remove_dynamic_contacts(self, dynamic_keys='c'):
-        ''' Remove all contacts labeled as dynamic '''
-        dynamic_keys = sc.promotetolist(dynamic_keys)
-        for key in dynamic_keys:
-         if key in self.pars['contacts']:
-            self.contacts.pop(key)
-        return
-
-
-
 class Person(sc.prettyobj):
     '''
     Class for a single person. Note: this is largely deprecated since sim.people
@@ -760,60 +779,88 @@ class Person(sc.prettyobj):
     '''
     def __init__(self, pars=None, uid=None, age=-1, sex=-1, contacts=None):
         self.uid         = uid # This person's unique identifier
-        self.age         = float(age) # Age of the person (in years)
-        self.sex         = int(sex) # Female (0) or male (1)
+        self.age         = cvd.default_float(age) # Age of the person (in years)
+        self.sex         = cvd.default_int(sex) # Female (0) or male (1)
         self.contacts    = contacts # Contacts
-        self.dyn_cont_ppl = {} # People who are contactable within the community.  Changes every step so has to be here.
-
-        # Set states
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
-
         return
 
 
-class Contacts(dict):
+class FlexDict(dict):
     '''
-    A simple (for now) class for storing different contact layers.
+    A dict that allows more flexible element access: in addition to obj['a'],
+    also allow obj[0]. Lightweight implementation of the Sciris odict class.
     '''
-    def __init__(self, layer_keys):
-        # Initialize with the right layers
-        for key in layer_keys:
-            self[key] = Layer()
-        return
-
-
-    def __repr__(self):
-        ''' Use slightly customized repr'''
-        output = 'Contacts(): '
-        output += super().__repr__()
-        return output
-
 
     def __getitem__(self, key):
-        ''' Lightweight odict -- allow indexing by number '''
+        ''' Lightweight odict -- allow indexing by number, with low performance '''
         try:
             return super().__getitem__(key)
         except KeyError as KE:
             try: # Assume it's an integer
-                dictkey = list(self.keys())[key]
+                dictkey = self.keys()[key]
                 return self[dictkey]
             except:
-                raise KE # This is the original error
+                raise KE # This is the original errors
+
+    def keys(self):
+        return list(super().keys())
+
+    def values(self):
+        return list(super().values())
+
+    def items(self):
+        return list(super().items())
 
 
-class Layer(dict):
+class Contacts(FlexDict):
+    '''
+    A simple (for now) class for storing different contact layers.
+    '''
+    def __init__(self, layer_keys=None):
+        if layer_keys is not None:
+            for key in layer_keys:
+                self[key] = Layer()
+        return
+
+    def __repr__(self):
+        ''' Use slightly customized repr'''
+        keys_str = ', '.join(self.keys())
+        output = f'Contacts({keys_str})\n'
+        for key in self.keys():
+            output += f'\n"{key}": '
+            output += self[key].__repr__() + '\n'
+        return output
+
+
+    def __len__(self):
+        ''' The length of the contacts is the length of all the layers '''
+        output = 0
+        for key in self.keys():
+            try:
+                output += len(self[key])
+            except:
+                pass
+        return output
+
+
+class Layer(FlexDict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, **kwargs):
-        self.layer_info = sc.dcp(cvd.PeopleKeys.contacts)
+        self.meta = {
+            'p1':    cvd.default_int, # Person 1
+            'p2':    cvd.default_int,  # Person 2
+            'beta':  cvd.default_float, # Default transmissibility for this contact type
+        }
+        self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
 
-        # Initialize the keys of the layer
-        for key,dtype in self.layer_info.items():
+        # Initialize the keys of the layers
+        for key,dtype in self.meta.items():
             self[key] = np.empty((0,), dtype=dtype)
-        self.keylist = list(self.keys())
-        self.basekey = self.keylist[0] # Assign a base key for calculating lengths and performing other operations
 
+        # Set data, if provided
         for key,value in kwargs.items():
             self[key] = value
 
@@ -828,16 +875,17 @@ class Layer(dict):
 
 
     def __repr__(self):
-        ''' Use slightly customized repr'''
-        output = 'Layer():'
-        output += super().__repr__()
+        ''' Convert to a dataframe for printing '''
+        keys_str = ', '.join(self.keys())
+        output = f'Layer({keys_str})\n'
+        output += self.to_df().__repr__()
         return output
 
 
     def validate(self):
         ''' Check the integrity of the layer: right types, right lengths '''
         n = len(self[self.basekey])
-        for key,dtype in self.layer_info.items():
+        for key,dtype in self.meta.items():
             if dtype:
                 assert self[key].dtype == dtype
             assert n == len(self[key])
@@ -852,7 +900,7 @@ class Layer(dict):
 
     def from_df(self, df):
         ''' Convert from dataframe '''
-        for key in self.layer_info.keys():
+        for key in self.meta.keys():
             self[key] = df[key]
         return
 
@@ -868,9 +916,10 @@ class TransTree(sc.prettyobj):
     Args:
         sources (list): the person who infected this person
         targets (list): the people this person infected
+        seeds   (list): whether this person was a seed infection (initial or importation)
     '''
 
-    def __init__(self, pop_size=None, sources=None, targets=None):
+    def __init__(self, pop_size=None, sources=None, targets=None, seeds=None):
 
         # Handle inputs and preallocate if a size is given
         if sources is None:
@@ -883,10 +932,13 @@ class TransTree(sc.prettyobj):
                 targets = []
             else:
                 targets = [[] for p in range(pop_size)] # Make a list of empty lists
+        if seeds is None:
+            seeds = []
 
         # Assign
         self.sources = sources
         self.targets = targets
+        self.seeds   = seeds
         return
 
 

@@ -22,24 +22,24 @@ class People(cvb.BasePeople):
         super().__init__(pars, pop_size)
 
         # Set person properties -- mostly floats
-        for key in self.keylist.person:
+        for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=object)
             else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
+                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
         # Set health states -- only susceptible is true by default -- booleans
-        for key in self.keylist.states:
+        for key in self.meta.states:
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
             else:
                 self[key] = np.full(self.pop_size, False, dtype=bool)
 
         # Set dates and durations -- both floats
-        for key in self.keylist.dates + self.keylist.durs:
-            self[key] = np.full(self.pop_size, np.nan, dtype=self._default_dtype)
+        for key in self.meta.dates + self.meta.durs:
+            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
-        # Store the dtypes used
+        # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
         self._lock = True # Stop further attributes from being set
 
@@ -52,10 +52,10 @@ class People(cvb.BasePeople):
         return
 
 
-    def initialize(self, pars=None, dynamic_keys=None):
+    def initialize(self, pars=None):
         ''' Perform initializations '''
         self.set_prognoses(pars)
-        self.set_betas(pars)
+        self.validate()
         return
 
 
@@ -70,26 +70,13 @@ class People(cvb.BasePeople):
 
         prognoses = pars['prognoses']
         age_cutoffs = prognoses['age_cutoffs']
-        inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=np.int32, count=len(self))
+        inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=cvd.default_int, count=len(self))
         self.symp_prob[:]   = pars['rel_symp_prob']   * prognoses['symp_probs'][inds]
         self.severe_prob[:] = pars['rel_severe_prob'] * prognoses['severe_probs'][inds]
         self.crit_prob[:]   = pars['rel_crit_prob']   * prognoses['crit_probs'][inds]
         self.death_prob[:]  = pars['rel_death_prob']  * prognoses['death_probs'][inds]
         self.rel_sus[:]     = 1.0 # By default: is susceptible
         self.rel_trans[:]   = 0.0 # By default: cannot transmit
-
-        return
-
-
-    def set_betas(self, pars=None):
-        ''' Set betas for each layer '''
-        if pars is None:
-            pars = self.pars
-
-
-        for key,value in pars['beta_layer'].items():
-            df = self.contacts[key]
-            df['beta'][:] = value
 
         return
 
@@ -117,33 +104,29 @@ class People(cvb.BasePeople):
         return counts
 
 
-    def update_contacts(self, dynamic_keys='c'):
-        ''' Set dynamic contacts, by default, community ('c') '''
+    def update_contacts(self):
+        ''' Refresh dynamic contacts, e.g. community '''
 
-        # Remove existing dynamic contacts
-        self.remove_dynamic_contacts()
+        # Figure out if anything needs to be done -- e.g. {'h':False, 'c':True}
+        dynam_keys = [lkey for lkey,is_dynam in self.pars['dynam_layer'].items() if is_dynam]
 
-        # Figure out if anything needs to be done
-        dynamic_keys = sc.promotetolist(dynamic_keys)
-        for dynamic_key in dynamic_keys:
-            if dynamic_key in self.layer_keys():
-                pop_size   = len(self)
-                n_contacts = self.pars['contacts'][dynamic_key]
-                beta       = self.pars['beta_layer'][dynamic_key]
+        # Loop over dynamic keys
+        for lkey in dynam_keys:
+            # Remove existing contacts
+            self.contacts.pop(lkey)
 
-                # Create new contacts
-                n_new = n_contacts*pop_size
-                new_contacts = {} # Initialize
-                new_contacts['p1'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=np.int32)
-                new_contacts['p2'] = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=np.int32)
+            # Create new contacts
+            pop_size   = len(self)
+            n_contacts = self.pars['contacts'][lkey]
+            n_new = n_contacts*pop_size
+            new_contacts = {} # Initialize
+            new_contacts['p1']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
+            new_contacts['p2']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
+            new_contacts['beta'] = np.ones(n_new, dtype=cvd.default_float)
 
-                # Set the things for the entire list
-                new_contacts['layer'] = np.array([dynamic_key]*n_new)
-                new_contacts['beta']  = np.array([beta]*n_new, dtype=np.float32)
-
-                # Add to contacts
-                self.add_contacts(new_contacts, key=dynamic_key)
-                self.contacts[dynamic_key].validate()
+            # Add to contacts
+            self.add_contacts(new_contacts, lkey=lkey)
+            self.contacts[lkey].validate()
 
         return self.contacts
 
@@ -152,13 +135,13 @@ class People(cvb.BasePeople):
         '''
         Make person susceptible. This is used during dynamic resampling
         '''
-        for key in self.keylist.states:
+        for key in self.meta.states:
             if key == 'susceptible':
                 self[key][inds] = True
             else:
                 self[key][inds] = False
 
-        for key in self.keylist.dates + self.keylist.durs:
+        for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
         return
@@ -382,7 +365,7 @@ class People(cvb.BasePeople):
         is_inf_pos    = is_infectious[pos_test]
 
         not_diagnosed = is_inf_pos[np.isnan(self.date_diagnosed[is_inf_pos])]
-        not_lost      = cvu.n_binomial(test_sensitivity, len(not_diagnosed))
+        not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
         inds          = not_diagnosed[not_lost]
 
         self.date_diagnosed[inds] = self.t + test_delay

@@ -6,10 +6,27 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['PeopleKeys', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
+__all__ = ['default_precision', 'result_float', 'default_float', 'default_int',
+           'PeopleMeta', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
            'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots']
 
-class PeopleKeys(sc.prettyobj):
+#%% Specify what data types to use
+
+default_precision = 32 # Use this by default for speed and memory efficiency
+result_float = np.float64 # Always use float64 for results, for simplicity
+if default_precision == 32:
+    default_float = np.float32
+    default_int   = np.int32
+elif default_precision == 64:
+    default_float = np.float64
+    default_int   = np.int64
+else:
+    raise NotImplementedError
+
+
+#%% Define all properties of people
+
+class PeopleMeta(sc.prettyobj):
     ''' For storing all the keys relating to a person and people '''
 
     # Set the properties of a persocn
@@ -56,15 +73,8 @@ class PeopleKeys(sc.prettyobj):
 
     all_states = person + states + dates + durs
 
-    # Properties of contacts
-    contacts = {
-        'p1':      np.int32, # Person 1
-        'p2':      np.int32,  # Person 2
-        'layer':   None, # The layer by which the people are connected
-        'beta':    np.float32, # Default transmissibility for this contact type
-    }
 
-
+#%% Define other defaults
 
 # A subset of the above states are used for results
 result_stocks = {
@@ -145,23 +155,17 @@ default_sim_plots = sc.odict({
             'cum_infections',
             'cum_diagnoses',
             'cum_recoveries',
-            # 'cum_tests',
-            # 'n_susceptible',
-            # 'n_infectious',
         ],
         'Daily counts': [
             'new_infections',
             'new_diagnoses',
             'new_recoveries',
             'new_deaths',
-            # 'tests',
         ],
         'Health outcomes': [
             'cum_severe',
             'cum_critical',
             'cum_deaths',
-            # 'n_severe',
-            # 'n_critical',
         ]
 })
 
