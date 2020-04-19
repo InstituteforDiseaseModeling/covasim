@@ -6,9 +6,10 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.27.13 (2020-04-18)
+Version 0.27.14 (2020-04-18)
 ----------------------------
 - Refactored data types
+- Changed how populations are handled, including adding a ``dynam_layer`` parameter to specify which layers are dynamic
 
 
 Version 0.27.12 (2020-04-17)
