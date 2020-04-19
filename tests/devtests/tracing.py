@@ -26,6 +26,8 @@ pars = dict(
     )
 
 sim = cv.Sim(pars)
+sim.initialize()
+# sim.people.contacts['w']['beta'] *= 0
 
 
 sim.run()

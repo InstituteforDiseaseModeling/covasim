@@ -410,8 +410,10 @@ class People(cvb.BasePeople):
             if self.pars['beta_layer'][lkey]: # Skip if beta is 0 for this layer
                 this_trace_time = trace_time[lkey]
 
+                nzinds = self.contacts[lkey]['beta'].nonzero()[0] # Find nonzero beta edges
                 p1inds = np.isin(self.contacts[lkey]['p1'], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
-                p2inds = np.unique(self.contacts[lkey]['p2'][p1inds]) # Find their pairing partner
+                nzp1inds = np.intersect1d(nzinds, p1inds)
+                p2inds = np.unique(self.contacts[lkey]['p2'][nzp1inds]) # Find their pairing partner
                 # Check not diagnosed!
                 contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
                 print('Traced:', lkey, contact_inds)
