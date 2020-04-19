@@ -430,10 +430,18 @@ class People(cvb.BasePeople):
 
             p1inds = np.where(np.isin(np.array(self.contacts[layer]['p1']),inds))[0] # Get all the indices of the pairs that each person is in
             p2inds = np.unique(np.array(self.contacts[layer]['p2'][p1inds])) # Find their pairing partner
+            if layer == 's':
+                print('P1', self.contacts[layer]['p1'][p1inds])
+                print('P2', self.contacts[layer]['p2'][p1inds])
+                print('FOUND:', p2inds)
             # Check not diagnosed!
             contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
             print('Traced:', layer, contact_inds)
             self.known_contact[contact_inds] = True
+
+            if layer == 's':
+                print('SCHOOL', self.contacts[layer])
+
 
             # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?
             first_time_contacted_inds   = np.intersect1d(never_been_contacted, contact_inds) # indices of people getting contacted for the first time
@@ -443,6 +451,7 @@ class People(cvb.BasePeople):
                 self.date_known_contact[first_time_contacted_inds]  = self.t + this_trace_time # Store when they were contacted
             if len(contacted_before_inds):
                 self.date_known_contact[contacted_before_inds]  = np.minimum(self.date_known_contact[contacted_before_inds], self.t + this_trace_time)
+
 
         return
 
