@@ -655,7 +655,7 @@ class Sim(cvb.BaseSim):
             font_family (str): Font face
             use_grid (bool): Whether or not to plot gridlines
             use_commaticks (bool): Plot y-axis with commas rather than scientific notation
-            log_scale (bool): Whether or not to plot the y-axis with a log scale
+            log_scale (bool or list): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
             do_show (bool): Whether or not to show the figure
             verbose (bool): Display a bit of extra information
 
@@ -691,7 +691,11 @@ class Sim(cvb.BaseSim):
         for p,title,keylabels in to_plot.enumitems():
             ax = pl.subplot(n_rows, n_cols, p+1)
             if log_scale:
-                ax.set_yscale('log')
+                if isinstance(log_scale, list):
+                    if title in log_scale:
+                        ax.set_yscale('log')
+                else:
+                    ax.set_yscale('log')
             for key in keylabels:
                 label = res[key].name
                 this_color = res[key].color
