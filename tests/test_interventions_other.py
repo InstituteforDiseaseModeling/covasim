@@ -122,7 +122,7 @@ if __name__ == '__main__':
     sc.tic()
 
     bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
-    border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    # border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
 
     sc.toc()
 

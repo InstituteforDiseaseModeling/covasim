@@ -208,7 +208,7 @@ class Sim(cvb.BaseSim):
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
         self.results['n_susceptible'].scale = 'static'
-        self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
+        self.results['bed_capacity']  = init_res('Fractional bed capacity', scale=False)
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
