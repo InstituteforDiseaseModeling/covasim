@@ -47,18 +47,18 @@ class Sim(cvb.BaseSim):
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
-        self.label         = None  # The label/name of the simulation
-        self.created       = None  # The datetime the sim was created
-        self.simfile       = None  # The filename of the sim
-        self.datafile      = None  # The name of the data file
-        self.popfile       = None  # The population file
-        self.data          = None  # The actual data
-        self.popdict       = None  # The population dictionary
-        self.t             = None  # The current time in the simulation
-        self.people        = None  # Initialize these here so methods that check their length can see they're empty
-        self.results       = {}    # For storing results
-        self.initialized   = False # Whether or not initialization is complete
-        self.results_ready = False # Whether or not results are ready
+        self.label         = label    # The label/name of the simulation
+        self.created       = None     # The datetime the sim was created
+        self.simfile       = simfile  # The filename of the sim
+        self.datafile      = datafile # The name of the data file
+        self.popfile       = popfile  # The population file
+        self.data          = None     # The actual data
+        self.popdict       = None     # The population dictionary
+        self.t             = None     # The current time in the simulation
+        self.people        = None     # Initialize these here so methods that check their length can see they're empty
+        self.results       = {}       # For storing results
+        self.initialized   = False    # Whether or not initialization is complete
+        self.results_ready = False    # Whether or not results are ready
 
         # Now update everything
         self.set_metadata(simfile, label) # Set the simulation date and filename
