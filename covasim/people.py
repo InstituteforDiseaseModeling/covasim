@@ -400,30 +400,31 @@ class People(cvb.BasePeople):
             trace_time (dict): # days it'll take to trace people at each contact layer - should have the same keys as contacts
         '''
         # Figure out who has been contacted in the past
-        never_been_contacted = cvu.true(np.isnan(self.date_known_contact))  # Indices of people who've never been contacted
+        never_been_contacted = cvu.not_defined(self.date_known_contact)  # Indices of people who've never been contacted
 
         print('Trace from:', inds)
 
         # Extract the indices of the people who'll be contacted
         traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
-        for layer,this_trace_prob in traceable_layers.items():
-            this_trace_time = trace_time[layer]
+        for lkey,this_trace_prob in traceable_layers.items():
+            if self.pars['beta_layer'][lkey]: # Skip if beta is 0 for this layer
+                this_trace_time = trace_time[lkey]
 
-            p1inds = np.where(np.isin(np.array(self.contacts[layer]['p1']),inds))[0] # Get all the indices of the pairs that each person is in
-            p2inds = np.unique(np.array(self.contacts[layer]['p2'][p1inds])) # Find their pairing partner
-            # Check not diagnosed!
-            contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
-            print('Traced:', layer, contact_inds)
-            self.known_contact[contact_inds] = True
+                p1inds = np.isin(self.contacts[lkey]['p1'], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
+                p2inds = np.unique(np.array(self.contacts[lkey]['p2'][p1inds])) # Find their pairing partner
+                # Check not diagnosed!
+                contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
+                print('Traced:', lkey, contact_inds)
+                self.known_contact[contact_inds] = True
 
-            # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?
-            first_time_contacted_inds   = np.intersect1d(never_been_contacted, contact_inds) # indices of people getting contacted for the first time
-            contacted_before_inds       = np.setdiff1d(contact_inds, first_time_contacted_inds) # indices of people who've been contacted before
+                # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?
+                first_time_contacted_inds   = np.intersect1d(never_been_contacted, contact_inds) # indices of people getting contacted for the first time
+                contacted_before_inds       = np.setdiff1d(contact_inds, first_time_contacted_inds) # indices of people who've been contacted before
 
-            if len(first_time_contacted_inds):
-                self.date_known_contact[first_time_contacted_inds]  = self.t + this_trace_time # Store when they were contacted
-            if len(contacted_before_inds):
-                self.date_known_contact[contacted_before_inds]  = np.minimum(self.date_known_contact[contacted_before_inds], self.t + this_trace_time)
+                if len(first_time_contacted_inds):
+                    self.date_known_contact[first_time_contacted_inds]  = self.t + this_trace_time # Store when they were contacted
+                if len(contacted_before_inds):
+                    self.date_known_contact[contacted_before_inds]  = np.minimum(self.date_known_contact[contacted_before_inds], self.t + this_trace_time)
 
         return
 
