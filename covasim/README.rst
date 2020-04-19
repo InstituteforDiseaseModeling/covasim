@@ -2,69 +2,76 @@
 Parameters
 ==========
 
-This file describes the expected behavior of each parameter in the model. Note: the term "overall infection rate" can be explored using ``sim.results['doubling_time']`` and ``sim.results['r_eff']`` (a higher infection rate means lower doubling times and higher *R\_eff*), as well as by simply looking at the epidemic curves.
+This file describes the expected behavior of each parameter in the model. Note: the term "overall infection rate" can be explored using ``sim.results['doubling_time```` and ``sim.results['r_eff```` (a higher infection rate means lower doubling times and higher *R\_eff*), as well as by simply looking at the epidemic curves.
 
 Population parameters
-=====================
-
-* ``pop_scale``    = Multiplicative scale for results. Test: run 2 sims, set to 10, ``sim.results['cum_exposed']`` in 2nd sim should be 10x higher than first.
-* ``pop_size``     = Nmber of people in the simulation. Test: ``len(sim.people)`` should equal this number.
-* ``pop_infected`` = Initial number of people infected. Test: if 0, there should be no infections; if equals ``n``, should be no *new* infections.
-* ``pop_type``   = The type of population structure to use with the model; default ``'random'``, using Seattle demographics; other options are ``'hybrid'`` (structured households and random school, work, and community contacts), ``'clustered'`` (all clustered contacts), and ``'synthpops'`` (requires the ``synthpops`` library, but uses data-based population structure)
-* ``location``   = Which country or state to load demographic data from (optional)
+---------------------
+* ``pop_size``     = Number ultimately susceptible to CoV
+* ``pop_infected`` = Number of initial infections
+* ``pop_type``     = What type of population data to use -- random (fastest), synthpops (best), hybrid (compromise), or clustered (not recommended)
+* ``location``     = What location to load data from -- default Seattle
 
 Simulation parameters
-=====================
+---------------------
+* ``start_day``  = Start day of the simulation
+* ``n_days``     = Number of days of run, if end_day isn't used
+* ``rand_seed``  = Random seed, if None, don't reset
+* ``verbose``    = Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
-* ``start_day``    = The calendar date of the start day of the simulation.
-* ``n_days``       = The number of days to simulate. Test: ``len(sim.results['t.values'])`` should equal this.
-* ``rand_seed``    = Random seed for the simulation. Test: two simulations with the same seed should produce identical results *except for* person UIDs; otherwise, different.
-* ``verbose``      = Level of detail to print.
+Rescaling parameters
+--------------------
+* ``pop_scale``         = Factor by which to scale the population -- e.g. 1000 with pop_size = 10e3 means a population of 10m
+* ``rescale``           = Enable dynamic rescaling of the population
+* ``rescale_threshold`` = Fraction susceptible population that will trigger rescaling if rescaling
+* ``rescale_factor``    = Factor by which we rescale the population
 
-Disease transmission parameters
-===============================
+Basic disease transmission
+--------------------------
+* ``beta``        = Beta per symptomatic contact; absolute
+* ``contacts``    = The number of contacts per layer; set below
+* ``dynam_layer`` = Which layers are dynamic; set below
+* ``beta_layer``  = Transmissibility per layer; set below
+* ``n_imports``   = Average daily number of imported cases (actual number is drawn from Poisson distribution)
 
-* ``n_imports``    = Average daily number of imported cases (actual number is drawn from Poisson distribution)
-* ``beta``         = Transmissibility per contact. Test: set to 0 for no infections, set to 1 for ≈ ``contacts`` infections per day (will not be exactly equal due to overlap and other effects)
-* ``asymp_factor`` = Effect of asymptomaticity on transmission.
-* ``diag_factor``  = Effect of diagnosis on transmission.
-* ``cont_factor``  = Effect of being a known contact  on transmission.
-* ``contacts``     = The number of contacts per layer
-* ``beta_layers``  = Transmissibility per layer
+Efficacy of protection measures
+-------------------------------
+* ``asymp_factor`` = Multiply beta by this factor for asymptomatic cases
+* ``diag_factor``  = Multiply beta by this factor for diganosed cases
+* ``quar_eff``     = Quarantine multiplier on transmissibility and susceptibility; set below
+* ``quar_period``  = Number of days to quarantine for
 
-Duration parameters
-===================
-
+Time for disease progression
+----------------------------
 * ``exp2inf``  = Duration from exposed to infectious
 * ``inf2sym``  = Duration from infectious to symptomatic
 * ``sym2sev``  = Duration from symptomatic to severe symptoms
 * ``sev2crit`` = Duration from severe symptoms to requiring ICU
+
+Time for disease recovery
+-------------------------
 * ``asym2rec`` = Duration for asymptomatics to recover
 * ``mild2rec`` = Duration from mild symptoms to recovered
-* ``sev2rec``  = Duration from severe symptoms to recovered
+* ``sev2rec``  = Duration from severe symptoms to recovered - leads to meandisease time
 * ``crit2rec`` = Duration from critical symptoms to recovered
 * ``crit2die`` = Duration from critical symptoms to death
 
-Severity parameters: Probabilities of symptom progression
-=========================================================
-
-* ``OR_no_treat``      = Odds ratio for how much more likely people are to die if no treatment available
-* ``rel_symp_probs``   = Relative probability of developing symptoms
-* ``rel_severe_probs`` = Relative probability of developing severe symptoms
-* ``rel_crit_probs``   = Relative probability of developing critical symptoms
-* ``rel_death_probs``  = Relative probability of dying
-* ``prog_by_age``      = Whether to set disease progression based on the person's age
-* ``prognoses``        = The full arrays of a person's prognosis (populated later by default)
+Severity parameters
+-------------------
+* ``OR_no_treat``     = Odds ratio for how much more likely people are to die if no treatment available
+* ``rel_symp_prob``   = Scale factor for proportion of symptomatic cases
+* ``rel_severe_prob`` = Scale factor for proportion of symptomatic cases that become severe
+* ``rel_crit_prob``   = Scale factor for proportion of severe cases that become critical
+* ``rel_death_prob``  = Scale factor for proportion of critical cases that result in death
+* ``prog_by_age``     = Whether to set disease progression based on the person's age
+* ``prognoses``       = Populate this later
 
 Events and interventions
-========================
-
+------------------------
 * ``interventions`` = List of Intervention instances
 * ``interv_func``   = Custom intervention function
-* ``timelimit``     = Stop simulation if it exceeds this duration. Test: set to a small number (e.g. 1) and choose a large ``n``/``n_days``.
-* ``stopping_func`` = User-defined stopping function (no test).
+* ``timelimit``     = Time limit for a simulation (seconds)
+* ``stopping_func`` = A function to call to stop the sim partway through
 
 Health system parameters
-========================
-
-* ``n_beds`` = Baseline assumption is that there's enough beds for the whole population (i.e., no constraints)
+--------------------------
+* ``n_beds`` = Baseline assumption is that there's no upper limit on the number of beds i.e. there's enough for everyone

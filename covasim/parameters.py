@@ -51,7 +51,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
     pars['diag_factor']  = 0.2 # Multiply beta by this factor for diganosed cases
     pars['quar_eff']     = None # Quarantine multiplier on transmissibility and susceptibility; set below
-    pars['quar_period']  = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
+    pars['quar_period']  = 14  # Number of days to quarantine for
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
@@ -73,11 +73,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
     pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
     pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
-    pars['prog_by_age']     = prog_by_age
+    pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
     pars['prognoses']       = None # Populate this later
 
     # Events and interventions
-    pars['interventions'] = []  #: List of Intervention instances
+    pars['interventions'] = []   # List of Intervention instances
     pars['interv_func']   = None # Custom intervention function
     pars['timelimit']     = 3600 # Time limit for a simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
