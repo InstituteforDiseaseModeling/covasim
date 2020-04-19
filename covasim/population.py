@@ -20,7 +20,7 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-def make_people(sim, verbose=None, die=True, reset=False):
+def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset=False):
     '''
     Make the actual people for the simulation.
 
@@ -40,6 +40,8 @@ def make_people(sim, verbose=None, die=True, reset=False):
     pop_type = sim['pop_type'] # Shorten
     if verbose is None:
         verbose = sim['verbose']
+    if popfile is None:
+        popfile = sim.popfile
 
     # Check which type of population to produce
     if pop_type == 'synthpops':
@@ -54,12 +56,14 @@ def make_people(sim, verbose=None, die=True, reset=False):
     # Actually create the population
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
+        layer_keys = list(popdict['contacts'][0].keys()) # Assume there's at least one contact!
+        sim.popdict = None # Once loaded, remove
     else:
         # Create the population
         if pop_type in ['random', 'clustered', 'hybrid']:
-            popdict = make_randpop(sim, microstructure=pop_type)
+            popdict, layer_keys = make_randpop(sim, microstructure=pop_type)
         elif pop_type == 'synthpops':
-            popdict = make_synthpop(sim)
+            popdict, layer_keys = make_synthpop(sim)
         else:
             errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
             raise NotImplementedError(errormsg)
@@ -69,12 +73,22 @@ def make_people(sim, verbose=None, die=True, reset=False):
         sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
-    sim.layer_keys = popdict.pop('layer_keys')
+    sim.layer_keys = layer_keys
     people = cvppl.People(sim.pars, **popdict) # List for storing the people
     sim.people = people
 
     average_age = sum(popdict['age']/pop_size)
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
+
+    if save_pop:
+        if popfile is None:
+            errormsg = 'Please specify a file to save to using the popfile kwarg'
+            raise FileNotFoundError(errormsg)
+        else:
+            filepath = sc.makefilepath(filename=popfile)
+            sc.saveobj(filepath, popdict)
+            if verbose:
+                print(f'Saved population of type "{pop_type}" with {pop_size:n} people to {filepath}')
 
     return
 
@@ -95,14 +109,14 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
         age_data = cvd.default_age_data
 
     # Handle sexes and ages
-    uids = np.arange(pop_size, dtype=int)
+    uids = np.arange(pop_size, dtype=cvd.default_int)
     sexes = np.random.binomial(1, sex_ratio, pop_size)
     age_data_min  = age_data[:,0]
     age_data_max  = age_data[:,1] + 1 # Since actually e.g. 69.999
     age_data_range = age_data_max - age_data_min
     age_data_prob = age_data[:,2]
     age_data_prob /= age_data_prob.sum() # Ensure it sums to 1
-    age_bins = cvu.multinomial(np.array(age_data_prob, dtype=np.float32), np.int32(pop_size)) # Choose age bins
+    age_bins = cvu.multinomial(np.array(age_data_prob, dtype=cvd.default_float), cvd.default_int(pop_size)) # Choose age bins
     ages = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(pop_size) # Uniformly distribute within this age bin
 
     # Store output; data duplicated as per-person and list-like formats for convenience
@@ -122,9 +136,8 @@ def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
         raise NotImplementedError(errormsg)
 
     popdict['contacts'] = contacts
-    popdict['layer_keys'] = layer_keys
 
-    return popdict
+    return popdict, layer_keys
 
 
 def make_random_contacts(pop_size, contacts, overshoot=1.2):
@@ -195,7 +208,7 @@ def make_microstructured_contacts(pop_size, contacts):
             n_remaining -= this_cluster
 
         for key in contacts_dict.keys():
-            contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=np.int32)
+            contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=cvd.default_int)
 
     return contacts_list, layer_keys
 
@@ -209,8 +222,8 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     '''
 
     # Handle inputs and defaults
-    layer_keys = ['h', 's', 'w']
-    contacts = sc.mergedicts({'h':4, 's':20, 'w':20}, contacts) # Ensure essential keys are populated
+    layer_keys = ['h', 's', 'w', 'c']
+    contacts = sc.mergedicts({'h':4, 's':20, 'w':20, 'c':20}, contacts) # Ensure essential keys are populated
     if school_ages is None:
         school_ages = [6, 18]
     if work_ages is None:
@@ -254,21 +267,23 @@ def make_synthpop(sim):
     # Replace contact UIDs with ints...
     uid_mapping = {uid:u for u,uid in enumerate(uids)}
     key_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
-    for uid,person in population.items():
-        uid_contacts = person['contacts']
+    for uid in uids:
+        person = population.pop(uid)
+        uid_contacts = sc.dcp(person['contacts'])
         int_contacts = {}
         for key in uid_contacts.keys():
             new_key = key_mapping[key]
             int_contacts[new_key] = []
             for uid in uid_contacts[key]:
                 int_contacts[new_key].append(uid_mapping[uid])
-            int_contacts[new_key] = np.array(int_contacts[new_key], dtype=np.int32)
+            int_contacts[new_key] = np.array(int_contacts[new_key], dtype=cvd.default_int)
         contacts.append(int_contacts)
 
     popdict = {}
-    popdict['uid']      = uids
+    popdict['uid']      = sc.dcp(uids)
     popdict['age']      = np.array(ages)
     popdict['sex']      = np.array(sexes)
-    popdict['contacts'] = contacts
-    popdict['layer_keys'] = list(key_mapping.values())
-    return popdict
+    popdict['contacts'] = sc.dcp(contacts)
+    layer_keys = list(key_mapping.values())
+
+    return popdict, layer_keys

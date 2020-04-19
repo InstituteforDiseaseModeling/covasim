@@ -79,8 +79,7 @@ class Result(object):
         scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
         color (str or array): default color for plotting (hex or RGB notation)
 
-    **Example**
-    ::
+    **Example**::
 
         import covasim as cv
         r1 = cv.Result(name='test1', npts=10)
@@ -101,7 +100,7 @@ class Result(object):
                 values = np.zeros(int(npts)) # If length is known, use zeros
             else:
                 values = [] # Otherwise, empty
-        self.values = np.array(values, dtype=float) # Ensure it's an array
+        self.values = np.array(values, dtype=cvd.result_float) # Ensure it's an array
         return
 
     def __repr__(self, *args, **kwargs):
@@ -393,13 +392,12 @@ class BaseSim(ParsObj):
         Returns:
             filename (str): the validated absolute path to the saved file
 
-        **Example**
-        ::
+        **Example**::
 
             sim.save() # Saves to a .sim file with the date and time of creation by default
         '''
         if filename is None:
-            filename = self.filename
+            filename = self.simfile
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
         if skip_attrs or not keep_population:
@@ -422,8 +420,7 @@ class BaseSim(ParsObj):
         Returns:
             sim (Sim): the loaded simulation object
 
-        **Example**
-        ::
+        **Example**::
 
             sim = cv.Sim.load('my-simulation.sim')
         '''
@@ -454,9 +451,7 @@ class BasePeople(sc.prettyobj):
 
         # Other initialization
         self.t = 0 # Keep current simulation time
-        self.dynamic_keys = ['c'] # List of keys to treat as being dynamic
         self._lock = False # Prevent further modification of keys
-        self._ddtype = np.float32 # For performance -- 2x faster than float32, the default
         self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
         self.contacts = None
         self.init_contacts() # Initialize the contacts
@@ -628,7 +623,7 @@ class BasePeople(sc.prettyobj):
 
     def to_arr(self):
         ''' Return as numpy array '''
-        arr = np.empty((len(self), len(self.keys())), dtype=np.float32)
+        arr = np.empty((len(self), len(self.keys())), dtype=cvd.default_float)
         for k,key in enumerate(self.keys()):
             if key == 'uid':
                 arr[:,k] = np.arange(len(self))
@@ -718,8 +713,8 @@ class BasePeople(sc.prettyobj):
             if 'beta' not in new_layer or len(new_layer['beta']) != n:
                 if beta is None:
                     beta = self.pars['beta_layer'][lkey]
-                beta = np.float32(beta)
-                new_layer['beta'] = np.ones(n, dtype=np.float32)*beta
+                beta = cvd.default_float(beta)
+                new_layer['beta'] = np.ones(n, dtype=cvd.default_float)*beta
 
             # Actually include them, and update properties if supplied
             for col in self.contacts[lkey].keys():
@@ -777,15 +772,6 @@ class BasePeople(sc.prettyobj):
         return df
 
 
-    def remove_dynamic_contacts(self):
-        ''' Remove all contacts labeled as dynamic '''
-        for key in self.dynamic_keys:
-         if key in self.pars['contacts']:
-            self.contacts.pop(key)
-        return
-
-
-
 class Person(sc.prettyobj):
     '''
     Class for a single person. Note: this is largely deprecated since sim.people
@@ -793,8 +779,8 @@ class Person(sc.prettyobj):
     '''
     def __init__(self, pars=None, uid=None, age=-1, sex=-1, contacts=None):
         self.uid         = uid # This person's unique identifier
-        self.age         = float(age) # Age of the person (in years)
-        self.sex         = int(sex) # Female (0) or male (1)
+        self.age         = cvd.default_float(age) # Age of the person (in years)
+        self.sex         = cvd.default_int(sex) # Female (0) or male (1)
         self.contacts    = contacts # Contacts
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
@@ -848,14 +834,25 @@ class Contacts(FlexDict):
         return output
 
 
+    def __len__(self):
+        ''' The length of the contacts is the length of all the layers '''
+        output = 0
+        for key in self.keys():
+            try:
+                output += len(self[key])
+            except:
+                pass
+        return output
+
+
 class Layer(FlexDict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, **kwargs):
         self.meta = {
-            'p1':    np.int32, # Person 1
-            'p2':    np.int32,  # Person 2
-            'beta':  np.float32, # Default transmissibility for this contact type
+            'p1':    cvd.default_int, # Person 1
+            'p2':    cvd.default_int,  # Person 2
+            'beta':  cvd.default_float, # Default transmissibility for this contact type
         }
         self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
 
