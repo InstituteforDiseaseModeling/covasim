@@ -146,7 +146,6 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     # Preprocessing
     pop_size = int(pop_size) # Number of people
     contacts = sc.dcp(contacts)
-    contacts.pop('c', None) # Remove community
     layer_keys = list(contacts.keys())
     contacts_list = []
 
@@ -235,6 +234,9 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     # Start with the household contacts for each person
     h_contacts, _ = make_microstructured_contacts(pop_size, {'h':contacts['h']})
 
+    # Make community contacts
+    c_contacts, _ = make_random_contacts(pop_size, {'c':contacts['c']})
+
     # Get the indices of people in each age bin
     ages = np.array(ages)
     s_inds = sc.findinds((ages >= school_ages[0]) * (ages < school_ages[1]))
@@ -248,16 +250,17 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     for i     in range(pop_size):   contacts_list[i]['h']   = h_contacts[i]['h'] # Copy over household contacts -- present for everyone
     for i,ind in enumerate(s_inds): contacts_list[ind]['s'] = s_contacts[i]['s'] # Copy over school contacts
     for i,ind in enumerate(w_inds): contacts_list[ind]['w'] = w_contacts[i]['w'] # Copy over work contacts
+    for i     in range(pop_size):   contacts_list[i]['c']   = c_contacts[i]['c'] # Copy over community contacts -- present for everyone
 
     return contacts_list, layer_keys
-
 
 
 
 def make_synthpop(sim):
     ''' Make a population using synthpops, including contacts '''
     import synthpops as sp # Optional import
-    population = sp.make_population(n=sim['pop_size'])
+    pop_size = sim['pop_size']
+    population = sp.make_population(n=pop_size)
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)
@@ -279,6 +282,12 @@ def make_synthpop(sim):
             int_contacts[new_key] = np.array(int_contacts[new_key], dtype=cvd.default_int)
         contacts.append(int_contacts)
 
+    # Add community contacts
+    c_contacts, _ = make_random_contacts(pop_size, {'c':sim['contacts']['c']})
+    for i in range(pop_size):
+        contacts[i]['c'] = c_contacts[i]['c'] # Copy over community contacts -- present for everyone
+
+    # Finalize
     popdict = {}
     popdict['uid']      = sc.dcp(uids)
     popdict['age']      = np.array(ages)
