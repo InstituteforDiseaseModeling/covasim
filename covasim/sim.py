@@ -141,6 +141,10 @@ class Sim(cvb.BaseSim):
     def validate_pars(self):
         ''' Some parameters can take multiple types; this makes them consistent '''
 
+        # Handle types
+        for key in ['pop_size', 'pop_infected', 'pop_size', 'n_days', 'rand_seed']:
+            self[key] = int(self[key])
+
         # Handle start day
         start_day = self['start_day'] # Shorten
         if start_day in [None, 0]: # Use default start day
