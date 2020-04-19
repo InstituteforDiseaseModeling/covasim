@@ -48,7 +48,7 @@ def test_pop_options(doplot=False): # If being run via pytest, turn off
 if __name__ == '__main__':
     sc.tic()
 
-    sims1 = test_pop_options(doplot=doplot)
+    sims = test_pop_options(doplot=doplot)
 
     sc.toc()
 
