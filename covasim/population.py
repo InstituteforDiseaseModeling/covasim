@@ -87,6 +87,8 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
         else:
             filepath = sc.makefilepath(filename=popfile)
             sc.saveobj(filepath, popdict)
+            if verbose:
+                print(f'Saved population of type "{pop_type}" with {pop_size:n} people to {filepath}')
 
     return
 

@@ -244,8 +244,10 @@ class Sim(cvb.BaseSim):
             n_actual = len(self.popdict['uid'])
             n_expected = self['pop_size']
             if n_actual != n_expected:
-                errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "pop_size" to match or regenerate the file'
+                errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
                 raise ValueError(errormsg)
+            if self['verbose']:
+                print(f'Loaded population from {filepath}')
         return
 
 
