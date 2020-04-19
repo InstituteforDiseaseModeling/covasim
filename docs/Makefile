@@ -61,7 +61,7 @@ generate-api:
 	rm -rf temp
 	sphinx-apidoc -f --tocfile dummy -o . ../covasim
 	-rm dummy.rst
-# 	mv covasim.rst modules.rst
+	mv covasim.rst modules.rst
 
 external:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

@@ -12,10 +12,11 @@ also be used to explore the potential impact of different interventions.
    :maxdepth: 3
    :titlesonly:
 
-   main
+   installation
+   usage
+   tests
    parameters
-   whatsnew
    contributing
-   covasim
-
+   whatsnew
+   modules
 
