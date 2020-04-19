@@ -148,12 +148,15 @@ class People(cvb.BasePeople):
 
     #%% Methods for updating state
 
-    def check_inds(self, current, date, filter_inds=None):
+    def check_inds(self, current, date, filter_out=None, filter_in=None):
         ''' Return indices for which the current state is false and which meet the date criterion '''
-        if filter_inds is None:
-            filter_inds = self.is_exp
-        not_current = cvu.ifalsei(current, filter_inds)
-        has_date    = cvu.idefinedi(date, not_current)
+        if filter_in is not None:
+            available = cvu.itruei(current, filter_in)
+        else:
+            if filter_out is None:
+                filter_out = self.is_exp
+            available = cvu.ifalsei(current, filter_out)
+        has_date    = cvu.idefinedi(date, available)
         inds        = cvu.itrue(self.t >= date[has_date], has_date)
         return inds
 
@@ -162,7 +165,7 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious)
         self.infectious[inds] = True
-        self.rel_trans[inds]  = 1.0 # TODO: make this dynamic
+        self.rel_trans[inds]  = 1.0
         return len(inds)
 
 
@@ -233,15 +236,21 @@ class People(cvb.BasePeople):
 
         if self.pars['quar_period'] is not None:
             not_diagnosed_inds = self.false('diagnosed')
+            print('hiiii')
+            print(len(not_diagnosed_inds))
             all_inds = np.arange(len(self)) # Do dead people come out of quarantine?
 
             # Perform quarantine - on all who have a date_known_contact (Filter to those not already diagnosed?)
-            inds = self.check_inds(self.quarantined, self.date_known_contact, filter_inds=not_diagnosed_inds) # Check who is quarantined, not_diagnosed_inds?
+            inds = self.check_inds(self.quarantined, self.date_known_contact, filter_in=not_diagnosed_inds) # Check who is quarantined, not_diagnosed_inds?
+            print(self.quarantined[not_diagnosed_inds])
+            print(self.date_known_contact[not_diagnosed_inds])
+            print(len(inds))
+            print('done')
             self.quarantine(inds) # Put people in quarantine
             self.date_known_contact[inds] = np.nan # Clear date
 
             # Check for the end of quarantine - on all who are quarantined
-            end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=all_inds) # Note the double-negative here
+            end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_in=all_inds) # Note the double-negative here
             self.quarantined[end_inds] = False # Release from quarantine
             self.date_end_quarantine[end_inds] = np.nan # Clear end quarantine time
 
