@@ -10,7 +10,7 @@ start_day = 30
 ones  = {k:1.0 for k in 'hswc'}
 zeros = {k:0.0 for k in 'hswc'}
 
-tp = {'h':0, 's':1, 'w':0, 'c':0}
+tp = {'h':0, 's':0, 'w':1, 'c':0}
 
 interventions = [
     cv.test_prob(start_day=start_day, symp_prob=1.0, asymp_prob=1.0, test_delay=0.0),
@@ -26,6 +26,8 @@ pars = dict(
     )
 
 sim = cv.Sim(pars)
+sim.initialize()
+# sim.people.contacts['w']['beta'] *= 0
 
 
 sim.run()
