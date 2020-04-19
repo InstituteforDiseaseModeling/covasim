@@ -86,7 +86,7 @@ class People(cvb.BasePeople):
         # Initialize
         self.t = t
         counts = {key:0 for key in cvd.new_result_flows}
-        self.is_exp = cvu.true(self.exposed) # For storing the interim values since used in every subsequent calculation
+        self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
         # Perform updates
         counts['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
@@ -232,7 +232,7 @@ class People(cvb.BasePeople):
         ''' Check for whether someone has been contacted by a positive'''
 
         if self.pars['quar_period'] is not None:
-            not_diagnosed_inds = cvu.false(self.diagnosed)
+            not_diagnosed_inds = self.false('diagnosed')
             all_inds = np.arange(len(self)) # Do dead people come out of quarantine?
 
             # Perform quarantine - on all who have a date_known_contact (Filter to those not already diagnosed?)
