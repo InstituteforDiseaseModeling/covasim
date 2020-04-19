@@ -4,7 +4,6 @@ Defines the Person class and functions associated with making people.
 
 #%% Imports
 import numpy as np
-import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
