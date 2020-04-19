@@ -6,11 +6,14 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.27.14 (2020-04-18)
+Version 0.27.15 (2020-04-18)
 ----------------------------
 - Refactored data types
 - Changed how populations are handled, including adding a ``dynam_layer`` parameter to specify which layers are dynamic
 - Disease progression duration parameters were updated to be longer
+- Fixed bugs with quarantine
+- Fixed bug with hybrid school and work contacts
+- Changed contact tracing to be only for contacts with nonzero transmission
 
 
 Version 0.27.12 (2020-04-17)

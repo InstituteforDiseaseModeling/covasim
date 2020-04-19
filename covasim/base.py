@@ -265,6 +265,11 @@ class BaseSim(ParsObj):
         return pardict
 
 
+    def copy(self):
+        ''' Returns a deep copy of the sim '''
+        return sc.dcp(self)
+
+
     def to_json(self, filename=None, keys=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
         '''
         Export results as JSON.
@@ -543,7 +548,7 @@ class BasePeople(sc.prettyobj):
 
     def not_defined(self, key):
         ''' Return indices of people who are nan '''
-        return (~np.isnan(self[key])).nonzero()[0]
+        return np.isnan(self[key]).nonzero()[0]
 
 
     def count(self, key):
