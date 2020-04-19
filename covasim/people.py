@@ -409,7 +409,6 @@ class People(cvb.BasePeople):
                 p2inds = np.unique(self.contacts[lkey]['p2'][nzp1inds]) # Find their pairing partner
                 # Check not diagnosed!
                 contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
-                print('Traced:', lkey, contact_inds)
                 self.known_contact[contact_inds] = True
 
                 # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?
