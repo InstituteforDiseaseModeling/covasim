@@ -348,10 +348,6 @@ class Sim(cvb.BaseSim):
                 source = sources[ind]
                 target = targets[ind]
 
-                assert not people.diagnosed[source] # TEMP
-                assert not people.quarantined[source] # TEMP
-                assert not people.quarantined[target] # TEMP
-
                 s_symp = people.symptomatic[source]
                 s_diag = people.diagnosed[source]
                 s_quar = people.quarantined[source]
