@@ -102,6 +102,19 @@ class People(cvb.BasePeople):
 
         return counts
 
+    def update_states_post_intervention(self, t, counts):
+        # Initialize
+        self.t = t
+        self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
+
+        # Perform updates
+        counts['new_quarantined'] += self.check_quar() # Update if they're quarantined
+        counts['new_diagnoses']   += self.check_diagnosed()
+        counts['new_tests']       += self.check_tested()
+        del self.is_exp # Tidy up
+
+        return counts
+
 
     def update_contacts(self):
         ''' Refresh dynamic contacts, e.g. community '''

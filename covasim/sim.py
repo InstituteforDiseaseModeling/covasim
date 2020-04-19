@@ -312,6 +312,13 @@ class Sim(cvb.BaseSim):
             for ind in imporation_inds:
                 self.people.transtree.seeds.append({'person':ind, 'date':self.t, 'layer':None})
 
+        # Apply interventions - DJK!!!
+        for intervention in self['interventions']:
+            intervention.apply(self)
+        if self['interv_func'] is not None: # Apply custom intervention function
+            self =self['interv_func'](self)
+        flows = people.update_states_post_intervention(t, flows)
+
         # Compute the probability of transmission
         beta         = cvd.default_float(self['beta'])
         asymp_factor = cvd.default_float(self['asymp_factor'])
@@ -340,14 +347,31 @@ class Sim(cvb.BaseSim):
             for ind in edge_inds:
                 source = sources[ind]
                 target = targets[ind]
-                self.people.transtree.sources[target] = {'source':source, 'target':target, 'date':self.t, 'layer':lkey}
-                self.people.transtree.targets[source].append({'source':source, 'target':target, 'date':self.t, 'layer':lkey})
 
+                assert not people.diagnosed[source] # TEMP
+                assert not people.quarantined[source] # TEMP
+                assert not people.quarantined[target] # TEMP
+
+                s_symp = people.symptomatic[source]
+                s_diag = people.diagnosed[source]
+                s_quar = people.quarantined[source]
+                s_sev  = people.severe[source]
+                s_crit = people.critical[source]
+                t_quar = people.quarantined[target]
+
+                s_asymp = np.isnan(people.date_symptomatic[source])
+                s_presymp = ~s_asymp and ~s_symp # Not asymptomatic and not currently symptomatic
+
+                self.people.transtree.sources[target] = {'source':source, 'target':target, 'date':self.t, 'layer':lkey, 's_symp':s_symp, 's_diag':s_diag, 's_quar':s_quar, 't_quar':t_quar, 's_asymp':s_asymp, 's_presymp':s_presymp, 's_sev':s_sev, 's_crit':s_crit} # Call this the linelist
+                self.people.transtree.targets[source].append({'source':source, 'target':target, 'date':self.t, 'layer':lkey}) # Make a count
+
+        ''' DJK!!!
         # Apply interventions
         for intervention in self['interventions']:
             intervention.apply(self)
         if self['interv_func'] is not None: # Apply custom intervention function
             self =self['interv_func'](self)
+        '''
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
