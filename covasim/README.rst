@@ -2,7 +2,7 @@
 Parameters
 ==========
 
-This file describes the expected behavior of each parameter in the model. Note: the term "overall infection rate" can be explored using ``sim.results['doubling_time```` and ``sim.results['r_eff```` (a higher infection rate means lower doubling times and higher *R\_eff*), as well as by simply looking at the epidemic curves.
+This file describes the expected behavior of each parameter in the model. Note: the term "overall infection rate" can be explored using ``sim.results['doubling_time']`` and ``sim.results['r_eff']`` (a higher infection rate means lower doubling times and higher *R\_eff*), as well as by simply looking at the epidemic curves.
 
 Population parameters
 ---------------------
