@@ -51,7 +51,7 @@ Time for disease recovery
 -------------------------
 * ``asym2rec`` = Duration for asymptomatics to recover
 * ``mild2rec`` = Duration from mild symptoms to recovered
-* ``sev2rec``  = Duration from severe symptoms to recovered - leads to meandisease time
+* ``sev2rec``  = Duration from severe symptoms to recovered
 * ``crit2rec`` = Duration from critical symptoms to recovered
 * ``crit2die`` = Duration from critical symptoms to death
 

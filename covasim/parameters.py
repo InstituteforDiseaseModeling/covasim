@@ -57,13 +57,13 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['dur'] = {}
     pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4, 'par2':1} # Duration from exposed to infectious
     pars['dur']['inf2sym']  = {'dist':'lognormal_int', 'par1':1, 'par2':1} # Duration from infectious to symptomatic
-    pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':1, 'par2':1} # Duration from symptomatic to severe symptoms
-    pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':1, 'par2':1} # Duration from severe symptoms to requiring ICU
+    pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':3, 'par2':2} # Duration from symptomatic to severe symptoms
+    pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':3, 'par2':2} # Duration from severe symptoms to requiring ICU
 
     # Duration parameters: time for disease recovery
     pars['dur']['asym2rec'] = {'dist':'lognormal_int', 'par1':8,  'par2':2} # Duration for asymptomatics to recover
     pars['dur']['mild2rec'] = {'dist':'lognormal_int', 'par1':8,  'par2':2} # Duration from mild symptoms to recovered
-    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':11, 'par2':3} # Duration from severe symptoms to recovered - leads to mean total disease time of
+    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':11, 'par2':3} # Duration from severe symptoms to recovered
     pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':17, 'par2':3} # Duration from critical symptoms to recovered
     pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':7,  'par2':3} # Duration from critical symptoms to death
 
