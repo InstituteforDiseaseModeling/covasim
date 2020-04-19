@@ -56,7 +56,7 @@ class Sim(cvb.BaseSim):
         self.popdict       = None  # The population dictionary
         self.t             = None  # The current time in the simulation
         self.people        = None  # Initialize these here so methods that check their length can see they're empty
-        self.results       = None  # For storing results
+        self.results       = {}    # For storing results
         self.initialized   = False # Whether or not initialization is complete
         self.results_ready = False # Whether or not results are ready
 

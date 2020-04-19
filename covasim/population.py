@@ -40,6 +40,8 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
     pop_type = sim['pop_type'] # Shorten
     if verbose is None:
         verbose = sim['verbose']
+    if popfile is None:
+        popfile = sim.popfile
 
     # Check which type of population to produce
     if pop_type == 'synthpops':
@@ -79,7 +81,12 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
 
     if save_pop:
-
+        if popfile is None:
+            errormsg = 'Please specify a file to save to using the popfile kwarg'
+            raise FileNotFoundError(errormsg)
+        else:
+            filepath = sc.makefilepath(filename=popfile)
+            sc.saveobj(filepath, popdict)
 
     return
 

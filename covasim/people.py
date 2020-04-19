@@ -108,7 +108,7 @@ class People(cvb.BasePeople):
         ''' Refresh dynamic contacts, e.g. community '''
 
         # Figure out if anything needs to be done -- e.g. {'h':False, 'c':True}
-        dynam_keys = [lkey for lkey,is_dynam in self.pars['dynam_layer'] if is_dynam]
+        dynam_keys = [lkey for lkey,is_dynam in self.pars['dynam_layer'].items() if is_dynam]
 
         # Loop over dynamic keys
         for lkey in dynam_keys:
