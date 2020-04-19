@@ -3,17 +3,29 @@ What's new
 
 All major changes to the codebase are documented in this file. Note: in many cases,
 changes from multiple patch versions are grouped together, so numbering will not be
-strictly consecutive. 
+strictly consecutive.
 
 
-Version 0.27.8 (2020-04-17)
----------------------------
+Version 0.27.14 (2020-04-18)
+----------------------------
+- Refactored data types
+- Changed how populations are handled, including adding a ``dynam_layer`` parameter to specify which layers are dynamic
+- Disease progression duration parameters were updated to be longer
+
+
+Version 0.27.12 (2020-04-17)
+----------------------------
 - Caches Numba functions, reducing load time from 2.5 to 0.5 seconds
 - Pins Numba to 0.48, which is 10x faster than 0.49
 - Fixed issue with saving populations in scenarios
 - Refactored how populations are handled, removing ``use_layers`` parameter (use ``pop_type`` instead)
 - Removed layer key from layer object, reducing total sim memory footprint by 3x
 - Improved handling of mismatches between loaded population layers and simulation parameters
+- Added custom key errors to handle multiline error messages
+- Fix several issues with probability-based testing
+- Changed how layer betas are applied (inside the sim rather than statically)
+- Added more detail to the transmission tree
+- Refactored random population calculation, speeding up large populations (>100k) by a factor of 10
 - Added `documentation <https://institutefordiseasemodeling.github.io/covasim-docs/>`__
 
 
