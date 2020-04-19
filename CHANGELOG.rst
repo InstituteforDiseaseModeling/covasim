@@ -6,8 +6,9 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.27.15 (2020-04-18)
+Version 0.28.0 (2020-04-19)
 ----------------------------
+- Includes dynamic per-person viral load
 - Refactored data types
 - Changed how populations are handled, including adding a ``dynam_layer`` parameter to specify which layers are dynamic
 - Disease progression duration parameters were updated to be longer

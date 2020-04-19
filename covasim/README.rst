@@ -32,6 +32,7 @@ Basic disease transmission
 * ``dynam_layer`` = Which layers are dynamic; set below
 * ``beta_layer``  = Transmissibility per layer; set below
 * ``n_imports``   = Average daily number of imported cases (actual number is drawn from Poisson distribution)
+* ``viral_dist``  = The time varying viral load (transmissibility)
 
 Efficacy of protection measures
 -------------------------------
