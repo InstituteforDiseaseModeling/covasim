@@ -373,6 +373,10 @@ class contact_tracing(Intervention):
         if t < self.start_day:
             return
 
+        print(t, 'nS:', ~sim.people.susceptible)
+        print(t, 'D:', sim.people.diagnosed)
+        print(t, 'DD:', sim.people.date_diagnosed)
+
         just_diagnsed_inds = cvu.true(sim.people.diagnosed & (sim.people.date_diagnosed == t-1)) # Diagnosed last time step, time to trace
         if len(just_diagnsed_inds): # If there are any just-diagnosed people, go trace their contacts
             sim.people.trace(just_diagnsed_inds, self.trace_probs, self.trace_time)

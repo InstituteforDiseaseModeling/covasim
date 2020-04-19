@@ -168,7 +168,7 @@ class People(cvb.BasePeople):
     #%% Methods for updating state
 
     def check_inds(self, current, date, filter_inds=None):
-        ''' Return indices for which the current state is false nad which meet the date criterion '''
+        ''' Return indices for which the current state is false and which meet the date criterion '''
         if filter_inds is None:
             filter_inds = self.is_exp
         not_current = cvu.ifalsei(current, filter_inds)
@@ -251,14 +251,24 @@ class People(cvb.BasePeople):
         ''' Check for whether someone has been contacted by a positive'''
 
         if self.pars['quar_period'] is not None:
+            not_diagnosed_inds = cvu.false(self.diagnosed)
+            all_inds = np.arange(len(self)) # Do dead people come out of quarantine?
 
-            # Perform quarantine
-            inds = self.check_inds(self.quarantined, self.date_known_contact) # Check who is quarantined
+            # Perform quarantine - on all who have a date_known_contact (Filter to those not already diagnosed?)
+            inds = self.check_inds(self.quarantined, self.date_known_contact, filter_inds=not_diagnosed_inds) # Check who is quarantined, not_diagnosed_inds?
+            if np.any(inds):
+                print(self.t)
+                print('IN:', inds)
+                print('Q:',self.quarantined)
+                print('DKC:', self.date_known_contact)
             self.quarantine(inds) # Put people in quarantine
             self.date_known_contact[inds] = np.nan # Clear date
 
-            # Check for the end of quarantine
-            end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine) # Note the double-negative here
+            # Check for the end of quarantine - on all who are quarantined
+            end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=all_inds) # Note the double-negative here
+            #if np.any(end_inds):
+            #    print(self.t, 'OUT:', end_inds, self.quarantined, self.date_end_quarantine)
+            assert all(self.quarantined[inds]) # DJK
             self.quarantined[end_inds] = False # Release from quarantine
             self.date_end_quarantine[end_inds] = np.nan # Clear end quarantine time
 
@@ -414,6 +424,8 @@ class People(cvb.BasePeople):
         # Figure out who has been contacted in the past
         never_been_contacted = cvu.true(np.isnan(self.date_known_contact))  # Indices of people who've never been contacted
 
+        print('Trace from:', inds)
+
         # Extract the indices of the people who'll be contacted
         traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
         for layer,this_trace_prob in traceable_layers.items():
@@ -421,7 +433,9 @@ class People(cvb.BasePeople):
 
             p1inds = np.where(np.isin(np.array(self.contacts[layer]['p1']),inds))[0] # Get all the indices of the pairs that each person is in
             p2inds = np.unique(np.array(self.contacts[layer]['p2'][p1inds])) # Find their pairing partner
+            # Check not diagnosed!
             contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
+            print('Traced:', layer, contact_inds)
             self.known_contact[contact_inds] = True
 
             # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?

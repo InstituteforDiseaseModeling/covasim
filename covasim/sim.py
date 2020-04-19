@@ -661,6 +661,7 @@ class Sim(cvb.BaseSim):
         n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
         for p,title,keylabels in to_plot.enumitems():
             ax = pl.subplot(n_rows, n_cols, p+1)
+            if 'eff' not in title: ax.set_yscale('log')
             for key in keylabels:
                 label = res[key].name
                 this_color = res[key].color
