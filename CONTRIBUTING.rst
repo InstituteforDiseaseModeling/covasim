@@ -107,7 +107,7 @@ Submit a pull request
 To contribute directly to Covasim code, do the following:
 
 1.  Fork and clone the Covasim repository.
-2.  Install Covasim on your machine. See :doc:`installation` or the `project README`_.
+2.  Install Covasim on your machine. See the `project README`_.
 3.  Create a new branch::
 
         git checkout -b my-branch-name

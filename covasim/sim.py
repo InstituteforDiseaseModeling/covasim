@@ -104,7 +104,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def load_population(self, filename=None, die=True, **kwargs):
+    def load_population(self, filename=None, **kwargs):
         '''
         Load the population dictionary from file.
 
