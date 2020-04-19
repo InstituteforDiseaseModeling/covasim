@@ -261,10 +261,11 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    p
     '''
 
     # Get the end date from recover or death
-    time_stop = time_dead[:]
-    inds = ~np.isnan(time_recovered)
-    time_stop[inds] = time_recovered[inds]
-    load = np.ones(len(time_start), dtype=cvd.default_float) # allocate an array of ones with the correct dtype
+    n = len(time_dead)
+    time_stop = np.ones(n, dtype=cvd.default_float)*time_recovered # This is needed to make a copy
+    inds = ~np.isnan(time_dead)
+    time_stop[inds] = time_dead[inds]
+    load = np.ones(n, dtype=cvd.default_float) # allocate an array of ones with the correct dtype
     early = (t-time_start)/(time_stop-time_start) < par1 # are we in the early or late phase
     load = (par2 * early + load * ~early)/(load+par1*(par2-load)) # calculate load
 

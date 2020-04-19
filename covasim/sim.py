@@ -316,12 +316,12 @@ class Sim(cvb.BaseSim):
         beta         = cvd.default_float(self['beta'])
         asymp_factor = cvd.default_float(self['asymp_factor'])
         diag_factor  = cvd.default_float(self['diag_factor'])
-        switch_point = cvd.default_float(self['viral_dist']['par1'])
-        change_ratio = cvd.default_float(self['viral_dist']['par2'])
-        date_inf  = people.date_infectious
-        date_rec  = people.date_recovered
-        date_dead = people.date_dead
-        viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, switch_point, change_ratio)
+        frac_time    = cvd.default_float(self['viral_dist']['frac_time'])
+        load_ratio   = cvd.default_float(self['viral_dist']['load_ratio'])
+        date_inf     = people.date_infectious
+        date_rec     = people.date_recovered
+        date_dead    = people.date_dead
+        viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio)
 
         for lkey,layer in contacts.items():
             sources = layer['p1']
