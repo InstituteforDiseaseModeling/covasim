@@ -148,15 +148,12 @@ class People(cvb.BasePeople):
 
     #%% Methods for updating state
 
-    def check_inds(self, current, date, filter_out=None, filter_in=None):
+    def check_inds(self, current, date, filter_inds=None):
         ''' Return indices for which the current state is false and which meet the date criterion '''
-        if filter_in is not None:
-            available = cvu.itruei(current, filter_in)
-        else:
-            if filter_out is None:
-                filter_out = self.is_exp
-            available = cvu.ifalsei(current, filter_out)
-        has_date    = cvu.idefinedi(date, available)
+        if filter_inds is None:
+            filter_inds = self.is_exp
+        not_current = cvu.ifalsei(current, filter_inds)
+        has_date    = cvu.idefinedi(date, not_current)
         inds        = cvu.itrue(self.t >= date[has_date], has_date)
         return inds
 
@@ -239,14 +236,14 @@ class People(cvb.BasePeople):
             all_inds = np.arange(len(self)) # Do dead people come out of quarantine?
 
             # Perform quarantine - on all who have a date_known_contact (Filter to those not already diagnosed?)
-            inds = self.check_inds(self.quarantined, self.date_known_contact, filter_in=not_diagnosed_inds) # Check who is quarantined, not_diagnosed_inds?
+            inds = self.check_inds(self.quarantined, self.date_known_contact, filter_inds=not_diagnosed_inds) # Check who is quarantined, not_diagnosed_inds?
             if np.any(inds):
                 print(self.t, 'IN:', inds)
             self.quarantine(inds) # Put people in quarantine
             self.date_known_contact[inds] = np.nan # Clear date
 
             # Check for the end of quarantine - on all who are quarantined
-            end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_in=all_inds) # Note the double-negative here
+            end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=all_inds) # Note the double-negative here
             if np.any(end_inds):
                 print(self.t, 'OUT:', end_inds)
             assert all(self.quarantined[inds]) # DJK
@@ -403,31 +400,30 @@ class People(cvb.BasePeople):
             trace_time (dict): # days it'll take to trace people at each contact layer - should have the same keys as contacts
         '''
         # Figure out who has been contacted in the past
-        never_been_contacted = self.not_defined('date_known_contact')  # Indices of people who've never been contacted
+        never_been_contacted = cvu.true(np.isnan(self.date_known_contact))  # Indices of people who've never been contacted
+
+        print('Trace from:', inds)
 
         # Extract the indices of the people who'll be contacted
         traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
-        for lkey,this_trace_prob in traceable_layers.items():
-            if self.pars['beta_layer'][lkey]: # Skip if beta is 0 for this layer
-                this_trace_time = trace_time[lkey]
+        for layer,this_trace_prob in traceable_layers.items():
+            this_trace_time = trace_time[layer]
 
-                nzinds = self.contacts[lkey]['beta'].nonzero()[0] # Find nonzero beta edges
-                p1inds = np.isin(self.contacts[lkey]['p1'], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
-                nzp1inds = np.intersect1d(nzinds, p1inds)
-                p2inds = np.unique(self.contacts[lkey]['p2'][nzp1inds]) # Find their pairing partner
-                # Check not diagnosed!
-                contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
-                self.known_contact[contact_inds] = True
+            p1inds = np.where(np.isin(np.array(self.contacts[layer]['p1']),inds))[0] # Get all the indices of the pairs that each person is in
+            p2inds = np.unique(np.array(self.contacts[layer]['p2'][p1inds])) # Find their pairing partner
+            # Check not diagnosed!
+            contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
+            print('Traced:', layer, contact_inds)
+            self.known_contact[contact_inds] = True
 
-                # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?
-                first_time_contacted_inds   = np.intersect1d(never_been_contacted, contact_inds) # indices of people getting contacted for the first time
-                contacted_before_inds       = np.setdiff1d(contact_inds, first_time_contacted_inds) # indices of people who've been contacted before
+            # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?
+            first_time_contacted_inds   = np.intersect1d(never_been_contacted, contact_inds) # indices of people getting contacted for the first time
+            contacted_before_inds       = np.setdiff1d(contact_inds, first_time_contacted_inds) # indices of people who've been contacted before
 
-                if len(first_time_contacted_inds):
-                    self.date_known_contact[first_time_contacted_inds]  = self.t + this_trace_time # Store when they were contacted
-                if len(contacted_before_inds):
-                    self.date_known_contact[contacted_before_inds]  = np.minimum(self.date_known_contact[contacted_before_inds], self.t + this_trace_time)
-
+            if len(first_time_contacted_inds):
+                self.date_known_contact[first_time_contacted_inds]  = self.t + this_trace_time # Store when they were contacted
+            if len(contacted_before_inds):
+                self.date_known_contact[contacted_before_inds]  = np.minimum(self.date_known_contact[contacted_before_inds], self.t + this_trace_time)
 
         return
 
