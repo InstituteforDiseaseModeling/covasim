@@ -82,14 +82,14 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def set_metadata(self, filename, label):
+    def set_metadata(self, simfile, label):
         ''' Set the metadata for the simulation -- creation time and filename '''
         self.created = sc.now()
         self.version = cvv.__version__
         self.git_info = cvm.git_info()
-        if filename is None:
+        if simfile is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            self.filename = f'covasim_{datestr}.sim'
+            self.simfile = f'covasim_{datestr}.sim'
         if label is not None:
             self.label = label
         return

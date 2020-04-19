@@ -43,13 +43,13 @@ class Scenarios(cvb.ParsObj):
         metapars (dict): meta-parameters for the run, e.g. number of runs; see make_metapars() for structure
         scenarios (dict): a dictionary defining the scenarios; see default_scenario for structure
         basepars (dict): a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
-        filename (str): a filename for saving (defaults to the creation date)
+        scenfile (str): a filename for saving (defaults to the creation date)
 
     Returns:
         scens: a Scenarios object
     '''
 
-    def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, filename=None):
+    def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, scenfile=None):
 
         # For this object, metapars are the foundation
         default_pars = make_metapars() # Start with default pars
@@ -57,10 +57,10 @@ class Scenarios(cvb.ParsObj):
 
         # Handle filename
         self.created = sc.now()
-        if filename is None:
+        if scenfile is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            filename = f'covasim_scenarios_{datestr}.scens'
-        self.filename = filename
+            scenfile = f'covasim_scenarios_{datestr}.scens'
+        self.scenfile = scenfile
 
         # Handle scenarios -- by default, create a baseline scenario
         if scenarios is None:
@@ -364,28 +364,28 @@ class Scenarios(cvb.ParsObj):
         return output
 
 
-    def save(self, filename=None, keep_sims=True, keep_people=False, **kwargs):
+    def save(self, scenfile=None, keep_sims=True, keep_people=False, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
         Args:
-            filename (str or None): the name or path of the file to save to; if None, uses stored
+            scenfile (str or None): the name or path of the file to save to; if None, uses stored
             keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object
             keep_people (bool): whether or not to store the population in the Sim objects (NB, very large)
             keywords: passed to makefilepath()
 
         Returns:
-            filename (str): the validated absolute path to the saved file
+            scenfile (str): the validated absolute path to the saved file
 
         **Example**::
 
             scens.save() # Saves to a .scens file with the date and time of creation by default
 
         '''
-        if filename is None:
-            filename = self.filename
-        filename = sc.makefilepath(filename=filename, **kwargs)
-        self.filename = filename # Store the actual saved filename
+        if scenfile is None:
+            scenfile = self.scenfile
+        scenfile = sc.makefilepath(filename=scenfile, **kwargs)
+        self.scenfile = scenfile # Store the actual saved filename
 
         # Store sims seperately
         sims = self.sims
@@ -409,19 +409,19 @@ class Scenarios(cvb.ParsObj):
                     for sim in sims[key]:
                         obj.sims[key].append(sim.shrink(in_place=False))
 
-        sc.saveobj(filename=filename, obj=obj) # Actually save
+        sc.saveobj(filename=scenfile, obj=obj) # Actually save
 
         self.sims = sims # Restore
-        return filename
+        return scenfile
 
 
     @staticmethod
-    def load(filename, **kwargs):
+    def load(scenfile, **kwargs):
         '''
         Load from disk from a gzipped pickle.
 
         Args:
-            filename (str): the name or path of the file to save to
+            scenfile (str): the name or path of the file to save to
             keywords: passed to makefilepath()
 
         Returns:
@@ -431,8 +431,8 @@ class Scenarios(cvb.ParsObj):
 
             sim = cv.Scenarios.load('my-scenarios.scens')
         '''
-        filename = sc.makefilepath(filename=filename, **kwargs)
-        scens = sc.loadobj(filename=filename)
+        scenfile = sc.makefilepath(filename=scenfile, **kwargs)
+        scens = sc.loadobj(filename=scenfile)
         return scens
 
 

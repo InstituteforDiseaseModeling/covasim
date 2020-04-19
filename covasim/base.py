@@ -397,7 +397,7 @@ class BaseSim(ParsObj):
             sim.save() # Saves to a .sim file with the date and time of creation by default
         '''
         if filename is None:
-            filename = self.filename
+            filename = self.simfile
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
         if skip_attrs or not keep_population:
