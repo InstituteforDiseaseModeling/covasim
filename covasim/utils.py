@@ -4,6 +4,20 @@ Numerical utilities for running Covasim
 
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
+from . import defaults as cvd
+
+#%% Set dtypes
+
+nbbool = nb.bool_
+if cvd.default_precision == 32:
+    nbint   = nb.int32
+    nbfloat = nb.float32
+elif cvd.default_precision == 64:
+    nbint   = nb.int64
+    nbfloat = nb.float64
+else:
+    raise NotImplementedError
+
 
 #%% Sampling and seed methods
 
@@ -23,8 +37,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
     Returns:
         A length N array of samples
 
-    **Examples**
-    ::
+    **Examples**::
 
         sample() # returns Unif(0,1)
         sample(dist='normal', par1=3, par2=0.5) # returns Normal(μ=3, σ=0.5)
@@ -63,11 +76,12 @@ def sample(dist=None, par1=None, par2=None, size=None):
         raise NotImplementedError(errormsg)
 
     return samples
-    
+
+
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
 
-    @nb.njit((nb.int32,), cache=True)
+    @nb.njit((nbint,), cache=True)
     def set_seed_numba(seed):
         return np.random.seed(seed)
 
@@ -133,35 +147,42 @@ def idefinedi(arr, inds):
 
 #%% Probabilities -- mostly not jitted since performance gain is minimal
 
-__all__ += ['binomial_arr', 'multinomial', 'poisson', 'binomial_filter', 'choose', 'choose_r', 'choose_w']
+__all__ += ['n_binomial', 'binomial_arr', 'binomial_filter', 'multinomial', 'poisson', 'n_poisson', 'choose', 'choose_r', 'choose_w']
 
 
 def n_binomial(prob, n):
     ''' Perform n binomial (Bernolli) trials -- return boolean array '''
     return np.random.random(n) < prob
 
+
 def binomial_arr(prob_arr):
     ''' Binomial (Bernoulli) trials each with different probabilities -- return boolean array '''
     return np.random.random(len(prob_arr)) < prob_arr
 
 
-def multinomial(probs, repeats):
+def binomial_filter(prob, arr): # No speed gain from Numba
+    ''' Binomial "filter" -- return entries that passed '''
+    return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]
+
+
+def multinomial(probs, repeats): # No speed gain from Numba
     ''' A multinomial trial '''
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
-@nb.njit((nb.int32,), cache=True) # This hugely increases performance
+@nb.njit((nbint,), cache=True) # This hugely increases performance
 def poisson(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
 
-def binomial_filter(prob, arr):
-    ''' Binomial "filter" -- return entries that passed '''
-    return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]
+@nb.njit((nbint, nbint), cache=True) # This hugely increases performance
+def n_poisson(rate, n):
+    ''' A Poisson trial '''
+    return np.random.poisson(rate, n)
 
 
-@nb.njit((nb.int32, nb.int32), cache=True) # This hugely increases performance
+@nb.njit((nbint, nbint), cache=True) # This hugely increases performance
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replacement.
@@ -178,7 +199,7 @@ def choose(max_n, n):
     return np.random.choice(max_n, n, replace=False)
 
 
-@nb.njit((nb.int32, nb.int32), cache=True) # This hugely increases performance
+@nb.njit((nbint, nbint), cache=True) # This hugely increases performance
 def choose_r(max_n, n):
     '''
     Choose a subset of items (e.g., people), with replacement.
@@ -187,7 +208,8 @@ def choose_r(max_n, n):
         max_n (int): the total number of items
         n (int): the number of items to choose
 
-    Example:
+    **Example**::
+
         ``choose(5, 2)`` will choose 2 out of 5 people with equal probability.
     '''
     return np.random.choice(max_n, n, replace=True)
@@ -202,16 +224,16 @@ def choose_w(probs, n, unique=True):
         n (int): number of samples to choose
         unique (bool): whether or not to ensure unique indices
 
-    Example:
+    **Example**::
+    
         ``choose_w([0.2, 0.5, 0.1, 0.1, 0.1], 2)`` will choose 2 out of 5 people with nonequal probability.
     '''
-
-    probs = np.array(probs, dtype=np.float32)
+    probs = np.array(probs)
     n_choices = len(probs)
     n_samples = int(n)
     probs_sum = probs.sum()
     if probs_sum: # Weight is nonzero, rescale
-        probs /= probs_sum
+        probs = probs/probs_sum
     else: # Weights are all zero, choose uniformly
         probs = np.ones(n_choices)/n_choices
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
@@ -219,17 +241,18 @@ def choose_w(probs, n, unique=True):
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit((    nb.float32[:], nb.float32[:], nb.float32[:], nb.bool_[:], nb.bool_[:], nb.bool_[:],   nb.float32,  nb.float32, nb.float32))
-def compute_probs(rel_trans,       rel_sus,    viral_load,        symp,        diag,        quar, asymp_factor, diag_factor, quar_trans):
+@nb.njit((            nbfloat[:], nbfloat[:], nbfloat,    nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,     nbfloat), cache=True)
+def compute_trans_sus(rel_trans,  rel_sus,    beta_layer, symp,      diag,      quar,      asymp_factor, diag_factor, quar_trans):
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
     f_quar_eff = ~quar +  quar * quar_trans # Quarantine
-    rel_trans  = rel_trans * viral_load * f_quar_eff * f_asymp * f_diag # Recalulate transmisibility
+    rel_trans  = rel_trans * f_quar_eff * f_asymp * f_diag * beta_layer # Recalulate transmisibility
     rel_sus    = rel_sus   * f_quar_eff # Recalulate susceptibility
     return rel_trans, rel_sus
 
-@nb.njit((      nb.int32, nb.float32[:],  nb.float32[:], nb.float32[:], nb.float32, nb.float32))
+
+@nb.njit((      nbint, nbfloat[:],  nbfloat[:], nbfloat[:], nbfloat, nbfloat))
 def compute_viral_load(t,    time_start, time_recovered,     time_dead,       par1,       par2):
     ''' Calculate relative transmissibility for time t. Includes time varying
         viral load, pre/asymptomatic factor, diagonsis factor, etc.
@@ -246,18 +269,14 @@ def compute_viral_load(t,    time_start, time_recovered,     time_dead,       pa
     time_stop = time_dead
     inds = ~np.isnan(time_recovered)
     time_stop[inds] = time_recovered[inds]
-    # allocate an array of ones with the correct dtype
-    load = np.ones(len(time_start), dtype=np.float32)
-    # are we in the early or late phase
-    early = (t-time_start)/(time_stop-time_start) < par1
-    # calculate load
-    load = (par2 * early + load * ~early)/(load+par1*(par2-load))
+    load = np.ones(len(time_start), dtype=cvd.default_float) # allocate an array of ones with the correct dtype
+    early = (t-time_start)/(time_stop-time_start) < par1 # are we in the early or late phase
+    load = (par2 * early + load * ~early)/(load+par1*(par2-load)) # calculate load
             
     return load
 
-
-@nb.njit((    nb.float32, nb.int32[:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:]), cache=True)
-def compute_targets(beta,     sources,     targets,   layer_betas,     rel_trans,       rel_sus):
+@nb.njit((             nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True)
+def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
     nonzero_inds    = betas.nonzero()[0] # Find nonzero entries

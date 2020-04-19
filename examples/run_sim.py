@@ -17,7 +17,7 @@ interv  = 0
 
 # Set filename if saving
 version  = 'v0'
-date     = '2020apr15'
+date     = '2020apr17'
 folder   = 'results'
 basename = f'{folder}/covasim_run_{date}_{version}'
 fig_path = f'{basename}.png'
@@ -28,7 +28,7 @@ pars = sc.objdict(
     pop_infected = 1,     # Number of initial infections
     n_days       = 60,   # Number of days to simulate
     rand_seed    = 1,     # Random seed
-    pop_type     = 'hybrid',
+    pop_type     = 'random',
 )
 
 # Optionally add an intervention

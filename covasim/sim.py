@@ -24,59 +24,72 @@ class Sim(cvb.BaseSim):
     '''
     The Sim class handles the running of the simulation: the number of children,
     number of time points, and the parameters of the simulation.
+
     Args:
         pars (dict): parameters to modify from their default values
         datafile (str): filename of (Excel) data file to load, if any
         datacols (list): list of column names of the data file to load
-        filename (str): the filename for this simulation, if it's saved (default: creation date)
+        label (str): the name of the simulation (useful to distinguish in batch runs)
+        simfile (str): the filename for this simulation, if it's saved (default: creation date)
+        popfile (str): the filename to load/save the population for this simulation
+        load_pop (bool): whether or not to load the population from the named file
+        kwargs (dict): passed to make_pars()
+
+    **Examples**::
+
+        sim = cv.Sim()
+        sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, popfile=None, filename=None, label=None, **kwargs):
+    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, **kwargs):
         # Create the object
         default_pars = cvpars.make_pars(**kwargs) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
-        self.label         = None  # The label/name of the simulation
-        self.created       = None  # The datetime the sim was created
-        self.filename      = None  # The filename of the sim
-        self.datafile      = None  # The name of the data file
-        self.data          = None  # The actual data
-        self.popdict       = None  # The population dictionary
-        self.t             = None  # The current time in the simulation
-        self.initialized   = False # Whether or not initialization is complete
-        self.results_ready = False # Whether or not results are ready
-        self.people        = []    # Initialize these here so methods that check their length can see they're empty
-        self.results       = {}    # For storing results
+        self.label         = label    # The label/name of the simulation
+        self.created       = None     # The datetime the sim was created
+        self.simfile       = simfile  # The filename of the sim
+        self.datafile      = datafile # The name of the data file
+        self.popfile       = popfile  # The population file
+        self.data          = None     # The actual data
+        self.popdict       = None     # The population dictionary
+        self.t             = None     # The current time in the simulation
+        self.people        = None     # Initialize these here so methods that check their length can see they're empty
+        self.results       = {}       # For storing results
+        self.initialized   = False    # Whether or not initialization is complete
+        self.results_ready = False    # Whether or not results are ready
 
         # Now update everything
-        self.set_metadata(filename, label) # Set the simulation date and filename
+        self.set_metadata(simfile, label) # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
-        self.load_population(popfile)      # Load the population, if provided
         self.update_pars(pars)             # Update the parameters, if provided
+        if load_pop:
+            self.load_population(popfile)      # Load the population, if provided
 
         return
 
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
+        pars = sc.mergedicts(pars, kwargs)
         if pars:
             if 'pop_type' in pars:
-                cvpars.set_contacts(pars)
+                cvpars.reset_layer_pars(pars)
             if 'prog_by_age' in pars:
                 pars['prognoses'] = cvpars.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
 
 
-    def set_metadata(self, filename, label):
+    def set_metadata(self, simfile, label):
         ''' Set the metadata for the simulation -- creation time and filename '''
         self.created = sc.now()
         self.version = cvv.__version__
         self.git_info = cvm.git_info()
-        if filename is None:
+        if simfile is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            self.filename = f'covasim_{datestr}.sim'
+            self.simfile = f'covasim_{datestr}.sim'
         if label is not None:
             self.label = label
         return
@@ -91,51 +104,46 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def load_population(self, filename=None, **kwargs):
-        '''
-        Load the population dictionary from file.
-        Args:
-            filename (str): name of the file to load
-        '''
-        if filename is not None:
-            filepath = sc.makefilepath(filename=filename, **kwargs)
-            self.popdict = sc.loadobj(filepath)
-            n_actual = len(self.popdict['uid'])
-            n_expected = self['pop_size']
-            if n_actual != n_expected:
-                errormsg = f'Wrong number of people ({n_expected} requested, {n_actual} actual) -- please change "pop_size" to match or regenerate the file'
-                raise ValueError(errormsg)
-        return
-
-
-    def save_population(self, filename, **kwargs):
-        '''
-        Save the population dictionary to file.
-        Args:
-            filename (str): name of the file to save to.
-        '''
-        filepath = sc.makefilepath(filename=filename, **kwargs)
-        sc.saveobj(filepath, self.popdict)
-        return filepath
-
-
-    def initialize(self, **kwargs):
+    def initialize(self, save_pop=False, load_pop=False, popfile=None, **kwargs):
         '''
         Perform all initializations.
+
         Args:
+            save_pop (bool): if true, save the population to popfile
+            load_pop (bool): if true, load the population from popfile
+            popfile (str): filename to load/save the population
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
-        self.init_people(**kwargs) # Create all the people (slow)
+        self.init_people(save_pop=save_pop, load_pop=load_pop, popfile=popfile, **kwargs) # Create all the people (slow)
         self.initialized = True
+        return
+
+
+    def reset_layer_pars(self, force=True):
+        '''
+        Reset the parameters to match the population.
+
+        Args:
+            force (bool): reset the pars even if they already exist
+        '''
+        if self.people is not None:
+            layer_keys = self.people.contacts.keys()
+        else:
+            layer_keys = None
+        cvpars.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
         return
 
 
     def validate_pars(self):
         ''' Some parameters can take multiple types; this makes them consistent '''
+
+        # Handle types
+        for key in ['pop_size', 'pop_infected', 'pop_size', 'n_days']:
+            self[key] = int(self[key])
 
         # Handle start day
         start_day = self['start_day'] # Shorten
@@ -157,8 +165,13 @@ class Sim(cvb.BaseSim):
         contacts_keys   = set(self.pars['contacts'].keys())
         quar_eff_keys   = set(self.pars['quar_eff'].keys())
         if not(beta_layer_keys == contacts_keys == quar_eff_keys):
-            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} are not consistent'
-            raise ValueError(errormsg)
+            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} have inconsistent keys'
+            raise cvm.KeyNotFoundError(errormsg)
+        if self.people is not None:
+            pop_keys = set(self.people.contacts.keys())
+            if pop_keys != beta_layer_keys:
+                errormsg = f'Please update your parameter keys {beta_layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
+                raise cvm.KeyNotFoundError(errormsg)
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
@@ -166,7 +179,7 @@ class Sim(cvb.BaseSim):
         if choice not in popdata_choices:
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
-            raise ValueError(errormsg)
+            raise cvm.KeyNotFoundError(errormsg)
 
         # Handle interventions
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
@@ -195,7 +208,7 @@ class Sim(cvb.BaseSim):
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
         self.results['n_susceptible'].scale = 'static'
-        self.results['bed_capacity']  = init_res('Percentage bed capacity', scale=False)
+        self.results['bed_capacity']  = init_res('Bed demand relative to capacity', scale=False)
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
@@ -219,21 +232,57 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_people(self, verbose=None, id_len=None, **kwargs):
-        ''' Create the people '''
+    def load_population(self, popfile=None, **kwargs):
+        '''
+        Load the population dictionary from file -- typically done automatically
+        as part of sim.initialize(load_pop=True).
 
+        Args:
+            popfile (str): name of the file to load
+        '''
+        if popfile is None and self.popfile is not None:
+            popfile = self.popfile
+        if popfile is not None:
+            filepath = sc.makefilepath(filename=popfile, **kwargs)
+            self.popdict = sc.loadobj(filepath)
+            n_actual = len(self.popdict['uid'])
+            n_expected = self['pop_size']
+            if n_actual != n_expected:
+                errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
+                raise ValueError(errormsg)
+            if self['verbose']:
+                print(f'Loaded population from {filepath}')
+        return
+
+
+    def init_people(self, save_pop=False, load_pop=False, popfile=None, verbose=None, **kwargs):
+        '''
+        Create the people.
+
+        Args:
+            save_pop (bool): if true, save the population to popfile
+            load_pop (bool): if true, load the population from popfile
+            popfile (str): filename to load/save the population
+            verbose (int): detail to prnt
+        '''
+
+        # Handle inputs
         if verbose is None:
             verbose = self['verbose']
-
         if verbose:
             print(f'Initializing sim with {self["pop_size"]:0n} people for {self["n_days"]} days')
+        if load_pop and self.popdict is None:
+            self.load_population(popfile=popfile)
 
-        cvpop.make_people(self, verbose=verbose, **kwargs)
-        self.people.initialize() # Not sure this is the best place for it
+        # Actually make the people
+        cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
+        self.people.initialize()
 
         # Create the seed infections
         inds = np.arange(int(self['pop_infected']))
         self.people.infect(inds=inds)
+        for ind in inds:
+            self.people.transtree.seeds.append({'person':ind, 'date':self.t, 'layer':None})
 
         return
 
@@ -260,41 +309,39 @@ class Sim(cvb.BaseSim):
         if n_imports>0:
             imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
             flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max)
+            for ind in imporation_inds:
+                self.people.transtree.seeds.append({'person':ind, 'date':self.t, 'layer':None})
 
         # Compute the probability of transmission
-        beta         = np.float32(self['beta'])
-        asymp_factor = np.float32(self['asymp_factor'])
-        diag_factor  = np.float32(self['diag_factor'])
-        load_switch_point = self['viral_dist']['par1']
-        load_change_ratio = self['viral_dist']['par2']
-        viral_load = cvu.compute_viral_load(t, people.date_infectious,\
-                                            people.date_recovered, people.date_dead,\
-                                            load_switch_point, load_change_ratio)
+        beta         = cvd.default_float(self['beta'])
+        asymp_factor = cvd.default_float(self['asymp_factor'])
+        diag_factor  = cvd.default_float(self['diag_factor'])
 
-        for key,layer in contacts.items():
-            sources     = layer['p1']
-            targets     = layer['p2']
-            layer_betas = layer['beta']
+        for lkey,layer in contacts.items():
+            sources = layer['p1']
+            targets = layer['p2']
+            betas   = layer['beta']
 
             # Compute relative transmission and susceptibility
-            rel_trans = people.rel_trans
-            rel_sus   = people.rel_sus
-            symp      = people.symptomatic
-            diag      = people.diagnosed
-            quar      = people.quarantined
-            quar_eff  = np.float32(self['quar_eff'][key])
-            rel_trans, rel_sus = cvu.compute_probs(rel_trans, rel_sus, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
+            rel_trans  = people.rel_trans
+            rel_sus    = people.rel_sus
+            symp       = people.symptomatic
+            diag       = people.diagnosed
+            quar       = people.quarantined
+            quar_eff   = cvd.default_float(self['quar_eff'][lkey])
+            beta_layer = cvd.default_float(self['beta_layer'][lkey])
+            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
             # Calculate actual transmission
-            target_inds, edge_inds = cvu.compute_targets(beta, sources, targets, layer_betas, rel_trans, rel_sus) # Calculate transmission!
+            target_inds, edge_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
             flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
 
             # Store the transmission tree
             for ind in edge_inds:
                 source = sources[ind]
                 target = targets[ind]
-                self.people.transtree.sources[target] = source
-                self.people.transtree.targets[source].append(target)
+                self.people.transtree.sources[target] = {'source':source, 'target':target, 'date':self.t, 'layer':lkey}
+                self.people.transtree.targets[source].append({'source':source, 'target':target, 'date':self.t, 'layer':lkey})
 
         # Apply interventions
         for intervention in self['interventions']:
@@ -339,10 +386,12 @@ class Sim(cvb.BaseSim):
     def run(self, do_plot=False, verbose=None, **kwargs):
         '''
         Run the simulation.
+
         Args:
             do_plot (bool): whether to plot
             verbose (int): level of detail to print
             kwargs (dict): passed to self.plot()
+
         Returns:
             results: the results object (also modifies in-place)
         '''
@@ -424,9 +473,11 @@ class Sim(cvb.BaseSim):
         t-window, and uses that to compute the doubling time. For example, if there are
         100 cumulative infections on day 12 and 200 infections on day 19, doubling
         time is 7 days.
+
         Args:
             window (float): the size of the window used (larger values are more accurate but less precise)
             max_doubling_time (float): doubling time could be infinite, so this places a bound on it
+
         Returns:
             None (modifies results in place)
         '''
@@ -583,9 +634,10 @@ class Sim(cvb.BaseSim):
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, legend_args=None, as_dates=True, dateformat=None,
              interval=None, n_cols=1, font_size=18, font_family=None, use_grid=True, use_commaticks=True,
-             do_show=True, verbose=None):
+             log_scale=False, do_show=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
+
         Args:
             to_plot (dict): Nested dict of results to plot; see default_sim_plots for structure
             do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
@@ -603,8 +655,10 @@ class Sim(cvb.BaseSim):
             font_family (str): Font face
             use_grid (bool): Whether or not to plot gridlines
             use_commaticks (bool): Plot y-axis with commas rather than scientific notation
+            log_scale (bool or list): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
             do_show (bool): Whether or not to show the figure
             verbose (bool): Display a bit of extra information
+
         Returns:
             fig: Figure handle
         '''
@@ -636,6 +690,12 @@ class Sim(cvb.BaseSim):
         n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
         for p,title,keylabels in to_plot.enumitems():
             ax = pl.subplot(n_rows, n_cols, p+1)
+            if log_scale:
+                if isinstance(log_scale, list):
+                    if title in log_scale:
+                        ax.set_yscale('log')
+                else:
+                    ax.set_yscale('log')
             for key in keylabels:
                 label = res[key].name
                 this_color = res[key].color
@@ -694,12 +754,14 @@ class Sim(cvb.BaseSim):
         '''
         Simple method to plot a single result. Useful for results that aren't
         standard outputs.
+
         Args:
             key (str): the key of the result to plot
             fig_args (dict): passed to pl.figure()
             plot_args (dict): passed to pl.plot()
-            
-        **Example**
+
+        **Examples**::
+
             sim.plot_result('doubling_time')
         '''
         fig_args  = sc.mergedicts({'figsize':(16,10)}, fig_args)
