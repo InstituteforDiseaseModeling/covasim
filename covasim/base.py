@@ -548,7 +548,7 @@ class BasePeople(sc.prettyobj):
 
     def not_defined(self, key):
         ''' Return indices of people who are nan '''
-        return (~np.isnan(self[key])).nonzero()[0]
+        return np.isnan(self[key]).nonzero()[0]
 
 
     def count(self, key):
