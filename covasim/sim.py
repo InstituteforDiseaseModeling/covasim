@@ -634,7 +634,7 @@ class Sim(cvb.BaseSim):
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, legend_args=None, as_dates=True, dateformat=None,
              interval=None, n_cols=1, font_size=18, font_family=None, use_grid=True, use_commaticks=True,
-             do_show=True, verbose=None):
+             log_scale=False, do_show=True, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -655,6 +655,7 @@ class Sim(cvb.BaseSim):
             font_family (str): Font face
             use_grid (bool): Whether or not to plot gridlines
             use_commaticks (bool): Plot y-axis with commas rather than scientific notation
+            log_scale (bool): Whether or not to plot the y-axis with a log scale
             do_show (bool): Whether or not to show the figure
             verbose (bool): Display a bit of extra information
 
@@ -689,7 +690,8 @@ class Sim(cvb.BaseSim):
         n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
         for p,title,keylabels in to_plot.enumitems():
             ax = pl.subplot(n_rows, n_cols, p+1)
-            if 'eff' not in title: ax.set_yscale('log')
+            if log_scale:
+                ax.set_yscale('log')
             for key in keylabels:
                 label = res[key].name
                 this_color = res[key].color

@@ -247,10 +247,10 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     w_contacts, _ = make_random_contacts(len(w_inds), {'w':contacts['w']})
 
     # Construct the actual lists of contacts
-    for i     in range(pop_size):   contacts_list[i]['h']   = h_contacts[i]['h'] # Copy over household contacts -- present for everyone
-    for i,ind in enumerate(s_inds): contacts_list[ind]['s'] = s_contacts[i]['s'] # Copy over school contacts
-    for i,ind in enumerate(w_inds): contacts_list[ind]['w'] = w_contacts[i]['w'] # Copy over work contacts
-    for i     in range(pop_size):   contacts_list[i]['c']   = c_contacts[i]['c'] # Copy over community contacts -- present for everyone
+    for i     in range(pop_size):   contacts_list[i]['h']   =        h_contacts[i]['h']  # Copy over household contacts -- present for everyone
+    for i,ind in enumerate(s_inds): contacts_list[ind]['s'] = s_inds[s_contacts[i]['s']] # Copy over school contacts
+    for i,ind in enumerate(w_inds): contacts_list[ind]['w'] = w_inds[w_contacts[i]['w']] # Copy over work contacts
+    for i     in range(pop_size):   contacts_list[i]['c']   =        c_contacts[i]['c']  # Copy over community contacts -- present for everyone
 
     return contacts_list, layer_keys
 
