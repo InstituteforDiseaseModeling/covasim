@@ -18,7 +18,7 @@ interventions = [
 ]
 
 pars = dict(
-    pop_size=200,
+    pop_size=1000,
     pop_infected=10,
     pop_type='hybrid',
     n_days=90,
