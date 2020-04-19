@@ -210,8 +210,8 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     '''
 
     # Handle inputs and defaults
-    layer_keys = ['h', 's', 'w']
-    contacts = sc.mergedicts({'h':4, 's':20, 'w':20}, contacts) # Ensure essential keys are populated
+    layer_keys = ['h', 's', 'w', 'c']
+    contacts = sc.mergedicts({'h':4, 's':20, 'w':20, 'c':20}, contacts) # Ensure essential keys are populated
     if school_ages is None:
         school_ages = [6, 18]
     if work_ages is None:
