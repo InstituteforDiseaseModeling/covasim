@@ -400,7 +400,7 @@ class People(cvb.BasePeople):
             trace_time (dict): # days it'll take to trace people at each contact layer - should have the same keys as contacts
         '''
         # Figure out who has been contacted in the past
-        never_been_contacted = cvu.not_defined(self.date_known_contact)  # Indices of people who've never been contacted
+        never_been_contacted = self.not_defined('date_known_contact')  # Indices of people who've never been contacted
 
         print('Trace from:', inds)
 
@@ -411,7 +411,7 @@ class People(cvb.BasePeople):
                 this_trace_time = trace_time[lkey]
 
                 p1inds = np.isin(self.contacts[lkey]['p1'], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
-                p2inds = np.unique(np.array(self.contacts[lkey]['p2'][p1inds])) # Find their pairing partner
+                p2inds = np.unique(self.contacts[lkey]['p2'][p1inds]) # Find their pairing partner
                 # Check not diagnosed!
                 contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
                 print('Traced:', lkey, contact_inds)
