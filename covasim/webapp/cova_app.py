@@ -3,15 +3,15 @@ Sciris app to run the web interface.
 '''
 
 # Key imports
-import numpy as np
-import sciris as sc
-import covasim as cv
 import os
 import sys
 import json
 import base64
 import tempfile
 import traceback
+import numpy as np
+import sciris as sc
+import covasim as cv
 from pathlib import Path
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
