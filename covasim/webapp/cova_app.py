@@ -190,24 +190,22 @@ def parse_interventions(int_pars):
             interv['ikey'] = ikey
             masterlist.append(dict(interv))
 
-    for interv in masterlist:
-        ikey  = interv['ikey']
-        start = interv['start']
-        end   = interv['end']
+    for iconfig in masterlist:
+        ikey  = iconfig['ikey']
+        start = iconfig['start']
+        end   = iconfig['end']
         if ikey == 'social_distance':
-            level = interv['level']
+            level = iconfig['level']
             mapping = {
                 'mild': 0.8,
                 'moderate': 0.5,
                 'aggressive': 0.2,
                 }
             change = mapping[level]
-            iobj = cv.change_beta(days=[start, end], changes=[change, 1.0])
-            print(ikey)
-            print(interv)
+            interv = cv.change_beta(days=[start, end], changes=[change, 1.0])
         elif ikey == 'school_closures':
-            print(ikey)
-            print(interv)
+            change = 0.7
+            interv = cv.change_beta(days=[start, end], changes=[change, 1.0], layers='a')
         elif ikey == 'symptomatic_testing':
             print(ikey)
             print(interv)
@@ -217,7 +215,7 @@ def parse_interventions(int_pars):
         else:
             raise NotImplementedError
 
-        intervs.append(iobj)
+        intervs.append(interv)
 
     return intervs
 
