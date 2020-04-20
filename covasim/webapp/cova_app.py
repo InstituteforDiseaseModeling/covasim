@@ -51,7 +51,7 @@ def log_err(message, ex):
         "message": message,
         "exception": ''.join(traceback.format_exception(tex.exc_type, tex, tex.exc_traceback))
     }
-    print(output)
+    sc.pp(output)
     return output
 
 
