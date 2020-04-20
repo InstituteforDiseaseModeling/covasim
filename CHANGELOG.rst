@@ -6,6 +6,12 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
+
+Version 0.28.3 (2020-04-20)
+----------------------------
+- Includes data on household sizes from various countries
+
+
 Version 0.28.2 (2020-04-20)
 ----------------------------
 - Changes to interventions to include end as well as start days, and plotting as a default option
