@@ -112,7 +112,7 @@ def get_age_distribution(location=None):
     result = {}
     for loc,entry in entries.items():
         age_distribution = entry["ageDistribution"]
-        total_pop = sum(age_distribution.values())
+        total_pop = sum(list(age_distribution.values()))
         local_pop = []
 
         for age, age_pop in age_distribution.items():
@@ -125,7 +125,7 @@ def get_age_distribution(location=None):
         result[loc] = np.array(local_pop)
 
     if len(result) == 1:
-        result = result.values()[0]
+        result = list(result.values())[0]
 
     return result
 
