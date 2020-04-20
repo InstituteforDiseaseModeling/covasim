@@ -272,9 +272,9 @@ class test_num(Intervention):
             return
 
         test_probs = np.ones(sim.n) # Begin by assigning equal tesitng probability to everyone
-        symp_inds = sim.people.true('symptomatic')
-        quar_inds = sim.people.true('quarantined')
-        diag_inds = sim.people.true('diagnosed')
+        symp_inds = cvu.true(sim.people.symptomatic)
+        quar_inds = cvu.true(sim.people.quarantined)
+        diag_inds = cvu.true(sim.people.diagnosed)
         test_probs[symp_inds] *= self.sympt_test
         test_probs[quar_inds] *= self.quar_test
         test_probs[diag_inds] = 0.
@@ -329,12 +329,12 @@ class test_prob(Intervention):
         if t < self.start_day:
             return
 
-        symp_inds       = sim.people.true('symptomatic')
-        asymp_inds      = sim.people.true('symptomatic'))
-        quar_inds       = sim.people.true('quarantined')
-        symp_quar_inds  = quar_inds[sim.people.true('symptomatic')[quar_inds]]
-        asymp_quar_inds = quar_inds[sim.people.true('symptomatic')[quar_inds]]
-        diag_inds       = sim.people.true('diagnosed')
+        symp_inds       = cvu.true(sim.people.symptomatic)
+        asymp_inds      = cvu.false(sim.people.symptomatic)
+        quar_inds       = cvu.true(sim.people.quarantined)
+        symp_quar_inds  = quar_inds[cvu.true(sim.people.symptomatic[quar_inds])]
+        asymp_quar_inds = quar_inds[cvu.false(sim.people.symptomatic[quar_inds])]
+        diag_inds       = cvu.true(sim.people.diagnosed)
 
         test_probs = np.zeros(sim.n) # Begin by assigning equal tesitng probability to everyone
         test_probs[symp_inds]       = self.symp_prob
