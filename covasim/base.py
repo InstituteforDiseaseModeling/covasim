@@ -946,9 +946,10 @@ class TransTree(sc.prettyobj):
         if self.targets is None or reset:
             self.targets = [[] for p in range(len(self))] # Make a list of empty lists
             for transdict in self.linelist:
-                source = transdict['source']
-                if source is not None: # e.g., from an importation
-                    self.targets[source].append(transdict)
+                if transdict is not None:
+                    source = transdict['source']
+                    if source is not None: # e.g., from an importation
+                        self.targets[source].append(transdict)
             return
 
 
@@ -961,24 +962,26 @@ class TransTree(sc.prettyobj):
 
             for transdict in self.linelist:
 
-                # Pull out key quantities
-                ddict  = sc.dcp(transdict) # For "detailed dictionary"
-                source = ddict['source']
-                target = ddict['target']
-                date   = ddict['date']
+                if transdict is not None:
 
-                # Only need to check against the date, since will return False if condition is false (NaN)
-                if source is not None: # This information is only available for people infected by other people, not e.g. importations
-                    ddict['s_symp']    = people.date_symptomatic[source] <= date
-                    ddict['s_diag']    = people.date_diagnosed[source]   <= date
-                    ddict['s_quar']    = people.date_quarantined[source] <= date
-                    ddict['s_sev']     = people.date_severe[source]      <= date
-                    ddict['s_crit']    = people.date_critical[source]    <= date
-                    ddict['t_quar']    = people.date_quarantined[target] <= date
-                    ddict['s_asymp']   = np.isnan(people.date_symptomatic[source])
-                    ddict['s_presymp'] = ~ddict['s_asymp'] and ~ddict['s_symp'] # Not asymptomatic and not currently symptomatic
+                    # Pull out key quantities
+                    ddict  = sc.dcp(transdict) # For "detailed dictionary"
+                    source = ddict['source']
+                    target = ddict['target']
+                    date   = ddict['date']
 
-                self.detailed[target] = ddict
+                    # Only need to check against the date, since will return False if condition is false (NaN)
+                    if source is not None: # This information is only available for people infected by other people, not e.g. importations
+                        ddict['s_symp']    = people.date_symptomatic[source] <= date
+                        ddict['s_diag']    = people.date_diagnosed[source]   <= date
+                        ddict['s_quar']    = people.date_quarantined[source] <= date
+                        ddict['s_sev']     = people.date_severe[source]      <= date
+                        ddict['s_crit']    = people.date_critical[source]    <= date
+                        ddict['t_quar']    = people.date_quarantined[target] <= date
+                        ddict['s_asymp']   = np.isnan(people.date_symptomatic[source])
+                        ddict['s_presymp'] = ~ddict['s_asymp'] and ~ddict['s_symp'] # Not asymptomatic and not currently symptomatic
+
+                    self.detailed[target] = ddict
 
         return
 
