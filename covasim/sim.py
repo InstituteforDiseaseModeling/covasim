@@ -356,6 +356,7 @@ class Sim(cvb.BaseSim):
                 target = targets[ind]
                 transdict = dict(source=source, target=target, date=self.t, layer=lkey)
                 self.people.transtree.linelist[target] = transdict
+                self.people.transtree.targets[source].append(transdict)
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
@@ -514,7 +515,6 @@ class Sim(cvb.BaseSim):
         sources = np.zeros(self.npts)
         targets = np.zeros(self.npts)
         window = int(window)
-        self.people.transtree.make_targets() # Copy the source list to the targets for ease of use
 
         for t in self.tvec:
 

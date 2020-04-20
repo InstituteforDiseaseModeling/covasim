@@ -924,7 +924,7 @@ class TransTree(sc.prettyobj):
 
     def __init__(self, pop_size):
         self.linelist = [None]*pop_size
-        self.targets  = None
+        self.targets  = [[] for p in range(len(self))] # Make a list of empty lists
         self.detailed = None
         return
 
@@ -942,7 +942,10 @@ class TransTree(sc.prettyobj):
 
 
     def make_targets(self, reset=False):
-        ''' Convert sources into targets -- same information, just grouped differently '''
+        '''
+        Convert sources into targets -- same information, just grouped differently.
+        Usually done inside sim:step(), here just for completeness.
+        '''
         if self.targets is None or reset:
             self.targets = [[] for p in range(len(self))] # Make a list of empty lists
             for transdict in self.linelist:
