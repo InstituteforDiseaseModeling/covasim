@@ -31,6 +31,8 @@ max_pop  = 10e3 # Maximum population size
 max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
 die      = False # Whether or not to raise exceptions instead of continuing
+bgcolor  = '#eee' # Background color for app
+plotbg   = '#fff'
 
 
 # Define a get API for readiness in kubernetes
@@ -338,7 +340,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
                     fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
-            fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
+            fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True, paper_bgcolor=bgcolor, plot_bgcolor=plotbg)
 
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
@@ -466,7 +468,7 @@ def plot_people(sim) -> dict:
             fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
-    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
+    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True, paper_bgcolor=bgcolor)
 
     output = {'json': fig.to_json(), 'id': str(sc.uuid())}
     d = json.loads(output['json'])
@@ -597,7 +599,8 @@ def animate_people(sim) -> dict:
     )
 
     fig.update_layout(
-        plot_bgcolor='#fff'
+        plot_bgcolor='#fff',
+        paper_bgcolor=bgcolor,
     )
 
     fig.update_layout(title={'text': 'Epidemic over time'})
