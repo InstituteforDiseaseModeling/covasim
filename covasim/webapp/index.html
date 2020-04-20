@@ -287,7 +287,7 @@
         </template>
         <template v-else>
 
-          <div class="d-flex">
+          <div class="d-flex flex-wrap">
             <div class="w-50" v-for="x in result.graphs">
               <plotly-chart :graph="x" :key="x.id"/>
             </div>

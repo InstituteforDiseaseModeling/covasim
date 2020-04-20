@@ -44,9 +44,6 @@ html, body {
 .sidebar {
     background-color: #F8F9FA !important;
 }
-.graph {
-    background-color: #ff0 !important;
-}
 
 #parameters {
     width: 47rem;
