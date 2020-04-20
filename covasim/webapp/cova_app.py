@@ -32,7 +32,7 @@ max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
 die      = False # Whether or not to raise exceptions instead of continuing
 bgcolor  = '#eee' # Background color for app
-plotbg   = '#fff'
+plotbg   = '#dde'
 
 
 # Define a get API for readiness in kubernetes
