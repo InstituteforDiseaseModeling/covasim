@@ -147,27 +147,6 @@ class SimulationParameterTests(CovaSimTest):
         # self.assertIn("population", error_message)
         pass
 
-    def test_different_pop_types(self):
-        pop_types = ['random', 'hybrid', 'clustered', 'synthpops']
-        results = {}
-        for poptype in pop_types:
-            short_sample = {
-                TPKeys.number_agents: 10000,
-                TPKeys.number_simulated_days: 10,
-                TPKeys.initial_infected_count: 50
-            }
-            self.run_sim(short_sample, population_type=poptype)
-            results[poptype] = self.simulation_result
-            pass
-        # random
-
-        # hybrid
-
-        # clustered
-
-        # synthpops
-        pass
-
     def test_population_scaling(self):
         """
         Scale population vanilla (x10) compare
