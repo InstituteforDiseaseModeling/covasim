@@ -300,7 +300,7 @@ class Sim(cvb.BaseSim):
         # Perform initial operations
         self.rescale() # Check if we need to rescale
         people   = self.people # Shorten this for later use
-        flows    = people.update_states(t=t) # Update the state of everyone and count the flows
+        flows    = people.update_states_pre(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
         bed_max  = people.count('severe') > self['n_beds'] # Check for a bed constraint
 
@@ -318,7 +318,7 @@ class Sim(cvb.BaseSim):
         if self['interv_func'] is not None: # Apply custom intervention function
             self =self['interv_func'](self)
 
-        flows = people.update_states_post_intervention(t, flows) # Check for state changes after interventions
+        flows = people.update_states_post(flows) # Check for state changes after interventions
 
         # Compute the probability of transmission
         beta         = cvd.default_float(self['beta'])
@@ -369,8 +369,7 @@ class Sim(cvb.BaseSim):
 
         # Update counts for this time step: flows
         for key,count in flows.items():
-            if key != 'new_tests': # tests are updated separately, as part of interventions
-                self.results[key][t] = count
+            self.results[key][t] += count
 
         # Tidy up
         self.t += 1
