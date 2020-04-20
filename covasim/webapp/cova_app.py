@@ -186,9 +186,9 @@ def parse_interventions(int_pars):
     intervs = []
     masterlist = []
     for ikey,intervlist in int_pars.items():
-        for interv in intervlist:
-            interv['ikey'] = ikey
-            masterlist.append(dict(interv))
+        for iconfig in intervlist:
+            iconfig['ikey'] = ikey
+            masterlist.append(dict(iconfig))
 
     for iconfig in masterlist:
         ikey  = iconfig['ikey']
@@ -207,11 +207,15 @@ def parse_interventions(int_pars):
             change = 0.7
             interv = cv.change_beta(days=[start, end], changes=[change, 1.0], layers='a')
         elif ikey == 'symptomatic_testing':
-            print(ikey)
-            print(interv)
+            level = iconfig['level']
+            level = float(level)/100
+            asymp_prob = 0.0
+            delay = 0.0
+            interv = cv.test_prob(start_day=start, end_day=end, symp_prob=level, asymp_prob=asymp_prob, test_delay=delay)
         elif ikey == 'contact_tracing':
-            print(ikey)
-            print(interv)
+            trace_prob = {'a':1.0}
+            trace_time = {'a':0.0}
+            interv = cv.contact_tracing(start_day=start, end_day=end, trace_probs=trace_prob, trace_time=trace_time)
         else:
             raise NotImplementedError
 
@@ -359,10 +363,12 @@ def main_plots(sim):
                 fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
         if sim['interventions']:
-            interv_day = sim['interventions'][0].days[0]
-            if interv_day > 0 and interv_day < sim['n_days']:
-                fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
+            for interv in sim['interventions']:
+                if hasattr(interv, 'days'):
+                    for interv_day in interv.days:
+                        if interv_day > 0 and interv_day < sim['n_days']:
+                            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+                            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
         fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True, paper_bgcolor=bgcolor, plot_bgcolor=plotbg)
 
@@ -432,10 +438,12 @@ def plot_people(sim) -> dict:
         ))
 
     if sim['interventions']:
-        interv_day = sim['interventions'][0].days[0]
-        if interv_day > 0 and interv_day < sim['n_days']:
-            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
+        for interv in sim['interventions']:
+                if hasattr(interv, 'days'):
+                    for interv_day in interv.days:
+                        if interv_day > 0 and interv_day < sim['n_days']:
+                            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+                            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
     fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True, paper_bgcolor=bgcolor)

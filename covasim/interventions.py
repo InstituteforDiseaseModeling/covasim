@@ -19,6 +19,7 @@ class Intervention:
 
     '''
     def __init__(self):
+        self.days = []
         self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
 
 
@@ -53,6 +54,9 @@ class Intervention:
         Returns:
             None
         '''
+        ylims = ax.get_ylim()
+        for day in self.days:
+            pl.plot([day]*2, ylims, '--', c=[0,0,0])
         return
 
 
@@ -248,6 +252,7 @@ class test_num(Intervention):
         self.loss_prob = loss_prob
         self.start_day = start_day
         self.end_day = end_day
+        self.days = [start_day, end_day]
 
         return
 
@@ -316,7 +321,7 @@ class test_prob(Intervention):
     Returns:
         Intervention
     '''
-    def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
+    def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None):
         super().__init__()
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
@@ -326,6 +331,8 @@ class test_prob(Intervention):
         self.loss_prob        = loss_prob
         self.test_delay       = test_delay
         self.start_day        = start_day
+        self.end_day          = end_day
+        self.days             = [start_day, end_day]
 
         return
 
@@ -370,6 +377,7 @@ class contact_tracing(Intervention):
         self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
         self.start_day = start_day
         self.end_day = end_day
+        self.days = [start_day, end_day]
         return
 
     def apply(self, sim):
