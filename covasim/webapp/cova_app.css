@@ -45,6 +45,14 @@ html, body {
     background-color: #F8F9FA !important;
 }
 
+.parheading {
+    background-color:#000;
+    color: rgba(255,255,255,0.8); !important;
+}
+.parheading:hover {
+    color: rgba(255,255,255,1.0); !important;
+}
+
 #parameters {
     width: 47rem;
     min-width: 26rem;

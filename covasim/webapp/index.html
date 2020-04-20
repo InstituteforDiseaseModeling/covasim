@@ -14,7 +14,7 @@
   <script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=es2015%2CIntersectionObserver"></script>
   <script src="https://unpkg.com/vue@2.6.11/dist/vue.min.js"></script>
   <script src="https://unpkg.com/bootstrap-vue@2.11.0/dist/bootstrap-vue.min.js"></script>
-  <link href="https://fonts.googleapis.com/css?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
   <!-- Avenir is not available -->
 
   <!-- Customization -->
@@ -61,7 +61,7 @@
     <b-sidebar id="parameters" :visible="panel_open" no-header class="sidebar" :width="panel_width+'vw'" shadow>
       <div class="px-3">
         <header class="d-flex justify-content-between">
-          <h4 class="my-2">Campaign Builder</h4>
+          <h4 class="my-2">Simulation configuration</h4>
           <button class="close" @click="close_panel" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -108,7 +108,7 @@
         </div>
 
         <div class="form-group">
-          <label for="n_days">Campaign Duration (in days):</label>
+          <label for="n_days">Simulation duration (in days):</label>
           <input id="n_days" type="number" :min="sim_length.min" :max="sim_length.max" :disabled="running" class="form-control" v-model.number="sim_length.best">
           <span aria-live="assertive" v-if="paramError.sim_length" class="text-danger form-error">{{paramError.sim_length}}</span>
 
@@ -117,7 +117,7 @@
           </b-tooltip>
         </div>
         <div class="form-row mb-3">
-          <label for="datafile" class="col-12">Upload Data</label>
+          <label for="datafile" class="col-12">Upload data</label>
           <div class="col">
             <b-form-file id="datafile" name="datafile" accept=".csv, .xlsx" placeholder="Use IDM's data" v-model="datafile.local_path" @change="upload_datafile" :disabled="running"></b-form-file>
           </div>
@@ -126,14 +126,14 @@
               Clear
             </button>
             <b-tooltip target="reset-datafile">
-              Remove the input data file from the campaign.
+              Remove the input data file from the simulation
             </b-tooltip>
           </div>
 
         </div>
         <div class="card mb-3">
           <div class="card-header">
-            <button class="btn btn-block" v-b-toggle.intervention>Interventions</button>
+            <button class="btn btn-block parheading" v-b-toggle.intervention>Interventions</button>
           </div>
           <b-collapse visible id="intervention">
             <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
@@ -145,7 +145,6 @@
                       {{ intervention.formTitle }}
                     </template>
                     <fieldset>
-                      <legend>{{intervention.formTitle}}</legend>
                       <form @submit.prevent="(e) => addIntervention(name, e)">
                         <div class="form-group">
                           <div class="input-group mb-3">
@@ -189,9 +188,9 @@
         </div>
         <div class="card mb-3">
           <div class="card-header">
-            <button class="btn btn-block" v-b-toggle.advanced>Advanced</button>
+            <button class="btn btn-block parheading" v-b-toggle.advanced>Model parameters</button>
           </div>
-          <b-collapse id="advanced">
+          <b-collapse visible id="advanced">
             <div class="card-body">
               <div class="row">
 
@@ -269,7 +268,7 @@
             </option>
           </select>
           <b-tooltip target="history-wpr">
-            History of campaign runs used in this session
+            History of simulation runs used in this session
           </b-tooltip>
         </div>
       </div>
