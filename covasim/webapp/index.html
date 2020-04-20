@@ -37,11 +37,11 @@
     <b-navbar type="dark" variant="dark">
       <b-navbar-brand href="#">{{ app.title }}</b-navbar-brand>
       <b-navbar-nav>
-        <b-nav-item :href="app.docs_url" target="_blank">Documentation</b-nav-item>
-        <b-nav-item v-b-modal.about>About</b-nav-item>
+        <b-nav-item :href="app.docs_url" target="_blank"><span class="nav-text">Documentation</span></b-nav-item>
+        <b-nav-item v-b-modal.about><span class="nav-text">About</span></b-nav-item>
       </b-navbar-nav>
       <b-navbar-nav class="ml-auto">
-        <b-nav-item :href="app.github_url" target="_blank">{{app.version}}</b-nav-item>
+        <b-nav-item :href="app.github_url" target="_blank"><span class="nav-text">{{app.version}}</span></b-nav-item>
       </b-navbar-nav>
     </b-navbar>
 
@@ -58,7 +58,7 @@
 
   <div class="content">
 
-    <b-sidebar id="parameters" :visible="panel_open" no-header bg-variant="white" :width="panel_width+'vw'" shadow>
+    <b-sidebar id="parameters" :visible="panel_open" no-header class="sidebar" :width="panel_width+'vw'" shadow>
       <div class="px-3">
         <header class="d-flex justify-content-between">
           <h4 class="my-2">Campaign Builder</h4>
@@ -321,7 +321,7 @@
     <b-navbar type="dark" variant="dark">
       <a :href="app.org_url" target="_blank">
         <img src="assets/idm-logo.png" height="30px"/>
-        <span class="navbar-text text-white" style="padding-left: 20px; padding-bottom:0px">
+        <span class="nav-text" style="padding-left: 20px">
           &copy; {{ app.copyright_year }} Institute for Disease Modeling
         </span>
       </a>
@@ -333,9 +333,9 @@
           </svg>
           <span class="sr-only">View this project on GitHub</span>
         </b-nav-item>
-        <b-nav-item v-b-modal.licenses>License</b-nav-item>
-        <b-nav-item :href="app.org_url + '/terms'" target="_blank">Terms</b-nav-item>
-        <b-nav-item :href="app.org_url + '/privacy'" target="_blank">Privacy</b-nav-item>
+        <b-nav-item v-b-modal.licenses><span class="nav-text">License</span></b-nav-item>
+        <b-nav-item :href="app.org_url + '/terms'" target="_blank"><span class="nav-text">Terms</span></b-nav-item>
+        <b-nav-item :href="app.org_url + '/privacy'" target="_blank"><span class="nav-text">Privacy</span></b-nav-item>
       </b-navbar-nav>
     </b-navbar>
   </footer>

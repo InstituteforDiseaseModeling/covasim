@@ -1,6 +1,7 @@
 body {
     font-family: 'Quicksand', 'Roboto', Helvetica, Arial, sans-serif;
 }
+
 html, body {
     height: 100%;
 }
@@ -20,6 +21,14 @@ html, body {
     grid-area: header;
 }
 
+.navbar{
+    background-color: #111313 !important;
+}
+
+.nav-text{
+    color: rgba(255,255,255,0.8); !important;
+}
+
 .navbar-brand {
     font-size: 2.2rem;
 }
@@ -30,6 +39,10 @@ html, body {
 #app > .content{
     grid-area: content;
     margin: 1em 0;
+}
+
+.sidebar {
+    background-color: #eee !important;
 }
 
 #parameters {
