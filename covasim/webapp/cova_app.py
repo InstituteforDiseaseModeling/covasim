@@ -42,11 +42,13 @@ def healthcheck():
 def log_err(message, ex):
     ''' Compile error messages to send to the frontend '''
     tex = traceback.TracebackException.from_exception(ex)
-    print(f"{message}\n", )
-    return {
+    output = {
         "message": message,
         "exception": ''.join(traceback.format_exception(tex.exc_type, tex, tex.exc_traceback))
     }
+    print(output)
+    return output
+
 
 @app.register_RPC()
 def get_defaults(region=None, merge=False, die=die):
@@ -114,6 +116,7 @@ def get_defaults(region=None, merge=False, die=die):
 
     return output
 
+
 def map_social_distance(scenario, web_pars):
     '''map social distance to intervention'''
     interventions = []
@@ -152,11 +155,13 @@ def map_contact_tracing(scenario, web_pars):
 
     web_pars['interventions'] = None
 
+
 @app.register_RPC()
 def get_version():
     ''' Get the version '''
     output = f'Version {cv.__version__} ({cv.__versiondate__})'
     return output
+
 
 @app.register_RPC()
 def get_licenses():
@@ -170,6 +175,7 @@ def get_licenses():
         'notice': notice
     }
 
+
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
     parameters = sc.loadjson(fname)
@@ -178,6 +184,7 @@ def upload_pars(fname):
     if  'sim_pars' not in parameters or 'epi_pars' not in parameters:
         raise KeyError(f'Parameters file must have keys "sim_pars" and "epi_pars", not {parameters.keys()}')
     return parameters
+
 
 @app.register_RPC(call_type='upload')
 def upload_file(file):
@@ -189,6 +196,7 @@ def upload_file(file):
         fd.flush()
         fd.close()
     return path
+
 
 @app.register_RPC()
 def get_gantt(intervention_pars=None, intervention_config=None):
@@ -206,6 +214,7 @@ def get_gantt(intervention_pars=None, intervention_config=None):
         response['json'] = fig.to_json()
 
     return response
+
 
 @app.register_RPC()
 def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True, die=die):
@@ -329,7 +338,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
                     fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
                     fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
-            fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
+            fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True, paper_bgcolor='#e37c30')
 
             output = {'json': fig.to_json(), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
@@ -457,7 +466,7 @@ def plot_people(sim) -> dict:
             fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
-    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
+    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True, paper_bgcolor='#e37c30')
 
     output = {'json': fig.to_json(), 'id': str(sc.uuid())}
     d = json.loads(output['json'])
@@ -588,7 +597,8 @@ def animate_people(sim) -> dict:
     )
 
     fig.update_layout(
-        plot_bgcolor='#fff'
+        plot_bgcolor='#fff',
+        paper_bgcolor='#e37c30'
     )
 
     fig.update_layout(title={'text': 'Epidemic over time'})
