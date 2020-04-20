@@ -291,8 +291,6 @@ def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_ani
     # Create the sim and update the parameters
     try:
         sim = cv.Sim(pars=web_pars,datafile=datafile)
-        print('FDLKJDFLKDFLKJDLKJFDLKFDJLKFJKLDKLFDJLK')
-        print(sim['interventions'])
     except Exception as E:
         errs.append(log_err('Sim creation failed!', E))
         if die: raise
