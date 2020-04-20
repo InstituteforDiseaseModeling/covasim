@@ -217,7 +217,7 @@ def get_gantt(intervention_pars=None, intervention_config=None):
     return response
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, location=None, verbose=True):
     ''' Create, run, and plot everything '''
     errs = []
     try:
@@ -261,6 +261,9 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
 
         # Add n_days
         web_pars['n_days'] = n_days
+
+        # Add demographic
+        web_pars['location'] = location
 
         # Add the intervention
         web_pars['interventions'] = []

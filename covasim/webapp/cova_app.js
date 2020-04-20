@@ -150,6 +150,8 @@ var vm = new Vue({
             history: [],
             historyIdx: 0,
             sim_length: {},
+            country: null,
+            country_options: [],
             sim_pars: {},
             epi_pars: {},
             datafile: {
@@ -297,7 +299,8 @@ var vm = new Vue({
                     intervention_pars: this.intervention_pars,
                     datafile: this.datafile.server_path,
                     show_animation: this.show_animation,
-                    n_days: this.sim_length.best
+                    n_days: this.sim_length.best,
+                    location: this.country
                 }
                 console.log('run_sim: ', kwargs);
                 const response = await sciris.rpc('run_sim', undefined, kwargs);
@@ -309,7 +312,7 @@ var vm = new Vue({
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.intervention_pars = response.data.intervention_pars;
-                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, intervention_pars: this.intervention_pars, result: this.result })));
+                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, country: this.country, intervention_pars: this.intervention_pars, result: this.result })));
                 this.historyIdx = this.history.length - 1;
 
             } catch (e) {
@@ -404,6 +407,7 @@ var vm = new Vue({
         loadPars() {
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
+            this.country = this.history[this.historyIdx].country;
             this.intervention_pars = this.history[this.historyIdx].intervention_pars;
             this.result = this.history[this.historyIdx].result;
         },
