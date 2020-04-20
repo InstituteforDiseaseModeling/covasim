@@ -28,10 +28,10 @@ flask_app = app.flask_app
 
 
 # Set defaults
-max_pop  = 10e3 # Maximum population size
+max_pop  = 20e3 # Maximum population size
 max_days = 180  # Maximum number of days
 max_time = 10   # Maximum of seconds for a run
-die      = False # Whether or not to raise exceptions instead of continuing
+die      = True # Whether or not to raise exceptions instead of continuing
 bgcolor  = '#eee' # Background color for app
 plotbg   = '#dde'
 
@@ -67,7 +67,7 @@ def get_defaults(region=None, merge=False, die=die):
             'Example': 1,
         },
         'pop_size': {
-            'Example': 2000,
+            'Example': 10000,
         },
         'pop_infected': {
             'Example': 100,
@@ -75,11 +75,11 @@ def get_defaults(region=None, merge=False, die=die):
     }
 
     sim_pars = {}
-    sim_pars['pop_scale']    = dict(best=1,    min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
-    sim_pars['pop_size']     = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
-    sim_pars['pop_infected'] = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
-    sim_pars['rand_seed']    = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
-    sim_pars['n_days']       = dict(best=90,   min=1, max=max_days, name="Simulation Duration",        tip='Total duration (in days) of the simulation')
+    sim_pars['pop_scale']    = dict(best=1,     min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
+    sim_pars['pop_size']     = dict(best=10000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
+    sim_pars['pop_infected'] = dict(best=10,    min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
+    sim_pars['rand_seed']    = dict(best=0,     min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
+    sim_pars['n_days']       = dict(best=90,    min=1, max=max_days, name="Simulation Duration",        tip='Total duration (in days) of the simulation')
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
@@ -99,45 +99,6 @@ def get_defaults(region=None, merge=False, die=die):
         output = {'sim_pars': sim_pars, 'epi_pars': epi_pars}
 
     return output
-
-
-def map_social_distance(scenario, web_pars):
-    '''map social distance to intervention'''
-    interventions = []
-    for timeline in scenario:
-        start = timeline['start']
-        end = timeline['end']
-        level = timeline['level'] # aggressive, moderate, mild
-
-    web_pars['interventions'] = None
-
-def map_school_closures(scenario, web_pars):
-    '''map social distance to intervention'''
-    interventions = []
-    for timeline in scenario:
-        start = timeline['start']
-        end = timeline['end']
-
-    web_pars['interventions'] = None
-
-def map_symptomatic_testing(scenario, web_pars):
-    '''map social distance to intervention'''
-    interventions = []
-    for timeline in scenario:
-        start = timeline['start']
-        end = timeline['end']
-        level = timeline['level'] # 60, 90
-
-    web_pars['interventions'] = None
-
-def map_contact_tracing(scenario, web_pars):
-    '''map social distance to intervention'''
-    interventions = []
-    for timeline in scenario:
-        start = timeline['start']
-        end = timeline['end']
-
-    web_pars['interventions'] = None
 
 
 @app.register_RPC()
@@ -183,10 +144,10 @@ def upload_file(file):
 
 
 @app.register_RPC()
-def get_gantt(intervention_pars=None, intervention_config=None):
+def get_gantt(int_pars=None, intervention_config=None):
     df = []
     response = {'id': 'test'}
-    for key,scenario in intervention_pars.items():
+    for key,scenario in int_pars.items():
         for timeline in scenario:
             task = intervention_config[key]['formTitle']
             level = task + ' ' + str(timeline.get('level', ''))
@@ -202,8 +163,67 @@ def get_gantt(intervention_pars=None, intervention_config=None):
 
 #%% Define the core API
 
+def parse_interventions(int_pars):
+    '''
+    Parse interventions. Format:
+
+    int_pars = {
+        'social_distance': [
+            {'start': 1,  'end': 19, 'level': 'aggressive'},
+            {'start': 20, 'end': 30, 'level': 'mild'},
+            ],
+        'school_closures': [
+            {'start': 12, 'end': 14}
+            ],
+        'symptomatic_testing': [
+            {'start': 8, 'end': 25, 'level': 60}
+            ]
+        }
+    '''
+    print('LDKFJ')
+    sc.pp(int_pars)
+
+    intervs = []
+    masterlist = []
+    for ikey,intervlist in int_pars.items():
+        for interv in intervlist:
+            interv['ikey'] = ikey
+            masterlist.append(dict(interv))
+
+    for interv in masterlist:
+        ikey  = interv['ikey']
+        start = interv['start']
+        end   = interv['end']
+        if ikey == 'social_distance':
+            level = interv['level']
+            mapping = {
+                'mild': 0.8,
+                'moderate': 0.5,
+                'aggressive': 0.2,
+                }
+            change = mapping[level]
+            iobj = cv.change_beta(days=[start, end], changes=[change, 1.0])
+            print(ikey)
+            print(interv)
+        elif ikey == 'school_closures':
+            print(ikey)
+            print(interv)
+        elif ikey == 'symptomatic_testing':
+            print(ikey)
+            print(interv)
+        elif ikey == 'contact_tracing':
+            print(ikey)
+            print(interv)
+        else:
+            raise NotImplementedError
+
+        intervs.append(iobj)
+
+    return intervs
+
+
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True, die=die):
+def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True, die=die):
     ''' Create, run, and plot everything '''
     errs = []
     try:
@@ -249,18 +269,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         web_pars['n_days'] = n_days
 
         # Add the intervention
-        web_pars['interventions'] = []
-
-        switcher = {
-            'social_distance': map_social_distance,
-            'school_closures': map_school_closures,
-            'symptomatic_testing': map_symptomatic_testing,
-            'contact_tracing': map_contact_tracing
-        }
-        if intervention_pars is not None:
-            for key,scenario in intervention_pars.items():
-                func = switcher.get(key)
-                func(scenario, web_pars)
+        web_pars['interventions'] = parse_interventions(int_pars)
 
         # Handle CFR -- ignore symptoms and set to 1
         web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
@@ -281,6 +290,8 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     # Create the sim and update the parameters
     try:
         sim = cv.Sim(pars=web_pars,datafile=datafile)
+        print('FDLKJDFLKDFLKJDLKJFDLKFDJLKFJKLDKLFDJLK')
+        print(sim['interventions'])
     except Exception as E:
         errs.append(log_err('Sim creation failed!', E))
         if die: raise
@@ -324,7 +335,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     output['errs']     = errs
     output['sim_pars'] = sim_pars
     output['epi_pars'] = epi_pars
-    output['intervention_pars'] = intervention_pars
+    output['int_pars'] = int_pars
     output['graphs']   = graphs
     output['files']    = files
     output['summary']  = summary

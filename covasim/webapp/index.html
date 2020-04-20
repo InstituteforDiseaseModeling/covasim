@@ -185,7 +185,7 @@
                       </div>
                     </form>
                     <span aria-live="assertive" v-if="scenarioError[name]" class="text-danger form-error">{{scenarioError[name]}}</span>
-                    <div v-if="intervention_pars && intervention_pars[name] && intervention_pars[name].length > 0">
+                    <div v-if="int_pars && int_pars[name] && int_pars[name].length > 0">
                       <table class="table">
                         <thead>
                         <tr>
@@ -194,7 +194,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr v-for="(par, index) in intervention_pars[name]">
+                        <tr v-for="(par, index) in int_pars[name]">
                           <th v-for="field in intervention.fields" scope="row">{{par[field.key]}}</th>
                           <td>
                             <button @click="deleteIntervention(name, index)" class="btn btn-outline-secondary" type="button">Delete</button>
