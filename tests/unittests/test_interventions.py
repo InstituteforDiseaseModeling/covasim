@@ -225,7 +225,6 @@ class InterventionTests(CovaSimTest):
                                       target_pop_new_channel=None)
 
     def test_test_prob_perfect_symptomatic(self):
-        self.is_debugging = True
         params = {
             SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 60
@@ -365,7 +364,6 @@ class InterventionTests(CovaSimTest):
     def test_brutal_contact_tracing(self):
         # Contact tracing traces people who have been diagnosed, so need brutal diagnosis first
         # So I need a sequence here
-        self.is_debugging = True
         params = {
             SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 55
