@@ -33,10 +33,10 @@ const PlotlyChart = {
 
 const interventionTableConfig = {
     social_distance: {
-        formTitle: "Social Distancing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'},
-            {key: 'end', type: 'number', label: 'End Day'},
-            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive Effectiveness', value: 'aggressive'}, {label: 'Moderate Effectiveness', value: 'moderate'}, {label: 'Mild Effectiveness', value: 'mild'}]}],
+        formTitle: "Social distancing",
+        fields: [{key: 'start', type: 'number', label: 'Start day'},
+            {key: 'end', type: 'number', label: 'End day'},
+            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive effectiveness', value: 'aggressive'}, {label: 'Moderate effectiveness', value: 'moderate'}, {label: 'Mild effectiveness', value: 'mild'}]}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -45,8 +45,8 @@ const interventionTableConfig = {
         }
     },
     school_closures: {
-        formTitle: "School Closures",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
+        formTitle: "School closures",
+        fields: [{key: 'start', type: 'number', label: 'Start day'}, {key: 'end', type: 'number', label: 'End day'}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -54,8 +54,8 @@ const interventionTableConfig = {
         }
     },
     symptomatic_testing: {
-        formTitle: "Symptomatic Testing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}, {label: 'Accuracy', key: 'level', type: 'select', options: [{label: '60% Accuracy', value: '60'}, {label: '90% Accuracy', value: '90'},]}],
+        formTitle: "Symptomatic testing",
+        fields: [{key: 'start', type: 'number', label: 'Start day'}, {key: 'end', type: 'number', label: 'End day'}, {label: 'Accuracy', key: 'level', type: 'select', options: [{label: '60% accuracy', value: '60'}, {label: '90% accuracy', value: '90'},]}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -64,8 +64,8 @@ const interventionTableConfig = {
         }
     },
     contact_tracing: {
-        formTitle: "Contact Tracing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
+        formTitle: "Contact tracing",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End day'}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);

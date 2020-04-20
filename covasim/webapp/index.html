@@ -134,7 +134,7 @@
               <div class="form-row mb-3">
                 <label for="datafile" class="col-12">Upload data</label>
                 <div class="col">
-                  <b-form-file id="datafile" name="datafile" accept=".csv, .xlsx" placeholder="Use IDM's data" v-model="datafile.local_path" @change="upload_datafile" :disabled="running"></b-form-file>
+                  <b-form-file id="datafile" name="datafile" accept=".csv, .xlsx" placeholder="<none>" v-model="datafile.local_path" @change="upload_datafile" :disabled="running"></b-form-file>
                 </div>
                 <div class="col-auto">
                   <button id="reset-datafile" :disabled="running" class="btn btn-primary blueish" type="button" @click="reset_datafile">
