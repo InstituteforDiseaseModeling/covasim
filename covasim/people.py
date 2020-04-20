@@ -80,27 +80,33 @@ class People(cvb.BasePeople):
         return
 
 
-    def update_states(self, t):
+    def update_states_pre(self, t):
         ''' Perform all state updates '''
 
         # Initialize
         self.t = t
-        counts = {key:0 for key in cvd.new_result_flows}
         self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
         # Perform updates
-        counts['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
-        counts['new_symptomatic'] += self.check_symptomatic()
-        counts['new_severe']      += self.check_severe()
-        counts['new_critical']    += self.check_critical()
-        counts['new_deaths']      += self.check_death()
-        counts['new_recoveries']  += self.check_recovery()
-        counts['new_quarantined'] += self.check_quar() # Update if they're quarantined
-        counts['new_diagnoses']   += self.check_diagnosed()
-        counts['new_tests']       += self.check_tested()
-        del self.is_exp # Tidy up
+        flows  = {key:0 for key in cvd.new_result_flows}
+        flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
+        flows['new_symptomatic'] += self.check_symptomatic()
+        flows['new_severe']      += self.check_severe()
+        flows['new_critical']    += self.check_critical()
+        flows['new_deaths']      += self.check_death()
+        flows['new_recoveries']  += self.check_recovery()
+        flows['new_diagnoses']   += self.check_diagnosed()
+        flows['new_quarantined'] += self.check_quar()
 
-        return counts
+        return flows
+
+
+    def update_states_post(self, flows):
+        ''' Perform post-timestep updates '''
+        flows['new_diagnoses']   += self.check_diagnosed()
+        flows['new_quarantined'] += self.check_quar()
+        del self.is_exp # Tidy up
+        return flows
 
 
     def update_contacts(self):
@@ -211,13 +217,6 @@ class People(cvb.BasePeople):
         self.recovered[inds]   = False
         self.dead[inds]        = True
         self.rel_trans[inds]   = 0.0
-        return len(inds)
-
-
-    def check_tested(self):
-        ''' Check for new tests '''
-        inds = self.check_inds(self.tested, self.date_tested)
-        self.tested[inds] = True
         return len(inds)
 
 

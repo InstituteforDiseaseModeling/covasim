@@ -282,7 +282,7 @@ class Sim(cvb.BaseSim):
         inds = np.arange(int(self['pop_infected']))
         self.people.infect(inds=inds)
         for ind in inds:
-            self.people.transtree.seeds.append({'person':ind, 'date':self.t, 'layer':None})
+            self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='seed_infection')
 
         return
 
@@ -300,7 +300,7 @@ class Sim(cvb.BaseSim):
         # Perform initial operations
         self.rescale() # Check if we need to rescale
         people   = self.people # Shorten this for later use
-        flows    = people.update_states(t=t) # Update the state of everyone and count the flows
+        flows    = people.update_states_pre(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
         bed_max  = people.count('severe') > self['n_beds'] # Check for a bed constraint
 
@@ -310,7 +310,15 @@ class Sim(cvb.BaseSim):
             imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
             flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max)
             for ind in imporation_inds:
-                self.people.transtree.seeds.append({'person':ind, 'date':self.t, 'layer':None})
+                self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='importation')
+
+        # Apply interventions
+        for intervention in self['interventions']:
+            intervention.apply(self)
+        if self['interv_func'] is not None: # Apply custom intervention function
+            self =self['interv_func'](self)
+
+        flows = people.update_states_post(flows) # Check for state changes after interventions
 
         # Compute the probability of transmission
         beta         = cvd.default_float(self['beta'])
@@ -346,14 +354,9 @@ class Sim(cvb.BaseSim):
             for ind in edge_inds:
                 source = sources[ind]
                 target = targets[ind]
-                self.people.transtree.sources[target] = {'source':source, 'target':target, 'date':self.t, 'layer':lkey}
-                self.people.transtree.targets[source].append({'source':source, 'target':target, 'date':self.t, 'layer':lkey})
-
-        # Apply interventions
-        for intervention in self['interventions']:
-            intervention.apply(self)
-        if self['interv_func'] is not None: # Apply custom intervention function
-            self =self['interv_func'](self)
+                transdict = dict(source=source, target=target, date=self.t, layer=lkey)
+                self.people.transtree.linelist[target] = transdict
+                self.people.transtree.targets[source].append(transdict)
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
@@ -362,8 +365,7 @@ class Sim(cvb.BaseSim):
 
         # Update counts for this time step: flows
         for key,count in flows.items():
-            if key != 'new_tests': # tests are updated separately, as part of interventions
-                self.results[key][t] = count
+            self.results[key][t] += count
 
         # Tidy up
         self.t += 1

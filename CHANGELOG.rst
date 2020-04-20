@@ -6,6 +6,13 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
+Version 0.28.1 (2020-04-19)
+----------------------------
+- Major refactor of transmission trees, including additional detail via ``sim.people.transtree.make_detailed()``
+- Counting of diagnoses before and after interventions on each timestep (allowing people to go into quarantine on the same day)
+- Improved saving of people in scenarios, and updated keyword for sims (``sim.save(keep_people=True)``)
+
+
 Version 0.28.0 (2020-04-19)
 ----------------------------
 - Includes dynamic per-person viral load

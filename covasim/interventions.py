@@ -345,7 +345,6 @@ class test_prob(Intervention):
         test_inds = cvu.binomial_arr(test_probs).nonzero()[0]
 
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
-
         sim.results['new_tests'][t] += len(test_inds)
 
         return
@@ -368,8 +367,8 @@ class contact_tracing(Intervention):
         if t < self.start_day:
             return
 
-        just_diagnsed_inds = cvu.true(sim.people.diagnosed & (sim.people.date_diagnosed == t-1)) # Diagnosed last time step, time to trace
-        if len(just_diagnsed_inds): # If there are any just-diagnosed people, go trace their contacts
-            sim.people.trace(just_diagnsed_inds, self.trace_probs, self.trace_time)
+        just_diagnosed_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
+        if len(just_diagnosed_inds): # If there are any just-diagnosed people, go trace their contacts
+            sim.people.trace(just_diagnosed_inds, self.trace_probs, self.trace_time)
 
         return
