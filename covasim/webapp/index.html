@@ -319,9 +319,12 @@
 
   <footer class="row no-gutter">
     <b-navbar type="dark" variant="dark">
-      <span class="navbar-text text-white">
-        &copy; {{ app.copyright_year }} <a :href="app.org_url" target="_blank">Institute for Disease Modeling</a>
-      </span>
+      <a :href="app.org_url" target="_blank">
+        <img src="assets/idm-logo.png" height="30px"/>
+        <span class="navbar-text text-white" style="padding-left: 20px; padding-bottom:0px">
+          &copy; {{ app.copyright_year }} Institute for Disease Modeling
+        </span>
+      </a>
       <b-navbar-nav class="ml-auto">
         <b-nav-item :href="app.github_url" target="_blank">
           <svg viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true" style="vertical-align: text-bottom">
