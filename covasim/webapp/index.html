@@ -79,7 +79,7 @@
 
               <!-- Presets -->
               <div class="form-row mb-3">
-                <div class="col-12">
+                <div class="col">
                   <select :disabled="running" id="examples" v-model="reset_choice" @change="resetPars()" class="form-control" aria-label="Example Presets">
                     <option v-for="(item, index) in reset_options" :value="item">
                       {{ item }}
@@ -116,9 +116,11 @@
                   </b-tooltip>
                 </div>
               </div>
+            </div>
 
-              <div class="form-row mb-3">
-                <label for="n_days" class="col-12">Simulation duration (in days):</label>
+            <div class="row">
+              <div class="form-group">
+                <label for="n_days">Simulation duration (in days):</label>
                 <input id="n_days" type="number" :min="sim_length.min" :max="sim_length.max" :disabled="running" class="form-control" v-model.number="sim_length.best">
                 <span aria-live="assertive" v-if="paramError.sim_length" class="text-danger form-error">{{paramError.sim_length}}</span>
 
@@ -126,6 +128,9 @@
                   {{sim_length.tip}}
                 </b-tooltip>
               </div>
+            </div>
+
+            <div class="row">
               <div class="form-row mb-3">
                 <label for="datafile" class="col-12">Upload data</label>
                 <div class="col">
