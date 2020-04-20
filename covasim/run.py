@@ -284,7 +284,7 @@ class Scenarios(cvb.ParsObj):
                 if self.base_sim.data is not None and reskey in self.base_sim.data:
                     data_t = np.array((self.base_sim.data.index-self.base_sim['start_day'])/np.timedelta64(1,'D'))
                     pl.plot(data_t, self.base_sim.data[reskey], 'sk', **plot_args)
-                    
+
                 # Optionally reset tick marks (useful for e.g. plotting weeks/months)
                 if interval:
                     xmin,xmax = ax.get_xlim()
@@ -399,7 +399,7 @@ class Scenarios(cvb.ParsObj):
         if not keep_people:
             obj.base_sim.shrink(in_place=True)
 
-        if keep_sims:
+        if keep_sims or keep_people:
             if keep_people:
                 if not obj._kept_people:
                     print('Warning: there are no people because they were not saved during the run. '

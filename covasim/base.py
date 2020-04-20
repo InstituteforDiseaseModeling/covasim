@@ -371,7 +371,7 @@ class BaseSim(ParsObj):
             shrunken_sim (Sim): a Sim object with the listed attributes removed
         '''
 
-        # By default, skip people (~90%) and uids (~9%)
+        # By default, skip people (~90% of memory) and the popdict (which is usually empty anyway)
         if skip_attrs is None:
             skip_attrs = ['popdict', 'people']
 
@@ -386,7 +386,7 @@ class BaseSim(ParsObj):
             return shrunken_sim
 
 
-    def save(self, filename=None, keep_population=False, skip_attrs=None, **kwargs):
+    def save(self, filename=None, keep_people=False, skip_attrs=None, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
@@ -405,7 +405,7 @@ class BaseSim(ParsObj):
             filename = self.simfile
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
-        if skip_attrs or not keep_population:
+        if skip_attrs or not keep_people:
             obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
