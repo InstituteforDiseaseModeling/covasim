@@ -7,6 +7,7 @@ import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 import pandas as pd
 from . import utils as cvu
+from . import misc as cvm
 from . import defaults as cvd
 
 # Specify all externally visible classes this file defines
@@ -26,20 +27,22 @@ class ParsObj(sc.prettyobj):
 
     def __getitem__(self, key):
         ''' Allow sim['par_name'] instead of sim.pars['par_name'] '''
-        return self.pars[key]
+        try:
+            return self.pars[key]
+        except:
+            all_keys = '\n'.join(list(self.pars.keys()))
+            errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
+            raise cvm.KeyNotFoundError(errormsg)
+            return
 
     def __setitem__(self, key, value):
         ''' Ditto '''
         if key in self.pars:
             self.pars[key] = value
         else:
-            suggestion = sc.suggest(key, self.pars.keys())
-            if suggestion:
-                errormsg = f'Key "{key}" not found; did you mean "{suggestion}"?'
-            else:
-                all_keys = '\n'.join(list(self.pars.keys()))
-                errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
-            raise KeyError(errormsg)
+            all_keys = '\n'.join(list(self.pars.keys()))
+            errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
+            raise cvm.KeyNotFoundError(errormsg)
         return
 
     def update_pars(self, pars=None, create=False):
@@ -48,7 +51,7 @@ class ParsObj(sc.prettyobj):
 
         Args:
             pars (dict): the parameters to update (if None, do nothing)
-            create (bool): if create is False, then raise a KeyError if the key does not already exist
+            create (bool): if create is False, then raise a KeyNotFoundError if the key does not already exist
         '''
         if pars is not None:
             if not isinstance(pars, dict):
@@ -60,7 +63,7 @@ class ParsObj(sc.prettyobj):
                 mismatches = [key for key in pars.keys() if key not in available_keys]
                 if len(mismatches):
                     errormsg = f'Key(s) {mismatches} not found; available keys are {available_keys}'
-                    raise KeyError(errormsg)
+                    raise cvm.KeyNotFoundError(errormsg)
             self.pars.update(pars)
         return
 
@@ -76,8 +79,7 @@ class Result(object):
         scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
         color (str or array): default color for plotting (hex or RGB notation)
 
-    **Example**
-    ::
+    **Example**::
 
         import covasim as cv
         r1 = cv.Result(name='test1', npts=10)
@@ -98,7 +100,7 @@ class Result(object):
                 values = np.zeros(int(npts)) # If length is known, use zeros
             else:
                 values = [] # Otherwise, empty
-        self.values = np.array(values, dtype=float) # Ensure it's an array
+        self.values = np.array(values, dtype=cvd.result_float) # Ensure it's an array
         return
 
     def __repr__(self, *args, **kwargs):
@@ -181,7 +183,7 @@ class BaseSim(ParsObj):
         try:
             return self['start_day'] + self.tvec * dt.timedelta(days=1)
         except:
-            return []
+            return np.arange([])
 
 
     def inds2dates(self, inds, dateformat=None):
@@ -261,6 +263,11 @@ class BaseSim(ParsObj):
             else:
                 pardict[key] = self.pars[key]
         return pardict
+
+
+    def copy(self):
+        ''' Returns a deep copy of the sim '''
+        return sc.dcp(self)
 
 
     def to_json(self, filename=None, keys=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
@@ -364,7 +371,7 @@ class BaseSim(ParsObj):
             shrunken_sim (Sim): a Sim object with the listed attributes removed
         '''
 
-        # By default, skip people (~90%) and uids (~9%)
+        # By default, skip people (~90% of memory) and the popdict (which is usually empty anyway)
         if skip_attrs is None:
             skip_attrs = ['popdict', 'people']
 
@@ -379,7 +386,7 @@ class BaseSim(ParsObj):
             return shrunken_sim
 
 
-    def save(self, filename=None, keep_population=False, skip_attrs=None, **kwargs):
+    def save(self, filename=None, keep_people=False, skip_attrs=None, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
@@ -390,16 +397,15 @@ class BaseSim(ParsObj):
         Returns:
             filename (str): the validated absolute path to the saved file
 
-        **Example**
-        ::
+        **Example**::
 
             sim.save() # Saves to a .sim file with the date and time of creation by default
         '''
         if filename is None:
-            filename = self.filename
+            filename = self.simfile
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
-        if skip_attrs or not keep_population:
+        if skip_attrs or not keep_people:
             obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
@@ -419,8 +425,7 @@ class BaseSim(ParsObj):
         Returns:
             sim (Sim): the loaded simulation object
 
-        **Example**
-        ::
+        **Example**::
 
             sim = cv.Sim.load('my-simulation.sim')
         '''
@@ -451,9 +456,7 @@ class BasePeople(sc.prettyobj):
 
         # Other initialization
         self.t = 0 # Keep current simulation time
-        self.dynamic_keys = ['c'] # List of keys to treat as being dynamic
         self._lock = False # Prevent further modification of keys
-        self._ddtype = np.float32 # For performance -- 2x faster than float32, the default
         self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
         self.contacts = None
         self.init_contacts() # Initialize the contacts
@@ -518,8 +521,14 @@ class BasePeople(sc.prettyobj):
 
 
     def get(self, key):
-        ''' Convenience method '''
-        return self[key]
+        ''' Convenience method -- key can be string or list of strings '''
+        if isinstance(key, str):
+            return self[key]
+        elif isinstance(key, list):
+            arr = np.zeros((len(self), len(key)))
+            for k,ky in enumerate(key):
+                arr[:,k] = self[ky]
+            return arr
 
 
     def true(self, key):
@@ -529,12 +538,27 @@ class BasePeople(sc.prettyobj):
 
     def false(self, key):
         ''' Return indices not matching the condition '''
-        return ~self[key].nonzero()[0]
+        return (~self[key]).nonzero()[0]
 
 
-    def count(self,key):
+    def defined(self, key):
+        ''' Return indices of people who are not-nan '''
+        return (~np.isnan(self[key])).nonzero()[0]
+
+
+    def not_defined(self, key):
+        ''' Return indices of people who are nan '''
+        return np.isnan(self[key]).nonzero()[0]
+
+
+    def count(self, key):
         ''' Count the number of people for a given key '''
         return (self[key]>0).sum()
+
+
+    def count_not(self, key):
+        ''' Count the number of people who do not have a property for a given key '''
+        return (self[key]==0).sum()
 
 
     def keys(self, which=None):
@@ -604,7 +628,7 @@ class BasePeople(sc.prettyobj):
 
     def to_arr(self):
         ''' Return as numpy array '''
-        arr = np.empty((len(self), len(self.keys())), dtype=np.float32)
+        arr = np.empty((len(self), len(self.keys())), dtype=cvd.default_float)
         for k,key in enumerate(self.keys()):
             if key == 'uid':
                 arr[:,k] = np.arange(len(self))
@@ -694,8 +718,8 @@ class BasePeople(sc.prettyobj):
             if 'beta' not in new_layer or len(new_layer['beta']) != n:
                 if beta is None:
                     beta = self.pars['beta_layer'][lkey]
-                beta = np.float32(beta)
-                new_layer['beta'] = np.ones(n, dtype=np.float32)*beta
+                beta = cvd.default_float(beta)
+                new_layer['beta'] = np.ones(n, dtype=cvd.default_float)*beta
 
             # Actually include them, and update properties if supplied
             for col in self.contacts[lkey].keys():
@@ -717,14 +741,17 @@ class BasePeople(sc.prettyobj):
         for lkey in lkeys:
             new_contacts[lkey]['p1']    = [] # Person 1 of the contact pair
             new_contacts[lkey]['p2']    = [] # Person 2 of the contact pair
-            new_contacts[lkey]['layer'] = [] # Layers
 
-        for p,cdict in enumerate(contacts):
-            for lkey,p_contacts in cdict.items():
-                n = len(p_contacts) # Number of contacts
-                new_contacts[lkey]['p1'].extend([p]*n) # e.g. [4, 4, 4, 4]
-                new_contacts[lkey]['p2'].extend(p_contacts) # e.g. [243, 4538, 7,19]
-                new_contacts[lkey]['layer'].extend([lkey]*n) # e.g. ['h', 'h', 'h', 'h']
+        try:
+            for p,cdict in enumerate(contacts):
+                for lkey,p_contacts in cdict.items():
+                    n = len(p_contacts) # Number of contacts
+                    new_contacts[lkey]['p1'].extend([p]*n) # e.g. [4, 4, 4, 4]
+                    new_contacts[lkey]['p2'].extend(p_contacts) # e.g. [243, 4538, 7,19]
+        except KeyError:
+            lkeystr = ', '.join(lkeys)
+            errormsg = f'Layer "{lkey}" could not be loaded since it was not among parameter keys "{lkeystr}". Please update manually or via sim.reset_layer_pars().'
+            raise cvm.KeyNotFoundError(errormsg)
 
         # Turn into a dataframe
         for lkey in lkeys:
@@ -750,15 +777,6 @@ class BasePeople(sc.prettyobj):
         return df
 
 
-    def remove_dynamic_contacts(self):
-        ''' Remove all contacts labeled as dynamic '''
-        for key in self.dynamic_keys:
-         if key in self.pars['contacts']:
-            self.contacts.pop(key)
-        return
-
-
-
 class Person(sc.prettyobj):
     '''
     Class for a single person. Note: this is largely deprecated since sim.people
@@ -766,8 +784,8 @@ class Person(sc.prettyobj):
     '''
     def __init__(self, pars=None, uid=None, age=-1, sex=-1, contacts=None):
         self.uid         = uid # This person's unique identifier
-        self.age         = float(age) # Age of the person (in years)
-        self.sex         = int(sex) # Female (0) or male (1)
+        self.age         = cvd.default_float(age) # Age of the person (in years)
+        self.sex         = cvd.default_int(sex) # Female (0) or male (1)
         self.contacts    = contacts # Contacts
         self.infected = [] #: Record the UIDs of all people this person infected
         self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
@@ -821,15 +839,25 @@ class Contacts(FlexDict):
         return output
 
 
+    def __len__(self):
+        ''' The length of the contacts is the length of all the layers '''
+        output = 0
+        for key in self.keys():
+            try:
+                output += len(self[key])
+            except:
+                pass
+        return output
+
+
 class Layer(FlexDict):
     ''' A tiny class holding a single layer of contacts '''
 
     def __init__(self, **kwargs):
         self.meta = {
-            'p1':    np.int32, # Person 1
-            'p2':    np.int32,  # Person 2
-            'layer': None, # The layer by which the people are connected
-            'beta':  np.float32, # Default transmissibility for this contact type
+            'p1':    cvd.default_int, # Person 1
+            'p2':    cvd.default_int,  # Person 2
+            'beta':  cvd.default_float, # Default transmissibility for this contact type
         }
         self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
 
@@ -891,27 +919,73 @@ class TransTree(sc.prettyobj):
     with the length of the list being the number of people that person infected.
 
     Args:
-        sources (list): the person who infected this person
-        targets (list): the people this person infected
+        pop_size (int): the number of people in the population
     '''
 
-    def __init__(self, pop_size=None, sources=None, targets=None):
+    def __init__(self, pop_size):
+        self.linelist = [None]*pop_size
+        self.targets  = [[] for p in range(len(self))] # Make a list of empty lists
+        self.detailed = None
+        return
 
-        # Handle inputs and preallocate if a size is given
-        if sources is None:
-            if pop_size is None:
-                sources = []
-            else:
-                sources = [None]*pop_size
-        if targets is None:
-            if pop_size is None:
-                targets = []
-            else:
-                targets = [[] for p in range(pop_size)] # Make a list of empty lists
 
-        # Assign
-        self.sources = sources
-        self.targets = targets
+    def __len__(self):
+        '''
+        The length of the transmission tree is the length of the line list,
+        which should equal the population size (non-infected people are None
+        in the line list).
+        '''
+        try:
+            return len(self.linelist)
+        except:
+            return 0
+
+
+    def make_targets(self, reset=False):
+        '''
+        Convert sources into targets -- same information, just grouped differently.
+        Usually done inside sim:step(), here just for completeness.
+        '''
+        if self.targets is None or reset:
+            self.targets = [[] for p in range(len(self))] # Make a list of empty lists
+            for transdict in self.linelist:
+                if transdict is not None:
+                    source = transdict['source']
+                    if source is not None: # e.g., from an importation
+                        self.targets[source].append(transdict)
+            return
+
+
+    def make_detailed(self, people, reset=False):
+        ''' Construct a detailed transmission tree, with additional information for each person '''
+        if self.detailed is None or reset:
+
+            # Reset to look like the line list, but with more detail
+            self.detailed = [None]*len(self)
+
+            for transdict in self.linelist:
+
+                if transdict is not None:
+
+                    # Pull out key quantities
+                    ddict  = sc.dcp(transdict) # For "detailed dictionary"
+                    source = ddict['source']
+                    target = ddict['target']
+                    date   = ddict['date']
+
+                    # Only need to check against the date, since will return False if condition is false (NaN)
+                    if source is not None: # This information is only available for people infected by other people, not e.g. importations
+                        ddict['s_symp']    = people.date_symptomatic[source] <= date
+                        ddict['s_diag']    = people.date_diagnosed[source]   <= date
+                        ddict['s_quar']    = people.date_quarantined[source] <= date
+                        ddict['s_sev']     = people.date_severe[source]      <= date
+                        ddict['s_crit']    = people.date_critical[source]    <= date
+                        ddict['t_quar']    = people.date_quarantined[target] <= date
+                        ddict['s_asymp']   = np.isnan(people.date_symptomatic[source])
+                        ddict['s_presymp'] = ~ddict['s_asymp'] and ~ddict['s_symp'] # Not asymptomatic and not currently symptomatic
+
+                    self.detailed[target] = ddict
+
         return
 
 

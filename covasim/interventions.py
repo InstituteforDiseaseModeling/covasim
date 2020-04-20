@@ -4,6 +4,7 @@ import pylab as pl
 import sciris as sc
 import covasim as cv
 from . import utils as cvu
+from . import misc as cvm
 
 
 
@@ -86,8 +87,7 @@ class dynamic_pars(Intervention):
     Args:
         pars (dict): described above
 
-    **Examples**
-    ::
+    **Examples**::
 
         interv = cv.dynamic_pars({'diag_factor':{'days':30, 'vals':0.5}, 'cont_factor':{'days':30, 'vals':0.5}}) # Starting day 30, make diagnosed people and people with contacts half as likely to transmit
         interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}}) # On day 14, change beta to 0.005, and on day 28 change it back to 0.015
@@ -100,7 +100,7 @@ class dynamic_pars(Intervention):
             for subkey in subkeys:
                 if subkey not in pars[parkey].keys():
                     errormsg = f'Parameter {parkey} is missing subkey {subkey}'
-                    raise KeyError(errormsg)
+                    raise cvm.KeyNotFoundError(errormsg)
                 if sc.isnumber(pars[parkey][subkey]): # Allow scalar values or dicts, but leave everything else unchanged
                     pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
             len_days = len(pars[parkey]['days'])
@@ -139,8 +139,7 @@ class sequence(Intervention):
         interventions (list): the interventions to apply on those days
         WARNING: Will take first intervation after sum(days) days has ellapsed!
 
-    **Example**
-    ::
+    **Example**::
 
         interv = cv.sequence(days=[10, 51], interventions=[
                     cv.test_num(n_tests=[100]*npts),
@@ -173,8 +172,7 @@ class change_beta(Intervention):
         layers (str or array): the layers in which to change beta
 
 
-    **Examples**
-    ::
+    **Examples**::
 
         interv = cv.change_beta(25, 0.3) # On day 25, reduce overall beta by 70% to 0.3
         interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
@@ -184,7 +182,7 @@ class change_beta(Intervention):
         super().__init__()
         self.days = sc.promotetoarray(days)
         self.changes = sc.promotetoarray(changes)
-        self.layers = sc.promotetolist(layers, keepnone=True)
+        self.layer_keys = sc.promotetolist(layers, keepnone=True)
         if len(self.days) != len(self.changes):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
@@ -197,22 +195,23 @@ class change_beta(Intervention):
         # If this is the first time it's being run, store beta
         if self.orig_betas is None:
             self.orig_betas = {}
-            for layer in self.layers:
-                if layer is None:
+            for lkey in self.layer_keys:
+                if lkey is None:
                     self.orig_betas['overall'] = sim['beta']
                 else:
-                    self.orig_betas[layer] = sim['beta_layer'][layer]
+                    self.orig_betas[lkey] = sim['beta_layer'][lkey]
 
         # If this day is found in the list, apply the intervention
         inds = sc.findinds(self.days, sim.t)
         if len(inds):
-            for layer,new_beta in self.orig_betas.items():
+            for lkey,new_beta in self.orig_betas.items():
                 for ind in inds:
                     new_beta = new_beta * self.changes[ind]
-                if layer == 'overall':
+                if lkey == 'overall':
                     sim['beta'] = new_beta
                 else:
-                    sim['beta_layer'][layer] = new_beta
+                    sim['beta_layer'][lkey] = new_beta
+
         return
 
 
@@ -230,8 +229,7 @@ class test_num(Intervention):
     '''
     Test a fixed number of people per day.
 
-    **Example**
-    ::
+    **Example**::
 
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
 
@@ -303,8 +301,7 @@ class test_prob(Intervention):
         test_delay (int): How long testing takes
         start_day (int): When to start the intervention
 
-    **Example**
-    ::
+    **Example**::
 
         interv = cv.test_prob(symptomatic_prob=0.1, asymptomatic_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
@@ -348,7 +345,6 @@ class test_prob(Intervention):
         test_inds = cvu.binomial_arr(test_probs).nonzero()[0]
 
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
-
         sim.results['new_tests'][t] += len(test_inds)
 
         return
@@ -371,8 +367,8 @@ class contact_tracing(Intervention):
         if t < self.start_day:
             return
 
-        just_diagnsed_inds = cvu.true(sim.people.diagnosed & (sim.people.date_diagnosed == t-1)) # Diagnosed last time step, time to trace
-        if len(just_diagnsed_inds): # If there are any just-diagnosed people, go trace their contacts
-            sim.people.trace(just_diagnsed_inds, self.trace_probs, self.trace_time)
+        just_diagnosed_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
+        if len(just_diagnosed_inds): # If there are any just-diagnosed people, go trace their contacts
+            sim.people.trace(just_diagnosed_inds, self.trace_probs, self.trace_time)
 
         return

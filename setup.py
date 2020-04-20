@@ -61,7 +61,7 @@ setup(
     author_email="covid@idmod.org",
     description="COVID-19 agent-based simulator",
     long_description=long_description,
-    long_description_content_type="text/rst",
+    long_description_content_type="text/x-rst",
     url='http://github.com/institutefordiseasemodeling/covasim',
     keywords=["Covid-19", "coronavirus", "SARS-CoV-2", "stochastic", "agent-based model"],
     platforms=["OS Independent"],

@@ -1,10 +1,10 @@
 {
   "time": {
-    "initialize": 0.366,
-    "run": 0.153
+    "initialize": 0.271,
+    "run": 0.161
   },
   "parameters": {
-    "pop_size": 20000.0,
+    "pop_size": 20000,
     "pop_type": "random",
     "n_days": 60
   }

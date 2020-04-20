@@ -50,7 +50,7 @@ def log_err(message, ex):
     }
 
 @app.register_RPC()
-def get_defaults(region=None, merge=False):
+def get_defaults(region=None, merge=False, die=die):
     ''' Get parameter defaults '''
 
     if region is None:
@@ -217,7 +217,7 @@ def get_gantt(intervention_pars=None, intervention_config=None):
     return response
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, location=None, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, location=None, verbose=True, die=die):
     ''' Create, run, and plot everything '''
     errs = []
     try:
