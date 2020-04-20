@@ -265,6 +265,11 @@ class BaseSim(ParsObj):
         return pardict
 
 
+    def copy(self):
+        ''' Returns a deep copy of the sim '''
+        return sc.dcp(self)
+
+
     def to_json(self, filename=None, keys=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
         '''
         Export results as JSON.
@@ -366,7 +371,7 @@ class BaseSim(ParsObj):
             shrunken_sim (Sim): a Sim object with the listed attributes removed
         '''
 
-        # By default, skip people (~90%) and uids (~9%)
+        # By default, skip people (~90% of memory) and the popdict (which is usually empty anyway)
         if skip_attrs is None:
             skip_attrs = ['popdict', 'people']
 
@@ -381,7 +386,7 @@ class BaseSim(ParsObj):
             return shrunken_sim
 
 
-    def save(self, filename=None, keep_population=False, skip_attrs=None, **kwargs):
+    def save(self, filename=None, keep_people=False, skip_attrs=None, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
@@ -400,7 +405,7 @@ class BaseSim(ParsObj):
             filename = self.simfile
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
-        if skip_attrs or not keep_population:
+        if skip_attrs or not keep_people:
             obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
@@ -543,7 +548,7 @@ class BasePeople(sc.prettyobj):
 
     def not_defined(self, key):
         ''' Return indices of people who are nan '''
-        return (~np.isnan(self[key])).nonzero()[0]
+        return np.isnan(self[key]).nonzero()[0]
 
 
     def count(self, key):
@@ -914,31 +919,73 @@ class TransTree(sc.prettyobj):
     with the length of the list being the number of people that person infected.
 
     Args:
-        sources (list): the person who infected this person
-        targets (list): the people this person infected
-        seeds   (list): whether this person was a seed infection (initial or importation)
+        pop_size (int): the number of people in the population
     '''
 
-    def __init__(self, pop_size=None, sources=None, targets=None, seeds=None):
+    def __init__(self, pop_size):
+        self.linelist = [None]*pop_size
+        self.targets  = [[] for p in range(len(self))] # Make a list of empty lists
+        self.detailed = None
+        return
 
-        # Handle inputs and preallocate if a size is given
-        if sources is None:
-            if pop_size is None:
-                sources = []
-            else:
-                sources = [None]*pop_size
-        if targets is None:
-            if pop_size is None:
-                targets = []
-            else:
-                targets = [[] for p in range(pop_size)] # Make a list of empty lists
-        if seeds is None:
-            seeds = []
 
-        # Assign
-        self.sources = sources
-        self.targets = targets
-        self.seeds   = seeds
+    def __len__(self):
+        '''
+        The length of the transmission tree is the length of the line list,
+        which should equal the population size (non-infected people are None
+        in the line list).
+        '''
+        try:
+            return len(self.linelist)
+        except:
+            return 0
+
+
+    def make_targets(self, reset=False):
+        '''
+        Convert sources into targets -- same information, just grouped differently.
+        Usually done inside sim:step(), here just for completeness.
+        '''
+        if self.targets is None or reset:
+            self.targets = [[] for p in range(len(self))] # Make a list of empty lists
+            for transdict in self.linelist:
+                if transdict is not None:
+                    source = transdict['source']
+                    if source is not None: # e.g., from an importation
+                        self.targets[source].append(transdict)
+            return
+
+
+    def make_detailed(self, people, reset=False):
+        ''' Construct a detailed transmission tree, with additional information for each person '''
+        if self.detailed is None or reset:
+
+            # Reset to look like the line list, but with more detail
+            self.detailed = [None]*len(self)
+
+            for transdict in self.linelist:
+
+                if transdict is not None:
+
+                    # Pull out key quantities
+                    ddict  = sc.dcp(transdict) # For "detailed dictionary"
+                    source = ddict['source']
+                    target = ddict['target']
+                    date   = ddict['date']
+
+                    # Only need to check against the date, since will return False if condition is false (NaN)
+                    if source is not None: # This information is only available for people infected by other people, not e.g. importations
+                        ddict['s_symp']    = people.date_symptomatic[source] <= date
+                        ddict['s_diag']    = people.date_diagnosed[source]   <= date
+                        ddict['s_quar']    = people.date_quarantined[source] <= date
+                        ddict['s_sev']     = people.date_severe[source]      <= date
+                        ddict['s_crit']    = people.date_critical[source]    <= date
+                        ddict['t_quar']    = people.date_quarantined[target] <= date
+                        ddict['s_asymp']   = np.isnan(people.date_symptomatic[source])
+                        ddict['s_presymp'] = ~ddict['s_asymp'] and ~ddict['s_symp'] # Not asymptomatic and not currently symptomatic
+
+                    self.detailed[target] = ddict
+
         return
 
 

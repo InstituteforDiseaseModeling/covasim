@@ -6,11 +6,27 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.27.14 (2020-04-18)
+Version 0.28.3 (2020-04-20)
 ----------------------------
+- Includes data on household sizes from various countries
+
+
+Version 0.28.1 (2020-04-19)
+----------------------------
+- Major refactor of transmission trees, including additional detail via ``sim.people.transtree.make_detailed()``
+- Counting of diagnoses before and after interventions on each timestep (allowing people to go into quarantine on the same day)
+- Improved saving of people in scenarios, and updated keyword for sims (``sim.save(keep_people=True)``)
+
+
+Version 0.28.0 (2020-04-19)
+----------------------------
+- Includes dynamic per-person viral load
 - Refactored data types
 - Changed how populations are handled, including adding a ``dynam_layer`` parameter to specify which layers are dynamic
 - Disease progression duration parameters were updated to be longer
+- Fixed bugs with quarantine
+- Fixed bug with hybrid school and work contacts
+- Changed contact tracing to be only for contacts with nonzero transmission
 
 
 Version 0.27.12 (2020-04-17)

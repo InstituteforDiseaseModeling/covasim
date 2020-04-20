@@ -225,7 +225,7 @@ def choose_w(probs, n, unique=True):
         unique (bool): whether or not to ensure unique indices
 
     **Example**::
-    
+
         ``choose_w([0.2, 0.5, 0.1, 0.1, 0.1], 2)`` will choose 2 out of 5 people with nonequal probability.
     '''
     probs = np.array(probs)
@@ -241,8 +241,39 @@ def choose_w(probs, n, unique=True):
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit((            nbfloat[:], nbfloat[:], nbfloat,    nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,     nbfloat), cache=True)
-def compute_trans_sus(rel_trans,  rel_sus,    beta_layer, symp,      diag,      quar,      asymp_factor, diag_factor, quar_trans):
+
+@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat))
+def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    par2):
+    '''
+    Calculate relative transmissibility for time t. Includes time varying
+    viral load, pre/asymptomatic factor, diagonsis factor, etc.
+
+    Args:
+        t: (int) timestep
+        time_start: (float[]) individuals' infectious date
+        time_recovered: (float[]) individuals' recovered date
+        time_dead: (float[]) individuals' death date
+        par1: (float) frac of time in high load
+        par2: (float) ratio for high to low viral load
+
+    Returns:
+        load (float): viral load
+    '''
+
+    # Get the end date from recover or death
+    n = len(time_dead)
+    time_stop = np.ones(n, dtype=cvd.default_float)*time_recovered # This is needed to make a copy
+    inds = ~np.isnan(time_dead)
+    time_stop[inds] = time_dead[inds]
+    load = np.ones(n, dtype=cvd.default_float) # allocate an array of ones with the correct dtype
+    early = (t-time_start)/(time_stop-time_start) < par1 # are we in the early or late phase
+    load = (par2 * early + load * ~early)/(load+par1*(par2-load)) # calculate load
+
+    return load
+
+
+@nb.njit(            (nbfloat[:], nbfloat[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,     nbfloat), cache=True)
+def compute_trans_sus(rel_trans,  rel_sus,    beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, diag_factor, quar_trans):
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
@@ -252,7 +283,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    beta_layer, symp,      diag,      
     return rel_trans, rel_sus
 
 
-@nb.njit((             nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True)
+@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
