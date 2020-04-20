@@ -320,39 +320,10 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     # Core plotting
     graphs = []
     try:
-        to_plot = sc.dcp(cv.default_sim_plots)
-        for p,title,keylabels in to_plot.enumitems():
-            fig = go.Figure()
-            for key in keylabels:
-                label = sim.results[key].name
-                this_color = sim.results[key].color
-                y = sim.results[key][:]
-                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
-                if sim.data is not None and key in sim.data:
-                    data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
-                    print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
-                    ydata = sim.data[key]
-                    fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
-
-            if sim['interventions']:
-                interv_day = sim['interventions'][0].days[0]
-                if interv_day > 0 and interv_day < sim['n_days']:
-                    fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                    fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
-
-            fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True, paper_bgcolor=bgcolor, plot_bgcolor=plotbg)
-
-            output = {'json': fig.to_json(), 'id': str(sc.uuid())}
-            d = json.loads(output['json'])
-            d['config'] = {'responsive': True}
-            output['json'] = json.dumps(d)
-            graphs.append(output)
-
-        graphs.append(plot_people(sim))
-
+        graphs += main_plots(sim)
+        graphs += plot_people(sim)
         if show_animation:
-            graphs.append(animate_people(sim))
-
+            graphs += animate_people(sim)
     except Exception as E:
         errs.append(log_err('Plotting failed!', E))
         if die: raise
@@ -397,6 +368,39 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     output['summary']  = summary
 
     return output
+
+
+def main_plots(sim):
+    ''' Main simulation results '''
+    plots = []
+    to_plot = sc.dcp(cv.default_sim_plots)
+    for p,title,keylabels in to_plot.enumitems():
+        fig = go.Figure()
+        for key in keylabels:
+            label = sim.results[key].name
+            this_color = sim.results[key].color
+            y = sim.results[key][:]
+            fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
+            if sim.data is not None and key in sim.data:
+                data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
+                print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
+                ydata = sim.data[key]
+                fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
+
+        if sim['interventions']:
+            interv_day = sim['interventions'][0].days[0]
+            if interv_day > 0 and interv_day < sim['n_days']:
+                fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+                fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
+
+        fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True, paper_bgcolor=bgcolor, plot_bgcolor=plotbg)
+
+        output = {'json': fig.to_json(), 'id': str(sc.uuid())}
+        d = json.loads(output['json'])
+        d['config'] = {'responsive': True}
+        output['json'] = json.dumps(d)
+        plots.append(output)
+    return plots
 
 
 def get_individual_states(sim, order=True):
@@ -475,7 +479,7 @@ def plot_people(sim) -> dict:
     d['config'] = {'responsive': True}
     output['json'] = json.dumps(d)
 
-    return output
+    return [output]
 
 
 def animate_people(sim) -> dict:
@@ -610,7 +614,8 @@ def animate_people(sim) -> dict:
     d['config'] = {'responsive': True}
     output['json'] = json.dumps(d)
 
-    return output
+    return [output]
+
 
 #%% Run the server using Flask
 if __name__ == "__main__":
