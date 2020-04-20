@@ -49,8 +49,9 @@
     <b-modal id="about" ok-only ok-variant="secondary" ok-title="Close">
       <template v-slot:modal-title>About {{ app.title }}</template>
       <p>{{ app.title }} is an agent-based model that simulates the transmission of COVID-19 (novel coronavirus, SARS-CoV-2) in a population. Each individual in the model may pass through the following stages of COVID-19 infection: susceptible, exposed, infectious, and recovered (SEIR). The epidemiological parameter values are taken from literature.</p>
-      <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals in neighboring nodes to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.05 and a doubling time of 6-7 days. For more information, please visit the <a href="{{ app.github_url }}" target="_blank">GitHub</a> repository.</p>
-      <p>Note: Models are only as good as the values of the parameters put into them. This is a rapidly changing situation, and we will update content as relevant information is received.</p>
+      <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.5 and a doubling time of 6-7 days. For more information, please visit the <a href="https://github.com/InstituteforDiseaseModeling/covasim" target="_blank">GitHub</a> repository.</p>
+      <p><b>Note:</b> Models are only as good as the values of the parameters put into them. This is a rapidly changing situation, and we will update content as relevant information is received.</p>
+      <p><b>Acknowledgements:</b> Covasim is currently under active development by IDM's COVID-19 Response Team. Model development is led by Daniel Klein, Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, and Dina Mistry. UI design is led by Lauren George, William Chen, and Scott Ayers, inspired by a prototype from Brian Lovin. For the full list of contributors, please see our <a href="https://github.com/InstituteforDiseaseModeling/covasim/graphs/contributors" target="_blank">Contributors</a> page</a>.</p>
     </b-modal>
 
 
@@ -62,9 +63,12 @@
       <div class="px-3">
         <header class="d-flex justify-content-between">
           <h4 class="my-2">Simulation configuration</h4>
-          <button class="close" @click="close_panel" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+          <button class="close" id="hidepanel" @click="close_panel" aria-label="Left">
+            <span aria-hidden="true">🡄</span>
           </button>
+          <b-tooltip target="hidepanel">
+            Hide configuration panel
+          </b-tooltip>
         </header>
 
       </div>
@@ -79,6 +83,7 @@
 
               <!-- Presets -->
               <div class="form-row mb-3">
+                <label for="datafile" class="col-12">Choose simulation presets</label>
                 <div class="col">
                   <select :disabled="running" id="examples" v-model="reset_choice" @change="resetPars()" class="form-control" aria-label="Example Presets">
                     <option v-for="(item, index) in reset_options" :value="item">
@@ -276,7 +281,7 @@
   <div id="graphs" class="graphs">
     <div class="form-inline">
       <button class="btn btn-primary blueish" @click="open_panel">
-        Open parameters
+        Open configuration
       </button>
 
 <!--      <div class="form-group ml-3" id="history-wpr">-->
