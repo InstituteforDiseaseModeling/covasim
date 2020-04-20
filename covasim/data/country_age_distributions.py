@@ -1,4 +1,4 @@
-def get_country_age_distributions():
+def age_distribution_data():
     '''
     This is the following file:
 

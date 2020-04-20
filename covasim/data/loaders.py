@@ -7,68 +7,13 @@ import numpy as np
 import pandas as pd
 import sciris as sc
 from . import country_age_distributions as cad
+from . import household_sizes as hs
 
-__all__ = ['get_age_distribution']
-
-
-def get_age_distribution(location=None):
-    '''
-    Load age distribution for a given country or countries.
-
-    Args:
-        location (str or list): name of the country or countries to load the age distribution for
-
-    Returns:
-        age_data (array): Numpy array of age distributions
-    '''
-
-    # Load the raw data
-    json = cad.get_country_age_distributions()
-    countries = [entry["country"].lower() for entry in json] # Pull out available countries
-
-    # Set parameters
-    max_age = 99
-    if location is None:
-        location = countries
-    else:
-        location = sc.promotetolist(location)
-
-    # Define a mapping for common mistakes
-    mapping = get_country_mappings()
-    mapping = {key.lower(): val.lower() for key, val in mapping.items()}
-
-    result = {}
-    for loc in location:
-        loc = loc.lower()
-        if loc in mapping:
-            loc = mapping[loc]
-        try:
-            ind = countries.index(loc.lower())
-            entry = json[ind]
-        except ValueError:
-            suggestions = sc.suggest(loc, countries, n=4)
-            errormsg = f'Location "{loc}" not recognized, did you mean {suggestions}?'
-            raise ValueError(errormsg)
-        age_distribution = entry["ageDistribution"]
-        total_pop = sum(age_distribution.values())
-        local_pop = []
-
-        for age, age_pop in age_distribution.items():
-            if age[-1] == '+':
-                val = [int(age[:-1]), max_age, age_pop/total_pop]
-            else:
-                ages = age.split('-')
-                val = [int(ages[0]), int(ages[1]), age_pop/total_pop]
-            local_pop.append(val)
-        result[loc] = np.array(local_pop)
-
-    if len(location) == 1:
-        result = result[loc]
-
-    return result
+__all__ = ['get_country_aliases', 'map_entries', 'get_age_distribution', 'get_household_sizes']
 
 
-def get_country_mappings():
+def get_country_aliases():
+    ''' Define aliases for countries with odd names in the data '''
     country_mappings = {
        'Bolivia':        'Bolivia (Plurinational State of)',
        'Burkina':        'Burkina Faso',
@@ -76,6 +21,7 @@ def get_country_mappings():
        'Hong Kong':      'China, Hong Kong Special Administrative Region',
        'Macao':          'China, Macao Special Administrative Region',
        "Cote d'Ivore":   'Côte d’Ivoire',
+       "Ivory Coast":    'Côte d’Ivoire',
        'DRC':            'Democratic Republic of the Congo',
        'Iran':           'Iran (Islamic Republic of)',
        'Laos':           "Lao People's Democratic Republic",
@@ -100,39 +46,109 @@ def get_country_mappings():
     return country_mappings # Convert to lowercase
 
 
-def get_country_household_sizes(url=None):
-    """
-    Load country household size from UN data source.
+def map_entries(json, location, which):
+    '''
+    Find a match between the JSON file and the provided location(s).
 
     Args:
-        URL or path to the excel file.
+        json (list or dict): the data being loaded
+        location (list or str): the list of locations to pull from
+        which (str): either 'age' for age data or 'household' for household size distributions
+
+    '''
+
+    # The data have slightly different formats: list of dicts or just a dict
+    if which == 'age':
+        countries = [entry["country"].lower() for entry in json] # Pull out available countries
+    else:
+        countries = [key.lower() for key in json.keys()]
+
+    # Set parameters
+    if location is None:
+        location = countries
+    else:
+        location = sc.promotetolist(location)
+
+    # Define a mapping for common mistakes
+    mapping = get_country_aliases()
+    mapping = {key.lower(): val.lower() for key, val in mapping.items()}
+
+    entries = {}
+    for loc in location:
+        loc = loc.lower()
+        if loc in mapping:
+            loc = mapping[loc]
+        try:
+            ind = countries.index(loc.lower())
+            if which == 'age':
+                entry = json[ind]
+            else:
+                entry = list(json.values())[ind]
+            entries[loc] = entry
+        except ValueError:
+            suggestions = sc.suggest(loc, countries, n=4)
+            errormsg = f'Location "{loc}" not recognized, did you mean {suggestions}?'
+            raise ValueError(errormsg)
+
+    return entries
+
+
+def get_age_distribution(location=None):
+    '''
+    Load age distribution for a given country or countries.
+
+    Args:
+        location (str or list): name of the country or countries to load the age distribution for
 
     Returns:
-        Dictionary with country name as key and average household size as value.
-    """
-    url = url or 'https://population.un.org/household/exceldata/population_division_UN_Houseshold_Size_and_Composition_2019.xlsx'
-    df_raw: pd.DataFrame = pd.read_excel(url, sheet_name='UN HH Size and Composition 2019', skiprows=4)
-    assert len(df_raw) > 1, "Loaded UN Household size."
+        age_data (array): Numpy array of age distributions, or dict if multiple locations
+    '''
 
-    # Select and rename columns
-    target_columns = ['Country or area', 'Reference date (dd/mm/yyyy)', 'Average household size (number of members)']
-    df: pd.DataFrame = df_raw[target_columns].copy()
-    df.columns = ['country', 'date', 'size']
+    # Load the raw data
+    json = cad.age_distribution_data()
+    entries = map_entries(json, location, which='age')
 
-    # Convert date column to datetime type and replace nodata with NA.
-    df['date'] = df['date'].apply(lambda d: pd.to_datetime(d, format='%d/%m/%Y'))
-    df['size'] = df['size'].apply(lambda s: np.nan if isinstance(s, str) and s == '..' else s)
-    df = df.dropna()
+    max_age = 99
+    result = {}
+    for loc,entry in entries.items():
+        age_distribution = entry["ageDistribution"]
+        total_pop = sum(age_distribution.values())
+        local_pop = []
 
-    # Take the most recent household size for each country.
-    df = df.sort_values(by=['country', 'date']).groupby(by=['country']).last()[['size']]
-    un_country_households_dict = df.to_dict()['size'].copy()
+        for age, age_pop in age_distribution.items():
+            if age[-1] == '+':
+                val = [int(age[:-1]), max_age, age_pop/total_pop]
+            else:
+                ages = age.split('-')
+                val = [int(ages[0]), int(ages[1]), age_pop/total_pop]
+            local_pop.append(val)
+        result[loc] = np.array(local_pop)
 
-    # Add to the dictionary commonly used aliases like USA for United States of America.
-    us_countries = [k.lower() for k in un_country_households_dict]
-    country_mappings_dict = get_country_mappings()
-    for alias, name in country_mappings_dict.items():
-        if name.lower() in us_countries:
-            un_country_households_dict[alias] = un_country_households_dict[name]
+    if len(result) == 1:
+        result = result.values()[0]
 
-    return un_country_households_dict
+    return result
+
+
+def get_household_sizes(location=None):
+    '''
+    Load household size distribution for a given country or countries.
+
+    Args:
+        location (str or list): name of the country or countries to load the age distribution for
+
+    Returns:
+        house_size (float): Size of household, or dict if multiple locations
+    '''
+    # Load the raw data
+    json = hs.household_size_data()
+    if location is None:
+        loclist = '\n  '.join(sorted(list(json.keys())))
+        print(f'Available locations:\n  {loclist}')
+        return
+
+    result = map_entries(json, location, which='household')
+    if len(result) == 1:
+        result = list(result.values())[0]
+
+    return result
