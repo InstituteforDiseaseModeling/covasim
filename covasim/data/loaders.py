@@ -75,20 +75,23 @@ def map_entries(json, location, which):
 
     entries = {}
     for loc in location:
-        loc = loc.lower()
-        if loc in mapping:
-            loc = mapping[loc]
-        try:
-            ind = countries.index(loc.lower())
-            if which == 'age':
-                entry = json[ind]
-            else:
-                entry = list(json.values())[ind]
-            entries[loc] = entry
-        except ValueError:
-            suggestions = sc.suggest(loc, countries, n=4)
-            errormsg = f'Location "{loc}" not recognized, did you mean {suggestions}?'
-            raise ValueError(errormsg)
+        lloc = loc.lower()
+        if lloc not in countries and lloc in mapping:
+            lloc = mapping[lloc]
+        # try:
+        ind = countries.index(lloc)
+        if which == 'age':
+            entry = json[ind]
+        else:
+            entry = list(json.values())[ind]
+        entries[loc] = entry
+        # except ValueError as E:
+        #     suggestions = sc.suggest(loc, countries, n=4)
+        #     if suggestions:
+        #         errormsg = f'Location "{loc}" not recognized, did you mean {suggestions}? ({str(E)})'
+        #     else:
+        #         errormsg = f'Location "{loc}" not recognized ({str(E)})'
+        #     raise ValueError(errormsg)
 
     return entries
 
@@ -142,10 +145,6 @@ def get_household_sizes(location=None):
     '''
     # Load the raw data
     json = hs.household_size_data()
-    if location is None:
-        loclist = '\n  '.join(sorted(list(json.keys())))
-        print(f'Available locations:\n  {loclist}')
-        return
 
     result = map_entries(json, location, which='household')
     if len(result) == 1:

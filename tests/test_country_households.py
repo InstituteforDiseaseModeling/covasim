@@ -1,11 +1,6 @@
-import sys
-import tempfile
-from pathlib import Path
-
 import pandas as pd
 import sciris as sc
-
-from covasim.data import loaders
+import covasim as cv
 
 
 def validate_country_households_range():
@@ -13,16 +8,18 @@ def validate_country_households_range():
     Validate household size is withing the expected range.
     """
     print('Loading data...')
-    ch = loaders.get_country_household_sizes()
+    ch = cv.data.loaders.get_household_sizes()
 
-    assert 2 <= ch['USA'] <= 5
-    assert 1 <= ch['Korea'] <= 3
-    assert 1 <= ch['South Korea'] <= 3
+    assert 2 <= ch['usa'] <= 5
+    assert 1 <= ch['korea'] <= 3
+    assert 1 <= ch['south korea'] <= 3
 
     for c in ch:
         assert 0 < ch[c] < 10
 
     print('Household size values are in the expected range.')
+
+    return ch
 
 
 def plot_validate_country_households():
@@ -30,7 +27,7 @@ def plot_validate_country_households():
     Plot to help spot if some countries have unexpected values.
     """
     # Convert to dataframe for plotting.
-    ch = loaders.get_country_household_sizes()
+    ch = cv.data.loaders.get_household_sizes()
     df = pd.DataFrame.from_dict(ch, orient='index', columns=['size']).reset_index()
     df['size'] = df['size'].astype(float)
     df.columns = ['country', 'size']
@@ -40,22 +37,16 @@ def plot_validate_country_households():
     ax = df.plot(kind='barh', x=df.columns[0], y=df.columns[1], figsize=(20, 50))
     fig = ax.get_figure()
 
-    # Save plot to a temp file.
-    png_path = Path(tempfile.TemporaryDirectory().name).joinpath('country_households_test_plot.png')
-    png_path.parent.mkdir()
-    fig.savefig(png_path)
-    print(f'Plot path: {png_path}')
+    return fig
 
 
 # %% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    if len(sys.argv) > 1 and sys.argv[1] == 'plot':
-        plot_validate_country_households()
-    else:
-        validate_country_households_range()
+    ch = validate_country_households_range()
+    fig = plot_validate_country_households()
 
     sc.toc()
 
-print('Done.')
+    print('Done.')
