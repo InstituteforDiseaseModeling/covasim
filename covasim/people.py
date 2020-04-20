@@ -95,9 +95,9 @@ class People(cvb.BasePeople):
         counts['new_critical']    += self.check_critical()
         counts['new_deaths']      += self.check_death()
         counts['new_recoveries']  += self.check_recovery()
-        counts['new_quarantined'] += self.check_quar() # Update if they're quarantined
-        counts['new_diagnoses']   += self.check_diagnosed()
         counts['new_tests']       += self.check_tested()
+        counts['new_diagnoses']   += self.check_diagnosed()
+        counts['new_quarantined'] += self.check_quar() # Update if they're quarantined
         del self.is_exp # Tidy up
 
         return counts
@@ -108,9 +108,9 @@ class People(cvb.BasePeople):
         self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
         # Perform updates
-        counts['new_quarantined'] += self.check_quar() # Update if they're quarantined
-        counts['new_diagnoses']   += self.check_diagnosed()
         counts['new_tests']       += self.check_tested()
+        counts['new_diagnoses']   += self.check_diagnosed()
+        counts['new_quarantined'] += self.check_quar() # Update if they're quarantined
         del self.is_exp # Tidy up
 
         return counts

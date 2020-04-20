@@ -312,12 +312,13 @@ class Sim(cvb.BaseSim):
             for ind in imporation_inds:
                 self.people.transtree.seeds.append({'person':ind, 'date':self.t, 'layer':None})
 
-        # Apply interventions - DJK!!!
+        # Apply interventions
         for intervention in self['interventions']:
             intervention.apply(self)
         if self['interv_func'] is not None: # Apply custom intervention function
             self =self['interv_func'](self)
-        flows = people.update_states_post_intervention(t, flows)
+
+        flows = people.update_states_post_intervention(t, flows) # Check for state changes after interventions
 
         # Compute the probability of transmission
         beta         = cvd.default_float(self['beta'])
@@ -360,14 +361,6 @@ class Sim(cvb.BaseSim):
 
                 self.people.transtree.sources[target] = {'source':source, 'target':target, 'date':self.t, 'layer':lkey, 's_symp':s_symp, 's_diag':s_diag, 's_quar':s_quar, 't_quar':t_quar, 's_asymp':s_asymp, 's_presymp':s_presymp, 's_sev':s_sev, 's_crit':s_crit} # Call this the linelist
                 self.people.transtree.targets[source].append({'source':source, 'target':target, 'date':self.t, 'layer':lkey}) # Make a count
-
-        ''' DJK!!!
-        # Apply interventions
-        for intervention in self['interventions']:
-            intervention.apply(self)
-        if self['interv_func'] is not None: # Apply custom intervention function
-            self =self['interv_func'](self)
-        '''
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
