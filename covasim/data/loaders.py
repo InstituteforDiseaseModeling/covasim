@@ -78,20 +78,20 @@ def map_entries(json, location, which):
         lloc = loc.lower()
         if lloc not in countries and lloc in mapping:
             lloc = mapping[lloc]
-        # try:
-        ind = countries.index(lloc)
-        if which == 'age':
-            entry = json[ind]
-        else:
-            entry = list(json.values())[ind]
-        entries[loc] = entry
-        # except ValueError as E:
-        #     suggestions = sc.suggest(loc, countries, n=4)
-        #     if suggestions:
-        #         errormsg = f'Location "{loc}" not recognized, did you mean {suggestions}? ({str(E)})'
-        #     else:
-        #         errormsg = f'Location "{loc}" not recognized ({str(E)})'
-        #     raise ValueError(errormsg)
+        try:
+            ind = countries.index(lloc)
+            if which == 'age':
+                entry = json[ind]
+            else:
+                entry = list(json.values())[ind]
+            entries[loc] = entry
+        except ValueError as E:
+            suggestions = sc.suggest(loc, countries, n=4)
+            if suggestions:
+                errormsg = f'Location "{loc}" not recognized, did you mean {suggestions}? ({str(E)})'
+            else:
+                errormsg = f'Location "{loc}" not recognized ({str(E)})'
+            raise ValueError(errormsg)
 
     return entries
 
