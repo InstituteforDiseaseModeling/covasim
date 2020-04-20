@@ -282,7 +282,7 @@ class Sim(cvb.BaseSim):
         inds = np.arange(int(self['pop_infected']))
         self.people.infect(inds=inds)
         for ind in inds:
-            self.people.transtree.linelist[ind] = dict(source=np.nan, target=ind, date=self.t, layer='seed_infection')
+            self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='seed_infection')
 
         return
 
@@ -310,7 +310,7 @@ class Sim(cvb.BaseSim):
             imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
             flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max)
             for ind in imporation_inds:
-                self.people.transtree.linelist[ind] = dict(source=np.nan, target=ind, date=self.t, layer='importation')
+                self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='importation')
 
         # Apply interventions
         for intervention in self['interventions']:
@@ -355,7 +355,7 @@ class Sim(cvb.BaseSim):
                 source = sources[ind]
                 target = targets[ind]
                 transdict = dict(source=source, target=target, date=self.t, layer=lkey)
-                self.people.transtree.sources[target] = transdict # Call this the linelist
+                self.people.transtree.linelist[target] = transdict
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
@@ -514,6 +514,7 @@ class Sim(cvb.BaseSim):
         sources = np.zeros(self.npts)
         targets = np.zeros(self.npts)
         window = int(window)
+        self.people.transtree.make_targets() # Copy the source list to the targets for ease of use
 
         for t in self.tvec:
 
