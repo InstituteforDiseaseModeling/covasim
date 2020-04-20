@@ -21,12 +21,19 @@ html, body {
     grid-area: header;
 }
 
-.navbar{
+.navbar {
     background-color: #111313 !important;
 }
 
-.nav-text{
-    color: rgba(255,255,255,0.8); !important;
+.nav-text {
+    color: rgba(255,255,255,0.8) !important;
+}
+.nav-text:hover {
+    color: rgba(255,255,255,1.0) !important;
+}
+
+.nav-head {
+    padding-top: 10px !important;
 }
 
 .navbar-brand {

@@ -36,7 +36,7 @@
   <header class="row no-gutter">
     <b-navbar type="dark" variant="dark">
       <b-navbar-brand href="#">{{ app.title }}</b-navbar-brand>
-      <b-navbar-nav>
+      <b-navbar-nav class="nav-head">
         <b-nav-item :href="app.docs_url" target="_blank"><span class="nav-text">Documentation</span></b-nav-item>
         <b-nav-item v-b-modal.about><span class="nav-text">About</span></b-nav-item>
       </b-navbar-nav>
@@ -279,21 +279,21 @@
         Open parameters
       </button>
 
-      <div class="form-group ml-3" id="history-wpr">
-        <label for="history"> History: </label>
-        <select id="history" :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">
-          <option v-for="(item, index) in history" :value="index">
-            {{ index }}
-          </option>
-        </select>
-        <b-tooltip target="history-wpr">
-          History of simulation runs used in this session
-        </b-tooltip>
+<!--      <div class="form-group ml-3" id="history-wpr">-->
+<!--        <label for="history"> History: </label>-->
+<!--        <select id="history" :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">-->
+<!--          <option v-for="(item, index) in history" :value="index">-->
+<!--            {{ index }}-->
+<!--          </option>-->
+<!--        </select>-->
+<!--        <b-tooltip target="history-wpr">-->
+<!--          History of simulation runs used in this session-->
+<!--        </b-tooltip>-->
       </div>
     </div>
 
     <fieldset>
-      <legend>Results</legend>
+<!--      <legend>Results</legend>-->
       <!--
       <template v-if="running">
         <p><i>Please wait, running model...</i></p>
