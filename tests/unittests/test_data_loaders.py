@@ -1,23 +1,21 @@
 import unittest
-
-from covasim.data import loaders
-
+import covasim as cv
 
 class TestDataLoaders(unittest.TestCase):
     def test_country_households(self):
-        ch = loaders.get_country_household_sizes('un_household_size_sample.xlsx')
+        ch = cv.data.loaders.get_household_sizes()
 
         self.assertTrue(isinstance(ch, dict))
         self.assertGreater(len(ch), 5)
 
-        self.assertTrue(ch['United States of America'] == ch['USA'])
-        self.assertTrue(ch['Republic of Korea'] == ch['Korea'])
-        self.assertTrue(ch['Republic of Korea'] == ch['South Korea'])
+        self.assertTrue(ch['united states of america'] == ch['usa'])
+        self.assertTrue(ch['republic of korea'] == ch['korea'])
+        self.assertTrue(ch['republic of korea'] == ch['south korea'])
 
-        self.assertTrue(2 <= ch['USA'] <= 5)
-        self.assertTrue(1 <= ch['Korea'] <= 3)
-        self.assertTrue(1 <= ch['Germany'] <= 3)
-        self.assertTrue(5 <= ch['Senegal'] <= 10)
+        self.assertTrue(2 <= ch['usa'] <= 5)
+        self.assertTrue(1 <= ch['korea'] <= 3)
+        self.assertTrue(1 <= ch['germany'] <= 3)
+        self.assertTrue(5 <= ch['senegal'] <= 10)
 
 
 if __name__ == '__main__':
