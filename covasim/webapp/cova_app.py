@@ -28,10 +28,10 @@ flask_app = app.flask_app
 
 
 # Set defaults
-max_pop  = 20e3 # Maximum population size
-max_days = 180  # Maximum number of days
-max_time = 10   # Maximum of seconds for a run
-die      = True # Whether or not to raise exceptions instead of continuing
+max_pop  = 20e3   # Maximum population size
+max_days = 180    # Maximum number of days
+max_time = 10     # Maximum of seconds for a run
+die      = False  # Whether or not to raise exceptions instead of continuing
 bgcolor  = '#eee' # Background color for app
 plotbg   = '#dde'
 
