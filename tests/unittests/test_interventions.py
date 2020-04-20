@@ -171,7 +171,7 @@ class InterventionTests(CovaSimTest):
                              f"and delay {test_delay}. Got {new_diagnoses[start_day + test_delay]} instead.")
         post_test_days = range(start_day + 1, len(new_tests))
         if target_pop_new_channel:
-            for d in post_test_days:
+            for d in post_test_days[:test_delay]:
                 symp_today = target_new[d]
                 diag_today = new_diagnoses[d + test_delay]
                 test_today = new_tests[d]
@@ -225,6 +225,7 @@ class InterventionTests(CovaSimTest):
                                       target_pop_new_channel=None)
 
     def test_test_prob_perfect_symptomatic(self):
+        self.is_debugging = True
         params = {
             SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 60
@@ -233,7 +234,7 @@ class InterventionTests(CovaSimTest):
 
         symptomatic_probability_of_test = 1.0
         test_sensitivity = 1.0
-        test_delay = 0
+        test_delay = 1
         start_day = 30
 
         self.intervention_set_test_prob(symptomatic_prob=symptomatic_probability_of_test,
@@ -406,9 +407,8 @@ class InterventionTests(CovaSimTest):
                                               trace_times=trace_delays)
         intervention_days.append(start_day)
         intervention_list.append(self.interventions)
-        # self.intervention_build_sequence(day_list=intervention_days,
-        #                                  intervention_list=intervention_list)
-        self.interventions = [intervention_list]
+        self.intervention_build_sequence(day_list=intervention_days,
+                                         intervention_list=intervention_list)
         self.run_sim()
 
         pass
