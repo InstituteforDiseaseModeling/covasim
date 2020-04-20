@@ -2,6 +2,8 @@
 Sciris app to run the web interface.
 '''
 
+#%% Housekeeping
+
 # Key imports
 import os
 import sys
@@ -24,7 +26,6 @@ import scirisweb as sw
 app = sw.ScirisApp(__name__, name="Covasim")
 flask_app = app.flask_app
 
-#%% Define the API
 
 # Set defaults
 max_pop  = 10e3 # Maximum population size
@@ -35,11 +36,13 @@ bgcolor  = '#eee' # Background color for app
 plotbg   = '#dde'
 
 
-# Define a get API for readiness in kubernetes
+#%% Define the API helper functions
+
 @app.route('/healthcheck')
 def healthcheck():
     ''' Check that the server is up '''
     return sw.robustjsonify({'status':'ok'})
+
 
 def log_err(message, ex):
     ''' Compile error messages to send to the frontend '''
@@ -62,34 +65,13 @@ def get_defaults(region=None, merge=False, die=die):
     regions = {
         'pop_scale': {
             'Example': 1,
-            # 'Seattle': 25,
-            # 'Wuhan': 200,
         },
         'pop_size': {
             'Example': 2000,
-            # 'Seattle': 10000,
-            # 'Wuhan': 1,
         },
-        # 'n_days': {
-        #     'Example': 60,
-        #     # 'Seattle': 45,
-        #     # 'Wuhan': 90,
-        # },
         'pop_infected': {
             'Example': 100,
-            # 'Seattle': 4,
-            # 'Wuhan': 10,
         },
-        # 'web_int_day': {
-        #     'Example': 25,
-        #     # 'Seattle': 0,
-        #     # 'Wuhan': 1,
-        # },
-        # 'web_int_eff': {
-        #     'Example': 0.8,
-        #     # 'Seattle': 0.0,
-        #     # 'Wuhan': 0.9,
-        # },
     }
 
     sim_pars = {}
@@ -218,6 +200,8 @@ def get_gantt(intervention_pars=None, intervention_config=None):
     return response
 
 
+#%% Define the core API
+
 @app.register_RPC()
 def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True, die=die):
     ''' Create, run, and plot everything '''
@@ -278,7 +262,6 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
                 func = switcher.get(key)
                 func(scenario, web_pars)
 
-
         # Handle CFR -- ignore symptoms and set to 1
         web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
         web_pars['rel_symp_prob']   = 1e4 # Arbitrarily large
@@ -328,33 +311,12 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         errs.append(log_err('Plotting failed!', E))
         if die: raise
 
-
     # Create and send output files (base64 encoded content)
-    files = {}
-    summary = {}
     try:
-        datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
-
-
-        ss = sim.to_excel()
-        files['xlsx'] = {
-            'filename': f'covasim_results_{datestamp}.xlsx',
-            'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
-        }
-
-        json_string = sim.to_json(verbose=False)
-        files['json'] = {
-            'filename': f'covasim_results_{datestamp}.json',
-            'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
-        }
-
-        # Summary output
-        summary = {
-            'days': sim.npts-1,
-            'cases': round(sim.results['cum_infections'][-1]),
-            'deaths': round(sim.results['cum_deaths'][-1]),
-        }
+        files,summary = get_output_files(sim)
     except Exception as E:
+        files = {}
+        summary = {}
         errs.append(log_err('Unable to save output files!', E))
         if die: raise
 
@@ -405,12 +367,7 @@ def main_plots(sim):
 
 def get_individual_states(sim, order=True):
     people = sim.people
-    # if order:
-        # print('Note: ordering of people for the animation is currently not supported')
-        # people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
 
-    # Order these in order of precedence
-    # The last matching quantity will be used
     states = [
         {'name': 'Healthy',
          'quantity': None,
@@ -617,7 +574,35 @@ def animate_people(sim) -> dict:
     return [output]
 
 
+def get_output_files(sim):
+    ''' Create output files for download '''
+
+    datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
+    ss = sim.to_excel()
+
+    files = {}
+    files['xlsx'] = {
+        'filename': f'covasim_results_{datestamp}.xlsx',
+        'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
+    }
+
+    json_string = sim.to_json(verbose=False)
+    files['json'] = {
+        'filename': f'covasim_results_{datestamp}.json',
+        'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
+    }
+
+    # Summary output
+    summary = {
+        'days': sim.npts-1,
+        'cases': round(sim.results['cum_infections'][-1]),
+        'deaths': round(sim.results['cum_deaths'][-1]),
+    }
+    return files, summary
+
+
 #%% Run the server using Flask
+
 if __name__ == "__main__":
 
     os.chdir(sc.thisdir(__file__))
