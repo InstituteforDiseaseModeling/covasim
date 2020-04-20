@@ -180,46 +180,45 @@ def parse_interventions(int_pars):
             ]
         }
     '''
-    print('LDKFJ')
-    sc.pp(int_pars)
-
     intervs = []
-    masterlist = []
-    for ikey,intervlist in int_pars.items():
-        for iconfig in intervlist:
-            iconfig['ikey'] = ikey
-            masterlist.append(dict(iconfig))
 
-    for iconfig in masterlist:
-        ikey  = iconfig['ikey']
-        start = iconfig['start']
-        end   = iconfig['end']
-        if ikey == 'social_distance':
-            level = iconfig['level']
-            mapping = {
-                'mild': 0.8,
-                'moderate': 0.5,
-                'aggressive': 0.2,
-                }
-            change = mapping[level]
-            interv = cv.change_beta(days=[start, end], changes=[change, 1.0])
-        elif ikey == 'school_closures':
-            change = 0.7
-            interv = cv.change_beta(days=[start, end], changes=[change, 1.0], layers='a')
-        elif ikey == 'symptomatic_testing':
-            level = iconfig['level']
-            level = float(level)/100
-            asymp_prob = 0.0
-            delay = 0.0
-            interv = cv.test_prob(start_day=start, end_day=end, symp_prob=level, asymp_prob=asymp_prob, test_delay=delay)
-        elif ikey == 'contact_tracing':
-            trace_prob = {'a':1.0}
-            trace_time = {'a':0.0}
-            interv = cv.contact_tracing(start_day=start, end_day=end, trace_probs=trace_prob, trace_time=trace_time)
-        else:
-            raise NotImplementedError
+    if int_pars is not None:
+        masterlist = []
+        for ikey,intervlist in int_pars.items():
+            for iconfig in intervlist:
+                iconfig['ikey'] = ikey
+                masterlist.append(dict(iconfig))
 
-        intervs.append(interv)
+        for iconfig in masterlist:
+            ikey  = iconfig['ikey']
+            start = iconfig['start']
+            end   = iconfig['end']
+            if ikey == 'social_distance':
+                level = iconfig['level']
+                mapping = {
+                    'mild': 0.8,
+                    'moderate': 0.5,
+                    'aggressive': 0.2,
+                    }
+                change = mapping[level]
+                interv = cv.change_beta(days=[start, end], changes=[change, 1.0])
+            elif ikey == 'school_closures':
+                change = 0.7
+                interv = cv.change_beta(days=[start, end], changes=[change, 1.0], layers='a')
+            elif ikey == 'symptomatic_testing':
+                level = iconfig['level']
+                level = float(level)/100
+                asymp_prob = 0.0
+                delay = 0.0
+                interv = cv.test_prob(start_day=start, end_day=end, symp_prob=level, asymp_prob=asymp_prob, test_delay=delay)
+            elif ikey == 'contact_tracing':
+                trace_prob = {'a':1.0}
+                trace_time = {'a':0.0}
+                interv = cv.contact_tracing(start_day=start, end_day=end, trace_probs=trace_prob, trace_time=trace_time)
+            else:
+                raise NotImplementedError
+
+            intervs.append(interv)
 
     return intervs
 
