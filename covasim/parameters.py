@@ -226,5 +226,3 @@ def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
 
     return data
 
-
-

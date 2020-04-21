@@ -6,10 +6,10 @@ Load data
 import numpy as np
 import pandas as pd
 import sciris as sc
-from . import country_age_distributions as cad
-from . import household_sizes as hs
+from . import age_distribution_data as add
+from . import household_size_data as hsd
 
-__all__ = ['get_country_aliases', 'map_entries', 'get_age_distribution', 'get_household_sizes']
+__all__ = ['get_country_aliases', 'map_entries', 'get_age_distribution', 'get_household_size']
 
 
 def get_country_aliases():
@@ -108,7 +108,7 @@ def get_age_distribution(location=None):
     '''
 
     # Load the raw data
-    json = cad.age_distribution_data()
+    json = add.age_distribution_data()
     entries = map_entries(json, location, which='age')
 
     max_age = 99
@@ -133,7 +133,7 @@ def get_age_distribution(location=None):
     return result
 
 
-def get_household_sizes(location=None):
+def get_household_size(location=None):
     '''
     Load household size distribution for a given country or countries.
 
@@ -144,7 +144,7 @@ def get_household_sizes(location=None):
         house_size (float): Size of household, or dict if multiple locations
     '''
     # Load the raw data
-    json = hs.household_size_data()
+    json = hsd.household_size_data()
 
     result = map_entries(json, location, which='household')
     if len(result) == 1:

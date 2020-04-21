@@ -17,6 +17,8 @@ sim2.initialize()
 ages1 = sim1.people.age
 ages2 = sim2.people.age
 
+print(sim1['contacts'])
+
 n = 100
 fig = pl.figure()
 
@@ -29,3 +31,5 @@ pl.hist(ages2, n)
 pl.title(loc2)
 pl.xlabel('Age')
 pl.ylabel('Count')
+
+pl.show()

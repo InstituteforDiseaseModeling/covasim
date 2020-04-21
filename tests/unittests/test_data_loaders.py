@@ -3,7 +3,7 @@ import covasim as cv
 
 class TestDataLoaders(unittest.TestCase):
     def test_country_households(self):
-        ch = cv.data.loaders.get_household_sizes()
+        ch = cv.data.get_household_size()
 
         self.assertTrue(isinstance(ch, dict))
         self.assertGreater(len(ch), 5)
