@@ -189,5 +189,5 @@ code to suit your own modeling needs as contemplated under the Creative Commons
 Attribution-Noncommercial-ShareAlike 4.0 License. See the `contributing`_ and `code of conduct`_
 READMEs for more information.
 
-.. _contributing: .CONTRIBUTING.rst
+.. _contributing: CONTRIBUTING.rst
 .. _code of conduct: CODE_OF_CONDUCT.rst
