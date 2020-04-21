@@ -265,7 +265,10 @@ class Scenarios(cvb.ParsObj):
                 figs.append(pl.figure(**fig_args))
                 ax = pl.subplot(111)
             else:
-                ax = pl.subplot(n_rows, n_cols, rk + 1)
+                if rk == 0:
+                    ax = pl.subplot(n_rows, n_cols, rk + 1)
+                else:
+                    ax = pl.subplot(n_rows, n_cols, rk + 1, sharex=ax)
 
             resdata = self.results[reskey]
 
