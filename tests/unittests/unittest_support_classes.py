@@ -20,7 +20,9 @@ class TestProperties:
     class ParameterKeys:
         class SimulationKeys:
             number_agents = 'pop_size'
+            number_contacts = 'contacts'
             population_scaling_factor = 'pop_scale'
+            population_type = 'pop_type'
             initial_infected_count = 'pop_infected'
             start_day = 'start_day'
             number_simulated_days = 'n_days'
@@ -115,14 +117,15 @@ class TestProperties:
         diagnoses_at_timestep = 'diagnoses'
         diagnostics_at_timestep = 'tests'
         diagnostics_cumulative = 'cum_tested'
-        exposed_cumulative = 'cum_exposed'
         exposed_at_timestep = 'n_exposed'
         susceptible_at_timestep = 'n_susceptible'
         infectious_at_timestep = 'n_infectious'
         symptomatic_at_timestep = 'n_symptomatic'
+        symptomatic_cumulative = 'cum_symptomatic'
         recovered_at_timestep = 'new_recoveries'
         recovered_cumulative = 'cum_recoveries'
         infections_at_timestep = 'new_infections'
+        infections_cumulative = 'cum_infections'
         GUESS_doubling_time_at_timestep = 'doubling_time'
         GUESS_r_effective_at_timestep = 'r_eff'
 
@@ -164,7 +167,7 @@ class CovaSimTest(unittest.TestCase):
 
         """
         if not self.simulation_parameters:
-            self.simulation_parameters = parameters.make_pars(set_prognoses=True, prog_by_age=True, use_layers=True)
+            self.simulation_parameters = parameters.make_pars(set_prognoses=True, prog_by_age=True)
         if params_dict:
             self.simulation_parameters.update(params_dict)
         pass
@@ -225,7 +228,7 @@ class CovaSimTest(unittest.TestCase):
         self.set_simulation_parameters(params_dict=params_dict)
 
 
-    def run_sim(self, params_dict=None, write_results_json=False):
+    def run_sim(self, params_dict=None, write_results_json=False, population_type=None):
         if not self.simulation_parameters or params_dict: # If we need one, or have one here
             self.set_simulation_parameters(params_dict=params_dict)
             pass
@@ -237,6 +240,8 @@ class CovaSimTest(unittest.TestCase):
             )
             pass
         self.sim['prognoses'] = self.simulation_prognoses
+        if population_type:
+            self.sim.update_pars(pop_type=population_type)
         self.sim.run(verbose=0)
         self.simulation_result = self.sim.to_json(tostring=False)
         if write_results_json or self.is_debugging:
@@ -445,7 +450,6 @@ class TestSupportTests(CovaSimTest):
         """
         All agents start infected
         """
-        self.is_debugging = True
 
         total_agents = 500
         self.set_everyone_infected(agent_count=total_agents)
@@ -461,7 +465,6 @@ class TestSupportTests(CovaSimTest):
         Verifies that there are lots of infections in
         a short time.
         """
-        self.is_debugging = True
         self.assertIsNone(self.simulation_parameters)
         self.assertIsNone(self.sim)
         self.set_smallpop_hightransmission()

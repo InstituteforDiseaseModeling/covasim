@@ -40,7 +40,7 @@ versionpath = os.path.join(cwd, 'covasim', 'version.py')
 version = runpy.run_path(versionpath)['__version__']
 
 # Get the documentation
-with open(os.path.join(cwd, 'README.md'), "r") as fh:
+with open(os.path.join(cwd, 'README.rst'), "r") as fh:
     long_description = fh.read()
 
 CLASSIFIERS = [
@@ -61,7 +61,7 @@ setup(
     author_email="covid@idmod.org",
     description="COVID-19 agent-based simulator",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     url='http://github.com/institutefordiseasemodeling/covasim',
     keywords=["Covid-19", "coronavirus", "SARS-CoV-2", "stochastic", "agent-based model"],
     platforms=["OS Independent"],

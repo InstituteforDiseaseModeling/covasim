@@ -8,6 +8,7 @@ covasim/cova_seattle/school_analysis
 covasim/cova_seattle/seattle_analysis
 results/
 data/epi_data
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -75,6 +76,7 @@ db.sqlite3-journal
 # Flask stuff:
 instance/
 .webassets-cache
+*.out
 
 # Scrapy stuff:
 .scrapy
@@ -138,3 +140,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Node.js and NPM
+node_modules
+docs/covasim.*
+docs/modules.rst

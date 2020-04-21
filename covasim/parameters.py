@@ -6,17 +6,16 @@ import numpy as np
 import pandas as pd
 
 
-__all__ = ['make_pars', 'set_contacts', 'get_prognoses', 'load_data']
+__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'load_data']
 
 
-def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs):
+def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     '''
     Set parameters for the simulation.
 
     Args:
         Set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
         prog_by_age (bool): whether or not to use age-based severity, mortality etc.
-        use_layers (bool): whether or not to use household, school, etc. contact layers
 
     Returns:
         pars (dict): the parameters of the simulation
@@ -42,30 +41,31 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['rescale_factor']    = 2   # Factor by which we rescale the population
 
     # Basic disease transmission
-    pars['n_imports']    = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta']         = 0.015 # Beta per symptomatic contact; absolute
-    pars['use_layers']   = use_layers # Whether or not to use different contact layers
-    pars['contacts']     = None # The number of contacts per layer
-    pars['beta_layers']  = None # Transmissibility per layer
+    pars['beta']        = 0.015 # Beta per symptomatic contact; absolute
+    pars['contacts']    = None # The number of contacts per layer; set below
+    pars['dynam_layer'] = None # Which layers are dynamic; set below
+    pars['beta_layer']  = None # Transmissibility per layer; set below
+    pars['n_imports']   = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['beta_dist']   = {'dist':'lognormal','par1':1, 'par2':0} # Distribution to draw individual level transmissibility
+    pars['viral_dist']  = {'frac_time':1, 'load_ratio':1} # The time varying viral load (transmissibility)
 
     # Efficacy of protection measures
-    pars['asymp_factor']        = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']         = 0.2 # Multiply beta by this factor for diganosed cases
-    pars['quar_trans_factor']   = {'h': 0.8, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
-    pars['quar_acq_factor']     = 0.2 # Acquisition multiplier on exposure for quarantined individual
-    pars['quar_period']         = 14  # Number of days to quarantine for -- TODO, should this be drawn from distribution, or fixed since it's policy?
+    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
+    pars['diag_factor']  = 0.2 # Multiply beta by this factor for diganosed cases
+    pars['quar_eff']     = None # Quarantine multiplier on transmissibility and susceptibility; set below
+    pars['quar_period']  = 14  # Number of days to quarantine for
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
     pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4, 'par2':1} # Duration from exposed to infectious
     pars['dur']['inf2sym']  = {'dist':'lognormal_int', 'par1':1, 'par2':1} # Duration from infectious to symptomatic
-    pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':1, 'par2':1} # Duration from symptomatic to severe symptoms
-    pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':1, 'par2':1} # Duration from severe symptoms to requiring ICU
+    pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':3, 'par2':2} # Duration from symptomatic to severe symptoms
+    pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':3, 'par2':2} # Duration from severe symptoms to requiring ICU
 
     # Duration parameters: time for disease recovery
     pars['dur']['asym2rec'] = {'dist':'lognormal_int', 'par1':8,  'par2':2} # Duration for asymptomatics to recover
     pars['dur']['mild2rec'] = {'dist':'lognormal_int', 'par1':8,  'par2':2} # Duration from mild symptoms to recovered
-    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':11, 'par2':3} # Duration from severe symptoms to recovered - leads to mean total disease time of
+    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':11, 'par2':3} # Duration from severe symptoms to recovered
     pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':17, 'par2':3} # Duration from critical symptoms to recovered
     pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':7,  'par2':3} # Duration from critical symptoms to death
 
@@ -75,11 +75,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
     pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
     pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
-    pars['prog_by_age']     = prog_by_age
+    pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
     pars['prognoses']       = None # Populate this later
 
     # Events and interventions
-    pars['interventions'] = []  #: List of Intervention instances
+    pars['interventions'] = []   # List of Intervention instances
     pars['interv_func']   = None # Custom intervention function
     pars['timelimit']     = 3600 # Time limit for a simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
@@ -89,27 +89,44 @@ def make_pars(set_prognoses=False, prog_by_age=True, use_layers=False, **kwargs)
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
-    set_contacts(pars)
-    if set_prognoses:
+    reset_layer_pars(pars)
+    if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age']) # Default to age-specific prognoses
 
     return pars
 
 
-def set_contacts(pars):
-    '''r
+def reset_layer_pars(pars, layer_keys=None, force=False):
+    '''
     Small helper function to set numbers of contacts and beta based on whether
-    or not to use layers. Typically not called by the user.
+    or not to use layers.
 
     Args:
         pars (dict): the parameters dictionary
+        pop_keys (list): the known keys of the population, if available
+        force (bool): reset the pars even if they already exist
     '''
-    if pars['use_layers']:
-        pars['contacts']    = {'h': 4,   's': 22,  'w': 20,  'c': 20} # Number of contacts per person per day, estimated
-        pars['beta_layers'] = {'h': 1.6, 's': 1.0, 'w': 1.0, 'c': 0.3} # Per-population beta weights; relative
-    else:
-        pars['contacts']    = {'a': 20}  # Number of contacts per person per day -- 'a' for 'all'
-        pars['beta_layers'] = {'a': 1.0} # Per-population beta weights; relative
+    d_contacts    = 20  # Default number of contacts
+    d_dynam_layer = 0   # Do not use dynamic layers by default
+    d_beta_layer  = 1.0 # No change in beta
+    d_quar_eff    = 0.3 # Assumed quarantine effectiveness
+
+    if layer_keys is not None: # Create based on known population keys
+        pars['contacts']    = {lkey:d_contacts    for lkey in layer_keys}
+        pars['dynam_layer'] = {lkey:d_dynam_layer for lkey in layer_keys}
+        pars['beta_layer']  = {lkey:d_beta_layer  for lkey in layer_keys}
+        pars['quar_eff']    = {lkey:d_quar_eff    for lkey in layer_keys}
+    else: # Guess based on population type
+        if pars['pop_type'] == 'random':
+            if pars.get('contacts',    None) is None or force: pars['contacts']    = {'a': d_contacts}    # Number of contacts per person per day -- 'a' for 'all'
+            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = {'a': d_dynam_layer} # Which layers are dynamic
+            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = {'a': d_beta_layer}  # Per-population beta weights; relative
+            if pars.get('quar_eff',    None) is None or force: pars['quar_eff']    = {'a': d_quar_eff}    # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+        else:
+            if pars.get('contacts',    None) is None or force: pars['contacts']    = {'h': 4,   's': 20,  'w': 20,  'c': 20}   # Number of contacts per person per day, estimated
+            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = {'h': 0,   's': 0,   'w': 0,   'c': 0}    # Which layers are dynamic -- none by defaul
+            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = {'h': 1.2, 's': 0.6, 'w': 0.6, 'c': 0.2}  # Per-population beta weights; relative
+            if pars.get('quar_eff',    None) is None or force: pars['quar_eff']    = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor
     return
 
 
@@ -208,6 +225,4 @@ def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
     data.set_index('date', inplace=True)
 
     return data
-
-
 

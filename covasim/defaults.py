@@ -6,9 +6,77 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['result_stocks', 'result_flows', 'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots', 'default_scenario']
+__all__ = ['default_precision', 'result_float', 'default_float', 'default_int',
+           'PeopleMeta', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
+           'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots']
+
+#%% Specify what data types to use
+
+default_precision = 32 # Use this by default for speed and memory efficiency
+result_float = np.float64 # Always use float64 for results, for simplicity
+if default_precision == 32:
+    default_float = np.float32
+    default_int   = np.int32
+elif default_precision == 64:
+    default_float = np.float64
+    default_int   = np.int64
+else:
+    raise NotImplementedError
 
 
+#%% Define all properties of people
+
+class PeopleMeta(sc.prettyobj):
+    ''' For storing all the keys relating to a person and people '''
+
+    # Set the properties of a persocn
+    person = [
+        'uid',         # Any (int or str, usually)
+        'age',         # Float
+        'sex',         # Int
+        'symp_prob',   # Float
+        'severe_prob', # Float
+        'crit_prob',   # Float
+        'death_prob',  # Float
+        'rel_trans',   # Float
+        'rel_sus',     # Float
+    ]
+
+    # Set the states that a person can be in: these are all booleans per person -- used in people.py
+    states = [
+        'susceptible',
+        'exposed',
+        'infectious',
+        'symptomatic',
+        'severe',
+        'critical',
+        'tested',
+        'diagnosed',
+        'recovered',
+        'dead',
+        'known_contact',
+        'quarantined',
+    ]
+
+    # Set the dates various events took place: these are floats per person -- used in people.py
+    dates = [f'date_{state}' for state in states] # Convert each state into a date
+    dates.append('date_end_quarantine') # This one is not like the others...
+
+    # Duration of different states: these are floats per person -- used in people.py
+    durs = [
+        'dur_exp2inf',
+        'dur_inf2sym',
+        'dur_sym2sev',
+        'dur_sev2crit',
+        'dur_disease',
+    ]
+
+    all_states = person + states + dates + durs
+
+
+#%% Define other defaults
+
+# A subset of the above states are used for results
 result_stocks = {
         'susceptible': 'Number susceptible',
         'exposed':     'Number exposed',
@@ -22,6 +90,7 @@ result_stocks = {
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix
 result_flows = {'infections':  'infections',
+                'infectious':  'infectious',
                 'tests':       'tests',
                 'diagnoses':   'diagnoses',
                 'recoveries':  'recoveries',
@@ -31,6 +100,10 @@ result_flows = {'infections':  'infections',
                 'deaths':      'deaths',
                 'quarantined': 'quarantined people',
 }
+
+# Define these here as well
+new_result_flows = [f'new_{key}' for key in result_flows.keys()]
+cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([
@@ -82,23 +155,17 @@ default_sim_plots = sc.odict({
             'cum_infections',
             'cum_diagnoses',
             'cum_recoveries',
-            # 'cum_tests',
-            # 'n_susceptible',
-            # 'n_infectious',
         ],
         'Daily counts': [
             'new_infections',
             'new_diagnoses',
             'new_recoveries',
             'new_deaths',
-            # 'tests',
         ],
         'Health outcomes': [
             'cum_severe',
             'cum_critical',
             'cum_deaths',
-            # 'n_severe',
-            # 'n_critical',
         ]
 })
 
@@ -109,7 +176,3 @@ default_scen_plots = [
             'n_infectious',
             'n_severe',
 ]
-
-
-# The minimal scenario to run -- used in run.py
-default_scenario = {'baseline':{'name':'Baseline', 'pars':{}}}

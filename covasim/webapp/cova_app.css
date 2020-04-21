@@ -1,5 +1,6 @@
 body {
-    font-family: 'Roboto', Helvetica, Arial, sans-serif;
+    font-family: 'Quicksand', 'Roboto', Helvetica, Arial, sans-serif;
+    background: #eee;
 }
 html, body {
     height: 100%;
@@ -20,6 +21,21 @@ html, body {
     grid-area: header;
 }
 
+.navbar {
+    background-color: #111313 !important;
+}
+
+.nav-text {
+    color: rgba(255,255,255,0.8) !important;
+}
+.nav-text:hover {
+    color: rgba(255,255,255,1.0) !important;
+}
+
+.nav-head {
+    padding-top: 10px !important;
+}
+
 .navbar-brand {
     font-size: 2.2rem;
 }
@@ -32,9 +48,24 @@ html, body {
     margin: 1em 0;
 }
 
+.sidebar {
+    background-color: #F8F9FA !important;
+}
+
+.parheading {
+    background-color:#000;
+    color: rgba(255,255,255,0.8); !important;
+}
+.parheading:hover {
+    color: rgba(255,255,255,1.0); !important;
+}
+
 #parameters {
     width: 47rem;
     min-width: 26rem;
+    top: 4.9rem;
+    bottom: 3.5rem;
+    height: auto !important;
 }
 
 #resize-handle {
@@ -96,6 +127,13 @@ header.row, footer.row {
     text-align: left;
     margin: -.75rem -1.25rem;
     width: calc(100% + 2.5rem);
+}
+.tabs .card-header {
+    background-color: transparent;
+}
+
+.w-fit {
+    width: fit-content !important;
 }
 
 /* Tooltip container */
