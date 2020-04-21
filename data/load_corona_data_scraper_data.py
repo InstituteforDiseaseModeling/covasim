@@ -3,7 +3,7 @@ This script creates a single file containing all the scraped
 data from the Corona Data Scraper.
 '''
 
-from data.scraper import Scraper
+from cova_epi_scraper import Scraper
 
 class CoronaDataScraperScraper(Scraper):
     pass

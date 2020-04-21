@@ -4,7 +4,7 @@ data from the Covid Data Project Data Scraper.
 https://covidtracking.com
 '''
 
-from data.scraper import Scraper
+from cova_epi_scraper import Scraper
 import datetime as dt
 
 def covid_tracking_date_to_date(d):
