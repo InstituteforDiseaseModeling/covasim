@@ -1,78 +1,108 @@
 '''
 This script creates a single file containing all the scraped 
-data from the COVID tracking project.
+data from the Covid Data Project Data Scraper.
+https://covidtracking.com
 '''
 
-import os
-import sys
-import logging
+from cova_epi_scraper import Scraper
 import datetime as dt
-import pandas as pd
-import sciris as sc
 
-subfolder = 'epi_data'
-outputfile = 'covid-tracking-project-data.csv'
-
-log = logging.getLogger("Covid Tracking Project Loader")
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
-
-# Read in the Corona Data Scraper Data into a dataframe.
-
-log.info("Loading states timeseries data from covidtracking.com")
-df_states = pd.read_csv("https://covidtracking.com/api/v1/states/daily.csv")
-df_states['name'] = df_states.state
-df_states.drop(['state'], inplace=True, axis=1)
-log.info("Loading US timeseries data from covidtracking.com")
-df_us = pd.read_csv("https://covidtracking.com/api/v1/us/daily.csv")
-df_us['name'] = 'US'
-df_us.drop(['states'], inplace=True, axis=1)
-
-# Put them together
-df = pd.concat([df_states, df_us], ignore_index=True, sort=False)
-
-# Convert integer date to a datetime date
 def covid_tracking_date_to_date(d):
     return dt.date((d // 10000), ((d % 1000) // 100), (d % 1000) % 100)
 
-df.date = df.date.apply(covid_tracking_date_to_date)
+class CovidTrackingProjectScraper(Scraper):
+    def create_date(self):
+        self.df['date'] = self.df.date.apply(covid_tracking_date_to_date)
 
-# Sort by name and date.
-df = df.sort_values(['name', 'date'])
 
-# Each data set has a unique name. Let's create groups.
-g = df.groupby('name')
+class CovidUSTrackingProjectScraper(CovidTrackingProjectScraper):
+    def create_key(self):
+        self.df['key'] = 'US'
 
-# The parameter 'day' is the number of days since the first
-# day of data collection for the group.
-df['day'] = g['date'].transform(lambda x: (x - min(x))).apply(lambda x: x.days)
 
-# We'll 'rename' some of the columns to be consistent
-# with the parameters file.
+## Set up parameters 
+pars_state = dict()
+pars_state['title'] = "Covid Tracking Project Scraper for US states"
+pars_state['load_path'] = "https://covidtracking.com/api/v1/states/daily.csv"
 
-df['new_positives'] = df.positiveIncrease
-df['new_negatives'] = df.negativeIncrease
-df['new_tests'] = df.totalTestResultsIncrease
-df['new_death'] = df.deathIncrease
+pars_state['output_folder'] = "epi_data/covid-tracking"
 
-df.drop(['positiveIncrease', 'positiveIncrease',
-         'totalTestResultsIncrease', 'deathIncrease'], inplace=True, axis=1)
+pars_state['renames'] = dict()
+pars_state['renames']['state'] = "key"
+pars_state['renames']['positiveIncrease'] = "new_positives"
+pars_state['renames']['negativeIncrease'] = "new_negatives"
+pars_state['renames']['totalTestResultsIncrease'] = "new_tests"
+pars_state['renames']['hospitalizedIncrease'] = "new_hospitalized"
+pars_state['renames']['deathIncrease'] = "new_death"
+pars_state['renames']['inIcuCumulative'] = "cum_in_icu"
+pars_state['renames']['hospitalizedCumulative'] = "cum_hospitalized"
+pars_state['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
 
-# The COVID Project contains cumulative totals
-# for ICU and ventilator data. We get the daily
-# adjusted values and drop the no longer needed
-# columns
+pars_state['cumulative_fields'] = dict()
+pars_state['cumulative_fields']['cum_in_icu'] = "num_icu"
+pars_state['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
 
-df['icu_lagged'] = g.inIcuCurrently.shift(1)
-df['vent_lagged'] = g.onVentilatorCurrently.shift(1)
-df['new_icu'] = df.inIcuCurrently.sub(df.icu_lagged).fillna(df.inIcuCurrently)
-df['new_vent'] = df.onVentilatorCurrently.sub(
-    df.vent_lagged).fillna(df.onVentilatorCurrently)
-df.drop(['icu_lagged', 'vent_lagged'], inplace=True, axis=1)
 
-# And save it to the data directory.
-here = sc.thisdir(__file__)
-data_home = os.path.join(here, subfolder)
-filepath = sc.makefilepath(filename=outputfile, folder=data_home)
-log.info(f"Saving to {filepath}")
-df.to_csv(filepath)
-log.info(f"Script complete")
+pars_state['fields_to_drop'] = [
+    "hash",
+    "dateChecked",
+    "fips",
+    "totalTestResults",
+    "posNeg",
+    "positive",
+    "negative",
+    "pending",
+    "hospitalizedCurrently",
+    "inIcuCurrently",
+    "onVentilatorCurrently",
+    "recovered",
+    "hospitalized",
+    "total"
+]
+
+# Set up US parameters
+parameter_us = dict()
+parameter_us['title'] = "Covid Tracking Project Scraper for US states"
+parameter_us['load_path'] = "https://covidtracking.com/api/v1/us/daily.csv"
+
+pars_state['output_folder'] = "epi_data/covid-tracking"
+
+parameter_us['renames'] = dict()
+parameter_us['renames']['positiveIncrease'] = "new_positives"
+parameter_us['renames']['negativeIncrease'] = "new_negatives"
+parameter_us['renames']['totalTestResultsIncrease'] = "new_tests"
+parameter_us['renames']['hospitalizedIncrease'] = "new_hospitalized"
+parameter_us['renames']['deathIncrease'] = "new_death"
+parameter_us['renames']['inIcuCumulative'] = "cum_in_icu"
+parameter_us['renames']['hospitalizedCumulative'] = "cum_hospitalized"
+parameter_us['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
+
+parameter_us['cumulative_fields'] = dict()
+parameter_us['cumulative_fields']['cum_in_icu'] = "num_icu"
+parameter_us['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
+
+
+parameter_us['fields_to_drop'] = [
+    "hash",
+    "dateChecked",
+    "fips",
+    "totalTestResults",
+    "posNeg",
+    "positive",
+    "negative",
+    "pending",
+    "hospitalizedCurrently",
+    "inIcuCurrently",
+    "onVentilatorCurrently",
+    "recovered",
+    "hospitalized",
+    "states",
+    "total"
+]
+
+# Scrape states
+CovidTrackingProjectScraper(pars_state).scrape()
+# Scrape US
+CovidUSTrackingProjectScraper(parameter_us).scrape()
+
+
