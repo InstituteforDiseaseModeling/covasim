@@ -20,12 +20,12 @@ sim2.initialize()
 sim3.initialize()
 sim4.initialize()
 
-ages1 = sim1.people.extract('age')
-ages2 = sim2.people.extract('age')
-ages3 = sim3.people.extract('age')
-ages4 = sim4.people.extract('age')
+ages1 = sim1.people.age
+ages2 = sim2.people.age
+ages3 = sim3.people.age
+ages4 = sim4.people.age
 
-n = 100
+n = 20
 fig = pl.figure()
 
 pl.subplot(2,2,1)

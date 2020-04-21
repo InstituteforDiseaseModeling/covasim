@@ -120,10 +120,9 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
                     sim['contacts']['h'] = household_size
                 else:
                     keystr = ', '.join(list(sim['contacts'].keys()))
-
                     print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
             except ValueError as E:
-                if not location.startswith('usa-'): # We know these don't exist
+                if sim['verbose']>=2: # These don't exist for many locations, so skip the warning by default
                     print(f'Could not load household size data for requested location "{location}" ({str(E)}), using default')
 
     # Handle sexes and ages
