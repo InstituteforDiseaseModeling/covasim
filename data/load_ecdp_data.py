@@ -8,21 +8,19 @@ class ECDPScraper(Scraper):
         self.df["date"] = pd.to_datetime(self.df[["year", "month", "day"]])
 
 
-parameters = dict()
-parameters['title'] = 'European Centre for Disease Prevention and Control Covid-19 Data Scraper'
-parameters['load_path'] = 'https://opendata.ecdc.europa.eu/covid19/casedistribution/csv'
-# parameters['load_path'] =  '/Users/willf/github/covasim/data/epi_data/input/ecdp-input.csv'
+pars = dict()
+pars['title'] = 'European Centre for Disease Prevention and Control Covid-19 Data Scraper'
+pars['load_path'] = 'https://opendata.ecdc.europa.eu/covid19/casedistribution/csv'
 
-parameters['output_folder'] = 'epi_data'
-parameters['output_folder'] = 'epi_data/european-centre-for-disease-prevention-and-control'
+pars['output_folder'] = 'epi_data/ecdp'
 
-parameters['renames'] = dict()
-parameters['renames']['countriesAndTerritories'] = 'key'
-parameters['renames']['cases'] = 'new_positives'
-parameters['renames']['deaths'] = 'new_death'
-parameters['renames']['popData2018'] = 'population'
+pars['renames'] = dict()
+pars['renames']['countriesAndTerritories'] = 'key'
+pars['renames']['cases'] = 'new_positives'
+pars['renames']['deaths'] = 'new_death'
+pars['renames']['popData2018'] = 'population'
 
-parameters['fields_to_drop'] = [
+pars['fields_to_drop'] = [
     'dateRep',
     'month',
     'year',
@@ -30,5 +28,5 @@ parameters['fields_to_drop'] = [
     'countryterritoryCode'
 ]
 
-ECDPScraper(parameters).scrape()
+ECDPScraper(pars).scrape()
 

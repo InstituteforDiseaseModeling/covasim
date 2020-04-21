@@ -10,34 +10,33 @@ class CoronaDataScraperScraper(Scraper):
 
 # Set up parameters
 
-parameters = dict()
-parameters['title'] = 'Corona Data Scraper Project Scraper'
-parameters['load_path'] = 'https://coronadatascraper.com/timeseries.csv'
-# parameters['load_path'] = '/Users/willf/github/covasim/data/epi_data/input/cds-input.csv'
+pars = dict()
+pars['title'] = 'Corona Data Scraper Project Scraper'
+pars['load_path'] = 'https://coronadatascraper.com/timeseries.csv'
 
-parameters['output_folder'] = 'epi_data/corona-data-scraper-project'
+pars['output_folder'] = 'epi_data/corona-data'
 
-parameters['renames'] = dict()
-parameters['renames']['name'] = 'key'
-parameters['renames']['cases'] = 'cum_positives'
-parameters['renames']['deaths'] = 'cum_death'
-parameters['renames']['tested'] = 'cum_tests'
-parameters['renames']['hospitalized'] = 'cum_hospitalized'
-parameters['renames']['discharged'] = 'cum_discharged'
-parameters['renames']['recovered'] = 'cum_recovered'
-parameters['renames']['active'] = 'cum_active'
+pars['renames'] = dict()
+pars['renames']['name'] = 'key'
+pars['renames']['cases'] = 'cum_positives'
+pars['renames']['deaths'] = 'cum_death'
+pars['renames']['tested'] = 'cum_tests'
+pars['renames']['hospitalized'] = 'cum_hospitalized'
+pars['renames']['discharged'] = 'cum_discharged'
+pars['renames']['recovered'] = 'cum_recovered'
+pars['renames']['active'] = 'cum_active'
 
-parameters['cumulative_fields'] = dict()
-parameters['cumulative_fields']['cum_positives'] = 'positives'
-parameters['cumulative_fields']['cum_death'] = 'death'
-parameters['cumulative_fields']['cum_tests'] = 'tests'
-parameters['cumulative_fields']['cum_hospitalized'] = 'hospitalized'
-parameters['cumulative_fields']['cum_discharged'] = 'discharged'
-parameters['cumulative_fields']['cum_recovered'] = 'recovered'
-parameters['cumulative_fields']['cum_active'] = 'active'
+pars['cumulative_fields'] = dict()
+pars['cumulative_fields']['cum_positives'] = 'positives'
+pars['cumulative_fields']['cum_death'] = 'death'
+pars['cumulative_fields']['cum_tests'] = 'tests'
+pars['cumulative_fields']['cum_hospitalized'] = 'hospitalized'
+pars['cumulative_fields']['cum_discharged'] = 'discharged'
+pars['cumulative_fields']['cum_recovered'] = 'recovered'
+pars['cumulative_fields']['cum_active'] = 'active'
 
 
-parameters['fields_to_drop'] = [
+pars['fields_to_drop'] = [
     'growthFactor',
     'city',
     'county',
@@ -50,4 +49,4 @@ parameters['fields_to_drop'] = [
     'level'
 ]
 
-CoronaDataScraperScraper(parameters).scrape()
+CoronaDataScraperScraper(pars).scrape()

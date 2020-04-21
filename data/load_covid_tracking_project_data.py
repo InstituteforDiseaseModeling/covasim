@@ -21,30 +21,29 @@ class CovidUSTrackingProjectScraper(CovidTrackingProjectScraper):
 
 
 ## Set up parameters 
-parameters_state = dict()
-parameters_state['title'] = "Covid Tracking Project Scraper for US states"
-parameters_state['load_path'] = "https://covidtracking.com/api/v1/states/daily.csv"
-# parameters_state['load_path'] = "/Users/willf/github/covasim/data/epi_data/input/ctp-state-input.csv"
+pars_state = dict()
+pars_state['title'] = "Covid Tracking Project Scraper for US states"
+pars_state['load_path'] = "https://covidtracking.com/api/v1/states/daily.csv"
 
-parameters_state['output_folder'] = "epi_data/covid-tracking-project"
+pars_state['output_folder'] = "epi_data/covid-tracking"
 
-parameters_state['renames'] = dict()
-parameters_state['renames']['state'] = "key"
-parameters_state['renames']['positiveIncrease'] = "new_positives"
-parameters_state['renames']['negativeIncrease'] = "new_negatives"
-parameters_state['renames']['totalTestResultsIncrease'] = "new_tests"
-parameters_state['renames']['hospitalizedIncrease'] = "new_hospitalized"
-parameters_state['renames']['deathIncrease'] = "new_death"
-parameters_state['renames']['inIcuCumulative'] = "cum_in_icu"
-parameters_state['renames']['hospitalizedCumulative'] = "cum_hospitalized"
-parameters_state['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
+pars_state['renames'] = dict()
+pars_state['renames']['state'] = "key"
+pars_state['renames']['positiveIncrease'] = "new_positives"
+pars_state['renames']['negativeIncrease'] = "new_negatives"
+pars_state['renames']['totalTestResultsIncrease'] = "new_tests"
+pars_state['renames']['hospitalizedIncrease'] = "new_hospitalized"
+pars_state['renames']['deathIncrease'] = "new_death"
+pars_state['renames']['inIcuCumulative'] = "cum_in_icu"
+pars_state['renames']['hospitalizedCumulative'] = "cum_hospitalized"
+pars_state['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
 
-parameters_state['cumulative_fields'] = dict()
-parameters_state['cumulative_fields']['cum_in_icu'] = "num_icu"
-parameters_state['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
+pars_state['cumulative_fields'] = dict()
+pars_state['cumulative_fields']['cum_in_icu'] = "num_icu"
+pars_state['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
 
 
-parameters_state['fields_to_drop'] = [
+pars_state['fields_to_drop'] = [
     "hash",
     "dateChecked",
     "fips",
@@ -65,9 +64,8 @@ parameters_state['fields_to_drop'] = [
 parameter_us = dict()
 parameter_us['title'] = "Covid Tracking Project Scraper for US states"
 parameter_us['load_path'] = "https://covidtracking.com/api/v1/us/daily.csv"
-parameter_us['load_path'] = "/Users/willf/github/covasim/data/epi_data/input/ctp-us-input.csv"
 
-parameters_state['output_folder'] = "epi_data/covid-tracking-project"
+pars_state['output_folder'] = "epi_data/covid-tracking"
 
 parameter_us['renames'] = dict()
 parameter_us['renames']['positiveIncrease'] = "new_positives"
@@ -103,7 +101,7 @@ parameter_us['fields_to_drop'] = [
 ]
 
 # Scrape states
-CovidTrackingProjectScraper(parameters_state).scrape()
+CovidTrackingProjectScraper(pars_state).scrape()
 # Scrape US
 CovidUSTrackingProjectScraper(parameter_us).scrape()
 

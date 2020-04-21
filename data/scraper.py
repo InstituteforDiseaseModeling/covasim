@@ -136,7 +136,7 @@ class Scraper(sc.prettyobj):
 
         for g in self.grouping:
             key_value = g[0]
-            filename = f'{sc.sanitizefilename(key_value, platform="universal")}.csv'
+            filename = f'{sc.sanitizefilename(key_value)}.csv'
             filepath = sc.makefilepath(filename=filename, folder=data_home)
             self.log.info(f'Creating {filepath}')
             mini_df = self.df[self.df.key == key_value]
