@@ -39,8 +39,8 @@ def train(beta:float=0.015,
     sim.plot(do_show=False, 
              do_save=True, 
              fig_path=sc.makefilepath(folder=wandb.run.dir, filename=f'{run_id}.png'))
-    wandb.save(datafile)
-    sc.saveobj(folder=wandb.run.dir, filename=f'pars_{run_id}.pkl', f)
+    #wandb.save(datafile)
+    sc.saveobj(sim.pars, folder=wandb.run.dir, filename=f'pars_{run_id}.pkl')
     
 if __name__ == '__main__':
     fire.Fire(train)

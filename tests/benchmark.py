@@ -8,12 +8,14 @@ sim['n_days'] = 180
 to_profile = 'step' # Must be one of the options listed below...currently only 1
 
 func_options = {
-    'person':      cv.Person.__init__,
-    'make_people': cv.make_people,
-    'init_people': sim.init_people,
-    'initialize':  sim.initialize,
-    'run':         sim.run,
-    'step':        sim.step,
+    'make_contacts': cv.make_random_contacts,
+    'make_randpop':  cv.make_randpop,
+    'person':        cv.Person.__init__,
+    'make_people':   cv.make_people,
+    'init_people':   sim.init_people,
+    'initialize':    sim.initialize,
+    'run':           sim.run,
+    'step':          sim.step,
 }
 
 sc.profile(run=sim.run, follow=func_options[to_profile])

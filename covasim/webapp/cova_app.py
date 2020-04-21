@@ -2,16 +2,18 @@
 Sciris app to run the web interface.
 '''
 
+#%% Housekeeping
+
 # Key imports
-import numpy as np
-import sciris as sc
-import covasim as cv
 import os
 import sys
 import json
 import base64
 import tempfile
 import traceback
+import numpy as np
+import sciris as sc
+import covasim as cv
 from pathlib import Path
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
@@ -24,32 +26,37 @@ import scirisweb as sw
 app = sw.ScirisApp(__name__, name="Covasim")
 flask_app = app.flask_app
 
-#%% Define the API
 
 # Set defaults
-max_pop  = 10e3 # Maximum population size
-max_days = 180  # Maximum number of days
-max_time = 10   # Maximum of seconds for a run
-die      = False # Whether or not to raise exceptions instead of continuing
+max_pop  = 20e3   # Maximum population size
+max_days = 180    # Maximum number of days
+max_time = 10     # Maximum of seconds for a run
+die      = False  # Whether or not to raise exceptions instead of continuing
+bgcolor  = '#eee' # Background color for app
+plotbg   = '#dde'
 
 
-# Define a get API for readiness in kubernetes
+#%% Define the API helper functions
+
 @app.route('/healthcheck')
 def healthcheck():
     ''' Check that the server is up '''
     return sw.robustjsonify({'status':'ok'})
 
+
 def log_err(message, ex):
     ''' Compile error messages to send to the frontend '''
     tex = traceback.TracebackException.from_exception(ex)
-    print(f"{message}\n", )
-    return {
+    output = {
         "message": message,
         "exception": ''.join(traceback.format_exception(tex.exc_type, tex, tex.exc_traceback))
     }
+    sc.pp(output)
+    return output
+
 
 @app.register_RPC()
-def get_defaults(region=None, merge=False):
+def get_defaults(region=None, merge=False, die=die):
     ''' Get parameter defaults '''
 
     if region is None:
@@ -58,42 +65,21 @@ def get_defaults(region=None, merge=False):
     regions = {
         'pop_scale': {
             'Example': 1,
-            # 'Seattle': 25,
-            # 'Wuhan': 200,
         },
         'pop_size': {
-            'Example': 2000,
-            # 'Seattle': 10000,
-            # 'Wuhan': 1,
+            'Example': 10000,
         },
-        # 'n_days': {
-        #     'Example': 60,
-        #     # 'Seattle': 45,
-        #     # 'Wuhan': 90,
-        # },
         'pop_infected': {
             'Example': 100,
-            # 'Seattle': 4,
-            # 'Wuhan': 10,
         },
-        # 'web_int_day': {
-        #     'Example': 25,
-        #     # 'Seattle': 0,
-        #     # 'Wuhan': 1,
-        # },
-        # 'web_int_eff': {
-        #     'Example': 0.8,
-        #     # 'Seattle': 0.0,
-        #     # 'Wuhan': 0.9,
-        # },
     }
 
     sim_pars = {}
-    sim_pars['pop_scale']    = dict(best=1,    min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
-    sim_pars['pop_size']     = dict(best=5000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
-    sim_pars['pop_infected'] = dict(best=10,   min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
-    sim_pars['rand_seed']    = dict(best=0,    min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
-    sim_pars['n_days']       = dict(best=90,   min=1, max=max_days, name="Simulation Duration",        tip='Total duration (in days) of the simulation')
+    sim_pars['pop_scale']    = dict(best=1,     min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
+    sim_pars['pop_size']     = dict(best=10000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
+    sim_pars['pop_infected'] = dict(best=10,    min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
+    sim_pars['rand_seed']    = dict(best=0,     min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
+    sim_pars['n_days']       = dict(best=90,    min=1, max=max_days, name="Simulation Duration",        tip='Total duration (in days) of the simulation')
 
     epi_pars = {}
     epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
@@ -114,49 +100,13 @@ def get_defaults(region=None, merge=False):
 
     return output
 
-def map_social_distance(scenario, web_pars):
-    '''map social distance to intervention'''
-    interventions = []
-    for timeline in scenario:
-        start = timeline['start']
-        end = timeline['end']
-        level = timeline['level'] # aggressive, moderate, mild
-
-    web_pars['interventions'] = None
-
-def map_school_closures(scenario, web_pars):
-    '''map social distance to intervention'''
-    interventions = []
-    for timeline in scenario:
-        start = timeline['start']
-        end = timeline['end']
-
-    web_pars['interventions'] = None
-
-def map_symptomatic_testing(scenario, web_pars):
-    '''map social distance to intervention'''
-    interventions = []
-    for timeline in scenario:
-        start = timeline['start']
-        end = timeline['end']
-        level = timeline['level'] # 60, 90
-
-    web_pars['interventions'] = None
-
-def map_contact_tracing(scenario, web_pars):
-    '''map social distance to intervention'''
-    interventions = []
-    for timeline in scenario:
-        start = timeline['start']
-        end = timeline['end']
-
-    web_pars['interventions'] = None
 
 @app.register_RPC()
 def get_version():
     ''' Get the version '''
     output = f'Version {cv.__version__} ({cv.__versiondate__})'
     return output
+
 
 @app.register_RPC()
 def get_licenses():
@@ -170,6 +120,7 @@ def get_licenses():
         'notice': notice
     }
 
+
 @app.register_RPC(call_type='upload')
 def upload_pars(fname):
     parameters = sc.loadjson(fname)
@@ -178,6 +129,7 @@ def upload_pars(fname):
     if  'sim_pars' not in parameters or 'epi_pars' not in parameters:
         raise KeyError(f'Parameters file must have keys "sim_pars" and "epi_pars", not {parameters.keys()}')
     return parameters
+
 
 @app.register_RPC(call_type='upload')
 def upload_file(file):
@@ -190,11 +142,12 @@ def upload_file(file):
         fd.close()
     return path
 
+
 @app.register_RPC()
-def get_gantt(intervention_pars=None, intervention_config=None):
+def get_gantt(int_pars=None, intervention_config=None):
     df = []
     response = {'id': 'test'}
-    for key,scenario in intervention_pars.items():
+    for key,scenario in int_pars.items():
         for timeline in scenario:
             task = intervention_config[key]['formTitle']
             level = task + ' ' + str(timeline.get('level', ''))
@@ -207,8 +160,71 @@ def get_gantt(intervention_pars=None, intervention_config=None):
 
     return response
 
+
+#%% Define the core API
+
+def parse_interventions(int_pars):
+    '''
+    Parse interventions. Format:
+
+    int_pars = {
+        'social_distance': [
+            {'start': 1,  'end': 19, 'level': 'aggressive'},
+            {'start': 20, 'end': 30, 'level': 'mild'},
+            ],
+        'school_closures': [
+            {'start': 12, 'end': 14}
+            ],
+        'symptomatic_testing': [
+            {'start': 8, 'end': 25, 'level': 60}
+            ]
+        }
+    '''
+    intervs = []
+
+    if int_pars is not None:
+        masterlist = []
+        for ikey,intervlist in int_pars.items():
+            for iconfig in intervlist:
+                iconfig['ikey'] = ikey
+                masterlist.append(dict(iconfig))
+
+        for iconfig in masterlist:
+            ikey  = iconfig['ikey']
+            start = iconfig['start']
+            end   = iconfig['end']
+            if ikey == 'social_distance':
+                level = iconfig['level']
+                mapping = {
+                    'mild': 0.8,
+                    'moderate': 0.5,
+                    'aggressive': 0.2,
+                    }
+                change = mapping[level]
+                interv = cv.change_beta(days=[start, end], changes=[change, 1.0])
+            elif ikey == 'school_closures':
+                change = 0.7
+                interv = cv.change_beta(days=[start, end], changes=[change, 1.0], layers='a')
+            elif ikey == 'symptomatic_testing':
+                level = iconfig['level']
+                level = float(level)/100
+                asymp_prob = 0.0
+                delay = 0.0
+                interv = cv.test_prob(start_day=start, end_day=end, symp_prob=level, asymp_prob=asymp_prob, test_delay=delay)
+            elif ikey == 'contact_tracing':
+                trace_prob = {'a':1.0}
+                trace_time = {'a':0.0}
+                interv = cv.contact_tracing(start_day=start, end_day=end, trace_probs=trace_prob, trace_time=trace_time)
+            else:
+                raise NotImplementedError
+
+            intervs.append(interv)
+
+    return intervs
+
+
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True):
+def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True, die=die):
     ''' Create, run, and plot everything '''
     errs = []
     try:
@@ -254,19 +270,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
         web_pars['n_days'] = n_days
 
         # Add the intervention
-        web_pars['interventions'] = []
-
-        switcher = {
-            'social_distance': map_social_distance,
-            'school_closures': map_school_closures,
-            'symptomatic_testing': map_symptomatic_testing,
-            'contact_tracing': map_contact_tracing
-        }
-        if intervention_pars is not None:
-            for key,scenario in intervention_pars.items():
-                func = switcher.get(key)
-                func(scenario, web_pars)
-
+        web_pars['interventions'] = parse_interventions(int_pars)
 
         # Handle CFR -- ignore symptoms and set to 1
         web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
@@ -309,70 +313,20 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     # Core plotting
     graphs = []
     try:
-        to_plot = sc.dcp(cv.default_sim_plots)
-        for p,title,keylabels in to_plot.enumitems():
-            fig = go.Figure()
-            for key in keylabels:
-                label = sim.results[key].name
-                this_color = sim.results[key].color
-                y = sim.results[key][:]
-                fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
-                if sim.data is not None and key in sim.data:
-                    data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
-                    print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
-                    ydata = sim.data[key]
-                    fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
-
-            if sim['interventions']:
-                interv_day = sim['interventions'][0].days[0]
-                if interv_day > 0 and interv_day < sim['n_days']:
-                    fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                    fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
-
-            fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
-
-            output = {'json': fig.to_json(), 'id': str(sc.uuid())}
-            d = json.loads(output['json'])
-            d['config'] = {'responsive': True}
-            output['json'] = json.dumps(d)
-            graphs.append(output)
-
-        graphs.append(plot_people(sim))
-
+        graphs += main_plots(sim)
+        graphs += plot_people(sim)
         if show_animation:
-            graphs.append(animate_people(sim))
-
+            graphs += animate_people(sim)
     except Exception as E:
         errs.append(log_err('Plotting failed!', E))
         if die: raise
 
-
     # Create and send output files (base64 encoded content)
-    files = {}
-    summary = {}
     try:
-        datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
-
-
-        ss = sim.to_excel()
-        files['xlsx'] = {
-            'filename': f'covasim_results_{datestamp}.xlsx',
-            'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
-        }
-
-        json_string = sim.to_json(verbose=False)
-        files['json'] = {
-            'filename': f'covasim_results_{datestamp}.json',
-            'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
-        }
-
-        # Summary output
-        summary = {
-            'days': sim.npts-1,
-            'cases': round(sim.results['cum_infections'][-1]),
-            'deaths': round(sim.results['cum_deaths'][-1]),
-        }
+        files,summary = get_output_files(sim)
     except Exception as E:
+        files = {}
+        summary = {}
         errs.append(log_err('Unable to save output files!', E))
         if die: raise
 
@@ -380,7 +334,7 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     output['errs']     = errs
     output['sim_pars'] = sim_pars
     output['epi_pars'] = epi_pars
-    output['intervention_pars'] = intervention_pars
+    output['int_pars'] = int_pars
     output['graphs']   = graphs
     output['files']    = files
     output['summary']  = summary
@@ -388,14 +342,44 @@ def run_sim(sim_pars=None, epi_pars=None, intervention_pars=None, datafile=None,
     return output
 
 
+def main_plots(sim):
+    ''' Main simulation results '''
+    plots = []
+    to_plot = sc.dcp(cv.default_sim_plots)
+    for p,title,keylabels in to_plot.enumitems():
+        fig = go.Figure()
+        for key in keylabels:
+            label = sim.results[key].name
+            this_color = sim.results[key].color
+            y = sim.results[key][:]
+            fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
+            if sim.data is not None and key in sim.data:
+                data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
+                print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
+                ydata = sim.data[key]
+                fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
+
+        if sim['interventions']:
+            for interv in sim['interventions']:
+                if hasattr(interv, 'days'):
+                    for interv_day in interv.days:
+                        if interv_day > 0 and interv_day < sim['n_days']:
+                            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+                            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
+
+        fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True, paper_bgcolor=bgcolor, plot_bgcolor=plotbg)
+
+        output = {'json': fig.to_json(), 'id': str(sc.uuid())}
+        d = json.loads(output['json'])
+        d['config'] = {'responsive': True}
+        output['json'] = json.dumps(d)
+        plots.append(output)
+    return plots
+
+
 def get_individual_states(sim, order=True):
     people = sim.people
-    # if order:
-        # print('Note: ordering of people for the animation is currently not supported')
-        # people = sorted(people, key=lambda x: x.date_exposed if x.date_exposed is not None else np.inf)
 
-    # Order these in order of precedence
-    # The last matching quantity will be used
     states = [
         {'name': 'Healthy',
          'quantity': None,
@@ -451,20 +435,22 @@ def plot_people(sim) -> dict:
         ))
 
     if sim['interventions']:
-        interv_day = sim['interventions'][0].days[0]
-        if interv_day > 0 and interv_day < sim['n_days']:
-            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention start", showarrow=False)])
+        for interv in sim['interventions']:
+                if hasattr(interv, 'days'):
+                    for interv_day in interv.days:
+                        if interv_day > 0 and interv_day < sim['n_days']:
+                            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+                            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
-    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
+    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True, paper_bgcolor=bgcolor)
 
     output = {'json': fig.to_json(), 'id': str(sc.uuid())}
     d = json.loads(output['json'])
     d['config'] = {'responsive': True}
     output['json'] = json.dumps(d)
 
-    return output
+    return [output]
 
 
 def animate_people(sim) -> dict:
@@ -588,7 +574,8 @@ def animate_people(sim) -> dict:
     )
 
     fig.update_layout(
-        plot_bgcolor='#fff'
+        plot_bgcolor='#fff',
+        paper_bgcolor=bgcolor,
     )
 
     fig.update_layout(title={'text': 'Epidemic over time'})
@@ -598,9 +585,38 @@ def animate_people(sim) -> dict:
     d['config'] = {'responsive': True}
     output['json'] = json.dumps(d)
 
-    return output
+    return [output]
+
+
+def get_output_files(sim):
+    ''' Create output files for download '''
+
+    datestamp = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
+    ss = sim.to_excel()
+
+    files = {}
+    files['xlsx'] = {
+        'filename': f'covasim_results_{datestamp}.xlsx',
+        'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
+    }
+
+    json_string = sim.to_json(verbose=False)
+    files['json'] = {
+        'filename': f'covasim_results_{datestamp}.json',
+        'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
+    }
+
+    # Summary output
+    summary = {
+        'days': sim.npts-1,
+        'cases': round(sim.results['cum_infections'][-1]),
+        'deaths': round(sim.results['cum_deaths'][-1]),
+    }
+    return files, summary
+
 
 #%% Run the server using Flask
+
 if __name__ == "__main__":
 
     os.chdir(sc.thisdir(__file__))

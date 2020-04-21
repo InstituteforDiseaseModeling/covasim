@@ -5,9 +5,13 @@ Covasim
 Covasim is a stochastic agent-based simulator designed to be used for COVID-19
 (novel coronavirus, SARS-CoV-2) epidemic analyses. These include projections of
 indicators such as numbers of infections and peak hospital demand. Covasim can
-also be used to explore the potential impact of different interventions.
+also be used to explore the potential impact of different interventions, including
+social distancing, school closures, testing, contact tracing, and quarantine.
 
-Questions or comments can be directed to covasim@idmod.org.
+Questions or comments can be directed to covasim@idmod.org, or on this project's
+GitHub_ page.
+
+.. _GitHub: https://github.com/institutefordiseasemodeling/covasim
 
 .. contents:: Contents
    :local:

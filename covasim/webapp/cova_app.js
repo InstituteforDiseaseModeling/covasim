@@ -33,10 +33,10 @@ const PlotlyChart = {
 
 const interventionTableConfig = {
     social_distance: {
-        formTitle: "Social Distancing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'},
-            {key: 'end', type: 'number', label: 'End Day'},
-            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive Effectiveness', value: 'aggressive'}, {label: 'Moderate Effectiveness', value: 'moderate'}, {label: 'Mild Effectiveness', value: 'mild'}]}],
+        formTitle: "Social distancing",
+        fields: [{key: 'start', type: 'number', label: 'Start day'},
+            {key: 'end', type: 'number', label: 'End day'},
+            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive effectiveness', value: 'aggressive'}, {label: 'Moderate effectiveness', value: 'moderate'}, {label: 'Mild effectiveness', value: 'mild'}]}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -45,8 +45,8 @@ const interventionTableConfig = {
         }
     },
     school_closures: {
-        formTitle: "School Closures",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
+        formTitle: "School closures",
+        fields: [{key: 'start', type: 'number', label: 'Start day'}, {key: 'end', type: 'number', label: 'End day'}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -54,8 +54,8 @@ const interventionTableConfig = {
         }
     },
     symptomatic_testing: {
-        formTitle: "Symptomatic Testing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}, {label: 'Accuracy', key: 'level', type: 'select', options: [{label: '60% Accuracy', value: '60'}, {label: '90% Accuracy', value: '90'},]}],
+        formTitle: "Symptomatic testing",
+        fields: [{key: 'start', type: 'number', label: 'Start day'}, {key: 'end', type: 'number', label: 'End day'}, {label: 'Coverage', key: 'level', type: 'select', options: [{label: '10% per day', value: '10'}, {label: '30% per day', value: '30'},]}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -64,8 +64,8 @@ const interventionTableConfig = {
         }
     },
     contact_tracing: {
-        formTitle: "Contact Tracing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End Day'}],
+        formTitle: "Contact tracing",
+        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End day'}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -156,7 +156,7 @@ var vm = new Vue({
                 local_path: null,
                 server_path: null
             },
-            intervention_pars: {},
+            int_pars: {},
             intervention_figs: {},
             show_animation: false,
             result: { // Store currently displayed results
@@ -202,8 +202,8 @@ var vm = new Vue({
             const intervention = this.interventionTableConfig[scenarioKey].handleSubmit(event);
             const key = scenarioKey;
             const self = this
-            if (!this.intervention_pars[key]) {
-                this.$set(this.intervention_pars, key, []);
+            if (!this.int_pars[key]) {
+                this.$set(this.int_pars, key, []);
             }
             // validate intervention
             const notValid = !intervention.end || !intervention.start || intervention.end <= intervention.start
@@ -212,7 +212,7 @@ var vm = new Vue({
                 return;
             }
 
-            const overlaps = this.intervention_pars[key].some(({start, end}) => {
+            const overlaps = this.int_pars[key].some(({start, end}) => {
                 return start <= intervention.start && end >= intervention.start ||
                     start <= intervention.end && end >= intervention.end ||
                     intervention.start <= start && intervention.end >= end;
@@ -222,7 +222,7 @@ var vm = new Vue({
                 return ;
             }
 
-            const outOfBounds = intervention.start > this.sim_length.best || intervention.end > this.sim_length.best || this.intervention_pars[key].some(({start, end}) => {
+            const outOfBounds = intervention.start > this.sim_length.best || intervention.end > this.sim_length.best || this.int_pars[key].some(({start, end}) => {
                 return start > self.sim_length.best || end > self.sim_length.best
             })
             if (outOfBounds){
@@ -231,15 +231,15 @@ var vm = new Vue({
             }
             this.$set(this.scenarioError, scenarioKey, '');
 
-            this.intervention_pars[key].push(intervention);
-            const result = this.intervention_pars[key].sort((a, b) => a.start - b.start);
-            this.$set(this.intervention_pars, key, result);
-            const response = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
+            this.int_pars[key].push(intervention);
+            const result = this.int_pars[key].sort((a, b) => a.start - b.start);
+            this.$set(this.int_pars, key, result);
+            const response = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig});
             this.intervention_figs = response.data;
         },
         async deleteIntervention(scenarioKey, index) {
-            this.$delete(this.intervention_pars[scenarioKey], index);
-            const response = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
+            this.$delete(this.int_pars[scenarioKey], index);
+            const response = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig});
             this.intervention_figs = response.data;
         },
         open_panel() {
@@ -287,7 +287,7 @@ var vm = new Vue({
                 const kwargs = {
                     sim_pars: this.sim_pars,
                     epi_pars: this.epi_pars,
-                    intervention_pars: this.intervention_pars,
+                    int_pars: this.int_pars,
                     datafile: this.datafile.server_path,
                     show_animation: this.show_animation,
                     n_days: this.sim_length.best
@@ -301,8 +301,8 @@ var vm = new Vue({
                 this.panel_open = this.errs.length > 0;
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
-                this.intervention_pars = response.data.intervention_pars;
-                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, intervention_pars: this.intervention_pars, result: this.result })));
+                this.int_pars = response.data.int_pars;
+                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, int_pars: this.int_pars, result: this.result })));
                 this.historyIdx = this.history.length - 1;
 
             } catch (e) {
@@ -320,7 +320,7 @@ var vm = new Vue({
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
             this.sim_length = {...this.sim_pars['n_days']}
-            this.intervention_pars = {};
+            this.int_pars = {};
             this.intervention_figs = {};
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
@@ -358,7 +358,7 @@ var vm = new Vue({
             const data = {
                 sim_pars: this.sim_pars,
                 epi_pars: this.epi_pars,
-                intervention_pars: this.intervention_pars
+                int_pars: this.int_pars
             };
             const fileToSave = new Blob([JSON.stringify(data, null, 4)], {
                 type: 'application/json',
@@ -372,12 +372,12 @@ var vm = new Vue({
                 const response = await sciris.upload('upload_pars');  //, [], {}, '');
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
-                this.intervention_pars = response.data.intervention_pars;
+                this.int_pars = response.data.int_pars;
                 this.graphs = [];
                 this.intervention_figs = {}
 
-                if (this.intervention_pars){
-                    const gantt = await sciris.rpc('get_gantt', undefined, {intervention_pars: this.intervention_pars, intervention_config: this.interventionTableConfig});
+                if (this.int_pars){
+                    const gantt = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig});
                     this.intervention_figs = gantt.data;
                 }
 
@@ -397,7 +397,7 @@ var vm = new Vue({
         loadPars() {
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
-            this.intervention_pars = this.history[this.historyIdx].intervention_pars;
+            this.int_pars = this.history[this.historyIdx].int_pars;
             this.result = this.history[this.historyIdx].result;
         },
 

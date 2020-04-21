@@ -28,7 +28,7 @@ interv_eff = 0.7
 default_beta = 0.015 # Should match parameters.py
 
 basepars = dict(
-  pop_size = 5000
+  pop_size = 2000
 )
 
 metapars = dict(
