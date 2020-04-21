@@ -31,12 +31,27 @@ def test_data():
     return data
 
 
+def test_location():
+    sc.heading('Population settings')
+
+    pars = dict(
+        pop_size = 1000,
+        pop_type = 'hybrid',
+        location = 'nigeria',
+        )
+    sim = cv.Sim(pars)
+    sim.initialize()
+
+    return sim
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
     pars = test_parameters()
     data = test_data()
+    sim = test_location()
 
     sc.toc()
 

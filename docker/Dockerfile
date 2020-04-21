@@ -2,7 +2,7 @@ FROM continuumio/miniconda3:latest
 
 ENV PATH="/opt/conda/bin:${PATH}"
 
-RUN apt-get -y update && apt-get install -y nginx supervisor
+RUN apt-get -y update && apt-get install -y nginx supervisor curl
 
 # conda has its own gcc. Install it so we can compile required packages.
 RUN conda install gcc_linux-64
@@ -22,6 +22,8 @@ WORKDIR /app
 COPY docker/docker_nginx.conf /etc/nginx/sites-enabled/default
 
 RUN python3 -m pip install .
+# bytcode compile python libraries to improve startup times
+RUN python3 -m compileall $(python3 -c "import covasim,os;print(os.path.dirname(covasim.__file__))" | tail -n 1)
 RUN cd data && ./run_scrapers
 
 CMD /etc/init.d/nginx restart && supervisord -c docker/supervisord.conf
