@@ -7,6 +7,7 @@ on:
 jobs:
   build_and_push_docker:
     runs-on: ubuntu-latest
+    if: github.repository == 'InstituteforDiseaseModeling/covasim'
     name: Build and Publish Docker Image
     steps:
       - name: Checkout sources
