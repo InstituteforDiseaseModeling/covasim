@@ -5,7 +5,7 @@ Compare current results to baseline
 import sciris as sc
 import covasim as cv
 
-do_save = True
+do_save = False
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
 baseline_key = 'summary'
@@ -17,7 +17,8 @@ def save_baseline(do_save=do_save):
 
     sim = cv.Sim(verbose=0)
     sim.run()
-    sim.to_json(filename=baseline_filename, keys=baseline_key)
+    if do_save:
+        sim.to_json(filename=baseline_filename, keys=baseline_key)
 
     print('Done.')
 
