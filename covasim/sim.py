@@ -697,7 +697,10 @@ class Sim(cvb.BaseSim):
         # Plot everything
         n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
         for p,title,keylabels in to_plot.enumitems():
-            ax = pl.subplot(n_rows, n_cols, p+1)
+            if p == 0:
+                ax = pl.subplot(n_rows, n_cols, p+1)
+            else:
+                ax = pl.subplot(n_rows, n_cols, p + 1, sharex=ax)
             if log_scale:
                 if isinstance(log_scale, list):
                     if title in log_scale:
