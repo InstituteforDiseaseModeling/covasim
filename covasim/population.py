@@ -53,6 +53,10 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
                 print(errormsg)
                 pop_type = 'random'
 
+        location = sim['location']
+        if location:
+            print(f'Warning: not setting ages or contacts for "{location}" since synthpops contacts are pre-generated')
+
     # Actually create the population
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
@@ -104,17 +108,21 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     if location is not None:
         if use_age_data:
             try:
-                age_data = cvdata.loaders.get_age_distribution(location)
+                age_data = cvdata.get_age_distribution(location)
+                if sim['verbose']:
+                    print(f'Loaded age distribution for "{location}"')
             except ValueError as E:
                 print(f'Could not load age data for requested location "{location}" ({str(E)}), using default')
         if use_household_data:
             try:
-                household_size = cvdata.loaders.get_household_size(location)
+                household_size = cvdata.get_household_size(location)
                 if 'h' in sim['contacts']:
                     sim['contacts']['h'] = household_size
+                    if sim['verbose']:
+                        print(f'Loaded household sizes for "{location}"')
                 else:
                     keystr = ', '.join(list(sim['contacts'].keys()))
-                    print(f'Not loading household size for "{location}" since no "h" key; keys are "{keystr}"')
+                    print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
             except ValueError as E:
                 print(f'Could not load household size data for requested location "{location}" ({str(E)}), using default')
 
