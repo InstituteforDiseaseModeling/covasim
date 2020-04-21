@@ -1,4 +1,4 @@
-def age_distribution_data():
+def get():
     '''
     This is the following file:
 
@@ -6,7 +6,7 @@ def age_distribution_data():
 
     expressed as a function.
     '''
-    data = {
+    output = {
      'Afghanistan': {'0-9': 11088731,
       '10-19': 9821561,
       '20-29': 7035871,
@@ -1826,4 +1826,4 @@ def age_distribution_data():
       '70-79': 200359,
       '80+': 62663}
       }
-    return data
+    return output
