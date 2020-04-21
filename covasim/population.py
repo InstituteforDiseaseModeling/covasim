@@ -106,11 +106,11 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     age_data = cvd.default_age_data
     location = sim['location']
     if location is not None:
+        if sim['verbose']:
+            print(f'Loading location-specific data for "{location}"')
         if use_age_data:
             try:
                 age_data = cvdata.get_age_distribution(location)
-                if sim['verbose']:
-                    print(f'Loaded age distribution for "{location}"')
             except ValueError as E:
                 print(f'Could not load age data for requested location "{location}" ({str(E)}), using default')
         if use_household_data:
@@ -118,13 +118,12 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
                 household_size = cvdata.get_household_size(location)
                 if 'h' in sim['contacts']:
                     sim['contacts']['h'] = household_size
-                    if sim['verbose']:
-                        print(f'Loaded household sizes for "{location}"')
                 else:
                     keystr = ', '.join(list(sim['contacts'].keys()))
                     print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
             except ValueError as E:
-                print(f'Could not load household size data for requested location "{location}" ({str(E)}), using default')
+                if sim['verbose']>=2: # These don't exist for many locations, so skip the warning by default
+                    print(f'Could not load household size data for requested location "{location}" ({str(E)}), using default')
 
     # Handle sexes and ages
     uids           = np.arange(pop_size, dtype=cvd.default_int)

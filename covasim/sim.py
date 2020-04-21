@@ -186,6 +186,7 @@ class Sim(cvb.BaseSim):
 
         return
 
+
     def init_results(self):
         '''
         Create the main results structure.

@@ -4,9 +4,9 @@ Load data
 
 #%% Housekeeping
 import numpy as np
-import pandas as pd
 import sciris as sc
-from . import age_distribution_data as add
+from . import country_age_data    as cad
+from . import state_age_data      as sad
 from . import household_size_data as hsd
 
 __all__ = ['get_country_aliases', 'map_entries', 'get_age_distribution', 'get_household_size']
@@ -46,22 +46,17 @@ def get_country_aliases():
     return country_mappings # Convert to lowercase
 
 
-def map_entries(json, location, which):
+def map_entries(json, location):
     '''
     Find a match between the JSON file and the provided location(s).
 
     Args:
         json (list or dict): the data being loaded
         location (list or str): the list of locations to pull from
-        which (str): either 'age' for age data or 'household' for household size distributions
-
     '''
 
     # The data have slightly different formats: list of dicts or just a dict
-    if which == 'age':
-        countries = [entry["country"].lower() for entry in json] # Pull out available countries
-    else:
-        countries = [key.lower() for key in json.keys()]
+    countries = [key.lower() for key in json.keys()]
 
     # Set parameters
     if location is None:
@@ -80,10 +75,7 @@ def map_entries(json, location, which):
             lloc = mapping[lloc]
         try:
             ind = countries.index(lloc)
-            if which == 'age':
-                entry = json[ind]
-            else:
-                entry = list(json.values())[ind]
+            entry = list(json.values())[ind]
             entries[loc] = entry
         except ValueError as E:
             suggestions = sc.suggest(loc, countries, n=4)
@@ -108,13 +100,14 @@ def get_age_distribution(location=None):
     '''
 
     # Load the raw data
-    json = add.age_distribution_data()
-    entries = map_entries(json, location, which='age')
+    country_json = cad.get()
+    state_json   = sad.get()
+    json = {**state_json, **country_json}
+    entries = map_entries(json, location)
 
     max_age = 99
     result = {}
-    for loc,entry in entries.items():
-        age_distribution = entry["ageDistribution"]
+    for loc,age_distribution in entries.items():
         total_pop = sum(list(age_distribution.values()))
         local_pop = []
 
@@ -144,9 +137,9 @@ def get_household_size(location=None):
         house_size (float): Size of household, or dict if multiple locations
     '''
     # Load the raw data
-    json = hsd.household_size_data()
+    json = hsd.get()
 
-    result = map_entries(json, location, which='household')
+    result = map_entries(json, location)
     if len(result) == 1:
         result = list(result.values())[0]
 
