@@ -26,7 +26,6 @@ class People(cvb.BasePeople):
                 self[key] = np.arange(self.pop_size, dtype=object)
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
-        self.beta_dist = pars['beta_dist']
 
         # Set health states -- only susceptible is true by default -- booleans
         for key in self.meta.states:
@@ -90,7 +89,7 @@ class People(cvb.BasePeople):
 
         # Perform updates
         flows  = {key:0 for key in cvd.new_result_flows}
-        flows['new_infectious']  += self.check_infectious(**self.beta_dist) # For people who are exposed and not infectious, check if they begin being infectious
+        flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
         flows['new_symptomatic'] += self.check_symptomatic()
         flows['new_severe']      += self.check_severe()
         flows['new_critical']    += self.check_critical()
@@ -165,11 +164,11 @@ class People(cvb.BasePeople):
         return inds
 
 
-    def check_infectious(self, dist, par1, par2):
+    def check_infectious(self):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious)
         self.infectious[inds] = True
-        self.rel_trans[inds]  = cvu.sample(dist, par1, par2, len(inds))
+        self.rel_trans[inds]  = cvu.sample(**self.pars['beta_dist'], size=len(inds))
         return len(inds)
 
 
