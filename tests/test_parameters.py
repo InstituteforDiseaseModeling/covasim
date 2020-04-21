@@ -30,15 +30,20 @@ def test_data():
 
     return data
 
-def test_population_location_sets_housesize_and_population():
+
+def test_location():
     sc.heading('Population settings')
 
-    pars = cv.make_pars()
-    pars['location'] = 'USA'
-    pars['use_layers'] = True
-    cv.set_contacts(pars)
-    assert pars['contacts']['h'] == 2.49113173309193
-    assert pars['pop_type'] == 'hybrid'
+    pars = dict(
+        pop_size = 1000,
+        pop_type = 'hybrid',
+        location = 'nigeria',
+        )
+    sim = cv.Sim(pars)
+    sim.initialize()
+
+    return sim
+
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -46,6 +51,7 @@ if __name__ == '__main__':
 
     pars = test_parameters()
     data = test_data()
+    sim = test_location()
 
     sc.toc()
 
