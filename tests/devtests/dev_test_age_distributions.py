@@ -20,17 +20,10 @@ sim2.initialize()
 sim3.initialize()
 sim4.initialize()
 
-<<<<<<< HEAD
 ages1 = sim1.people.extract('age')
 ages2 = sim2.people.extract('age')
 ages3 = sim3.people.extract('age')
 ages4 = sim4.people.extract('age')
-=======
-ages1 = sim1.people.age
-ages2 = sim2.people.age
-
-print(sim1['contacts'])
->>>>>>> develop
 
 n = 100
 fig = pl.figure()
@@ -54,8 +47,4 @@ pl.title(loc4)
 
 pl.xlabel('Age')
 pl.ylabel('Count')
-<<<<<<< HEAD
-=======
-
->>>>>>> develop
 pl.show()
