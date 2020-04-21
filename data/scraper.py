@@ -3,7 +3,6 @@ import sys
 import logging
 import pandas as pd
 import sciris as sc
-from pathvalidate import sanitize_filename
 
 class Scraper(sc.prettyobj):
     '''
@@ -137,7 +136,7 @@ class Scraper(sc.prettyobj):
 
         for g in self.grouping:
             key_value = g[0]
-            filename = f'{sanitize_filename(key_value, platform="universal")}.csv'
+            filename = f'{sc.sanitizefilename(key_value, platform="universal")}.csv'
             filepath = sc.makefilepath(filename=filename, folder=data_home)
             self.log.info(f'Creating {filepath}')
             mini_df = self.df[self.df.key == key_value]
