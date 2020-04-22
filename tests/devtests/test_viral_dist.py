@@ -3,12 +3,11 @@ load to a simple time varying viral load.'''
 import sciris as sc
 import covasim as cv
 import numpy as np
-from scipy.special import kl_div
 
 runs = 100
-r0_const = np.zeros(runs)
-r0_twolevel = np.zeros(runs)
-r0_twolevel2 = np.zeros(runs)
+dist_const = np.zeros(0,dtype=np.int64)
+dist_twolevel = np.zeros(0,dtype=np.int64)
+dist_twolevel2 = np.zeros(0,dtype=np.int64)
 base_pars = sc.objdict(
         n_days       = 12,   # Number of days to simulate
         asymp_factor = 1, # Multiply beta by this factor for asymptomatic cases
@@ -45,41 +44,35 @@ for i in range(runs):
     print('Making sim ', i, '...')
     sim1 = cv.Sim(pars=pars)
     sim1.run()
-    r0_const[i] = len(sim1.people.transtree.targets[0])
+    linelist = sim1.people.transtree.targets[0]
+    targets = np.zeros(len(linelist), dtype=np.int64)
+    for j in np.arange(len(linelist)):
+        targets[j] = linelist[j]['target']
+    time_temp = np.int64(np.array(sim1.people.date_exposed)[targets]) - np.int64(np.array(sim1.people.date_infectious[0]))
+    dist_const = np.append(dist_const,time_temp)
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_dist'] = {'frac_time':.5, 'load_ratio':2}
+    pars['viral_dist'] = {'frac_time':.5, 'load_ratio':4}
     sim2 = cv.Sim(pars=pars)
     sim2.run()
-    r0_twolevel[i] = len(sim2.people.transtree.targets[0])
+    linelist = sim2.people.transtree.targets[0]
+    targets = np.zeros(len(linelist), dtype=np.int64)
+    for j in np.arange(len(linelist)):
+        targets[j] = linelist[j]['target']
+    time_temp = np.int64(np.array(sim2.people.date_exposed)[targets]) - np.int64(np.array(sim2.people.date_infectious[0]))
+    dist_twolevel = np.append(dist_twolevel,time_temp)
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_dist'] = {'frac_time':.3, 'load_ratio':3}
+    pars['viral_dist'] = {'frac_time':.125, 'load_ratio':10}
     sim3 = cv.Sim(pars=pars)
     sim3.run()
-    r0_twolevel2[i] = len(sim3.people.transtree.targets[0])
-
-print('R0 constant viral load: ', np.mean(r0_const), ' +- ', np.std(r0_const))
-print('R0 two level viral load: ', np.mean(r0_twolevel), ' +- ', np.std(r0_twolevel))
-print('R0 two level diff params: ', np.mean(r0_twolevel2), ' +- ', np.std(r0_twolevel2))
+    linelist = sim3.people.transtree.targets[0]
+    targets = np.zeros(len(linelist), dtype=np.int64)
+    for j in np.arange(len(linelist)):
+        targets[j] = linelist[j]['target']
+    time_temp = np.int64(np.array(sim3.people.date_exposed)[targets]) - np.int64(np.array(sim3.people.date_infectious[0]))
+    dist_twolevel2 = np.append(dist_twolevel2,time_temp)
 
 import matplotlib.pyplot as plt
-hist1 = plt.hist(r0_const, bins=np.arange(-0.5, 10.5), density=True)
-hist2 = plt.hist(r0_twolevel, bins=np.arange(-0.5, 10.5), density=True)
-hist3 = plt.hist(r0_twolevel2, bins=np.arange(-0.5, 10.5), density=True)
+hist3 = plt.hist(dist_twolevel2, bins=np.arange(-0.5, 10.5), density=True)
+hist2 = plt.hist(dist_twolevel, bins=np.arange(-0.5, 10.5), density=True)
+hist1 = plt.hist(dist_const, bins=np.arange(-0.5, 10.5), density=True)
 plt.show()
-# Test that the R0 did not change substantially, though the std is large
-assert(abs(np.mean(r0_const)-np.mean(r0_twolevel))<np.std(r0_const))
-assert(abs(np.mean(r0_const)-np.mean(r0_twolevel2))<np.std(r0_const))
-assert(abs(np.mean(r0_twolevel)-np.mean(r0_twolevel2))<np.std(r0_twolevel))
-# adding some sudo counts to distribution because a 0 in the second distribution
-# where there isn't a 0 in the first distribution gives inf
-hist1[0][hist1[0]==0] = 1e-10
-hist1[0][:] = hist1[0]/sum(hist1[0])
-hist2[0][hist2[0]==0] = 1e-10
-hist2[0][:] = hist2[0]/sum(hist2[0])
-hist3[0][hist3[0]==0] = 1e-10
-hist3[0][:] = hist3[0]/sum(hist3[0])
-# Test the KL diverage of the distributions of R0. Since std is large this is
-# likely a stronger test than the above R0 comparisons.
-assert(sum(kl_div(hist1[0], hist2[0]))<1)
-assert(sum(kl_div(hist1[0], hist3[0]))<1)
-assert(sum(kl_div(hist2[0], hist3[0]))<1)
