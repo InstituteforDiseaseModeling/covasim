@@ -19,6 +19,7 @@ class Intervention:
 
     '''
     def __init__(self):
+        self.days = []
         self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
 
 
@@ -53,6 +54,9 @@ class Intervention:
         Returns:
             None
         '''
+        ylims = ax.get_ylim()
+        for day in self.days:
+            pl.plot([day]*2, ylims, '--', c=[0,0,0])
         return
 
 
@@ -237,7 +241,7 @@ class test_num(Intervention):
         Intervention
     '''
 
-    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0, loss_prob=0):
+    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0, loss_prob=0, start_day=0, end_day=None):
         super().__init__()
 
         self.daily_tests = daily_tests #: Should be a list of length matching time
@@ -246,6 +250,9 @@ class test_num(Intervention):
         self.sensitivity = sensitivity
         self.test_delay = test_delay
         self.loss_prob = loss_prob
+        self.start_day = start_day
+        self.end_day = end_day
+        self.days = [start_day, end_day]
 
         return
 
@@ -253,6 +260,10 @@ class test_num(Intervention):
     def apply(self, sim):
 
         t = sim.t
+        if t < self.start_day:
+            return
+        elif self.end_day is not None and t > self.end_day:
+            return
 
         # Process daily tests -- has to be here rather than init so have access to the sim object
         if isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
@@ -262,8 +273,9 @@ class test_num(Intervention):
             self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
 
         # Check that there are still tests
-        if t < len(self.daily_tests):
-            n_tests = self.daily_tests[t]  # Number of tests for this day
+        rel_t = t - self.start_day
+        if rel_t < len(self.daily_tests):
+            n_tests = self.daily_tests[rel_t]  # Number of tests for this day
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
@@ -309,7 +321,7 @@ class test_prob(Intervention):
     Returns:
         Intervention
     '''
-    def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0):
+    def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None):
         super().__init__()
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
@@ -319,6 +331,8 @@ class test_prob(Intervention):
         self.loss_prob        = loss_prob
         self.test_delay       = test_delay
         self.start_day        = start_day
+        self.end_day          = end_day
+        self.days             = [start_day, end_day]
 
         return
 
@@ -327,6 +341,8 @@ class test_prob(Intervention):
         ''' Perform testing '''
         t = sim.t
         if t < self.start_day:
+            return
+        elif self.end_day is not None and t > self.end_day:
             return
 
         symp_inds       = cvu.true(sim.people.symptomatic)
@@ -354,17 +370,21 @@ class contact_tracing(Intervention):
     '''
     Contact tracing of positives
     '''
-    def __init__(self, trace_probs, trace_time, start_day=0, contact_reduction=None):
+    def __init__(self, trace_probs, trace_time, start_day=0, end_day=None, contact_reduction=None):
         super().__init__()
         self.trace_probs = trace_probs
         self.trace_time = trace_time
         self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
         self.start_day = start_day
+        self.end_day = end_day
+        self.days = [start_day, end_day]
         return
 
     def apply(self, sim):
         t = sim.t
         if t < self.start_day:
+            return
+        elif self.end_day is not None and t > self.end_day:
             return
 
         just_diagnosed_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace

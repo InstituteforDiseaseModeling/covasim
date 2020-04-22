@@ -8,6 +8,7 @@ covasim/cova_seattle/school_analysis
 covasim/cova_seattle/seattle_analysis
 results/
 data/epi_data
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
