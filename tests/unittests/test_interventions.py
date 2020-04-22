@@ -209,6 +209,45 @@ class InterventionTests(CovaSimTest):
                          cum_infections_channel[sequence_days[0] - 1],
                          msg=f"With all layers at 0 beta, should be 0 infections at {last_intervention_day}.")
 
+    def test_change_beta_layers_hybrid(self):
+        self.is_debugging = False
+        initial_infected = 10
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 60,
+            SimKeys.population_type: 'random',
+            SimKeys.initial_infected_count: initial_infected
+        }
+        self.set_simulation_parameters(params_dict=params)
+        day_of_change = 25
+        change_multipliers = [0.0]
+        layer_keys = ['h','s','w','c']
+
+        sequence_days = []
+        sequence_interventions = []
+
+        for k in layer_keys: # Zero out one layer at a time
+            day_of_change += 5
+            self.intervention_set_changebeta(
+                days_array=[day_of_change],
+                multiplier_array=change_multipliers,
+                layers=[k]
+            )
+            sequence_days.append(day_of_change)
+            sequence_interventions.append(self.interventions)
+            self.interventions = None
+            pass
+        self.intervention_build_sequence(day_list=sequence_days,
+                                         intervention_list=sequence_interventions)
+        self.run_sim()
+        last_intervention_day = sequence_days[-1]
+        cum_infections_channel= self.get_full_result_channel(ResultsKeys.infections_cumulative)
+        self.assertGreater(cum_infections_channel[sequence_days[0]-1],
+                           initial_infected,
+                           msg=f"Before intervention at day {sequence_days[0]}, there should be infections happening.")
+        self.assertEqual(cum_infections_channel[last_intervention_day],
+                         cum_infections_channel[sequence_days[0] - 1],
+                         msg=f"With all layers at 0 beta, should be 0 infections at {last_intervention_day}.")
 
 
     # endregion
