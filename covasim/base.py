@@ -414,13 +414,13 @@ class BaseSim(ParsObj):
 
 
     @staticmethod
-    def load(filename, **kwargs):
+    def load(filename, *args, **kwargs):
         '''
         Load from disk from a gzipped pickle.
 
         Args:
             filename (str): the name or path of the file to save to
-            keywords: passed to makefilepath()
+            kwargs: passed to sc.loadobj()
 
         Returns:
             sim (Sim): the loaded simulation object
@@ -429,8 +429,8 @@ class BaseSim(ParsObj):
 
             sim = cv.Sim.load('my-simulation.sim')
         '''
-        filename = sc.makefilepath(filename=filename, **kwargs)
-        sim = sc.loadobj(filename=filename)
+        sim = cvm.load(filename, *args, **kwargs)
+        assert isinstance(sim, BaseSim)
         return sim
 
 

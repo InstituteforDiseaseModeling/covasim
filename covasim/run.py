@@ -423,25 +423,24 @@ class Scenarios(cvb.ParsObj):
 
 
     @staticmethod
-    def load(scenfile, **kwargs):
+    def load(scenfile, *args, **kwargs):
         '''
         Load from disk from a gzipped pickle.
 
         Args:
             scenfile (str): the name or path of the file to save to
-            keywords: passed to makefilepath()
+            kwargs: passed to sc.loadobj()
 
         Returns:
             scens (Scenarios): the loaded scenarios object
 
         **Example**::
 
-            sim = cv.Scenarios.load('my-scenarios.scens')
+            scens = cv.Scenarios.load('my-scenarios.scens')
         '''
-        scenfile = sc.makefilepath(filename=scenfile, **kwargs)
-        scens = sc.loadobj(filename=scenfile)
+        scens = cvm.load(scenfile, *args, **kwargs)
+        assert isinstance(scens, Scenarios)
         return scens
-
 
 
 def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=False, run_args=None, sim_args=None, **kwargs):
