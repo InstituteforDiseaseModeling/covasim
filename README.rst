@@ -89,34 +89,36 @@ follows:
 Module structure
 ================
 
-All core model code is located in the `covasim` subfolder; standard usage is
-`import covasim as cv`. The other subfolders, `cruise_ship` and `webapp`, are
+All core model code is located in the ``covasim`` subfolder; standard usage is
+``import covasim as cv``. The other subfolders, ``cruise_ship`` and ``webapp``, are
 also described below.
 
-The model consists of two core classes: the `Person` class (which contains
-information on health state), and the `Sim` class (which contains methods for
+The model consists of two core classes: the ``Person`` class (which contains
+information on health state), and the ``Sim`` class (which contains methods for
 running, calculating results, plotting, etc.).
 
-The structure of the `covasim` folder is as follows:
+The structure of the ``covasim`` folder is as follows:
 
-* `base.py`: The `ParsObj` class, plus basic methods of the `BaseSim` class, and associated functions.
-* `defaults.py`: The default colors, plots, etc. used by Covasim.
-* `interventions.py`: The `Intervention` class, for adding interventions and dynamically modifying parameters.
-* `parameters.py`: Functions for creating the parameters dictionary and loading the input data.
-* `person.py`: The `Person` class.
-* `population.py`: The `People` class, and functions for creating a population of people.
-* `requirements.py`: A simple module to check that imports succeeded, and turn off features if they didn't.
-* `run.py`: Functions for running simulations (e.g. parallel runs and the `Scenarios` class).
-* `sim.py`: The `Sim` class, which performs most of the heavy lifting: initializing the model, running, and plotting.
-* `utils.py`: Functions for choosing random numbers, many based on Numba, plus other helper functions.
-* `version.py`: Version, date, and license information.
+* ``base.py``: The ``ParsObj`` class, plus basic methods of the ``BaseSim`` class, and associated functions.
+* ``defaults.py``: The default colors, plots, etc. used by Covasim.
+* ``interventions.py``: The ``Intervention`` class, for adding interventions and dynamically modifying parameters.
+* ``misc.py``: Miscellaneous helper functions.
+* ``parameters.py``: Functions for creating the parameters dictionary and loading the input data.
+* ``population.py``: The ``People`` class, for handling updates of state for each person.
+* ``plotting.py``: Plotly graphs to supplement the built-in Matplotlib graphs.
+* ``population.py``: Functions for creating populations of people, including age, contacts, etc.
+* ``requirements.py``: A simple module to check that imports succeeded, and turn off features if they didn't.
+* ``run.py``: Functions for running simulations (e.g. parallel runs and the ``Scenarios`` class).
+* ``sim.py``: The ``Sim`` class, which performs most of the heavy lifting: initializing the model, running, and plotting.
+* ``utils.py``: Functions for choosing random numbers, many based on Numba, plus other helper functions.
+* ``version.py``: Version, date, and license information.
 
 cruise_ship
 -----------
 
 A version of the Covasim model specifically adapted for modeling the Diamond
-Princess cruise ship. It uses its own parameters file (`parameters.py`) and has
-slight variations to the model (`model.py`).
+Princess cruise ship. It uses its own parameters file (``parameters.py``) and has
+slight variations to the model (``model.py``).
 
 webapp
 ------
@@ -149,7 +151,7 @@ and the data files themselves (which are not part of the repository).
 docker
 ------
 
-This folder contains the `Dockerfile` and other files that allow Covasim to be
+This folder contains the ``Dockerfile`` and other files that allow Covasim to be
 run as a webapp via Docker.
 
 examples

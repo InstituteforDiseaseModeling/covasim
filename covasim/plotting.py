@@ -1,9 +1,20 @@
+'''
+Plotly-based plotting functions to supplement the Matplotlib based ones that are
+part of the Sim and Scenarios objects. Intended mostly for use with the webapp.
+'''
+
 import covasim as cv
 import numpy as np
 import sciris as sc
 import plotly.graph_objects as go
 
+
+__all__ = ['standard_plots', 'plot_people', 'animate_people']
+
+
 def get_individual_states(sim):
+    ''' Helper function to convert people into integers '''
+
     people = sim.people
 
     states = [
@@ -44,8 +55,10 @@ def get_individual_states(sim):
 
     return z, states
 
+
 def standard_plots(sim):
-    ''' Main simulation results '''
+    ''' Main simulation results -- parallel of sim.plot() '''
+
     plots = []
     to_plot = sc.dcp(cv.default_sim_plots)
     for p,title,keylabels in to_plot.enumitems():
@@ -74,7 +87,9 @@ def standard_plots(sim):
         plots.append(fig)
     return plots
 
-def plot_people(sim) -> dict:
+
+def plot_people(sim):
+    ''' Plot a "cascade" of people moving through different states '''
     z, states = get_individual_states(sim)
 
     fig = go.Figure()
@@ -103,7 +118,9 @@ def plot_people(sim) -> dict:
     return fig
 
 
-def animate_people(sim) -> dict:
+def animate_people(sim):
+    ''' Plot an animation of each person in the sim '''
+
     z, states = get_individual_states(sim)
 
     min_color = min(states, key=lambda x: x['value'])['value']
