@@ -14,6 +14,7 @@ import traceback
 import numpy as np
 import sciris as sc
 import covasim as cv
+import shutil as sh
 from pathlib import Path
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
@@ -134,12 +135,8 @@ def upload_pars(fname):
 @app.register_RPC(call_type='upload')
 def upload_file(file):
     stem, ext = os.path.splitext(file)
-    data = sc.loadtext(file)
     fd, path = tempfile.mkstemp(suffix=ext, prefix="input_", dir=tempfile.mkdtemp())
-    with open(path, mode='w', encoding="utf-8", newline="\n") as fd:
-        fd.write(data)
-        fd.flush()
-        fd.close()
+    sh.copyfile(file, path)
     return path
 
 
@@ -179,7 +176,7 @@ def parse_interventions(int_pars):
             'symptomatic_testing': [
                 {'start': 8, 'end': 25, 'level': 60}
                 ]}
-                
+
     '''
     intervs = []
 
