@@ -30,6 +30,7 @@ jobs:
         with:
           repository: ${{ env.GITHUB_OWNER }}/covasim-docs
           path: covasim-docs
+          ssh-key: '${{ secrets.DOCS_DEPLOY_KEY }}'
       - name: Checkout sources
         uses: actions/checkout@v2
         with:

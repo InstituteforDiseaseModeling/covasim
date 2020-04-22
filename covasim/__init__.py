@@ -17,3 +17,4 @@ from .population    import *
 from .sim           import *
 from .run           import *
 from .interventions import *
+from .plotting      import *

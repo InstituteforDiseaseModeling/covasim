@@ -8,10 +8,10 @@ from . import misc as cvm
 
 
 
-__all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'contact_tracing']
-
-
 #%% Generic intervention classes
+
+__all__ = ['Intervention', 'dynamic_pars', 'sequence']
+
 
 class Intervention:
     '''
@@ -166,6 +166,12 @@ class sequence(Intervention):
         return
 
 
+
+#%% Beta interventions
+
+__all__+= ['change_beta', 'clip_edges']
+
+
 class change_beta(Intervention):
     '''
     The most basic intervention -- change beta by a certain amount.
@@ -173,7 +179,7 @@ class change_beta(Intervention):
     Args:
         days (int or array): the day or array of days to apply the interventions
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
-        layers (str or array): the layers in which to change beta
+        layers (str or list): the layers in which to change beta
 
 
     **Examples**::
@@ -227,7 +233,70 @@ class change_beta(Intervention):
         return
 
 
+class clip_edges(Intervention):
+    '''
+    Isolate contacts by moving them from the simulation to this intervention.
+
+    Args:
+        start_day (int): the day to isolate contacts
+        end_day (int): the day to end isolating contacts
+        change (float or dict): the proportion of contacts to retain, a la change_beta (1 = no change, 0 = no transmission)
+
+    **Examples**::
+
+        interv = cv.clip_edges(25, 0.3) # On day 25, reduce overall contacts by 70% to 0.3
+        interv = cv.clip_edges(start_day=25, end_day=35, change={'s':0.1}) # On day 25, remove 90% of school contacts, and on day 35, restore them
+    '''
+
+    def __init__(self, days, changes, layers=None):
+        super().__init__()
+        self.days = sc.promotetoarray(days)
+        self.changes = sc.promotetoarray(changes)
+        self.layer_keys = sc.promotetolist(layers, keepnone=True)
+        if len(self.days) != len(self.changes):
+            errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
+            raise ValueError(errormsg)
+        self.orig_betas = None
+        return
+
+
+    def apply(self, sim):
+
+        # If this is the first time it's being run, store beta
+        if self.orig_betas is None:
+            self.orig_betas = {}
+            for lkey in self.layer_keys:
+                if lkey is None:
+                    self.orig_betas['overall'] = sim['beta']
+                else:
+                    self.orig_betas[lkey] = sim['beta_layer'][lkey]
+
+        # If this day is found in the list, apply the intervention
+        inds = sc.findinds(self.days, sim.t)
+        if len(inds):
+            for lkey,new_beta in self.orig_betas.items():
+                for ind in inds:
+                    new_beta = new_beta * self.changes[ind]
+                if lkey == 'overall':
+                    sim['beta'] = new_beta
+                else:
+                    sim['beta_layer'][lkey] = new_beta
+
+        return
+
+
+    def plot(self, sim, ax):
+        ''' Plot vertical lines for when changes in beta '''
+        ylims = ax.get_ylim()
+        for day in self.days:
+            pl.plot([day]*2, ylims, '--', c=[0,0,0])
+        return
+
+
 #%% Testing interventions
+
+__all__+= ['test_num', 'test_prob', 'contact_tracing']
+
 
 class test_num(Intervention):
     '''
