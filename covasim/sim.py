@@ -408,6 +408,8 @@ class Sim(cvb.BaseSim):
         T = sc.tic()
         if not self.initialized:
             self.initialize()
+        else:
+            self.validate_pars() # We always want to validate the parameters before running
         if verbose is None:
             verbose = self['verbose']
 
