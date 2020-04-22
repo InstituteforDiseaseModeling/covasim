@@ -5,13 +5,14 @@ import sciris as sc
 import covasim as cv
 from . import utils as cvu
 from . import misc as cvm
+from . import base as cvb
 
-
-
-__all__ = ['Intervention', 'dynamic_pars', 'sequence', 'change_beta', 'test_num', 'test_prob', 'contact_tracing']
 
 
 #%% Generic intervention classes
+
+__all__ = ['Intervention', 'dynamic_pars', 'sequence']
+
 
 class Intervention:
     '''
@@ -166,6 +167,12 @@ class sequence(Intervention):
         return
 
 
+
+#%% Beta interventions
+
+__all__+= ['change_beta', 'clip_edges']
+
+
 class change_beta(Intervention):
     '''
     The most basic intervention -- change beta by a certain amount.
@@ -173,7 +180,7 @@ class change_beta(Intervention):
     Args:
         days (int or array): the day or array of days to apply the interventions
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
-        layers (str or array): the layers in which to change beta
+        layers (str or list): the layers in which to change beta
 
 
     **Examples**::
@@ -227,7 +234,97 @@ class change_beta(Intervention):
         return
 
 
+class clip_edges(Intervention):
+    '''
+    Isolate contacts by moving them from the simulation to this intervention.
+
+    Args:
+        start_day (int): the day to isolate contacts
+        end_day (int): the day to end isolating contacts
+        change (float or dict): the proportion of contacts to retain, a la change_beta (1 = no change, 0 = no transmission)
+
+    **Examples**::
+
+        interv = cv.clip_edges(25, 0.3) # On day 25, reduce overall contacts by 70% to 0.3
+        interv = cv.clip_edges(start_day=25, end_day=35, change={'s':0.1}) # On day 25, remove 90% of school contacts, and on day 35, restore them
+    '''
+
+    def __init__(self, start_day, change=None, end_day=None, verbose=False):
+        super().__init__()
+        self.start_day = start_day
+        self.end_day = end_day
+        self.days = [start_day, end_day]
+        self.change = change
+        self.verbose = verbose
+        self.layer_keys = None
+        self.contacts = None
+        return
+
+
+    def apply(self, sim):
+
+        verbose = self.verbose
+
+        # On the start day, move contacts over
+        if sim.t == self.start_day:
+
+            # If this is the first time it's being run, create the contacts
+            if self.contacts is None:
+                if isinstance(self.change, dict):
+                    self.layer_keys = list(self.change.keys())
+                else:
+                    self.layer_keys = list(sim.people.contacts.keys())
+                    self.change = {key:self.change for key in self.layer_keys}
+                self.contacts = cvb.Contacts(layer_keys=self.layer_keys)
+                if verbose:
+                    print(f'Created contacts: {self.contacts}')
+
+            # Do the contact moving
+            for lkey,prop in self.change.items():
+                layer = sim.people.contacts[lkey]
+                if verbose:
+                    print(f'Working on layer {lkey}: {layer}')
+                n_contacts = len(layer)
+                prop_to_move = 1-prop # Calculate the proportion of contacts to move
+                n_to_move = int(prop_to_move*n_contacts)
+                inds = cvu.choose(max_n=n_contacts, n=n_to_move)
+                layer_df = layer.to_df()
+                to_move = layer_df.iloc[inds]
+                if verbose:
+                    print(f'Moving {prop_to_move} of {n_contacts} gives {n_to_move}. Before:\n{layer_df}\nTo move:\n{to_move}')
+                self.contacts[lkey] = cvb.Layer().from_df(to_move) # Move them here
+                if verbose:
+                    print(f'Contacts here: {self.contacts[lkey]}')
+                layer_df = layer_df.drop(layer_df.index[inds]) # Remove indices
+                new_layer = cvb.Layer().from_df(layer_df) # Convert back
+                new_layer.validate()
+                sim.people.contacts[lkey] = new_layer
+                if verbose:
+                    print(f'Remaining contacts: {sim.people.contacts[lkey]}')
+
+        if sim.t == self.end_day:
+            if verbose:
+                print(f'Before:\n{sim.people.contacts}')
+            sim.people.add_contacts(self.contacts)
+            if verbose:
+                print(f'After:\n{sim.people.contacts}')
+            self.contacts = None # Reset to save memory
+
+        return
+
+
+    def plot(self, sim, ax):
+        ''' Plot vertical lines for when changes in beta '''
+        ylims = ax.get_ylim()
+        for day in self.days:
+            pl.plot([day]*2, ylims, '--', c=[0,0,0])
+        return
+
+
 #%% Testing interventions
+
+__all__+= ['test_num', 'test_prob', 'contact_tracing']
+
 
 class test_num(Intervention):
     '''
