@@ -278,7 +278,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    beta_layer, viral_load, symp,     
     f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
     f_quar_eff = ~quar +  quar * quar_trans # Quarantine
-    rel_trans  = rel_trans * f_quar_eff * f_asymp * f_diag * beta_layer # Recalulate transmisibility
+    rel_trans  = rel_trans * viral_load * f_quar_eff * f_asymp * f_diag * beta_layer # Recalulate transmisibility
     rel_sus    = rel_sus   * f_quar_eff # Recalulate susceptibility
     return rel_trans, rel_sus
 
