@@ -54,10 +54,10 @@ html, body {
 
 .parheading {
     background-color:#000;
-    color: rgba(255,255,255,0.8); !important;
+    color: rgba(255,255,255,0.8) !important;
 }
 .parheading:hover {
-    color: rgba(255,255,255,1.0); !important;
+    color: rgba(255,255,255,1.0) !important;
 }
 
 #parameters {
