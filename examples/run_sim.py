@@ -10,6 +10,7 @@ print('Configuring...')
 
 # Run options
 do_plot = 1
+do_plotly = 0
 do_save = 0
 do_show = 1
 verbose = 1
@@ -45,5 +46,7 @@ if do_plot:
     print('Plotting...')
     fig = sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
 
-fig = cv.plot_people(sim)
-fig.show(renderer='browser')
+if do_plotly:
+    print('Plotting with plotly...')
+    fig = cv.plot_people(sim)
+    fig.show(renderer='browser')
