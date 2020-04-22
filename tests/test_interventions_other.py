@@ -10,7 +10,36 @@ do_plot   = 1
 do_show   = 1
 do_save   = 0
 debug     = 1
-fig_path  = 'results/testing_borderclosure.png'
+fig_path  = 'results/testing_other.png'
+
+
+def test_beta_edges(do_plot=False, do_show=True, do_save=False, fig_path=None):
+
+    pars = dict(
+        pop_size=1000,
+        pop_infected=10,
+        pop_type='hybrid',
+        )
+
+    start_day = 30 # Day to start the intervention
+    change    = 0.2 # Amount of change
+
+    sims = sc.objdict()
+    sims.b = cv.Sim(pars) # Beta intervention
+    sims.e = cv.Sim(pars) # Edges intervention
+
+    beta_interv = cv.change_beta(days=start_day, changes=change)
+    edge_interv = cv.clip_edges(start_day=start_day, change={'h':change})
+    sims.b.update_pars(interventions=beta_interv)
+    sims.e.update_pars(interventions=edge_interv)
+
+    for sim in sims.values():
+        sim.run()
+        if do_plot:
+            sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+
+    return sims
+
 
 def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
     sc.heading('Test of bed capacity estimation')
@@ -116,8 +145,10 @@ def test_borderclosure(do_plot=False, do_show=True, do_save=False, fig_path=None
 if __name__ == '__main__':
     sc.tic()
 
-    bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
-    border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    sims = test_beta_edges(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    # bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+    # border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
+
 
     sc.toc()
 

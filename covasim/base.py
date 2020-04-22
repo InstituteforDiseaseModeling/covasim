@@ -906,8 +906,8 @@ class Layer(FlexDict):
     def from_df(self, df):
         ''' Convert from dataframe '''
         for key in self.meta.keys():
-            self[key] = df[key]
-        return
+            self[key] = df[key].to_numpy()
+        return self
 
 
 

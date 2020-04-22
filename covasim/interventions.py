@@ -260,7 +260,7 @@ class clip_edges(Intervention):
         return
 
 
-    def apply(self, sim):
+    def apply(self, sim, verbose=True):
 
         # If this is the first time it's being run, create the contacts
         if self.contacts is None:
@@ -270,27 +270,37 @@ class clip_edges(Intervention):
                 self.layer_keys = list(sim.people.contacts.keys())
                 self.change = {key:self.change for key in self.layer_keys}
             self.contacts = cvb.Contacts(layer_keys=self.layer_keys)
+            if verbose:
+                print(f'Created contacts: {self.contacts}')
 
         # On the start day, move contacts over
         if sim.t == self.start_day:
             for lkey,prop in self.change.items():
                 layer = sim.people.contacts[lkey]
+                if verbose:
+                    print(f'Working on layer {lkey}: {layer}')
                 n_contacts = len(layer)
                 prop_to_move = 1-prop # Calculate the proportion of contacts to move
                 n_to_move = int(prop_to_move*n_contacts)
                 inds = cvu.choose(max_n=n_contacts, n=n_to_move)
                 layer_df = layer.to_df()
                 to_move = layer_df.iloc[inds]
+                if verbose:
+                    print(f'Moving {prop_to_move} of {n_contacts} gives {n_to_move}. Before:\n{layer_df}\nTo move:\n{to_move}')
                 self.contacts[lkey] = cvb.Layer().from_df(to_move) # Move them here
-                layer_df.drop(layer_df.index[inds]) # Remove indices
-                sim.people.contacts[lkey] = cvb.Layer().from_df(layer_df) # Convert back
+                if verbose:
+                    print(f'Contacts here: {self.contacts[lkey]}')
+                layer_df = layer_df.drop(layer_df.index[inds]) # Remove indices
+                new_layer = cvb.Layer().from_df(layer_df) # Convert back
+                new_layer.validate()
+                sim.people.contacts[lkey] = new_layer
+                if verbose:
+                    print(f'Remaining contacts: {sim.people.contacts[lkey]}')
 
         if sim.t == self.end_day:
             for lkey,prop in self.change.items():
                 sim.people.add_contacts(self.contacts)
-                self.contacts = None
-
-
+                self.contacts = None # Reset to save memory
 
         return
 
