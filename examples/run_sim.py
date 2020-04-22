@@ -10,7 +10,6 @@ print('Configuring...')
 
 # Run options
 do_plot = 1
-do_plotly = 0
 do_save = 0
 do_show = 1
 verbose = 1
@@ -25,8 +24,8 @@ fig_path = f'{basename}.png'
 
 # Configure the sim -- can also just use a normal dictionary
 pars = sc.objdict(
-    pop_size     = 20000, # Population size
-    pop_infected = 1,     # Number of initial infections
+    pop_size     = 5000, # Population size
+    pop_infected = 10,     # Number of initial infections
     n_days       = 60,   # Number of days to simulate
     rand_seed    = 1,     # Random seed
     pop_type     = 'random',
@@ -45,8 +44,3 @@ sim.run(verbose=verbose)
 if do_plot:
     print('Plotting...')
     fig = sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
-
-if do_plotly:
-    print('Plotting with plotly...')
-    fig = cv.plot_people(sim)
-    fig.show(renderer='browser')
