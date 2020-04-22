@@ -16,8 +16,8 @@ fig_path  = 'results/testing_other.png'
 def test_beta_edges(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
     pars = dict(
-        pop_size=10000,
-        pop_infected=100,
+        pop_size=2000,
+        pop_infected=20,
         pop_type='hybrid',
         )
 
