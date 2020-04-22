@@ -72,13 +72,13 @@ class InterventionTests(CovaSimTest):
 
         break_days = [0, 2]  # index of "beta to zero" periods
         for b in break_days:
-            happy_days = range(days[b] + 1, days[b + 1] + 1)
+            happy_days = range(days[b], days[b + 1])
             for d in happy_days:
                 # print(f"DEBUG: looking at happy day {d}")
                 self.assertEqual(new_infections_channel[d],
                                  0,
                                  msg=f"expected 0 infections on day {d}, got {new_infections_channel[d]}.")
-            infection_days = range(days[b+1] + 1, days[b+2] + 1)
+            infection_days = range(days[b+1], days[b+2])
             for d in infection_days:
                 # print(f"DEBUG: looking at infection day {d}")
                 self.assertGreater(new_infections_channel[d],
