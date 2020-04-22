@@ -5,6 +5,7 @@ import sciris as sc
 import covasim as cv
 from . import utils as cvu
 from . import misc as cvm
+from . import base as cvb
 
 
 
@@ -248,39 +249,48 @@ class clip_edges(Intervention):
         interv = cv.clip_edges(start_day=25, end_day=35, change={'s':0.1}) # On day 25, remove 90% of school contacts, and on day 35, restore them
     '''
 
-    def __init__(self, days, changes, layers=None):
+    def __init__(self, start_day, change=None, end_day=None):
         super().__init__()
-        self.days = sc.promotetoarray(days)
-        self.changes = sc.promotetoarray(changes)
-        self.layer_keys = sc.promotetolist(layers, keepnone=True)
-        if len(self.days) != len(self.changes):
-            errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
-            raise ValueError(errormsg)
-        self.orig_betas = None
+        self.start_day = start_day
+        self.end_day = end_day
+        self.days = [start_day, end_day]
+        self.change = change
+        self.layer_keys = None
+        self.contacts = None
         return
 
 
     def apply(self, sim):
 
-        # If this is the first time it's being run, store beta
-        if self.orig_betas is None:
-            self.orig_betas = {}
-            for lkey in self.layer_keys:
-                if lkey is None:
-                    self.orig_betas['overall'] = sim['beta']
-                else:
-                    self.orig_betas[lkey] = sim['beta_layer'][lkey]
+        # If this is the first time it's being run, create the contacts
+        if self.contacts is None:
+            if isinstance(self.change, dict):
+                self.layer_keys = list(self.change.keys())
+            else:
+                self.layer_keys = list(sim.people.contacts.keys())
+                self.change = {key:self.change for key in self.layer_keys}
+            self.contacts = cvb.Contacts(layer_keys=self.layer_keys)
 
-        # If this day is found in the list, apply the intervention
-        inds = sc.findinds(self.days, sim.t)
-        if len(inds):
-            for lkey,new_beta in self.orig_betas.items():
-                for ind in inds:
-                    new_beta = new_beta * self.changes[ind]
-                if lkey == 'overall':
-                    sim['beta'] = new_beta
-                else:
-                    sim['beta_layer'][lkey] = new_beta
+        # On the start day, move contacts over
+        if sim.t == self.start_day:
+            for lkey,prop in self.change.items():
+                layer = sim.people.contacts[lkey]
+                n_contacts = len(layer)
+                prop_to_move = 1-prop # Calculate the proportion of contacts to move
+                n_to_move = int(prop_to_move*n_contacts)
+                inds = cvu.choose(max_n=n_contacts, n=n_to_move)
+                layer_df = layer.to_df()
+                to_move = layer_df.iloc[inds]
+                self.contacts[lkey] = cvb.Layer().from_df(to_move) # Move them here
+                layer_df.drop(layer_df.index[inds]) # Remove indices
+                sim.people.contacts[lkey] = cvb.Layer().from_df(layer_df) # Convert back
+
+        if sim.t == self.end_day:
+            for lkey,prop in self.change.items():
+                sim.people.add_contacts(self.contacts)
+                self.contacts = None
+
+
 
         return
 

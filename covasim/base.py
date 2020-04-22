@@ -715,8 +715,6 @@ class BasePeople(sc.prettyobj):
         # Ensure the columns are right and add values if supplied
         for lkey, new_layer in new_contacts.items():
             n = len(new_layer['p1'])
-            if 'layer' not in new_layer:
-                new_layer['layer'] = np.array([lkey]*n)
             if 'beta' not in new_layer or len(new_layer['beta']) != n:
                 if beta is None:
                     beta = self.pars['beta_layer'][lkey]
