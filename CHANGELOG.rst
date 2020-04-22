@@ -14,6 +14,7 @@ Version 0.28.5 (2020-04-21)
 - Changes to interventions to include end as well as start days, and plotting as a default option
 - Adds version checks to loading and introduces a new function `cv.load()` to replace e.g. `cv.Sim.load()`
 - Major layout and functionality changes to the webapp
+- Provided access to Plotly graphs via the backend
 
 
 Version 0.28.1 (2020-04-19)

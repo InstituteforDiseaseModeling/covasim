@@ -24,8 +24,8 @@ fig_path = f'{basename}.png'
 
 # Configure the sim -- can also just use a normal dictionary
 pars = sc.objdict(
-    pop_size     = 20000, # Population size
-    pop_infected = 1,     # Number of initial infections
+    pop_size     = 5000, # Population size
+    pop_infected = 10,     # Number of initial infections
     n_days       = 60,   # Number of days to simulate
     rand_seed    = 1,     # Random seed
     pop_type     = 'random',
