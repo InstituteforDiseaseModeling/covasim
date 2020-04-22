@@ -95,8 +95,8 @@ class SimulationParameterTests(CovaSimTest):
         pop_10k_pop = self.get_day_zero_channel_value()
         self.run_sim(pop_100k_one_day)
         pop_100k_pop = self.get_day_zero_channel_value()
-        self.run_sim(pop_200k_one_day)
-        pop_200k_pop = self.get_day_zero_channel_value()
+        # self.run_sim(pop_200k_one_day)
+        # pop_200k_pop = self.get_day_zero_channel_value()
 
         # self.run_sim(pop_400k_one_day)
         # pop_400k_pop = self.get_day_zero_channel_value()
@@ -110,7 +110,7 @@ class SimulationParameterTests(CovaSimTest):
 
         self.assertEqual(pop_10k_pop, pop_10k_one_day[TPKeys.number_agents])
         self.assertEqual(pop_100k_pop, pop_100k_one_day[TPKeys.number_agents])
-        self.assertEqual(pop_200k_pop, pop_200k_one_day[TPKeys.number_agents])
+        # self.assertEqual(pop_200k_pop, pop_200k_one_day[TPKeys.number_agents])
 
         # self.assertEqual(pop_400k_pop, pop_400k_one_day[TPKeys.number_agents])
         # self.assertEqual(pop_1M_pop, pop_1M_one_day[TPKeys.number_agents])

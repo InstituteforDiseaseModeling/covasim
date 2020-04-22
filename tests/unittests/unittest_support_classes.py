@@ -12,7 +12,7 @@ import json
 import os
 import numpy as np
 
-from covasim import Sim, parameters
+from covasim import Sim, parameters, change_beta, test_prob, contact_tracing, sequence
 
 
 
@@ -113,19 +113,20 @@ class TestProperties:
     class ResultsDataKeys:
         deaths_cumulative = 'cum_deaths'
         deaths_daily = 'new_deaths'
-        diagnoses_cumulative = 'cum_diagnosed'
-        diagnoses_at_timestep = 'diagnoses'
-        diagnostics_at_timestep = 'tests'
-        diagnostics_cumulative = 'cum_tested'
+        diagnoses_cumulative = 'cum_diagnoses'
+        diagnoses_at_timestep = 'new_diagnoses'
         exposed_at_timestep = 'n_exposed'
         susceptible_at_timestep = 'n_susceptible'
         infectious_at_timestep = 'n_infectious'
         symptomatic_at_timestep = 'n_symptomatic'
         symptomatic_cumulative = 'cum_symptomatic'
+        symptomatic_new_timestep = 'new_symptomatic'
         recovered_at_timestep = 'new_recoveries'
         recovered_cumulative = 'cum_recoveries'
         infections_at_timestep = 'new_infections'
         infections_cumulative = 'cum_infections'
+        tests_at_timestep = 'new_tests'
+        tests_cumulative = 'cum_tests'
         GUESS_doubling_time_at_timestep = 'doubling_time'
         GUESS_r_effective_at_timestep = 'r_eff'
 
@@ -143,6 +144,7 @@ class CovaSimTest(unittest.TestCase):
         self.simulation_prognoses = None
         self.sim = None
         self.simulation_result = None
+        self.interventions = None
         self.expected_result_filename = f"DEBUG_{self.id()}.json"
         if os.path.isfile(self.expected_result_filename):
             os.unlink(self.expected_result_filename)
@@ -232,6 +234,9 @@ class CovaSimTest(unittest.TestCase):
         if not self.simulation_parameters or params_dict: # If we need one, or have one here
             self.set_simulation_parameters(params_dict=params_dict)
             pass
+
+        self.simulation_parameters['interventions'] = self.interventions
+
         self.sim = Sim(pars=self.simulation_parameters,
                        datafile=None)
         if not self.simulation_prognoses:
@@ -239,6 +244,7 @@ class CovaSimTest(unittest.TestCase):
                 self.simulation_parameters[TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.progression_by_age]
             )
             pass
+
         self.sim['prognoses'] = self.simulation_prognoses
         if population_type:
             self.sim.update_pars(pop_type=population_type)
@@ -270,6 +276,56 @@ class CovaSimTest(unittest.TestCase):
     def get_day_final_channel_value(self, channel):
         channel = self.get_full_result_channel(channel=channel)
         return channel[-1]
+    # endregion
+
+    # region interventions support
+    def intervention_set_changebeta(self,
+                                    days_array,
+                                    multiplier_array,
+                                    layers = None):
+        self.interventions = change_beta(days=days_array,
+                                         changes=multiplier_array,
+                                         layers=layers)
+        pass
+
+    def intervention_set_test_prob(self, symptomatic_prob=0, asymptomatic_prob=0,
+                                   asymptomatic_quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0,
+                                   loss_prob=0.0, test_delay=1, start_day=0):
+        self.interventions = test_prob(symp_prob=symptomatic_prob,
+                                       asymp_prob=asymptomatic_prob,
+                                       asymp_quar_prob=asymptomatic_quarantine_prob,
+                                       symp_quar_prob=symp_quar_prob,
+                                       test_sensitivity=test_sensitivity,
+                                       loss_prob=loss_prob,
+                                       test_delay=test_delay,
+                                       start_day=start_day)
+        pass
+
+    def intervention_set_contact_tracing(self,
+                                         start_day,
+                                         trace_probabilities=None,
+                                         trace_times=None):
+        #  see ../tests/test_interventions_testing.test_tracedelay
+        #  trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1}
+        #  trace_time = {'h': 0, 's': 1, 'w': 1, 'c': 2}
+        #  pars.quar_eff = {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0}
+        #  pars.quar_period = 60 # 60 days
+        if not trace_probabilities:
+            trace_probabilities = {'h': 1, 's': 1, 'w': 1, 'c': 1}
+            pass
+        if not trace_times:
+            trace_times = {'h': 1, 's': 1, 'w': 1, 'c': 1}
+        self.interventions = contact_tracing(trace_probs=trace_probabilities,
+                                             trace_time=trace_times,
+                                             start_day=start_day)
+        pass
+
+    def intervention_build_sequence(self,
+                                    day_list,
+                                    intervention_list):
+        my_sequence = sequence(days=day_list,
+                               interventions=intervention_list)
+        self.interventions = my_sequence
     # endregion
 
     # region specialized simulation methods
