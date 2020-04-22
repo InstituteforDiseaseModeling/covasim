@@ -33,7 +33,7 @@ included in the following README files:
       application.
    -  `Docker README <https://github.com/InstituteforDiseaseModeling/covasim/blob/master/docker/README.rst>`__: Information regarding the
       docker setup.
-   -  `Tests README <https://github.com/InstituteforDiseaseModeling/covasim/blob/master/tests/README.md>`__: Running tests locally.
+   -  `Tests README <https://github.com/InstituteforDiseaseModeling/covasim/blob/master/tests/README.rst>`__: Running tests locally.
 
 Contribution types
 ===================

@@ -165,20 +165,21 @@ def get_gantt(int_pars=None, intervention_config=None):
 
 def parse_interventions(int_pars):
     '''
-    Parse interventions. Format:
+    Parse interventions. Format
 
-    int_pars = {
-        'social_distance': [
-            {'start': 1,  'end': 19, 'level': 'aggressive'},
-            {'start': 20, 'end': 30, 'level': 'mild'},
-            ],
-        'school_closures': [
-            {'start': 12, 'end': 14}
-            ],
-        'symptomatic_testing': [
-            {'start': 8, 'end': 25, 'level': 60}
-            ]
-        }
+    Args:
+        int_pars = {
+            'social_distance': [
+                {'start': 1,  'end': 19, 'level': 'aggressive'},
+                {'start': 20, 'end': 30, 'level': 'mild'},
+                ],
+            'school_closures': [
+                {'start': 12, 'end': 14}
+                ],
+            'symptomatic_testing': [
+                {'start': 8, 'end': 25, 'level': 60}
+                ]}
+                
     '''
     intervs = []
 

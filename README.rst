@@ -175,6 +175,7 @@ Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `sweep
 .. _Weights and Biases: https://www.wandb.com/
 .. _sweep README: ./sweep
 
+
 Disclaimer
 ==========
 
@@ -186,8 +187,5 @@ build upon it for their own work. We make no representations that the code works
 as intended or that we will provide support, address issues that are found, or
 accept pull requests. You are welcome to create your own fork and modify the
 code to suit your own modeling needs as contemplated under the Creative Commons
-Attribution-Noncommercial-ShareAlike 4.0 License. See the `contributing`_ and `code of conduct`_
+Attribution-Noncommercial-ShareAlike 4.0 License. See the contributing and code of conduct
 READMEs for more information.
-
-.. _contributing: .CONTRIBUTING.rst
-.. _code of conduct: CODE_OF_CONDUCT.rst
