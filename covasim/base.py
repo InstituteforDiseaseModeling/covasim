@@ -430,7 +430,9 @@ class BaseSim(ParsObj):
             sim = cv.Sim.load('my-simulation.sim')
         '''
         sim = cvm.load(filename, *args, **kwargs)
-        assert isinstance(sim, BaseSim)
+        if not isinstance(sim, BaseSim):
+            errormsg = f'Cannot load object of {type(sim)} as a Sim object'
+            raise TypeError(errormsg)
         return sim
 
 

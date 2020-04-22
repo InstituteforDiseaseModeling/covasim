@@ -439,7 +439,9 @@ class Scenarios(cvb.ParsObj):
             scens = cv.Scenarios.load('my-scenarios.scens')
         '''
         scens = cvm.load(scenfile, *args, **kwargs)
-        assert isinstance(scens, Scenarios)
+        if not isinstance(scens, Scenarios):
+            errormsg = f'Cannot load object of {type(scens)} as a Scenarios object'
+            raise TypeError(errormsg)
         return scens
 
 
