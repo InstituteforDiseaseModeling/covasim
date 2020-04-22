@@ -9,7 +9,7 @@ import scipy.stats as sps # Used by poisson_test()
 from . import version as cvver
 
 
-__all__ = ['KeyNotFoundError', 'check_version', 'git_info', 'fixaxis', 'progressbar', 'get_doubling_time', 'poisson_test']
+__all__ = ['KeyNotFoundError', 'load', 'save', 'check_version', 'git_info', 'fixaxis', 'progressbar', 'get_doubling_time', 'poisson_test']
 
 
 class KeyNotFoundError(KeyError):
@@ -17,6 +17,42 @@ class KeyNotFoundError(KeyError):
 
     def __str__(self):
         return Exception.__str__(self)
+
+
+def load(*args, **kwargs):
+    '''
+    Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
+    cv.Scenarios.load().
+
+    **Examples**::
+
+        sim = cv.load('calib.sim')
+        scens = cv.load(filename='school-closures.scens', folder='schools')
+    '''
+    obj = sc.loadobj(*args, **kwargs)
+    if hasattr(obj, 'version'):
+        v_curr = cvver.__version__
+        v_obj = obj.version
+        cmp = check_version(v_obj, verbose=False)
+        if cmp != 0:
+            print(f'Note: you have Covasim v{v_curr}, but are loading an object from v{v_obj}')
+    return obj
+
+
+def save(*args, **kwargs):
+    '''
+    Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
+    cv.Scenarios.load().
+
+    **Examples**::
+
+        sim = cv.load('calib.sim')
+        scens = cv.load(filename='school-closures.scens', folder='schools')
+    '''
+    obj = sc.loadobj(*args, **kwargs)
+    if hasattr(obj, 'version'):
+        check_version(obj.version)
+    return obj
 
 
 def check_version(expected, die=False, verbose=True, **kwargs):
