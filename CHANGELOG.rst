@@ -6,9 +6,13 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.28.3 (2020-04-20)
+Version 0.28.4 (2020-04-20)
 ----------------------------
+- Include individual-level viral load
 - Includes data on household sizes from various countries
+- Includes age data on US states
+- Changes to interventions to include end as well as start days, and plotting as a default option
+- Major layout and functionality changes to the webapp
 
 
 Version 0.28.1 (2020-04-19)

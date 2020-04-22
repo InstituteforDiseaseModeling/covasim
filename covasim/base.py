@@ -168,7 +168,7 @@ class BaseSim(ParsObj):
         try:
             return np.arange(self.npts)
         except:
-            return np.arange([])
+            return np.array([])
 
     @property
     def datevec(self):
@@ -183,7 +183,7 @@ class BaseSim(ParsObj):
         try:
             return self['start_day'] + self.tvec * dt.timedelta(days=1)
         except:
-            return np.arange([])
+            return np.array([])
 
 
     def inds2dates(self, inds, dateformat=None):
