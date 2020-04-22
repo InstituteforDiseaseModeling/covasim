@@ -2,12 +2,16 @@
 Numerical utilities for running Covasim
 '''
 
+#%% Housekeeping
+
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
 from . import defaults as cvd
 
-#%% Set dtypes
+# What to import -- not all functions are externally available
+__all__ = []
 
+# Set dtypes
 nbbool = nb.bool_
 if cvd.default_precision == 32:
     nbint   = nb.int32
@@ -19,9 +23,67 @@ else:
     raise NotImplementedError
 
 
+#%% The core Covasim functions -- compute the infections
+
+@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat))
+def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    par2):
+    '''
+    Calculate relative transmissibility for time t. Includes time varying
+    viral load, pre/asymptomatic factor, diagonsis factor, etc.
+
+    Args:
+        t: (int) timestep
+        time_start: (float[]) individuals' infectious date
+        time_recovered: (float[]) individuals' recovered date
+        time_dead: (float[]) individuals' death date
+        par1: (float) frac of time in high load
+        par2: (float) ratio for high to low viral load
+
+    Returns:
+        load (float): viral load
+    '''
+
+    # Get the end date from recover or death
+    n = len(time_dead)
+    time_stop = np.ones(n, dtype=cvd.default_float)*time_recovered # This is needed to make a copy
+    inds = ~np.isnan(time_dead)
+    time_stop[inds] = time_dead[inds]
+    load = np.ones(n, dtype=cvd.default_float) # allocate an array of ones with the correct dtype
+    early = (t-time_start)/(time_stop-time_start) < par1 # are we in the early or late phase
+    load = (par2 * early + load * ~early)/(load+par1*(par2-load)) # calculate load
+
+    return load
+
+
+@nb.njit(            (nbfloat[:], nbfloat[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,     nbfloat), cache=True)
+def compute_trans_sus(rel_trans,  rel_sus,    beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, diag_factor, quar_trans):
+    ''' Calculate relative transmissibility and susceptibility '''
+    f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
+    f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
+    f_quar_eff = ~quar +  quar * quar_trans # Quarantine
+    rel_trans  = rel_trans * viral_load * f_quar_eff * f_asymp * f_diag * beta_layer # Recalulate transmisibility
+    rel_sus    = rel_sus   * f_quar_eff # Recalulate susceptibility
+    return rel_trans, rel_sus
+
+
+@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True)
+def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
+    ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
+    betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
+    nonzero_inds    = betas.nonzero()[0] # Find nonzero entries
+    nonzero_betas   = betas[nonzero_inds] # Remove zero entries from beta
+    nonzero_targets = targets[nonzero_inds] # Remove zero entries from the targets
+    transmissions   = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
+    edge_inds       = nonzero_inds[transmissions] # The index of the contact responsible for the transmission
+    target_inds     = nonzero_targets[transmissions] # Filter the targets on the actual infections
+    target_inds     = np.unique(target_inds) # Ensure the targets are unique
+    return target_inds, edge_inds
+
+
+
 #%% Sampling and seed methods
 
-__all__ = ['sample', 'set_seed']
+__all__ += ['sample', 'set_seed']
 
 
 def sample(dist=None, par1=None, par2=None, size=None):
@@ -100,55 +162,10 @@ def set_seed(seed=None):
     return
 
 
-#%% Simple array operations
-__all__ += ['true', 'false', 'defined',
-            'itrue', 'ifalse', 'idefined',
-            'itruei', 'ifalsei', 'idefinedi',
-            ]
-
-
-def true(arr):
-    ''' Returns the indices of the values of the array that are true '''
-    return arr.nonzero()[0]
-
-def false(arr):
-    ''' Returns the indices of the values of the array that are false '''
-    return (~arr).nonzero()[0]
-
-def defined(arr):
-    ''' Returns the indices of the values of the array that are not-nan '''
-    return (~np.isnan(arr)).nonzero()[0]
-
-def itrue(arr, inds):
-    ''' Returns the indices that are true in the array -- name is short for indices[true] '''
-    return inds[arr]
-
-def ifalse(arr, inds):
-    ''' Returns the indices that are true in the array -- name is short for indices[false] '''
-    return inds[~arr]
-
-def idefined(arr, inds):
-    ''' Returns the indices that are true in the array -- name is short for indices[defined] '''
-    return inds[~np.isnan(arr)]
-
-def itruei(arr, inds):
-    ''' Returns the indices that are true in the array -- name is short for indices[true[indices]] '''
-    return inds[arr[inds]]
-
-def ifalsei(arr, inds):
-    ''' Returns the indices that are false in the array -- name is short for indices[false[indices]] '''
-    return inds[~arr[inds]]
-
-def idefinedi(arr, inds):
-    ''' Returns the indices that are defined in the array -- name is short for indices[defined[indices]] '''
-    return inds[~np.isnan(arr[inds])]
-
-
-
 #%% Probabilities -- mostly not jitted since performance gain is minimal
 
-__all__ += ['n_binomial', 'binomial_arr', 'binomial_filter', 'multinomial', 'poisson', 'n_poisson', 'choose', 'choose_r', 'choose_w']
-
+__all__ += ['n_binomial', 'binomial_arr', 'binomial_filter', 'multinomial',
+            'poisson', 'n_poisson', 'choose', 'choose_r', 'choose_w']
 
 def n_binomial(prob, n):
     ''' Perform n binomial (Bernolli) trials -- return boolean array '''
@@ -239,59 +256,45 @@ def choose_w(probs, n, unique=True):
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
 
 
-#%% The core Covasim functions -- compute the infections
+#%% Simple array operations
+
+__all__ += ['true',   'false',   'defined',
+            'itrue',  'ifalse',  'idefined',
+            'itruei', 'ifalsei', 'idefinedi']
 
 
-@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat))
-def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    par2):
-    '''
-    Calculate relative transmissibility for time t. Includes time varying
-    viral load, pre/asymptomatic factor, diagonsis factor, etc.
+def true(arr):
+    ''' Returns the indices of the values of the array that are true '''
+    return arr.nonzero()[0]
 
-    Args:
-        t: (int) timestep
-        time_start: (float[]) individuals' infectious date
-        time_recovered: (float[]) individuals' recovered date
-        time_dead: (float[]) individuals' death date
-        par1: (float) frac of time in high load
-        par2: (float) ratio for high to low viral load
+def false(arr):
+    ''' Returns the indices of the values of the array that are false '''
+    return (~arr).nonzero()[0]
 
-    Returns:
-        load (float): viral load
-    '''
+def defined(arr):
+    ''' Returns the indices of the values of the array that are not-nan '''
+    return (~np.isnan(arr)).nonzero()[0]
 
-    # Get the end date from recover or death
-    n = len(time_dead)
-    time_stop = np.ones(n, dtype=cvd.default_float)*time_recovered # This is needed to make a copy
-    inds = ~np.isnan(time_dead)
-    time_stop[inds] = time_dead[inds]
-    load = np.ones(n, dtype=cvd.default_float) # allocate an array of ones with the correct dtype
-    early = (t-time_start)/(time_stop-time_start) < par1 # are we in the early or late phase
-    load = (par2 * early + load * ~early)/(load+par1*(par2-load)) # calculate load
+def itrue(arr, inds):
+    ''' Returns the indices that are true in the array -- name is short for indices[true] '''
+    return inds[arr]
 
-    return load
+def ifalse(arr, inds):
+    ''' Returns the indices that are true in the array -- name is short for indices[false] '''
+    return inds[~arr]
 
+def idefined(arr, inds):
+    ''' Returns the indices that are true in the array -- name is short for indices[defined] '''
+    return inds[~np.isnan(arr)]
 
-@nb.njit(            (nbfloat[:], nbfloat[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,     nbfloat), cache=True)
-def compute_trans_sus(rel_trans,  rel_sus,    beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, diag_factor, quar_trans):
-    ''' Calculate relative transmissibility and susceptibility '''
-    f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
-    f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
-    f_quar_eff = ~quar +  quar * quar_trans # Quarantine
-    rel_trans  = rel_trans * viral_load * f_quar_eff * f_asymp * f_diag * beta_layer # Recalulate transmisibility
-    rel_sus    = rel_sus   * f_quar_eff # Recalulate susceptibility
-    return rel_trans, rel_sus
+def itruei(arr, inds):
+    ''' Returns the indices that are true in the array -- name is short for indices[true[indices]] '''
+    return inds[arr[inds]]
 
+def ifalsei(arr, inds):
+    ''' Returns the indices that are false in the array -- name is short for indices[false[indices]] '''
+    return inds[~arr[inds]]
 
-@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True)
-def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
-    ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
-    betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
-    nonzero_inds    = betas.nonzero()[0] # Find nonzero entries
-    nonzero_betas   = betas[nonzero_inds] # Remove zero entries from beta
-    nonzero_targets = targets[nonzero_inds] # Remove zero entries from the targets
-    transmissions   = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
-    edge_inds       = nonzero_inds[transmissions] # The index of the contact responsible for the transmission
-    target_inds     = nonzero_targets[transmissions] # Filter the targets on the actual infections
-    target_inds     = np.unique(target_inds) # Ensure the targets are unique
-    return target_inds, edge_inds
+def idefinedi(arr, inds):
+    ''' Returns the indices that are defined in the array -- name is short for indices[defined[indices]] '''
+    return inds[~np.isnan(arr[inds])]
