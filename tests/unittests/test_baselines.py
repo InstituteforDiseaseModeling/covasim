@@ -29,8 +29,7 @@ def test_baseline():
     ''' Compare the current default sim against the saved baseline '''
 
     # Load existing baseline
-    filepath = sc.makefilepath(filename=baseline_filename, folder=sc.thisdir(__file__))
-    baseline = sc.loadjson(filepath)
+    baseline = sc.loadjson(baseline_filename)
     old = baseline[baseline_key]
 
     # Calculate new baseline
@@ -83,7 +82,8 @@ def test_baseline():
 def test_benchmark(do_save=do_save):
     ''' Compare benchmark performance '''
 
-    print('Updating benchmark...')
+    print('Running benchmark...')
+    previous = sc.loadjson(benchmark_filename)
 
     # Create the sim
     sim = cv.Sim(verbose=0)
@@ -110,6 +110,12 @@ def test_benchmark(do_save=do_save):
                 'n_days':   sim['n_days'],
                 },
             }
+
+    print('Previous benchmark:')
+    sc.pp(previous)
+
+    print('\nNew benchmark:')
+    sc.pp(json)
 
     if do_save:
         sc.savejson(filename=benchmark_filename, obj=json, indent=2)

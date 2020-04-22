@@ -6,7 +6,7 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.28.4 (2020-04-20)
+Version 0.28.4 (2020-04-21)
 ----------------------------
 - Include individual-level viral load
 - Includes data on household sizes from various countries
