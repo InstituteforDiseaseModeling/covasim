@@ -249,32 +249,37 @@ class clip_edges(Intervention):
         interv = cv.clip_edges(start_day=25, end_day=35, change={'s':0.1}) # On day 25, remove 90% of school contacts, and on day 35, restore them
     '''
 
-    def __init__(self, start_day, change=None, end_day=None):
+    def __init__(self, start_day, change=None, end_day=None, verbose=False):
         super().__init__()
         self.start_day = start_day
         self.end_day = end_day
         self.days = [start_day, end_day]
         self.change = change
+        self.verbose = verbose
         self.layer_keys = None
         self.contacts = None
         return
 
 
-    def apply(self, sim, verbose=True):
+    def apply(self, sim):
 
-        # If this is the first time it's being run, create the contacts
-        if self.contacts is None:
-            if isinstance(self.change, dict):
-                self.layer_keys = list(self.change.keys())
-            else:
-                self.layer_keys = list(sim.people.contacts.keys())
-                self.change = {key:self.change for key in self.layer_keys}
-            self.contacts = cvb.Contacts(layer_keys=self.layer_keys)
-            if verbose:
-                print(f'Created contacts: {self.contacts}')
+        verbose = self.verbose
 
         # On the start day, move contacts over
         if sim.t == self.start_day:
+
+            # If this is the first time it's being run, create the contacts
+            if self.contacts is None:
+                if isinstance(self.change, dict):
+                    self.layer_keys = list(self.change.keys())
+                else:
+                    self.layer_keys = list(sim.people.contacts.keys())
+                    self.change = {key:self.change for key in self.layer_keys}
+                self.contacts = cvb.Contacts(layer_keys=self.layer_keys)
+                if verbose:
+                    print(f'Created contacts: {self.contacts}')
+
+            # Do the contact moving
             for lkey,prop in self.change.items():
                 layer = sim.people.contacts[lkey]
                 if verbose:
@@ -298,9 +303,12 @@ class clip_edges(Intervention):
                     print(f'Remaining contacts: {sim.people.contacts[lkey]}')
 
         if sim.t == self.end_day:
-            for lkey,prop in self.change.items():
-                sim.people.add_contacts(self.contacts)
-                self.contacts = None # Reset to save memory
+            if verbose:
+                print(f'Before:\n{sim.people.contacts}')
+            sim.people.add_contacts(self.contacts)
+            if verbose:
+                print(f'After:\n{sim.people.contacts}')
+            self.contacts = None # Reset to save memory
 
         return
 

@@ -16,20 +16,21 @@ fig_path  = 'results/testing_other.png'
 def test_beta_edges(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
     pars = dict(
-        pop_size=1000,
-        pop_infected=10,
+        pop_size=10000,
+        pop_infected=100,
         pop_type='hybrid',
         )
 
-    start_day = 30 # Day to start the intervention
-    change    = 0.2 # Amount of change
+    start_day = 25 # Day to start the intervention
+    end_day   = 40 # Day to end the intervention
+    change    = 0.3 # Amount of change
 
     sims = sc.objdict()
     sims.b = cv.Sim(pars) # Beta intervention
     sims.e = cv.Sim(pars) # Edges intervention
 
-    beta_interv = cv.change_beta(days=start_day, changes=change)
-    edge_interv = cv.clip_edges(start_day=start_day, change={'h':change})
+    beta_interv = cv.change_beta(days=[start_day, end_day], changes=[change, 1.0])
+    edge_interv = cv.clip_edges(start_day=start_day, end_day=end_day, change=change, verbose=True)
     sims.b.update_pars(interventions=beta_interv)
     sims.e.update_pars(interventions=edge_interv)
 
@@ -37,6 +38,7 @@ def test_beta_edges(do_plot=False, do_show=True, do_save=False, fig_path=None):
         sim.run()
         if do_plot:
             sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
+            sim.plot_result('r_eff')
 
     return sims
 

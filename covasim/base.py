@@ -697,7 +697,7 @@ class BasePeople(sc.prettyobj):
         # Validate the supplied contacts
         if isinstance(contacts, Contacts):
             new_contacts = contacts
-        if isinstance(contacts, Layer):
+        elif isinstance(contacts, Layer):
             new_contacts = {}
             new_contacts[lkey] = contacts
         elif sc.checktype(contacts, 'array'):
