@@ -8,7 +8,11 @@ indicators such as numbers of infections and peak hospital demand. Covasim can
 also be used to explore the potential impact of different interventions, including
 social distancing, school closures, testing, contact tracing, and quarantine.
 
-Questions or comments can be directed to covasim@idmod.org.
+Questions or comments can be directed to covasim@idmod.org, or on this project's
+GitHub_ page. Full information about Covasim is provided in the documentation_.
+
+.. _GitHub: https://github.com/institutefordiseasemodeling/covasim
+.. _documentation: https://institutefordiseasemodeling.github.io/covasim-docs
 
 .. contents:: Contents
    :local:
@@ -86,34 +90,36 @@ follows:
 Module structure
 ================
 
-All core model code is located in the `covasim` subfolder; standard usage is
-`import covasim as cv`. The other subfolders, `cruise_ship` and `webapp`, are
+All core model code is located in the ``covasim`` subfolder; standard usage is
+``import covasim as cv``. The other subfolders, ``cruise_ship`` and ``webapp``, are
 also described below.
 
-The model consists of two core classes: the `Person` class (which contains
-information on health state), and the `Sim` class (which contains methods for
+The model consists of two core classes: the ``Person`` class (which contains
+information on health state), and the ``Sim`` class (which contains methods for
 running, calculating results, plotting, etc.).
 
-The structure of the `covasim` folder is as follows:
+The structure of the ``covasim`` folder is as follows:
 
-* `base.py`: The `ParsObj` class, plus basic methods of the `BaseSim` class, and associated functions.
-* `defaults.py`: The default colors, plots, etc. used by Covasim.
-* `interventions.py`: The `Intervention` class, for adding interventions and dynamically modifying parameters.
-* `parameters.py`: Functions for creating the parameters dictionary and loading the input data.
-* `person.py`: The `Person` class.
-* `population.py`: The `People` class, and functions for creating a population of people.
-* `requirements.py`: A simple module to check that imports succeeded, and turn off features if they didn't.
-* `run.py`: Functions for running simulations (e.g. parallel runs and the `Scenarios` class).
-* `sim.py`: The `Sim` class, which performs most of the heavy lifting: initializing the model, running, and plotting.
-* `utils.py`: Functions for choosing random numbers, many based on Numba, plus other helper functions.
-* `version.py`: Version, date, and license information.
+* ``base.py``: The ``ParsObj`` class, plus basic methods of the ``BaseSim`` class, and associated functions.
+* ``defaults.py``: The default colors, plots, etc. used by Covasim.
+* ``interventions.py``: The ``Intervention`` class, for adding interventions and dynamically modifying parameters.
+* ``misc.py``: Miscellaneous helper functions.
+* ``parameters.py``: Functions for creating the parameters dictionary and loading the input data.
+* ``population.py``: The ``People`` class, for handling updates of state for each person.
+* ``plotting.py``: Plotly graphs to supplement the built-in Matplotlib graphs.
+* ``population.py``: Functions for creating populations of people, including age, contacts, etc.
+* ``requirements.py``: A simple module to check that imports succeeded, and turn off features if they didn't.
+* ``run.py``: Functions for running simulations (e.g. parallel runs and the ``Scenarios`` class).
+* ``sim.py``: The ``Sim`` class, which performs most of the heavy lifting: initializing the model, running, and plotting.
+* ``utils.py``: Functions for choosing random numbers, many based on Numba, plus other helper functions.
+* ``version.py``: Version, date, and license information.
 
 cruise_ship
 -----------
 
 A version of the Covasim model specifically adapted for modeling the Diamond
-Princess cruise ship. It uses its own parameters file (`parameters.py`) and has
-slight variations to the model (`model.py`).
+Princess cruise ship. It uses its own parameters file (``parameters.py``) and has
+slight variations to the model (``model.py``).
 
 webapp
 ------
@@ -146,7 +152,7 @@ and the data files themselves (which are not part of the repository).
 docker
 ------
 
-This folder contains the `Dockerfile` and other files that allow Covasim to be
+This folder contains the ``Dockerfile`` and other files that allow Covasim to be
 run as a webapp via Docker.
 
 examples
@@ -172,6 +178,7 @@ Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `sweep
 .. _Weights and Biases: https://www.wandb.com/
 .. _sweep README: ./sweep
 
+
 Disclaimer
 ==========
 
@@ -183,8 +190,5 @@ build upon it for their own work. We make no representations that the code works
 as intended or that we will provide support, address issues that are found, or
 accept pull requests. You are welcome to create your own fork and modify the
 code to suit your own modeling needs as contemplated under the Creative Commons
-Attribution-Noncommercial-ShareAlike 4.0 License. See the `contributing`_ and `code of conduct`_
+Attribution-Noncommercial-ShareAlike 4.0 License. See the contributing and code of conduct
 READMEs for more information.
-
-.. _contributing: .CONTRIBUTING.rst
-.. _code of conduct: CODE_OF_CONDUCT.rst

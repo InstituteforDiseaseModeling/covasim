@@ -168,7 +168,7 @@ class BaseSim(ParsObj):
         try:
             return np.arange(self.npts)
         except:
-            return np.arange([])
+            return np.array([])
 
     @property
     def datevec(self):
@@ -183,7 +183,7 @@ class BaseSim(ParsObj):
         try:
             return self['start_day'] + self.tvec * dt.timedelta(days=1)
         except:
-            return np.arange([])
+            return np.array([])
 
 
     def inds2dates(self, inds, dateformat=None):
@@ -414,13 +414,13 @@ class BaseSim(ParsObj):
 
 
     @staticmethod
-    def load(filename, **kwargs):
+    def load(filename, *args, **kwargs):
         '''
         Load from disk from a gzipped pickle.
 
         Args:
             filename (str): the name or path of the file to save to
-            keywords: passed to makefilepath()
+            kwargs: passed to sc.loadobj()
 
         Returns:
             sim (Sim): the loaded simulation object
@@ -429,8 +429,10 @@ class BaseSim(ParsObj):
 
             sim = cv.Sim.load('my-simulation.sim')
         '''
-        filename = sc.makefilepath(filename=filename, **kwargs)
-        sim = sc.loadobj(filename=filename)
+        sim = cvm.load(filename, *args, **kwargs)
+        if not isinstance(sim, BaseSim):
+            errormsg = f'Cannot load object of {type(sim)} as a Sim object'
+            raise TypeError(errormsg)
         return sim
 
 
@@ -695,7 +697,7 @@ class BasePeople(sc.prettyobj):
         # Validate the supplied contacts
         if isinstance(contacts, Contacts):
             new_contacts = contacts
-        if isinstance(contacts, Layer):
+        elif isinstance(contacts, Layer):
             new_contacts = {}
             new_contacts[lkey] = contacts
         elif sc.checktype(contacts, 'array'):
@@ -713,8 +715,6 @@ class BasePeople(sc.prettyobj):
         # Ensure the columns are right and add values if supplied
         for lkey, new_layer in new_contacts.items():
             n = len(new_layer['p1'])
-            if 'layer' not in new_layer:
-                new_layer['layer'] = np.array([lkey]*n)
             if 'beta' not in new_layer or len(new_layer['beta']) != n:
                 if beta is None:
                     beta = self.pars['beta_layer'][lkey]
@@ -906,8 +906,8 @@ class Layer(FlexDict):
     def from_df(self, df):
         ''' Convert from dataframe '''
         for key in self.meta.keys():
-            self[key] = df[key]
-        return
+            self[key] = df[key].to_numpy()
+        return self
 
 
 

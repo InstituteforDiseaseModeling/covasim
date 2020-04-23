@@ -53,6 +53,10 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
                 print(errormsg)
                 pop_type = 'random'
 
+        location = sim['location']
+        if location:
+            print(f'Warning: not setting ages or contacts for "{location}" since synthpops contacts are pre-generated')
+
     # Actually create the population
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
@@ -93,44 +97,55 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
     return
 
 
-def make_randpop(sim, age_data=None, sex_ratio=0.5, microstructure=False):
+def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5, microstructure=False):
     ''' Make a random population, without contacts '''
 
     pop_size = int(sim['pop_size']) # Number of people
 
-    # Load age data based on 2018 Seattle demographics by default
+    # Load age data and household demographics based on 2018 Seattle demographics by default, or country if available
+    age_data = cvd.default_age_data
     location = sim['location']
     if location is not None:
-        try:
-            age_data = cvdata.loaders.get_age_distribution(location)
-        except ValueError as E:
-            print(f'Could not load data for requested location "{location}" ({str(E)}), using default')
-    if age_data is None:
-        age_data = cvd.default_age_data
+        if sim['verbose']:
+            print(f'Loading location-specific data for "{location}"')
+        if use_age_data:
+            try:
+                age_data = cvdata.get_age_distribution(location)
+            except ValueError as E:
+                print(f'Could not load age data for requested location "{location}" ({str(E)}), using default')
+        if use_household_data:
+            try:
+                household_size = cvdata.get_household_size(location)
+                if 'h' in sim['contacts']:
+                    sim['contacts']['h'] = household_size
+                else:
+                    keystr = ', '.join(list(sim['contacts'].keys()))
+                    print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
+            except ValueError as E:
+                if sim['verbose']>=2: # These don't exist for many locations, so skip the warning by default
+                    print(f'Could not load household size data for requested location "{location}" ({str(E)}), using default')
 
     # Handle sexes and ages
-    uids = np.arange(pop_size, dtype=cvd.default_int)
-    sexes = np.random.binomial(1, sex_ratio, pop_size)
-    age_data_min  = age_data[:,0]
-    age_data_max  = age_data[:,1] + 1 # Since actually e.g. 69.999
+    uids           = np.arange(pop_size, dtype=cvd.default_int)
+    sexes          = np.random.binomial(1, sex_ratio, pop_size)
+    age_data_min   = age_data[:,0]
+    age_data_max   = age_data[:,1] + 1 # Since actually e.g. 69.999
     age_data_range = age_data_max - age_data_min
-    age_data_prob = age_data[:,2]
+    age_data_prob  = age_data[:,2]
     age_data_prob /= age_data_prob.sum() # Ensure it sums to 1
-    age_bins = cvu.multinomial(np.array(age_data_prob, dtype=cvd.default_float), cvd.default_int(pop_size)) # Choose age bins
-    ages = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(pop_size) # Uniformly distribute within this age bin
+    age_bins       = cvu.multinomial(np.array(age_data_prob, dtype=cvd.default_float), cvd.default_int(pop_size)) # Choose age bins
+    ages           = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(pop_size) # Uniformly distribute within this age bin
 
-    # Store output; data duplicated as per-person and list-like formats for convenience
+    # Store output
     popdict = {}
     popdict['uid'] = uids
     popdict['age'] = ages
     popdict['sex'] = sexes
 
-    if microstructure == 'random':
-        contacts, layer_keys = make_random_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'clustered':
-        contacts, layer_keys = make_microstructured_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'hybrid':
-        contacts, layer_keys = make_hybrid_contacts(pop_size, ages, sim['contacts'])
+    # Actually create the contacts
+    if   microstructure == 'random':    contacts, layer_keys = make_random_contacts(pop_size, sim['contacts'])
+    elif microstructure == 'clustered': contacts, layer_keys = make_microstructured_contacts(pop_size, sim['contacts'])
+    elif microstructure == 'hybrid':    contacts, layer_keys = make_hybrid_contacts(pop_size, ages, sim['contacts'])
     else:
         errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
         raise NotImplementedError(errormsg)

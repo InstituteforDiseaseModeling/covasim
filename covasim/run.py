@@ -265,7 +265,10 @@ class Scenarios(cvb.ParsObj):
                 figs.append(pl.figure(**fig_args))
                 ax = pl.subplot(111)
             else:
-                ax = pl.subplot(n_rows, n_cols, rk + 1)
+                if rk == 0:
+                    ax = pl.subplot(n_rows, n_cols, rk + 1)
+                else:
+                    ax = pl.subplot(n_rows, n_cols, rk + 1, sharex=ax)
 
             resdata = self.results[reskey]
 
@@ -420,25 +423,26 @@ class Scenarios(cvb.ParsObj):
 
 
     @staticmethod
-    def load(scenfile, **kwargs):
+    def load(scenfile, *args, **kwargs):
         '''
         Load from disk from a gzipped pickle.
 
         Args:
             scenfile (str): the name or path of the file to save to
-            keywords: passed to makefilepath()
+            kwargs: passed to sc.loadobj()
 
         Returns:
             scens (Scenarios): the loaded scenarios object
 
         **Example**::
 
-            sim = cv.Scenarios.load('my-scenarios.scens')
+            scens = cv.Scenarios.load('my-scenarios.scens')
         '''
-        scenfile = sc.makefilepath(filename=scenfile, **kwargs)
-        scens = sc.loadobj(filename=scenfile)
+        scens = cvm.load(scenfile, *args, **kwargs)
+        if not isinstance(scens, Scenarios):
+            errormsg = f'Cannot load object of {type(scens)} as a Scenarios object'
+            raise TypeError(errormsg)
         return scens
-
 
 
 def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=False, run_args=None, sim_args=None, **kwargs):

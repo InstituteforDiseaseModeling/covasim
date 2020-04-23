@@ -141,7 +141,7 @@ def test_dynamic_resampling(do_plot=False, do_show=False): # If being run via py
     sc.heading('Test dynamic resampling')
 
     pop_size = 1000
-    sim = cv.Sim(pop_size=pop_size, pp_rescale=1, pop_scale=1000, n_days=180, rescale_factor=2)
+    sim = cv.Sim(pop_size=pop_size, rescale=1, pop_scale=1000, n_days=180, rescale_factor=2)
     sim.run()
 
     # Optionally plot

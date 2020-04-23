@@ -14,7 +14,7 @@
   <script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=es2015%2CIntersectionObserver"></script>
   <script src="https://unpkg.com/vue@2.6.11/dist/vue.min.js"></script>
   <script src="https://unpkg.com/bootstrap-vue@2.11.0/dist/bootstrap-vue.min.js"></script>
-  <link href="https://fonts.googleapis.com/css?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
   <!-- Avenir is not available -->
 
   <!-- Customization -->
@@ -36,12 +36,12 @@
   <header class="row no-gutter">
     <b-navbar type="dark" variant="dark">
       <b-navbar-brand href="#">{{ app.title }}</b-navbar-brand>
-      <b-navbar-nav>
-        <b-nav-item :href="app.docs_url" target="_blank">Documentation</b-nav-item>
-        <b-nav-item v-b-modal.about>About</b-nav-item>
+      <b-navbar-nav class="nav-head">
+        <b-nav-item :href="app.docs_url" target="_blank"><span class="nav-text">Documentation</span></b-nav-item>
+        <b-nav-item v-b-modal.about><span class="nav-text">About</span></b-nav-item>
       </b-navbar-nav>
       <b-navbar-nav class="ml-auto">
-        <b-nav-item :href="app.github_url" target="_blank">{{app.version}}</b-nav-item>
+        <b-nav-item :href="app.github_url" target="_blank"><span class="nav-text">{{app.version}}</span></b-nav-item>
       </b-navbar-nav>
     </b-navbar>
 
@@ -49,8 +49,9 @@
     <b-modal id="about" ok-only ok-variant="secondary" ok-title="Close">
       <template v-slot:modal-title>About {{ app.title }}</template>
       <p>{{ app.title }} is an agent-based model that simulates the transmission of COVID-19 (novel coronavirus, SARS-CoV-2) in a population. Each individual in the model may pass through the following stages of COVID-19 infection: susceptible, exposed, infectious, and recovered (SEIR). The epidemiological parameter values are taken from literature.</p>
-      <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals in neighboring nodes to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.05 and a doubling time of 6-7 days. For more information, please visit the <a href="{{ app.github_url }}" target="_blank">GitHub</a> repository.</p>
-      <p>Note: Models are only as good as the values of the parameters put into them. This is a rapidly changing situation, and we will update content as relevant information is received.</p>
+      <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.5 and a doubling time of 6-7 days. For more information, please visit the <a href="https://github.com/InstituteforDiseaseModeling/covasim" target="_blank">GitHub</a> repository.</p>
+      <p><b>Note:</b> Models are only as good as the values of the parameters put into them. This is a rapidly changing situation, and we will update content as relevant information is received.</p>
+      <p><b>Acknowledgements:</b> Covasim is currently under active development by IDM's COVID-19 Response Team. Model development is led by Daniel Klein, Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, and Dina Mistry. UI design is led by Lauren George, William Chen, and Scott Ayers, inspired by a prototype from Brian Lovin. For the full list of contributors, please see our <a href="https://github.com/InstituteforDiseaseModeling/covasim/graphs/contributors" target="_blank">Contributors</a> page</a>.</p>
     </b-modal>
 
 
@@ -58,188 +59,198 @@
 
   <div class="content">
 
-    <b-sidebar id="parameters" :visible="panel_open" no-header bg-variant="white" :width="panel_width+'vw'" shadow>
+    <b-sidebar id="parameters" :visible="panel_open" no-header class="sidebar" :width="panel_width+'vw'" shadow>
       <div class="px-3">
         <header class="d-flex justify-content-between">
-          <h4 class="my-2">Campaign Builder</h4>
-          <button class="close" @click="close_panel" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+          <h4 class="my-2">Simulation configuration</h4>
+          <button class="close" id="hidepanel" @click="close_panel" aria-label="Left">
+            <span aria-hidden="true">&#129092;</span>
           </button>
+          <b-tooltip target="hidepanel">
+            Hide configuration panel
+          </b-tooltip>
         </header>
+      </div>
 
-        <!-- Presets -->
-        <div class="form-row mb-3">
-          <div class="col">
-            <select :disabled="running" id="examples" v-model="reset_choice" @change="resetPars()" class="form-control" aria-label="Example Presets">
-              <option v-for="(item, index) in reset_options" :value="item">
-                {{ item }}
-              </option>
-            </select>
-            <b-tooltip target="examples">
-              Example parameter configurations
-            </b-tooltip>
-          </div>
-          <div class="col-auto">
-            <button id="reset_btn" :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
-              Reset
-            </button>
-            <b-tooltip target="reset_btn">
-              Reset parameters to default values
-            </b-tooltip>
-          </div>
-          <div class="col-auto">
-            <button id="download-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="downloadPars">
-              <span class="ti-download"/>
-              <span class="sr-only"> Download parameters </span>
-            </button>
-            <b-tooltip target="download-parameters-button">
-              Download parameters
-            </b-tooltip>
-          </div>
-          <div class="col-auto">
-            <button id="upload-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="uploadPars">
-              <span class="ti-upload"/>
-              <span class="sr-only"> Upload parameters </span>
-            </button>
-            <b-tooltip target="upload-parameters-button">
-              Upload parameters
-            </b-tooltip>
-          </div>
+      <div class="card mb-3">
+        <div class="card-header">
+          <button class="btn btn-block parheading" v-b-toggle.general>General options</button>
         </div>
+        <b-collapse visible id="general">
+          <div class="card-body">
+            <div class="row">
 
-        <div class="form-group">
-          <label for="n_days">Campaign Duration (in days):</label>
-          <input id="n_days" type="number" :min="sim_length.min" :max="sim_length.max" :disabled="running" class="form-control" v-model.number="sim_length.best">
-          <span aria-live="assertive" v-if="paramError.sim_length" class="text-danger form-error">{{paramError.sim_length}}</span>
+              <!-- Presets -->
+              <div class="form-row mb-3">
+                <label for="examples" class="col-12">Choose simulation presets</label>
+                <div class="col">
+                  <select :disabled="running" id="examples" v-model="reset_choice" @change="resetPars()" class="form-control" aria-label="Example Presets">
+                    <option v-for="(item, index) in reset_options" :value="item">
+                      {{ item }}
+                    </option>
+                  </select>
+                  <b-tooltip target="examples">
+                    Example parameter configurations
+                  </b-tooltip>
+                </div>
+                <div class="col-auto">
+                  <button id="reset_btn" :disabled="running" class="btn btn-primary blueish" type="button" @click="resetPars">
+                    Reset
+                  </button>
+                  <b-tooltip target="reset_btn">
+                    Reset parameters to default values
+                  </b-tooltip>
+                </div>
+                <div class="col-auto">
+                  <button id="download-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="downloadPars">
+                    <span class="ti-download"/>
+                    <span class="sr-only"> Download parameters </span>
+                  </button>
+                  <b-tooltip target="download-parameters-button">
+                    Download parameters
+                  </b-tooltip>
+                </div>
+                <div class="col-auto">
+                  <button id="upload-parameters-button" :disabled="running" class="btn btn-primary blueish" type="button" @click="uploadPars">
+                    <span class="ti-upload"/>
+                    <span class="sr-only"> Upload parameters </span>
+                  </button>
+                  <b-tooltip target="upload-parameters-button">
+                    Upload parameters
+                  </b-tooltip>
+                </div>
+              </div>
+            </div>
 
-          <b-tooltip target="n_days">
-            {{sim_length.tip}}
-          </b-tooltip>
-        </div>
-        <div class="form-group">
-          <label for="country">Demographic:</label>
-          <select :disabled="running" id="country" v-model="country" class="form-control">
-            <option v-for="item in country_options" :value="item">
-              {{ item }}
-            </option>
-          </select>
+            <div class="row">
+              <div class="form-group">
+                <label for="n_days">Simulation duration (in days):</label>
+                <input id="n_days" type="number" :min="sim_length.min" :max="sim_length.max" :disabled="running" class="form-control" v-model.number="sim_length.best">
+                <span aria-live="assertive" v-if="paramError.sim_length" class="text-danger form-error">{{paramError.sim_length}}</span>
 
-          <b-tooltip target="country">
-            This will use the latest age distribution data for the selected country
-          </b-tooltip>
-        </div>
-        <div class="form-row mb-3">
-          <label for="datafile" class="col-12">Upload Data</label>
-          <div class="col">
-            <b-form-file id="datafile" name="datafile" accept=".csv, .xlsx" placeholder="Use IDM's data" v-model="datafile.local_path" @change="upload_datafile" :disabled="running"></b-form-file>
-          </div>
-          <div class="col-auto">
-            <button id="reset-datafile" :disabled="running" class="btn btn-primary blueish" type="button" @click="reset_datafile">
-              Clear
-            </button>
-            <b-tooltip target="reset-datafile">
-              Remove the input data file from the campaign.
-            </b-tooltip>
-          </div>
+                <b-tooltip target="n_days">
+                  {{sim_length.tip}}
+                </b-tooltip>
+              </div>
+            </div>
 
-        </div>
-        <div class="card mb-3">
-          <div class="card-header">
-            <button class="btn btn-block" v-b-toggle.intervention>Interventions</button>
-          </div>
-          <b-collapse visible id="intervention">
-            <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
-            <b-card no-body class="border-0 rounded-0">
-              <b-tabs fill card>
-                <template v-for="(intervention, name, index) in interventionTableConfig">
-                  <b-tab :class="[index === 0? 'active' : '']" :id="'intervention-'+name">
-                    <template v-slot:title>
-                      {{ intervention.formTitle }}
-                    </template>
-                    <fieldset>
-                      <legend>{{intervention.formTitle}}</legend>
-                      <form @submit.prevent="(e) => addIntervention(name, e)">
-                        <div class="form-group">
-                          <div class="input-group mb-3">
-                            <template v-for="field in intervention.fields">
-                              <input :max="sim_length.max" :min="sim_length.min" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type">
-                              <select class="form-control" :name="field.key" v-else>
-                                <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
-                              </select>
-                            </template>
-                            <div class="input-group-append">
-                              <button class="btn btn-outline-secondary" type="submit">Add intervention</button>
-                            </div>
-                          </div>
-                        </div>
-                      </form>
-                      <span aria-live="assertive" v-if="scenarioError[name]" class="text-danger form-error">{{scenarioError[name]}}</span>
-                      <div v-if="intervention_pars && intervention_pars[name] && intervention_pars[name].length > 0">
-                        <table class="table">
-                          <thead>
-                          <tr>
-                            <th scope="col" v-for="field in intervention.fields">{{field.label}}</th>
-                            <th scope="col"></th>
-                          </tr>
-                          </thead>
-                          <tbody>
-                          <tr v-for="(par, index) in intervention_pars[name]">
-                            <th v-for="field in intervention.fields" scope="row">{{par[field.key]}}</th>
-                            <td>
-                              <button @click="deleteIntervention(name, index)" class="btn btn-outline-secondary" type="button">Delete</button>
-                            </td>
-                          </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </fieldset>
-                  </b-tab>
-                </template>
-              </b-tabs>
-            </b-card>
-          </b-collapse>
-        </div>
-        <div class="card mb-3">
-          <div class="card-header">
-            <button class="btn btn-block" v-b-toggle.advanced>Advanced</button>
-          </div>
-          <b-collapse id="advanced">
-            <div class="card-body">
-              <div class="row">
-
-                <fieldset class="col-md-6">
-                  <legend>Population parameters</legend>
-                  <div v-for="(par, key) in sim_pars" class="form-group">
-                    <div :id="key+'-wpr'" v-if="key !== 'n_days'">
-                      <label :for="key">{{par.name}}:</label>
-                      <input :id="key" :disabled="running" class="form-control" v-model="par.best">
-                      <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
-                    </div>
-                    <b-tooltip :target="key+'-wpr'" v-if="key !== 'n_days'">
-                      {{par.tip}}
-                    </b-tooltip>
-                  </div>
-                </fieldset>
-                <fieldset class="col-md-6">
-                  <legend>Epidemiological parameters</legend>
-                  <div v-for="(par, key) in epi_pars" class="form-group">
-                    <div :id="key+'-wpr'">
-                      <label :for="key">{{par.name}}:</label>
-                      <input :id="key" :disabled="running" class="form-control" v-model="par.best">
-                      <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
-                    </div>
-                    <b-tooltip :target="key+'-wpr'">
-                      {{par.tip}}
-                    </b-tooltip>
-                  </div>
-                </fieldset>
+            <div class="row">
+              <div class="form-row mb-3">
+                <label for="datafile" class="col-12">Upload data</label>
+                <div class="col">
+                  <b-form-file id="datafile" name="datafile" accept=".csv, .xlsx" placeholder="<none>" v-model="datafile.local_path" @change="upload_datafile" :disabled="running"></b-form-file>
+                </div>
+                <div class="col-auto">
+                  <button id="reset-datafile" :disabled="running" class="btn btn-primary blueish" type="button" @click="reset_datafile">
+                    Clear
+                  </button>
+                  <b-tooltip target="reset-datafile">
+                    Remove the input data file from the simulation
+                  </b-tooltip>
+                </div>
 
               </div>
             </div>
-          </b-collapse>
-        </div>
-
+          </div>
+        </b-collapse>
       </div>
+
+      <div class="card mb-3">
+        <div class="card-header">
+          <button class="btn btn-block parheading" v-b-toggle.intervention>Interventions</button>
+        </div>
+        <b-collapse visible id="intervention">
+          <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
+          <b-card no-body class="border-0 rounded-0">
+            <b-tabs fill card>
+              <template v-for="(intervention, name, index) in interventionTableConfig">
+                <b-tab :class="[index === 0? 'active' : '']" :id="'intervention-'+name">
+                  <template v-slot:title>
+                    {{ intervention.formTitle }}
+                  </template>
+                  <fieldset>
+                    <form @submit.prevent="(e) => addIntervention(name, e)">
+                      <div class="form-group">
+                        <div class="input-group mb-3">
+                          <template v-for="field in intervention.fields">
+                            <input :max="sim_length.max" :min="sim_length.min" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type">
+                            <select class="form-control" :name="field.key" v-else>
+                              <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
+                            </select>
+                          </template>
+                          <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="submit">Add intervention</button>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                    <span aria-live="assertive" v-if="scenarioError[name]" class="text-danger form-error">{{scenarioError[name]}}</span>
+                    <div v-if="int_pars && int_pars[name] && int_pars[name].length > 0">
+                      <table class="table">
+                        <thead>
+                        <tr>
+                          <th scope="col" v-for="field in intervention.fields">{{field.label}}</th>
+                          <th scope="col"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="(par, index) in int_pars[name]">
+                          <th v-for="field in intervention.fields" scope="row">{{par[field.key]}}</th>
+                          <td>
+                            <button @click="deleteIntervention(name, index)" class="btn btn-outline-secondary" type="button">Delete</button>
+                          </td>
+                        </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </fieldset>
+                </b-tab>
+              </template>
+            </b-tabs>
+          </b-card>
+        </b-collapse>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header">
+          <button class="btn btn-block parheading" v-b-toggle.advanced>Model parameters</button>
+        </div>
+        <b-collapse visible id="advanced">
+          <div class="card-body">
+            <div class="row">
+
+              <fieldset class="col-md-6">
+                <legend>Population parameters</legend>
+                <div v-for="(par, key) in sim_pars" class="form-group">
+                  <div :id="key+'-wpr'" v-if="key !== 'n_days'">
+                    <label :for="key">{{par.name}}:</label>
+                    <input :id="key" :disabled="running" class="form-control" v-model="par.best">
+                    <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
+                  </div>
+                  <b-tooltip :target="key+'-wpr'" v-if="key !== 'n_days'">
+                    {{par.tip}}
+                  </b-tooltip>
+                </div>
+              </fieldset>
+              <fieldset class="col-md-6">
+                <legend>Epidemiological parameters</legend>
+                <div v-for="(par, key) in epi_pars" class="form-group">
+                  <div :id="key+'-wpr'">
+                    <label :for="key">{{par.name}}:</label>
+                    <input :id="key" :disabled="running" class="form-control" v-model="par.best">
+                    <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
+                  </div>
+                  <b-tooltip :target="key+'-wpr'">
+                    {{par.tip}}
+                  </b-tooltip>
+                </div>
+              </fieldset>
+
+            </div>
+          </div>
+        </b-collapse>
+      </div>
+
 
       <!-- Resize handle -->
       <div id="resize-handle" @mousedown="resize_start"></div>
@@ -270,70 +281,54 @@
     <div id="graphs" class="graphs">
       <div class="form-inline">
         <button class="btn btn-primary blueish" @click="open_panel">
-          Open parameters
+          Open configuration
         </button>
-
-        <div class="form-group ml-3" id="history-wpr">
-          <label for="history"> History: </label>
-          <select id="history" :disabled="running" v-model="historyIdx" @change="loadPars" class="form-control form-control-sm" aria-label="Run history">
-            <option v-for="(item, index) in history" :value="index">
-              {{ index }}
-            </option>
-          </select>
-          <b-tooltip target="history-wpr">
-            History of campaign runs used in this session
-          </b-tooltip>
-        </div>
       </div>
+    </div>
 
-      <fieldset>
-        <legend>Results</legend>
-        <!--
-        <template v-if="running">
-          <p><i>Please wait, running model...</i></p>
-            <b-spinner />
-        </template>
-        -->
-        <template v-if="result.graphs.length === 0">
-          <p><i>Click "Run" to display graphs</i></p>
-        </template>
-        <template v-else>
+    <fieldset>
+      <template v-if="result.graphs.length === 0">
+        <p><i>Click "Run" to display graphs</i></p>
+      </template>
+      <template v-else>
 
-          <div class="d-flex flex-wrap">
-            <div class="w-50" v-for="x in result.graphs">
-              <plotly-chart :graph="x" :key="x.id"/>
-            </div>
-
-            <!-- <b>After {{ result.summary.days }} days: {{ result.summary.cases }} cases, {{ result.summary.deaths }} deaths</b> -->
-
-            <div class="text-center">
-              <button id="download_xlsx" class="btn btn-primary blueish" type="button" @click="downloadExcel">
-                <span class="sr-only">Download</span> XLSX <span class="ti-download"/>
-              </button>
-              <button id="download_json" class="btn btn-primary blueish" type="button" @click="downloadJson">
-                <span class="sr-only">Download</span> JSON <span class="ti-download"/>
-              </button>
-              <b-tooltip target="download_xlsx">
-                Download results as an XLSX file
-              </b-tooltip>
-              <b-tooltip target="download_json">
-                Download results as a JSON file
-              </b-tooltip>
-            </div>
-
+        <div class="d-flex flex-wrap">
+          <div class="w-50" v-for="x in result.graphs">
+            <plotly-chart :graph="x" :key="x.id"/>
           </div>
 
-        </template>
+          <!-- <b>After {{ result.summary.days }} days: {{ result.summary.cases }} cases, {{ result.summary.deaths }} deaths</b> -->
 
-      </fieldset>
-    </div>
+          <div class="text-center">
+            <button id="download_xlsx" class="btn btn-primary blueish" type="button" @click="downloadExcel">
+              <span class="sr-only">Download</span> XLSX <span class="ti-download"/>
+            </button>
+            <button id="download_json" class="btn btn-primary blueish" type="button" @click="downloadJson">
+              <span class="sr-only">Download</span> JSON <span class="ti-download"/>
+            </button>
+            <b-tooltip target="download_xlsx">
+              Download results as an XLSX file
+            </b-tooltip>
+            <b-tooltip target="download_json">
+              Download results as a JSON file
+            </b-tooltip>
+          </div>
+
+        </div>
+
+      </template>
+
+    </fieldset>
   </div>
 
   <footer class="row no-gutter">
     <b-navbar type="dark" variant="dark">
-      <span class="navbar-text text-white">
-        &copy; {{ app.copyright_year }} <a :href="app.org_url" target="_blank">Institute for Disease Modeling</a>
-      </span>
+      <a :href="app.org_url" target="_blank">
+        <img src="assets/idm-logo.png" height="30px"/>
+        <span class="nav-text" style="padding-left: 20px">
+          &copy; {{ app.copyright_year }} Institute for Disease Modeling
+        </span>
+      </a>
       <b-navbar-nav class="ml-auto">
         <b-nav-item :href="app.github_url" target="_blank">
           <svg viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true" style="vertical-align: text-bottom">
@@ -342,9 +337,9 @@
           </svg>
           <span class="sr-only">View this project on GitHub</span>
         </b-nav-item>
-        <b-nav-item v-b-modal.licenses>License</b-nav-item>
-        <b-nav-item :href="app.org_url + '/terms'" target="_blank">Terms</b-nav-item>
-        <b-nav-item :href="app.org_url + '/privacy'" target="_blank">Privacy</b-nav-item>
+        <b-nav-item v-b-modal.licenses><span class="nav-text">License</span></b-nav-item>
+        <b-nav-item :href="app.org_url + '/terms'" target="_blank"><span class="nav-text">Terms</span></b-nav-item>
+        <b-nav-item :href="app.org_url + '/privacy'" target="_blank"><span class="nav-text">Privacy</span></b-nav-item>
       </b-navbar-nav>
     </b-navbar>
   </footer>

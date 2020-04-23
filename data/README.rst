@@ -1,162 +1,198 @@
-=============
 Data scrapers
 =============
 
-These scripts pull data from various sources for use in Covasim. To run all scrapers,
-simply type::
+These scripts pull data from various sources for use in Covasim. To run
+all scrapers, simply type
+
+.. code:: bash
 
     ./run_scrapers
 
-.. contents:: Contents
-   :local:
-   :depth: 1
-
 1. Corona Data Scraper
-======================
+----------------------
 
-To quote the `Corona Data Scraper`_ web page,
+To quote the `Corona Data Scraper <https://coronadatascraper.com>`__ web
+page,
 
-.. _Corona Data Scraper: https://coronadatascraper.com
+    Corona Data Scraper pulls COVID-19 Coronavirus case data from
+    verified sources.
 
-*Corona Data Scraper pulls COVID-19 Coronavirus case data from verified sources, finds the corresponding GeoJSON features, and adds population data.*
+These are scraped by the loader below, and placed in the
+``data/epi_data/corona-data-scraper-project`` directory. The data is in
+CSV format.
 
-We transform this data for use in the Covasim parameter format. It is stored
-in CSV format.
+Here is a sample of the data.
+
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+|         | key                                      | population   | aggregate   | cum\_positives   | cum\_death   | cum\_recovered   | cum\_active   | cum\_tests   | cum\_hospitalized   | cum\_discharged   | date         | day   | positives   | death   | tests   | hospitalized   | discharged   | recovered   | active   |
++=========+==========================================+==============+=============+==================+==============+==================+===============+==============+=====================+===================+==============+=======+=============+=========+=========+================+==============+=============+==========+
+| 57089   | Roane County, Tennessee, United States   | 53382.0      | county      | 1.0              |              |                  |               |              |                     |                   | 2020-03-21   | 0     | 1.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57090   | Roane County, Tennessee, United States   | 53382.0      | county      | 1.0              |              |                  |               |              |                     |                   | 2020-03-22   | 1     | 0.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57091   | Roane County, Tennessee, United States   | 53382.0      | county      | 1.0              |              |                  |               |              |                     |                   | 2020-03-23   | 2     | 0.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57092   | Roane County, Tennessee, United States   | 53382.0      | county      | 1.0              |              |                  |               |              |                     |                   | 2020-03-24   | 3     | 0.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57093   | Roane County, Tennessee, United States   | 53382.0      | county      | 1.0              |              |                  |               |              |                     |                   | 2020-03-25   | 4     | 0.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57094   | Roane County, Tennessee, United States   | 53382.0      | county      | 1.0              |              |                  |               |              |                     |                   | 2020-03-26   | 5     | 0.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57095   | Roane County, Tennessee, United States   | 53382.0      | county      | 1.0              |              |                  |               |              |                     |                   | 2020-03-27   | 6     | 0.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57096   | Roane County, Tennessee, United States   | 53382.0      | county      | 1.0              |              |                  |               |              |                     |                   | 2020-03-28   | 7     | 0.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57097   | Roane County, Tennessee, United States   | 53382.0      | county      | 2.0              |              |                  |               |              |                     |                   | 2020-03-29   | 8     | 1.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57098   | Roane County, Tennessee, United States   | 53382.0      | county      | 2.0              |              |                  |               |              |                     |                   | 2020-03-30   | 9     | 0.0         |         |         |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57099   | Roane County, Tennessee, United States   | 53382.0      | county      | 2.0              |              |                  |               | 88.0         |                     |                   | 2020-03-31   | 10    | 0.0         |         | 88.0    |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57100   | Roane County, Tennessee, United States   | 53382.0      | county      | 2.0              |              |                  |               | 91.0         |                     |                   | 2020-04-01   | 11    | 0.0         |         | 3.0     |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57101   | Roane County, Tennessee, United States   | 53382.0      | county      | 3.0              |              |                  |               | 131.0        |                     |                   | 2020-04-02   | 12    | 1.0         |         | 40.0    |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
+| 57102   | Roane County, Tennessee, United States   | 53382.0      | county      | 3.0              |              |                  |               | 150.0        |                     |                   | 2020-04-03   | 13    | 0.0         |         | 19.0    |                |              |             |          |
++---------+------------------------------------------+--------------+-------------+------------------+--------------+------------------+---------------+--------------+---------------------+-------------------+--------------+-------+-------------+---------+---------+----------------+--------------+-------------+----------+
 
 Updating
---------
+~~~~~~~~
 
-To update the Corona Data Scraper data::
+To update the Corona Data Scraper data,
+
+.. code:: bash
 
     python data/load_corona_data_scraper_data.py
 
-This will create a file *corona_data_scraper.csv* in the *data/epi_data* directory.
-
-Data dictionary
----------------
-
-The following columns are present in the data:
-
-- ``name``: Apparently, a unique name for the data set
-- ``level``: level of the data (country, state, county, city)
-- ``city``: The city name
-- ``county``: The county or parish
-- ``state``: The state, province, or region
-- ``country``: [ ISO 3166-1 alpha-3 country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3)
-- ``population``: The estimated population of the location
-- ``lat``: latitude
-- ``long``: longitude
-- ``url``: Data source
-- aggregate
-- ``tz``: Time zone
-- ``recovered``: Cumulative number recovered (as of date)
-- ``active``: Cumulative number active (as of date)
-- ``growthFactor``:
-- ``date``: Date in yyyy-MM-dd text format
-- ``day``: Number of days since first reporting
-- ``positives``: Cumulative number of positive cases (as of date)
-- ``death``: Cumulative number of deaths (as of date)
-- ``tests``: Cumulative number of tests (as of date)
-- ``new_positives``: New positives on this date
-- ``new_active``: New active cases on this date
-- ``new_death``: Number of deaths on this date
-- ``new_tests``: New tests on this date
-
-As of April 4, 2020, there are apparently 3280 data sets.
+As of April 4, 2020, there are apparently 3874 data sets.
 
 2. European Centre for Disease Prevention and Control
-=====================================================
+-----------------------------------------------------
 
-To quote the `European Centre for Disease Prevention and Control`_ web page,
+To quote the `European Centre for Disease Prevention and
+Control <https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases>`__
+web page,
 
-.. _European Centre for Disease Prevention and Control: https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases
+    Since the beginning of the coronavirus pandemic, ECDC’s Epidemic
+    Intelligence team has been collecting the number of COVID-19 cases
+    and deaths, based on reports from health authorities worldwide. This
+    comprehensive and systematic process is carried out on a daily
+    basis. To insure the accuracy and reliability of the data, this
+    process is being constantly refined. This helps to monitor and
+    interpret the dynamics of the COVID-19 pandemic not only in the
+    European Union (EU), the European Economic Area (EEA), but also
+    worldwide.
 
-*Since the beginning of the coronavirus pandemic, ECDC’s Epidemic Intelligence team has been collecting the number of COVID-19 cases and deaths, based on reports from health authorities worldwide. This comprehensive and systematic process is carried out on a daily basis. To insure the accuracy and reliability of the data, this process is being constantly refined. This helps to monitor and interpret the dynamics of the COVID-19 pandemic not only in the European Union (EU), the European Economic Area (EEA), but also worldwide.*
+The data is stored in CSV format in
+``data/epi_data/european-centre-for-disease-prevention-and-control``
 
-We transform this data for use in the Covasim parameter format. It is stored
-in CSV format.
+Here is a sample of the data:
+
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+|        | day   | new\_positives   | new\_death   | key         | population   | date         |
++========+=======+==================+==============+=============+==============+==============+
+| 3960   | 0     | 2                | 0            | Greenland   | 56025.0      | 2020-03-20   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3959   | 1     | 0                | 0            | Greenland   | 56025.0      | 2020-03-21   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3958   | 2     | 0                | 0            | Greenland   | 56025.0      | 2020-03-22   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3957   | 3     | 0                | 0            | Greenland   | 56025.0      | 2020-03-23   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3956   | 4     | 2                | 0            | Greenland   | 56025.0      | 2020-03-24   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3955   | 5     | 0                | 0            | Greenland   | 56025.0      | 2020-03-25   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3954   | 6     | 1                | 0            | Greenland   | 56025.0      | 2020-03-26   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3953   | 7     | 1                | 0            | Greenland   | 56025.0      | 2020-03-27   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3952   | 8     | 3                | 0            | Greenland   | 56025.0      | 2020-03-28   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3951   | 9     | 1                | 0            | Greenland   | 56025.0      | 2020-03-29   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3950   | 10    | 0                | 0            | Greenland   | 56025.0      | 2020-03-30   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3949   | 11    | 0                | 0            | Greenland   | 56025.0      | 2020-03-31   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3948   | 12    | 0                | 0            | Greenland   | 56025.0      | 2020-04-01   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
+| 3947   | 13    | 0                | 0            | Greenland   | 56025.0      | 2020-04-02   |
++--------+-------+------------------+--------------+-------------+--------------+--------------+
 
 Updating
---------
+~~~~~~~~
 
-To update the Corona Data Scraper data::
+To update the Corona Data Scraper data,
+
+.. code:: bash
 
     python data/load_ecdp_data.py
 
-
-This will create a file *ecdp_data.csv* in the *data/epi_data* directory.
-
-This adds data from 204 countries and territories (as of April 5, 2020), including Africa, Asia, the Americas, Europe, and Oceania. More details at: https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases
-
-The following columns are present in the data:
-
-- ``countriesAndTerritories``: Unique country or territory name
-- ``geoId``: Geo ID of same
-- ``countryterritoryCode``: ISO 3-letter code?
-- ``date``: Date in yyyy-MM-dd text format
-- ``day``: Number of days since first reporting
-- ``new_positives``: New positives on this date
-- ``new_death``: Number of deaths on this date
-
-
+This adds data from 10,538 countries and territories (as of April 15,
+2020), including Africa, Asia, the Americas, Europe, and Oceania. More
+details at:
+https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases
 
 3. The COVID Tracking Project
-=============================
+-----------------------------
 
-The COVID Tracking Project "obtains, organizes, and publishes high-quality data required to understand and respond to the COVID-19 outbreak in the United States." The project website is https://covidtracking.com
+The COVID Tracking Project "obtains, organizes, and publishes
+high-quality data required to understand and respond to the COVID-19
+outbreak in the United States." The project website is
+https://covidtracking.com
 
-We transform this data for use in the Covasim parameter format. It is stored
-in CSV format.
+We transform this data for use in the Covasim parameter format. It is
+stored in CSV-format in the ``ata/epi_data/covid-tracking-project``
+directory.
+
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+|        | date         | key   | cum\_hospitalized   | cum\_in\_icu   | cum\_on\_ventilator   | death   | new\_death   | new\_hospitalized   | new\_negatives   | new\_positives   | new\_tests   | day   | num\_icu   | num\_on\_ventilator   |
++========+==============+=======+=====================+================+=======================+=========+==============+=====================+==================+==================+==============+=======+============+=======================+
+| 2210   | 2020-03-04   | NY    |                     |                |                       |         |              |                     |                  |                  |              | 0     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 2191   | 2020-03-05   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 28.0             | 16.0             | 44.0         | 1     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 2163   | 2020-03-06   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 16.0             | 11.0             | 27.0         | 2     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 2122   | 2020-03-07   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 0.0              | 43.0             | 43.0         | 3     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 2071   | 2020-03-08   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 0.0              | 29.0             | 29.0         | 4     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 2020   | 2020-03-09   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 0.0              | 37.0             | 37.0         | 5     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 1969   | 2020-03-10   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 0.0              | 31.0             | 31.0         | 6     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 1918   | 2020-03-11   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 0.0              | 43.0             | 43.0         | 7     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 1867   | 2020-03-12   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 0.0              | 0.0              | 0.0          | 8     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 1816   | 2020-03-13   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 2687.0           | 205.0            | 2892.0       | 9     |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 1765   | 2020-03-14   | NY    |                     |                |                       |         | 0.0          | 0.0                 | 0.0              | 103.0            | 103.0        | 10    |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 1714   | 2020-03-15   | NY    |                     |                |                       | 3.0     | 3.0          | 0.0                 | 1764.0           | 205.0            | 1969.0       | 11    |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 1661   | 2020-03-16   | NY    |                     |                |                       | 7.0     | 4.0          | 0.0                 | 0.0              | 221.0            | 221.0        | 12    |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
+| 1605   | 2020-03-17   | NY    |                     |                |                       | 7.0     | 0.0          | 0.0                 | 963.0            | 750.0            | 1713.0       | 13    |            |                       |
++--------+--------------+-------+---------------------+----------------+-----------------------+---------+--------------+---------------------+------------------+------------------+--------------+-------+------------+-----------------------+
 
 Updating
---------
+~~~~~~~~
 
-To update the COVID Tracking Project data::
+To update the COVID Tracking Project data,
+
+.. code:: bash
 
     python data/load_covid_tracking_project_data.py
 
-
-This will create a file *covid-tracking-project-data.csv* in the data directory.
-
-This adds data from each of the US states and territories, as well as for the whole of the United States. The following fields are saved:
-
-- ``date``
-- ``positive``
-- ``negative``
-- ``pending``
-- ``hospitalizedCurrently``
-- ``hospitalizedCumulative``
-- ``inIcuCurrently``
-- ``inIcuCumulative``
-- ``onVentilatorCurrently``
-- ``onVentilatorCumulative``
-- ``recovered``
-- ``hash``
-- ``dateChecked``
-- ``death``
-- ``hospitalized``
-- ``total``
-- ``totalTestResults``
-- ``posNeg``
-- ``fips``
-- ``hospitalizedIncrease``
-- ``negativeIncrease``
-- ``name``
-- ``day``
-- ``new_positives``
-- ``new_negatives``
-- ``new_tests``
-- ``new_death``
-- ``new_icu``
-- ``new_vent``
-
-More details at: https://covidtracking.com/api The ``new_`` variables are per-day
-changes in the values, in parameter.py format.
-
-
 4. Demographic data scraper
-===========================
+---------------------------
 
-To scrape demographic data, run::
+To scrape demographic data, run
+
+.. code:: bash
 
     python data/load_demographic_data.py
+
