@@ -30,6 +30,7 @@ class TestProperties:
             verbose = 'verbose'
             enable_synthpops = 'usepopdata'
             time_limit = 'timelimit'
+            quarantine_effectiveness = 'quar_eff'
             # stopping_function = 'stop_func'
             pass
 
@@ -127,6 +128,7 @@ class TestProperties:
         infections_cumulative = 'cum_infections'
         tests_at_timestep = 'new_tests'
         tests_cumulative = 'cum_tests'
+        quarantined_new = 'new_quarantined'
         GUESS_doubling_time_at_timestep = 'doubling_time'
         GUESS_r_effective_at_timestep = 'r_eff'
 
@@ -289,8 +291,9 @@ class CovaSimTest(unittest.TestCase):
         pass
 
     def intervention_set_test_prob(self, symptomatic_prob=0, asymptomatic_prob=0,
-                                   asymptomatic_quarantine_prob=0, symp_quar_prob=0, test_sensitivity=1.0,
-                                   loss_prob=0.0, test_delay=1, start_day=0):
+                                   asymptomatic_quarantine_prob=0, symp_quar_prob=0,
+                                   test_sensitivity=1.0, loss_prob=0.0, test_delay=1,
+                                   start_day=0):
         self.interventions = test_prob(symp_prob=symptomatic_prob,
                                        asymp_prob=asymptomatic_prob,
                                        asymp_quar_prob=asymptomatic_quarantine_prob,
