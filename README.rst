@@ -9,9 +9,10 @@ also be used to explore the potential impact of different interventions, includi
 social distancing, school closures, testing, contact tracing, and quarantine.
 
 Questions or comments can be directed to covasim@idmod.org, or on this project's
-GitHub_ page.
+GitHub_ page. Full information about Covasim is provided in the documentation_.
 
 .. _GitHub: https://github.com/institutefordiseasemodeling/covasim
+.. _documentation: https://institutefordiseasemodeling.github.io/covasim-docs
 
 .. contents:: Contents
    :local:
