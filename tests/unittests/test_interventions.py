@@ -5,6 +5,8 @@ import numpy as np
 
 import unittest
 
+import numpy as np
+
 ResultsKeys = TestProperties.ResultsDataKeys
 SimKeys = TestProperties.ParameterKeys.SimulationKeys
 class InterventionTests(CovaSimTest):
@@ -127,12 +129,193 @@ class InterventionTests(CovaSimTest):
                                msg=f"Expected more infections with multiplier {my_multiplier} "
                                    f"(with {total_infections[my_multiplier]} infections) than {next_multiplier} "
                                    f"(with {total_infections[next_multiplier]} infections)")
+
+    def test_change_beta_layers_clustered(self):
+        self.is_debugging = False
+        initial_infected = 10
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 60,
+            SimKeys.initial_infected_count: initial_infected
+        }
+        self.set_simulation_parameters(params_dict=params)
+        day_of_change = 25
+        change_multipliers = [0.0]
+        layer_keys = ['c','h','s','w']
+
+        sequence_days = []
+        sequence_interventions = []
+
+        for k in layer_keys: # Zero out one layer at a time
+            day_of_change += 5
+            self.intervention_set_changebeta(
+                days_array=[day_of_change],
+                multiplier_array=change_multipliers,
+                layers=[k]
+            )
+            sequence_days.append(day_of_change)
+            sequence_interventions.append(self.interventions)
+            self.interventions = None
+            pass
+        self.intervention_build_sequence(day_list=sequence_days,
+                                         intervention_list=sequence_interventions)
+        self.run_sim(population_type='clustered')
+        last_intervention_day = sequence_days[-1]
+        first_intervention_day = sequence_days[0]
+        cum_infections_channel= self.get_full_result_channel(ResultsKeys.infections_cumulative)
+        self.assertGreater(cum_infections_channel[sequence_days[0]-1],
+                           initial_infected,
+                           msg=f"Before intervention at day {sequence_days[0]}, there should be infections happening.")
+        self.assertGreater(cum_infections_channel[last_intervention_day],
+                           cum_infections_channel[first_intervention_day],
+                           msg=f"Cumulative infections should grow with only some layers enabled.")
+        self.assertEqual(cum_infections_channel[last_intervention_day],
+                         cum_infections_channel[-1],
+                         msg=f"With all layers at 0 beta, the cumulative infections at {last_intervention_day}"
+                             f" should be the same as at the end.")
+        pass
+
+    def test_change_beta_layers_random(self):
+        self.is_debugging = False
+        initial_infected = 10
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 60,
+            SimKeys.initial_infected_count: initial_infected
+        }
+        self.set_simulation_parameters(params_dict=params)
+        day_of_change = 25
+        change_multipliers = [0.0]
+        layer_keys = ['a']
+
+        sequence_days = []
+        sequence_interventions = []
+
+        for k in layer_keys: # Zero out one layer at a time
+            day_of_change += 5
+            self.intervention_set_changebeta(
+                days_array=[day_of_change],
+                multiplier_array=change_multipliers,
+                layers=[k]
+            )
+            sequence_days.append(day_of_change)
+            sequence_interventions.append(self.interventions)
+            self.interventions = None
+            pass
+        self.intervention_build_sequence(day_list=sequence_days,
+                                         intervention_list=sequence_interventions)
+        self.run_sim(population_type='random')
+        last_intervention_day = sequence_days[-1]
+        cum_infections_channel= self.get_full_result_channel(ResultsKeys.infections_cumulative)
+        self.assertGreater(cum_infections_channel[sequence_days[0]-1],
+                           initial_infected,
+                           msg=f"Before intervention at day {sequence_days[0]}, there should be infections happening.")
+        self.assertEqual(cum_infections_channel[last_intervention_day],
+                         cum_infections_channel[sequence_days[0] - 1],
+                         msg=f"With all layers at 0 beta, should be 0 infections at {last_intervention_day}.")
+
+    def test_change_beta_layers_hybrid(self):
+        self.is_debugging = False
+        initial_infected = 10
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 60,
+            SimKeys.initial_infected_count: initial_infected
+        }
+        self.set_simulation_parameters(params_dict=params)
+        day_of_change = 25
+        change_multipliers = [0.0]
+        layer_keys = ['c','s','w','h']
+
+        sequence_days = []
+        sequence_interventions = []
+        current_layers = []
+
+        for k in layer_keys: # Zero out one layer at a time
+            day_of_change += 5
+            current_layers.append(k)
+            self.intervention_set_changebeta(
+                days_array=[day_of_change],
+                multiplier_array=change_multipliers,
+                layers=current_layers
+            )
+            sequence_days.append(day_of_change)
+            sequence_interventions.append(self.interventions)
+            self.interventions = None
+            pass
+        self.intervention_build_sequence(day_list=sequence_days,
+                                         intervention_list=sequence_interventions)
+        self.run_sim(population_type='hybrid')
+        last_intervention_day = sequence_days[-1]
+        first_intervention_day = sequence_days[0]
+        cum_infections_channel= self.get_full_result_channel(ResultsKeys.infections_cumulative)
+        self.assertGreater(cum_infections_channel[sequence_days[0]-1],
+                           initial_infected,
+                           msg=f"Before intervention at day {sequence_days[0]}, there should be infections happening.")
+        self.assertGreater(cum_infections_channel[last_intervention_day],
+                           cum_infections_channel[first_intervention_day],
+                           msg=f"Cumulative infections should grow with only some layers enabled.")
+        self.assertEqual(cum_infections_channel[last_intervention_day],
+                         cum_infections_channel[-1],
+                         msg=f"With all layers at 0 beta, the cumulative infections at {last_intervention_day}"
+                             f" should be the same as at the end.")
+
+    @unittest.skip("TODO: re-enable when synthpops is guaranteed to be here")
+    def test_change_beta_layers_synthpops(self):
+        self.is_debugging = False
+        initial_infected = 10
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 60,
+            SimKeys.initial_infected_count: initial_infected
+        }
+        self.set_simulation_parameters(params_dict=params)
+        day_of_change = 25
+        change_multipliers = [0.0]
+        layer_keys = ['c','s','w','h']
+
+        sequence_days = []
+        sequence_interventions = []
+        current_layers = []
+
+        for k in layer_keys: # Zero out one layer at a time
+            day_of_change += 5
+            current_layers.append(k)
+            self.intervention_set_changebeta(
+                days_array=[day_of_change],
+                multiplier_array=change_multipliers,
+                layers=current_layers
+            )
+            sequence_days.append(day_of_change)
+            sequence_interventions.append(self.interventions)
+            self.interventions = None
+            pass
+        self.intervention_build_sequence(day_list=sequence_days,
+                                         intervention_list=sequence_interventions)
+        self.run_sim(population_type='synthpops')
+        last_intervention_day = sequence_days[-1]
+        first_intervention_day = sequence_days[0]
+        cum_infections_channel= self.get_full_result_channel(ResultsKeys.infections_cumulative)
+        self.assertGreater(cum_infections_channel[sequence_days[0]-1],
+                           initial_infected,
+                           msg=f"Before intervention at day {sequence_days[0]}, there should be infections happening.")
+        self.assertGreater(cum_infections_channel[last_intervention_day],
+                           cum_infections_channel[first_intervention_day],
+                           msg=f"Cumulative infections should grow with only some layers enabled.")
+        self.assertEqual(cum_infections_channel[last_intervention_day],
+                         cum_infections_channel[-1],
+                         msg=f"With all layers at 0 beta, the cumulative infections at {last_intervention_day}"
+                             f" should be the same as at the end.")
+
     # endregion
 
     # region test_prob
     def verify_perfect_test_prob(self, start_day, test_delay, test_sensitivity,
                                  target_pop_count_channel,
-                                 target_pop_new_channel):
+                                 target_pop_new_channel,
+                                 target_test_count_channel=None):
+        if not target_test_count_channel:
+            target_test_count = target_pop_count_channel
         if test_sensitivity < 1.0:
             raise ValueError("This test method only works with perfect test "
                              f"sensitivity. {test_sensitivity} won't cut it.")
@@ -161,8 +344,8 @@ class InterventionTests(CovaSimTest):
             print(f"target count before, on, after start day: {target_count[start_day-1:start_day+2]}")
             pass
         self.assertEqual(new_tests[start_day],
-                         target_count[start_day],
-                         msg=f"Should have each of the {target_count[start_day]} targets"
+                         target_test_count_channel[start_day],
+                         msg=f"Should have each of the {target_test_count_channel[start_day]} targets"
                              f" get tested at day {start_day}. Got {new_tests[start_day]} instead.")
         self.assertEqual(new_diagnoses[start_day + test_delay],
                          target_count[start_day],
@@ -188,9 +371,14 @@ class InterventionTests(CovaSimTest):
             pass
         pass
 
-    @unittest.skip("Don't know how to calc asymptomatic yet")
     def test_test_prob_perfect_asymptomatic(self):
-        self.is_debugging = True
+        '''
+        Test that at 1.0 sensitivity, testing 1.0 asymptomatics finds
+        all persons who are infectious but not symptomatic
+        '''
+
+        self.is_debugging = False
+        agent_count = 5000
         params = {
             SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 60
@@ -199,7 +387,7 @@ class InterventionTests(CovaSimTest):
 
         asymptomatic_probability_of_test = 1.0
         test_sensitivity = 1.0
-        test_delay = 2
+        test_delay = 0
         start_day = 30
 
         self.intervention_set_test_prob(asymptomatic_prob=asymptomatic_probability_of_test,
@@ -210,18 +398,20 @@ class InterventionTests(CovaSimTest):
         symptomatic_count_channel = self.get_full_result_channel(
             ResultsKeys.symptomatic_at_timestep
         )
-        population_channel = [5000] * len(symptomatic_count_channel)
-        susceptible_count_channel = self.get_full_result_channel(
-            ResultsKeys.susceptible_at_timestep
+        infectious_count_channel = self.get_full_result_channel(
+            ResultsKeys.infectious_at_timestep
         )
-        asymptomatic_count_channel = list(np.subtract(population_channel,
-                                                      symptomatic_count_channel))
-        asymptomatic_count_channel = list(np.subtract(asymptomatic_count_channel,
-                                                      ))
+        population_channel = [agent_count] * len(symptomatic_count_channel)
+        asymptomatic_infectious_count_channel = list(np.subtract(np.array(infectious_count_channel),
+                                                      np.array(symptomatic_count_channel)))
+        asymptomatic_population_count_channel = list(np.subtract(np.array(population_channel),
+                                                                 np.array(symptomatic_count_channel)))
+
         self.verify_perfect_test_prob(start_day=start_day,
                                       test_delay=test_delay,
                                       test_sensitivity=test_sensitivity,
-                                      target_pop_count_channel=asymptomatic_count_channel,
+                                      target_pop_count_channel=asymptomatic_infectious_count_channel,
+                                      target_test_count_channel=asymptomatic_population_count_channel,
                                       target_pop_new_channel=None)
 
     def test_test_prob_perfect_symptomatic(self):
@@ -252,8 +442,43 @@ class InterventionTests(CovaSimTest):
                                       test_delay=test_delay,
                                       test_sensitivity=test_sensitivity,
                                       target_pop_count_channel=symptomatic_count_channel,
-                                      target_pop_new_channel=symptomatic_new_channel
+                                      target_pop_new_channel=symptomatic_new_channel,
+                                      target_test_count_channel=symptomatic_count_channel
                                       )
+        pass
+
+    def test_test_prob_perfect_not_quarantined(self):
+        self.is_debugging = False
+        agent_count = 5000
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 60
+        }
+        self.set_simulation_parameters(params_dict=params)
+
+        asymptomatic_probability_of_test = 1.0
+        symptomatic_probability_of_test = 1.0
+        test_sensitivity = 1.0
+        test_delay = 0
+        start_day = 30
+
+        self.intervention_set_test_prob(asymptomatic_prob=asymptomatic_probability_of_test,
+                                        symptomatic_prob=symptomatic_probability_of_test,
+                                        test_sensitivity=test_sensitivity,
+                                        test_delay=test_delay,
+                                        start_day=start_day)
+        self.run_sim()
+        infectious_count_channel = self.get_full_result_channel(
+            ResultsKeys.infectious_at_timestep
+        )
+        population_channel = [agent_count] * len(infectious_count_channel)
+
+        self.verify_perfect_test_prob(start_day=start_day,
+                                      test_delay=test_delay,
+                                      test_sensitivity=test_sensitivity,
+                                      target_pop_count_channel=infectious_count_channel,
+                                      target_test_count_channel=population_channel,
+                                      target_pop_new_channel=None)
         pass
 
     def test_test_prob_sensitivity(self, subtract_today_recoveries=True):
@@ -360,36 +585,32 @@ class InterventionTests(CovaSimTest):
             pass
         pass
 
-
     # endregion
 
     # region contact tracing
     def test_brutal_contact_tracing(self):
-        # Contact tracing traces people who have been diagnosed, so need brutal diagnosis first
-        # So I need a sequence here
         params = {
             SimKeys.number_agents: 5000,
             SimKeys.number_simulated_days: 55
         }
         self.set_simulation_parameters(params_dict=params)
 
-        intervention_days = []
         intervention_list = []
 
         symptomatic_probability_of_test = 1.0
         test_sensitivity = 1.0
         test_delay = 0
-        start_day = 30
+        tests_start_day = 30
+        trace_start_day = 40
 
         self.intervention_set_test_prob(symptomatic_prob=symptomatic_probability_of_test,
                                         test_sensitivity=test_sensitivity,
                                         test_delay=test_delay,
-                                        start_day=start_day)
-        intervention_days.append(start_day)
+                                        start_day=tests_start_day)
         intervention_list.append(self.interventions)
 
         trace_probability = 1.0
-        trace_delay = 1
+        trace_delay = 5
         trace_probabilities = {
             'h': trace_probability,
             's': trace_probability,
@@ -404,15 +625,98 @@ class InterventionTests(CovaSimTest):
             'c': trace_delay
         }
 
-        self.intervention_set_contact_tracing(start_day=start_day,
+        self.intervention_set_contact_tracing(start_day=trace_start_day,
                                               trace_probabilities=trace_probabilities,
                                               trace_times=trace_delays)
-        intervention_days.append(start_day)
         intervention_list.append(self.interventions)
-        self.intervention_build_sequence(day_list=intervention_days,
-                                         intervention_list=intervention_list)
-        self.run_sim()
+        self.interventions = intervention_list
+        self.run_sim(population_type='hybrid')
+        channel_new_quarantines = self.get_full_result_channel(
+            ResultsKeys.quarantined_new
+        )
+        quarantines_before_tracing = sum(channel_new_quarantines[:trace_start_day])
+        quarantines_before_delay_completed = sum(channel_new_quarantines[trace_start_day:trace_start_day + trace_delay])
+        quarantines_after_delay = sum(channel_new_quarantines[trace_start_day+trace_delay:])
+
+        self.assertEqual(quarantines_before_tracing, 0,
+                         msg="There should be no quarantines until tracing begins.")
+        self.assertEqual(quarantines_before_delay_completed, 0,
+                         msg="There should be no quarantines until delay expires")
+        self.assertGreater(quarantines_after_delay, 0,
+                           msg="There should be quarantines after tracing begins")
 
         pass
 
+    def test_contact_tracing_perfect_school_layer(self):
+        self.is_debugging = False
+        initial_infected = 10
+        params = {
+            SimKeys.number_agents: 5000,
+            SimKeys.number_simulated_days: 60,
+            SimKeys.quarantine_effectiveness: {'c':0.0, 'h':0.0, 'w':0.0, 's':0.0},
+            'quar_period': 10,
+            SimKeys.initial_infected_count: initial_infected
+        }
+        self.set_simulation_parameters(params_dict=params)
+        sequence_days = [30, 40]
+        sequence_interventions = []
+
+        layer_to_trace = 's'
+        layers_to_zero_beta = ['c','h','w']
+
+        self.intervention_set_test_prob(symptomatic_prob=1.0,
+                                        asymptomatic_prob=1.0,
+                                        test_sensitivity=1.0,
+                                        start_day=sequence_days[1])
+        sequence_interventions.append(self.interventions)
+
+        self.intervention_set_changebeta(days_array=[sequence_days[0]],
+                                         multiplier_array=[0.0],
+                                         layers=layers_to_zero_beta)
+        sequence_interventions.append(self.interventions)
+
+        trace_probabilities = {'c': 0, 'h': 0, 'w': 0, 's': 1}
+        trace_times         = {'c': 0, 'h': 0, 'w': 0, 's': 0}
+        self.intervention_set_contact_tracing(start_day=sequence_days[1],
+                                              trace_probabilities=trace_probabilities,
+                                              trace_times=trace_times)
+        sequence_interventions.append(self.interventions)
+
+        self.interventions = sequence_interventions
+        self.run_sim(population_type='hybrid')
+        channel_new_infections = self.get_full_result_channel(
+            ResultsKeys.infections_at_timestep
+        )
+        channel_new_tests = self.get_full_result_channel(
+            ResultsKeys.tests_at_timestep
+        )
+        channel_new_diagnoses = self.get_full_result_channel(
+            ResultsKeys.diagnoses_at_timestep
+        )
+        channel_new_quarantine = self.get_full_result_channel(
+            ResultsKeys.quarantined_new
+        )
+
+        infections_before_quarantine = sum(channel_new_infections[sequence_days[0]:sequence_days[1]])
+        infections_after_quarantine  = sum(channel_new_infections[sequence_days[1]:sequence_days[1] + 10])
+        if self.is_debugging:
+            print(f"Quarantined before, during, three days past sequence:"
+                  f" {channel_new_quarantine[sequence_days[0] -1: sequence_days[-1] + 10]}")
+            print(f"Tested before, during, three days past sequence:"
+                  f" {channel_new_tests[sequence_days[0] -1: sequence_days[-1] + 10]}")
+            print(f"Diagnosed before, during, three days past sequence:"
+                  f" {channel_new_diagnoses[sequence_days[0] -1: sequence_days[-1] + 10]}")
+            print(f"Infections before, during, three days past sequence:"
+                  f" {channel_new_infections[sequence_days[0] -1: sequence_days[-1] + 10]}")
+            print(f"10 Days after change beta but before quarantine: {infections_before_quarantine} "
+                  f"should be less than 10 days after: {infections_after_quarantine}")
+
+        self.assertLess(infections_after_quarantine, infections_before_quarantine,
+                        msg=f"10 Days after change beta but before quarantine: {infections_before_quarantine} "
+                            f"should be less than 10 days after: {infections_after_quarantine}")
+
+    @unittest.skip("NYI")
+    def test_contact_tracing_perfect_by_layer(self):
+        # TODO: loop through the layers and reproduce the school test above
+        pass
     # endregion
