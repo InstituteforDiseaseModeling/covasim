@@ -2,5 +2,6 @@
   "name": "themify-icons",
   "version": "1.0.1",
   "url": "https://themify.me/themify-icons",
-  "license": "MIT + OFL-1.1"
+  "repository": "https://themify.me/themify-icons",
+  "license": "MIT AND OFL-1.1"
 }
