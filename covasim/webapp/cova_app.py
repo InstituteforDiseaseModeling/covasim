@@ -14,7 +14,6 @@ import traceback
 import numpy as np
 import sciris as sc
 import covasim as cv
-from covasim.data import country_age_data as cad
 import shutil as sh
 from pathlib import Path
 import plotly.figure_factory as ff
