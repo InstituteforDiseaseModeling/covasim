@@ -91,9 +91,8 @@ def get_defaults(region=None, merge=False, die=die):
     epi_pars['web_timetodie'] = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',       tip ='Average number of days between infection and death')
     epi_pars['web_cfr']       = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',            tip ='Proportion of people who become infected who die')
 
-
     for parkey,valuedict in regions.items():
-        sim_pars[parkey]['best'] = valuedict[region]
+        sim_pars[parkey]['best'] = valuedict['Example'] # NB, needs to be refactored
     if merge:
         output = {**sim_pars, **epi_pars}
     else:

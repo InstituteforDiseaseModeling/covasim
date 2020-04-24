@@ -271,7 +271,9 @@ var vm = new Vue({
 
         async get_location_options() {
             let response = await sciris.rpc('get_location_options');
-            this.reset_options.push(...response.data);
+            for (let country of response.data) {
+                this.reset_options.push(country);
+            }
         },
 
         async get_licenses(){
