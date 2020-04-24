@@ -327,7 +327,7 @@ var vm = new Vue({
             const response = await sciris.rpc('get_defaults', [this.reset_choice]);
             this.sim_pars = response.data.sim_pars;
             this.epi_pars = response.data.epi_pars;
-            this.sim_length = {...this.sim_pars['n_days']}
+            this.sim_length = this.sim_pars['n_days'];
             this.int_pars = {};
             this.intervention_figs = {};
             this.setupFormWatcher('sim_pars');
