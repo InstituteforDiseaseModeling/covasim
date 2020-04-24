@@ -1,0 +1,32 @@
+{
+  "name": "covasim",
+  "private": true,
+  "author": "Institute for Disease Modeling",
+  "description": "Agent-based model.",
+  "license": "CC-BY-SA-4.0",
+  "main": "notice.js",
+  "config": {
+    "save-exact": true,
+    "shrinkrap": false,
+    "package-lock": false
+  },
+  "scripts": {
+    "build": "node notice.js"
+  },
+  "dependencies": {
+    "@google-fonts/open-sans": "file:custom/google-fonts/open-sans",
+    "bootstrap": "4.4.1",
+    "bootstrap-vue": "2.11.0",
+    "coronadatascraper-data": "file:custom/coronadatascraper-data",
+    "covid-tracking-data": "file:custom/covid-tracking-data",
+    "file-saver": "2.0.2",
+    "plotly.js": "1.53.0",
+    "polyfill.io": "file:custom/polyfill.io",
+    "sciris-js": "0.2.18",
+    "themify-icons": "file:custom/themify-icons",
+    "vue": "2.6.11"
+  },
+  "devDependencies": {
+    "license-checker": "*"
+  }
+}
