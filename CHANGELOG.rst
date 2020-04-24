@@ -6,14 +6,14 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.28.6 (2020-04-21)
+Version 0.28.7 (2020-04-24)
 ----------------------------
 - Include individual-level viral load
 - Includes data on household sizes from various countries
 - Includes age data on US states
 - Changes to interventions to include end as well as start days, and plotting as a default option
 - Adds version checks to loading and introduces a new function `cv.load()` to replace e.g. `cv.Sim.load()`
-- Major layout and functionality changes to the webapp
+- Major layout and functionality changes to the webapp, including country selection
 - Provided access to Plotly graphs via the backend
 - Introduced `cv.clip_edges()` intervention, similar to `cv.change_beta()` but removes contacts entirely
 

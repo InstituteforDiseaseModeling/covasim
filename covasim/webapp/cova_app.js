@@ -176,6 +176,7 @@ var vm = new Vue({
 
     async created() {
         this.get_version();
+        this.get_location_options();
         this.resetPars();
         this.watchSimLengthParam();
         this.get_licenses();
@@ -267,11 +268,20 @@ var vm = new Vue({
             const response = await sciris.rpc('get_version');
             this.app.version = response.data;
         },
-        async get_licenses(){
+
+        async get_location_options() {
+            let response = await sciris.rpc('get_location_options');
+            for (let country of response.data) {
+                this.reset_options.push(country);
+            }
+        },
+
+        async get_licenses() {
             const response = await sciris.rpc('get_licenses');
             this.app.license = response.data.license;
             this.app.notice = response.data.notice;
         },
+
         async runSim() {
             this.running = true;
             // this.graphs = this.$options.data().graphs; // Uncomment this to clear the graphs on each run
@@ -290,7 +300,8 @@ var vm = new Vue({
                     int_pars: this.int_pars,
                     datafile: this.datafile.server_path,
                     show_animation: this.show_animation,
-                    n_days: this.sim_length.best
+                    n_days: this.sim_length.best,
+                    location: this.reset_choice
                 }
                 console.log('run_sim: ', kwargs);
                 const response = await sciris.rpc('run_sim', undefined, kwargs);
@@ -302,7 +313,7 @@ var vm = new Vue({
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.int_pars = response.data.int_pars;
-                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, int_pars: this.int_pars, result: this.result })));
+                this.history.push(JSON.parse(JSON.stringify({ sim_pars: this.sim_pars, epi_pars: this.epi_pars, reset_choice: this.reset_choice, int_pars: this.int_pars, result: this.result })));
                 this.historyIdx = this.history.length - 1;
 
             } catch (e) {
@@ -327,6 +338,7 @@ var vm = new Vue({
             this.graphs = [];
             this.reset_datafile()
         },
+
         setupFormWatcher(paramKey) {
             const params = this[paramKey];
             if (!params) {
@@ -336,9 +348,11 @@ var vm = new Vue({
                 this.$watch(`${paramKey}.${key}`, this.validateParam(key), { deep: true });
             });
         },
+
         watchSimLengthParam() {
             this.$watch('sim_length', this.validateParam('sim_length'), { deep: true });
         },
+
         validateParam(key) {
             return (param) => {
                 if (param.best <= param.max && param.best >= param.min) {
@@ -388,15 +402,18 @@ var vm = new Vue({
         upload_datafile: generate_upload_file_handler(function(filepath){
             vm.datafile.server_path = filepath
         }),
+
         reset_datafile() {
             this.datafile = {
                 local_path: null,
                 server_path: null
             }
         },
+
         loadPars() {
             this.sim_pars = this.history[this.historyIdx].sim_pars;
             this.epi_pars = this.history[this.historyIdx].epi_pars;
+            this.reset_choice = this.history[this.historyIdx].reset_choice;
             this.int_pars = this.history[this.historyIdx].int_pars;
             this.result = this.history[this.historyIdx].result;
         },

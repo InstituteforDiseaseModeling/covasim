@@ -90,9 +90,8 @@ def get_defaults(region=None, merge=False, die=die):
     epi_pars['web_timetodie'] = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',       tip ='Average number of days between infection and death')
     epi_pars['web_cfr']       = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',            tip ='Proportion of people who become infected who die')
 
-
     for parkey,valuedict in regions.items():
-        sim_pars[parkey]['best'] = valuedict[region]
+        sim_pars[parkey]['best'] = valuedict['Example'] # NB, needs to be refactored
     if merge:
         output = {**sim_pars, **epi_pars}
     else:
@@ -119,6 +118,14 @@ def get_licenses():
         'license': license,
         'notice': notice
     }
+
+@app.register_RPC()
+def get_location_options():
+    ''' Get the list of options for the location select '''
+    json1 = cv.data.country_age_data.get()
+    json2 = cv.data.state_age_data.get()
+    locations = list(json1.keys()) + list(json2.keys())
+    return locations
 
 
 @app.register_RPC(call_type='upload')
@@ -221,7 +228,7 @@ def parse_interventions(int_pars):
 
 
 @app.register_RPC()
-def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_animation=False, n_days=90, verbose=True, die=die):
+def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_animation=False, n_days=90, location=None, verbose=True, die=die):
     ''' Create, run, and plot everything '''
     errs = []
     try:
@@ -265,6 +272,9 @@ def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_ani
 
         # Add n_days
         web_pars['n_days'] = n_days
+
+        # Add demographic
+        web_pars['location'] = location
 
         # Add the intervention
         web_pars['interventions'] = parse_interventions(int_pars)
