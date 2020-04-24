@@ -63,9 +63,6 @@ def get_defaults(region=None, merge=False, die=die):
         region = 'Example'
 
     regions = {
-        'pop_scale': {
-            'Example': 1,
-        },
         'pop_size': {
             'Example': 10000,
         },
@@ -75,20 +72,23 @@ def get_defaults(region=None, merge=False, die=die):
     }
 
     sim_pars = {}
-    sim_pars['pop_scale']    = dict(best=1,     min=1, max=1e6,      name='Population scale factor',    tip='Multiplier for results (to approximate large populations)')
     sim_pars['pop_size']     = dict(best=10000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
     sim_pars['pop_infected'] = dict(best=10,    min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
     sim_pars['rand_seed']    = dict(best=0,     min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
     sim_pars['n_days']       = dict(best=90,    min=1, max=max_days, name="Simulation Duration",        tip='Total duration (in days) of the simulation')
 
     epi_pars = {}
-    epi_pars['beta']          = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',         tip ='Probability of infection per contact per day')
-    epi_pars['contacts']      = dict(best=20,    min=0.0, max=50,  name='Number of contacts',            tip ='Average number of people each person is in contact with each day')
-    epi_pars['web_exp2inf']   = dict(best=4.0,   min=1.0, max=30,  name='Time to infectiousness (days)', tip ='Average number of days between exposure and being infectious')
-    epi_pars['web_inf2sym']   = dict(best=1.0,   min=1.0, max=30,  name='Asymptomatic period (days)',    tip ='Average number of days between exposure and developing symptoms')
-    epi_pars['web_dur']       = dict(best=10.0,  min=1.0, max=30,  name='Infection duration (days)',     tip ='Average number of days between infection and recovery (viral shedding period)')
-    epi_pars['web_timetodie'] = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',       tip ='Average number of days between infection and death')
-    epi_pars['web_cfr']       = dict(best=0.02,  min=0.0, max=1.0, name='Case fatality rate',            tip ='Proportion of people who become infected who die')
+    epi_pars['beta']            = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',              tip ='Probability of infection per contact per day')
+    epi_pars['web_exp2inf']     = dict(best=4.0,   min=1.0, max=30,  name='Time to infectiousness (days)',      tip ='Average number of days between exposure and being infectious')
+    epi_pars['web_inf2sym']     = dict(best=1.0,   min=1.0, max=30,  name='Asymptomatic period (days)',         tip ='Average number of days between exposure and developing symptoms')
+    epi_pars['web_dur']         = dict(best=10.0,  min=1.0, max=30,  name='Infection duration (days)',          tip ='Average number of days between infection and recovery (viral shedding period)')
+    epi_pars['web_timetodie']   = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',            tip ='Average number of days between infection and death')
+    epi_pars['rel_symp_prob']   = dict(best=1.0,   min=0.0, max=5.0, name='Symptomatic probability multiplier', tip ='Adjustment factor on literature-derived values for proportion of infected people who become symptomatic')
+    epi_pars['rel_severe_prob'] = dict(best=1.0,   min=0.0, max=5.0, name='Severe probability multiplier',      tip ='Adjustment factor on literature-derived values for proportion of symptomatic people who develop severe disease')
+    epi_pars['rel_crit_prob']   = dict(best=1.0,   min=0.0, max=5.0, name='Critical probability multiplier',    tip ='Adjustment factor on literature-derived values for proportion of people with severe disease who become crtiically ill')
+    epi_pars['rel_death_prob']  = dict(best=1.0,   min=0.0, max=5.0, name='Death probability multiplier',       tip ='Adjustment factor on literature-derived values for proportion of critically ill people who die')
+
+
 
     for parkey,valuedict in regions.items():
         sim_pars[parkey]['best'] = valuedict['Example'] # NB, needs to be refactored
@@ -120,12 +120,15 @@ def get_licenses():
     }
 
 @app.register_RPC()
-def get_location_options():
+def get_location_options(enable=False):
     ''' Get the list of options for the location select '''
     json1 = cv.data.country_age_data.get()
     json2 = cv.data.state_age_data.get()
     locations = list(json1.keys()) + list(json2.keys())
-    return locations
+    if enable:
+        return locations
+    else:
+        return []
 
 
 @app.register_RPC(call_type='upload')
@@ -227,70 +230,75 @@ def parse_interventions(int_pars):
     return intervs
 
 
+def parse_parameters(sim_pars, epi_pars, int_pars, n_days, location, verbose, errs):
+    ''' Sanitize web parameters into actual simulation ones '''
+    orig_pars = cv.make_pars()
+
+    defaults = get_defaults(merge=True)
+    web_pars = {}
+    web_pars['verbose'] = verbose # Control verbosity here
+
+    for key,entry in {**sim_pars, **epi_pars}.items():
+        print(key, entry)
+
+        best   = defaults[key]['best']
+        minval = defaults[key]['min']
+        maxval = defaults[key]['max']
+
+        try:
+            web_pars[key] = np.clip(float(entry['best']), minval, maxval)
+        except Exception as E:
+            user_key = entry['name']
+            user_val = entry['best']
+            err = f'Could not convert parameter "{user_key}" from value "{user_val}"; using default value instead.'
+            errs.append(log_err(err, E))
+            web_pars[key] = best
+            if die: raise
+
+        if key in sim_pars:
+            sim_pars[key]['best'] = web_pars[key]
+        else:
+            epi_pars[key]['best'] = web_pars[key]
+
+    # Convert durations
+    web_pars['dur'] = sc.dcp(orig_pars['dur']) # This is complicated, so just copy it
+    web_pars['dur']['exp2inf']['par1']  = web_pars.pop('web_exp2inf')
+    web_pars['dur']['inf2sym']['par1']  = web_pars.pop('web_inf2sym')
+    web_pars['dur']['crit2die']['par1'] = web_pars.pop('web_timetodie')
+    web_dur = web_pars.pop('web_dur')
+    for key in ['asym2rec', 'mild2rec', 'sev2rec', 'crit2rec']:
+        web_pars['dur'][key]['par1'] = web_dur
+
+    # Add n_days
+    web_pars['n_days'] = n_days
+
+    # Add demographic
+    web_pars['location'] = location
+
+    # Add the intervention
+    web_pars['interventions'] = parse_interventions(int_pars)
+
+    # Handle CFR -- ignore symptoms and set to 1
+    web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
+    web_pars['rel_symp_prob']   = 1e4 # Arbitrarily large
+    web_pars['rel_severe_prob'] = 1e4
+    web_pars['rel_crit_prob']   = 1e4
+    web_pars['prognoses']['death_probs'][0] = web_pars.pop('web_cfr')
+    if web_pars['rand_seed'] == 0:
+        web_pars['rand_seed'] = None
+    web_pars['timelimit'] = max_time  # Set the time limit
+    web_pars['pop_size'] = int(web_pars['pop_size'])  # Set data type
+    web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
+
+    return web_pars
+
+
 @app.register_RPC()
 def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_animation=False, n_days=90, location=None, verbose=True, die=die):
     ''' Create, run, and plot everything '''
     errs = []
     try:
-        # Fix up things that JavaScript mangles
-        orig_pars = cv.make_pars(set_prognoses=True, prog_by_age=False, use_layers=False)
-
-        defaults = get_defaults(merge=True)
-        web_pars = {}
-        web_pars['verbose'] = verbose # Control verbosity here
-
-        for key,entry in {**sim_pars, **epi_pars}.items():
-            print(key, entry)
-
-            best   = defaults[key]['best']
-            minval = defaults[key]['min']
-            maxval = defaults[key]['max']
-
-            try:
-                web_pars[key] = np.clip(float(entry['best']), minval, maxval)
-            except Exception as E:
-                user_key = entry['name']
-                user_val = entry['best']
-                err = f'Could not convert parameter "{user_key}" from value "{user_val}"; using default value instead.'
-                errs.append(log_err(err, E))
-                web_pars[key] = best
-                if die: raise
-
-            if key in sim_pars:
-                sim_pars[key]['best'] = web_pars[key]
-            else:
-                epi_pars[key]['best'] = web_pars[key]
-
-        # Convert durations
-        web_pars['dur'] = sc.dcp(orig_pars['dur']) # This is complicated, so just copy it
-        web_pars['dur']['exp2inf']['par1']  = web_pars.pop('web_exp2inf')
-        web_pars['dur']['inf2sym']['par1']  = web_pars.pop('web_inf2sym')
-        web_pars['dur']['crit2die']['par1'] = web_pars.pop('web_timetodie')
-        web_dur = web_pars.pop('web_dur')
-        for key in ['asym2rec', 'mild2rec', 'sev2rec', 'crit2rec']:
-            web_pars['dur'][key]['par1'] = web_dur
-
-        # Add n_days
-        web_pars['n_days'] = n_days
-
-        # Add demographic
-        web_pars['location'] = location
-
-        # Add the intervention
-        web_pars['interventions'] = parse_interventions(int_pars)
-
-        # Handle CFR -- ignore symptoms and set to 1
-        web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
-        web_pars['rel_symp_prob']   = 1e4 # Arbitrarily large
-        web_pars['rel_severe_prob'] = 1e4
-        web_pars['rel_crit_prob']   = 1e4
-        web_pars['prognoses']['death_probs'][0] = web_pars.pop('web_cfr')
-        if web_pars['rand_seed'] == 0:
-            web_pars['rand_seed'] = None
-        web_pars['timelimit'] = max_time  # Set the time limit
-        web_pars['pop_size'] = int(web_pars['pop_size'])  # Set data type
-        web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
-
+        web_pars = parse_parameters(sim_pars=sim_pars, epi_pars=epi_pars, int_pars=int_pars, n_days=n_days, location=location, verbose=verbose, die=die)
     except Exception as E:
         errs.append(log_err('Parameter conversion failed!', E))
         if die: raise
