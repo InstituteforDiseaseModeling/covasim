@@ -18,7 +18,6 @@ Version 0.28.7 (2020-04-24)
 - Introduced `cv.clip_edges()` intervention, similar to `cv.change_beta()` but removes contacts entirely
 
 
-
 Version 0.28.1 (2020-04-19)
 ----------------------------
 - Major refactor of transmission trees, including additional detail via ``sim.people.transtree.make_detailed()``

@@ -123,9 +123,10 @@ def get_licenses():
 @app.register_RPC()
 def get_location_options():
     ''' Get the list of options for the location select '''
-    json = cad.get()
-    countries = json.keys()
-    return list(countries)
+    json1 = cv.data.country_age_data.get()
+    json2 = cv.data.state_age_data.get()
+    locations = list(json1.keys()) + list(json2.keys())
+    return locations
 
 
 @app.register_RPC(call_type='upload')
