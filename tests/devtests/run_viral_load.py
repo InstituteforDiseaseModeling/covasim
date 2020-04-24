@@ -36,23 +36,24 @@ base_pars['rel_severe_prob'] = 0  # Scale factor for proportion of symptomatic c
 base_pars['rel_crit_prob']   = 0  # Scale factor for proportion of severe cases that become critical
 base_pars['rel_death_prob']  = 0  # Scale factor for proportion of critical cases that result in death
 base_pars['prog_by_age']     = False
+pars['beta_dist']   = {'dist':'lognormal','par1':1, 'par2':0}
 
 for i in range(runs):
     # Configure the sim -- can also just use a normal dictionary
     pars = base_pars
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_dist'] = {'frac_time':1, 'load_ratio':1}
+    pars['viral_dist'] = {'frac_time':1, 'load_ratio':1, 'high_cap':100}
     print('Making sim ', i, '...')
     sim1 = cv.Sim(pars=pars)
     sim1.run()
     r0_const[i] = len(sim1.people.transtree.targets[0])
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_dist'] = {'frac_time':.5, 'load_ratio':2}
+    pars['viral_dist'] = {'frac_time':.5, 'load_ratio':2, 'high_cap':4}
     sim2 = cv.Sim(pars=pars)
     sim2.run()
     r0_twolevel[i] = len(sim2.people.transtree.targets[0])
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_dist'] = {'frac_time':.3, 'load_ratio':3}
+    pars['viral_dist'] = {'frac_time':.3, 'load_ratio':3, 'high_cap':1}
     sim3 = cv.Sim(pars=pars)
     sim3.run()
     r0_twolevel2[i] = len(sim3.people.transtree.targets[0])

@@ -46,8 +46,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['dynam_layer'] = None # Which layers are dynamic; set below
     pars['beta_layer']  = None # Transmissibility per layer; set below
     pars['n_imports']   = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta_dist']   = {'dist':'lognormal','par1':1, 'par2':0} # Distribution to draw individual level transmissibility
-    pars['viral_dist']  = {'frac_time':1, 'load_ratio':1} # The time varying viral load (transmissibility)
+    pars['beta_dist']   = {'dist':'lognormal','par1':1, 'par2':.3} # Distribution to draw individual level transmissibility
+    pars['viral_dist']  = {'frac_time':.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility)
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases

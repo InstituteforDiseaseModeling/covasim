@@ -25,8 +25,8 @@ else:
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat))
-def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    par2):
+@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat))
+def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    par2,    par3):
     '''
     Calculate relative transmissibility for time t. Includes time varying
     viral load, pre/asymptomatic factor, diagonsis factor, etc.
@@ -38,6 +38,7 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    p
         time_dead: (float[]) individuals' death date
         par1: (float) frac of time in high load
         par2: (float) ratio for high to low viral load
+        par3: (float) cap on the number of days with high viral load
 
     Returns:
         load (float): viral load
@@ -48,8 +49,20 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    p
     time_stop = np.ones(n, dtype=cvd.default_float)*time_recovered # This is needed to make a copy
     inds = ~np.isnan(time_dead)
     time_stop[inds] = time_dead[inds]
+    
+    # Calculate which individuals with be high past the cap and when it should happen
+    infect_days_total = time_stop-time_start
+    trans_day = par1*infect_days_total
+    inds = trans_day > par3
+    cap_frac = par3/infect_days_total[inds]
+
+    # Get corrected time to switch from high to low    
+    trans_point = np.ones(n,dtype=cvd.default_float)*par1
+    trans_point[inds] = cap_frac
+    
+      
     load = np.ones(n, dtype=cvd.default_float) # allocate an array of ones with the correct dtype
-    early = (t-time_start)/(time_stop-time_start) < par1 # are we in the early or late phase
+    early = (t-time_start)/infect_days_total < trans_point # are we in the early or late phase
     load = (par2 * early + load * ~early)/(load+par1*(par2-load)) # calculate load
 
     return load
