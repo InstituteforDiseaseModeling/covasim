@@ -2,7 +2,7 @@
 Build and test in Docker
 ========================
 
-The docker directory contains scripts and files related to building |Cov_s| into a Docker container. This is intended as an environment to allow you to build and test the Docker image locally using Docker only. To test the Kubernetes version, see the `.platform` directory.
+The docker directory contains scripts and files related to building Covasim into a Docker container. This is intended as an environment to allow you to build and test the Docker image locally using Docker only. To test the Kubernetes version, see the `.platform` directory.
 
 Build the container
 ===================

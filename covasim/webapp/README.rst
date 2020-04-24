@@ -77,4 +77,6 @@ Note that for local development, the ``--reload`` flag to the ``gunicorn`` comma
 Docker
 ======
 
-See :doc:`docker` or the README under the *docker* folder.
+See :doc:`docker` or the `Docker README`_.
+
+.. _docker README: https://github.com/InstituteforDiseaseModeling/covasim/tree/master/docker
