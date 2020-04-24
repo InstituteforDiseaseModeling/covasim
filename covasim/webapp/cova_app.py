@@ -230,7 +230,7 @@ def parse_interventions(int_pars):
     return intervs
 
 
-def parse_parameters(sim_pars, epi_pars, int_pars, n_days, location, verbose, errs):
+def parse_parameters(sim_pars, epi_pars, int_pars, n_days, location, verbose, errs, die):
     ''' Sanitize web parameters into actual simulation ones '''
     orig_pars = cv.make_pars()
 
@@ -279,16 +279,10 @@ def parse_parameters(sim_pars, epi_pars, int_pars, n_days, location, verbose, er
     web_pars['interventions'] = parse_interventions(int_pars)
 
     # Handle CFR -- ignore symptoms and set to 1
-    web_pars['prognoses'] = sc.dcp(orig_pars['prognoses'])
-    web_pars['rel_symp_prob']   = 1e4 # Arbitrarily large
-    web_pars['rel_severe_prob'] = 1e4
-    web_pars['rel_crit_prob']   = 1e4
-    web_pars['prognoses']['death_probs'][0] = web_pars.pop('web_cfr')
     if web_pars['rand_seed'] == 0:
         web_pars['rand_seed'] = None
     web_pars['timelimit'] = max_time  # Set the time limit
     web_pars['pop_size'] = int(web_pars['pop_size'])  # Set data type
-    web_pars['contacts'] = int(web_pars['contacts'])  # Set data type
 
     return web_pars
 
@@ -298,7 +292,7 @@ def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_ani
     ''' Create, run, and plot everything '''
     errs = []
     try:
-        web_pars = parse_parameters(sim_pars=sim_pars, epi_pars=epi_pars, int_pars=int_pars, n_days=n_days, location=location, verbose=verbose, die=die)
+        web_pars = parse_parameters(sim_pars=sim_pars, epi_pars=epi_pars, int_pars=int_pars, n_days=n_days, location=location, verbose=verbose, errs=errs, die=die)
     except Exception as E:
         errs.append(log_err('Parameter conversion failed!', E))
         if die: raise
