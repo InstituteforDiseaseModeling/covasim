@@ -26,7 +26,7 @@ else:
 #%% The core Covasim functions -- compute the infections
 
 @nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat))
-def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    par2,    par3):
+def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,    load_ratio,    high_cap):
     '''
     Calculate relative transmissibility for time t. Includes time varying
     viral load, pre/asymptomatic factor, diagonsis factor, etc.
@@ -36,9 +36,9 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    p
         time_start: (float[]) individuals' infectious date
         time_recovered: (float[]) individuals' recovered date
         time_dead: (float[]) individuals' death date
-        par1: (float) frac of time in high load
-        par2: (float) ratio for high to low viral load
-        par3: (float) cap on the number of days with high viral load
+        frac_time: (float) frac of time in high load
+        load_ratio: (float) ratio for high to low viral load
+        high_cap: (float) cap on the number of days with high viral load
 
     Returns:
         load (float): viral load
@@ -52,18 +52,18 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  par1,    p
     
     # Calculate which individuals with be high past the cap and when it should happen
     infect_days_total = time_stop-time_start
-    trans_day = par1*infect_days_total
-    inds = trans_day > par3
-    cap_frac = par3/infect_days_total[inds]
+    trans_day = frac_time*infect_days_total
+    inds = trans_day > high_cap
+    cap_frac = high_cap/infect_days_total[inds]
 
     # Get corrected time to switch from high to low    
-    trans_point = np.ones(n,dtype=cvd.default_float)*par1
+    trans_point = np.ones(n,dtype=cvd.default_float)*frac_time
     trans_point[inds] = cap_frac
     
       
     load = np.ones(n, dtype=cvd.default_float) # allocate an array of ones with the correct dtype
     early = (t-time_start)/infect_days_total < trans_point # are we in the early or late phase
-    load = (par2 * early + load * ~early)/(load+par1*(par2-load)) # calculate load
+    load = (load_ratio * early + load * ~early)/(load+frac_time*(load_ratio-load)) # calculate load
 
     return load
 
