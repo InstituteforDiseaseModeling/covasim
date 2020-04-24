@@ -1,7 +1,7 @@
 What's new
 ==========
 
-All major changes to the codebase are documented in this file. Note: in many cases,
+All notable changes to the codebase are documented in this file. Note: in many cases,
 changes from multiple patch versions are grouped together, so numbering will not be
 strictly consecutive.
 
@@ -12,10 +12,11 @@ Version 0.28.7 (2020-04-24)
 - Includes data on household sizes from various countries
 - Includes age data on US states
 - Changes to interventions to include end as well as start days, and plotting as a default option
-- Adds version checks to loading and introduces a new function `cv.load()` to replace e.g. `cv.Sim.load()`
+- Adds version checks to loading and introduces a new function ``cv.load()`` to replace e.g. ``cv.Sim.load()``
 - Major layout and functionality changes to the webapp, including country selection
 - Provided access to Plotly graphs via the backend
-- Introduced `cv.clip_edges()` intervention, similar to `cv.change_beta()` but removes contacts entirely
+- Moved relative probabilities (e.g. ``rel_death_prob``) from population creation to loop so can be modified dynamically
+- Introduced ``cv.clip_edges()`` intervention, similar to ``cv.change_beta()`` but removes contacts entirely
 
 
 Version 0.28.1 (2020-04-19)
