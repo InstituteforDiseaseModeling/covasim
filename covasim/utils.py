@@ -49,29 +49,29 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     time_stop = np.ones(n, dtype=cvd.default_float)*time_recovered # This is needed to make a copy
     inds = ~np.isnan(time_dead)
     time_stop[inds] = time_dead[inds]
-    
+
     # Calculate which individuals with be high past the cap and when it should happen
     infect_days_total = time_stop-time_start
     trans_day = frac_time*infect_days_total
     inds = trans_day > high_cap
     cap_frac = high_cap/infect_days_total[inds]
 
-    # Get corrected time to switch from high to low    
+    # Get corrected time to switch from high to low
     trans_point = np.ones(n,dtype=cvd.default_float)*frac_time
     trans_point[inds] = cap_frac
-    
-      
+
+
     load = np.ones(n, dtype=cvd.default_float) # allocate an array of ones with the correct dtype
     early = (t-time_start)/infect_days_total < trans_point # are we in the early or late phase
     load = (load_ratio * early + load * ~early)/(load+frac_time*(load_ratio-load)) # calculate load
-    
+
     # set load to 0 if not infectious (shouldn't have to do this but somewhere
     # this is getting used without rel_trans=0 when not infectious)
     inds = (t-time_start)<1
     load[inds] = 0
     inds = (t-time_start)>=infect_days_total
     load[inds] = 0
-    
+
     return load
 
 
@@ -147,9 +147,12 @@ def sample(dist=None, par1=None, par2=None, size=None):
     elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
     elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size)))
     elif dist in ['lognormal', 'lognormal_int']:
-        mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
-        sigma = np.sqrt(np.log(par2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
-        samples = np.random.lognormal(mean=mean, sigma=sigma, size=size)
+        if par1>0:
+            mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
+            sigma = np.sqrt(np.log(par2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
+            samples = np.random.lognormal(mean=mean, sigma=sigma, size=size)
+        else:
+            samples = np.zeros(size)
         if dist == 'lognormal_int': samples = np.round(samples)
     elif dist == 'neg_binomial':  samples = np.random.negative_binomial(n=par1, p=par2, size=size)
     else:
