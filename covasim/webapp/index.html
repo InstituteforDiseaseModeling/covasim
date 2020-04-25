@@ -60,7 +60,11 @@
 
     <!--  Paramaters Accordion  -->
     <b-sidebar id="parameters" :visible="panel_open" v-model="panel_open" :width="panel_width+'vw'" @shown="dispatch_resize" @hidden="dispatch_resize"
-               shadow  class="sidebar" title="Simulation configuration" >
+               shadow  class="sidebar" title="Simulation configuration">
+      <template v-slot:header-close>
+        <b-button-close content="" v-b-toggle.parameters v-b-tooltip.hover.right title="Hide simulation configuration" class="ti-angle-double-left"></b-button-close>
+      </template>
+
       <div role="tablist">
         <!--  General Parameters -->
         <b-card no-body>
