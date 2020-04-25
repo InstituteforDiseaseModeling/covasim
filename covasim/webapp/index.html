@@ -207,7 +207,7 @@
                 <fieldset class="col-md-6">
                   <legend>Population parameters</legend>
                   <div v-for="(par, key) in sim_pars" class="form-group">
-                    <div v-if="key !== 'n_days'" :id="key+'-wpr'" v-b-tooltip.hover title="{{ par.tip }}">
+                    <div v-if="key !== 'n_days'" :id="key+'-wpr'" v-b-tooltip.hover :title="par.tip">
                       <label :for="key">{{par.name}}:</label>
                       <input :id="key" :disabled="running" class="form-control" v-model="par.best">
                       <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
@@ -217,7 +217,7 @@
                 <fieldset class="col-md-6">
                   <legend>Epidemiological parameters</legend>
                   <div v-for="(par, key) in epi_pars" class="form-group">
-                    <div :id="key+'-wpr'" v-b-tooltip.hover title="{{ par.tip }}">
+                    <div :id="key+'-wpr'" v-b-tooltip.hover :title="par.tip">
                       <label :for="key">{{par.name}}:</label>
                       <input :id="key" :disabled="running" class="form-control" v-model="par.best">
                       <span aria-live="assertive" v-if="paramError[key]" class="text-danger form-error">{{paramError[key]}}</span>
