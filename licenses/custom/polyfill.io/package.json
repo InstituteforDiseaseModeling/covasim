@@ -1,0 +1,7 @@
+{
+  "name": "polyfill.io",
+  "version": "3.52.1",
+  "url": "https://polyfill.io/v3",
+  "repository": "https://github.com/financial-times/polyfill-service",
+  "license": "MIT"
+}

@@ -2,10 +2,9 @@ const fs = require('fs')
 const path = require('path')
 const process = require('process')
 
-const repo = path.join(__dirname, '..')
+const repo = path.resolve(__dirname, '..')
 const paths = {
     repo: repo,
-    webapp: path.join(repo, 'covasim/webapp'),
     licenses: path.join(repo, 'licenses')
 }
 
@@ -15,7 +14,7 @@ function handler(packages = {}) {
                      return {
                          name: p.name,
                          version: p.version,
-                         url: p.repository,
+                         url: p.url || p.repository,
                          license: p.licenses,
                          license_text: p.licenseText
                      }
@@ -23,21 +22,23 @@ function handler(packages = {}) {
 }
 
 const checker = require('license-checker')
-checker.init({
-                 start: paths.webapp,
-                 production: true,
-                 excludePackages: 'covasim',
-                 excludePrivatePackages: true,
-                 direct: true,
-                 customPath: path.join(paths.licenses, 'js-license-format.json')
-             },
-             (err, packages) => {
-                 if (err) {
-                     console.error(err)
-                 } else {
-                     let json = JSON.stringify(handler(packages))
-                     console.log(json)
-                 }
-             })
+checker.init(
+    {
+        start: paths.licenses,
+        production: true,
+        excludePackages: 'covasim',
+        direct: 0,
+        customPath: path.join(paths.licenses, 'custom/license-format.json')
+    },
+    (err, packages) => {
+        if (err) {
+            console.error(err)
+        } else {
+            const transformed = handler(packages)
+            let json = JSON.stringify(transformed)
+            console.log(json)
+        }
+    }
+)
 
 

@@ -14,9 +14,9 @@ const PlotlyChart = {
                 let x = JSON.parse(this.graph.json);
                 x.responsive = true;
                 Plotly.react(this.graph.id, x);
+                window.dispatchEvent(new Event('resize'))
             }
-        }
-        );
+        });
     },
     updated() {
         this.$nextTick(function () {
@@ -174,7 +174,7 @@ var vm = new Vue({
         };
     },
 
-    async created() {
+    created() {
         this.get_version();
         this.get_location_options();
         this.resetPars();
@@ -243,12 +243,7 @@ var vm = new Vue({
             const response = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig});
             this.intervention_figs = response.data;
         },
-        open_panel() {
-            this.panel_open = true;
-        },
-        close_panel() {
-            this.panel_open = false;
-        },
+
         resize_start() {
             this.resizing = true;
         },
@@ -264,6 +259,9 @@ var vm = new Vue({
             }
         },
 
+        dispatch_resize(){
+            window.dispatchEvent(new Event('resize'))
+        },
         async get_version() {
             const response = await sciris.rpc('get_version');
             this.app.version = response.data;
@@ -321,6 +319,7 @@ var vm = new Vue({
                     message: 'Unable to submit model.',
                     exception: `${e.constructor.name}: ${e.message}`
                 })
+                this.panel_open = true
             }
             this.running = false;
 
@@ -335,7 +334,7 @@ var vm = new Vue({
             this.intervention_figs = {};
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
-            this.graphs = [];
+            this.result.graphs = [];
             this.reset_datafile()
         },
 
@@ -387,7 +386,7 @@ var vm = new Vue({
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.int_pars = response.data.int_pars;
-                this.graphs = [];
+                this.result.graphs = [];
                 this.intervention_figs = {}
 
                 if (this.int_pars){
