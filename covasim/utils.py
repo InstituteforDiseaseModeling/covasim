@@ -60,17 +60,10 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     trans_point = np.ones(n,dtype=cvd.default_float)*frac_time
     trans_point[inds] = cap_frac
 
-
+    # Calculate load
     load = np.ones(n, dtype=cvd.default_float) # allocate an array of ones with the correct dtype
     early = (t-time_start)/infect_days_total < trans_point # are we in the early or late phase
     load = (load_ratio * early + load * ~early)/(load+frac_time*(load_ratio-load)) # calculate load
-
-    # set load to 0 if not infectious (shouldn't have to do this but somewhere
-    # this is getting used without rel_trans=0 when not infectious)
-    inds = (t-time_start)<1
-    load[inds] = 0
-    inds = (t-time_start)>=infect_days_total
-    load[inds] = 0
 
     return load
 
@@ -81,7 +74,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    beta_layer, viral_load, symp,     
     f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
     f_quar_eff = ~quar +  quar * quar_trans # Quarantine
-    rel_trans  = rel_trans * viral_load * f_quar_eff * f_asymp * f_diag * beta_layer # Recalulate transmisibility
+    rel_trans  = rel_trans * f_quar_eff * f_asymp * f_diag * beta_layer * viral_load # Recalulate transmisibility
     rel_sus    = rel_sus   * f_quar_eff # Recalulate susceptibility
     return rel_trans, rel_sus
 
