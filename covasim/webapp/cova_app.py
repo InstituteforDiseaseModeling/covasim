@@ -333,6 +333,9 @@ def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_ani
     errs = []
     try:
         web_pars = parse_parameters(sim_pars=sim_pars, epi_pars=epi_pars, int_pars=int_pars, n_days=n_days, location=location, verbose=verbose, errs=errs, die=die)
+        if verbose:
+            print('Input parameters:')
+            print(web_pars)
     except Exception as E:
         errs.append(log_err('Parameter conversion failed!', E))
         if die: raise
@@ -347,10 +350,6 @@ def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_ani
     except Exception as E:
         errs.append(log_err('Sim creation failed!', E))
         if die: raise
-
-    if verbose:
-        print('Input parameters:')
-        print(web_pars)
 
     # Core algorithm
     try:
