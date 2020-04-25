@@ -122,18 +122,18 @@
                 </div>
               </div>
               <div class="form-row mb-3">
-                <label for="datafile" class="col-12">Upload data</label>
-                <div class="col">
-                  <b-form-file id="datafile" name="datafile" accept=".csv, .xlsx" placeholder="<none>" v-model="datafile.local_path" @change="upload_datafile" :disabled="running"></b-form-file>
-                </div>
-                <div class="col-auto">
-                  <button id="reset-datafile" :disabled="running" class="btn btn-primary" type="button" @click="reset_datafile">
-                    Clear
-                  </button>
-                  <b-tooltip target="reset-datafile">
-                    Remove the input data file from the simulation
-                  </b-tooltip>
-                </div>
+<!--                <label for="datafile" class="col-12">Upload data</label>-->
+<!--                <div class="col">-->
+<!--                  <b-form-file id="datafile" name="datafile" accept=".csv, .xlsx" placeholder="<none>" v-model="datafile.local_path" @change="upload_datafile" :disabled="running"></b-form-file>-->
+<!--                </div>-->
+<!--                <div class="col-auto">-->
+<!--                  <button id="reset-datafile" :disabled="running" class="btn btn-primary" type="button" @click="reset_datafile">-->
+<!--                    Clear-->
+<!--                  </button>-->
+<!--                  <b-tooltip target="reset-datafile">-->
+<!--                    Remove the input data file from the simulation-->
+<!--                  </b-tooltip>-->
+<!--                </div>-->
 
               </div>
             </b-card-body>
@@ -159,7 +159,7 @@
                         <div class="form-group">
                           <div class="input-group mb-3">
                             <template v-for="field in intervention.fields">
-                              <input :max="sim_length.max" :min="sim_length.min" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type">
+                              <input :max="sim_length.max" :min="0" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type">
                               <select class="form-control" :name="field.key" v-else>
                                 <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
                               </select>
@@ -269,7 +269,7 @@
     <!-- Show the actual graphs -->
     <div id="graphs" class="results" v-bind:class="{ empty: result.graphs.length === 0 }">
         <template v-if="result.graphs.length === 0">
-          <p class="h4"><i>Click "Run" to display graphs</i></p>
+          <p class="h5"><i>Click "Run" to display graphs</i></p>
         </template>
         <template v-else>
           <div class="row no-gutter">

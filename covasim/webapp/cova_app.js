@@ -33,10 +33,10 @@ const PlotlyChart = {
 
 const interventionTableConfig = {
     social_distance: {
-        formTitle: "Social distancing",
+        formTitle: "Physical distancing",
         fields: [{key: 'start', type: 'number', label: 'Start day'},
             {key: 'end', type: 'number', label: 'End day'},
-            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive effectiveness', value: 'aggressive'}, {label: 'Moderate effectiveness', value: 'moderate'}, {label: 'Mild effectiveness', value: 'mild'}]}],
+            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive (80%)', value: 'aggressive'}, {label: 'Moderate (50%)', value: 'moderate'}, {label: 'Mild (20%)', value: 'mild'}]}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -207,7 +207,7 @@ var vm = new Vue({
                 this.$set(this.int_pars, key, []);
             }
             // validate intervention
-            const notValid = !intervention.end || !intervention.start || intervention.end <= intervention.start
+            const notValid = !intervention.end || intervention.start < 0 || intervention.end <= intervention.start
             if (notValid) {
                 this.$set(this.scenarioError, scenarioKey, `Please enter a valid day range`);
                 return;
