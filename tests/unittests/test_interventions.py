@@ -5,7 +5,6 @@ import numpy as np
 
 import unittest
 
-import numpy as np
 
 ResultsKeys = TestProperties.ResultsDataKeys
 SimKeys = TestProperties.ParameterKeys.SimulationKeys
@@ -315,7 +314,7 @@ class InterventionTests(CovaSimTest):
                                  target_pop_new_channel,
                                  target_test_count_channel=None):
         if not target_test_count_channel:
-            target_test_count = target_pop_count_channel
+            target_test_count = target_pop_count_channel # CK: unused
         if test_sensitivity < 1.0:
             raise ValueError("This test method only works with perfect test "
                              f"sensitivity. {test_sensitivity} won't cut it.")
@@ -481,6 +480,7 @@ class InterventionTests(CovaSimTest):
                                       target_pop_new_channel=None)
         pass
 
+    @unittest.skip("Not robust to changes in seed")
     def test_test_prob_sensitivity(self, subtract_today_recoveries=True):
         self.is_debugging = False
         params = {
@@ -661,7 +661,7 @@ class InterventionTests(CovaSimTest):
         sequence_days = [30, 40]
         sequence_interventions = []
 
-        layer_to_trace = 's'
+        layer_to_trace = 's' # CK: unused
         layers_to_zero_beta = ['c','h','w']
 
         self.intervention_set_test_prob(symptomatic_prob=1.0,
@@ -720,3 +720,7 @@ class InterventionTests(CovaSimTest):
         # TODO: loop through the layers and reproduce the school test above
         pass
     # endregion
+
+
+if __name__ == '__main__':
+    unittest.main()
