@@ -83,10 +83,10 @@ def get_defaults(region=None, merge=False, die=die):
     epi_pars['web_inf2sym']     = dict(best=1.0,   min=1.0, max=30,  name='Asymptomatic period (days)',         tip ='Average number of days between exposure and developing symptoms')
     epi_pars['web_dur']         = dict(best=10.0,  min=1.0, max=30,  name='Infection duration (days)',          tip ='Average number of days between infection and recovery (viral shedding period)')
     epi_pars['web_timetodie']   = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',            tip ='Average number of days between infection and death')
-    epi_pars['rel_symp_prob']   = dict(best=1.0,   min=0.0, max=5.0, name='Symptomatic probability multiplier', tip ='Adjustment factor on literature-derived values for proportion of infected people who become symptomatic')
-    epi_pars['rel_severe_prob'] = dict(best=1.0,   min=0.0, max=5.0, name='Severe probability multiplier',      tip ='Adjustment factor on literature-derived values for proportion of symptomatic people who develop severe disease')
-    epi_pars['rel_crit_prob']   = dict(best=1.0,   min=0.0, max=5.0, name='Critical probability multiplier',    tip ='Adjustment factor on literature-derived values for proportion of people with severe disease who become crtiically ill')
-    epi_pars['rel_death_prob']  = dict(best=1.0,   min=0.0, max=5.0, name='Death probability multiplier',       tip ='Adjustment factor on literature-derived values for proportion of critically ill people who die')
+    epi_pars['rel_symp_prob']   = dict(best=1.0,   min=0.0, max=10.0, name='Symptomatic probability multiplier', tip ='Adjustment factor on literature-derived values for proportion of infected people who become symptomatic')
+    epi_pars['rel_severe_prob'] = dict(best=1.0,   min=0.0, max=10.0, name='Severe probability multiplier',      tip ='Adjustment factor on literature-derived values for proportion of symptomatic people who develop severe disease')
+    epi_pars['rel_crit_prob']   = dict(best=1.0,   min=0.0, max=10.0, name='Critical probability multiplier',    tip ='Adjustment factor on literature-derived values for proportion of people with severe disease who become crtiically ill')
+    epi_pars['rel_death_prob']  = dict(best=1.0,   min=0.0, max=10.0, name='Death probability multiplier',       tip ='Adjustment factor on literature-derived values for proportion of critically ill people who die')
 
 
 
@@ -299,7 +299,11 @@ def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_ani
 
     # Create the sim and update the parameters
     try:
-        sim = cv.Sim(pars=web_pars,datafile=datafile)
+        extra_pars = dict(
+            pop_type = 'hybrid'
+            )
+        pars = sc.mergedicts(extra_pars, web_pars)
+        sim = cv.Sim(pars=pars, datafile=datafile)
     except Exception as E:
         errs.append(log_err('Sim creation failed!', E))
         if die: raise

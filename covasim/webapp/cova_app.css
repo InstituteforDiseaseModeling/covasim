@@ -108,7 +108,7 @@ fieldset > legend {
     grid-area: content;
     margin: 0;
     display: grid;
-    grid-template-columns: 3fr 4fr;
+    grid-template-columns: 2fr 4fr;
     grid-template-rows: 100%;
     grid-template-areas:
         "sidebar results";

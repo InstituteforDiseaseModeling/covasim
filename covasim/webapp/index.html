@@ -35,12 +35,10 @@
   <header>
     <b-navbar type="dark" variant="dark">
       <b-navbar-brand href="#">{{ app.title }}</b-navbar-brand>
-      <b-navbar-nav class="nav-head">
+      <b-navbar-nav class="ml-auto">
         <b-nav-item :href="app.docs_url" target="_blank">Documentation</b-nav-item>
         <b-nav-item v-b-modal.about>About</b-nav-item>
-      </b-navbar-nav>
-      <b-navbar-nav class="ml-auto">
-        <b-nav-item :href="app.github_url" target="_blank">{{app.version}}</b-nav-item>
+        <b-nav-item href="https://institutefordiseasemodeling.github.io/covasim-docs/whatsnew.html" target="_blank">{{app.version}}</b-nav-item>
       </b-navbar-nav>
     </b-navbar>
 
@@ -59,8 +57,7 @@
   <div class="content" v-bind:class="{ 'sidebar-closed': !panel_open , 'sidebar-opened': panel_open}">
 
     <!--  Paramaters Accordion  -->
-    <b-sidebar id="parameters" :visible="panel_open" v-model="panel_open" :width="panel_width+'vw'" @shown="dispatch_resize" @hidden="dispatch_resize"
-               shadow  class="sidebar" title="Configuration">
+    <b-sidebar id="parameters" :visible="panel_open" v-model="panel_open" :width="panel_width+'vw'" @shown="dispatch_resize" @hidden="dispatch_resize" shadow  class="sidebar" title="Configuration">
       <template v-slot:header-close>
         <b-button-close content="" v-b-toggle.parameters v-b-tooltip.hover.right title="Hide configuration" class="ti-angle-double-left"></b-button-close>
       </template>
