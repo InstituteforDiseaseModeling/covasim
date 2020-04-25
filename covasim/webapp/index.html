@@ -60,9 +60,9 @@
 
     <!--  Paramaters Accordion  -->
     <b-sidebar id="parameters" :visible="panel_open" v-model="panel_open" :width="panel_width+'vw'" @shown="dispatch_resize" @hidden="dispatch_resize"
-               shadow  class="sidebar" title="Simulation configuration">
+               shadow  class="sidebar" title="Configuration">
       <template v-slot:header-close>
-        <b-button-close content="" v-b-toggle.parameters v-b-tooltip.hover.right title="Hide simulation configuration" class="ti-angle-double-left"></b-button-close>
+        <b-button-close content="" v-b-toggle.parameters v-b-tooltip.hover.right title="Hide configuration" class="ti-angle-double-left"></b-button-close>
       </template>
 
       <div role="tablist">
@@ -272,7 +272,7 @@
     <!-- Show the actual graphs -->
     <div id="graphs" class="results" v-bind:class="{ empty: result.graphs.length === 0 }">
         <template v-if="result.graphs.length === 0">
-          <p class="h3"><i>Click "Run" to display graphs</i></p>
+          <p class="h4"><i>Click "Run" to display graphs</i></p>
         </template>
         <template v-else>
           <div class="row no-gutter">
