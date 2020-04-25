@@ -266,7 +266,7 @@
     </button>
 
     <!-- Show the actual graphs -->
-    <div id="graphs" class="results">
+    <div id="graphs" class="results" v-bind:class="{ empty: result.graphs.length === 0 }">
         <template v-if="result.graphs.length === 0">
           <p class="h3"><i>Click "Run" to display graphs</i></p>
         </template>

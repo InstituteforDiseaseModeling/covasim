@@ -130,7 +130,7 @@ fieldset > legend {
 #app > .content.sidebar-closed > .sidebar {
     grid-area: none;
 }
-#app > .content.sidebar-opened > .results {
+#app > .content > .results.empty {
     justify-self: stretch;
     align-self: center;
     text-align: center;
