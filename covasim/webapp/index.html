@@ -65,7 +65,7 @@
         <!--  General Parameters -->
         <b-card no-body>
           <b-card-header header-tag="header" class="p-0 rounded-0" role="tab" header-bg-variant="dark">
-            <b-button block href="#" v-b-toggle.parameters-general variant="link">General options</b-button>
+            <b-button block href="#" v-b-toggle.parameters-general variant="link">General options <span class="ti-angle-up"></span> <span class="ti-angle-down"></span></b-button>
           </b-card-header>
           <b-collapse id="parameters-general" visible role="tabpanel">
             <b-card-body>
@@ -142,7 +142,7 @@
         <!--  Intervention Parameters -->
         <b-card no-body>
           <b-card-header header-tag="header" class="p-0 rounded-0" role="tab" header-bg-variant="dark">
-            <b-button block v-b-toggle.parameters-intervention variant="link">Interventions</b-button>
+            <b-button block v-b-toggle.parameters-intervention variant="link">Interventions <span class="ti-angle-up"></span> <span class="ti-angle-down"></span></b-button>
           </b-card-header>
           <b-collapse id="parameters-intervention" visible role="tabpanel">
             <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
@@ -199,7 +199,7 @@
         <!--  Advanced Parameters -->
         <b-card no-body>
           <b-card-header header-tag="header" class="bg-dark p-0 rounded-0" role="tab" header-bg-variant="dark">
-            <b-button block variant="link" v-b-toggle.parameters-advanced>Model parameters</b-button>
+            <b-button block variant="link" v-b-toggle.parameters-advanced>Model parameters <span class="ti-angle-up"></span> <span class="ti-angle-down"></span></b-button>
           </b-card-header>
           <b-collapse id="parameters-advanced" role="tabpanel">
             <b-card-body>
