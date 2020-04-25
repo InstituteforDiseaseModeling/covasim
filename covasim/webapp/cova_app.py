@@ -60,38 +60,78 @@ def get_defaults(region=None, merge=False, die=die):
     ''' Get parameter defaults '''
 
     if region is None:
-        region = 'Example'
+        region = 'Default'
 
     regions = {
-        'pop_size': {
-            'Example': 10000,
+        # 'n_imports': {
+        #     'Default': 0,
+        #     'Optimistic': 0,
+        #     'Pessimistic': 10,
+        # },
+        'beta': {
+            'Default': 0.015,
+            'Optimistic': 0.010,
+            'Pessimistic': 0.025,
         },
-        'pop_infected': {
-            'Example': 100,
+        'web_exp2inf': {
+            'Default': 4.0,
+            'Optimistic': 5.0,
+            'Pessimistic': 3.0,
+        },
+        'web_inf2sym': {
+            'Default': 1.0,
+            'Optimistic': 0.0,
+            'Pessimistic': 3.0,
+        },
+        'rel_symp_prob': {
+            'Default': 1.0,
+            'Optimistic': 1.2,
+            'Pessimistic': 0.5,
+        },
+        'rel_severe_prob': {
+            'Default': 1.0,
+            'Optimistic': 0.3,
+            'Pessimistic': 3.0,
+        },
+        'rel_crit_prob': {
+            'Default': 1.0,
+            'Optimistic': 0.7,
+            'Pessimistic': 5.0,
+        },
+        'rel_death_prob': {
+            'Default': 1.0,
+            'Optimistic': 0.5,
+            'Pessimistic': 2.0,
         },
     }
 
-    sim_pars = {}
-    sim_pars['pop_size']     = dict(best=10000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model')
-    sim_pars['pop_infected'] = dict(best=10,    min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model')
-    sim_pars['rand_seed']    = dict(best=0,     min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)')
-    sim_pars['n_days']       = dict(best=90,    min=1, max=max_days, name="Simulation Duration",        tip='Total duration (in days) of the simulation')
+    sim_pars = dict(
+        pop_size     = dict(best=10000, min=1, max=max_pop,  name='Population size',            tip='Number of agents simulated in the model'),
+        pop_infected = dict(best=10,    min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model'),
+        # n_imports    = dict(best=0,     min=0, max=100,      name='Daily imported infections',  tip='Number of infections that are imported each day'),
+        rand_seed    = dict(best=0,     min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)'),
+        n_days       = dict(best=90,    min=1, max=max_days, name="Simulation duration",        tip='Total duration (in days) of the simulation'),
+    )
 
-    epi_pars = {}
-    epi_pars['beta']            = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',              tip ='Probability of infection per contact per day')
-    epi_pars['web_exp2inf']     = dict(best=4.0,   min=1.0, max=30,  name='Time to infectiousness (days)',      tip ='Average number of days between exposure and being infectious')
-    epi_pars['web_inf2sym']     = dict(best=1.0,   min=1.0, max=30,  name='Asymptomatic period (days)',         tip ='Average number of days between exposure and developing symptoms')
-    epi_pars['web_dur']         = dict(best=10.0,  min=1.0, max=30,  name='Infection duration (days)',          tip ='Average number of days between infection and recovery (viral shedding period)')
-    epi_pars['web_timetodie']   = dict(best=22.0,  min=1.0, max=60,  name='Time until death (days)',            tip ='Average number of days between infection and death')
-    epi_pars['rel_symp_prob']   = dict(best=1.0,   min=0.0, max=10.0, name='Symptomatic probability multiplier', tip ='Adjustment factor on literature-derived values for proportion of infected people who become symptomatic')
-    epi_pars['rel_severe_prob'] = dict(best=1.0,   min=0.0, max=10.0, name='Severe probability multiplier',      tip ='Adjustment factor on literature-derived values for proportion of symptomatic people who develop severe disease')
-    epi_pars['rel_crit_prob']   = dict(best=1.0,   min=0.0, max=10.0, name='Critical probability multiplier',    tip ='Adjustment factor on literature-derived values for proportion of people with severe disease who become crtiically ill')
-    epi_pars['rel_death_prob']  = dict(best=1.0,   min=0.0, max=10.0, name='Death probability multiplier',       tip ='Adjustment factor on literature-derived values for proportion of critically ill people who die')
-
-
+    epi_pars = dict(
+        beta            = dict(best=0.015, min=0.0, max=0.2, name='Beta (infectiousness)',              tip ='Probability of infection per contact per day'),
+        web_exp2inf     = dict(best=4.0,   min=0.0, max=30,  name='Time to infectiousness (days)',      tip ='Average number of days between exposure and being infectious'),
+        web_inf2sym     = dict(best=1.0,   min=0.0, max=30,  name='Asymptomatic period (days)',         tip ='Average number of days between exposure and developing symptoms'),
+        web_dur         = dict(best=10.0,  min=0.0, max=30,  name='Infection duration (days)',          tip ='Average number of days between infection and recovery (viral shedding period)'),
+        web_timetodie   = dict(best=22.0,  min=0.0, max=60,  name='Time until death (days)',            tip ='Average number of days between infection and death'),
+        rel_symp_prob   = dict(best=1.0,   min=0.0, max=10,  name='Symptomatic probability multiplier', tip ='Adjustment factor on literature-derived values for proportion of infected people who become symptomatic'),
+        rel_severe_prob = dict(best=1.0,   min=0.0, max=10,  name='Severe probability multiplier',      tip ='Adjustment factor on literature-derived values for proportion of symptomatic people who develop severe disease'),
+        rel_crit_prob   = dict(best=1.0,   min=0.0, max=10,  name='Critical probability multiplier',    tip ='Adjustment factor on literature-derived values for proportion of people with severe disease who become crtiically ill'),
+        rel_death_prob  = dict(best=1.0,   min=0.0, max=10,  name='Death probability multiplier',       tip ='Adjustment factor on literature-derived values for proportion of critically ill people who die'),
+    )
 
     for parkey,valuedict in regions.items():
-        sim_pars[parkey]['best'] = valuedict['Example'] # NB, needs to be refactored
+        if parkey in sim_pars:
+            sim_pars[parkey]['best'] = valuedict[region] # NB, needs to be refactored -- 'Default' is just a placeholder until we have actual regions
+        elif parkey in epi_pars:
+            epi_pars[parkey]['best'] = valuedict[region]
+        else:
+            raise Exception(f'Key {parkey} not found')
     if merge:
         output = {**sim_pars, **epi_pars}
     else:
@@ -113,11 +153,11 @@ def get_licenses():
     repo = cwd.joinpath('../..')
     license = repo.joinpath('LICENSE').read_text(encoding='utf-8')
     notice = repo.joinpath('licenses/NOTICE').read_text(encoding='utf-8')
-
     return {
         'license': license,
         'notice': notice
     }
+
 
 @app.register_RPC()
 def get_location_options(enable=False):
@@ -210,8 +250,8 @@ def parse_interventions(int_pars):
                 change = mapping[level]
                 interv = cv.change_beta(days=[start, end], changes=[change, 1.0])
             elif ikey == 'school_closures':
-                change = 0.7
-                interv = cv.change_beta(days=[start, end], changes=[change, 1.0], layers='a')
+                change = 0.0
+                interv = cv.change_beta(days=[start, end], changes=[change, 1.0], layers='s')
             elif ikey == 'symptomatic_testing':
                 level = iconfig['level']
                 level = float(level)/100
@@ -219,8 +259,8 @@ def parse_interventions(int_pars):
                 delay = 0.0
                 interv = cv.test_prob(start_day=start, end_day=end, symp_prob=level, asymp_prob=asymp_prob, test_delay=delay)
             elif ikey == 'contact_tracing':
-                trace_prob = {'a':1.0}
-                trace_time = {'a':0.0}
+                trace_prob = {k:1.0 for k in 'hswc'}
+                trace_time = {k:0.0 for k in 'hswc'}
                 interv = cv.contact_tracing(start_day=start, end_day=end, trace_probs=trace_prob, trace_time=trace_time)
             else:
                 raise NotImplementedError

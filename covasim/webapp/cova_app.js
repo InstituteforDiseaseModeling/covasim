@@ -169,8 +169,8 @@ var vm = new Vue({
             interventionTableConfig,
             running: false,
             errs: [],
-            reset_options: ['Example'],//, 'Seattle', 'Wuhan', 'Global'],
-            reset_choice: 'Example'
+            reset_options: ['Default', 'Optimistic', 'Pessimistic'],
+            reset_choice: 'Default'
         };
     },
 
@@ -334,7 +334,7 @@ var vm = new Vue({
             this.intervention_figs = {};
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
-            this.result.graphs = [];
+            // this.result.graphs = [];
             this.reset_datafile()
         },
 
