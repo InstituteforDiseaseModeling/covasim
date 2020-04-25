@@ -126,7 +126,7 @@ webapp
 
 For running the interactive web application. See the `webapp README`_ for more information.
 
-.. _webapp README: ./covasim/webapp
+.. _webapp README: https://github.com/InstituteforDiseaseModeling/covasim/tree/master/covasim/webapp
 
 Other folders
 =============
