@@ -136,19 +136,10 @@ class People(cvb.BasePeople):
         return self.contacts
 
 
-    def make_susceptible(self, inds):
-        '''
-        Make person susceptible. This is used during dynamic resampling
-        '''
-        for key in self.meta.states:
-            if key == 'susceptible':
-                self[key][inds] = True
-            else:
-                self[key][inds] = False
 
-        for key in self.meta.dates + self.meta.durs:
-            self[key][inds] = np.nan
-
+    def make_detailed_transtree(self):
+        ''' Convenience function to avoid repeating the people object '''
+        self.transtree.make_detailed(self)
         return
 
 
@@ -254,6 +245,22 @@ class People(cvb.BasePeople):
 
     #%% Methods to make events occur (infection and diagnosis)
 
+    def make_susceptible(self, inds):
+        '''
+        Make person susceptible. This is used during dynamic resampling
+        '''
+        for key in self.meta.states:
+            if key == 'susceptible':
+                self[key][inds] = True
+            else:
+                self[key][inds] = False
+
+        for key in self.meta.dates + self.meta.durs:
+            self[key][inds] = np.nan
+
+        return
+
+
     def infect(self, inds, bed_max=None, verbose=True):
         '''
         Infect people and determine their eventual outcomes.
@@ -272,7 +279,7 @@ class People(cvb.BasePeople):
         '''
 
         # Handle inputs
-        # inds         = inds[self.susceptible[inds]] # Do not infect people who are not susceptible
+        inds         = inds[self.susceptible[inds]] # Do not infect people who are not susceptible
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
