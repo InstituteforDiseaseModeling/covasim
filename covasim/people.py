@@ -272,17 +272,15 @@ class People(cvb.BasePeople):
         '''
 
         # Handle inputs
+        # inds         = inds[self.susceptible[inds]] # Do not infect people who are not susceptible
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
         # Set states
-        self.susceptible[inds]    = False
-        self.exposed[inds]        = True
-        self.rel_sus[inds]        = 0.0 # Not susceptible after becoming infected
-        self.date_exposed[inds]   = self.t
-
-        # Deal with bed constraint if applicable
-        if bed_max is None: bed_max = False
+        self.susceptible[inds]   = False
+        self.exposed[inds]       = True
+        self.rel_sus[inds]       = 0.0 # Not susceptible after becoming infected
+        self.date_exposed[inds]  = self.t
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)
