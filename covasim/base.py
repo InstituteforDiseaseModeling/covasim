@@ -6,6 +6,7 @@ import datetime as dt
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 import pandas as pd
+import pylab as pl
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
@@ -992,4 +993,43 @@ class TransTree(sc.prettyobj):
 
 
     def plot(self):
-        raise NotImplementedError('Transmission tree plotting is not yet available')
+        ''' Plot the transmission tree '''
+        if self.detailed is None:
+            errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
+            raise ValueError(errormsg)
+
+        detailed = filter(None, self.detailed)
+
+        df = pd.DataFrame(detailed).rename(columns={'date': 'Day'})
+        df = df.loc[df['layer'] != 'seed_infection']
+
+        df['Stage'] = 'Symptomatic'
+        df.loc[df['s_asymp'], 'Stage'] = 'Asymptomatic'
+        df.loc[df['s_presymp'], 'Stage'] = 'Presymptomatic'
+
+        df['Severity'] = 'Mild'
+        df.loc[df['s_sev'], 'Severity'] = 'Severe'
+        df.loc[df['s_crit'], 'Severity'] = 'Critical'
+
+        fig = pl.figure(figsize=(16,10))
+        i=1; r=2; c=3
+
+        def plot(key, title, i):
+            dat = df.groupby(['Day', key]).size().unstack(key)
+            ax = pl.subplot(r,c,i);
+            dat.plot(ax=ax, legend=None)
+            pl.legend(title=None)
+            ax.set_title(title)
+
+        to_plot = {
+            'layer':'Layer',
+            'Stage':'Source stage',
+            's_diag':'Source diagnosed',
+            's_quar':'Source quarantined',
+            't_quar':'Target quarantined',
+            'Severity':'Symptomatic source severity'
+        }
+        for i, (key, title) in enumerate(to_plot.items()):
+            plot(key, title, i+1)
+
+        return fig
