@@ -1,5 +1,5 @@
 '''
-Demonstrate that even interventions can be exported
+Demonstrate flexibility in date handling
 '''
 
 import sciris as sc
