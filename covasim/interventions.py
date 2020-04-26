@@ -49,7 +49,6 @@ class Intervention:
     '''
     def __init__(self):
         self.days = []
-        self.initialized = False
         return
 
 
