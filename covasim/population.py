@@ -239,9 +239,9 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     layer_keys = ['h', 's', 'w', 'c']
     contacts = sc.mergedicts({'h':4, 's':20, 'w':20, 'c':20}, contacts) # Ensure essential keys are populated
     if school_ages is None:
-        school_ages = [6, 18]
+        school_ages = [6, 22]
     if work_ages is None:
-        work_ages   = [18, 65]
+        work_ages   = [22, 65]
 
     # Create the empty contacts list -- a list of {'h':[], 's':[], 'w':[]}
     contacts_list = [{key:[] for key in layer_keys} for i in range(pop_size)]

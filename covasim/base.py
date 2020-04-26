@@ -717,7 +717,7 @@ class BasePeople(sc.prettyobj):
             n = len(new_layer['p1'])
             if 'beta' not in new_layer or len(new_layer['beta']) != n:
                 if beta is None:
-                    beta = self.pars['beta_layer'][lkey]
+                    beta = 1.0
                 beta = cvd.default_float(beta)
                 new_layer['beta'] = np.ones(n, dtype=cvd.default_float)*beta
 

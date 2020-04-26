@@ -6,8 +6,9 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.29.3 (2020-04-25)
+Version 0.29.4 (2020-04-25)
 ----------------------------
+- Fixed bug whereby layer betas were applied twice, and updated default values
 - Includes individual-level viral load (to use previous results, set ``pars['beta_dist'] = {'dist':'lognormal','par1':1.0, 'par2':0.0}`` and ``pars['viral_dist']  = {'frac_time':0.0, 'load_ratio':1, 'high_cap':0}``)
 - Updated parameter values (mostly durations) based on revised literature review
 - Added ``sim.export_pars()`` and ``sim.export_results()`` methods
