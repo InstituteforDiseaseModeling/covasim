@@ -11,10 +11,11 @@ import matplotlib.ticker as ticker
 from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
-from . import defaults as cvd
 from . import base as cvb
-from . import parameters as cvpars
+from . import defaults as cvd
+from . import parameters as cvpar
 from . import population as cvpop
+from . import interventions as cvi
 
 # Specify all externally visible things this file defines
 __all__ = ['Sim']
@@ -43,7 +44,7 @@ class Sim(cvb.BaseSim):
 
     def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, **kwargs):
         # Create the object
-        default_pars = cvpars.make_pars(**kwargs) # Start with default pars
+        default_pars = cvpar.make_pars(**kwargs) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
@@ -75,9 +76,9 @@ class Sim(cvb.BaseSim):
         pars = sc.mergedicts(pars, kwargs)
         if pars:
             if 'pop_type' in pars:
-                cvpars.reset_layer_pars(pars)
+                cvpar.reset_layer_pars(pars)
             if 'prog_by_age' in pars:
-                pars['prognoses'] = cvpars.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
+                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
 
@@ -99,7 +100,7 @@ class Sim(cvb.BaseSim):
         ''' Load the data to calibrate against, if provided '''
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvpars.load_data(filename=datafile, columns=datacols, **kwargs)
+            self.data = cvpar.load_data(filename=datafile, columns=datacols, **kwargs)
 
         return
 
@@ -134,7 +135,7 @@ class Sim(cvb.BaseSim):
             layer_keys = self.people.contacts.keys()
         else:
             layer_keys = None
-        cvpars.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
+        cvpar.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
         return
 
 
@@ -183,6 +184,9 @@ class Sim(cvb.BaseSim):
 
         # Handle interventions
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
+        for i,interv in enumerate(self['interventions']):
+            if isinstance(interv, dict): # It's a dictionary representation of an intervention
+                self['interventions'][i] = cvi.InterventionDict(**interv)
 
         return
 
@@ -326,10 +330,11 @@ class Sim(cvb.BaseSim):
         diag_factor  = cvd.default_float(self['diag_factor'])
         frac_time    = cvd.default_float(self['viral_dist']['frac_time'])
         load_ratio   = cvd.default_float(self['viral_dist']['load_ratio'])
+        high_cap     = cvd.default_float(self['viral_dist']['high_cap'])
         date_inf     = people.date_infectious
         date_rec     = people.date_recovered
         date_dead    = people.date_dead
-        viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio)
+        viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         for lkey,layer in contacts.items():
             sources = layer['p1']

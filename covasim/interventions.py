@@ -1,9 +1,9 @@
+import inspect
 import numpy as np
 import pandas as pd
 import pylab as pl
 import sciris as sc
 import datetime as dt
-import covasim as cv
 from . import utils as cvu
 from . import misc as cvm
 from . import base as cvb
@@ -12,17 +12,68 @@ from . import base as cvb
 
 #%% Generic intervention classes
 
-__all__ = ['Intervention', 'dynamic_pars', 'sequence']
+__all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence']
+
+
+def InterventionDict(which, pars):
+    '''
+    Generate an intervention from a dictionary. Although a function, it acts
+    like a class, since it returns a class instance.
+
+    **Example**::
+
+        interv = cv.InterventionDict(which='change_beta', pars={'days': 30, 'changes': 0.5, 'layers': None})
+    '''
+    mapping = dict(
+        dynamic_pars    = dynamic_pars,
+        sequence        = sequence,
+        change_beta     = change_beta,
+        clip_edges      = clip_edges,
+        test_num        = test_num,
+        test_prob       = test_prob,
+        contact_tracing = contact_tracing,
+        )
+    try:
+        IntervClass = mapping[which]
+    except:
+        available = ', '.join(mapping.keys())
+        errormsg = f'Only interventions "{available}" are available in dictionary representation'
+        raise NotImplementedError(errormsg)
+    intervention = IntervClass(**pars)
+    return intervention
 
 
 class Intervention:
     '''
     Abstract class for interventions
-
     '''
     def __init__(self):
         self.days = []
-        self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
+
+
+    def __repr__(self):
+        ''' Return a JSON-friendly output if possible, else revert to pretty repr '''
+        try:
+            json = self.to_json()
+            which = json['which']
+            pars = json['pars']
+            output = f"cv.InterventionDict('{which}', pars={pars})"
+        except:
+            output = sc.prepr(self)
+        return output
+
+
+    def _store_args(self):
+        ''' Store the user-supplied arguments for later use in to_json '''
+        f0 = inspect.currentframe() # This "frame", i.e. Intervention.__init__()
+        f1 = inspect.getouterframes(f0) # The list of outer frames
+        parent = f1[1].frame # The parent frame, e.g. change_beta.__init__()
+        _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
+        self.input_args = {}
+        for key,value in values.items():
+            if key not in ['self', '__class__']: # Skip these two
+                self.input_args[key] = value
+        return
 
 
     def apply(self, sim):
@@ -34,7 +85,6 @@ class Intervention:
         by derived classes
 
         Args:
-            self:
             sim: The Sim instance
 
         Returns:
@@ -75,9 +125,10 @@ class Intervention:
         Returns:
             JSON-serializable representation (typically a dict, but could be anything else)
         '''
-        d = sc.dcp(self.__dict__)
-        d['InterventionType'] = self.__class__.__name__
-        return d
+        which = self.__class__.__name__
+        pars = sc.jsonify(self.input_args)
+        output = dict(which=which, pars=pars)
+        return output
 
 
 class dynamic_pars(Intervention):
@@ -114,6 +165,7 @@ class dynamic_pars(Intervention):
             if len_days != len_vals:
                 raise ValueError(f'Length of days ({len_days}) does not match length of values ({len_vals}) for parameter {parkey}')
         self.pars = pars
+        self._store_args()
         return
 
 
@@ -159,10 +211,11 @@ class sequence(Intervention):
         self.days = days
         self.interventions = interventions
         self._cum_days = np.cumsum(days)
+        self._store_args()
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         idx = np.argmax(self._cum_days > sim.t)  # Index of the intervention to apply on this day
         self.interventions[idx].apply(sim)
         return
@@ -192,13 +245,15 @@ class change_beta(Intervention):
 
     def __init__(self, days, changes, layers=None):
         super().__init__()
+
         self.days = sc.promotetoarray(days)
         self.changes = sc.promotetoarray(changes)
-        self.layer_keys = sc.promotetolist(layers, keepnone=True)
+        self.layers = sc.promotetolist(layers, keepnone=True)
         if len(self.days) != len(self.changes):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
         self.orig_betas = None
+        self._store_args()
         return
 
 
@@ -207,7 +262,7 @@ class change_beta(Intervention):
         # If this is the first time it's being run, store beta
         if self.orig_betas is None:
             self.orig_betas = {}
-            for lkey in self.layer_keys:
+            for lkey in self.layers:
                 if lkey is None:
                     self.orig_betas['overall'] = sim['beta']
                 else:
@@ -259,6 +314,7 @@ class clip_edges(Intervention):
         self.verbose = verbose
         self.layer_keys = None
         self.contacts = None
+        self._store_args()
         return
 
 
@@ -341,7 +397,6 @@ class test_num(Intervention):
 
     def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0, loss_prob=0, start_day=0, end_day=None):
         super().__init__()
-
         self.daily_tests = daily_tests #: Should be a list of length matching time
         self.sympt_test = sympt_test
         self.quar_test = quar_test
@@ -351,7 +406,7 @@ class test_num(Intervention):
         self.start_day = start_day
         self.end_day = end_day
         self.days = [start_day, end_day]
-
+        self._store_args()
         return
 
 
@@ -431,7 +486,7 @@ class test_prob(Intervention):
         self.start_day        = start_day
         self.end_day          = end_day
         self.days             = [start_day, end_day]
-
+        self._store_args()
         return
 
 
@@ -476,6 +531,7 @@ class contact_tracing(Intervention):
         self.start_day = start_day
         self.end_day = end_day
         self.days = [start_day, end_day]
+        self._store_args()
         return
 
     def apply(self, sim):

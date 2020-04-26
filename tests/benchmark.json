@@ -1,7 +1,7 @@
 {
   "time": {
-    "initialize": 0.209,
-    "run": 0.157
+    "initialize": 0.23,
+    "run": 0.17
   },
   "parameters": {
     "pop_size": 20000,

@@ -33,10 +33,10 @@ const PlotlyChart = {
 
 const interventionTableConfig = {
     social_distance: {
-        formTitle: "Social distancing",
+        formTitle: "Physical distancing",
         fields: [{key: 'start', type: 'number', label: 'Start day'},
             {key: 'end', type: 'number', label: 'End day'},
-            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive effectiveness', value: 'aggressive'}, {label: 'Moderate effectiveness', value: 'moderate'}, {label: 'Mild effectiveness', value: 'mild'}]}],
+            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive (80%)', value: 'aggressive'}, {label: 'Moderate (50%)', value: 'moderate'}, {label: 'Mild (20%)', value: 'mild'}]}],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -169,8 +169,8 @@ var vm = new Vue({
             interventionTableConfig,
             running: false,
             errs: [],
-            reset_options: ['Example'],//, 'Seattle', 'Wuhan', 'Global'],
-            reset_choice: 'Example'
+            reset_options: ['Default', 'Optimistic', 'Pessimistic'],
+            reset_choice: 'Default'
         };
     },
 
@@ -207,7 +207,7 @@ var vm = new Vue({
                 this.$set(this.int_pars, key, []);
             }
             // validate intervention
-            const notValid = !intervention.end || !intervention.start || intervention.end <= intervention.start
+            const notValid = !intervention.end || intervention.start < 0 || intervention.end <= intervention.start
             if (notValid) {
                 this.$set(this.scenarioError, scenarioKey, `Please enter a valid day range`);
                 return;
@@ -307,7 +307,7 @@ var vm = new Vue({
                 this.result.files = response.data.files;
                 this.result.summary = response.data.summary;
                 this.errs = response.data.errs;
-                this.panel_open = this.errs.length > 0;
+                // this.panel_open = this.errs.length > 0; // Better solution would be to have a pin button
                 this.sim_pars = response.data.sim_pars;
                 this.epi_pars = response.data.epi_pars;
                 this.int_pars = response.data.int_pars;
@@ -334,7 +334,7 @@ var vm = new Vue({
             this.intervention_figs = {};
             this.setupFormWatcher('sim_pars');
             this.setupFormWatcher('epi_pars');
-            this.result.graphs = [];
+            // this.result.graphs = [];
             this.reset_datafile()
         },
 

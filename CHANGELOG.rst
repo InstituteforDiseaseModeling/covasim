@@ -6,14 +6,22 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.28.7 (2020-04-24)
+Version 0.29.4 (2020-04-25)
 ----------------------------
-- Include individual-level viral load
+- Fixed bug whereby layer betas were applied twice, and updated default values
+- Includes individual-level viral load (to use previous results, set ``pars['beta_dist'] = {'dist':'lognormal','par1':1.0, 'par2':0.0}`` and ``pars['viral_dist']  = {'frac_time':0.0, 'load_ratio':1, 'high_cap':0}``)
+- Updated parameter values (mostly durations) based on revised literature review
+- Added ``sim.export_pars()`` and ``sim.export_results()`` methods
+- Interventions can now be converted to/from JSON -- automatically when loading a parameters dictionary into a sim, or manually using ``cv.InterventionDict()``
+
+
+Version 0.28.8 (2020-04-24)
+----------------------------
 - Includes data on household sizes from various countries
 - Includes age data on US states
 - Changes to interventions to include end as well as start days, and plotting as a default option
 - Adds version checks to loading and introduces a new function ``cv.load()`` to replace e.g. ``cv.Sim.load()``
-- Major layout and functionality changes to the webapp, including country selection
+- Major layout and functionality changes to the webapp, including country selection (disabled by default)
 - Provided access to Plotly graphs via the backend
 - Moved relative probabilities (e.g. ``rel_death_prob``) from population creation to loop so can be modified dynamically
 - Introduced ``cv.clip_edges()`` intervention, similar to ``cv.change_beta()`` but removes contacts entirely

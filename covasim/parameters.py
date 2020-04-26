@@ -41,33 +41,33 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['rescale_factor']    = 2   # Factor by which we rescale the population
 
     # Basic disease transmission
-    pars['beta']        = 0.015 # Beta per symptomatic contact; absolute
+    pars['beta']        = 0.015 # Beta per symptomatic contact; absolute value, calibrated
     pars['contacts']    = None # The number of contacts per layer; set below
     pars['dynam_layer'] = None # Which layers are dynamic; set below
     pars['beta_layer']  = None # Transmissibility per layer; set below
     pars['n_imports']   = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta_dist']   = {'dist':'lognormal','par1':1, 'par2':0} # Distribution to draw individual level transmissibility
-    pars['viral_dist']  = {'frac_time':1, 'load_ratio':1} # The time varying viral load (transmissibility)
+    pars['beta_dist']   = {'dist':'lognormal','par1':0.84, 'par2':0.3} # Distribution to draw individual level transmissibility; see https://wellcomeopenresearch.org/articles/5-67
+    pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
     # Efficacy of protection measures
-    pars['asymp_factor'] = 0.8 # Multiply beta by this factor for asymptomatic cases
-    pars['diag_factor']  = 0.2 # Multiply beta by this factor for diganosed cases
+    pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
+    pars['diag_factor']  = 0.2 # Multiply beta by this factor for diganosed cases; based on intervention strength
     pars['quar_eff']     = None # Quarantine multiplier on transmissibility and susceptibility; set below
-    pars['quar_period']  = 14  # Number of days to quarantine for
+    pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
-    pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4, 'par2':1} # Duration from exposed to infectious
-    pars['dur']['inf2sym']  = {'dist':'lognormal_int', 'par1':1, 'par2':1} # Duration from infectious to symptomatic
-    pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':3, 'par2':2} # Duration from symptomatic to severe symptoms
-    pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':3, 'par2':2} # Duration from severe symptoms to requiring ICU
+    pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4.6, 'par2':4.8} # Duration from exposed to infectious; see Linton et al., https://doi.org/10.3390/jcm9020538
+    pars['dur']['inf2sym']  = {'dist':'lognormal_int', 'par1':1.0, 'par2':0.9} # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538
+    pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':6.6, 'par2':4.9} # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538
+    pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':3.0, 'par2':7.4} # Duration from severe symptoms to requiring ICU; see Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044
 
     # Duration parameters: time for disease recovery
-    pars['dur']['asym2rec'] = {'dist':'lognormal_int', 'par1':8,  'par2':2} # Duration for asymptomatics to recover
-    pars['dur']['mild2rec'] = {'dist':'lognormal_int', 'par1':8,  'par2':2} # Duration from mild symptoms to recovered
-    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':11, 'par2':3} # Duration from severe symptoms to recovered
-    pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':17, 'par2':3} # Duration from critical symptoms to recovered
-    pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':7,  'par2':3} # Duration from critical symptoms to death
+    pars['dur']['asym2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration for asymptomatics to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+    pars['dur']['mild2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration from mild symptoms to recovered; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration from severe symptoms to recovered, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+    pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration from critical symptoms to recovered, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+    pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':6.2,  'par2':1.7} # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
 
     # Severity parameters: probabilities of symptom progression
     pars['OR_no_treat']     = 2.0  # Odds ratio for how much more likely people are to die if no treatment available
@@ -123,10 +123,10 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
             if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = {'a': d_beta_layer}  # Per-population beta weights; relative
             if pars.get('quar_eff',    None) is None or force: pars['quar_eff']    = {'a': d_quar_eff}    # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
         else:
-            if pars.get('contacts',    None) is None or force: pars['contacts']    = {'h': 4,   's': 20,  'w': 20,  'c': 20}   # Number of contacts per person per day, estimated
-            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = {'h': 0,   's': 0,   'w': 0,   'c': 0}    # Which layers are dynamic -- none by defaul
-            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = {'h': 1.2, 's': 0.6, 'w': 0.6, 'c': 0.2}  # Per-population beta weights; relative
-            if pars.get('quar_eff',    None) is None or force: pars['quar_eff']    = {'h': 0.5, 's': 0.0, 'w': 0.0, 'c': 0.05} # Multiply beta by this factor
+            if pars.get('contacts',    None) is None or force: pars['contacts']    = dict(h=2.7, s=20,  w=8,  c=20)   # Number of contacts per person per day, estimated
+            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = dict(h=0,   s=0,   w=0,   c=0)    # Which layers are dynamic -- none by defaul
+            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = dict(h=7.0, s=0.7, w=1.4, c=0.14)  # Per-population beta weights; relative
+            if pars.get('quar_eff',    None) is None or force: pars['quar_eff']    = dict(h=0.5, s=0.0, w=0.0, c=0.05) # Multiply beta by this factor
     return
 
 
@@ -158,7 +158,7 @@ def get_prognoses(by_age=True):
     else:
         prognoses = dict(
             age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      max_age]), # Age cutoffs
-            symp_probs   = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms
+            symp_probs   = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
             severe_probs = np.array([0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]), # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
             crit_probs   = np.array([0.00004, 0.00011, 0.00050, 0.00123, 0.00214, 0.00800, 0.02750, 0.06000, 0.10333]), # Overall probability of developing critical symptoms (derived from https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm)
             death_probs  = np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]), # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)

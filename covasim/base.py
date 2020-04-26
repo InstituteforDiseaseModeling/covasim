@@ -214,7 +214,7 @@ class BaseSim(ParsObj):
         return keys
 
 
-    def _make_resdict(self, for_json=True):
+    def export_results(self, for_json=True):
         '''
         Convert results to dict
 
@@ -244,7 +244,7 @@ class BaseSim(ParsObj):
         return resdict
 
 
-    def _make_pardict(self):
+    def export_pars(self):
         '''
         Return parameters for JSON export
 
@@ -270,7 +270,7 @@ class BaseSim(ParsObj):
         return sc.dcp(self)
 
 
-    def to_json(self, filename=None, keys=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
+    def to_json(self, filename=None, keys=None, tostring=False, indent=2, verbose=False, *args, **kwargs):
         '''
         Export results as JSON.
 
@@ -288,7 +288,7 @@ class BaseSim(ParsObj):
             or writes the JSON file to disk
 
         Examples:
-            string = sim.to_json()
+            json = sim.to_json()
             sim.to_json('results.json')
             sim.to_json('summary.json', keys='summary')
         '''
@@ -302,10 +302,10 @@ class BaseSim(ParsObj):
         d = {}
         for key in keys:
             if key == 'results':
-                resdict = self._make_resdict()
+                resdict = self.export_results(for_json=True)
                 d['results'] = resdict
             elif key in ['pars', 'parameters']:
-                pardict = self._make_pardict()
+                pardict = self.export_pars()
                 d['parameters'] = pardict
             elif key == 'summary':
                 d['summary'] = dict(sc.dcp(self.summary))
@@ -335,7 +335,7 @@ class BaseSim(ParsObj):
             An sc.Spreadsheet with an Excel file, or writes the file to disk
 
         '''
-        resdict = self._make_resdict(for_json=False)
+        resdict = self.export_results(for_json=False)
         result_df = pd.DataFrame.from_dict(resdict)
         result_df.index = self.tvec
         result_df.index.name = 'Day'
@@ -717,7 +717,7 @@ class BasePeople(sc.prettyobj):
             n = len(new_layer['p1'])
             if 'beta' not in new_layer or len(new_layer['beta']) != n:
                 if beta is None:
-                    beta = self.pars['beta_layer'][lkey]
+                    beta = 1.0
                 beta = cvd.default_float(beta)
                 new_layer['beta'] = np.ones(n, dtype=cvd.default_float)*beta
 
@@ -975,6 +975,8 @@ class TransTree(sc.prettyobj):
 
                     # Only need to check against the date, since will return False if condition is false (NaN)
                     if source is not None: # This information is only available for people infected by other people, not e.g. importations
+                        ddict['s_age']     = people.age[source]
+                        ddict['t_age']     = people.age[target]
                         ddict['s_symp']    = people.date_symptomatic[source] <= date
                         ddict['s_diag']    = people.date_diagnosed[source]   <= date
                         ddict['s_quar']    = people.date_quarantined[source] <= date

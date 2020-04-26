@@ -333,7 +333,7 @@ class Scenarios(cvb.ParsObj):
              'results':   self.results,
              'basepars':  self.basepars,
              'metapars':  self.metapars,
-             'simpars':   self.base_sim._make_pardict(),
+             'simpars':   self.base_sim.export_pars(),
              'scenarios': self.scenarios
              }
         if filename is None:
