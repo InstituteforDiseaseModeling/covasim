@@ -6,9 +6,10 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.29.0 (2020-04-25)
+Version 0.29.1 (2020-04-25)
 ----------------------------
 - Include individual-level viral load (to use previous results, set ``pars['beta_dist'] = {'dist':'lognormal','par1':1.0, 'par2':0.0}`` and ``pars['viral_dist']  = {'frac_time':0.0, 'load_ratio':1, 'high_cap':0}``)
+- Updated parameter values (mostly durations) based on revised literature review
 
 
 Version 0.28.7 (2020-04-24)
