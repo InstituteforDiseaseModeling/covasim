@@ -5,7 +5,7 @@ import numpy as np
 s1s = []
 s2s = []
 s3s = []
-ps = [5000, 10000, 20000, 50000, 100000][4]
+ps = [5000, 10000, 20000, 50000, 100000][1]
 pi = 100
 nd = 40
 for i in [1, 2, 3]:
@@ -37,3 +37,6 @@ for i,tt in enumerate([tt_hy, tt_sp]):
     for lk in 'hswc':
         infs = [d for d in tt if d and d['layer']==lk]
         print(lk, len(infs))
+
+s2.people.transtree.plot()
+s3.people.transtree.plot()

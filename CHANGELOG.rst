@@ -13,6 +13,7 @@ Version 0.29.4 (2020-04-25)
 - Updated parameter values (mostly durations) based on revised literature review
 - Added ``sim.export_pars()`` and ``sim.export_results()`` methods
 - Interventions can now be converted to/from JSON -- automatically when loading a parameters dictionary into a sim, or manually using ``cv.InterventionDict()``
+- Iprovements to transmission trees: can now make a detailed tree with ``sim.people.make_detailed_transtree()`` (replacing ``sim.people.transtree.make_detailed(sim.people)``), and can plot via ``sim.people.transtree.plot()``
 
 
 Version 0.28.8 (2020-04-24)
