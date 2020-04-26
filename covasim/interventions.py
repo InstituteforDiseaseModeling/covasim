@@ -225,6 +225,12 @@ class sequence(Intervention):
         return
 
 
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.days = [sim.day(day) for day in self.days]
+        return
+
+
     def apply(self, sim):
         idx = np.argmax(self._cum_days > sim.t)  # Index of the intervention to apply on this day
         self.interventions[idx].apply(sim)
@@ -326,12 +332,19 @@ class clip_edges(Intervention):
         super().__init__()
         self.start_day = start_day
         self.end_day = end_day
-        self.days = [start_day, end_day]
         self.change = change
         self.verbose = verbose
         self.layer_keys = None
         self.contacts = None
         self._store_args()
+        return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.start_day = sim.day(self.start_day)
+        self.end_day = sim.day(self.end_day)
+        self.days = [self.start_day, self.end_day]
         return
 
 
@@ -422,8 +435,15 @@ class test_num(Intervention):
         self.loss_prob = loss_prob
         self.start_day = start_day
         self.end_day = end_day
-        self.days = [start_day, end_day]
         self._store_args()
+        return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.start_day = sim.day(self.start_day)
+        self.end_day = sim.day(self.end_day)
+        self.days = [self.start_day, self.end_day]
         return
 
 
@@ -502,8 +522,15 @@ class test_prob(Intervention):
         self.test_delay       = test_delay
         self.start_day        = start_day
         self.end_day          = end_day
-        self.days             = [start_day, end_day]
         self._store_args()
+        return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.start_day = sim.day(self.start_day)
+        self.end_day = sim.day(self.end_day)
+        self.days = [self.start_day, self.end_day]
         return
 
 
@@ -547,9 +574,17 @@ class contact_tracing(Intervention):
         self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
         self.start_day = start_day
         self.end_day = end_day
-        self.days = [start_day, end_day]
         self._store_args()
         return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.start_day = sim.day(self.start_day)
+        self.end_day = sim.day(self.end_day)
+        self.days = [self.start_day, self.end_day]
+        return
+
 
     def apply(self, sim):
         t = sim.t
