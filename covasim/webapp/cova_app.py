@@ -202,7 +202,7 @@ def get_gantt(int_pars=None, intervention_config=None):
         fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
                             show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
         fig.update_xaxes(type='linear')
-        response['json'] = fig.to_json()
+        response['json'] = fig.to_json(tostring=True)
 
     return response
 
@@ -367,7 +367,7 @@ def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_ani
         jsons = []
         for fig in sc.promotetolist(figs):
             fig.update_layout(paper_bgcolor=bgcolor, plot_bgcolor=plotbg)
-            output = {'json': fig.to_json(), 'id': str(sc.uuid())}
+            output = {'json': fig.to_json(tostring=True), 'id': str(sc.uuid())}
             d = json.loads(output['json'])
             d['config'] = {'responsive': True}
             output['json'] = json.dumps(d)
@@ -418,7 +418,7 @@ def get_output_files(sim):
         'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
     }
 
-    json_string = sim.to_json(verbose=False)
+    json_string = sim.to_json(tostring=True, verbose=False)
     files['json'] = {
         'filename': f'covasim_results_{datestamp}.json',
         'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
