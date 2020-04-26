@@ -59,7 +59,7 @@ def test_baseline():
 
     if len(mismatches):
         errormsg = '\nThe following values have changed between old and new!\n'
-        errormsg += 'Please rerun "tests/unittests/update_baseline" if this is intentional.\n'
+        errormsg += 'Please rerun "tests/update_baseline" if this is intentional.\n'
         errormsg += 'Mismatches:\n'
         space = ' '*17
         for mkey,mval in mismatches.items():

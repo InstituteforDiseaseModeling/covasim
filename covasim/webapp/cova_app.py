@@ -418,7 +418,7 @@ def get_output_files(sim):
         'content': 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64.b64encode(ss.blob).decode("utf-8"),
     }
 
-    json_string = sim.to_json(verbose=False)
+    json_string = sim.to_json(tostring=True, verbose=False)
     files['json'] = {
         'filename': f'covasim_results_{datestamp}.json',
         'content': 'data:application/text;base64,' + base64.b64encode(json_string.encode()).decode("utf-8"),
