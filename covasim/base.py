@@ -186,19 +186,92 @@ class BaseSim(ParsObj):
             return np.array([])
 
 
-    def inds2dates(self, inds, dateformat=None):
-        ''' Convert a set of indices to a set of dates '''
+    def day(self, day, *args):
+        '''
+        Convert a string, date/datetime object, or int to a day (int).
 
-        if sc.isnumber(inds): # If it's a number, convert it to a list
-            inds = sc.promotetolist(inds)
+        Args:
+            day (str, date, int, or list): convert any of these objects to a day relative to the simulation's start day
+
+        Returns:
+            days (int or str): the day(s) in simulation time
+
+        **Example**::
+
+            sim.day('2020-04-05') # Returns 35
+        '''
+        if sc.isstring(day) or sc.isnumber(day) or isinstance(day, (dt.date, dt.datetime)):
+            day = sc.promotetolist(day) # Ensure it's iterable
+        day.extend(args)
+
+        days = []
+        for d in day:
+            if sc.isnumber(d):
+                days.append(int(d)) # Just convert to an integer
+            else:
+                try:
+                    if sc.isstring(d):
+                        d = sc.readdate(d).date()
+                    elif isinstance(d, dt.datetime):
+                        d = d.date()
+                    d_day = (d - self['start_day']).days
+                    days.append(d_day)
+                except Exception as E:
+                    errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
+                    raise ValueError(errormsg)
+
+        # Return an integer rather than a list if only one provided
+        if len(day)==1:
+            days = days[0]
+
+        return days
+
+
+    def daydiff(self, day1, day2):
+        '''
+        Convenience function to find the difference between two days.
+
+        **Example**::
+
+            diff = sim.daydiff('2020-03-20', '2020-04-05') # Returns 16
+        '''
+        day1 = self.day(day1)
+        day2 = self.day(day2)
+        return day2 - day1
+
+
+    def date(self, ind, *args, dateformat=None):
+        '''
+        Convert an integer or list of integer simulation days to a date/list of dates.
+
+        Args:
+            ind (int, list, or array): the day(s) in simulation time
+
+        Returns:
+            dates (str or list): the date relative to the simulation start day, as an integer
+
+        **Example**::
+
+            sim.date(35) # Returns '2020-04-05'
+
+        '''
+
+        if sc.isnumber(ind): # If it's a number, convert it to a list
+            ind = sc.promotetolist(ind)
+        ind.extend(args)
 
         if dateformat is None:
-            dateformat = '%b-%d'
+            dateformat = '%Y-%m-%d'
 
         dates = []
-        for ind in inds:
-            tmp = self['start_day'] + dt.timedelta(days=int(ind))
+        for i in ind:
+            tmp = self['start_day'] + dt.timedelta(days=int(i))
             dates.append(tmp.strftime(dateformat))
+
+        # Return a string rather than a list if only one provided
+        if len(ind)==1:
+            dates = dates[0]
+
         return dates
 
 
@@ -287,7 +360,8 @@ class BaseSim(ParsObj):
             A unicode string containing a JSON representation of the results,
             or writes the JSON file to disk
 
-        Examples:
+        **Examples**::
+
             json = sim.to_json()
             sim.to_json('results.json')
             sim.to_json('summary.json', keys='summary')
