@@ -201,6 +201,11 @@ class BaseSim(ParsObj):
 
             sim.day('2020-04-05') # Returns 35
         '''
+        # Do not process a day if it's not supplied
+        if day is None:
+            return None
+
+        # Convert to list
         if sc.isstring(day) or sc.isnumber(day) or isinstance(day, (dt.date, dt.datetime)):
             day = sc.promotetolist(day) # Ensure it's iterable
         day.extend(args)
@@ -254,7 +259,6 @@ class BaseSim(ParsObj):
         **Example**::
 
             sim.date(35) # Returns '2020-04-05'
-
         '''
 
         if sc.isnumber(ind): # If it's a number, convert it to a list
