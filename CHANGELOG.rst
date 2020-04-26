@@ -12,13 +12,13 @@ Version 0.29.1 (2020-04-25)
 - Updated parameter values (mostly durations) based on revised literature review
 
 
-Version 0.28.7 (2020-04-24)
+Version 0.28.8 (2020-04-24)
 ----------------------------
 - Includes data on household sizes from various countries
 - Includes age data on US states
 - Changes to interventions to include end as well as start days, and plotting as a default option
 - Adds version checks to loading and introduces a new function ``cv.load()`` to replace e.g. ``cv.Sim.load()``
-- Major layout and functionality changes to the webapp, including country selection
+- Major layout and functionality changes to the webapp, including country selection (disabled by default)
 - Provided access to Plotly graphs via the backend
 - Moved relative probabilities (e.g. ``rel_death_prob``) from population creation to loop so can be modified dynamically
 - Introduced ``cv.clip_edges()`` intervention, similar to ``cv.change_beta()`` but removes contacts entirely
