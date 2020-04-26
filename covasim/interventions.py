@@ -9,19 +9,52 @@ from . import base as cvb
 
 
 
+import inspect
+from functools import wraps
+
+
+def autocall(callback):
+    def decorator(f):
+        sig = inspect.signature(f)
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            bound_arguments = sig.bind(*args, **kwargs)
+            bound_arguments.apply_defaults()
+            callback(bound_arguments)
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def print_callback(val):
+    print(f"Value is {val}")
+
+
+
 #%% Generic intervention classes
 
 __all__ = ['Intervention', 'dynamic_pars', 'sequence']
 
 
-class Intervention:
+class Intervention(sc.prettyobj):
     '''
     Abstract class for interventions
 
     '''
     def __init__(self):
         self.days = []
-        self.results = {}  #: All interventions are guaranteed to have results, so `Sim` can safely iterate over this dict
+        self.args = [] # List of arguments
+
+
+    def store_args(self):
+        ''' Store the arguments for later use '''
+        # sig = inspect.signature(self.__init__)
+        # bound_arguments = sig.bind()
+        # bound_arguments.apply_defaults()
+        # args = bound_arguments
+        # args = inspect.getargspec(self.__init__).args # For jsonification
+        # self.argdict = {arg:self.__dict__[arg] for arg in args[1:]}
+        return
 
 
     def apply(self, sim):
@@ -189,15 +222,18 @@ class change_beta(Intervention):
         interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
     '''
 
+    @autocall(print_callback)
     def __init__(self, days, changes, layers=None):
         super().__init__()
+
         self.days = sc.promotetoarray(days)
         self.changes = sc.promotetoarray(changes)
-        self.layer_keys = sc.promotetolist(layers, keepnone=True)
+        self.layers = sc.promotetolist(layers, keepnone=True)
         if len(self.days) != len(self.changes):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
         self.orig_betas = None
+        self.store_args()
         return
 
 
@@ -206,7 +242,7 @@ class change_beta(Intervention):
         # If this is the first time it's being run, store beta
         if self.orig_betas is None:
             self.orig_betas = {}
-            for lkey in self.layer_keys:
+            for lkey in self.layers:
                 if lkey is None:
                     self.orig_betas['overall'] = sim['beta']
                 else:
@@ -251,6 +287,7 @@ class clip_edges(Intervention):
 
     def __init__(self, start_day, change=None, end_day=None, verbose=False):
         super().__init__()
+        self.args = inspect.getargspec(self.__init__).args # For jsonification
         self.start_day = start_day
         self.end_day = end_day
         self.days = [start_day, end_day]
@@ -340,7 +377,7 @@ class test_num(Intervention):
 
     def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0, loss_prob=0, start_day=0, end_day=None):
         super().__init__()
-
+        self.args = inspect.getargspec(self.__init__).args # For jsonification
         self.daily_tests = daily_tests #: Should be a list of length matching time
         self.sympt_test = sympt_test
         self.quar_test = quar_test
@@ -420,6 +457,7 @@ class test_prob(Intervention):
     '''
     def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None):
         super().__init__()
+        self.args = inspect.getargspec(self.__init__).args # For jsonification
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
         self.symp_quar_prob   = symp_quar_prob  if  symp_quar_prob is not None else  symp_prob
@@ -469,6 +507,7 @@ class contact_tracing(Intervention):
     '''
     def __init__(self, trace_probs, trace_time, start_day=0, end_day=None, contact_reduction=None):
         super().__init__()
+        self.args = inspect.getargspec(self.__init__).args # For jsonification
         self.trace_probs = trace_probs
         self.trace_time = trace_time
         self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
