@@ -6,7 +6,7 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
-Version 0.29.4 (2020-04-25)
+Version 0.29.5 (2020-04-26)
 ----------------------------
 - Fixed bug whereby layer betas were applied twice, and updated default values
 - Includes individual-level viral load (to use previous results, set ``pars['beta_dist'] = {'dist':'lognormal','par1':1.0, 'par2':0.0}`` and ``pars['viral_dist']  = {'frac_time':0.0, 'load_ratio':1, 'high_cap':0}``)
@@ -14,6 +14,7 @@ Version 0.29.4 (2020-04-25)
 - Added ``sim.export_pars()`` and ``sim.export_results()`` methods
 - Interventions can now be converted to/from JSON -- automatically when loading a parameters dictionary into a sim, or manually using ``cv.InterventionDict()``
 - Improvements to transmission trees: can now make a detailed tree with ``sim.people.make_detailed_transtree()`` (replacing ``sim.people.transtree.make_detailed(sim.people)``), and can plot via ``sim.people.transtree.plot()``
+- Improved date handling, so most functions are now agnostic as to whether a date string, datetime object, or number of days is provided; new functions: ``sim.day()`` converts dates to days, ``sim.date()`` (formerly ``sim.inds2dates()``) converts days to dates, and ``sim.daydiff()`` computes the number of days between two dates
 
 
 Version 0.28.8 (2020-04-24)

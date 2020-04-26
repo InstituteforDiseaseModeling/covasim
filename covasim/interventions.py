@@ -49,6 +49,7 @@ class Intervention:
     '''
     def __init__(self):
         self.days = []
+        return
 
 
     def __repr__(self):
@@ -73,6 +74,14 @@ class Intervention:
         for key,value in values.items():
             if key not in ['self', '__class__']: # Skip these two
                 self.input_args[key] = value
+        return
+
+
+    def initialize(self, sim):
+        '''
+        Initialize intervention -- this is used to make modifications to the intervention
+        that can't be done until after the sim is created.
+        '''
         return
 
 
@@ -215,6 +224,12 @@ class sequence(Intervention):
         return
 
 
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.days = [sim.day(day) for day in self.days]
+        return
+
+
     def apply(self, sim):
         idx = np.argmax(self._cum_days > sim.t)  # Index of the intervention to apply on this day
         self.interventions[idx].apply(sim)
@@ -245,28 +260,35 @@ class change_beta(Intervention):
 
     def __init__(self, days, changes, layers=None):
         super().__init__()
-
-        self.days = sc.promotetoarray(days)
+        self.days = days
         self.changes = sc.promotetoarray(changes)
         self.layers = sc.promotetolist(layers, keepnone=True)
-        if len(self.days) != len(self.changes):
-            errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
-            raise ValueError(errormsg)
         self.orig_betas = None
         self._store_args()
         return
 
 
-    def apply(self, sim):
+    def initialize(self, sim):
+        ''' Fix days and store beta '''
+        if sc.isstring(self.days) or not sc.isiterable(self.days):
+            self.days = sc.promotetolist(self.days)
+        if isinstance(self.days, list):
+            for d,day in enumerate(self.days):
+                self.days[d] = sim.day(day) # Ensure it's an integer and not a string or something
+        self.days = sc.promotetoarray(self.days)
+        if len(self.days) != len(self.changes):
+            errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
+            raise ValueError(errormsg)
+        self.orig_betas = {}
+        for lkey in self.layers:
+            if lkey is None:
+                self.orig_betas['overall'] = sim['beta']
+            else:
+                self.orig_betas[lkey] = sim['beta_layer'][lkey]
+        return
 
-        # If this is the first time it's being run, store beta
-        if self.orig_betas is None:
-            self.orig_betas = {}
-            for lkey in self.layers:
-                if lkey is None:
-                    self.orig_betas['overall'] = sim['beta']
-                else:
-                    self.orig_betas[lkey] = sim['beta_layer'][lkey]
+
+    def apply(self, sim):
 
         # If this day is found in the list, apply the intervention
         inds = sc.findinds(self.days, sim.t)
@@ -309,12 +331,19 @@ class clip_edges(Intervention):
         super().__init__()
         self.start_day = start_day
         self.end_day = end_day
-        self.days = [start_day, end_day]
         self.change = change
         self.verbose = verbose
         self.layer_keys = None
         self.contacts = None
         self._store_args()
+        return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.start_day = sim.day(self.start_day)
+        self.end_day = sim.day(self.end_day)
+        self.days = [self.start_day, self.end_day]
         return
 
 
@@ -405,8 +434,15 @@ class test_num(Intervention):
         self.loss_prob = loss_prob
         self.start_day = start_day
         self.end_day = end_day
-        self.days = [start_day, end_day]
         self._store_args()
+        return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.start_day = sim.day(self.start_day)
+        self.end_day = sim.day(self.end_day)
+        self.days = [self.start_day, self.end_day]
         return
 
 
@@ -485,8 +521,15 @@ class test_prob(Intervention):
         self.test_delay       = test_delay
         self.start_day        = start_day
         self.end_day          = end_day
-        self.days             = [start_day, end_day]
         self._store_args()
+        return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.start_day = sim.day(self.start_day)
+        self.end_day = sim.day(self.end_day)
+        self.days = [self.start_day, self.end_day]
         return
 
 
@@ -530,9 +573,17 @@ class contact_tracing(Intervention):
         self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
         self.start_day = start_day
         self.end_day = end_day
-        self.days = [start_day, end_day]
         self._store_args()
         return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.start_day = sim.day(self.start_day)
+        self.end_day = sim.day(self.end_day)
+        self.days = [self.start_day, self.end_day]
+        return
+
 
     def apply(self, sim):
         t = sim.t
