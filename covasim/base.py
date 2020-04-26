@@ -214,7 +214,7 @@ class BaseSim(ParsObj):
         return keys
 
 
-    def _make_resdict(self, for_json=True):
+    def export_results(self, for_json=True):
         '''
         Convert results to dict
 
@@ -244,7 +244,7 @@ class BaseSim(ParsObj):
         return resdict
 
 
-    def _make_pardict(self):
+    def export_pars(self):
         '''
         Return parameters for JSON export
 
@@ -270,7 +270,7 @@ class BaseSim(ParsObj):
         return sc.dcp(self)
 
 
-    def to_json(self, filename=None, keys=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
+    def to_json(self, filename=None, keys=None, tostring=False, indent=2, verbose=False, *args, **kwargs):
         '''
         Export results as JSON.
 
@@ -288,7 +288,7 @@ class BaseSim(ParsObj):
             or writes the JSON file to disk
 
         Examples:
-            string = sim.to_json()
+            json = sim.to_json()
             sim.to_json('results.json')
             sim.to_json('summary.json', keys='summary')
         '''
@@ -302,10 +302,10 @@ class BaseSim(ParsObj):
         d = {}
         for key in keys:
             if key == 'results':
-                resdict = self._make_resdict()
+                resdict = self.export_results(for_json=True)
                 d['results'] = resdict
             elif key in ['pars', 'parameters']:
-                pardict = self._make_pardict()
+                pardict = self.export_pars()
                 d['parameters'] = pardict
             elif key == 'summary':
                 d['summary'] = dict(sc.dcp(self.summary))
@@ -335,7 +335,7 @@ class BaseSim(ParsObj):
             An sc.Spreadsheet with an Excel file, or writes the file to disk
 
         '''
-        resdict = self._make_resdict(for_json=False)
+        resdict = self.export_results(for_json=False)
         result_df = pd.DataFrame.from_dict(resdict)
         result_df.index = self.tvec
         result_df.index.name = 'Day'

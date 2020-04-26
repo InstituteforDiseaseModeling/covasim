@@ -33,7 +33,7 @@ def InterventionDict(which, pars):
     return intervention
 
 
-class Intervention(sc.prettyobj):
+class Intervention:
     '''
     Abstract class for interventions
 
@@ -42,11 +42,8 @@ class Intervention(sc.prettyobj):
         self.days = []
 
 
-    def __str__(self):
-        ''' Return a JSON-friendly output '''
-        which = self.__class__.__name__
-        pars = sc.jsonify(self.input_args)
-        output = f"cv.InterventionDict('{which}', pars={pars})"
+    def __repr__(self):
+        output = ''
         return output
 
 
@@ -112,9 +109,10 @@ class Intervention(sc.prettyobj):
         Returns:
             JSON-serializable representation (typically a dict, but could be anything else)
         '''
-        d = sc.dcp(self.__dict__)
-        d['InterventionType'] = self.__class__.__name__
-        return d
+        which = self.__class__.__name__
+        pars = sc.jsonify(self.input_args)
+        output = dict(which=which, pars=pars)
+        return output
 
 
 class dynamic_pars(Intervention):
