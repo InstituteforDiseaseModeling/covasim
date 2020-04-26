@@ -10,30 +10,27 @@ from . import base as cvb
 
 
 import inspect
-from functools import wraps
 
-
-def autocall(callback):
-    def decorator(f):
-        sig = inspect.signature(f)
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            bound_arguments = sig.bind(*args, **kwargs)
-            bound_arguments.apply_defaults()
-            callback(bound_arguments)
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
-def print_callback(val):
-    print(f"Value is {val}")
 
 
 
 #%% Generic intervention classes
 
-__all__ = ['Intervention', 'dynamic_pars', 'sequence']
+__all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence']
+
+
+def InterventionDict(which, pars):
+    ''' Generate an intervention from a dictionary '''
+    mapping = dict(
+        change_beta     = change_beta,
+        clip_edges      = clip_edges,
+        test_num        = test_num,
+        test_prob       = test_prob,
+        contact_tracing = contact_tracing,
+        )
+    IntervClass = mapping[which]
+    intervention = IntervClass(**pars)
+    return intervention
 
 
 class Intervention(sc.prettyobj):
@@ -43,17 +40,25 @@ class Intervention(sc.prettyobj):
     '''
     def __init__(self):
         self.days = []
-        self.args = [] # List of arguments
+
+
+    def __str__(self):
+        ''' Return a JSON-friendly output '''
+        which = self.__class__.__name__
+        pars = sc.jsonify(self.input_args)
+        output = f"cv.InterventionDict('{which}', pars={pars})"
+        return output
 
 
     def store_args(self):
         ''' Store the arguments for later use '''
-        # sig = inspect.signature(self.__init__)
-        # bound_arguments = sig.bind()
-        # bound_arguments.apply_defaults()
-        # args = bound_arguments
-        # args = inspect.getargspec(self.__init__).args # For jsonification
-        # self.argdict = {arg:self.__dict__[arg] for arg in args[1:]}
+        f0 = inspect.currentframe()
+        f1 = inspect.getouterframes(f0)
+        _,_,_,values = inspect.getargvalues(f1[1].frame)
+        self.input_args = {}
+        for key,value in values.items():
+            if key not in ['self', '__class__']:
+                self.input_args[key] = value
         return
 
 
@@ -222,7 +227,6 @@ class change_beta(Intervention):
         interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
     '''
 
-    @autocall(print_callback)
     def __init__(self, days, changes, layers=None):
         super().__init__()
 
