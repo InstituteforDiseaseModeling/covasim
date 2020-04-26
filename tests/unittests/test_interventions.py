@@ -130,7 +130,6 @@ class InterventionTests(CovaSimTest):
                                    f"(with {total_infections[my_multiplier]} infections) than {next_multiplier} "
                                    f"(with {total_infections[next_multiplier]} infections)")
 
-    @unittest.skip("Not working in v0.29.0")
     def test_change_beta_layers_clustered(self):
         '''
         Suggested alternative implementation:
