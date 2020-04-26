@@ -496,7 +496,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     new_sim[noisepar] *= noisefactor
 
     if verbose>=1:
-        print(f'Running a simulation using {new_sim["rand_seed"]} seed and {noisefactor} noise')
+        print(f'Running a simulation using {new_sim["rand_seed"]} seed and {noisefactor} noise factor')
 
     # Handle additional arguments
     for key,val in sim_args.items():

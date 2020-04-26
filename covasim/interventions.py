@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pylab as pl
 import sciris as sc
+import datetime as dt
 import covasim as cv
 from . import utils as cvu
 from . import misc as cvm
@@ -364,7 +365,7 @@ class test_num(Intervention):
 
         # Process daily tests -- has to be here rather than init so have access to the sim object
         if isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
-            start_date = sim['start_day']
+            start_date = sim['start_day'] + dt.timedelta(days=self.start_day)
             end_date = self.daily_tests.index[-1]
             dateindex = pd.date_range(start_date, end_date)
             self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
