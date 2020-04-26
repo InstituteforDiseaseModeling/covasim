@@ -12,7 +12,7 @@ Version 0.29.4 (2020-04-25)
 - Updated parameter values (mostly durations) based on revised literature review
 - Added ``sim.export_pars()`` and ``sim.export_results()`` methods
 - Interventions can now be converted to/from JSON -- automatically when loading a parameters dictionary into a sim, or manually using ``cv.InterventionDict()``
-- Improved date handling, so most functions are now agnostic as to whether a date string, datetime object, or number of days is provided
+- Improved date handling, so most functions are now agnostic as to whether a date string, datetime object, or number of days is provided; new functions: ``sim.day()`` converts dates to days, ``sim.date()`` converts days to dates, and ``sim.daydiff()`` computes the number of days between two dates
 
 
 Version 0.28.8 (2020-04-24)
