@@ -40,7 +40,7 @@ for i in range(runs):
     # Configure the sim -- can also just use a normal dictionary
     pars = base_pars
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_dist'] = {'frac_time':1, 'load_ratio':1}
+    pars['viral_dist'] = {'frac_time':1, 'load_ratio':1, 'high_cap':100}
     print('Making sim ', i, '...')
     sim1 = cv.Sim(pars=pars)
     sim1.run()
@@ -51,7 +51,7 @@ for i in range(runs):
     time_temp = np.int64(np.array(sim1.people.date_exposed)[targets]) - np.int64(np.array(sim1.people.date_infectious[0]))
     dist_const = np.append(dist_const,time_temp)
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_dist'] = {'frac_time':.5, 'load_ratio':4}
+    pars['viral_dist'] = {'frac_time':.5, 'load_ratio':4, 'high_cap':4}
     sim2 = cv.Sim(pars=pars)
     sim2.run()
     linelist = sim2.people.transtree.targets[0]
@@ -61,7 +61,7 @@ for i in range(runs):
     time_temp = np.int64(np.array(sim2.people.date_exposed)[targets]) - np.int64(np.array(sim2.people.date_infectious[0]))
     dist_twolevel = np.append(dist_twolevel,time_temp)
     pars['rand_seed'] = i*np.random.rand()
-    pars['viral_dist'] = {'frac_time':.125, 'load_ratio':10}
+    pars['viral_dist'] = {'frac_time':.125, 'load_ratio':10, 'high_cap':1}
     sim3 = cv.Sim(pars=pars)
     sim3.run()
     linelist = sim3.people.transtree.targets[0]
