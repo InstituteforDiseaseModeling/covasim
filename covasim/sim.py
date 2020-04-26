@@ -120,6 +120,7 @@ class Sim(cvb.BaseSim):
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
         self.init_people(save_pop=save_pop, load_pop=load_pop, popfile=popfile, **kwargs) # Create all the people (slow)
+        self.init_interventions()
         self.initialized = True
         return
 
@@ -288,6 +289,14 @@ class Sim(cvb.BaseSim):
         for ind in inds:
             self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='seed_infection')
 
+        return
+
+
+    def init_interventions(self):
+        ''' Initialize the interventions '''
+        # Initialize interventions
+        for intervention in self['interventions']:
+            intervention.initialize(self)
         return
 
 
