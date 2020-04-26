@@ -13,7 +13,7 @@ do_plot = 1
 do_save = 0
 do_show = 1
 verbose = 1
-interv  = 0
+interv  = 1
 
 # Set filename if saving
 version  = 'v0'

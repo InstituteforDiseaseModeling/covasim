@@ -975,6 +975,8 @@ class TransTree(sc.prettyobj):
 
                     # Only need to check against the date, since will return False if condition is false (NaN)
                     if source is not None: # This information is only available for people infected by other people, not e.g. importations
+                        ddict['s_age']     = people.age[source]
+                        ddict['t_age']     = people.age[target]
                         ddict['s_symp']    = people.date_symptomatic[source] <= date
                         ddict['s_diag']    = people.date_diagnosed[source]   <= date
                         ddict['s_quar']    = people.date_quarantined[source] <= date
