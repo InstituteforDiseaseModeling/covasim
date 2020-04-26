@@ -993,10 +993,14 @@ class TransTree(sc.prettyobj):
 
 
     def plot(self):
+        ''' Plot the transmission tree '''
+        if self.detailed is None:
+            errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
+            raise ValueError(errormsg)
+
         detailed = filter(None, self.detailed)
 
         df = pd.DataFrame(detailed).rename(columns={'date': 'Day'})
-
         df = df.loc[df['layer'] != 'seed_infection']
 
         df['Stage'] = 'Symptomatic'
