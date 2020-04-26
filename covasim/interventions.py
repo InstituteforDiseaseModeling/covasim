@@ -1,16 +1,11 @@
+import inspect
 import numpy as np
 import pandas as pd
 import pylab as pl
 import sciris as sc
-import covasim as cv
 from . import utils as cvu
 from . import misc as cvm
 from . import base as cvb
-
-
-
-import inspect
-
 
 
 
@@ -20,7 +15,14 @@ __all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence']
 
 
 def InterventionDict(which, pars):
-    ''' Generate an intervention from a dictionary '''
+    '''
+    Generate an intervention from a dictionary. Although a function, it acts
+    like a class, since it returns a class instance.
+
+    **Example**::
+
+        interv = cv.InterventionDict(which='change_beta', pars={'days': 30, 'changes': 0.5, 'layers': None})
+    '''
     mapping = dict(
         change_beta     = change_beta,
         clip_edges      = clip_edges,
@@ -36,25 +38,32 @@ def InterventionDict(which, pars):
 class Intervention:
     '''
     Abstract class for interventions
-
     '''
     def __init__(self):
         self.days = []
 
 
     def __repr__(self):
-        output = ''
+        ''' Return a JSON-friendly output if possible, else revert to pretty repr '''
+        try:
+            json = self.to_json()
+            which = json['which']
+            pars = json['pars']
+            output = f"cv.InterventionDict('{which}', pars={pars})"
+        except:
+            output = sc.prepr(self)
         return output
 
 
     def store_args(self):
-        ''' Store the arguments for later use '''
-        f0 = inspect.currentframe()
-        f1 = inspect.getouterframes(f0)
-        _,_,_,values = inspect.getargvalues(f1[1].frame)
+        ''' Store the user-supplied arguments for later use in to_json '''
+        f0 = inspect.currentframe() # This "frame", i.e. Intervention.__init__()
+        f1 = inspect.getouterframes(f0) # The list of outer frames
+        parent = f1[1].frame # The parent frame, e.g. change_beta.__init__()
+        _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
         self.input_args = {}
         for key,value in values.items():
-            if key not in ['self', '__class__']:
+            if key not in ['self', '__class__']: # Skip these two
                 self.input_args[key] = value
         return
 
@@ -68,7 +77,6 @@ class Intervention:
         by derived classes
 
         Args:
-            self:
             sim: The Sim instance
 
         Returns:
@@ -197,7 +205,7 @@ class sequence(Intervention):
         return
 
 
-    def apply(self, sim: cv.Sim):
+    def apply(self, sim):
         idx = np.argmax(self._cum_days > sim.t)  # Index of the intervention to apply on this day
         self.interventions[idx].apply(sim)
         return
@@ -289,7 +297,6 @@ class clip_edges(Intervention):
 
     def __init__(self, start_day, change=None, end_day=None, verbose=False):
         super().__init__()
-        self.args = inspect.getargspec(self.__init__).args # For jsonification
         self.start_day = start_day
         self.end_day = end_day
         self.days = [start_day, end_day]
@@ -297,6 +304,7 @@ class clip_edges(Intervention):
         self.verbose = verbose
         self.layer_keys = None
         self.contacts = None
+        self.store_args()
         return
 
 
@@ -389,7 +397,7 @@ class test_num(Intervention):
         self.start_day = start_day
         self.end_day = end_day
         self.days = [start_day, end_day]
-
+        self.store_args()
         return
 
 
@@ -470,7 +478,7 @@ class test_prob(Intervention):
         self.start_day        = start_day
         self.end_day          = end_day
         self.days             = [start_day, end_day]
-
+        self.store_args()
         return
 
 
@@ -516,6 +524,7 @@ class contact_tracing(Intervention):
         self.start_day = start_day
         self.end_day = end_day
         self.days = [start_day, end_day]
+        self.store_args()
         return
 
     def apply(self, sim):
