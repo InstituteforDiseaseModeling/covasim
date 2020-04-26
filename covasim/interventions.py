@@ -24,13 +24,20 @@ def InterventionDict(which, pars):
         interv = cv.InterventionDict(which='change_beta', pars={'days': 30, 'changes': 0.5, 'layers': None})
     '''
     mapping = dict(
+        dynamic_pars    = dynamic_pars,
+        sequence        = sequence,
         change_beta     = change_beta,
         clip_edges      = clip_edges,
         test_num        = test_num,
         test_prob       = test_prob,
         contact_tracing = contact_tracing,
         )
-    IntervClass = mapping[which]
+    try:
+        IntervClass = mapping[which]
+    except:
+        available = ', '.join(mapping.keys())
+        errormsg = f'Only interventions "{available}" are available in dictionary representation'
+        raise NotImplementedError(errormsg)
     intervention = IntervClass(**pars)
     return intervention
 
@@ -55,7 +62,7 @@ class Intervention:
         return output
 
 
-    def store_args(self):
+    def _store_args(self):
         ''' Store the user-supplied arguments for later use in to_json '''
         f0 = inspect.currentframe() # This "frame", i.e. Intervention.__init__()
         f1 = inspect.getouterframes(f0) # The list of outer frames
@@ -157,6 +164,7 @@ class dynamic_pars(Intervention):
             if len_days != len_vals:
                 raise ValueError(f'Length of days ({len_days}) does not match length of values ({len_vals}) for parameter {parkey}')
         self.pars = pars
+        self._store_args()
         return
 
 
@@ -202,6 +210,7 @@ class sequence(Intervention):
         self.days = days
         self.interventions = interventions
         self._cum_days = np.cumsum(days)
+        self._store_args()
         return
 
 
@@ -243,7 +252,7 @@ class change_beta(Intervention):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
         self.orig_betas = None
-        self.store_args()
+        self._store_args()
         return
 
 
@@ -304,7 +313,7 @@ class clip_edges(Intervention):
         self.verbose = verbose
         self.layer_keys = None
         self.contacts = None
-        self.store_args()
+        self._store_args()
         return
 
 
@@ -387,7 +396,6 @@ class test_num(Intervention):
 
     def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0, loss_prob=0, start_day=0, end_day=None):
         super().__init__()
-        self.args = inspect.getargspec(self.__init__).args # For jsonification
         self.daily_tests = daily_tests #: Should be a list of length matching time
         self.sympt_test = sympt_test
         self.quar_test = quar_test
@@ -397,7 +405,7 @@ class test_num(Intervention):
         self.start_day = start_day
         self.end_day = end_day
         self.days = [start_day, end_day]
-        self.store_args()
+        self._store_args()
         return
 
 
@@ -467,7 +475,6 @@ class test_prob(Intervention):
     '''
     def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None):
         super().__init__()
-        self.args = inspect.getargspec(self.__init__).args # For jsonification
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
         self.symp_quar_prob   = symp_quar_prob  if  symp_quar_prob is not None else  symp_prob
@@ -478,7 +485,7 @@ class test_prob(Intervention):
         self.start_day        = start_day
         self.end_day          = end_day
         self.days             = [start_day, end_day]
-        self.store_args()
+        self._store_args()
         return
 
 
@@ -517,14 +524,13 @@ class contact_tracing(Intervention):
     '''
     def __init__(self, trace_probs, trace_time, start_day=0, end_day=None, contact_reduction=None):
         super().__init__()
-        self.args = inspect.getargspec(self.__init__).args # For jsonification
         self.trace_probs = trace_probs
         self.trace_time = trace_time
         self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
         self.start_day = start_day
         self.end_day = end_day
         self.days = [start_day, end_day]
-        self.store_args()
+        self._store_args()
         return
 
     def apply(self, sim):
