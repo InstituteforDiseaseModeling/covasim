@@ -74,7 +74,7 @@ class People(cvb.BasePeople):
         self.severe_prob[:] = prognoses['severe_probs'][inds]
         self.crit_prob[:]   = prognoses['crit_probs'][inds]
         self.death_prob[:]  = prognoses['death_probs'][inds]
-        self.rel_sus[:]     = 1.0 # By default: is susceptible
+        self.rel_sus[:]     = prognoses['sus_ORs'][inds] # Default susceptibilities
         self.rel_trans[:]   = 0.0 # By default: cannot transmit
 
         return
