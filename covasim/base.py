@@ -227,23 +227,10 @@ class BaseSim(ParsObj):
                     raise ValueError(errormsg)
 
         # Return an integer rather than a list if only one provided
-        if len(day)==1:
+        if len(days)==1:
             days = days[0]
 
         return days
-
-
-    def daydiff(self, day1, day2):
-        '''
-        Convenience function to find the difference between two days.
-
-        **Example**::
-
-            diff = sim.daydiff('2020-03-20', '2020-04-05') # Returns 16
-        '''
-        day1 = self.day(day1)
-        day2 = self.day(day2)
-        return day2 - day1
 
 
     def date(self, ind, *args, dateformat=None):
