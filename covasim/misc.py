@@ -9,14 +9,7 @@ import scipy.stats as sps # Used by poisson_test()
 from . import version as cvver
 
 
-__all__ = ['KeyNotFoundError', 'load', 'save', 'check_version', 'git_info', 'fixaxis', 'progressbar', 'get_doubling_time', 'poisson_test']
-
-
-class KeyNotFoundError(KeyError):
-    ''' A tiny class to fix repr for KeyErrors '''
-
-    def __str__(self):
-        return Exception.__str__(self)
+__all__ = ['load', 'save', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
 
 
 def load(*args, **kwargs):
@@ -117,37 +110,6 @@ def fixaxis(sim, useSI=True, boxoff=False):
     pl.xlim((0, sim['n_days']+delta))
     if boxoff:
         sc.boxoff() # Turn off top and right lines
-    return
-
-
-def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newline=False):
-    '''
-    Call in a loop to create terminal progress bar.
-
-    Args:
-        i (int): current iteration
-        maxiters (int): maximum number of iterations
-        label (str): initial label to print
-        length (int): length of progress bar
-        empty (str): character for empty steps
-        full (str): character for empty steps
-
-    **Example**::
-
-        import pylab as pl
-        for i in range(100):
-            progressbar(i+1, 100)
-            pl.pause(0.05)
-
-    Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
-    '''
-    ending = None if newline else '\r'
-    pct = i/maxiters*100
-    percent = f'{pct:0.0f}%'
-    filled = int(length*i//maxiters)
-    bar = full*filled + empty*(length-filled)
-    print(f'\r{label} {bar} {percent}', end=ending)
-    if i == maxiters: print()
     return
 
 
