@@ -34,6 +34,7 @@ const PlotlyChart = {
 const interventionTableConfig = {
     social_distance: {
         formTitle: "Distancing",
+        toolTip: "Physical distancing and social distancing interventions",
         fields: [
             {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
             {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
@@ -48,6 +49,7 @@ const interventionTableConfig = {
     },
     school_closures: {
         formTitle: "Schools",
+        toolTip: "School and university closures",
         fields: [
             {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
             {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
@@ -62,6 +64,7 @@ const interventionTableConfig = {
     },
     symptomatic_testing: {
         formTitle: "Testing",
+        toolTip: "Testing rates for people with symptoms",
         fields: [
             {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
             {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
@@ -76,6 +79,7 @@ const interventionTableConfig = {
     },
     contact_tracing: {
         formTitle: "Tracing",
+        toolTip: "Contact tracing of diagnosed cases (requires testing intervention)",
         fields: [
             {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
             {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
