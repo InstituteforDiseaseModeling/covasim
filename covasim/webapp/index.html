@@ -151,7 +151,6 @@
             <b-button block v-b-toggle.parameters-intervention variant="link">Interventions <span class="ti-angle-up"></span> <span class="ti-angle-down"></span></b-button>
           </b-card-header>
           <b-collapse id="parameters-intervention" visible role="tabpanel">
-            <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
             <b-card no-body class="border-0 rounded-0">
               <b-tabs fill card>
                 <template v-for="(intervention, name, index) in interventionTableConfig">
@@ -206,6 +205,7 @@
                 </template>
               </b-tabs>
             </b-card>
+            <plotly-chart v-if="intervention_figs && intervention_figs.id" :graph="intervention_figs" :key="intervention_figs.id" ></plotly-chart>
           </b-collapse>
         </b-card>
 
