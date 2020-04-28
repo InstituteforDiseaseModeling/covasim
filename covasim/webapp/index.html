@@ -164,10 +164,15 @@
                         <div class="form-group">
                           <div class="input-group mb-3">
                             <template v-for="field in intervention.fields">
-                              <input :max="sim_length.max" :min="0" :placeholder="field.label" :name="field.key" :aria-label="field.label" class="form-control" v-if="field.type !== 'select'" :type="field.type">
+                              <input :max="field.max || sim_length.max" :min="field.min || 0" :placeholder="field.label" :name="field.key"
+                                     :aria-label="field.label" class="form-control" v-if="field.type !== 'select'"
+                                     :type="field.type" v-b-tooltip.hover :title="field.tooltip">
                               <select class="form-control" :name="field.key" v-else>
                                 <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
                               </select>
+                              <div class="input-group-append" v-if="field.key === 'level'">
+                                <span class="input-group-text">%</span>
+                              </div>
                             </template>
                             <div class="input-group-append">
                               <button class="btn btn-outline-secondary" type="submit">Add intervention</button>
@@ -186,7 +191,9 @@
                           </thead>
                           <tbody>
                           <tr v-for="(par, index) in int_pars[name]">
-                            <th v-for="field in intervention.fields" scope="row">{{par[field.key]}}</th>
+                            <td v-for="field in intervention.fields" scope="row">
+                              {{par[field.key]}}<span v-if="field.key=== 'level'">%</span>
+                            </td>
                             <td>
                               <button @click="deleteIntervention(name, index)" class="btn btn-outline-secondary" type="button">Delete</button>
                             </td>

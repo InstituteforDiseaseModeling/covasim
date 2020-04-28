@@ -196,7 +196,7 @@ def get_gantt(int_pars=None, intervention_config=None):
     for key,scenario in int_pars.items():
         for timeline in scenario:
             task = intervention_config[key]['formTitle']
-            level = task + ' ' + str(timeline.get('level', ''))
+            level = task + ' ' + str(timeline.get('level', '')) + '%'
             df.append(dict(Task=task, Start=timeline['start'], Finish=timeline['end'], Level= level))
     if len(df) > 0:
         fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
@@ -242,12 +242,7 @@ def parse_interventions(int_pars):
             end   = iconfig['end']
             if ikey == 'social_distance':
                 level = iconfig['level']
-                mapping = {
-                    'mild': 0.8,
-                    'moderate': 0.5,
-                    'aggressive': 0.2,
-                    }
-                change = mapping[level]
+                change = float(level)/100
                 interv = cv.change_beta(days=[start, end], changes=[change, 1.0])
             elif ikey == 'school_closures':
                 change = 0.0

@@ -34,9 +34,11 @@ const PlotlyChart = {
 const interventionTableConfig = {
     social_distance: {
         formTitle: "Physical distancing",
-        fields: [{key: 'start', type: 'number', label: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day'},
-            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive (80%)', value: 'aggressive'}, {label: 'Moderate (50%)', value: 'moderate'}, {label: 'Mild (20%)', value: 'mild'}]}],
+        fields: [
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100}
+        ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -46,7 +48,10 @@ const interventionTableConfig = {
     },
     school_closures: {
         formTitle: "School closures",
-        fields: [{key: 'start', type: 'number', label: 'Start day'}, {key: 'end', type: 'number', label: 'End day'}],
+        fields: [
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'}
+        ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -55,7 +60,11 @@ const interventionTableConfig = {
     },
     symptomatic_testing: {
         formTitle: "Symptomatic testing",
-        fields: [{key: 'start', type: 'number', label: 'Start day'}, {key: 'end', type: 'number', label: 'End day'}, {label: 'Coverage', key: 'level', type: 'select', options: [{label: '10% per day', value: '10'}, {label: '30% per day', value: '30'},]}],
+        fields: [
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
+            {key: 'level', type: 'number', label: 'Coverage', tooltip: 'Test coverage', min: 0, max: 100}
+        ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
@@ -65,7 +74,10 @@ const interventionTableConfig = {
     },
     contact_tracing: {
         formTitle: "Contact tracing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End day'}],
+        fields: [
+            {key: 'start', type: 'number', label: 'Start Day', tooltip: 'Start day'},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'}
+        ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
