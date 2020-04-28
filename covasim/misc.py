@@ -9,14 +9,7 @@ import scipy.stats as sps # Used by poisson_test()
 from . import version as cvver
 
 
-__all__ = ['KeyNotFoundError', 'load', 'save', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
-
-
-class KeyNotFoundError(KeyError):
-    ''' A tiny class to fix repr for KeyErrors '''
-
-    def __str__(self):
-        return Exception.__str__(self)
+__all__ = ['load', 'save', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
 
 
 def load(*args, **kwargs):
