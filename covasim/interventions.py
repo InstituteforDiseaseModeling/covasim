@@ -5,7 +5,6 @@ import pylab as pl
 import sciris as sc
 import datetime as dt
 from . import utils as cvu
-from . import misc as cvm
 from . import base as cvb
 
 
@@ -47,7 +46,10 @@ class Intervention:
     '''
     Abstract class for interventions
     '''
-    def __init__(self):
+    def __init__(self, do_plot=None):
+        if do_plot is None:
+            do_plot = True
+        self.do_plot = do_plot
         self.days = []
         return
 
@@ -102,11 +104,12 @@ class Intervention:
         raise NotImplementedError
 
 
-    def plot(self, sim, ax):
+    def plot(self, sim, ax=None):
         '''
         Call function during plotting
 
-        This can be used to do things like add vertical lines on days when interventions take place
+        This can be used to do things like add vertical lines on days when
+        interventions take place. Can be disabled by setting self.do_plot=False.
 
         Args:
             sim: the Sim instance
@@ -115,9 +118,12 @@ class Intervention:
         Returns:
             None
         '''
-        ylims = ax.get_ylim()
-        for day in self.days:
-            pl.plot([day]*2, ylims, '--', c=[0,0,0])
+        if self.do_plot or self.do_plot is None:
+            if ax is None:
+                ax = pl.gca()
+            ylims = ax.get_ylim()
+            for day in self.days:
+                pl.plot([day]*2, ylims, '--', c=[0,0,0])
         return
 
 
@@ -152,6 +158,7 @@ class dynamic_pars(Intervention):
 
     Args:
         pars (dict): described above
+        do_plot (bool): whether or not to plot the intervention
 
     **Examples**::
 
@@ -159,8 +166,8 @@ class dynamic_pars(Intervention):
         interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}}) # On day 14, change beta to 0.005, and on day 28 change it back to 0.015
     '''
 
-    def __init__(self, pars):
-        super().__init__()
+    def __init__(self, pars, do_plot=None):
+        super().__init__(do_plot=do_plot)
         subkeys = ['days', 'vals']
         for parkey in pars.keys():
             for subkey in subkeys:
@@ -204,7 +211,7 @@ class sequence(Intervention):
     Args:
         days (list): the days on which to apply each intervention
         interventions (list): the interventions to apply on those days
-        WARNING: Will take first intervation after sum(days) days has ellapsed!
+        do_plot (bool): whether or not to plot the intervention
 
     **Example**::
 
@@ -214,8 +221,8 @@ class sequence(Intervention):
                 ])
     '''
 
-    def __init__(self, days, interventions):
-        super().__init__()
+    def __init__(self, days, interventions, do_plot=None):
+        super().__init__(do_plot=do_plot)
         assert len(days) == len(interventions)
         self.days = days
         self.interventions = interventions
@@ -250,6 +257,7 @@ class change_beta(Intervention):
         days (int or array): the day or array of days to apply the interventions
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
         layers (str or list): the layers in which to change beta
+        do_plot (bool): whether or not to plot the intervention
 
 
     **Examples**::
@@ -258,8 +266,8 @@ class change_beta(Intervention):
         interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
     '''
 
-    def __init__(self, days, changes, layers=None):
-        super().__init__()
+    def __init__(self, days, changes, layers=None, do_plot=None):
+        super().__init__(do_plot=do_plot)
         self.days = days
         self.changes = sc.promotetoarray(changes)
         self.layers = sc.promotetolist(layers, keepnone=True)
@@ -320,6 +328,7 @@ class clip_edges(Intervention):
         start_day (int): the day to isolate contacts
         end_day (int): the day to end isolating contacts
         change (float or dict): the proportion of contacts to retain, a la change_beta (1 = no change, 0 = no transmission)
+        do_plot (bool): whether or not to plot the intervention
 
     **Examples**::
 
@@ -327,14 +336,14 @@ class clip_edges(Intervention):
         interv = cv.clip_edges(start_day=25, end_day=35, change={'s':0.1}) # On day 25, remove 90% of school contacts, and on day 35, restore them
     '''
 
-    def __init__(self, start_day, change=None, end_day=None, verbose=False):
-        super().__init__()
-        self.start_day = start_day
-        self.end_day = end_day
-        self.change = change
-        self.verbose = verbose
+    def __init__(self, start_day, change=None, end_day=None, verbose=False, do_plot=None):
+        super().__init__(do_plot=do_plot)
+        self.start_day  = start_day
+        self.end_day    = end_day
+        self.change     = change
+        self.verbose    = verbose
         self.layer_keys = None
-        self.contacts = None
+        self.contacts   = None
         self._store_args()
         return
 
@@ -342,8 +351,8 @@ class clip_edges(Intervention):
     def initialize(self, sim):
         ''' Fix the dates '''
         self.start_day = sim.day(self.start_day)
-        self.end_day = sim.day(self.end_day)
-        self.days = [self.start_day, self.end_day]
+        self.end_day   = sim.day(self.end_day)
+        self.days      = [self.start_day, self.end_day]
         return
 
 
@@ -416,6 +425,17 @@ class test_num(Intervention):
     '''
     Test a fixed number of people per day.
 
+    Args:
+        daily_tests (int or arr): number of tests per day
+        symp_test (float): odds ratio of a symptomatic person testing
+        quar_test (float): probability of a person in quarantine testing
+        sensitivity (float): test sensitivity
+        loss_prob (float): probability of the person being lost-to-follow-up
+        test_delay (int): days for test result to be known
+        start_day (int): day the intervention starts
+        end_day (int): day the intervention ends
+        do_plot (bool): whether or not to plot the intervention
+
     **Example**::
 
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
@@ -424,16 +444,16 @@ class test_num(Intervention):
         Intervention
     '''
 
-    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, test_delay=0, loss_prob=0, start_day=0, end_day=None):
-        super().__init__()
+    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, loss_prob=0, test_delay=0, start_day=0, end_day=None, do_plot=None):
+        super().__init__(do_plot=do_plot)
         self.daily_tests = daily_tests #: Should be a list of length matching time
-        self.sympt_test = sympt_test
-        self.quar_test = quar_test
+        self.sympt_test  = sympt_test
+        self.quar_test   = quar_test
         self.sensitivity = sensitivity
-        self.test_delay = test_delay
-        self.loss_prob = loss_prob
-        self.start_day = start_day
-        self.end_day = end_day
+        self.loss_prob   = loss_prob
+        self.test_delay  = test_delay
+        self.start_day   = start_day
+        self.end_day     = end_day
         self._store_args()
         return
 
@@ -441,8 +461,8 @@ class test_num(Intervention):
     def initialize(self, sim):
         ''' Fix the dates '''
         self.start_day = sim.day(self.start_day)
-        self.end_day = sim.day(self.end_day)
-        self.days = [self.start_day, self.end_day]
+        self.end_day   = sim.day(self.end_day)
+        self.days      = [self.start_day, self.end_day]
         return
 
 
@@ -473,9 +493,9 @@ class test_num(Intervention):
             return
 
         test_probs = np.ones(sim.n) # Begin by assigning equal tesitng probability to everyone
-        symp_inds = cvu.true(sim.people.symptomatic)
-        quar_inds = cvu.true(sim.people.quarantined)
-        diag_inds = cvu.true(sim.people.diagnosed)
+        symp_inds  = cvu.true(sim.people.symptomatic)
+        quar_inds  = cvu.true(sim.people.quarantined)
+        diag_inds  = cvu.true(sim.people.diagnosed)
         test_probs[symp_inds] *= self.sympt_test
         test_probs[quar_inds] *= self.quar_test
         test_probs[diag_inds] = 0.
@@ -510,8 +530,8 @@ class test_prob(Intervention):
     Returns:
         Intervention
     '''
-    def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None):
-        super().__init__()
+    def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None, do_plot=None):
+        super().__init__(do_plot=do_plot)
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
         self.symp_quar_prob   = symp_quar_prob  if  symp_quar_prob is not None else  symp_prob
@@ -528,8 +548,8 @@ class test_prob(Intervention):
     def initialize(self, sim):
         ''' Fix the dates '''
         self.start_day = sim.day(self.start_day)
-        self.end_day = sim.day(self.end_day)
-        self.days = [self.start_day, self.end_day]
+        self.end_day   = sim.day(self.end_day)
+        self.days      = [self.start_day, self.end_day]
         return
 
 
@@ -564,15 +584,23 @@ class test_prob(Intervention):
 
 class contact_tracing(Intervention):
     '''
-    Contact tracing of positives
+    Contact tracing of positive people.
+
+    Args:
+        trace_probs (float): probability of tracing, per layer
+        trace_time (int): days required to trace, per layer
+        start_day (int): intervention start day
+        end_day (int): intervention end day
+        contact_red (float): not implemented currently, but could potentially scale contact in this intervention
+        do_plot (bool): whether or not to plot
     '''
-    def __init__(self, trace_probs, trace_time, start_day=0, end_day=None, contact_reduction=None):
-        super().__init__()
+    def __init__(self, trace_probs, trace_time, start_day=0, end_day=None, contact_red=None, do_plot=None):
+        super().__init__(do_plot=do_plot)
         self.trace_probs = trace_probs
-        self.trace_time = trace_time
-        self.contact_reduction = contact_reduction # Not using this yet, but could potentially scale contact in this intervention
-        self.start_day = start_day
-        self.end_day = end_day
+        self.trace_time  = trace_time
+        self.contact_red = contact_red
+        self.start_day   = start_day
+        self.end_day     = end_day
         self._store_args()
         return
 
@@ -580,8 +608,8 @@ class contact_tracing(Intervention):
     def initialize(self, sim):
         ''' Fix the dates '''
         self.start_day = sim.day(self.start_day)
-        self.end_day = sim.day(self.end_day)
-        self.days = [self.start_day, self.end_day]
+        self.end_day   = sim.day(self.end_day)
+        self.days      = [self.start_day, self.end_day]
         return
 
 
