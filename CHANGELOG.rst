@@ -6,6 +6,11 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
+Version 0.29.6 (2020-04-27)
+----------------------------
+- Updated to use Sciris v0.17.0.
+
+
 Version 0.29.5 (2020-04-26)
 ----------------------------
 - Fixed bug whereby layer betas were applied twice, and updated default values
