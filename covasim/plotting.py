@@ -60,7 +60,7 @@ def standard_plots(sim):
     ''' Main simulation results -- parallel of sim.plot() '''
 
     plots = []
-    to_plot = sc.dcp(cv.default_sim_plots)
+    to_plot = cv.get_sim_plots()
     for p,title,keylabels in to_plot.enumitems():
         fig = go.Figure()
         for key in keylabels:

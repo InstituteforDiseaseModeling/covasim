@@ -210,7 +210,7 @@ class Scenarios(cvb.ParsObj):
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
-            to_plot     (dict): Dict of results to plot; see default_scen_plots for structure
+            to_plot     (dict): Dict of results to plot; see get_scen_plots() for structure
             do_save     (bool): Whether or not to save the figure
             fig_path    (str):  Path to save the figure
             fig_args    (dict): Dictionary of kwargs to be passed to pl.figure()
@@ -239,7 +239,7 @@ class Scenarios(cvb.ParsObj):
         sc.printv('Plotting...', 1, verbose)
 
         if to_plot is None:
-            to_plot = cvd.default_scen_plots
+            to_plot = cvd.get_scen_plots()
         to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults
