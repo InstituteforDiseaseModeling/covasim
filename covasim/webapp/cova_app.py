@@ -240,22 +240,20 @@ def parse_interventions(int_pars):
             ikey  = iconfig['ikey']
             start = iconfig['start']
             end   = iconfig['end']
+            level = float(iconfig['level'])/100
             if ikey == 'social_distance':
-                level = iconfig['level']
-                change = float(level)/100
+                change = 1.0-level
                 interv = cv.change_beta(days=[start, end], changes=[change, 1.0])
             elif ikey == 'school_closures':
-                change = 0.0
+                change = 1.0-level
                 interv = cv.change_beta(days=[start, end], changes=[change, 1.0], layers='s')
             elif ikey == 'symptomatic_testing':
-                level = iconfig['level']
-                level = float(level)/100
-                asymp_prob = 0.0
-                delay = 0.0
+                asymp_prob = level/10
+                delay = 1.0
                 interv = cv.test_prob(start_day=start, end_day=end, symp_prob=level, asymp_prob=asymp_prob, test_delay=delay)
             elif ikey == 'contact_tracing':
-                trace_prob = {k:1.0 for k in 'hswc'}
-                trace_time = {k:0.0 for k in 'hswc'}
+                trace_prob = {k:level for k in 'hswc'}
+                trace_time = {k:1.0 for k in 'hswc'}
                 interv = cv.contact_tracing(start_day=start, end_day=end, trace_probs=trace_prob, trace_time=trace_time)
             else:
                 raise NotImplementedError

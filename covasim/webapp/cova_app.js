@@ -49,13 +49,13 @@ const interventionTableConfig = {
     school_closures: {
         formTitle: "Schools",
         fields: [
-            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
-            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100}
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Impact of school closures (0 = no schools closed, 100 = all schools closed)', min: 0, max: 100, value: 90}
         ],
         handleSubmit: function(event) {
-            const start = parseInt(event.target.elements.start.value);
-            const end = parseInt(event.target.elements.end.value);
+            const start = vm.parse_day(event.target.elements.start.value);
+            const end = vm.parse_day(event.target.elements.end.value);
             const level = event.target.elements.level.value;
             return {start, end, level};
         }
@@ -63,13 +63,13 @@ const interventionTableConfig = {
     symptomatic_testing: {
         formTitle: "Testing",
         fields: [
-            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
-            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100}
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Proportion of people tested per day (0 = no testing, 10 = 10% of people tested per day, 100 = everyone tested every day); assumes 1 day test delay', min: 0, max: 100, value: 10}
         ],
         handleSubmit: function(event) {
-            const start = parseInt(event.target.elements.start.value);
-            const end = parseInt(event.target.elements.end.value);
+            const start = vm.parse_day(event.target.elements.start.value);
+            const end = vm.parse_day(event.target.elements.end.value);
             const level = event.target.elements.level.value;
             return {start, end, level};
         }
@@ -77,17 +77,17 @@ const interventionTableConfig = {
     contact_tracing: {
         formTitle: "Tracing",
         fields: [
-            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
-            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100}
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness of contact tracing (0 = no tracing, 100 = all contacts traced); assumes 1 day tracing delay. Please note: you must implement a testing intervention as well for tracing to have any effect', min: 0, max: 100, value: 80}
         ],
         handleSubmit: function(event) {
-            const start = parseInt(event.target.elements.start.value);
-            const end = parseInt(event.target.elements.end.value);
+            const start = vm.parse_day(event.target.elements.start.value);
+            const end = vm.parse_day(event.target.elements.end.value);
             const level = event.target.elements.level.value;
             return {start, end, level};
         }
-  }
+    }
 
 };
 

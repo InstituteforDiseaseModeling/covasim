@@ -121,6 +121,7 @@ fieldset > legend {
     display: block;
     position: relative !important;
     width: initial;
+    /*overflow-y: scroll; CK: for later use */
     height: auto !important;
     grid-area: sidebar;
     margin: 0;
