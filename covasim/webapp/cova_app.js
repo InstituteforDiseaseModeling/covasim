@@ -35,13 +35,13 @@ const interventionTableConfig = {
     social_distance: {
         formTitle: "Distancing",
         fields: [
-            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day', value: 0},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day', value: null},
-            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100, value: 50}
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Impact of social distancing (examples: 20 = mild, 50 = moderate, 80 = aggressive)', min: 0, max: 100, value: 50}
         ],
         handleSubmit: function(event) {
-            const start = parseInt(event.target.elements.start.value);
-            const end = parseInt(event.target.elements.end.value);
+            const start = vm.parse_day(event.target.elements.start.value);
+            const end = vm.parse_day(event.target.elements.end.value);
             const level = event.target.elements.level.value;
             return {start, end, level};
         }
@@ -258,6 +258,16 @@ var vm = new Vue({
             this.$delete(this.int_pars[scenarioKey], index);
             const response = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig});
             this.intervention_figs = response.data;
+        },
+
+        parse_day(day) {
+            if (day == null || day == '') {
+                const output = this.sim_length.best
+                return output
+            } else {
+                const output = parseInt(day)
+                return output
+            }
         },
 
         resize_start() {
