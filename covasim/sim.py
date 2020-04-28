@@ -168,12 +168,12 @@ class Sim(cvb.BaseSim):
         quar_eff_keys   = set(self.pars['quar_eff'].keys())
         if not(beta_layer_keys == contacts_keys == quar_eff_keys):
             errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} have inconsistent keys'
-            raise cvm.KeyNotFoundError(errormsg)
+            raise sc.KeyNotFoundError(errormsg)
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
             if pop_keys != beta_layer_keys:
                 errormsg = f'Please update your parameter keys {beta_layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
-                raise cvm.KeyNotFoundError(errormsg)
+                raise sc.KeyNotFoundError(errormsg)
 
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
@@ -181,7 +181,7 @@ class Sim(cvb.BaseSim):
         if choice not in popdata_choices:
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
-            raise cvm.KeyNotFoundError(errormsg)
+            raise sc.KeyNotFoundError(errormsg)
 
         # Handle interventions
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
@@ -438,7 +438,7 @@ class Sim(cvb.BaseSim):
                 if verbose >= 2:
                     sc.heading(string)
                 elif verbose == 1:
-                    cvm.progressbar(t+1, self.npts, label=string, newline=True)
+                    sc.progressbar(t+1, self.npts, label=string, newline=True)
 
             # Do the heavy lifting -- actually run the model!
             self.step()

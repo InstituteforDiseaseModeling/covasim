@@ -485,7 +485,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     if noisepar is None:
         noisepar = 'beta'
         if noisepar not in sim.pars.keys():
-            raise cvm.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
+            raise sc.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
 
     # Handle noise -- normally distributed fractional error
     noiseval = noise*np.random.normal()
@@ -506,7 +506,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
                 print(f'Setting key {key} from {new_sim[key]} to {val}')
                 new_sim[key] = val
         else:
-            raise cvm.KeyNotFoundError(f'Could not set key {key}: not a valid parameter name')
+            raise sc.KeyNotFoundError(f'Could not set key {key}: not a valid parameter name')
 
     # Run
     new_sim.run(**run_args)

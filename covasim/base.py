@@ -3,10 +3,10 @@ Base classes for Covasim.
 '''
 
 import datetime as dt
-import numpy as np # Needed for a few things not provided by pl
-import sciris as sc
-import pandas as pd
+import numpy as np
 import pylab as pl
+import pandas as pd
+import sciris as sc
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
@@ -33,8 +33,8 @@ class ParsObj(sc.prettyobj):
         except:
             all_keys = '\n'.join(list(self.pars.keys()))
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
-            raise cvm.KeyNotFoundError(errormsg)
-            return
+            raise sc.KeyNotFoundError(errormsg)
+        return
 
     def __setitem__(self, key, value):
         ''' Ditto '''
@@ -43,7 +43,7 @@ class ParsObj(sc.prettyobj):
         else:
             all_keys = '\n'.join(list(self.pars.keys()))
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
-            raise cvm.KeyNotFoundError(errormsg)
+            raise sc.KeyNotFoundError(errormsg)
         return
 
     def update_pars(self, pars=None, create=False):
@@ -64,7 +64,7 @@ class ParsObj(sc.prettyobj):
                 mismatches = [key for key in pars.keys() if key not in available_keys]
                 if len(mismatches):
                     errormsg = f'Key(s) {mismatches} not found; available keys are {available_keys}'
-                    raise cvm.KeyNotFoundError(errormsg)
+                    raise sc.KeyNotFoundError(errormsg)
             self.pars.update(pars)
         return
 
@@ -830,7 +830,7 @@ class BasePeople(sc.prettyobj):
         except KeyError:
             lkeystr = ', '.join(lkeys)
             errormsg = f'Layer "{lkey}" could not be loaded since it was not among parameter keys "{lkeystr}". Please update manually or via sim.reset_layer_pars().'
-            raise cvm.KeyNotFoundError(errormsg)
+            raise sc.KeyNotFoundError(errormsg)
 
         # Turn into a dataframe
         for lkey in lkeys:
