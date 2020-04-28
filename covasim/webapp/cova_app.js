@@ -35,9 +35,9 @@ const interventionTableConfig = {
     social_distance: {
         formTitle: "Distancing",
         fields: [
-            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
-            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100}
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day', value: 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day', value: null},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100, value: 50}
         ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
