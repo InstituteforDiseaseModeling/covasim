@@ -150,12 +150,8 @@ class Sim(cvb.BaseSim):
         # Handle start day
         start_day = self['start_day'] # Shorten
         if start_day in [None, 0]: # Use default start day
-            start_day = dt.date(2020, 1, 1)
-        elif sc.isstring(start_day):
-            start_day = sc.readdate(start_day)
-        if isinstance(start_day,dt.datetime):
-            start_day = start_day.date()
-        self['start_day'] = start_day
+            start_day = '2020-03-01'
+        self['start_day'] = cvm.date(start_day)
 
         # Handle contacts
         contacts = self['contacts']

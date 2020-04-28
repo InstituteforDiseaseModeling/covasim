@@ -8,12 +8,15 @@ strictly consecutive.
 
 Version 0.29.7 (2020-04-27)
 ---------------------------
+- New functions ``cv.date()`` and ``cv.daydiff()`` have been added, to ease handling of dates of different formats.
 - Defaults are now functions rather than dictionaries, specifically: ``cv.default_sim_plots`` is now ``cv.get_sim_plots()``; ``cv.default_scen_plots`` is now ``cv.get_scen_plots()``; and ``cv.default_colors`` is now ``cv.get_colors()``.
+- Interventions now have a ``do_plot`` kwarg, which if ``False`` will disable their plotting.
+- The example scenario (``examples/run_scenario.py``) has been rewritten to include a test-trace-quarantine example.
 
 
 Version 0.29.6 (2020-04-27)
 ---------------------------
-- Updated to use Sciris v0.17.0.
+- Updated to use Sciris v0.17.0, to fix JSON export issues and improve ``KeyError`` messages.
 
 
 Version 0.29.5 (2020-04-26)

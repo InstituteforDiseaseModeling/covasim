@@ -7,7 +7,7 @@ import covasim as cv
 # Run options
 do_plot = 1
 do_show = 1
-verbose = 0
+verbose = 1
 
 # Sim options
 basepars = dict(
@@ -15,6 +15,7 @@ basepars = dict(
   verbose = verbose,
 )
 
+# Scenario metaparameters
 metapars = dict(
     n_runs    = 3, # Number of parallel runs; change to 3 for quick, 11 for real
     noise     = 0.1, # Use noise, optionally
@@ -23,7 +24,7 @@ metapars = dict(
     quantiles = {'low':0.1, 'high':0.9},
 )
 
-# Define the scenarios
+# Define the actual scenarios
 start_day = '2020-04-04'
 scenarios = {'baseline': {
               'name':'Baseline',
@@ -48,7 +49,8 @@ scenarios = {'baseline': {
               },
              }
 
-if __name__ == "__main__": # Required for parallel processing on Windows
+# Run the scenarios -- this block is required for parallel processing on Windows
+if __name__ == "__main__":
 
     scens = cv.Scenarios(basepars=basepars, metapars=metapars, scenarios=scenarios)
     scens.run(verbose=verbose)
