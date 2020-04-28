@@ -35,9 +35,9 @@ const interventionTableConfig = {
     social_distance: {
         formTitle: "Physical distancing",
         fields: [
-            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
-            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100}
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day', defaultValue: () => 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day',  defaultValue: () => vm.sim_length.best},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100, defaultValue: () => 100}
         ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
@@ -49,8 +49,8 @@ const interventionTableConfig = {
     school_closures: {
         formTitle: "School closures",
         fields: [
-            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'}
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day', defaultValue: () => vm.sim_length.min},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day', defaultValue: () => vm.sim_length.best}
         ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
@@ -61,9 +61,9 @@ const interventionTableConfig = {
     symptomatic_testing: {
         formTitle: "Symptomatic testing",
         fields: [
-            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
-            {key: 'level', type: 'number', label: 'Coverage', tooltip: 'Test coverage', min: 0, max: 100}
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day', defaultValue: () => vm.sim_length.min},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day',  defaultValue: () => vm.sim_length.best},
+            {key: 'level', type: 'number', label: 'Coverage', tooltip: 'Test coverage', min: 0, max: 100, defaultValue: () => 100}
         ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
@@ -75,8 +75,8 @@ const interventionTableConfig = {
     contact_tracing: {
         formTitle: "Contact tracing",
         fields: [
-            {key: 'start', type: 'number', label: 'Start Day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'}
+            {key: 'start', type: 'number', label: 'Start Day', tooltip: 'Start day', defaultValue: () => vm.sim_length.min},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day', defaultValue: () => vm.sim_length.best}
         ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);

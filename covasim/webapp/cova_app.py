@@ -110,7 +110,7 @@ def get_defaults(region=None, merge=False, die=die):
         pop_infected = dict(best=10,    min=1, max=max_pop,  name='Initial infections',         tip='Number of initial seed infections in the model'),
         # n_imports    = dict(best=0,     min=0, max=100,      name='Daily imported infections',  tip='Number of infections that are imported each day'),
         rand_seed    = dict(best=0,     min=0, max=100,      name='Random seed',                tip='Random number seed (set to 0 for different results each time)'),
-        n_days       = dict(best=90,    min=1, max=max_days, name="Simulation duration",        tip='Total duration (in days) of the simulation'),
+        n_days       = dict(best=90,    min=0, max=max_days, name="Simulation duration",        tip='Total duration (in days) of the simulation'),
     )
 
     epi_pars = dict(

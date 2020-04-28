@@ -164,11 +164,22 @@
                         <div class="form-group">
                           <div class="input-group mb-3">
                             <template v-for="field in intervention.fields">
-                              <input :max="field.max || sim_length.max" :min="field.min || 0" :placeholder="field.label" :name="field.key"
-                                     :aria-label="field.label" class="form-control" v-if="field.type !== 'select'"
-                                     :type="field.type" v-b-tooltip.hover :title="field.tooltip">
-                              <select class="form-control" :name="field.key" v-else>
-                                <option v-for="option in field.options" :value="option.value">{{option.label}}</option>
+                              <input v-if="field.type !== 'select'"
+                                     :name="field.key"
+                                     :max="field.max || sim_length.max"
+                                     :min="field.min || 0"
+                                     :placeholder="field.label"
+                                     :aria-label="field.label"
+                                     :type="field.type"
+                                     :value="field.defaultValue? field.defaultValue() : undefined"
+                                     v-b-tooltip.hover :title="field.tooltip"
+                                     class="form-control">
+                              <select v-else
+                                      :name="field.key"
+                                      class="form-control">
+                                <option v-for="option in field.options" :value="option.value" :selected="option.selected">
+                                  {{option.label}}
+                                </option>
                               </select>
                               <div class="input-group-append" v-if="field.key === 'level'">
                                 <span class="input-group-text">%</span>
@@ -192,7 +203,7 @@
                           <tbody>
                           <tr v-for="(par, index) in int_pars[name]">
                             <td v-for="field in intervention.fields" scope="row">
-                              {{par[field.key]}}<span v-if="field.key=== 'level'">%</span>
+                              {{par[field.key]}}<span v-if="field.key === 'level'">%</span>
                             </td>
                             <td>
                               <button @click="deleteIntervention(name, index)" class="btn btn-outline-danger" type="button">Delete</button>
