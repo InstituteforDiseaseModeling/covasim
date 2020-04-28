@@ -190,7 +190,7 @@ def upload_file(file):
 
 
 @app.register_RPC()
-def get_gantt(int_pars=None, intervention_config=None):
+def get_gantt(int_pars=None, intervention_config=None, n_days=90):
     df = []
     response = {'id': 'test'}
     for key,scenario in int_pars.items():
@@ -201,7 +201,7 @@ def get_gantt(int_pars=None, intervention_config=None):
     if len(df) > 0:
         fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
                             show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
-        fig.update_xaxes(type='linear')
+        fig.update_xaxes(type='linear', range=[0, n_days])
         response['json'] = fig.to_json()
 
     return response

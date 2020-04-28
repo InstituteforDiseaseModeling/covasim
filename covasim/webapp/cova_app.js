@@ -33,7 +33,7 @@ const PlotlyChart = {
 
 const interventionTableConfig = {
     social_distance: {
-        formTitle: "Physical distancing",
+        formTitle: "Distancing",
         fields: [
             {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
             {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
@@ -47,41 +47,45 @@ const interventionTableConfig = {
         }
     },
     school_closures: {
-        formTitle: "School closures",
-        fields: [
-            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'}
-        ],
-        handleSubmit: function(event) {
-            const start = parseInt(event.target.elements.start.value);
-            const end = parseInt(event.target.elements.end.value);
-            return {start, end};
-        }
-    },
-    symptomatic_testing: {
-        formTitle: "Symptomatic testing",
+        formTitle: "Schools",
         fields: [
             {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
             {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
-            {key: 'level', type: 'number', label: 'Coverage', tooltip: 'Test coverage', min: 0, max: 100}
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100}
         ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
-            const level = parseInt(event.target.elements.level.value);
+            const level = event.target.elements.level.value;
+            return {start, end, level};
+        }
+    },
+    symptomatic_testing: {
+        formTitle: "Testing",
+        fields: [
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100}
+        ],
+        handleSubmit: function(event) {
+            const start = parseInt(event.target.elements.start.value);
+            const end = parseInt(event.target.elements.end.value);
+            const level = event.target.elements.level.value;
             return {start, end, level};
         }
     },
     contact_tracing: {
-        formTitle: "Contact tracing",
+        formTitle: "Tracing",
         fields: [
-            {key: 'start', type: 'number', label: 'Start Day', tooltip: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'}
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day'},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day'},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness', min: 0, max: 100}
         ],
         handleSubmit: function(event) {
             const start = parseInt(event.target.elements.start.value);
             const end = parseInt(event.target.elements.end.value);
-            return {start, end};
+            const level = event.target.elements.level.value;
+            return {start, end, level};
         }
   }
 
@@ -247,7 +251,7 @@ var vm = new Vue({
             this.int_pars[key].push(intervention);
             const result = this.int_pars[key].sort((a, b) => a.start - b.start);
             this.$set(this.int_pars, key, result);
-            const response = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig});
+            const response = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig, n_days: this.sim_length.best});
             this.intervention_figs = response.data;
         },
         async deleteIntervention(scenarioKey, index) {
