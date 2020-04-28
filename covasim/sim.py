@@ -207,7 +207,7 @@ class Sim(cvb.BaseSim):
             output = cvb.Result(*args, **kwargs, npts=self.npts)
             return output
 
-        dcols = cvd.default_colors # Shorten default colors
+        dcols = cvd.get_colors() # Get default colors
 
         # Stock variables
         for key,label in cvd.result_stocks.items():
@@ -663,7 +663,7 @@ class Sim(cvb.BaseSim):
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
-            to_plot (dict): Nested dict of results to plot; see default_sim_plots for structure
+            to_plot (dict): Nested dict of results to plot; see get_sim_plots() for structure
             do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
             fig_path (str): Path to save the figure
             fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
@@ -692,7 +692,7 @@ class Sim(cvb.BaseSim):
         sc.printv('Plotting...', 1, verbose)
 
         if to_plot is None:
-            to_plot = cvd.default_sim_plots
+            to_plot = cvd.get_sim_plots()
         to_plot = sc.odict(to_plot) # In case it's supplied as a dict
 
         # Handle input arguments -- merge user input with defaults
