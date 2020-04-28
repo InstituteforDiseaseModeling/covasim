@@ -83,7 +83,7 @@ const interventionTableConfig = {
         fields: [
             {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
             {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
-            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness of contact tracing (0 = no tracing, 100 = all contacts traced); assumes 1 day tracing delay. Please note: you must implement a testing intervention as well for tracing to have any effect', min: 0, max: 100, value: 80}
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness of contact tracing (0 = no tracing, 100 = all contacts traced); assumes 1 day tracing delay. Please note: you must implement a testing intervention as well for tracing to have any effect.', min: 0, max: 100, value: 80}
         ],
         handleSubmit: function(event) {
             const start = vm.parse_day(event.target.elements.start.value);
