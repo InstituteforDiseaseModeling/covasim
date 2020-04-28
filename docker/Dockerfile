@@ -8,7 +8,7 @@ RUN apt-get -y update && apt-get install -y nginx supervisor curl
 RUN conda install gcc_linux-64
 
 RUN mkdir /app && \
-    conda install twisted python-Levenshtein
+    conda install twisted
 
 # Add requirements.txt first and install to maximize chances of hitting docker cache
 ADD ./requirements.txt /app
