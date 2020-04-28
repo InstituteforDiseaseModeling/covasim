@@ -24,7 +24,7 @@ metapars = dict(
 )
 
 # Define the scenarios
-interv_day = '2020-04-04'
+start_day = '2020-04-04'
 scenarios = {'baseline': {
               'name':'Baseline',
               'pars': {
@@ -34,15 +34,15 @@ scenarios = {'baseline': {
             'distance': {
               'name':'Social distancing',
               'pars': {
-                  'interventions': cv.change_beta(days=interv_day, changes=0.7)
+                  'interventions': cv.change_beta(days=start_day, changes=0.7)
                   }
               },
             'ttq': {
               'name':'Test-trace-quarantine',
               'pars': {
                   'interventions': [
-                        cv.test_prob(start_day=interv_day, symp_prob=0.2, asymp_prob=0.05, test_delay=1.0),
-                        cv.contact_tracing(start_day=interv_day, trace_probs=0.8, trace_time=1.0),
+                        cv.test_prob(start_day=start_day, symp_prob=0.2, asymp_prob=0.05, test_delay=1.0),
+                        cv.contact_tracing(start_day=start_day, trace_probs=0.8, trace_time=1.0),
                     ]
                   }
               },
