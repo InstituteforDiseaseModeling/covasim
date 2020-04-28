@@ -190,18 +190,18 @@ def upload_file(file):
 
 
 @app.register_RPC()
-def get_gantt(int_pars=None, intervention_config=None):
+def get_gantt(int_pars=None, intervention_config=None, n_days=90):
     df = []
     response = {'id': 'test'}
     for key,scenario in int_pars.items():
         for timeline in scenario:
             task = intervention_config[key]['formTitle']
-            level = task + ' ' + str(timeline.get('level', ''))
+            level = task + ' ' + str(timeline.get('level', '')) + '%'
             df.append(dict(Task=task, Start=timeline['start'], Finish=timeline['end'], Level= level))
     if len(df) > 0:
         fig = ff.create_gantt(df, height=400, index_col='Level', title='Intervention timeline',
                             show_colorbar=True, group_tasks=True, showgrid_x=True, showgrid_y=True)
-        fig.update_xaxes(type='linear')
+        fig.update_xaxes(type='linear', range=[0, n_days])
         response['json'] = fig.to_json()
 
     return response
@@ -240,27 +240,20 @@ def parse_interventions(int_pars):
             ikey  = iconfig['ikey']
             start = iconfig['start']
             end   = iconfig['end']
+            level = float(iconfig['level'])/100
             if ikey == 'social_distance':
-                level = iconfig['level']
-                mapping = {
-                    'mild': 0.8,
-                    'moderate': 0.5,
-                    'aggressive': 0.2,
-                    }
-                change = mapping[level]
+                change = 1.0-level
                 interv = cv.change_beta(days=[start, end], changes=[change, 1.0])
             elif ikey == 'school_closures':
-                change = 0.0
+                change = 1.0-level
                 interv = cv.change_beta(days=[start, end], changes=[change, 1.0], layers='s')
             elif ikey == 'symptomatic_testing':
-                level = iconfig['level']
-                level = float(level)/100
-                asymp_prob = 0.0
-                delay = 0.0
+                asymp_prob = level/10
+                delay = 1.0
                 interv = cv.test_prob(start_day=start, end_day=end, symp_prob=level, asymp_prob=asymp_prob, test_delay=delay)
             elif ikey == 'contact_tracing':
-                trace_prob = {k:1.0 for k in 'hswc'}
-                trace_time = {k:0.0 for k in 'hswc'}
+                trace_prob = {k:level for k in 'hswc'}
+                trace_time = {k:1.0 for k in 'hswc'}
                 interv = cv.contact_tracing(start_day=start, end_day=end, trace_probs=trace_prob, trace_time=trace_time)
             else:
                 raise NotImplementedError

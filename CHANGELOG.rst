@@ -6,6 +6,11 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
+Version 0.29.8 (2020-04-28)
+---------------------------
+- Update webapp UI with more detail on and control over interventions.
+
+
 Version 0.29.7 (2020-04-27)
 ---------------------------
 - New functions ``cv.date()`` and ``cv.daydiff()`` have been added, to ease handling of dates of different formats.
