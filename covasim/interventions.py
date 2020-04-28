@@ -606,10 +606,16 @@ class contact_tracing(Intervention):
 
 
     def initialize(self, sim):
-        ''' Fix the dates '''
+        ''' Fix the dates and dictionaries '''
         self.start_day = sim.day(self.start_day)
         self.end_day   = sim.day(self.end_day)
         self.days      = [self.start_day, self.end_day]
+        if sc.isnumber(self.trace_probs):
+            val = self.trace_probs
+            self.trace_probs = {k:val for k in sim.people.layer_keys()}
+        if sc.isnumber(self.trace_time):
+            val = self.trace_time
+            self.trace_time = {k:val for k in sim.people.layer_keys()}
         return
 
 

@@ -2,33 +2,17 @@
 Simple script for running Covasim scenarios
 '''
 
-import sciris as sc
 import covasim as cv
 
-
-sc.heading('Setting up...')
-
-# Specify what to run
-scenarios = {
-    'baseline':     'Status quo',
-    'distance':    'Social distancing',
-    # 'isolatepos':   'Isolate people who diagnose positive',
-}
-
 # Run options
-do_run  = 1
-do_save = 0 # refers to whether to save plot - see also save_sims
 do_plot = 1
 do_show = 1
-verbose = 1
+verbose = 0
 
 # Sim options
-interv_day = 35
-interv_eff = 0.7
-default_beta = 0.015 # Should match parameters.py
-
 basepars = dict(
-  pop_size = 2000
+  pop_size = 2000,
+  verbose = verbose,
 )
 
 metapars = dict(
@@ -39,15 +23,8 @@ metapars = dict(
     quantiles = {'low':0.1, 'high':0.9},
 )
 
-# For saving
-version  = 'v0'
-date     = '2020mar24'
-folder   = 'results'
-basename = f'{folder}/covasim_scenarios_{date}_{version}'
-fig_path = f'{basename}.png'
-obj_path = f'{basename}.scens'
-
 # Define the scenarios
+interv_day = '2020-04-04'
 scenarios = {'baseline': {
               'name':'Baseline',
               'pars': {
@@ -57,35 +34,24 @@ scenarios = {'baseline': {
             'distance': {
               'name':'Social distancing',
               'pars': {
-                  'interventions': cv.change_beta(days=interv_day, changes=interv_eff)
+                  'interventions': cv.change_beta(days=interv_day, changes=0.7)
                   }
               },
-            'distance2': { # With noise = 0.0, this should be identical to the above
-              'name':'Social distancing, version 2',
+            'ttq': {
+              'name':'Test-trace-quarantine',
               'pars': {
-                  'interventions': cv.dynamic_pars({'beta':dict(days=interv_day, vals=interv_eff*default_beta)})
+                  'interventions': [
+                        cv.test_prob(start_day=interv_day, symp_prob=0.2, asymp_prob=0.05, test_delay=1.0),
+                        cv.contact_tracing(start_day=interv_day, trace_probs=0.8, trace_time=1.0),
+                    ]
                   }
               },
              }
 
-
 if __name__ == "__main__": # Required for parallel processing on Windows
 
-    sc.tic()
-
-    # If we're rerunning...
-    if do_run:
-        scens = cv.Scenarios(basepars=basepars, metapars=metapars, scenarios=scenarios)
-        scens.run(verbose=verbose)
-        if do_save:
-            scens.save(filename=obj_path)
-
-    # Don't run
-    else:
-        scens = cv.Scenarios.load(obj_path)
-
+    scens = cv.Scenarios(basepars=basepars, metapars=metapars, scenarios=scenarios)
+    scens.run(verbose=verbose)
     if do_plot:
         fig1 = scens.plot(do_show=do_show)
-
-    sc.toc()
 
