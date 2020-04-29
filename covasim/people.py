@@ -215,6 +215,9 @@ class People(cvb.BasePeople):
         ''' Check for new diagnoses '''
         inds = self.check_inds(self.diagnosed, self.date_diagnosed)
         self.diagnosed[inds] = True
+
+        print(f'\nHI: diagnosed {len(inds)} people on day {self.t}. inds:\n{inds}\n')
+
         return len(inds)
 
 
@@ -365,18 +368,32 @@ class People(cvb.BasePeople):
         Returns:
             Whether or not this person tested positive
         '''
+
+        print(f'starting test(). time: {self.t}')
+        print(f'n_inds: {len(inds)}')
+        print(f'inds: {inds}')
+
         self.tested[inds] = True
         self.date_tested[inds] = self.t # Only keep the last time they tested
 
         is_infectious = cvu.itruei(self.infectious, inds)
         pos_test      = cvu.n_binomial(test_sensitivity, len(is_infectious))
         is_inf_pos    = is_infectious[pos_test]
+        print(f'is_infectious: {is_infectious}')
+        print(f'pos_test: {pos_test}')
+        print(f'is_inf_pos: {is_inf_pos}')
 
         not_diagnosed = is_inf_pos[np.isnan(self.date_diagnosed[is_inf_pos])]
         not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
-        inds          = not_diagnosed[not_lost]
+        final_inds    = not_diagnosed[not_lost]
 
-        self.date_diagnosed[inds] = self.t + test_delay
+        print(f'not_diagnosed: {not_diagnosed}')
+        print(f'not_lost: {not_lost}')
+        print(f'final_inds: {final_inds}')
+
+        print(f'\nHI: tested {len(final_inds)}/{len(inds)} people, who should be diagnosed on day {self.t + test_delay}.\n')
+
+        self.date_diagnosed[final_inds] = self.t + test_delay
 
         return
 
