@@ -288,7 +288,7 @@
       <template v-else>
         <div class="row no-gutter">
           <template v-for="(x, index) in result.graphs">
-            <div :class="{'col-md-6': (index + 1 < result.graphs.length) || !show_animation, 'col-md-12': (index + 1 === result.graphs.length) && show_animation }">
+            <div :class="{'col-md-6': (index + 1 < result.graphs.length) || !show_animation || result.graphs.length%2 === 0, 'col-md-12': (index + 1 === result.graphs.length) && show_animation && result.graphs.length%2 === 1 }">
               <plotly-chart :graph="x" :key="x.id"/>
             </div>
           </template>
