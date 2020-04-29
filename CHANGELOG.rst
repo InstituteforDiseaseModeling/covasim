@@ -6,9 +6,15 @@ changes from multiple patch versions are grouped together, so numbering will not
 strictly consecutive.
 
 
+Version 0.29.9 (2020-04-28)
+---------------------------
+- Fixed bug in which people who had been tested and since recovered were not being diagnosed.
+- Updated definition of "Time to die" parameter in the webapp.
+
+
 Version 0.29.8 (2020-04-28)
 ---------------------------
-- Update webapp UI with more detail on and control over interventions.
+- Updated webapp UI with more detail on and control over interventions.
 
 
 Version 0.29.7 (2020-04-27)
