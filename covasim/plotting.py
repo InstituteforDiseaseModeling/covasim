@@ -5,7 +5,6 @@ part of the Sim and Scenarios objects. Intended mostly for use with the webapp.
 
 import covasim as cv
 import numpy as np
-import sciris as sc
 import plotly.graph_objects as go
 
 
@@ -88,7 +87,7 @@ def standard_plots(sim):
     return plots
 
 
-def plot_people(sim):
+def plot_people(sim, do_show=False):
     ''' Plot a "cascade" of people moving through different states '''
     z, states = get_individual_states(sim)
 
@@ -115,10 +114,13 @@ def plot_people(sim):
     fig.update_layout(yaxis_range=(0, sim.n))
     fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
 
+    if do_show:
+        fig.show()
+
     return fig
 
 
-def animate_people(sim):
+def animate_people(sim, do_show=False):
     ''' Plot an animation of each person in the sim '''
 
     z, states = get_individual_states(sim)
@@ -127,7 +129,7 @@ def animate_people(sim):
     max_color = max(states, key=lambda x: x['value'])['value']
     colorscale = [[x['value'] / max_color, x['color']] for x in states]
 
-    aspect = 3
+    aspect = 1
     y_size = int(np.ceil((z.shape[0] / aspect) ** 0.5))
     x_size = int(np.ceil(aspect * y_size))
 
@@ -242,5 +244,8 @@ def animate_people(sim):
 
 
     fig.update_layout(title={'text': 'Epidemic over time'})
+
+    if do_show:
+        fig.show()
 
     return fig
