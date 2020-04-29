@@ -8,6 +8,8 @@ indicators such as numbers of infections and peak hospital demand. Covasim can
 also be used to explore the potential impact of different interventions, including
 social distancing, school closures, testing, contact tracing, and quarantine.
 
+The Covasim webapp is available at https://covasim.idmod.org.
+
 Questions or comments can be directed to covasim@idmod.org, or on this project's
 GitHub_ page. Full information about Covasim is provided in the documentation_.
 
