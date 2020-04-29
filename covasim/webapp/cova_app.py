@@ -118,7 +118,7 @@ def get_defaults(region=None, merge=False, die=die):
         web_exp2inf     = dict(best=4.0,   min=0.0, max=30,  name='Time to infectiousness (days)',      tip ='Average number of days between exposure and being infectious'),
         web_inf2sym     = dict(best=1.0,   min=0.0, max=30,  name='Asymptomatic period (days)',         tip ='Average number of days between exposure and developing symptoms'),
         web_dur         = dict(best=10.0,  min=0.0, max=30,  name='Infection duration (days)',          tip ='Average number of days between infection and recovery (viral shedding period)'),
-        web_timetodie   = dict(best=22.0,  min=0.0, max=60,  name='Time until death (days)',            tip ='Average number of days between infection and death'),
+        web_timetodie   = dict(best=6.0,   min=0.0, max=30,  name='Time until death (days)',            tip ='Average number of days between becoming critically ill and death'),
         rel_symp_prob   = dict(best=1.0,   min=0.0, max=10,  name='Symptomatic probability multiplier', tip ='Adjustment factor on literature-derived values for proportion of infected people who become symptomatic'),
         rel_severe_prob = dict(best=1.0,   min=0.0, max=10,  name='Severe probability multiplier',      tip ='Adjustment factor on literature-derived values for proportion of symptomatic people who develop severe disease'),
         rel_crit_prob   = dict(best=1.0,   min=0.0, max=10,  name='Critical probability multiplier',    tip ='Adjustment factor on literature-derived values for proportion of people with severe disease who become crtiically ill'),
