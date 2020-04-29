@@ -282,7 +282,7 @@ class People(cvb.BasePeople):
         '''
 
         # Handle inputs
-        inds         = inds[self.susceptible[inds]] # Do not infect people who are not susceptible
+        inds         = np.unique(inds[self.susceptible[inds]]) # Do not infect people who are not susceptible
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
@@ -372,6 +372,11 @@ class People(cvb.BasePeople):
         print(f'starting test(). time: {self.t}')
         print(f'n_inds: {len(inds)}')
         print(f'inds: {inds}')
+
+        inds = np.unique(inds)
+
+        print(f'n_uinds: {len(inds)}')
+        print(f'uinds: {inds}')
 
         self.tested[inds] = True
         self.date_tested[inds] = self.t # Only keep the last time they tested
