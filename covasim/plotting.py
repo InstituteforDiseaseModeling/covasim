@@ -129,7 +129,7 @@ def animate_people(sim, do_show=False):
     max_color = max(states, key=lambda x: x['value'])['value']
     colorscale = [[x['value'] / max_color, x['color']] for x in states]
 
-    aspect = 1
+    aspect = 3
     y_size = int(np.ceil((z.shape[0] / aspect) ** 0.5))
     x_size = int(np.ceil(aspect * y_size))
 
