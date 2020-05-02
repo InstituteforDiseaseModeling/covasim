@@ -622,48 +622,49 @@ class Scenarios(cvb.ParsObj):
             pl.rcParams['font.family'] = font_family
 
         n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
-        for rk,reskey in enumerate(to_plot):
-            title = self.base_sim.results[reskey].name # Get the name of this result from the base simulation
+        for rk,title,reskeys in to_plot.enumitems():
             if sep_figs:
                 figs.append(pl.figure(**fig_args))
                 ax = pl.subplot(111)
             else:
                 if rk == 0:
-                    ax = pl.subplot(n_rows, n_cols, rk + 1)
+                    ax = pl.subplot(n_rows, n_cols, rk+1)
                 else:
-                    ax = pl.subplot(n_rows, n_cols, rk + 1, sharex=ax)
+                    ax = pl.subplot(n_rows, n_cols, rk+1, sharex=ax)
 
-            resdata = self.results[reskey]
+            for reskey in reskeys:
 
-            for scenkey, scendata in resdata.items():
+                resdata = self.results[reskey]
 
-                pl.fill_between(self.tvec, scendata.low, scendata.high, **fill_args)
-                pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
-                pl.title(title)
-                if rk == 0:
-                    pl.legend(**legend_args)
+                for scenkey, scendata in resdata.items():
 
-                pl.grid(grid)
-                if commaticks:
-                    sc.commaticks()
+                    pl.fill_between(self.tvec, scendata.low, scendata.high, **fill_args)
+                    pl.plot(self.tvec, scendata.best, label=scendata.name, **plot_args)
+                    pl.title(title)
+                    if rk == 0:
+                        pl.legend(**legend_args)
 
-                if self.base_sim.data is not None and reskey in self.base_sim.data:
-                    data_t = np.array((self.base_sim.data.index-self.base_sim['start_day'])/np.timedelta64(1,'D'))
-                    pl.plot(data_t, self.base_sim.data[reskey], 'sk', **plot_args)
+                    pl.grid(grid)
+                    if commaticks:
+                        sc.commaticks()
 
-                # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-                if interval:
-                    xmin,xmax = ax.get_xlim()
-                    ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+                    if self.base_sim.data is not None and reskey in self.base_sim.data:
+                        data_t = np.array((self.base_sim.data.index-self.base_sim['start_day'])/np.timedelta64(1,'D'))
+                        pl.plot(data_t, self.base_sim.data[reskey], 'sk', **plot_args)
 
-                # Set xticks as dates
-                if as_dates:
-                    @ticker.FuncFormatter
-                    def date_formatter(x, pos):
-                        return (self.base_sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
-                    ax.xaxis.set_major_formatter(date_formatter)
-                    if not interval:
-                        ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+                    # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                    if interval:
+                        xmin,xmax = ax.get_xlim()
+                        ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+
+                    # Set xticks as dates
+                    if as_dates:
+                        @ticker.FuncFormatter
+                        def date_formatter(x, pos):
+                            return (self.base_sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+                        ax.xaxis.set_major_formatter(date_formatter)
+                        if not interval:
+                            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         # Ensure the figure actually renders or saves
         if do_save:
