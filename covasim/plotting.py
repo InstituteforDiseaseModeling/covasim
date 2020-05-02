@@ -3,12 +3,167 @@ Plotly-based plotting functions to supplement the Matplotlib based ones that are
 part of the Sim and Scenarios objects. Intended mostly for use with the webapp.
 '''
 
-import covasim as cv
 import numpy as np
+import sciris as sc
+import pylab as pl
+import datetime as dt
+import matplotlib.ticker as ticker
 import plotly.graph_objects as go
+from . import defaults as cvd
 
 
-__all__ = ['standard_plots', 'plot_people', 'animate_people']
+__all__ = ['plot', 'plot_result', 'plotly_sim', 'plotly_people', 'plotly_animate']
+
+
+def plot(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
+         interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
+         log_scale=False, do_show=True, sep_figs=False, verbose=None):
+    '''
+    Plot the results -- can supply arguments for both the figure and the plots.
+
+    Args:
+        to_plot      (dict): Dict of results to plot; see get_sim_plots() for structure
+        do_save      (bool): Whether or not to save the figure
+        fig_path     (str):  Path to save the figure
+        fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
+        plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
+        scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
+        axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+        fill_args    (dict): Dictionary of kwargs to be passed to pl.fill_between()
+        legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
+        as_dates     (bool): Whether to plot the x-axis as dates or time points
+        dateformat   (str):  Date string format, e.g. '%B %d'
+        interval     (int):  Interval between tick marks
+        n_cols       (int):  Number of columns of subpanels to use for subplot
+        font_size    (int):  Size of the font
+        font_family  (str):  Font face
+        grid         (bool): Whether or not to plot gridlines
+        commaticks   (bool): Plot y-axis with commas rather than scientific notation
+        log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
+        do_show      (bool): Whether or not to show the figure
+        sep_figs     (bool): Whether to show separate figures for different results instead of subplots
+        verbose      (bool): Display a bit of extra information
+
+    Returns:
+        fig: Figure handle
+    '''
+
+    if verbose is None:
+        verbose = sim['verbose']
+    sc.printv('Plotting...', 1, verbose)
+
+    if to_plot is None:
+        to_plot = cvd.get_sim_plots()
+    to_plot = sc.odict(to_plot) # In case it's supplied as a dict
+
+    # Handle input arguments -- merge user input with defaults
+    fig_args    = sc.mergedicts({'figsize': (16, 14)}, fig_args)
+    plot_args   = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
+    scatter_args = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
+    axis_args   = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
+    fill_args   = sc.mergedicts({'alpha': 0.2}, fill_args)
+    legend_args = sc.mergedicts({'loc': 'best'}, legend_args)
+
+    if sep_figs:
+        figs = []
+    else:
+        fig = pl.figure(**fig_args)
+    pl.subplots_adjust(**axis_args)
+    pl.rcParams['font.size'] = font_size
+    if font_family:
+        pl.rcParams['font.family'] = font_family
+
+    res = sim.results # Shorten since heavily used
+
+    # Plot everything
+    n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
+    for p,title,keylabels in to_plot.enumitems():
+        if p == 0:
+            ax = pl.subplot(n_rows, n_cols, p+1)
+        else:
+            ax = pl.subplot(n_rows, n_cols, p + 1, sharex=ax)
+        if log_scale:
+            if isinstance(log_scale, list):
+                if title in log_scale:
+                    ax.set_yscale('log')
+            else:
+                ax.set_yscale('log')
+        for key in keylabels:
+            label = res[key].name
+            this_color = res[key].color
+            y = res[key].values
+            pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
+            if sim.data is not None and key in sim.data:
+                data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
+                pl.scatter(data_t, sim.data[key], c=[this_color], **scatter_args)
+            if sim.data is not None and len(sim.data):
+                pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+
+            pl.legend(**legend_args)
+            pl.grid(grid)
+            sc.setylim()
+            if commaticks:
+                sc.commaticks()
+            pl.title(title)
+
+            # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+            if interval:
+                xmin,xmax = ax.get_xlim()
+                ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+
+            # Set xticks as dates
+            if as_dates:
+                @ticker.FuncFormatter
+                def date_formatter(x, pos):
+                    return (sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+                ax.xaxis.set_major_formatter(date_formatter)
+                if not interval:
+                    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+            # Plot interventions
+            for intervention in sim['interventions']:
+                intervention.plot(sim, ax)
+
+    # Ensure the figure actually renders or saves
+    if do_save:
+        if fig_path is None: # No figpath provided - see whether do_save is a figpath
+            fig_path = 'covasim_sim.png' # Just give it a default name
+        fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
+        pl.savefig(fig_path)
+
+    if do_show:
+        pl.show()
+    else:
+        pl.close(fig)
+
+    return fig
+
+
+def plot_result(sim, key, fig_args=None, plot_args=None):
+    '''
+    Simple method to plot a single result. Useful for results that aren't
+    standard outputs.
+
+    Args:
+        key (str): the key of the result to plot
+        fig_args (dict): passed to pl.figure()
+        plot_args (dict): passed to pl.plot()
+
+    **Examples**::
+
+        sim.plot_result('doubling_time')
+    '''
+    fig_args  = sc.mergedicts({'figsize':(16,10)}, fig_args)
+    plot_args = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
+    fig = pl.figure(**fig_args)
+    pl.subplot(111)
+    tvec = sim.results['t']
+    res = sim.results[key]
+    y = res.values
+    color = res.color
+    pl.plot(tvec, y, c=color, **plot_args)
+    return fig
 
 
 def get_individual_states(sim):
@@ -48,18 +203,18 @@ def get_individual_states(sim):
     for state in states:
         date = state['quantity']
         if date is not None:
-            inds = cv.defined(people[date])
+            inds = sim.people.defined(date)
             for ind in inds:
                 z[ind, int(people[date][ind]):] = state['value']
 
     return z, states
 
 
-def standard_plots(sim):
+def plotly_sim(sim):
     ''' Main simulation results -- parallel of sim.plot() '''
 
     plots = []
-    to_plot = cv.get_sim_plots()
+    to_plot = cvd.get_sim_plots()
     for p,title,keylabels in to_plot.enumitems():
         fig = go.Figure()
         for key in keylabels:
@@ -87,7 +242,7 @@ def standard_plots(sim):
     return plots
 
 
-def plot_people(sim, do_show=False):
+def plotly_people(sim, do_show=False):
     ''' Plot a "cascade" of people moving through different states '''
     z, states = get_individual_states(sim)
 
@@ -106,10 +261,11 @@ def plot_people(sim, do_show=False):
     if sim['interventions']:
         for interv in sim['interventions']:
                 if hasattr(interv, 'days'):
-                    for interv_day in interv.days:
-                        if interv_day > 0 and interv_day < sim['n_days']:
-                            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
+                    if interv.do_plot:
+                        for interv_day in interv.days:
+                            if interv_day > 0 and interv_day < sim['n_days']:
+                                fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+                                fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
     fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
@@ -120,7 +276,7 @@ def plot_people(sim, do_show=False):
     return fig
 
 
-def animate_people(sim, do_show=False):
+def plotly_animate(sim, do_show=False):
     ''' Plot an animation of each person in the sim '''
 
     z, states = get_individual_states(sim)

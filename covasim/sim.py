@@ -6,8 +6,6 @@ Defines the Sim class, Covasim's core class.
 import numpy as np
 import pylab as pl
 import sciris as sc
-import datetime as dt
-import matplotlib.ticker as ticker
 from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
@@ -16,6 +14,7 @@ from . import defaults as cvd
 from . import parameters as cvpar
 from . import population as cvpop
 from . import interventions as cvi
+from . import plotting as cvplt
 
 # Specify all externally visible things this file defines
 __all__ = ['Sim']
@@ -652,124 +651,40 @@ class Sim(cvb.BaseSim):
 
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             scatter_args=None, axis_args=None, legend_args=None, as_dates=True, dateformat=None,
-             interval=None, n_cols=1, font_size=18, font_family=None, use_grid=True, use_commaticks=True,
-             log_scale=False, do_show=True, verbose=None):
+             scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
+             interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
+             log_scale=False, do_show=True, sep_figs=False, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
-            to_plot (dict): Nested dict of results to plot; see get_sim_plots() for structure
-            do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
-            fig_path (str): Path to save the figure
-            fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
+            to_plot      (dict): Dict of results to plot; see get_sim_plots() for structure
+            do_save      (bool): Whether or not to save the figure
+            fig_path     (str):  Path to save the figure
+            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-            axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            legend_args (dict): Dictionary of kwargs to be passed to pl.legend()
-            as_dates (bool): Whether to plot the x-axis as dates or time points
-            dateformat (str): Date string format, e.g. '%B %d'
-            interval (int): Interval between tick marks
-            n_cols (int): Number of columns of subpanels to use for subplot
-            font_size (int): Size of the font
-            font_family (str): Font face
-            use_grid (bool): Whether or not to plot gridlines
-            use_commaticks (bool): Plot y-axis with commas rather than scientific notation
-            log_scale (bool or list): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
-            do_show (bool): Whether or not to show the figure
-            verbose (bool): Display a bit of extra information
+            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
+            as_dates     (bool): Whether to plot the x-axis as dates or time points
+            dateformat   (str):  Date string format, e.g. '%B %d'
+            interval     (int):  Interval between tick marks
+            n_cols       (int):  Number of columns of subpanels to use for subplot
+            font_size    (int):  Size of the font
+            font_family  (str):  Font face
+            grid         (bool): Whether or not to plot gridlines
+            commaticks   (bool): Plot y-axis with commas rather than scientific notation
+            log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
+            do_show      (bool): Whether or not to show the figure
+            verbose      (bool): Display a bit of extra information
 
         Returns:
             fig: Figure handle
         '''
-
-        if verbose is None:
-            verbose = self['verbose']
-        sc.printv('Plotting...', 1, verbose)
-
-        if to_plot is None:
-            to_plot = cvd.get_sim_plots()
-        to_plot = sc.odict(to_plot) # In case it's supplied as a dict
-
-        # Handle input arguments -- merge user input with defaults
-        fig_args     = sc.mergedicts({'figsize':(16,14)}, fig_args)
-        plot_args    = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
-        scatter_args = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
-        axis_args    = sc.mergedicts({'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}, axis_args)
-        legend_args  = sc.mergedicts({'loc': 'best'}, legend_args)
-
-        fig = pl.figure(**fig_args)
-        pl.subplots_adjust(**axis_args)
-        pl.rcParams['font.size'] = font_size
-        if font_family:
-            pl.rcParams['font.family'] = font_family
-
-        res = self.results # Shorten since heavily used
-
-        # Plot everything
-        n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
-        for p,title,keylabels in to_plot.enumitems():
-            if p == 0:
-                ax = pl.subplot(n_rows, n_cols, p+1)
-            else:
-                ax = pl.subplot(n_rows, n_cols, p + 1, sharex=ax)
-            if log_scale:
-                if isinstance(log_scale, list):
-                    if title in log_scale:
-                        ax.set_yscale('log')
-                else:
-                    ax.set_yscale('log')
-            for key in keylabels:
-                label = res[key].name
-                this_color = res[key].color
-                y = res[key].values
-                pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
-                if self.data is not None and key in self.data:
-                    data_t = (self.data.index-self['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
-                    pl.scatter(data_t, self.data[key], c=[this_color], **scatter_args)
-            if self.data is not None and len(self.data):
-                pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-
-            pl.legend(**legend_args)
-            pl.grid(use_grid)
-            sc.setylim()
-            if use_commaticks:
-                sc.commaticks()
-            pl.title(title)
-
-            # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-            if interval:
-                xmin,xmax = ax.get_xlim()
-                ax.set_xticks(pl.arange(xmin, xmax+1, interval))
-
-            # Set xticks as dates
-            if as_dates:
-                @ticker.FuncFormatter
-                def date_formatter(x, pos):
-                    return (self['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
-                ax.xaxis.set_major_formatter(date_formatter)
-                if not interval:
-                    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-
-            # Plot interventions
-            for intervention in self['interventions']:
-                intervention.plot(self, ax)
-
-        # Ensure the figure actually renders or saves
-        if do_save:
-            if fig_path is None: # No figpath provided - see whether do_save is a figpath
-                if isinstance(do_save, str) :
-                    fig_path = do_save # It's a string, assume it's a filename
-                else:
-                    fig_path = 'covasim.png' # Just give it a default name
-            fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-            pl.savefig(fig_path)
-
-        if do_show:
-            pl.show()
-        else:
-            pl.close(fig)
-
+        fig = cvplt.plot(sim=self, to_plot=to_plot, do_save=do_save, fig_path=fig_path, fig_args=fig_args, plot_args=plot_args,
+             scatter_args=scatter_args, axis_args=axis_args, legend_args=legend_args, as_dates=as_dates, dateformat=dateformat,
+             interval=interval, n_cols=n_cols, font_size=font_size, font_family=font_family, grid=grid, commaticks=commaticks,
+             log_scale=log_scale, do_show=do_show, verbose=verbose)
         return fig
 
 
@@ -787,13 +702,5 @@ class Sim(cvb.BaseSim):
 
             sim.plot_result('doubling_time')
         '''
-        fig_args  = sc.mergedicts({'figsize':(16,10)}, fig_args)
-        plot_args = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
-        fig = pl.figure(**fig_args)
-        pl.subplot(111)
-        tvec = self.results['t']
-        res = self.results[key]
-        y = res.values
-        color = res.color
-        pl.plot(tvec, y, c=color, **plot_args)
+        fig = cvplt.plot_result(sim=self, key=key, fig_args=fig_args, plot_args=plot_args)
         return fig

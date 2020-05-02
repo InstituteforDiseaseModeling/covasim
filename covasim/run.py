@@ -563,9 +563,9 @@ class Scenarios(cvb.ParsObj):
 
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
+             scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
              interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
-             do_show=True, sep_figs=False, verbose=None):
+             log_scale=False, do_show=True, sep_figs=False, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -575,6 +575,7 @@ class Scenarios(cvb.ParsObj):
             fig_path    (str):  Path to save the figure
             fig_args    (dict): Dictionary of kwargs to be passed to pl.figure()
             plot_args   (dict): Dictionary of kwargs to be passed to pl.plot()
+            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between()
             legend_args (dict): Dictionary of kwargs to be passed to pl.legend()
@@ -586,6 +587,7 @@ class Scenarios(cvb.ParsObj):
             font_family (str):  Font face
             grid        (bool): Whether or not to plot gridlines
             commaticks  (bool): Plot y-axis with commas rather than scientific notation
+            log_scale (bool or list): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
             do_show     (bool): Whether or not to show the figure
             sep_figs    (bool): Whether to show separate figures for different results instead of subplots
             verbose     (bool): Display a bit of extra information
@@ -605,7 +607,8 @@ class Scenarios(cvb.ParsObj):
         # Handle input arguments -- merge user input with defaults
         fig_args    = sc.mergedicts({'figsize': (16, 14)}, fig_args)
         plot_args   = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-        axis_args   = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.90, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
+        scatter_args = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
+        axis_args   = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
         fill_args   = sc.mergedicts({'alpha': 0.2}, fill_args)
         legend_args = sc.mergedicts({'loc': 'best'}, legend_args)
 
