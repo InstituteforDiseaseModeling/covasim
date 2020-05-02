@@ -75,6 +75,25 @@ def test_scenarios(do_plot=False):
     return scens
 
 
+def test_multisim_reduce(do_plot=False): # If being run via pytest, turn off
+    sc.heading('Combine results test')
+
+    n_runs = 3
+    pop_size = 1000
+    pop_infected = 10
+
+    print('Running first sim...')
+    sim = cv.Sim(pop_size=pop_size, pop_infected=pop_infected)
+    msim = cv.MultiSim(sim)
+    msim.run(n_runs=n_runs, keep_people=True)
+    # msim.reduce()
+
+    # if do_plot:
+    #     msim.plot()
+
+    return msim
+
+
 def test_multisim_combine(do_plot=False): # If being run via pytest, turn off
     sc.heading('Combine results test')
 
@@ -94,7 +113,7 @@ def test_multisim_combine(do_plot=False): # If being run via pytest, turn off
     sim2.run()
 
     if do_plot:
-        msim.plot()
+        sim1.plot()
         sim2.plot()
 
     return msim
@@ -106,8 +125,8 @@ if __name__ == '__main__':
 
     # sim1  = test_singlerun()
     # sims2 = test_multirun(do_plot=do_plot)
-    # sims3 = test_multisim_stats(do_plot=do_plot)
-    sims4 = test_multisim_combine(do_plot=do_plot)
+    msim1 = test_multisim_reduce(do_plot=do_plot)
+    # msim2 = test_multisim_combine(do_plot=do_plot)
 
     # scens = test_scenarios(do_plot=do_plot)
 
