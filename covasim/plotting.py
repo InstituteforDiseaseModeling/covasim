@@ -406,7 +406,7 @@ def plotly_animate(sim, do_show=False):
         "currentvalue": {
             "font": {"size": 20},
             "prefix": "Day: ",
-            "visible": True,
+            "visible": False,
             "xanchor": "right"
         },
         "transition": {"duration": 200},
@@ -448,27 +448,27 @@ def plotly_animate(sim, do_show=False):
 
     fig = go.Figure(fig_dict)
 
-    fig.update_layout(
-    autosize=True,
-        xaxis=dict(
-            automargin=True,
-            range=[-0.5, x_size + 0.5],
-            constrain="domain",
-            showgrid=False,
-            showline=False,
-            showticklabels=False,
-        ),
-        yaxis=dict(
-            automargin=True,
-            range=[-0.5, y_size + 0.5],
-            constrain="domain",
-            scaleanchor="x",
-            scaleratio=1,
-            showgrid=False,
-            showline=False,
-            showticklabels=False,
-        ),
-    )
+    # fig.update_layout(
+    # autosize=True,
+    #     xaxis=dict(
+    #         automargin=True,
+    #         range=[-0.5, x_size + 0.5],
+    #         constrain="domain",
+    #         showgrid=False,
+    #         showline=False,
+    #         showticklabels=False,
+    #     ),
+    #     yaxis=dict(
+    #         automargin=True,
+    #         range=[-0.5, y_size + 0.5],
+    #         constrain="domain",
+    #         scaleanchor="x",
+    #         scaleratio=1,
+    #         showgrid=False,
+    #         showline=False,
+    #         showticklabels=False,
+    #     ),
+    # )
 
 
     fig.update_layout(title={'text': 'Epidemic over time'}, **plotly_legend)
