@@ -357,7 +357,7 @@ def plotly_animate(sim, do_show=False):
     max_color = max(states, key=lambda x: x['value'])['value']
     colorscale = [[x['value'] / max_color, x['color']] for x in states]
 
-    aspect = 3
+    aspect = 5
     y_size = int(np.ceil((z.shape[0] / aspect) ** 0.5))
     x_size = int(np.ceil(aspect * y_size))
 
@@ -448,27 +448,20 @@ def plotly_animate(sim, do_show=False):
 
     fig = go.Figure(fig_dict)
 
-    # fig.update_layout(
-    # autosize=True,
-    #     xaxis=dict(
-    #         automargin=True,
-    #         range=[-0.5, x_size + 0.5],
-    #         constrain="domain",
-    #         showgrid=False,
-    #         showline=False,
-    #         showticklabels=False,
-    #     ),
-    #     yaxis=dict(
-    #         automargin=True,
-    #         range=[-0.5, y_size + 0.5],
-    #         constrain="domain",
-    #         scaleanchor="x",
-    #         scaleratio=1,
-    #         showgrid=False,
-    #         showline=False,
-    #         showticklabels=False,
-    #     ),
-    # )
+    fig.update_layout(
+    autosize=True,
+        xaxis=dict(
+            showgrid=False,
+            showline=False,
+            showticklabels=False,
+        ),
+        yaxis=dict(
+            automargin=True,
+            showgrid=False,
+            showline=False,
+            showticklabels=False,
+        ),
+    )
 
 
     fig.update_layout(title={'text': 'Epidemic over time'}, **plotly_legend)
