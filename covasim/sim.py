@@ -676,15 +676,14 @@ class Sim(cvb.BaseSim):
             commaticks   (bool): Plot y-axis with commas rather than scientific notation
             log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
             do_show      (bool): Whether or not to show the figure
-            verbose      (bool): Display a bit of extra information
 
         Returns:
             fig: Figure handle
         '''
-        fig = cvplt.plot(sim=self, to_plot=to_plot, do_save=do_save, fig_path=fig_path, fig_args=fig_args, plot_args=plot_args,
+        fig = cvplt.plot_sim(sim=self, to_plot=to_plot, do_save=do_save, fig_path=fig_path, fig_args=fig_args, plot_args=plot_args,
              scatter_args=scatter_args, axis_args=axis_args, legend_args=legend_args, as_dates=as_dates, dateformat=dateformat,
              interval=interval, n_cols=n_cols, font_size=font_size, font_family=font_family, grid=grid, commaticks=commaticks,
-             log_scale=log_scale, do_show=do_show, verbose=verbose)
+             log_scale=log_scale, do_show=do_show)
         return fig
 
 

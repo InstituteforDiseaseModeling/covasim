@@ -344,7 +344,6 @@ class Scenarios(cvb.ParsObj):
             log_scale (bool or list): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
             do_show     (bool): Whether or not to show the figure
             sep_figs    (bool): Whether to show separate figures for different results instead of subplots
-            verbose     (bool): Display a bit of extra information
 
         Returns:
             fig: Figure handle
@@ -352,7 +351,7 @@ class Scenarios(cvb.ParsObj):
         fig = cvplt.plot_scens(scens=self, to_plot=to_plot, do_save=do_save, fig_path=fig_path, fig_args=fig_args, plot_args=plot_args,
              scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args, legend_args=legend_args, as_dates=as_dates, dateformat=dateformat,
              interval=interval, n_cols=n_cols, font_size=font_size, font_family=font_family, grid=grid, commaticks=commaticks,
-             log_scale=log_scale, do_show=do_show, sep_figs=sep_figs, verbose=verbose)
+             log_scale=log_scale, do_show=do_show, sep_figs=sep_figs)
 
         return fig
 

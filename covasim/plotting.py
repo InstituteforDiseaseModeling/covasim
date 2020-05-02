@@ -12,10 +12,110 @@ import plotly.graph_objects as go
 from . import defaults as cvd
 
 
-__all__ = ['plot', 'plot_result', 'plotly_sim', 'plotly_people', 'plotly_animate']
+__all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
 
-def plot(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+
+
+
+def handle_args(to_plot, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args):
+    ''' Handle input arguments -- merge user input with defaults '''
+    args = sc.objdict()
+    args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
+    args.plot    = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
+    args.scatter = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
+    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
+    args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
+    args.legend  = sc.mergedicts({'loc': 'best'}, legend_args)
+
+    if to_plot is None:
+        to_plot = cvd.get_scen_plots()
+    to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
+
+    return to_plot, args
+
+
+def create_figs(sep_figs, args, font_size, font_family):
+    if sep_figs:
+        fig = None
+        figs = []
+    else:
+        fig = pl.figure(**args.fig)
+        figs = None
+    pl.subplots_adjust(**args.axis)
+    pl.rcParams['font.size'] = font_size
+    if font_family:
+        pl.rcParams['font.family'] = font_family
+    return fig, figs
+
+
+def create_subplots(figs, ax, n_rows, n_cols, rk, fig_args, sep_figs):
+    if sep_figs:
+        figs.append(pl.figure(**fig_args))
+        ax = pl.subplot(111)
+    else:
+        if rk == 0:
+            ax = pl.subplot(n_rows, n_cols, rk+1)
+        else:
+            ax = pl.subplot(n_rows, n_cols, rk+1, sharex=ax)
+    return ax
+
+
+def title_grid_ticks_legend(title, grid, commaticks, legend_args, rk):
+    pl.title(title)
+    if rk == 0:
+        pl.legend(**legend_args)
+
+    pl.grid(grid)
+    if commaticks:
+        sc.commaticks()
+    return
+
+
+def plot_data(sim, key, scatter_args):
+    if sim.data is not None and key in sim.data and len(sim.data[key]):
+        this_color = sim.results[key].color
+        data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
+        pl.scatter(data_t, sim.data[key], c=[this_color], **scatter_args)
+        pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+    return
+
+
+def reset_ticks(ax, sim, interval, as_dates):
+    if interval:
+        xmin,xmax = ax.get_xlim()
+        ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+
+    # Set xticks as dates
+    if as_dates:
+
+        @ticker.FuncFormatter
+        def date_formatter(x, pos):
+            return (sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+
+        ax.xaxis.set_major_formatter(date_formatter)
+        if not interval:
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+    return
+
+
+def tidy_up(fig, do_save, fig_path, do_show, default_name):
+    if do_save:
+        if fig_path is None: # No figpath provided - see whether do_save is a figpath
+            fig_path = default_name # Just give it a default name
+        fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
+        pl.savefig(fig_path)
+
+    if do_show:
+        pl.show()
+    else:
+        pl.close(fig)
+
+    return
+
+
+def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
          log_scale=False, do_show=True, sep_figs=False, verbose=None):
@@ -140,100 +240,6 @@ def plot(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_arg
     return fig
 
 
-def handle_args(to_plot, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args):
-    ''' Handle input arguments -- merge user input with defaults '''
-    args = sc.objdict()
-    args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
-    args.plot    = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-    args.scatter = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
-    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
-    args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
-    args.legend  = sc.mergedicts({'loc': 'best'}, legend_args)
-
-    if to_plot is None:
-        to_plot = cvd.get_scen_plots()
-    to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
-
-    return to_plot, args
-
-
-def create_figs(sep_figs, args, font_size, font_family):
-    if sep_figs:
-        fig = None
-        figs = []
-    else:
-        fig = pl.figure(**args.fig)
-        figs = None
-    pl.subplots_adjust(**args.axis)
-    pl.rcParams['font.size'] = font_size
-    if font_family:
-        pl.rcParams['font.family'] = font_family
-    return fig, figs
-
-
-def create_subplots(figs, n_rows, n_cols, rk, fig_args, sep_figs):
-    if sep_figs:
-        figs.append(pl.figure(**fig_args))
-        ax = pl.subplot(111)
-    else:
-        if rk == 0:
-            ax = pl.subplot(n_rows, n_cols, rk+1)
-        else:
-            ax = pl.subplot(n_rows, n_cols, rk+1, sharex=ax)
-    return ax
-
-
-def title_grid_ticks_legend(title, grid, commaticks, legend_args, rk):
-    pl.title(title)
-    if rk == 0:
-        pl.legend(**legend_args)
-
-    pl.grid(grid)
-    if commaticks:
-        sc.commaticks()
-    return
-
-
-def plot_data(sim, reskey, plot_args):
-    if sim.data is not None and reskey in sim.data:
-        data_t = np.array((sim.data.index-sim['start_day'])/np.timedelta64(1,'D'))
-        pl.plot(data_t, sim.data[reskey], 'sk', **plot_args)
-    return
-
-
-def reset_ticks(ax, sim, interval, as_dates):
-    if interval:
-        xmin,xmax = ax.get_xlim()
-        ax.set_xticks(pl.arange(xmin, xmax+1, interval))
-
-    # Set xticks as dates
-    if as_dates:
-
-        @ticker.FuncFormatter
-        def date_formatter(x, pos):
-            return (sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
-
-        ax.xaxis.set_major_formatter(date_formatter)
-        if not interval:
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-
-    return
-
-def tidy_up(fig, do_save, fig_path, do_show, default_name):
-    if do_save:
-        if fig_path is None: # No figpath provided - see whether do_save is a figpath
-            fig_path = default_name # Just give it a default name
-        fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-        pl.savefig(fig_path)
-
-    if do_show:
-        pl.show()
-    else:
-        pl.close(fig)
-
-    return
-
-
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
@@ -275,15 +281,16 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
     fig, figs = create_figs(sep_figs, args, font_size, font_family)
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
+    ax = None
     for rk,title,reskeys in to_plot.enumitems():
-        ax = create_subplots(figs, n_rows, n_cols, rk, args.fig, sep_figs)
+        ax = create_subplots(figs, ax, n_rows, n_cols, rk, args.fig, sep_figs)
         for reskey in reskeys:
             resdata = scens.results[reskey]
             for scenkey, scendata in resdata.items():
                 pl.fill_between(scens.tvec, scendata.low, scendata.high, **args.fill)
                 pl.plot(scens.tvec, scendata.best, label=scendata.name, **args.plot)
                 title_grid_ticks_legend(title, grid, commaticks, args.legend, rk)
-                plot_data(sim, reskey)
+                plot_data(sim, reskey, args.scatter)
                 reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     # Ensure the figure actually renders or saves
