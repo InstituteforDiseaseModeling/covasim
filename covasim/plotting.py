@@ -15,7 +15,7 @@ from . import defaults as cvd
 __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
 
-def handle_args(which, to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args):
+def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None):
     ''' Handle input arguments -- merge user input with defaults '''
     args = sc.objdict()
     args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
@@ -24,6 +24,11 @@ def handle_args(which, to_plot, n_cols, fig_args, plot_args, scatter_args, axis_
     args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
     args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
     args.legend  = sc.mergedicts({'loc': 'best'}, legend_args)
+    return args
+
+
+def handle_to_plot(which, to_plot, n_cols):
+    ''' Handle which quantities to plot '''
 
     if to_plot is None:
         if which == 'sim':
@@ -37,10 +42,10 @@ def handle_args(which, to_plot, n_cols, fig_args, plot_args, scatter_args, axis_
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
 
-    return to_plot, n_rows, args
+    return to_plot, n_rows
 
 
-def create_figs(sep_figs, args, font_size, font_family):
+def create_figs(args, font_size, font_family, sep_figs):
     ''' Create the figures and set overall figure properties '''
     if sep_figs:
         fig = None
@@ -103,11 +108,12 @@ def title_grid_legend(title, grid, legend_args, show_legend=True):
     return
 
 
-def reset_ticks(ax, sim, commaticks, interval, as_dates):
+def reset_ticks(ax, sim, y, commaticks, interval, as_dates):
     ''' Set the tick marks, using dates by default '''
 
     if commaticks:
-        sc.commaticks()
+        if y.max() >= 1000:
+            sc.commaticks()
 
     if interval:
         xmin,xmax = ax.get_xlim()
@@ -148,13 +154,14 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name):
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
-         interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
+         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True,
          log_scale=False, do_show=True, sep_figs=False, verbose=None):
     ''' Plot the results of a sim -- see Sim.plot() for documentation. '''
 
     # Handle inputs
-    to_plot, n_rows, args = handle_args('sim', to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    fig, figs, ax = create_figs(sep_figs, args, font_size, font_family)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs)
 
     # Do the plotting
     for pnum,title,keylabels in to_plot.enumitems():
@@ -162,24 +169,26 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
         for reskey in keylabels:
             res = sim.results[reskey]
             res_t = sim.results['t']
-            pl.plot(res_t, res.values, label=res.name, **args.plot, c=res.color)
+            res_y = res.values
+            ax.plot(res_t, res_y, label=res.name, **args.plot, c=res.color)
             plot_data(sim, reskey, args.scatter) # Plot the data
             plot_interventions(sim, ax) # Plot the interventions
             title_grid_legend(title, grid, args.legend) # Configure the title, grid, and legend
-            reset_ticks(ax, sim, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+            reset_ticks(ax, sim, res_y, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png')
 
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
-         interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
+         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True,
          log_scale=False, do_show=True, sep_figs=False):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation. '''
 
     # Handle inputs
-    to_plot, n_rows, args = handle_args('scens', to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    fig, figs, ax = create_figs(sep_figs, args, font_size, font_family)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs)
 
     # Do the plotting
     for pnum,title,reskeys in to_plot.enumitems():
@@ -188,27 +197,39 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
             resdata = scens.results[reskey]
             for scenkey, scendata in resdata.items():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
+                res_y = scendata.best
                 ax.fill_between(scens.tvec, scendata.low, scendata.high, **args.fill) # Create the uncertainty bound
-                ax.plot(scens.tvec, scendata.best, label=scendata.name, **args.plot) # Plot the actual line
+                ax.plot(scens.tvec, res_y, label=scendata.name, **args.plot) # Plot the actual line
                 plot_data(sim, reskey, args.scatter) # Plot the data
                 plot_interventions(sim, ax) # Plot the interventions
                 title_grid_legend(title, grid, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
-                reset_ticks(ax, sim, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                reset_ticks(ax, sim, res_y, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim_scenarios.png')
 
 
-def plot_result(sim, key, fig_args=None, plot_args=None):
+def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
+                font_size=18, font_family=None, grid=False, commaticks=True, as_dates=True,
+                dateformat=None, interval=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation. '''
-    fig_args  = sc.mergedicts({'figsize':(16,10)}, fig_args)
-    plot_args = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
-    fig = pl.figure(**fig_args)
-    pl.subplot(111)
-    tvec = sim.results['t']
+
+    # Handle inputs
+    fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
+    axis_args = sc.mergedicts({'top': 0.95}, axis_args)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False)
+
+    # Do the plotting
+    ax = pl.subplot(111)
     res = sim.results[key]
-    y = res.values
-    color = res.color
-    pl.plot(tvec, y, c=color, **plot_args)
+    res_t = sim.results['t']
+    res_y = res.values
+    ax.plot(res_t, res_y, c=res.color, **args.plot)
+    plot_data(sim, key, args.scatter) # Plot the data
+    plot_interventions(sim, ax) # Plot the interventions
+    title_grid_legend(res.name, grid, args.legend, show_legend=False) # Configure the title, grid, and legend
+    reset_ticks(ax, sim, res_y, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+
     return fig
 
 

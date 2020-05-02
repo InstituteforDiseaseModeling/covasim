@@ -318,7 +318,7 @@ class Scenarios(cvb.ParsObj):
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
-             interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
+             interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True,
              log_scale=False, do_show=True, sep_figs=False, verbose=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.

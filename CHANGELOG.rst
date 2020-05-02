@@ -10,6 +10,7 @@ Version 0.30.0 (2020-05-02)
 ---------------------------
 - Added new ``MultiSim`` class for plotting a single simulation with uncertainty.
 - Refactored plotting to increase consistency between ``sim.plot()``, ``sim.plot_result()``, ``scens.plot()``, and ``multisim.plot()``.
+- Doubling time calculation defaults have been updated to use a window of 3 days and a maximum of 30 days.
 
 
 Version 0.29.9 (2020-04-28)
