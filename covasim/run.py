@@ -67,14 +67,12 @@ class MultiSim(sc.prettyobj):
         if base_sim is None:
             if isinstance(sims, cvs.Sim):
                 base_sim = sims
-                sims = []
+                sims = None
             elif isinstance(sims, list):
                 base_sim = sims[0]
             else:
                 errormsg = f'If base_sim is not supplied, sims must be either a sims or a list of sims, not {type(sims)}'
                 raise TypeError(errormsg)
-        if sims is None:
-            sims = []
 
         self.sims = sims
         self.base_sim = base_sim
@@ -113,12 +111,16 @@ class MultiSim(sc.prettyobj):
         Returns:
             None (modifies Scenarios object in place)
         '''
+        if self.sims is None:
+            sims = self.base_sim
+        else:
+            sims = self.sims
 
-        self.sims = multi_run(self.sims, *args, **kwargs)
+        self.sims = multi_run(sims, *args, **kwargs)
         return
 
 
-    def combine(self, keep_people=False, output=False):
+    def combine(self, output=False):
         ''' Combine multiple sims into a single sim with scaled results '''
 
         n_runs = len(self)
@@ -127,7 +129,7 @@ class MultiSim(sc.prettyobj):
         combined_sim['pop_size'] *= n_runs  # Record the number of people
 
         for s,sim in enumerate(self.sims[1:]): # Skip the first one
-            if keep_people:
+            if combined_sim.people:
                 combined_sim.people += sim.people
             for key in sim.result_keys():
                 this_res = sim.results[key]
@@ -803,7 +805,7 @@ class Scenarios(cvb.ParsObj):
         return scens
 
 
-def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=False, run_args=None, sim_args=None, **kwargs):
+def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, verbose=None, keep_people=False, run_args=None, sim_args=None, **kwargs):
     '''
     Convenience function to perform a single simulation run. Mostly used for
     parallelization, but can also be used directly.
@@ -811,6 +813,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     Args:
         sim (Sim): the sim instance to be run
         ind (int): the index of this sim
+        reseed (bool): whether or not to generate a fresh seed for each run
         noise (float): the amount of noise to add to each run
         noisepar (string): the name of the parameter to add noise to
         verbose (int): detail to print
@@ -836,8 +839,9 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     sim_args = sc.mergedicts(sim_args, kwargs)
     run_args = sc.mergedicts({'verbose':verbose}, run_args)
 
-    new_sim['rand_seed'] += ind # Reset the seed, otherwise no point of parallel runs
-    new_sim.set_seed()
+    if reseed:
+        new_sim['rand_seed'] += ind # Reset the seed, otherwise no point of parallel runs
+        new_sim.set_seed()
 
     # If the noise parameter is not found, guess what it should be
     if noisepar is None:
@@ -876,7 +880,7 @@ def single_run(sim, ind=0, noise=0.0, noisepar=None, verbose=None, keep_people=F
     return new_sim
 
 
-def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=None, combine=False, keep_people=None, run_args=None, sim_args=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, verbose=None, combine=False, keep_people=None, run_args=None, sim_args=None, **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
@@ -884,6 +888,7 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     Args:
         sim (Sim or list): the sim instance to be run, or a list of sims.
         n_runs (int): the number of parallel runs
+        reseed (bool): whether or not to generate a fresh seed for each run
         noise (float): the amount of noise to add to each run
         noisepar (string): the name of the parameter to add noise to
         iterpars (dict): any other parameters to iterate over the runs; see sc.parallelize() for syntax
@@ -925,7 +930,7 @@ def multi_run(sim, n_runs=4, noise=0.0, noisepar=None, iterpars=None, verbose=No
     if isinstance(sim, cvs.Sim): # Normal case: one sim
         iterkwargs = {'ind':np.arange(n_runs)}
         iterkwargs.update(iterpars)
-        kwargs = {'sim':sim, 'noise':noise, 'noisepar':noisepar, 'verbose':verbose, 'keep_people':keep_people, 'sim_args':sim_args, 'run_args':run_args}
+        kwargs = dict(sim=sim, reseed=reseed, noise=noise, noisepar=noisepar, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args)
         sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
     elif isinstance(sim, list): # List of sims
         iterkwargs = {'sim':sim}

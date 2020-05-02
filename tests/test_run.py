@@ -85,9 +85,8 @@ def test_multisim_combine(do_plot=False): # If being run via pytest, turn off
     print('Running first sim...')
     sim = cv.Sim(pop_size=pop_size, pop_infected=pop_infected)
     msim = cv.MultiSim(sim)
-    msim.replicate(n_runs)
-    msim.run()
-    sim1 = msim.combine(output=True, keep_people=True)
+    msim.run(n_runs=n_runs, keep_people=True)
+    sim1 = msim.combine(output=True)
     assert sim1['pop_size'] == pop_size*n_runs
 
     print('Running second sim, results should be similar but not identical (stochastic differences)...')
