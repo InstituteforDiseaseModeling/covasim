@@ -15,9 +15,6 @@ from . import defaults as cvd
 __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
 
-
-
-
 def handle_args(which, to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args):
     ''' Handle input arguments -- merge user input with defaults '''
     args = sc.objdict()
@@ -44,6 +41,7 @@ def handle_args(which, to_plot, n_cols, fig_args, plot_args, scatter_args, axis_
 
 
 def create_figs(sep_figs, args, font_size, font_family):
+    ''' Create the figures and set overall figure properties '''
     if sep_figs:
         fig = None
         figs = []
@@ -58,6 +56,7 @@ def create_figs(sep_figs, args, font_size, font_family):
 
 
 def create_subplots(figs, ax, n_rows, n_cols, rk, fig_args, sep_figs, log_scale, title):
+    ''' Create subplots and set logarithmic scale '''
     if sep_figs:
         figs.append(pl.figure(**fig_args))
         ax = pl.subplot(111)
@@ -78,6 +77,7 @@ def create_subplots(figs, ax, n_rows, n_cols, rk, fig_args, sep_figs, log_scale,
 
 
 def plot_data(sim, key, scatter_args):
+    ''' Add data to the plot '''
     if sim.data is not None and key in sim.data and len(sim.data[key]):
         this_color = sim.results[key].color
         data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
@@ -86,15 +86,17 @@ def plot_data(sim, key, scatter_args):
     return
 
 
-def plot_interventions(sim, ax): # Plot the interventions
+def plot_interventions(sim, ax):
+    ''' Add interventions to the plot '''
     for intervention in sim['interventions']:
         intervention.plot(sim, ax)
     return
 
 
-def title_grid_legend(title, grid, legend_args, show=True):
+def title_grid_legend(title, grid, legend_args, show_legend=True):
+    ''' Set the plot title, add a legend, optionally add gridlines, and set the tickmarks '''
     pl.title(title)
-    if show: # Only show the legend for some subplots
+    if show_legend: # Only show the legend for some subplots
         pl.legend(**legend_args)
     pl.grid(grid)
     sc.setylim()
@@ -102,6 +104,7 @@ def title_grid_legend(title, grid, legend_args, show=True):
 
 
 def reset_ticks(ax, sim, commaticks, interval, as_dates):
+    ''' Set the tick marks, using dates by default '''
 
     if commaticks:
         sc.commaticks()
@@ -125,6 +128,7 @@ def reset_ticks(ax, sim, commaticks, interval, as_dates):
 
 
 def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name):
+    ''' Handle saving, figure showing, and what value to return '''
     if do_save:
         if fig_path is None: # No figpath provided - see whether do_save is a figpath
             fig_path = default_name # Just give it a default name
