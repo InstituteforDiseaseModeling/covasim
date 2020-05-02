@@ -86,10 +86,10 @@ def test_multisim_reduce(do_plot=False): # If being run via pytest, turn off
     sim = cv.Sim(pop_size=pop_size, pop_infected=pop_infected)
     msim = cv.MultiSim(sim)
     msim.run(n_runs=n_runs, keep_people=True)
-    # msim.reduce()
+    msim.reduce()
 
-    # if do_plot:
-    #     msim.plot()
+    if do_plot:
+        msim.plot()
 
     return msim
 

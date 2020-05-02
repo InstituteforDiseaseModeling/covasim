@@ -169,12 +169,13 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
         for reskey in keylabels:
             res = sim.results[reskey]
             res_t = sim.results['t']
-            res_y = res.values
-            ax.plot(res_t, res_y, label=res.name, **args.plot, c=res.color)
+            if res.low is not None and res.high is not None:
+                ax.fill_between(res_t, res.low, res.hig, **args.fill) # Create the uncertainty bound
+            ax.plot(res_t, res.values, label=res.name, **args.plot, c=res.color)
             plot_data(sim, reskey, args.scatter) # Plot the data
             plot_interventions(sim, ax) # Plot the interventions
             title_grid_legend(title, grid, args.legend) # Configure the title, grid, and legend
-            reset_ticks(ax, sim, res_y, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+            reset_ticks(ax, sim, res.values, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png')
 
