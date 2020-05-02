@@ -277,6 +277,9 @@ def get_individual_states(sim):
     return z, states
 
 
+# Default settings for the Plotly legend
+plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
+
 def plotly_sim(sim):
     ''' Main simulation results -- parallel of sim.plot() '''
 
@@ -287,13 +290,13 @@ def plotly_sim(sim):
         for key in keylabels:
             label = sim.results[key].name
             this_color = sim.results[key].color
+            x = sim.results['date'][:]
             y = sim.results[key][:]
-            fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
+            fig.add_trace(go.Scatter(x=x, y=y, mode='lines', name=label, line_color=this_color))
             if sim.data is not None and key in sim.data:
-                data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
-                print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
+                xdata = sim.data['date']
                 ydata = sim.data[key]
-                fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
+                fig.add_trace(go.Scatter(x=xdata, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
         if sim['interventions']:
             for interv in sim['interventions']:
@@ -303,7 +306,7 @@ def plotly_sim(sim):
                             fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
                             fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
 
-        fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
+        fig.update_layout(title={'text':title}, yaxis_title='Count', autosize=True, **plotly_legend)
 
         plots.append(fig)
     return plots
@@ -316,8 +319,10 @@ def plotly_people(sim, do_show=False):
     fig = go.Figure()
 
     for state in states[::-1]:  # Reverse order for plotting
+        x = sim.results['date'][:]
+        y = (z == state['value']).sum(axis=0)
         fig.add_trace(go.Scatter(
-            x=sim.tvec, y=(z == state['value']).sum(axis=0),
+            x=x, y=y,
             stackgroup='one',
             line=dict(width=0.5, color=state['color']),
             fillcolor=state['color'],
@@ -335,7 +340,7 @@ def plotly_people(sim, do_show=False):
                                 fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
-    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
+    fig.update_layout(title={'text': 'Numbers of people by health state'}, yaxis_title='People', autosize=True, **plotly_legend)
 
     if do_show:
         fig.show()
@@ -466,7 +471,7 @@ def plotly_animate(sim, do_show=False):
     )
 
 
-    fig.update_layout(title={'text': 'Epidemic over time'})
+    fig.update_layout(title={'text': 'Epidemic over time'}, **plotly_legend)
 
     if do_show:
         fig.show()
