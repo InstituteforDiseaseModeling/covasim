@@ -140,6 +140,68 @@ def plot(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_arg
     return fig
 
 
+def set_figs(figs, n_rows, n_cols, rk, fig_args, sep_figs):
+    if sep_figs:
+        figs.append(pl.figure(**fig_args))
+        ax = pl.subplot(111)
+    else:
+        if rk == 0:
+            ax = pl.subplot(n_rows, n_cols, rk+1)
+        else:
+            ax = pl.subplot(n_rows, n_cols, rk+1, sharex=ax)
+    return ax
+
+
+def title_grid_ticks_legend(title, grid, commaticks, legend_args, rk):
+    pl.title(title)
+    if rk == 0:
+        pl.legend(**legend_args)
+
+    pl.grid(grid)
+    if commaticks:
+        sc.commaticks()
+    return
+
+
+def plot_data(sim, reskey, plot_args):
+    if sim.data is not None and reskey in sim.data:
+        data_t = np.array((sim.data.index-sim['start_day'])/np.timedelta64(1,'D'))
+        pl.plot(data_t, sim.data[reskey], 'sk', **plot_args)
+    return
+
+
+def reset_ticks(ax, sim, interval, as_dates):
+    if interval:
+        xmin,xmax = ax.get_xlim()
+        ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+
+    # Set xticks as dates
+    if as_dates:
+
+        @ticker.FuncFormatter
+        def date_formatter(x, pos):
+            return (sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+
+        ax.xaxis.set_major_formatter(date_formatter)
+        if not interval:
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+    return
+
+def tidy_up(fig, do_save, fig_path, do_show, default_name):
+    if do_save:
+        if fig_path is None: # No figpath provided - see whether do_save is a figpath
+            fig_path = default_name # Just give it a default name
+        fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
+        pl.savefig(fig_path)
+
+    if do_show:
+        pl.show()
+    else:
+        pl.close(fig)
+
+    return
+
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
@@ -205,60 +267,18 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
     for rk,title,reskeys in to_plot.enumitems():
-        if sep_figs:
-            figs.append(pl.figure(**fig_args))
-            ax = pl.subplot(111)
-        else:
-            if rk == 0:
-                ax = pl.subplot(n_rows, n_cols, rk+1)
-            else:
-                ax = pl.subplot(n_rows, n_cols, rk+1, sharex=ax)
-
+        ax = set_figs(figs, n_rows, n_cols, rk, fig_args, sep_figs)
         for reskey in reskeys:
-
             resdata = scens.results[reskey]
-
             for scenkey, scendata in resdata.items():
-
                 pl.fill_between(scens.tvec, scendata.low, scendata.high, **fill_args)
                 pl.plot(scens.tvec, scendata.best, label=scendata.name, **plot_args)
-                pl.title(title)
-                if rk == 0:
-                    pl.legend(**legend_args)
-
-                pl.grid(grid)
-                if commaticks:
-                    sc.commaticks()
-
-                if sim.data is not None and reskey in sim.data:
-                    data_t = np.array((sim.data.index-sim['start_day'])/np.timedelta64(1,'D'))
-                    pl.plot(data_t, sim.data[reskey], 'sk', **plot_args)
-
-                # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-                if interval:
-                    xmin,xmax = ax.get_xlim()
-                    ax.set_xticks(pl.arange(xmin, xmax+1, interval))
-
-                # Set xticks as dates
-                if as_dates:
-                    @ticker.FuncFormatter
-                    def date_formatter(x, pos):
-                        return (sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
-                    ax.xaxis.set_major_formatter(date_formatter)
-                    if not interval:
-                        ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+                title_grid_ticks_legend(title, grid, commaticks, legend_args, rk)
+                plot_data(sim, reskey)
+                reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     # Ensure the figure actually renders or saves
-    if do_save:
-        if fig_path is None: # No figpath provided - see whether do_save is a figpath
-            fig_path = 'covasim_scenarios.png' # Just give it a default name
-        fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-        pl.savefig(fig_path)
-
-    if do_show:
-        pl.show()
-    else:
-        pl.close(fig)
+    tidy_up(fig, do_save, fig_path, do_show, 'covasim_scenarios.png')
 
     return fig
 
