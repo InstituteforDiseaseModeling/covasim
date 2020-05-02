@@ -146,34 +146,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
          log_scale=False, do_show=True, sep_figs=False, verbose=None):
-    '''
-    Plot the results -- can supply arguments for both the figure and the plots.
-
-    Args:
-        to_plot      (dict): Dict of results to plot; see get_sim_plots() for structure
-        do_save      (bool): Whether or not to save the figure
-        fig_path     (str):  Path to save the figure
-        fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
-        plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
-        scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-        axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-        fill_args    (dict): Dictionary of kwargs to be passed to pl.fill_between()
-        legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
-        as_dates     (bool): Whether to plot the x-axis as dates or time points
-        dateformat   (str):  Date string format, e.g. '%B %d'
-        interval     (int):  Interval between tick marks
-        n_cols       (int):  Number of columns of subpanels to use for subplot
-        font_size    (int):  Size of the font
-        font_family  (str):  Font face
-        grid         (bool): Whether or not to plot gridlines
-        commaticks   (bool): Plot y-axis with commas rather than scientific notation
-        log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
-        do_show      (bool): Whether or not to show the figure
-        sep_figs     (bool): Whether to show separate figures for different results instead of subplots
-
-    Returns:
-        fig: Figure handle
-    '''
+    ''' Plot the results of a sim -- see Sim.plot() for documentation. '''
 
     # Handle inputs
     to_plot, n_rows, args = handle_args('sim', to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
@@ -198,35 +171,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
          log_scale=False, do_show=True, sep_figs=False):
-    '''
-    Plot the results -- can supply arguments for both the figure and the plots.
-
-    Args:
-        scens        (Scens): The Scenarios object being plotted
-        to_plot      (dict):  Dict of results to plot; see get_scen_plots() for structure
-        do_save      (bool):  Whether or not to save the figure
-        fig_path     (str):   Path to save the figure
-        fig_args     (dict):  Dictionary of kwargs to be passed to pl.figure()
-        plot_args    (dict):  Dictionary of kwargs to be passed to pl.plot()
-        scatter_args (dict):  Dictionary of kwargs to be passed to pl.scatter()
-        axis_args    (dict):  Dictionary of kwargs to be passed to pl.subplots_adjust()
-        fill_args    (dict):  Dictionary of kwargs to be passed to pl.fill_between()
-        legend_args  (dict):  Dictionary of kwargs to be passed to pl.legend()
-        as_dates     (bool):  Whether to plot the x-axis as dates or time points
-        dateformat   (str):   Date string format, e.g. '%B %d'
-        interval     (int):   Interval between tick marks
-        n_cols       (int):   Number of columns of subpanels to use for subplot
-        font_size    (int):   Size of the font
-        font_family  (str):   Font face
-        grid         (bool):  Whether or not to plot gridlines
-        commaticks   (bool):  Plot y-axis with commas rather than scientific notation
-        log_scale    (bool):  Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
-        do_show      (bool):  Whether or not to show the figure
-        sep_figs     (bool):  Whether to show separate figures for different results instead of subplots
-
-    Returns:
-        fig: Figure handle, or list of figure handles if sep_figs is used
-    '''
+    ''' Plot the results of a scenario -- see Scenarios.plot() for documentation. '''
 
     # Handle inputs
     to_plot, n_rows, args = handle_args('scens', to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
@@ -250,19 +195,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None):
-    '''
-    Simple method to plot a single result. Useful for results that aren't
-    standard outputs.
-
-    Args:
-        key (str): the key of the result to plot
-        fig_args (dict): passed to pl.figure()
-        plot_args (dict): passed to pl.plot()
-
-    **Examples**::
-
-        sim.plot_result('doubling_time')
-    '''
+    ''' Plot a single result -- see Sim.plot_result() for documentation. '''
     fig_args  = sc.mergedicts({'figsize':(16,10)}, fig_args)
     plot_args = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
     fig = pl.figure(**fig_args)
