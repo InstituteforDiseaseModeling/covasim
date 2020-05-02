@@ -46,7 +46,7 @@ def create_figs(sep_figs, args, font_size, font_family):
     pl.rcParams['font.size'] = font_size
     if font_family:
         pl.rcParams['font.family'] = font_family
-    return fig, figs
+    return fig, figs, None # Initialize axis to be None
 
 
 def create_subplots(figs, ax, n_rows, n_cols, rk, fig_args, sep_figs):
@@ -61,17 +61,6 @@ def create_subplots(figs, ax, n_rows, n_cols, rk, fig_args, sep_figs):
     return ax
 
 
-def title_grid_ticks_legend(title, grid, commaticks, legend_args, rk):
-    pl.title(title)
-    if rk == 0:
-        pl.legend(**legend_args)
-
-    pl.grid(grid)
-    if commaticks:
-        sc.commaticks()
-    return
-
-
 def plot_data(sim, key, scatter_args):
     if sim.data is not None and key in sim.data and len(sim.data[key]):
         this_color = sim.results[key].color
@@ -81,7 +70,19 @@ def plot_data(sim, key, scatter_args):
     return
 
 
-def reset_ticks(ax, sim, interval, as_dates):
+def title_grid_legend(title, grid, legend_args, subplot_num):
+    pl.title(title)
+    if subplot_num == 0: # Only show the
+        pl.legend(**legend_args)
+    pl.grid(grid)
+    return
+
+
+def reset_ticks(ax, sim, commaticks, interval, as_dates):
+
+    if commaticks:
+        sc.commaticks()
+
     if interval:
         xmin,xmax = ax.get_xlim()
         ax.set_xticks(pl.arange(xmin, xmax+1, interval))
@@ -100,7 +101,7 @@ def reset_ticks(ax, sim, interval, as_dates):
     return
 
 
-def tidy_up(fig, do_save, fig_path, do_show, default_name):
+def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name):
     if do_save:
         if fig_path is None: # No figpath provided - see whether do_save is a figpath
             fig_path = default_name # Just give it a default name
@@ -112,7 +113,10 @@ def tidy_up(fig, do_save, fig_path, do_show, default_name):
     else:
         pl.close(fig)
 
-    return
+    if sep_figs:
+        return figs
+    else:
+        return fig
 
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
@@ -274,32 +278,24 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
         fig: Figure handle
     '''
 
+    # Handle inputs
     to_plot, args = handle_args(to_plot, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-
-    sim = scens.base_sim
-
-    fig, figs = create_figs(sep_figs, args, font_size, font_family)
+    fig, figs, ax = create_figs(sep_figs, args, font_size, font_family)
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
-    ax = None
     for rk,title,reskeys in to_plot.enumitems():
         ax = create_subplots(figs, ax, n_rows, n_cols, rk, args.fig, sep_figs)
         for reskey in reskeys:
             resdata = scens.results[reskey]
             for scenkey, scendata in resdata.items():
-                pl.fill_between(scens.tvec, scendata.low, scendata.high, **args.fill)
-                pl.plot(scens.tvec, scendata.best, label=scendata.name, **args.plot)
-                title_grid_ticks_legend(title, grid, commaticks, args.legend, rk)
-                plot_data(sim, reskey, args.scatter)
-                reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                pl.fill_between(scens.tvec, scendata.low, scendata.high, **args.fill) # Create the uncertainty bound
+                pl.plot(scens.tvec, scendata.best, label=scendata.name, **args.plot) # Plot the actual line
+                plot_data(scens.base_sim, reskey, args.scatter) # Plot the data
+                title_grid_legend(title, grid, args.legend, rk) # Configure the title, grid, and legend
+                reset_ticks(ax, scens.base_sim, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     # Ensure the figure actually renders or saves
-    tidy_up(fig, do_save, fig_path, do_show, 'covasim_scenarios.png')
-
-    if sep_figs:
-        return figs
-    else:
-        return fig
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, 'covasim_scenarios.png')
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None):
