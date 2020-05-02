@@ -18,7 +18,7 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plotly_sim', 'plotly_people
 
 
 
-def handle_args(to_plot, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args):
+def handle_args(to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args):
     ''' Handle input arguments -- merge user input with defaults '''
     args = sc.objdict()
     args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
@@ -32,7 +32,9 @@ def handle_args(to_plot, fig_args, plot_args, scatter_args, axis_args, fill_args
         to_plot = cvd.get_scen_plots()
     to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
-    return to_plot, args
+    n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
+
+    return to_plot, n_rows, args
 
 
 def create_figs(sep_figs, args, font_size, font_family):
@@ -275,27 +277,26 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
         sep_figs     (bool):  Whether to show separate figures for different results instead of subplots
 
     Returns:
-        fig: Figure handle
+        fig: Figure handle, or list of figure handles if sep_figs is used
     '''
 
     # Handle inputs
-    to_plot, args = handle_args(to_plot, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    to_plot, n_rows, args = handle_args(to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
     fig, figs, ax = create_figs(sep_figs, args, font_size, font_family)
 
-    n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
+    # Do the plotting
     for rk,title,reskeys in to_plot.enumitems():
         ax = create_subplots(figs, ax, n_rows, n_cols, rk, args.fig, sep_figs)
         for reskey in reskeys:
             resdata = scens.results[reskey]
             for scenkey, scendata in resdata.items():
-                pl.fill_between(scens.tvec, scendata.low, scendata.high, **args.fill) # Create the uncertainty bound
-                pl.plot(scens.tvec, scendata.best, label=scendata.name, **args.plot) # Plot the actual line
+                ax.fill_between(scens.tvec, scendata.low, scendata.high, **args.fill) # Create the uncertainty bound
+                ax.plot(scens.tvec, scendata.best, label=scendata.name, **args.plot) # Plot the actual line
                 plot_data(scens.base_sim, reskey, args.scatter) # Plot the data
                 title_grid_legend(title, grid, args.legend, rk) # Configure the title, grid, and legend
                 reset_ticks(ax, scens.base_sim, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    # Ensure the figure actually renders or saves
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, 'covasim_scenarios.png')
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim_scenarios.png')
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None):
