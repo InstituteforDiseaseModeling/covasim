@@ -140,7 +140,38 @@ def plot(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_arg
     return fig
 
 
-def set_figs(figs, n_rows, n_cols, rk, fig_args, sep_figs):
+def handle_args(to_plot, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args):
+    ''' Handle input arguments -- merge user input with defaults '''
+    args = sc.objdict()
+    args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
+    args.plot    = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
+    args.scatter = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
+    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
+    args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
+    args.legend  = sc.mergedicts({'loc': 'best'}, legend_args)
+
+    if to_plot is None:
+        to_plot = cvd.get_scen_plots()
+    to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
+
+    return to_plot, args
+
+
+def create_figs(sep_figs, args, font_size, font_family):
+    if sep_figs:
+        fig = None
+        figs = []
+    else:
+        fig = pl.figure(**args.fig)
+        figs = None
+    pl.subplots_adjust(**args.axis)
+    pl.rcParams['font.size'] = font_size
+    if font_family:
+        pl.rcParams['font.family'] = font_family
+    return fig, figs
+
+
+def create_subplots(figs, n_rows, n_cols, rk, fig_args, sep_figs):
     if sep_figs:
         figs.append(pl.figure(**fig_args))
         ax = pl.subplot(111)
@@ -206,7 +237,7 @@ def tidy_up(fig, do_save, fig_path, do_show, default_name):
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=True, commaticks=True,
-         log_scale=False, do_show=True, sep_figs=False, verbose=None):
+         log_scale=False, do_show=True, sep_figs=False):
     '''
     Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -232,55 +263,36 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
         log_scale    (bool):  Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
         do_show      (bool):  Whether or not to show the figure
         sep_figs     (bool):  Whether to show separate figures for different results instead of subplots
-        verbose      (bool):  Display a bit of extra information
 
     Returns:
         fig: Figure handle
     '''
 
-    if verbose is None:
-        verbose = scens['verbose']
-    sc.printv('Plotting...', 1, verbose)
-
-    if to_plot is None:
-        to_plot = cvd.get_scen_plots()
-    to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
-
-    # Handle input arguments -- merge user input with defaults
-    fig_args    = sc.mergedicts({'figsize': (16, 14)}, fig_args)
-    plot_args   = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-    scatter_args = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
-    axis_args   = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
-    fill_args   = sc.mergedicts({'alpha': 0.2}, fill_args)
-    legend_args = sc.mergedicts({'loc': 'best'}, legend_args)
+    to_plot, args = handle_args(to_plot, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
 
     sim = scens.base_sim
 
-    if sep_figs:
-        figs = []
-    else:
-        fig = pl.figure(**fig_args)
-    pl.subplots_adjust(**axis_args)
-    pl.rcParams['font.size'] = font_size
-    if font_family:
-        pl.rcParams['font.family'] = font_family
+    fig, figs = create_figs(sep_figs, args, font_size, font_family)
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
     for rk,title,reskeys in to_plot.enumitems():
-        ax = set_figs(figs, n_rows, n_cols, rk, fig_args, sep_figs)
+        ax = create_subplots(figs, n_rows, n_cols, rk, args.fig, sep_figs)
         for reskey in reskeys:
             resdata = scens.results[reskey]
             for scenkey, scendata in resdata.items():
-                pl.fill_between(scens.tvec, scendata.low, scendata.high, **fill_args)
-                pl.plot(scens.tvec, scendata.best, label=scendata.name, **plot_args)
-                title_grid_ticks_legend(title, grid, commaticks, legend_args, rk)
+                pl.fill_between(scens.tvec, scendata.low, scendata.high, **args.fill)
+                pl.plot(scens.tvec, scendata.best, label=scendata.name, **args.plot)
+                title_grid_ticks_legend(title, grid, commaticks, args.legend, rk)
                 plot_data(sim, reskey)
                 reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     # Ensure the figure actually renders or saves
     tidy_up(fig, do_save, fig_path, do_show, 'covasim_scenarios.png')
 
-    return fig
+    if sep_figs:
+        return figs
+    else:
+        return fig
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None):
