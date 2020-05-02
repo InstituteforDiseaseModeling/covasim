@@ -18,7 +18,7 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plotly_sim', 'plotly_people
 
 
 
-def handle_args(to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args):
+def handle_args(which, to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args):
     ''' Handle input arguments -- merge user input with defaults '''
     args = sc.objdict()
     args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
@@ -29,7 +29,13 @@ def handle_args(to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, f
     args.legend  = sc.mergedicts({'loc': 'best'}, legend_args)
 
     if to_plot is None:
-        to_plot = cvd.get_scen_plots()
+        if which == 'sim':
+            to_plot = cvd.get_sim_plots()
+        elif which =='scens':
+            to_plot = cvd.get_scen_plots()
+        else:
+            errormsg = f'Which must be "sim" or "scens", not {which}'
+            raise NotImplementedError(errormsg)
     to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
@@ -51,7 +57,7 @@ def create_figs(sep_figs, args, font_size, font_family):
     return fig, figs, None # Initialize axis to be None
 
 
-def create_subplots(figs, ax, n_rows, n_cols, rk, fig_args, sep_figs):
+def create_subplots(figs, ax, n_rows, n_cols, rk, fig_args, sep_figs, log_scale, title):
     if sep_figs:
         figs.append(pl.figure(**fig_args))
         ax = pl.subplot(111)
@@ -60,6 +66,14 @@ def create_subplots(figs, ax, n_rows, n_cols, rk, fig_args, sep_figs):
             ax = pl.subplot(n_rows, n_cols, rk+1)
         else:
             ax = pl.subplot(n_rows, n_cols, rk+1, sharex=ax)
+
+    if log_scale:
+        if isinstance(log_scale, list):
+            if title in log_scale:
+                ax.set_yscale('log')
+        else:
+            ax.set_yscale('log')
+
     return ax
 
 
@@ -72,11 +86,18 @@ def plot_data(sim, key, scatter_args):
     return
 
 
-def title_grid_legend(title, grid, legend_args, subplot_num):
+def plot_interventions(sim, ax): # Plot the interventions
+    for intervention in sim['interventions']:
+        intervention.plot(sim, ax)
+    return
+
+
+def title_grid_legend(title, grid, legend_args, show=True):
     pl.title(title)
-    if subplot_num == 0: # Only show the
+    if show: # Only show the legend for some subplots
         pl.legend(**legend_args)
     pl.grid(grid)
+    sc.setylim()
     return
 
 
@@ -149,101 +170,28 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
         log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
         do_show      (bool): Whether or not to show the figure
         sep_figs     (bool): Whether to show separate figures for different results instead of subplots
-        verbose      (bool): Display a bit of extra information
 
     Returns:
         fig: Figure handle
     '''
 
-    if verbose is None:
-        verbose = sim['verbose']
-    sc.printv('Plotting...', 1, verbose)
+    # Handle inputs
+    to_plot, n_rows, args = handle_args('sim', to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    fig, figs, ax = create_figs(sep_figs, args, font_size, font_family)
 
-    if to_plot is None:
-        to_plot = cvd.get_sim_plots()
-    to_plot = sc.odict(to_plot) # In case it's supplied as a dict
+    # Do the plotting
+    for pnum,title,keylabels in to_plot.enumitems():
+        ax = create_subplots(figs, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+        for reskey in keylabels:
+            res = sim.results[reskey]
+            res_t = sim.results['t']
+            pl.plot(res_t, res.values, label=res.name, **args.plot, c=res.color)
+            plot_data(sim, reskey, args.scatter) # Plot the data
+            plot_interventions(sim, ax) # Plot the interventions
+            title_grid_legend(title, grid, args.legend) # Configure the title, grid, and legend
+            reset_ticks(ax, sim, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    # Handle input arguments -- merge user input with defaults
-    fig_args    = sc.mergedicts({'figsize': (16, 14)}, fig_args)
-    plot_args   = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-    scatter_args = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
-    axis_args   = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
-    fill_args   = sc.mergedicts({'alpha': 0.2}, fill_args)
-    legend_args = sc.mergedicts({'loc': 'best'}, legend_args)
-
-    if sep_figs:
-        figs = []
-    else:
-        fig = pl.figure(**fig_args)
-    pl.subplots_adjust(**axis_args)
-    pl.rcParams['font.size'] = font_size
-    if font_family:
-        pl.rcParams['font.family'] = font_family
-
-    res = sim.results # Shorten since heavily used
-
-    # Plot everything
-    n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
-    for p,title,keylabels in to_plot.enumitems():
-        if p == 0:
-            ax = pl.subplot(n_rows, n_cols, p+1)
-        else:
-            ax = pl.subplot(n_rows, n_cols, p + 1, sharex=ax)
-        if log_scale:
-            if isinstance(log_scale, list):
-                if title in log_scale:
-                    ax.set_yscale('log')
-            else:
-                ax.set_yscale('log')
-        for key in keylabels:
-            label = res[key].name
-            this_color = res[key].color
-            y = res[key].values
-            pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
-            if sim.data is not None and key in sim.data:
-                data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
-                pl.scatter(data_t, sim.data[key], c=[this_color], **scatter_args)
-            if sim.data is not None and len(sim.data):
-                pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-
-            pl.legend(**legend_args)
-            pl.grid(grid)
-            sc.setylim()
-            if commaticks:
-                sc.commaticks()
-            pl.title(title)
-
-            # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-            if interval:
-                xmin,xmax = ax.get_xlim()
-                ax.set_xticks(pl.arange(xmin, xmax+1, interval))
-
-            # Set xticks as dates
-            if as_dates:
-                @ticker.FuncFormatter
-                def date_formatter(x, pos):
-                    return (sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
-                ax.xaxis.set_major_formatter(date_formatter)
-                if not interval:
-                    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-
-            # Plot interventions
-            for intervention in sim['interventions']:
-                intervention.plot(sim, ax)
-
-    # Ensure the figure actually renders or saves
-    if do_save:
-        if fig_path is None: # No figpath provided - see whether do_save is a figpath
-            fig_path = 'covasim_sim.png' # Just give it a default name
-        fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-        pl.savefig(fig_path)
-
-    if do_show:
-        pl.show()
-    else:
-        pl.close(fig)
-
-    return fig
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png')
 
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
@@ -281,20 +229,22 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
     '''
 
     # Handle inputs
-    to_plot, n_rows, args = handle_args(to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    to_plot, n_rows, args = handle_args('scens', to_plot, n_cols, fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
     fig, figs, ax = create_figs(sep_figs, args, font_size, font_family)
 
     # Do the plotting
-    for rk,title,reskeys in to_plot.enumitems():
-        ax = create_subplots(figs, ax, n_rows, n_cols, rk, args.fig, sep_figs)
+    for pnum,title,reskeys in to_plot.enumitems():
+        ax = create_subplots(figs, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for reskey in reskeys:
             resdata = scens.results[reskey]
             for scenkey, scendata in resdata.items():
+                sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
                 ax.fill_between(scens.tvec, scendata.low, scendata.high, **args.fill) # Create the uncertainty bound
                 ax.plot(scens.tvec, scendata.best, label=scendata.name, **args.plot) # Plot the actual line
-                plot_data(scens.base_sim, reskey, args.scatter) # Plot the data
-                title_grid_legend(title, grid, args.legend, rk) # Configure the title, grid, and legend
-                reset_ticks(ax, scens.base_sim, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                plot_data(sim, reskey, args.scatter) # Plot the data
+                plot_interventions(sim, ax) # Plot the interventions
+                title_grid_legend(title, grid, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
+                reset_ticks(ax, sim, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim_scenarios.png')
 

@@ -121,9 +121,9 @@ class Intervention:
         if self.do_plot or self.do_plot is None:
             if ax is None:
                 ax = pl.gca()
-            ylims = ax.get_ylim()
             for day in self.days:
-                pl.plot([day]*2, ylims, '--', c=[0,0,0])
+                if day is not None:
+                    ax.axvline(day, linestyle='--', c=[0,0,0])
         return
 
 
@@ -312,14 +312,6 @@ class change_beta(Intervention):
         return
 
 
-    def plot(self, sim, ax):
-        ''' Plot vertical lines for when changes in beta '''
-        ylims = ax.get_ylim()
-        for day in self.days:
-            pl.plot([day]*2, ylims, '--', c=[0,0,0])
-        return
-
-
 class clip_edges(Intervention):
     '''
     Isolate contacts by moving them from the simulation to this intervention.
@@ -407,13 +399,6 @@ class clip_edges(Intervention):
 
         return
 
-
-    def plot(self, sim, ax):
-        ''' Plot vertical lines for when changes in beta '''
-        ylims = ax.get_ylim()
-        for day in self.days:
-            pl.plot([day]*2, ylims, '--', c=[0,0,0])
-        return
 
 
 #%% Testing interventions
