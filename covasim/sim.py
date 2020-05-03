@@ -563,11 +563,14 @@ class Sim(cvb.BaseSim):
         if method == 'daily':
 
             # Find the dates that everyone became infectious and recovered, and hence calculate infectious duration
-            inds = self.people.defined('date_recovered')
-            date_rec = self.people.date_recovered[inds]
+            recov_inds = self.people.defined('date_recovered')
+            dead_inds = self.people.defined('date_dead')
+            date_recov = self.people.date_recovered[recov_inds]
+            date_dead = self.people.date_dead[dead_inds]
+            date_outcome = np.concatenate((date_recov, date_dead))
+            inds = np.concatenate((recov_inds, dead_inds))
             date_inf = self.people.date_infectious[inds]
-            diff = date_rec - date_inf
-            mean_inf = diff.mean()
+            mean_inf = date_outcome.mean() - date_inf.mean()
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
             values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
