@@ -346,9 +346,9 @@ class clip_edges(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
-        self.start_day = sim.day(self.start_day)
-        self.end_day   = sim.day(self.end_day)
-        self.days      = [self.start_day, self.end_day]
+        self.start_day   = sim.day(self.start_day)
+        self.end_day     = sim.day(self.end_day)
+        self.days        = [self.start_day, self.end_day]
         self.initialized = True
         return
 
