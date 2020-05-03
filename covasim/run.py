@@ -34,12 +34,14 @@ def make_metapars():
 
 class MultiSim(sc.prettyobj):
     '''
-    Class for running multiple copies of a simulation.
+    Class for running multiple copies of a simulation. The parameter n_runs
+    controls how many copies of the simulation there will be, if a list of sims
+    is not provided.
 
     Args:
         sims (Sim or list): a single sim or a list of sims
         base_sim (Sim): the sim used for shared properties; if not supplied, the first of the sims provided
-        make_metapars()['quantiles']
+        quantiles (dict): the quantiles to use with reduce(), e.g. [0.1, 0.9] or {'low:'0.1, 'high':0.9}
         kwargs (dict): stored in run_args and passed to run()
 
     Returns:
@@ -48,17 +50,15 @@ class MultiSim(sc.prettyobj):
     **Examples**::
 
         sim = cv.Sim() # Create the sim
-        msim = cv.MultiSim(sim) # Create the multisim
-        msim.replicate(5) # Create 5 replicates
+        msim = cv.MultiSim(sim, n_runs=5) # Create the multisim
         msim.run() # Run them in parallel
-        msim.reduce() # Calculate statistics
+        msim.combine() # Calculate statistics
         msim.plot() # Plot results
 
-        sims = [cv.Sim(beta=0.015*[1+0.1*i]) for i in range(5)] # Create sims
+        sims = [cv.Sim(beta=0.015*(1+0.1*i)) for i in range(5)] # Create sims
         for sim in sims: sim.run() # Run sims in serial
         msim = cv.MultiSim(sims) # Convert to multisim
-        msim.reduce('add') # Add results together
-        msim.plot() # Plot as single sim
+        msim.plot() # Plot each sim separately
     '''
 
     def __init__(self, sims=None, base_sim=None, quantiles=None, **kwargs):
@@ -201,7 +201,12 @@ class MultiSim(sc.prettyobj):
 
     def plot(self, *args, **kwargs):
         ''' Convenience mthod for plotting '''
-        fig = self.base_sim.plot(*args, **kwargs)
+        if self.which in ['combined', 'reduced']:
+            fig = self.base_sim.plot(*args, **kwargs)
+        else:
+            fig = None
+            for sim in self.sims:
+                fig = sim.plot(fig=fig, *args, **kwargs)
         return fig
 
 
@@ -401,31 +406,32 @@ class Scenarios(cvb.ParsObj):
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
              interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True,
-             log_scale=False, do_show=True, sep_figs=False, verbose=None):
+             log_scale=False, do_show=True, sep_figs=False, fig=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
         Args:
-            to_plot     (dict): Dict of results to plot; see get_scen_plots() for structure
-            do_save     (bool): Whether or not to save the figure
-            fig_path    (str):  Path to save the figure
-            fig_args    (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args   (dict): Dictionary of kwargs to be passed to pl.plot()
+            to_plot      (dict): Dict of results to plot; see get_scen_plots() for structure
+            do_save      (bool): Whether or not to save the figure
+            fig_path     (str):  Path to save the figure
+            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-            axis_args   (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            fill_args   (dict): Dictionary of kwargs to be passed to pl.fill_between()
-            legend_args (dict): Dictionary of kwargs to be passed to pl.legend()
-            as_dates    (bool): Whether to plot the x-axis as dates or time points
-            dateformat  (str):  Date string format, e.g. '%B %d'
-            interval    (int):  Interval between tick marks
-            n_cols      (int):  Number of columns of subpanels to use for subplot
-            font_size   (int):  Size of the font
-            font_family (str):  Font face
-            grid        (bool): Whether or not to plot gridlines
-            commaticks  (bool): Plot y-axis with commas rather than scientific notation
-            log_scale (bool or list): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
-            do_show     (bool): Whether or not to show the figure
-            sep_figs    (bool): Whether to show separate figures for different results instead of subplots
+            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            fill_args    (dict): Dictionary of kwargs to be passed to pl.fill_between()
+            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
+            as_dates     (bool): Whether to plot the x-axis as dates or time points
+            dateformat   (str):  Date string format, e.g. '%B %d'
+            interval     (int):  Interval between tick marks
+            n_cols       (int):  Number of columns of subpanels to use for subplot
+            font_size    (int):  Size of the font
+            font_family  (str):  Font face
+            grid         (bool): Whether or not to plot gridlines
+            commaticks   (bool): Plot y-axis with commas rather than scientific notation
+            log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
+            do_show      (bool): Whether or not to show the figure
+            sep_figs     (bool): Whether to show separate figures for different results instead of subplots
+            fig          (fig):  Existing figure to plot into
 
         Returns:
             fig: Figure handle
@@ -433,7 +439,7 @@ class Scenarios(cvb.ParsObj):
         fig = cvplt.plot_scens(scens=self, to_plot=to_plot, do_save=do_save, fig_path=fig_path, fig_args=fig_args, plot_args=plot_args,
              scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args, legend_args=legend_args, as_dates=as_dates, dateformat=dateformat,
              interval=interval, n_cols=n_cols, font_size=font_size, font_family=font_family, grid=grid, commaticks=commaticks,
-             log_scale=log_scale, do_show=do_show, sep_figs=sep_figs)
+             log_scale=log_scale, do_show=do_show, sep_figs=sep_figs, fig=fig)
 
         return fig
 

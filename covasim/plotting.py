@@ -1,6 +1,9 @@
 '''
-Plotly-based plotting functions to supplement the Matplotlib based ones that are
-part of the Sim and Scenarios objects. Intended mostly for use with the webapp.
+Core plotting functions for simulations, multisims, and scenarios.
+
+Also includes Plotly-based plotting functions to supplement the Matplotlib based
+ones that are of the Sim and Scenarios objects. Intended mostly for use with the
+webapp.
 '''
 
 import numpy as np
@@ -36,7 +39,7 @@ def handle_to_plot(which, to_plot, n_cols):
         elif which =='scens':
             to_plot = cvd.get_scen_plots()
         else:
-            errormsg = f'Which must be "sim" or "scens", not {which}'
+            errormsg = f'"which" must be "sim" or "scens", not "{which}"'
             raise NotImplementedError(errormsg)
     to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
 
@@ -45,13 +48,14 @@ def handle_to_plot(which, to_plot, n_cols):
     return to_plot, n_rows
 
 
-def create_figs(args, font_size, font_family, sep_figs):
+def create_figs(args, font_size, font_family, sep_figs, fig=None):
     ''' Create the figures and set overall figure properties '''
     if sep_figs:
         fig = None
         figs = []
     else:
-        fig = pl.figure(**args.fig)
+        if fig is None:
+            fig = pl.figure(**args.fig) # Create the figure if none is supplied
         figs = None
     pl.subplots_adjust(**args.axis)
     pl.rcParams['font.size'] = font_size
@@ -99,22 +103,24 @@ def plot_interventions(sim, ax):
 
 
 def title_grid_legend(title, grid, legend_args, show_legend=True):
-    ''' Set the plot title, add a legend, optionally add gridlines, and set the tickmarks '''
+    ''' Plot styling -- set the plot title, add a legend, and optionally add gridlines'''
     pl.title(title)
     if show_legend: # Only show the legend for some subplots
         pl.legend(**legend_args)
     pl.grid(grid)
-    sc.setylim()
     return
 
 
 def reset_ticks(ax, sim, y, commaticks, interval, as_dates):
     ''' Set the tick marks, using dates by default '''
 
+    # Set the y axis limits and style
+    sc.setylim()
     if commaticks:
         if y.max() >= 1000:
             sc.commaticks()
 
+    # Set the x-axis intervals
     if interval:
         xmin,xmax = ax.get_xlim()
         ax.set_xticks(pl.arange(xmin, xmax+1, interval))
@@ -133,19 +139,23 @@ def reset_ticks(ax, sim, y, commaticks, interval, as_dates):
     return
 
 
-def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name):
+def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png'):
     ''' Handle saving, figure showing, and what value to return '''
+
+    # Handle saving
     if do_save:
         if fig_path is None: # No figpath provided - see whether do_save is a figpath
             fig_path = default_name # Just give it a default name
         fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
         pl.savefig(fig_path)
 
+    # Show or close the figure
     if do_show:
         pl.show()
     else:
         pl.close(fig)
 
+    # Return the figure or figures
     if sep_figs:
         return figs
     else:
@@ -155,13 +165,13 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name):
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True,
-         log_scale=False, do_show=True, sep_figs=False, verbose=None):
+         log_scale=False, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a sim -- see Sim.plot() for documentation. '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
     to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
     for pnum,title,keylabels in to_plot.enumitems():
@@ -183,13 +193,13 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True,
-         log_scale=False, do_show=True, sep_figs=False):
+         log_scale=False, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation. '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
     to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
     for pnum,title,reskeys in to_plot.enumitems():
@@ -211,14 +221,14 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 font_size=18, font_family=None, grid=False, commaticks=True, as_dates=True,
-                dateformat=None, interval=None):
+                dateformat=None, interval=None, fig=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation. '''
 
     # Handle inputs
     fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
 
     # Do the plotting
     ax = pl.subplot(111)
