@@ -400,12 +400,13 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, verbose=None, **kwargs):
+    def run(self, do_plot=False, until=None, verbose=None, **kwargs):
         '''
         Run the simulation.
 
         Args:
             do_plot (bool): whether to plot
+            until (int): day to run until
             verbose (int): level of detail to print
             kwargs (dict): passed to self.plot()
 
@@ -446,6 +447,8 @@ class Sim(cvb.BaseSim):
             elif self['stopping_func'] and self['stopping_func'](self):
                 sc.printv("Stopping function terminated the simulation", 1, verbose)
                 break
+            if self.t == until: # If until is specified, just stop here
+                return
 
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results

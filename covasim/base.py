@@ -452,7 +452,7 @@ class BaseSim(ParsObj):
             return shrunken_sim
 
 
-    def save(self, filename=None, keep_people=False, skip_attrs=None, **kwargs):
+    def save(self, filename=None, keep_people=None, skip_attrs=None, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
@@ -467,15 +467,27 @@ class BaseSim(ParsObj):
 
             sim.save() # Saves to a .sim file with the date and time of creation by default
         '''
+
+        # Set keep_people based on whether or not we're in the middle of a run
+        if keep_people is None:
+            if self.initialized and not self.results_ready:
+                keep_people = True
+            else:
+                keep_people = False
+
+        # Handle the filename
         if filename is None:
             filename = self.simfile
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
+
+        # Handle the shrinkage and save
         if skip_attrs or not keep_people:
             obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
         sc.saveobj(filename=filename, obj=obj)
+
         return filename
 
 

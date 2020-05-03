@@ -111,9 +111,15 @@ def test_start_stop(): # If being run via pytest, turn off
         sim2.step()
     sim2.finalize()
 
+    # Test that until works
+    sim3 = cv.Sim(pars)
+    sim3.run(until=20)
+    sim3.run()
+
     # Compare results
     key = 'cum_infections'
     assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Next values do not match'
+    assert (sim1.results[key][:] == sim3.results[key][:]).all(), 'Until values do not match'
 
     return sim2
 
