@@ -115,24 +115,43 @@ def plot_interventions(sim, ax):
     return
 
 
-def title_grid_legend(title, grid, legend_args, show_legend=True):
+def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_legend=True):
     ''' Plot styling -- set the plot title, add a legend, and optionally add gridlines'''
-    show_legend = legend_args.pop('show_legend', show_legend) # Allow show_legend to be specified in the legend args
-    pl.title(title)
-    if show_legend: # Only show the legend for some subplots
-        pl.legend(**legend_args)
-    pl.grid(grid)
+
+    # Handle show_legend being in the legend args, since in some cases this is the only way it can get passed
+    if 'show_legend' in legend_args:
+        show_legend = legend_args.pop('show_legend')
+        popped = True
+    else:
+        popped = False
+
+    # Show the legend
+    if show_legend:
+        ax.legend(**legend_args)
+
+    # If we removed it from the legend_args dict, put it back now
+    if popped:
+        legend_args['show_legend'] = show_legend
+
+    # Set the title and gridlines
+    ax.set_title(title)
+    ax.grid(grid)
+
+    # Set the y axis style
+    if setylim:
+        print(f'i am setylim {setylim} {title}')
+        ax.set_ylim(bottom=0)
+        # sc.setylim()
+    if commaticks:
+        ylims = ax.get_ylim()
+        if ylims[1] >= 1000:
+            sc.commaticks()
+
     return
 
 
-def reset_ticks(ax, sim, y, commaticks, interval, as_dates):
+def reset_ticks(ax, sim, interval, as_dates):
     ''' Set the tick marks, using dates by default '''
-
-    # Set the y axis limits and style
-    sc.setylim()
-    if commaticks:
-        if y.max() >= 1000:
-            sc.commaticks()
 
     # Set the x-axis intervals
     if interval:
@@ -178,9 +197,11 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covas
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
-         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True,
+         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
          log_scale=False, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a sim -- see Sim.plot() for documentation. '''
+
+    print(f'BONJOUR i am {setylim}')
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
@@ -197,16 +218,17 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
                 ax.fill_between(res_t, res.low, res.high, **args.fill) # Create the uncertainty bound
             ax.plot(res_t, res.values, label=res.name, **args.plot, c=res.color)
             plot_data(sim, reskey, args.scatter) # Plot the data
-            plot_interventions(sim, ax) # Plot the interventions
-            title_grid_legend(title, grid, args.legend) # Configure the title, grid, and legend
-            reset_ticks(ax, sim, res.values, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+            reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+        plot_interventions(sim, ax) # Plot the interventions
+        print(f'hi, i am {pnum} {title}')
+        title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png')
 
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
-         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True,
+         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
          log_scale=False, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation. '''
 
@@ -227,15 +249,15 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
                 ax.plot(scens.tvec, res_y, label=scendata.name, **args.plot) # Plot the actual line
                 plot_data(sim, reskey, args.scatter) # Plot the data
                 plot_interventions(sim, ax) # Plot the interventions
-                title_grid_legend(title, grid, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
-                reset_ticks(ax, sim, res_y, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+        title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim_scenarios.png')
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                font_size=18, font_family=None, grid=False, commaticks=True, as_dates=True,
-                dateformat=None, interval=None, fig=None):
+                font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
+                as_dates=True, dateformat=None, interval=None, fig=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation. '''
 
     # Handle inputs
@@ -252,8 +274,8 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     ax.plot(res_t, res_y, c=res.color, **args.plot)
     plot_data(sim, key, args.scatter) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
-    title_grid_legend(res.name, grid, args.legend, show_legend=False) # Configure the title, grid, and legend
-    reset_ticks(ax, sim, res_y, commaticks, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend, show_legend=False) # Configure the title, grid, and legend
+    reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return fig
 
