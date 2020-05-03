@@ -421,7 +421,7 @@ class test_num(Intervention):
     Test a fixed number of people per day.
 
     Args:
-        daily_tests (int or arr): number of tests per day
+        daily_tests (int or arr): number of tests per day; if integer, use that number every day
         symp_test (float): odds ratio of a symptomatic person testing
         quar_test (float): probability of a person in quarantine testing
         sensitivity (float): test sensitivity
@@ -439,10 +439,10 @@ class test_num(Intervention):
         Intervention
     '''
 
-    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, loss_prob=0, test_delay=0, start_day=0, end_day=None, do_plot=None):
+    def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, sensitivity=1.0, loss_prob=0, test_delay=0, start_day=0, end_day=None, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.daily_tests = daily_tests #: Should be a list of length matching time
-        self.sympt_test  = sympt_test
+        self.symp_test  = symp_test
         self.quar_test   = quar_test
         self.sensitivity = sensitivity
         self.loss_prob   = loss_prob
@@ -454,11 +454,23 @@ class test_num(Intervention):
 
 
     def initialize(self, sim):
-        ''' Fix the dates '''
+        ''' Fix the dates and number of tests '''
+
+        # Process daily tests -- has to be here rather than init so have access to the sim object
+        if sc.isnumber(self.daily_tests): # If a number, convert to an array
+            self.daily_tests = np.array([int(self.daily_tests)]*sim.npts)
+        elif isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
+            start_date = sim['start_day'] + dt.timedelta(days=self.start_day)
+            end_date = self.daily_tests.index[-1]
+            dateindex = pd.date_range(start_date, end_date)
+            self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
+
+        # Handle days
         self.start_day   = sim.day(self.start_day)
         self.end_day     = sim.day(self.end_day)
         self.days        = [self.start_day, self.end_day]
         self.initialized = True
+
         return
 
 
@@ -470,17 +482,10 @@ class test_num(Intervention):
         elif self.end_day is not None and t > self.end_day:
             return
 
-        # Process daily tests -- has to be here rather than init so have access to the sim object
-        if isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
-            start_date = sim['start_day'] + dt.timedelta(days=self.start_day)
-            end_date = self.daily_tests.index[-1]
-            dateindex = pd.date_range(start_date, end_date)
-            self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
-
         # Check that there are still tests
         rel_t = t - self.start_day
         if rel_t < len(self.daily_tests):
-            n_tests = self.daily_tests[rel_t]  # Number of tests for this day
+            n_tests = int(self.daily_tests[rel_t]/sim.rescale_vec[t])  # Number of tests for this day -- rescaled
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
@@ -492,7 +497,7 @@ class test_num(Intervention):
         symp_inds  = cvu.true(sim.people.symptomatic)
         quar_inds  = cvu.true(sim.people.quarantined)
         diag_inds  = cvu.true(sim.people.diagnosed)
-        test_probs[symp_inds] *= self.sympt_test
+        test_probs[symp_inds] *= self.symp_test
         test_probs[quar_inds] *= self.quar_test
         test_probs[diag_inds] = 0.
 
@@ -574,7 +579,7 @@ class test_prob(Intervention):
         test_inds = cvu.binomial_arr(test_probs).nonzero()[0]
 
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
-        sim.results['new_tests'][t] += len(test_inds)
+        sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
         return
 

@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from . import defaults as cvd
 
 
-__all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plotly_sim', 'plotly_people', 'plotly_animate']
+__all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
 
 #%% Plotting helper functions
@@ -200,7 +200,7 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covas
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-         log_scale=False, colors=None, do_show=True, sep_figs=False, fig=None):
+         log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
@@ -218,9 +218,13 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
                 color = colors[reskey]
             else:
                 color = res.color
+            if labels is not None:
+                label = labels[reskey]
+            else:
+                label = res.name
             if res.low is not None and res.high is not None:
                 ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
-            ax.plot(res_t, res.values, label=res.name, **args.plot, c=color)
+            ax.plot(res_t, res.values, label=label, **args.plot, c=color)
             plot_data(sim, reskey, args.scatter) # Plot the data
             reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         plot_interventions(sim, ax) # Plot the interventions
@@ -232,7 +236,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-         log_scale=False, colors=None, do_show=True, sep_figs=False, fig=None):
+         log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
@@ -253,8 +257,12 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
                     color = colors[scenkey]
                 else:
                     color = default_colors[snum]
+                if labels is not None:
+                    label = labels[scenkey]
+                else:
+                    label = scendata.name
                 ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
-                ax.plot(scens.tvec, res_y, label=scendata.name, c=color, **args.plot) # Plot the actual line
+                ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot) # Plot the actual line
                 plot_data(sim, reskey, args.scatter) # Plot the data
                 plot_interventions(sim, ax) # Plot the interventions
                 reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
@@ -265,7 +273,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-                as_dates=True, dateformat=None, interval=None, color=None, fig=None):
+                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
@@ -291,11 +299,57 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
         ax = pl.subplot(111, label='plot_result')
 
     # Do the plotting
-    ax.plot(res_t, res_y, c=color, label=res.name, **args.plot)
+    if label is None:
+        label = res.name
+    ax.plot(res_t, res_y, c=color, label=label, **args.plot)
     plot_data(sim, key, args.scatter) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
     reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+
+    return fig
+
+
+def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
+                font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
+                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None):
+    ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
+
+    # Handle inputs
+    fig_args  = sc.mergedicts({'figsize':(16,16)}, fig_args)
+    axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
+
+    # Map from results into different categories
+    mapping = {
+        'cum': 'Cumulative counts',
+        'new': 'New counts',
+        'n': 'Number in state',
+        'r': 'R_eff',
+        }
+    category = []
+    for v in df.index.values:
+        v_type = v.split('_')[0]
+        if v_type in mapping:
+            category.append(v_type)
+        else:
+            category.append('other')
+    df['category'] = category
+
+    # Plot
+    for i,m in enumerate(mapping):
+        not_r_eff = m != 'r'
+        if not_r_eff:
+            ax = fig.add_subplot(2, 2, i+1)
+        else:
+            ax = fig.add_subplot(8, 2, 10)
+        dfm = df[df['category'] == m]
+        logx = not_r_eff and log_scale
+        dfm.plot(ax=ax, kind='barh', logx=logx, legend=False)
+        if not(not_r_eff):
+            ax.legend(loc='upper left', bbox_to_anchor=(0,-0.3))
+        ax.grid(True)
 
     return fig
 
