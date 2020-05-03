@@ -52,13 +52,19 @@ class MultiSim(sc.prettyobj):
         sim = cv.Sim() # Create the sim
         msim = cv.MultiSim(sim, n_runs=5) # Create the multisim
         msim.run() # Run them in parallel
-        msim.combine() # Calculate statistics
+        msim.combine() # Combine into one sim
         msim.plot() # Plot results
 
-        sims = [cv.Sim(beta=0.015*(1+0.1*i)) for i in range(5)] # Create sims
+        sim = cv.Sim() # Create the sim
+        msim = cv.MultiSim(sim, n_runs=11, noise=0.1) # Set up a multisim with noise
+        msim.run() # Run
+        msim.reduce() # Compute statistics
+        msim.plot() # Plot
+
+        sims = [cv.Sim(beta=0.015*(1+0.02*i)) for i in range(5)] # Create sims
         for sim in sims: sim.run() # Run sims in serial
         msim = cv.MultiSim(sims) # Convert to multisim
-        msim.plot() # Plot each sim separately
+        msim.plot() # Plot as single sim
     '''
 
     def __init__(self, sims=None, base_sim=None, quantiles=None, **kwargs):
@@ -122,7 +128,6 @@ class MultiSim(sc.prettyobj):
             sims = self.sims
 
         kwargs = sc.mergedicts(self.run_args, kwargs)
-        print(kwargs)
         self.sims = multi_run(sims, *args, **kwargs)
         return
 
@@ -214,8 +219,6 @@ class MultiSim(sc.prettyobj):
                     kwargs['setylim'] = orig_setylim
                 else:
                     kwargs['setylim'] = False
-                print(f'ABOUT TO PLOT')
-                print(kwargs['setylim'])
                 fig = sim.plot(fig=fig, *args, **kwargs)
         return fig
 

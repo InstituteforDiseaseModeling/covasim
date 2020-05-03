@@ -139,9 +139,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
 
     # Set the y axis style
     if setylim:
-        print(f'i am setylim {setylim} {title}')
         ax.set_ylim(bottom=0)
-        # sc.setylim()
     if commaticks:
         ylims = ax.get_ylim()
         if ylims[1] >= 1000:
@@ -201,8 +199,6 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
          log_scale=False, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a sim -- see Sim.plot() for documentation. '''
 
-    print(f'BONJOUR i am {setylim}')
-
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
     to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols)
@@ -220,7 +216,6 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
             plot_data(sim, reskey, args.scatter) # Plot the data
             reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         plot_interventions(sim, ax) # Plot the interventions
-        print(f'hi, i am {pnum} {title}')
         title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png')
