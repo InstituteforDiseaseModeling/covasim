@@ -9,31 +9,34 @@ p = sc.objdict() # Parameters
 s = sc.objdict() # Sims
 m = sc.objdict() # Multisims
 
+# Properties that are shared across sims
 shared = sc.objdict(
     n_days = 120,
     beta = 0.012,
-    )
+)
 
-
+# Simulate the entire population
 p.entire = dict(
-    pop_size = 200e3,
+    pop_size     = 500e3,
     pop_infected = 100,
-    pop_scale = 1,
-    rescale = False,
+    pop_scale    = 1,
+    rescale      = False,
 )
 
+# Simulate a small population with dynamic scaling
 p.rescale = dict(
-    pop_size = 20e3,
+    pop_size     = 25e3,
     pop_infected = 100,
-    pop_scale = 10,
-    rescale = True,
+    pop_scale    = 20,
+    rescale      = True,
 )
 
+# Simulate a small population with static scaling
 p.static = dict(
-    pop_size = 20e3,
-    pop_infected = 10,
-    pop_scale = 10,
-    rescale = False,
+    pop_size     = 25e3,
+    pop_infected = 5,
+    pop_scale    = 20,
+    rescale      = False,
 )
 
 keys = p.keys()
