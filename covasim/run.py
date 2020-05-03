@@ -616,10 +616,11 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, verbose=None, 
     new_sim = sc.dcp(sim) # Copy the sim to avoid overwriting it
 
     # Set sim and run arguments
-    if verbose is None:
-        verbose = new_sim['verbose']
     sim_args = sc.mergedicts(sim_args, kwargs)
     run_args = sc.mergedicts({'verbose':verbose}, run_args)
+    if verbose is None:
+        verbose = new_sim['verbose']
+
     if not new_sim.label:
         new_sim.label = f'Sim {ind:d}'
 
@@ -696,8 +697,8 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
     '''
 
     # Handle inputs
-    sim_args = sc.mergedicts({}, sim_args) # Handle blank
-    par_args = sc.mergedicts({}, par_args) # Handle blank
+    sim_args = sc.mergedicts(sim_args, kwargs) # Handle blank
+    par_args = sc.mergedicts(par_args) # Handle blank
 
     # Handle iterpars
     if iterpars is None:
