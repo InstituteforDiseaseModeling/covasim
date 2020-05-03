@@ -541,7 +541,7 @@ class Sim(cvb.BaseSim):
         return self.results['doubling_time']
 
 
-    def compute_r_eff(self, method='daily', smoothing=3, window=7):
+    def compute_r_eff(self, method='daily', smoothing=2, window=7):
         '''
         Effective reproductive number based on number of people each person infected.
 
@@ -574,13 +574,13 @@ class Sim(cvb.BaseSim):
             values = sc.smooth(r_eff, smoothing)
 
         # Alternate (traditional) method -- count from the date of infection or outcome
-        elif method in ['infection', 'outcome']:
+        elif method in ['infected', 'outcome']:
 
             for t in self.tvec:
 
                 # Sources are easy -- count up the arrays
-                if method == 'initial':
-                    inds = cvu.true(t == self.people.date_infected) # Find people who were infected on this timestep
+                if method == 'infected':
+                    inds = cvu.true(t == self.people.date_infectious) # Find people who became infectious on this timestep
                 elif method == 'outcome':
                     recov_inds = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
                     dead_inds  = cvu.true(t == self.people.date_dead)  # Find people who died on this timestep
