@@ -288,11 +288,11 @@ class MultiSim(sc.prettyobj):
         self.sims = None # Remove for now
 
         obj = sc.dcp(self) # This should be quick once we've removed the sims
-
         if keep_people:
             obj.sims = sims # Just restore the object in full
             print('Note: saving people, which may produce a large file!')
         else:
+            obj.base_sim.shrink(in_place=True)
             obj.sims = []
             for sim in sims:
                 obj.sims.append(sim.shrink(in_place=False))
