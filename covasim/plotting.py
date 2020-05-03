@@ -85,7 +85,7 @@ def create_subplots(figs, fig, shareax, n_rows, n_cols, pnum, fig_args, sep_figs
             ax = pl.subplot(111, label=label)
     else:
         if ax is None:
-            ax = pl.subplot(n_rows, n_cols, pnum+1, sharex=shareax, label=f'ax{pnum+1}')
+            ax = pl.subplot(n_rows, n_cols, pnum+1, sharex=shareax, label=label)
 
     # Handle log scale
     if log_scale:
