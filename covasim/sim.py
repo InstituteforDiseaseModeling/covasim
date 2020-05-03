@@ -291,7 +291,8 @@ class Sim(cvb.BaseSim):
         ''' Initialize the interventions '''
         # Initialize interventions
         for intervention in self['interventions']:
-            intervention.initialize(self)
+            if not intervention.initialized:
+                intervention.initialize(self)
         return
 
 
@@ -420,6 +421,7 @@ class Sim(cvb.BaseSim):
             self.initialize()
         else:
             self.validate_pars() # We always want to validate the parameters before running
+            self.init_interventions() # And interventions
         if verbose is None:
             verbose = self['verbose']
 
