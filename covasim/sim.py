@@ -155,15 +155,20 @@ class Sim(cvb.BaseSim):
         # Handle end day and n_days
         end_day = self['end_day']
         n_days = self['n_days']
-        if n_days is not None:
-            self['end_day'] = self.date(n_days) # Convert from the number of days to the end day
-        else:
-            if not end_day:
-                errormsg = f'If n_days is not specified, you must specify a valid end day, not "{end_day}"'
+        if end_day:
+            self['end_day'] = cvm.date(end_day)
+            n_days = cvm.daydiff(self['start_day'], self['end_day'])
+            if n_days <= 0:
+                errormsg = f"Number of days must be >0, but you supplied start={str(self['start_day'])} and end={str(self['end_day'])}, which gives n_days={n_days}"
                 raise ValueError(errormsg)
             else:
-                self['end_day'] = cvm.date(end_day)
-                self['n_days'] = cvm.daydiff(self['end_day'], self['start_day'])
+                self['n_days'] = n_days
+        else:
+            if n_days:
+                self['end_day'] = self.date(n_days) # Convert from the number of days to the end day
+            else:
+                errormsg = f'You must supply one of n_days and end_day, not "{n_days}" and "{end_day}"'
+                raise ValueError(errormsg)
 
         # Handle contacts
         contacts = self['contacts']
@@ -445,11 +450,11 @@ class Sim(cvb.BaseSim):
             if verbose >= 1:
                 elapsed = sc.toc(output=True)
                 simlabel = f'"{self.label}": ' if self.label else ''
-                string = f'  Running {simlabel}day {t:2.0f}/{self.pars["n_days"]} ({elapsed:0.2f} s) '
+                string = f'  Running {simlabel}{self.datevec[t]} ({t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
                 if verbose >= 2:
                     sc.heading(string)
                 elif verbose == 1:
-                    sc.progressbar(t+1, self.npts, label=string, newline=True)
+                    sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
 
             # Do the heavy lifting -- actually run the model!
             self.step()
