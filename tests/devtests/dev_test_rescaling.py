@@ -12,22 +12,22 @@ s = sc.objdict() # Sims
 m = sc.objdict() # Multisims
 
 # Interventions
-iday = 30
-cb = cv.change_beta(days=iday, changes=0.5) # Change beta
-tn = cv.test_num(start_day=iday, daily_tests=1000, symp_test=10) # Test a number of people
-tp = cv.test_prob(start_day=iday, symp_prob=0.1, asymp_prob=0.01) # Test a number of people
+tn = cv.test_num(start_day=40, daily_tests=1000, symp_test=10) # Test a number of people
+tp = cv.test_prob(start_day=30, symp_prob=0.1, asymp_prob=0.01) # Test a number of people
+cb = cv.change_beta(days=50, changes=0.5) # Change beta
 
 # Properties that are shared across sims
 basepop      = 10e3
-popinfected  = 20
+popinfected  = 100
 popscale1    = 10
 popscale2    = 20 # Try a different population scale
-which_interv = 1 # Which intervention to test
+which_interv = 2 # Which intervention to test
 
 shared = sc.objdict(
     n_days = 120,
     beta = 0.015,
-    interventions = [cb, tn, tp][which_interv],
+    rand_seed = 239487,
+    interventions = [cb, tn, tp],
 )
 
 # Simulate the entire population
@@ -96,12 +96,16 @@ for key in keys:
 
 # Plot
 to_plot = {
-    'Totals': ['cum_infections', 'cum_tests', 'cum_diagnoses'],
-    'New': ['new_infections', 'new_tests', 'new_diagnoses'],
+    'Totals': ['cum_infections', 'cum_diagnoses'],
+    'New': ['new_infections', 'new_diagnoses'],
+    'Total tests': ['cum_tests'],
+    'New tests': ['new_tests'],
     }
+log_scale = ['Total tests']
+
 
 for key in keys:
-    m[key].plot(to_plot=to_plot)
+    m[key].plot(to_plot=to_plot, log_scale=log_scale)
 
 bsims = [msim.base_sim for msim in m.values()]
 mm = cv.MultiSim(sims=bsims)
