@@ -211,7 +211,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
             res = sim.results[reskey]
             res_t = sim.results['t']
             if res.low is not None and res.high is not None:
-                ax.fill_between(res_t, res.low, res.high, **args.fill) # Create the uncertainty bound
+                ax.fill_between(res_t, res.low, res.high, color=res.color, **args.fill) # Create the uncertainty bound
             ax.plot(res_t, res.values, label=res.name, **args.plot, c=res.color)
             plot_data(sim, reskey, args.scatter) # Plot the data
             reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
@@ -233,15 +233,16 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
+    colors = sc.gridcolors(ncolors=len(scens.sims))
     for pnum,title,reskeys in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for reskey in reskeys:
             resdata = scens.results[reskey]
-            for scenkey, scendata in resdata.items():
+            for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
                 res_y = scendata.best
-                ax.fill_between(scens.tvec, scendata.low, scendata.high, **args.fill) # Create the uncertainty bound
-                ax.plot(scens.tvec, res_y, label=scendata.name, **args.plot) # Plot the actual line
+                ax.fill_between(scens.tvec, scendata.low, scendata.high, color=colors[snum], **args.fill) # Create the uncertainty bound
+                ax.plot(scens.tvec, res_y, label=scendata.name, c=colors[snum], **args.plot) # Plot the actual line
                 plot_data(sim, reskey, args.scatter) # Plot the data
                 plot_interventions(sim, ax) # Plot the interventions
                 reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
