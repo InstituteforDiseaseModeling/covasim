@@ -186,6 +186,7 @@ class MultiSim(sc.prettyobj):
             reduced_sim.results[reskey].values[:] = np.median(raw[reskey], axis=1) # Changed from median to mean for smoother plots
             reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
             reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
+        reduced_sim.likelihood() # Recompute the likelihood for the average sim
         reduced_sim.summary_stats(verbose=False) # Recalculate the summary stats
 
         self.base_sim = reduced_sim
