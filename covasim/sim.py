@@ -143,8 +143,12 @@ class Sim(cvb.BaseSim):
         ''' Some parameters can take multiple types; this makes them consistent '''
 
         # Handle types
-        for key in ['pop_size', 'pop_infected', 'pop_size', 'n_days']:
-            self[key] = int(self[key])
+        for key in ['pop_size', 'pop_infected', 'pop_size']:
+            try:
+                self[key] = int(self[key])
+            except Exception as E:
+                errormsg = f'Could not convert {key}={self[key]} of {type(self[key])} to integer'
+                raise TypeError(errormsg) from E
 
         # Handle start day
         start_day = self['start_day'] # Shorten
@@ -162,9 +166,10 @@ class Sim(cvb.BaseSim):
                 errormsg = f"Number of days must be >0, but you supplied start={str(self['start_day'])} and end={str(self['end_day'])}, which gives n_days={n_days}"
                 raise ValueError(errormsg)
             else:
-                self['n_days'] = n_days
+                self['n_days'] = int(n_days)
         else:
             if n_days:
+                self['n_days'] = int(n_days)
                 self['end_day'] = self.date(n_days) # Convert from the number of days to the end day
             else:
                 errormsg = f'You must supply one of n_days and end_day, not "{n_days}" and "{end_day}"'
