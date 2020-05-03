@@ -22,7 +22,7 @@ basepop      = 10e3
 popinfected  = 20
 popscale1    = 10
 popscale2    = 20 # Try a different population scale
-which_interv = 2 # Which intervention to test
+which_interv = 1 # Which intervention to test
 
 shared = sc.objdict(
     n_days = 120,
