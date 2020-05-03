@@ -7,8 +7,8 @@ webapp.
 '''
 
 import numpy as np
-import sciris as sc
 import pylab as pl
+import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
 import plotly.graph_objects as go
@@ -17,6 +17,8 @@ from . import defaults as cvd
 
 __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
+
+#%% Plotting helper functions
 
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None):
     ''' Handle input arguments -- merge user input with defaults '''
@@ -193,6 +195,8 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covas
         return fig
 
 
+#%% Core plotting functions
+
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
@@ -287,6 +291,8 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
 
     return fig
 
+
+#%% Plotly functions
 
 def get_individual_states(sim):
     ''' Helper function to convert people into integers '''
