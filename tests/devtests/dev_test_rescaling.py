@@ -43,8 +43,14 @@ for key in keys:
 
 for key in keys:
     s[key] = cv.Sim(pars=p[key], label=key)
+    m[key] = cv.MultiSim(base_sim=s[key], n_runs=10)
 
-msim = cv.MultiSim(sims=s.values(), reseed=False)
-msim.run()
-msim.compare()
-msim.plot()
+for key in keys:
+    m[key].run()
+    m[key].reduce()
+    m[key].plot()
+
+# msim = cv.MultiSim(sims=s.values(), reseed=False)
+# msim.run()
+# msim.compare()
+# msim.plot()
