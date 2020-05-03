@@ -43,7 +43,7 @@ def handle_to_plot(which, to_plot, n_cols):
         else:
             errormsg = f'"which" must be "sim" or "scens", not "{which}"'
             raise NotImplementedError(errormsg)
-    to_plot = sc.dcp(to_plot) # In case it's supplied as a dict
+    to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
 
