@@ -417,8 +417,44 @@ class Scenarios(cvb.ParsObj):
 
 
     def plot(self, *args, **kwargs):
-        ''' Plot the results -- see documentation in the plotting module '''
-        self.plot.__func__.__doc__ = cvplt.plot_scens.__doc__ # Use the docstring from the plotting module
+        '''
+        Plot the results of a scenario.
+
+        Args:
+            to_plot      (dict): Dict of results to plot; see get_scen_plots() for structure
+            do_save      (bool): Whether or not to save the figure
+            fig_path     (str):  Path to save the figure
+            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
+            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
+            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            fill_args    (dict): Dictionary of kwargs to be passed to pl.fill_between()
+            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
+            as_dates     (bool): Whether to plot the x-axis as dates or time points
+            dateformat   (str):  Date string format, e.g. '%B %d'
+            interval     (int):  Interval between tick marks
+            n_cols       (int):  Number of columns of subpanels to use for subplot
+            font_size    (int):  Size of the font
+            font_family  (str):  Font face
+            grid         (bool): Whether or not to plot gridlines
+            commaticks   (bool): Plot y-axis with commas rather than scientific notation
+            setylim      (bool): Reset the y limit to start at 0
+            log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
+            do_show      (bool): Whether or not to show the figure
+            colors       (dict): Custom color for each scenario, must be a dictionary with one entry per scenario key
+            sep_figs     (bool): Whether to show separate figures for different results instead of subplots
+            fig          (fig):  Existing figure to plot into
+
+        Returns:
+            fig: Figure handle
+
+
+        **Example**::
+
+            scens = cv.Scenarios()
+            scens.run()
+            scens.plot()
+        '''
         fig = cvplt.plot_scens(scens=self, *args, **kwargs)
         return fig
 

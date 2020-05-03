@@ -651,8 +651,43 @@ class Sim(cvb.BaseSim):
 
 
     def plot(self, *args, **kwargs):
-        ''' Plot the results -- see documentation in the plotting module '''
-        self.plot.__func__.__doc__ = cvplt.plot_sim.__doc__  # Use the docstring from the plotting module
+        '''
+        Plot the results of a single simulation.
+
+        Args:
+            to_plot      (dict): Dict of results to plot; see get_sim_plots() for structure
+            do_save      (bool): Whether or not to save the figure
+            fig_path     (str):  Path to save the figure
+            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
+            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
+            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
+            as_dates     (bool): Whether to plot the x-axis as dates or time points
+            dateformat   (str):  Date string format, e.g. '%B %d'
+            interval     (int):  Interval between tick marks
+            n_cols       (int):  Number of columns of subpanels to use for subplot
+            font_size    (int):  Size of the font
+            font_family  (str):  Font face
+            grid         (bool): Whether or not to plot gridlines
+            commaticks   (bool): Plot y-axis with commas rather than scientific notation
+            setylim      (bool): Reset the y limit to start at 0
+            log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
+            do_show      (bool): Whether or not to show the figure
+            colors       (dict): Custom color for each result, must be a dictionary with one entry per result key in to_plot
+            sep_figs     (bool): Whether to show separate figures for different results instead of subplots
+            fig          (fig):  Handle of existing figure to plot into
+
+        Returns:
+            fig: Figure handle
+
+
+        **Example**::
+
+            sim = cv.Sim()
+            sim.run()
+            sim.plot()
+        '''
         fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig
 
