@@ -310,22 +310,22 @@ def get_individual_states(sim):
     states = [
         {'name': 'Healthy',
          'quantity': None,
-         'color': '#b9d58a',
+         'color': '#a6cee3',
          'value': 0
          },
         {'name': 'Exposed',
          'quantity': 'date_exposed',
-         'color': '#e37c30',
+         'color': '#ff7f00',
          'value': 2
          },
         {'name': 'Infectious',
          'quantity': 'date_infectious',
-         'color': '#c35d86',
+         'color': '#e33d3e',
          'value': 3
          },
         {'name': 'Recovered',
          'quantity': 'date_recovered',
-         'color': '#799956',
+         'color': '#3e89bc',
          'value': 4
          },
         {'name': 'Dead',
