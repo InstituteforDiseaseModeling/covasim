@@ -281,12 +281,20 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     if color is None:
         color = res.color
 
+    # Reuse the figure, if available
+    try:
+        if fig.axes[0].get_label() == 'plot_result':
+            ax = fig.axes[0]
+    except:
+        pass
+    if ax is None: # Otherwise, make a new one
+        ax = pl.subplot(111, label='plot_result')
+
     # Do the plotting
-    ax = pl.subplot(111, label='ax')
-    ax.plot(res_t, res_y, c=color, **args.plot)
+    ax.plot(res_t, res_y, c=color, label=res.name, **args.plot)
     plot_data(sim, key, args.scatter) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
-    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend, show_legend=False) # Configure the title, grid, and legend
+    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
     reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return fig
