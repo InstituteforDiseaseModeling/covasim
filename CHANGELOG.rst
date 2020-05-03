@@ -5,6 +5,11 @@ All notable changes to the codebase are documented in this file. Note: in many c
 changes from multiple patch versions are grouped together, so numbering will not be
 strictly consecutive.
 
+Version 0.30.1 (2020-05-02)
+---------------------------
+- Added a ``par_args`` arugument to ``multi_run()``, allowing arguments (e.g. ``ncpus``) to be passed to ``sc.parallelize()``.
+- Fixed bug whereby intervention were not getting initialized if they were added to a sim after it was initialized.
+
 
 Version 0.30.0 (2020-05-02)
 ---------------------------
@@ -13,7 +18,6 @@ Version 0.30.0 (2020-05-02)
 - Refactored plotting to increase consistency between ``sim.plot()``, ``sim.plot_result()``, ``scens.plot()``, and ``multisim.plot()``.
 - Doubling time calculation defaults have been updated to use a window of 3 days and a maximum of 30 days.
 - Added an ``until`` argument to ``sim.run()``, to make it easier to run a partially completed sim and then resume. See ``tests/devtests/test_run_until.py``.
-- Added a ``par_args`` arugument to ``multi_run()``, allowing arguments (e.g. ``ncpus``) to be passed to ``sc.parallelize()``.
 - Fixed a bug whereby ``cv.clip_edges()`` with no end day specified resulted in large sim files when saved.
 
 
