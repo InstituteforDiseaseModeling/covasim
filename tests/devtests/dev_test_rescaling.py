@@ -12,7 +12,7 @@ s = sc.objdict() # Sims
 m = sc.objdict() # Multisims
 
 # Interventions
-iday = 60
+iday = 30
 cb = cv.change_beta(days=iday, changes=0.5) # Change beta
 tn = cv.test_num(start_day=iday, daily_tests=1000, symp_test=10) # Test a number of people
 tp = cv.test_prob(start_day=iday, symp_prob=0.1, asymp_prob=0.01) # Test a number of people
@@ -25,7 +25,7 @@ popscale2    = 20 # Try a different population scale
 which_interv = 2 # Which intervention to test
 
 shared = sc.objdict(
-    n_days = 120,
+    n_days = 60,
     beta = 0.015,
     interventions = [cb, tn, tp][which_interv],
 )
