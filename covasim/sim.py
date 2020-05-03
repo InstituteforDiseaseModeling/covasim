@@ -418,8 +418,9 @@ class Sim(cvb.BaseSim):
                     max_ratio = pop_scale/current_scale # We don't want to exceed this
                     scaling_ratio = min(self['rescale_factor'], max_ratio)
                     self.rescale_vec[t+1:] *= scaling_ratio # Update the rescaling factor from here on
-                    n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
+                    n = int(n_people) #*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
                     new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
+                    print(len(new_sus_inds))
                     self.people.make_susceptible(new_sus_inds)
         return
 
