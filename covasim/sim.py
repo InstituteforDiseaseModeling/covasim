@@ -570,8 +570,9 @@ class Sim(cvb.BaseSim):
             mean_inf = diff.mean()
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
-            r_eff = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
-            values = sc.smooth(r_eff, smoothing)
+            values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
+            if len(values) >= 3: # Can't smooth arrays shorter than this
+                values = sc.smooth(values, smoothing)
 
         # Alternate (traditional) method -- count from the date of infection or outcome
         elif method in ['infectious', 'outcome']:
