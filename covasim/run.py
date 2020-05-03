@@ -188,7 +188,7 @@ class MultiSim(sc.prettyobj):
                 raw[reskey][:,s] = sim.results[reskey].values
 
         for reskey in reskeys:
-            reduced_sim.results[reskey].values[:] = np.median(raw[reskey], axis=1) # Changed from median to mean for smoother plots
+            reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
             reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
             reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
         reduced_sim.likelihood() # Recompute the likelihood for the average sim
@@ -432,7 +432,7 @@ class Scenarios(cvb.ParsObj):
 
             scenraw = {}
             for reskey in reskeys:
-                scenraw[reskey] = pl.zeros((self.npts, len(scen_sims)))
+                scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
                     scenraw[reskey][:,s] = sim.results[reskey].values
 
@@ -441,9 +441,9 @@ class Scenarios(cvb.ParsObj):
             scenres.low = {}
             scenres.high = {}
             for reskey in reskeys:
-                scenres.best[reskey] = pl.median(scenraw[reskey], axis=1) # Changed from median to mean for smoother plots
-                scenres.low[reskey]  = pl.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
-                scenres.high[reskey] = pl.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
+                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
+                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
+                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
 
             for reskey in reskeys:
                 self.results[reskey][scenkey]['name'] = scenname
