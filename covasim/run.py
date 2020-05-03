@@ -416,46 +416,10 @@ class Scenarios(cvb.ParsObj):
         return
 
 
-    def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
-             interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-             log_scale=False, colors=None, do_show=True, sep_figs=False, fig=None):
-        '''
-        Plot the results -- can supply arguments for both the figure and the plots.
-
-        Args:
-            to_plot      (dict): Dict of results to plot; see get_scen_plots() for structure
-            do_save      (bool): Whether or not to save the figure
-            fig_path     (str):  Path to save the figure
-            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
-            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            fill_args    (dict): Dictionary of kwargs to be passed to pl.fill_between()
-            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
-            as_dates     (bool): Whether to plot the x-axis as dates or time points
-            dateformat   (str):  Date string format, e.g. '%B %d'
-            interval     (int):  Interval between tick marks
-            n_cols       (int):  Number of columns of subpanels to use for subplot
-            font_size    (int):  Size of the font
-            font_family  (str):  Font face
-            grid         (bool): Whether or not to plot gridlines
-            commaticks   (bool): Plot y-axis with commas rather than scientific notation
-            setylim      (bool): Reset the y limit to start at 0
-            log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
-            do_show      (bool): Whether or not to show the figure
-            colors       (dict): Custom color for each scenario, must be a dictionary with one entry per scenario key
-            sep_figs     (bool): Whether to show separate figures for different results instead of subplots
-            fig          (fig):  Existing figure to plot into
-
-        Returns:
-            fig: Figure handle
-        '''
-        fig = cvplt.plot_scens(scens=self, to_plot=to_plot, do_save=do_save, fig_path=fig_path, fig_args=fig_args, plot_args=plot_args,
-             scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args, legend_args=legend_args, as_dates=as_dates, dateformat=dateformat,
-             interval=interval, n_cols=n_cols, font_size=font_size, font_family=font_family, grid=grid, commaticks=commaticks, setylim=setylim,
-             log_scale=log_scale, colors=colors, do_show=do_show, sep_figs=sep_figs, fig=fig)
-
+    def plot(self, *args, **kwargs):
+        ''' Plot the results -- see documentation in the plotting module '''
+        self.plot.__func__.__doc__ = cvplt.plot_scens.__doc__ # Use the docstring from the plotting module
+        fig = cvplt.plot_scens(scens=self, *args, **kwargs)
         return fig
 
 
