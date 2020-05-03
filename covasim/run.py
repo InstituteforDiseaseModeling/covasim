@@ -419,7 +419,7 @@ class Scenarios(cvb.ParsObj):
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
              scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
              interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-             log_scale=False, do_show=True, sep_figs=False, fig=None):
+             log_scale=False, colors=None, do_show=True, sep_figs=False, fig=None):
         '''
         Plot the results -- can supply arguments for both the figure and the plots.
 
@@ -444,6 +444,7 @@ class Scenarios(cvb.ParsObj):
             setylim      (bool): Reset the y limit to start at 0
             log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
             do_show      (bool): Whether or not to show the figure
+            colors       (dict): Custom color for each scenario, must be a dictionary with one entry per scenario key
             sep_figs     (bool): Whether to show separate figures for different results instead of subplots
             fig          (fig):  Existing figure to plot into
 
@@ -453,7 +454,7 @@ class Scenarios(cvb.ParsObj):
         fig = cvplt.plot_scens(scens=self, to_plot=to_plot, do_save=do_save, fig_path=fig_path, fig_args=fig_args, plot_args=plot_args,
              scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args, legend_args=legend_args, as_dates=as_dates, dateformat=dateformat,
              interval=interval, n_cols=n_cols, font_size=font_size, font_family=font_family, grid=grid, commaticks=commaticks, setylim=setylim,
-             log_scale=log_scale, do_show=do_show, sep_figs=sep_figs, fig=fig)
+             log_scale=log_scale, colors=colors, do_show=do_show, sep_figs=sep_figs, fig=fig)
 
         return fig
 

@@ -196,7 +196,7 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covas
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-         log_scale=False, do_show=True, sep_figs=False, fig=None):
+         log_scale=False, colors=None, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a sim -- see Sim.plot() for documentation '''
 
     # Handle inputs
@@ -210,9 +210,13 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
         for reskey in keylabels:
             res = sim.results[reskey]
             res_t = sim.results['t']
+            if colors is not None:
+                color = colors[reskey]
+            else:
+                color = res.color
             if res.low is not None and res.high is not None:
-                ax.fill_between(res_t, res.low, res.high, color=res.color, **args.fill) # Create the uncertainty bound
-            ax.plot(res_t, res.values, label=res.name, **args.plot, c=res.color)
+                ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
+            ax.plot(res_t, res.values, label=res.name, **args.plot, c=color)
             plot_data(sim, reskey, args.scatter) # Plot the data
             reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         plot_interventions(sim, ax) # Plot the interventions
@@ -224,7 +228,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-         log_scale=False, do_show=True, sep_figs=False, fig=None):
+         log_scale=False, colors=None, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
@@ -233,7 +237,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
-    colors = sc.gridcolors(ncolors=len(scens.sims))
+    default_colors = sc.gridcolors(ncolors=len(scens.sims))
     for pnum,title,reskeys in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for reskey in reskeys:
@@ -241,8 +245,12 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
             for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
                 res_y = scendata.best
-                ax.fill_between(scens.tvec, scendata.low, scendata.high, color=colors[snum], **args.fill) # Create the uncertainty bound
-                ax.plot(scens.tvec, res_y, label=scendata.name, c=colors[snum], **args.plot) # Plot the actual line
+                if colors is not None:
+                    color = colors[scenkey]
+                else:
+                    color = default_colors[snum]
+                ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
+                ax.plot(scens.tvec, res_y, label=scendata.name, c=color, **args.plot) # Plot the actual line
                 plot_data(sim, reskey, args.scatter) # Plot the data
                 plot_interventions(sim, ax) # Plot the interventions
                 reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
@@ -253,7 +261,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-                as_dates=True, dateformat=None, interval=None, fig=None):
+                as_dates=True, dateformat=None, interval=None, color=None, fig=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
@@ -262,12 +270,16 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
 
-    # Do the plotting
-    ax = pl.subplot(111, label='ax')
+    # Gather results
     res = sim.results[key]
     res_t = sim.results['t']
     res_y = res.values
-    ax.plot(res_t, res_y, c=res.color, **args.plot)
+    if color is None:
+        color = res.color
+
+    # Do the plotting
+    ax = pl.subplot(111, label='ax')
+    ax.plot(res_t, res_y, c=color, **args.plot)
     plot_data(sim, key, args.scatter) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend, show_legend=False) # Configure the title, grid, and legend
