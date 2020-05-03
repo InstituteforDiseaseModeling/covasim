@@ -55,30 +55,10 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
     return sims
 
 
-def test_scenarios(do_plot=False):
-    sc.heading('Scenarios test')
-    basepars = {'pop_size':1000}
-
-    json_path = 'scen_test.json'
-    xlsx_path = 'scen_test.xlsx'
-
-    scens = cv.Scenarios(basepars=basepars)
-    scens.run()
-    if do_plot:
-        scens.plot()
-    scens.to_json(json_path)
-    scens.to_excel(xlsx_path)
-
-    for path in [json_path, xlsx_path]:
-        print(f'Removing {path}')
-        os.remove(path)
-    return scens
-
-
 def test_multisim_reduce(do_plot=False): # If being run via pytest, turn off
     sc.heading('Combine results test')
 
-    n_runs = 11
+    n_runs = 3
     pop_size = 1000
     pop_infected = 10
 
@@ -116,6 +96,26 @@ def test_multisim_combine(do_plot=False): # If being run via pytest, turn off
         sim2.plot()
 
     return msim
+
+
+def test_scenarios(do_plot=False):
+    sc.heading('Scenarios test')
+    basepars = {'pop_size':1000}
+
+    json_path = 'scen_test.json'
+    xlsx_path = 'scen_test.xlsx'
+
+    scens = cv.Scenarios(basepars=basepars)
+    scens.run()
+    if do_plot:
+        scens.plot()
+    scens.to_json(json_path)
+    scens.to_excel(xlsx_path)
+
+    for path in [json_path, xlsx_path]:
+        print(f'Removing {path}')
+        os.remove(path)
+    return scens
 
 
 #%% Run as a script
