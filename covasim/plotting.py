@@ -473,9 +473,9 @@ def plotly_animate(sim, do_show=False):
         "yanchor": "top",
         "xanchor": "left",
         "currentvalue": {
-            "font": {"size": 20},
+            "font": {"size": 16},
             "prefix": "Day: ",
-            "visible": False,
+            "visible": True,
             "xanchor": "right"
         },
         "transition": {"duration": 200},
