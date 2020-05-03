@@ -641,7 +641,8 @@ class Sim(cvb.BaseSim):
         date_symptomatic = self.people.date_symptomatic
         for p in range(len(self.people)):
             if len(targets[p])>0:
-                for target_ind in targets[p]:
+                for target in targets[p]:
+                    target_ind = target['target']
                     intervals1[pos1] = date_exposed[target_ind] - date_exposed[p]
                     pos1 += 1
                     if not np.isnan(date_symptomatic[p]):
