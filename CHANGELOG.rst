@@ -7,6 +7,7 @@ strictly consecutive.
 
 Version 0.30.1 (2020-05-02)
 ---------------------------
+- Added ``end_day`` as a parameter, allowing an end date to be specified instead of a number of days.
 - Added a ``par_args`` arugument to ``multi_run()``, allowing arguments (e.g. ``ncpus``) to be passed to ``sc.parallelize()``.
 - Fixed bug whereby intervention were not getting initialized if they were added to a sim after it was initialized.
 

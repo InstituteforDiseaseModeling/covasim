@@ -152,6 +152,19 @@ class Sim(cvb.BaseSim):
             start_day = '2020-03-01'
         self['start_day'] = cvm.date(start_day)
 
+        # Handle end day and n_days
+        end_day = self['end_day']
+        n_days = self['n_days']
+        if n_days is not None:
+            self['end_day'] = self.date(n_days) # Convert from the number of days to the end day
+        else:
+            if not end_day:
+                errormsg = f'If n_days is not specified, you must specify a valid end day, not "{end_day}"'
+                raise ValueError(errormsg)
+            else:
+                self['end_day'] = cvm.date(end_day)
+                self['n_days'] = cvm.daydiff(self['end_day'], self['start_day'])
+
         # Handle contacts
         contacts = self['contacts']
         if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's all contacts
