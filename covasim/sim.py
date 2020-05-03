@@ -546,9 +546,9 @@ class Sim(cvb.BaseSim):
         Effective reproductive number based on number of people each person infected.
 
         Args:
-            method (str): 'instant' uses daily infections, 'infected' counts from the date infected, 'outcome' counts from the date recovered/dead
+            method (str): 'instant' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
             smoothing (int): the number of steps to smooth over for the 'daily' method
-            window (int): the size of the window used for 'infected' and 'outcome' calculations (larger values are more accurate but less precise)
+            window (int): the size of the window used for 'infectious' and 'outcome' calculations (larger values are more accurate but less precise)
 
         Returns:
             r_eff (Result): the r_eff result object
@@ -574,12 +574,12 @@ class Sim(cvb.BaseSim):
             values = sc.smooth(r_eff, smoothing)
 
         # Alternate (traditional) method -- count from the date of infection or outcome
-        elif method in ['infected', 'outcome']:
+        elif method in ['infectious', 'outcome']:
 
             for t in self.tvec:
 
                 # Sources are easy -- count up the arrays
-                if method == 'infected':
+                if method == 'infectious':
                     inds = cvu.true(t == self.people.date_infectious) # Find people who became infectious on this timestep
                 elif method == 'outcome':
                     recov_inds = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep

@@ -5,6 +5,13 @@ All notable changes to the codebase are documented in this file. Note: in many c
 changes from multiple patch versions are grouped together, so numbering will not be
 strictly consecutive.
 
+
+Version 0.30.2 (2020-05-02)
+---------------------------
+- Updated ``r_eff`` to use a new method based on daily new infections. The previous version, where infections were counted from when someone recovered or died, is available as ``sim.compute_r_eff(method='outcome')``, while the traditional method, where infections are counted from the day someone becomes infectious, is available via ``sim.compute_r_eff(method='infectious')``.
+
+
+
 Version 0.30.1 (2020-05-02)
 ---------------------------
 - Added ``end_day`` as a parameter, allowing an end date to be specified instead of a number of days.
