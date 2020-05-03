@@ -197,7 +197,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
          log_scale=False, do_show=True, sep_figs=False, fig=None):
-    ''' Plot the results of a sim -- see Sim.plot() for documentation. '''
+    ''' Plot the results of a sim -- see Sim.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
@@ -225,7 +225,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
          interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
          log_scale=False, do_show=True, sep_figs=False, fig=None):
-    ''' Plot the results of a scenario -- see Scenarios.plot() for documentation. '''
+    ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
@@ -253,7 +253,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
                 as_dates=True, dateformat=None, interval=None, fig=None):
-    ''' Plot a single result -- see Sim.plot_result() for documentation. '''
+    ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
     fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
