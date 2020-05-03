@@ -455,12 +455,22 @@ class test_num(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates and number of tests '''
+
+        # Process daily tests -- has to be here rather than init so have access to the sim object
         if sc.isnumber(self.daily_tests): # If a number, convert to an array
             self.daily_tests = np.array([int(self.daily_tests)]*sim.npts)
+        elif isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
+            start_date = sim['start_day'] + dt.timedelta(days=self.start_day)
+            end_date = self.daily_tests.index[-1]
+            dateindex = pd.date_range(start_date, end_date)
+            self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
+
+        # Handle days
         self.start_day   = sim.day(self.start_day)
         self.end_day     = sim.day(self.end_day)
         self.days        = [self.start_day, self.end_day]
         self.initialized = True
+
         return
 
 
@@ -472,17 +482,10 @@ class test_num(Intervention):
         elif self.end_day is not None and t > self.end_day:
             return
 
-        # Process daily tests -- has to be here rather than init so have access to the sim object
-        if isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
-            start_date = sim['start_day'] + dt.timedelta(days=self.start_day)
-            end_date = self.daily_tests.index[-1]
-            dateindex = pd.date_range(start_date, end_date)
-            self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
-
         # Check that there are still tests
         rel_t = t - self.start_day
         if rel_t < len(self.daily_tests):
-            n_tests = self.daily_tests[rel_t]  # Number of tests for this day
+            n_tests = int(self.daily_tests[rel_t]/sim.rescale_vec[t])  # Number of tests for this day -- rescaled
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
