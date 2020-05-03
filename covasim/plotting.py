@@ -170,7 +170,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
             res = sim.results[reskey]
             res_t = sim.results['t']
             if res.low is not None and res.high is not None:
-                ax.fill_between(res_t, res.low, res.hig, **args.fill) # Create the uncertainty bound
+                ax.fill_between(res_t, res.low, res.high, **args.fill) # Create the uncertainty bound
             ax.plot(res_t, res.values, label=res.name, **args.plot, c=res.color)
             plot_data(sim, reskey, args.scatter) # Plot the data
             plot_interventions(sim, ax) # Plot the interventions

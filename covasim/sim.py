@@ -469,7 +469,7 @@ class Sim(cvb.BaseSim):
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
+            self.results[f'cum_{key}'].values[:] = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Perform calculations on results
@@ -555,7 +555,7 @@ class Sim(cvb.BaseSim):
         ind = den > 0
         values[ind] = num[ind]/den[ind]
 
-        self.results['r_eff'].values = values
+        self.results['r_eff'].values[:] = values
 
         return
 

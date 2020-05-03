@@ -1,5 +1,5 @@
 '''
-Functions for running multiple Covasim runs.
+Functions and classes for running multiple Covasim runs.
 '''
 
 #%% Imports
@@ -39,6 +39,8 @@ class MultiSim(sc.prettyobj):
     Args:
         sims (Sim or list): a single sim or a list of sims
         base_sim (Sim): the sim used for shared properties; if not supplied, the first of the sims provided
+        make_metapars()['quantiles']
+        kwargs (dict): stored in run_args and passed to run()
 
     Returns:
         msim: a MultiSim object
@@ -59,7 +61,7 @@ class MultiSim(sc.prettyobj):
         msim.plot() # Plot as single sim
     '''
 
-    def __init__(self, sims=None, base_sim=None):
+    def __init__(self, sims=None, base_sim=None, quantiles=None, **kwargs):
 
         # Handle inputs
         if base_sim is None:
@@ -72,8 +74,13 @@ class MultiSim(sc.prettyobj):
                 errormsg = f'If base_sim is not supplied, sims must be either a sims or a list of sims, not {type(sims)}'
                 raise TypeError(errormsg)
 
+        if quantiles is None:
+            quantiles = make_metapars()['quantiles']
+
         self.sims = sims
         self.base_sim = base_sim
+        self.quantiles = quantiles
+        self.run_args = sc.mergedicts(kwargs)
         self.results = None
         self.which = None # Whether the multisim is to be reduced, combined, etc.
 
@@ -107,13 +114,15 @@ class MultiSim(sc.prettyobj):
             kwargs (dict): passed to multi_run() and thence to sim.run()
 
         Returns:
-            None (modifies Scenarios object in place)
+            None (modifies MultiSim object in place)
         '''
         if self.sims is None:
             sims = self.base_sim
         else:
             sims = self.sims
 
+        kwargs = sc.mergedicts(self.run_args, kwargs)
+        print(kwargs)
         self.sims = multi_run(sims, *args, **kwargs)
         return
 
@@ -138,14 +147,86 @@ class MultiSim(sc.prettyobj):
             if not combined_sim.results[key].scale:
                 combined_sim.results[key].values /= n_runs
 
-        self.combined_sim = combined_sim
-        self.results = self.combined_sim.results
+        self.base_sim = combined_sim
+        self.results = combined_sim.results
         self.which = 'combined'
 
         if output:
-            return combined_sim
+            return self.base_sim
         else:
             return
+
+
+    def reduce(self, quantiles=None, output=False):
+        ''' Combine multiple sims into a single sim with scaled results '''
+
+        if quantiles is None:
+            quantiles = self.quantiles
+        if not isinstance(quantiles, dict):
+            try:
+                quantiles = {'low':quantiles[0], 'high':quantiles[1]}
+            except Exception as E:
+                errormsg = f'Could not figure out how to convert {quantiles} into a quantiles object: must be a dict with keys low, high or a 2-element array ({str(E)})'
+                raise ValueError(errormsg)
+
+        # Store information on the sims
+        n_runs = len(self)
+        reduced_sim = sc.dcp(self.sims[0])
+        reduced_sim.parallelized = {'parallelized':True, 'combined':False, 'n_runs':n_runs}  # Store how this was parallelized
+
+        # Perform the statistics
+        raw = {}
+        reskeys = reduced_sim.result_keys()
+        for reskey in reskeys:
+            raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
+            for s,sim in enumerate(self.sims):
+                raw[reskey][:,s] = sim.results[reskey].values
+
+        for reskey in reskeys:
+            reduced_sim.results[reskey].values[:] = np.median(raw[reskey], axis=1) # Changed from median to mean for smoother plots
+            reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
+            reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
+        reduced_sim.summary_stats(verbose=False) # Recalculate the summary stats
+
+        self.base_sim = reduced_sim
+        self.results = reduced_sim.results
+        self.which = 'reduced'
+
+        if output:
+            return self.base_sim
+        else:
+            return
+
+
+    def plot(self, *args, **kwargs):
+        ''' Convenience mthod for plotting '''
+        fig = self.base_sim.plot(*args, **kwargs)
+        return fig
+
+
+    def save(self, filename=None, **kwargs):
+        '''
+        Save to disk as a gzipped pickle. Load with cv.load(filename).
+
+        Args:
+            filename (str or None): the name or path of the file to save to; if None, uses stored
+            kwargs: passed to makefilepath()
+
+        Returns:
+            filename (str): the validated absolute path to the saved file
+
+        **Example**::
+
+            msim.save() # Saves to a .sim file with the date and time of creation by default
+        '''
+        if filename is None:
+            filename = self.simfile
+        filename = sc.makefilepath(filename=filename, **kwargs)
+        self.filename = filename # Store the actual saved filename
+        sc.saveobj(filename=filename, obj=self)
+        return filename
+
+
 
 
 class Scenarios(cvb.ParsObj):
@@ -517,6 +598,8 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, verbose=None, 
         verbose = new_sim['verbose']
     sim_args = sc.mergedicts(sim_args, kwargs)
     run_args = sc.mergedicts({'verbose':verbose}, run_args)
+    if not new_sim.label:
+        new_sim.label = f'Sim {ind:d}'
 
     if reseed:
         new_sim['rand_seed'] += ind # Reset the seed, otherwise no point of parallel runs
