@@ -421,7 +421,7 @@ class test_num(Intervention):
     Test a fixed number of people per day.
 
     Args:
-        daily_tests (int or arr): number of tests per day
+        daily_tests (int or arr): number of tests per day; if integer, use that number every day
         symp_test (float): odds ratio of a symptomatic person testing
         quar_test (float): probability of a person in quarantine testing
         sensitivity (float): test sensitivity
@@ -439,10 +439,10 @@ class test_num(Intervention):
         Intervention
     '''
 
-    def __init__(self, daily_tests, sympt_test=100.0, quar_test=1.0, sensitivity=1.0, loss_prob=0, test_delay=0, start_day=0, end_day=None, do_plot=None):
+    def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, sensitivity=1.0, loss_prob=0, test_delay=0, start_day=0, end_day=None, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.daily_tests = daily_tests #: Should be a list of length matching time
-        self.sympt_test  = sympt_test
+        self.symp_test  = symp_test
         self.quar_test   = quar_test
         self.sensitivity = sensitivity
         self.loss_prob   = loss_prob
@@ -454,7 +454,9 @@ class test_num(Intervention):
 
 
     def initialize(self, sim):
-        ''' Fix the dates '''
+        ''' Fix the dates and number of tests '''
+        if sc.isnumber(self.daily_tests): # If a number, convert to an array
+            self.daily_tests = np.array([int(self.daily_tests)]*sim.npts)
         self.start_day   = sim.day(self.start_day)
         self.end_day     = sim.day(self.end_day)
         self.days        = [self.start_day, self.end_day]
@@ -492,7 +494,7 @@ class test_num(Intervention):
         symp_inds  = cvu.true(sim.people.symptomatic)
         quar_inds  = cvu.true(sim.people.quarantined)
         diag_inds  = cvu.true(sim.people.diagnosed)
-        test_probs[symp_inds] *= self.sympt_test
+        test_probs[symp_inds] *= self.symp_test
         test_probs[quar_inds] *= self.quar_test
         test_probs[diag_inds] = 0.
 

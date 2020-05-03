@@ -5,44 +5,51 @@ Compare simulating the entire population vs. dynamic rescaling vs. static rescal
 import sciris as sc
 import covasim as cv
 
+T = sc.tic()
+
 p = sc.objdict() # Parameters
 s = sc.objdict() # Sims
 m = sc.objdict() # Multisims
 
 # Interventions
-cb = cv.change_beta(days=60, changes=0.5) # Change beta
-# tn = cv.test_num() # Test a number of people
+iday = 60
+cb = cv.change_beta(days=iday, changes=0.5) # Change beta
+tn = cv.test_num(start_day=iday, daily_tests=1000, symp_test=10) # Test a number of people
 # tp = cv.test_prob() # Test a number of people
 
 
 # Properties that are shared across sims
+basepop     = 10e3
+popscale    = 10
+popinfected = 20
+
 shared = sc.objdict(
     n_days = 120,
-    beta = 0.012,
-    interventions = cb,
+    beta = 0.015,
+    interventions = tn,
 )
 
 # Simulate the entire population
 p.entire = dict(
-    pop_size     = 200e3,
-    pop_infected = 20,
+    pop_size     = basepop*popscale,
+    pop_infected = popinfected,
     pop_scale    = 1,
     rescale      = False,
 )
 
 # Simulate a small population with dynamic scaling
 p.rescale = dict(
-    pop_size     = 20e3,
-    pop_infected = 20,
-    pop_scale    = 10,
+    pop_size     = basepop,
+    pop_infected = popinfected,
+    pop_scale    = popscale,
     rescale      = True,
 )
 
 # Simulate a small population with static scaling
 p.static = dict(
-    pop_size     = 20e3,
-    pop_infected = 2,
-    pop_scale    = 10,
+    pop_size     = basepop,
+    pop_infected = popinfected//popscale,
+    pop_scale    = popscale,
     rescale      = False,
 )
 
@@ -64,7 +71,4 @@ bsims = [msim.base_sim for msim in m.values()]
 mm = cv.MultiSim(sims=bsims)
 mm.compare()
 
-# msim = cv.MultiSim(sims=s.values(), reseed=False)
-# msim.run()
-# msim.compare()
-# msim.plot()
+sc.toc(T)
