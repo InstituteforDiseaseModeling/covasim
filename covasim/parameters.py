@@ -30,7 +30,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Simulation parameters
     pars['start_day']  = '2020-03-01' # Start day of the simulation
-    pars['n_days']     = 60 # Number of days of run, if end_day isn't used
+    pars['end_day']    = None # End day of the simulation
+    pars['n_days']     = 60 # Number of days to run, if end_day isn't specified
     pars['rand_seed']  = 1 # Random seed, if None, don't reset
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 

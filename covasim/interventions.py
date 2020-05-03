@@ -51,6 +51,7 @@ class Intervention:
             do_plot = True
         self.do_plot = do_plot
         self.days = []
+        self.initialized = False
         return
 
 
@@ -84,6 +85,7 @@ class Intervention:
         Initialize intervention -- this is used to make modifications to the intervention
         that can't be done until after the sim is created.
         '''
+        self.initialized = True
         return
 
 
@@ -234,6 +236,7 @@ class sequence(Intervention):
     def initialize(self, sim):
         ''' Fix the dates '''
         self.days = [sim.day(day) for day in self.days]
+        self.initialized = True
         return
 
 
@@ -293,6 +296,7 @@ class change_beta(Intervention):
                 self.orig_betas['overall'] = sim['beta']
             else:
                 self.orig_betas[lkey] = sim['beta_layer'][lkey]
+        self.initialized = True
         return
 
 
@@ -342,9 +346,10 @@ class clip_edges(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
-        self.start_day = sim.day(self.start_day)
-        self.end_day   = sim.day(self.end_day)
-        self.days      = [self.start_day, self.end_day]
+        self.start_day   = sim.day(self.start_day)
+        self.end_day     = sim.day(self.end_day)
+        self.days        = [self.start_day, self.end_day]
+        self.initialized = True
         return
 
 
@@ -450,9 +455,10 @@ class test_num(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
-        self.start_day = sim.day(self.start_day)
-        self.end_day   = sim.day(self.end_day)
-        self.days      = [self.start_day, self.end_day]
+        self.start_day   = sim.day(self.start_day)
+        self.end_day     = sim.day(self.end_day)
+        self.days        = [self.start_day, self.end_day]
+        self.initialized = True
         return
 
 
@@ -537,9 +543,10 @@ class test_prob(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
-        self.start_day = sim.day(self.start_day)
-        self.end_day   = sim.day(self.end_day)
-        self.days      = [self.start_day, self.end_day]
+        self.start_day   = sim.day(self.start_day)
+        self.end_day     = sim.day(self.end_day)
+        self.days        = [self.start_day, self.end_day]
+        self.initialized = True
         return
 
 
@@ -606,6 +613,7 @@ class contact_tracing(Intervention):
         if sc.isnumber(self.trace_time):
             val = self.trace_time
             self.trace_time = {k:val for k in sim.people.layer_keys()}
+        self.initialized = True
         return
 
 

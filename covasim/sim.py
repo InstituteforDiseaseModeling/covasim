@@ -143,14 +143,37 @@ class Sim(cvb.BaseSim):
         ''' Some parameters can take multiple types; this makes them consistent '''
 
         # Handle types
-        for key in ['pop_size', 'pop_infected', 'pop_size', 'n_days']:
-            self[key] = int(self[key])
+        for key in ['pop_size', 'pop_infected', 'pop_size']:
+            try:
+                self[key] = int(self[key])
+            except Exception as E:
+                errormsg = f'Could not convert {key}={self[key]} of {type(self[key])} to integer'
+                raise TypeError(errormsg) from E
 
         # Handle start day
         start_day = self['start_day'] # Shorten
         if start_day in [None, 0]: # Use default start day
             start_day = '2020-03-01'
         self['start_day'] = cvm.date(start_day)
+
+        # Handle end day and n_days
+        end_day = self['end_day']
+        n_days = self['n_days']
+        if end_day:
+            self['end_day'] = cvm.date(end_day)
+            n_days = cvm.daydiff(self['start_day'], self['end_day'])
+            if n_days <= 0:
+                errormsg = f"Number of days must be >0, but you supplied start={str(self['start_day'])} and end={str(self['end_day'])}, which gives n_days={n_days}"
+                raise ValueError(errormsg)
+            else:
+                self['n_days'] = int(n_days)
+        else:
+            if n_days:
+                self['n_days'] = int(n_days)
+                self['end_day'] = self.date(n_days) # Convert from the number of days to the end day
+            else:
+                errormsg = f'You must supply one of n_days and end_day, not "{n_days}" and "{end_day}"'
+                raise ValueError(errormsg)
 
         # Handle contacts
         contacts = self['contacts']
@@ -291,7 +314,8 @@ class Sim(cvb.BaseSim):
         ''' Initialize the interventions '''
         # Initialize interventions
         for intervention in self['interventions']:
-            intervention.initialize(self)
+            if not intervention.initialized:
+                intervention.initialize(self)
         return
 
 
@@ -420,6 +444,7 @@ class Sim(cvb.BaseSim):
             self.initialize()
         else:
             self.validate_pars() # We always want to validate the parameters before running
+            self.init_interventions() # And interventions
         if verbose is None:
             verbose = self['verbose']
 
@@ -430,11 +455,11 @@ class Sim(cvb.BaseSim):
             if verbose >= 1:
                 elapsed = sc.toc(output=True)
                 simlabel = f'"{self.label}": ' if self.label else ''
-                string = f'  Running {simlabel}day {t:2.0f}/{self.pars["n_days"]} ({elapsed:0.2f} s) '
+                string = f'  Running {simlabel}{self.datevec[t]} ({t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
                 if verbose >= 2:
                     sc.heading(string)
                 elif verbose == 1:
-                    sc.progressbar(t+1, self.npts, label=string, newline=True)
+                    sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
 
             # Do the heavy lifting -- actually run the model!
             self.step()

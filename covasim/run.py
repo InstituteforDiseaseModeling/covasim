@@ -616,10 +616,11 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, verbose=None, 
     new_sim = sc.dcp(sim) # Copy the sim to avoid overwriting it
 
     # Set sim and run arguments
-    if verbose is None:
-        verbose = new_sim['verbose']
     sim_args = sc.mergedicts(sim_args, kwargs)
     run_args = sc.mergedicts({'verbose':verbose}, run_args)
+    if verbose is None:
+        verbose = new_sim['verbose']
+
     if not new_sim.label:
         new_sim.label = f'Sim {ind:d}'
 
@@ -664,7 +665,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, verbose=None, 
     return new_sim
 
 
-def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, verbose=None, combine=False, keep_people=None, run_args=None, sim_args=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, verbose=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
@@ -681,6 +682,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         keep_people (bool): whether or not to keep the people in each sim
         run_args (dict): arguments passed to sim.run()
         sim_args (dict): extra parameters to pass to the sim
+        par_args (dict): arguments passed to sc.parallelize()
         kwargs (dict): also passed to the sim
 
     Returns:
@@ -694,9 +696,9 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         sims = cv.multi_run(sim, n_runs=6, noise=0.2)
     '''
 
-    # Create the sims
-    if sim_args is None:
-        sim_args = {}
+    # Handle inputs
+    sim_args = sc.mergedicts(sim_args, kwargs) # Handle blank
+    par_args = sc.mergedicts(par_args) # Handle blank
 
     # Handle iterpars
     if iterpars is None:
@@ -715,11 +717,11 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         iterkwargs = {'ind':np.arange(n_runs)}
         iterkwargs.update(iterpars)
         kwargs = dict(sim=sim, reseed=reseed, noise=noise, noisepar=noisepar, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args)
-        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
+        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
     elif isinstance(sim, list): # List of sims
         iterkwargs = {'sim':sim}
-        kwargs = {'verbose':verbose, 'keep_people':keep_people, 'sim_args':sim_args, 'run_args':run_args}
-        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs)
+        kwargs = dict(verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args)
+        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
     else:
         errormsg = f'Must be Sim object or list, not {type(sim)}'
         raise TypeError(errormsg)
