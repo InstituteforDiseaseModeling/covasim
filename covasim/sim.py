@@ -526,7 +526,7 @@ class Sim(cvb.BaseSim):
             max_doubling_time (float): doubling time could be infinite, so this places a bound on it
 
         Returns:
-            None (modifies results in place)
+            doubling_time (Result): the doubling time result object
         '''
         cum_infections = self.results['cum_infections'].values
         self.results['doubling_time'][:window] = np.nan
@@ -538,16 +538,20 @@ class Sim(cvb.BaseSim):
                 doubling_time = window*np.log(2)/np.log(r)
                 doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
                 self.results['doubling_time'][t] = doubling_time
-        return
+        return self.results['doubling_time']
 
 
-    def compute_r_eff(self, window=7):
+    def compute_r_eff(self, method='daily', smoothing=3, window=7):
         '''
         Effective reproductive number based on number of people each person infected.
 
         Args:
-            window (int): the size of the window used (larger values are more accurate but less precise)
+            method (str): 'instant' uses daily infections, 'infected' counts from the date infected, 'outcome' counts from the date recovered/dead
+            smoothing (int): the number of steps to smooth over for the 'daily' method
+            window (int): the size of the window used for 'infected' and 'outcome' calculations (larger values are more accurate but less precise)
 
+        Returns:
+            r_eff (Result): the r_eff result object
         '''
 
         # Initialize arrays to hold sources and targets infected each day
@@ -555,44 +559,73 @@ class Sim(cvb.BaseSim):
         targets = np.zeros(self.npts)
         window = int(window)
 
-        for t in self.tvec:
+        # Default method -- calculate the daily infections
+        if method == 'daily':
 
-            # Sources are easy -- count up the arrays
-            recov_inds   = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
-            dead_inds    = cvu.true(t == self.people.date_dead)  # Find people who died on this timestep
-            outcome_inds = np.concatenate((recov_inds, dead_inds))
-            sources[t]   = len(outcome_inds)
+            # Find the dates that everyone became infectious and recovered, and hence calculate infectious duration
+            inds = self.people.defined('date_recovered')
+            date_rec = self.people.date_recovered[inds]
+            date_inf = self.people.date_infectious[inds]
+            diff = date_rec - date_inf
+            mean_inf = diff.mean()
 
-            # Targets are hard -- loop over the transmission tree
-            for ind in outcome_inds:
-                targets[t] += len(self.people.transtree.targets[ind])
+            # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
+            r_eff = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
+            values = sc.smooth(r_eff, smoothing)
 
-        # Populate the array -- to avoid divide-by-zero, skip indices that are 0
-        inds = sc.findinds(sources>0)
-        r_eff = np.zeros(self.npts)*np.nan
-        r_eff[inds] = targets[inds]/sources[inds]
+        # Alternate (traditional) method -- count from the date of infection or outcome
+        elif method in ['infection', 'outcome']:
 
-        # use stored weights calculate the moving average over the window of timesteps, n
-        num = np.nancumsum(r_eff * sources)
-        num[window:] = num[window:] - num[:-window]
-        den = np.cumsum(sources)
-        den[window:] = den[window:] - den[:-window]
+            for t in self.tvec:
 
-        # avoid dividing by zero
-        values = np.zeros(num.shape)*np.nan
-        ind = den > 0
-        values[ind] = num[ind]/den[ind]
+                # Sources are easy -- count up the arrays
+                if method == 'initial':
+                    inds = cvu.true(t == self.people.date_infected) # Find people who were infected on this timestep
+                elif method == 'outcome':
+                    recov_inds = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
+                    dead_inds  = cvu.true(t == self.people.date_dead)  # Find people who died on this timestep
+                    inds       = np.concatenate((recov_inds, dead_inds))
+                sources[t] = len(inds)
 
+                # Targets are hard -- loop over the transmission tree
+                for ind in inds:
+                    targets[t] += len(self.people.transtree.targets[ind])
+
+            # Populate the array -- to avoid divide-by-zero, skip indices that are 0
+            inds = sc.findinds(sources>0)
+            r_eff = np.zeros(self.npts)*np.nan
+            r_eff[inds] = targets[inds]/sources[inds]
+
+            # Use stored weights calculate the moving average over the window of timesteps, n
+            num = np.nancumsum(r_eff * sources)
+            num[window:] = num[window:] - num[:-window]
+            den = np.cumsum(sources)
+            den[window:] = den[window:] - den[:-window]
+
+            # Avoid dividing by zero
+            values = np.zeros(num.shape)*np.nan
+            ind = den > 0
+            values[ind] = num[ind]/den[ind]
+
+        # Method not recognized
+        else:
+            errormsg = f'Method must be "daily", "infected", or "outcome", not "{method}"'
+            raise ValueError(errormsg)
+
+        # Set the values and return
         self.results['r_eff'].values[:] = values
 
-        return
+        return self.results['r_eff']
 
 
     def compute_gen_time(self):
         '''
-        Calculate the generation time (or serial interval) there are two
+        Calculate the generation time (or serial interval). There are two
         ways to do this calculation. The 'true' interval (exposure time to
         exposure time) or 'clinical' (symptom onset to symptom onset).
+
+        Returns:
+            gen_time (dict): the generation time results
         '''
 
         intervals1 = np.zeros(len(self.people))
@@ -617,13 +650,21 @@ class Sim(cvb.BaseSim):
                 'true_std':     np.std(intervals1[:pos1]),
                 'clinical':     np.mean(intervals2[:pos2]),
                 'clinical_std': np.std(intervals2[:pos2])}
-        return
+        return self.results['gen_time']
 
 
     def likelihood(self, weights=None, verbose=None, eps=1e-16):
         '''
         Compute the log-likelihood of the current simulation based on the number
         of new diagnoses.
+
+        Args:
+            weights (dict): the relative wieght to place on each result
+            verbose (bool): detail to print
+            eps (float): to avoid divide-by-zero errors
+
+        Returns:
+            loglike (float): the log-likelihood of the model given the data
         '''
 
         if verbose is None:
