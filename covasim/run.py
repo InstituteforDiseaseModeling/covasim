@@ -204,7 +204,7 @@ class MultiSim(sc.prettyobj):
             return
 
 
-    def compare(self, t=-1, sim_inds=None, output=False):
+    def compare(self, t=-1, sim_inds=None, output=False, do_plot=False, **kwargs):
         '''
         Create a dataframe compare sims at a single point in time.
 
@@ -212,6 +212,8 @@ class MultiSim(sc.prettyobj):
             t (int or str): the day (or date) to do the comparison; default, the end
             sim_inds (list): list of integers of which sims to include (default: all)
             output (bool): whether or not to return the comparison as a dataframe
+            do_plot (bool): whether or not to plot the comparison (see also plot_compare())
+            kwargs (dict): passed to plot_compare()
 
         Returns:
             df (dataframe): a dataframe comparison
@@ -238,6 +240,10 @@ class MultiSim(sc.prettyobj):
 
         # Convert to a dataframe
         df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coersion
+
+        if do_plot:
+            self.plot_compare(df, *args, **kwargs)
+
         if output:
             return df
         else:
@@ -246,7 +252,7 @@ class MultiSim(sc.prettyobj):
 
 
     def plot(self, *args, **kwargs):
-        ''' Convenience mthod for plotting '''
+        ''' Convenience method for plotting -- arguments passed to Sim.plot() '''
         if self.which in ['combined', 'reduced']:
             fig = self.base_sim.plot(*args, **kwargs)
         else:
@@ -263,6 +269,42 @@ class MultiSim(sc.prettyobj):
                 fig = sim.plot(fig=fig, *args, **kwargs)
         return fig
 
+
+    def plot_result(self, key, colors=None, labels=None, *args, **kwargs):
+        ''' Convenience method for plotting -- arguments passed to Sim.plot_result() '''
+        if self.which in ['combined', 'reduced']:
+            fig = self.base_sim.plot_result(key, *args, **kwargs)
+        else:
+            fig = None
+            if colors is None:
+                colors = sc.gridcolors(len(self))
+            if labels is None:
+                labels = [sim.label for sim in self.sims]
+            orig_setylim = kwargs.get('setylim', True)
+            for s,sim in enumerate(self.sims):
+                if s == len(self.sims)-1:
+                    kwargs['setylim'] = orig_setylim
+                else:
+                    kwargs['setylim'] = False
+                fig = sim.plot_result(key=key, fig=fig, color=colors[s], label=labels[s], *args, **kwargs)
+        return fig
+
+
+    def plot_compare(self, t=-1, sim_inds=None, log_scale=True, **kwargs):
+        '''
+        Plot a comparison between sims.
+
+        Args:
+            t (int): index of results, passed to compare()
+            sim_inds (list): which sims to include, passed to compare()
+            log_scale (bool): whether to plot with a logarithmic x-axis
+            kwargs (dict): standard plotting arguments, see Sim.plot() for explanation
+
+        Returns:
+            fig (figure): the figure handle
+        '''
+        df = self.compare(t=t, sim_inds=sim_inds, output=True)
+        cvplt.plot_compare(df, log_scale=log_scale, **kwargs)
 
     def save(self, filename=None, keep_people=False, **kwargs):
         '''
