@@ -8,6 +8,8 @@ Version 0.30.3 (2020-05-03)
 ---------------------------
 - Fixed bugs in dynamic scaling; see ``tests/devtests/dev_test_rescaling.py``. When using ``pop_scale>1``, the recommendation is now to use ``rescale=True``.
 - In ``cv.test_num()``, renamed argument from ``sympt_test`` to ``symp_test`` for consistency.
+- Added ``plot_compare()`` method to ``MultiSim``.
+- Added ``labels`` arguments to plotting methods, to allow custom labels to be used.
 
 
 Version 0.30.2 (2020-05-02)
