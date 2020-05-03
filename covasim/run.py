@@ -205,7 +205,10 @@ class MultiSim(sc.prettyobj):
             fig = self.base_sim.plot(*args, **kwargs)
         else:
             fig = None
-            for sim in self.sims:
+            kwargs['legend_args'] = sc.mergedicts({'show_legend':True}, kwargs.get('legend_args')) # Only plot the legend the first time
+            for s,sim in enumerate(self.sims):
+                if s != 0:
+                    kwargs['legend_args']['show_legend'] = False
                 fig = sim.plot(fig=fig, *args, **kwargs)
         return fig
 

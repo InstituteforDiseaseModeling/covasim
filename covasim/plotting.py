@@ -64,17 +64,30 @@ def create_figs(args, font_size, font_family, sep_figs, fig=None):
     return fig, figs, None # Initialize axis to be None
 
 
-def create_subplots(figs, ax, n_rows, n_cols, rk, fig_args, sep_figs, log_scale, title):
+def create_subplots(figs, fig, shareax, n_rows, n_cols, pnum, fig_args, sep_figs, log_scale, title):
     ''' Create subplots and set logarithmic scale '''
+
+    # Try to find axes by label, if they've already been defined -- this is to avoid the deprecation warning of reusing axes
+    label = f'ax{pnum+1}'
+    ax = None
+    try:
+        for fig_ax in fig.axes:
+            if fig_ax.get_label() == label:
+                ax = fig_ax
+                break
+    except:
+        pass
+
+    # Handle separate figs
     if sep_figs:
         figs.append(pl.figure(**fig_args))
-        ax = pl.subplot(111)
+        if ax is None:
+            ax = pl.subplot(111, label=label)
     else:
-        if rk == 0:
-            ax = pl.subplot(n_rows, n_cols, rk+1)
-        else:
-            ax = pl.subplot(n_rows, n_cols, rk+1, sharex=ax)
+        if ax is None:
+            ax = pl.subplot(n_rows, n_cols, pnum+1, sharex=shareax, label=f'ax{pnum+1}')
 
+    # Handle log scale
     if log_scale:
         if isinstance(log_scale, list):
             if title in log_scale:
@@ -104,6 +117,7 @@ def plot_interventions(sim, ax):
 
 def title_grid_legend(title, grid, legend_args, show_legend=True):
     ''' Plot styling -- set the plot title, add a legend, and optionally add gridlines'''
+    show_legend = legend_args.pop('show_legend', show_legend) # Allow show_legend to be specified in the legend args
     pl.title(title)
     if show_legend: # Only show the legend for some subplots
         pl.legend(**legend_args)
@@ -175,7 +189,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 
     # Do the plotting
     for pnum,title,keylabels in to_plot.enumitems():
-        ax = create_subplots(figs, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+        ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for reskey in keylabels:
             res = sim.results[reskey]
             res_t = sim.results['t']
@@ -203,7 +217,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
     # Do the plotting
     for pnum,title,reskeys in to_plot.enumitems():
-        ax = create_subplots(figs, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+        ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for reskey in reskeys:
             resdata = scens.results[reskey]
             for scenkey, scendata in resdata.items():
@@ -231,7 +245,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
 
     # Do the plotting
-    ax = pl.subplot(111)
+    ax = pl.subplot(111, label='ax')
     res = sim.results[key]
     res_t = sim.results['t']
     res_y = res.values
