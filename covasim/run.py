@@ -226,8 +226,10 @@ class MultiSim(sc.prettyobj):
         for i,s in enumerate(sim_inds):
             sim = self.sims[s]
             label = sim.label
-            if not label:
+            if not label: # Give it a label if it doesn't have one
                 label = f'Sim {i}'
+            if label in resdict: # Avoid duplicates
+                label += f' ({i})'
             for reskey in sim.result_keys():
                 val = sim.results[reskey].values[t]
                 if reskey not in ['r_eff', 'doubling_time']:
