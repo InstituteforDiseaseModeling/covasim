@@ -204,6 +204,45 @@ class MultiSim(sc.prettyobj):
             return
 
 
+    def compare(self, t=-1, sim_inds=None, output=False):
+        '''
+        Create a dataframe compare sims at a single point in time.
+
+        Args:
+            t (int or str): the day (or date) to do the comparison; default, the end
+            sim_inds (list): list of integers of which sims to include (default: all)
+            output (bool): whether or not to return the comparison as a dataframe
+
+        Returns:
+            df (dataframe): a dataframe comparison
+        '''
+
+        # Handle the indices
+        if sim_inds is None:
+            sim_inds = list(range(len(self.sims)))
+
+        # Move the results to a dictionary
+        resdict = defaultdict(dict)
+        for i,s in enumerate(sim_inds):
+            sim = self.sims[s]
+            label = sim.label
+            if not label:
+                label = f'Sim {i}'
+            for reskey in sim.result_keys():
+                val = sim.results[reskey].values[t]
+                if reskey not in ['r_eff', 'doubling_time']:
+                    val = int(val)
+                resdict[label][reskey] = val
+
+        # Convert to a dataframe
+        df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coersion
+        if output:
+            return df
+        else:
+            print(df)
+            return None
+
+
     def plot(self, *args, **kwargs):
         ''' Convenience mthod for plotting '''
         if self.which in ['combined', 'reduced']:
@@ -223,29 +262,45 @@ class MultiSim(sc.prettyobj):
         return fig
 
 
-    def save(self, filename=None, **kwargs):
+    def save(self, filename=None, keep_people=False, **kwargs):
         '''
         Save to disk as a gzipped pickle. Load with cv.load(filename).
 
         Args:
-            filename (str or None): the name or path of the file to save to; if None, uses stored
-            kwargs: passed to makefilepath()
+            filename (str or None): the name or path of the file to save to; if None, uses default
+            keep_people (bool): whether or not to store the population in the Sim objects (NB, very large)
+            keywords: passed to makefilepath()
 
         Returns:
-            filename (str): the validated absolute path to the saved file
+            scenfile (str): the validated absolute path to the saved file
 
         **Example**::
 
-            msim.save() # Saves to a .sim file with the date and time of creation by default
+            msim.save() # Saves to an .msim file
         '''
         if filename is None:
-            filename = self.simfile
-        filename = sc.makefilepath(filename=filename, **kwargs)
+            filename = 'covasim.msim'
+        scenfile = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
-        sc.saveobj(filename=filename, obj=self)
-        return filename
 
+        # Store sims seperately
+        sims = self.sims
+        self.sims = None # Remove for now
 
+        obj = sc.dcp(self) # This should be quick once we've removed the sims
+
+        if keep_people:
+            obj.sims = sims # Just restore the object in full
+            print('Note: saving people, which may produce a large file!')
+        else:
+            obj.sims = []
+            for sim in sims:
+                obj.sims.append(sim.shrink(in_place=False))
+
+        sc.saveobj(filename=scenfile, obj=obj) # Actually save
+
+        self.sims = sims # Restore
+        return scenfile
 
 
 class Scenarios(cvb.ParsObj):
