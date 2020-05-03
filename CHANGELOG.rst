@@ -12,6 +12,7 @@ Version 0.30.0 (2020-05-02)
 - Added ``low`` and ``high`` attributes to the ``Result`` object.
 - Refactored plotting to increase consistency between ``sim.plot()``, ``sim.plot_result()``, ``scens.plot()``, and ``multisim.plot()``.
 - Doubling time calculation defaults have been updated to use a window of 3 days and a maximum of 30 days.
+- Fixed a bug whereby ``cv.clip_edges()`` with no end day specified resulted in large sim files when saved.
 
 
 Version 0.29.9 (2020-04-28)

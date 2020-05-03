@@ -389,12 +389,17 @@ class clip_edges(Intervention):
                 if verbose:
                     print(f'Remaining contacts: {sim.people.contacts[lkey]}')
 
+        # At the end, move back
         if sim.t == self.end_day:
             if verbose:
                 print(f'Before:\n{sim.people.contacts}')
             sim.people.add_contacts(self.contacts)
             if verbose:
                 print(f'After:\n{sim.people.contacts}')
+            self.contacts = None # Reset to save memory
+
+        # If no end day is specified, ensure they get deleted
+        if sim.t == sim.tvec[-1]:
             self.contacts = None # Reset to save memory
 
         return
