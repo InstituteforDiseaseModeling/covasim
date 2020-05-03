@@ -18,8 +18,8 @@ window= [7,1]
 reff_t0 = []
 for iw, w in enumerate(window):
     r_eff = sim.compute_r_eff(method='infectious', window=w)
-    axes.plot(sim.tvec, r_eff.values, '-o', label=w)
-    reff_t0.append(sim.results['r_eff'].values[np.isfinite(sim.results['r_eff'].values)][0])
+    axes.plot(sim.tvec, r_eff, '-o', label=w)
+    reff_t0.append(r_eff[np.isfinite(r_eff)][0])
 axes.legend()
 axes.set_xlabel('time (days)')
 axes.set_ylabel('r_eff');
@@ -39,8 +39,8 @@ sim.run(verbose=False)
 plot_args = dict(lw=3, alpha=0.7)
 fig = sim.plot_result('r_eff')
 r_eff_d = sc.dcp(sim.results['r_eff'].values)
-r_eff_i = sc.dcp(sim.compute_r_eff(method='infectious').values)
-r_eff_o = sc.dcp(sim.compute_r_eff(method='outcome').values)
+r_eff_i = sc.dcp(sim.compute_r_eff(method='infectious'))
+r_eff_o = sc.dcp(sim.compute_r_eff(method='outcome'))
 pl.plot(r_eff_i, label='Method from infectious', c=[1.0,0.3,0], **plot_args)
 pl.plot(r_eff_o, label='Method from outcome', c=[0,0.5,0.0], **plot_args)
 pl.legend()

@@ -526,7 +526,7 @@ class Sim(cvb.BaseSim):
             max_doubling_time (float): doubling time could be infinite, so this places a bound on it
 
         Returns:
-            doubling_time (Result): the doubling time result object
+            doubling_time (array): the doubling time results array
         '''
         cum_infections = self.results['cum_infections'].values
         self.results['doubling_time'][:window] = np.nan
@@ -538,7 +538,7 @@ class Sim(cvb.BaseSim):
                 doubling_time = window*np.log(2)/np.log(r)
                 doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
                 self.results['doubling_time'][t] = doubling_time
-        return self.results['doubling_time']
+        return self.results['doubling_time'].values
 
 
     def compute_r_eff(self, method='daily', smoothing=2, window=7):
@@ -551,7 +551,7 @@ class Sim(cvb.BaseSim):
             window (int): the size of the window used for 'infectious' and 'outcome' calculations (larger values are more accurate but less precise)
 
         Returns:
-            r_eff (Result): the r_eff result object
+            r_eff (array): the r_eff results array
         '''
 
         # Initialize arrays to hold sources and targets infected each day
@@ -615,7 +615,7 @@ class Sim(cvb.BaseSim):
         # Set the values and return
         self.results['r_eff'].values[:] = values
 
-        return self.results['r_eff']
+        return self.results['r_eff'].values
 
 
     def compute_gen_time(self):
