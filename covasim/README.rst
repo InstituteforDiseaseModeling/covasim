@@ -14,7 +14,8 @@ Population parameters
 Simulation parameters
 ---------------------
 * ``start_day``  = Start day of the simulation
-* ``n_days``     = Number of days of run, if end_day isn't used
+* ``end_day``    = End day of the simulation
+* ``n_days``     = Number of days to run, if end_day isn't specified
 * ``rand_seed``  = Random seed, if None, don't reset
 * ``verbose``    = Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 

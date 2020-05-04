@@ -258,6 +258,9 @@ class People(cvb.BasePeople):
         for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
+        self.rel_sus[inds]   = 1.0 # By default: is susceptible
+        self.rel_trans[inds] = 0.0 # By default: cannot transmit
+
         return
 
 
