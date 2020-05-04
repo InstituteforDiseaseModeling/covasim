@@ -370,22 +370,22 @@ def get_individual_states(sim):
         {'name': 'Exposed',
          'quantity': 'date_exposed',
          'color': '#ff7f00',
-         'value': 2
+         'value': 1
          },
         {'name': 'Infectious',
          'quantity': 'date_infectious',
          'color': '#e33d3e',
-         'value': 3
+         'value': 2
          },
         {'name': 'Recovered',
          'quantity': 'date_recovered',
          'color': '#3e89bc',
-         'value': 4
+         'value': 3
          },
         {'name': 'Dead',
          'quantity': 'date_dead',
          'color': '#000000',
-         'value': 5
+         'value': 4
          },
     ]
 
@@ -484,7 +484,12 @@ def plotly_animate(sim, do_show=False):
     y_size = int(np.ceil((z.shape[0] / aspect) ** 0.5))
     x_size = int(np.ceil(aspect * y_size))
 
-    z = np.pad(z, ((0, x_size * y_size - z.shape[0]), (0, 0)), mode='constant', constant_values=np.nan)
+    z = np.pad(z, ((0, x_size * y_size - z.shape[0]), (0, 0)), mode='constant', constant_values=0)
+    z = np.array(z, dtype=int)
+
+    x_vec,y_vec = np.meshgrid(np.arange(x_size), np.arange(y_size))
+    x_vec = x_vec.flatten()
+    y_vec = y_vec.flatten()
 
     days = sim.tvec
 
@@ -498,13 +503,13 @@ def plotly_animate(sim, do_show=False):
         {
             "buttons": [
                 {
-                    "args": [None, {"frame": {"duration": 200, "redraw": True},
+                    "args": [None, {"frame": {"duration": 200, "redraw": False},
                                     "fromcurrent": True}],
                     "label": "Play",
                     "method": "animate"
                 },
                 {
-                    "args": [[None], {"frame": {"duration": 0, "redraw": True},
+                    "args": [[None], {"frame": {"duration": 0, "redraw": False},
                                       "mode": "immediate",
                                       "transition": {"duration": 0}}],
                     "label": "Pause",
@@ -541,21 +546,34 @@ def plotly_animate(sim, do_show=False):
     }
 
     # make data
-    fig_dict["data"] = [go.Heatmap(z=np.reshape(z[:, 0], (y_size, x_size)),
-                                   zmin=min_color,
-                                   zmax=max_color,
-                                   colorscale=colorscale,
-                                   showscale=False,
+    size = 5
+    colors = np.array([state['color'] for state in states])
+    fig_dict["data"] = [go.Scatter( x=x_vec,
+                                   y=y_vec,
+                                   mode='markers',
+                                   marker=dict(size=size, color=colors[z[:,0]]),
+                                   #z=z[:, 0],
+                                   # zmin=min_color,
+                                   # zmax=max_color,
+                                   # colorscale=colorscale,
+                                   # showscale=False,
                                    )]
 
     for state in states:
         fig_dict["data"].append(go.Scatter(x=[None], y=[None], mode='markers',
-                                           marker=dict(size=10, color=state['color']),
+                                           marker=dict(size=size, color=state['color']),
                                            showlegend=True, name=state['name']))
+
+
 
     # make frames
     for i, day in enumerate(days):
-        frame = {"data": [go.Heatmap(z=np.reshape(z[:, i], (y_size, x_size)))],
+        frame = {"data": [go.Scatter(x=x_vec,
+                                     y=y_vec,
+                                     mode='markers',
+                                     marker=dict(size=size, color=colors[z[:,i]]) # state['color']
+                                     # z=z[:, i],
+                                     )],
                  "name": i}
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
