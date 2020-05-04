@@ -1046,23 +1046,30 @@ class TransTree(sc.prettyobj):
                 if transdict is not None:
 
                     # Pull out key quantities
-                    ddict  = sc.dcp(transdict) # For "detailed dictionary"
-                    source = ddict['source']
-                    target = ddict['target']
-                    date   = ddict['date']
+                    ddict  = sc.objdict(sc.dcp(transdict)) # For "detailed dictionary"
+                    source = ddict.source
+                    target = ddict.target
+                    ddict.s = sc.objdict() # Source
+                    ddict.t = sc.objdict() # Target
 
-                    # Only need to check against the date, since will return False if condition is false (NaN)
+                    if source is not None:
+                        stdict = {'s':source, 't':target}
+                    else:
+                        stdict = {'t':target}
+
+                    attrs = ['age', 'date_symptomatic', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_quarantined']
+                    for st,stind in stdict.items():
+                        for attr in attrs:
+                            ddict[st][attr] = people[attr][stind]
+                    if source is not None:
+                        for attr in attrs:
+                            if attr.startswith('date_'):
+                                tf_attr = attr.replace('date_', 'tf_')
+                                ddict.s[tf_attr] = ddict.s[attr] <= ddict['date']# These don't make sense for people just infected (targets), only sources
+
                     if source is not None: # This information is only available for people infected by other people, not e.g. importations
-                        ddict['s_age']     = people.age[source]
-                        ddict['t_age']     = people.age[target]
-                        ddict['s_symp']    = people.date_symptomatic[source] <= date
-                        ddict['s_diag']    = people.date_diagnosed[source]   <= date
-                        ddict['s_quar']    = people.date_quarantined[source] <= date
-                        ddict['s_sev']     = people.date_severe[source]      <= date
-                        ddict['s_crit']    = people.date_critical[source]    <= date
-                        ddict['t_quar']    = people.date_quarantined[target] <= date
-                        ddict['s_asymp']   = np.isnan(people.date_symptomatic[source])
-                        ddict['s_presymp'] = ~ddict['s_asymp'] and ~ddict['s_symp'] # Not asymptomatic and not currently symptomatic
+                        ddict.s.is_asymp   = np.isnan(people.date_symptomatic[source])
+                        ddict.s.is_presymp = ~ddict.s.is_asymp and ~ddict.s.tf_symptomatic # Not asymptomatic and not currently symptomatic
 
                     self.detailed[target] = ddict
 
