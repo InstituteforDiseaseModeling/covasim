@@ -164,8 +164,7 @@ class dynamic_pars(Intervention):
 
     **Examples**::
 
-        interv = cv.dynamic_pars({'diag_factor':{'days':30, 'vals':0.5}, 'cont_factor':{'days':30, 'vals':0.5}}) # Starting day 30, make diagnosed people and people with contacts half as likely to transmit
-        interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}}) # On day 14, change beta to 0.005, and on day 28 change it back to 0.015
+        interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'diag_factor':{'days':30, 'vals':0.0}}) # Change beta, and make diagnosed people stop transmitting
     '''
 
     def __init__(self, pars, do_plot=None):
@@ -193,11 +192,11 @@ class dynamic_pars(Intervention):
         for parkey,parval in self.pars.items():
             inds = sc.findinds(parval['days'], t) # Look for matches
             if len(inds):
-
                 if len(inds)>1:
                     raise ValueError(f'Duplicate days are not allowed for Dynamic interventions (day={t}, indices={inds})')
                 else:
                     match = inds[0]
+                    self.days.append(t)
                     val = parval['vals'][match]
                     if isinstance(val, dict):
                         sim[parkey].update(val) # Set the parameter if a nested dict
@@ -211,7 +210,7 @@ class sequence(Intervention):
     This is an example of a meta-intervention which switches between a sequence of interventions.
 
     Args:
-        days (list): the days on which to apply each intervention
+        days (list): the days on which to start applying each intervention
         interventions (list): the interventions to apply on those days
         do_plot (bool): whether or not to plot the intervention
 
@@ -228,7 +227,6 @@ class sequence(Intervention):
         assert len(days) == len(interventions)
         self.days = days
         self.interventions = interventions
-        self._cum_days = np.cumsum(days)
         self._store_args()
         return
 
@@ -236,13 +234,16 @@ class sequence(Intervention):
     def initialize(self, sim):
         ''' Fix the dates '''
         self.days = [sim.day(day) for day in self.days]
+        self.days_arr = np.array(self.days + [sim.npts])
         self.initialized = True
         return
 
 
     def apply(self, sim):
-        idx = np.argmax(self._cum_days > sim.t)  # Index of the intervention to apply on this day
-        self.interventions[idx].apply(sim)
+        inds = sc.findinds(self.days_arr <= sim.t)
+        if len(inds):
+            idx = max(inds)  # Index of the intervention to apply on this day
+            self.interventions[idx].apply(sim)
         return
 
 
