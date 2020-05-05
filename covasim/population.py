@@ -275,7 +275,7 @@ def make_synthpop(sim):
     ''' Make a population using synthpops, including contacts '''
     import synthpops as sp # Optional import
     pop_size = sim['pop_size']
-    population = sp.make_population(n=pop_size)
+    population = sp.make_population(n=pop_size, generate=True)
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)

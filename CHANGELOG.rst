@@ -4,6 +4,13 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 0.30.4 (2020-05-04)
+---------------------------
+- Changed the detailed transmission tree (``sim.people.transtree.detailed``) to include much more information.
+- Added animation method to transmission tree: ``sim.people.transtree.animate()``.
+- Added support to generate populations on the fly in SynthPops.
+
+
 Version 0.30.3 (2020-05-03)
 ---------------------------
 - Fixed bugs in dynamic scaling; see ``tests/devtests/dev_test_rescaling.py``. When using ``pop_scale>1``, the recommendation is now to use ``rescale=True``.
