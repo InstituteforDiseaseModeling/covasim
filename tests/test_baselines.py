@@ -62,19 +62,21 @@ def test_baseline():
                 mismatches[key] = {'old': old_val, 'new': new_val}
 
     if len(mismatches):
-        errormsg = '\nThe following values have changed between old and new!\n'
-        errormsg += 'Please rerun "tests/update_baseline" if this is intentional.\n'
+        errormsg = '\nThe following values have changed from the previous baseline!\n'
+        errormsg += 'If this is intentional, please rerun "tests/update_baseline" and commit.\n'
         errormsg += 'Mismatches:\n'
         df = pd.DataFrame.from_dict(mismatches).transpose()
-        ratio = []
+        diff   = []
+        ratio  = []
         change = []
         small_change = 1e-3 # Define a small change, e.g. a rounding error
         for mdict in mismatches.values():
             old = mdict['old']
             new = mdict['new']
             if sc.isnumber(new) and sc.isnumber(old) and old>0:
+                this_diff  = new - old
                 this_ratio = new/old
-                abs_ratio = max(this_ratio, 1.0/this_ratio)
+                abs_ratio  = max(this_ratio, 1.0/this_ratio)
 
                 # Set the character to use
                 if abs_ratio<small_change:
@@ -98,22 +100,22 @@ def test_baseline():
 
                 this_change = change_char*repeats
             else:
-                this_ratio = np.nan
+                this_diff   = np.nan
+                this_ratio  = np.nan
                 this_change = 'N/A'
 
+            diff.append(this_diff)
             ratio.append(this_ratio)
             change.append(this_change)
 
-        df['ratio'] = ratio
+        df['diff']   = diff
+        df['ratio']  = ratio
         df['change'] = change
         errormsg += str(df)
 
     # Raise an error if mismatches were found
     if errormsg:
-        prefix = '\nThe following values have changed between the previous baseline and now!\n'
-        prefix += 'If this is intentional, please rerun "update_baseline" and commit.\n\n'
-        err = prefix + errormsg
-        raise ValueError(err)
+        raise ValueError(errormsg)
     else:
         print('Baseline matches')
 
