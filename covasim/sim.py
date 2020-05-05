@@ -99,7 +99,7 @@ class Sim(cvb.BaseSim):
         ''' Load the data to calibrate against, if provided '''
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvpar.load_data(filename=datafile, columns=datacols, **kwargs)
+            self.data = cvm.load_data(filename=datafile, columns=datacols, **kwargs)
 
         return
 

@@ -3,10 +3,9 @@ Set the parameters for Covasim.
 '''
 
 import numpy as np
-import pandas as pd
 
 
-__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'load_data']
+__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
 
 def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
@@ -158,8 +157,8 @@ def get_prognoses(by_age=True):
         )
     else:
         prognoses = dict(
-            age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      max_age]), # Age cutoffs
-            sus_ORs      = np.array([1.,      1.,      1.,      1.,      1.,      1.,      2.,      2.,      2.]),      # Odds ratios for relative susceptibility - from https://www.medrxiv.org/content/10.1101/2020.03.03.20028423v3.full.pdf, no significant differences by age
+            age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      max_age]), # Age cutoffs (upper limits)
+            sus_ORs      = np.array([0.34,    0.67,    1.0,     1.0,     1.0,     1.0,     1.24,    1.47,    1.47]),    # Odds ratios for relative susceptibility - from https://science.sciencemag.org/content/early/2020/05/04/science.abb8001; 10-20 and 60-70 bins are the average across the ORs
             symp_probs   = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
             severe_probs = np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, 0.20655, 0.24570]), # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
             crit_probs   = np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420]), # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
@@ -171,60 +170,3 @@ def get_prognoses(by_age=True):
     prognoses['severe_probs'] /= prognoses['symp_probs']   # Conditional probability of symptoms becoming severe, given symptomatic
 
     return prognoses
-
-
-def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
-    '''
-    Load data for comparing to the model output.
-
-    Args:
-        filename (str): the name of the file to load (either Excel or CSV)
-        columns (list): list of column names (otherwise, load all)
-        calculate (bool): whether or not to calculate cumulative values from daily counts
-        kwargs (dict): passed to pd.read_excel()
-
-    Returns:
-        data (dataframe): pandas dataframe of the loaded data
-    '''
-
-    # Load data
-    if filename.lower().endswith('csv'):
-        raw_data = pd.read_csv(filename, **kwargs)
-    elif filename.lower().endswith('xlsx'):
-        raw_data = pd.read_excel(filename, **kwargs)
-    else:
-        errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {filename}'
-        raise NotImplementedError(errormsg)
-
-    # Confirm data integrity and simplify
-    if columns is not None:
-        for col in columns:
-            if col not in raw_data.columns:
-                errormsg = f'Column "{col}" is missing from the loaded data'
-                raise ValueError(errormsg)
-        data = raw_data[columns]
-    else:
-        data = raw_data
-
-    # Calculate any cumulative columns that are missing
-    if calculate:
-        columns = data.columns
-        for col in columns:
-            if col.startswith('new'):
-                cum_col = col.replace('new_', 'cum_')
-                if cum_col not in columns:
-                    data[cum_col] = np.cumsum(data[col])
-                    if verbose:
-                        print(f'  Automatically adding cumulative column {cum_col} from {col}')
-
-    # Ensure required columns are present
-    if 'date' not in data.columns:
-        errormsg = f'Required column "date" not found; columns are {data.columns}'
-        raise ValueError(errormsg)
-    else:
-        data['date'] = pd.to_datetime(data['date']).dt.date
-
-    data.set_index('date', inplace=True)
-
-    return data
-
