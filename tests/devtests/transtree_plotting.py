@@ -9,10 +9,9 @@ tstart = sc.tic()
 
 plot_sim     = 0
 verbose      = 0
-simple       = 0
+simple       = 1
 animated     = 1
 animate_days = 1
-animate_all  = 0
 
 iday = 15
 pop_type = 'random'

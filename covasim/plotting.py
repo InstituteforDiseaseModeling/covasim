@@ -357,7 +357,9 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
 #%% Transtree functions
 def plot_transtree(tt, *args, **kwargs):
-    ''' Plot the transmission tree '''
+    ''' Plot the transmission tree; see TransTree.plot() for documentation '''
+
+    fig_args = kwargs.get('fig_args', dict(figsize=(16,10)))
 
     if tt.detailed is None:
         errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
@@ -390,7 +392,7 @@ def plot_transtree(tt, *args, **kwargs):
     df.loc[df['s_sev'], 'Severity'] = 'Severe'
     df.loc[df['s_crit'], 'Severity'] = 'Critical'
 
-    fig = pl.figure(figsize=(16,10))
+    fig = pl.figure(**fig_args)
     i=1; r=2; c=3
 
     def plot(key, title, i):
@@ -415,12 +417,12 @@ def plot_transtree(tt, *args, **kwargs):
 
 
 def animate_transtree(tt, **kwargs):
-    ''' Plot an animation of the transmission tree '''
+    ''' Plot an animation of the transmission tree; see TransTree.animate() for documentation '''
 
     # Settings
     animate    = kwargs.get('animate', True)
     verbose    = kwargs.get('verbose', False)
-    markersize = kwargs.get('markersize', 10)
+    msize      = kwargs.get('markersize', 10)
     sus_color  = kwargs.get('sus_color', [0.5, 0.5, 0.5])
     fig_args   = kwargs.get('fig_args', dict(figsize=(24,16)))
     axis_args  = kwargs.get('axis_args', dict(left=0.10, bottom=0.05, right=0.85, top=0.97, wspace=0.25, hspace=0.25))
@@ -441,42 +443,48 @@ def animate_transtree(tt, **kwargs):
     quars  = [list() for i in range(n)]
 
     # Construct each frame of the animation
-    for i,entry in enumerate(tt.detailed):
+    for i,entry in enumerate(tt.detailed): # Loop over every person
         frame = sc.objdict()
-        dq = sc.objdict()
+        tdq = sc.objdict() # Short for "tested, diagnosed, or quarantined"
+
+        # This person became infected
         if entry:
             source = entry['source']
             target = entry['target']
             target_date = entry['date']
-            if source:
+            if source: # Seed infections and importations won't have a source
                 source_date = tt.detailed[source]['date']
             else:
                 source = 0
                 source_date = 0
 
+            # Construct this frame
             frame.x = [source_date, target_date]
             frame.y = [source, target]
-            frame.c = colors[source] # colors[target_date]
-            frame.e = True
+            frame.c = colors[source]
+            frame.i = True # If this person is infected
             frames[target_date].append(frame)
 
-            dq.t = target
-            dq.d = target_date
-            dq.c = colors[target]
+            # Handle testing, diagnosis, and quarantine
+            tdq.t = target
+            tdq.d = target_date
+            tdq.c = colors[target]
             date_t = entry.t.date_tested
             date_d = entry.t.date_diagnosed
             date_q = entry.t.date_known_contact
-            if ~np.isnan(date_t) and date_t<n: tests[int(date_t)].append(dq)
-            if ~np.isnan(date_d) and date_d<n: diags[int(date_d)].append(dq)
-            if ~np.isnan(date_q) and date_q<n: quars[int(date_q)].append(dq)
+            if ~np.isnan(date_t) and date_t<n: tests[int(date_t)].append(tdq)
+            if ~np.isnan(date_d) and date_d<n: diags[int(date_d)].append(tdq)
+            if ~np.isnan(date_q) and date_q<n: quars[int(date_q)].append(tdq)
+
+        # This person did not become infected
         else:
             frame.x = [0]
             frame.y = [i]
             frame.c = sus_color
-            frame.e = False
+            frame.i = False
             frames[0].append(frame)
 
-    # Actually plot
+    # Configure plotting
     fig = pl.figure(**fig_args)
     pl.subplots_adjust(**axis_args)
     ax = fig.add_subplot(1,1,1)
@@ -485,14 +493,16 @@ def animate_transtree(tt, **kwargs):
     ax2 = pl.axes([0.85, 0.05, 0.14, 0.9])
     ax2.axis('off')
     lcol = colors[0]
-    pl.plot(np.nan, np.nan, '-', c=lcol, **plot_args, label='Transmission')
-    pl.plot(np.nan, np.nan, 'o', c=lcol, markersize=markersize, **plot_args, label='Source')
-    pl.plot(np.nan, np.nan, '*', c=lcol, markersize=markersize, **plot_args, label='Target')
-    pl.plot(np.nan, np.nan, 'o', c=lcol, markersize=markersize*2, fillstyle='none', **plot_args, label='Tested')
-    pl.plot(np.nan, np.nan, 's', c=lcol, markersize=markersize*1.2, **plot_args, label='Diagnosed')
-    pl.plot(np.nan, np.nan, 'x', c=lcol, markersize=markersize*2.0, label='Known contact')
+    na = np.nan # Shorten
+    pl.plot(na, na, '-', c=lcol, **plot_args, label='Transmission')
+    pl.plot(na, na, 'o', c=lcol, markersize=msize, **plot_args, label='Source')
+    pl.plot(na, na, '*', c=lcol, markersize=msize, **plot_args, label='Target')
+    pl.plot(na, na, 'o', c=lcol, markersize=msize*2, fillstyle='none', **plot_args, label='Tested')
+    pl.plot(na, na, 's', c=lcol, markersize=msize*1.2, **plot_args, label='Diagnosed')
+    pl.plot(na, na, 'x', c=lcol, markersize=msize*2.0, label='Known contact')
     pl.legend()
 
+    # Plot the animation
     pl.sca(ax)
     for day in range(n):
         pl.title(f'Day: {day}')
@@ -507,16 +517,15 @@ def animate_transtree(tt, **kwargs):
         if verbose: print(i, flist)
         for f in flist:
             if verbose: print(f)
-            pl.plot(f.x[0], f.y[0], 'o', c=f.c, markersize=markersize, **plot_args)
-            pl.plot(f.x, f.y, '-', c=f.c, **plot_args)
-        for f in flist:
-            if f.e:
-                pl.plot(f.x[1], f.y[1], '*', c=f.c, markersize=markersize, **plot_args)
-        for dq in tlist: pl.plot(dq.d, dq.t, 'o', c=dq.c, markersize=markersize*2, fillstyle='none', **plot_args)
-        for dq in dlist: pl.plot(dq.d, dq.t, 's', c=dq.c, markersize=markersize*1.2, **plot_args)
-        for dq in qlist: pl.plot(dq.d, dq.t, 'x', c=dq.c, markersize=markersize*2.0)
-        pl.plot([0, day], [0.5, 0.5], c='k', lw=5)
-        if animate:
+            pl.plot(f.x[0], f.y[0], 'o', c=f.c, markersize=msize, **plot_args) # Plot sources
+            pl.plot(f.x, f.y, '-', c=f.c, **plot_args) # Plot transmission lines
+            if f.i: # If this person is infected
+                pl.plot(f.x[1], f.y[1], '*', c=f.c, markersize=msize, **plot_args) # Plot targets
+        for tdq in tlist: pl.plot(tdq.d, tdq.t, 'o', c=tdq.c, markersize=msize*2, fillstyle='none') # Tested; No alpha for this
+        for tdq in dlist: pl.plot(tdq.d, tdq.t, 's', c=tdq.c, markersize=msize*1.2, **plot_args) # Diagnosed
+        for tdq in qlist: pl.plot(tdq.d, tdq.t, 'x', c=tdq.c, markersize=msize*2.0) # Quarantine; no alpha for this
+        pl.plot([0, day], [0.5, 0.5], c='k', lw=5) # Plot the endless march of time
+        if animate: # Whether to animate
             pl.pause(delay)
 
     return fig
