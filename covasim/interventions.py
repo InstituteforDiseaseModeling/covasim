@@ -492,12 +492,12 @@ class test_num(Intervention):
         else:
             return
 
-        test_probs = np.ones(sim.n) # Begin by assigning equal tesitng probability to everyone
+        test_probs = np.zeros(sim.n) # Begin by assigning equal tesitng probability to everyone
         symp_inds  = cvu.true(sim.people.symptomatic)
         quar_inds  = cvu.true(sim.people.quarantined)
         diag_inds  = cvu.true(sim.people.diagnosed)
-        test_probs[symp_inds] *= self.sympt_test
-        test_probs[quar_inds] *= self.quar_test
+        test_probs[symp_inds] = self.sympt_test
+        test_probs[quar_inds] = self.quar_test
         test_probs[diag_inds] = 0.
 
         test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=False)

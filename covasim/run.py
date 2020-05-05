@@ -199,7 +199,7 @@ class Scenarios(cvb.ParsObj):
         # Save details about the run
         self._kept_people = keep_people
 
-        return
+        return df
 
 
     def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,

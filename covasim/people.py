@@ -219,7 +219,7 @@ class People(cvb.BasePeople):
 
 
     def check_quar(self):
-        ''' Check for whether someone has been contacted by a positive'''
+        ''' Check for who gets put into quarantine'''
 
         if self.pars['quar_period'] is not None:
             not_diagnosed_inds = self.false('diagnosed')
