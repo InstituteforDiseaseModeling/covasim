@@ -58,7 +58,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     # Duration parameters: time for disease progression
     pars['dur'] = {}
     pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4.6, 'par2':4.8} # Duration from exposed to infectious; see Linton et al., https://doi.org/10.3390/jcm9020538
-    pars['dur']['inf2sym']  = {'dist':'lognormal_int', 'par1':1.0, 'par2':0.9} # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538
+    pars['dur']['inf2sym']  = {'dist':'lognormal_int', 'par1':1.5, 'par2':1.0} # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538
     pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':6.6, 'par2':4.9} # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538
     pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':3.0, 'par2':7.4} # Duration from severe symptoms to requiring ICU; see Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044
 
