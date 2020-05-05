@@ -1052,24 +1052,26 @@ class TransTree(sc.prettyobj):
                     ddict.s = sc.objdict() # Source
                     ddict.t = sc.objdict() # Target
 
+                    # If the source is available (e.g. not a seed infection), loop over both it and the target
                     if source is not None:
                         stdict = {'s':source, 't':target}
                     else:
                         stdict = {'t':target}
 
-                    attrs = ['age', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_quarantined']
+                    # Pull out each of the attributes relevant to transmission
+                    attrs = ['age', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
                     for st,stind in stdict.items():
                         for attr in attrs:
                             ddict[st][attr] = people[attr][stind]
                     if source is not None:
                         for attr in attrs:
                             if attr.startswith('date_'):
-                                tf_attr = attr.replace('date_', 'tf_')
-                                ddict.s[tf_attr] = ddict.s[attr] <= ddict['date']# These don't make sense for people just infected (targets), only sources
+                                is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
+                                ddict.s[is_attr] = ddict.s[attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
 
-                    if source is not None: # This information is only available for people infected by other people, not e.g. importations
                         ddict.s.is_asymp   = np.isnan(people.date_symptomatic[source])
-                        ddict.s.is_presymp = ~ddict.s.is_asymp and ~ddict.s.tf_symptomatic # Not asymptomatic and not currently symptomatic
+                        ddict.s.is_presymp = ~ddict.s.is_asymp and ~ddict.s.is_symptomatic # Not asymptomatic and not currently symptomatic
+                    ddict.t['is_quarantined'] = ddict.t['date_quarantined'] <= ddict['date'] # This is the only target date that it makes sense to define since it can happen before infection
 
                     self.detailed[target] = ddict
 
@@ -1082,12 +1084,23 @@ class TransTree(sc.prettyobj):
             errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
             raise ValueError(errormsg)
 
-        tdict = {}
+        ttlist = []
+        for entry in self.detailed:
+            if entry and entry.source:
+                tdict = {
+                    'date': entry.date,
+                    'layer': entry.layer,
+                    's_asymp': entry.s.is_asymp,
+                    's_presymp': entry.s.is_presymp,
+                    's_sev': entry.s.is_severe,
+                    's_crit': entry.s.is_critical,
+                    's_diag': entry.s.is_diagnosed,
+                    's_quar': entry.s.is_quarantined,
+                    't_quar': entry.t.is_quarantined,
+                         }
+                ttlist.append(tdict)
 
-
-        detailed = filter(None, self.detailed)
-
-        df = pd.DataFrame(detailed).rename(columns={'date': 'Day'})
+        df = pd.DataFrame(ttlist).rename(columns={'date': 'Day'})
         df = df.loc[df['layer'] != 'seed_infection']
 
         df['Stage'] = 'Symptomatic'
