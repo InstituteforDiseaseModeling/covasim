@@ -1082,6 +1082,9 @@ class TransTree(sc.prettyobj):
             errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
             raise ValueError(errormsg)
 
+        tdict = {}
+
+
         detailed = filter(None, self.detailed)
 
         df = pd.DataFrame(detailed).rename(columns={'date': 'Day'})
