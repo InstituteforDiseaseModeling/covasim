@@ -1,16 +1,360 @@
 '''
-Plotly-based plotting functions to supplement the Matplotlib based ones that are
-part of the Sim and Scenarios objects. Intended mostly for use with the webapp.
+Core plotting functions for simulations, multisims, and scenarios.
+
+Also includes Plotly-based plotting functions to supplement the Matplotlib based
+ones that are of the Sim and Scenarios objects. Intended mostly for use with the
+webapp.
 '''
 
-import covasim as cv
 import numpy as np
+import pylab as pl
 import sciris as sc
+import datetime as dt
+import matplotlib.ticker as ticker
 import plotly.graph_objects as go
+from . import defaults as cvd
 
 
-__all__ = ['standard_plots', 'plot_people', 'animate_people']
+__all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
+
+#%% Plotting helper functions
+
+def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None):
+    ''' Handle input arguments -- merge user input with defaults '''
+    args = sc.objdict()
+    args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
+    args.plot    = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
+    args.scatter = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
+    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
+    args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
+    args.legend  = sc.mergedicts({'loc': 'best'}, legend_args)
+    return args
+
+
+def handle_to_plot(which, to_plot, n_cols):
+    ''' Handle which quantities to plot '''
+
+    if to_plot is None:
+        if which == 'sim':
+            to_plot = cvd.get_sim_plots()
+        elif which =='scens':
+            to_plot = cvd.get_scen_plots()
+        else:
+            errormsg = f'"which" must be "sim" or "scens", not "{which}"'
+            raise NotImplementedError(errormsg)
+    to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
+
+    n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
+
+    return to_plot, n_rows
+
+
+def create_figs(args, font_size, font_family, sep_figs, fig=None):
+    ''' Create the figures and set overall figure properties '''
+    if sep_figs:
+        fig = None
+        figs = []
+    else:
+        if fig is None:
+            fig = pl.figure(**args.fig) # Create the figure if none is supplied
+        figs = None
+    pl.subplots_adjust(**args.axis)
+    pl.rcParams['font.size'] = font_size
+    if font_family:
+        pl.rcParams['font.family'] = font_family
+    return fig, figs, None # Initialize axis to be None
+
+
+def create_subplots(figs, fig, shareax, n_rows, n_cols, pnum, fig_args, sep_figs, log_scale, title):
+    ''' Create subplots and set logarithmic scale '''
+
+    # Try to find axes by label, if they've already been defined -- this is to avoid the deprecation warning of reusing axes
+    label = f'ax{pnum+1}'
+    ax = None
+    try:
+        for fig_ax in fig.axes:
+            if fig_ax.get_label() == label:
+                ax = fig_ax
+                break
+    except:
+        pass
+
+    # Handle separate figs
+    if sep_figs:
+        figs.append(pl.figure(**fig_args))
+        if ax is None:
+            ax = pl.subplot(111, label=label)
+    else:
+        if ax is None:
+            ax = pl.subplot(n_rows, n_cols, pnum+1, sharex=shareax, label=label)
+
+    # Handle log scale
+    if log_scale:
+        if isinstance(log_scale, list):
+            if title in log_scale:
+                ax.set_yscale('log')
+        else:
+            ax.set_yscale('log')
+
+    return ax
+
+
+def plot_data(sim, key, scatter_args):
+    ''' Add data to the plot '''
+    if sim.data is not None and key in sim.data and len(sim.data[key]):
+        this_color = sim.results[key].color
+        data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
+        pl.scatter(data_t, sim.data[key], c=[this_color], **scatter_args)
+        pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+    return
+
+
+def plot_interventions(sim, ax):
+    ''' Add interventions to the plot '''
+    for intervention in sim['interventions']:
+        intervention.plot(sim, ax)
+    return
+
+
+def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_legend=True):
+    ''' Plot styling -- set the plot title, add a legend, and optionally add gridlines'''
+
+    # Handle show_legend being in the legend args, since in some cases this is the only way it can get passed
+    if 'show_legend' in legend_args:
+        show_legend = legend_args.pop('show_legend')
+        popped = True
+    else:
+        popped = False
+
+    # Show the legend
+    if show_legend:
+        ax.legend(**legend_args)
+
+    # If we removed it from the legend_args dict, put it back now
+    if popped:
+        legend_args['show_legend'] = show_legend
+
+    # Set the title and gridlines
+    ax.set_title(title)
+    ax.grid(grid)
+
+    # Set the y axis style
+    if setylim:
+        ax.set_ylim(bottom=0)
+    if commaticks:
+        ylims = ax.get_ylim()
+        if ylims[1] >= 1000:
+            sc.commaticks()
+
+    return
+
+
+def reset_ticks(ax, sim, interval, as_dates):
+    ''' Set the tick marks, using dates by default '''
+
+    # Set the x-axis intervals
+    if interval:
+        xmin,xmax = ax.get_xlim()
+        ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+
+    # Set xticks as dates
+    if as_dates:
+
+        @ticker.FuncFormatter
+        def date_formatter(x, pos):
+            return (sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+
+        ax.xaxis.set_major_formatter(date_formatter)
+        if not interval:
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+    return
+
+
+def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png'):
+    ''' Handle saving, figure showing, and what value to return '''
+
+    # Handle saving
+    if do_save:
+        if fig_path is None: # No figpath provided - see whether do_save is a figpath
+            fig_path = default_name # Just give it a default name
+        fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
+        pl.savefig(fig_path)
+
+    # Show or close the figure
+    if do_show:
+        pl.show()
+    else:
+        pl.close(fig)
+
+    # Return the figure or figures
+    if sep_figs:
+        return figs
+    else:
+        return fig
+
+
+#%% Core plotting functions
+
+def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
+         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
+         log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
+    ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
+
+    # Handle inputs
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
+
+    # Do the plotting
+    for pnum,title,keylabels in to_plot.enumitems():
+        ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+        for reskey in keylabels:
+            res = sim.results[reskey]
+            res_t = sim.results['t']
+            if colors is not None:
+                color = colors[reskey]
+            else:
+                color = res.color
+            if labels is not None:
+                label = labels[reskey]
+            else:
+                label = res.name
+            if res.low is not None and res.high is not None:
+                ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
+            ax.plot(res_t, res.values, label=label, **args.plot, c=color)
+            plot_data(sim, reskey, args.scatter) # Plot the data
+            reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+        plot_interventions(sim, ax) # Plot the interventions
+        title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
+
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png')
+
+
+def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
+         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
+         log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
+    ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
+
+    # Handle inputs
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
+
+    # Do the plotting
+    default_colors = sc.gridcolors(ncolors=len(scens.sims))
+    for pnum,title,reskeys in to_plot.enumitems():
+        ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+        for reskey in reskeys:
+            resdata = scens.results[reskey]
+            for snum,scenkey,scendata in resdata.enumitems():
+                sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
+                res_y = scendata.best
+                if colors is not None:
+                    color = colors[scenkey]
+                else:
+                    color = default_colors[snum]
+                if labels is not None:
+                    label = labels[scenkey]
+                else:
+                    label = scendata.name
+                ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
+                ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot) # Plot the actual line
+                plot_data(sim, reskey, args.scatter) # Plot the data
+                plot_interventions(sim, ax) # Plot the interventions
+                reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+        title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
+
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim_scenarios.png')
+
+
+def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
+                font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
+                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None):
+    ''' Plot a single result -- see Sim.plot_result() for documentation '''
+
+    # Handle inputs
+    fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
+    axis_args = sc.mergedicts({'top': 0.95}, axis_args)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
+
+    # Gather results
+    res = sim.results[key]
+    res_t = sim.results['t']
+    res_y = res.values
+    if color is None:
+        color = res.color
+
+    # Reuse the figure, if available
+    try:
+        if fig.axes[0].get_label() == 'plot_result':
+            ax = fig.axes[0]
+    except:
+        pass
+    if ax is None: # Otherwise, make a new one
+        ax = pl.subplot(111, label='plot_result')
+
+    # Do the plotting
+    if label is None:
+        label = res.name
+    ax.plot(res_t, res_y, c=color, label=label, **args.plot)
+    plot_data(sim, key, args.scatter) # Plot the data
+    plot_interventions(sim, ax) # Plot the interventions
+    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
+    reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+
+    return fig
+
+
+def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
+                font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
+                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None):
+    ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
+
+    # Handle inputs
+    fig_args  = sc.mergedicts({'figsize':(16,16)}, fig_args)
+    axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
+
+    # Map from results into different categories
+    mapping = {
+        'cum': 'Cumulative counts',
+        'new': 'New counts',
+        'n': 'Number in state',
+        'r': 'R_eff',
+        }
+    category = []
+    for v in df.index.values:
+        v_type = v.split('_')[0]
+        if v_type in mapping:
+            category.append(v_type)
+        else:
+            category.append('other')
+    df['category'] = category
+
+    # Plot
+    for i,m in enumerate(mapping):
+        not_r_eff = m != 'r'
+        if not_r_eff:
+            ax = fig.add_subplot(2, 2, i+1)
+        else:
+            ax = fig.add_subplot(8, 2, 10)
+        dfm = df[df['category'] == m]
+        logx = not_r_eff and log_scale
+        dfm.plot(ax=ax, kind='barh', logx=logx, legend=False)
+        if not(not_r_eff):
+            ax.legend(loc='upper left', bbox_to_anchor=(0,-0.3))
+        ax.grid(True)
+
+    return fig
+
+
+#%% Plotly functions
 
 def get_individual_states(sim):
     ''' Helper function to convert people into integers '''
@@ -20,22 +364,22 @@ def get_individual_states(sim):
     states = [
         {'name': 'Healthy',
          'quantity': None,
-         'color': '#b9d58a',
+         'color': '#a6cee3',
          'value': 0
          },
         {'name': 'Exposed',
          'quantity': 'date_exposed',
-         'color': '#e37c30',
+         'color': '#ff7f00',
          'value': 2
          },
         {'name': 'Infectious',
          'quantity': 'date_infectious',
-         'color': '#c35d86',
+         'color': '#e33d3e',
          'value': 3
          },
         {'name': 'Recovered',
          'quantity': 'date_recovered',
-         'color': '#799956',
+         'color': '#3e89bc',
          'value': 4
          },
         {'name': 'Dead',
@@ -49,30 +393,33 @@ def get_individual_states(sim):
     for state in states:
         date = state['quantity']
         if date is not None:
-            inds = cv.defined(people[date])
+            inds = sim.people.defined(date)
             for ind in inds:
                 z[ind, int(people[date][ind]):] = state['value']
 
     return z, states
 
 
-def standard_plots(sim):
+# Default settings for the Plotly legend
+plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
+
+def plotly_sim(sim):
     ''' Main simulation results -- parallel of sim.plot() '''
 
     plots = []
-    to_plot = cv.get_sim_plots()
+    to_plot = cvd.get_sim_plots()
     for p,title,keylabels in to_plot.enumitems():
         fig = go.Figure()
         for key in keylabels:
             label = sim.results[key].name
             this_color = sim.results[key].color
+            x = sim.results['date'][:]
             y = sim.results[key][:]
-            fig.add_trace(go.Scatter(x=sim.results['t'][:], y=y, mode='lines', name=label, line_color=this_color))
+            fig.add_trace(go.Scatter(x=x, y=y, mode='lines', name=label, line_color=this_color))
             if sim.data is not None and key in sim.data:
-                data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D')
-                print(sim.data.index, sim['start_day'], np.timedelta64(1,'D'), data_t)
+                xdata = sim.data['date']
                 ydata = sim.data[key]
-                fig.add_trace(go.Scatter(x=data_t, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
+                fig.add_trace(go.Scatter(x=xdata, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
         if sim['interventions']:
             for interv in sim['interventions']:
@@ -82,21 +429,23 @@ def standard_plots(sim):
                             fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
                             fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
 
-        fig.update_layout(title={'text':title}, xaxis_title='Day', yaxis_title='Count', autosize=True)
+        fig.update_layout(title={'text':title}, yaxis_title='Count', autosize=True, **plotly_legend)
 
         plots.append(fig)
     return plots
 
 
-def plot_people(sim):
+def plotly_people(sim, do_show=False):
     ''' Plot a "cascade" of people moving through different states '''
     z, states = get_individual_states(sim)
 
     fig = go.Figure()
 
     for state in states[::-1]:  # Reverse order for plotting
+        x = sim.results['date'][:]
+        y = (z == state['value']).sum(axis=0)
         fig.add_trace(go.Scatter(
-            x=sim.tvec, y=(z == state['value']).sum(axis=0),
+            x=x, y=y,
             stackgroup='one',
             line=dict(width=0.5, color=state['color']),
             fillcolor=state['color'],
@@ -107,18 +456,22 @@ def plot_people(sim):
     if sim['interventions']:
         for interv in sim['interventions']:
                 if hasattr(interv, 'days'):
-                    for interv_day in interv.days:
-                        if interv_day > 0 and interv_day < sim['n_days']:
-                            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
+                    if interv.do_plot:
+                        for interv_day in interv.days:
+                            if interv_day > 0 and interv_day < sim['n_days']:
+                                fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+                                fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
 
     fig.update_layout(yaxis_range=(0, sim.n))
-    fig.update_layout(title={'text': 'Numbers of people by health state'}, xaxis_title='Day', yaxis_title='People', autosize=True)
+    fig.update_layout(title={'text': 'Numbers of people by health state'}, yaxis_title='People', autosize=True, **plotly_legend)
+
+    if do_show:
+        fig.show()
 
     return fig
 
 
-def animate_people(sim):
+def plotly_animate(sim, do_show=False):
     ''' Plot an animation of each person in the sim '''
 
     z, states = get_individual_states(sim)
@@ -127,7 +480,7 @@ def animate_people(sim):
     max_color = max(states, key=lambda x: x['value'])['value']
     colorscale = [[x['value'] / max_color, x['color']] for x in states]
 
-    aspect = 3
+    aspect = 5
     y_size = int(np.ceil((z.shape[0] / aspect) ** 0.5))
     x_size = int(np.ceil(aspect * y_size))
 
@@ -174,7 +527,7 @@ def animate_people(sim):
         "yanchor": "top",
         "xanchor": "left",
         "currentvalue": {
-            "font": {"size": 20},
+            "font": {"size": 16},
             "prefix": "Day: ",
             "visible": True,
             "xanchor": "right"
@@ -221,19 +574,12 @@ def animate_people(sim):
     fig.update_layout(
     autosize=True,
         xaxis=dict(
-            automargin=True,
-            range=[-0.5, x_size + 0.5],
-            constrain="domain",
             showgrid=False,
             showline=False,
             showticklabels=False,
         ),
         yaxis=dict(
             automargin=True,
-            range=[-0.5, y_size + 0.5],
-            constrain="domain",
-            scaleanchor="x",
-            scaleratio=1,
             showgrid=False,
             showline=False,
             showticklabels=False,
@@ -241,6 +587,9 @@ def animate_people(sim):
     )
 
 
-    fig.update_layout(title={'text': 'Epidemic over time'})
+    fig.update_layout(title={'text': 'Epidemic over time'}, **plotly_legend)
+
+    if do_show:
+        fig.show()
 
     return fig

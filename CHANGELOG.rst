@@ -1,9 +1,39 @@
 What's new
 ==========
 
-All notable changes to the codebase are documented in this file. Note: in many cases,
-changes from multiple patch versions are grouped together, so numbering will not be
-strictly consecutive.
+All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
+
+
+Version 0.30.3 (2020-05-03)
+---------------------------
+- Fixed bugs in dynamic scaling; see ``tests/devtests/dev_test_rescaling.py``. When using ``pop_scale>1``, the recommendation is now to use ``rescale=True``.
+- In ``cv.test_num()``, renamed argument from ``sympt_test`` to ``symp_test`` for consistency.
+- Added ``plot_compare()`` method to ``MultiSim``.
+- Added ``labels`` arguments to plotting methods, to allow custom labels to be used.
+
+
+Version 0.30.2 (2020-05-02)
+---------------------------
+- Updated ``r_eff`` to use a new method based on daily new infections. The previous version, where infections were counted from when someone recovered or died, is available as ``sim.compute_r_eff(method='outcome')``, while the traditional method, where infections are counted from the day someone becomes infectious, is available via ``sim.compute_r_eff(method='infectious')``.
+
+
+Version 0.30.1 (2020-05-02)
+---------------------------
+- Added ``end_day`` as a parameter, allowing an end date to be specified instead of a number of days.
+- ``Sim.run()`` now displays the date being simulated.
+- Added a ``par_args`` arugument to ``multi_run()``, allowing arguments (e.g. ``ncpus``) to be passed to ``sc.parallelize()``.
+- Added a ``compare()`` method to multisims and stopped people from being saved by default.
+- Fixed bug whereby intervention were not getting initialized if they were added to a sim after it was initialized.
+
+
+Version 0.30.0 (2020-05-02)
+---------------------------
+- Added new ``MultiSim`` class for plotting a single simulation with uncertainty.
+- Added ``low`` and ``high`` attributes to the ``Result`` object.
+- Refactored plotting to increase consistency between ``sim.plot()``, ``sim.plot_result()``, ``scens.plot()``, and ``multisim.plot()``.
+- Doubling time calculation defaults have been updated to use a window of 3 days and a maximum of 30 days.
+- Added an ``until`` argument to ``sim.run()``, to make it easier to run a partially completed sim and then resume. See ``tests/devtests/test_run_until.py``.
+- Fixed a bug whereby ``cv.clip_edges()`` with no end day specified resulted in large sim files when saved.
 
 
 Version 0.29.9 (2020-04-28)

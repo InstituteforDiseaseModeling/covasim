@@ -55,6 +55,49 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
     return sims
 
 
+def test_multisim_reduce(do_plot=False): # If being run via pytest, turn off
+    sc.heading('Combine results test')
+
+    n_runs = 3
+    pop_size = 1000
+    pop_infected = 10
+
+    print('Running first sim...')
+    sim = cv.Sim(pop_size=pop_size, pop_infected=pop_infected)
+    msim = cv.MultiSim(sim, n_runs=n_runs, noise=0.1)
+    msim.run()
+    msim.reduce()
+    if do_plot:
+        msim.plot()
+
+    return msim
+
+
+def test_multisim_combine(do_plot=False): # If being run via pytest, turn off
+    sc.heading('Combine results test')
+
+    n_runs = 3
+    pop_size = 1000
+    pop_infected = 10
+
+    print('Running first sim...')
+    sim = cv.Sim(pop_size=pop_size, pop_infected=pop_infected)
+    msim = cv.MultiSim(sim)
+    msim.run(n_runs=n_runs, keep_people=True)
+    sim1 = msim.combine(output=True)
+    assert sim1['pop_size'] == pop_size*n_runs
+
+    print('Running second sim, results should be similar but not identical (stochastic differences)...')
+    sim2 = cv.Sim(pop_size=pop_size*n_runs, pop_infected=pop_infected*n_runs)
+    sim2.run()
+
+    if do_plot:
+        msim.plot()
+        sim2.plot()
+
+    return msim
+
+
 def test_scenarios(do_plot=False):
     sc.heading('Scenarios test')
     basepars = {'pop_size':1000}
@@ -75,37 +118,15 @@ def test_scenarios(do_plot=False):
     return scens
 
 
-def test_combine(do_plot=False): # If being run via pytest, turn off
-    sc.heading('Combine results test')
-
-    n_runs = 3
-    pop_size = 1000
-    pop_infected = 10
-
-    print('Running first sim...')
-    sim = cv.Sim({'pop_size':pop_size, 'pop_infected':pop_infected})
-    sim = cv.multi_run(sim=sim, n_runs=n_runs, combine=True, keep_people=True)
-    assert sim['pop_size'] == pop_size*n_runs
-
-    print('Running second sim, results should be similar but not identical (stochastic differences)...')
-    sim2 = cv.Sim({'pop_size':pop_size*n_runs, 'pop_infected':pop_infected*n_runs})
-    sim2.run()
-
-    if do_plot:
-        sim.plot()
-        sim2.plot()
-
-    return sim
-
-
 #%% Run as a script
 if __name__ == '__main__':
     T = sc.tic()
 
-    # sim1  = test_singlerun()
+    sim1  = test_singlerun()
     sims2 = test_multirun(do_plot=do_plot)
-    # sims3 = test_combine(do_plot=do_plot)
-    # scens = test_scenarios(do_plot=do_plot)
+    msim1 = test_multisim_reduce(do_plot=do_plot)
+    msim2 = test_multisim_combine(do_plot=do_plot)
+    scens = test_scenarios(do_plot=do_plot)
 
     sc.toc(T)
 

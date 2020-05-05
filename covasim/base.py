@@ -75,7 +75,6 @@ class Result(object):
 
     Args:
         name (str): name of this result, e.g. new_infections
-        values (array): array of values corresponding to this result
         npts (int): if values is None, precreate it to be of this length
         scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
         color (str or array): default color for plotting (hex or RGB notation)
@@ -85,29 +84,30 @@ class Result(object):
         import covasim as cv
         r1 = cv.Result(name='test1', npts=10)
         r1[:5] = 20
-        print(r2.values)
-        r2 = cv.Result(name='test2', values=range(10))
-        print(r2)
+        print(r1.values)
     '''
 
-    def __init__(self, name=None, values=None, npts=None, scale='dynamic', color=None):
+    def __init__(self, name=None, npts=None, scale='dynamic', color=None):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
             color = '#000000'
         self.color = color # Default color
-        if values is None:
-            if npts is not None:
-                values = np.zeros(int(npts)) # If length is known, use zeros
-            else:
-                values = [] # Otherwise, empty
-        self.values = np.array(values, dtype=cvd.result_float) # Ensure it's an array
+        if npts is None:
+            npts = 0
+        self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
+        self.low    = None
+        self.high   = None
         return
 
     def __repr__(self, *args, **kwargs):
         ''' Use pretty repr, like sc.prettyobj, but displaying full values '''
-        output  = sc.prepr(self, skip='values')
+        output  = sc.prepr(self, skip=['values', 'low', 'high'])
         output += 'values:\n' + repr(self.values)
+        if self.low is not None:
+            output += '\nlow:\n' + repr(self.low)
+        if self.high is not None:
+            output += '\nhigh:\n' + repr(self.high)
         return output
 
     def __getitem__(self, *args, **kwargs):
@@ -452,7 +452,7 @@ class BaseSim(ParsObj):
             return shrunken_sim
 
 
-    def save(self, filename=None, keep_people=False, skip_attrs=None, **kwargs):
+    def save(self, filename=None, keep_people=None, skip_attrs=None, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
@@ -467,15 +467,27 @@ class BaseSim(ParsObj):
 
             sim.save() # Saves to a .sim file with the date and time of creation by default
         '''
+
+        # Set keep_people based on whether or not we're in the middle of a run
+        if keep_people is None:
+            if self.initialized and not self.results_ready:
+                keep_people = True
+            else:
+                keep_people = False
+
+        # Handle the filename
         if filename is None:
             filename = self.simfile
         filename = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
+
+        # Handle the shrinkage and save
         if skip_attrs or not keep_people:
             obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
         sc.saveobj(filename=filename, obj=obj)
+
         return filename
 
 

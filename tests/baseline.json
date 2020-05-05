@@ -29,7 +29,7 @@
     "cum_deaths": 12.0,
     "new_quarantined": 0.0,
     "cum_quarantined": 0.0,
-    "r_eff": 1.7936786654960493,
-    "doubling_time": 8.74834337181837
+    "r_eff": 1.030526068157997,
+    "doubling_time": 9.29296551635779
   }
 }

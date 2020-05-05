@@ -6,8 +6,6 @@ Defines the Sim class, Covasim's core class.
 import numpy as np
 import pylab as pl
 import sciris as sc
-import datetime as dt
-import matplotlib.ticker as ticker
 from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
@@ -16,6 +14,7 @@ from . import defaults as cvd
 from . import parameters as cvpar
 from . import population as cvpop
 from . import interventions as cvi
+from . import plotting as cvplt
 
 # Specify all externally visible things this file defines
 __all__ = ['Sim']
@@ -144,14 +143,37 @@ class Sim(cvb.BaseSim):
         ''' Some parameters can take multiple types; this makes them consistent '''
 
         # Handle types
-        for key in ['pop_size', 'pop_infected', 'pop_size', 'n_days']:
-            self[key] = int(self[key])
+        for key in ['pop_size', 'pop_infected', 'pop_size']:
+            try:
+                self[key] = int(self[key])
+            except Exception as E:
+                errormsg = f'Could not convert {key}={self[key]} of {type(self[key])} to integer'
+                raise TypeError(errormsg) from E
 
         # Handle start day
         start_day = self['start_day'] # Shorten
         if start_day in [None, 0]: # Use default start day
             start_day = '2020-03-01'
         self['start_day'] = cvm.date(start_day)
+
+        # Handle end day and n_days
+        end_day = self['end_day']
+        n_days = self['n_days']
+        if end_day:
+            self['end_day'] = cvm.date(end_day)
+            n_days = cvm.daydiff(self['start_day'], self['end_day'])
+            if n_days <= 0:
+                errormsg = f"Number of days must be >0, but you supplied start={str(self['start_day'])} and end={str(self['end_day'])}, which gives n_days={n_days}"
+                raise ValueError(errormsg)
+            else:
+                self['n_days'] = int(n_days)
+        else:
+            if n_days:
+                self['n_days'] = int(n_days)
+                self['end_day'] = self.date(n_days) # Convert from the number of days to the end day
+            else:
+                errormsg = f'You must supply one of n_days and end_day, not "{n_days}" and "{end_day}"'
+                raise ValueError(errormsg)
 
         # Handle contacts
         contacts = self['contacts']
@@ -292,7 +314,27 @@ class Sim(cvb.BaseSim):
         ''' Initialize the interventions '''
         # Initialize interventions
         for intervention in self['interventions']:
-            intervention.initialize(self)
+            if not intervention.initialized:
+                intervention.initialize(self)
+        return
+
+
+    def rescale(self):
+        ''' Dynamically rescale the population '''
+        if self['rescale']:
+            t = self.t
+            pop_scale = self['pop_scale']
+            current_scale = self.rescale_vec[t]
+            if current_scale < pop_scale: # We have room to rescale
+                n_not_sus = self.people.count_not('susceptible')
+                n_people = len(self.people)
+                if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
+                    max_ratio = pop_scale/current_scale # We don't want to exceed this
+                    scaling_ratio = min(self['rescale_factor'], max_ratio)
+                    self.rescale_vec[t:] *= scaling_ratio # Update the rescaling factor from here on
+                    n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
+                    new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
+                    self.people.make_susceptible(new_sus_inds)
         return
 
 
@@ -382,31 +424,13 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def rescale(self):
-        ''' Dynamically rescale the population '''
-        if self['rescale']:
-            t = self.t
-            pop_scale = self['pop_scale']
-            current_scale = self.rescale_vec[t]
-            if current_scale < pop_scale: # We have room to rescale
-                n_not_sus = self.people.count_not('susceptible')
-                n_people = len(self.people)
-                if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
-                    max_ratio = pop_scale/current_scale # We don't want to exceed this
-                    scaling_ratio = min(self['rescale_factor'], max_ratio)
-                    self.rescale_vec[t+1:] *= scaling_ratio # Update the rescaling factor from here on
-                    n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
-                    new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
-                    self.people.make_susceptible(new_sus_inds)
-        return
-
-
-    def run(self, do_plot=False, verbose=None, **kwargs):
+    def run(self, do_plot=False, until=None, verbose=None, **kwargs):
         '''
         Run the simulation.
 
         Args:
             do_plot (bool): whether to plot
+            until (int): day to run until
             verbose (int): level of detail to print
             kwargs (dict): passed to self.plot()
 
@@ -420,6 +444,7 @@ class Sim(cvb.BaseSim):
             self.initialize()
         else:
             self.validate_pars() # We always want to validate the parameters before running
+            self.init_interventions() # And interventions
         if verbose is None:
             verbose = self['verbose']
 
@@ -430,11 +455,11 @@ class Sim(cvb.BaseSim):
             if verbose >= 1:
                 elapsed = sc.toc(output=True)
                 simlabel = f'"{self.label}": ' if self.label else ''
-                string = f'  Running {simlabel}day {t:2.0f}/{self.pars["n_days"]} ({elapsed:0.2f} s) '
+                string = f'  Running {simlabel}{self.datevec[t]} ({t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
                 if verbose >= 2:
                     sc.heading(string)
                 elif verbose == 1:
-                    sc.progressbar(t+1, self.npts, label=string, newline=True)
+                    sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
 
             # Do the heavy lifting -- actually run the model!
             self.step()
@@ -447,6 +472,8 @@ class Sim(cvb.BaseSim):
             elif self['stopping_func'] and self['stopping_func'](self):
                 sc.printv("Stopping function terminated the simulation", 1, verbose)
                 break
+            if self.t == until: # If until is specified, just stop here
+                return
 
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results
@@ -470,7 +497,7 @@ class Sim(cvb.BaseSim):
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            self.results[f'cum_{key}'].values = np.cumsum(self.results[f'new_{key}'].values)
+            self.results[f'cum_{key}'].values[:] = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Perform calculations on results
@@ -486,7 +513,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def compute_doubling(self, window=7, max_doubling_time=50):
+    def compute_doubling(self, window=3, max_doubling_time=30):
         '''
         Calculate doubling time using exponential approximation -- a more detailed
         approach is in utils.py. Compares infections at time t to infections at time
@@ -499,7 +526,7 @@ class Sim(cvb.BaseSim):
             max_doubling_time (float): doubling time could be infinite, so this places a bound on it
 
         Returns:
-            None (modifies results in place)
+            doubling_time (array): the doubling time results array
         '''
         cum_infections = self.results['cum_infections'].values
         self.results['doubling_time'][:window] = np.nan
@@ -511,16 +538,20 @@ class Sim(cvb.BaseSim):
                 doubling_time = window*np.log(2)/np.log(r)
                 doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
                 self.results['doubling_time'][t] = doubling_time
-        return
+        return self.results['doubling_time'].values
 
 
-    def compute_r_eff(self, window=7):
+    def compute_r_eff(self, method='daily', smoothing=2, window=7):
         '''
         Effective reproductive number based on number of people each person infected.
 
         Args:
-            window (int): the size of the window used (larger values are more accurate but less precise)
+            method (str): 'instant' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
+            smoothing (int): the number of steps to smooth over for the 'daily' method
+            window (int): the size of the window used for 'infectious' and 'outcome' calculations (larger values are more accurate but less precise)
 
+        Returns:
+            r_eff (array): the r_eff results array
         '''
 
         # Initialize arrays to hold sources and targets infected each day
@@ -528,44 +559,77 @@ class Sim(cvb.BaseSim):
         targets = np.zeros(self.npts)
         window = int(window)
 
-        for t in self.tvec:
+        # Default method -- calculate the daily infections
+        if method == 'daily':
 
-            # Sources are easy -- count up the arrays
-            recov_inds   = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
-            dead_inds    = cvu.true(t == self.people.date_dead)  # Find people who died on this timestep
-            outcome_inds = np.concatenate((recov_inds, dead_inds))
-            sources[t]   = len(outcome_inds)
+            # Find the dates that everyone became infectious and recovered, and hence calculate infectious duration
+            recov_inds = self.people.defined('date_recovered')
+            dead_inds = self.people.defined('date_dead')
+            date_recov = self.people.date_recovered[recov_inds]
+            date_dead = self.people.date_dead[dead_inds]
+            date_outcome = np.concatenate((date_recov, date_dead))
+            inds = np.concatenate((recov_inds, dead_inds))
+            date_inf = self.people.date_infectious[inds]
+            mean_inf = date_outcome.mean() - date_inf.mean()
 
-            # Targets are hard -- loop over the transmission tree
-            for ind in outcome_inds:
-                targets[t] += len(self.people.transtree.targets[ind])
+            # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
+            values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
+            if len(values) >= 3: # Can't smooth arrays shorter than this
+                values = sc.smooth(values, smoothing)
 
-        # Populate the array -- to avoid divide-by-zero, skip indices that are 0
-        inds = sc.findinds(sources>0)
-        r_eff = np.zeros(self.npts)*np.nan
-        r_eff[inds] = targets[inds]/sources[inds]
+        # Alternate (traditional) method -- count from the date of infection or outcome
+        elif method in ['infectious', 'outcome']:
 
-        # use stored weights calculate the moving average over the window of timesteps, n
-        num = np.nancumsum(r_eff * sources)
-        num[window:] = num[window:] - num[:-window]
-        den = np.cumsum(sources)
-        den[window:] = den[window:] - den[:-window]
+            for t in self.tvec:
 
-        # avoid dividing by zero
-        values = np.zeros(num.shape)*np.nan
-        ind = den > 0
-        values[ind] = num[ind]/den[ind]
+                # Sources are easy -- count up the arrays
+                if method == 'infectious':
+                    inds = cvu.true(t == self.people.date_infectious) # Find people who became infectious on this timestep
+                elif method == 'outcome':
+                    recov_inds = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
+                    dead_inds  = cvu.true(t == self.people.date_dead)  # Find people who died on this timestep
+                    inds       = np.concatenate((recov_inds, dead_inds))
+                sources[t] = len(inds)
 
-        self.results['r_eff'].values = values
+                # Targets are hard -- loop over the transmission tree
+                for ind in inds:
+                    targets[t] += len(self.people.transtree.targets[ind])
 
-        return
+            # Populate the array -- to avoid divide-by-zero, skip indices that are 0
+            inds = sc.findinds(sources>0)
+            r_eff = np.zeros(self.npts)*np.nan
+            r_eff[inds] = targets[inds]/sources[inds]
+
+            # Use stored weights calculate the moving average over the window of timesteps, n
+            num = np.nancumsum(r_eff * sources)
+            num[window:] = num[window:] - num[:-window]
+            den = np.cumsum(sources)
+            den[window:] = den[window:] - den[:-window]
+
+            # Avoid dividing by zero
+            values = np.zeros(num.shape)*np.nan
+            ind = den > 0
+            values[ind] = num[ind]/den[ind]
+
+        # Method not recognized
+        else:
+            errormsg = f'Method must be "daily", "infected", or "outcome", not "{method}"'
+            raise ValueError(errormsg)
+
+        # Set the values and return
+        self.results['r_eff'].values[:] = values
+
+        return self.results['r_eff'].values
 
 
     def compute_gen_time(self):
         '''
-        Calculate the generation time (or serial interval) there are two
+        Calculate the generation time (or serial interval). There are two
         ways to do this calculation. The 'true' interval (exposure time to
         exposure time) or 'clinical' (symptom onset to symptom onset).
+
+        Returns:
+            gen_time (dict): the generation time results
         '''
 
         intervals1 = np.zeros(len(self.people))
@@ -577,7 +641,8 @@ class Sim(cvb.BaseSim):
         date_symptomatic = self.people.date_symptomatic
         for p in range(len(self.people)):
             if len(targets[p])>0:
-                for target_ind in targets[p]:
+                for target in targets[p]:
+                    target_ind = target['target']
                     intervals1[pos1] = date_exposed[target_ind] - date_exposed[p]
                     pos1 += 1
                     if not np.isnan(date_symptomatic[p]):
@@ -590,13 +655,21 @@ class Sim(cvb.BaseSim):
                 'true_std':     np.std(intervals1[:pos1]),
                 'clinical':     np.mean(intervals2[:pos2]),
                 'clinical_std': np.std(intervals2[:pos2])}
-        return
+        return self.results['gen_time']
 
 
     def likelihood(self, weights=None, verbose=None, eps=1e-16):
         '''
         Compute the log-likelihood of the current simulation based on the number
         of new diagnoses.
+
+        Args:
+            weights (dict): the relative wieght to place on each result
+            verbose (bool): detail to print
+            eps (float): to avoid divide-by-zero errors
+
+        Returns:
+            loglike (float): the log-likelihood of the model given the data
         '''
 
         if verbose is None:
@@ -651,149 +724,59 @@ class Sim(cvb.BaseSim):
         return summary
 
 
-    def plot(self, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-             scatter_args=None, axis_args=None, legend_args=None, as_dates=True, dateformat=None,
-             interval=None, n_cols=1, font_size=18, font_family=None, use_grid=True, use_commaticks=True,
-             log_scale=False, do_show=True, verbose=None):
+    def plot(self, *args, **kwargs):
         '''
-        Plot the results -- can supply arguments for both the figure and the plots.
+        Plot the results of a single simulation.
 
         Args:
-            to_plot (dict): Nested dict of results to plot; see get_sim_plots() for structure
-            do_save (bool or str): Whether or not to save the figure. If a string, save to that filename.
-            fig_path (str): Path to save the figure
-            fig_args (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args (dict): Dictionary of kwargs to be passed to pl.plot()
+            to_plot      (dict): Dict of results to plot; see get_sim_plots() for structure
+            do_save      (bool): Whether or not to save the figure
+            fig_path     (str):  Path to save the figure
+            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
+            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-            axis_args (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            legend_args (dict): Dictionary of kwargs to be passed to pl.legend()
-            as_dates (bool): Whether to plot the x-axis as dates or time points
-            dateformat (str): Date string format, e.g. '%B %d'
-            interval (int): Interval between tick marks
-            n_cols (int): Number of columns of subpanels to use for subplot
-            font_size (int): Size of the font
-            font_family (str): Font face
-            use_grid (bool): Whether or not to plot gridlines
-            use_commaticks (bool): Plot y-axis with commas rather than scientific notation
-            log_scale (bool or list): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
-            do_show (bool): Whether or not to show the figure
-            verbose (bool): Display a bit of extra information
+            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
+            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
+            as_dates     (bool): Whether to plot the x-axis as dates or time points
+            dateformat   (str):  Date string format, e.g. '%B %d'
+            interval     (int):  Interval between tick marks
+            n_cols       (int):  Number of columns of subpanels to use for subplot
+            font_size    (int):  Size of the font
+            font_family  (str):  Font face
+            grid         (bool): Whether or not to plot gridlines
+            commaticks   (bool): Plot y-axis with commas rather than scientific notation
+            setylim      (bool): Reset the y limit to start at 0
+            log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
+            do_show      (bool): Whether or not to show the figure
+            colors       (dict): Custom color for each result, must be a dictionary with one entry per result key in to_plot
+            sep_figs     (bool): Whether to show separate figures for different results instead of subplots
+            fig          (fig):  Handle of existing figure to plot into
 
         Returns:
             fig: Figure handle
+
+
+        **Example**::
+
+            sim = cv.Sim()
+            sim.run()
+            sim.plot()
         '''
-
-        if verbose is None:
-            verbose = self['verbose']
-        sc.printv('Plotting...', 1, verbose)
-
-        if to_plot is None:
-            to_plot = cvd.get_sim_plots()
-        to_plot = sc.odict(to_plot) # In case it's supplied as a dict
-
-        # Handle input arguments -- merge user input with defaults
-        fig_args     = sc.mergedicts({'figsize':(16,14)}, fig_args)
-        plot_args    = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
-        scatter_args = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
-        axis_args    = sc.mergedicts({'left':0.1, 'bottom':0.05, 'right':0.9, 'top':0.97, 'wspace':0.2, 'hspace':0.25}, axis_args)
-        legend_args  = sc.mergedicts({'loc': 'best'}, legend_args)
-
-        fig = pl.figure(**fig_args)
-        pl.subplots_adjust(**axis_args)
-        pl.rcParams['font.size'] = font_size
-        if font_family:
-            pl.rcParams['font.family'] = font_family
-
-        res = self.results # Shorten since heavily used
-
-        # Plot everything
-        n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
-        for p,title,keylabels in to_plot.enumitems():
-            if p == 0:
-                ax = pl.subplot(n_rows, n_cols, p+1)
-            else:
-                ax = pl.subplot(n_rows, n_cols, p + 1, sharex=ax)
-            if log_scale:
-                if isinstance(log_scale, list):
-                    if title in log_scale:
-                        ax.set_yscale('log')
-                else:
-                    ax.set_yscale('log')
-            for key in keylabels:
-                label = res[key].name
-                this_color = res[key].color
-                y = res[key].values
-                pl.plot(res['t'], y, label=label, **plot_args, c=this_color)
-                if self.data is not None and key in self.data:
-                    data_t = (self.data.index-self['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
-                    pl.scatter(data_t, self.data[key], c=[this_color], **scatter_args)
-            if self.data is not None and len(self.data):
-                pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
-
-            pl.legend(**legend_args)
-            pl.grid(use_grid)
-            sc.setylim()
-            if use_commaticks:
-                sc.commaticks()
-            pl.title(title)
-
-            # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-            if interval:
-                xmin,xmax = ax.get_xlim()
-                ax.set_xticks(pl.arange(xmin, xmax+1, interval))
-
-            # Set xticks as dates
-            if as_dates:
-                @ticker.FuncFormatter
-                def date_formatter(x, pos):
-                    return (self['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
-                ax.xaxis.set_major_formatter(date_formatter)
-                if not interval:
-                    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-
-            # Plot interventions
-            for intervention in self['interventions']:
-                intervention.plot(self, ax)
-
-        # Ensure the figure actually renders or saves
-        if do_save:
-            if fig_path is None: # No figpath provided - see whether do_save is a figpath
-                if isinstance(do_save, str) :
-                    fig_path = do_save # It's a string, assume it's a filename
-                else:
-                    fig_path = 'covasim.png' # Just give it a default name
-            fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-            pl.savefig(fig_path)
-
-        if do_show:
-            pl.show()
-        else:
-            pl.close(fig)
-
+        fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig
 
 
-    def plot_result(self, key, fig_args=None, plot_args=None):
+    def plot_result(self, key, *args, **kwargs):
         '''
         Simple method to plot a single result. Useful for results that aren't
-        standard outputs.
+        standard outputs. See sim.plot() for explanation of other arguments.
 
         Args:
             key (str): the key of the result to plot
-            fig_args (dict): passed to pl.figure()
-            plot_args (dict): passed to pl.plot()
 
         **Examples**::
 
-            sim.plot_result('doubling_time')
+            sim.plot_result('r_eff')
         '''
-        fig_args  = sc.mergedicts({'figsize':(16,10)}, fig_args)
-        plot_args = sc.mergedicts({'lw':3, 'alpha':0.7}, plot_args)
-        fig = pl.figure(**fig_args)
-        pl.subplot(111)
-        tvec = self.results['t']
-        res = self.results[key]
-        y = res.values
-        color = res.color
-        pl.plot(tvec, y, c=color, **plot_args)
+        fig = cvplt.plot_result(sim=self, key=key, *args, **kwargs)
         return fig
