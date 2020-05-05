@@ -419,9 +419,7 @@ class People(cvb.BasePeople):
                 p1inds = np.isin(self.contacts[lkey]['p1'], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
                 nzp1inds = np.intersect1d(nzinds, p1inds)
                 p2inds = np.unique(self.contacts[lkey]['p2'][nzp1inds]) # Find their pairing partner
-                print('hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii')
-                print(inds)
-                print(p2inds)
+
                 # Check not diagnosed!
                 contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
                 self.known_contact[contact_inds] = True
