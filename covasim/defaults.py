@@ -6,9 +6,7 @@ import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines
-__all__ = ['default_precision', 'result_float', 'default_float', 'default_int',
-           'PeopleMeta', 'result_stocks', 'result_flows', 'new_result_flows', 'cum_result_flows',
-           'default_age_data', 'default_colors', 'default_sim_plots', 'default_scen_plots']
+__all__ = ['get_colors', 'get_sim_plots', 'get_scen_plots']
 
 #%% Specify what data types to use
 
@@ -129,50 +127,67 @@ default_age_data = np.array([
             ])
 
 
-# Specify plot colors -- used in sim.py -- NB, includes duplicates since stocks and flows are named differently
-default_colors = sc.objdict(
-    susceptible = '#5e7544',
-    infectious  = '#c78f65',
-    infections  = '#c75649',
-    exposed     = '#c75649', # Duplicate
-    tests       = '#aaa8ff',
-    diagnoses   = '#8886cc',
-    diagnosed   = '#8886cc', # Duplicate
-    recoveries  = '#799956',
-    recovered   = '#799956', # Duplicate
-    symptomatic = '#c1ad71',
-    severe      = '#c1981d',
-    quarantined = '#5f1914',
-    critical    = '#b86113',
-    deaths      = '#000000',
-    dead        = '#000000', # Duplicate
+def get_colors():
+    '''
+    Specify plot colors -- used in sim.py.
+
+    NB, includes duplicates since stocks and flows are named differently.
+    '''
+    colors = sc.objdict(
+        susceptible = '#5e7544',
+        infectious  = '#c78f65',
+        infections  = '#c75649',
+        exposed     = '#c75649', # Duplicate
+        tests       = '#aaa8ff',
+        diagnoses   = '#8886cc',
+        diagnosed   = '#8886cc', # Duplicate
+        recoveries  = '#799956',
+        recovered   = '#799956', # Duplicate
+        symptomatic = '#c1ad71',
+        severe      = '#c1981d',
+        quarantined = '#5f1914',
+        critical    = '#b86113',
+        deaths      = '#000000',
+        dead        = '#000000', # Duplicate
     )
+    return colors
 
 
-# Specify which quantities to plot -- note, these can be turned on and off by commenting/uncommenting lines; used in sim.py
-default_sim_plots = sc.odict({
-        'Total counts': [
+def get_sim_plots():
+    ''' Specify which quantities to plot; used in sim.py '''
+    plots = sc.odict({
+            'Total counts': [
+                'cum_infections',
+                'cum_diagnoses',
+                'cum_recoveries',
+            ],
+            'Daily counts': [
+                'new_infections',
+                'new_diagnoses',
+                'new_recoveries',
+                'new_deaths',
+            ],
+            'Health outcomes': [
+                'cum_severe',
+                'cum_critical',
+                'cum_deaths',
+            ]
+    })
+    return plots
+
+
+def get_scen_plots():
+    ''' Default scenario plots -- used in run.py '''
+    plots = sc.odict({
+        'Cumulative infections': [
             'cum_infections',
-            'cum_diagnoses',
-            'cum_recoveries',
         ],
-        'Daily counts': [
-            'new_infections',
-            'new_diagnoses',
-            'new_recoveries',
-            'new_deaths',
-        ],
-        'Health outcomes': [
-            'cum_severe',
-            'cum_critical',
-            'cum_deaths',
-        ]
-})
-
-
-# Default scenario plots -- used in run.py
-default_scen_plots = [
-            'cum_infections',
+        'Number of people currently infectious': [
             'n_infectious',
+        ],
+        'Number of people requiring hospitalization': [
             'n_severe',
-]
+        ]
+    })
+    return plots
+

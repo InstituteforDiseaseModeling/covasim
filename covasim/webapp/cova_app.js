@@ -33,45 +33,65 @@ const PlotlyChart = {
 
 const interventionTableConfig = {
     social_distance: {
-        formTitle: "Physical distancing",
-        fields: [{key: 'start', type: 'number', label: 'Start day'},
-            {key: 'end', type: 'number', label: 'End day'},
-            {label: 'Effectiveness', key: 'level', type: 'select', options: [{label: 'Aggressive (80%)', value: 'aggressive'}, {label: 'Moderate (50%)', value: 'moderate'}, {label: 'Mild (20%)', value: 'mild'}]}],
+        formTitle: "Distancing",
+        toolTip: "Physical distancing and social distancing interventions",
+        fields: [
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Impact of social distancing (examples: 20 = mild, 50 = moderate, 80 = aggressive)', min: 0, max: 100, value: 50}
+        ],
         handleSubmit: function(event) {
-            const start = parseInt(event.target.elements.start.value);
-            const end = parseInt(event.target.elements.end.value);
+            const start = vm.parse_day(event.target.elements.start.value);
+            const end = vm.parse_day(event.target.elements.end.value);
             const level = event.target.elements.level.value;
             return {start, end, level};
         }
     },
     school_closures: {
-        formTitle: "School closures",
-        fields: [{key: 'start', type: 'number', label: 'Start day'}, {key: 'end', type: 'number', label: 'End day'}],
+        formTitle: "Schools",
+        toolTip: "School and university closures",
+        fields: [
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Impact of school closures (0 = no schools closed, 100 = all schools closed)', min: 0, max: 100, value: 90}
+        ],
         handleSubmit: function(event) {
-            const start = parseInt(event.target.elements.start.value);
-            const end = parseInt(event.target.elements.end.value);
-            return {start, end};
+            const start = vm.parse_day(event.target.elements.start.value);
+            const end = vm.parse_day(event.target.elements.end.value);
+            const level = event.target.elements.level.value;
+            return {start, end, level};
         }
     },
     symptomatic_testing: {
-        formTitle: "Symptomatic testing",
-        fields: [{key: 'start', type: 'number', label: 'Start day'}, {key: 'end', type: 'number', label: 'End day'}, {label: 'Coverage', key: 'level', type: 'select', options: [{label: '10% per day', value: '10'}, {label: '30% per day', value: '30'},]}],
+        formTitle: "Testing",
+        toolTip: "Testing rates for people with symptoms",
+        fields: [
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Proportion of people tested per day (0 = no testing, 10 = 10% of people tested per day, 100 = everyone tested every day); assumes 1 day test delay', min: 0, max: 100, value: 10}
+        ],
         handleSubmit: function(event) {
-            const start = parseInt(event.target.elements.start.value);
-            const end = parseInt(event.target.elements.end.value);
-            const level = parseInt(event.target.elements.level.value);
+            const start = vm.parse_day(event.target.elements.start.value);
+            const end = vm.parse_day(event.target.elements.end.value);
+            const level = event.target.elements.level.value;
             return {start, end, level};
         }
     },
     contact_tracing: {
-        formTitle: "Contact tracing",
-        fields: [{key: 'start', type: 'number', label: 'Start Day'}, {key: 'end', type: 'number', label: 'End day'}],
+        formTitle: "Tracing",
+        toolTip: "Contact tracing of diagnosed cases (requires testing intervention)",
+        fields: [
+            {key: 'start', type: 'number', label: 'Start day', tooltip: 'Start day of intervention', value: 0},
+            {key: 'end', type: 'number', label: 'End day', tooltip: 'End day of intervention (leave blank for no end)', value: null},
+            {key: 'level', type: 'number', label: 'Effectiveness', tooltip: 'Effectiveness of contact tracing (0 = no tracing, 100 = all contacts traced); assumes 1 day tracing delay. Please note: you must implement a testing intervention as well for tracing to have any effect.', min: 0, max: 100, value: 80}
+        ],
         handleSubmit: function(event) {
-            const start = parseInt(event.target.elements.start.value);
-            const end = parseInt(event.target.elements.end.value);
-            return {start, end};
+            const start = vm.parse_day(event.target.elements.start.value);
+            const end = vm.parse_day(event.target.elements.end.value);
+            const level = event.target.elements.level.value;
+            return {start, end, level};
         }
-  }
+    }
 
 };
 
@@ -235,13 +255,23 @@ var vm = new Vue({
             this.int_pars[key].push(intervention);
             const result = this.int_pars[key].sort((a, b) => a.start - b.start);
             this.$set(this.int_pars, key, result);
-            const response = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig});
+            const response = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig, n_days: this.sim_length.best});
             this.intervention_figs = response.data;
         },
         async deleteIntervention(scenarioKey, index) {
             this.$delete(this.int_pars[scenarioKey], index);
             const response = await sciris.rpc('get_gantt', undefined, {int_pars: this.int_pars, intervention_config: this.interventionTableConfig});
             this.intervention_figs = response.data;
+        },
+
+        parse_day(day) {
+            if (day == null || day == '') {
+                const output = this.sim_length.best
+                return output
+            } else {
+                const output = parseInt(day)
+                return output
+            }
         },
 
         resize_start() {

@@ -303,3 +303,7 @@ class SimulationParameterTests(CovaSimTest):
             print(f"Long sim length: {len(infections_channel_long)}")
         pass
     pass
+
+
+if __name__ == '__main__':
+    unittest.main()

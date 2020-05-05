@@ -136,7 +136,6 @@ class People(cvb.BasePeople):
         return self.contacts
 
 
-
     def make_detailed_transtree(self):
         ''' Convenience function to avoid repeating the people object '''
         self.transtree.make_detailed(self)
@@ -148,16 +147,17 @@ class People(cvb.BasePeople):
     def check_inds(self, current, date, filter_inds=None):
         ''' Return indices for which the current state is false and which meet the date criterion '''
         if filter_inds is None:
-            filter_inds = self.is_exp
-        not_current = cvu.ifalsei(current, filter_inds)
-        has_date    = cvu.idefinedi(date, not_current)
-        inds        = cvu.itrue(self.t >= date[has_date], has_date)
+            not_current = cvu.false(current)
+        else:
+            not_current = cvu.ifalsei(current, filter_inds)
+        has_date = cvu.idefinedi(date, not_current)
+        inds     = cvu.itrue(self.t >= date[has_date], has_date)
         return inds
 
 
     def check_infectious(self):
         ''' Check if they become infectious '''
-        inds = self.check_inds(self.infectious, self.date_infectious)
+        inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
         self.rel_trans[inds]  = cvu.sample(**self.pars['beta_dist'], size=len(inds))
         return len(inds)
@@ -165,28 +165,28 @@ class People(cvb.BasePeople):
 
     def check_symptomatic(self):
         ''' Check for new progressions to symptomatic '''
-        inds = self.check_inds(self.symptomatic, self.date_symptomatic)
+        inds = self.check_inds(self.symptomatic, self.date_symptomatic, filter_inds=self.is_exp)
         self.symptomatic[inds] = True
         return len(inds)
 
 
     def check_severe(self):
         ''' Check for new progressions to severe '''
-        inds = self.check_inds(self.severe, self.date_severe)
+        inds = self.check_inds(self.severe, self.date_severe, filter_inds=self.is_exp)
         self.severe[inds] = True
         return len(inds)
 
 
     def check_critical(self):
         ''' Check for new progressions to critical '''
-        inds = self.check_inds(self.critical, self.date_critical)
+        inds = self.check_inds(self.critical, self.date_critical, filter_inds=self.is_exp)
         self.critical[inds] = True
         return len(inds)
 
 
     def check_recovery(self):
         ''' Check for recovery '''
-        inds = self.check_inds(self.recovered, self.date_recovered)
+        inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=self.is_exp)
         self.exposed[inds]     = False
         self.infectious[inds]  = False
         self.symptomatic[inds] = False
@@ -199,7 +199,7 @@ class People(cvb.BasePeople):
 
     def check_death(self):
         ''' Check whether or not this person died on this timestep  '''
-        inds = self.check_inds(self.dead, self.date_dead)
+        inds = self.check_inds(self.dead, self.date_dead, filter_inds=self.is_exp)
         self.exposed[inds]     = False
         self.infectious[inds]  = False
         self.symptomatic[inds] = False
@@ -213,7 +213,7 @@ class People(cvb.BasePeople):
 
     def check_diagnosed(self):
         ''' Check for new diagnoses '''
-        inds = self.check_inds(self.diagnosed, self.date_diagnosed)
+        inds = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None)
         self.diagnosed[inds] = True
         return len(inds)
 
@@ -258,6 +258,9 @@ class People(cvb.BasePeople):
         for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
+        self.rel_sus[inds]   = 1.0 # By default: is susceptible
+        self.rel_trans[inds] = 0.0 # By default: cannot transmit
+
         return
 
 
@@ -279,7 +282,7 @@ class People(cvb.BasePeople):
         '''
 
         # Handle inputs
-        inds         = inds[self.susceptible[inds]] # Do not infect people who are not susceptible
+        inds         = np.unique(inds[self.susceptible[inds]]) # Do not infect people who are not susceptible
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
@@ -365,6 +368,8 @@ class People(cvb.BasePeople):
         Returns:
             Whether or not this person tested positive
         '''
+
+        inds = np.unique(inds)
         self.tested[inds] = True
         self.date_tested[inds] = self.t # Only keep the last time they tested
 
@@ -374,9 +379,9 @@ class People(cvb.BasePeople):
 
         not_diagnosed = is_inf_pos[np.isnan(self.date_diagnosed[is_inf_pos])]
         not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
-        inds          = not_diagnosed[not_lost]
+        final_inds    = not_diagnosed[not_lost]
 
-        self.date_diagnosed[inds] = self.t + test_delay
+        self.date_diagnosed[final_inds] = self.t + test_delay
 
         return
 
@@ -414,6 +419,7 @@ class People(cvb.BasePeople):
                 p1inds = np.isin(self.contacts[lkey]['p1'], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
                 nzp1inds = np.intersect1d(nzinds, p1inds)
                 p2inds = np.unique(self.contacts[lkey]['p2'][nzp1inds]) # Find their pairing partner
+
                 # Check not diagnosed!
                 contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
                 self.known_contact[contact_inds] = True

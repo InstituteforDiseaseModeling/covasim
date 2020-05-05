@@ -2,6 +2,7 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
+import datetime as dt
 import numpy as np
 import pylab  as pl # Used by fixaxis()
 import sciris as sc # Used by fixaxis()
@@ -9,14 +10,78 @@ import scipy.stats as sps # Used by poisson_test()
 from . import version as cvver
 
 
-__all__ = ['KeyNotFoundError', 'load', 'save', 'check_version', 'git_info', 'fixaxis', 'progressbar', 'get_doubling_time', 'poisson_test']
+__all__ = ['date', 'daydiff', 'load', 'save', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
 
 
-class KeyNotFoundError(KeyError):
-    ''' A tiny class to fix repr for KeyErrors '''
+def date(obj, *args, **kwargs):
+    '''
+    Convert a string or a datetime object to a date object. To convert to an integer
+    from the start day, use sim.date() instead.
 
-    def __str__(self):
-        return Exception.__str__(self)
+    Args:
+        obj (str, date, datetime): the object to convert
+        args (str, date, datetime): additional objects to convert
+
+    Returns:
+        dates (date or list): either a single date object, or a list of them
+
+    **Examples**::
+
+        cv.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
+    '''
+    # Convert to list
+    if sc.isstring(obj) or sc.isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
+        obj = sc.promotetolist(obj) # Ensure it's iterable
+    obj.extend(args)
+
+    dates = []
+    for d in obj:
+        try:
+            if type(d) == dt.date: # Do not use isinstance, since must be the exact type
+                pass
+            elif sc.isstring(d):
+                d = sc.readdate(d).date()
+            elif isinstance(d, dt.datetime):
+                d = d.date()
+            else:
+                errormsg = f'Could not interpret "{d}" of type {type(d)} as a date'
+                raise TypeError(errormsg)
+            dates.append(d)
+        except Exception as E:
+            errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
+            raise ValueError(errormsg)
+
+    # Return an integer rather than a list if only one provided
+    if len(dates)==1:
+        dates = dates[0]
+
+    return dates
+
+
+def daydiff(*args):
+    '''
+    Convenience function to find the difference between two or more days. With
+    only one argument, calculate days sin 2020-01-01.
+
+    **Example**::
+
+        since_ny = cv.daydiff('2020-03-20') # Returns 79 days since Jan. 1st
+        diff     = cv.daydiff('2020-03-20', '2020-04-05') # Returns 16
+        diffs    = cv.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
+    '''
+    days = [date(day) for day in args]
+    if len(days) == 1:
+        days.insert(0, date('2020-01-01')) # With one date, return days since Jan. 1st
+
+    output = []
+    for i in range(len(days)-1):
+        diff = (days[i+1] - days[i]).days
+        output.append(diff)
+
+    if len(output) == 1:
+        output = output[0]
+
+    return output
 
 
 def load(*args, **kwargs):
@@ -117,37 +182,6 @@ def fixaxis(sim, useSI=True, boxoff=False):
     pl.xlim((0, sim['n_days']+delta))
     if boxoff:
         sc.boxoff() # Turn off top and right lines
-    return
-
-
-def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newline=False):
-    '''
-    Call in a loop to create terminal progress bar.
-
-    Args:
-        i (int): current iteration
-        maxiters (int): maximum number of iterations
-        label (str): initial label to print
-        length (int): length of progress bar
-        empty (str): character for empty steps
-        full (str): character for empty steps
-
-    **Example**::
-
-        import pylab as pl
-        for i in range(100):
-            progressbar(i+1, 100)
-            pl.pause(0.05)
-
-    Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
-    '''
-    ending = None if newline else '\r'
-    pct = i/maxiters*100
-    percent = f'{pct:0.0f}%'
-    filled = int(length*i//maxiters)
-    bar = full*filled + empty*(length-filled)
-    print(f'\r{label} {bar} {percent}', end=ending)
-    if i == maxiters: print()
     return
 
 
