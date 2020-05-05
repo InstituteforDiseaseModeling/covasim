@@ -3,6 +3,7 @@ Compare current results to baseline
 """
 
 import sciris as sc
+import numpy as np
 import pandas as pd
 import covasim as cv
 
@@ -63,6 +64,46 @@ def test_baseline():
         errormsg += 'Please rerun "tests/update_baseline" if this is intentional.\n'
         errormsg += 'Mismatches:\n'
         df = pd.DataFrame.from_dict(mismatches).transpose()
+        ratio = []
+        change = []
+        small_change = 1e-3 # Define a small change, e.g. a rounding error
+        for mdict in mismatches.values():
+            old = mdict['old']
+            new = mdict['new']
+            if sc.isnumber(new) and sc.isnumber(old) and old>0:
+                this_ratio = new/old
+                abs_ratio = max(this_ratio, 1.0/this_ratio)
+
+                # Set the character to use
+                if abs_ratio<small_change:
+                    change_char = '≈'
+                elif new > old:
+                    change_char = '↑'
+                elif new < old:
+                    change_char = '↓'
+                else:
+                    errormsg = f'Could not determine relationship between old={old} and new={new}'
+                    raise ValueError(errormsg)
+
+                # Set how many repeats it should have
+                repeats = 1
+                if abs_ratio >= 1.1:
+                    repeats = 2
+                if abs_ratio >= 2:
+                    repeats = 3
+                if abs_ratio >= 10:
+                    repeats = 4
+
+                this_change = change_char*repeats
+            else:
+                this_ratio = np.nan
+                this_change = 'N/A'
+
+            ratio.append(this_ratio)
+            change.append(this_change)
+
+        df['ratio'] = ratio
+        df['change'] = change
         errormsg += str(df)
 
     # Raise an error if mismatches were found
