@@ -367,7 +367,7 @@ class Sim(cvb.BaseSim):
         for intervention in self['interventions']:
             intervention.apply(self)
         if self['interv_func'] is not None: # Apply custom intervention function
-            self =self['interv_func'](self)
+            self['interv_func'](self)
 
         flows = people.update_states_post(flows) # Check for state changes after interventions
 
