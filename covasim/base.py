@@ -10,6 +10,7 @@ import sciris as sc
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
+from . import plotting as cvplt
 
 # Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer', 'TransTree']
@@ -533,6 +534,9 @@ class BasePeople(sc.prettyobj):
                 pop_size = 0
         pop_size = int(pop_size)
         self.pop_size = pop_size
+        if pars is not None:
+            n_days = pars['n_days']
+        self.n_days = n_days
 
         # Other initialization
         self.t = 0 # Keep current simulation time
@@ -540,7 +544,7 @@ class BasePeople(sc.prettyobj):
         self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
         self.contacts = None
         self.init_contacts() # Initialize the contacts
-        self.transtree = TransTree(pop_size=pop_size) # Initialize the transmission tree
+        self.transtree = TransTree(pop_size=pop_size, n_days=n_days) # Initialize the transmission tree
 
         return
 
@@ -1000,10 +1004,12 @@ class TransTree(sc.prettyobj):
         pop_size (int): the number of people in the population
     '''
 
-    def __init__(self, pop_size):
+    def __init__(self, pop_size, n_days):
         self.linelist = [None]*pop_size
         self.targets  = [[] for p in range(len(self))] # Make a list of empty lists
         self.detailed = None
+        self.pop_size = pop_size
+        self.n_days   = n_days
         return
 
 
@@ -1046,67 +1052,61 @@ class TransTree(sc.prettyobj):
                 if transdict is not None:
 
                     # Pull out key quantities
-                    ddict  = sc.dcp(transdict) # For "detailed dictionary"
-                    source = ddict['source']
-                    target = ddict['target']
-                    date   = ddict['date']
+                    ddict  = sc.objdict(sc.dcp(transdict)) # For "detailed dictionary"
+                    source = ddict.source
+                    target = ddict.target
+                    ddict.s = sc.objdict() # Source
+                    ddict.t = sc.objdict() # Target
 
-                    # Only need to check against the date, since will return False if condition is false (NaN)
-                    if source is not None: # This information is only available for people infected by other people, not e.g. importations
-                        ddict['s_age']     = people.age[source]
-                        ddict['t_age']     = people.age[target]
-                        ddict['s_symp']    = people.date_symptomatic[source] <= date
-                        ddict['s_diag']    = people.date_diagnosed[source]   <= date
-                        ddict['s_quar']    = people.date_quarantined[source] <= date
-                        ddict['s_sev']     = people.date_severe[source]      <= date
-                        ddict['s_crit']    = people.date_critical[source]    <= date
-                        ddict['t_quar']    = people.date_quarantined[target] <= date
-                        ddict['s_asymp']   = np.isnan(people.date_symptomatic[source])
-                        ddict['s_presymp'] = ~ddict['s_asymp'] and ~ddict['s_symp'] # Not asymptomatic and not currently symptomatic
+                    # If the source is available (e.g. not a seed infection), loop over both it and the target
+                    if source is not None:
+                        stdict = {'s':source, 't':target}
+                    else:
+                        stdict = {'t':target}
+
+                    # Pull out each of the attributes relevant to transmission
+                    attrs = ['age', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
+                    for st,stind in stdict.items():
+                        for attr in attrs:
+                            ddict[st][attr] = people[attr][stind]
+                    if source is not None:
+                        for attr in attrs:
+                            if attr.startswith('date_'):
+                                is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
+                                ddict.s[is_attr] = ddict.s[attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
+
+                        ddict.s.is_asymp   = np.isnan(people.date_symptomatic[source])
+                        ddict.s.is_presymp = ~ddict.s.is_asymp and ~ddict.s.is_symptomatic # Not asymptomatic and not currently symptomatic
+                    ddict.t['is_quarantined'] = ddict.t['date_quarantined'] <= ddict['date'] # This is the only target date that it makes sense to define since it can happen before infection
 
                     self.detailed[target] = ddict
 
         return
 
 
-    def plot(self):
+    def plot(self, *args, **kwargs):
         ''' Plot the transmission tree '''
-        if self.detailed is None:
-            errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
-            raise ValueError(errormsg)
+        return cvplt.plot_transtree(self, *args, **kwargs)
 
-        detailed = filter(None, self.detailed)
 
-        df = pd.DataFrame(detailed).rename(columns={'date': 'Day'})
-        df = df.loc[df['layer'] != 'seed_infection']
+    def animate(self, *args, **kwargs):
+        '''
+        Animate the transmission tree.
 
-        df['Stage'] = 'Symptomatic'
-        df.loc[df['s_asymp'], 'Stage'] = 'Asymptomatic'
-        df.loc[df['s_presymp'], 'Stage'] = 'Presymptomatic'
+        Args:
+            animate    (bool):  whether to animate the plot (otherwise, show when finished)
+            verbose    (bool):  print out progress of each frame
+            markersize (int):   size of the markers
+            sus_color  (list):  color for susceptibles
+            fig_args   (dict):  arguments passed to pl.figure()
+            axis_args  (dict):  arguments passed to pl.subplots_adjust()
+            plot_args  (dict):  arguments passed to pl.plot()
+            delay      (float): delay between frames in seconds
+            font_size  (int):   size of the font
+            colors     (list):  color of each person
+            cmap       (str):   colormap for each person (if colors is not supplied)
 
-        df['Severity'] = 'Mild'
-        df.loc[df['s_sev'], 'Severity'] = 'Severe'
-        df.loc[df['s_crit'], 'Severity'] = 'Critical'
-
-        fig = pl.figure(figsize=(16,10))
-        i=1; r=2; c=3
-
-        def plot(key, title, i):
-            dat = df.groupby(['Day', key]).size().unstack(key)
-            ax = pl.subplot(r,c,i);
-            dat.plot(ax=ax, legend=None)
-            pl.legend(title=None)
-            ax.set_title(title)
-
-        to_plot = {
-            'layer':'Layer',
-            'Stage':'Source stage',
-            's_diag':'Source diagnosed',
-            's_quar':'Source quarantined',
-            't_quar':'Target quarantined',
-            'Severity':'Symptomatic source severity'
-        }
-        for i, (key, title) in enumerate(to_plot.items()):
-            plot(key, title, i+1)
-
-        return fig
+        Returns:
+            fig: the figure object
+        '''
+        return cvplt.animate_transtree(self, *args, **kwargs)
