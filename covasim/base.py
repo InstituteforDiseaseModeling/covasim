@@ -10,6 +10,7 @@ import sciris as sc
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
+from . import plotting as cvplt
 
 # Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer', 'TransTree']
@@ -1080,6 +1081,10 @@ class TransTree(sc.prettyobj):
 
     def plot(self):
         ''' Plot the transmission tree '''
+
+        return cvplt.plot_transtree(self, *args, **kwargs)
+
+
         if self.detailed is None:
             errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
             raise ValueError(errormsg)
@@ -1133,3 +1138,7 @@ class TransTree(sc.prettyobj):
             plot(key, title, i+1)
 
         return fig
+
+
+    def animate(self, *args, **kwargs):
+        return cvplt.animate_transtree(self, *args, **kwargs)
