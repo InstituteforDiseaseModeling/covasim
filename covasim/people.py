@@ -75,7 +75,7 @@ class People(cvb.BasePeople):
         self.crit_prob[:]   = prognoses['crit_probs'][inds]
         self.death_prob[:]  = prognoses['death_probs'][inds]
         self.rel_sus[:]     = prognoses['sus_ORs'][inds] # Default susceptibilities
-        self.rel_trans[:]   = 0.0 # By default: cannot transmit
+        self.rel_trans[:]   = prognoses['trans_ORs'][inds] # Default transmissibilities
 
         return
 
@@ -193,7 +193,6 @@ class People(cvb.BasePeople):
         self.severe[inds]      = False
         self.critical[inds]    = False
         self.recovered[inds]   = True
-        self.rel_trans[inds]   = 0.0
         return len(inds)
 
 
@@ -207,7 +206,6 @@ class People(cvb.BasePeople):
         self.critical[inds]    = False
         self.recovered[inds]   = False
         self.dead[inds]        = True
-        self.rel_trans[inds]   = 0.0
         return len(inds)
 
 
@@ -258,9 +256,6 @@ class People(cvb.BasePeople):
         for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
-        self.rel_sus[inds]   = 1.0 # By default: is susceptible
-        self.rel_trans[inds] = 0.0 # By default: cannot transmit
-
         return
 
 
@@ -289,7 +284,6 @@ class People(cvb.BasePeople):
         # Set states
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
-        self.rel_sus[inds]       = 0.0 # Not susceptible after becoming infected
         self.date_exposed[inds]  = self.t
 
         # Calculate how long before this person can infect other people

@@ -46,18 +46,20 @@ def test_baseline():
     if old_keys != new_keys:
         errormsg = f"Keys don't match!\n"
         missing = old_keys - new_keys
-        extra = new_keys - old_keys
+        extra   = new_keys - old_keys
         if missing:
             errormsg += f'  Missing old keys: {missing}\n'
         if extra:
             errormsg += f'  Extra new keys: {extra}\n'
 
     mismatches = {}
-    for key in old_keys.union(new_keys):
-        old_val = old[key] if key in old else 'not present'
-        new_val = new[key] if key in new else 'not present'
-        if old_val != new_val:
-            mismatches[key] = {'old': old_val, 'new': new_val}
+    union = old_keys.union(new_keys)
+    for key in new.keys(): # To ensure order
+        if key in union:
+            old_val = old[key] if key in old else 'not present'
+            new_val = new[key] if key in new else 'not present'
+            if old_val != new_val:
+                mismatches[key] = {'old': old_val, 'new': new_val}
 
     if len(mismatches):
         errormsg = '\nThe following values have changed between old and new!\n'
