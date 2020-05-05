@@ -121,7 +121,7 @@ def test_baseline():
     else:
         print('Baseline matches')
 
-    return df
+    return new
 
 
 def test_benchmark(do_save=do_save):
