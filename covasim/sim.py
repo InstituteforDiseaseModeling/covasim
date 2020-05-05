@@ -383,20 +383,19 @@ class Sim(cvb.BaseSim):
         date_dead    = people.date_dead
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
-        # Compute relative transmission and susceptibility
-        rel_trans  = people.rel_trans
-        rel_sus    = people.rel_sus
-        inf        = people.infectious
-        sus        = people.susceptible
-        symp       = people.symptomatic
-        diag       = people.diagnosed
-        quar       = people.quarantined
-
         for lkey,layer in contacts.items():
             sources = layer['p1']
             targets = layer['p2']
             betas   = layer['beta']
 
+            # Compute relative transmission and susceptibility
+            rel_trans  = people.rel_trans
+            rel_sus    = people.rel_sus
+            inf        = people.infectious
+            sus        = people.susceptible
+            symp       = people.symptomatic
+            diag       = people.diagnosed
+            quar       = people.quarantined
             quar_eff   = cvd.default_float(self['quar_eff'][lkey])
             beta_layer = cvd.default_float(self['beta_layer'][lkey])
             rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
