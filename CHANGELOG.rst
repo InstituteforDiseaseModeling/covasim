@@ -9,6 +9,7 @@ Version 0.30.4 (2020-05-04)
 - Changed the detailed transmission tree (``sim.people.transtree.detailed``) to include much more information.
 - Added animation method to transmission tree: ``sim.people.transtree.animate()``.
 - Added support to generate populations on the fly in SynthPops.
+- Adjusted the default arguments for ``test_prob`` and fixed a bug with ``test_num`` not accepting date input.
 
 
 Version 0.30.3 (2020-05-03)
