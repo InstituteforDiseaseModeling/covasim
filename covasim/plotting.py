@@ -359,8 +359,6 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 def get_individual_states(sim):
     ''' Helper function to convert people into integers '''
 
-    people = sim.people
-
     states = [
         {'name': 'Healthy',
          'quantity': None,
@@ -389,15 +387,27 @@ def get_individual_states(sim):
          },
     ]
 
-    z = np.zeros((len(people), sim.npts))
+    z = np.zeros((sim.n, sim.npts))
     for state in states:
         date = state['quantity']
         if date is not None:
             inds = sim.people.defined(date)
             for ind in inds:
-                z[ind, int(people[date][ind]):] = state['value']
+                z[ind, int(sim.people[date][ind]):] = state['value']
 
-    return z, states
+    indlist = [[] for i in sim.tvec]
+    zlist = [[] for i in sim.tvec]
+    for state in states:
+        quantity = state['quantity']
+        if quantity is not None:
+            inds = sim.people.defined(quantity)
+            dates = sim.people[quantity][inds]
+            for i,d in zip(inds, dates):
+                if d<sim.npts:
+                    indlist[int(d)].append(i)
+                    zlist[int(d)].append(state['value'])
+
+    return z, states, indlist, zlist
 
 
 # Default settings for the Plotly legend
@@ -437,7 +447,7 @@ def plotly_sim(sim):
 
 def plotly_people(sim, do_show=False):
     ''' Plot a "cascade" of people moving through different states '''
-    z, states = get_individual_states(sim)
+    z, states, _, _ = get_individual_states(sim)
 
     fig = go.Figure()
 
@@ -474,18 +484,18 @@ def plotly_people(sim, do_show=False):
 def plotly_animate(sim, do_show=False):
     ''' Plot an animation of each person in the sim '''
 
-    z, states = get_individual_states(sim)
+    _, states, indlist, zlist = get_individual_states(sim)
 
     min_color = min(states, key=lambda x: x['value'])['value']
     max_color = max(states, key=lambda x: x['value'])['value']
     colorscale = [[x['value'] / max_color, x['color']] for x in states]
 
     aspect = 5
-    y_size = int(np.ceil((z.shape[0] / aspect) ** 0.5))
+    y_size = int(np.ceil((sim.n / aspect) ** 0.5))
     x_size = int(np.ceil(aspect * y_size))
 
-    z = np.pad(z, ((0, x_size * y_size - z.shape[0]), (0, 0)), mode='constant', constant_values=0)
-    z = np.array(z, dtype=int)
+    # z = np.pad(z, ((0, x_size * y_size - z.shape[0]), (0, 0)), mode='constant', constant_values=0)
+    # z = np.array(z, dtype=int)
 
     x_vec,y_vec = np.meshgrid(np.arange(x_size), np.arange(y_size))
     x_vec = x_vec.flatten()
@@ -551,7 +561,7 @@ def plotly_animate(sim, do_show=False):
     fig_dict["data"] = [go.Scatter( x=x_vec,
                                    y=y_vec,
                                    mode='markers',
-                                   marker=dict(size=size, color=colors[z[:,0]]),
+                                   marker=dict(size=size, color=colors[0]),
                                    #z=z[:, 0],
                                    # zmin=min_color,
                                    # zmax=max_color,
@@ -568,17 +578,19 @@ def plotly_animate(sim, do_show=False):
 
     # make frames
     for i, day in enumerate(days):
-        frame = {"data": [go.Scatter(x=x_vec,
-                                     y=y_vec,
+        day_inds = indlist[day]
+        day_z = zlist[day]
+        frame = {"data": [go.Scatter(x=x_vec[day_inds],
+                                     y=y_vec[day_inds],
                                      mode='markers',
-                                     marker=dict(size=size, color=colors[z[:,i]]) # state['color']
+                                     marker=dict(size=size, color=colors[day_z]) # state['color']
                                      # z=z[:, i],
                                      )],
                  "name": i}
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
             [i],
-            {"frame": {"duration": 5, "redraw": True},
+            {"frame": {"duration": 5, "redraw": False},
              "mode": "immediate", }
         ],
             "label": i,
