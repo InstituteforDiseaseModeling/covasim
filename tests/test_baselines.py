@@ -3,6 +3,7 @@ Compare current results to baseline
 """
 
 import sciris as sc
+import pandas as pd
 import covasim as cv
 
 do_save = False
@@ -61,11 +62,8 @@ def test_baseline():
         errormsg = '\nThe following values have changed between old and new!\n'
         errormsg += 'Please rerun "tests/update_baseline" if this is intentional.\n'
         errormsg += 'Mismatches:\n'
-        space = ' '*17
-        for mkey,mval in mismatches.items():
-            errormsg += f'  {mkey}:\n'
-            errormsg += f'{space}old = {mval["old"]}\n'
-            errormsg += f'{space}new = {mval["new"]}\n'
+        df = pd.DataFrame.from_dict(mismatches).transpose()
+        errormsg += str(df)
 
     # Raise an error if mismatches were found
     if errormsg:
