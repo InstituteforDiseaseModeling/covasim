@@ -110,6 +110,8 @@ def test_baseline():
 
         df['diff']   = diff
         df['ratio']  = ratio
+        for col in ['old', 'new', 'diff', 'ratio']:
+            df[col] = df[col].round(decimals=3)
         df['change'] = change
         errormsg += str(df)
 
@@ -119,7 +121,7 @@ def test_baseline():
     else:
         print('Baseline matches')
 
-    return new
+    return df
 
 
 def test_benchmark(do_save=do_save):
@@ -172,7 +174,7 @@ def test_benchmark(do_save=do_save):
 
 if __name__ == '__main__':
 
-    new  = test_baseline()
+    df   = test_baseline()
     json = test_benchmark(do_save=do_save)
 
     print('Done.')
