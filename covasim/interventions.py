@@ -456,6 +456,11 @@ class test_num(Intervention):
     def initialize(self, sim):
         ''' Fix the dates and number of tests '''
 
+        # Handle days
+        self.start_day   = sim.day(self.start_day)
+        self.end_day     = sim.day(self.end_day)
+        self.days        = [self.start_day, self.end_day]
+
         # Process daily tests -- has to be here rather than init so have access to the sim object
         if sc.isnumber(self.daily_tests): # If a number, convert to an array
             self.daily_tests = np.array([int(self.daily_tests)]*sim.npts)
@@ -465,10 +470,6 @@ class test_num(Intervention):
             dateindex = pd.date_range(start_date, end_date)
             self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
 
-        # Handle days
-        self.start_day   = sim.day(self.start_day)
-        self.end_day     = sim.day(self.end_day)
-        self.days        = [self.start_day, self.end_day]
         self.initialized = True
 
         return
@@ -525,13 +526,13 @@ class test_prob(Intervention):
 
     **Example**::
 
-        interv = cv.test_prob(symptomatic_prob=0.1, asymptomatic_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
+        interv = cv.test_prob(symp_prob=0.1, asymp_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
 
     Returns:
         Intervention
     '''
-    def __init__(self, symp_prob=0, asymp_prob=0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None, do_plot=None):
+    def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
@@ -596,8 +597,12 @@ class contact_tracing(Intervention):
         contact_red (float): not implemented currently, but could potentially scale contact in this intervention
         do_plot (bool): whether or not to plot
     '''
-    def __init__(self, trace_probs, trace_time, start_day=0, end_day=None, contact_red=None, do_plot=None):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, contact_red=None, do_plot=None):
         super().__init__(do_plot=do_plot)
+        if trace_probs is None:
+            trace_probs = 1.0
+        if trace_time is None:
+            trace_time = 0.0
         self.trace_probs = trace_probs
         self.trace_time  = trace_time
         self.contact_red = contact_red
