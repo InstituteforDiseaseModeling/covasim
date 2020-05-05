@@ -159,7 +159,7 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
-        self.rel_trans[inds]  = cvu.sample(**self.pars['beta_dist'], size=len(inds))
+        self.rel_trans[inds]  = self.rel_trans[inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds))
         return len(inds)
 
 
