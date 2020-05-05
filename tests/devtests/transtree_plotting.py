@@ -3,10 +3,7 @@ Demonstrate different transtree plotting options
 '''
 
 import covasim as cv
-import pylab as pl
 import sciris as sc
-import numpy as np
-
 
 tstart = sc.tic()
 
@@ -29,7 +26,7 @@ ct = cv.contact_tracing(trace_probs={k:1.0 for k in lkeys[pop_type]},
                           start_day=iday)
 
 pars = dict(
-    pop_size = 100,
+    pop_size = 500,
     pop_type = pop_type,
     n_days = 60,
     contacts = 3,
@@ -60,7 +57,7 @@ if simple:
         sim.people.transtree.plot()
 
 if animated:
-    for sim in sims.values():
-        sim.people.transtree.animate(animate_days=animate_days)
+    # for sim in sims.values()[0]:
+    sim.people.transtree.animate(animate_days=animate_days)
 
 sc.toc(tstart)

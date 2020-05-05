@@ -534,6 +534,9 @@ class BasePeople(sc.prettyobj):
                 pop_size = 0
         pop_size = int(pop_size)
         self.pop_size = pop_size
+        if pars is not None:
+            n_days = pars['n_days']
+        self.n_days = n_days
 
         # Other initialization
         self.t = 0 # Keep current simulation time
@@ -541,7 +544,7 @@ class BasePeople(sc.prettyobj):
         self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
         self.contacts = None
         self.init_contacts() # Initialize the contacts
-        self.transtree = TransTree(pop_size=pop_size) # Initialize the transmission tree
+        self.transtree = TransTree(pop_size=pop_size, n_days=n_days) # Initialize the transmission tree
 
         return
 
@@ -1001,10 +1004,12 @@ class TransTree(sc.prettyobj):
         pop_size (int): the number of people in the population
     '''
 
-    def __init__(self, pop_size):
+    def __init__(self, pop_size, n_days):
         self.linelist = [None]*pop_size
         self.targets  = [[] for p in range(len(self))] # Make a list of empty lists
         self.detailed = None
+        self.pop_size = pop_size
+        self.n_days   = n_days
         return
 
 
@@ -1079,66 +1084,29 @@ class TransTree(sc.prettyobj):
         return
 
 
-    def plot(self):
+    def plot(self, *args, **kwargs):
         ''' Plot the transmission tree '''
-
         return cvplt.plot_transtree(self, *args, **kwargs)
 
 
-        if self.detailed is None:
-            errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
-            raise ValueError(errormsg)
-
-        ttlist = []
-        for entry in self.detailed:
-            if entry and entry.source:
-                tdict = {
-                    'date': entry.date,
-                    'layer': entry.layer,
-                    's_asymp': entry.s.is_asymp,
-                    's_presymp': entry.s.is_presymp,
-                    's_sev': entry.s.is_severe,
-                    's_crit': entry.s.is_critical,
-                    's_diag': entry.s.is_diagnosed,
-                    's_quar': entry.s.is_quarantined,
-                    't_quar': entry.t.is_quarantined,
-                         }
-                ttlist.append(tdict)
-
-        df = pd.DataFrame(ttlist).rename(columns={'date': 'Day'})
-        df = df.loc[df['layer'] != 'seed_infection']
-
-        df['Stage'] = 'Symptomatic'
-        df.loc[df['s_asymp'], 'Stage'] = 'Asymptomatic'
-        df.loc[df['s_presymp'], 'Stage'] = 'Presymptomatic'
-
-        df['Severity'] = 'Mild'
-        df.loc[df['s_sev'], 'Severity'] = 'Severe'
-        df.loc[df['s_crit'], 'Severity'] = 'Critical'
-
-        fig = pl.figure(figsize=(16,10))
-        i=1; r=2; c=3
-
-        def plot(key, title, i):
-            dat = df.groupby(['Day', key]).size().unstack(key)
-            ax = pl.subplot(r,c,i);
-            dat.plot(ax=ax, legend=None)
-            pl.legend(title=None)
-            ax.set_title(title)
-
-        to_plot = {
-            'layer':'Layer',
-            'Stage':'Source stage',
-            's_diag':'Source diagnosed',
-            's_quar':'Source quarantined',
-            't_quar':'Target quarantined',
-            'Severity':'Symptomatic source severity'
-        }
-        for i, (key, title) in enumerate(to_plot.items()):
-            plot(key, title, i+1)
-
-        return fig
-
-
     def animate(self, *args, **kwargs):
+        '''
+        Animate the transmission tree.
+
+        Args:
+            animate    (bool):  whether to animate the plot (otherwise, show when finished)
+            verbose    (bool):  print out progress of each frame
+            markersize (int):   size of the markers
+            sus_color  (list):  color for susceptibles
+            fig_args   (dict):  arguments passed to pl.figure()
+            axis_args  (dict):  arguments passed to pl.subplots_adjust()
+            plot_args  (dict):  arguments passed to pl.plot()
+            delay      (float): delay between frames in seconds
+            font_size  (int):   size of the font
+            colors     (list):  color of each person
+            cmap       (str):   colormap for each person (if colors is not supplied)
+
+        Returns:
+            fig: the figure object
+        '''
         return cvplt.animate_transtree(self, *args, **kwargs)

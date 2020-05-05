@@ -7,6 +7,7 @@ webapp.
 '''
 
 import numpy as np
+import pandas as pd
 import pylab as pl
 import sciris as sc
 import datetime as dt
@@ -355,15 +356,15 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
 
 #%% Transtree functions
-def plot_transtree(self, *args, **kwargs):
+def plot_transtree(tt, *args, **kwargs):
     ''' Plot the transmission tree '''
 
-    if self.detailed is None:
+    if tt.detailed is None:
         errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
         raise ValueError(errormsg)
 
     ttlist = []
-    for entry in self.detailed:
+    for entry in tt.detailed:
         if entry and entry.source:
             tdict = {
                 'date': entry.date,
@@ -412,123 +413,113 @@ def plot_transtree(self, *args, **kwargs):
 
     return fig
 
-def animate_transtree(transtree):
-    colors = sc.vectocolor(sim.n, cmap='parula')
 
-    msize = 10
-    suscol = [0.5,0.5,0.5]
-    plargs = dict(lw=2, alpha=0.5)
-    idelay = 0.05
-    daydelay = 0.2
-    pl.rcParams['font.size'] = 18
+def animate_transtree(tt, **kwargs):
+    ''' Plot an animation of the transmission tree '''
 
-    F = sc.objdict()
-    T = sc.objdict()
-    D = sc.objdict()
-    Q = sc.objdict()
+    # Settings
+    animate    = kwargs.get('animate', True)
+    verbose    = kwargs.get('verbose', False)
+    markersize = kwargs.get('markersize', 10)
+    sus_color  = kwargs.get('sus_color', [0.5, 0.5, 0.5])
+    fig_args   = kwargs.get('fig_args', dict(figsize=(24,16)))
+    axis_args  = kwargs.get('axis_args', dict(left=0.10, bottom=0.05, right=0.85, top=0.97, wspace=0.25, hspace=0.25))
+    plot_args  = kwargs.get('plot_args', dict(lw=2, alpha=0.5))
+    delay      = kwargs.get('delay', 0.2)
+    font_size  = kwargs.get('font_size', 18)
+    colors     = kwargs.get('colors', None)
+    cmap       = kwargs.get('cmap', 'parula')
+    pl.rcParams['font.size'] = font_size
+    if colors is None:
+        colors = sc.vectocolor(tt.pop_size, cmap=cmap)
 
-    for key in sims.keys():
+    # Initialization
+    n = tt.n_days + 1
+    frames = [list() for i in range(n)]
+    tests  = [list() for i in range(n)]
+    diags  = [list() for i in range(n)]
+    quars  = [list() for i in range(n)]
 
-        tt = tts[key]
-
-        frames = [list() for i in range(sim.npts)]
-        tests  = [list() for i in range(sim.npts)]
-        diags  = [list() for i in range(sim.npts)]
-        quars  = [list() for i in range(sim.npts)]
-
-        for i,entry in enumerate(tt):
-            frame = sc.objdict()
-            dq = sc.objdict()
-            if entry:
-                source = entry['source']
-                target = entry['target']
-                target_date = entry['date']
-                if source:
-                    source_date = tt[source]['date']
-                else:
-                    source = 0
-                    source_date = 0
-
-                frame.x = [source_date, target_date]
-                frame.y = [source, target]
-                frame.c = colors[source] # colors[target_date]
-                frame.e = True
-                frames[target_date].append(frame)
-
-                dq.t = target
-                dq.d = target_date
-                dq.c = colors[target]
-                date_t = entry.t.date_tested
-                date_d = entry.t.date_diagnosed
-                date_q = entry.t.date_known_contact
-                if ~np.isnan(date_t) and date_t<sim.npts: tests[int(date_t)].append(dq)
-                if ~np.isnan(date_d) and date_d<sim.npts: diags[int(date_d)].append(dq)
-                if ~np.isnan(date_q) and date_q<sim.npts: quars[int(date_q)].append(dq)
+    # Construct each frame of the animation
+    for i,entry in enumerate(tt.detailed):
+        frame = sc.objdict()
+        dq = sc.objdict()
+        if entry:
+            source = entry['source']
+            target = entry['target']
+            target_date = entry['date']
+            if source:
+                source_date = tt.detailed[source]['date']
             else:
-                frame.x = [0]
-                frame.y = [i]
-                frame.c = suscol
-                frame.e = False
-                frames[0].append(frame)
+                source = 0
+                source_date = 0
 
-        F[key] = frames
-        T[key] = tests
-        D[key] = diags
-        Q[key] = quars
+            frame.x = [source_date, target_date]
+            frame.y = [source, target]
+            frame.c = colors[source] # colors[target_date]
+            frame.e = True
+            frames[target_date].append(frame)
 
+            dq.t = target
+            dq.d = target_date
+            dq.c = colors[target]
+            date_t = entry.t.date_tested
+            date_d = entry.t.date_diagnosed
+            date_q = entry.t.date_known_contact
+            if ~np.isnan(date_t) and date_t<n: tests[int(date_t)].append(dq)
+            if ~np.isnan(date_d) and date_d<n: diags[int(date_d)].append(dq)
+            if ~np.isnan(date_q) and date_q<n: quars[int(date_q)].append(dq)
+        else:
+            frame.x = [0]
+            frame.y = [i]
+            frame.c = sus_color
+            frame.e = False
+            frames[0].append(frame)
 
     # Actually plot
-    fig, axes = pl.subplots(figsize=(24,18), nrows=3, ncols=1)
-    pl.subplots_adjust(**{'left': 0.10, 'bottom': 0.05, 'right': 0.85, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25})
+    fig = pl.figure(**fig_args)
+    pl.subplots_adjust(**axis_args)
+    ax = fig.add_subplot(1,1,1)
 
     # Create the legend
-    ax = pl.axes([0.85, 0.05, 0.14, 0.9])
-    ax.axis('off')
+    ax2 = pl.axes([0.85, 0.05, 0.14, 0.9])
+    ax2.axis('off')
     lcol = colors[0]
-    pl.plot(np.nan, np.nan, '-', c=lcol, **plargs, label='Transmission')
-    pl.plot(np.nan, np.nan, 'o', c=lcol, markersize=msize, **plargs, label='Source')
-    pl.plot(np.nan, np.nan, '*', c=lcol, markersize=msize, **plargs, label='Target')
-    pl.plot(np.nan, np.nan, 'o', c=lcol, markersize=msize*2, fillstyle='none', **plargs, label='Tested')
-    pl.plot(np.nan, np.nan, 's', c=lcol, markersize=msize*1.2, **plargs, label='Diagnosed')
-    pl.plot(np.nan, np.nan, 'x', c=lcol, markersize=msize*2.0, label='Known contact')
+    pl.plot(np.nan, np.nan, '-', c=lcol, **plot_args, label='Transmission')
+    pl.plot(np.nan, np.nan, 'o', c=lcol, markersize=markersize, **plot_args, label='Source')
+    pl.plot(np.nan, np.nan, '*', c=lcol, markersize=markersize, **plot_args, label='Target')
+    pl.plot(np.nan, np.nan, 'o', c=lcol, markersize=markersize*2, fillstyle='none', **plot_args, label='Tested')
+    pl.plot(np.nan, np.nan, 's', c=lcol, markersize=markersize*1.2, **plot_args, label='Diagnosed')
+    pl.plot(np.nan, np.nan, 'x', c=lcol, markersize=markersize*2.0, label='Known contact')
     pl.legend()
 
-
-    for day in range(sim.npts):
-        for i,key in enumerate(sims.keys()):
-            pl.sca(axes[i])
-            sim = sims[key]
-            pl.title(f'Simulation: {labels[i]}; day: {day}; infections: {sim.results["cum_infections"][day]}')
-            pl.xlim([0, sim.npts])
-            pl.ylim([0, sim.n])
-            pl.xlabel('Day')
-            pl.ylabel('Person')
-            flist = F[key][day]
-            tlist = T[key][day]
-            dlist = D[key][day]
-            qlist = Q[key][day]
-            if verbose: print(i, flist)
-            for f in flist:
-                if verbose: print(f)
-                pl.plot(f.x[0], f.y[0], 'o', c=f.c, markersize=msize, **plargs)
-                pl.plot(f.x, f.y, '-', c=f.c, **plargs)
-            if animate_all:
-                pl.pause(idelay)
-            for f in flist:
-                if f.e:
-                    pl.plot(f.x[1], f.y[1], '*', c=f.c, markersize=msize, **plargs)
-            if tlist:
-                for dq in tlist:
-                    pl.plot(dq.d, dq.t, 'o', c=dq.c, markersize=msize*2, fillstyle='none', **plargs)
-            if dlist:
-                for dq in dlist:
-                    pl.plot(dq.d, dq.t, 's', c=dq.c, markersize=msize*1.2, **plargs)
-            if qlist:
-                for dq in qlist:
-                    pl.plot(dq.d, dq.t, 'x', c=dq.c, markersize=msize*2.0)
-            pl.plot([0, day], [0.5, 0.5], c='k', lw=5)
+    pl.sca(ax)
+    for day in range(n):
+        pl.title(f'Day: {day}')
+        pl.xlim([0, n])
+        pl.ylim([0, tt.pop_size])
+        pl.xlabel('Day')
+        pl.ylabel('Person')
+        flist = frames[day]
+        tlist = tests[day]
+        dlist = diags[day]
+        qlist = quars[day]
+        if verbose: print(i, flist)
+        for f in flist:
+            if verbose: print(f)
+            pl.plot(f.x[0], f.y[0], 'o', c=f.c, markersize=markersize, **plot_args)
+            pl.plot(f.x, f.y, '-', c=f.c, **plot_args)
+        for f in flist:
+            if f.e:
+                pl.plot(f.x[1], f.y[1], '*', c=f.c, markersize=markersize, **plot_args)
+        for dq in tlist: pl.plot(dq.d, dq.t, 'o', c=dq.c, markersize=markersize*2, fillstyle='none', **plot_args)
+        for dq in dlist: pl.plot(dq.d, dq.t, 's', c=dq.c, markersize=markersize*1.2, **plot_args)
+        for dq in qlist: pl.plot(dq.d, dq.t, 'x', c=dq.c, markersize=markersize*2.0)
+        pl.plot([0, day], [0.5, 0.5], c='k', lw=5)
         if animate:
-            pl.pause(daydelay)
+            pl.pause(delay)
+
+    return fig
 
 
 
