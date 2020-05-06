@@ -45,5 +45,3 @@ jobs:
       - name: Run cruise ship tests
         working-directory: ./covasim/cruise_ship
         run: pytest test*.py
-      - name: Run examples
-        run: pytest --capture=tee-sys ./tests/test_examples.py
