@@ -452,6 +452,8 @@ class Sim(cvb.BaseSim):
             self.init_interventions() # And interventions
         if verbose is None:
             verbose = self['verbose']
+        if until:
+            until = self.day(until)
 
         # Main simulation loop
         for t in self.tvec:
