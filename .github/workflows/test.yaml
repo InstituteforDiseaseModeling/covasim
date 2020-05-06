@@ -9,7 +9,7 @@ jobs:
       max-parallel: 8
       matrix:
         python-version: ['3.7']
-    name: Install and test
+    name: Run tests
     steps:
       - name: Set repo owner env variable
         shell: python
@@ -36,7 +36,7 @@ jobs:
         run: |
           python setup.py develop --install-dir ~/.cache/site-packages
           pip install pytest
-      - name: Run integration tests and examples
+      - name: Run integration tests
         working-directory: ./tests
         run: pytest test*.py --durations=0 # Run actual tests
       - name: Run unit tests
@@ -45,3 +45,5 @@ jobs:
       - name: Run cruise ship tests
         working-directory: ./covasim/cruise_ship
         run: pytest test*.py
+      - name: Run examples
+        run: pytest --capture=tee-sys ./tests/test_examples.py
