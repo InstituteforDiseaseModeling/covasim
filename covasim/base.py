@@ -861,7 +861,7 @@ class BasePeople(sc.prettyobj):
 
     @staticmethod
     def remove_duplicates(df):
-        ''' Sort the dataframe and remove duplicates '''
+        ''' Sort the dataframe and remove duplicates -- note, not extensively tested '''
         p1 = df[['p1', 'p2']].values.min(1) # Reassign p1 to be the lower-valued of the two contacts
         p2 = df[['p1', 'p2']].values.max(1) # Reassign p2 to be the higher-valued of the two contacts
         df['p1'] = p1

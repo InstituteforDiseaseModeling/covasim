@@ -155,7 +155,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     return popdict, layer_keys
 
 
-def make_random_contacts(pop_size, contacts, overshoot=1.2):
+def make_random_contacts(pop_size, contacts, overshoot=1.2, directed=False):
     ''' Make random static contacts '''
 
     # Preprocessing
@@ -165,12 +165,16 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     contacts_list = []
 
     # Precalculate contacts
-    n_across_layers = np.prod(list(contacts.values()))
+    n_across_layers = np.sum(list(contacts.values()))
     n_all_contacts  = int(pop_size*n_across_layers*overshoot)
     all_contacts    = cvu.choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
     p_counts = {}
     for lkey in layer_keys:
-        p_counts[lkey] = cvu.n_poisson(contacts[lkey], pop_size)  # Draw the number of Poisson contacts for this person
+        if directed:
+            p_counts[lkey] = cvu.n_poisson(contacts[lkey], pop_size)
+        else:
+            p_counts[lkey] = np.array((cvu.n_poisson(contacts[lkey], pop_size)/2.0).round(), dtype=cvd.default_int)  # Draw the number of Poisson contacts for this person
+
 
     # Make contacts
     count = 0
@@ -185,7 +189,7 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     return contacts_list, layer_keys
 
 
-def make_microstructured_contacts(pop_size, contacts):
+def make_microstructured_contacts(pop_size, contacts, directed=False):
     ''' Create microstructured contacts -- i.e. households, schools, etc. '''
 
     # Preprocessing -- same as above
@@ -217,7 +221,8 @@ def make_microstructured_contacts(pop_size, contacts):
                         pass
                     else:
                         contacts_dict[i].add(j)
-                        contacts_dict[j].add(i)
+                        if directed:
+                            contacts_dict[j].add(i)
 
             n_remaining -= this_cluster
 
@@ -271,7 +276,7 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
 
 
 
-def make_synthpop(sim):
+def make_synthpop(sim, directed=False):
     ''' Make a population using synthpops, including contacts '''
     import synthpops as sp # Optional import
     pop_size = sim['pop_size']
@@ -282,19 +287,22 @@ def make_synthpop(sim):
         ages.append(person['age'])
         sexes.append(person['sex'])
 
-    # Replace contact UIDs with ints...
+    # Replace contact UIDs with ints
     uid_mapping = {uid:u for u,uid in enumerate(uids)}
     key_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
     for uid in uids:
+        iid = uid_mapping[uid] # Integer UID
         person = population.pop(uid)
         uid_contacts = sc.dcp(person['contacts'])
         int_contacts = {}
-        for key in uid_contacts.keys():
-            new_key = key_mapping[key]
-            int_contacts[new_key] = []
-            for uid in uid_contacts[key]:
-                int_contacts[new_key].append(uid_mapping[uid])
-            int_contacts[new_key] = np.array(int_contacts[new_key], dtype=cvd.default_int)
+        for spkey in uid_contacts.keys():
+            lkey = key_mapping[spkey] # Map the SynthPops key into a Covasim layer key
+            int_contacts[lkey] = []
+            for cid in uid_contacts[spkey]: # Contact ID
+                icid = uid_mapping[cid] # Integer contact ID
+                if icid>iid or directed: # Don't add duplicate contacts
+                    int_contacts[lkey].append(icid)
+            int_contacts[lkey] = np.array(int_contacts[lkey], dtype=cvd.default_int)
         contacts.append(int_contacts)
 
     # Add community contacts

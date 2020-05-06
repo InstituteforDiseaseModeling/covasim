@@ -386,8 +386,8 @@ class Sim(cvb.BaseSim):
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         for lkey,layer in contacts.items():
-            sources = layer['p1']
-            targets = layer['p2']
+            p1 = layer['p1']
+            p2 = layer['p2']
             betas   = layer['beta']
 
             # Compute relative transmission and susceptibility
@@ -403,16 +403,17 @@ class Sim(cvb.BaseSim):
             rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
             # Calculate actual transmission
-            target_inds, edge_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
-            flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
+            for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
+                target_inds, edge_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
+                flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
 
-            # Store the transmission tree
-            for ind in edge_inds:
-                source = sources[ind]
-                target = targets[ind]
-                transdict = dict(source=source, target=target, date=self.t, layer=lkey)
-                self.people.transtree.linelist[target] = transdict
-                self.people.transtree.targets[source].append(transdict)
+                # Store the transmission tree
+                for ind in edge_inds:
+                    source = sources[ind]
+                    target = targets[ind]
+                    transdict = dict(source=source, target=target, date=self.t, layer=lkey)
+                    self.people.transtree.linelist[target] = transdict
+                    self.people.transtree.targets[source].append(transdict)
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():

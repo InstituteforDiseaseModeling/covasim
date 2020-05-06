@@ -3,6 +3,12 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+Version 0.32.0 (2020-05-05)
+---------------------------
+- Changed the edges of the contact network from being directed to undirected, halving the amount of memory required and making contact tracing and edge clipping more realistic.
+- Added comorbidities to the prognoses parameters.
+- GitHub info: PR `482 <https://github.com/amath-idm/covasim/pull/482>`__, previous head ``029585f``
+
 
 Version 0.31.0 (2020-05-05)
 ---------------------------
