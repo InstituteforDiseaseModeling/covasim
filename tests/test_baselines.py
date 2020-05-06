@@ -174,7 +174,7 @@ def test_benchmark(do_save=do_save):
 
 if __name__ == '__main__':
 
-    df   = test_baseline()
+    new  = test_baseline()
     json = test_benchmark(do_save=do_save)
 
     print('Done.')
