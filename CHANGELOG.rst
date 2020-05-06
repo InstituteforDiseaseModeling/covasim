@@ -3,6 +3,12 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+
+Version 0.32.1 (2020-05-06)
+---------------------------
+- Added `ipywidgets` dependency since otherwise the webapp breaks due to a `bug <https://github.com/plotly/plotly.py/issues/2443>`__ with the latest Plotly version (4.7). 
+
+
 Version 0.32.0 (2020-05-05)
 ---------------------------
 - Changed the edges of the contact network from being directed to undirected, halving the amount of memory required and making contact tracing and edge clipping more realistic.
