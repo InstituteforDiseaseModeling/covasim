@@ -8,3 +8,4 @@ scirisweb>=0.17.0
 gunicorn
 plotly_express
 fire
+ipywidgets
