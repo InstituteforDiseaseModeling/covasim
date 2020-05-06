@@ -10,6 +10,7 @@ import covasim as cv
 do_save = False
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
+parameters_filename = sc.thisdir(__file__, 'regression', f'parameters_v{cv.__version__}.json')
 baseline_key = 'summary'
 
 
@@ -21,6 +22,7 @@ def save_baseline(do_save=do_save):
     sim.run()
     if do_save:
         sim.to_json(filename=baseline_filename, keys=baseline_key)
+        sim.export_pars(filename=parameters_filename)
 
     print('Done.')
 

@@ -28,7 +28,7 @@
     "n_critical": 19.0,
     "n_diagnosed": 0.0,
     "n_quarantined": 0.0,
-    "bed_capacity": 0.0,
+    "bed_capacity": null,
     "r_eff": 1.0759853505262773,
     "doubling_time": 9.522931495254712
   }
