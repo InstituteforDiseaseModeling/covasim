@@ -59,7 +59,7 @@ class People(cvb.BasePeople):
 
 
     def set_prognoses(self, pars=None):
-        ''' Set the prognoses for each person based on age '''
+        ''' Set the prognoses for each person based on age during initialization '''
 
         if pars is None:
             pars = self.pars
@@ -74,14 +74,14 @@ class People(cvb.BasePeople):
         self.severe_prob[:] = prognoses['severe_probs'][inds]
         self.crit_prob[:]   = prognoses['crit_probs'][inds]
         self.death_prob[:]  = prognoses['death_probs'][inds]
-        self.rel_sus[:]     = 1.0 # By default: is susceptible
-        self.rel_trans[:]   = 0.0 # By default: cannot transmit
+        self.rel_sus[:]     = prognoses['sus_ORs'][inds] # Default susceptibilities
+        self.rel_trans[:]   = prognoses['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, drawn from a distribution
 
         return
 
 
     def update_states_pre(self, t):
-        ''' Perform all state updates '''
+        ''' Perform all state updates at the current timestep '''
 
         # Initialize
         self.t = t
@@ -159,7 +159,6 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
-        self.rel_trans[inds]  = cvu.sample(**self.pars['beta_dist'], size=len(inds))
         return len(inds)
 
 
@@ -193,7 +192,6 @@ class People(cvb.BasePeople):
         self.severe[inds]      = False
         self.critical[inds]    = False
         self.recovered[inds]   = True
-        self.rel_trans[inds]   = 0.0
         return len(inds)
 
 
@@ -207,7 +205,6 @@ class People(cvb.BasePeople):
         self.critical[inds]    = False
         self.recovered[inds]   = False
         self.dead[inds]        = True
-        self.rel_trans[inds]   = 0.0
         return len(inds)
 
 
@@ -258,9 +255,6 @@ class People(cvb.BasePeople):
         for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
-        self.rel_sus[inds]   = 1.0 # By default: is susceptible
-        self.rel_trans[inds] = 0.0 # By default: cannot transmit
-
         return
 
 
@@ -289,7 +283,6 @@ class People(cvb.BasePeople):
         # Set states
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
-        self.rel_sus[inds]       = 0.0 # Not susceptible after becoming infected
         self.date_exposed[inds]  = self.t
 
         # Calculate how long before this person can infect other people

@@ -4,13 +4,70 @@ Miscellaneous functions that do not belong anywhere else
 
 import datetime as dt
 import numpy as np
-import pylab  as pl # Used by fixaxis()
-import sciris as sc # Used by fixaxis()
-import scipy.stats as sps # Used by poisson_test()
+import pandas as pd
+import pylab  as pl
+import sciris as sc
+import scipy.stats as sps
 from . import version as cvver
 
 
-__all__ = ['date', 'daydiff', 'load', 'save', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
+__all__ = ['load_data', 'date', 'daydiff', 'load', 'save', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
+
+
+def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
+    '''
+    Load data for comparing to the model output.
+
+    Args:
+        filename (str): the name of the file to load (either Excel or CSV)
+        columns (list): list of column names (otherwise, load all)
+        calculate (bool): whether or not to calculate cumulative values from daily counts
+        kwargs (dict): passed to pd.read_excel()
+
+    Returns:
+        data (dataframe): pandas dataframe of the loaded data
+    '''
+
+    # Load data
+    if filename.lower().endswith('csv'):
+        raw_data = pd.read_csv(filename, **kwargs)
+    elif filename.lower().endswith('xlsx'):
+        raw_data = pd.read_excel(filename, **kwargs)
+    else:
+        errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {filename}'
+        raise NotImplementedError(errormsg)
+
+    # Confirm data integrity and simplify
+    if columns is not None:
+        for col in columns:
+            if col not in raw_data.columns:
+                errormsg = f'Column "{col}" is missing from the loaded data'
+                raise ValueError(errormsg)
+        data = raw_data[columns]
+    else:
+        data = raw_data
+
+    # Calculate any cumulative columns that are missing
+    if calculate:
+        columns = data.columns
+        for col in columns:
+            if col.startswith('new'):
+                cum_col = col.replace('new_', 'cum_')
+                if cum_col not in columns:
+                    data[cum_col] = np.cumsum(data[col])
+                    if verbose:
+                        print(f'  Automatically adding cumulative column {cum_col} from {col}')
+
+    # Ensure required columns are present
+    if 'date' not in data.columns:
+        errormsg = f'Required column "date" not found; columns are {data.columns}'
+        raise ValueError(errormsg)
+    else:
+        data['date'] = pd.to_datetime(data['date']).dt.date
+
+    data.set_index('date', inplace=True)
+
+    return data
 
 
 def date(obj, *args, **kwargs):

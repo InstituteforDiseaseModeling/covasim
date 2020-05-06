@@ -3,11 +3,14 @@ Compare current results to baseline
 """
 
 import sciris as sc
+import numpy as np
+import pandas as pd
 import covasim as cv
 
 do_save = False
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
+parameters_filename = sc.thisdir(__file__, 'regression', f'parameters_v{cv.__version__}.json')
 baseline_key = 'summary'
 
 
@@ -19,6 +22,7 @@ def save_baseline(do_save=do_save):
     sim.run()
     if do_save:
         sim.to_json(filename=baseline_filename, keys=baseline_key)
+        sim.export_pars(filename=parameters_filename)
 
     print('Done.')
 
@@ -44,35 +48,78 @@ def test_baseline():
     if old_keys != new_keys:
         errormsg = f"Keys don't match!\n"
         missing = old_keys - new_keys
-        extra = new_keys - old_keys
+        extra   = new_keys - old_keys
         if missing:
             errormsg += f'  Missing old keys: {missing}\n'
         if extra:
             errormsg += f'  Extra new keys: {extra}\n'
 
     mismatches = {}
-    for key in old_keys.union(new_keys):
-        old_val = old[key] if key in old else 'not present'
-        new_val = new[key] if key in new else 'not present'
-        if old_val != new_val:
-            mismatches[key] = {'old': old_val, 'new': new_val}
+    union = old_keys.union(new_keys)
+    for key in new.keys(): # To ensure order
+        if key in union:
+            old_val = old[key] if key in old else 'not present'
+            new_val = new[key] if key in new else 'not present'
+            if old_val != new_val:
+                mismatches[key] = {'old': old_val, 'new': new_val}
 
     if len(mismatches):
-        errormsg = '\nThe following values have changed between old and new!\n'
-        errormsg += 'Please rerun "tests/update_baseline" if this is intentional.\n'
+        errormsg = '\nThe following values have changed from the previous baseline!\n'
+        errormsg += 'If this is intentional, please rerun "tests/update_baseline" and commit.\n'
         errormsg += 'Mismatches:\n'
-        space = ' '*17
-        for mkey,mval in mismatches.items():
-            errormsg += f'  {mkey}:\n'
-            errormsg += f'{space}old = {mval["old"]}\n'
-            errormsg += f'{space}new = {mval["new"]}\n'
+        df = pd.DataFrame.from_dict(mismatches).transpose()
+        diff   = []
+        ratio  = []
+        change = []
+        small_change = 1e-3 # Define a small change, e.g. a rounding error
+        for mdict in mismatches.values():
+            old = mdict['old']
+            new = mdict['new']
+            if sc.isnumber(new) and sc.isnumber(old) and old>0:
+                this_diff  = new - old
+                this_ratio = new/old
+                abs_ratio  = max(this_ratio, 1.0/this_ratio)
+
+                # Set the character to use
+                if abs_ratio<small_change:
+                    change_char = '≈'
+                elif new > old:
+                    change_char = '↑'
+                elif new < old:
+                    change_char = '↓'
+                else:
+                    errormsg = f'Could not determine relationship between old={old} and new={new}'
+                    raise ValueError(errormsg)
+
+                # Set how many repeats it should have
+                repeats = 1
+                if abs_ratio >= 1.1:
+                    repeats = 2
+                if abs_ratio >= 2:
+                    repeats = 3
+                if abs_ratio >= 10:
+                    repeats = 4
+
+                this_change = change_char*repeats
+            else:
+                this_diff   = np.nan
+                this_ratio  = np.nan
+                this_change = 'N/A'
+
+            diff.append(this_diff)
+            ratio.append(this_ratio)
+            change.append(this_change)
+
+        df['diff']   = diff
+        df['ratio']  = ratio
+        for col in ['old', 'new', 'diff', 'ratio']:
+            df[col] = df[col].round(decimals=3)
+        df['change'] = change
+        errormsg += str(df)
 
     # Raise an error if mismatches were found
     if errormsg:
-        prefix = '\nThe following values have changed between the previous baseline and now!\n'
-        prefix += 'If this is intentional, please rerun "update_baseline" and commit.\n\n'
-        err = prefix + errormsg
-        raise ValueError(err)
+        raise ValueError(errormsg)
     else:
         print('Baseline matches')
 
