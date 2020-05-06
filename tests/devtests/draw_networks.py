@@ -6,12 +6,11 @@ import covasim as cv
 import networkx as nx
 import pylab as pl
 import numpy as np
-import seaborn as sns
 import sciris as sc
-sns.set(font_scale=2)
 
-pop_size = 200
-pop_type = 'synthpops'
+pop_size = 100
+pop_type = 'hybrid'
+undirected = True
 
 contacts = dict(
     random = {'a':20},
@@ -45,9 +44,11 @@ for i, layer in enumerate(keys):
 
     G = nx.DiGraph()
     G.add_nodes_from(inds)
-    f = hdf['p1']
-    t = hdf['p2']
-    G.add_edges_from(zip(f,t))
+    p1 = hdf['p1']
+    p2 = hdf['p2']
+    G.add_edges_from(zip(p1,p2))
+    if undirected:
+        G.add_edges_from(zip(p2,p1))
     print(f'Layer: {layer}, nodes: {G.number_of_nodes()}, edges: {G.number_of_edges()}')
 
     pos = nx.spring_layout(G, k=0.2)

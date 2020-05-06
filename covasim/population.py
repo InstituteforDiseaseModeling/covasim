@@ -155,7 +155,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     return popdict, layer_keys
 
 
-def make_random_contacts(pop_size, contacts, overshoot=1.2):
+def make_random_contacts(pop_size, contacts, overshoot=1.2, undirected=True):
     ''' Make random static contacts '''
 
     # Preprocessing
@@ -170,7 +170,10 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     all_contacts    = cvu.choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
     p_counts = {}
     for lkey in layer_keys:
-        p_counts[lkey] = cvu.n_poisson(contacts[lkey], pop_size) #round(/2)  # Draw the number of Poisson contacts for this person
+        if undirected:
+            p_counts[lkey] = np.array((cvu.n_poisson(contacts[lkey], pop_size)/2.0).round(), dtype=cvd.default_int)  # Draw the number of Poisson contacts for this person
+        else:
+            p_counts[lkey] = cvu.n_poisson(contacts[lkey], pop_size)
 
     # Make contacts
     count = 0
@@ -185,7 +188,7 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     return contacts_list, layer_keys
 
 
-def make_microstructured_contacts(pop_size, contacts):
+def make_microstructured_contacts(pop_size, contacts, undirected=True):
     ''' Create microstructured contacts -- i.e. households, schools, etc. '''
 
     # Preprocessing -- same as above
@@ -217,7 +220,8 @@ def make_microstructured_contacts(pop_size, contacts):
                         pass
                     else:
                         contacts_dict[i].add(j)
-                        contacts_dict[j].add(i)
+                        if not undirected:
+                            contacts_dict[j].add(i)
 
             n_remaining -= this_cluster
 
