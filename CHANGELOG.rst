@@ -16,6 +16,7 @@ Version 0.31.0 (2020-05-05)
 - Reordered results dictionary to start with cumulative counts.
 - ``sim.export_pars()`` now accepts a filename to save to.
 - Added a ``tests/regression`` folder with previous versions of default parameter values.
+- Changed ``pars['n_beds']`` to interpret 0 or ``None`` as no bed constraint.
 - GitHub info: PR `480 <https://github.com/amath-idm/covasim/pull/480>`__, previous head ``c7171f8``
 
 

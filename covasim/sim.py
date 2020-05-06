@@ -417,7 +417,7 @@ class Sim(cvb.BaseSim):
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people.count(key)
-        self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds'] else np.nan
+        self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds'] else 0
 
         # Update counts for this time step: flows
         for key,count in flows.items():
