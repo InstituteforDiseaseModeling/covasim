@@ -6,13 +6,14 @@ All notable changes to the codebase are documented in this file. Note: in many c
 
 Version 0.31.0 (2020-05-05)
 ---------------------------
-- Added age-susceptible odds ratios, and modified severe and critical progression probabilities. To restore previous behavior (which was based on the `Imperial paper <https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf>`__), set the following values in ``sim.pars['prognoses']``::
+- Added age-susceptible odds ratios, and modified severe and critical progression probabilities. To compensate, default ``beta`` has been increased from 0.015 to 0.016. To restore previous behavior (which was based on the `Imperial paper <https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf>`__), set ``beta=0.015`` and set the following values in ``sim.pars['prognoses']``::
 
     sus_ORs[:]   = 1.0
     severe_probs = np.array([0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400])
     crit_probs   = np.array([0.00004, 0.00011, 0.00050, 0.00123, 0.00214, 0.00800, 0.02750, 0.06000, 0.10333])
 
 - Relative susceptibility and transmissibility (i.e., ``sim.people.rel_sus``) are now set when the population is initialized (before, they were modified dynamically when a person became infected or recovered). This means that modifying them before a simulation starts, or during a simulation, should be more robust.
+- Reordered results dictionary to start with cumulative counts.
 - GitHub info: PR `480 <https://github.com/amath-idm/covasim/pull/480>`__, previous head ``c7171f8``
 
 
