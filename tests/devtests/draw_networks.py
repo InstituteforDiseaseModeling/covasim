@@ -1,5 +1,6 @@
 """
-Show contacts within different layers
+Show contacts within different layers. Used with PR #482 to check that network
+properties are preserved.
 """
 
 import covasim as cv
@@ -8,8 +9,8 @@ import pylab as pl
 import numpy as np
 import sciris as sc
 
-pop_size = 100
-pop_type = 'hybrid'
+pop_size = 200
+pop_type = 'synthpops'
 undirected = True
 
 contacts = dict(
