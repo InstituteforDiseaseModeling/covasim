@@ -227,16 +227,18 @@ class Sim(cvb.BaseSim):
 
         dcols = cvd.get_colors() # Get default colors
 
+        # Flows and cumulative flows
+        for key,label in cvd.result_flows.items():
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
+
+        for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
+
         # Stock variables
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
         self.results['n_susceptible'].scale = 'static'
         self.results['bed_capacity']  = init_res('Bed demand relative to capacity', scale=False)
-
-        # Flows and cumulative flows
-        for key,label in cvd.result_flows.items():
-            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
 
         # Other variables
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)

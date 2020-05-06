@@ -41,7 +41,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['rescale_factor']    = 2    # Factor by which we rescale the population
 
     # Basic disease transmission
-    pars['beta']        = 0.015 # Beta per symptomatic contact; absolute value, calibrated
+    pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
     pars['contacts']    = None # The number of contacts per layer; set below
     pars['dynam_layer'] = None # Which layers are dynamic; set below
     pars['beta_layer']  = None # Transmissibility per layer; set below
