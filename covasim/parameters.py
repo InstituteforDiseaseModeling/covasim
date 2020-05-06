@@ -85,7 +85,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
     # Health system parameters
-    pars['n_beds'] = np.inf  # Baseline assumption is that there's no upper limit on the number of beds i.e. there's enough for everyone
+    pars['n_beds'] = None  # Baseline assumption is that there's no upper limit on the number of beds i.e. there's enough for everyone
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)

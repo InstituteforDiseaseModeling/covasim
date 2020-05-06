@@ -355,7 +355,7 @@ class Sim(cvb.BaseSim):
         people   = self.people # Shorten this for later use
         flows    = people.update_states_pre(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
-        bed_max  = people.count('severe') > self['n_beds'] # Check for a bed constraint
+        bed_max  = people.count('severe') > self['n_beds'] if self['n_beds'] else False # Check for a bed constraint
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases

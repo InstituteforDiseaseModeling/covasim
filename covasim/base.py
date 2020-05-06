@@ -280,18 +280,27 @@ class BaseSim(ParsObj):
         return keys
 
 
-    def export_results(self, for_json=True):
+    def copy(self):
+        ''' Returns a deep copy of the sim '''
+        return sc.dcp(self)
+
+
+    def export_results(self, for_json=True, filename=None, indent=2, *args, **kwargs):
         '''
-        Convert results to dict
+        Convert results to dict -- see also to_json().
 
         The results written to Excel must have a regular table shape, whereas
         for the JSON output, arbitrary data shapes are supported.
 
         Args:
-            for_json: If False, only data associated with Result objects will be included in the converted output
+            for_json (bool): if False, only data associated with Result objects will be included in the converted output
+            filename (str): filename to save to; if None, do not save
+            indent (int): indent (int): if writing to file, how many indents to use per nested level
+            args (list): passed to savejson()
+            kwargs (dict): passed to savejson()
 
         Returns:
-            resdict (dict): Dictionary representation of the results
+            resdict (dict): dictionary representation of the results
 
         '''
         resdict = {}
@@ -307,18 +316,26 @@ class BaseSim(ParsObj):
                     resdict[key] = [str(d) for d in res] # Convert dates to strings
                 else:
                     resdict[key] = res
+        if filename is not None:
+            sc.savejson(filename=filename, obj=resdict, indent=indent, *args, **kwargs)
         return resdict
 
 
-    def export_pars(self):
+    def export_pars(self, filename=None, indent=2, *args, **kwargs):
         '''
-        Return parameters for JSON export
+        Return parameters for JSON export -- see also to_json().
 
         This method is required so that interventions can specify
-        their JSON-friendly representation
+        their JSON-friendly representation.
+
+        Args:
+            filename (str): filename to save to; if None, do not save
+            indent (int): indent (int): if writing to file, how many indents to use per nested level
+            args (list): passed to savejson()
+            kwargs (dict): passed to savejson()
 
         Returns:
-
+            pardict (dict): a dictionary containing all the parameter values
         '''
         pardict = {}
         for key in self.pars.keys():
@@ -328,12 +345,9 @@ class BaseSim(ParsObj):
                 pardict[key] = str(self.pars[key])
             else:
                 pardict[key] = self.pars[key]
+        if filename is not None:
+            sc.savejson(filename=filename, obj=pardict, indent=indent, *args, **kwargs)
         return pardict
-
-
-    def copy(self):
-        ''' Returns a deep copy of the sim '''
-        return sc.dcp(self)
 
 
     def to_json(self, filename=None, keys=None, tostring=False, indent=2, verbose=False, *args, **kwargs):
