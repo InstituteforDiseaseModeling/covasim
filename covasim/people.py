@@ -71,7 +71,7 @@ class People(cvb.BasePeople):
         age_cutoffs = prognoses['age_cutoffs']
         inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=cvd.default_int, count=len(self))
         self.symp_prob[:]   = prognoses['symp_probs'][inds]
-        self.severe_prob[:] = prognoses['severe_probs'][inds]
+        self.severe_prob[:] = prognoses['severe_probs'][inds]*pars['prognoses']['comorbidities'][inds]
         self.crit_prob[:]   = prognoses['crit_probs'][inds]
         self.death_prob[:]  = prognoses['death_probs'][inds]
         self.rel_sus[:]     = prognoses['sus_ORs'][inds] # Default susceptibilities
