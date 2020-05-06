@@ -4,6 +4,11 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 0.31.0 (2020-05-05)
+---------------------------
+- Added age-susceptible odds ratios. To restore previous behavior, set ``pars['prognoses']['sus_ORs'][:] = 1.0``.
+
+
 Version 0.30.4 (2020-05-04)
 ---------------------------
 - Changed the detailed transmission tree (``sim.people.transtree.detailed``) to include much more information.

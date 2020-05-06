@@ -59,7 +59,7 @@ class People(cvb.BasePeople):
 
 
     def set_prognoses(self, pars=None):
-        ''' Set the prognoses for each person based on age '''
+        ''' Set the prognoses for each person based on age during initialization '''
 
         if pars is None:
             pars = self.pars
@@ -75,13 +75,13 @@ class People(cvb.BasePeople):
         self.crit_prob[:]   = prognoses['crit_probs'][inds]
         self.death_prob[:]  = prognoses['death_probs'][inds]
         self.rel_sus[:]     = prognoses['sus_ORs'][inds] # Default susceptibilities
-        self.rel_trans[:]   = prognoses['trans_ORs'][inds] # Default transmissibilities
+        self.rel_trans[:]   = prognoses['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, drawn from a distribution
 
         return
 
 
     def update_states_pre(self, t):
-        ''' Perform all state updates '''
+        ''' Perform all state updates at the current timestep '''
 
         # Initialize
         self.t = t
@@ -159,7 +159,6 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
-        self.rel_trans[inds]  = self.rel_trans[inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds))
         return len(inds)
 
 
