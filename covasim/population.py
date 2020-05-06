@@ -165,12 +165,12 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     contacts_list = []
 
     # Precalculate contacts
-    n_across_layers = np.prod(list(contacts.values()))
+    n_across_layers = np.sum(list(contacts.values()))
     n_all_contacts  = int(pop_size*n_across_layers*overshoot)
     all_contacts    = cvu.choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
     p_counts = {}
     for lkey in layer_keys:
-        p_counts[lkey] = cvu.n_poisson(contacts[lkey], pop_size)  # Draw the number of Poisson contacts for this person
+        p_counts[lkey] = cvu.n_poisson(contacts[lkey], pop_size) #round(/2)  # Draw the number of Poisson contacts for this person
 
     # Make contacts
     count = 0
