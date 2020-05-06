@@ -5,18 +5,24 @@ Show contacts within different layers
 import covasim as cv
 import networkx as nx
 import pylab as pl
+import numpy as np
 import seaborn as sns
 import sciris as sc
 sns.set(font_scale=2)
 
+pop_size = 200
+pop_type = 'synthpops'
+
+contacts = dict(
+    random = {'a':20},
+    hybrid = {'h': 2.0, 's': 4, 'w': 6, 'c': 10},
+    synthpops = {'h': 2.0, 's': 4, 'w': 6, 'c': 10},
+    )
+
 pars = {
-    'pop_size': 200, # start with a small pool
-    'pop_type': 'hybrid', # synthpops, hybrid
-    'pop_infected': 0, # Infect none for starters
-    'n_days': 100, # 40d is long enough for everything to play out
-    'contacts': {'h': 2.0, 's': 4, 'w': 6, 'c': 10},
-    'beta_layer': {'h': 1, 's': 1, 'w': 1, 'c': 1},
-    'quar_eff': {'h': 1, 's': 1, 'w': 1, 'c': 1},
+    'pop_size': pop_size, # start with a small pool
+    'pop_type': pop_type, # synthpops, hybrid
+    'contacts': contacts[pop_type],
 }
 
 # Create sim
@@ -24,11 +30,14 @@ sim = cv.Sim(pars=pars)
 sim.initialize()
 
 fig = pl.figure(figsize=(16,16), dpi=120)
-mapping = dict(h='Households', s='Schools', w='Work', c='Community')
+mapping = dict(a='All', h='Households', s='Schools', w='Work', c='Community')
 colors = sc.vectocolor(sim.people.age, cmap='turbo')
 
-for i, layer in enumerate(['h', 's', 'w', 'c']):
-    ax = pl.subplot(2,2,i+1)
+keys = list(contacts[pop_type].keys())
+nrowcol = np.ceil(np.sqrt(len(keys)))
+
+for i, layer in enumerate(keys):
+    ax = pl.subplot(nrowcol,nrowcol,i+1)
     hdf = sim.people.contacts[layer].to_df()
 
     inds = list(set(list(hdf['p1'].unique()) + list(hdf['p2'].unique())))
