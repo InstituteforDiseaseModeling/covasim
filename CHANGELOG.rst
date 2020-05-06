@@ -14,6 +14,8 @@ Version 0.31.0 (2020-05-05)
 
 - Relative susceptibility and transmissibility (i.e., ``sim.people.rel_sus``) are now set when the population is initialized (before, they were modified dynamically when a person became infected or recovered). This means that modifying them before a simulation starts, or during a simulation, should be more robust.
 - Reordered results dictionary to start with cumulative counts.
+- ``sim.export_pars()`` now accepts a filename to save to.
+- Added a ``tests/regression`` folder with previous versions of default parameter values.
 - GitHub info: PR `480 <https://github.com/amath-idm/covasim/pull/480>`__, previous head ``c7171f8``
 
 
