@@ -2,10 +2,13 @@
 Run examples/*.py using pytest
 '''
 
-import importlib.util as iu
 import os
 from pathlib import Path
+import importlib.util as iu
+import pylab as pl
+import sciris as sc
 
+pl.switch_backend('agg') # To avoid graphs from appearing
 cwd = Path(os.path.dirname(os.path.abspath(__file__)))
 examples_dir = cwd.joinpath('../examples')
 
