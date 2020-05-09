@@ -646,10 +646,10 @@ class contact_tracing(Intervention):
             test_neg_inds = trace_from_inds[cvu.false( sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
             if len(test_neg_inds): # If there are any just-diagnosed people, go trace their contacts
                 UNKNOWN_TEST_DELAY = 2
-                TIME_IN_QUAR = {lkey: tt - UNKNOWN_TEST_DELAY for lkey, tt in self.trace_time.items()}
+                days_in_quar = {lkey: ltrace_time - UNKNOWN_TEST_DELAY for lkey, ltrace_time in self.trace_time.items()}
                 # By the time we trace them, the negative diagnostic results might already be available
-                if max(TIME_IN_QUAR.values()) > 0:
-                    sim.people.trace(test_neg_inds, self.trace_probs, self.trace_time, TIME_IN_QUAR)
+                if max(days_in_quar.values()) > 0:
+                    sim.people.trace(test_neg_inds, self.trace_probs, self.trace_time, days_in_quar)
         else:
             trace_from_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
             if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
