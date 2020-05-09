@@ -589,18 +589,20 @@ def get_individual_states(sim):
 plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
 
 
-def plotly_interventions(sim, fig):
+def plotly_interventions(sim, fig, add_to_legend=False):
     ''' Add vertical lines for interventions to the plot '''
     if sim['interventions']:
         for interv in sim['interventions']:
             if hasattr(interv, 'days'):
                 for interv_day in interv.days:
                     if interv_day and interv_day < sim['n_days']:
-                        fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                        fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
+                        interv_date = sim.date(interv_day, as_date=True)
+                        fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_date, x1=interv_date, y0=0, y1=1, line=dict(width=0.5, dash='dash')))
+                        if add_to_legend:
+                            fig.add_trace(go.Scatter(x=[interv_date], y=[0], mode='lines', name='Intervention change', line=dict(width=0.5, dash='dash')))
     return
 
-def plotly_sim(sim):
+def plotly_sim(sim, do_show=False):
     ''' Main simulation results -- parallel of sim.plot() '''
 
     plots = []
@@ -618,10 +620,15 @@ def plotly_sim(sim):
                 ydata = sim.data[key]
                 fig.add_trace(go.Scatter(x=xdata, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
-        plotly_interventions(sim, fig)
+        plotly_interventions(sim, fig, add_to_legend=(p==0)) # Only add the intervention label to the legend for the first plot
         fig.update_layout(title={'text':title}, yaxis_title='Count', autosize=True, **plotly_legend)
 
         plots.append(fig)
+
+    if do_show:
+        for fig in plots:
+            fig.show()
+
     return plots
 
 

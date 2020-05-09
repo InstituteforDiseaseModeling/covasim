@@ -3,6 +3,13 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+Version 1.0.1 (2020-05-09)
+--------------------------
+- Added argument ``as_date`` for ``sim.date()`` to return a ``datetime`` object instead of a string.
+- Fixed plotting of interventions in the webapp.
+- Removed default 1-hour time limit for simulations.
+- GitHub info: PR `490 <https://github.com/amath-idm/covasim/pull/490>`__, previous head ``9a6c23b``
+
 
 Version 1.0.0 (2020-05-08)
 --------------------------

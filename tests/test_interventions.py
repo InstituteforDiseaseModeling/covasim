@@ -20,7 +20,7 @@ def test_all_interventions():
         pop_infected = 10,
         pop_type     = 'hybrid',
         n_days       = 90,
-        )
+    )
 
 
     #%% Define the interventions

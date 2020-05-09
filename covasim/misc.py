@@ -2,10 +2,10 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
-import datetime as dt
 import numpy as np
 import pandas as pd
 import sciris as sc
+import datetime as dt
 import scipy.stats as sps
 from . import version as cvver
 

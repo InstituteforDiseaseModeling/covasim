@@ -5,13 +5,13 @@ Defines functions for making the population.
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
+from collections import defaultdict
 from . import requirements as cvreq
 from . import utils as cvu
 from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpars
 from . import people as cvppl
-from collections import defaultdict
 
 
 # Specify all externally visible functions this file defines
