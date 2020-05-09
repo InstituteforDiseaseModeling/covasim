@@ -208,12 +208,14 @@ def test_population():
 def test_requirements():
     sc.heading('Testing requirements')
 
+    cv.requirements.min_versions['sciris'] = '99.99.99'
     with pytest.raises(ImportError):
-        cv.requirements.min_versions['sciris'] = '99.99.99'
+
         cv.requirements.check_sciris()
 
+    cv.requirements.min_versions['scirisweb'] = '99.99.99'
+    cv.requirements.check_scirisweb()
     with pytest.raises(ImportError):
-        cv.requirements.min_versions['scirisweb'] = '99.99.99'
         cv.requirements.check_scirisweb(die=True)
 
     cv.requirements.check_synthpops()
