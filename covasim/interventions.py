@@ -1,8 +1,13 @@
-import inspect
+'''
+Specify the core interventions available in Covasim. Other interventions can be
+defined by the user by inheriting from these classes.
+'''
+
 import numpy as np
 import pandas as pd
 import pylab as pl
 import sciris as sc
+import inspect
 import datetime as dt
 from . import utils as cvu
 from . import base as cvb

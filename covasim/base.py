@@ -2,10 +2,10 @@
 Base classes for Covasim.
 '''
 
-import datetime as dt
 import numpy as np
 import pandas as pd
 import sciris as sc
+import datetime as dt
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
