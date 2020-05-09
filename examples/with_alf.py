@@ -1,7 +1,7 @@
 import covasim as cv
 import sciris as sc
 import numpy as np
-sim = cv.Sim(pop_type='hybrid')
+sim = cv.Sim(pop_type='hybrid', pop_size=1000)
 sim.initialize()
 
 # Define ALF parameters
@@ -31,6 +31,7 @@ pop_size = sim.pars['pop_size']
 # Create the contacts
 layer_keys = ['alf']
 alf_inds = cv.binomial_filter(alf_prob, sc.findinds(sim.people.age >= min_alf_age))
+assert max(alf_inds) < pop_size
 contacts_list = [{key:[] for key in layer_keys} for i in range(pop_size)]
 alf_contacts, _ = cv.make_microstructured_contacts(len(alf_inds), {'alf':n_alf_contacts}, sim)
 
@@ -38,31 +39,39 @@ alf_contacts, _ = cv.make_microstructured_contacts(len(alf_inds), {'alf':n_alf_c
 alf_dict = sim.contactdict['alf']
 
 for i, ind in enumerate(alf_inds):
-    contacts_list[ind]['alf'] = alf_inds[alf_contacts[i]['alf']] # Copy over alf contacts
+    contacts_list[ind]['alf'] = alf_inds[alf_contacts[i]['alf']].tolist() # Copy over alf contacts
+    if len(contacts_list[ind]['alf']):
+        assert max(contacts_list[ind]['alf']) < pop_size
 
     # find the cluster that individual is in and replace with correct index
 i = 0
 for id, _ in alf_dict.items():
-    alf_dict[id] = list(alf_inds[alf_contacts[i]['alf']])
+    alf_dict[id] = sc.dcp(alf_inds[alf_contacts[i]['alf']]).tolist()
     i += 1
+    assert max(alf_dict[id]) < pop_size
 
 # Create list of health care workers
 health_care_worker_age = [22, 55]
 health_care_worker_inds = sc.findinds((sim.people.age >= health_care_worker_age[0]) * (sim.people.age < health_care_worker_age[1]))
+assert max(health_care_worker_inds) < pop_size
 
 # Loop through all ALFs, select a number of health care workers from health_care_worker_inds, add them to ALF and
 # to list of contacts, then remove them from health_care_worker_inds
 
 for id, cluster_members in alf_dict.items():
     num_health_care_workers = cv.poisson(n_alf_staff)
-    health_care_workers_to_add = np.random.choice(health_care_worker_inds, n_alf_staff, replace=False)
-    for person in np.nditer(health_care_workers_to_add):
-        contacts_list[person]['alf'] = contacts_list[person]['alf'] + cluster_members
+    health_care_workers_to_add = np.random.choice(health_care_worker_inds, n_alf_staff, replace=False).tolist()
+    assert max(health_care_workers_to_add) < pop_size
+    for person in health_care_workers_to_add:
+        contacts_list[person]['alf'] += cluster_members
+        assert max(contacts_list[person]['alf']) < pop_size
         cluster_members.append(person)
         for alf_member in cluster_members:
-            contacts_list[alf_member]['alf'] = contacts_list[alf_member]['alf'] + person
+            contacts_list[alf_member]['alf'] += [person]
+            assert max(contacts_list[alf_member]['alf']) < pop_size
     for person in range(len(health_care_workers_to_add)):
         health_care_worker_inds = health_care_worker_inds[health_care_worker_inds != health_care_workers_to_add[person]]
+        assert max(health_care_worker_inds) < pop_size
 
 sim.contactdict['alf'] = alf_dict
 sim.people.add_contacts(contacts_list, lkey='alf')
