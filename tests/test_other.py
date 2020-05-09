@@ -10,7 +10,7 @@ import sciris as sc
 import covasim as cv
 import pylab as pl
 
-do_plot = False
+do_plot = True
 
 def remove_files(*args):
     ''' Remove files that were created '''
@@ -191,6 +191,30 @@ def test_people():
 
     return
 
+
+def test_plotting():
+    sc.heading('Testing plotting')
+
+    fig_path = 'plotting_test.png'
+
+    # Create sim with data and interventions
+    ce = cv.clip_edges(**{'start_day': 10, 'change': 0.5})
+    sim = cv.Sim(pop_size=100, n_days=60, datafile='example_data.csv', interventions=ce, verbose=0)
+    sim.run(do_plot=True)
+
+    # Handle lesser-used plotting options
+    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, font_family='Arial', log_scale=['Number of new infections'], interval=5, do_save=True, fig_path=fig_path)
+    print('↑ May print a warning about zero values')
+
+    # Handle Plotly functions
+    cv.plotly_sim(sim)
+    cv.plotly_people(sim)
+    cv.plotly_animate(sim)
+
+    # Tidy up
+    remove_files(fig_path)
+
+    return
 
 
 def test_population():
@@ -374,14 +398,15 @@ if __name__ == '__main__':
 
     sc.tic()
 
-    test_base()
-    test_interventions()
-    test_misc()
-    test_people()
-    test_population()
-    test_requirements()
-    test_run()
-    test_sim()
+    # test_base()
+    # test_interventions()
+    # test_misc()
+    # test_people()
+    test_plotting()
+    # test_population()
+    # test_requirements()
+    # test_run()
+    # test_sim()
 
     print('\n'*2)
     sc.toc()
