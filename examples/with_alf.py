@@ -1,7 +1,7 @@
 import covasim as cv
 import sciris as sc
 import numpy as np
-sim = cv.Sim(pop_type='hybrid', pop_size=1000)
+sim = cv.Sim(pop_type='hybrid', pop_size=2e4)
 sim.initialize()
 
 # Define ALF parameters
@@ -33,7 +33,7 @@ layer_keys = ['alf']
 alf_inds = cv.binomial_filter(alf_prob, sc.findinds(sim.people.age >= min_alf_age))
 assert max(alf_inds) < pop_size
 contacts_list = [{key:[] for key in layer_keys} for i in range(pop_size)]
-alf_contacts, _ = cv.make_microstructured_contacts(len(alf_inds), {'alf':n_alf_contacts}, sim)
+alf_contacts, _ = cv.make_microstructured_contacts(len(alf_inds), {'alf':n_alf_contacts}, sim, directed=True)
 
 # get the dictionary of ALFs
 alf_dict = sim.contactdict['alf']
@@ -44,10 +44,8 @@ for i, ind in enumerate(alf_inds):
         assert max(contacts_list[ind]['alf']) < pop_size
 
     # find the cluster that individual is in and replace with correct index
-i = 0
-for id, _ in alf_dict.items():
-    alf_dict[id] = sc.dcp(alf_inds[alf_contacts[i]['alf']]).tolist()
-    i += 1
+for id, alf_members in alf_dict.items():
+    alf_dict[id] = sc.dcp(alf_inds[alf_members]).tolist()
     assert max(alf_dict[id]) < pop_size
 
 # Create list of health care workers
