@@ -269,7 +269,6 @@ def test_requirements():
 
     cv.requirements.min_versions['sciris'] = '99.99.99'
     with pytest.raises(ImportError):
-
         cv.requirements.check_sciris()
 
     cv.requirements.min_versions['scirisweb'] = '99.99.99'
@@ -278,6 +277,8 @@ def test_requirements():
         cv.requirements.check_scirisweb(die=True)
 
     cv.requirements.check_synthpops()
+
+    print('↑ Should print various requirements warnings')
 
     return
 
@@ -406,7 +407,7 @@ if __name__ == '__main__':
     if not do_plot:
         pl.switch_backend('agg')
 
-    sc.tic()
+    T = sc.tic()
 
     test_base()
     test_interventions()
@@ -419,4 +420,5 @@ if __name__ == '__main__':
     test_sim()
 
     print('\n'*2)
-    sc.toc()
+    sc.toc(T)
+    print('Done.')

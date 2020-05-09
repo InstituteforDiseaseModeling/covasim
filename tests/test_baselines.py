@@ -2,9 +2,9 @@
 Compare current results to baseline
 """
 
-import sciris as sc
 import numpy as np
 import pandas as pd
+import sciris as sc
 import covasim as cv
 
 do_save = False

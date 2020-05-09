@@ -40,12 +40,10 @@ def test_webapp():
 
 #%% Run as a script
 if __name__ == '__main__':
-    sc.tic()
+    T = sc.tic()
 
-    pars = test_pars()
+    pars   = test_pars()
     output = test_webapp()
 
-    sc.toc()
-
-
-print('Done.')
+    sc.toc(T)
+    print('Done.')
