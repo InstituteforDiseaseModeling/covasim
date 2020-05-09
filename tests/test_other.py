@@ -10,7 +10,11 @@ import sciris as sc
 import covasim as cv
 import pylab as pl
 
+
 do_plot = True
+csv_file  = os.path.join(sc.thisdir(__file__), 'example_data.csv')
+xlsx_file = os.path.join(sc.thisdir(__file__), 'example_data.xlsx')
+
 
 def remove_files(*args):
     ''' Remove files that were created '''
@@ -98,7 +102,7 @@ def test_interventions():
     sc.heading('Testing interventions')
 
     # Create sim
-    sim = cv.Sim(pop_size=100, n_days=60, datafile='example_data.csv', verbose=0)
+    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, verbose=0)
 
     # Intervention conversion
     ce = cv.InterventionDict(**{'which': 'clip_edges', 'pars': {'start_day': 10, 'end_day':30, 'change': 0.5, 'verbose':True}})
@@ -126,14 +130,14 @@ def test_misc():
     json_path = 'test_misc.json'
 
     # Data loading
-    cv.load_data('example_data.csv')
-    cv.load_data('example_data.xlsx')
+    cv.load_data(csv_file)
+    cv.load_data(xlsx_file)
 
     with pytest.raises(NotImplementedError):
         cv.load_data('example_data.unsupported_extension')
 
     with pytest.raises(ValueError):
-        cv.load_data('example_data.xlsx', columns=['missing_column'])
+        cv.load_data(xlsx_file, columns=['missing_column'])
 
     # Dates
     d1 = cv.date('2020-04-04')
@@ -199,7 +203,7 @@ def test_plotting():
 
     # Create sim with data and interventions
     ce = cv.clip_edges(**{'start_day': 10, 'change': 0.5})
-    sim = cv.Sim(pop_size=100, n_days=60, datafile='example_data.csv', interventions=ce, verbose=0)
+    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, interventions=ce, verbose=0)
     sim.run(do_plot=True)
 
     # Handle lesser-used plotting options
