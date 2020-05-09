@@ -645,8 +645,15 @@ class contact_tracing(Intervention):
 
         # Quarantine self until results come back
         if self.quar_until_results and self.test_delay > 0:
-            sim.people.date_known_contact[trace_from_inds] = t
-            sim.people.date_end_quarantine[trace_from_inds] = t + self.test_delay
+            # Take earliest date know contact
+            sim.people.date_known_contact[trace_from_inds] = np.nanmin(np.stack([
+                sim.people.date_known_contact[trace_from_inds], t*np.ones_like(sim.people.date_known_contact[trace_from_inds])
+            ]), axis=0)
+
+            # Take latest date end quarantine
+            sim.people.date_end_quarantine[trace_from_inds] = np.nanmax(np.stack([
+                sim.people.date_end_quarantine[trace_from_inds], (t + self.test_delay)*np.ones_like(sim.people.date_end_quarantine[trace_from_inds])
+            ]), axis=0)
 
         test_pos_inds = trace_from_inds[cvu.true( sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
         if len(test_pos_inds): # If there are any just-diagnosed people, go trace their contacts
