@@ -131,6 +131,16 @@ class MultiSim(sc.prettyobj):
         return
 
 
+    def reset(self):
+        ''' Undo a combine() or reduce() by resetting the base sim, which, and results '''
+        if hasattr(self, 'orig_base_sim'):
+            self.base_sim = self.orig_base_sim
+            delattr(self, 'orig_base_sim')
+        self.which = None
+        self.results = None
+        return
+
+
     def combine(self, output=False):
         ''' Combine multiple sims into a single sim with scaled results '''
 
@@ -151,6 +161,7 @@ class MultiSim(sc.prettyobj):
             if not combined_sim.results[key].scale:
                 combined_sim.results[key].values /= n_runs
 
+        self.orig_base_sim = self.base_sim
         self.base_sim = combined_sim
         self.results = combined_sim.results
         self.which = 'combined'
@@ -168,7 +179,7 @@ class MultiSim(sc.prettyobj):
             quantiles = self.quantiles
         if not isinstance(quantiles, dict):
             try:
-                quantiles = {'low':quantiles[0], 'high':quantiles[1]}
+                quantiles = {'low':float(quantiles[0]), 'high':float(quantiles[1])}
             except Exception as E:
                 errormsg = f'Could not figure out how to convert {quantiles} into a quantiles object: must be a dict with keys low, high or a 2-element array ({str(E)})'
                 raise ValueError(errormsg)
@@ -193,6 +204,7 @@ class MultiSim(sc.prettyobj):
         reduced_sim.likelihood() # Recompute the likelihood for the average sim
         reduced_sim.summary_stats(verbose=False) # Recalculate the summary stats
 
+        self.orig_base_sim = self.base_sim
         self.base_sim = reduced_sim
         self.results = reduced_sim.results
         self.which = 'reduced'
@@ -237,13 +249,11 @@ class MultiSim(sc.prettyobj):
                     val = int(val)
                 resdict[label][reskey] = val
 
-        # Convert to a dataframe
-        df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coersion
-
         if do_plot:
-            self.plot_compare(df, *args, **kwargs)
+            self.plot_compare(**kwargs)
 
         if output:
+            df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coersion
             return df
         else:
             print(df)

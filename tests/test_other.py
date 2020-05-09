@@ -221,6 +221,58 @@ def test_requirements():
     return
 
 
+def test_run():
+    sc.heading('Testing run')
+
+    msim_path  = 'run_test.msim'
+    scens_path = 'run_test.scens'
+
+    # Test creation
+    s1 = cv.Sim(pop_size=100)
+    s2 = s1.copy()
+    msim = cv.MultiSim(sims=[s1, s2])
+    with pytest.raises(TypeError):
+        cv.MultiSim(sims='not a sim')
+
+    # Test other properties
+    len(msim)
+    msim.result_keys()
+    msim.base_sim = None
+    with pytest.raises(ValueError):
+        msim.result_keys()
+    msim.base_sim = msim.sims[0] # Restore
+
+    # Run
+    msim.run(verbose=0)
+    msim.reduce(quantiles=[0.1, 0.9], output=True)
+    with pytest.raises(ValueError):
+        msim.reduce(quantiles='invalid')
+    msim.compare(output=True, do_plot=True, log_scale=False)
+
+    # Plot
+    for i in range(2):
+        if i == 1:
+            msim.reset() # Reset as if reduce() was not called
+        msim.plot()
+        msim.plot_result('r_eff')
+
+    # Save
+    for keep_people in [True, False]:
+        msim.save(filename=msim_path, keep_people=keep_people)
+
+    # Scenarios
+    scens = cv.Scenarios(sim=s1, metapars={'n_runs':1})
+    scens.run(keep_people=True, verbose=0)
+    for keep_people in [True, False]:
+        scens.save(scens_path, keep_people=keep_people)
+    cv.Scenarios.load(scens_path)
+
+    # Tidy up
+    remove_files(msim_path, scens_path)
+
+    return
+
+
 def test_sim():
     sc.heading('Testing sim')
 
@@ -295,9 +347,10 @@ if __name__ == '__main__':
     test_base()
     test_misc()
     test_people()
-    # test_population()
+    test_population()
     test_requirements()
     test_sim()
+    test_run()
 
     print('\n'*2)
     sc.toc()
