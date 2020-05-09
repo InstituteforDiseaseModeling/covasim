@@ -5,7 +5,7 @@ Test Plotly plotting outside of the webapp.
 import plotly.io as pio
 import covasim as cv
 
-# pio.renderers.default = "browser"
+pio.renderers.default = "browser" # Or can use a Jupyter notebook
 
 ce = cv.clip_edges(**{'start_day': 10, 'change': 0.5})
 sim = cv.Sim(pop_size=100, n_days=60, datafile='../example_data.csv', interventions=ce, verbose=0)
