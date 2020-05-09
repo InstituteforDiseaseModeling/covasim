@@ -257,7 +257,7 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
             'pars': {
                 'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
                 'quar_period': 14,
-                'interventions': [cv.test_num(daily_tests=daily_tests, symp_test=50),
+                'interventions': [cv.test_num(daily_tests=daily_tests, symp_test=50, test_delay=2),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
                         trace_time  = {'h': 0, 's': 2,   'w': 2,   'c': 5})]
             }
@@ -268,7 +268,7 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
             'pars': {
                 'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
                 'quar_period': 14,
-                'interventions': [cv.test_num(daily_tests=daily_tests, symp_test=50),
+                'interventions': [cv.test_num(daily_tests=daily_tests, symp_test=50, test_delay=2),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
                         trace_time  = {'h': 0, 's': 2,   'w': 2,   'c': 5},
                         presumptive = True )]
@@ -296,7 +296,10 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
             ],
             'Number of newly quarantined': [
                 'new_quarantined',
-            ]
+            ],
+            'Number diagnosed': [
+                'n_diagnosed',
+            ],
         }
 
         fig_args = dict(figsize=(24,16))
