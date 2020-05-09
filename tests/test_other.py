@@ -97,7 +97,22 @@ def test_base():
 def test_interventions():
     sc.heading('Testing interventions')
 
-    sim = cv.Sim(pop_size=300, n_days=60)
+    # Create sim
+    sim = cv.Sim(pop_size=100, n_days=60, datafile='example_data.csv', verbose=0)
+
+    # Intervention conversion
+    ce = cv.InterventionDict(**{'which': 'clip_edges', 'pars': {'start_day': 10, 'end_day':30, 'change': 0.5, 'verbose':True}})
+    print(ce)
+    with pytest.raises(sc.KeyNotFoundError):
+        cv.InterventionDict(**{'which': 'invalid', 'pars': {'days': 10, 'changes': 0.5}})
+
+    # Test numbers and contact tracing
+    tn1 = cv.test_num(10, start_day=3, end_day=20)
+    tn2 = cv.test_num(daily_tests=sim.data['new_tests'])
+    ct = cv.contact_tracing()
+
+    # Create and run
+    sim['interventions'] = [ce, tn1, tn2, ct]
     sim.run()
 
     return
@@ -359,14 +374,14 @@ if __name__ == '__main__':
 
     sc.tic()
 
-    # test_base()
+    test_base()
     test_interventions()
-    # test_misc()
-    # test_people()
-    # test_population()
-    # test_requirements()
-    # test_run()
-    # test_sim()
+    test_misc()
+    test_people()
+    test_population()
+    test_requirements()
+    test_run()
+    test_sim()
 
     print('\n'*2)
     sc.toc()

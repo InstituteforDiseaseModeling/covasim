@@ -36,8 +36,8 @@ def InterventionDict(which, pars):
         IntervClass = mapping[which]
     except:
         available = ', '.join(mapping.keys())
-        errormsg = f'Only interventions "{available}" are available in dictionary representation'
-        raise NotImplementedError(errormsg)
+        errormsg = f'Only interventions "{available}" are available in dictionary representation, not "{which}"'
+        raise sc.KeyNotFoundError(errormsg)
     intervention = IntervClass(**pars)
     return intervention
 
