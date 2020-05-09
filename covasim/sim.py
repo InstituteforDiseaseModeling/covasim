@@ -473,7 +473,7 @@ class Sim(cvb.BaseSim):
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
-            if elapsed > self['timelimit']:
+            if self['timelimit'] and elapsed > self['timelimit']:
                 sc.printv(f"Time limit ({self['timelimit']} s) exceeded", 1, verbose)
                 break
             elif self['stopping_func'] and self['stopping_func'](self):
