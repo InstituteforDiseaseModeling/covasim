@@ -21,11 +21,9 @@ def test_webapp():
     sc.heading('Testing webapp')
 
     pars = cw.get_defaults(die=True)
+    pars['sim_pars']['pop_size']['best'] = 200
+    pars['sim_pars']['n_days']['best']   = 30
     output = cw.run_sim(sim_pars=pars['sim_pars'], epi_pars=pars['epi_pars'], die=True)
-    if output['errs']:
-        errormsg = 'Webapp encountered an error:\n'
-        errormsg += sc.pp(str(output['errs']), doprint=False)
-        raise Exception(errormsg)
 
     output2 = cw.run_sim(sim_pars='invalid', epi_pars='invalid')
     if not output2['errs']:
