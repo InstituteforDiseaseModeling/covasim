@@ -3,10 +3,12 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+
 Version 1.0.0 (2020-05-08)
 --------------------------
 - Official release of Covasim.
-- Updated standard deviation of ``exp2inf`` to be 1 day.
+- Made scenario and simulation plotting more flexible: ``to_plot`` can now simply be a list of results keys, e.g. ``cum_deaths``.
+- Added additional tests.
 - GitHub info: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
 
 
