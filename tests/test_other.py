@@ -94,6 +94,16 @@ def test_base():
     return
 
 
+def test_interventions():
+    sc.heading('Testing interventions')
+
+    sim = cv.Sim(pop_size=300, n_days=60)
+    sim.run()
+
+    return
+
+
+
 def test_misc():
     sc.heading('Testing miscellaneous functions')
 
@@ -158,8 +168,9 @@ def test_misc():
 
 
 def test_people():
-    sc.heading('Testing people (dynamic layers)')
+    sc.heading('Testing people')
 
+    # Test dynamic layers
     sim = cv.Sim(pop_size=100, n_days=10, verbose=0, dynam_layer={'a':1})
     sim.run()
 
@@ -257,6 +268,7 @@ def test_run():
             msim.reset() # Reset as if reduce() was not called
         msim.plot()
         msim.plot_result('r_eff')
+    print('↑ May print some plotting warnings')
 
     # Save
     for keep_people in [True, False]:
@@ -324,9 +336,10 @@ def test_sim():
     sim.validate_pars()
 
     # Test intervention functions and results analyses
-    sim = cv.Sim(pop_size=100)
-    sim['interv_func'] = lambda sim: (sim.t==20 and (sim.__setitem__('beta', 0) or print(f'Applying lambda intervention to set beta=0 on day {sim.t}'))) # The world's most ridiculous way of defining an intervention
-    sim['verbose'] = 0
+    cv.Sim(pop_size=100, verbose=0, interv_func=lambda sim: (sim.t==20 and (sim.__setitem__('beta', 0) or print(f'Applying lambda intervention to set beta=0 on day {sim.t}')))).run() # ...This is not the recommended way of defining interventions.
+
+    # Test other outputs
+    sim = cv.Sim(pop_size=100, verbose=0, n_days=30)
     sim.run()
     sim.compute_r_eff(method='infectious')
     sim.compute_r_eff(method='outcome')
@@ -346,13 +359,14 @@ if __name__ == '__main__':
 
     sc.tic()
 
-    test_base()
-    test_misc()
-    test_people()
-    test_population()
-    test_requirements()
-    test_sim()
-    test_run()
+    # test_base()
+    test_interventions()
+    # test_misc()
+    # test_people()
+    # test_population()
+    # test_requirements()
+    # test_run()
+    # test_sim()
 
     print('\n'*2)
     sc.toc()
