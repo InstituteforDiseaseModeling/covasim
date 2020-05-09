@@ -81,17 +81,19 @@ for id, cluster_members in alf_dict.items():
         health_care_worker_inds = health_care_worker_inds[health_care_worker_inds != health_care_workers_to_add[person]]
         assert max(health_care_worker_inds) < pop_size
 
-health_care_aides = health_care_aides
-work_layer = sim.people.contacts['w']
-work_layer_df = pd.DataFrame(work_layer)
-for aide in health_care_aides:
+
+
+# Clip health care aides edges in the workplace
+
+work_layer = sim.people.contacts['w'] # extract workplace layer contacts to adjust
+work_layer_df = pd.DataFrame(work_layer) # turn it into a DF
+for aide in health_care_aides: # look through each aide, remove them from any pairwise contacts
     work_layer_df.drop(work_layer_df[work_layer_df["p1"] == aide].index, inplace=True)
     work_layer_df.drop(work_layer_df[work_layer_df["p2"] == aide].index, inplace=True)
 
-print("aides dropped from work layer")
-new_work_layer = cvb.Layer().from_df(work_layer_df) # Convert back
+new_work_layer = cvb.Layer().from_df(work_layer_df) # Convert DF back with Layers (from base class)
 new_work_layer.validate()
-sim.people.contacts['w'] = new_work_layer
+sim.people.contacts['w'] = new_work_layer # reassign workplace layer contacts as new work layer
 
 sim.contactdict['alf'] = alf_dict
 sim.people.add_contacts(contacts_list, lkey='alf')
