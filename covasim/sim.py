@@ -148,7 +148,7 @@ class Sim(cvb.BaseSim):
                 self[key] = int(self[key])
             except Exception as E:
                 errormsg = f'Could not convert {key}={self[key]} of {type(self[key])} to integer'
-                raise TypeError(errormsg) from E
+                raise ValueError(errormsg) from E
 
         # Handle start day
         start_day = self['start_day'] # Shorten
@@ -199,7 +199,7 @@ class Sim(cvb.BaseSim):
         if choice not in popdata_choices:
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
-            raise sc.KeyNotFoundError(errormsg)
+            raise ValueError(errormsg)
 
         # Handle interventions
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
