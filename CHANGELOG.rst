@@ -5,6 +5,7 @@ All notable changes to the codebase are documented in this file. Note: in many c
 
 Version 1.0.0 (2020-05-08)
 --------------------------
+- Official release of Covasim.
 - Updated standard deviation of ``exp2inf`` to be 1 day.
 - GitHub info: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
 

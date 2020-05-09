@@ -1,3 +1,4 @@
 #!/bin/bash
-coverage run -m pytest test_* unittests/test_*
+coverage run --source=../covasim --omit=*cruise_ship*,*webapp* -m pytest test_*
+echo 'Running report...'
 coverage report
