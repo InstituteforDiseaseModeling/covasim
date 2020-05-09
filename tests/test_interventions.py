@@ -1,369 +1,95 @@
 '''
-Testing the effect of testing interventions in Covasim
+Demonstrate all interventions, taken from intervention docstrings
 '''
 
-#%% Imports and settings
-import os
+#%% Housekeeping
+
 import sciris as sc
+import pylab as pl
 import covasim as cv
 
-do_plot   = 1
-do_show   = 1
-do_save   = 0
-debug     = 1
-keep_sims = 0
-fig_paths = [f'results/testing_scen_{i}.png' for i in range(3)]
-fig_paths += ['results/testing_other.png']
+do_plot = 1
+verbose = 0
+
+pars = sc.objdict(
+    pop_size     = 10e3,
+    pop_infected = 100,
+    pop_type     = 'hybrid',
+    n_days       = 90,
+    )
 
 
-def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None):
-    sc.heading('Test of testing interventions')
+#%% Define the interventions
+
+# 1. Dynamic pars
+i00 = cv.test_prob(start_day=5, symp_prob=0.3)
+i01 = cv.dynamic_pars({'beta':{'days':[40, 50], 'vals':[0.005, 0.015]}, 'diag_factor':{'days':30, 'vals':0.0}}) # Starting day 30, make diagnosed people stop transmitting
 
 
-    sc.heading('Setting up...')
-
-    sc.tic()
-
-    n_runs = 3
-    verbose = 1
-    base_pars = {
-      'pop_size': 1000,
-      'pop_type': 'hybrid',
-      }
-
-    base_sim = cv.Sim(base_pars) # create sim object
-    n_people = base_sim['pop_size']
-    npts = base_sim.npts
-
-    # Define overall testing assumptions
-    # Remember that this is the daily % of the population that gets tested. S Korea (one of the highest-testing places) tested
-    # an average of 10000 people/day over March, or 270,000 in total. This is ~200 people per million every day (0.02%)....
-    max_optimistic_testing = 0.1 # ... which means that this is an artificially high number, for testing purposes only!!
-    optimistic_daily_tests = [max_optimistic_testing*n_people]*npts # Very best-case scenario for asymptomatic testing
-
-    # Define the scenarios
-    scenarios = {
-        'baseline': {
-          'name':'Status quo, no testing',
-          'pars': {
-              'interventions': None,
-              }
-          },
-        'test_skorea': {
-          'name':'Assuming South Korea testing levels of 0.02% daily (untargeted); isolate positives',
-          'pars': {
-              'interventions': cv.test_num(daily_tests=optimistic_daily_tests)
-              }
-          },
-        'floating': {
-            'name': 'Test with constant probability based on symptoms',
-            'pars': {
-                'interventions': cv.test_prob(symp_prob=max_optimistic_testing, asymp_prob=0.0)
-                }
-        },
-        'sequence': {
-            'name': 'Historical switching to probability',
-            'pars': {
-                'interventions': cv.sequence(days=[10, 51], interventions=[
-                    cv.test_num(daily_tests=optimistic_daily_tests),
-                    cv.test_prob(symp_prob=0.2, asymp_prob=0.002),
+# 2. Sequence
+i02 = cv.sequence(days=[20, 40, 60], interventions=[
+                    cv.test_num(daily_tests=[20]*pars.n_days),
+                    cv.test_prob(symp_prob=0.0),
+                    cv.test_prob(symp_prob=0.2),
                 ])
-            }
-        },
-
-    }
-
-    metapars = {'n_runs': n_runs}
-
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose, debug=debug)
-
-    to_plot = ['cum_infections', 'n_infectious', 'new_tests', 'new_diagnoses']
-    fig_args = dict(figsize=(20, 24))
-
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path, interval=7, fig_args=fig_args, to_plot=to_plot)
-
-    return scens
 
 
-def test_turnaround(do_plot=False, do_show=True, do_save=False, fig_path=None):
-    sc.heading('Test impact of reducing delay time for getting test results')
-
-    sc.heading('Setting up...')
-
-    sc.tic()
-
-    n_runs = 3
-    verbose = 1
-    base_pars = {
-      'pop_size': 1000,
-      'pop_type': 'hybrid',
-      }
-
-    base_sim = cv.Sim(base_pars) # create sim object
-    n_people = base_sim['pop_size']
-    npts = base_sim.npts
-
-    # Define overall testing assumptions
-    testing_prop = 0.1 # Assumes we could test 10% of the population daily (!!)
-    daily_tests = [testing_prop*n_people]*npts # Number of daily tests
-
-    # Define the scenarios
-    scenarios = {
-        f'{d}dayturnaround': {
-            'name':f'Symptomatic testing with {d} days to get results',
-            'pars': {
-                'interventions': cv.test_num(daily_tests=daily_tests, test_delay=d)
-            }
-        } for d in range(1, 3+1, 2)
-    }
-
-    metapars = {'n_runs': n_runs}
-
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose, debug=debug)
-
-    to_plot = ['cum_infections', 'n_infectious', 'new_tests', 'new_diagnoses']
-    fig_args = dict(figsize=(20, 24))
-
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path, interval=7, fig_args=fig_args, to_plot=to_plot)
-
-    return scens
+# 3. Change beta
+i03 = cv.change_beta([30, 50], [0.0, 1], layers='h')
+i04 = cv.change_beta([30, 40, 60], [0.0, 1.0, 0.5])
 
 
-def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
-    sc.heading('Test impact of reducing delay time for finding contacts of positives')
-
-    sc.heading('Setting up...')
-
-    sc.tic()
-
-    n_runs = 3
-    verbose = 1
-    base_pars = {
-      'pop_size': 1000,
-      'pop_type': 'hybrid',
-      }
-
-    base_sim = cv.Sim(base_pars) # create sim object
-    base_sim['n_days'] = 50
-    base_sim['beta'] = 0.03 # Increase beta
-
-    n_people = base_sim['pop_size']
-    npts = base_sim.npts
+# 4. Clip edges -- should match the change_beta scenarios
+i05 = cv.clip_edges(start_day=30, end_day=50, change={'h':0.0})
+i06 = cv.clip_edges(start_day=30, end_day=40, change=0.0)
+i07 = cv.clip_edges(start_day=60, end_day=None, change=0.5)
 
 
-    # Define overall testing assumptions
-    testing_prop = 0.1 # Assumes we could test 10% of the population daily (way too optimistic!!)
-    daily_tests = [testing_prop*n_people]*npts # Number of daily tests
-
-    # Define the scenarios
-    scenarios = {
-        'lowtrace': {
-            'name': 'Poor contact tracing',
-            'pars': {
-                'quar_eff': {'h': 1, 's': 0.5, 'w': 0.5, 'c': 0.25},
-                'quar_period': 7,
-                'interventions': [cv.test_num(daily_tests=daily_tests),
-                cv.contact_tracing(trace_probs = {'h': 0, 's': 0, 'w': 0, 'c': 0},
-                        trace_time  = {'h': 1, 's': 7,   'w': 7,   'c': 7})]
-            }
-        },
-        'modtrace': {
-            'name': 'Moderate contact tracing',
-            'pars': {
-                'quar_eff': {'h': 0.75, 's': 0.25, 'w': 0.25, 'c': 0.1},
-                'quar_period': 10,
-                'interventions': [cv.test_num(daily_tests=daily_tests),
-                cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
-                        trace_time  = {'h': 0,  's': 3,  'w': 3,   'c': 8})]
-            }
-        },
-        'hightrace': {
-            'name': 'Fast contact tracing',
-            'pars': {
-                'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
-                'quar_period': 14,
-                'interventions': [cv.test_num(daily_tests=daily_tests),
-                cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
-                        trace_time  = {'h': 0, 's': 1,   'w': 1,   'c': 5})]
-            }
-        },
-        'alltrace': {
-            'name': 'Same-day contact tracing',
-            'pars': {
-                'quar_eff': {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0},
-                'quar_period': 21,
-                'interventions': [cv.test_num(daily_tests=daily_tests),
-                cv.contact_tracing(trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1},
-                        trace_time  = {'h': 0, 's': 1, 'w': 1, 'c': 2})]
-            }
-        },
-    }
-
-    metapars = {'n_runs': n_runs}
-
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose, debug=debug)
-
-    if do_plot:
-        to_plot = [
-            'cum_infections',
-            'cum_recoveries',
-            'new_infections',
-            'n_quarantined',
-            'new_quarantined'
-        ]
-        fig_args = dict(figsize=(24,16))
-        scens.plot(do_save=do_save, do_show=do_show, to_plot=to_plot, fig_path=fig_path, n_cols=2, fig_args=fig_args)
-
-    return scens
+# 5. Test number
+i08 = cv.test_num(daily_tests=[100, 100, 100, 0, 0, 0]*(pars.n_days//6))
 
 
+# 6. Test probability
+i09 = cv.test_prob(symp_prob=0.1)
 
-def test_beta_edges(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
-    pars = dict(
-        pop_size=1000,
-        pop_infected=20,
-        pop_type='hybrid',
-        )
+# 7. Contact tracing
+i10 = cv.test_prob(start_day=20, symp_prob=0.01, asymp_prob=0.0, symp_quar_prob=1.0, asymp_quar_prob=1.0, test_delay=0)
+i11 = cv.contact_tracing(start_day=20, trace_probs=dict(h=0.9, s=0.7, w=0.7, c=0.3), trace_time=dict(h=0, s=1, w=1, c=3))
 
-    start_day = 25 # Day to start the intervention
-    end_day   = 40 # Day to end the intervention
-    change    = 0.3 # Amount of change
 
-    sims = sc.objdict()
-    sims.b = cv.Sim(pars) # Beta intervention
-    sims.e = cv.Sim(pars) # Edges intervention
+# 8. Combination
+i12 = cv.clip_edges(start_day=18, change={'s':0.0}) # Close schools
+i13 = cv.clip_edges(start_day=20, end_day=32,   change={'w':0.7, 'c':0.7}) # Reduce work and community
+i14 = cv.clip_edges(start_day=32, end_day=45,   change={'w':0.3, 'c':0.3}) # Reduce work and community more
+i15 = cv.clip_edges(start_day=45, end_day=None, change={'w':0.9, 'c':0.9}) # Reopen work and community more
+i16 = cv.test_prob(start_day=38, symp_prob=0.01, asymp_prob=0.0, symp_quar_prob=1.0, asymp_quar_prob=1.0, test_delay=2) # Start testing for TTQ
+i17 = cv.contact_tracing(start_day=40, trace_probs=dict(h=0.9, s=0.7, w=0.7, c=0.3), trace_time=dict(h=0, s=1, w=1, c=3)) # Start tracing for TTQ
 
-    beta_interv = cv.change_beta(days=[start_day, end_day], changes=[change, 1.0])
-    edge_interv = cv.clip_edges(start_day=start_day, end_day=end_day, change=change, verbose=True)
-    sims.b.update_pars(interventions=beta_interv)
-    sims.e.update_pars(interventions=edge_interv)
 
+#%% Create and run the simulations
+sims = sc.objdict()
+sims.dynamic      = cv.Sim(pars=pars, interventions=[i00, i01])
+sims.sequence     = cv.Sim(pars=pars, interventions=i02)
+sims.change_beta1 = cv.Sim(pars=pars, interventions=i03)
+sims.clip_edges1  = cv.Sim(pars=pars, interventions=i05) # Roughly equivalent to change_beta1
+sims.change_beta2 = cv.Sim(pars=pars, interventions=i04)
+sims.clip_edges2  = cv.Sim(pars=pars, interventions=[i06, i07]) # Roughly euivalent to change_beta2
+sims.test_num     = cv.Sim(pars=pars, interventions=i08)
+sims.test_prob    = cv.Sim(pars=pars, interventions=i09)
+sims.tracing      = cv.Sim(pars=pars, interventions=[i10, i11])
+sims.combo        = cv.Sim(pars=pars, interventions=[i12, i13, i14, i15, i16, i17])
+
+for key,sim in sims.items():
+    sim.label = key
+    sim.run(verbose=verbose)
+
+
+#%% Plotting
+if do_plot:
     for sim in sims.values():
-        sim.run()
-        if do_plot:
-            sim.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
-            sim.plot_result('r_eff')
+        print(f'Running {sim.label}...')
+        sim.plot()
+        fig = pl.gcf()
+        fig.axes[0].set_title(f'Simulation: {sim.label}')
 
-    return sims
-
-
-def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
-    sc.heading('Test of bed capacity estimation')
-
-    sc.heading('Setting up...')
-
-    sc.tic()
-
-    n_runs = 2
-    verbose = 1
-
-    basepars = {'pop_size': 1000}
-    metapars = {'n_runs': n_runs}
-
-    sim = cv.Sim()
-
-    # Define the scenarios
-    scenarios = {
-        'baseline': {
-          'name': 'No bed constraints',
-          'pars': {
-              'pop_infected': 100
-          }
-        },
-        'bedconstraint': {
-            'name': 'Only 50 beds available',
-            'pars': {
-                'pop_infected': 100,
-                'n_beds': 50,
-            }
-        },
-        'bedconstraint2': {
-            'name': 'Only 10 beds available',
-            'pars': {
-                'pop_infected': 100,
-                'n_beds': 10,
-            }
-        },
-    }
-
-    scens = cv.Scenarios(sim=sim, basepars=basepars, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose, debug=debug)
-
-    if do_plot:
-        to_plot = sc.odict({
-            'Cumulative deaths':   'cum_deaths',
-            'People needing beds / beds': 'bed_capacity',
-            'Number of cases requiring hospitalization': 'n_severe',
-            'Number of cases requiring ICU': 'n_critical',
-        })
-        scens.plot(to_plot=to_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
-
-    return scens
-
-
-def test_borderclosure(do_plot=False, do_show=True, do_save=False, fig_path=None):
-    sc.heading('Test effect of border closures')
-
-    sc.heading('Setting up...')
-
-    sc.tic()
-
-    n_runs = 2
-    verbose = 1
-
-    basepars = {'pop_size': 1000}
-    basepars = {'n_imports': 5}
-    metapars = {'n_runs': n_runs}
-
-    sim = cv.Sim()
-
-    # Define the scenarios
-    scenarios = {
-        'baseline': {
-            'name': 'No border closures',
-            'pars': {
-            }
-        },
-        'borderclosures_day10': {
-            'name': 'Close borders on day 10',
-            'pars': {
-                'interventions': [cv.dynamic_pars({'n_imports': {'days': 10, 'vals': 0}})]
-            }
-        },
-    }
-
-    scens = cv.Scenarios(sim=sim, basepars=basepars, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose, debug=debug)
-
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=fig_path)
-
-    return scens
-
-
-#%% Run as a script
-if __name__ == '__main__':
-    sc.tic()
-
-    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
-    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
-    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
-    sims = test_beta_edges(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
-    bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
-    border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
-
-    for path in fig_paths:
-        if os.path.exists(path):
-            print(f'Removing {path}')
-            os.remove(path)
-
-    sc.toc()
-
-
-print('Done.')
