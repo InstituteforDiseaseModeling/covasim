@@ -598,7 +598,7 @@ class contact_tracing(Intervention):
         contact_red (float): not implemented currently, but could potentially scale contact in this intervention
         do_plot (bool): whether or not to plot
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, contact_red=None, do_plot=None):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, contact_red=None, do_plot=None, presumptive=False):
         super().__init__(do_plot=do_plot)
         if trace_probs is None:
             trace_probs = 1.0
@@ -609,6 +609,7 @@ class contact_tracing(Intervention):
         self.contact_red = contact_red
         self.start_day   = start_day
         self.end_day     = end_day
+        self.presumptive = presumptive
         self._store_args()
         return
 
@@ -635,8 +636,28 @@ class contact_tracing(Intervention):
         elif self.end_day is not None and t > self.end_day:
             return
 
-        just_diagnosed_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
-        if len(just_diagnosed_inds): # If there are any just-diagnosed people, go trace their contacts
-            sim.people.trace(just_diagnosed_inds, self.trace_probs, self.trace_time)
+        if self.presumptive:
+            trace_from_inds = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
+            print(trace_from_inds)
+            print(sim.people.date_diagnosed[trace_from_inds])
+
+            test_pos_inds = trace_from_inds[cvu.true( sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
+            if len(test_pos_inds): # If there are any just-diagnosed people, go trace their contacts
+                print('Pos inds:', test_pos_inds)
+                sim.people.trace(test_pos_inds, self.trace_probs, self.trace_time, sim.pars['quar_period'])
+                print('Pos DKC     :', sim.people.date_known_contact[test_pos_inds])
+                print('Pos End Quar:', sim.people.date_end_quarantine[test_pos_inds])
+
+            test_neg_inds = trace_from_inds[cvu.false( sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
+            if len(test_neg_inds): # If there are any just-diagnosed people, go trace their contacts
+                UNKNOWN_TEST_DELAY = 1
+                print('Neg inds:', test_neg_inds)
+                sim.people.trace(test_neg_inds, self.trace_probs, self.trace_time, UNKNOWN_TEST_DELAY)
+                print('Neg DKC     :', sim.people.date_known_contact[test_neg_inds])
+                print('Neg End Quar:', sim.people.date_end_quarantine[test_neg_inds])
+        else:
+            trace_from_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
+            if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
+                sim.people.trace(trace_from_inds, self.trace_probs, self.trace_time, sim.pars['quar_period'])
 
         return

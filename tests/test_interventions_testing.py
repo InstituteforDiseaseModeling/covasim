@@ -226,14 +226,88 @@ def test_tracedelay(do_plot=False, do_show=True, do_save=False, fig_path=None):
     return scens
 
 
+def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=None):
+    sc.heading('Test impact of presumptive quarantine')
+
+    sc.heading('Setting up...')
+
+    sc.tic()
+
+    n_runs = 1 # 3
+    verbose = 1
+    base_pars = {
+      'pop_size': 2000,
+      'pop_type': 'hybrid',
+      }
+
+    base_sim = cv.Sim(base_pars) # create sim object
+    base_sim['n_days'] = 50
+    base_sim['beta'] = 0.03 # Increase beta
+
+    n_people = base_sim['pop_size']
+    npts = base_sim.npts
+
+
+    # Define overall testing assumptions
+    testing_prop = 0.01 # Assumes we could test 5% of the population daily (way too optimistic!!)
+    daily_tests = [testing_prop*n_people]*npts # Number of daily tests
+
+    regular = {
+            'name': 'ordinary contact tracing',
+            'pars': {
+                'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
+                'quar_period': 14,
+                'interventions': [cv.test_num(daily_tests=daily_tests, symp_test=50),
+                cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
+                        trace_time  = {'h': 0, 's': 2,   'w': 2,   'c': 5})]
+            }
+        }
+
+    presumptive = {
+            'name': 'presumptive contact tracing',
+            'pars': {
+                'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
+                'quar_period': 14,
+                'interventions': [cv.test_num(daily_tests=daily_tests, symp_test=50),
+                cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
+                        trace_time  = {'h': 0, 's': 2,   'w': 2,   'c': 5},
+                        presumptive = True )]
+            }
+        }
+
+    # Define the scenarios
+    scenarios = {
+        'regular': regular,
+        'presumptive': presumptive,
+    }
+
+    metapars = {'n_runs': n_runs}
+
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run(verbose=verbose, debug=debug)
+
+    if do_plot:
+        to_plot = [
+            'cum_infections',
+            'cum_recoveries',
+            'new_infections',
+            'n_quarantined',
+            'new_quarantined'
+        ]
+        fig_args = dict(figsize=(24,16))
+        scens.plot(do_save=do_save, do_show=do_show, to_plot=to_plot, fig_path=fig_path, n_cols=2, fig_args=fig_args)
+
+    return scens
+
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
-    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
-    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
+    #scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
+    #scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
+    #scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
+    scens4 = test_presumptive_quar(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
 
     sc.toc()
 

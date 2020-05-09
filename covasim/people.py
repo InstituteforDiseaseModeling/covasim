@@ -391,11 +391,10 @@ class People(cvb.BasePeople):
             inds (array): indices of who to quarantine
         '''
         self.quarantined[inds] = True
-        self.date_end_quarantine[inds] = self.t + self.pars['quar_period']
         return
 
 
-    def trace(self, inds, trace_probs, trace_time):
+    def trace(self, inds, trace_probs, trace_time, quar_period=None):
         '''
         Trace the contacts of the people provided
         Args:
@@ -403,13 +402,12 @@ class People(cvb.BasePeople):
             trace_probs (dict): probability of being able to trace people at each contact layer - should have the same keys as contacts
             trace_time (dict): # days it'll take to trace people at each contact layer - should have the same keys as contacts
         '''
-        # Figure out who has been contacted in the past
-        never_been_contacted = self.not_defined('date_known_contact')  # Indices of people who've never been contacted
 
         # Extract the indices of the people who'll be contacted
         traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
         for lkey,this_trace_prob in traceable_layers.items():
             if self.pars['beta_layer'][lkey]: # Skip if beta is 0 for this layer
+                this_trace_time = trace_time[lkey]
 
                 # Find all the contacts of these people
                 nzinds = self.contacts[lkey]['beta'].nonzero()[0] # Find nonzero beta edges
@@ -424,16 +422,13 @@ class People(cvb.BasePeople):
                 contact_inds = cvu.binomial_filter(this_trace_prob, edge_inds) # Filter the indices according to the probability of being able to trace this layer
                 self.known_contact[contact_inds] = True
 
-                # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?
-                first_time_contacted_inds   = np.intersect1d(never_been_contacted, contact_inds) # indices of people getting contacted for the first time
-                contacted_before_inds       = np.setdiff1d(contact_inds, first_time_contacted_inds) # indices of people who've been contacted before
+                if len(contact_inds) and quar_period is not None:
+                    self.date_known_contact[contact_inds] = np.nanmin(np.stack([
+                        self.date_known_contact[contact_inds], (self.t + this_trace_time)*np.ones_like(self.date_known_contact[contact_inds])
+                    ]))
 
-                if len(first_time_contacted_inds):
-                    self.date_known_contact[first_time_contacted_inds]  = self.t + trace_time[lkey] # Store when they were contacted
-                if len(contacted_before_inds):
-                    self.date_known_contact[contacted_before_inds]  = np.minimum(self.date_known_contact[contacted_before_inds], self.t + trace_time[lkey])
+                    self.date_end_quarantine[contact_inds] = np.nanmax(np.stack([
+                        self.date_end_quarantine[contact_inds], (self.t + this_trace_time + quar_period)*np.ones_like(self.date_end_quarantine[contact_inds])
+                    ]))
 
         return
-
-
-
