@@ -61,12 +61,6 @@ def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None
                 'interventions': cv.test_prob(symp_prob=max_optimistic_testing, asymp_prob=0.0)
                 }
         },
-        # 'historical': {
-        #     'name': 'Test a known number of positive cases',
-        #     'pars': {
-        #         'interventions': cv.test_historical(n_tests=[100]*npts, n_positive = [1]*npts)
-        #     }
-        # },
         'sequence': {
             'name': 'Historical switching to probability',
             'pars': {
