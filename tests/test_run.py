@@ -216,6 +216,4 @@ if __name__ == '__main__':
     scens2 = test_complex_scenarios(do_plot=do_plot)
 
     sc.toc(T)
-
-
-print('Done.')
+    print('Done.')
