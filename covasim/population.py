@@ -12,7 +12,7 @@ from . import defaults as cvd
 from . import parameters as cvpars
 from . import people as cvppl
 from collections import defaultdict
-
+import uuid
 
 # Specify all externally visible functions this file defines
 __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
@@ -144,8 +144,8 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
 
     # Actually create the contacts
     if   microstructure == 'random':    contacts, layer_keys = make_random_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'clustered': contacts, layer_keys = make_microstructured_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'hybrid':    contacts, layer_keys = make_hybrid_contacts(pop_size, ages, sim['contacts'])
+    elif microstructure == 'clustered': contacts, layer_keys = make_microstructured_contacts(pop_size, sim['contacts'], sim)
+    elif microstructure == 'hybrid':    contacts, layer_keys = make_hybrid_contacts(pop_size, ages, sim['contacts'], sim)
     else:
         errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
         raise NotImplementedError(errormsg)
@@ -189,7 +189,7 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2, directed=False):
     return contacts_list, layer_keys
 
 
-def make_microstructured_contacts(pop_size, contacts, directed=False):
+def make_microstructured_contacts(pop_size, contacts, sim, directed=False):
     ''' Create microstructured contacts -- i.e. households, schools, etc. '''
 
     # Preprocessing -- same as above
@@ -200,12 +200,15 @@ def make_microstructured_contacts(pop_size, contacts, directed=False):
     contacts_list = [{c:[] for c in layer_keys} for p in range(pop_size)] # Pre-populate
 
     for layer_name, cluster_size in contacts.items():
+        # Add dictionary for this layer
+        cluster_dict = dict()
         # Make clusters - each person belongs to one cluster
         n_remaining = pop_size
         contacts_dict = defaultdict(set) # Use defaultdict of sets for convenience while initializing. Could probably change this as part of performance optimization
 
         while n_remaining > 0:
-
+            # Assign cluster id
+            cluster_id = uuid.uuid1()
             # Get the size of this cluster
             this_cluster =  cvu.poisson(cluster_size)  # Sample the cluster size
             if this_cluster > n_remaining:
@@ -213,7 +216,7 @@ def make_microstructured_contacts(pop_size, contacts, directed=False):
 
             # Indices of people in this cluster
             cluster_indices = (pop_size-n_remaining)+np.arange(this_cluster)
-
+            cluster_dict[cluster_id] = cluster_indices
             # Add symmetric pairwise contacts in each cluster. Can probably optimize this
             for i in cluster_indices:
                 for j in cluster_indices:
@@ -229,10 +232,12 @@ def make_microstructured_contacts(pop_size, contacts, directed=False):
         for key in contacts_dict.keys():
             contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=cvd.default_int)
 
+        sim.contactdict[layer_name] = cluster_dict
+
     return contacts_list, layer_keys
 
 
-def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=None):
+def make_hybrid_contacts(pop_size, ages, contacts, sim, school_ages=None, work_ages=None):
     '''
     Create "hybrid" contacts -- microstructured contacts for households and
     random contacts for schools and workplaces, both of which have extremely
@@ -252,7 +257,7 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     contacts_list = [{key:[] for key in layer_keys} for i in range(pop_size)]
 
     # Start with the household contacts for each person
-    h_contacts, _ = make_microstructured_contacts(pop_size, {'h':contacts['h']})
+    h_contacts, _ = make_microstructured_contacts(pop_size, {'h':contacts['h']}, sim)
 
     # Make community contacts
     c_contacts, _ = make_random_contacts(pop_size, {'c':contacts['c']})
