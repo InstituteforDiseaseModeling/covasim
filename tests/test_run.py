@@ -10,7 +10,7 @@ import covasim as cv
 do_plot = 1
 do_save = 0
 do_show = 1
-debug   = 0
+debug   = 1
 verbose = 0
 
 #%% Define the tests

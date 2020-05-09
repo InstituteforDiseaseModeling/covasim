@@ -111,11 +111,9 @@ class MultiSim(sc.prettyobj):
 
     def run(self, *args, **kwargs):
         '''
-        Run the actual scenarios
+        Run the actual sims
 
         Args:
-            debug (bool): if True, runs a single run instead of multiple, which makes debugging easier
-            verbose (int): level of detail to print, passed to sim.run()
             kwargs (dict): passed to multi_run() and thence to sim.run()
 
         Returns:

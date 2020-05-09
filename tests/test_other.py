@@ -11,7 +11,9 @@ import covasim as cv
 import pylab as pl
 
 
-do_plot = True
+do_plot = 1
+verbose = 0
+debug   = 1 # This runs without parallelization; faster with pytest
 csv_file  = os.path.join(sc.thisdir(__file__), 'example_data.csv')
 xlsx_file = os.path.join(sc.thisdir(__file__), 'example_data.xlsx')
 
@@ -34,7 +36,7 @@ def test_base():
     sim_path  = 'base_tests.sim'
 
     # Create a small sim for later use
-    sim = cv.Sim(pop_size=100, verbose=0)
+    sim = cv.Sim(pop_size=100, verbose=verbose)
     sim.run()
 
     # Check setting invalid key
@@ -102,7 +104,7 @@ def test_interventions():
     sc.heading('Testing interventions')
 
     # Create sim
-    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, verbose=0)
+    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, verbose=verbose)
 
     # Intervention conversion
     ce = cv.InterventionDict(**{'which': 'clip_edges', 'pars': {'start_day': 10, 'end_day':30, 'change': 0.5, 'verbose':True}})
@@ -190,7 +192,7 @@ def test_people():
     sc.heading('Testing people')
 
     # Test dynamic layers
-    sim = cv.Sim(pop_size=100, n_days=10, verbose=0, dynam_layer={'a':1})
+    sim = cv.Sim(pop_size=100, n_days=10, verbose=verbose, dynam_layer={'a':1})
     sim.run()
 
     return
@@ -203,7 +205,7 @@ def test_plotting():
 
     # Create sim with data and interventions
     ce = cv.clip_edges(**{'start_day': 10, 'change': 0.5})
-    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, interventions=ce, verbose=0)
+    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, interventions=ce, verbose=verbose)
     sim.run(do_plot=True)
 
     # Handle lesser-used plotting options
@@ -299,7 +301,7 @@ def test_run():
     msim.base_sim = msim.sims[0] # Restore
 
     # Run
-    msim.run(verbose=0)
+    msim.run(verbose=verbose)
     msim.reduce(quantiles=[0.1, 0.9], output=True)
     with pytest.raises(ValueError):
         msim.reduce(quantiles='invalid')
@@ -319,7 +321,7 @@ def test_run():
 
     # Scenarios
     scens = cv.Scenarios(sim=s1, metapars={'n_runs':1})
-    scens.run(keep_people=True, verbose=0)
+    scens.run(keep_people=True, verbose=verbose, debug=debug)
     for keep_people in [True, False]:
         scens.save(scens_path, keep_people=keep_people)
     cv.Scenarios.load(scens_path)
