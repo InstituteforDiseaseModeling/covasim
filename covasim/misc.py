@@ -64,7 +64,7 @@ def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
     else:
         data['date'] = pd.to_datetime(data['date']).dt.date
 
-    data.set_index('date', inplace=True)
+    data.set_index('date', inplace=True, drop=False) # So sim.data['date'] can still be accessed
 
     return data
 

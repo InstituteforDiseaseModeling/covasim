@@ -588,6 +588,18 @@ def get_individual_states(sim):
 # Default settings for the Plotly legend
 plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
 
+
+def plotly_interventions(sim, fig):
+    ''' Add vertical lines for interventions to the plot '''
+    if sim['interventions']:
+        for interv in sim['interventions']:
+            if hasattr(interv, 'days'):
+                for interv_day in interv.days:
+                    if interv_day and interv_day < sim['n_days']:
+                        fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
+                        fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
+    return
+
 def plotly_sim(sim):
     ''' Main simulation results -- parallel of sim.plot() '''
 
@@ -606,14 +618,7 @@ def plotly_sim(sim):
                 ydata = sim.data[key]
                 fig.add_trace(go.Scatter(x=xdata, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
-        if sim['interventions']:
-            for interv in sim['interventions']:
-                if hasattr(interv, 'days'):
-                    for interv_day in interv.days:
-                        if interv_day > 0 and interv_day < sim['n_days']:
-                            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
-
+        plotly_interventions(sim, fig)
         fig.update_layout(title={'text':title}, yaxis_title='Count', autosize=True, **plotly_legend)
 
         plots.append(fig)
@@ -638,15 +643,7 @@ def plotly_people(sim, do_show=False):
             name=state['name']
         ))
 
-    if sim['interventions']:
-        for interv in sim['interventions']:
-                if hasattr(interv, 'days'):
-                    if interv.do_plot:
-                        for interv_day in interv.days:
-                            if interv_day > 0 and interv_day < sim['n_days']:
-                                fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                                fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
-
+    plotly_interventions(sim, fig)
     fig.update_layout(yaxis_range=(0, sim.n))
     fig.update_layout(title={'text': 'Numbers of people by health state'}, yaxis_title='People', autosize=True, **plotly_legend)
 
