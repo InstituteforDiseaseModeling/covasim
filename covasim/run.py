@@ -4,7 +4,6 @@ Functions and classes for running multiple Covasim runs.
 
 #%% Imports
 import numpy as np
-import pylab as pl
 import pandas as pd
 import sciris as sc
 from collections import defaultdict

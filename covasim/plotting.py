@@ -33,7 +33,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     return args
 
 
-def handle_to_plot(which, to_plot, n_cols):
+def handle_to_plot(which, to_plot, n_cols, sim=None):
     ''' Handle which quantities to plot '''
 
     if to_plot is None:
@@ -44,6 +44,16 @@ def handle_to_plot(which, to_plot, n_cols):
         else:
             errormsg = f'"which" must be "sim" or "scens", not "{which}"'
             raise NotImplementedError(errormsg)
+    elif isinstance(to_plot, list): # If a list of keys has been supplied
+        if sim is None:
+            errormsg = f'Cannot plot {to_plot} as a list without a sim supplied; supply as a title:resultkey dict instead'
+            raise ValueError(errormsg)
+        else:
+            to_plot_list = to_plot # Store separately
+            to_plot = sc.odict() # Create the dict
+            for reskey in to_plot_list:
+                to_plot[sim.results[reskey].name] = [reskey] # Use the result name as the key and the reskey as the value
+
     to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
@@ -242,7 +252,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols)
+    to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
