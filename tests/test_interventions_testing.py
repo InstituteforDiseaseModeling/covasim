@@ -233,7 +233,7 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
 
     sc.tic()
 
-    n_runs = 1 # 3
+    n_runs = 3
     verbose = 1
     base_pars = {
       'pop_size': 2000,
@@ -287,13 +287,18 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
     scens.run(verbose=verbose, debug=debug)
 
     if do_plot:
-        to_plot = [
-            'cum_infections',
-            'cum_recoveries',
-            'new_infections',
-            'n_quarantined',
-            'new_quarantined'
-        ]
+        to_plot = {
+            'Number of people currently infectious': [
+                'n_infectious',
+            ],
+            'Number of people in quarantine': [
+                'n_quarantined',
+            ],
+            'Number of newly quarantined': [
+                'new_quarantined',
+            ]
+        }
+
         fig_args = dict(figsize=(24,16))
         scens.plot(do_save=do_save, do_show=do_show, to_plot=to_plot, fig_path=fig_path, n_cols=2, fig_args=fig_args)
 
