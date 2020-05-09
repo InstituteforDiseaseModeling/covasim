@@ -21,7 +21,8 @@ if 'nowebapp' in sys.argv:
     webapp_reqs = [
         'scirisweb',
         'gunicorn',
-        'plotly_express'
+        'plotly',
+        'ipywidgets',
     ]
     requirements = [req for req in requirements if req not in webapp_reqs]
 

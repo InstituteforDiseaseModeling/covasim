@@ -8,7 +8,10 @@ Version 1.0.0 (2020-05-08)
 --------------------------
 - Official release of Covasim.
 - Made scenario and simulation plotting more flexible: ``to_plot`` can now simply be a list of results keys, e.g. ``cum_deaths``.
-- Added additional tests.
+- Added additional tests, increasing test coverage from 67% to 92%.
+- Fixed bug in ``cv.save()``.
+- Added ``reset()`` to MultiSim that undoes a ``reduce()`` or ``combine()`` call.
+- General code cleaning: made exceptions raised more consistent, removed unused functions, etc.
 - GitHub info: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
 
 
