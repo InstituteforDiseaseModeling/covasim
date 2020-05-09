@@ -431,10 +431,10 @@ class People(cvb.BasePeople):
                     if this_quar_period > 0:
                         self.date_known_contact[contact_inds] = np.nanmin(np.stack([
                             self.date_known_contact[contact_inds], (self.t + this_trace_time)*np.ones_like(self.date_known_contact[contact_inds])
-                        ]))
+                        ]), axis=0)
 
                         self.date_end_quarantine[contact_inds] = np.nanmax(np.stack([
                             self.date_end_quarantine[contact_inds], (self.t + this_trace_time + this_quar_period)*np.ones_like(self.date_end_quarantine[contact_inds])
-                        ]))
+                        ]), axis=0)
 
         return

@@ -236,49 +236,77 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
     n_runs = 3
     verbose = 1
     base_pars = {
-      'pop_size': 2000,
-      'pop_type': 'hybrid',
-      }
+      'pop_size'    : 10000,
+      'pop_infected':    10,
+      'pop_type'    : 'synthpops',
+      'n_days'      : 150,
+      'beta'        : 0.02,
+      'quar_period' : 14,
+      'quar_eff'    : {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1}, # Bidirectional becaues on transmit and receive, e.g. in home
+      'diag_factor' : 0.2, # Worried about diagnosed while in quarantine - double impact!
+    }
 
     base_sim = cv.Sim(base_pars) # create sim object
-    base_sim['n_days'] = 50
-    base_sim['beta'] = 0.03 # Increase beta
 
     n_people = base_sim['pop_size']
     npts = base_sim.npts
 
+    # DEFINE INTERVENTIONS
+    test_delay = 2
 
-    # Define overall testing assumptions
-    testing_prop = 0.01 # Assumes we could test 5% of the population daily (way too optimistic!!)
-    daily_tests = [testing_prop*n_people]*npts # Number of daily tests
+    testing = cv.test_prob(symp_prob=0.03, asymp_prob=0.001, symp_quar_prob=0.5, asymp_quar_prob=0.1, test_delay=test_delay)
+    isokwargs = {
+        'start_day'  : 30,
+        'trace_probs': {'h': 0, 's': 0, 'w': 0, 'c': 0},
+        'trace_time' : {'h': 0, 's': 0,   'w': 0,   'c': 0}
+    }
+    ctkwargs = {
+        'start_day'  : 30,
+        'trace_probs': {'h': 0.9, 's': 0.7, 'w': 0.7, 'c': 0.2},
+        'trace_time' : {'h': 0, 's': 2,   'w': 2,   'c': 3}
+    }
 
-    regular = {
-            'name': 'ordinary contact tracing',
-            'pars': {
-                'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
-                'quar_period': 14,
-                'interventions': [cv.test_num(daily_tests=daily_tests, symp_test=50, test_delay=2),
-                cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
-                        trace_time  = {'h': 0, 's': 2,   'w': 2,   'c': 5})]
-            }
+    baseline = {
+        'name': 'Baseline',
+        'pars': {
+            'interventions': [ testing, ]
         }
+    }
 
-    presumptive = {
-            'name': 'presumptive contact tracing',
-            'pars': {
-                'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
-                'quar_period': 14,
-                'interventions': [cv.test_num(daily_tests=daily_tests, symp_test=50, test_delay=2),
-                cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
-                        trace_time  = {'h': 0, 's': 2,   'w': 2,   'c': 5},
-                        presumptive = True )]
-            }
+    contact_tracing = {
+        'name': 'Contact tracing',
+        'pars': {
+            'interventions': [
+                testing,
+                cv.contact_tracing(**ctkwargs)]
         }
+    }
+
+    quar_on_test = {
+        'name': 'Quarantine on test',
+        'pars': {
+            'interventions': [
+                testing,
+                cv.contact_tracing(**isokwargs, presumptive=True, test_delay=test_delay)]
+        }
+    }
+
+    # Only if trace_time < test_delay will presumptive tracing follow contacts of negatives to quarantine
+    presumptive_ct = {
+        'name': 'Contact tracing (presumptive)',
+        'pars': {
+            'interventions': [
+                testing,
+                cv.contact_tracing(**ctkwargs, presumptive=True, test_delay=test_delay)]
+        }
+    }
 
     # Define the scenarios
     scenarios = {
-        'regular': regular,
-        'presumptive': presumptive,
+        'Baseline': baseline,
+        'Quarantine on test': quar_on_test,
+        'Trace on diagnosis': contact_tracing,
+        'Trace on test': presumptive_ct,
     }
 
     metapars = {'n_runs': n_runs}
@@ -299,6 +327,12 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
             ],
             'Number diagnosed': [
                 'n_diagnosed',
+            ],
+            'Cum inf': [
+                'cum_infections',
+            ],
+            'Re': [
+                'r_eff',
             ],
         }
 

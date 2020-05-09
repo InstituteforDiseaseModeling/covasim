@@ -76,6 +76,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     f_quar_eff = ~quar +  quar * quar_trans # Quarantine
     rel_trans  = rel_trans * inf * f_quar_eff * f_asymp * f_diag * beta_layer * viral_load # Recalulate transmisibility
     rel_sus    = rel_sus   * sus * f_quar_eff # Recalulate susceptibility
+
     return rel_trans, rel_sus
 
 
