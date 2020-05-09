@@ -35,7 +35,6 @@ class ParsObj(sc.prettyobj):
             all_keys = '\n'.join(list(self.pars.keys()))
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
-        return
 
     def __setitem__(self, key, value):
         ''' Ditto '''
@@ -274,12 +273,6 @@ class BaseSim(ParsObj):
         return keys
 
 
-    def layer_keys(self):
-        ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
-        keys = list(self['beta_layer'].keys())
-        return keys
-
-
     def copy(self):
         ''' Returns a deep copy of the sim '''
         return sc.dcp(self)
@@ -379,7 +372,7 @@ class BaseSim(ParsObj):
             keys = ['results', 'pars', 'summary']
         keys = sc.promotetolist(keys)
 
-        # Convert to JSON-compatibleformat
+        # Convert to JSON-compatible format
         d = {}
         for key in keys:
             if key == 'results':
@@ -903,7 +896,7 @@ class FlexDict(dict):
                 dictkey = self.keys()[key]
                 return self[dictkey]
             except:
-                raise KE # This is the original errors
+                raise sc.KeyNotFoundError(KE) # Raise the original error
 
     def keys(self):
         return list(super().keys())

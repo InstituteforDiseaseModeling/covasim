@@ -70,7 +70,7 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
             popdict, layer_keys = make_synthpop(sim)
         else:
             errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
-            raise NotImplementedError(errormsg)
+            raise ValueError(errormsg)
 
     # Ensure prognoses are set
     if sim['prognoses'] is None:

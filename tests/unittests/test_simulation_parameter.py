@@ -52,36 +52,6 @@ class SimulationParameterTests(CovaSimTest):
             TPKeys.number_agents: 1234,
             TPKeys.initial_infected_count: 0
         }
-        pop_10k_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: 1e4,
-            TPKeys.initial_infected_count: 0
-        }
-        pop_100k_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: 1e5,
-            TPKeys.initial_infected_count: 0
-        }
-        pop_200k_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: 2e5,
-            TPKeys.initial_infected_count: 0
-        }
-        pop_400k_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: 4e5,
-            TPKeys.initial_infected_count: 0
-        }
-        pop_1M_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: 1e6,
-            TPKeys.initial_infected_count: 0
-        }
         self.run_sim(pop_2_one_day)
         pop_2_pop = self.get_day_zero_channel_value()
         self.run_sim(pop_10_one_day)
@@ -91,29 +61,11 @@ class SimulationParameterTests(CovaSimTest):
         self.run_sim(pop_1234_one_day)
         pop_1234_pop = self.get_day_zero_channel_value()
 
-        self.run_sim(pop_10k_one_day)
-        pop_10k_pop = self.get_day_zero_channel_value()
-        self.run_sim(pop_100k_one_day)
-        pop_100k_pop = self.get_day_zero_channel_value()
-        # self.run_sim(pop_200k_one_day)
-        # pop_200k_pop = self.get_day_zero_channel_value()
-
-        # self.run_sim(pop_400k_one_day)
-        # pop_400k_pop = self.get_day_zero_channel_value()
-        # self.run_sim(pop_1M_one_day)
-        # pop_1M_pop = self.get_day_zero_channel_value()
-
         self.assertEqual(pop_2_pop, pop_2_one_day[TPKeys.number_agents])
         self.assertEqual(pop_10_pop, pop_10_one_day[TPKeys.number_agents])
         self.assertEqual(pop_123_pop, pop_123_one_day[TPKeys.number_agents])
         self.assertEqual(pop_1234_pop, pop_1234_one_day[TPKeys.number_agents])
 
-        self.assertEqual(pop_10k_pop, pop_10k_one_day[TPKeys.number_agents])
-        self.assertEqual(pop_100k_pop, pop_100k_one_day[TPKeys.number_agents])
-        # self.assertEqual(pop_200k_pop, pop_200k_one_day[TPKeys.number_agents])
-
-        # self.assertEqual(pop_400k_pop, pop_400k_one_day[TPKeys.number_agents])
-        # self.assertEqual(pop_1M_pop, pop_1M_one_day[TPKeys.number_agents])
         pass
 
     def test_population_size_ranges(self):
@@ -141,10 +93,6 @@ class SimulationParameterTests(CovaSimTest):
         self.assertEqual(self.simulation_result['results'][ResKeys.susceptible_at_timestep][-1], 0)
         self.assertEqual(self.simulation_result['results'][ResKeys.susceptible_at_timestep][0], 0)
 
-        # with self.assertRaises(Exception) as context:
-        #     self.run_sim(pop_zero_one_day)
-        # error_message = str(context.exception)
-        # self.assertIn("population", error_message)
         pass
 
     def test_population_scaling(self):
@@ -155,14 +103,17 @@ class SimulationParameterTests(CovaSimTest):
         Depends on population_size
         """
         scale_1_one_day = {
+            TPKeys.number_agents: 100,
             TPKeys.population_scaling_factor: 1,
             TPKeys.number_simulated_days: 1
         }
         scale_2_one_day = {
+            TPKeys.number_agents: 100,
             TPKeys.population_scaling_factor: 2,
             TPKeys.number_simulated_days: 1
         }
         scale_10_one_day = {
+            TPKeys.number_agents: 100,
             TPKeys.population_scaling_factor: 10,
             TPKeys.number_simulated_days: 1
         }
@@ -182,16 +133,19 @@ class SimulationParameterTests(CovaSimTest):
         Run sim for one day and verify correct count
         """
         infected_0_one_day = {
+            TPKeys.number_agents: 100,
             TPKeys.number_simulated_days: 1,
             TPKeys.population_scaling_factor: 1,
             TPKeys.initial_infected_count: 0
         }
         infected_1_one_day = {
+            TPKeys.number_agents: 100,
             TPKeys.population_scaling_factor: 1,
             TPKeys.number_simulated_days: 1,
             TPKeys.initial_infected_count: 1
         }
         infected_321_one_day = {
+            TPKeys.number_agents: 1000,
             TPKeys.population_scaling_factor: 1,
             TPKeys.number_simulated_days: 1,
             TPKeys.initial_infected_count: 321
