@@ -87,10 +87,10 @@ def test_beds(do_plot=False, do_show=True, do_save=False, fig_path=None):
 
     if do_plot:
         to_plot = sc.odict({
-            'cum_deaths':   'Cumulative deaths',
-           'bed_capacity': 'People needing beds / beds',
-            'n_severe':     'Number of cases requiring hospitalization',
-            'n_critical':   'Number of cases requiring ICU',
+            'Cumulative deaths':   'cum_deaths',
+            'People needing beds / beds': 'bed_capacity',
+            'Number of cases requiring hospitalization': 'n_severe',
+            'Number of cases requiring ICU': 'n_critical',
         })
         scens.plot(to_plot=to_plot, do_save=do_save, do_show=do_show, fig_path=fig_path)
 

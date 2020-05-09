@@ -249,6 +249,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
     default_colors = sc.gridcolors(ncolors=len(scens.sims))
     for pnum,title,reskeys in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+        reskeys = sc.promotetolist(reskeys) # In case it's a string
         for reskey in reskeys:
             resdata = scens.results[reskey]
             for snum,scenkey,scendata in resdata.enumitems():
