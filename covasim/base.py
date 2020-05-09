@@ -4,7 +4,6 @@ Base classes for Covasim.
 
 import datetime as dt
 import numpy as np
-import pylab as pl
 import pandas as pd
 import sciris as sc
 from . import utils as cvu
@@ -233,32 +232,40 @@ class BaseSim(ParsObj):
         return days
 
 
-    def date(self, ind, *args, dateformat=None):
+    def date(self, ind, *args, dateformat=None, as_date=False):
         '''
-        Convert an integer or list of integer simulation days to a date/list of dates.
+        Convert one or more integer days of simulation time to a date/list of dates --
+        by default returns a string, or returns a datetime Date object if as_date is True.
 
         Args:
             ind (int, list, or array): the day(s) in simulation time
+            as_date (bool): whether to return as a datetime date instead of a string
 
         Returns:
-            dates (str or list): the date relative to the simulation start day, as an integer
+            dates (str, Date, or list): the date(s) corresponding to the simulation day(s)
 
-        **Example**::
+        **Examples**::
 
-            sim.date(35) # Returns '2020-04-05'
+            sim.date(34) # Returns '2020-04-04'
+            sim.date([34, 54]) # Returns ['2020-04-04', '2020-04-24']
+            sim.date(34, 54, as_dt=True) # Returns [datetime.date(2020, 4, 4), datetime.date(2020, 4, 24)]
         '''
 
+        # Handle inputs
         if sc.isnumber(ind): # If it's a number, convert it to a list
             ind = sc.promotetolist(ind)
         ind.extend(args)
-
         if dateformat is None:
             dateformat = '%Y-%m-%d'
 
+        # Do the conversion
         dates = []
         for i in ind:
-            tmp = self['start_day'] + dt.timedelta(days=int(i))
-            dates.append(tmp.strftime(dateformat))
+            date_obj = self['start_day'] + dt.timedelta(days=int(i))
+            if as_date:
+                dates.append(date_obj)
+            else:
+                dates.append(date_obj.strftime(dateformat))
 
         # Return a string rather than a list if only one provided
         if len(ind)==1:

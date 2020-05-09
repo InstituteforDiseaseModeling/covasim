@@ -49,12 +49,15 @@ def test_base():
     print(r)
     print(r.npts)
 
-    # Day conversion
+    # Day and date conversion
     daystr = '2020-04-04'
     sim.day(daystr)
     sim.day(sc.readdate(daystr))
     with pytest.raises(ValueError):
         sim.day('not a date')
+    sim.date(34)
+    sim.date([34, 54])
+    sim.date(34, 54, as_date=True)
 
     # BaseSim methods
     sim.copy()
@@ -399,20 +402,21 @@ def test_sim():
 #%% Run as a script
 if __name__ == '__main__':
 
+    # We need to create plots to test plotting, but can use a non-GUI backend
     if not do_plot:
         pl.switch_backend('agg')
 
     sc.tic()
 
-    # test_base()
-    # test_interventions()
-    # test_misc()
-    # test_people()
+    test_base()
+    test_interventions()
+    test_misc()
+    test_people()
     test_plotting()
-    # test_population()
-    # test_requirements()
-    # test_run()
-    # test_sim()
+    test_population()
+    test_requirements()
+    test_run()
+    test_sim()
 
     print('\n'*2)
     sc.toc()
