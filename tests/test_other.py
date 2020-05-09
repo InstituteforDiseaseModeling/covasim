@@ -7,6 +7,9 @@ import os
 import pytest
 import sciris as sc
 import covasim as cv
+import pylab as pl
+
+do_plot = False
 
 
 #%% Define the tests
@@ -84,11 +87,22 @@ def test_base():
     return
 
 
+def test_requirements():
+    sc.heading('Testing requirements')
+
+    return
+
+
 #%% Run as a script
 if __name__ == '__main__':
+
+    if not do_plot:
+        pl.switch_backend('agg')
+
     sc.tic()
 
     test_base()
+    test_requirements()
 
     print('\n'*2)
     sc.toc()
