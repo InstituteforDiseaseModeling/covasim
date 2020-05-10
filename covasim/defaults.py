@@ -178,10 +178,16 @@ def get_sim_plots():
 
 def get_scen_plots():
     ''' Default scenario plots -- used in run.py '''
-    plots = [
+    plots = sc.odict({
+        'Cumulative infections': [
             'cum_infections',
+        ],
+        'Number of people currently infectious': [
             'n_infectious',
+        ],
+        'Number of people requiring hospitalization': [
             'n_severe',
-            ]
+        ]
+    })
     return plots
 

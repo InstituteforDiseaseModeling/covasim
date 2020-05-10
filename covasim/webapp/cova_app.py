@@ -369,10 +369,10 @@ def run_sim(sim_pars=None, epi_pars=None, int_pars=None, datafile=None, show_ani
 
     graphs = []
     try:
-        graphs += process_graphs(cv.standard_plots(sim))
-        graphs += process_graphs(cv.plot_people(sim))
+        graphs += process_graphs(cv.plotly_sim(sim))
+        graphs += process_graphs(cv.plotly_people(sim))
         if show_animation:
-            graphs += process_graphs(cv.animate_people(sim))
+            graphs += process_graphs(cv.plotly_animate(sim))
     except Exception as E:
         errs.append(log_err('Plotting failed!', E))
         if die: raise
