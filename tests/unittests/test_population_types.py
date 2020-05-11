@@ -16,7 +16,7 @@ class PopulationTypeTests(CovaSimTest):
         pop_types = ['random', 'hybrid', 'clustered']  #, 'synthpops']
         results = {}
         short_sample = {
-            TPKeys.number_agents: 10000,
+            TPKeys.number_agents: 1000,
             TPKeys.number_simulated_days: 10,
             TPKeys.initial_infected_count: 50
         }

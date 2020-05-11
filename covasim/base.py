@@ -2,11 +2,10 @@
 Base classes for Covasim.
 '''
 
-import datetime as dt
 import numpy as np
-import pylab as pl
 import pandas as pd
 import sciris as sc
+import datetime as dt
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
@@ -35,7 +34,6 @@ class ParsObj(sc.prettyobj):
             all_keys = '\n'.join(list(self.pars.keys()))
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
-        return
 
     def __setitem__(self, key, value):
         ''' Ditto '''
@@ -234,32 +232,40 @@ class BaseSim(ParsObj):
         return days
 
 
-    def date(self, ind, *args, dateformat=None):
+    def date(self, ind, *args, dateformat=None, as_date=False):
         '''
-        Convert an integer or list of integer simulation days to a date/list of dates.
+        Convert one or more integer days of simulation time to a date/list of dates --
+        by default returns a string, or returns a datetime Date object if as_date is True.
 
         Args:
             ind (int, list, or array): the day(s) in simulation time
+            as_date (bool): whether to return as a datetime date instead of a string
 
         Returns:
-            dates (str or list): the date relative to the simulation start day, as an integer
+            dates (str, Date, or list): the date(s) corresponding to the simulation day(s)
 
-        **Example**::
+        **Examples**::
 
-            sim.date(35) # Returns '2020-04-05'
+            sim.date(34) # Returns '2020-04-04'
+            sim.date([34, 54]) # Returns ['2020-04-04', '2020-04-24']
+            sim.date(34, 54, as_dt=True) # Returns [datetime.date(2020, 4, 4), datetime.date(2020, 4, 24)]
         '''
 
+        # Handle inputs
         if sc.isnumber(ind): # If it's a number, convert it to a list
             ind = sc.promotetolist(ind)
         ind.extend(args)
-
         if dateformat is None:
             dateformat = '%Y-%m-%d'
 
+        # Do the conversion
         dates = []
         for i in ind:
-            tmp = self['start_day'] + dt.timedelta(days=int(i))
-            dates.append(tmp.strftime(dateformat))
+            date_obj = self['start_day'] + dt.timedelta(days=int(i))
+            if as_date:
+                dates.append(date_obj)
+            else:
+                dates.append(date_obj.strftime(dateformat))
 
         # Return a string rather than a list if only one provided
         if len(ind)==1:
@@ -274,24 +280,27 @@ class BaseSim(ParsObj):
         return keys
 
 
-    def layer_keys(self):
-        ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
-        keys = list(self['beta_layer'].keys())
-        return keys
+    def copy(self):
+        ''' Returns a deep copy of the sim '''
+        return sc.dcp(self)
 
 
-    def export_results(self, for_json=True):
+    def export_results(self, for_json=True, filename=None, indent=2, *args, **kwargs):
         '''
-        Convert results to dict
+        Convert results to dict -- see also to_json().
 
         The results written to Excel must have a regular table shape, whereas
         for the JSON output, arbitrary data shapes are supported.
 
         Args:
-            for_json: If False, only data associated with Result objects will be included in the converted output
+            for_json (bool): if False, only data associated with Result objects will be included in the converted output
+            filename (str): filename to save to; if None, do not save
+            indent (int): indent (int): if writing to file, how many indents to use per nested level
+            args (list): passed to savejson()
+            kwargs (dict): passed to savejson()
 
         Returns:
-            resdict (dict): Dictionary representation of the results
+            resdict (dict): dictionary representation of the results
 
         '''
         resdict = {}
@@ -307,18 +316,26 @@ class BaseSim(ParsObj):
                     resdict[key] = [str(d) for d in res] # Convert dates to strings
                 else:
                     resdict[key] = res
+        if filename is not None:
+            sc.savejson(filename=filename, obj=resdict, indent=indent, *args, **kwargs)
         return resdict
 
 
-    def export_pars(self):
+    def export_pars(self, filename=None, indent=2, *args, **kwargs):
         '''
-        Return parameters for JSON export
+        Return parameters for JSON export -- see also to_json().
 
         This method is required so that interventions can specify
-        their JSON-friendly representation
+        their JSON-friendly representation.
+
+        Args:
+            filename (str): filename to save to; if None, do not save
+            indent (int): indent (int): if writing to file, how many indents to use per nested level
+            args (list): passed to savejson()
+            kwargs (dict): passed to savejson()
 
         Returns:
-
+            pardict (dict): a dictionary containing all the parameter values
         '''
         pardict = {}
         for key in self.pars.keys():
@@ -328,12 +345,9 @@ class BaseSim(ParsObj):
                 pardict[key] = str(self.pars[key])
             else:
                 pardict[key] = self.pars[key]
+        if filename is not None:
+            sc.savejson(filename=filename, obj=pardict, indent=indent, *args, **kwargs)
         return pardict
-
-
-    def copy(self):
-        ''' Returns a deep copy of the sim '''
-        return sc.dcp(self)
 
 
     def to_json(self, filename=None, keys=None, tostring=False, indent=2, verbose=False, *args, **kwargs):
@@ -365,7 +379,7 @@ class BaseSim(ParsObj):
             keys = ['results', 'pars', 'summary']
         keys = sc.promotetolist(keys)
 
-        # Convert to JSON-compatibleformat
+        # Convert to JSON-compatible format
         d = {}
         for key in keys:
             if key == 'results':
@@ -847,7 +861,7 @@ class BasePeople(sc.prettyobj):
 
     @staticmethod
     def remove_duplicates(df):
-        ''' Sort the dataframe and remove duplicates '''
+        ''' Sort the dataframe and remove duplicates -- note, not extensively tested '''
         p1 = df[['p1', 'p2']].values.min(1) # Reassign p1 to be the lower-valued of the two contacts
         p2 = df[['p1', 'p2']].values.max(1) # Reassign p2 to be the higher-valued of the two contacts
         df['p1'] = p1
@@ -889,7 +903,7 @@ class FlexDict(dict):
                 dictkey = self.keys()[key]
                 return self[dictkey]
             except:
-                raise KE # This is the original errors
+                raise sc.KeyNotFoundError(KE) # Raise the original error
 
     def keys(self):
         return list(super().keys())

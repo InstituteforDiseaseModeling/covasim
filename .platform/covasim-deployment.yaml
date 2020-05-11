@@ -33,7 +33,7 @@ spec:
         service: covasim
     spec:
       containers:
-      - image: "registry.hub.docker.com/jules2689/covasim:latest"
+      - image: "registry.hub.docker.com/idmod/covasim:latest-webapp"
         name: covasim
         ports:
         - containerPort: 80

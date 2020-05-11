@@ -3,3 +3,4 @@ sphinxcontrib-napoleon
 beautifulsoup4
 sphinx
 plantweb
+pytest

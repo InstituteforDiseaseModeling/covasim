@@ -6,7 +6,7 @@ Test that the parameters and data files are being created correctly.
 import os
 import pytest
 import sciris as sc
-import covasim as cv # NOTE: this is the only tests script that doesn't use base
+import covasim as cv
 
 do_plot = False
 
@@ -45,15 +45,29 @@ def test_location():
     return sim
 
 
+def test_age_structure():
+    sc.heading('Age structures')
+
+    available     = 'Lithuania'
+    not_available = 'Ruritania'
+
+    age_data = cv.data.loaders.get_age_distribution(available)
+
+    with pytest.raises(ValueError):
+        cv.data.loaders.get_age_distribution(not_available)
+
+    return age_data
+
+
 #%% Run as a script
 if __name__ == '__main__':
-    sc.tic()
+
+    T = sc.tic()
 
     pars = test_parameters()
     data = test_data()
-    sim = test_location()
+    sim  = test_location()
+    age  = test_age_structure()
 
-    sc.toc()
-
-
-print('Done.')
+    sc.toc(T)
+    print('Done.')

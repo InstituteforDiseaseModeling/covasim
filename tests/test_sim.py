@@ -164,15 +164,13 @@ def test_dynamic_resampling(do_plot=False, do_show=False): # If being run via py
 if __name__ == '__main__':
     T = sc.tic()
 
-    pars  = test_parsobj()
-    sim0  = test_microsim()
-    sim1  = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    json  = test_fileio()
-    sim4  = test_start_stop()
-    sim5  = test_sim_data(do_plot=do_plot, do_show=do_show)
-    sim6  = test_dynamic_resampling(do_plot=do_plot, do_show=do_show)
+    pars = test_parsobj()
+    sim0 = test_microsim()
+    sim1 = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    json = test_fileio()
+    sim4 = test_start_stop()
+    sim5 = test_sim_data(do_plot=do_plot, do_show=do_show)
+    sim6 = test_dynamic_resampling(do_plot=do_plot, do_show=do_show)
 
     sc.toc(T)
-
-
-print('Done.')
+    print('Done.')
