@@ -21,7 +21,8 @@ if 'nowebapp' in sys.argv:
     webapp_reqs = [
         'scirisweb',
         'gunicorn',
-        'plotly_express'
+        'plotly',
+        'ipywidgets',
     ]
     requirements = [req for req in requirements if req not in webapp_reqs]
 
@@ -50,7 +51,7 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3.7",
 ]
 
@@ -58,11 +59,11 @@ setup(
     name="covasim",
     version=version,
     author="Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, Dina Mistry, Lauren George, and Daniel Klein, on behalf of the IDM COVID-19 Response Team",
-    author_email="covid@idmod.org",
-    description="COVID-19 agent-based simulator",
+    author_email="covasim@idmod.org",
+    description="COVID-19 Agent-based Simulator",
     long_description=long_description,
     long_description_content_type="text/x-rst",
-    url='http://github.com/institutefordiseasemodeling/covasim',
+    url='http://covasim.org',
     keywords=["Covid-19", "coronavirus", "SARS-CoV-2", "stochastic", "agent-based model"],
     platforms=["OS Independent"],
     classifiers=CLASSIFIERS,

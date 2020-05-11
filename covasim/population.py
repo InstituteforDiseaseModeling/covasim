@@ -5,14 +5,15 @@ Defines functions for making the population.
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
+from collections import defaultdict
 from . import requirements as cvreq
 from . import utils as cvu
 from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpars
 from . import people as cvppl
-from collections import defaultdict
 import uuid
+
 
 # Specify all externally visible functions this file defines
 __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
@@ -70,7 +71,7 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
             popdict, layer_keys = make_synthpop(sim)
         else:
             errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
-            raise NotImplementedError(errormsg)
+            raise ValueError(errormsg)
 
     # Ensure prognoses are set
     if sim['prognoses'] is None:

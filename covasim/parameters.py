@@ -57,16 +57,16 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
-    pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4.6, 'par2':4.8} # Duration from exposed to infectious; see Linton et al., https://doi.org/10.3390/jcm9020538
+    pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4.6, 'par2':4.8} # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sim duration
     pars['dur']['inf2sym']  = {'dist':'lognormal_int', 'par1':1.0, 'par2':0.9} # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538
     pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':6.6, 'par2':4.9} # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538
     pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':3.0, 'par2':7.4} # Duration from severe symptoms to requiring ICU; see Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044
 
     # Duration parameters: time for disease recovery
-    pars['dur']['asym2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration for asymptomatics to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['mild2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration from mild symptoms to recovered; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration from severe symptoms to recovered, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
-    pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration from critical symptoms to recovered, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+    pars['dur']['asym2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration for asymptomatic people to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+    pars['dur']['mild2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration for people with mild symptoms to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration for people with severe symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+    pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration for people with critical symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':6.2,  'par2':1.7} # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
 
     # Severity parameters: probabilities of symptom progression
@@ -76,16 +76,16 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
     pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
     pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
-    pars['prognoses']       = None # Populate this later
+    pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
 
     # Events and interventions
-    pars['interventions'] = []   # List of Intervention instances
+    pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['interv_func']   = None # Custom intervention function
-    pars['timelimit']     = 3600 # Time limit for a simulation (seconds)
+    pars['timelimit']     = None # Time limit for the simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
     # Health system parameters
-    pars['n_beds'] = None  # Baseline assumption is that there's no upper limit on the number of beds i.e. there's enough for everyone
+    pars['n_beds'] = None  # The number of beds available for severely/critically ill patients (default is no constraint)
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)

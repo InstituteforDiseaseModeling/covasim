@@ -2,16 +2,15 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
-import datetime as dt
 import numpy as np
 import pandas as pd
-import pylab  as pl
 import sciris as sc
+import datetime as dt
 import scipy.stats as sps
 from . import version as cvver
 
 
-__all__ = ['load_data', 'date', 'daydiff', 'load', 'save', 'check_version', 'git_info', 'fixaxis', 'get_doubling_time', 'poisson_test']
+__all__ = ['load_data', 'date', 'daydiff', 'load', 'save', 'check_version', 'git_info', 'get_doubling_time', 'poisson_test']
 
 
 def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
@@ -65,7 +64,7 @@ def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
     else:
         data['date'] = pd.to_datetime(data['date']).dt.date
 
-    data.set_index('date', inplace=True)
+    data.set_index('date', inplace=True, drop=False) # So sim.data['date'] can still be accessed
 
     return data
 
@@ -87,8 +86,7 @@ def date(obj, *args, **kwargs):
         cv.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
     '''
     # Convert to list
-    if sc.isstring(obj) or sc.isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
-        obj = sc.promotetolist(obj) # Ensure it's iterable
+    obj = sc.promotetolist(obj) # Ensure it's iterable
     obj.extend(args)
 
     dates = []
@@ -101,7 +99,7 @@ def date(obj, *args, **kwargs):
             elif isinstance(d, dt.datetime):
                 d = d.date()
             else:
-                errormsg = f'Could not interpret "{d}" of type {type(d)} as a date'
+                errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
                 raise TypeError(errormsg)
             dates.append(d)
         except Exception as E:
@@ -163,18 +161,16 @@ def load(*args, **kwargs):
 
 def save(*args, **kwargs):
     '''
-    Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
-    cv.Scenarios.load().
+    Convenience method for sc.saveobj() and equivalent to cv.Sim.save() or
+    cv.Scenarios.save().
 
     **Examples**::
 
-        sim = cv.load('calib.sim')
-        scens = cv.load(filename='school-closures.scens', folder='schools')
+        cv.save('calib.sim', sim)
+        cv.save(filename='school-closures.scens', folder='schools', obj=scens)
     '''
-    obj = sc.loadobj(*args, **kwargs)
-    if hasattr(obj, 'version'):
-        check_version(obj.version)
-    return obj
+    filepath = sc.saveobj(*args, **kwargs)
+    return filepath
 
 
 def check_version(expected, die=False, verbose=True, **kwargs):
@@ -218,6 +214,7 @@ def git_info(filename=None, check=False, old_info=None, die=False, verbose=True,
             output = sc.savejson(filename, info, **kwargs)
         else:
             output = info
+        return output
     else:
         if filename is not None:
             old_info = sc.loadjson(filename, **kwargs)
@@ -228,18 +225,7 @@ def git_info(filename=None, check=False, old_info=None, die=False, verbose=True,
                 raise ValueError(string)
             elif verbose:
                 print(string)
-    return output
-
-
-def fixaxis(sim, useSI=True, boxoff=False):
-    ''' Make the plotting more consistent -- add a legend and ensure the axes start at 0 '''
-    delta = 0.5
-    pl.legend() # Add legend
-    sc.setylim() # Rescale y to start at 0
-    pl.xlim((0, sim['n_days']+delta))
-    if boxoff:
-        sc.boxoff() # Turn off top and right lines
-    return
+        return
 
 
 def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=None, moving_window=None, exp_approx=False, max_doubling_time=100, eps=1e-3, verbose=None):
@@ -341,7 +327,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
 
 
 def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
-                      method='score', alternative='2-sided'):
+                      method='score', alternative='two-sided'):
     '''Test for ratio of two sample Poisson intensities
 
     If the two Poisson rates are g1 and g2, then the Null hypothesis is
@@ -422,7 +408,7 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         elif alternative in ['smaller', 's']:
             pvalue = sps.norm.cdf(zstat)
         else:
-            raise ValueError('invalid alternative')
+            raise ValueError(f'invalid alternative "{alternative}"')
         return pvalue# zstat
 
     # shortcut names
@@ -450,8 +436,9 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         if method in ['cond-midp']:
             # not inplace in case we still want binom pvalue
             pvalue = pvalue - 0.5 * sps.binom.pmf(y1, y_total, bp)
-
         dist = 'binomial'
+    else:
+        raise ValueError(f'invalid method "{method}"')
 
     if dist == 'normal':
         return zstat_generic2(stat, 1, alternative)
