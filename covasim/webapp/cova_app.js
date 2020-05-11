@@ -160,7 +160,8 @@ var vm = new Vue({
                 copyright_year: copyright_year(),
                 github_url: "https://github.com/institutefordiseasemodeling/covasim",
                 org_url: "https://idmod.org",
-                docs_url: "https://institutefordiseasemodeling.github.io/covasim-docs",
+                docs_url: "http://docs.covasim.org",
+                paper_url: "http://paper.covasim.org",
                 license: 'Loading...',
                 notice: 'Loading...'
             },
