@@ -4,6 +4,21 @@ import numpy as np
 import pandas as pd
 from covasim import base as cvb
 
+
+def remove_contacts_from_layer(layer, inds, sim):
+    layer_to_change = sim.people.contacts[layer]  # extract home layer contacts to adjust
+    layer_to_change_df = pd.DataFrame(layer_to_change)  # turn it into a DF
+    for person in inds:  # look through each alf, remove them from any pairwise contacts
+        layer_to_change_df.drop(layer_to_change_df[layer_to_change_df["p1"] == person].index, inplace=True)
+        layer_to_change_df.drop(layer_to_change_df[layer_to_change_df["p2"] == person].index, inplace=True)
+
+    new_layer = cvb.Layer().from_df(layer_to_change_df)  # Convert DF back with Layers (from base class)
+    new_layer.validate()
+    sim.people.contacts[layer] = new_layer  # reassign home layer contacts as new home layer
+
+    return
+
+
 sim = cv.Sim(pop_type='hybrid', pop_size=2e4)
 sim.initialize()
 
@@ -49,10 +64,24 @@ for i, ind in enumerate(alf_inds):
     if len(contacts_list[ind]['alf']):
         assert max(contacts_list[ind]['alf']) < pop_size
 
-    # find the cluster that individual is in and replace with correct index
+# find the cluster that individual is in and replace with correct index
 for id, alf_members in alf_dict.items():
     alf_dict[id] = sc.dcp(alf_inds[alf_members]).tolist()
     assert max(alf_dict[id]) < pop_size
+
+# Clip edges of ALF residents in home and community
+alf_inds = alf_inds.tolist()
+remove_contacts_from_layer('h', alf_inds, sim)
+
+# home_layer = sim.people.contacts['h'] # extract home layer contacts to adjust
+# home_layer_df = pd.DataFrame(home_layer) # turn it into a DF
+# for alf in alf_inds: # look through each alf, remove them from any pairwise contacts
+#     home_layer_df.drop(home_layer_df[home_layer_df["p1"] == alf].index, inplace=True)
+#     home_layer_df.drop(home_layer_df[home_layer_df["p2"] == alf].index, inplace=True)
+#
+# new_home_layer = cvb.Layer().from_df(home_layer_df) # Convert DF back with Layers (from base class)
+# new_home_layer.validate()
+# sim.people.contacts['h'] = new_home_layer # reassign home layer contacts as new home layer
 
 # Create list of health care workers
 health_care_worker_age = [22, 55]
@@ -81,19 +110,19 @@ for id, cluster_members in alf_dict.items():
         health_care_worker_inds = health_care_worker_inds[health_care_worker_inds != health_care_workers_to_add[person]]
         assert max(health_care_worker_inds) < pop_size
 
-
-
 # Clip health care aides edges in the workplace
+# Clip edges of ALF residents in home and community
+remove_contacts_from_layer('w', health_care_aides, sim)
 
-work_layer = sim.people.contacts['w'] # extract workplace layer contacts to adjust
-work_layer_df = pd.DataFrame(work_layer) # turn it into a DF
-for aide in health_care_aides: # look through each aide, remove them from any pairwise contacts
-    work_layer_df.drop(work_layer_df[work_layer_df["p1"] == aide].index, inplace=True)
-    work_layer_df.drop(work_layer_df[work_layer_df["p2"] == aide].index, inplace=True)
-
-new_work_layer = cvb.Layer().from_df(work_layer_df) # Convert DF back with Layers (from base class)
-new_work_layer.validate()
-sim.people.contacts['w'] = new_work_layer # reassign workplace layer contacts as new work layer
+# work_layer = sim.people.contacts['w'] # extract workplace layer contacts to adjust
+# work_layer_df = pd.DataFrame(work_layer) # turn it into a DF
+# for aide in health_care_aides: # look through each aide, remove them from any pairwise contacts
+#     work_layer_df.drop(work_layer_df[work_layer_df["p1"] == aide].index, inplace=True)
+#     work_layer_df.drop(work_layer_df[work_layer_df["p2"] == aide].index, inplace=True)
+#
+# new_work_layer = cvb.Layer().from_df(work_layer_df) # Convert DF back with Layers (from base class)
+# new_work_layer.validate()
+# sim.people.contacts['w'] = new_work_layer # reassign workplace layer contacts as new work layer
 
 sim.contactdict['alf'] = alf_dict
 sim.people.add_contacts(contacts_list, lkey='alf')
@@ -102,3 +131,5 @@ print('Total alf contacts: ', len(sim.people.contacts['alf']))
 # Run
 sim.run()
 sim.plot()
+
+
