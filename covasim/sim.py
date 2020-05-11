@@ -54,6 +54,7 @@ class Sim(cvb.BaseSim):
         self.popfile       = popfile  # The population file
         self.data          = None     # The actual data
         self.popdict       = None     # The population dictionary
+        self.contactdict = dict()     # A dictionary that will hold each school, household, workplace, etc.
         self.t             = None     # The current time in the simulation
         self.people        = None     # Initialize these here so methods that check their length can see they're empty
         self.results       = {}       # For storing results
