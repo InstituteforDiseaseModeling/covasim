@@ -293,7 +293,6 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     # Gather results
     res = sim.results[key]
     res_t = sim.results['t']
-    res_y = res.values
     if color is None:
         color = res.color
 
@@ -309,7 +308,9 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     # Do the plotting
     if label is None:
         label = res.name
-    ax.plot(res_t, res_y, c=color, label=label, **args.plot)
+    if res.low is not None and res.high is not None:
+        ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
+    ax.plot(res_t, res.values, c=color, label=label, **args.plot)
     plot_data(sim, key, args.scatter) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
