@@ -3,6 +3,13 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+
+Version 1.0.2 (2020-05-10)
+--------------------------
+- Added uncertainty to the ``plot_result()`` method of MultiSims.
+- Added documentation and webapp links to the paper.
+
+
 Version 1.0.1 (2020-05-09)
 --------------------------
 - Added argument ``as_date`` for ``sim.date()`` to return a ``datetime`` object instead of a string.

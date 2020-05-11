@@ -8,7 +8,12 @@ indicators such as numbers of infections and peak hospital demand. Covasim can
 also be used to explore the potential impact of different interventions, including
 social distancing, school closures, testing, contact tracing, and quarantine.
 
-The Covasim webapp is available at https://app.covasim.org.
+The scientific paper describing Covasim is available at http://paper.covasim.org.
+The recommended citation is:
+
+    Kerr CC, Stuart RM, Mistry D, Abeysuriya RG, Hart G, Rosenfeld R, Selvaraj P, Núñez RC, Hagedorn B, George L, Izzo A, Palmer A, Delport D, Bennette C, Wagner B, Chang S, Cohen JA, Panovska-Griffiths J, Jastrzębski M, Oron AP, Wenger E, Famulare M, Klein DJ (2020). *Covasim: an agent-based model of COVID-19 dynamics and interventions*. Institute for Disease Modeling. Available at http://paper.covasim.org.
+
+The Covasim webapp is available at http://app.covasim.org.
 
 Questions or comments can be directed to covasim@idmod.org, or on this project's
 GitHub_ page. Full information about Covasim is provided in the documentation_.
