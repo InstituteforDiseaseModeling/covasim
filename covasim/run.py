@@ -55,7 +55,7 @@ class MultiSim(sc.prettyobj):
         msim.plot() # Plot results
 
         sim = cv.Sim() # Create the sim
-        msim = cv.MultiSim(sim, n_runs=11, noise=0.1) # Set up a multisim with noise
+        msim = cv.MultiSim(sim, n_runs=11, noise=0.1, keep_people=True) # Set up a multisim with noise
         msim.run() # Run
         msim.reduce() # Compute statistics
         msim.plot() # Plot
@@ -114,7 +114,7 @@ class MultiSim(sc.prettyobj):
         Run the actual sims
 
         Args:
-            kwargs (dict): passed to multi_run() and thence to sim.run()
+            kwargs (dict): passed to multi_run() and thence (in part) to sim.run()
 
         Returns:
             None (modifies MultiSim object in place)
@@ -312,6 +312,7 @@ class MultiSim(sc.prettyobj):
         '''
         df = self.compare(t=t, sim_inds=sim_inds, output=True)
         cvplt.plot_compare(df, log_scale=log_scale, **kwargs)
+
 
     def save(self, filename=None, keep_people=False, **kwargs):
         '''
