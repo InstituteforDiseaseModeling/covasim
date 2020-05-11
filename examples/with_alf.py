@@ -111,7 +111,6 @@ for id, cluster_members in alf_dict.items():
         assert max(health_care_worker_inds) < pop_size
 
 # Clip health care aides edges in the workplace
-# Clip edges of ALF residents in home and community
 remove_contacts_from_layer('w', health_care_aides, sim)
 
 # work_layer = sim.people.contacts['w'] # extract workplace layer contacts to adjust
