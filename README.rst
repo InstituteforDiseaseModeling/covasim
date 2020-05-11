@@ -8,13 +8,18 @@ indicators such as numbers of infections and peak hospital demand. Covasim can
 also be used to explore the potential impact of different interventions, including
 social distancing, school closures, testing, contact tracing, and quarantine.
 
-The Covasim webapp is available at https://covasim.idmod.org.
+The scientific paper describing Covasim is available at http://paper.covasim.org.
+The recommended citation is:
+
+    Kerr CC, Stuart RM, Mistry D, Abeysuriya RG, Hart G, Rosenfeld R, Selvaraj P, Núñez RC, Hagedorn B, George L, Izzo A, Palmer A, Delport D, Bennette C, Wagner B, Chang S, Cohen JA, Panovska-Griffiths J, Jastrzębski M, Oron AP, Wenger E, Famulare M, Klein DJ (2020). *Covasim: an agent-based model of COVID-19 dynamics and interventions*. Institute for Disease Modeling. Available at http://paper.covasim.org.
+
+The Covasim webapp is available at http://app.covasim.org.
 
 Questions or comments can be directed to covasim@idmod.org, or on this project's
 GitHub_ page. Full information about Covasim is provided in the documentation_.
 
 .. _GitHub: https://github.com/institutefordiseasemodeling/covasim
-.. _documentation: https://institutefordiseasemodeling.github.io/covasim-docs
+.. _documentation: https://docs.covasim.org
 
 .. contents:: Contents
    :local:
@@ -31,6 +36,7 @@ more information, see documentation for venv_ or Anaconda_.
 
 .. _venv: https://docs.python.org/3/tutorial/venv.html
 .. _Anaconda: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+
 
 Quick start guide
 ==================
@@ -93,7 +99,7 @@ Module structure
 ================
 
 All core model code is located in the ``covasim`` subfolder; standard usage is
-``import covasim as cv``. The other subfolders, ``cruise_ship`` and ``webapp``, are
+``import covasim as cv``. The other subfolders, ``cruise_ship``, ``data``, and ``webapp``, are
 also described below.
 
 The model consists of two core classes: the ``Person`` class (which contains
@@ -116,24 +122,35 @@ The structure of the ``covasim`` folder is as follows:
 * ``utils.py``: Functions for choosing random numbers, many based on Numba, plus other helper functions.
 * ``version.py``: Version, date, and license information.
 
-cruise_ship
+
+Cruise ship
 -----------
 
 A version of the Covasim model specifically adapted for modeling the Diamond
 Princess cruise ship. It uses its own parameters file (``parameters.py``) and has
 slight variations to the model (``model.py``).
 
-webapp
+
+Data
+----
+
+This folder contains loading scripts for the epidemiological data in the root ``data`` folder, as well as data on age distributions for different countries and household sizes.
+
+
+
+Webapp
 ------
 
 For running the interactive web application. See the `webapp README`_ for more information.
 
 .. _webapp README: https://github.com/InstituteforDiseaseModeling/covasim/tree/master/covasim/webapp
 
+
 Other folders
 =============
 
 Please see the readme in each subfolder for more information.
+
 
 bin
 ---
@@ -145,11 +162,13 @@ This folder contains a command-line interface (CLI) version of Covasim; example 
 Note: the CLI is currently not compatible with Windows. You will need to add
 this folder to your path to run from other folders.
 
+
 data
 ----
 
 Scripts to automatically scrape data (including demographics and COVID epidemiology data),
 and the data files themselves (which are not part of the repository).
+
 
 docker
 ------
@@ -157,20 +176,24 @@ docker
 This folder contains the ``Dockerfile`` and other files that allow Covasim to be
 run as a webapp via Docker.
 
+
 examples
 --------
 
 This folder contains demonstrations of simple Covasim usage.
+
 
 licenses
 --------
 
 Licensing information and legal notices.
 
+
 tests
 -----
 
 Integration, development, and unit tests.
+
 
 sweep
 -----

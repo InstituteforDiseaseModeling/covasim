@@ -7,6 +7,7 @@ webapp.
 '''
 
 import numpy as np
+import pandas as pd
 import pylab as pl
 import sciris as sc
 import datetime as dt
@@ -15,7 +16,7 @@ import plotly.graph_objects as go
 from . import defaults as cvd
 
 
-__all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plotly_sim', 'plotly_people', 'plotly_animate']
+__all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_transtree', 'animate_transtree', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
 
 #%% Plotting helper functions
@@ -32,7 +33,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     return args
 
 
-def handle_to_plot(which, to_plot, n_cols):
+def handle_to_plot(which, to_plot, n_cols, sim):
     ''' Handle which quantities to plot '''
 
     if to_plot is None:
@@ -43,6 +44,12 @@ def handle_to_plot(which, to_plot, n_cols):
         else:
             errormsg = f'"which" must be "sim" or "scens", not "{which}"'
             raise NotImplementedError(errormsg)
+    elif isinstance(to_plot, list): # If a list of keys has been supplied
+        to_plot_list = to_plot # Store separately
+        to_plot = sc.odict() # Create the dict
+        for reskey in to_plot_list:
+            to_plot[sim.results[reskey].name] = [reskey] # Use the result name as the key and the reskey as the value
+
     to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
@@ -205,7 +212,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols)
+    to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
@@ -241,13 +248,14 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols)
+    to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
     default_colors = sc.gridcolors(ncolors=len(scens.sims))
     for pnum,title,reskeys in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+        reskeys = sc.promotetolist(reskeys) # In case it's a string
         for reskey in reskeys:
             resdata = scens.results[reskey]
             for snum,scenkey,scendata in resdata.enumitems():
@@ -285,7 +293,6 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     # Gather results
     res = sim.results[key]
     res_t = sim.results['t']
-    res_y = res.values
     if color is None:
         color = res.color
 
@@ -301,7 +308,9 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     # Do the plotting
     if label is None:
         label = res.name
-    ax.plot(res_t, res_y, c=color, label=label, **args.plot)
+    if res.low is not None and res.high is not None:
+        ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
+    ax.plot(res_t, res.values, c=color, label=label, **args.plot)
     plot_data(sim, key, args.scatter) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
@@ -354,6 +363,183 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
     return fig
 
 
+#%% Transtree functions
+def plot_transtree(tt, *args, **kwargs):
+    ''' Plot the transmission tree; see TransTree.plot() for documentation '''
+
+    fig_args = kwargs.get('fig_args', dict(figsize=(16,10)))
+
+    if tt.detailed is None:
+        errormsg = 'Please run sim.people.make_detailed_transtree() before calling plotting'
+        raise ValueError(errormsg)
+
+    ttlist = []
+    for entry in tt.detailed:
+        if entry and entry.source:
+            tdict = {
+                'date': entry.date,
+                'layer': entry.layer,
+                's_asymp': entry.s.is_asymp,
+                's_presymp': entry.s.is_presymp,
+                's_sev': entry.s.is_severe,
+                's_crit': entry.s.is_critical,
+                's_diag': entry.s.is_diagnosed,
+                's_quar': entry.s.is_quarantined,
+                't_quar': entry.t.is_quarantined,
+                     }
+            ttlist.append(tdict)
+
+    df = pd.DataFrame(ttlist).rename(columns={'date': 'Day'})
+    df = df.loc[df['layer'] != 'seed_infection']
+
+    df['Stage'] = 'Symptomatic'
+    df.loc[df['s_asymp'], 'Stage'] = 'Asymptomatic'
+    df.loc[df['s_presymp'], 'Stage'] = 'Presymptomatic'
+
+    df['Severity'] = 'Mild'
+    df.loc[df['s_sev'], 'Severity'] = 'Severe'
+    df.loc[df['s_crit'], 'Severity'] = 'Critical'
+
+    fig = pl.figure(**fig_args)
+    i=1; r=2; c=3
+
+    def plot(key, title, i):
+        dat = df.groupby(['Day', key]).size().unstack(key)
+        ax = pl.subplot(r,c,i);
+        dat.plot(ax=ax, legend=None)
+        pl.legend(title=None)
+        ax.set_title(title)
+
+    to_plot = {
+        'layer':'Layer',
+        'Stage':'Source stage',
+        's_diag':'Source diagnosed',
+        's_quar':'Source quarantined',
+        't_quar':'Target quarantined',
+        'Severity':'Symptomatic source severity'
+    }
+    for i, (key, title) in enumerate(to_plot.items()):
+        plot(key, title, i+1)
+
+    return fig
+
+
+def animate_transtree(tt, **kwargs):
+    ''' Plot an animation of the transmission tree; see TransTree.animate() for documentation '''
+
+    # Settings
+    animate    = kwargs.get('animate', True)
+    verbose    = kwargs.get('verbose', False)
+    msize      = kwargs.get('markersize', 10)
+    sus_color  = kwargs.get('sus_color', [0.5, 0.5, 0.5])
+    fig_args   = kwargs.get('fig_args', dict(figsize=(24,16)))
+    axis_args  = kwargs.get('axis_args', dict(left=0.10, bottom=0.05, right=0.85, top=0.97, wspace=0.25, hspace=0.25))
+    plot_args  = kwargs.get('plot_args', dict(lw=2, alpha=0.5))
+    delay      = kwargs.get('delay', 0.2)
+    font_size  = kwargs.get('font_size', 18)
+    colors     = kwargs.get('colors', None)
+    cmap       = kwargs.get('cmap', 'parula')
+    pl.rcParams['font.size'] = font_size
+    if colors is None:
+        colors = sc.vectocolor(tt.pop_size, cmap=cmap)
+
+    # Initialization
+    n = tt.n_days + 1
+    frames = [list() for i in range(n)]
+    tests  = [list() for i in range(n)]
+    diags  = [list() for i in range(n)]
+    quars  = [list() for i in range(n)]
+
+    # Construct each frame of the animation
+    for i,entry in enumerate(tt.detailed): # Loop over every person
+        frame = sc.objdict()
+        tdq = sc.objdict() # Short for "tested, diagnosed, or quarantined"
+
+        # This person became infected
+        if entry:
+            source = entry['source']
+            target = entry['target']
+            target_date = entry['date']
+            if source: # Seed infections and importations won't have a source
+                source_date = tt.detailed[source]['date']
+            else:
+                source = 0
+                source_date = 0
+
+            # Construct this frame
+            frame.x = [source_date, target_date]
+            frame.y = [source, target]
+            frame.c = colors[source]
+            frame.i = True # If this person is infected
+            frames[target_date].append(frame)
+
+            # Handle testing, diagnosis, and quarantine
+            tdq.t = target
+            tdq.d = target_date
+            tdq.c = colors[target]
+            date_t = entry.t.date_tested
+            date_d = entry.t.date_diagnosed
+            date_q = entry.t.date_known_contact
+            if ~np.isnan(date_t) and date_t<n: tests[int(date_t)].append(tdq)
+            if ~np.isnan(date_d) and date_d<n: diags[int(date_d)].append(tdq)
+            if ~np.isnan(date_q) and date_q<n: quars[int(date_q)].append(tdq)
+
+        # This person did not become infected
+        else:
+            frame.x = [0]
+            frame.y = [i]
+            frame.c = sus_color
+            frame.i = False
+            frames[0].append(frame)
+
+    # Configure plotting
+    fig = pl.figure(**fig_args)
+    pl.subplots_adjust(**axis_args)
+    ax = fig.add_subplot(1,1,1)
+
+    # Create the legend
+    ax2 = pl.axes([0.85, 0.05, 0.14, 0.9])
+    ax2.axis('off')
+    lcol = colors[0]
+    na = np.nan # Shorten
+    pl.plot(na, na, '-', c=lcol, **plot_args, label='Transmission')
+    pl.plot(na, na, 'o', c=lcol, markersize=msize, **plot_args, label='Source')
+    pl.plot(na, na, '*', c=lcol, markersize=msize, **plot_args, label='Target')
+    pl.plot(na, na, 'o', c=lcol, markersize=msize*2, fillstyle='none', **plot_args, label='Tested')
+    pl.plot(na, na, 's', c=lcol, markersize=msize*1.2, **plot_args, label='Diagnosed')
+    pl.plot(na, na, 'x', c=lcol, markersize=msize*2.0, label='Known contact')
+    pl.legend()
+
+    # Plot the animation
+    pl.sca(ax)
+    for day in range(n):
+        pl.title(f'Day: {day}')
+        pl.xlim([0, n])
+        pl.ylim([0, tt.pop_size])
+        pl.xlabel('Day')
+        pl.ylabel('Person')
+        flist = frames[day]
+        tlist = tests[day]
+        dlist = diags[day]
+        qlist = quars[day]
+        if verbose: print(i, flist)
+        for f in flist:
+            if verbose: print(f)
+            pl.plot(f.x[0], f.y[0], 'o', c=f.c, markersize=msize, **plot_args) # Plot sources
+            pl.plot(f.x, f.y, '-', c=f.c, **plot_args) # Plot transmission lines
+            if f.i: # If this person is infected
+                pl.plot(f.x[1], f.y[1], '*', c=f.c, markersize=msize, **plot_args) # Plot targets
+        for tdq in tlist: pl.plot(tdq.d, tdq.t, 'o', c=tdq.c, markersize=msize*2, fillstyle='none') # Tested; No alpha for this
+        for tdq in dlist: pl.plot(tdq.d, tdq.t, 's', c=tdq.c, markersize=msize*1.2, **plot_args) # Diagnosed
+        for tdq in qlist: pl.plot(tdq.d, tdq.t, 'x', c=tdq.c, markersize=msize*2.0) # Quarantine; no alpha for this
+        pl.plot([0, day], [0.5, 0.5], c='k', lw=5) # Plot the endless march of time
+        if animate: # Whether to animate
+            pl.pause(delay)
+
+    return fig
+
+
+
 #%% Plotly functions
 
 def get_individual_states(sim):
@@ -403,7 +589,21 @@ def get_individual_states(sim):
 # Default settings for the Plotly legend
 plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
 
-def plotly_sim(sim):
+
+def plotly_interventions(sim, fig, add_to_legend=False):
+    ''' Add vertical lines for interventions to the plot '''
+    if sim['interventions']:
+        for interv in sim['interventions']:
+            if hasattr(interv, 'days'):
+                for interv_day in interv.days:
+                    if interv_day and interv_day < sim['n_days']:
+                        interv_date = sim.date(interv_day, as_date=True)
+                        fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_date, x1=interv_date, y0=0, y1=1, line=dict(width=0.5, dash='dash')))
+                        if add_to_legend:
+                            fig.add_trace(go.Scatter(x=[interv_date], y=[0], mode='lines', name='Intervention change', line=dict(width=0.5, dash='dash')))
+    return
+
+def plotly_sim(sim, do_show=False):
     ''' Main simulation results -- parallel of sim.plot() '''
 
     plots = []
@@ -421,17 +621,15 @@ def plotly_sim(sim):
                 ydata = sim.data[key]
                 fig.add_trace(go.Scatter(x=xdata, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
-        if sim['interventions']:
-            for interv in sim['interventions']:
-                if hasattr(interv, 'days'):
-                    for interv_day in interv.days:
-                        if interv_day > 0 and interv_day < sim['n_days']:
-                            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
-
+        plotly_interventions(sim, fig, add_to_legend=(p==0)) # Only add the intervention label to the legend for the first plot
         fig.update_layout(title={'text':title}, yaxis_title='Count', autosize=True, **plotly_legend)
 
         plots.append(fig)
+
+    if do_show:
+        for fig in plots:
+            fig.show()
+
     return plots
 
 
@@ -453,15 +651,7 @@ def plotly_people(sim, do_show=False):
             name=state['name']
         ))
 
-    if sim['interventions']:
-        for interv in sim['interventions']:
-                if hasattr(interv, 'days'):
-                    if interv.do_plot:
-                        for interv_day in interv.days:
-                            if interv_day > 0 and interv_day < sim['n_days']:
-                                fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                                fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
-
+    plotly_interventions(sim, fig)
     fig.update_layout(yaxis_range=(0, sim.n))
     fig.update_layout(title={'text': 'Numbers of people by health state'}, yaxis_title='People', autosize=True, **plotly_legend)
 

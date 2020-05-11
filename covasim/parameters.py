@@ -3,10 +3,9 @@ Set the parameters for Covasim.
 '''
 
 import numpy as np
-import pandas as pd
 
 
-__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'load_data']
+__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
 
 def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
@@ -42,7 +41,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['rescale_factor']    = 2    # Factor by which we rescale the population
 
     # Basic disease transmission
-    pars['beta']        = 0.015 # Beta per symptomatic contact; absolute value, calibrated
+    pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
     pars['contacts']    = None # The number of contacts per layer; set below
     pars['dynam_layer'] = None # Which layers are dynamic; set below
     pars['beta_layer']  = None # Transmissibility per layer; set below
@@ -58,16 +57,16 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
-    pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4.6, 'par2':4.8} # Duration from exposed to infectious; see Linton et al., https://doi.org/10.3390/jcm9020538
+    pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4.6, 'par2':4.8} # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sim duration
     pars['dur']['inf2sym']  = {'dist':'lognormal_int', 'par1':1.0, 'par2':0.9} # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538
     pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':6.6, 'par2':4.9} # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538
     pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':3.0, 'par2':7.4} # Duration from severe symptoms to requiring ICU; see Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044
 
     # Duration parameters: time for disease recovery
-    pars['dur']['asym2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration for asymptomatics to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['mild2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration from mild symptoms to recovered; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration from severe symptoms to recovered, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
-    pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration from critical symptoms to recovered, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+    pars['dur']['asym2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration for asymptomatic people to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+    pars['dur']['mild2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration for people with mild symptoms to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration for people with severe symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+    pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration for people with critical symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':6.2,  'par2':1.7} # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
 
     # Severity parameters: probabilities of symptom progression
@@ -77,16 +76,16 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
     pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
     pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
-    pars['prognoses']       = None # Populate this later
+    pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
 
     # Events and interventions
-    pars['interventions'] = []   # List of Intervention instances
+    pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['interv_func']   = None # Custom intervention function
-    pars['timelimit']     = 3600 # Time limit for a simulation (seconds)
+    pars['timelimit']     = None # Time limit for the simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
     # Health system parameters
-    pars['n_beds'] = np.inf  # Baseline assumption is that there's no upper limit on the number of beds i.e. there's enough for everyone
+    pars['n_beds'] = None  # The number of beds available for severely/critically ill patients (default is no constraint)
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
@@ -143,7 +142,6 @@ def get_prognoses(by_age=True):
 
     Returns:
         prog_pars (dict): the dictionary of prognosis probabilities
-
     '''
 
     max_age = 120 # For the sake of having a finite age cutoff
@@ -158,72 +156,18 @@ def get_prognoses(by_age=True):
         )
     else:
         prognoses = dict(
-            age_cutoffs  = np.array([10,      20,      30,      40,      50,      60,      70,      80,      max_age]), # Age cutoffs
-            symp_probs   = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
-            severe_probs = np.array([0.00100, 0.00100, 0.01100, 0.03400, 0.04300, 0.08200, 0.11800, 0.16600, 0.18400]), # Overall probability of developing severe symptoms (https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf)
-            crit_probs   = np.array([0.00004, 0.00011, 0.00050, 0.00123, 0.00214, 0.00800, 0.02750, 0.06000, 0.10333]), # Overall probability of developing critical symptoms (derived from https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm)
-            death_probs  = np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]), # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
+            age_cutoffs   = np.array([10,      20,      30,      40,      50,      60,      70,      80,      max_age]), # Age cutoffs (upper limits)
+            sus_ORs       = np.array([0.34,    0.67,    1.00,    1.00,    1.00,    1.00,    1.24,    1.47,    1.47]),    # Odds ratios for relative susceptibility -- from https://science.sciencemag.org/content/early/2020/05/04/science.abb8001; 10-20 and 60-70 bins are the average across the ORs
+            trans_ORs     = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Odds ratios for relative transmissibility -- no evidence of differences
+            comorbidities = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Comorbidities by age -- set to 1 by default since already included in disease progression rates
+            symp_probs    = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
+            severe_probs  = np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, 0.20655, 0.24570]), # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
+            crit_probs    = np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420]), # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
+            death_probs   = np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]), # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
         )
 
-    prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given severe symptoms
+    prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given critical symptoms
     prognoses['crit_probs']   /= prognoses['severe_probs'] # Conditional probability of symptoms becoming critical, given severe
     prognoses['severe_probs'] /= prognoses['symp_probs']   # Conditional probability of symptoms becoming severe, given symptomatic
 
     return prognoses
-
-
-def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
-    '''
-    Load data for comparing to the model output.
-
-    Args:
-        filename (str): the name of the file to load (either Excel or CSV)
-        columns (list): list of column names (otherwise, load all)
-        calculate (bool): whether or not to calculate cumulative values from daily counts
-        kwargs (dict): passed to pd.read_excel()
-
-    Returns:
-        data (dataframe): pandas dataframe of the loaded data
-    '''
-
-    # Load data
-    if filename.lower().endswith('csv'):
-        raw_data = pd.read_csv(filename, **kwargs)
-    elif filename.lower().endswith('xlsx'):
-        raw_data = pd.read_excel(filename, **kwargs)
-    else:
-        errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {filename}'
-        raise NotImplementedError(errormsg)
-
-    # Confirm data integrity and simplify
-    if columns is not None:
-        for col in columns:
-            if col not in raw_data.columns:
-                errormsg = f'Column "{col}" is missing from the loaded data'
-                raise ValueError(errormsg)
-        data = raw_data[columns]
-    else:
-        data = raw_data
-
-    # Calculate any cumulative columns that are missing
-    if calculate:
-        columns = data.columns
-        for col in columns:
-            if col.startswith('new'):
-                cum_col = col.replace('new_', 'cum_')
-                if cum_col not in columns:
-                    data[cum_col] = np.cumsum(data[col])
-                    if verbose:
-                        print(f'  Automatically adding cumulative column {cum_col} from {col}')
-
-    # Ensure required columns are present
-    if 'date' not in data.columns:
-        errormsg = f'Required column "date" not found; columns are {data.columns}'
-        raise ValueError(errormsg)
-    else:
-        data['date'] = pd.to_datetime(data['date']).dt.date
-
-    data.set_index('date', inplace=True)
-
-    return data
-

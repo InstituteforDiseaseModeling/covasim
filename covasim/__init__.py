@@ -10,6 +10,7 @@ from . import requirements
 from .utils         import *
 from .misc          import *
 from .defaults      import *
+from .plotting      import *
 from .base          import *
 from .parameters    import *
 from .people        import *
@@ -17,4 +18,4 @@ from .population    import *
 from .interventions import *
 from .sim           import *
 from .run           import *
-from .plotting      import *
+

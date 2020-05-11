@@ -4,6 +4,6 @@ services:
     build:
       context: ../
       dockerfile: docker/Dockerfile
-    image: jules2689/covasim:latest
+    image: idmod/covasim:latest
     ports:
       - 8000:80

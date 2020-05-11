@@ -4,7 +4,6 @@ Functions and classes for running multiple Covasim runs.
 
 #%% Imports
 import numpy as np
-import pylab as pl
 import pandas as pd
 import sciris as sc
 from collections import defaultdict
@@ -56,7 +55,7 @@ class MultiSim(sc.prettyobj):
         msim.plot() # Plot results
 
         sim = cv.Sim() # Create the sim
-        msim = cv.MultiSim(sim, n_runs=11, noise=0.1) # Set up a multisim with noise
+        msim = cv.MultiSim(sim, n_runs=11, noise=0.1, keep_people=True) # Set up a multisim with noise
         msim.run() # Run
         msim.reduce() # Compute statistics
         msim.plot() # Plot
@@ -112,12 +111,10 @@ class MultiSim(sc.prettyobj):
 
     def run(self, *args, **kwargs):
         '''
-        Run the actual scenarios
+        Run the actual sims
 
         Args:
-            debug (bool): if True, runs a single run instead of multiple, which makes debugging easier
-            verbose (int): level of detail to print, passed to sim.run()
-            kwargs (dict): passed to multi_run() and thence to sim.run()
+            kwargs (dict): passed to multi_run() and thence (in part) to sim.run()
 
         Returns:
             None (modifies MultiSim object in place)
@@ -129,6 +126,16 @@ class MultiSim(sc.prettyobj):
 
         kwargs = sc.mergedicts(self.run_args, kwargs)
         self.sims = multi_run(sims, *args, **kwargs)
+        return
+
+
+    def reset(self):
+        ''' Undo a combine() or reduce() by resetting the base sim, which, and results '''
+        if hasattr(self, 'orig_base_sim'):
+            self.base_sim = self.orig_base_sim
+            delattr(self, 'orig_base_sim')
+        self.which = None
+        self.results = None
         return
 
 
@@ -152,6 +159,7 @@ class MultiSim(sc.prettyobj):
             if not combined_sim.results[key].scale:
                 combined_sim.results[key].values /= n_runs
 
+        self.orig_base_sim = self.base_sim
         self.base_sim = combined_sim
         self.results = combined_sim.results
         self.which = 'combined'
@@ -169,7 +177,7 @@ class MultiSim(sc.prettyobj):
             quantiles = self.quantiles
         if not isinstance(quantiles, dict):
             try:
-                quantiles = {'low':quantiles[0], 'high':quantiles[1]}
+                quantiles = {'low':float(quantiles[0]), 'high':float(quantiles[1])}
             except Exception as E:
                 errormsg = f'Could not figure out how to convert {quantiles} into a quantiles object: must be a dict with keys low, high or a 2-element array ({str(E)})'
                 raise ValueError(errormsg)
@@ -194,6 +202,7 @@ class MultiSim(sc.prettyobj):
         reduced_sim.likelihood() # Recompute the likelihood for the average sim
         reduced_sim.summary_stats(verbose=False) # Recalculate the summary stats
 
+        self.orig_base_sim = self.base_sim
         self.base_sim = reduced_sim
         self.results = reduced_sim.results
         self.which = 'reduced'
@@ -238,13 +247,11 @@ class MultiSim(sc.prettyobj):
                     val = int(val)
                 resdict[label][reskey] = val
 
-        # Convert to a dataframe
-        df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coersion
-
         if do_plot:
-            self.plot_compare(df, *args, **kwargs)
+            self.plot_compare(**kwargs)
 
         if output:
+            df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coersion
             return df
         else:
             print(df)
@@ -305,6 +312,7 @@ class MultiSim(sc.prettyobj):
         '''
         df = self.compare(t=t, sim_inds=sim_inds, output=True)
         cvplt.plot_compare(df, log_scale=log_scale, **kwargs)
+
 
     def save(self, filename=None, keep_people=False, **kwargs):
         '''

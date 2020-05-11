@@ -99,7 +99,7 @@ class Sim(cvb.BaseSim):
         ''' Load the data to calibrate against, if provided '''
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvpar.load_data(filename=datafile, columns=datacols, **kwargs)
+            self.data = cvm.load_data(filename=datafile, columns=datacols, **kwargs)
 
         return
 
@@ -148,7 +148,7 @@ class Sim(cvb.BaseSim):
                 self[key] = int(self[key])
             except Exception as E:
                 errormsg = f'Could not convert {key}={self[key]} of {type(self[key])} to integer'
-                raise TypeError(errormsg) from E
+                raise ValueError(errormsg) from E
 
         # Handle start day
         start_day = self['start_day'] # Shorten
@@ -199,7 +199,7 @@ class Sim(cvb.BaseSim):
         if choice not in popdata_choices:
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
-            raise sc.KeyNotFoundError(errormsg)
+            raise ValueError(errormsg)
 
         # Handle interventions
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
@@ -216,7 +216,7 @@ class Sim(cvb.BaseSim):
         We differentiate between flows, stocks, and cumulative results
         The prefix "new" is used for flow variables, i.e. counting new events (infections/deaths/recoveries) on each timestep
         The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any particular timestep
-        The prefix "cum\_" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
+        The prefix "cum" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
         Note that, by definition, n_dead is the same as cum_deaths and n_recovered is the same as cum_recoveries, so we only define the cumulative versions
         '''
 
@@ -227,16 +227,18 @@ class Sim(cvb.BaseSim):
 
         dcols = cvd.get_colors() # Get default colors
 
+        # Flows and cumulative flows
+        for key,label in cvd.result_flows.items():
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
+
+        for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
+
         # Stock variables
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
         self.results['n_susceptible'].scale = 'static'
         self.results['bed_capacity']  = init_res('Bed demand relative to capacity', scale=False)
-
-        # Flows and cumulative flows
-        for key,label in cvd.result_flows.items():
-            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
 
         # Other variables
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
@@ -353,7 +355,7 @@ class Sim(cvb.BaseSim):
         people   = self.people # Shorten this for later use
         flows    = people.update_states_pre(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
-        bed_max  = people.count('severe') > self['n_beds'] # Check for a bed constraint
+        bed_max  = people.count('severe') > self['n_beds'] if self['n_beds'] else False # Check for a bed constraint
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
@@ -367,7 +369,7 @@ class Sim(cvb.BaseSim):
         for intervention in self['interventions']:
             intervention.apply(self)
         if self['interv_func'] is not None: # Apply custom intervention function
-            self =self['interv_func'](self)
+            self['interv_func'](self)
 
         flows = people.update_states_post(flows) # Check for state changes after interventions
 
@@ -384,36 +386,39 @@ class Sim(cvb.BaseSim):
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         for lkey,layer in contacts.items():
-            sources = layer['p1']
-            targets = layer['p2']
+            p1 = layer['p1']
+            p2 = layer['p2']
             betas   = layer['beta']
 
             # Compute relative transmission and susceptibility
             rel_trans  = people.rel_trans
             rel_sus    = people.rel_sus
+            inf        = people.infectious
+            sus        = people.susceptible
             symp       = people.symptomatic
             diag       = people.diagnosed
             quar       = people.quarantined
             quar_eff   = cvd.default_float(self['quar_eff'][lkey])
             beta_layer = cvd.default_float(self['beta_layer'][lkey])
-            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
+            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
 
             # Calculate actual transmission
-            target_inds, edge_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
-            flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
+            for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
+                target_inds, edge_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
+                flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
 
-            # Store the transmission tree
-            for ind in edge_inds:
-                source = sources[ind]
-                target = targets[ind]
-                transdict = dict(source=source, target=target, date=self.t, layer=lkey)
-                self.people.transtree.linelist[target] = transdict
-                self.people.transtree.targets[source].append(transdict)
+                # Store the transmission tree
+                for ind in edge_inds:
+                    source = sources[ind]
+                    target = targets[ind]
+                    transdict = dict(source=source, target=target, date=self.t, layer=lkey)
+                    self.people.transtree.linelist[target] = transdict
+                    self.people.transtree.targets[source].append(transdict)
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people.count(key)
-        self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds']>0 else np.nan
+        self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds'] else 0
 
         # Update counts for this time step: flows
         for key,count in flows.items():
@@ -447,6 +452,8 @@ class Sim(cvb.BaseSim):
             self.init_interventions() # And interventions
         if verbose is None:
             verbose = self['verbose']
+        if until:
+            until = self.day(until)
 
         # Main simulation loop
         for t in self.tvec:
@@ -466,7 +473,7 @@ class Sim(cvb.BaseSim):
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
-            if elapsed > self['timelimit']:
+            if self['timelimit'] and elapsed > self['timelimit']:
                 sc.printv(f"Time limit ({self['timelimit']} s) exceeded", 1, verbose)
                 break
             elif self['stopping_func'] and self['stopping_func'](self):

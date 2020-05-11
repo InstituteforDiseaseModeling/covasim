@@ -59,7 +59,7 @@ class People(cvb.BasePeople):
 
 
     def set_prognoses(self, pars=None):
-        ''' Set the prognoses for each person based on age '''
+        ''' Set the prognoses for each person based on age during initialization '''
 
         if pars is None:
             pars = self.pars
@@ -71,17 +71,17 @@ class People(cvb.BasePeople):
         age_cutoffs = prognoses['age_cutoffs']
         inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=cvd.default_int, count=len(self))
         self.symp_prob[:]   = prognoses['symp_probs'][inds]
-        self.severe_prob[:] = prognoses['severe_probs'][inds]
+        self.severe_prob[:] = prognoses['severe_probs'][inds]*pars['prognoses']['comorbidities'][inds]
         self.crit_prob[:]   = prognoses['crit_probs'][inds]
         self.death_prob[:]  = prognoses['death_probs'][inds]
-        self.rel_sus[:]     = 1.0 # By default: is susceptible
-        self.rel_trans[:]   = 0.0 # By default: cannot transmit
+        self.rel_sus[:]     = prognoses['sus_ORs'][inds] # Default susceptibilities
+        self.rel_trans[:]   = prognoses['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, drawn from a distribution
 
         return
 
 
     def update_states_pre(self, t):
-        ''' Perform all state updates '''
+        ''' Perform all state updates at the current timestep '''
 
         # Initialize
         self.t = t
@@ -109,7 +109,7 @@ class People(cvb.BasePeople):
         return flows
 
 
-    def update_contacts(self):
+    def update_contacts(self, directed=False):
         ''' Refresh dynamic contacts, e.g. community '''
 
         # Figure out if anything needs to be done -- e.g. {'h':False, 'c':True}
@@ -120,10 +120,14 @@ class People(cvb.BasePeople):
             # Remove existing contacts
             self.contacts.pop(lkey)
 
-            # Create new contacts
+            # Choose how many contacts to make
             pop_size   = len(self)
             n_contacts = self.pars['contacts'][lkey]
             n_new = n_contacts*pop_size
+            if not directed:
+                n_new = int(n_new/2) # Since these get looped over in both directions later
+
+            # Create the contacts
             new_contacts = {} # Initialize
             new_contacts['p1']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
             new_contacts['p2']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
@@ -159,7 +163,6 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
-        self.rel_trans[inds]  = cvu.sample(**self.pars['beta_dist'], size=len(inds))
         return len(inds)
 
 
@@ -193,7 +196,6 @@ class People(cvb.BasePeople):
         self.severe[inds]      = False
         self.critical[inds]    = False
         self.recovered[inds]   = True
-        self.rel_trans[inds]   = 0.0
         return len(inds)
 
 
@@ -207,7 +209,6 @@ class People(cvb.BasePeople):
         self.critical[inds]    = False
         self.recovered[inds]   = False
         self.dead[inds]        = True
-        self.rel_trans[inds]   = 0.0
         return len(inds)
 
 
@@ -258,9 +259,6 @@ class People(cvb.BasePeople):
         for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
-        self.rel_sus[inds]   = 1.0 # By default: is susceptible
-        self.rel_trans[inds] = 0.0 # By default: cannot transmit
-
         return
 
 
@@ -289,7 +287,6 @@ class People(cvb.BasePeople):
         # Set states
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
-        self.rel_sus[inds]       = 0.0 # Not susceptible after becoming infected
         self.date_exposed[inds]  = self.t
 
         # Calculate how long before this person can infect other people
@@ -413,14 +410,18 @@ class People(cvb.BasePeople):
         traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
         for lkey,this_trace_prob in traceable_layers.items():
             if self.pars['beta_layer'][lkey]: # Skip if beta is 0 for this layer
-                this_trace_time = trace_time[lkey]
 
+                # Find all the contacts of these people
                 nzinds = self.contacts[lkey]['beta'].nonzero()[0] # Find nonzero beta edges
-                p1inds = np.isin(self.contacts[lkey]['p1'], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
-                nzp1inds = np.intersect1d(nzinds, p1inds)
-                p2inds = np.unique(self.contacts[lkey]['p2'][nzp1inds]) # Find their pairing partner
+                inds_list = []
+                for k1,k2 in [['p1','p2'],['p2','p1']]: # Loop over the contact network in both directions
+                    in_k1 = np.isin(self.contacts[lkey][k1], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
+                    nz_k1 = np.intersect1d(nzinds, in_k1) # Find the ones that are nonzero
+                    inds_list.append(self.contacts[lkey][k2][nz_k1]) # Find their pairing partner
+                edge_inds = np.unique(np.concatenate(inds_list)) # Find all edges
+
                 # Check not diagnosed!
-                contact_inds = cvu.binomial_filter(this_trace_prob, p2inds) # Filter the indices according to the probability of being able to trace this layer
+                contact_inds = cvu.binomial_filter(this_trace_prob, edge_inds) # Filter the indices according to the probability of being able to trace this layer
                 self.known_contact[contact_inds] = True
 
                 # Set the date of contact, careful not to override what might be an earlier date. TODO: this could surely be one operation?
@@ -428,10 +429,9 @@ class People(cvb.BasePeople):
                 contacted_before_inds       = np.setdiff1d(contact_inds, first_time_contacted_inds) # indices of people who've been contacted before
 
                 if len(first_time_contacted_inds):
-                    self.date_known_contact[first_time_contacted_inds]  = self.t + this_trace_time # Store when they were contacted
+                    self.date_known_contact[first_time_contacted_inds]  = self.t + trace_time[lkey] # Store when they were contacted
                 if len(contacted_before_inds):
-                    self.date_known_contact[contacted_before_inds]  = np.minimum(self.date_known_contact[contacted_before_inds], self.t + this_trace_time)
-
+                    self.date_known_contact[contacted_before_inds]  = np.minimum(self.date_known_contact[contacted_before_inds], self.t + trace_time[lkey])
 
         return
 
