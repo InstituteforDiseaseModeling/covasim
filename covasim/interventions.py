@@ -597,26 +597,20 @@ class contact_tracing(Intervention):
 
     Args:
         trace_probs (float): probability of tracing, per layer
-        trace_time (int): days required to trace, per layer
-        start_day (int): intervention start day
-        end_day (int): intervention end day
-        contact_red (float): not implemented currently, but could potentially scale contact in this intervention
-        do_plot (bool): whether or not to plot
+        trace_time  (int):  days required to trace, per layer
+        start_day   (int):  intervention start day
+        end_day     (int):  intervention end day
+        presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
+        do_plot     (bool): whether or not to plot
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, contact_red=None, do_plot=None, presumptive=False, test_delay=0, quar_until_results=True):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, do_plot=None, presumptive=False, test_delay=0):
         super().__init__(do_plot=do_plot)
-        if trace_probs is None:
-            trace_probs = 1.0
-        if trace_time is None:
-            trace_time = 0.0
         self.trace_probs = trace_probs
         self.trace_time  = trace_time
-        self.contact_red = contact_red
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
-        self.test_delay = test_delay
-        self.quar_until_results = quar_until_results
+        self.test_delay  = test_delay
         self._store_args()
         return
 
@@ -626,6 +620,10 @@ class contact_tracing(Intervention):
         self.start_day = sim.day(self.start_day)
         self.end_day   = sim.day(self.end_day)
         self.days      = [self.start_day, self.end_day]
+        if self.trace_probs is None:
+            self.trace_probs = 1.0
+        if self.trace_time is None:
+            self.trace_time = 0.0
         if sc.isnumber(self.trace_probs):
             val = self.trace_probs
             self.trace_probs = {k:val for k in sim.people.layer_keys()}
@@ -643,34 +641,27 @@ class contact_tracing(Intervention):
         elif self.end_day is not None and t > self.end_day:
             return
 
-        if self.presumptive:
-            trace_from_inds = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
-        else:
+        # Figure out whom to test and trace
+        if not self.presumptive:
             trace_from_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
+        else:
+            trace_from_inds = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
 
-        # Quarantine self until results come back
-        if self.quar_until_results and self.test_delay > 0:
-            # Take earliest date know contact
-            sim.people.date_known_contact[trace_from_inds] = np.nanmin(np.stack([
-                sim.people.date_known_contact[trace_from_inds], t*np.ones_like(sim.people.date_known_contact[trace_from_inds])
-            ]), axis=0)
+            # Quarantine self until results come back
+            sim.people.date_quarantined[trace_from_inds] = np.fmin(sim.people.date_quarantined[trace_from_inds], t) # Take earliest date know contact
+            sim.people.date_end_quarantined[trace_from_inds] = np.fmin(sim.people.date_end_quarantined[trace_from_inds], (t + self.test_delay)) # Take latest date end quarantine
 
-            # Take latest date end quarantine
-            sim.people.date_end_quarantine[trace_from_inds] = np.nanmax(np.stack([
-                sim.people.date_end_quarantine[trace_from_inds], (t + self.test_delay)*np.ones_like(sim.people.date_end_quarantine[trace_from_inds])
-            ]), axis=0)
-
+        # Figure out who tests positive, and trace their contacts
         test_pos_inds = trace_from_inds[cvu.true( sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
         if len(test_pos_inds): # If there are any just-diagnosed people, go trace their contacts
             sim.people.trace(test_pos_inds, self.trace_probs, self.trace_time, sim.pars['quar_period'])
 
-        test_neg_inds = trace_from_inds[cvu.false( sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
+        # Figure out who tests negative, and release them
+        test_neg_inds = trace_from_inds[cvu.false(sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
         if len(test_neg_inds): # If there are any just-diagnosed people, go trace their contacts
             days_in_quar = {lkey: self.test_delay - ltrace_time for lkey, ltrace_time in self.trace_time.items()}
             # By the time we trace them, the negative diagnostic results might already be available
             if max(days_in_quar.values()) > 0:
                 sim.people.trace(test_neg_inds, self.trace_probs, self.trace_time, days_in_quar)
-
-
 
         return
