@@ -175,19 +175,41 @@ class Sim(cvb.BaseSim):
                 errormsg = f'You must supply one of n_days and end_day, not "{n_days}" and "{end_day}"'
                 raise ValueError(errormsg)
 
-        # Handle contacts
-        contacts = self['contacts']
-        if sc.isnumber(contacts): # It's a scalar instead of a dict, assume it's all contacts
-            self['contacts']    = {'a':contacts}
+        # Handle parameters specified by layer
+        layer_pars = ['beta_layer', 'contacts', 'iso_factor', 'quar_factor']
+        layer_keys = None # Try to figure out what the layer keys should be
+        if self.people is not None:
+            layer_keys = set(self.people.contacts.keys())
+        elif isinstance(self['beta_layer'], dict):
+            layer_keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
+        else:
+            layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
+
+        # Convert parameters from a scalar to a dictionary
+        for lp in layer_pars:
+            val = self[lp]
+            if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
+                self[lp] = {k:val for k in layer_keys}
 
         # Handle key mismaches
+        lp_key_list = []
+        for lp in layer_pars:
+            lp_key_list.append(set(self.pars[lp].keys()))
+        for lp,lpkeys in zip(layer_pars, lp_key_list):
+            if not lp_keys == set(layer_keys):
+                errormsg = f'Layer parameters have inconsistent keys: beta={beta_layer_keys}, contacts={contacts_keys}, iso_factor={iso_factor_keys}, quar_factor={quar_factor_keys} have inconsistent keys'
+                for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
+                    errormsg += f'\n{lp2} = {}'
+                raise sc.KeyNotFoundError(errormsg)
+
+
+
         beta_layer_keys  = set(self.pars['beta_layer'].keys())
         contacts_keys    = set(self.pars['contacts'].keys())
         iso_factor_keys  = set(self.pars['iso_factor'].keys())
         quar_factor_keys = set(self.pars['quar_factor'].keys())
         if not(beta_layer_keys == contacts_keys == iso_factor_keys == quar_factor_keys):
-            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, iso_factor={iso_factor_keys}, quar_factor={quar_factor_keys} have inconsistent keys'
-            raise sc.KeyNotFoundError(errormsg)
+
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
             if pop_keys != beta_layer_keys:
