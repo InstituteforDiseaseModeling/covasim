@@ -8,7 +8,7 @@ import numpy as np
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
 
-def make_pars(set_prognoses=True, prog_by_age=True, **kwargs):
+def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     '''
     Set parameters for the simulation.
 
