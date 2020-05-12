@@ -464,12 +464,12 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
 if __name__ == '__main__':
     sc.tic()
 
-    # scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
-    # scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
-    # scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
-    # sims = test_beta_edges(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
-    # bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[4])
-    # border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[5])
+    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
+    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
+    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
+    sims = test_beta_edges(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
+    bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[4])
+    border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[5])
     scens4 = test_presumptive_quar(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[6])
 
     for path in fig_paths:
