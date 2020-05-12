@@ -1,5 +1,5 @@
 '''
-Include an extra population -- in this example, assisted living facilities.
+Include an extra contact network -- in this example, assisted living facilities.
 '''
 
 import covasim as cv
