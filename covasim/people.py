@@ -215,7 +215,8 @@ class People(cvb.BasePeople):
     def check_diagnosed(self):
         ''' Check for new diagnoses '''
         inds = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None)
-        self.diagnosed[inds] = True
+        self.diagnosed[inds]   = True
+        self.quarantined[inds] = False # If you are diagnosed, you are isolated, not in quarantine
         return len(inds)
 
 

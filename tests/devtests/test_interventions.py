@@ -12,8 +12,7 @@ do_show   = 1
 do_save   = 0
 debug     = 1
 keep_sims = 0
-fig_paths = [f'results/testing_scen_{i}.png' for i in range(3)]
-fig_paths += ['results/testing_other.png']
+fig_paths = [f'results/testing_scen_{i}.png' for i in range(7)]
 
 
 def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None):
@@ -364,14 +363,11 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
       'n_days'      : 150,
       'beta'        : 0.02,
       'quar_period' : 14,
-      'quar_eff'    : {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1}, # Bidirectional becaues on transmit and receive, e.g. in home
-      'diag_factor' : 0.2, # Worried about diagnosed while in quarantine - double impact!
+      'quar_factor' : {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1}, # Bidirectional becaues on transmit and receive, e.g. in home
+      'iso_factor'  : {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1}, # Worried about diagnosed while in quarantine - double impact!
     }
 
     base_sim = cv.Sim(base_pars) # create sim object
-
-    n_people = base_sim['pop_size']
-    npts = base_sim.npts
 
     # DEFINE INTERVENTIONS
     test_delay = 2
@@ -468,13 +464,13 @@ def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=N
 if __name__ == '__main__':
     sc.tic()
 
-    scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
-    scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
-    scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
-    sims = test_beta_edges(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
-    bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
-    border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
-    scens4 = test_presumptive_quar(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
+    # scens1 = test_interventions(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[0])
+    # scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
+    # scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
+    # sims = test_beta_edges(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
+    # bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[4])
+    # border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[5])
+    scens4 = test_presumptive_quar(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[6])
 
     for path in fig_paths:
         if os.path.exists(path):
