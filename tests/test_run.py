@@ -38,7 +38,7 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
 
     # Method 1 -- Note: this runs 3 simulations, not 3x3!
     iterpars = {'beta': [0.015, 0.025, 0.035],
-                'diag_factor': [0.1, 0.5, 0.9],
+                'iso_factor': [0.1, 0.5, 0.9],
                 }
     sim = cv.Sim(n_days=n_days, pop_size=pop_size)
     sims = cv.multi_run(sim=sim, iterpars=iterpars, verbose=verbose)
@@ -46,7 +46,7 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
     # Method 2 -- run a list of sims
     simlist = []
     for i in range(len(iterpars['beta'])):
-        sim = cv.Sim(n_days=n_days, pop_size=pop_size, beta=iterpars['beta'][i], diag_factor=iterpars['diag_factor'][i])
+        sim = cv.Sim(n_days=n_days, pop_size=pop_size, beta=iterpars['beta'][i], iso_factor=iterpars['iso_factor'][i])
         simlist.append(sim)
     sims2 = cv.multi_run(sim=simlist, verbose=verbose)
 
@@ -145,7 +145,7 @@ def test_complex_scenarios(do_plot=False, do_show=True, do_save=False, fig_path=
         'lowtrace': {
             'name': 'Poor contact tracing',
             'pars': {
-                'quar_eff': {'h': 1, 's': 0.5, 'w': 0.5, 'c': 0.25},
+                'quar_factor': {'h': 1, 's': 0.5, 'w': 0.5, 'c': 0.25},
                 'quar_period': 7,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 0, 's': 0, 'w': 0, 'c': 0},
@@ -155,7 +155,7 @@ def test_complex_scenarios(do_plot=False, do_show=True, do_save=False, fig_path=
         'modtrace': {
             'name': 'Moderate contact tracing',
             'pars': {
-                'quar_eff': {'h': 0.75, 's': 0.25, 'w': 0.25, 'c': 0.1},
+                'quar_factor': {'h': 0.75, 's': 0.25, 'w': 0.25, 'c': 0.1},
                 'quar_period': 10,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.5, 'c': 0.1},
@@ -165,7 +165,7 @@ def test_complex_scenarios(do_plot=False, do_show=True, do_save=False, fig_path=
         'hightrace': {
             'name': 'Fast contact tracing',
             'pars': {
-                'quar_eff': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
+                'quar_factor': {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1},
                 'quar_period': 14,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 0.8, 'w': 0.8, 'c': 0.2},
@@ -175,7 +175,7 @@ def test_complex_scenarios(do_plot=False, do_show=True, do_save=False, fig_path=
         'alltrace': {
             'name': 'Same-day contact tracing',
             'pars': {
-                'quar_eff': {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0},
+                'quar_factor': {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0},
                 'quar_period': 21,
                 'interventions': [cv.test_num(daily_tests=daily_tests),
                 cv.contact_tracing(trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1},

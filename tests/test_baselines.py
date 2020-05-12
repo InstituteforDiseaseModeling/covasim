@@ -132,18 +132,58 @@ def test_benchmark(do_save=do_save):
     print('Running benchmark...')
     previous = sc.loadjson(benchmark_filename)
 
-    # Create the sim
-    sim = cv.Sim(verbose=0)
+    repeats = 5
+    t_inits = []
+    t_runs  = []
 
-    # Time initialization
-    t0 = sc.tic()
-    sim.initialize()
-    t_init = sc.toc(t0, output=True)
+    def normalize_performance():
+        ''' Normalize performance across CPUs -- simple Numpy calculation '''
+        t_bls = []
+        bl_repeats = 5
+        n_outer = 10
+        n_inner = 1e6
+        for r in range(bl_repeats):
+            t0 = sc.tic()
+            for i in range(n_outer):
+                a = np.random.random(int(n_inner))
+                b = np.random.random(int(n_inner))
+                a*b
+            t_bl = sc.toc(t0, output=True)
+            t_bls.append(t_bl)
+        t_bl = min(t_bls)
+        reference = 0.112 # Benchmarked on an Intel i9-8950HK CPU @ 2.90GHz
+        ratio = reference/t_bl
+        return ratio
 
-    # Time running
-    t0 = sc.tic()
-    sim.run()
-    t_run = sc.toc(t0, output=True)
+
+    # Test CPU performance before the run
+    r1 = normalize_performance()
+
+    # Do the actual benchmarking
+    for r in range(repeats):
+
+        # Create the sim
+        sim = cv.Sim(verbose=0)
+
+        # Time initialization
+        t0 = sc.tic()
+        sim.initialize()
+        t_init = sc.toc(t0, output=True)
+
+        # Time running
+        t0 = sc.tic()
+        sim.run()
+        t_run = sc.toc(t0, output=True)
+
+        # Store results
+        t_inits.append(t_init)
+        t_runs.append(t_run)
+
+    # Test CPU performance after the run
+    r2 = normalize_performance()
+    ratio = (r1+r2)/2
+    t_init = min(t_inits)*ratio
+    t_run  = min(t_runs)*ratio
 
     # Construct json
     n_decimals = 3
@@ -156,6 +196,7 @@ def test_benchmark(do_save=do_save):
                 'pop_type': sim['pop_type'],
                 'n_days':   sim['n_days'],
                 },
+            'cpu_performance': ratio,
             }
 
     print('Previous benchmark:')

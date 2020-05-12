@@ -39,8 +39,8 @@ Basic disease transmission
 Efficacy of protection measures
 -------------------------------
 * ``asymp_factor`` = Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-* ``diag_factor``  = Multiply beta by this factor for diganosed cases; based on intervention strength
-* ``quar_eff``     = Quarantine multiplier on transmissibility and susceptibility; set below
+* ``iso_factor``  = Multiply beta by this factor for diganosed cases to represent isolation; set below
+* ``quar_factor``  = Quarantine multiplier on transmissibility and susceptibility; set below
 * ``quar_period``  = Number of days to quarantine for; assumption based on standard policies
 
 Time for disease progression
