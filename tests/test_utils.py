@@ -173,14 +173,16 @@ def test_doubling_time():
 
 #%% Run as a script
 if __name__ == '__main__':
-    sc.tic()
+
+    T = sc.tic()
 
     rnd1    = test_rand()
     rnd2    = test_poisson()
     samples = test_samples(doplot=doplot)
     people1 = test_choose()
     people2 = test_choose_w()
-    dt = test_doubling_time()
+    dt      = test_doubling_time()
 
     print('\n'*2)
-    sc.toc()
+    sc.toc(T)
+    print('Done.')

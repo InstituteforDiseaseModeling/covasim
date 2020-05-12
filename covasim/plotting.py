@@ -33,7 +33,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     return args
 
 
-def handle_to_plot(which, to_plot, n_cols):
+def handle_to_plot(which, to_plot, n_cols, sim):
     ''' Handle which quantities to plot '''
 
     if to_plot is None:
@@ -44,6 +44,12 @@ def handle_to_plot(which, to_plot, n_cols):
         else:
             errormsg = f'"which" must be "sim" or "scens", not "{which}"'
             raise NotImplementedError(errormsg)
+    elif isinstance(to_plot, list): # If a list of keys has been supplied
+        to_plot_list = to_plot # Store separately
+        to_plot = sc.odict() # Create the dict
+        for reskey in to_plot_list:
+            to_plot[sim.results[reskey].name] = [reskey] # Use the result name as the key and the reskey as the value
+
     to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
 
     n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
@@ -206,7 +212,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols)
+    to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
@@ -242,13 +248,14 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols)
+    to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
     default_colors = sc.gridcolors(ncolors=len(scens.sims))
     for pnum,title,reskeys in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+        reskeys = sc.promotetolist(reskeys) # In case it's a string
         for reskey in reskeys:
             resdata = scens.results[reskey]
             for snum,scenkey,scendata in resdata.enumitems():
@@ -286,7 +293,6 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     # Gather results
     res = sim.results[key]
     res_t = sim.results['t']
-    res_y = res.values
     if color is None:
         color = res.color
 
@@ -302,7 +308,9 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     # Do the plotting
     if label is None:
         label = res.name
-    ax.plot(res_t, res_y, c=color, label=label, **args.plot)
+    if res.low is not None and res.high is not None:
+        ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
+    ax.plot(res_t, res.values, c=color, label=label, **args.plot)
     plot_data(sim, key, args.scatter) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
@@ -581,7 +589,21 @@ def get_individual_states(sim):
 # Default settings for the Plotly legend
 plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
 
-def plotly_sim(sim):
+
+def plotly_interventions(sim, fig, add_to_legend=False):
+    ''' Add vertical lines for interventions to the plot '''
+    if sim['interventions']:
+        for interv in sim['interventions']:
+            if hasattr(interv, 'days'):
+                for interv_day in interv.days:
+                    if interv_day and interv_day < sim['n_days']:
+                        interv_date = sim.date(interv_day, as_date=True)
+                        fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_date, x1=interv_date, y0=0, y1=1, line=dict(width=0.5, dash='dash')))
+                        if add_to_legend:
+                            fig.add_trace(go.Scatter(x=[interv_date], y=[0], mode='lines', name='Intervention change', line=dict(width=0.5, dash='dash')))
+    return
+
+def plotly_sim(sim, do_show=False):
     ''' Main simulation results -- parallel of sim.plot() '''
 
     plots = []
@@ -599,17 +621,15 @@ def plotly_sim(sim):
                 ydata = sim.data[key]
                 fig.add_trace(go.Scatter(x=xdata, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
-        if sim['interventions']:
-            for interv in sim['interventions']:
-                if hasattr(interv, 'days'):
-                    for interv_day in interv.days:
-                        if interv_day > 0 and interv_day < sim['n_days']:
-                            fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                            fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
-
+        plotly_interventions(sim, fig, add_to_legend=(p==0)) # Only add the intervention label to the legend for the first plot
         fig.update_layout(title={'text':title}, yaxis_title='Count', autosize=True, **plotly_legend)
 
         plots.append(fig)
+
+    if do_show:
+        for fig in plots:
+            fig.show()
+
     return plots
 
 
@@ -631,15 +651,7 @@ def plotly_people(sim, do_show=False):
             name=state['name']
         ))
 
-    if sim['interventions']:
-        for interv in sim['interventions']:
-                if hasattr(interv, 'days'):
-                    if interv.do_plot:
-                        for interv_day in interv.days:
-                            if interv_day > 0 and interv_day < sim['n_days']:
-                                fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_day, x1=interv_day, y0=0, y1=1, name='Intervention', line=dict(width=0.5, dash='dash')))
-                                fig.update_layout(annotations=[dict(x=interv_day, y=1.07, xref="x", yref="paper", text="Intervention change", showarrow=False)])
-
+    plotly_interventions(sim, fig)
     fig.update_layout(yaxis_range=(0, sim.n))
     fig.update_layout(title={'text': 'Numbers of people by health state'}, yaxis_title='People', autosize=True, **plotly_legend)
 

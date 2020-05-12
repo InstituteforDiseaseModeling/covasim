@@ -148,7 +148,7 @@ class Sim(cvb.BaseSim):
                 self[key] = int(self[key])
             except Exception as E:
                 errormsg = f'Could not convert {key}={self[key]} of {type(self[key])} to integer'
-                raise TypeError(errormsg) from E
+                raise ValueError(errormsg) from E
 
         # Handle start day
         start_day = self['start_day'] # Shorten
@@ -199,7 +199,7 @@ class Sim(cvb.BaseSim):
         if choice not in popdata_choices:
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
-            raise sc.KeyNotFoundError(errormsg)
+            raise ValueError(errormsg)
 
         # Handle interventions
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
@@ -216,7 +216,7 @@ class Sim(cvb.BaseSim):
         We differentiate between flows, stocks, and cumulative results
         The prefix "new" is used for flow variables, i.e. counting new events (infections/deaths/recoveries) on each timestep
         The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any particular timestep
-        The prefix "cum\_" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
+        The prefix "cum" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
         Note that, by definition, n_dead is the same as cum_deaths and n_recovered is the same as cum_recoveries, so we only define the cumulative versions
         '''
 
@@ -473,7 +473,7 @@ class Sim(cvb.BaseSim):
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
-            if elapsed > self['timelimit']:
+            if self['timelimit'] and elapsed > self['timelimit']:
                 sc.printv(f"Time limit ({self['timelimit']} s) exceeded", 1, verbose)
                 break
             elif self['stopping_func'] and self['stopping_func'](self):

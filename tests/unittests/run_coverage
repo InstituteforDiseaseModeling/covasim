@@ -1,3 +1,0 @@
-#!/bin/bash
-coverage run -m unittest unittest_* test_*
-coverage html

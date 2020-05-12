@@ -8,7 +8,7 @@ import numba  as nb # For faster computations
 import numpy  as np # For numerics
 from . import defaults as cvd
 
-# What to import -- not all functions are externally available
+# What functions are externally visible -- note, this gets populated in each section below
 __all__ = []
 
 # Set dtypes

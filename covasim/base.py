@@ -2,11 +2,10 @@
 Base classes for Covasim.
 '''
 
-import datetime as dt
 import numpy as np
-import pylab as pl
 import pandas as pd
 import sciris as sc
+import datetime as dt
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
@@ -35,7 +34,6 @@ class ParsObj(sc.prettyobj):
             all_keys = '\n'.join(list(self.pars.keys()))
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
-        return
 
     def __setitem__(self, key, value):
         ''' Ditto '''
@@ -234,32 +232,40 @@ class BaseSim(ParsObj):
         return days
 
 
-    def date(self, ind, *args, dateformat=None):
+    def date(self, ind, *args, dateformat=None, as_date=False):
         '''
-        Convert an integer or list of integer simulation days to a date/list of dates.
+        Convert one or more integer days of simulation time to a date/list of dates --
+        by default returns a string, or returns a datetime Date object if as_date is True.
 
         Args:
             ind (int, list, or array): the day(s) in simulation time
+            as_date (bool): whether to return as a datetime date instead of a string
 
         Returns:
-            dates (str or list): the date relative to the simulation start day, as an integer
+            dates (str, Date, or list): the date(s) corresponding to the simulation day(s)
 
-        **Example**::
+        **Examples**::
 
-            sim.date(35) # Returns '2020-04-05'
+            sim.date(34) # Returns '2020-04-04'
+            sim.date([34, 54]) # Returns ['2020-04-04', '2020-04-24']
+            sim.date(34, 54, as_dt=True) # Returns [datetime.date(2020, 4, 4), datetime.date(2020, 4, 24)]
         '''
 
+        # Handle inputs
         if sc.isnumber(ind): # If it's a number, convert it to a list
             ind = sc.promotetolist(ind)
         ind.extend(args)
-
         if dateformat is None:
             dateformat = '%Y-%m-%d'
 
+        # Do the conversion
         dates = []
         for i in ind:
-            tmp = self['start_day'] + dt.timedelta(days=int(i))
-            dates.append(tmp.strftime(dateformat))
+            date_obj = self['start_day'] + dt.timedelta(days=int(i))
+            if as_date:
+                dates.append(date_obj)
+            else:
+                dates.append(date_obj.strftime(dateformat))
 
         # Return a string rather than a list if only one provided
         if len(ind)==1:
@@ -271,12 +277,6 @@ class BaseSim(ParsObj):
     def result_keys(self):
         ''' Get the actual results objects, not other things stored in sim.results '''
         keys = [key for key in self.results.keys() if isinstance(self.results[key], Result)]
-        return keys
-
-
-    def layer_keys(self):
-        ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
-        keys = list(self['beta_layer'].keys())
         return keys
 
 
@@ -379,7 +379,7 @@ class BaseSim(ParsObj):
             keys = ['results', 'pars', 'summary']
         keys = sc.promotetolist(keys)
 
-        # Convert to JSON-compatibleformat
+        # Convert to JSON-compatible format
         d = {}
         for key in keys:
             if key == 'results':
@@ -903,7 +903,7 @@ class FlexDict(dict):
                 dictkey = self.keys()[key]
                 return self[dictkey]
             except:
-                raise KE # This is the original errors
+                raise sc.KeyNotFoundError(KE) # Raise the original error
 
     def keys(self):
         return list(super().keys())
