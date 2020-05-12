@@ -7,6 +7,7 @@ All notable changes to the codebase are documented in this file. Note: in many c
 Version 1.1.0 (2020-05-12)
 --------------------------
 - Renamed the parameter ``diag_factor`` to ``iso_factor``, and converted it to a dictionary by layer.
+- Renamed the parameter ``quar_eff`` to ``quar_factor`` (but otherwise left it unchanged).
 - Added the option for presumptive isolation and quarantine in testing interventions.
 - Fixed a bug whereby people who had been in quarantine and were then diagnosed had both diagnosis and quarantine factors applied.
 - GitHub info: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
