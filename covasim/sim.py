@@ -176,8 +176,11 @@ class Sim(cvb.BaseSim):
                 raise ValueError(errormsg)
 
         # Handle parameters specified by layer
+
+
+        # Try to figure out what the layer keys should be
+        layer_keys = None # e.g. household, school
         layer_pars = ['beta_layer', 'contacts', 'iso_factor', 'quar_factor']
-        layer_keys = None # Try to figure out what the layer keys should be
         if self.people is not None:
             layer_keys = set(self.people.contacts.keys())
         elif isinstance(self['beta_layer'], dict):
@@ -185,35 +188,25 @@ class Sim(cvb.BaseSim):
         else:
             layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
 
-        # Convert parameters from a scalar to a dictionary
+        # Convert scalar layer parameters to dictionaries
         for lp in layer_pars:
             val = self[lp]
             if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
                 self[lp] = {k:val for k in layer_keys}
 
         # Handle key mismaches
-        lp_key_list = []
         for lp in layer_pars:
-            lp_key_list.append(set(self.pars[lp].keys()))
-        for lp,lpkeys in zip(layer_pars, lp_key_list):
+            lp_keys = set(self.pars[lp].keys())
             if not lp_keys == set(layer_keys):
-                errormsg = f'Layer parameters have inconsistent keys: beta={beta_layer_keys}, contacts={contacts_keys}, iso_factor={iso_factor_keys}, quar_factor={quar_factor_keys} have inconsistent keys'
+                errormsg = f'Layer parameters have inconsistent keys:'
                 for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
-                    errormsg += f'\n{lp2} = {}'
+                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
                 raise sc.KeyNotFoundError(errormsg)
-
-
-
-        beta_layer_keys  = set(self.pars['beta_layer'].keys())
-        contacts_keys    = set(self.pars['contacts'].keys())
-        iso_factor_keys  = set(self.pars['iso_factor'].keys())
-        quar_factor_keys = set(self.pars['quar_factor'].keys())
-        if not(beta_layer_keys == contacts_keys == iso_factor_keys == quar_factor_keys):
 
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
-            if pop_keys != beta_layer_keys:
-                errormsg = f'Please update your parameter keys {beta_layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
+            if pop_keys != layer_keys:
+                errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
                 raise sc.KeyNotFoundError(errormsg)
 
         # Handle population data
