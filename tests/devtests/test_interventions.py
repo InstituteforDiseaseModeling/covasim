@@ -12,8 +12,7 @@ do_show   = 1
 do_save   = 0
 debug     = 1
 keep_sims = 0
-fig_paths = [f'results/testing_scen_{i}.png' for i in range(3)]
-fig_paths += ['results/testing_other.png']
+fig_paths = [f'results/testing_scen_{i}.png' for i in range(7)]
 
 
 def test_interventions(do_plot=False, do_show=True, do_save=False, fig_path=None):
@@ -347,6 +346,120 @@ def test_borderclosure(do_plot=False, do_show=True, do_save=False, fig_path=None
     return scens
 
 
+
+def test_presumptive_quar(do_plot=False, do_show=True, do_save=False, fig_path=None):
+    sc.heading('Test impact of presumptive quarantine')
+
+    sc.heading('Setting up...')
+
+    sc.tic()
+
+    n_runs = 3
+    verbose = 1
+    base_pars = {
+      'pop_size'    : 10000,
+      'pop_infected':    10,
+      'pop_type'    : 'synthpops',
+      'n_days'      : 150,
+      'beta'        : 0.02,
+      'quar_period' : 14,
+      'quar_factor' : {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1}, # Bidirectional becaues on transmit and receive, e.g. in home
+      'iso_factor'  : {'h': 0.5, 's': 0.1, 'w': 0.1, 'c': 0.1}, # Worried about diagnosed while in quarantine - double impact!
+    }
+
+    base_sim = cv.Sim(base_pars) # create sim object
+
+    # DEFINE INTERVENTIONS
+    test_delay = 2
+
+    testing = cv.test_prob(symp_prob=0.03, asymp_prob=0.001, symp_quar_prob=0.5, asymp_quar_prob=0.1, test_delay=test_delay)
+    isokwargs = {
+        'start_day'  : 30,
+        'trace_probs': {'h': 0, 's': 0, 'w': 0, 'c': 0},
+        'trace_time' : {'h': 0, 's': 0,   'w': 0,   'c': 0}
+    }
+    ctkwargs = {
+        'start_day'  : 30,
+        'trace_probs': {'h': 0.9, 's': 0.7, 'w': 0.7, 'c': 0.2},
+        'trace_time' : {'h': 0, 's': 2,   'w': 2,   'c': 3}
+    }
+
+    baseline = {
+        'name': 'Baseline',
+        'pars': {
+            'interventions': [ testing, ]
+        }
+    }
+
+    contact_tracing = {
+        'name': 'Contact tracing',
+        'pars': {
+            'interventions': [
+                testing,
+                cv.contact_tracing(**ctkwargs)]
+        }
+    }
+
+    quar_on_test = {
+        'name': 'Quarantine on test',
+        'pars': {
+            'interventions': [
+                testing,
+                cv.contact_tracing(**isokwargs, presumptive=True, test_delay=test_delay)]
+        }
+    }
+
+    # Only if trace_time < test_delay will presumptive tracing follow contacts of negatives to quarantine
+    presumptive_ct = {
+        'name': 'Contact tracing (presumptive)',
+        'pars': {
+            'interventions': [
+                testing,
+                cv.contact_tracing(**ctkwargs, presumptive=True, test_delay=test_delay)]
+        }
+    }
+
+    # Define the scenarios
+    scenarios = {
+        'Baseline': baseline,
+        'Quarantine on test': quar_on_test,
+        'Trace on diagnosis': contact_tracing,
+        'Trace on test': presumptive_ct,
+    }
+
+    metapars = {'n_runs': n_runs}
+
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run(verbose=verbose, debug=debug)
+
+    if do_plot:
+        to_plot = {
+            'Number of people currently infectious': [
+                'n_infectious',
+            ],
+            'Number of people in quarantine': [
+                'n_quarantined',
+            ],
+            'Number of newly quarantined': [
+                'new_quarantined',
+            ],
+            'Number diagnosed': [
+                'n_diagnosed',
+            ],
+            'Cum inf': [
+                'cum_infections',
+            ],
+            'Re': [
+                'r_eff',
+            ],
+        }
+
+        fig_args = dict(figsize=(24,16))
+        scens.plot(do_save=do_save, do_show=do_show, to_plot=to_plot, fig_path=fig_path, n_cols=2, fig_args=fig_args)
+
+    return scens
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
@@ -355,8 +468,9 @@ if __name__ == '__main__':
     scens2 = test_turnaround(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[1])
     scens3 = test_tracedelay(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[2])
     sims = test_beta_edges(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
-    bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
-    border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[3])
+    bed_scens = test_beds(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[4])
+    border_scens = test_borderclosure(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[5])
+    scens4 = test_presumptive_quar(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=fig_paths[6])
 
     for path in fig_paths:
         if os.path.exists(path):

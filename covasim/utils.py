@@ -68,14 +68,14 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,     nbfloat), cache=True)
-def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, diag_factor, quar_trans):
+@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True)
+def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor):
     ''' Calculate relative transmissibility and susceptibility '''
-    f_asymp    =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
-    f_diag     = ~diag +  diag * diag_factor # Diagnosis factor, changes e.g. [0,1] with a factor of 0.8 to [1,0.8]
-    f_quar_eff = ~quar +  quar * quar_trans # Quarantine
-    rel_trans  = rel_trans * inf * f_quar_eff * f_asymp * f_diag * beta_layer * viral_load # Recalulate transmisibility
-    rel_sus    = rel_sus   * sus * f_quar_eff # Recalulate susceptibility
+    f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
+    f_iso     = ~diag +  diag * iso_factor # Isolation factor, changes e.g. [0,1] with a factor of 0.2 to [1,0.2]
+    f_quar    = ~quar +  quar * quar_factor # Quarantine, changes e.g. [0,1] with a factor of 0.5 to [1,0.5]
+    rel_trans = rel_trans * inf * f_quar * f_asymp * f_iso * beta_layer * viral_load # Recalulate transmisibility
+    rel_sus   = rel_sus   * sus * f_quar # Recalulate susceptibility
     return rel_trans, rel_sus
 
 
