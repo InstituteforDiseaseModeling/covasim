@@ -1,3 +1,7 @@
+'''
+Include an extra population -- in this example, assisted living facilities.
+'''
+
 import covasim as cv
 import sciris as sc
 import numpy as np
@@ -22,7 +26,7 @@ def remove_contacts_from_layer(layer, inds, sim):
 sim = cv.Sim(pop_type='hybrid', pop_size=2e4)
 sim.initialize()
 
-''' 
+'''
 Define ALF parameters
 According to LTC 2015-2016 data for all of Washington:
 83% of residents in nursing homes are 65> and 95% of residents in residential care communities are 65>.
@@ -54,10 +58,8 @@ layer_keys = ['alf']
 alf_inds = cv.binomial_filter(alf_prob, sc.findinds(sim.people.age >= min_alf_age))
 assert max(alf_inds) < pop_size
 contacts_list = [{key: [] for key in layer_keys} for i in range(pop_size)]
-alf_contacts, _ = cv.make_microstructured_contacts(len(alf_inds), {'alf': n_alf_contacts}, sim)
-
-# get the dictionary of ALFs
-alf_dict = sim.contactdict['alf']
+alf_contacts, _, clusters = cv.make_microstructured_contacts(len(alf_inds), {'alf': n_alf_contacts})
+alf_dict = clusters['alf']
 
 for i, ind in enumerate(alf_inds):
     contacts_list[ind]['alf'] = alf_inds[alf_contacts[i]['alf']].tolist()  # Copy over alf contacts
@@ -123,7 +125,6 @@ remove_contacts_from_layer('w', health_care_aides, sim)
 # new_work_layer.validate()
 # sim.people.contacts['w'] = new_work_layer # reassign workplace layer contacts as new work layer
 
-sim.contactdict['alf'] = alf_dict
 sim.people.add_contacts(contacts_list, lkey='alf')
 print('Total alf contacts: ', len(sim.people.contacts['alf']))
 
