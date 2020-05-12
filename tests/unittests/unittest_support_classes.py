@@ -30,7 +30,7 @@ class TestProperties:
             verbose = 'verbose'
             enable_synthpops = 'usepopdata'
             time_limit = 'timelimit'
-            quarantine_effectiveness = 'quar_eff'
+            quarantine_effectiveness = 'quar_factor'
             # stopping_function = 'stop_func'
             pass
 
@@ -38,7 +38,7 @@ class TestProperties:
             beta = 'beta'
             asymptomatic_fraction = 'asym_prop'
             asymptomatic_transmission_multiplier = 'asym_factor'
-            diagnosis_transmission_factor = 'diag_factor'
+            diagnosis_transmission_factor = 'iso_factor'
             contact_transmission_factor = 'cont_factor'
             contacts_per_agent = 'contacts'  # TODO: need to construct a population now
             beta_population_specific = 'beta_pop'
@@ -311,7 +311,6 @@ class CovaSimTest(unittest.TestCase):
         #  see ../tests/test_interventions_testing.test_tracedelay
         #  trace_probs = {'h': 1, 's': 1, 'w': 1, 'c': 1}
         #  trace_time = {'h': 0, 's': 1, 'w': 1, 'c': 2}
-        #  pars.quar_eff = {'h': 0.0, 's': 0.0, 'w': 0.0, 'c': 0.0}
         #  pars.quar_period = 60 # 60 days
         if not trace_probabilities:
             trace_probabilities = {'h': 1, 's': 1, 'w': 1, 'c': 1}

@@ -27,7 +27,7 @@ def test_all_interventions():
 
     # 1. Dynamic pars
     i00 = cv.test_prob(start_day=5, symp_prob=0.3)
-    i01 = cv.dynamic_pars({'beta':{'days':[40, 50], 'vals':[0.005, 0.015]}, 'diag_factor':{'days':30, 'vals':0.0}}) # Starting day 30, make diagnosed people stop transmitting
+    i01 = cv.dynamic_pars({'beta':{'days':[40, 50], 'vals':[0.005, 0.015]}, 'rel_death_prob':{'days':30, 'vals':2.0}}) # Starting day 30, make diagnosed people stop transmitting
 
 
     # 2. Sequence

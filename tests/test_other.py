@@ -368,13 +368,13 @@ def test_sim():
     sim['n_days'] = 30 # Restore
 
     # Check layer pars are internally consistent
-    sim['quar_eff'] = {'invalid':30}
+    sim['quar_factor'] = {'invalid':30}
     with pytest.raises(sc.KeyNotFoundError):
         sim.validate_pars()
     sim.reset_layer_pars() # Restore
 
     # Check mismatch with population
-    for key in ['beta_layer', 'contacts', 'quar_eff']:
+    for key in ['beta_layer', 'contacts', 'quar_factor']:
         sim[key] = {'invalid':1}
     with pytest.raises(sc.KeyNotFoundError):
         sim.validate_pars()
