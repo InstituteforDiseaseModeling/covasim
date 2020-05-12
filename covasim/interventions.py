@@ -596,14 +596,15 @@ class contact_tracing(Intervention):
     Contact tracing of positive people.
 
     Args:
-        trace_probs (float): probability of tracing, per layer
-        trace_time  (int):  days required to trace, per layer
+        trace_probs (dict): probability of tracing, per layer
+        trace_time  (dict): days required to trace, per layer
         start_day   (int):  intervention start day
         end_day     (int):  intervention end day
+        test_delay  (int):  number of days a test result takes
         presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
         do_plot     (bool): whether or not to plot
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, do_plot=None, presumptive=False, test_delay=0):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, test_delay=0, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.trace_probs = trace_probs
         self.trace_time  = trace_time
