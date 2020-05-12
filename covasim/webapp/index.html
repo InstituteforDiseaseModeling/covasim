@@ -37,6 +37,7 @@
       <b-navbar-brand href="#">{{ app.title }}</b-navbar-brand>
       <b-navbar-nav class="ml-auto">
         <b-nav-item :href="app.docs_url" target="_blank">Documentation</b-nav-item>
+        <b-nav-item :href="app.paper_url" target="_blank">Paper</b-nav-item>
         <b-nav-item v-b-modal.about>About</b-nav-item>
         <b-nav-item href="https://institutefordiseasemodeling.github.io/covasim-docs/whatsnew.html" target="_blank">{{app.version}}</b-nav-item>
       </b-navbar-nav>
@@ -46,7 +47,7 @@
     <b-modal id="about" ok-only ok-variant="secondary" ok-title="Close">
       <template v-slot:modal-title>About {{ app.title }}</template>
       <p>{{ app.title }} is an agent-based model that simulates the transmission of COVID-19 (novel coronavirus, SARS-CoV-2) in a population. Each individual in the model may pass through the following stages of COVID-19 infection: susceptible, exposed, infectious, and recovered (SEIR). The epidemiological parameter values are taken from literature.</p>
-      <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.5 and a doubling time of 6-7 days. For more information, please visit the <a :href="app.github_url" target="_blank">GitHub</a> repository.</p>
+      <p>Viral transmission occurs on a fixed contact network with undirected edges. Each day, infectious individuals expose susceptible individuals to possible infection. By default, the daily probability of infection, number of contacts, and mean duration of infectiousness roughly equates to R0 = 2.5 and a doubling time of 6-7 days. For more information, please read the <a :href="app.paper_url" target="_blank">paper</a> or visit the <a :href="app.github_url" target="_blank">GitHub</a> repository.</p>
       <p><b>Note:</b> Models are only as good as the values of the parameters put into them. This is a rapidly changing situation, and we will update content as relevant information is received.</p>
       <p><b>Acknowledgements:</b> Covasim is currently under active development by IDM's COVID-19 Response Team. Model development is led by Daniel Klein, Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, and Dina Mistry. UI design is led by Lauren George, William Chen, and Scott Ayers, inspired by a prototype from Brian Lovin. For the full list of contributors, please see our <a href="https://github.com/InstituteforDiseaseModeling/covasim/graphs/contributors" target="_blank">Contributors</a> page.</p>
     </b-modal>

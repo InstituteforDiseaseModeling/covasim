@@ -3,6 +3,19 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+
+Version 1.0.3 (2020-05-11)
+--------------------------
+- Added an extra output of ``make_microstructured_contacts()`` to store each person's cluster identifier. Currently, this is only supported for the ``hybrid`` population type, but in future versions, ``synthpops`` will also be supported.
+- Removed the ``directed`` argument from population creation functions since it is no longer supported in the model.
+
+
+Version 1.0.2 (2020-05-10)
+--------------------------
+- Added uncertainty to the ``plot_result()`` method of MultiSims.
+- Added documentation and webapp links to the paper.
+
+
 Version 1.0.1 (2020-05-09)
 --------------------------
 - Added argument ``as_date`` for ``sim.date()`` to return a ``datetime`` object instead of a string.
