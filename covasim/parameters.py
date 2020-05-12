@@ -51,8 +51,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['diag_factor']  = 0.2 # Multiply beta by this factor for diganosed cases; based on intervention strength
-    pars['quar_eff']     = None # Quarantine multiplier on transmissibility and susceptibility; set below
+    pars['iso_factor']   = None # Multiply beta by this factor for diganosed cases to represent isolation; set below
+    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set below
     pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
 
     # Duration parameters: time for disease progression
@@ -109,24 +109,28 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     d_contacts    = 20  # Default number of contacts
     d_dynam_layer = 0   # Do not use dynamic layers by default
     d_beta_layer  = 1.0 # No change in beta
-    d_quar_eff    = 0.3 # Assumed quarantine effectiveness
+    d_iso_factor  = 0.2 # Assumed isolation factor
+    d_quar_factor = 0.3 # Assumed quarantine factor
 
     if layer_keys is not None: # Create based on known population keys
         pars['contacts']    = {lkey:d_contacts    for lkey in layer_keys}
         pars['dynam_layer'] = {lkey:d_dynam_layer for lkey in layer_keys}
         pars['beta_layer']  = {lkey:d_beta_layer  for lkey in layer_keys}
-        pars['quar_eff']    = {lkey:d_quar_eff    for lkey in layer_keys}
-    else: # Guess based on population type
+        pars['iso_factor']  = {lkey:d_iso_factor  for lkey in layer_keys}
+        pars['quar_factor'] = {lkey:d_quar_factor for lkey in layer_keys}
+    else: # Set based on population type
         if pars['pop_type'] == 'random':
             if pars.get('contacts',    None) is None or force: pars['contacts']    = {'a': d_contacts}    # Number of contacts per person per day -- 'a' for 'all'
             if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = {'a': d_dynam_layer} # Which layers are dynamic
             if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = {'a': d_beta_layer}  # Per-population beta weights; relative
-            if pars.get('quar_eff',    None) is None or force: pars['quar_eff']    = {'a': d_quar_eff}    # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+            if pars.get('iso_factor',  None) is None or force: pars['iso_factor']  = {'a': d_iso_factor}  # Multiply beta by this factor for people who have been diagnosed
+            if pars.get('quar_factor', None) is None or force: pars['quar_factor'] = {'a': d_quar_factor} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
         else:
             if pars.get('contacts',    None) is None or force: pars['contacts']    = dict(h=2.7, s=20,  w=8,  c=20)   # Number of contacts per person per day, estimated
             if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = dict(h=0,   s=0,   w=0,   c=0)    # Which layers are dynamic -- none by defaul
             if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = dict(h=7.0, s=0.7, w=1.4, c=0.14)  # Per-population beta weights; relative
-            if pars.get('quar_eff',    None) is None or force: pars['quar_eff']    = dict(h=0.5, s=0.0, w=0.0, c=0.05) # Multiply beta by this factor
+            if pars.get('iso_factor',  None) is None or force: pars['iso_factor']  = dict(h=0.3, s=0.0, w=0.0, c=0.1) # Multiply beta by this factor for people in isolation
+            if pars.get('quar_factor', None) is None or force: pars['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3) # Multiply beta by this factor for people in quarantine
     return
 
 

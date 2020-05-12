@@ -181,11 +181,12 @@ class Sim(cvb.BaseSim):
             self['contacts']    = {'a':contacts}
 
         # Handle key mismaches
-        beta_layer_keys = set(self.pars['beta_layer'].keys())
-        contacts_keys   = set(self.pars['contacts'].keys())
-        quar_eff_keys   = set(self.pars['quar_eff'].keys())
-        if not(beta_layer_keys == contacts_keys == quar_eff_keys):
-            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, quar_eff={quar_eff_keys} have inconsistent keys'
+        beta_layer_keys  = set(self.pars['beta_layer'].keys())
+        contacts_keys    = set(self.pars['contacts'].keys())
+        iso_factor_keys  = set(self.pars['iso_factor'].keys())
+        quar_factor_keys = set(self.pars['quar_factor'].keys())
+        if not(beta_layer_keys == contacts_keys == iso_factor_keys == quar_factor_keys):
+            errormsg = f'Layer parameters beta={beta_layer_keys}, contacts={contacts_keys}, iso_factor={iso_factor_keys}, quar_factor={quar_factor_keys} have inconsistent keys'
             raise sc.KeyNotFoundError(errormsg)
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
@@ -376,7 +377,6 @@ class Sim(cvb.BaseSim):
         # Compute the probability of transmission
         beta         = cvd.default_float(self['beta'])
         asymp_factor = cvd.default_float(self['asymp_factor'])
-        diag_factor  = cvd.default_float(self['diag_factor'])
         frac_time    = cvd.default_float(self['viral_dist']['frac_time'])
         load_ratio   = cvd.default_float(self['viral_dist']['load_ratio'])
         high_cap     = cvd.default_float(self['viral_dist']['high_cap'])
@@ -391,16 +391,17 @@ class Sim(cvb.BaseSim):
             betas   = layer['beta']
 
             # Compute relative transmission and susceptibility
-            rel_trans  = people.rel_trans
-            rel_sus    = people.rel_sus
-            inf        = people.infectious
-            sus        = people.susceptible
-            symp       = people.symptomatic
-            diag       = people.diagnosed
-            quar       = people.quarantined
-            quar_eff   = cvd.default_float(self['quar_eff'][lkey])
-            beta_layer = cvd.default_float(self['beta_layer'][lkey])
-            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, diag_factor, quar_eff)
+            rel_trans   = people.rel_trans
+            rel_sus     = people.rel_sus
+            inf         = people.infectious
+            sus         = people.susceptible
+            symp        = people.symptomatic
+            diag        = people.diagnosed
+            quar        = people.quarantined
+            iso_factor  = cvd.default_float(self['iso_factor'][lkey])
+            quar_factor = cvd.default_float(self['quar_factor'][lkey])
+            beta_layer  = cvd.default_float(self['beta_layer'][lkey])
+            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor)
 
             # Calculate actual transmission
             for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1

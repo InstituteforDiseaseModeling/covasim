@@ -169,7 +169,7 @@ class dynamic_pars(Intervention):
 
     **Examples**::
 
-        interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'diag_factor':{'days':30, 'vals':0.0}}) # Change beta, and make diagnosed people stop transmitting
+        interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'iso_factor':{'days':30, 'vals':0.0}}) # Change beta, and make diagnosed people stop transmitting
     '''
 
     def __init__(self, pars, do_plot=None):
