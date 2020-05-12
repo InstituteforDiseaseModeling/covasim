@@ -12,7 +12,6 @@ from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpars
 from . import people as cvppl
-import uuid
 
 
 # Specify all externally visible functions this file defines
@@ -230,7 +229,7 @@ def make_microstructured_contacts(pop_size, contacts):
     return contacts_list, layer_keys, clusters
 
 
-def make_hybrid_contacts(pop_size, ages, contacts, sim, school_ages=None, work_ages=None):
+def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=None):
     '''
     Create "hybrid" contacts -- microstructured contacts for households and
     random contacts for schools and workplaces, both of which have extremely

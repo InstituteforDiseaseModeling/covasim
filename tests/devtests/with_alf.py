@@ -87,7 +87,7 @@ health_care_aides = [] # List of health care aides. will use this later to clip 
 
 for id, cluster_members in alf_dict.items():
     num_health_care_workers = cv.poisson(n_alf_staff)
-    health_care_workers_to_add = np.random.choice(health_care_worker_inds, n_alf_staff, replace=False).tolist()
+    health_care_workers_to_add = np.random.choice(health_care_worker_inds, num_health_care_workers, replace=False).tolist()
     assert max(health_care_workers_to_add) < pop_size
     for person in health_care_workers_to_add:
         health_care_aides.append(person)
