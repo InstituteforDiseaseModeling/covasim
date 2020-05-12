@@ -145,8 +145,8 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
 
     # Actually create the contacts
     if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'], sim)
-    elif microstructure == 'hybrid':    contacts, layer_keys, _ = make_hybrid_contacts(pop_size, ages, sim['contacts'], sim)
+    elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'])
+    elif microstructure == 'hybrid':    contacts, layer_keys, _ = make_hybrid_contacts(pop_size, ages, sim['contacts'])
     else:
         errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
         raise NotImplementedError(errormsg)
