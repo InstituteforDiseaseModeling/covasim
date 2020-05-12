@@ -391,6 +391,7 @@ class People(cvb.BasePeople):
             inds (array): indices of who to quarantine
         '''
         self.quarantined[inds] = True
+        self.date_quarantined[inds] = self.t
         return
 
 

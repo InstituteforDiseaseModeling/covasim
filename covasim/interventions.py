@@ -648,8 +648,8 @@ class contact_tracing(Intervention):
             trace_from_inds = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
 
             # Quarantine self until results come back
-            sim.people.date_quarantined[trace_from_inds] = np.fmin(sim.people.date_quarantined[trace_from_inds], t) # Take earliest date know contact
-            sim.people.date_end_quarantined[trace_from_inds] = np.fmin(sim.people.date_end_quarantined[trace_from_inds], (t + self.test_delay)) # Take latest date end quarantine
+            sim.people.date_known_contact[trace_from_inds] = np.fmin(sim.people.date_known_contact[trace_from_inds], t) # Take earliest date know contact
+            sim.people.date_end_quarantine[trace_from_inds] = np.fmin(sim.people.date_end_quarantine[trace_from_inds], (t + self.test_delay)) # Take latest date end quarantine
 
         # Figure out who tests positive, and trace their contacts
         test_pos_inds = trace_from_inds[cvu.true( sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
