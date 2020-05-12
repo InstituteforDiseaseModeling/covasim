@@ -56,6 +56,7 @@ class Intervention:
             do_plot = True
         self.do_plot = do_plot
         self.days = []
+        self.days = []
         self.initialized = False
         return
 
