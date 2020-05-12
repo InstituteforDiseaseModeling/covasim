@@ -133,9 +133,11 @@ def test_benchmark(do_save=do_save):
     previous = sc.loadjson(benchmark_filename)
 
     repeats = 5
+    t_inits = []
+    t_runs  = []
 
     def normalize_performance():
-        ''' Normalize performance across CPUs '''
+        ''' Normalize performance across CPUs -- simple Numpy calculation '''
         t_bls = []
         bl_repeats = 5
         n_outer = 10
@@ -149,17 +151,15 @@ def test_benchmark(do_save=do_save):
             t_bl = sc.toc(t0, output=True)
             t_bls.append(t_bl)
         t_bl = min(t_bls)
-        reference = 0.1
+        reference = 0.112 # Benchmarked on an Intel i9-8950HK CPU @ 2.90GHz
         ratio = reference/t_bl
-        print(f'Performance ratio: {ratio}')
-        print(f'Performance tbl: {t_bl} {t_bls}')
         return ratio
 
-    ratio = normalize_performance()
 
-    t_inits = []
-    t_runs  = []
+    # Test CPU performance before the run
+    r1 = normalize_performance()
 
+    # Do the actual benchmarking
     for r in range(repeats):
 
         # Create the sim
@@ -179,8 +179,11 @@ def test_benchmark(do_save=do_save):
         t_inits.append(t_init)
         t_runs.append(t_run)
 
-    t_init = min(t_inits)/ratio
-    t_run  = min(t_runs)/ratio
+    # Test CPU performance after the run
+    r2 = normalize_performance()
+    ratio = (r1+r2)/2
+    t_init = min(t_inits)*ratio
+    t_run  = min(t_runs)*ratio
 
     # Construct json
     n_decimals = 3
@@ -193,6 +196,7 @@ def test_benchmark(do_save=do_save):
                 'pop_type': sim['pop_type'],
                 'n_days':   sim['n_days'],
                 },
+            'cpu_performance': ratio,
             }
 
     print('Previous benchmark:')
