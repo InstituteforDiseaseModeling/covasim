@@ -132,18 +132,55 @@ def test_benchmark(do_save=do_save):
     print('Running benchmark...')
     previous = sc.loadjson(benchmark_filename)
 
-    # Create the sim
-    sim = cv.Sim(verbose=0)
+    repeats = 5
 
-    # Time initialization
-    t0 = sc.tic()
-    sim.initialize()
-    t_init = sc.toc(t0, output=True)
+    def normalize_performance():
+        ''' Normalize performance across CPUs '''
+        t_bls = []
+        bl_repeats = 5
+        n_outer = 10
+        n_inner = 1e6
+        for r in range(bl_repeats):
+            t0 = sc.tic()
+            for i in range(n_outer):
+                a = np.random.random(int(n_inner))
+                b = np.random.random(int(n_inner))
+                a*b
+            t_bl = sc.toc(t0, output=True)
+            t_bls.append(t_bl)
+        t_bl = min(t_bls)
+        reference = 0.1
+        ratio = reference/t_bl
+        print(f'Performance ratio: {ratio}')
+        print(f'Performance tbl: {t_bl} {t_bls}')
+        return ratio
 
-    # Time running
-    t0 = sc.tic()
-    sim.run()
-    t_run = sc.toc(t0, output=True)
+    ratio = normalize_performance()
+
+    t_inits = []
+    t_runs  = []
+
+    for r in range(repeats):
+
+        # Create the sim
+        sim = cv.Sim(verbose=0)
+
+        # Time initialization
+        t0 = sc.tic()
+        sim.initialize()
+        t_init = sc.toc(t0, output=True)
+
+        # Time running
+        t0 = sc.tic()
+        sim.run()
+        t_run = sc.toc(t0, output=True)
+
+        # Store results
+        t_inits.append(t_init)
+        t_runs.append(t_run)
+
+    t_init = min(t_inits)/ratio
+    t_run  = min(t_runs)/ratio
 
     # Construct json
     n_decimals = 3
