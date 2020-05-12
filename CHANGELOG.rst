@@ -4,6 +4,15 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.1.0 (2020-05-12)
+--------------------------
+- Renamed the parameter ``diag_factor`` to ``iso_factor``, and converted it to a dictionary by layer.
+- Added the option for presumptive isolation and quarantine in testing interventions.
+- Fixed a bug whereby people who had been in quarantine and were then diagnosed had both diagnosis and quarantine factors applied.
+- GitHub info: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
+
+
+
 Version 1.0.3 (2020-05-11)
 --------------------------
 - Added an extra output of ``make_microstructured_contacts()`` to store each person's cluster identifier. Currently, this is only supported for the ``hybrid`` population type, but in future versions, ``synthpops`` will also be supported.
