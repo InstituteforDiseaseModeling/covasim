@@ -18,14 +18,14 @@ cb = cv.change_beta(days=50, changes=0.5) # Change beta
 
 # Properties that are shared across sims
 basepop      = 10e3
-popinfected  = 100
+popinfected  = 1000
 popscale1    = 10
 popscale2    = 20 # Try a different population scale
 which_interv = 2 # Which intervention to test
 
 shared = sc.objdict(
     pop_type = 'hybrid',
-    beta_layer = dict(h=50, s=0, w=0, c=0.5),
+    beta_layer = dict(h=50, s=0, w=0, c=0.3),
     n_days = 60,
     beta = 0.010,
     rand_seed = 239487,
