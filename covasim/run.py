@@ -250,8 +250,8 @@ class MultiSim(sc.prettyobj):
         if do_plot:
             self.plot_compare(**kwargs)
 
+        df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coercion
         if output:
-            df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coersion
             return df
         else:
             print(df)
