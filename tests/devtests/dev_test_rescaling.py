@@ -18,7 +18,7 @@ cb = cv.change_beta(days=50, changes=0.5) # Change beta
 
 # Properties that are shared across sims
 basepop      = 10e3
-popinfected  = 1000
+popinfected  = 100
 popscale1    = 10
 popscale2    = 20 # Try a different population scale
 which_interv = 2 # Which intervention to test
@@ -28,9 +28,9 @@ shared = sc.objdict(
     beta_layer = dict(h=50, s=0, w=0, c=0.3),
     n_days = 60,
     beta = 0.010,
-    rand_seed = 239487,
-    verbose = 1,
-    rescale_factor = 2,
+    rand_seed = 20589,
+    verbose = 0,
+    rescale_factor = 5,
     # interventions = [cb, tn, tp],
 )
 
@@ -58,29 +58,29 @@ p.static = dict(
     rescale      = False,
 )
 
-# Simulate an extra large population
-p.entire2 = dict(
-    pop_size     = basepop*popscale2,
-    pop_infected = popinfected,
-    pop_scale    = 1,
-    rescale      = False,
-)
+# # Simulate an extra large population
+# p.entire2 = dict(
+#     pop_size     = basepop*popscale2,
+#     pop_infected = popinfected,
+#     pop_scale    = 1,
+#     rescale      = False,
+# )
 
-# Simulate a small population with dynamic scaling
-p.rescale2 = dict(
-    pop_size     = basepop,
-    pop_infected = popinfected,
-    pop_scale    = popscale2,
-    rescale      = True,
-)
+# # Simulate a small population with dynamic scaling
+# p.rescale2 = dict(
+#     pop_size     = basepop,
+#     pop_infected = popinfected,
+#     pop_scale    = popscale2,
+#     rescale      = True,
+# )
 
-# Simulate a small population with static scaling
-p.static2 = dict(
-    pop_size     = basepop,
-    pop_infected = popinfected//popscale2,
-    pop_scale    = popscale2,
-    rescale      = False,
-)
+# # Simulate a small population with static scaling
+# p.static2 = dict(
+#     pop_size     = basepop,
+#     pop_infected = popinfected//popscale2,
+#     pop_scale    = popscale2,
+#     rescale      = False,
+# )
 
 
 # Create and run the sims

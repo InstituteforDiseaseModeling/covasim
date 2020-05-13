@@ -320,7 +320,7 @@ class Sim(cvb.BaseSim):
         self.people.initialize()
 
         # Create the seed infections
-        inds = np.arange(int(self['pop_infected']))
+        inds = cvu.choose(self['pop_size'], self['pop_infected'])
         self.people.infect(inds=inds)
         for ind in inds:
             self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='seed_infection')
