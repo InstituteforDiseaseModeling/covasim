@@ -277,9 +277,9 @@ class change_beta(Intervention):
 
     def __init__(self, days, changes, layers=None, do_plot=None):
         super().__init__(do_plot=do_plot)
-        self.days = days
-        self.changes = sc.promotetoarray(changes)
-        self.layers = sc.promotetolist(layers, keepnone=True)
+        self.days       = sc.dcp(days)
+        self.changes    = sc.dcp(changes)
+        self.layers     = sc.dcp(layers)
         self.orig_betas = None
         self._store_args()
         return
@@ -293,15 +293,20 @@ class change_beta(Intervention):
             for d,day in enumerate(self.days):
                 self.days[d] = sim.day(day) # Ensure it's an integer and not a string or something
         self.days = sc.promotetoarray(self.days)
+
+        self.changes = sc.promotetoarray(self.changes)
         if len(self.days) != len(self.changes):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
+
         self.orig_betas = {}
+        self.layers = sc.promotetolist(self.layers, keepnone=True)
         for lkey in self.layers:
             if lkey is None:
                 self.orig_betas['overall'] = sim['beta']
             else:
                 self.orig_betas[lkey] = sim['beta_layer'][lkey]
+
         self.initialized = True
         return
 
