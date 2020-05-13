@@ -27,7 +27,7 @@ shared = sc.objdict(
     n_days = 120,
     beta = 0.015,
     rand_seed = 239487,
-    interventions = [cb, tn, tp],
+    # interventions = [cb, tn, tp],
 )
 
 # Simulate the entire population

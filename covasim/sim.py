@@ -353,6 +353,7 @@ class Sim(cvb.BaseSim):
                     n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
                     new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
                     self.people.make_susceptible(new_sus_inds)
+                    sc.printv(f"Rescaled by {scaling_ratio} because {n_not_sus/n_people}", 2, self['verbose'])
         return
 
 
