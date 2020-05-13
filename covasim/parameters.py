@@ -87,6 +87,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     # Health system parameters
     pars['n_beds'] = None  # The number of beds available for severely/critically ill patients (default is no constraint)
 
+    pars['LTCF'] = False
+
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
     reset_layer_pars(pars)
@@ -126,11 +128,14 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
             if pars.get('iso_factor',  None) is None or force: pars['iso_factor']  = {'a': d_iso_factor}  # Multiply beta by this factor for people who have been diagnosed
             if pars.get('quar_factor', None) is None or force: pars['quar_factor'] = {'a': d_quar_factor} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
         else:
-            if pars.get('contacts',    None) is None or force: pars['contacts']    = dict(h=2.7, s=20,  w=8,  c=20)   # Number of contacts per person per day, estimated
+            if pars.get('contacts',    None) is None or force: pars['contacts']    = dict(h=4, s=20,  w=8,  c=20)   # Number of contacts per person per day, estimated
             if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = dict(h=0,   s=0,   w=0,   c=0)    # Which layers are dynamic -- none by defaul
             if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = dict(h=7.0, s=0.7, w=1.4, c=0.14)  # Per-population beta weights; relative
             if pars.get('iso_factor',  None) is None or force: pars['iso_factor']  = dict(h=0.3, s=0.0, w=0.0, c=0.1) # Multiply beta by this factor for people in isolation
             if pars.get('quar_factor', None) is None or force: pars['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3) # Multiply beta by this factor for people in quarantine
+        if pars['LTCF']:
+            for key in ['contacts', 'dynam_layer', 'beta_layer', 'iso_factor', 'quar_factor']:
+                pars[key]['ltcf'] = pars[key]['h']
     return
 
 
