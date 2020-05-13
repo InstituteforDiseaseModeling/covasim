@@ -140,7 +140,6 @@ class WebAppUnitTests(unittest.TestCase):
         self.assertEqual(len(expected_output), len(output))
 
     def test_run_sim_with_intervention(self):
-        self.is_debugging = True
         sc.heading('Testing sim with interventions')
 
         pars = cw.get_defaults(die=True)
