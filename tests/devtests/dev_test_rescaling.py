@@ -24,10 +24,13 @@ popscale2    = 20 # Try a different population scale
 which_interv = 2 # Which intervention to test
 
 shared = sc.objdict(
+    pop_type = 'hybrid',
+    beta_layer = dict(h=50, s=0, w=0, c=0.5),
     n_days = 60,
     beta = 0.010,
     rand_seed = 239487,
-    verbose = 0,
+    verbose = 1,
+    rescale_factor = 2,
     # interventions = [cb, tn, tp],
 )
 
