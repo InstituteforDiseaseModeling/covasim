@@ -22,7 +22,7 @@ def make_metapars():
     ''' Create default metaparameters for a Scenarios run '''
     metapars = sc.objdict(
         n_runs    = 3, # Number of parallel runs; change to 3 for quick, 11 for real
-        noise     = 0.1, # Use noise, optionally
+        noise     = 0.0, # Use noise, optionally
         noisepar  = 'beta',
         rand_seed = 1,
         quantiles = {'low':0.1, 'high':0.9},
