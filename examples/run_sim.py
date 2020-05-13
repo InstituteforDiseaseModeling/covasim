@@ -17,7 +17,6 @@ pars = sc.objdict(
     n_days       = 120,      # Number of days to simulate
     rand_seed    = 1,        # Random seed
     pop_type     = 'hybrid', # Population to use -- "hybrid" is random with household, school,and work structure
-    LTCF         = True,     # Create LTCF
 )
 
 # Optionally add an intervention
