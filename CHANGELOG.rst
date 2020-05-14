@@ -3,6 +3,7 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+
 Version 1.1.1 (2020-05-13)
 --------------------------
 - Refactored the contact tracing and quarantining functions, to fixed a bug (introduced in v1.1.0) in which some people who went into quarantine never came out of quarantine.
@@ -21,7 +22,6 @@ Version 1.1.0 (2020-05-12)
 - Added the option for presumptive isolation and quarantine in testing interventions.
 - Fixed a bug whereby people who had been in quarantine and were then diagnosed had both diagnosis and quarantine factors applied.
 - GitHub info: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
-
 
 
 Version 1.0.3 (2020-05-11)
