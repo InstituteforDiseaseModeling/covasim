@@ -3,6 +3,16 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+Version 1.1.1 (2020-05-13)
+--------------------------
+- Refactored the contact tracing and quarantining functions, to fixed a bug (introduced in v1.1.0) in which some people who went into quarantine never came out of quarantine.
+- Changed initialization so seed infections are now sampled randomly from the population, rather than the first ``pop_infected`` agents. Since ``hybrid`` also uses consecutive indices for constructing households, this was causing some households to be fully infected on initialization, while all other households had no infections.
+- Updated the default ``rescale_factor`` from 2.0 to 1.2, since large amounts of rescaling cause noticeable "blips" in inhomogeneous networks (e.g., a population where some households are 100% infected and most are 0% infected).
+- Added ability to pass plotting arguments to ``intervention.plot()``.
+- Removed default noise in scenarios (restore previous behavior by setting ``metapars = dict(noise=0.1)``).
+- Refactored and renamed computed results (e.g., summary stats) in the Sim class.
+- GitHub info: PR `513 <https://github.com/amath-idm/covasim/pull/513>`__, previous head ``973801a``
+
 
 Version 1.1.0 (2020-05-12)
 --------------------------
