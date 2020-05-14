@@ -654,21 +654,7 @@ class contact_tracing(Intervention):
         else:
             trace_from_inds = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
 
-            # Quarantine self until results come back
-            sim.people.date_known_contact[trace_from_inds] = np.fmin(sim.people.date_known_contact[trace_from_inds], t) # Take earliest date know contact
-            sim.people.date_end_quarantine[trace_from_inds] = np.fmin(sim.people.date_end_quarantine[trace_from_inds], (t + self.test_delay)) # Take latest date end quarantine
-
-        # Figure out who tests positive, and trace their contacts
-        test_pos_inds = trace_from_inds[cvu.true( sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
-        if len(test_pos_inds): # If there are any just-diagnosed people, go trace their contacts
-            sim.people.trace(test_pos_inds, self.trace_probs, self.trace_time, sim.pars['quar_period'])
-
-        # Figure out who tests negative, and release them
-        test_neg_inds = trace_from_inds[cvu.false(sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
-        if len(test_neg_inds): # If there are any just-diagnosed people, go trace their contacts
-            days_in_quar = {lkey: self.test_delay - ltrace_time for lkey, ltrace_time in self.trace_time.items()}
-            # By the time we trace them, the negative diagnostic results might already be available
-            if max(days_in_quar.values()) > 0:
-                sim.people.trace(test_neg_inds, self.trace_probs, self.trace_time, days_in_quar)
+        if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
+            sim.people.trace(trace_from_inds, self.trace_probs, self.trace_time)
 
         return
