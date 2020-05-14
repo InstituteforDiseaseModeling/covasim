@@ -26,8 +26,8 @@ pars = dict(
     )
 
 intervs = [
-    cv.test_prob(start_day=10, symp_prob=0.1, asymp_prob=0.001, symp_quar_prob=0.8, asymp_quar_prob=0.3, test_delay=1.0, do_plot=False),
-    cv.contact_tracing(start_day=10, trace_probs=dict(h=0.9, s=0.7, w=0.7, c=0.3), trace_time=2.0, presumptive=True, do_plot=False),
+    cv.test_prob(start_day=10, symp_prob=0.1, asymp_prob=0.001, symp_quar_prob=0.8, asymp_quar_prob=0.0, test_delay=1.0, do_plot=False),
+    cv.contact_tracing(start_day=10, trace_probs=dict(h=0.9, s=0.7, w=0.7, c=0.3), trace_time=2.0, presumptive=False, do_plot=False),
     ]
 
 sim = cv.Sim(pars, interventions=intervs)
