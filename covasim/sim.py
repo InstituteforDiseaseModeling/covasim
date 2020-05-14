@@ -259,6 +259,7 @@ class Sim(cvb.BaseSim):
         # Other variables
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
         self.results['doubling_time'] = init_res('Doubling time', scale=False)
+        self.results['test_yield']    = init_res('Testing yield', scale=False)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -535,6 +536,10 @@ class Sim(cvb.BaseSim):
 
     def compute_results(self, verbose=None):
         ''' Perform final calculations on the results '''
+        n_diags = self.results['new_diagnoses'].values
+        n_tests = self.results['new_tests'].values
+        inds = cvu.true(n_tests) # Pull out non-zero numbers of tests
+        self.results['test_yield'].values[inds] = n_diags[inds]/n_tests[inds]
         self.compute_doubling()
         self.compute_r_eff()
         self.compute_likelihood()
