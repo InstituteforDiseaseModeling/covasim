@@ -421,8 +421,6 @@ class People(cvb.BasePeople):
                 # Check contacts
                 contact_inds = cvu.binomial_filter(this_trace_prob, edge_inds) # Filter the indices according to the probability of being able to trace this layer
                 if len(contact_inds):
-                    print('HI, tracing', len(contact_inds))
-                    print('DIAGNOSED ARE', sum(self.diagnosed[contact_inds]))
                     self.known_contact[contact_inds] = True
                     self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time)
 

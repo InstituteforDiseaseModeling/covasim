@@ -38,8 +38,10 @@ def test_baseline():
 
     # Calculate new baseline
     sim = cv.Sim(verbose=0)
-    sim.run()
-    new = sim.summary
+    msim = cv.MultiSim(sim)
+    msim.run(n_runs=10)
+    msim.reduce()
+    new = msim.summary
 
     # Compare keys
     errormsg = ''

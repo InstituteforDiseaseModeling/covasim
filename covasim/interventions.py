@@ -651,7 +651,8 @@ class contact_tracing(Intervention):
         if not self.presumptive:
             trace_from_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
         else:
-            trace_from_inds = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
+            just_tested = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
+            trace_from_inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
 
         if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
             sim.people.trace(trace_from_inds, self.trace_probs, self.trace_time)
