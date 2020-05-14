@@ -24,10 +24,14 @@ popscale2    = 20 # Try a different population scale
 which_interv = 2 # Which intervention to test
 
 shared = sc.objdict(
-    n_days = 120,
-    beta = 0.015,
-    rand_seed = 239487,
-    interventions = [cb, tn, tp],
+    pop_type = 'hybrid',
+    beta_layer = dict(h=50, s=0, w=0, c=0.3),
+    n_days = 60,
+    beta = 0.010,
+    rand_seed = 20589,
+    verbose = 0,
+    rescale_factor = 5,
+    # interventions = [cb, tn, tp],
 )
 
 # Simulate the entire population
@@ -87,9 +91,10 @@ for key in keys:
 
 for key in keys:
     s[key] = cv.Sim(pars=p[key], label=key)
-    m[key] = cv.MultiSim(base_sim=s[key], n_runs=10)
+    m[key] = cv.MultiSim(base_sim=s[key], n_runs=5)
 
 for key in keys:
+    print(f'Running {key}...')
     m[key].run()
     m[key].reduce()
 

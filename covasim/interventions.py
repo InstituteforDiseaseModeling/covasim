@@ -111,7 +111,7 @@ class Intervention:
         raise NotImplementedError
 
 
-    def plot(self, sim, ax=None):
+    def plot(self, sim, ax=None, **kwargs):
         '''
         Call function during plotting
 
@@ -121,16 +121,18 @@ class Intervention:
         Args:
             sim: the Sim instance
             ax: the axis instance
+            kwargs: passed to ax.axvline()
 
         Returns:
             None
         '''
+        line_args = sc.mergedicts(dict(linestyle='--', c=[0,0,0]), kwargs)
         if self.do_plot or self.do_plot is None:
             if ax is None:
                 ax = pl.gca()
             for day in self.days:
                 if day is not None:
-                    ax.axvline(day, linestyle='--', c=[0,0,0])
+                    ax.axvline(day, **line_args)
         return
 
 
@@ -277,9 +279,9 @@ class change_beta(Intervention):
 
     def __init__(self, days, changes, layers=None, do_plot=None):
         super().__init__(do_plot=do_plot)
-        self.days = days
-        self.changes = sc.promotetoarray(changes)
-        self.layers = sc.promotetolist(layers, keepnone=True)
+        self.days       = sc.dcp(days)
+        self.changes    = sc.dcp(changes)
+        self.layers     = sc.dcp(layers)
         self.orig_betas = None
         self._store_args()
         return
@@ -293,15 +295,20 @@ class change_beta(Intervention):
             for d,day in enumerate(self.days):
                 self.days[d] = sim.day(day) # Ensure it's an integer and not a string or something
         self.days = sc.promotetoarray(self.days)
+
+        self.changes = sc.promotetoarray(self.changes)
         if len(self.days) != len(self.changes):
             errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
             raise ValueError(errormsg)
+
         self.orig_betas = {}
+        self.layers = sc.promotetolist(self.layers, keepnone=True)
         for lkey in self.layers:
             if lkey is None:
                 self.orig_betas['overall'] = sim['beta']
             else:
                 self.orig_betas[lkey] = sim['beta_layer'][lkey]
+
         self.initialized = True
         return
 
@@ -604,14 +611,13 @@ class contact_tracing(Intervention):
         presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
         do_plot     (bool): whether or not to plot
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, test_delay=0, do_plot=None):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.trace_probs = trace_probs
         self.trace_time  = trace_time
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
-        self.test_delay  = test_delay
         self._store_args()
         return
 
@@ -646,23 +652,10 @@ class contact_tracing(Intervention):
         if not self.presumptive:
             trace_from_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
         else:
-            trace_from_inds = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
+            just_tested = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
+            trace_from_inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
 
-            # Quarantine self until results come back
-            sim.people.date_known_contact[trace_from_inds] = np.fmin(sim.people.date_known_contact[trace_from_inds], t) # Take earliest date know contact
-            sim.people.date_end_quarantine[trace_from_inds] = np.fmin(sim.people.date_end_quarantine[trace_from_inds], (t + self.test_delay)) # Take latest date end quarantine
-
-        # Figure out who tests positive, and trace their contacts
-        test_pos_inds = trace_from_inds[cvu.true( sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
-        if len(test_pos_inds): # If there are any just-diagnosed people, go trace their contacts
-            sim.people.trace(test_pos_inds, self.trace_probs, self.trace_time, sim.pars['quar_period'])
-
-        # Figure out who tests negative, and release them
-        test_neg_inds = trace_from_inds[cvu.false(sim.people.date_diagnosed[trace_from_inds] >= t)] # Repeats
-        if len(test_neg_inds): # If there are any just-diagnosed people, go trace their contacts
-            days_in_quar = {lkey: self.test_delay - ltrace_time for lkey, ltrace_time in self.trace_time.items()}
-            # By the time we trace them, the negative diagnostic results might already be available
-            if max(days_in_quar.values()) > 0:
-                sim.people.trace(test_neg_inds, self.trace_probs, self.trace_time, days_in_quar)
+        if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
+            sim.people.trace(trace_from_inds, self.trace_probs, self.trace_time)
 
         return

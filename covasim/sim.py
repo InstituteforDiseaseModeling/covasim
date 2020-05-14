@@ -320,7 +320,7 @@ class Sim(cvb.BaseSim):
         self.people.initialize()
 
         # Create the seed infections
-        inds = np.arange(int(self['pop_infected']))
+        inds = cvu.choose(self['pop_size'], self['pop_infected'])
         self.people.infect(inds=inds)
         for ind in inds:
             self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='seed_infection')
@@ -353,6 +353,7 @@ class Sim(cvb.BaseSim):
                     n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
                     new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
                     self.people.make_susceptible(new_sus_inds)
+                    # print(f"Rescaled by {scaling_ratio} on {self.datevec[self.t]} because {n_not_sus/n_people}")#, 2, self['verbose'])
         return
 
 
@@ -501,7 +502,6 @@ class Sim(cvb.BaseSim):
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results
         sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
-        self.summary = self.summary_stats(verbose=verbose)
         if do_plot: # Optionally plot
             self.plot(**kwargs)
 
@@ -524,15 +524,21 @@ class Sim(cvb.BaseSim):
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Perform calculations on results
-        self.compute_doubling()
-        self.compute_r_eff()
-        self.likelihood()
+        self.compute_results()
 
         # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
         self.results = sc.objdict(self.results)
         self.results_ready = True
         self.initialized = False # To enable re-running
 
+        return
+
+    def compute_results(self, verbose=None):
+        ''' Perform final calculations on the results '''
+        self.compute_doubling()
+        self.compute_r_eff()
+        self.compute_likelihood()
+        self.compute_summary(verbose=verbose)
         return
 
 
@@ -681,7 +687,7 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def likelihood(self, weights=None, verbose=None, eps=1e-16):
+    def compute_likelihood(self, weights=None, verbose=None, eps=1e-16):
         '''
         Compute the log-likelihood of the current simulation based on the number
         of new diagnoses.
@@ -730,7 +736,7 @@ class Sim(cvb.BaseSim):
         return loglike
 
 
-    def summary_stats(self, verbose=None):
+    def compute_summary(self, verbose=None):
         ''' Compute the summary statistics to display at the end of a run '''
 
         if verbose is None:
@@ -743,6 +749,7 @@ class Sim(cvb.BaseSim):
             if key.startswith('cum_'):
                 summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
         sc.printv(summary_str, 1, verbose)
+        self.summary = summary
 
         return summary
 
