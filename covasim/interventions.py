@@ -610,14 +610,13 @@ class contact_tracing(Intervention):
         presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
         do_plot     (bool): whether or not to plot
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, test_delay=0, do_plot=None):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.trace_probs = trace_probs
         self.trace_time  = trace_time
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
-        self.test_delay  = test_delay
         self._store_args()
         return
 
