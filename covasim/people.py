@@ -263,7 +263,7 @@ class People(cvb.BasePeople):
         return
 
 
-    def infect(self, inds, bed_max=None, verbose=True):
+    def infect(self, inds, aac_max=None, icu_max=None, verbose=True):
         '''
         Infect people and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
@@ -274,7 +274,8 @@ class People(cvb.BasePeople):
         Args:
             inds    (array):  array of people to infect
             t       (int):    current timestep
-            bed_max (bool):   whether or not there is a bed available for this person
+            aac_max (bool):   whether or not there is an acute bed available for this person
+            icu_max (bool):   whether or not there is an ICU bed available for this person
 
         Returns:
             count (int): number of people infected
@@ -322,7 +323,7 @@ class People(cvb.BasePeople):
         # CASE 2.2: Severe cases: hospitalization required, may become critical
         self.dur_sym2sev[sev_inds] = cvu.sample(**durpars['sym2sev'], size=len(sev_inds)) # Store how long this person took to develop severe symptoms
         self.date_severe[sev_inds] = self.date_symptomatic[sev_inds] + self.dur_sym2sev[sev_inds]  # Date symptoms become severe
-        crit_probs = self.pars['rel_crit_prob'] * self.crit_prob[sev_inds] # Probability of these people being critical
+        crit_probs = self.pars['rel_crit_prob'] * self.crit_prob[sev_inds] * (self.pars['OR_no_AAC'] if aac_max else 1.)# Probability of these people becoming critical - higher if no beds available
         is_crit = cvu.binomial_arr(crit_probs)  # See if they're a critical case
         crit_inds = sev_inds[is_crit]
         non_crit_inds = sev_inds[~is_crit]
@@ -335,7 +336,7 @@ class People(cvb.BasePeople):
         # CASE 2.2.2: Critical cases: ICU required, may die
         self.dur_sev2crit[crit_inds] = cvu.sample(**durpars['sev2crit'], size=len(crit_inds))
         self.date_critical[crit_inds] = self.date_severe[crit_inds] + self.dur_sev2crit[crit_inds]  # Date they become critical
-        death_probs = self.pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['OR_no_treat'] if bed_max else 1.) # Probability they'll die
+        death_probs = self.pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['OR_no_ICU'] if icu_max else 1.) # Probability they'll die
         is_dead = cvu.binomial_arr(death_probs)  # Death outcome
         dead_inds = crit_inds[is_dead]
         alive_inds = crit_inds[~is_dead]

@@ -254,7 +254,6 @@ class Sim(cvb.BaseSim):
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
         self.results['n_susceptible'].scale = 'static'
-        self.results['bed_capacity']  = init_res('Bed demand relative to capacity', scale=False)
 
         # Other variables
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
@@ -371,13 +370,14 @@ class Sim(cvb.BaseSim):
         people   = self.people # Shorten this for later use
         flows    = people.update_states_pre(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
-        bed_max  = people.count('severe') > self['n_beds'] if self['n_beds'] else False # Check for a bed constraint
+        aac_max  = people.count('severe') > self['n_AAC_beds'] if self['n_AAC_beds'] else False # Check for acute bed constraint
+        icu_max  = people.count('critical') > self['n_ICU_beds'] if self['n_ICU_beds'] else False # Check for ICU bed constraint
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
         if n_imports>0:
             imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
-            flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max)
+            flows['new_infections'] += people.infect(inds=imporation_inds, aac_max=aac_max, icu_max=icu_max)
             for ind in imporation_inds:
                 self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='importation')
 
@@ -421,7 +421,7 @@ class Sim(cvb.BaseSim):
             # Calculate actual transmission
             for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
                 target_inds, edge_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
-                flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
+                flows['new_infections'] += people.infect(inds=target_inds, aac_max=aac_max, icu_max=icu_max) # Actually infect people
 
                 # Store the transmission tree
                 for ind in edge_inds:
@@ -434,7 +434,6 @@ class Sim(cvb.BaseSim):
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people.count(key)
-        self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds'] else 0
 
         # Update counts for this time step: flows
         for key,count in flows.items():
