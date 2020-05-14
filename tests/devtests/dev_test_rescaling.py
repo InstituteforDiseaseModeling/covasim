@@ -58,29 +58,29 @@ p.static = dict(
     rescale      = False,
 )
 
-# # Simulate an extra large population
-# p.entire2 = dict(
-#     pop_size     = basepop*popscale2,
-#     pop_infected = popinfected,
-#     pop_scale    = 1,
-#     rescale      = False,
-# )
+# Simulate an extra large population
+p.entire2 = dict(
+    pop_size     = basepop*popscale2,
+    pop_infected = popinfected,
+    pop_scale    = 1,
+    rescale      = False,
+)
 
-# # Simulate a small population with dynamic scaling
-# p.rescale2 = dict(
-#     pop_size     = basepop,
-#     pop_infected = popinfected,
-#     pop_scale    = popscale2,
-#     rescale      = True,
-# )
+# Simulate a small population with dynamic scaling
+p.rescale2 = dict(
+    pop_size     = basepop,
+    pop_infected = popinfected,
+    pop_scale    = popscale2,
+    rescale      = True,
+)
 
-# # Simulate a small population with static scaling
-# p.static2 = dict(
-#     pop_size     = basepop,
-#     pop_infected = popinfected//popscale2,
-#     pop_scale    = popscale2,
-#     rescale      = False,
-# )
+# Simulate a small population with static scaling
+p.static2 = dict(
+    pop_size     = basepop,
+    pop_infected = popinfected//popscale2,
+    pop_scale    = popscale2,
+    rescale      = False,
+)
 
 
 # Create and run the sims

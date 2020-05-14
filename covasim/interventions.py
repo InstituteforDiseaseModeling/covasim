@@ -111,7 +111,7 @@ class Intervention:
         raise NotImplementedError
 
 
-    def plot(self, sim, ax=None):
+    def plot(self, sim, ax=None, **kwargs):
         '''
         Call function during plotting
 
@@ -121,17 +121,18 @@ class Intervention:
         Args:
             sim: the Sim instance
             ax: the axis instance
+            kwargs: passed to ax.axvline()
 
         Returns:
             None
         '''
+        line_args = sc.mergedicts(dict(linestyle='--', c=[0,0,0]), kwargs)
         if self.do_plot or self.do_plot is None:
             if ax is None:
                 ax = pl.gca()
             for day in self.days:
                 if day is not None:
-                    # ax.axvline(day, linestyle='--', c=[0,0,0])
-                    ax.axvline(day, linestyle='-', c=[0,0,0], alpha=0.2, lw=3)
+                    ax.axvline(day, **line_args)
         return
 
 
