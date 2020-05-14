@@ -131,7 +131,7 @@ class Intervention:
             for day in self.days:
                 if day is not None:
                     # ax.axvline(day, linestyle='--', c=[0,0,0])
-                    ax.axvline(day, linestyle='-', c=[0,0,0], alpha=0.5, lw=3)
+                    ax.axvline(day, linestyle='-', c=[0,0,0], alpha=0.2, lw=3)
         return
 
 
