@@ -3,7 +3,7 @@ Set the parameters for Covasim.
 '''
 
 import numpy as np
-
+from . import defaults as cvd
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
@@ -106,31 +106,31 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
         pop_keys (list): the known keys of the population, if available
         force (bool): reset the pars even if they already exist
     '''
-    d_contacts    = 20  # Default number of contacts
-    d_dynam_layer = 0   # Do not use dynamic layers by default
-    d_beta_layer  = 1.0 # No change in beta
-    d_iso_factor  = 0.2 # Assumed isolation factor
-    d_quar_factor = 0.3 # Assumed quarantine factor
+    dr = {} # Dfaults for random
+    dr['contacts']    = 20  # Default number of contacts
+    dr['dynam_layer'] = 0   # Do not use dynamic layers by default
+    dr['beta_layer']  = 1.0 # No change in beta
+    dr['iso_factor']  = 0.2 # Assumed isolation factor
+    dr['quar_factor'] = 0.3 # Assumed quarantine factor
+
+    dh = {} # Defaults for hybrid (and SynthPops)
+    dh['contacts']    = dict(h=2.7, s=20,  w=8,   c=20)   # Number of contacts per person per day, estimated
+    dh['dynam_layer'] = dict(h=0,   s=0,   w=0,   c=0)    # Which layers are dynamic -- none by default
+    dh['beta_layer']  = dict(h=7.0, s=0.7, w=1.4, c=0.14) # Per-population beta weights; relative
+    dh['iso_factor']  = dict(h=0.3, s=0.0, w=0.0, c=0.1)  # Multiply beta by this factor for people in isolation
+    dh['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3)  # Multiply beta by this factor for people in quarantine
+
 
     if layer_keys is not None: # Create based on known population keys
-        pars['contacts']    = {lkey:d_contacts    for lkey in layer_keys}
-        pars['dynam_layer'] = {lkey:d_dynam_layer for lkey in layer_keys}
-        pars['beta_layer']  = {lkey:d_beta_layer  for lkey in layer_keys}
-        pars['iso_factor']  = {lkey:d_iso_factor  for lkey in layer_keys}
-        pars['quar_factor'] = {lkey:d_quar_factor for lkey in layer_keys}
+        for par in cvd.layer_pars:
+            pars[par]    = {lkey:d[par] for lkey in layer_keys}
     else: # Set based on population type
         if pars['pop_type'] == 'random':
-            if pars.get('contacts',    None) is None or force: pars['contacts']    = {'a': d_contacts}    # Number of contacts per person per day -- 'a' for 'all'
-            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = {'a': d_dynam_layer} # Which layers are dynamic
-            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = {'a': d_beta_layer}  # Per-population beta weights; relative
-            if pars.get('iso_factor',  None) is None or force: pars['iso_factor']  = {'a': d_iso_factor}  # Multiply beta by this factor for people who have been diagnosed
-            if pars.get('quar_factor', None) is None or force: pars['quar_factor'] = {'a': d_quar_factor} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+            d = dr
         else:
-            if pars.get('contacts',    None) is None or force: pars['contacts']    = dict(h=2.7, s=20,  w=8,  c=20)   # Number of contacts per person per day, estimated
-            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = dict(h=0,   s=0,   w=0,   c=0)    # Which layers are dynamic -- none by defaul
-            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = dict(h=7.0, s=0.7, w=1.4, c=0.14)  # Per-population beta weights; relative
-            if pars.get('iso_factor',  None) is None or force: pars['iso_factor']  = dict(h=0.3, s=0.0, w=0.0, c=0.1) # Multiply beta by this factor for people in isolation
-            if pars.get('quar_factor', None) is None or force: pars['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3) # Multiply beta by this factor for people in quarantine
+            d = dh
+        for par in cvd.layer_pars:
+            if pars.get(par, None) is None or force: pars[par] = {'a': d[par]} # Set automatic parameters
     return
 
 

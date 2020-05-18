@@ -180,7 +180,6 @@ class Sim(cvb.BaseSim):
 
         # Try to figure out what the layer keys should be
         layer_keys = None # e.g. household, school
-        layer_pars = ['beta_layer', 'contacts', 'iso_factor', 'quar_factor']
         if self.people is not None:
             layer_keys = set(self.people.contacts.keys())
         elif isinstance(self['beta_layer'], dict):
@@ -189,17 +188,17 @@ class Sim(cvb.BaseSim):
             layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
 
         # Convert scalar layer parameters to dictionaries
-        for lp in layer_pars:
+        for lp in cvd.layer_pars:
             val = self[lp]
             if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
                 self[lp] = {k:val for k in layer_keys}
 
         # Handle key mismaches
-        for lp in layer_pars:
+        for lp in cvd.layer_pars:
             lp_keys = set(self.pars[lp].keys())
             if not lp_keys == set(layer_keys):
                 errormsg = f'Layer parameters have inconsistent keys:'
-                for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
+                for lp2 in cvd.layer_pars: # Fail on first error, but re-loop to list all of them
                     errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
                 raise sc.KeyNotFoundError(errormsg)
 
