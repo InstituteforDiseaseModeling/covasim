@@ -42,6 +42,9 @@ class People(cvb.BasePeople):
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
         self._lock = True # Stop further attributes from being set
 
+        # Store flows to be computed during simulation
+        self.flows = {key:0 for key in cvd.new_result_flows}
+
         # Set any values, if supplied
         if 'contacts' in kwargs:
             self.add_contacts(kwargs.pop('contacts'))
@@ -88,25 +91,25 @@ class People(cvb.BasePeople):
         self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
         # Perform updates
-        flows  = {key:0 for key in cvd.new_result_flows}
-        flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
-        flows['new_symptomatic'] += self.check_symptomatic()
-        flows['new_severe']      += self.check_severe()
-        flows['new_critical']    += self.check_critical()
-        flows['new_deaths']      += self.check_death()
-        flows['new_recoveries']  += self.check_recovery()
-        flows['new_diagnoses']   += self.check_diagnosed()
-        flows['new_quarantined'] += self.check_quar()
+        self.flows  = {key:0 for key in cvd.new_result_flows}
+        self.flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
+        self.flows['new_symptomatic'] += self.check_symptomatic()
+        self.flows['new_severe']      += self.check_severe()
+        self.flows['new_critical']    += self.check_critical()
+        self.flows['new_deaths']      += self.check_death()
+        self.flows['new_recoveries']  += self.check_recovery()
+        self.flows['new_diagnoses']   += self.check_diagnosed()
+        self.flows['new_quarantined'] += self.check_quar()
 
-        return flows
+        return
 
-
-    def update_states_post(self, flows):
+    def update_states_post(self):
         ''' Perform post-timestep updates '''
-        flows['new_diagnoses']   += self.check_diagnosed()
-        flows['new_quarantined'] += self.check_quar()
-        del self.is_exp # Tidy up
-        return flows
+        self.flows['new_diagnoses']   += self.check_diagnosed()
+        self.flows['new_quarantined'] += self.check_quar()
+        del self.is_exp  # Tidy up
+
+        return
 
 
     def update_contacts(self):
@@ -260,7 +263,7 @@ class People(cvb.BasePeople):
         return
 
 
-    def infect(self, inds, bed_max=None, verbose=True):
+    def infect(self, inds, bed_max=None, verbose=True, source=None, layer=None):
         '''
         Infect people and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
@@ -277,8 +280,18 @@ class People(cvb.BasePeople):
             count (int): number of people infected
         '''
 
-        # Handle inputs
-        inds         = np.unique(inds[self.susceptible[inds]]) # Do not infect people who are not susceptible
+        # Remove duplicates
+        unique = np.unique(inds, return_index=True)[1]
+        inds = inds[unique]
+        if source is not None:
+            source = source[unique]
+
+        # Keep only susceptibles
+        keep = self.susceptible[inds] # Unique indices in inds and source that are also susceptible
+        inds = inds[keep]
+        if source is not None:
+            source = source[keep]
+
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
@@ -286,6 +299,16 @@ class People(cvb.BasePeople):
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
         self.date_exposed[inds]  = self.t
+        self.flows['new_infections'] += len(inds)
+
+        # Update the transmission tree
+        for i, target in enumerate(inds):
+            if source is not None:
+                transdict = dict(source=source[i], target=target, date=self.t, layer=layer)
+                self.transtree.targets[source].append(transdict)
+            else:
+                transdict = dict(source=None, target=target, date=self.t, layer=layer)
+            self.transtree.linelist[target] = transdict
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)

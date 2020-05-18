@@ -85,13 +85,12 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
     nonzero_inds    = betas.nonzero()[0] # Find nonzero entries
     nonzero_betas   = betas[nonzero_inds] # Remove zero entries from beta
+    nonzero_sources = sources[nonzero_inds] # Remove zero entries from the sources
     nonzero_targets = targets[nonzero_inds] # Remove zero entries from the targets
     transmissions   = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
-    edge_inds       = nonzero_inds[transmissions] # The index of the contact responsible for the transmission
+    source_inds     = nonzero_sources[transmissions]
     target_inds     = nonzero_targets[transmissions] # Filter the targets on the actual infections
-    target_inds     = np.unique(target_inds) # Ensure the targets are unique
-    return target_inds, edge_inds
-
+    return source_inds, target_inds
 
 
 #%% Sampling and seed methods
