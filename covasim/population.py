@@ -273,11 +273,28 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
 
 
 
-def make_synthpop(sim, directed=False):
-    ''' Make a population using synthpops, including contacts '''
+def make_synthpop(sim, generate=True, ltcf=False, layer_mapping=None, **kwargs):
+    '''
+    Make a population using SynthPops, including contacts.
+
+    Args:
+        sim (Sim): a Covasim simulation object
+        generate (bool): whether or not to generate a new population (otherwise, tries to load a pre-generated one)
+        ltcf (bool): whether to include long-term care facilities such as aged care facilities
+        layer_mapping (dict): a custom mapping from SynthPops layers to Covasim layers
+        kwars (dict): passed to sp.make_population()
+    '''
     import synthpops as sp # Optional import
+
+    # Handle layer mapping
+    default_layer_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
+    if ltcf:
+        default_layer_mapping['LTCF'] = 'f'
+    layer_mapping = sc.mergedicts(default_layer_mapping, layer_mapping)
+
+    # Handle other input arguments
     pop_size = sim['pop_size']
-    population = sp.make_population(n=pop_size, generate=True)
+    population = sp.make_population(n=pop_size, generate=generate, with_facilities=ltcf, **kwargs)
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)
@@ -286,18 +303,21 @@ def make_synthpop(sim, directed=False):
 
     # Replace contact UIDs with ints
     uid_mapping = {uid:u for u,uid in enumerate(uids)}
-    key_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
     for uid in uids:
         iid = uid_mapping[uid] # Integer UID
         person = population.pop(uid)
         uid_contacts = sc.dcp(person['contacts'])
         int_contacts = {}
         for spkey in uid_contacts.keys():
-            lkey = key_mapping[spkey] # Map the SynthPops key into a Covasim layer key
+            try:
+                lkey = layer_mapping[spkey] # Map the SynthPops key into a Covasim layer key
+            except KeyError:
+                errormsg = f'Could not find key "{spkey}" in layer mapping "{layer_mapping}"'
+                raise sc.KeyNotFoundError(errormsg)
             int_contacts[lkey] = []
             for cid in uid_contacts[spkey]: # Contact ID
                 icid = uid_mapping[cid] # Integer contact ID
-                if icid>iid or directed: # Don't add duplicate contacts
+                if icid>iid: # Don't add duplicate contacts
                     int_contacts[lkey].append(icid)
             int_contacts[lkey] = np.array(int_contacts[lkey], dtype=cvd.default_int)
         contacts.append(int_contacts)
@@ -313,6 +333,6 @@ def make_synthpop(sim, directed=False):
     popdict['age']      = np.array(ages)
     popdict['sex']      = np.array(sexes)
     popdict['contacts'] = sc.dcp(contacts)
-    layer_keys = list(key_mapping.values())
+    layer_keys = list(layer_mapping.values())
 
     return popdict, layer_keys
