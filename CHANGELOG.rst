@@ -4,6 +4,12 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.1.2 (2020-05-18)
+--------------------------
+- Added a new result, ``test_yield``, which is the number of diagnoses divided by the number of cases each day.
+- Minor improvements to date handling and plotting.
+
+
 Version 1.1.1 (2020-05-13)
 --------------------------
 - Refactored the contact tracing and quarantining functions, to fixed a bug (introduced in v1.1.0) in which some people who went into quarantine never came out of quarantine.
