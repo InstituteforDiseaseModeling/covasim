@@ -4,6 +4,11 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.1.5 (2020-05-18)
+--------------------------
+- Add extra flexibility for targeting interventions by index of a person, for example, by age.
+
+
 Version 1.1.4 (2020-05-18)
 --------------------------
 - Added a new hospital bed capacity constraint and renamed health system capacity parameters. To migrate an older set of parameters to this version, set::
