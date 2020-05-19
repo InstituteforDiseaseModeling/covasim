@@ -326,7 +326,7 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
 
     # Finalize
     popdict = {}
-    popdict['uid']      = sc.dcp(uids)
+    popdict['uid']      = sc.dcp(list(uid_mapping.values()))
     popdict['age']      = np.array(ages)
     popdict['sex']      = np.array(sexes)
     popdict['contacts'] = sc.dcp(contacts)
