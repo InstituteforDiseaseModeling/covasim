@@ -25,6 +25,7 @@ if interv:
 
 # Make, run, and plot the sim
 sim = cv.Sim(pars=pars)
+sim.initialize()
 sim.run(verbose=verbose)
 if do_plot:
     sim.plot()

@@ -22,7 +22,7 @@ def make_metapars():
     ''' Create default metaparameters for a Scenarios run '''
     metapars = sc.objdict(
         n_runs    = 3, # Number of parallel runs; change to 3 for quick, 11 for real
-        noise     = 0.1, # Use noise, optionally
+        noise     = 0.0, # Use noise, optionally
         noisepar  = 'beta',
         rand_seed = 1,
         quantiles = {'low':0.1, 'high':0.9},
@@ -159,9 +159,14 @@ class MultiSim(sc.prettyobj):
             if not combined_sim.results[key].scale:
                 combined_sim.results[key].values /= n_runs
 
+        # Compute and store final results
+        combined_sim.compute_likelihood()
+        combined_sim.compute_summary(verbose=False)
         self.orig_base_sim = self.base_sim
         self.base_sim = combined_sim
         self.results = combined_sim.results
+        self.summary = combined_sim.summary
+
         self.which = 'combined'
 
         if output:
@@ -199,12 +204,14 @@ class MultiSim(sc.prettyobj):
             reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
             reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
             reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
-        reduced_sim.likelihood() # Recompute the likelihood for the average sim
-        reduced_sim.summary_stats(verbose=False) # Recalculate the summary stats
 
+        # Compute and store final results
+        reduced_sim.compute_likelihood()
+        reduced_sim.compute_summary(verbose=False)
         self.orig_base_sim = self.base_sim
         self.base_sim = reduced_sim
         self.results = reduced_sim.results
+        self.summary = reduced_sim.summary
         self.which = 'reduced'
 
         if output:
@@ -250,8 +257,8 @@ class MultiSim(sc.prettyobj):
         if do_plot:
             self.plot_compare(**kwargs)
 
+        df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coercion
         if output:
-            df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coersion
             return df
         else:
             print(df)

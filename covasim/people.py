@@ -109,7 +109,7 @@ class People(cvb.BasePeople):
         return flows
 
 
-    def update_contacts(self, directed=False):
+    def update_contacts(self):
         ''' Refresh dynamic contacts, e.g. community '''
 
         # Figure out if anything needs to be done -- e.g. {'h':False, 'c':True}
@@ -123,9 +123,7 @@ class People(cvb.BasePeople):
             # Choose how many contacts to make
             pop_size   = len(self)
             n_contacts = self.pars['contacts'][lkey]
-            n_new = n_contacts*pop_size
-            if not directed:
-                n_new = int(n_new/2) # Since these get looped over in both directions later
+            n_new = int(n_contacts*pop_size/2) # Since these get looped over in both directions later
 
             # Create the contacts
             new_contacts = {} # Initialize
@@ -217,30 +215,29 @@ class People(cvb.BasePeople):
         inds = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None)
         self.diagnosed[inds]   = True
         self.quarantined[inds] = False # If you are diagnosed, you are isolated, not in quarantine
+        self.date_end_quarantine[inds] = np.nan # Clear end quarantine time
         return len(inds)
 
 
     def check_quar(self):
         ''' Check for who gets put into quarantine'''
 
-        if self.pars['quar_period'] is not None:
-            not_diagnosed_inds = self.false('diagnosed')
-            all_inds = np.arange(len(self)) # Do dead people come out of quarantine?
+        not_diagnosed_inds = self.false('diagnosed')
+        all_inds = np.arange(len(self)) # Do dead people come out of quarantine?
 
-            # Perform quarantine - on all who have a date_known_contact (Filter to those not already diagnosed?)
-            inds = self.check_inds(self.quarantined, self.date_known_contact, filter_inds=not_diagnosed_inds) # Check who is quarantined, not_diagnosed_inds?
-            self.quarantine(inds) # Put people in quarantine
-            self.date_known_contact[inds] = np.nan # Clear date
+        # Perform quarantine - on all who have a date_known_contact (Filter to those not already diagnosed?)
+        not_quar_inds = self.check_inds(self.quarantined, self.date_known_contact, filter_inds=not_diagnosed_inds) # Check who is quarantined, not_diagnosed_inds?
+        not_recovered = cvu.ifalsei(self.recovered, not_quar_inds)  # Pull out people who are not recovered
+        quar_inds     = cvu.ifalsei(self.dead, not_recovered)       # ...or dead
+        self.quarantine(quar_inds) # Put people in quarantine
+        self.date_known_contact[quar_inds] = np.nan # Clear date
 
-            # Check for the end of quarantine - on all who are quarantined
-            end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=all_inds) # Note the double-negative here
-            self.quarantined[end_inds] = False # Release from quarantine
-            self.date_end_quarantine[end_inds] = np.nan # Clear end quarantine time
+        # Check for the end of quarantine - on all who are quarantined
+        end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=all_inds) # Note the double-negative here
+        self.quarantined[end_inds] = False # Release from quarantine
+        self.date_end_quarantine[end_inds] = np.nan # Clear end quarantine time
 
-            n_quarantined = len(inds)
-
-        else:
-            n_quarantined = 0
+        n_quarantined = len(quar_inds)
 
         return n_quarantined
 
@@ -389,20 +386,21 @@ class People(cvb.BasePeople):
         Quarantine selected people starting on the current day. If a person is already
         quarantined, this will extend their quarantine.
         Args:
-            inds (array): indices of who to quarantine
+            inds (array): indices of who to quarantine, specified by check_quar()
         '''
         self.quarantined[inds] = True
         self.date_quarantined[inds] = self.t
+        self.date_end_quarantine[inds] = self.t + self.pars['quar_period']
         return
 
 
-    def trace(self, inds, trace_probs, trace_time, quar_period=None):
+    def trace(self, inds, trace_probs, trace_time):
         '''
         Trace the contacts of the people provided
         Args:
             inds (array): indices of whose contacts to trace
             trace_probs (dict): probability of being able to trace people at each contact layer - should have the same keys as contacts
-            trace_time (dict): # days it'll take to trace people at each contact layer - should have the same keys as contacts
+            trace_time (dict): days it'll take to trace people at each contact layer - should have the same keys as contacts
         '''
 
         # Extract the indices of the people who'll be contacted
@@ -420,23 +418,10 @@ class People(cvb.BasePeople):
                     inds_list.append(self.contacts[lkey][k2][nz_k1]) # Find their pairing partner
                 edge_inds = np.unique(np.concatenate(inds_list)) # Find all edges
 
-                # Check not diagnosed!
+                # Check contacts
                 contact_inds = cvu.binomial_filter(this_trace_prob, edge_inds) # Filter the indices according to the probability of being able to trace this layer
-                self.known_contact[contact_inds] = True
-
-                if len(contact_inds) and quar_period is not None:
-                    if isinstance(quar_period, dict):
-                        this_quar_period = quar_period[lkey]
-                    else:
-                        this_quar_period = quar_period
-
-                    if this_quar_period > 0:
-                        self.date_known_contact[contact_inds] = np.nanmin(np.stack([
-                            self.date_known_contact[contact_inds], (self.t + this_trace_time)*np.ones_like(self.date_known_contact[contact_inds])
-                        ]), axis=0)
-
-                        self.date_end_quarantine[contact_inds] = np.nanmax(np.stack([
-                            self.date_end_quarantine[contact_inds], (self.t + this_trace_time + this_quar_period)*np.ones_like(self.date_end_quarantine[contact_inds])
-                        ]), axis=0)
+                if len(contact_inds):
+                    self.known_contact[contact_inds] = True
+                    self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time)
 
         return
