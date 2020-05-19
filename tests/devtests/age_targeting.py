@@ -22,8 +22,9 @@ age_cutoffs   = new_prognoses['age_cutoffs']
 trans_ORs[age_cutoffs>=70]  *= 0.8 # Reduce relative transmissibility for people over 70 by 20%
 sus_ORs[age_cutoffs>=70]    *= 0.8 # Reduce relative susceptibility for people over 70 by 20%
 
-n_people = sim['pop_size']
-n_days   = sim['n_days']
+n_people  = sim['pop_size']
+n_days    = sim['n_days']
+start_day = 40
 
 # Define the scenarios
 scenarios = {
@@ -36,8 +37,14 @@ scenarios = {
         'name': 'Protect the elderly',
         'pars': {
             'prognoses': new_prognoses,
-            'interventions': cv.test_num(start_day=40, daily_tests=[0.005*n_people]*n_days, subtarget={'inds': sim.people.age>50, 'val': 2.0}),
+            'interventions': cv.test_num(start_day=start_day, daily_tests=[0.005*n_people]*n_days, subtarget={'inds': sim.people.age>50, 'val': 2.0}),
             }
+    },
+    'testelderly': {
+    'name': 'Test the elderly',
+    'pars': {
+        'interventions': cv.test_prob(start_day=start_day, symp_prob=0.1, asymp_prob=0.005, subtarget={'inds': sim.people.age>50, 'val': 2.0}),
+        }
     },
 }
 
