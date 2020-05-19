@@ -521,14 +521,15 @@ class test_num(Intervention):
         test_probs[quar_inds] *= self.quar_test
 
         # Handle any other user-specified testing criteria
-        subtarget_inds  = self.subtarget['inds']
-        if sc.isnumber(self.subtarget['val']):
-            test_probs[subtarget_inds] *= self.subtarget['val']
-        elif sc.isiterable(self.subtarget['val']):
-            if len(self.subtarget['val']) != len(subtarget_inds):
-                raise ValueError(f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(self.subtarget["val"])})')
-            else:
-                test_probs[subtarget_inds] = test_probs[subtarget_inds]*self.subtarget['val']
+        if self.subtarget is not None:
+            subtarget_inds  = self.subtarget['inds']
+            if sc.isnumber(self.subtarget['val']):
+                test_probs[subtarget_inds] *= self.subtarget['val']
+            elif sc.isiterable(self.subtarget['val']):
+                if len(self.subtarget['val']) != len(subtarget_inds):
+                    raise ValueError(f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(self.subtarget["val"])})')
+                else:
+                    test_probs[subtarget_inds] = test_probs[subtarget_inds]*self.subtarget['val']
 
         # Don't re-diagnose people
         diag_inds  = cvu.true(sim.people.diagnosed)

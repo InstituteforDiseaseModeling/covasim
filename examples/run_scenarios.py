@@ -53,7 +53,7 @@ scenarios = {'baseline': {
 if __name__ == "__main__":
 
     scens = cv.Scenarios(basepars=basepars, metapars=metapars, scenarios=scenarios)
-    scens.run(verbose=verbose, debug=True)
+    scens.run(verbose=verbose)
     if do_plot:
         fig1 = scens.plot(do_show=do_show)
 
