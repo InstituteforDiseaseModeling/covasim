@@ -220,7 +220,7 @@ class BaseSim(ParsObj):
                         d = sc.readdate(d).date()
                     elif isinstance(d, dt.datetime):
                         d = d.date()
-                    d_day = (d - self['start_day']).days
+                    d_day = (d - cvm.date(self['start_day'])).days
                     days.append(d_day)
                 except Exception as E:
                     errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
@@ -262,7 +262,7 @@ class BaseSim(ParsObj):
         # Do the conversion
         dates = []
         for i in ind:
-            date_obj = self['start_day'] + dt.timedelta(days=int(i))
+            date_obj = cvm.date(self['start_day']) + dt.timedelta(days=int(i))
             if as_date:
                 dates.append(date_obj)
             else:

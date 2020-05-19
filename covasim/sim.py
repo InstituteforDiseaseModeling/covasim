@@ -176,12 +176,8 @@ class Sim(cvb.BaseSim):
                 errormsg = f'You must supply one of n_days and end_day, not "{n_days}" and "{end_day}"'
                 raise ValueError(errormsg)
 
-        # Handle parameters specified by layer
-
-
-        # Try to figure out what the layer keys should be
+        # Layer keys -- first, try to figure out what the layer keys should be
         layer_keys = None # e.g. household, school
-        layer_pars = ['beta_layer', 'contacts', 'iso_factor', 'quar_factor']
         if self.people is not None:
             layer_keys = set(self.people.contacts.keys())
         elif isinstance(self['beta_layer'], dict):
@@ -189,13 +185,14 @@ class Sim(cvb.BaseSim):
         else:
             layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
 
-        # Convert scalar layer parameters to dictionaries
+        # Layer keys -- convert scalar layer parameters to dictionaries
+        layer_pars = cvpar.layer_pars # The names of the parameters that are specified by layer
         for lp in layer_pars:
             val = self[lp]
             if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
                 self[lp] = {k:val for k in layer_keys}
 
-        # Handle key mismaches
+        # Layer keys -- handle key mismaches
         for lp in layer_pars:
             lp_keys = set(self.pars[lp].keys())
             if not lp_keys == set(layer_keys):
@@ -204,13 +201,14 @@ class Sim(cvb.BaseSim):
                     errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
                 raise sc.KeyNotFoundError(errormsg)
 
+        # Layer keys -- handle mismatches with the population
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
             if pop_keys != layer_keys:
                 errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
                 raise sc.KeyNotFoundError(errormsg)
 
-        # Handle population data
+        # Moving on, handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
         choice = self['pop_type']
         if choice not in popdata_choices:
@@ -255,11 +253,11 @@ class Sim(cvb.BaseSim):
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
         self.results['n_susceptible'].scale = 'static'
-        self.results['bed_capacity']  = init_res('Bed demand relative to capacity', scale=False)
 
         # Other variables
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
         self.results['doubling_time'] = init_res('Doubling time', scale=False)
+        self.results['test_yield']    = init_res('Testing yield', scale=False)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -370,13 +368,14 @@ class Sim(cvb.BaseSim):
         people   = self.people # Shorten this for later use
         people.update_states_pre(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
-        bed_max  = people.count('severe') > self['n_beds'] if self['n_beds'] else False # Check for a bed constraint
+        hosp_max = people.count('severe')   > self['n_beds_hosp'] if self['n_beds_hosp'] else False # Check for acute bed constraint
+        icu_max  = people.count('critical') > self['n_beds_icu']  if self['n_beds_icu']  else False # Check for ICU bed constraint
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
         if n_imports>0:
             importation_inds = cvu.choose(max_n=len(people), n=n_imports)
-            people.infect(inds=importation_inds, bed_max=bed_max, layer='importation')
+            people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
 
         # Apply interventions
         for intervention in self['interventions']:
@@ -418,13 +417,12 @@ class Sim(cvb.BaseSim):
             # Calculate actual transmission
             for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
                 source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
-                people.infect(inds=target_inds, bed_max=bed_max, source=source_inds, layer=lkey) # Actually infect people
+                people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey) # Actually infect people
 
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people.count(key)
-        self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds'] else 0
 
         # Update counts for this time step: flows
         for key,count in people.flows.items():
@@ -522,12 +520,23 @@ class Sim(cvb.BaseSim):
 
         return
 
+
     def compute_results(self, verbose=None):
         ''' Perform final calculations on the results '''
+        self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
         self.compute_likelihood()
         self.compute_summary(verbose=verbose)
+        return
+
+
+    def compute_yield(self):
+        ''' Compute test yield -- number of positive tests divided by the total number of tests '''
+        n_diags = self.results['new_diagnoses'].values # Number of positive tests
+        n_tests = self.results['new_tests'].values # Total number of tests
+        inds = cvu.true(n_tests) # Pull out non-zero numbers of tests
+        self.results['test_yield'].values[inds] = n_diags[inds]/n_tests[inds] # Calculate the yield
         return
 
 

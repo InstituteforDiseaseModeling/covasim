@@ -3,7 +3,7 @@ Set the parameters for Covasim.
 '''
 
 import numpy as np
-
+import sciris as sc
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
@@ -42,17 +42,17 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Basic disease transmission
     pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
-    pars['contacts']    = None # The number of contacts per layer; set below
-    pars['dynam_layer'] = None # Which layers are dynamic; set below
-    pars['beta_layer']  = None # Transmissibility per layer; set below
+    pars['contacts']    = None # The number of contacts per layer; set by reset_layer_pars() below
+    pars['dynam_layer'] = None # Which layers are dynamic; set by reset_layer_pars() below
+    pars['beta_layer']  = None # Transmissibility per layer; set by reset_layer_pars() below
     pars['n_imports']   = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta_dist']   = {'dist':'lognormal','par1':0.84, 'par2':0.3} # Distribution to draw individual level transmissibility; see https://wellcomeopenresearch.org/articles/5-67
     pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['iso_factor']   = None # Multiply beta by this factor for diganosed cases to represent isolation; set below
-    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set below
+    pars['iso_factor']   = None # Multiply beta by this factor for diganosed cases to represent isolation; set by reset_layer_pars() below
+    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
     pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
 
     # Duration parameters: time for disease progression
@@ -70,7 +70,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':6.2,  'par2':1.7} # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
 
     # Severity parameters: probabilities of symptom progression
-    pars['OR_no_treat']     = 2.0  # Odds ratio for how much more likely people are to die if no treatment available
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
     pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
@@ -85,7 +84,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
     # Health system parameters
-    pars['n_beds'] = None  # The number of beds available for severely/critically ill patients (default is no constraint)
+    pars['n_beds_hosp']    = None # The number of hospital (adult acute care) beds available for severely ill patients (default is no constraint)
+    pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
+    pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
+    pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
+
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
@@ -96,41 +99,63 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     return pars
 
 
+# Define which parametrs need to be specified as a dictionary by layer -- define here so it's available at the module level for sim.py
+layer_pars = ['beta_layer', 'contacts', 'dynam_layer', 'iso_factor', 'quar_factor']
+
+
 def reset_layer_pars(pars, layer_keys=None, force=False):
     '''
-    Small helper function to set numbers of contacts and beta based on whether
-    or not to use layers.
+    Small helper function to set layer-specific parameters. If layer keys are not
+    provided, then set them based on the population type.
 
     Args:
         pars (dict): the parameters dictionary
-        pop_keys (list): the known keys of the population, if available
+        layer_keys (list): the known keys of the population, if available
         force (bool): reset the pars even if they already exist
     '''
-    d_contacts    = 20  # Default number of contacts
-    d_dynam_layer = 0   # Do not use dynamic layers by default
-    d_beta_layer  = 1.0 # No change in beta
-    d_iso_factor  = 0.2 # Assumed isolation factor
-    d_quar_factor = 0.3 # Assumed quarantine factor
 
-    if layer_keys is not None: # Create based on known population keys
-        pars['contacts']    = {lkey:d_contacts    for lkey in layer_keys}
-        pars['dynam_layer'] = {lkey:d_dynam_layer for lkey in layer_keys}
-        pars['beta_layer']  = {lkey:d_beta_layer  for lkey in layer_keys}
-        pars['iso_factor']  = {lkey:d_iso_factor  for lkey in layer_keys}
-        pars['quar_factor'] = {lkey:d_quar_factor for lkey in layer_keys}
-    else: # Set based on population type
-        if pars['pop_type'] == 'random':
-            if pars.get('contacts',    None) is None or force: pars['contacts']    = {'a': d_contacts}    # Number of contacts per person per day -- 'a' for 'all'
-            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = {'a': d_dynam_layer} # Which layers are dynamic
-            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = {'a': d_beta_layer}  # Per-population beta weights; relative
-            if pars.get('iso_factor',  None) is None or force: pars['iso_factor']  = {'a': d_iso_factor}  # Multiply beta by this factor for people who have been diagnosed
-            if pars.get('quar_factor', None) is None or force: pars['quar_factor'] = {'a': d_quar_factor} # Multiply beta by this factor for people who know they've been in contact with a positive, even if they haven't been diagnosed yet
+    # Specify defaults for random -- layer 'a' for 'all'
+    defaults_r = dict(
+        beta_layer  = dict(a=1.0), # Default beta
+        contacts    = dict(a=20),  # Default number of contacts
+        dynam_layer = dict(a=0),   # Do not use dynamic layers by default
+        iso_factor  = dict(a=0.2), # Assumed isolation factor
+        quar_factor = dict(a=0.3), # Assumed quarantine factor
+    )
+
+    # Specify defaults for hybrid (and SynthPops) -- household, school, work, and community layers (h, s, w, c)
+    defaults_h = dict(
+        beta_layer  = dict(h=7.0, s=0.7, w=1.4, c=0.14), # Per-population beta weights; relative
+        contacts    = dict(h=2.7, s=20,  w=8,   c=20),   # Number of contacts per person per day, estimated
+        dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
+        iso_factor  = dict(h=0.3, s=0.0, w=0.0, c=0.1),  # Multiply beta by this factor for people in isolation
+        quar_factor = dict(h=0.8, s=0.0, w=0.0, c=0.3),  # Multiply beta by this factor for people in quarantine
+    )
+
+    # Choose the parameter defaults based on the population type, and get the layer keys
+    if pars['pop_type'] == 'random':
+        defaults = defaults_r
+        default_layer_keys = ['a'] # Although this could be retrieved from the dictionary, make it explicit
+    else:
+        defaults = defaults_h
+        default_layer_keys = ['h', 's', 'w', 'c'] # NB, these must match defaults_h above
+    if layer_keys is None:
+        layer_keys = default_layer_keys # If not supplied, use the defaults
+
+    # Actually set the parameters
+    for pkey in layer_pars:
+        par = {} # Initialize this parameter
+        default_val = defaults_r[pkey]['a'] # Get the default value for this parameter
+        if force:
+            default_par = defaults[pkey] # Just use defaults
         else:
-            if pars.get('contacts',    None) is None or force: pars['contacts']    = dict(h=2.7, s=20,  w=8,  c=20)   # Number of contacts per person per day, estimated
-            if pars.get('dynam_layer', None) is None or force: pars['dynam_layer'] = dict(h=0,   s=0,   w=0,   c=0)    # Which layers are dynamic -- none by defaul
-            if pars.get('beta_layer',  None) is None or force: pars['beta_layer']  = dict(h=7.0, s=0.7, w=1.4, c=0.14)  # Per-population beta weights; relative
-            if pars.get('iso_factor',  None) is None or force: pars['iso_factor']  = dict(h=0.3, s=0.0, w=0.0, c=0.1) # Multiply beta by this factor for people in isolation
-            if pars.get('quar_factor', None) is None or force: pars['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3) # Multiply beta by this factor for people in quarantine
+            default_par = sc.mergedicts(defaults[pkey], pars.get(pkey, None)) # Use user-supplied parameters if available, else default
+
+        # Construct this parameter, layer by layer
+        for lkey in layer_keys: # Loop over layers
+            par[lkey] = default_par.get(lkey, default_val) # Get the value for this layer if available, else use the default for random
+        pars[pkey] = par # Save this parameter to the dictionary
+
     return
 
 
