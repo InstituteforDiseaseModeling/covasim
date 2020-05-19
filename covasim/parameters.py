@@ -81,6 +81,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     # Events and interventions
     pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['interv_func']   = None # Custom intervention function
+    pars['ili_prev']      = None # Prevalence of influenza-like-illness (ILI); affects testing interventions
     pars['timelimit']     = None # Time limit for the simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
