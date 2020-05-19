@@ -124,17 +124,15 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def reset_layer_pars(self, force=True):
+    def reset_layer_pars(self, layer_keys=None, force=True):
         '''
         Reset the parameters to match the population.
 
         Args:
             force (bool): reset the pars even if they already exist
         '''
-        if self.people is not None:
+        if layer_keys is None and self.people is not None:
             layer_keys = self.people.contacts.keys()
-        else:
-            layer_keys = None
         cvpar.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
         return
 
