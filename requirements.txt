@@ -10,3 +10,4 @@ gunicorn
 plotly
 ipywidgets
 fire
+networkx
