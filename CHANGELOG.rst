@@ -3,6 +3,10 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+Version 1.1.3 (2020-05-18)
+--------------------------
+- Improved the how "layer parameters" (e.g., ``beta_layer``) are initialized.
+- Allowed arbitrary arguments to be passed to SynthPops via ``cv.make_synthpop``.
 
 Version 1.1.2 (2020-05-18)
 --------------------------
