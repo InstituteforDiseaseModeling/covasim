@@ -7,12 +7,12 @@ import covasim as cv
 import sciris as sc
 
 pars = dict(
-    n_days=180,
+    n_days=120,
     )
 
 sim = cv.Sim(pars)
-sim.initialize()
-sim.initialized = False
+sim.initialize() # This is necessary so sim.people.age is populated for the intervention...
+sim.initialized = False # ...but this is necessary so the prognosis parameters are able to take effect
 
 new_prognoses = sc.dcp(sim.pars['prognoses'])
 trans_ORs     = new_prognoses['trans_ORs']
@@ -35,8 +35,8 @@ scenarios = {
     'protectelderly': {
         'name': 'Protect the elderly',
         'pars': {
-            # 'prognoses': new_prognoses,
-            'interventions': cv.test_num(daily_tests=[0.01*n_people]*n_days, subtarget={'inds': sim.people.age>50, 'val': 1.2}),
+            'prognoses': new_prognoses,
+            'interventions': cv.test_num(start_day=40, daily_tests=[0.005*n_people]*n_days, subtarget={'inds': sim.people.age>50, 'val': 2.0}),
             }
     },
 }
@@ -44,14 +44,16 @@ scenarios = {
 to_plot = [
     'cum_infections',
     'new_infections',
+    'cum_diagnoses',
     'n_severe',
+    'n_critical',
     'cum_deaths',
 ]
 fig_args = dict(figsize=(24, 16))
 
 scens = cv.Scenarios(sim=sim, scenarios=scenarios, metapars={'n_runs': 1})
 scens.run(keep_people=True)
-scens.plot()
+scens.plot(to_plot=to_plot, n_cols=2, fig_args=fig_args)
 
 
 
