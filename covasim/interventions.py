@@ -54,10 +54,9 @@ class Intervention:
     def __init__(self, do_plot=None):
         if do_plot is None:
             do_plot = True
-        self.do_plot = do_plot
-        self.days = []
-        self.subtarget = None
-        self.initialized = False
+        self.do_plot = do_plot # Whether or not to plot interventions
+        self.days = [] # The start and end days of the intervention
+        self.initialized = False # Whether or not it has been initialized
         return
 
 
