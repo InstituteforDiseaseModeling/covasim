@@ -73,7 +73,6 @@ class TransTree(sc.prettyobj):
 
     def plot(self, *args, **kwargs):
         ''' Plot the transmission tree '''
-        ''' Plot the transmission tree; see TransTree.plot() for documentation '''
 
         fig_args = kwargs.get('fig_args', dict(figsize=(16, 10)))
 
