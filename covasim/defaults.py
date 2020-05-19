@@ -126,9 +126,6 @@ default_age_data = np.array([
             [90, 99, 0.00672],
             ])
 
-# Define which parametrs need to be specified as a dictionary by layer
-layer_pars = ['beta_layer', 'contacts', 'iso_factor', 'quar_factor']
-
 
 def get_colors():
     '''

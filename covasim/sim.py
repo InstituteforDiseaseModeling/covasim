@@ -175,10 +175,7 @@ class Sim(cvb.BaseSim):
                 errormsg = f'You must supply one of n_days and end_day, not "{n_days}" and "{end_day}"'
                 raise ValueError(errormsg)
 
-        # Handle parameters specified by layer
-
-
-        # Try to figure out what the layer keys should be
+        # Layer keys -- first, try to figure out what the layer keys should be
         layer_keys = None # e.g. household, school
         if self.people is not None:
             layer_keys = set(self.people.contacts.keys())
@@ -187,28 +184,30 @@ class Sim(cvb.BaseSim):
         else:
             layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
 
-        # Convert scalar layer parameters to dictionaries
-        for lp in cvd.layer_pars:
+        # Layer keys -- convert scalar layer parameters to dictionaries
+        layer_pars = cvpar.layer_pars # The names of the parameters that are specified by layer
+        for lp in layer_pars:
             val = self[lp]
             if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
                 self[lp] = {k:val for k in layer_keys}
 
-        # Handle key mismaches
-        for lp in cvd.layer_pars:
+        # Layer keys -- handle key mismaches
+        for lp in layer_pars:
             lp_keys = set(self.pars[lp].keys())
             if not lp_keys == set(layer_keys):
                 errormsg = f'Layer parameters have inconsistent keys:'
-                for lp2 in cvd.layer_pars: # Fail on first error, but re-loop to list all of them
+                for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
                     errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
                 raise sc.KeyNotFoundError(errormsg)
 
+        # Layer keys -- handle mismatches with the population
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
             if pop_keys != layer_keys:
                 errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
                 raise sc.KeyNotFoundError(errormsg)
 
-        # Handle population data
+        # Moving on, handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
         choice = self['pop_type']
         if choice not in popdata_choices:
