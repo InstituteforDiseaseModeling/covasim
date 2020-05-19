@@ -320,10 +320,7 @@ class Sim(cvb.BaseSim):
 
         # Create the seed infections
         inds = cvu.choose(self['pop_size'], self['pop_infected'])
-        self.people.infect(inds=inds)
-        for ind in inds:
-            self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='seed_infection')
-
+        self.people.infect(inds=inds, layer='seed_infection')
         return
 
 
@@ -369,17 +366,15 @@ class Sim(cvb.BaseSim):
         # Perform initial operations
         self.rescale() # Check if we need to rescale
         people   = self.people # Shorten this for later use
-        flows    = people.update_states_pre(t=t) # Update the state of everyone and count the flows
+        people.update_states_pre(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
         bed_max  = people.count('severe') > self['n_beds'] if self['n_beds'] else False # Check for a bed constraint
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
         if n_imports>0:
-            imporation_inds = cvu.choose(max_n=len(people), n=n_imports)
-            flows['new_infections'] += people.infect(inds=imporation_inds, bed_max=bed_max)
-            for ind in imporation_inds:
-                self.people.transtree.linelist[ind] = dict(source=None, target=ind, date=self.t, layer='importation')
+            importation_inds = cvu.choose(max_n=len(people), n=n_imports)
+            people.infect(inds=importation_inds, bed_max=bed_max, layer='importation')
 
         # Apply interventions
         for intervention in self['interventions']:
@@ -387,7 +382,7 @@ class Sim(cvb.BaseSim):
         if self['interv_func'] is not None: # Apply custom intervention function
             self['interv_func'](self)
 
-        flows = people.update_states_post(flows) # Check for state changes after interventions
+        people.update_states_post() # Check for state changes after interventions
 
         # Compute the probability of transmission
         beta         = cvd.default_float(self['beta'])
@@ -420,16 +415,9 @@ class Sim(cvb.BaseSim):
 
             # Calculate actual transmission
             for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
-                target_inds, edge_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
-                flows['new_infections'] += people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
+                source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
+                people.infect(inds=target_inds, bed_max=bed_max, source=source_inds, layer=lkey) # Actually infect people
 
-                # Store the transmission tree
-                for ind in edge_inds:
-                    source = sources[ind]
-                    target = targets[ind]
-                    transdict = dict(source=source, target=target, date=self.t, layer=lkey)
-                    self.people.transtree.linelist[target] = transdict
-                    self.people.transtree.targets[source].append(transdict)
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
@@ -437,7 +425,7 @@ class Sim(cvb.BaseSim):
         self.results['bed_capacity'][t] = self.results['n_severe'][t]/self['n_beds'] if self['n_beds'] else 0
 
         # Update counts for this time step: flows
-        for key,count in flows.items():
+        for key,count in people.flows.items():
             self.results[key][t] += count
 
         # Tidy up
