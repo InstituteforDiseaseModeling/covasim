@@ -10,7 +10,6 @@ import sciris as sc
 import covasim as cv
 import pylab as pl
 
-
 do_plot = 1
 verbose = 0
 debug   = 1 # This runs without parallelization; faster with pytest
@@ -73,7 +72,7 @@ def test_base():
     ppl.get(['susceptible', 'infectious'])
     ppl.keys(which='all_states')
     ppl.index()
-    ppl.resize(pop_size=200)
+    # ppl.resize(pop_size=200) # Resizing isn't quite right e.g. new person UIDs aren't created
     ppl.to_df()
     ppl.to_arr()
     ppl.person(50)
@@ -92,10 +91,9 @@ def test_base():
     len(contacts)
 
     # Transmission tree methods
-    ppl.transtree.make_targets()
-    ppl.make_detailed_transtree()
-    ppl.transtree.plot()
-    ppl.transtree.animate(animate=False)
+    transtree = cv.TransTree(ppl)
+    transtree.plot()
+    transtree.animate(animate=False)
 
     # Tidy up
     remove_files(json_path, sim_path)

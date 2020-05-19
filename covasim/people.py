@@ -301,14 +301,9 @@ class People(cvb.BasePeople):
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
 
-        # Update the transmission tree
+        # Record transmissions
         for i, target in enumerate(inds):
-            if source is not None:
-                transdict = dict(source=source[i], target=target, date=self.t, layer=layer)
-                self.transtree.targets[source[i]].append(transdict)
-            else:
-                transdict = dict(source=None, target=target, date=self.t, layer=layer)
-            self.transtree.linelist[target] = transdict
+            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)
