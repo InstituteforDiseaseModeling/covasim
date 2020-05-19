@@ -252,7 +252,6 @@ class Sim(cvb.BaseSim):
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
         self.results['n_susceptible'].scale = 'static'
-        self.results['bed_capacity']  = init_res('Bed demand relative to capacity', scale=False)
 
         # Other variables
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
