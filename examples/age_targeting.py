@@ -4,12 +4,17 @@ Example script to vary relative transmissibility and susceptibility for the elde
 
 #%% Imports and settings
 import covasim as cv
-import copy
+import sciris as sc
 
-sim = cv.Sim()
+pars = dict(
+    n_days=180,
+    )
+
+sim = cv.Sim(pars)
 sim.initialize()
+sim.initialized = False
 
-new_prognoses = copy.deepcopy(sim.pars['prognoses'])
+new_prognoses = sc.dcp(sim.pars['prognoses'])
 trans_ORs     = new_prognoses['trans_ORs']
 sus_ORs       = new_prognoses['sus_ORs']
 age_cutoffs   = new_prognoses['age_cutoffs']
@@ -29,8 +34,10 @@ scenarios = {
     },
     'protectelderly': {
         'name': 'Protect the elderly',
-        'pars': {'prognoses': new_prognoses,
-                 'interventions': cv.test_num(daily_tests=[0.10*n_people]*n_days, subtarget={'inds': sim.people.age>50, 'val': 1.2})}
+        'pars': {
+            # 'prognoses': new_prognoses,
+            'interventions': cv.test_num(daily_tests=[0.01*n_people]*n_days, subtarget={'inds': sim.people.age>50, 'val': 1.2}),
+            }
     },
 }
 
@@ -43,7 +50,7 @@ to_plot = [
 fig_args = dict(figsize=(24, 16))
 
 scens = cv.Scenarios(sim=sim, scenarios=scenarios, metapars={'n_runs': 1})
-scens.run()
+scens.run(keep_people=True)
 scens.plot()
 
 

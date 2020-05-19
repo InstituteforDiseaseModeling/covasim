@@ -6,7 +6,7 @@ All notable changes to the codebase are documented in this file. Note: in many c
 
 Version 1.1.5 (2020-05-18)
 --------------------------
-- Add extra flexibility for targeting interventions by index of a person, for example, by age.
+- Added extra flexibility for targeting interventions by index of a person, for example, by age.
 
 
 Version 1.1.4 (2020-05-18)
