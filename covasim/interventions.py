@@ -533,7 +533,7 @@ class test_prob(Intervention):
         symp_quar_prob (float): Probability of testing a symptomatic quarantined person
         asymp_quar_prob (float): Probability of testing an asymptomatic quarantined person
         test_sensitivity (float): Probability of a true positive
-        ili_prev (float or array): Prevalence of influenza
+        ili_prev (float or array): Prevalence of influenza-like-illness symptoms in the population
         loss_prob (float): Probability of loss to follow-up
         test_delay (int): How long testing takes
         start_day (int): When to start the intervention
