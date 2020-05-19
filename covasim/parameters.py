@@ -38,7 +38,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
     pars['rescale']           = 0    # Enable dynamic rescaling of the population -- starts with pop_scale=1 and scales up dynamically as the epidemic grows
     pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
-    pars['rescale_factor']    = 2    # Factor by which we rescale the population
+    pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled
 
     # Basic disease transmission
     pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
