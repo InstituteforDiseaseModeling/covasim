@@ -59,7 +59,6 @@ Time for disease recovery
 
 Severity parameters
 -------------------
-* ``OR_no_treat``     = Odds ratio for how much more likely people are to die if no treatment available
 * ``rel_symp_prob``   = Scale factor for proportion of symptomatic cases
 * ``rel_severe_prob`` = Scale factor for proportion of symptomatic cases that become severe
 * ``rel_crit_prob``   = Scale factor for proportion of severe cases that become critical
@@ -76,4 +75,7 @@ Events and interventions
 
 Health system parameters
 --------------------------
-* ``n_beds`` = The number of beds available for severely/critically ill patients (default is no constraint)
+* ``n_beds_hosp``    The number of hospital (adult acute care) beds available for severely ill patients (default is no constraint)
+* ``n_beds_icu``     The number of ICU beds available for critically ill patients (default is no constraint)
+* ``no_hosp_factor`` Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
+* ``no_icu_factor``  Multiplier for how much more likely critically ill people are to die if no ICU beds are available
