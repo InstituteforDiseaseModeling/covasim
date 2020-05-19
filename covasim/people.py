@@ -223,7 +223,7 @@ class People(cvb.BasePeople):
 
 
     def check_quar(self):
-        ''' Check for whether someone has been contacted by a positive'''
+        ''' Check for who gets put into quarantine'''
 
         not_diagnosed_inds = self.false('diagnosed')
         all_inds = np.arange(len(self)) # Do dead people come out of quarantine?

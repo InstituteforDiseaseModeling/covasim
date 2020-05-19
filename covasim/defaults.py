@@ -27,7 +27,7 @@ else:
 class PeopleMeta(sc.prettyobj):
     ''' For storing all the keys relating to a person and people '''
 
-    # Set the properties of a persocn
+    # Set the properties of a person
     person = [
         'uid',         # Any (int or str, usually)
         'age',         # Float

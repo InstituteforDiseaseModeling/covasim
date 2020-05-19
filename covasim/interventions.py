@@ -54,9 +54,9 @@ class Intervention:
     def __init__(self, do_plot=None):
         if do_plot is None:
             do_plot = True
-        self.do_plot = do_plot
-        self.days = []
-        self.initialized = False
+        self.do_plot = do_plot # Whether or not to plot interventions
+        self.days = [] # The start and end days of the intervention
+        self.initialized = False # Whether or not it has been initialized
         return
 
 
@@ -437,6 +437,7 @@ class test_num(Intervention):
         daily_tests (int or arr): number of tests per day; if integer, use that number every day
         symp_test (float): odds ratio of a symptomatic person testing
         quar_test (float): probability of a person in quarantine testing
+        subtarget (dict): subtarget intervention to people with particular indices (format: {'ind': array of indices, 'val': value to apply}
         sensitivity (float): test sensitivity
         loss_prob (float): probability of the person being lost-to-follow-up
         test_delay (int): days for test result to be known
@@ -447,16 +448,19 @@ class test_num(Intervention):
     **Example**::
 
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'val': 1.2}) # People over 50 are 20% more likely to test
 
     Returns:
         Intervention
     '''
 
-    def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, sensitivity=1.0, loss_prob=0, test_delay=0, start_day=0, end_day=None, do_plot=None):
+    def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, subtarget=None, sensitivity=1.0, loss_prob=0, test_delay=0,
+                 start_day=0, end_day=None, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.daily_tests = daily_tests #: Should be a list of length matching time
-        self.symp_test  = symp_test
+        self.symp_test   = symp_test   # Set probability of testing symptomatics
         self.quar_test   = quar_test
+        self.subtarget   = subtarget    # Set any other testing criteria, e.g. testing by age: {'inds': array of indices of people > 70, 'val': how much more/less likely these people are to tests}
         self.sensitivity = sensitivity
         self.loss_prob   = loss_prob
         self.test_delay  = test_delay
@@ -507,16 +511,31 @@ class test_num(Intervention):
         else:
             return
 
-        test_probs = np.ones(sim.n) # Begin by assigning equal tesitng probability to everyone
-        symp_inds  = cvu.true(sim.people.symptomatic)
+        test_probs = np.ones(sim.n) # Begin by assigning equal testing probability to everyone
+
+        # Handle symptomatic and quarantine testing
+        symp_inds = cvu.true(sim.people.symptomatic)
         quar_inds  = cvu.true(sim.people.quarantined)
-        diag_inds  = cvu.true(sim.people.diagnosed)
         test_probs[symp_inds] *= self.symp_test
         test_probs[quar_inds] *= self.quar_test
+
+        # Handle any other user-specified testing criteria
+        if self.subtarget is not None:
+            subtarget_inds  = self.subtarget['inds']
+            if sc.isnumber(self.subtarget['val']):
+                test_probs[subtarget_inds] *= self.subtarget['val']
+            elif sc.isiterable(self.subtarget['val']):
+                if len(self.subtarget['val']) != len(subtarget_inds):
+                    raise ValueError(f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(self.subtarget["val"])})')
+                else:
+                    test_probs[subtarget_inds] = test_probs[subtarget_inds]*self.subtarget['val']
+
+        # Don't re-diagnose people
+        diag_inds  = cvu.true(sim.people.diagnosed)
         test_probs[diag_inds] = 0.
 
+        # Now choose who gets tested and test them
         test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=False)
-
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return
@@ -532,6 +551,7 @@ class test_prob(Intervention):
         asymp_prob (float): Probability of testing an asymptomatic (unquarantined) person
         symp_quar_prob (float): Probability of testing a symptomatic quarantined person
         asymp_quar_prob (float): Probability of testing an asymptomatic quarantined person
+        subtarget (dict): subtarget intervention to people with particular indices (format: {'ind': array of indices, 'val': value to apply}
         test_sensitivity (float): Probability of a true positive
         loss_prob (float): Probability of loss to follow-up
         test_delay (int): How long testing takes
@@ -545,12 +565,14 @@ class test_prob(Intervention):
     Returns:
         Intervention
     '''
-    def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None, do_plot=None):
+    def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, subtarget=None,
+                 test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
         self.symp_quar_prob   = symp_quar_prob  if  symp_quar_prob is not None else  symp_prob
         self.asymp_quar_prob  = asymp_quar_prob if asymp_quar_prob is not None else asymp_prob
+        self.subtarget        = subtarget
         self.test_sensitivity = test_sensitivity
         self.loss_prob        = loss_prob
         self.test_delay       = test_delay
@@ -582,6 +604,8 @@ class test_prob(Intervention):
         quar_inds       = cvu.true(sim.people.quarantined)
         symp_quar_inds  = quar_inds[cvu.true(sim.people.symptomatic[quar_inds])]
         asymp_quar_inds = quar_inds[cvu.false(sim.people.symptomatic[quar_inds])]
+        if self.subtarget is not None:
+            subtarget_inds  = self.subtarget['inds']
         diag_inds       = cvu.true(sim.people.diagnosed)
 
         test_probs = np.zeros(sim.n) # Begin by assigning equal tesitng probability to everyone
@@ -589,6 +613,8 @@ class test_prob(Intervention):
         test_probs[asymp_inds]      = self.asymp_prob
         test_probs[symp_quar_inds]  = self.symp_quar_prob
         test_probs[asymp_quar_inds] = self.asymp_quar_prob
+        if self.subtarget is not None:
+            test_probs[subtarget_inds]  = self.subtarget['val']
         test_probs[diag_inds]       = 0.
         test_inds = cvu.binomial_arr(test_probs).nonzero()[0]
 
