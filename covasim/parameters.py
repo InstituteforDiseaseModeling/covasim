@@ -87,9 +87,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     # Health system parameters
     pars['n_beds'] = None  # The number of beds available for severely/critically ill patients (default is no constraint)
 
-    # Store the names of which of the above parameters must be specified per contact layer
-
-
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
     reset_layer_pars(pars)
