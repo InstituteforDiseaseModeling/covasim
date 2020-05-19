@@ -15,6 +15,7 @@ from . import parameters as cvpar
 from . import population as cvpop
 from . import interventions as cvi
 from . import plotting as cvplt
+from . import analysis as cva
 
 # Specify all externally visible things this file defines
 __all__ = ['Sim']
@@ -597,6 +598,8 @@ class Sim(cvb.BaseSim):
         # Alternate (traditional) method -- count from the date of infection or outcome
         elif method in ['infectious', 'outcome']:
 
+            transtree = cva.TransTree(self.people)
+
             for t in self.tvec:
 
                 # Sources are easy -- count up the arrays
@@ -610,23 +613,17 @@ class Sim(cvb.BaseSim):
 
                 # Targets are hard -- loop over the transmission tree
                 for ind in inds:
-                    targets[t] += len(self.people.transtree.targets[ind])
+                    targets[t] += transtree.graph.out_degree(ind)
 
             # Populate the array -- to avoid divide-by-zero, skip indices that are 0
-            inds = sc.findinds(sources>0)
-            r_eff = np.zeros(self.npts)*np.nan
-            r_eff[inds] = targets[inds]/sources[inds]
+            r_eff = np.divide(targets, sources, out=np.full(self.npts, np.nan), where=sources > 0)
 
             # Use stored weights calculate the moving average over the window of timesteps, n
             num = np.nancumsum(r_eff * sources)
             num[window:] = num[window:] - num[:-window]
             den = np.cumsum(sources)
             den[window:] = den[window:] - den[:-window]
-
-            # Avoid dividing by zero
-            values = np.zeros(num.shape)*np.nan
-            ind = den > 0
-            values[ind] = num[ind]/den[ind]
+            values = np.divide(num, den, out=np.full(self.npts, np.nan), where=den > 0)
 
         # Method not recognized
         else:

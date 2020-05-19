@@ -1,20 +1,8 @@
-import numpy as np
-import pandas as pd
 import pylab as pl
-import sciris as sc
-import datetime as dt
-import matplotlib.ticker as ticker
-import plotly.graph_objects as go
-from . import defaults as cvd
 import numpy as np
 import pandas as pd
 import sciris as sc
-import datetime as dt
 import networkx as nx
-from . import utils as cvu
-from . import misc as cvm
-from . import defaults as cvd
-from . import plotting as cvplt
 
 
 class TransTree(sc.prettyobj):
@@ -31,7 +19,7 @@ class TransTree(sc.prettyobj):
     def __init__(self, people):
 
         # Pull out each of the attributes relevant to transmission
-        attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact'}
+        attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}
 
         self.n_days = people.t  # people.t should be set to the last simulation timestep in the output (since the Transtree is constructed after the people have been stepped forward in time)
         self.graph = nx.DiGraph()
@@ -51,6 +39,27 @@ class TransTree(sc.prettyobj):
     @property
     def pop_size(self):
         return sum(x is not None for x in self.graph.nodes)
+
+    def r0(self, recovered_only=False):
+        """
+        Return average number of transmissions per person
+
+        This doesn't include seed transmissions. By default, it also doesn't adjust
+        for length of infection (e.g. people infected towards the end of the simulation
+        will have fewer transmissions because their infection may extend past the end
+        of the simulation, these people are not included). If 'recovered_only=True'
+        then the downstream transmissions will only be included for people that recover
+        before the end of the simulation, thus ensuring they all had the same amount of
+        time to transmit.
+
+        """
+
+        n_infected = []
+        for i, node in self.graph.nodes.items():
+            if i is None or np.isnan(node['date_exposed']) or (recovered_only and node['date_recovered']>self.n_days):
+                continue
+            n_infected.append(self.graph.out_degree(i))
+        return np.mean(n_infected)
 
     def plot(self, *args, **kwargs):
         ''' Plot the transmission tree '''

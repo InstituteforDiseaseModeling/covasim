@@ -141,12 +141,6 @@ class People(cvb.BasePeople):
         return self.contacts
 
 
-    def make_detailed_transtree(self):
-        ''' Convenience function to avoid repeating the people object '''
-        self.transtree.make_detailed(self)
-        return
-
-
     #%% Methods for updating state
 
     def check_inds(self, current, date, filter_inds=None):
