@@ -11,7 +11,6 @@ pars = dict(
     n_days=120,
     )
 
-
 sims = []
 for ltcf in [False, True]:
     print(f'Running LTCF {ltcf}')
@@ -20,7 +19,6 @@ for ltcf in [False, True]:
     sim.popdict = popdict
     sim.reset_layer_pars(layer_keys)
     sims.append(sim)
-
 
 to_plot = ['cum_infections', 'new_infections', 'cum_severe', 'cum_deaths']
 msim = cv.MultiSim(sims)
