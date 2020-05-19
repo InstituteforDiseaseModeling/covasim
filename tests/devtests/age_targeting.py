@@ -61,6 +61,3 @@ fig_args = dict(figsize=(24, 16))
 scens = cv.Scenarios(sim=sim, scenarios=scenarios, metapars={'n_runs': 1})
 scens.run(keep_people=True)
 scens.plot(to_plot=to_plot, n_cols=2, fig_args=fig_args)
-
-
-
