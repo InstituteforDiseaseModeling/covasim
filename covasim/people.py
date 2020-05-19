@@ -42,6 +42,9 @@ class People(cvb.BasePeople):
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
         self._lock = True # Stop further attributes from being set
 
+        # Store flows to be computed during simulation
+        self.flows = {key:0 for key in cvd.new_result_flows}
+
         # Set any values, if supplied
         if 'contacts' in kwargs:
             self.add_contacts(kwargs.pop('contacts'))
@@ -88,25 +91,25 @@ class People(cvb.BasePeople):
         self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
         # Perform updates
-        flows  = {key:0 for key in cvd.new_result_flows}
-        flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
-        flows['new_symptomatic'] += self.check_symptomatic()
-        flows['new_severe']      += self.check_severe()
-        flows['new_critical']    += self.check_critical()
-        flows['new_deaths']      += self.check_death()
-        flows['new_recoveries']  += self.check_recovery()
-        flows['new_diagnoses']   += self.check_diagnosed()
-        flows['new_quarantined'] += self.check_quar()
+        self.flows  = {key:0 for key in cvd.new_result_flows}
+        self.flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
+        self.flows['new_symptomatic'] += self.check_symptomatic()
+        self.flows['new_severe']      += self.check_severe()
+        self.flows['new_critical']    += self.check_critical()
+        self.flows['new_deaths']      += self.check_death()
+        self.flows['new_recoveries']  += self.check_recovery()
+        self.flows['new_diagnoses']   += self.check_diagnosed()
+        self.flows['new_quarantined'] += self.check_quar()
 
-        return flows
+        return
 
-
-    def update_states_post(self, flows):
+    def update_states_post(self):
         ''' Perform post-timestep updates '''
-        flows['new_diagnoses']   += self.check_diagnosed()
-        flows['new_quarantined'] += self.check_quar()
-        del self.is_exp # Tidy up
-        return flows
+        self.flows['new_diagnoses']   += self.check_diagnosed()
+        self.flows['new_quarantined'] += self.check_quar()
+        del self.is_exp  # Tidy up
+
+        return
 
 
     def update_contacts(self):
@@ -260,7 +263,7 @@ class People(cvb.BasePeople):
         return
 
 
-    def infect(self, inds, bed_max=None, verbose=True):
+    def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None):
         '''
         Infect people and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
@@ -269,16 +272,28 @@ class People(cvb.BasePeople):
             * Critical cases either recover or die
 
         Args:
-            inds    (array):  array of people to infect
-            t       (int):    current timestep
-            bed_max (bool):   whether or not there is a bed available for this person
+            inds     (array): array of people to infect
+            hosp_max (bool):  whether or not there is an acute bed available for this person
+            icu_max  (bool):  whether or not there is an ICU bed available for this person
+            source   (int):   source person of this infection (None if an importation or seed infection)
+            layer    (str):   contact layer this infection was transmitted on
 
         Returns:
             count (int): number of people infected
         '''
 
-        # Handle inputs
-        inds         = np.unique(inds[self.susceptible[inds]]) # Do not infect people who are not susceptible
+        # Remove duplicates
+        unique = np.unique(inds, return_index=True)[1]
+        inds = inds[unique]
+        if source is not None:
+            source = source[unique]
+
+        # Keep only susceptibles
+        keep = self.susceptible[inds] # Unique indices in inds and source that are also susceptible
+        inds = inds[keep]
+        if source is not None:
+            source = source[keep]
+
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
@@ -286,6 +301,16 @@ class People(cvb.BasePeople):
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
         self.date_exposed[inds]  = self.t
+        self.flows['new_infections'] += len(inds)
+
+        # Update the transmission tree
+        for i, target in enumerate(inds):
+            if source is not None:
+                transdict = dict(source=source[i], target=target, date=self.t, layer=layer)
+                self.transtree.targets[source[i]].append(transdict)
+            else:
+                transdict = dict(source=None, target=target, date=self.t, layer=layer)
+            self.transtree.linelist[target] = transdict
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)
@@ -319,7 +344,7 @@ class People(cvb.BasePeople):
         # CASE 2.2: Severe cases: hospitalization required, may become critical
         self.dur_sym2sev[sev_inds] = cvu.sample(**durpars['sym2sev'], size=len(sev_inds)) # Store how long this person took to develop severe symptoms
         self.date_severe[sev_inds] = self.date_symptomatic[sev_inds] + self.dur_sym2sev[sev_inds]  # Date symptoms become severe
-        crit_probs = self.pars['rel_crit_prob'] * self.crit_prob[sev_inds] # Probability of these people being critical
+        crit_probs = self.pars['rel_crit_prob'] * self.crit_prob[sev_inds] * (self.pars['no_hosp_factor'] if hosp_max else 1.)# Probability of these people becoming critical - higher if no beds available
         is_crit = cvu.binomial_arr(crit_probs)  # See if they're a critical case
         crit_inds = sev_inds[is_crit]
         non_crit_inds = sev_inds[~is_crit]
@@ -332,7 +357,7 @@ class People(cvb.BasePeople):
         # CASE 2.2.2: Critical cases: ICU required, may die
         self.dur_sev2crit[crit_inds] = cvu.sample(**durpars['sev2crit'], size=len(crit_inds))
         self.date_critical[crit_inds] = self.date_severe[crit_inds] + self.dur_sev2crit[crit_inds]  # Date they become critical
-        death_probs = self.pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['OR_no_treat'] if bed_max else 1.) # Probability they'll die
+        death_probs = self.pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['no_icu_factor'] if icu_max else 1.) # Probability they'll die
         is_dead = cvu.binomial_arr(death_probs)  # Death outcome
         dead_inds = crit_inds[is_dead]
         alive_inds = crit_inds[~is_dead]

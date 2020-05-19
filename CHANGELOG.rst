@@ -4,6 +4,25 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.1.4 (2020-05-18)
+--------------------------
+- Added a new hospital bed capacity constraint and renamed health system capacity parameters. To migrate an older set of parameters to this version, set::
+
+    pars['no_icu_factor']  = pars.pop('OR_no_treat')
+    pars['n_beds_icu']     = pars.pop('n_beds')
+    pars['no_hosp_factor'] = 1.0
+    pars['n_beds_hosp']    = None
+
+- Removed the ``bed_capacity`` result.
+- GitHub info: PR `510 <https://github.com/amath-idm/covasim/pull/510>`__, previous head ``0f6d48c``
+
+
+Version 1.1.3 (2020-05-18)
+--------------------------
+- Improved the how "layer parameters" (e.g., ``beta_layer``) are initialized.
+- Allowed arbitrary arguments to be passed to SynthPops via ``cv.make_synthpop``.
+
+
 Version 1.1.2 (2020-05-18)
 --------------------------
 - Added a new result, ``test_yield``, which is the number of diagnoses divided by the number of cases each day.
