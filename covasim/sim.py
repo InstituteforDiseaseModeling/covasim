@@ -417,7 +417,7 @@ class Sim(cvb.BaseSim):
             # Calculate actual transmission
             for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
                 source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
-                people.infect(inds=target_inds, bed_max=bed_max) # Actually infect people
+                people.infect(inds=target_inds, bed_max=bed_max, source=source_inds, layer=lkey) # Actually infect people
 
 
         # Update counts for this time step: stocks

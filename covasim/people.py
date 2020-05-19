@@ -305,7 +305,7 @@ class People(cvb.BasePeople):
         for i, target in enumerate(inds):
             if source is not None:
                 transdict = dict(source=source[i], target=target, date=self.t, layer=layer)
-                self.transtree.targets[source].append(transdict)
+                self.transtree.targets[source[i]].append(transdict)
             else:
                 transdict = dict(source=None, target=target, date=self.t, layer=layer)
             self.transtree.linelist[target] = transdict
