@@ -11,7 +11,7 @@ social distancing, school closures, testing, contact tracing, and quarantine.
 The scientific paper describing Covasim is available at http://paper.covasim.org.
 The recommended citation is:
 
-    Kerr CC, Stuart RM, Mistry D, Abeysuriya RG, Hart G, Rosenfeld R, Selvaraj P, Núñez RC, Hagedorn B, George L, Izzo A, Palmer A, Delport D, Bennette C, Wagner B, Chang S, Cohen JA, Panovska-Griffiths J, Jastrzębski M, Oron AP, Wenger E, Famulare M, Klein DJ (2020). *Covasim: an agent-based model of COVID-19 dynamics and interventions*. Institute for Disease Modeling. Available at http://paper.covasim.org.
+    Kerr CC, Stuart RM, Mistry D, Abeysuriya RG, Hart G, Rosenfeld R, Selvaraj P, Núñez RC, Hagedorn B, George L, Izzo A, Palmer A, Delport D, Bennette C, Wagner B, Chang S, Cohen JA, Panovska-Griffiths J, Jastrzębski M, Oron AP, Wenger E, Famulare M, Klein DJ (2020). *Covasim: an agent-based model of COVID-19 dynamics and interventions*. Institute for Disease Modeling. *medRxiv* 2020.05.10.20097469; doi: https://doi.org/10.1101/2020.05.10.20097469.
 
 The Covasim webapp is available at http://app.covasim.org.
 
