@@ -604,7 +604,8 @@ class test_prob(Intervention):
         quar_inds       = cvu.true(sim.people.quarantined)
         symp_quar_inds  = quar_inds[cvu.true(sim.people.symptomatic[quar_inds])]
         asymp_quar_inds = quar_inds[cvu.false(sim.people.symptomatic[quar_inds])]
-        subtarget_inds  = self.subtarget['inds']
+        if self.subtarget is not None:
+            subtarget_inds  = self.subtarget['inds']
         diag_inds       = cvu.true(sim.people.diagnosed)
 
         test_probs = np.zeros(sim.n) # Begin by assigning equal tesitng probability to everyone
@@ -612,7 +613,8 @@ class test_prob(Intervention):
         test_probs[asymp_inds]      = self.asymp_prob
         test_probs[symp_quar_inds]  = self.symp_quar_prob
         test_probs[asymp_quar_inds] = self.asymp_quar_prob
-        test_probs[subtarget_inds]  = self.subtarget['val']
+        if self.subtarget is not None:
+            test_probs[subtarget_inds]  = self.subtarget['val']
         test_probs[diag_inds]       = 0.
         test_inds = cvu.binomial_arr(test_probs).nonzero()[0]
 
