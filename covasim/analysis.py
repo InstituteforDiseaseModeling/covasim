@@ -40,6 +40,16 @@ class TransTree(sc.prettyobj):
     def pop_size(self):
         return sum(x is not None for x in self.graph.nodes)
 
+    @property
+    def transmissions(self):
+        """
+        Iterable over edges corresponding to transmission events
+
+        This excludes edges corresponding to seeded infections without a source
+
+        """
+        return nx.subgraph_view(self.graph, lambda x: x is not None).edges
+
     def r0(self, recovered_only=False):
         """
         Return average number of transmissions per person
@@ -68,22 +78,21 @@ class TransTree(sc.prettyobj):
         fig_args = kwargs.get('fig_args', dict(figsize=(16, 10)))
 
         ttlist = []
-        for source_ind, target_ind in self.graph.edges:
-            if source_ind is not None:
-                source = self.graph.nodes[source_ind]
-                target = self.graph.nodes[target_ind]
+        for source_ind, target_ind in self.transmissions:
+            source = self.graph.nodes[source_ind]
+            target = self.graph.nodes[target_ind]
 
-                tdict = {}
-                tdict['date'] =  self.graph[source_ind][target_ind]['date']
-                tdict['layer'] =  self.graph[source_ind][target_ind]['layer']
-                tdict['s_asymp'] =  np.isnan(source['date_symptomatic']) # True if they *never* became symptomatic
-                tdict['s_presymp'] =  ~tdict['s_asymp'] and tdict['date']<source['date_symptomatic'] # True if they became symptomatic after the transmission date
-                tdict['s_sev'] = source['date_severe'] < tdict['date']
-                tdict['s_crit'] = source['date_critical'] < tdict['date']
-                tdict['s_diag'] = source['date_diagnosed'] < tdict['date']
-                tdict['s_quar'] = source['date_quarantined'] < tdict['date']
-                tdict['t_quar'] = target['date_quarantined'] < tdict['date'] # What if the target was released from quarantine?
-                ttlist.append(tdict)
+            tdict = {}
+            tdict['date'] =  self.graph[source_ind][target_ind]['date']
+            tdict['layer'] =  self.graph[source_ind][target_ind]['layer']
+            tdict['s_asymp'] =  np.isnan(source['date_symptomatic']) # True if they *never* became symptomatic
+            tdict['s_presymp'] =  ~tdict['s_asymp'] and tdict['date']<source['date_symptomatic'] # True if they became symptomatic after the transmission date
+            tdict['s_sev'] = source['date_severe'] < tdict['date']
+            tdict['s_crit'] = source['date_critical'] < tdict['date']
+            tdict['s_diag'] = source['date_diagnosed'] < tdict['date']
+            tdict['s_quar'] = source['date_quarantined'] < tdict['date']
+            tdict['t_quar'] = target['date_quarantined'] < tdict['date'] # What if the target was released from quarantine?
+            ttlist.append(tdict)
 
         df = pd.DataFrame(ttlist).rename(columns={'date': 'Day'})
         df = df.loc[df['layer'] != 'seed_infection']

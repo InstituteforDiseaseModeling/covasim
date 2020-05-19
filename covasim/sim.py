@@ -650,19 +650,15 @@ class Sim(cvb.BaseSim):
         intervals2 = np.zeros(len(self.people))
         pos1 = 0
         pos2 = 0
-        targets = self.people.transtree.targets
+        transtree = cva.TransTree(self.people)
         date_exposed = self.people.date_exposed
         date_symptomatic = self.people.date_symptomatic
-        for p in range(len(self.people)):
-            if len(targets[p])>0:
-                for target in targets[p]:
-                    target_ind = target['target']
-                    intervals1[pos1] = date_exposed[target_ind] - date_exposed[p]
-                    pos1 += 1
-                    if not np.isnan(date_symptomatic[p]):
-                        if not np.isnan(date_symptomatic[target_ind]):
-                            intervals2[pos2] = date_symptomatic[target_ind] - date_symptomatic[p]
-                            pos2 += 1
+        for source_ind, target_ind in transtree.transmissions:
+            intervals1[pos1] = date_exposed[target_ind] - date_exposed[source_ind]
+            pos1 += 1
+            if np.isfinite(date_symptomatic[source_ind]) and np.isfinite(date_symptomatic[target_ind]):
+                intervals2[pos2] = date_symptomatic[target_ind] - date_symptomatic[source_ind]
+                pos2 += 1
 
         self.results['gen_time'] = {
                 'true':         np.mean(intervals1[:pos1]),
