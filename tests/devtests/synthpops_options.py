@@ -1,6 +1,6 @@
 '''
 Script for testing integration with new SynthPops features -- namely, long-term
-care facilities. Not currently functional.
+care facilities.
 '''
 
 import covasim as cv
