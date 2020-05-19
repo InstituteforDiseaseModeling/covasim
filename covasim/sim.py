@@ -368,14 +368,14 @@ class Sim(cvb.BaseSim):
         people   = self.people # Shorten this for later use
         people.update_states_pre(t=t) # Update the state of everyone and count the flows
         contacts = people.update_contacts() # Compute new contacts
-        aac_max  = people.count('severe') > self['n_AAC_beds'] if self['n_AAC_beds'] else False # Check for acute bed constraint
-        icu_max  = people.count('critical') > self['n_ICU_beds'] if self['n_ICU_beds'] else False # Check for ICU bed constraint
+        hosp_max = people.count('severe')   > self['n_beds_hosp'] if self['n_beds_hosp'] else False # Check for acute bed constraint
+        icu_max  = people.count('critical') > self['n_beds_icu']  if self['n_beds_icu']  else False # Check for ICU bed constraint
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
         if n_imports>0:
             importation_inds = cvu.choose(max_n=len(people), n=n_imports)
-            people.infect(inds=importation_inds, aac_max=aac_max, icu_max=icu_max, layer='importation')
+            people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
 
         # Apply interventions
         for intervention in self['interventions']:
@@ -417,7 +417,7 @@ class Sim(cvb.BaseSim):
             # Calculate actual transmission
             for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
                 source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
-                people.infect(inds=target_inds, aac_max=aac_max, icu_max=icu_max, source=source_inds, layer=lkey) # Actually infect people
+                people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey) # Actually infect people
 
 
         # Update counts for this time step: stocks

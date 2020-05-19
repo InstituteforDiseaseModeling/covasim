@@ -70,8 +70,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':6.2,  'par2':1.7} # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
 
     # Severity parameters: probabilities of symptom progression
-    pars['OR_no_AAC']       = 2.0  # Odds ratio for how much more likely people are to progress to critical if no adult acute care (AAC) beds are available
-    pars['OR_no_ICU']       = 2.0  # Odds ratio for how much more likely people are to die if no ICU beds are available
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
     pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
@@ -86,8 +84,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
     # Health system parameters
-    pars['n_AAC_beds'] = None  # The number of AAC beds available for severely ill patients (default is no constraint)
-    pars['n_ICU_beds'] = None  # The number of ICU beds available for critically ill patients (default is no constraint)
+    pars['n_beds_hosp']    = None # The number of hospital (adult acute care) beds available for severely ill patients (default is no constraint)
+    pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
+    pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
+    pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
+
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
