@@ -101,7 +101,25 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
 
 
 def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5, microstructure=False):
-    ''' Make a random population, without contacts '''
+    '''
+    Make a random population, with contacts.
+
+    Args:
+        sim (Sim): the simulation object
+        use_age_data (bool): whether to use location-specific age data
+        use_household_data (bool): whether to use location-specific household size data
+        sex_ratio (float): proportion of the population that is male (not currently used)
+        microstructure (bol): whether or not to use the microstructuring algorithm to group contacts
+
+    Returns:
+        popdict (dict): a dictionary representing the population, with the following keys for a population of N agents with M contacts between them:
+            uid: an array of (usually consecutive) integers of length N, uniquely identifying each agent
+            age: an array of floats of length N, the age in years of each agent
+            sex: an array of integers of length N (not currently used, so does not have to be binary)
+            contacts: list of length N listing the contacts; see make_random_contacts() for details
+        layer_keys (list): a list of strings representing the different contact layers in the population; see make_random_contacts() for details
+
+    '''
 
     pop_size = int(sim['pop_size']) # Number of people
 
@@ -159,7 +177,18 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
 
 
 def make_random_contacts(pop_size, contacts, overshoot=1.2):
-    ''' Make random static contacts '''
+    '''
+    Make random static contacts.
+
+    Args:
+        pop_size (int): number of agents to create contacts between (N)
+        contacts (dict): a dictionary with one entry per layer describing the average number of contacts per person for that layer
+        overshoot (float): to avoid needing to take multiple Poisson draws
+
+    Returns:
+        contacts_list (list): a list of length N, where each entry is a dictionary by layer, and each dictionary entry is the UIDs of the agent's contacts
+        layer_keys (list): a list of layer keys, which is the same as the keys of the input "contacts" dictionary
+    '''
 
     # Preprocessing
     pop_size = int(pop_size) # Number of people
@@ -329,7 +358,7 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
 
     # Finalize
     popdict = {}
-    popdict['uid']      = sc.dcp(uids)
+    popdict['uid']      = sc.dcp(list(uid_mapping.values()))
     popdict['age']      = np.array(ages)
     popdict['sex']      = np.array(sexes)
     popdict['contacts'] = sc.dcp(contacts)
