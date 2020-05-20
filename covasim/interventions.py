@@ -445,13 +445,10 @@ class test_num(Intervention):
         end_day (int): day the intervention ends
         do_plot (bool): whether or not to plot the intervention
 
-    **Example**::
+    **Examples**::
 
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'val': 1.2}) # People over 50 are 20% more likely to test
-
-    Returns:
-        Intervention
     '''
 
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, subtarget=None, sensitivity=1.0, loss_prob=0, test_delay=0,
@@ -557,16 +554,13 @@ class test_prob(Intervention):
         test_delay (int): How long testing takes
         start_day (int): When to start the intervention
 
-    **Example**::
+    **Examples**::
 
         interv = cv.test_prob(symp_prob=0.1, asymp_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
-
-    Returns:
-        Intervention
     '''
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, subtarget=None,
-                 test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None, do_plot=None):
+                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob

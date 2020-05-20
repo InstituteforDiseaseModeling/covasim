@@ -107,8 +107,8 @@ class People(cvb.BasePeople):
         self.flows['new_critical']    += self.check_critical()
         self.flows['new_deaths']      += self.check_death()
         self.flows['new_recoveries']  += self.check_recovery()
-        self.flows['new_diagnoses']   += self.check_diagnosed()
-        self.flows['new_quarantined'] += self.check_quar()
+        # self.flows['new_diagnoses']   += self.check_diagnosed()
+        # self.flows['new_quarantined'] += self.check_quar()
 
         return
 
@@ -217,12 +217,25 @@ class People(cvb.BasePeople):
 
 
     def check_diagnosed(self):
-        ''' Check for new diagnoses '''
-        inds = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None)
-        self.diagnosed[inds]   = True
-        self.quarantined[inds] = False # If you are diagnosed, you are isolated, not in quarantine
-        self.date_end_quarantine[inds] = np.nan # Clear end quarantine time
-        return len(inds)
+        '''
+        Check for new diagnoses. Since most data are reported with diagnoses on
+        the date of the test, this function reports counts not for the number of
+        people who received a positive test result on a day, but rather, the number
+        of people who were tested on that day who are schedule to be diagnosed in
+        the future.
+        '''
+
+        # Handle people who were actually diagnosed today
+        diag_inds  = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
+        self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
+        self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
+        self.date_end_quarantine[diag_inds] = np.nan # Clear end quarantine time
+
+        # Handle people who tested today who will be diagnosed in future
+        not_diag   = cvu.false(self.diagnosed) # Find people who are not diagnosed
+        test_today = cvu.itrue(self.t == self.date_tested[not_diag], not_diag) # Find people who tested today
+        test_pos   = cvu.idefinedi(self.date_diagnosed, test_today) # Find people who will be diagnosed in future
+        return len(test_pos)
 
 
     def check_quar(self):
