@@ -667,13 +667,14 @@ class BasePeople(sc.prettyobj):
 
     def layer_keys(self):
         ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
-        if self.contacts: # If initialized, get from the contacts
-            keys = list(self.contacts.keys())
-        elif self.pars.get('beta_layer'): # If not initialized
-            keys = list(self.pars['beta_layer'].keys())
-        else: # If truly not initialized, give up
-            keys = []
-        return keys
+        return sc.dcp(self.pars.get('layer_keys'))
+        # if self.contacts: # If initialized, get from the contacts
+        #     keys = list(self.contacts.keys())
+        # elif self.pars.get('beta_layer'): # If not initialized
+        #     keys = list(self.pars['beta_layer'].keys())
+        # else: # If truly not initialized, give up
+        #     keys = []
+        # return keys
 
 
     def index(self):
@@ -685,9 +686,9 @@ class BasePeople(sc.prettyobj):
 
         # Check that the keys match
         contact_layer_keys = set(self.contacts.keys())
-        beta_layer_keys    = set(self.pars['beta_layer'].keys())
-        if contact_layer_keys != beta_layer_keys:
-            errormsg = f'Parameters layers {beta_layer_keys} are not consistent with contact layers {contact_layer_keys}'
+        layer_keys    = self.layer_keys()
+        if contact_layer_keys != layer_keys:
+            errormsg = f'Parameters layers {layer_keys} are not consistent with contact layers {contact_layer_keys}'
             raise ValueError(errormsg)
 
         # Check that the length of each array is consistent
