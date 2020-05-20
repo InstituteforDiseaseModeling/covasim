@@ -15,7 +15,6 @@ from . import parameters as cvpar
 from . import population as cvpop
 from . import interventions as cvi
 from . import plotting as cvplt
-from . import analysis as cva
 
 # Specify all externally visible things this file defines
 __all__ = ['Sim']
@@ -607,8 +606,6 @@ class Sim(cvb.BaseSim):
         # Alternate (traditional) method -- count from the date of infection or outcome
         elif method in ['infectious', 'outcome']:
 
-            transtree = cva.TransTree(self.people)
-
             for t in self.tvec:
 
                 # Sources are easy -- count up the arrays
@@ -622,7 +619,7 @@ class Sim(cvb.BaseSim):
 
                 # Targets are hard -- loop over the transmission tree
                 for ind in inds:
-                    targets[t] += transtree.graph.out_degree(ind)
+                    targets[t] += len(self.people.transtree.targets[ind])
 
             # Populate the array -- to avoid divide-by-zero, skip indices that are 0
             r_eff = np.divide(targets, sources, out=np.full(self.npts, np.nan), where=sources > 0)
