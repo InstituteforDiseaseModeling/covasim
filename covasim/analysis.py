@@ -1,7 +1,7 @@
 '''
 Additional analysis functions that are not part of the core Covasim workflow,
-but which are useful for particular investigations. Currently, this consists of
-the transmission tree
+but which are useful for particular investigations. Currently, this just consists
+of the transmission tree.
 '''
 
 import pylab as pl
@@ -14,11 +14,11 @@ __all__ = ['TransTree']
 
 
 def import_nx():
-    ''' Fail gracefully if NetworkX is called for but is not found. '''
+    ''' Fail gracefully if NetworkX is called for but is not found '''
     try:
-        import netwdorkx as nx # Optional import
+        import networkx as nx # Optional import
     except ImportError as E:
-        errormsg = f'WARNING: Could not import networkx ({str(E)}). Most functionality will be disabled. If desired, please install manually, e.g. "pip install networkx".'
+        errormsg = f'WARNING: Could not import networkx ({str(E)}). Some functionality will be disabled. If desired, please install manually, e.g. "pip install networkx".'
         print(errormsg)
         nx = None
     return nx

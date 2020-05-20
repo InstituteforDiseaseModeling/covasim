@@ -4,6 +4,13 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.1.6 (2020-05-19)
+--------------------------
+- Created an ``analysis.py`` file to support different types of analysis.
+- Moved ``transtree`` from ``sim.people`` into its own class: thus instead of ``sim.people.make_detailed_transtree()``, the new syntax is ``tt = cv.TransTree(sim.people)``.
+- GitHub info: PR `531 <https://github.com/amath-idm/covasim/pull/531>`__, previous head ``998116c``
+
+
 Version 1.1.5 (2020-05-18)
 --------------------------
 - Added extra flexibility for targeting interventions by index of a person, for example, by age.
