@@ -4,6 +4,16 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.1.7 (2020-05-19)
+--------------------------
+- Diagnoses are now reported on the day the test was conducted, not the day the person gets their diagnosis. This is to better align with data (which is reported this way), and to avoid a bug in which test yield could be >100%.
+- An "overview" plotting feature has been added for sims and scenarios: simply use ``sim.plot(to_plot='overview')`` to use. This plots almost all of the simulation outputs on one screen.
+- It is now possible to set ``pop_type = None`` if you are supplying a custom population.
+- Population creation functions (including ``People()``) have been tidied up with additional docstrings added.
+- Duplication between pre- and post-step state checking has been removed.
+
+
+
 Version 1.1.6 (2020-05-19)
 --------------------------
 - Created an ``analysis.py`` file to support different types of analysis.

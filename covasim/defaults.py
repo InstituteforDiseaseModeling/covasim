@@ -180,7 +180,7 @@ def get_sim_plots(which='default'):
     Args:
         which (str): either 'default' or 'overview'
     '''
-    if which == 'default':
+    if which in [None, 'default']:
         plots = sc.odict({
                 'Total counts': [
                     'cum_infections',
@@ -209,7 +209,7 @@ def get_sim_plots(which='default'):
 
 def get_scen_plots(which='default'):
     ''' Default scenario plots -- used in run.py '''
-    if which == 'default':
+    if which in [None, 'default']:
         plots = sc.odict({
             'Cumulative infections': [
                 'cum_infections',
