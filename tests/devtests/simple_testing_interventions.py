@@ -1,5 +1,5 @@
 '''
-Perform simple testing tests
+Perform (semi) simple testing tests
 '''
 
 import covasim as cv
@@ -10,22 +10,29 @@ pars = dict(
 
 sim = cv.Sim(pars)
 sim.initialize()
+
+# Set parameters
 n_people = sim['pop_size']
 n_tests  = 0.1 * n_people
-
 delay = 5
 start_day = 40
+
+# Create interventions
+tn = cv.test_num(daily_tests=n_tests, symp_test=1.0, start_day=start_day, test_delay=delay, label='Testing', line_args=dict(linestyle='-', alpha=0.5))
+tp = cv.test_prob(symp_prob=0.1, asymp_prob=0.1, start_day=start_day, test_delay=delay)
+
+# Create scenarios
 scenarios = {
     'test_num': {
         'name': 'test_num',
         'pars': {
-            'interventions': cv.test_num(daily_tests=n_tests, symp_test=1.0, start_day=start_day, test_delay=delay)
+            'interventions': tn
             }
     },
     'test_prob': {
         'name': 'test_prob',
         'pars': {
-            'interventions': cv.test_prob(symp_prob=0.1, asymp_prob=0.1, start_day=start_day, test_delay=delay)
+            'interventions': tp
         }
     },
 }

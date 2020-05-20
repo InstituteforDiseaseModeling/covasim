@@ -4,6 +4,12 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.1.8 (2020-05-19)
+--------------------------
+- In plotting, data points are now slightly transparent by default to improve visibility of the model curve.
+- Interventions now have a ``label`` attribute, which can be helpful for finding them if many are used, e.g. ``[interv if interv.label=='Close schools' for interv in sim['interventions']``.
+
+
 Version 1.1.7 (2020-05-19)
 --------------------------
 - Diagnoses are now reported on the day the test was conducted, not the day the person gets their diagnosis. This is to better align with data (which is reported this way), and to avoid a bug in which test yield could be >100%. A new attribute, ``date_pos_test``, was added to the ``sim.people`` object in order to track the date on which a person is given the test which will (after ``test_delay`` days) come back positive.
