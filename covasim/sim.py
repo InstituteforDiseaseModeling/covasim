@@ -589,14 +589,14 @@ class Sim(cvb.BaseSim):
         if method == 'daily':
 
             # Find the dates that everyone became infectious and recovered, and hence calculate infectious duration
-            recov_inds = self.people.defined('date_recovered')
-            dead_inds = self.people.defined('date_dead')
-            date_recov = self.people.date_recovered[recov_inds]
-            date_dead = self.people.date_dead[dead_inds]
+            recov_inds   = self.people.defined('date_recovered')
+            dead_inds    = self.people.defined('date_dead')
+            date_recov   = self.people.date_recovered[recov_inds]
+            date_dead    = self.people.date_dead[dead_inds]
             date_outcome = np.concatenate((date_recov, date_dead))
-            inds = np.concatenate((recov_inds, dead_inds))
-            date_inf = self.people.date_infectious[inds]
-            mean_inf = date_outcome.mean() - date_inf.mean()
+            inds         = np.concatenate((recov_inds, dead_inds))
+            date_inf     = self.people.date_infectious[inds]
+            mean_inf     = date_outcome.mean() - date_inf.mean()
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
             values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
@@ -606,9 +606,12 @@ class Sim(cvb.BaseSim):
         # Alternate (traditional) method -- count from the date of infection or outcome
         elif method in ['infectious', 'outcome']:
 
+            # Store a mapping from each source to their date
+            source_dates = {}
+
             for t in self.tvec:
 
-                # Sources are easy -- count up the arrays
+                # Sources are easy -- count up the arrays for all the people who became infections on that day
                 if method == 'infectious':
                     inds = cvu.true(t == self.people.date_infectious) # Find people who became infectious on this timestep
                 elif method == 'outcome':
@@ -617,9 +620,19 @@ class Sim(cvb.BaseSim):
                     inds       = np.concatenate((recov_inds, dead_inds))
                 sources[t] = len(inds)
 
-                # Targets are hard -- loop over the transmission tree
+                # Create the mapping from sources to dates
                 for ind in inds:
-                    targets[t] += len(self.people.transtree.targets[ind])
+                    source_dates[ind] = t
+
+            # Targets are hard -- loop over the transmission tree
+            for transdict in self.people.infection_log:
+                source = transdict['source']
+                if source is not None and source in source_dates: # Skip seed infections and people with e.g. recovery after the end of the sim
+                    source_date = source_dates[source]
+                    targets[source_date] += 1
+
+                # for ind in inds:
+                #     targets[t] += len(self.people.transtree.targets[ind])
 
             # Populate the array -- to avoid divide-by-zero, skip indices that are 0
             r_eff = np.divide(targets, sources, out=np.full(self.npts, np.nan), where=sources > 0)
