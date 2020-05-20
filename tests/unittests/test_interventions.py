@@ -509,7 +509,7 @@ class InterventionTests(CovaSimTest):
 
         symptomatic_probability_of_test = 1.0
         test_sensitivity = 1.0
-        test_delay = 1
+        test_delay = 0
         start_day = 30
 
         self.intervention_set_test_prob(symptomatic_prob=symptomatic_probability_of_test,
