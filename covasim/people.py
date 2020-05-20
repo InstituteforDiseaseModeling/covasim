@@ -223,17 +223,17 @@ class People(cvb.BasePeople):
         the future.
         '''
 
+        # Handle people who tested today who will be diagnosed in future
+        test_pos_inds = self.check_inds(self.diagnosed, self.date_pos_test, filter_inds=None) # Find people who will be diagnosed in future
+        self.date_pos_test[test_pos_inds] = np.nan # Clear date of having will-be-positive test
+
         # Handle people who were actually diagnosed today
         diag_inds  = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
         self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
         self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
         self.date_end_quarantine[diag_inds] = np.nan # Clear end quarantine time
 
-        # Handle people who tested today who will be diagnosed in future
-        not_diag   = cvu.false(self.diagnosed) # Find people who are not diagnosed
-        test_today = cvu.itrue(self.t == self.date_tested[not_diag], not_diag) # Find people who tested today
-        test_pos   = cvu.idefinedi(self.date_diagnosed, test_today) # Find people who will be diagnosed in future
-        return len(test_pos)
+        return len(test_pos_inds)
 
 
     def check_quar(self):
@@ -410,7 +410,9 @@ class People(cvb.BasePeople):
         not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
         final_inds    = not_diagnosed[not_lost]
 
+        # Store the date the person will be diagnosed, as well as the date they took the test which will come back positive
         self.date_diagnosed[final_inds] = self.t + test_delay
+        self.date_pos_test[final_inds] = self.t
 
         return
 
