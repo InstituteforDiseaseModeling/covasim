@@ -72,7 +72,7 @@ def test_base():
     ppl.get(['susceptible', 'infectious'])
     ppl.keys(which='all_states')
     ppl.index()
-    # ppl.resize(pop_size=200) # Resizing isn't quite right e.g. new person UIDs aren't created
+    ppl.resize(pop_size=200) # This only resizes the arrays, not actually creates new people
     ppl.to_df()
     ppl.to_arr()
     ppl.person(50)

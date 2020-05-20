@@ -252,7 +252,7 @@ class TransTree(sc.prettyobj):
         cmap = kwargs.get('cmap', 'parula')
         pl.rcParams['font.size'] = font_size
         if colors is None:
-            colors = sc.vectocolor(len(self), cmap=cmap)
+            colors = sc.vectocolor(self.pop_size, cmap=cmap)
 
         # Initialization
         n = self.n_days + 1
