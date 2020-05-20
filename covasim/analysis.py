@@ -279,10 +279,14 @@ class TransTree(sc.prettyobj):
 
             if not np.isnan(target['date_exposed']): # If this person was infected
 
-                source_ind = list(self.graph.predecessors(target_ind))[0] # Index of the person who infected the target
+                print('Predecessors')
+                print(list(self.graph.predecessors(target_ind)))
+
+                source_ind_list = list(self.graph.predecessors(target_ind)) # Index of the person who infected the target
 
                 target_date = target['date_exposed']
-                if source_ind is not None:  # Seed infections and importations won't have a source
+                if source_ind_list and source_ind_list[0] is not None:  # Seed infections and importations won't have a source
+                    source_ind = source_ind_list[0]
                     source_date = self.graph.nodes[source_ind]['date_exposed']
                 else:
                     source_ind = 0
