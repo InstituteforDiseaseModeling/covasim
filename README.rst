@@ -153,35 +153,35 @@ This folder contains a command-line interface (CLI) version of Covasim; example 
   covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
 
 Note: the CLI is currently not compatible with Windows. You will need to add
-this folder to your path to run from other folders. See the `README`_ for more information.
+this folder to your path to run from other folders. See the `bin README`_ for more information.
 
-.. _README: ./bin
+.. _bin README: ./bin
 
 
 Data
 ----
 
 Scripts to automatically scrape data (including demographics and COVID epidemiology data),
-and the data files themselves (which are not part of the repository). See the `README`_ for more information.
+and the data files themselves (which are not part of the repository). See the `data README`_ for more information.
 
-.. _README: ./data
+.. _data README: ./data
 
 
 Docker
 ------
 
 This folder contains the ``Dockerfile`` and other files that allow Covasim to be
-run as a webapp via Docker. See the `README`_ for more information.
+run as a webapp via Docker. See the `Docker README`_ for more information.
 
-.. _README: ./docker
+.. _Docker README: ./docker
 
 
 Examples
 --------
 
-This folder contains demonstrations of simple Covasim usage, including an early application of Covasim to the Diamond Princess cruise ship. See the `README`_ for more information.
+This folder contains demonstrations of simple Covasim usage, including an early application of Covasim to the Diamond Princess cruise ship. See the `examples README`_ for more information.
 
-.. _README: ./examples
+.. _examples README: ./examples
 
 
 Licenses
@@ -193,9 +193,9 @@ Licensing information and legal notices.
 Tests
 -----
 
-Integration, development, and unit tests. While not (yet) beautifully curated, these folders contain many usage examples. See the `README`_ for more information.
+Integration, development, and unit tests. While not (yet) beautifully curated, these folders contain many usage examples. See the `tests README`_ for more information.
 
-.. _README: ./tests
+.. _tests README: ./tests
 
 
 Sweep
