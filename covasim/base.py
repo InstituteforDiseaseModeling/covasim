@@ -6,11 +6,9 @@ import numpy as np
 import pandas as pd
 import sciris as sc
 import datetime as dt
-import networkx as nx
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
-from . import plotting as cvplt
 
 # Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']

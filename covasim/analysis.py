@@ -2,7 +2,6 @@ import pylab as pl
 import numpy as np
 import pandas as pd
 import sciris as sc
-import networkx as nx
 
 
 class TransTree(sc.prettyobj):
@@ -17,6 +16,8 @@ class TransTree(sc.prettyobj):
     '''
 
     def __init__(self, people):
+
+        import networkx as nx # Optional import
 
         # Pull out each of the attributes relevant to transmission
         attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}
@@ -36,9 +37,12 @@ class TransTree(sc.prettyobj):
 
         return
 
+
     @property
     def pop_size(self):
+        ''' Get the number of people in the transmission tree '''
         return sum(x is not None for x in self.graph.nodes)
+
 
     @property
     def transmissions(self):
@@ -48,7 +52,9 @@ class TransTree(sc.prettyobj):
         This excludes edges corresponding to seeded infections without a source
 
         """
+        import networkx as nx # Optional import
         return nx.subgraph_view(self.graph, lambda x: x is not None).edges
+
 
     def r0(self, recovered_only=False):
         """
@@ -70,6 +76,7 @@ class TransTree(sc.prettyobj):
                 continue
             n_infected.append(self.graph.out_degree(i))
         return np.mean(n_infected)
+
 
     def plot(self, *args, **kwargs):
         ''' Plot the transmission tree '''
@@ -129,6 +136,7 @@ class TransTree(sc.prettyobj):
 
         return fig
 
+
     def animate(self, *args, **kwargs):
         '''
         Animate the transmission tree.
@@ -149,7 +157,6 @@ class TransTree(sc.prettyobj):
         Returns:
             fig: the figure object
         '''
-        ''' Plot an animation of the transmission tree; see TransTree.animate() for documentation '''
 
         # Settings
         animate = kwargs.get('animate', True)
@@ -252,7 +259,6 @@ class TransTree(sc.prettyobj):
             tlist = tests[day]
             dlist = diags[day]
             qlist = quars[day]
-            if verbose: print(i, flist)
             for f in flist:
                 if verbose: print(f)
                 pl.plot(f.x[0], f.y[0], 'o', c=f.c, markersize=msize, **plot_args)  # Plot sources
