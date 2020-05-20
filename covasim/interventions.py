@@ -502,7 +502,6 @@ class test_num(Intervention):
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
-
     '''
 
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, subtarget=None, sensitivity=1.0, loss_prob=0, test_delay=0,

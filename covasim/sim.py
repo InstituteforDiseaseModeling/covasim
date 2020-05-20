@@ -430,14 +430,15 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, verbose=None, **kwargs):
+    def run(self, do_plot=False, until=None, verbose=None, restore_pars=True, **kwargs):
         '''
         Run the simulation.
 
         Args:
             do_plot (bool): whether to plot
             until (int): day to run until
-            verbose (int): level of detail to print
+            verbose (int): level of detail to print (otherwise uses self['verbose'])
+            restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             kwargs (dict): passed to self.plot()
 
         Returns:
@@ -446,6 +447,8 @@ class Sim(cvb.BaseSim):
 
         # Initialize
         T = sc.tic()
+        if restore_pars:
+            orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
         if not self.initialized:
             self.initialize()
         else:
@@ -486,6 +489,8 @@ class Sim(cvb.BaseSim):
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results
         sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
+        if restore_pars:
+            self.pars = orig_pars # Restore the original parameters
         if do_plot: # Optionally plot
             self.plot(**kwargs)
 

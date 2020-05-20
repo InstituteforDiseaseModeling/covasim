@@ -6,8 +6,11 @@ All notable changes to the codebase are documented in this file. Note: in many c
 
 Version 1.1.8 (2020-05-19)
 --------------------------
+- Since parameters can be modified during the run, previously, the sim could not be rerun with the guarantee that the results would be the same. ``sim.run()`` now has a ``restore_pars`` argument (default true), which makes a copy of the parameters just prior to the run to ensure reproducibility.
 - In plotting, data points are now slightly transparent by default to improve visibility of the model curve.
 - Interventions now have a ``label`` attribute, which can be helpful for finding them if many are used, e.g. ``[interv if interv.label=='Close schools' for interv in sim['interventions']``.
+- Subtargeting of particular people in testing interventions can now be done via a function that gets called dynamically, avoiding the need to initialize the sim prior to creating the intervention.
+- GitHub info: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
 
 
 Version 1.1.7 (2020-05-19)
