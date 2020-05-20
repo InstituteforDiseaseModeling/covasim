@@ -447,13 +447,13 @@ class Sim(cvb.BaseSim):
 
         # Initialize
         T = sc.tic()
-        if restore_pars:
-            orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
         if not self.initialized:
             self.initialize()
         else:
             self.validate_pars() # We always want to validate the parameters before running
             self.init_interventions() # And interventions
+        if restore_pars:
+            orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
         if verbose is None:
             verbose = self['verbose']
         if until:

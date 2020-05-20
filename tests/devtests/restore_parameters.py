@@ -29,3 +29,4 @@ for i,s in enumerate([s1, s2, s3]):
 assert s1.summary == s2.summary
 assert s2.summary != s3.summary
 
+print('Tests passed.')
