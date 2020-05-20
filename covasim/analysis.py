@@ -81,6 +81,12 @@ class TransTree(sc.prettyobj):
 
 
     @property
+    def n_nodes(self):
+        ''' Count the number of non-None nodes in the graph '''
+        return sum(x is not None for x in self.graph.nodes)
+
+
+    @property
     def transmissions(self):
         """
         Iterable over edges corresponding to transmission events
