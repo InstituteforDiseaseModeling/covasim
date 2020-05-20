@@ -104,21 +104,23 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     '''
     Make a random population, with contacts.
 
+    This function returns a "popdict" dictionary, which has the following (required) keys:
+
+        - uid: an array of (usually consecutive) integers of length N, uniquely identifying each agent
+        - age: an array of floats of length N, the age in years of each agent
+        - sex: an array of integers of length N (not currently used, so does not have to be binary)
+        - contacts: list of length N listing the contacts; see make_random_contacts() for details
+        - layer_keys: a list of strings representing the different contact layers in the population; see make_random_contacts() for details
+
     Args:
         sim (Sim): the simulation object
         use_age_data (bool): whether to use location-specific age data
         use_household_data (bool): whether to use location-specific household size data
         sex_ratio (float): proportion of the population that is male (not currently used)
-        microstructure (bol): whether or not to use the microstructuring algorithm to group contacts
+        microstructure (bool): whether or not to use the microstructuring algorithm to group contacts
 
     Returns:
         popdict (dict): a dictionary representing the population, with the following keys for a population of N agents with M contacts between them:
-            uid: an array of (usually consecutive) integers of length N, uniquely identifying each agent
-            age: an array of floats of length N, the age in years of each agent
-            sex: an array of integers of length N (not currently used, so does not have to be binary)
-            contacts: list of length N listing the contacts; see make_random_contacts() for details
-        layer_keys (list): a list of strings representing the different contact layers in the population; see make_random_contacts() for details
-
     '''
 
     pop_size = int(sim['pop_size']) # Number of people
