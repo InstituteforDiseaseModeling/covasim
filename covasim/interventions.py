@@ -430,9 +430,10 @@ __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 
 # Process daily data
-def process_daily_data(daily_data, sim):
+def process_daily_data(daily_data, sim, as_int=False):
     if sc.isnumber(daily_data):  # If a number, convert to an array
-        daily_data = np.array([int(daily_data)] * sim.npts)
+        if as_int: daily_data = int(daily_data) # Make it an integer
+        daily_data = np.array([daily_data] * sim.npts)
     elif isinstance(daily_data, (pd.Series, pd.DataFrame)):
         start_date = sim['start_day'] + dt.timedelta(days=self.start_day)
         end_date = daily_data.index[-1]
@@ -523,18 +524,19 @@ class test_num(Intervention):
 
         test_probs = np.ones(sim.n) # Begin by assigning equal testing probability to everyone
 
-        # Handle symptomatic and quarantine testing
+        # Handle symptomatic testing, taking into account prevalence of ILI symptoms
         symp_inds = cvu.true(sim.people.symptomatic)
-        quar_inds  = cvu.true(sim.people.quarantined)
-        test_probs[symp_inds] *= self.symp_test
-        test_probs[quar_inds] *= self.quar_test
-
-        # Handle prevalence of ILI symptoms
         if self.ili_prev is not None:
             if rel_t < len(self.ili_prev):
                 n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
                 ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
-                test_probs[ili_inds] *= self.symp_test
+                #if t>20: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                symp_inds = np.unique(np.concatenate((symp_inds, ili_inds)),0)
+        test_probs[symp_inds] *= self.symp_test
+
+        # Handle quarantine testing
+        quar_inds  = cvu.true(sim.people.quarantined)
+        test_probs[quar_inds] *= self.quar_test
 
         # Handle any other user-specified testing criteria
         if self.subtarget is not None:
@@ -619,13 +621,14 @@ class test_prob(Intervention):
         elif self.end_day is not None and t > self.end_day:
             return
 
+        symp_inds = cvu.true(sim.people.symptomatic)
         if self.ili_prev is not None:
             rel_t = t - self.start_day
             if rel_t < len(self.ili_prev):
                 n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
-                ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
+                ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
+                symp_inds = np.unique(np.concatenate((symp_inds, ili_inds)),0)
 
-        symp_inds       = np.unique(np.concatenate(cvu.true(sim.people.symptomatic), ili_inds),0)
         asymp_inds      = cvu.false(sim.people.symptomatic)
         quar_inds       = cvu.true(sim.people.quarantined)
         symp_quar_inds  = quar_inds[cvu.true(sim.people.symptomatic[quar_inds])]
