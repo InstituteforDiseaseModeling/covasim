@@ -42,7 +42,7 @@ class TransTree(sc.prettyobj):
         attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}
 
         self.n_days = people.t  # people.t should be set to the last simulation timestep in the output (since the Transtree is constructed after the people have been stepped forward in time)
-        self.pop_size = len(people)
+        self._pop_size = len(people)
 
         # Include the basic line list
         self.infection_log = sc.dcp(people.infection_log)
@@ -81,7 +81,7 @@ class TransTree(sc.prettyobj):
 
 
     @property
-    def n_nodes(self):
+    def pop_size(self):
         ''' Count the number of non-None nodes in the graph '''
         return sum(x is not None for x in self.graph.nodes)
 
@@ -104,7 +104,7 @@ class TransTree(sc.prettyobj):
     def make_detailed(self, people, reset=False):
         ''' Construct a detailed transmission tree, with additional information for each person '''
         # Reset to look like the line list, but with more detail
-        detailed = [None]*self.pop_size
+        detailed = [None]*self._pop_size
 
         for transdict in self.infection_log:
 
@@ -279,14 +279,10 @@ class TransTree(sc.prettyobj):
 
             if not np.isnan(target['date_exposed']): # If this person was infected
 
-                print('Predecessors')
-                print(list(self.graph.predecessors(target_ind)))
-
-                source_ind_list = list(self.graph.predecessors(target_ind)) # Index of the person who infected the target
+                source_ind = list(self.graph.predecessors(target_ind))[0] # Index of the person who infected the target
 
                 target_date = target['date_exposed']
-                if source_ind_list and source_ind_list[0] is not None:  # Seed infections and importations won't have a source
-                    source_ind = source_ind_list[0]
+                if source_ind is not None:  # Seed infections and importations won't have a source
                     source_date = self.graph.nodes[source_ind]['date_exposed']
                 else:
                     source_ind = 0
@@ -343,7 +339,7 @@ class TransTree(sc.prettyobj):
         for day in range(n):
             pl.title(f'Day: {day}')
             pl.xlim([0, n])
-            pl.ylim([0, len(self)])
+            pl.ylim([0, self.pop_size])
             pl.xlabel('Day')
             pl.ylabel('Person')
             flist = frames[day]
