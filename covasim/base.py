@@ -536,22 +536,19 @@ class BasePeople(sc.prettyobj):
     '''
     A class to handle all the boilerplate for people -- note that everything
     interesting happens in the People class.
+
+    Args:
+        pars (dict): a dictionary with, at minimum, keys 'pop_size' and 'n_days'
+
     '''
 
-    def __init__(self, pars=None, pop_size=None, *args, **kwargs):
+    def __init__(self, pars=None, **kwargs):
 
         # Handle pars and population size
+        pars = sc.mergedicts({'pop_size':0, 'n_days':0}, pars)
         self.pars = pars
-        if pop_size is None:
-            if pars is not None:
-                pop_size = pars['pop_size']
-            else:
-                pop_size = 0
-        pop_size = int(pop_size)
-        self.pop_size = pop_size
-        if pars is not None:
-            n_days = pars['n_days']
-        self.n_days = n_days
+        self.pop_size = pars['pop_size']
+        self.n_days = pars['n_days']
 
         # Other initialization
         self.t = 0 # Keep current simulation time

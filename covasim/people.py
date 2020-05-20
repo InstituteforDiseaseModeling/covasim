@@ -15,10 +15,16 @@ __all__ = ['People']
 class People(cvb.BasePeople):
     '''
     A class to perform all the operations on the people.
+
+    Args:
+        pars (dict): the sim parameters, e.g. sim.pars -- must have pop_size and n_days keys
+        strict (bool): whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set
+        kwargs (dict): the actual data, e.g. from a popdict, being specified
+
     '''
 
-    def __init__(self, pars=None, pop_size=None, **kwargs):
-        super().__init__(pars, pop_size)
+    def __init__(self, pars, strict=True, **kwargs):
+        super().__init__(pars)
 
         # Set person properties -- mostly floats
         for key in self.meta.person:
@@ -49,7 +55,10 @@ class People(cvb.BasePeople):
         if 'contacts' in kwargs:
             self.add_contacts(kwargs.pop('contacts'))
         for key,value in kwargs.items():
-            self.set(key, value)
+            if strict:
+                self.set(key, value)
+            else:
+                self[key] = value
 
         return
 

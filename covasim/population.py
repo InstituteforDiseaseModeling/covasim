@@ -81,7 +81,7 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
 
     # Actually create the people
     sim.layer_keys = layer_keys
-    people = cvppl.People(sim.pars, **popdict) # List for storing the people
+    people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
     sim.people = people
 
     average_age = sum(popdict['age']/pop_size)
