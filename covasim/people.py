@@ -141,12 +141,6 @@ class People(cvb.BasePeople):
         return self.contacts
 
 
-    def make_detailed_transtree(self):
-        ''' Convenience function to avoid repeating the people object '''
-        self.transtree.make_detailed(self)
-        return
-
-
     #%% Methods for updating state
 
     def check_inds(self, current, date, filter_inds=None):
@@ -275,7 +269,7 @@ class People(cvb.BasePeople):
             inds     (array): array of people to infect
             hosp_max (bool):  whether or not there is an acute bed available for this person
             icu_max  (bool):  whether or not there is an ICU bed available for this person
-            source   (int):   source person of this infection (None if an importation or seed infection)
+            source   (array): source indices of the people who transmitted this infection (None if an importation or seed infection)
             layer    (str):   contact layer this infection was transmitted on
 
         Returns:
@@ -303,14 +297,9 @@ class People(cvb.BasePeople):
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
 
-        # Update the transmission tree
+        # Record transmissions
         for i, target in enumerate(inds):
-            if source is not None:
-                transdict = dict(source=source[i], target=target, date=self.t, layer=layer)
-                self.transtree.targets[source[i]].append(transdict)
-            else:
-                transdict = dict(source=None, target=target, date=self.t, layer=layer)
-            self.transtree.linelist[target] = transdict
+            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)

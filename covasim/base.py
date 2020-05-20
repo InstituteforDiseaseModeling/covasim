@@ -1,5 +1,7 @@
 '''
-Base classes for Covasim.
+Base classes for Covasim. These classes handle a lot of the boilerplate of the
+People and Sim classes (e.g. loading, saving, key lookups, etc.), so those classes
+can be focused on the disease-specific functionality.
 '''
 
 import numpy as np
@@ -9,10 +11,9 @@ import datetime as dt
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
-from . import plotting as cvplt
 
 # Specify all externally visible classes this file defines
-__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer', 'TransTree']
+__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
 
 
 #%% Define simulation classes
@@ -558,7 +559,7 @@ class BasePeople(sc.prettyobj):
         self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
         self.contacts = None
         self.init_contacts() # Initialize the contacts
-        self.transtree = TransTree(pop_size=pop_size, n_days=n_days) # Initialize the transmission tree
+        self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
 
         return
 
@@ -582,7 +583,7 @@ class BasePeople(sc.prettyobj):
 
 
     def __len__(self):
-        ''' This is just a scalar, but validate() and resize() make sure it's right '''
+        ''' This is just a scalar, but validate() and _resize_arrays() make sure it's right '''
         return self.pop_size
 
 
@@ -701,11 +702,11 @@ class BasePeople(sc.prettyobj):
                 else:
                     if verbose:
                         print(f'Resizing "{key}" from {actual_len} to {expected_len}')
-                    self.resize(keys=key)
+                    self._resize_arrays(keys=key)
         return
 
 
-    def resize(self, pop_size=None, keys=None):
+    def _resize_arrays(self, pop_size=None, keys=None):
         ''' Resize arrays if any mismatches are found '''
         if pop_size is None:
             pop_size = len(self)
@@ -758,7 +759,7 @@ class BasePeople(sc.prettyobj):
         # Handle population size
         pop_size = len(people)
         if resize:
-            self.resize(pop_size=pop_size)
+            self._resize_arrays(pop_size=pop_size)
 
         # Iterate over people -- slow!
         for p,person in enumerate(people):
@@ -1005,122 +1006,3 @@ class Layer(FlexDict):
             self[key] = df[key].to_numpy()
         return self
 
-
-
-class TransTree(sc.prettyobj):
-    '''
-    A class for holding a transmission tree. Sources and targets are both lists
-    of the same length as the population size. Sources has one entry for people who
-    have been infected, zero for those who haven't. Targets is a list of lists,
-    with the length of the list being the number of people that person infected.
-
-    Args:
-        pop_size (int): the number of people in the population
-    '''
-
-    def __init__(self, pop_size, n_days):
-        self.linelist = [None]*pop_size
-        self.targets  = [[] for p in range(len(self))] # Make a list of empty lists
-        self.detailed = None
-        self.pop_size = pop_size
-        self.n_days   = n_days
-        return
-
-
-    def __len__(self):
-        '''
-        The length of the transmission tree is the length of the line list,
-        which should equal the population size (non-infected people are None
-        in the line list).
-        '''
-        try:
-            return len(self.linelist)
-        except:
-            return 0
-
-
-    def make_targets(self, reset=False):
-        '''
-        Convert sources into targets -- same information, just grouped differently.
-        Usually done inside sim:step(), here just for completeness.
-        '''
-        if self.targets is None or reset:
-            self.targets = [[] for p in range(len(self))] # Make a list of empty lists
-            for transdict in self.linelist:
-                if transdict is not None:
-                    source = transdict['source']
-                    if source is not None: # e.g., from an importation
-                        self.targets[source].append(transdict)
-            return
-
-
-    def make_detailed(self, people, reset=False):
-        ''' Construct a detailed transmission tree, with additional information for each person '''
-        if self.detailed is None or reset:
-
-            # Reset to look like the line list, but with more detail
-            self.detailed = [None]*len(self)
-
-            for transdict in self.linelist:
-
-                if transdict is not None:
-
-                    # Pull out key quantities
-                    ddict  = sc.objdict(sc.dcp(transdict)) # For "detailed dictionary"
-                    source = ddict.source
-                    target = ddict.target
-                    ddict.s = sc.objdict() # Source
-                    ddict.t = sc.objdict() # Target
-
-                    # If the source is available (e.g. not a seed infection), loop over both it and the target
-                    if source is not None:
-                        stdict = {'s':source, 't':target}
-                    else:
-                        stdict = {'t':target}
-
-                    # Pull out each of the attributes relevant to transmission
-                    attrs = ['age', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
-                    for st,stind in stdict.items():
-                        for attr in attrs:
-                            ddict[st][attr] = people[attr][stind]
-                    if source is not None:
-                        for attr in attrs:
-                            if attr.startswith('date_'):
-                                is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
-                                ddict.s[is_attr] = ddict.s[attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
-
-                        ddict.s.is_asymp   = np.isnan(people.date_symptomatic[source])
-                        ddict.s.is_presymp = ~ddict.s.is_asymp and ~ddict.s.is_symptomatic # Not asymptomatic and not currently symptomatic
-                    ddict.t['is_quarantined'] = ddict.t['date_quarantined'] <= ddict['date'] # This is the only target date that it makes sense to define since it can happen before infection
-
-                    self.detailed[target] = ddict
-
-        return
-
-
-    def plot(self, *args, **kwargs):
-        ''' Plot the transmission tree '''
-        return cvplt.plot_transtree(self, *args, **kwargs)
-
-
-    def animate(self, *args, **kwargs):
-        '''
-        Animate the transmission tree.
-
-        Args:
-            animate    (bool):  whether to animate the plot (otherwise, show when finished)
-            verbose    (bool):  print out progress of each frame
-            markersize (int):   size of the markers
-            sus_color  (list):  color for susceptibles
-            fig_args   (dict):  arguments passed to pl.figure()
-            axis_args  (dict):  arguments passed to pl.subplots_adjust()
-            plot_args  (dict):  arguments passed to pl.plot()
-            delay      (float): delay between frames in seconds
-            font_size  (int):   size of the font
-            colors     (list):  color of each person
-            cmap       (str):   colormap for each person (if colors is not supplied)
-
-        Returns:
-            fig: the figure object
-        '''
-        return cvplt.animate_transtree(self, *args, **kwargs)
