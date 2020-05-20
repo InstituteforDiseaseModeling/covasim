@@ -26,10 +26,11 @@ def import_nx():
 
 class TransTree(sc.prettyobj):
     '''
-    A class for holding a transmission tree. Sources and targets are both lists
-    of the same length as the population size. Sources has one entry for people who
-    have been infected, zero for those who haven't. Targets is a list of lists,
-    with the length of the list being the number of people that person infected.
+    A class for holding a transmission tree. There are several different representations
+    of the transmission tree: "infection_log" is copied from the people object and is the
+    simplest representation. "detailed h" includes additional attributes about the source
+    and target. If NetworkX is installed (required for most methods), "graph" includes an
+    NX representation of the transmission tree.
 
     Args:
         pop_size (int): the number of people in the population
