@@ -6,7 +6,7 @@ care facilities. Not currently functional.
 import covasim as cv
 
 sim = cv.Sim(pop_size=5000, pop_type='synthpops')
-popdict, layer_keys = cv.make_synthpop(sim, with_facilities=False, layer_mapping={'LTCF':'f'})
+popdict, layer_keys = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF':'f'})
 sim.popdict = popdict
 sim.initialize()
 sim.run()
