@@ -46,7 +46,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Basic disease transmission
     pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
-    pars['layer_keys']  = None # The contact layers in the model; set by reset_layer_pars() below
     pars['contacts']    = None # The number of contacts per layer; set by reset_layer_pars() below
     pars['dynam_layer'] = None # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']  = None # Transmissibility per layer; set by reset_layer_pars() below
@@ -97,7 +96,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
-    reset_layer_pars(pars, update_layer_keys=True)
+    reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age']) # Default to age-specific prognoses
 
@@ -108,7 +107,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 layer_pars = ['beta_layer', 'contacts', 'dynam_layer', 'iso_factor', 'quar_factor']
 
 
-def reset_layer_pars(pars, layer_keys=None, force=False, update_layer_keys=False):
+def reset_layer_pars(pars, layer_keys=None, force=False):
     '''
     Small helper function to set layer-specific parameters. If layer keys are not
     provided, then set them based on the population type.
@@ -117,7 +116,6 @@ def reset_layer_pars(pars, layer_keys=None, force=False, update_layer_keys=False
         pars (dict): the parameters dictionary
         layer_keys (list): the known keys of the population, if available
         force (bool): reset the pars even if they already exist
-        update_layer_keys (bool): whether or not to update the layer keys
     '''
 
     # Specify defaults for random -- layer 'a' for 'all'
@@ -146,8 +144,7 @@ def reset_layer_pars(pars, layer_keys=None, force=False, update_layer_keys=False
         defaults = defaults_h
         default_layer_keys = ['h', 's', 'w', 'c'] # NB, these must match defaults_h above
     if layer_keys is None:
-        if not pars.get('layer_keys'): # Check if it's already present in the parameters
-            layer_keys = default_layer_keys # If not supplied, use the defaults
+        layer_keys = default_layer_keys # If not supplied, use the defaults
 
     # Actually set the parameters
     for pkey in layer_pars:
@@ -163,11 +160,7 @@ def reset_layer_pars(pars, layer_keys=None, force=False, update_layer_keys=False
             par[lkey] = default_par.get(lkey, default_val) # Get the value for this layer if available, else use the default for random
         pars[pkey] = par # Save this parameter to the dictionary
 
-    # Update the layer keys to match
-    if update_layer_keys:
-        pars['layer_keys'] = layer_keys
-
-    return pars
+    return
 
 
 

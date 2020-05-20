@@ -667,14 +667,11 @@ class BasePeople(sc.prettyobj):
 
     def layer_keys(self):
         ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
-        return sc.dcp(self.pars.get('layer_keys'))
-        # if self.contacts: # If initialized, get from the contacts
-        #     keys = list(self.contacts.keys())
-        # elif self.pars.get('beta_layer'): # If not initialized
-        #     keys = list(self.pars['beta_layer'].keys())
-        # else: # If truly not initialized, give up
-        #     keys = []
-        # return keys
+        try:
+            keys = list(self.pars['beta_layer'].keys())
+        except: # If not initialized
+            keys = []
+        return keys
 
 
     def index(self):

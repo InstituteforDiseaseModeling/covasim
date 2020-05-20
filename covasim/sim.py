@@ -134,20 +134,19 @@ class Sim(cvb.BaseSim):
         uninitialized sim), or by assuming a default (if none of the above are
         available).
         '''
-        return sc.dcp(self['layer_keys'])
-        # layer_keys = None # e.g. ['h', 's', 'w', 'c'] for hybrid
-        # if self.people is not None:
-        #     layer_keys = list(self.people.contacts.keys())
-        # elif self.popdict is not None:
-        #     layer_keys = list(self.popdict['layer_keys'])
-        # elif isinstance(self['beta_layer'], dict):
-        #     layer_keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
-        # else:
-        #     layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
-        # return layer_keys
+        layer_keys = None # e.g. ['h', 's', 'w', 'c'] for hybrid
+        if self.people is not None:
+            layer_keys = list(self.people.contacts.keys())
+        elif self.popdict is not None:
+            layer_keys = list(self.popdict['layer_keys'])
+        elif isinstance(self['beta_layer'], dict):
+            layer_keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
+        else:
+            layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
+        return layer_keys
 
 
-    def reset_layer_pars(self, pars=None, layer_keys=None, force=False, update_layer_keys=True):
+    def reset_layer_pars(self, pars=None, layer_keys=None, force=False):
         '''
         Reset the parameters to match the population.
 
@@ -156,10 +155,11 @@ class Sim(cvb.BaseSim):
             layer_keys (list): override the default layer keys (use stored keys by default)
             force (bool): reset the parameters even if they already exist
         '''
-        pars = sc.mergedicts(self.pars, pars) # Ensure the full set of parameters is being passed
+        if pars is None:
+            pars = self.pars
         if layer_keys is None:
             layer_keys = self.layer_keys()
-        self.pars = cvpar.reset_layer_pars(pars=pars, layer_keys=layer_keys, force=force, update_layer_keys=update_layer_keys)
+        cvpar.reset_layer_pars(pars=pars, layer_keys=layer_keys, force=force)
         return
 
 
