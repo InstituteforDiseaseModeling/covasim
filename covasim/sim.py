@@ -74,9 +74,9 @@ class Sim(cvb.BaseSim):
         ''' Ensure that metaparameters get used properly before being updated '''
         pars = sc.mergedicts(pars, kwargs)
         if pars:
-            if 'pop_type' in pars:
+            if pars.get('pop_type'):
                 cvpar.reset_layer_pars(pars)
-            if 'prog_by_age' in pars:
+            if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
@@ -210,7 +210,7 @@ class Sim(cvb.BaseSim):
         # Moving on, handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
         choice = self['pop_type']
-        if choice not in popdata_choices:
+        if choice and choice not in popdata_choices:
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)

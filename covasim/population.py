@@ -68,6 +68,9 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
             popdict, layer_keys = make_randpop(sim, microstructure=pop_type)
         elif pop_type == 'synthpops':
             popdict, layer_keys = make_synthpop(sim)
+        elif pop_type is None:
+            errormsg = f'You have set pop_type=None. This is fine, but you must ensure sim.popdict exists before calling make_people().'
+            raise ValueError(errormsg)
         else:
             errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
             raise ValueError(errormsg)
