@@ -6,7 +6,7 @@ All notable changes to the codebase are documented in this file. Note: in many c
 
 Version 1.1.7 (2020-05-19)
 --------------------------
-- Diagnoses are now reported on the day the test was conducted, not the day the person gets their diagnosis. This is to better align with data (which is reported this way), and to avoid a bug in which test yield could be >100%.
+- Diagnoses are now reported on the day the test was conducted, not the day the person gets their diagnosis. This is to better align with data (which is reported this way), and to avoid a bug in which test yield could be >100%. A new attribute, ``date_pos_test``, was added to the ``sim.people`` object in order to track the date on which a person is given the test which will (after ``test_delay`` days) come back positive.
 - An "overview" plotting feature has been added for sims and scenarios: simply use ``sim.plot(to_plot='overview')`` to use. This plots almost all of the simulation outputs on one screen.
 - It is now possible to set ``pop_type = None`` if you are supplying a custom population.
 - Population creation functions (including ``People()``) have been tidied up with additional docstrings added.
