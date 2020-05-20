@@ -427,11 +427,6 @@ class InterventionTests(CovaSimTest):
             print(f"target count before, on, after start day: {target_count[start_day-1:start_day+2]}")
             pass
 
-        print('looking at tests...')
-        print(new_tests)
-        print(target_test_count_channel)
-        print(new_diagnoses)
-        print(target_count)
         self.assertEqual(new_tests[start_day],
                          target_test_count_channel[start_day],
                          msg=f"Should have each of the {target_test_count_channel[start_day]} targets"
