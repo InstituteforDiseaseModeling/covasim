@@ -370,7 +370,7 @@ class Scenarios(cvb.ParsObj):
     Args:
         sim (Sim or None): if supplied, use a pre-created simulation as the basis for the scenarios
         metapars (dict): meta-parameters for the run, e.g. number of runs; see make_metapars() for structure
-        scenarios (dict): a dictionary defining the scenarios; see default_scenario for structure
+        scenarios (dict): a dictionary defining the scenarios; see examples folder for examples; see below for baseline
         basepars (dict): a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
         scenfile (str): a filename for saving (defaults to the creation date)
 
@@ -391,7 +391,7 @@ class Scenarios(cvb.ParsObj):
             scenfile = f'covasim_scenarios_{datestr}.scens'
         self.scenfile = scenfile
 
-        # Handle scenarios -- by default, create a baseline scenario
+        # Handle scenarios -- by default, create the simplest possible baseline scenario
         if scenarios is None:
             scenarios = {'baseline':{'name':'Baseline', 'pars':{}}}
         self.scenarios = scenarios
