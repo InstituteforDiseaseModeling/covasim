@@ -4,7 +4,7 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
-Version 1.1.8 (2020-05-19)
+Version 1.2.0 (2020-05-20)
 --------------------------
 - Since parameters can be modified during the run, previously, the sim could not be rerun with the guarantee that the results would be the same. ``sim.run()`` now has a ``restore_pars`` argument (default true), which makes a copy of the parameters just prior to the run to ensure reproducibility.
 - In plotting, data points are now slightly transparent by default to improve visibility of the model curve.
