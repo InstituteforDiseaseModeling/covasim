@@ -16,7 +16,7 @@ __all__ = ['TransTree']
 def import_nx():
     ''' Fail gracefully if NetworkX is called for but is not found. '''
     try:
-        import networkx as nx # Optional import
+        import netwdorkx as nx # Optional import
     except ImportError as E:
         errormsg = f'WARNING: Could not import networkx ({str(E)}). Most functionality will be disabled. If desired, please install manually, e.g. "pip install networkx".'
         print(errormsg)
@@ -85,13 +85,16 @@ class TransTree(sc.prettyobj):
         Iterable over edges corresponding to transmission events
 
         This excludes edges corresponding to seeded infections without a source
-
         """
         nx = import_nx()
         if nx:
             return nx.subgraph_view(self.graph, lambda x: x is not None).edges
         else:
-            return
+            output = []
+            for d in self.infection_log:
+                if d['source'] is not None:
+                    output.append([d['source'], d['target']])
+            return output
 
 
     def make_detailed(self, people, reset=False):
@@ -101,37 +104,35 @@ class TransTree(sc.prettyobj):
 
         for transdict in self.infection_log:
 
-            if transdict is not None:
+            # Pull out key quantities
+            ddict  = sc.objdict(sc.dcp(transdict)) # For "detailed dictionary"
+            source = ddict.source
+            target = ddict.target
+            ddict.s = sc.objdict() # Source
+            ddict.t = sc.objdict() # Target
 
-                # Pull out key quantities
-                ddict  = sc.objdict(sc.dcp(transdict)) # For "detailed dictionary"
-                source = ddict.source
-                target = ddict.target
-                ddict.s = sc.objdict() # Source
-                ddict.t = sc.objdict() # Target
+            # If the source is available (e.g. not a seed infection), loop over both it and the target
+            if source is not None:
+                stdict = {'s':source, 't':target}
+            else:
+                stdict = {'t':target}
 
-                # If the source is available (e.g. not a seed infection), loop over both it and the target
-                if source is not None:
-                    stdict = {'s':source, 't':target}
-                else:
-                    stdict = {'t':target}
+            # Pull out each of the attributes relevant to transmission
+            attrs = ['age', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
+            for st,stind in stdict.items():
+                for attr in attrs:
+                    ddict[st][attr] = people[attr][stind]
+            if source is not None:
+                for attr in attrs:
+                    if attr.startswith('date_'):
+                        is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
+                        ddict.s[is_attr] = ddict.s[attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
 
-                # Pull out each of the attributes relevant to transmission
-                attrs = ['age', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
-                for st,stind in stdict.items():
-                    for attr in attrs:
-                        ddict[st][attr] = people[attr][stind]
-                if source is not None:
-                    for attr in attrs:
-                        if attr.startswith('date_'):
-                            is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
-                            ddict.s[is_attr] = ddict.s[attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
+                ddict.s.is_asymp   = np.isnan(people.date_symptomatic[source])
+                ddict.s.is_presymp = ~ddict.s.is_asymp and ~ddict.s.is_symptomatic # Not asymptomatic and not currently symptomatic
+            ddict.t['is_quarantined'] = ddict.t['date_quarantined'] <= ddict['date'] # This is the only target date that it makes sense to define since it can happen before infection
 
-                    ddict.s.is_asymp   = np.isnan(people.date_symptomatic[source])
-                    ddict.s.is_presymp = ~ddict.s.is_asymp and ~ddict.s.is_symptomatic # Not asymptomatic and not currently symptomatic
-                ddict.t['is_quarantined'] = ddict.t['date_quarantined'] <= ddict['date'] # This is the only target date that it makes sense to define since it can happen before infection
-
-                detailed[target] = ddict
+            detailed[target] = ddict
 
         return detailed
 
@@ -148,8 +149,6 @@ class TransTree(sc.prettyobj):
         before the end of the simulation, thus ensuring they all had the same amount of
         time to transmit.
         """
-        import_nx() # Check that NetworkX can be imported
-
         n_infected = []
         for i, node in self.graph.nodes.items():
             if i is None or np.isnan(node['date_exposed']) or (recovered_only and node['date_recovered']>self.n_days):
@@ -165,12 +164,13 @@ class TransTree(sc.prettyobj):
 
         ttlist = []
         for source_ind, target_ind in self.transmissions:
-            source = self.graph.nodes[source_ind]
-            target = self.graph.nodes[target_ind]
+            ddict = self.detailed[target_ind]
+            source = ddict.s
+            target = ddict.t
 
             tdict = {}
-            tdict['date'] =  self.graph[source_ind][target_ind]['date']
-            tdict['layer'] =  self.graph[source_ind][target_ind]['layer']
+            tdict['date'] =  ddict['date']
+            tdict['layer'] =  ddict['layer']
             tdict['s_asymp'] =  np.isnan(source['date_symptomatic']) # True if they *never* became symptomatic
             tdict['s_presymp'] =  ~tdict['s_asymp'] and tdict['date']<source['date_symptomatic'] # True if they became symptomatic after the transmission date
             tdict['s_sev'] = source['date_severe'] < tdict['date']
@@ -262,21 +262,22 @@ class TransTree(sc.prettyobj):
         quars = [list() for i in range(n)]
 
         # Construct each frame of the animation
-        for target_ind in self.graph.nodes:  # Loop over every person
-            if target_ind is None:
+        for ddict in self.detailed:  # Loop over every person
+            if ddict is None:
                 continue # Skip the 'None' node corresponding to seeded infections
 
             frame = sc.objdict()
             tdq = sc.objdict()  # Short for "tested, diagnosed, or quarantined"
-            target = self.graph.nodes[target_ind]
+            target = ddict.t
+            target_ind = ddict['target']
 
-            if not np.isnan(target['date_exposed']): # If this person was infected
+            if not np.isnan(ddict['date']): # If this person was infected
 
-                source_ind = list(self.graph.predecessors(target_ind))[0] # Index of the person who infected the target
+                source_ind = ddict['source'] # Index of the person who infected the target
 
-                target_date = target['date_exposed']
+                target_date = ddict['date']
                 if source_ind is not None:  # Seed infections and importations won't have a source
-                    source_date = self.graph.nodes[source_ind]['date_exposed']
+                    source_date = self.detailed[source_ind]['date']
                 else:
                     source_ind = 0
                     source_date = 0
