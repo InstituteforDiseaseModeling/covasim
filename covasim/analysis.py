@@ -33,7 +33,7 @@ class TransTree(sc.prettyobj):
     NX representation of the transmission tree.
 
     Args:
-        pop_size (int): the number of people in the population
+        people (People): the sim.people object
     '''
 
     def __init__(self, people):
@@ -42,7 +42,7 @@ class TransTree(sc.prettyobj):
         attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}
 
         self.n_days = people.t  # people.t should be set to the last simulation timestep in the output (since the Transtree is constructed after the people have been stepped forward in time)
-        self._pop_size = len(people)
+        self.pop_size = len(people)
 
         # Include the basic line list
         self.infection_log = sc.dcp(people.infection_log)
@@ -71,19 +71,12 @@ class TransTree(sc.prettyobj):
     def __len__(self):
         '''
         The length of the transmission tree is the length of the line list,
-        which should equal the population size (non-infected people are None
-        in the line list).
+        which should equal the number of infections.
         '''
         try:
             return len(self.infection_log)
         except:
             return 0
-
-
-    @property
-    def pop_size(self):
-        ''' Count the number of non-None nodes in the graph '''
-        return sum(x is not None for x in self.graph.nodes)
 
 
     @property
@@ -104,7 +97,7 @@ class TransTree(sc.prettyobj):
     def make_detailed(self, people, reset=False):
         ''' Construct a detailed transmission tree, with additional information for each person '''
         # Reset to look like the line list, but with more detail
-        detailed = [None]*self._pop_size
+        detailed = [None]*self.pop_size
 
         for transdict in self.infection_log:
 
@@ -339,7 +332,7 @@ class TransTree(sc.prettyobj):
         for day in range(n):
             pl.title(f'Day: {day}')
             pl.xlim([0, n])
-            pl.ylim([0, self.pop_size])
+            pl.ylim([0, len(self)])
             pl.xlabel('Day')
             pl.ylabel('Person')
             flist = frames[day]

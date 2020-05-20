@@ -72,7 +72,8 @@ def test_base():
     ppl.get(['susceptible', 'infectious'])
     ppl.keys(which='all_states')
     ppl.index()
-    ppl.resize(pop_size=200) # This only resizes the arrays, not actually creates new people
+    ppl._resize_arrays(pop_size=200) # This only resizes the arrays, not actually create new people
+    ppl._resize_arrays(pop_size=100) # Change back
     ppl.to_df()
     ppl.to_arr()
     ppl.person(50)

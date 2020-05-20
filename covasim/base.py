@@ -583,7 +583,7 @@ class BasePeople(sc.prettyobj):
 
 
     def __len__(self):
-        ''' This is just a scalar, but validate() and resize() make sure it's right '''
+        ''' This is just a scalar, but validate() and _resize_arrays() make sure it's right '''
         return self.pop_size
 
 
@@ -702,11 +702,11 @@ class BasePeople(sc.prettyobj):
                 else:
                     if verbose:
                         print(f'Resizing "{key}" from {actual_len} to {expected_len}')
-                    self.resize(keys=key)
+                    self._resize_arrays(keys=key)
         return
 
 
-    def resize(self, pop_size=None, keys=None):
+    def _resize_arrays(self, pop_size=None, keys=None):
         ''' Resize arrays if any mismatches are found '''
         if pop_size is None:
             pop_size = len(self)
@@ -759,7 +759,7 @@ class BasePeople(sc.prettyobj):
         # Handle population size
         pop_size = len(people)
         if resize:
-            self.resize(pop_size=pop_size)
+            self._resize_arrays(pop_size=pop_size)
 
         # Iterate over people -- slow!
         for p,person in enumerate(people):
