@@ -107,8 +107,6 @@ class People(cvb.BasePeople):
         self.flows['new_critical']    += self.check_critical()
         self.flows['new_deaths']      += self.check_death()
         self.flows['new_recoveries']  += self.check_recovery()
-        # self.flows['new_diagnoses']   += self.check_diagnosed()
-        # self.flows['new_quarantined'] += self.check_quar()
 
         return
 
