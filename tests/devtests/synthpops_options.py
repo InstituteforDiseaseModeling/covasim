@@ -10,9 +10,9 @@ which = ['simple', 'complex'][0]
 if which == 'simple':
 
     sim = cv.Sim(pop_size=5000, pop_type='synthpops')
-    popdict, layer_keys = cv.make_synthpop(sim, with_facilities=False, layer_mapping={'LTCF':'f'})
+    popdict, layer_keys = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF':'f'})
     sim.popdict = popdict
-    sim.initialize()
+    sim.reset_layer_pars(layer_keys)
     sim.run()
 
 
