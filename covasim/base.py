@@ -667,9 +667,11 @@ class BasePeople(sc.prettyobj):
 
     def layer_keys(self):
         ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
-        try:
+        if self.contacts: # If initialized, get from the contacts
+            keys = list(self.contacts.keys())
+        elif self.pars.get('beta_layer'): # If not initialized
             keys = list(self.pars['beta_layer'].keys())
-        except: # If not initialized
+        else: # If truly not initialized, give up
             keys = []
         return keys
 
@@ -783,10 +785,9 @@ class BasePeople(sc.prettyobj):
     def add_contacts(self, contacts, lkey=None, beta=None):
         ''' Add new contacts to the array '''
 
+        # If no layer key is supplied and it can't be worked out from defaults, use the first layer
         if lkey is None:
             lkey = self.layer_keys()[0]
-        if lkey not in self.contacts:
-            self.contacts[lkey] = Layer()
 
         # Validate the supplied contacts
         if isinstance(contacts, Contacts):
@@ -815,8 +816,12 @@ class BasePeople(sc.prettyobj):
                 beta = cvd.default_float(beta)
                 new_layer['beta'] = np.ones(n, dtype=cvd.default_float)*beta
 
+            # Create the layer if it doesn't yet exist
+            if lkey not in self.contacts:
+                self.contacts[lkey] = Layer()
+
             # Actually include them, and update properties if supplied
-            for col in self.contacts[lkey].keys():
+            for col in self.contacts[lkey].keys(): # Loop over the supplied columns
                 self.contacts[lkey][col] = np.concatenate([self.contacts[lkey][col], new_layer[col]])
             self.contacts[lkey].validate()
 
@@ -829,8 +834,13 @@ class BasePeople(sc.prettyobj):
         into an edge list.
         '''
 
-        # Parse the list
+        # Handle layer keys
         lkeys = self.layer_keys()
+        if len(contacts):
+            contact_keys = contacts[0].keys() # Pull out the keys of this contact list
+            lkeys += [key for key in contact_keys if key not in lkeys] # Extend the layer keys
+
+        # Create the new contacts
         new_contacts = Contacts(layer_keys=lkeys)
         for lkey in lkeys:
             new_contacts[lkey]['p1']    = [] # Person 1 of the contact pair

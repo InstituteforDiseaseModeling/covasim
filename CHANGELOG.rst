@@ -10,6 +10,7 @@ Version 1.2.0 (2020-05-20)
 - In plotting, data points are now slightly transparent by default to improve visibility of the model curve.
 - Interventions now have a ``label`` attribute, which can be helpful for finding them if many are used, e.g. ``[interv if interv.label=='Close schools' for interv in sim['interventions']``.
 - Subtargeting of particular people in testing interventions can now be done via a function that gets called dynamically, avoiding the need to initialize the sim prior to creating the intervention.
+- Layer keys are now stored inside the ``popdict``, for greater consistency handling loaded populations.
 - Moved the cruise ship code from the core folder into the examples folder.
 - GitHub info: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
 

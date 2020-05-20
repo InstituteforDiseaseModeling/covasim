@@ -74,10 +74,11 @@ class Sim(cvb.BaseSim):
         ''' Ensure that metaparameters get used properly before being updated '''
         pars = sc.mergedicts(pars, kwargs)
         if pars:
-            if pars.get('pop_type'):
-                cvpar.reset_layer_pars(pars)
-            if pars.get('prog_by_age'):
-                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
+            if not create: # Don't run these on creation since the sim object hasn't been populated yet
+                if pars.get('pop_type'):
+                    self.reset_layer_pars(pars, force=False)
+                if pars.get('prog_by_age'):
+                    pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
 
@@ -115,30 +116,93 @@ class Sim(cvb.BaseSim):
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
-        self.validate_pars() # Ensure parameters have valid values
+        self.validate_pars(validate_layers=False) # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
         self.init_people(save_pop=save_pop, load_pop=load_pop, popfile=popfile, **kwargs) # Create all the people (slow)
+        self.validate_layer_pars() # Once the population is initialized, validate the layer parameters
         self.init_interventions()
         self.initialized = True
         return
 
 
-    def reset_layer_pars(self, layer_keys=None, force=True):
+    def layer_keys(self):
+        '''
+        Attempt to retrieve the current layer keys, in the following order: from
+        the people object (for an initialized sim), from the popdict (for one in
+        the process of being initialized), from the beta_layer parameter (for an
+        uninitialized sim), or by assuming a default (if none of the above are
+        available).
+        '''
+        layer_keys = None # e.g. ['h', 's', 'w', 'c'] for hybrid
+        if self.people is not None:
+            layer_keys = list(self.people.contacts.keys())
+        elif self.popdict is not None:
+            layer_keys = list(self.popdict['layer_keys'])
+        elif isinstance(self['beta_layer'], dict):
+            layer_keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
+        else:
+            layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
+        return layer_keys
+
+
+    def reset_layer_pars(self, pars=None, layer_keys=None, force=False):
         '''
         Reset the parameters to match the population.
 
         Args:
-            force (bool): reset the pars even if they already exist
+            pars (dict): dictionary of parameters used for the update (use stored parameters by default)
+            layer_keys (list): override the default layer keys (use stored keys by default)
+            force (bool): reset the parameters even if they already exist
         '''
-        if layer_keys is None and self.people is not None:
-            layer_keys = self.people.contacts.keys()
-        cvpar.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
+        if pars is None:
+            pars = self.pars
+        if layer_keys is None:
+            layer_keys = self.layer_keys()
+        cvpar.reset_layer_pars(pars=pars, layer_keys=layer_keys, force=force)
         return
 
 
-    def validate_pars(self):
-        ''' Some parameters can take multiple types; this makes them consistent '''
+    def validate_layer_pars(self):
+        '''
+        Handle layer parameters, since they need to be validated after the population
+        creation, rather than before.
+        '''
+
+        # First, try to figure out what the layer keys should be and perform basic type checking
+        layer_keys = self.layer_keys()
+        layer_pars = cvpar.layer_pars # The names of the parameters that are specified by layer
+        for lp in layer_pars:
+            val = self[lp]
+            if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
+                self[lp] = {k:val for k in layer_keys}
+
+        # Handle key mismaches
+        for lp in layer_pars:
+            lp_keys = set(self.pars[lp].keys())
+            if not lp_keys == set(layer_keys):
+                errormsg = f'Layer parameters have inconsistent keys with the layer keys {layer_keys}:'
+                for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
+                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
+                raise sc.KeyNotFoundError(errormsg)
+
+        # Handle mismatches with the population
+        if self.people is not None:
+            pop_keys = set(self.people.contacts.keys())
+            if pop_keys != layer_keys:
+                errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
+                raise sc.KeyNotFoundError(errormsg)
+
+        return
+
+
+    def validate_pars(self, validate_layers=True):
+        '''
+        Some parameters can take multiple types; this makes them consistent.
+
+        Args:
+            validate_layers (bool): whether to validate layer parameters as well via validate_layer_pars() -- usually yes, except during initialization
+        '''
 
         # Handle types
         for key in ['pop_size', 'pop_infected', 'pop_size']:
@@ -173,39 +237,7 @@ class Sim(cvb.BaseSim):
                 errormsg = f'You must supply one of n_days and end_day, not "{n_days}" and "{end_day}"'
                 raise ValueError(errormsg)
 
-        # Layer keys -- first, try to figure out what the layer keys should be
-        layer_keys = None # e.g. household, school
-        if self.people is not None:
-            layer_keys = set(self.people.contacts.keys())
-        elif isinstance(self['beta_layer'], dict):
-            layer_keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
-        else:
-            layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
-
-        # Layer keys -- convert scalar layer parameters to dictionaries
-        layer_pars = cvpar.layer_pars # The names of the parameters that are specified by layer
-        for lp in layer_pars:
-            val = self[lp]
-            if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
-                self[lp] = {k:val for k in layer_keys}
-
-        # Layer keys -- handle key mismaches
-        for lp in layer_pars:
-            lp_keys = set(self.pars[lp].keys())
-            if not lp_keys == set(layer_keys):
-                errormsg = f'Layer parameters have inconsistent keys:'
-                for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
-                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
-                raise sc.KeyNotFoundError(errormsg)
-
-        # Layer keys -- handle mismatches with the population
-        if self.people is not None:
-            pop_keys = set(self.people.contacts.keys())
-            if pop_keys != layer_keys:
-                errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
-                raise sc.KeyNotFoundError(errormsg)
-
-        # Moving on, handle population data
+        # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
         choice = self['pop_type']
         if choice and choice not in popdata_choices:
@@ -218,6 +250,10 @@ class Sim(cvb.BaseSim):
         for i,interv in enumerate(self['interventions']):
             if isinstance(interv, dict): # It's a dictionary representation of an intervention
                 self['interventions'][i] = cvi.InterventionDict(**interv)
+
+        # Optionally handle layer parameters
+        if validate_layers:
+            self.validate_layer_pars()
 
         return
 
@@ -276,6 +312,7 @@ class Sim(cvb.BaseSim):
 
         Args:
             popfile (str): name of the file to load
+            kwargs (dict): passed to sc.makefilepath()
         '''
         if popfile is None and self.popfile is not None:
             popfile = self.popfile
@@ -289,6 +326,7 @@ class Sim(cvb.BaseSim):
                 raise ValueError(errormsg)
             if self['verbose']:
                 print(f'Loaded population from {filepath}')
+            self.reset_layer_pars(force=False) # Ensure that layer keys match the loaded population
         return
 
 
@@ -301,6 +339,7 @@ class Sim(cvb.BaseSim):
             load_pop (bool): if true, load the population from popfile
             popfile (str): filename to load/save the population
             verbose (int): detail to prnt
+            kwargs (dict): passed to cv.make_people()
         '''
 
         # Handle inputs
@@ -312,8 +351,9 @@ class Sim(cvb.BaseSim):
             self.load_population(popfile=popfile)
 
         # Actually make the people
-        cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
-        self.people.initialize()
+        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
+        self.people.initialize() # Fully initialize the people
+        self.reset_layer_pars() # Handle layer key mismatches
 
         # Create the seed infections
         inds = cvu.choose(self['pop_size'], self['pop_infected'])
@@ -331,7 +371,7 @@ class Sim(cvb.BaseSim):
 
 
     def rescale(self):
-        ''' Dynamically rescale the population '''
+        ''' Dynamically rescale the population -- used during step() '''
         if self['rescale']:
             t = self.t
             pop_scale = self['pop_scale']
@@ -346,7 +386,6 @@ class Sim(cvb.BaseSim):
                     n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
                     new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
                     self.people.make_susceptible(new_sus_inds)
-                    # print(f"Rescaled by {scaling_ratio} on {self.datevec[self.t]} because {n_not_sus/n_people}")#, 2, self['verbose'])
         return
 
 

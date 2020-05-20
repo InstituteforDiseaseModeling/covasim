@@ -60,14 +60,13 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
     # Actually create the population
     if sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
-        layer_keys = list(popdict['contacts'][0].keys()) # Assume there's at least one contact!
         sim.popdict = None # Once loaded, remove
     else:
         # Create the population
         if pop_type in ['random', 'clustered', 'hybrid']:
-            popdict, layer_keys = make_randpop(sim, microstructure=pop_type)
+            popdict = make_randpop(sim, microstructure=pop_type)
         elif pop_type == 'synthpops':
-            popdict, layer_keys = make_synthpop(sim)
+            popdict = make_synthpop(sim)
         elif pop_type is None:
             errormsg = f'You have set pop_type=None. This is fine, but you must ensure sim.popdict exists before calling make_people().'
             raise ValueError(errormsg)
@@ -80,9 +79,7 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
         sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
-    sim.layer_keys = layer_keys
     people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
-    sim.people = people
 
     average_age = sum(popdict['age']/pop_size)
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
@@ -97,7 +94,7 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
             if verbose:
                 print(f'Saved population of type "{pop_type}" with {pop_size:n} people to {filepath}')
 
-    return
+    return people
 
 
 def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5, microstructure=False):
@@ -173,9 +170,10 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
         errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
         raise NotImplementedError(errormsg)
 
-    popdict['contacts'] = contacts
+    popdict['contacts']   = contacts
+    popdict['layer_keys'] = layer_keys
 
-    return popdict, layer_keys
+    return popdict
 
 
 def make_random_contacts(pop_size, contacts, overshoot=1.2):
@@ -360,10 +358,10 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
 
     # Finalize
     popdict = {}
-    popdict['uid']      = sc.dcp(list(uid_mapping.values()))
-    popdict['age']      = np.array(ages)
-    popdict['sex']      = np.array(sexes)
-    popdict['contacts'] = sc.dcp(contacts)
-    layer_keys = list(layer_mapping.values())
+    popdict['uid']        = sc.dcp(list(uid_mapping.values()))
+    popdict['age']        = np.array(ages)
+    popdict['sex']        = np.array(sexes)
+    popdict['contacts']   = sc.dcp(contacts)
+    popdict['layer_keys'] = list(layer_mapping.values())
 
-    return popdict, layer_keys
+    return popdict
