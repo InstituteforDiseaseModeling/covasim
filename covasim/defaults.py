@@ -58,7 +58,8 @@ class PeopleMeta(sc.prettyobj):
 
     # Set the dates various events took place: these are floats per person -- used in people.py
     dates = [f'date_{state}' for state in states] # Convert each state into a date
-    dates.append('date_end_quarantine') # This one is not like the others...
+    dates.append('date_pos_test') # Store the date when a person tested which will come back positive
+    dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
 
     # Duration of different states: these are floats per person -- used in people.py
     durs = [
@@ -153,41 +154,78 @@ def get_colors():
     return colors
 
 
-def get_sim_plots():
-    ''' Specify which quantities to plot; used in sim.py '''
-    plots = sc.odict({
-            'Total counts': [
-                'cum_infections',
-                'cum_diagnoses',
-                'cum_recoveries',
-            ],
-            'Daily counts': [
-                'new_infections',
-                'new_diagnoses',
-                'new_recoveries',
-                'new_deaths',
-            ],
-            'Health outcomes': [
-                'cum_severe',
-                'cum_critical',
-                'cum_deaths',
+# Define the 'overview plots', i.e. the most useful set of plots to explore different aspects of a simulation
+overview_plots = [
+            'cum_infections',
+            'cum_diagnoses',
+            'cum_severe',
+            'cum_critical',
+            'cum_deaths',
+            'new_infections',
+            'new_tests',
+            'new_diagnoses',
+            'new_deaths',
+            'new_quarantined',
+            'n_infectious',
+            'n_symptomatic',
+            'n_quarantined',
+            'test_yield',
+            'r_eff',
             ]
-    })
+
+
+def get_sim_plots(which='default'):
+    '''
+    Specify which quantities to plot; used in sim.py.
+
+    Args:
+        which (str): either 'default' or 'overview'
+    '''
+    if which in [None, 'default']:
+        plots = sc.odict({
+                'Total counts': [
+                    'cum_infections',
+                    'cum_diagnoses',
+                    'cum_recoveries',
+                ],
+                'Daily counts': [
+                    'new_infections',
+                    'new_diagnoses',
+                    'new_recoveries',
+                    'new_deaths',
+                ],
+                'Health outcomes': [
+                    'cum_severe',
+                    'cum_critical',
+                    'cum_deaths',
+                ]
+        })
+    elif which == 'overview':
+        plots = sc.dcp(overview_plots)
+    else:
+        errormsg = f'The choice which="{which}" is not supported'
+        raise ValueError(errormsg)
     return plots
 
 
-def get_scen_plots():
+def get_scen_plots(which='default'):
     ''' Default scenario plots -- used in run.py '''
-    plots = sc.odict({
-        'Cumulative infections': [
-            'cum_infections',
-        ],
-        'Number of people currently infectious': [
-            'n_infectious',
-        ],
-        'Number of people requiring hospitalization': [
-            'n_severe',
-        ]
-    })
+    if which in [None, 'default']:
+        plots = sc.odict({
+            'Cumulative infections': [
+                'cum_infections',
+            ],
+            'Number of people currently infectious': [
+                'n_infectious',
+            ],
+            'Number of people requiring hospitalization': [
+                'n_severe',
+            ]
+        })
+    elif which == 'overview':
+        plots = sc.dcp(overview_plots)
+    else:
+        errormsg = f'The choice which="{which}" is not supported'
+        raise ValueError(errormsg)
     return plots
 

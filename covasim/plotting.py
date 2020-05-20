@@ -7,7 +7,6 @@ webapp.
 '''
 
 import numpy as np
-import pandas as pd
 import pylab as pl
 import sciris as sc
 import datetime as dt
@@ -36,15 +35,18 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
 def handle_to_plot(which, to_plot, n_cols, sim):
     ''' Handle which quantities to plot '''
 
-    if to_plot is None:
+    # If not specified or specified as a string, load defaults
+    if to_plot is None or isinstance(to_plot, str):
         if which == 'sim':
-            to_plot = cvd.get_sim_plots()
+            to_plot = cvd.get_sim_plots(to_plot)
         elif which =='scens':
-            to_plot = cvd.get_scen_plots()
+            to_plot = cvd.get_scen_plots(to_plot)
         else:
             errormsg = f'"which" must be "sim" or "scens", not "{which}"'
             raise NotImplementedError(errormsg)
-    elif isinstance(to_plot, list): # If a list of keys has been supplied
+
+    # If a list of keys has been supplied
+    if isinstance(to_plot, list):
         to_plot_list = to_plot # Store separately
         to_plot = sc.odict() # Create the dict
         for reskey in to_plot_list:

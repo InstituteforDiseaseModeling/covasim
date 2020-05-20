@@ -306,7 +306,8 @@ class MultiSim(sc.prettyobj):
 
     def plot_compare(self, t=-1, sim_inds=None, log_scale=True, **kwargs):
         '''
-        Plot a comparison between sims.
+        Plot a comparison between sims, using bars to show different values for
+        each result.
 
         Args:
             t (int): index of results, passed to compare()
