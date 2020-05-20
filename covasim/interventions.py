@@ -446,11 +446,17 @@ class clip_edges(Intervention):
 __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 
-def get_subtarget_inds(subtarget, sim):
+def get_subtargets(subtarget, sim):
     '''
     A small helper function to see if subtargeting is a list of indices to use,
     or a function that needs to be called. If a function, it must take a single
-    argument, a sim object, and return a list of indices.
+    argument, a sim object, and return a list of indices. Also validates the values.
+    Currently designed for use with testing interventions, but could be generalized
+    to other interventions.
+
+    Args:
+        subtarget (dict): dict with keys 'inds' and 'vals'; see test_num() for examples of a valid subtarget dictionary
+        sim (Sim): the simulation object
     '''
 
     # Validation
@@ -464,7 +470,15 @@ def get_subtarget_inds(subtarget, sim):
     else:
         subtarget_inds = subtarget['inds'] # The indices are supplied directly
 
-    return subtarget_inds
+    # Validate the values
+    subtarget_vals = subtarget['vals']
+    if sc.isiterable(subtarget_vals):
+        if len(subtarget_vals) != len(subtarget_inds):
+            errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'
+            raise ValueError(errormsg)
+
+
+    return subtarget_inds, subtarget_vals
 
 
 class test_num(Intervention):
@@ -475,7 +489,7 @@ class test_num(Intervention):
         daily_tests (int or arr): number of tests per day; if integer, use that number every day
         symp_test (float): odds ratio of a symptomatic person testing
         quar_test (float): probability of a person in quarantine testing
-        subtarget (dict or func): subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'val': value to apply}
+        subtarget (dict or func): subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'vals': value(s) to apply}
         sensitivity (float): test sensitivity
         loss_prob (float): probability of the person being lost-to-follow-up
         test_delay (int): days for test result to be known
@@ -486,8 +500,8 @@ class test_num(Intervention):
     **Examples**::
 
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
-        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'val': 1.2}) # People over 50 are 20% more likely to test
-        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: sim.people.age>50, 'val': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
 
     '''
 
@@ -498,7 +512,7 @@ class test_num(Intervention):
         self.daily_tests = daily_tests # Should be a list of length matching time
         self.symp_test   = symp_test   # Set probability of testing symptomatics
         self.quar_test   = quar_test
-        self.subtarget   = subtarget  # Set any other testing criteria, e.g. testing by age: {'inds': array of indices of people > 70, 'val': how much more/less likely these people are to tests}
+        self.subtarget   = subtarget  # Set any other testing criteria
         self.sensitivity = sensitivity
         self.loss_prob   = loss_prob
         self.test_delay  = test_delay
@@ -558,14 +572,8 @@ class test_num(Intervention):
 
         # Handle any other user-specified testing criteria
         if self.subtarget is not None:
-            subtarget_inds = get_subtarget_inds(self.subtarget, sim)
-            if sc.isnumber(self.subtarget['val']):
-                test_probs[subtarget_inds] *= self.subtarget['val']
-            elif sc.isiterable(self.subtarget['val']):
-                if len(self.subtarget['val']) != len(subtarget_inds):
-                    raise ValueError(f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(self.subtarget["val"])})')
-                else:
-                    test_probs[subtarget_inds] = test_probs[subtarget_inds]*self.subtarget['val']
+            subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+            test_probs[subtarget_inds] = test_probs[subtarget_inds]*subtarget_vals
 
         # Don't re-diagnose people
         diag_inds  = cvu.true(sim.people.diagnosed)
@@ -648,8 +656,8 @@ class test_prob(Intervention):
         test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
         test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
         if self.subtarget is not None:
-            subtarget_inds = get_subtarget_inds(self.subtarget, sim)
-            test_probs[subtarget_inds] = self.subtarget['val'] # People being explicitly subtargeted
+            subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+            test_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
         test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
         test_inds = cvu.binomial_arr(test_probs).nonzero()[0] # Finally, calculate who actually tests
 
