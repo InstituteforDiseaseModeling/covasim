@@ -1,7 +1,27 @@
+'''
+Additional analysis functions that are not part of the core Covasim workflow,
+but which are useful for particular investigations. Currently, this consists of
+the transmission tree
+'''
+
 import pylab as pl
 import numpy as np
 import pandas as pd
 import sciris as sc
+
+
+__all__ = ['TransTree']
+
+
+def import_nx():
+    ''' Fail gracefully if NetworkX is called for but is not found. '''
+    try:
+        import networkx as nx # Optional import
+    except ImportError as E:
+        errormsg = f'WARNING: Could not import networkx ({str(E)}). Most functionality will be disabled. If desired, please install manually, e.g. "pip install networkx".'
+        print(errormsg)
+        nx = None
+    return nx
 
 
 class TransTree(sc.prettyobj):
@@ -17,31 +37,46 @@ class TransTree(sc.prettyobj):
 
     def __init__(self, people):
 
-        import networkx as nx # Optional import
-
         # Pull out each of the attributes relevant to transmission
         attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}
 
         self.n_days = people.t  # people.t should be set to the last simulation timestep in the output (since the Transtree is constructed after the people have been stepped forward in time)
-        self.graph = nx.DiGraph()
+        self.pop_size = len(people)
 
-        for i in range(len(people)):
-            d = {}
-            for attr in attrs:
-                d[attr] = people[attr][i]
-            self.graph.add_node(i, **d)
+        # Include the basic line list
+        self.infection_log = sc.dcp(people.infection_log)
 
-        # Next, add edges from linelist
-        for edge in people.infection_log:
-            self.graph.add_edge(edge['source'],edge['target'],date=edge['date'],layer=edge['layer'])
+        # Include the detailed transmission tree as well
+        self.detailed = self.make_detailed(people)
+
+        # Check for NetworkX
+        nx = import_nx()
+        if nx:
+            self.graph = nx.DiGraph()
+
+            for i in range(len(people)):
+                d = {}
+                for attr in attrs:
+                    d[attr] = people[attr][i]
+                self.graph.add_node(i, **d)
+
+            # Next, add edges from linelist
+            for edge in people.infection_log:
+                self.graph.add_edge(edge['source'],edge['target'],date=edge['date'],layer=edge['layer'])
 
         return
 
 
-    @property
-    def pop_size(self):
-        ''' Get the number of people in the transmission tree '''
-        return sum(x is not None for x in self.graph.nodes)
+    def __len__(self):
+        '''
+        The length of the transmission tree is the length of the line list,
+        which should equal the population size (non-infected people are None
+        in the line list).
+        '''
+        try:
+            return len(self.infection_log)
+        except:
+            return 0
 
 
     @property
@@ -52,8 +87,53 @@ class TransTree(sc.prettyobj):
         This excludes edges corresponding to seeded infections without a source
 
         """
-        import networkx as nx # Optional import
-        return nx.subgraph_view(self.graph, lambda x: x is not None).edges
+        nx = import_nx()
+        if nx:
+            return nx.subgraph_view(self.graph, lambda x: x is not None).edges
+        else:
+            return
+
+
+    def make_detailed(self, people, reset=False):
+        ''' Construct a detailed transmission tree, with additional information for each person '''
+        # Reset to look like the line list, but with more detail
+        detailed = [None]*self.pop_size
+
+        for transdict in self.infection_log:
+
+            if transdict is not None:
+
+                # Pull out key quantities
+                ddict  = sc.objdict(sc.dcp(transdict)) # For "detailed dictionary"
+                source = ddict.source
+                target = ddict.target
+                ddict.s = sc.objdict() # Source
+                ddict.t = sc.objdict() # Target
+
+                # If the source is available (e.g. not a seed infection), loop over both it and the target
+                if source is not None:
+                    stdict = {'s':source, 't':target}
+                else:
+                    stdict = {'t':target}
+
+                # Pull out each of the attributes relevant to transmission
+                attrs = ['age', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
+                for st,stind in stdict.items():
+                    for attr in attrs:
+                        ddict[st][attr] = people[attr][stind]
+                if source is not None:
+                    for attr in attrs:
+                        if attr.startswith('date_'):
+                            is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
+                            ddict.s[is_attr] = ddict.s[attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
+
+                    ddict.s.is_asymp   = np.isnan(people.date_symptomatic[source])
+                    ddict.s.is_presymp = ~ddict.s.is_asymp and ~ddict.s.is_symptomatic # Not asymptomatic and not currently symptomatic
+                ddict.t['is_quarantined'] = ddict.t['date_quarantined'] <= ddict['date'] # This is the only target date that it makes sense to define since it can happen before infection
+
+                detailed[target] = ddict
+
+        return detailed
 
 
     def r0(self, recovered_only=False):
@@ -67,8 +147,8 @@ class TransTree(sc.prettyobj):
         then the downstream transmissions will only be included for people that recover
         before the end of the simulation, thus ensuring they all had the same amount of
         time to transmit.
-
         """
+        import_nx() # Check that NetworkX can be imported
 
         n_infected = []
         for i, node in self.graph.nodes.items():
@@ -116,7 +196,7 @@ class TransTree(sc.prettyobj):
         r = 2;
         c = 3
 
-        def plot(key, title, i):
+        def plot_quantity(key, title, i):
             dat = df.groupby(['Day', key]).size().unstack(key)
             ax = pl.subplot(r, c, i);
             dat.plot(ax=ax, legend=None)
@@ -132,7 +212,7 @@ class TransTree(sc.prettyobj):
             'Severity': 'Symptomatic source severity'
         }
         for i, (key, title) in enumerate(to_plot.items()):
-            plot(key, title, i + 1)
+            plot_quantity(key, title, i + 1)
 
         return fig
 
@@ -172,7 +252,7 @@ class TransTree(sc.prettyobj):
         cmap = kwargs.get('cmap', 'parula')
         pl.rcParams['font.size'] = font_size
         if colors is None:
-            colors = sc.vectocolor(self.pop_size, cmap=cmap)
+            colors = sc.vectocolor(len(self), cmap=cmap)
 
         # Initialization
         n = self.n_days + 1
@@ -252,7 +332,7 @@ class TransTree(sc.prettyobj):
         for day in range(n):
             pl.title(f'Day: {day}')
             pl.xlim([0, n])
-            pl.ylim([0, self.pop_size])
+            pl.ylim([0, len(self)])
             pl.xlabel('Day')
             pl.ylabel('Person')
             flist = frames[day]

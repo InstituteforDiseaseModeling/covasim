@@ -10,11 +10,15 @@ __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
 def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     '''
-    Set parameters for the simulation.
+    Create the parameters for the simulation. Typically, this function is used
+    internally rather than called by the user; e.g. typical use would be to do
+    sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+    directly.
 
     Args:
-        Set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
+        set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
         prog_by_age (bool): whether or not to use age-based severity, mortality etc.
+        kwargs (dict): any additional kwargs are interpreted as parameter names
 
     Returns:
         pars (dict): the parameters of the simulation

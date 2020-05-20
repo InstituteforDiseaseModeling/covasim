@@ -59,7 +59,7 @@ sims.trace = cv.Sim(pars, interventions=[tp, ct]) # Testing + contact tracing
 tts = sc.objdict()
 for key,sim in sims.items():
     sim.run()
-    tts[key] = cv.TransTree(sim.people)
+    tts[key] = cv.TransTree(sim.people).detailed
     if plot_sim:
         to_plot = cv.get_sim_plots()
         to_plot['Total counts']  = ['cum_infections', 'cum_diagnoses', 'cum_quarantined', 'n_quarantined']
@@ -91,7 +91,7 @@ for key in sims.keys():
     diags  = [list() for i in range(sim.npts)]
     quars  = [list() for i in range(sim.npts)]
 
-    for i,entry in enumerate(tt.graph.nodes):
+    for i,entry in enumerate(tt):
         frame = sc.objdict()
         dq = sc.objdict()
         if entry:

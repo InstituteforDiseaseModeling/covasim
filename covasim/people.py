@@ -269,7 +269,7 @@ class People(cvb.BasePeople):
             inds     (array): array of people to infect
             hosp_max (bool):  whether or not there is an acute bed available for this person
             icu_max  (bool):  whether or not there is an ICU bed available for this person
-            source   (int):   source person of this infection (None if an importation or seed infection)
+            source   (array): source indices of the people who transmitted this infection (None if an importation or seed infection)
             layer    (str):   contact layer this infection was transmitted on
 
         Returns:
