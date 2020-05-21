@@ -493,7 +493,11 @@ class test_num(Intervention):
 
         # Process daily data
         self.daily_tests = process_daily_data(self.daily_tests, sim)
-        if self.ili_prev is not None: self.ili_prev = process_daily_data(self.ili_prev, sim)
+        if self.ili_prev is None:
+            if sim['ili_prev'] is not None: # See if it's stored in the sim
+                self.ili_prev = sim['ili_prev']
+        if self.ili_prev is not None:
+            self.ili_prev = process_daily_data(self.ili_prev, sim)
 
         self.initialized = True
 
@@ -527,7 +531,6 @@ class test_num(Intervention):
             if rel_t < len(self.ili_prev):
                 n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
                 ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
-                #if t>20: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 symp_inds = np.unique(np.concatenate((symp_inds, ili_inds)),0)
         test_probs[symp_inds] *= self.symp_test
 
@@ -602,8 +605,15 @@ class test_prob(Intervention):
         self.start_day   = sim.day(self.start_day)
         self.end_day     = sim.day(self.end_day)
         self.days        = [self.start_day, self.end_day]
-        if self.ili_prev is not None: self.ili_prev = process_daily_data(self.ili_prev, sim) # Process daily data
+
+        if self.ili_prev is None:
+            if sim['ili_prev'] is not None: # See if it's stored in the sim
+                self.ili_prev = sim['ili_prev']
+        if self.ili_prev is not None:
+            self.ili_prev = process_daily_data(self.ili_prev, sim)
+
         self.initialized = True
+
         return
 
 
