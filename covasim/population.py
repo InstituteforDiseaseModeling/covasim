@@ -307,13 +307,20 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
 
 def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
     '''
-    Make a population using SynthPops, including contacts.
+    Make a population using SynthPops, including contacts. Usually called automatically,
+    but can also be called manually.
 
     Args:
         sim (Sim): a Covasim simulation object
         generate (bool): whether or not to generate a new population (otherwise, tries to load a pre-generated one)
         layer_mapping (dict): a custom mapping from SynthPops layers to Covasim layers
         kwars (dict): passed to sp.make_population()
+
+    **Example**::
+
+        sim = cv.Sim(pop_type='synthpops')
+        sim.popdict = cv.make_synthpop(sim)
+        sim.run()
     '''
     import synthpops as sp # Optional import
 

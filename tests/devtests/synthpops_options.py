@@ -5,12 +5,13 @@ care facilities.
 
 import covasim as cv
 
-which = ['simple', 'complex'][0]
+which = ['simple', 'complex'][1]
 
 if which == 'simple':
 
     sim = cv.Sim(pop_size=5000, pop_type='synthpops')
     sim.popdict = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF':'f'})
+    sim.reset_layer_pars()
     sim.run()
 
 
@@ -27,6 +28,7 @@ else:
         print(f'Running LTCF {ltcf}')
         sim = cv.Sim(pars)
         sim.popdict = cv.make_synthpop(sim, with_facilities=ltcf, layer_mapping={'LTCF':'f'})
+        sim.reset_layer_pars()
         sims.append(sim)
 
     to_plot = ['cum_infections', 'new_infections', 'cum_severe', 'cum_deaths']

@@ -25,7 +25,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     args = sc.objdict()
     args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
     args.plot    = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-    args.scatter = sc.mergedicts({'s':70, 'marker':'s', 'alpha':0.7}, scatter_args)
+    args.scatter = sc.mergedicts({'s':70, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
     args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
     args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
     args.legend  = sc.mergedicts({'loc': 'best', 'frameon':False}, legend_args)

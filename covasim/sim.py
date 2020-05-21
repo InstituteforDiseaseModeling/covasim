@@ -78,7 +78,7 @@ class Sim(cvb.BaseSim):
         pars = sc.mergedicts(pars, kwargs)
         if pars:
             if pars.get('pop_type'):
-                cvpar.reset_layer_pars(pars)
+                cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
@@ -118,11 +118,11 @@ class Sim(cvb.BaseSim):
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
-        self.validate_pars(validate_layers=False) # Ensure parameters have valid values
+        self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
-        self.validate_layer_pars() # Once the population is initialized, validate the layer parameters
+        self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.init_interventions()
         self.initialized = True
         return
@@ -143,7 +143,7 @@ class Sim(cvb.BaseSim):
         return keys
 
 
-    def reset_layer_pars(self, layer_keys=None, force=True):
+    def reset_layer_pars(self, layer_keys=None, force=False):
         '''
         Reset the parameters to match the population.
 

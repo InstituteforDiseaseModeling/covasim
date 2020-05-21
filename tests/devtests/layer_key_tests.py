@@ -44,7 +44,7 @@ sub2 = cv.Sim(pars)
 sub2.update_pars(beta_layer={'a':0.5})
 sub2.run()
 assert sub2['beta_layer']['a'] == 0.5
-with pytest.raises(ValueError): # q is not ok
+with pytest.raises(sc.KeyNotFoundError): # q is not ok
     sub2.update_pars(beta_layer={'q':0.5})
     sub2.run()
 
@@ -79,8 +79,9 @@ spl.run()
 sc.heading('SynthPops + LTCF load test')
 with pytest.raises(ValueError): # Wrong population size
     cv.Sim(pars, pop_type=None, popfile='synth.pop', load_pop=True)
-sspl = cv.Sim(pop_size=2000, pop_type=None, popfile='synth.pop', load_pop=True)
+sspl = cv.Sim(pop_size=2000, pop_type=None, popfile='synth.pop', load_pop=True, beta_layer=dict(h=10, s=2, w=2, c=2, f=1))
 sspl.run()
+assert sspl['beta_layer']['h'] == 10
 
 
 sc.toc(T)
