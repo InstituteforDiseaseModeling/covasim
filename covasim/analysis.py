@@ -47,6 +47,23 @@ class TransTree(sc.prettyobj):
         # Include the basic line list
         self.infection_log = sc.dcp(people.infection_log)
 
+        # Parse into sources and targets
+        self.sources = [None for i in range(self.pop_size)]
+        self.targets = [[]   for i in range(self.pop_size)]
+
+        self.n_targets = np.nan+np.zeros(self.pop_size)
+        for entry in self.infection_log:
+            source = entry['source']
+            target = entry['target']
+            if source:
+                self.sources[target] = source # Each target has at most one source
+                self.targets[source].append(target) # Each source can have multiple targets
+        for i in range(self.pop_size):
+            if self.sources[i] is not None:
+                self.n_targets[i] = len(self.targets[i])
+        self.infected_inds = sc.findinds(~np.isnan(self.n_targets))
+        self.n_targets = self.n_targets[self.infected_inds]
+
         # Include the detailed transmission tree as well
         self.detailed = self.make_detailed(people)
 
@@ -355,4 +372,16 @@ class TransTree(sc.prettyobj):
 
         return fig
 
+
+    def plot_histogram(self, bins=None):
+        ''' Plots a histogram of the number of people infected '''
+        fig = pl.figure(dpi=150)
+        if bins is None:
+            max_infections = self.n_targets.max()
+            bins = np.arange(0, max_infections+1)
+        pl.hist(self.n_targets, bins, width=0.8)
+        pl.xlabel('Number of transmissions')
+        pl.ylabel('Number of occurrences')
+
+        return fig
 
