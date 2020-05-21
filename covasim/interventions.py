@@ -586,7 +586,7 @@ class test_prob(Intervention):
         Intervention
     '''
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, subtarget=None, ili_prev=None,
-                 test_sensitivity=1.0, loss_prob=0.0, test_delay=1, start_day=0, end_day=None, do_plot=None):
+                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, do_plot=None):
         super().__init__(do_plot=do_plot)
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
