@@ -385,29 +385,43 @@ class TransTree(sc.prettyobj):
         total_counts = counts*bins
         n_bins = len(bins)
         n_trans = sum(total_counts)
+        index = np.linspace(0, 100, len(self.n_targets))
+        sorted_arr = np.sort(self.n_targets)
+        sorted_sum = np.cumsum(sorted_arr)
+        sorted_sum = sorted_sum/sorted_sum.max()*100
+        change_inds = sc.findinds(np.diff(sorted_arr) != 0)
 
-        fig_args = sc.mergedicts(dict(figsize=(18,7), dpi=150))
+        fig_args = sc.mergedicts(dict(figsize=(18,12), dpi=150))
 
         fig = pl.figure(**fig_args)
 
-        pl.subplot(1,3,1)
+        pl.subplot(2,2,1)
         pl.bar(bins, counts, width=width)
         pl.xlabel('Number of transmissions per person')
-        pl.ylabel('Frequency')
+        pl.ylabel('Number of occurrences in the model')
 
-        pl.subplot(1,3,2)
+        pl.subplot(2,2,2)
         pl.bar(bins, total_counts, width=width)
-        pl.xlabel('Number of transmissions total')
-        pl.ylabel('Frequency')
+        pl.xlabel('Number of transmissions per person')
+        pl.ylabel('Number of transmissions')
 
-        pl.subplot(1,3,3)
+        pl.subplot(2,2,3)
         total = 0
         for i in range(n_bins):
             new = total_counts[i]/n_trans*100
             pl.bar(bins[i:], new, width=width, bottom=total)
             total += new
-            pl.xlabel('Share attributable to this number of transmissions per person')
-            pl.ylabel('Proportion of transmissions (%)')
+            pl.xlabel('Number of transmissions per person')
+            pl.ylabel('Proportion of total transmissions (%)')
+
+        pl.subplot(2,2,4)
+        pl.plot(index, sorted_sum, lw=2)
+        colors = sc.vectocolor(len(change_inds))
+        for i in range(len(change_inds)):
+            pl.scatter([index[change_inds[i]]], [sorted_sum[change_inds[i]]], c=[colors[i]], label=f'Transmitted to {i+1} people')
+        pl.xlabel('Proportion of population, ordered by the number of people they infected (%)')
+        pl.ylabel('Proportion of infections caused (%)')
+        pl.legend()
 
         return fig
 
