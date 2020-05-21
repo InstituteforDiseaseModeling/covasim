@@ -32,7 +32,8 @@ class Sim(cvb.BaseSim):
         label (str): the name of the simulation (useful to distinguish in batch runs)
         simfile (str): the filename for this simulation, if it's saved (default: creation date)
         popfile (str): the filename to load/save the population for this simulation
-        load_pop (bool): whether or not to load the population from the named file
+        load_pop (bool): whether to load the population from the named file
+        save_pop (bool): whether to save the population to the named file
         kwargs (dict): passed to make_pars()
 
     **Examples**::
@@ -41,9 +42,9 @@ class Sim(cvb.BaseSim):
         sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, **kwargs):
+    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, save_pop=False, **kwargs):
         # Create the object
-        default_pars = cvpar.make_pars(**kwargs) # Start with default pars
+        default_pars = cvpar.make_pars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
@@ -52,6 +53,8 @@ class Sim(cvb.BaseSim):
         self.simfile       = simfile  # The filename of the sim
         self.datafile      = datafile # The name of the data file
         self.popfile       = popfile  # The population file
+        self.load_pop      = load_pop # Whether to load the population
+        self.save_pop      = save_pop # Whether to save the population
         self.data          = None     # The actual data
         self.popdict       = None     # The population dictionary
         self.t             = None     # The current time in the simulation
@@ -63,8 +66,8 @@ class Sim(cvb.BaseSim):
         # Now update everything
         self.set_metadata(simfile, label) # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
-        self.update_pars(pars)             # Update the parameters, if provided
-        if load_pop:
+        self.update_pars(pars, **kwargs)             # Update the parameters, if provided
+        if self.load_pop:
             self.load_population(popfile)      # Load the population, if provided
 
         return
@@ -104,21 +107,21 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def initialize(self, save_pop=False, load_pop=False, popfile=None, **kwargs):
+    def initialize(self, **kwargs):
         '''
-        Perform all initializations.
+        Perform all initializations, including validating the parameters, setting
+        the random number seed, creating the results structure, initializing the
+        people, validating the layer parameters (which requires the people),
+        and initializing the interventions.
 
         Args:
-            save_pop (bool): if true, save the population to popfile
-            load_pop (bool): if true, load the population from popfile
-            popfile (str): filename to load/save the population
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
         self.validate_pars(validate_layers=False) # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
-        self.init_people(save_pop=save_pop, load_pop=load_pop, popfile=popfile, **kwargs) # Create all the people (slow)
+        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters
         self.init_interventions()
         self.initialized = True
@@ -347,7 +350,6 @@ class Sim(cvb.BaseSim):
         # Actually make the people
         self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
         self.people.initialize() # Fully initialize the people
-        self.reset_layer_pars() # Handle layer key mismatches
 
         # Create the seed infections
         inds = cvu.choose(self['pop_size'], self['pop_infected'])
