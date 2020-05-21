@@ -829,7 +829,8 @@ class Sim(cvb.BaseSim):
             plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
+            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
+            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
             as_dates     (bool): Whether to plot the x-axis as dates or time points
             dateformat   (str):  Date string format, e.g. '%B %d'
             interval     (int):  Interval between tick marks
