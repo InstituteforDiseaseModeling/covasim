@@ -296,7 +296,7 @@ class Sim(cvb.BaseSim):
             scale = 1
         else:
             scale = self['pop_scale']
-        self.rescale_vec   = scale*np.ones(self.npts)
+        self.rescale_vec   = scale*np.ones(self.npts) # Not included in the results, but used to scale them
         self.results['t']    = self.tvec
         self.results['date'] = self.datevec
         self.results_ready   = False
@@ -574,13 +574,15 @@ class Sim(cvb.BaseSim):
     def compute_prev_inci(self):
         '''
         Compute prevalence and incidence. Prevalence is the current number of infected
-        people divided by the population size. Incidence is the number of new infections
-        per day per 100,000 people.
+        people divided by the number of people who are alive. Incidence is the number
+        of new infections per day divided by the susceptible population.
         '''
-        n_exposed = self.results['n_exposed'].values # Number of positive tests
-        new_infections = self.results['new_infections'].values # Total number of tests
-        self.results['prevalence'][:] = n_exposed/self.scaled_pop_size # Calculate the prevalence
-        self.results['incidence'][:] = new_infections/self.scaled_pop_size*100e3 # Calculate the incidence
+        n_exposed = self.results['n_exposed'].values # Number of people currently infected
+        n_alive = self.scaled_pop_size - self.results['cum_deaths'].values # Number of people still alive
+        n_susceptible = self.results['n_susceptible'].values # Number of people still susceptible
+        new_infections = self.results['new_infections'].values # Number of new infections
+        self.results['prevalence'][:] = n_exposed/n_alive # Calculate the prevalence
+        self.results['incidence'][:] = new_infections/n_susceptible # Calculate the incidence
         return
 
 
