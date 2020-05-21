@@ -430,12 +430,12 @@ __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 
 # Process daily data
-def process_daily_data(daily_data, sim, as_int=False):
+def process_daily_data(daily_data, sim, start_day, as_int=False):
     if sc.isnumber(daily_data):  # If a number, convert to an array
         if as_int: daily_data = int(daily_data) # Make it an integer
         daily_data = np.array([daily_data] * sim.npts)
     elif isinstance(daily_data, (pd.Series, pd.DataFrame)):
-        start_date = sim['start_day'] + dt.timedelta(days=self.start_day)
+        start_date = sim['start_day'] + dt.timedelta(days=start_day)
         end_date = daily_data.index[-1]
         dateindex = pd.date_range(start_date, end_date)
         daily_data = daily_data.reindex(dateindex, fill_value=0).to_numpy()
@@ -492,12 +492,12 @@ class test_num(Intervention):
         self.days        = [self.start_day, self.end_day]
 
         # Process daily data
-        self.daily_tests = process_daily_data(self.daily_tests, sim)
+        self.daily_tests = process_daily_data(self.daily_tests, sim, self.start_day)
         if self.ili_prev is None:
             if sim['ili_prev'] is not None: # See if it's stored in the sim
                 self.ili_prev = sim['ili_prev']
         if self.ili_prev is not None:
-            self.ili_prev = process_daily_data(self.ili_prev, sim)
+            self.ili_prev = process_daily_data(self.ili_prev, sim, self.start_day)
 
         self.initialized = True
 
@@ -610,7 +610,7 @@ class test_prob(Intervention):
             if sim['ili_prev'] is not None: # See if it's stored in the sim
                 self.ili_prev = sim['ili_prev']
         if self.ili_prev is not None:
-            self.ili_prev = process_daily_data(self.ili_prev, sim)
+            self.ili_prev = process_daily_data(self.ili_prev, sim, self.start_day)
 
         self.initialized = True
 

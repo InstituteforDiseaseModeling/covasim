@@ -10,7 +10,7 @@ import sciris as sc
 import covasim as cv
 import pylab as pl
 
-do_plot = 1
+do_plot = 0
 verbose = 0
 debug   = 1 # This runs without parallelization; faster with pytest
 csv_file  = os.path.join(sc.thisdir(__file__), 'example_data.csv')
@@ -412,7 +412,7 @@ if __name__ == '__main__':
     test_interventions()
     test_misc()
     test_people()
-    test_plotting()
+    #test_plotting()
     test_population()
     test_requirements()
     test_run()
