@@ -838,22 +838,18 @@ class BasePeople(sc.prettyobj):
             contact_keys = contacts[0].keys() # Pull out the keys of this contact list
             lkeys += [key for key in contact_keys if key not in lkeys] # Extend the layer keys
 
-        # Create the new contacts
+        # Initialize the new contacts
         new_contacts = Contacts(layer_keys=lkeys)
         for lkey in lkeys:
             new_contacts[lkey]['p1']    = [] # Person 1 of the contact pair
             new_contacts[lkey]['p2']    = [] # Person 2 of the contact pair
 
-        try:
-            for p,cdict in enumerate(contacts):
-                for lkey,p_contacts in cdict.items():
-                    n = len(p_contacts) # Number of contacts
-                    new_contacts[lkey]['p1'].extend([p]*n) # e.g. [4, 4, 4, 4]
-                    new_contacts[lkey]['p2'].extend(p_contacts) # e.g. [243, 4538, 7,19]
-        except KeyError:
-            lkeystr = ', '.join(lkeys)
-            errormsg = f'Layer "{lkey}" could not be loaded since it was not among parameter keys "{lkeystr}". Please update manually or via sim.reset_layer_pars().'
-            raise sc.KeyNotFoundError(errormsg)
+        # Populate the new contacts
+        for p,cdict in enumerate(contacts):
+            for lkey,p_contacts in cdict.items():
+                n = len(p_contacts) # Number of contacts
+                new_contacts[lkey]['p1'].extend([p]*n) # e.g. [4, 4, 4, 4]
+                new_contacts[lkey]['p2'].extend(p_contacts) # e.g. [243, 4538, 7,19]
 
         # Turn into a dataframe
         for lkey in lkeys:
