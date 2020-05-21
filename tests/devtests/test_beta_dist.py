@@ -47,17 +47,17 @@ for i in range(runs):
     print('Making sim ', i, '...')
     sim1 = cv.Sim(pars=pars)
     sim1.run()
-    r0_const[i] = len(sim1.people.transtree.targets[0])
+    r0_const[i] = cv.TransTree(sim1.people).r0()
     pars['rand_seed'] = i*np.random.rand()
     pars['beta_dist']   = {'dist':'lognormal','par1':1, 'par2':.3}
     sim2 = cv.Sim(pars=pars)
     sim2.run()
-    r0_twolevel[i] = len(sim2.people.transtree.targets[0])
+    r0_twolevel[i] = cv.TransTree(sim2.people).r0()
     pars['rand_seed'] = i*np.random.rand()
     pars['beta_dist']   = {'dist':'lognormal','par1':1, 'par2':.5}
     sim3 = cv.Sim(pars=pars)
     sim3.run()
-    r0_twolevel2[i] = len(sim3.people.transtree.targets[0])
+    r0_twolevel2[i] = cv.TransTree(sim3.people).r0()
 
 print('R0 constant viral load: ', np.mean(r0_const), ' +- ', np.std(r0_const))
 print('R0 two level viral load: ', np.mean(r0_twolevel), ' +- ', np.std(r0_twolevel))

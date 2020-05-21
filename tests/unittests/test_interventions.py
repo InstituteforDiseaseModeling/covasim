@@ -399,8 +399,6 @@ class InterventionTests(CovaSimTest):
                                  target_pop_count_channel,
                                  target_pop_new_channel,
                                  target_test_count_channel=None):
-        if not target_test_count_channel:
-            target_test_count = target_pop_count_channel # CK: unused
         if test_sensitivity < 1.0:
             raise ValueError("This test method only works with perfect test "
                              f"sensitivity. {test_sensitivity} won't cut it.")
@@ -428,6 +426,7 @@ class InterventionTests(CovaSimTest):
             print(f"new diagnoses before, on, after start day: {new_diagnoses[start_day-1:start_day+2]}")
             print(f"target count before, on, after start day: {target_count[start_day-1:start_day+2]}")
             pass
+
         self.assertEqual(new_tests[start_day],
                          target_test_count_channel[start_day],
                          msg=f"Should have each of the {target_test_count_channel[start_day]} targets"
@@ -509,7 +508,7 @@ class InterventionTests(CovaSimTest):
 
         symptomatic_probability_of_test = 1.0
         test_sensitivity = 1.0
-        test_delay = 1
+        test_delay = 0
         start_day = 30
 
         self.intervention_set_test_prob(symptomatic_prob=symptomatic_probability_of_test,

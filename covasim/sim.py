@@ -74,9 +74,9 @@ class Sim(cvb.BaseSim):
         ''' Ensure that metaparameters get used properly before being updated '''
         pars = sc.mergedicts(pars, kwargs)
         if pars:
-            if 'pop_type' in pars:
+            if pars.get('pop_type'):
                 cvpar.reset_layer_pars(pars)
-            if 'prog_by_age' in pars:
+            if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
@@ -124,17 +124,15 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def reset_layer_pars(self, force=True):
+    def reset_layer_pars(self, layer_keys=None, force=True):
         '''
         Reset the parameters to match the population.
 
         Args:
             force (bool): reset the pars even if they already exist
         '''
-        if self.people is not None:
+        if layer_keys is None and self.people is not None:
             layer_keys = self.people.contacts.keys()
-        else:
-            layer_keys = None
         cvpar.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
         return
 
@@ -210,7 +208,7 @@ class Sim(cvb.BaseSim):
         # Moving on, handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
         choice = self['pop_type']
-        if choice not in popdata_choices:
+        if choice and choice not in popdata_choices:
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
@@ -589,14 +587,14 @@ class Sim(cvb.BaseSim):
         if method == 'daily':
 
             # Find the dates that everyone became infectious and recovered, and hence calculate infectious duration
-            recov_inds = self.people.defined('date_recovered')
-            dead_inds = self.people.defined('date_dead')
-            date_recov = self.people.date_recovered[recov_inds]
-            date_dead = self.people.date_dead[dead_inds]
+            recov_inds   = self.people.defined('date_recovered')
+            dead_inds    = self.people.defined('date_dead')
+            date_recov   = self.people.date_recovered[recov_inds]
+            date_dead    = self.people.date_dead[dead_inds]
             date_outcome = np.concatenate((date_recov, date_dead))
-            inds = np.concatenate((recov_inds, dead_inds))
-            date_inf = self.people.date_infectious[inds]
-            mean_inf = date_outcome.mean() - date_inf.mean()
+            inds         = np.concatenate((recov_inds, dead_inds))
+            date_inf     = self.people.date_infectious[inds]
+            mean_inf     = date_outcome.mean() - date_inf.mean()
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
             values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
@@ -606,9 +604,12 @@ class Sim(cvb.BaseSim):
         # Alternate (traditional) method -- count from the date of infection or outcome
         elif method in ['infectious', 'outcome']:
 
+            # Store a mapping from each source to their date
+            source_dates = {}
+
             for t in self.tvec:
 
-                # Sources are easy -- count up the arrays
+                # Sources are easy -- count up the arrays for all the people who became infections on that day
                 if method == 'infectious':
                     inds = cvu.true(t == self.people.date_infectious) # Find people who became infectious on this timestep
                 elif method == 'outcome':
@@ -617,25 +618,29 @@ class Sim(cvb.BaseSim):
                     inds       = np.concatenate((recov_inds, dead_inds))
                 sources[t] = len(inds)
 
-                # Targets are hard -- loop over the transmission tree
+                # Create the mapping from sources to dates
                 for ind in inds:
-                    targets[t] += len(self.people.transtree.targets[ind])
+                    source_dates[ind] = t
+
+            # Targets are hard -- loop over the transmission tree
+            for transdict in self.people.infection_log:
+                source = transdict['source']
+                if source is not None and source in source_dates: # Skip seed infections and people with e.g. recovery after the end of the sim
+                    source_date = source_dates[source]
+                    targets[source_date] += 1
+
+                # for ind in inds:
+                #     targets[t] += len(self.people.transtree.targets[ind])
 
             # Populate the array -- to avoid divide-by-zero, skip indices that are 0
-            inds = sc.findinds(sources>0)
-            r_eff = np.zeros(self.npts)*np.nan
-            r_eff[inds] = targets[inds]/sources[inds]
+            r_eff = np.divide(targets, sources, out=np.full(self.npts, np.nan), where=sources > 0)
 
             # Use stored weights calculate the moving average over the window of timesteps, n
             num = np.nancumsum(r_eff * sources)
             num[window:] = num[window:] - num[:-window]
             den = np.cumsum(sources)
             den[window:] = den[window:] - den[:-window]
-
-            # Avoid dividing by zero
-            values = np.zeros(num.shape)*np.nan
-            ind = den > 0
-            values[ind] = num[ind]/den[ind]
+            values = np.divide(num, den, out=np.full(self.npts, np.nan), where=den > 0)
 
         # Method not recognized
         else:
@@ -662,19 +667,18 @@ class Sim(cvb.BaseSim):
         intervals2 = np.zeros(len(self.people))
         pos1 = 0
         pos2 = 0
-        targets = self.people.transtree.targets
         date_exposed = self.people.date_exposed
         date_symptomatic = self.people.date_symptomatic
-        for p in range(len(self.people)):
-            if len(targets[p])>0:
-                for target in targets[p]:
-                    target_ind = target['target']
-                    intervals1[pos1] = date_exposed[target_ind] - date_exposed[p]
-                    pos1 += 1
-                    if not np.isnan(date_symptomatic[p]):
-                        if not np.isnan(date_symptomatic[target_ind]):
-                            intervals2[pos2] = date_symptomatic[target_ind] - date_symptomatic[p]
-                            pos2 += 1
+
+        for infection in self.people.infection_log:
+            if infection['source'] is not None:
+                source_ind = infection['source']
+                target_ind = infection['target']
+                intervals1[pos1] = date_exposed[target_ind] - date_exposed[source_ind]
+                pos1 += 1
+                if np.isfinite(date_symptomatic[source_ind]) and np.isfinite(date_symptomatic[target_ind]):
+                    intervals2[pos2] = date_symptomatic[target_ind] - date_symptomatic[source_ind]
+                    pos2 += 1
 
         self.results['gen_time'] = {
                 'true':         np.mean(intervals1[:pos1]),

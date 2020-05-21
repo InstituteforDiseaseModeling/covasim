@@ -41,8 +41,7 @@ sims.trace = cv.Sim(pars, interventions=[tp, ct]) # Testing + contact tracing
 tts = sc.objdict()
 for key,sim in sims.items():
     sim.run()
-    sim.people.make_detailed_transtree()
-    tts[key] = sim.people.transtree.detailed
+    tts[key] = cv.TransTree(sim.people)
     if plot_sim:
         to_plot = cv.get_sim_plots()
         to_plot['Total counts']  = ['cum_infections', 'cum_diagnoses', 'cum_quarantined', 'n_quarantined']
@@ -52,11 +51,11 @@ for key,sim in sims.items():
 #%% Plotting
 
 if simple:
-    for sim in sims.values():
-        sim.people.transtree.plot()
+    for tt in tts.values():
+        tt.plot()
 
 if animated:
-    # for sim in sims.values()[0]:
-    sim.people.transtree.animate(animate_days=animate_days)
+    for tt in tts.values():
+        tt.animate(animate=False)
 
 sc.toc(tstart)

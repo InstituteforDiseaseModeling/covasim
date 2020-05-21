@@ -15,10 +15,16 @@ __all__ = ['People']
 class People(cvb.BasePeople):
     '''
     A class to perform all the operations on the people.
+
+    Args:
+        pars (dict): the sim parameters, e.g. sim.pars -- must have pop_size and n_days keys
+        strict (bool): whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set
+        kwargs (dict): the actual data, e.g. from a popdict, being specified
+
     '''
 
-    def __init__(self, pars=None, pop_size=None, **kwargs):
-        super().__init__(pars, pop_size)
+    def __init__(self, pars, strict=True, **kwargs):
+        super().__init__(pars)
 
         # Set person properties -- mostly floats
         for key in self.meta.person:
@@ -49,7 +55,10 @@ class People(cvb.BasePeople):
         if 'contacts' in kwargs:
             self.add_contacts(kwargs.pop('contacts'))
         for key,value in kwargs.items():
-            self.set(key, value)
+            if strict:
+                self.set(key, value)
+            else:
+                self[key] = value
 
         return
 
@@ -98,8 +107,6 @@ class People(cvb.BasePeople):
         self.flows['new_critical']    += self.check_critical()
         self.flows['new_deaths']      += self.check_death()
         self.flows['new_recoveries']  += self.check_recovery()
-        self.flows['new_diagnoses']   += self.check_diagnosed()
-        self.flows['new_quarantined'] += self.check_quar()
 
         return
 
@@ -139,12 +146,6 @@ class People(cvb.BasePeople):
             self.contacts[lkey].validate()
 
         return self.contacts
-
-
-    def make_detailed_transtree(self):
-        ''' Convenience function to avoid repeating the people object '''
-        self.transtree.make_detailed(self)
-        return
 
 
     #%% Methods for updating state
@@ -214,12 +215,25 @@ class People(cvb.BasePeople):
 
 
     def check_diagnosed(self):
-        ''' Check for new diagnoses '''
-        inds = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None)
-        self.diagnosed[inds]   = True
-        self.quarantined[inds] = False # If you are diagnosed, you are isolated, not in quarantine
-        self.date_end_quarantine[inds] = np.nan # Clear end quarantine time
-        return len(inds)
+        '''
+        Check for new diagnoses. Since most data are reported with diagnoses on
+        the date of the test, this function reports counts not for the number of
+        people who received a positive test result on a day, but rather, the number
+        of people who were tested on that day who are schedule to be diagnosed in
+        the future.
+        '''
+
+        # Handle people who tested today who will be diagnosed in future
+        test_pos_inds = self.check_inds(self.diagnosed, self.date_pos_test, filter_inds=None) # Find people who will be diagnosed in future
+        self.date_pos_test[test_pos_inds] = np.nan # Clear date of having will-be-positive test
+
+        # Handle people who were actually diagnosed today
+        diag_inds  = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
+        self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
+        self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
+        self.date_end_quarantine[diag_inds] = np.nan # Clear end quarantine time
+
+        return len(test_pos_inds)
 
 
     def check_quar(self):
@@ -275,7 +289,7 @@ class People(cvb.BasePeople):
             inds     (array): array of people to infect
             hosp_max (bool):  whether or not there is an acute bed available for this person
             icu_max  (bool):  whether or not there is an ICU bed available for this person
-            source   (int):   source person of this infection (None if an importation or seed infection)
+            source   (array): source indices of the people who transmitted this infection (None if an importation or seed infection)
             layer    (str):   contact layer this infection was transmitted on
 
         Returns:
@@ -303,14 +317,9 @@ class People(cvb.BasePeople):
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
 
-        # Update the transmission tree
+        # Record transmissions
         for i, target in enumerate(inds):
-            if source is not None:
-                transdict = dict(source=source[i], target=target, date=self.t, layer=layer)
-                self.transtree.targets[source[i]].append(transdict)
-            else:
-                transdict = dict(source=None, target=target, date=self.t, layer=layer)
-            self.transtree.linelist[target] = transdict
+            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)
@@ -401,7 +410,9 @@ class People(cvb.BasePeople):
         not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
         final_inds    = not_diagnosed[not_lost]
 
+        # Store the date the person will be diagnosed, as well as the date they took the test which will come back positive
         self.date_diagnosed[final_inds] = self.t + test_delay
+        self.date_pos_test[final_inds] = self.t
 
         return
 

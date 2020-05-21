@@ -4,6 +4,24 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.1.7 (2020-05-19)
+--------------------------
+- Diagnoses are now reported on the day the test was conducted, not the day the person gets their diagnosis. This is to better align with data (which is reported this way), and to avoid a bug in which test yield could be >100%. A new attribute, ``date_pos_test``, was added to the ``sim.people`` object in order to track the date on which a person is given the test which will (after ``test_delay`` days) come back positive.
+- An "overview" plotting feature has been added for sims and scenarios: simply use ``sim.plot(to_plot='overview')`` to use. This plots almost all of the simulation outputs on one screen.
+- It is now possible to set ``pop_type = None`` if you are supplying a custom population.
+- Population creation functions (including the ``People`` class) have been tidied up with additional docstrings added.
+- Duplication between pre- and post-step state checking has been removed.
+- GitHub info: PR `537 <https://github.com/amath-idm/covasim/pull/537>`__, previous head ``2d55c38``
+
+
+
+Version 1.1.6 (2020-05-19)
+--------------------------
+- Created an ``analysis.py`` file to support different types of analysis.
+- Moved ``transtree`` from ``sim.people`` into its own class: thus instead of ``sim.people.make_detailed_transtree()``, the new syntax is ``tt = cv.TransTree(sim.people)``.
+- GitHub info: PR `531 <https://github.com/amath-idm/covasim/pull/531>`__, previous head ``998116c``
+
+
 Version 1.1.5 (2020-05-18)
 --------------------------
 - Added extra flexibility for targeting interventions by index of a person, for example, by age.
