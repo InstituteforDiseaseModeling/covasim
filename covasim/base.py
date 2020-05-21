@@ -156,6 +156,14 @@ class BaseSim(ParsObj):
             return 0
 
     @property
+    def scaled_pop_size(self):
+        ''' Get the total population size, i.e. the number of agents times the scale factor -- if it fails, assume none '''
+        try:
+            return self['pop_size']*self['pop_scale']
+        except: # If it's None or missing
+            return 0
+
+    @property
     def npts(self):
         ''' Count the number of time points '''
         try:

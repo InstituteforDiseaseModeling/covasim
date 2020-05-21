@@ -285,6 +285,8 @@ class Sim(cvb.BaseSim):
         self.results['n_susceptible'].scale = 'static'
 
         # Other variables
+        self.results['prevalence']    = init_res('Prevalence', scale=False)
+        self.results['incidence']     = init_res('Incidence', scale=False)
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
         self.results['doubling_time'] = init_res('Doubling time', scale=False)
         self.results['test_yield']    = init_res('Testing yield', scale=False)
@@ -560,11 +562,25 @@ class Sim(cvb.BaseSim):
 
     def compute_results(self, verbose=None):
         ''' Perform final calculations on the results '''
+        self.compute_prev_inci()
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
         self.compute_likelihood()
         self.compute_summary(verbose=verbose)
+        return
+
+
+    def compute_prev_inci(self):
+        '''
+        Compute prevalence and incidence. Prevalence is the current number of infected
+        people divided by the population size. Incidence is the number of new infections
+        per day per 100,000 people.
+        '''
+        n_exposed = self.results['n_exposed'].values # Number of positive tests
+        new_infections = self.results['new_infections'].values # Total number of tests
+        self.results['prevalence'][:] = n_exposed/self.scaled_pop_size # Calculate the prevalence
+        self.results['incidence'][:] = new_infections/self.scaled_pop_size*100e3 # Calculate the incidence
         return
 
 
