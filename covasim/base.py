@@ -683,7 +683,7 @@ class BasePeople(sc.prettyobj):
 
         # Check that the keys match
         contact_layer_keys = set(self.contacts.keys())
-        layer_keys    = self.layer_keys()
+        layer_keys    = set(self.layer_keys())
         if contact_layer_keys != layer_keys:
             errormsg = f'Parameters layers {layer_keys} are not consistent with contact layers {contact_layer_keys}'
             raise ValueError(errormsg)

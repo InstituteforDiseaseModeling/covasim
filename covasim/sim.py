@@ -134,16 +134,11 @@ class Sim(cvb.BaseSim):
         uninitialized sim), or by assuming a default (if none of the above are
         available).
         '''
-        layer_keys = None # e.g. ['h', 's', 'w', 'c'] for hybrid
-        if self.people is not None:
-            layer_keys = list(self.people.contacts.keys())
-        elif self.popdict is not None:
-            layer_keys = list(self.popdict['layer_keys'])
-        elif isinstance(self['beta_layer'], dict):
-            layer_keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
-        else:
-            layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
-        return layer_keys
+        try:
+            keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
+        except:
+            keys = []
+        return keys
 
 
     def reset_layer_pars(self, pars=None, layer_keys=None, force=False):
@@ -189,7 +184,7 @@ class Sim(cvb.BaseSim):
         # Handle mismatches with the population
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
-            if pop_keys != layer_keys:
+            if pop_keys != set(layer_keys):
                 errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
                 raise sc.KeyNotFoundError(errormsg)
 
