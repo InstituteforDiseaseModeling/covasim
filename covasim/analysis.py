@@ -373,15 +373,41 @@ class TransTree(sc.prettyobj):
         return fig
 
 
-    def plot_histogram(self, bins=None):
-        ''' Plots a histogram of the number of people infected '''
-        fig = pl.figure(dpi=150)
+    def plot_histogram(self, bins=None, fig_args=None, width=0.8):
+        ''' Plots a histogram of the number of transmissions '''
         if bins is None:
             max_infections = self.n_targets.max()
-            bins = np.arange(0, max_infections+1)
-        pl.hist(self.n_targets, bins, width=0.8)
-        pl.xlabel('Number of transmissions')
-        pl.ylabel('Number of occurrences')
+            bins = np.arange(0, max_infections+2)
+
+        # Analysis
+        counts = np.histogram(self.n_targets, bins)[0]
+        bins = bins[:-1] # Remove last bin since it's an edge
+        total_counts = counts*bins
+        n_bins = len(bins)
+        n_trans = sum(total_counts)
+
+        fig_args = sc.mergedicts(dict(figsize=(18,7), dpi=150))
+
+        fig = pl.figure(**fig_args)
+
+        pl.subplot(1,3,1)
+        pl.bar(bins, counts, width=width)
+        pl.xlabel('Number of transmissions per person')
+        pl.ylabel('Frequency')
+
+        pl.subplot(1,3,2)
+        pl.bar(bins, total_counts, width=width)
+        pl.xlabel('Number of transmissions total')
+        pl.ylabel('Frequency')
+
+        pl.subplot(1,3,3)
+        total = 0
+        for i in range(n_bins):
+            new = total_counts[i]/n_trans*100
+            pl.bar(bins[i:], new, width=width, bottom=total)
+            total += new
+            pl.xlabel('Share attributable to this number of transmissions per person')
+            pl.ylabel('Proportion of transmissions (%)')
 
         return fig
 
