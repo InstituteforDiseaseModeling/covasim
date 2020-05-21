@@ -149,17 +149,10 @@ class Sim(cvb.BaseSim):
             force (bool): reset the parameters even if they already exist
         '''
         if layer_keys is None:
-            default_layer_keys = self.layer_keys() # Grab the current keys
-            pop_layer_keys = None
             if self.people is not None: # If people exist
-                pop_layer_keys = self.people.contacts.keys()
+                layer_keys = self.people.contacts.keys()
             elif self.popdict is not None:
-                pop_layer_keys = self.popdict['layer_keys']
-            if pop_layer_keys is None:
-                layer_keys = default_layer_keys
-            else:
-                layer_keys = [k for k in default_layer_keys if k in pop_layer_keys]
-                layer_keys += [k for k in pop_layer_keys if k not in layer_keys]
+                layer_keys = self.popdict['layer_keys']
         cvpar.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
         return
 
