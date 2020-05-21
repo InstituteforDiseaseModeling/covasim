@@ -32,7 +32,8 @@ class Sim(cvb.BaseSim):
         label (str): the name of the simulation (useful to distinguish in batch runs)
         simfile (str): the filename for this simulation, if it's saved (default: creation date)
         popfile (str): the filename to load/save the population for this simulation
-        load_pop (bool): whether or not to load the population from the named file
+        load_pop (bool): whether to load the population from the named file
+        save_pop (bool): whether to save the population to the named file
         kwargs (dict): passed to make_pars()
 
     **Examples**::
@@ -41,9 +42,9 @@ class Sim(cvb.BaseSim):
         sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, **kwargs):
+    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, save_pop=False, **kwargs):
         # Create the object
-        default_pars = cvpar.make_pars(**kwargs) # Start with default pars
+        default_pars = cvpar.make_pars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
@@ -52,6 +53,8 @@ class Sim(cvb.BaseSim):
         self.simfile       = simfile  # The filename of the sim
         self.datafile      = datafile # The name of the data file
         self.popfile       = popfile  # The population file
+        self.load_pop      = load_pop # Whether to load the population
+        self.save_pop      = save_pop # Whether to save the population
         self.data          = None     # The actual data
         self.popdict       = None     # The population dictionary
         self.t             = None     # The current time in the simulation
@@ -63,8 +66,8 @@ class Sim(cvb.BaseSim):
         # Now update everything
         self.set_metadata(simfile, label) # Set the simulation date and filename
         self.load_data(datafile, datacols) # Load the data, if provided
-        self.update_pars(pars)             # Update the parameters, if provided
-        if load_pop:
+        self.update_pars(pars, **kwargs)             # Update the parameters, if provided
+        if self.load_pop:
             self.load_population(popfile)      # Load the population, if provided
 
         return
@@ -75,7 +78,7 @@ class Sim(cvb.BaseSim):
         pars = sc.mergedicts(pars, kwargs)
         if pars:
             if pars.get('pop_type'):
-                cvpar.reset_layer_pars(pars)
+                cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
@@ -104,41 +107,99 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def initialize(self, save_pop=False, load_pop=False, popfile=None, **kwargs):
+    def initialize(self, **kwargs):
         '''
-        Perform all initializations.
+        Perform all initializations, including validating the parameters, setting
+        the random number seed, creating the results structure, initializing the
+        people, validating the layer parameters (which requires the people),
+        and initializing the interventions.
 
         Args:
-            save_pop (bool): if true, save the population to popfile
-            load_pop (bool): if true, load the population from popfile
-            popfile (str): filename to load/save the population
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed
         self.init_results() # Create the results stucture
-        self.init_people(save_pop=save_pop, load_pop=load_pop, popfile=popfile, **kwargs) # Create all the people (slow)
+        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
+        self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.init_interventions()
         self.initialized = True
         return
 
 
-    def reset_layer_pars(self, layer_keys=None, force=True):
+    def layer_keys(self):
+        '''
+        Attempt to retrieve the current layer keys, in the following order: from
+        the people object (for an initialized sim), from the popdict (for one in
+        the process of being initialized), from the beta_layer parameter (for an
+        uninitialized sim), or by assuming a default (if none of the above are
+        available).
+        '''
+        try:
+            keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
+        except:
+            keys = []
+        return keys
+
+
+    def reset_layer_pars(self, layer_keys=None, force=False):
         '''
         Reset the parameters to match the population.
 
         Args:
-            force (bool): reset the pars even if they already exist
+            layer_keys (list): override the default layer keys (use stored keys by default)
+            force (bool): reset the parameters even if they already exist
         '''
-        if layer_keys is None and self.people is not None:
-            layer_keys = self.people.contacts.keys()
+        if layer_keys is None:
+            if self.people is not None: # If people exist
+                layer_keys = self.people.contacts.keys()
+            elif self.popdict is not None:
+                layer_keys = self.popdict['layer_keys']
         cvpar.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
         return
 
 
-    def validate_pars(self):
-        ''' Some parameters can take multiple types; this makes them consistent '''
+    def validate_layer_pars(self):
+        '''
+        Handle layer parameters, since they need to be validated after the population
+        creation, rather than before.
+        '''
+
+        # First, try to figure out what the layer keys should be and perform basic type checking
+        layer_keys = self.layer_keys()
+        layer_pars = cvpar.layer_pars # The names of the parameters that are specified by layer
+        for lp in layer_pars:
+            val = self[lp]
+            if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
+                self[lp] = {k:val for k in layer_keys}
+
+        # Handle key mismaches
+        for lp in layer_pars:
+            lp_keys = set(self.pars[lp].keys())
+            if not lp_keys == set(layer_keys):
+                errormsg = f'Layer parameters have inconsistent keys with the layer keys {layer_keys}:'
+                for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
+                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
+                raise sc.KeyNotFoundError(errormsg)
+
+        # Handle mismatches with the population
+        if self.people is not None:
+            pop_keys = set(self.people.contacts.keys())
+            if pop_keys != set(layer_keys):
+                errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
+                raise sc.KeyNotFoundError(errormsg)
+
+        return
+
+
+    def validate_pars(self, validate_layers=True):
+        '''
+        Some parameters can take multiple types; this makes them consistent.
+
+        Args:
+            validate_layers (bool): whether to validate layer parameters as well via validate_layer_pars() -- usually yes, except during initialization
+        '''
 
         # Handle types
         for key in ['pop_size', 'pop_infected', 'pop_size']:
@@ -173,39 +234,7 @@ class Sim(cvb.BaseSim):
                 errormsg = f'You must supply one of n_days and end_day, not "{n_days}" and "{end_day}"'
                 raise ValueError(errormsg)
 
-        # Layer keys -- first, try to figure out what the layer keys should be
-        layer_keys = None # e.g. household, school
-        if self.people is not None:
-            layer_keys = set(self.people.contacts.keys())
-        elif isinstance(self['beta_layer'], dict):
-            layer_keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
-        else:
-            layer_keys = ['a'] # Assume this by default, corresponding to random/no layers
-
-        # Layer keys -- convert scalar layer parameters to dictionaries
-        layer_pars = cvpar.layer_pars # The names of the parameters that are specified by layer
-        for lp in layer_pars:
-            val = self[lp]
-            if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
-                self[lp] = {k:val for k in layer_keys}
-
-        # Layer keys -- handle key mismaches
-        for lp in layer_pars:
-            lp_keys = set(self.pars[lp].keys())
-            if not lp_keys == set(layer_keys):
-                errormsg = f'Layer parameters have inconsistent keys:'
-                for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
-                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
-                raise sc.KeyNotFoundError(errormsg)
-
-        # Layer keys -- handle mismatches with the population
-        if self.people is not None:
-            pop_keys = set(self.people.contacts.keys())
-            if pop_keys != layer_keys:
-                errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
-                raise sc.KeyNotFoundError(errormsg)
-
-        # Moving on, handle population data
+        # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
         choice = self['pop_type']
         if choice and choice not in popdata_choices:
@@ -218,6 +247,10 @@ class Sim(cvb.BaseSim):
         for i,interv in enumerate(self['interventions']):
             if isinstance(interv, dict): # It's a dictionary representation of an intervention
                 self['interventions'][i] = cvi.InterventionDict(**interv)
+
+        # Optionally handle layer parameters
+        if validate_layers:
+            self.validate_layer_pars()
 
         return
 
@@ -252,6 +285,8 @@ class Sim(cvb.BaseSim):
         self.results['n_susceptible'].scale = 'static'
 
         # Other variables
+        self.results['prevalence']    = init_res('Prevalence', scale=False)
+        self.results['incidence']     = init_res('Incidence', scale=False)
         self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
         self.results['doubling_time'] = init_res('Doubling time', scale=False)
         self.results['test_yield']    = init_res('Testing yield', scale=False)
@@ -261,7 +296,7 @@ class Sim(cvb.BaseSim):
             scale = 1
         else:
             scale = self['pop_scale']
-        self.rescale_vec   = scale*np.ones(self.npts)
+        self.rescale_vec   = scale*np.ones(self.npts) # Not included in the results, but used to scale them
         self.results['t']    = self.tvec
         self.results['date'] = self.datevec
         self.results_ready   = False
@@ -276,6 +311,7 @@ class Sim(cvb.BaseSim):
 
         Args:
             popfile (str): name of the file to load
+            kwargs (dict): passed to sc.makefilepath()
         '''
         if popfile is None and self.popfile is not None:
             popfile = self.popfile
@@ -289,6 +325,7 @@ class Sim(cvb.BaseSim):
                 raise ValueError(errormsg)
             if self['verbose']:
                 print(f'Loaded population from {filepath}')
+            self.reset_layer_pars(force=False, layer_keys=self.popdict['layer_keys']) # Ensure that layer keys match the loaded population
         return
 
 
@@ -301,6 +338,7 @@ class Sim(cvb.BaseSim):
             load_pop (bool): if true, load the population from popfile
             popfile (str): filename to load/save the population
             verbose (int): detail to prnt
+            kwargs (dict): passed to cv.make_people()
         '''
 
         # Handle inputs
@@ -312,8 +350,8 @@ class Sim(cvb.BaseSim):
             self.load_population(popfile=popfile)
 
         # Actually make the people
-        cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
-        self.people.initialize()
+        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
+        self.people.initialize() # Fully initialize the people
 
         # Create the seed infections
         inds = cvu.choose(self['pop_size'], self['pop_infected'])
@@ -331,7 +369,7 @@ class Sim(cvb.BaseSim):
 
 
     def rescale(self):
-        ''' Dynamically rescale the population '''
+        ''' Dynamically rescale the population -- used during step() '''
         if self['rescale']:
             t = self.t
             pop_scale = self['pop_scale']
@@ -346,7 +384,6 @@ class Sim(cvb.BaseSim):
                     n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
                     new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
                     self.people.make_susceptible(new_sus_inds)
-                    # print(f"Rescaled by {scaling_ratio} on {self.datevec[self.t]} because {n_not_sus/n_people}")#, 2, self['verbose'])
         return
 
 
@@ -430,14 +467,15 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, verbose=None, **kwargs):
+    def run(self, do_plot=False, until=None, verbose=None, restore_pars=True, **kwargs):
         '''
         Run the simulation.
 
         Args:
             do_plot (bool): whether to plot
             until (int): day to run until
-            verbose (int): level of detail to print
+            verbose (int): level of detail to print (otherwise uses self['verbose'])
+            restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             kwargs (dict): passed to self.plot()
 
         Returns:
@@ -451,6 +489,8 @@ class Sim(cvb.BaseSim):
         else:
             self.validate_pars() # We always want to validate the parameters before running
             self.init_interventions() # And interventions
+        if restore_pars:
+            orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
         if verbose is None:
             verbose = self['verbose']
         if until:
@@ -486,6 +526,8 @@ class Sim(cvb.BaseSim):
         # End of time loop; compute cumulative results outside of the time loop
         self.finalize(verbose=verbose) # Finalize the results
         sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
+        if restore_pars:
+            self.pars = orig_pars # Restore the original parameters
         if do_plot: # Optionally plot
             self.plot(**kwargs)
 
@@ -520,11 +562,27 @@ class Sim(cvb.BaseSim):
 
     def compute_results(self, verbose=None):
         ''' Perform final calculations on the results '''
+        self.compute_prev_inci()
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
         self.compute_likelihood()
         self.compute_summary(verbose=verbose)
+        return
+
+
+    def compute_prev_inci(self):
+        '''
+        Compute prevalence and incidence. Prevalence is the current number of infected
+        people divided by the number of people who are alive. Incidence is the number
+        of new infections per day divided by the susceptible population.
+        '''
+        n_exposed = self.results['n_exposed'].values # Number of people currently infected
+        n_alive = self.scaled_pop_size - self.results['cum_deaths'].values # Number of people still alive
+        n_susceptible = self.results['n_susceptible'].values # Number of people still susceptible
+        new_infections = self.results['new_infections'].values # Number of new infections
+        self.results['prevalence'][:] = n_exposed/n_alive # Calculate the prevalence
+        self.results['incidence'][:] = new_infections/n_susceptible # Calculate the incidence
         return
 
 
@@ -597,9 +655,13 @@ class Sim(cvb.BaseSim):
             mean_inf     = date_outcome.mean() - date_inf.mean()
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
-            values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
-            if len(values) >= 3: # Can't smooth arrays shorter than this
-                values = sc.smooth(values, smoothing)
+            raw_values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
+            if len(raw_values) >= 3: # Can't smooth arrays shorter than this since the default smoothing kernel has length 3
+                values = sc.smooth(raw_values, smoothing)
+                values[:smoothing] = raw_values[:smoothing] # To avoid numerical effects, replace the beginning and end with the original
+                values[-smoothing:] = raw_values[-smoothing:]
+            else:
+                values = raw_values
 
         # Alternate (traditional) method -- count from the date of infection or outcome
         elif method in ['infectious', 'outcome']:
@@ -767,7 +829,8 @@ class Sim(cvb.BaseSim):
             plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
+            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
+            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
             as_dates     (bool): Whether to plot the x-axis as dates or time points
             dateformat   (str):  Date string format, e.g. '%B %d'
             interval     (int):  Interval between tick marks

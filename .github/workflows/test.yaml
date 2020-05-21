@@ -42,6 +42,3 @@ jobs:
       - name: Run unit tests
         working-directory: ./tests/unittests
         run: pytest test*.py --durations=0 # Run actual tests
-      - name: Run cruise ship tests
-        working-directory: ./covasim/cruise_ship
-        run: pytest test*.py

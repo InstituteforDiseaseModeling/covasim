@@ -99,7 +99,7 @@ Module structure
 ================
 
 All core model code is located in the ``covasim`` subfolder; standard usage is
-``import covasim as cv``. The other subfolders, ``cruise_ship``, ``data``, and ``webapp``, are
+``import covasim as cv``. The other subfolders, ``data``, and ``webapp``, are
 also described below.
 
 The model consists of two core classes: the ``Person`` class (which contains
@@ -124,14 +124,6 @@ The structure of the ``covasim`` folder is as follows, in the order in which the
 * ``analysis.py``: The ``TransTree`` class, and other classes and functions for analyzing simulations.
 
 
-Cruise ship
------------
-
-A version of the Covasim model specifically adapted for modeling the Diamond
-Princess cruise ship. It uses its own parameters file (``parameters.py``) and has
-slight variations to the model (``model.py``).
-
-
 Data
 ----
 
@@ -153,7 +145,7 @@ Other folders
 Please see the readme in each subfolder for more information.
 
 
-bin
+Bin
 ---
 
 This folder contains a command-line interface (CLI) version of Covasim; example usage::
@@ -161,42 +153,52 @@ This folder contains a command-line interface (CLI) version of Covasim; example 
   covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
 
 Note: the CLI is currently not compatible with Windows. You will need to add
-this folder to your path to run from other folders.
+this folder to your path to run from other folders. See the `bin README`_ for more information.
+
+.. _bin README: ./bin
 
 
-data
+Data
 ----
 
 Scripts to automatically scrape data (including demographics and COVID epidemiology data),
-and the data files themselves (which are not part of the repository).
+and the data files themselves (which are not part of the repository). See the `data README`_ for more information.
+
+.. _data README: ./data
 
 
-docker
+Docker
 ------
 
 This folder contains the ``Dockerfile`` and other files that allow Covasim to be
-run as a webapp via Docker.
+run as a webapp via Docker. See the `Docker README`_ for more information.
+
+.. _Docker README: ./docker
 
 
-examples
+Examples
 --------
 
-This folder contains demonstrations of simple Covasim usage.
+This folder contains demonstrations of simple Covasim usage, including an early application of Covasim to the Diamond Princess cruise ship. See the `examples README`_ for more information.
+
+.. _examples README: ./examples
 
 
-licenses
+Licenses
 --------
 
 Licensing information and legal notices.
 
 
-tests
+Tests
 -----
 
-Integration, development, and unit tests.
+Integration, development, and unit tests. While not (yet) beautifully curated, these folders contain many usage examples. See the `tests README`_ for more information.
+
+.. _tests README: ./tests
 
 
-sweep
+Sweep
 -----
 
 Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `sweep README`_ for more information.

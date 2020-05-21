@@ -265,22 +265,48 @@ class MultiSim(sc.prettyobj):
             return None
 
 
-    def plot(self, *args, **kwargs):
-        ''' Convenience method for plotting -- arguments passed to Sim.plot() '''
+    def plot(self, inds=None, alpha_range=None, plot_args=None, show_args=None, *args, **kwargs):
+        '''
+        Convenience method for plotting -- arguments passed to Sim.plot(). If
+        plotting multiple sims,
+
+        Args:
+            inds (list): if not combined or reduced, the indices of the simulations to plot (if None, plot all)
+            alpha_range (list): if not combined or reduced, a 2-element list/tuple/array providing the range of alpha values to use to distinguish the lines
+        '''
+        # Plot a single curve, possibly with a range
         if self.which in ['combined', 'reduced']:
             fig = self.base_sim.plot(*args, **kwargs)
+
+        # PLot individual lines
         else:
+
+            # Initialize
             fig = None
             orig_setylim = kwargs.get('setylim', True)
             kwargs['legend_args'] = sc.mergedicts({'show_legend':True}, kwargs.get('legend_args')) # Only plot the legend the first time
-            for s,sim in enumerate(self.sims):
-                if s != 0:
-                    kwargs['legend_args']['show_legend'] = False
-                if s == len(self.sims)-1:
+
+            # Handle indices and alpha
+            if inds is None:
+                inds = np.arange(len(self.sims))
+            if alpha_range is None:
+                alpha_range = [0.2, 0.8]
+            n_sims = len(inds)
+            alphas = np.linspace(alpha_range[0], alpha_range[1], n_sims)
+
+            # Plot
+            for s,ind in enumerate(inds):
+                sim = self.sims[ind]
+                if s > 0:
+                    show_args = False # Only show things like data the first time it's plotting
+                if s == len(inds)-1:
                     kwargs['setylim'] = orig_setylim
                 else:
                     kwargs['setylim'] = False
-                fig = sim.plot(fig=fig, *args, **kwargs)
+
+                plot_args = sc.mergedicts({'alpha':alphas[s]}, plot_args)
+                fig = sim.plot(fig=fig, plot_args=plot_args, show_args=show_args, *args, **kwargs)
+
         return fig
 
 
@@ -370,7 +396,7 @@ class Scenarios(cvb.ParsObj):
     Args:
         sim (Sim or None): if supplied, use a pre-created simulation as the basis for the scenarios
         metapars (dict): meta-parameters for the run, e.g. number of runs; see make_metapars() for structure
-        scenarios (dict): a dictionary defining the scenarios; see default_scenario for structure
+        scenarios (dict): a dictionary defining the scenarios; see examples folder for examples; see below for baseline
         basepars (dict): a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
         scenfile (str): a filename for saving (defaults to the creation date)
 
@@ -391,7 +417,7 @@ class Scenarios(cvb.ParsObj):
             scenfile = f'covasim_scenarios_{datestr}.scens'
         self.scenfile = scenfile
 
-        # Handle scenarios -- by default, create a baseline scenario
+        # Handle scenarios -- by default, create the simplest possible baseline scenario
         if scenarios is None:
             scenarios = {'baseline':{'name':'Baseline', 'pars':{}}}
         self.scenarios = scenarios
@@ -544,7 +570,8 @@ class Scenarios(cvb.ParsObj):
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             fill_args    (dict): Dictionary of kwargs to be passed to pl.fill_between()
-            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend()
+            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
+            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
             as_dates     (bool): Whether to plot the x-axis as dates or time points
             dateformat   (str):  Date string format, e.g. '%B %d'
             interval     (int):  Interval between tick marks

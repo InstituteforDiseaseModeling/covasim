@@ -49,12 +49,21 @@ def InterventionDict(which, pars):
 
 class Intervention:
     '''
-    Abstract class for interventions
+    Base class for interventions. By default, interventions are printed using a
+    dict format, which they can be recreated from. To display all the attributes
+    of the intervention, use disp() instead.
+
+    Args:
+        label (str): a label for the intervention (used for plotting, and for ease of identification)
+        show_label (bool): whether or not to include the label, if provided, in the legend
+        do_plot (bool): whether or not to plot the intervention
+        line_args (dict): arguments passed to pl.axvline() whe plotting
     '''
-    def __init__(self, do_plot=None):
-        if do_plot is None:
-            do_plot = True
-        self.do_plot = do_plot # Whether or not to plot interventions
+    def __init__(self, label=None, show_label=True, do_plot=None, line_args=None):
+        self.label = label # e.g. "Close schools"
+        self.show_label = show_label # Show the label by default
+        self.do_plot = do_plot if do_plot is not None else True # Plot the intervention, including if None
+        self.line_args = sc.mergedicts(dict(linestyle='--', c=[0,0,0]), line_args) # Do not set alpha by default due to the issue of overlapping interventions
         self.days = [] # The start and end days of the intervention
         self.initialized = False # Whether or not it has been initialized
         return
@@ -70,6 +79,11 @@ class Intervention:
         except:
             output = sc.prepr(self)
         return output
+
+
+    def disp(self):
+        ''' Print a detailed representation of the intervention '''
+        return print(sc.prepr(self))
 
 
     def _store_args(self):
@@ -126,13 +140,17 @@ class Intervention:
         Returns:
             None
         '''
-        line_args = sc.mergedicts(dict(linestyle='--', c=[0,0,0]), kwargs)
+        line_args = sc.mergedicts(self.line_args, kwargs)
         if self.do_plot or self.do_plot is None:
             if ax is None:
                 ax = pl.gca()
             for day in self.days:
                 if day is not None:
-                    ax.axvline(day, **line_args)
+                    if self.show_label: # Choose whether to include the label in the legend
+                        label = self.label
+                    else:
+                        label = None
+                    ax.axvline(day, label=label, **line_args)
         return
 
 
@@ -167,15 +185,16 @@ class dynamic_pars(Intervention):
 
     Args:
         pars (dict): described above
-        do_plot (bool): whether or not to plot the intervention
+        kwargs (dict): passed to Intervention()
 
     **Examples**::
 
         interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'rel_death_prob':{'days':30, 'vals':2.0}}) # Change beta, and make diagnosed people stop transmitting
     '''
 
-    def __init__(self, pars, do_plot=None):
-        super().__init__(do_plot=do_plot)
+    def __init__(self, pars, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
         subkeys = ['days', 'vals']
         for parkey in pars.keys():
             for subkey in subkeys:
@@ -189,7 +208,6 @@ class dynamic_pars(Intervention):
             if len_days != len_vals:
                 raise ValueError(f'Length of days ({len_days}) does not match length of values ({len_vals}) for parameter {parkey}')
         self.pars = pars
-        self._store_args()
         return
 
 
@@ -219,7 +237,7 @@ class sequence(Intervention):
     Args:
         days (list): the days on which to start applying each intervention
         interventions (list): the interventions to apply on those days
-        do_plot (bool): whether or not to plot the intervention
+        kwargs (dict): passed to Intervention()
 
     **Example**::
 
@@ -229,12 +247,12 @@ class sequence(Intervention):
                 ])
     '''
 
-    def __init__(self, days, interventions, do_plot=None):
-        super().__init__(do_plot=do_plot)
+    def __init__(self, days, interventions, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
         assert len(days) == len(interventions)
         self.days = days
         self.interventions = interventions
-        self._store_args()
         return
 
 
@@ -268,8 +286,7 @@ class change_beta(Intervention):
         days (int or array): the day or array of days to apply the interventions
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
         layers (str or list): the layers in which to change beta
-        do_plot (bool): whether or not to plot the intervention
-
+        kwargs (dict): passed to Intervention()
 
     **Examples**::
 
@@ -277,13 +294,13 @@ class change_beta(Intervention):
         interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
     '''
 
-    def __init__(self, days, changes, layers=None, do_plot=None):
-        super().__init__(do_plot=do_plot)
+    def __init__(self, days, changes, layers=None, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
         self.days       = sc.dcp(days)
         self.changes    = sc.dcp(changes)
         self.layers     = sc.dcp(layers)
         self.orig_betas = None
-        self._store_args()
         return
 
 
@@ -337,7 +354,7 @@ class clip_edges(Intervention):
         start_day (int): the day to isolate contacts
         end_day (int): the day to end isolating contacts
         change (float or dict): the proportion of contacts to retain, a la change_beta (1 = no change, 0 = no transmission)
-        do_plot (bool): whether or not to plot the intervention
+        kwargs (dict): passed to Intervention()
 
     **Examples**::
 
@@ -345,15 +362,15 @@ class clip_edges(Intervention):
         interv = cv.clip_edges(start_day=25, end_day=35, change={'s':0.1}) # On day 25, remove 90% of school contacts, and on day 35, restore them
     '''
 
-    def __init__(self, start_day, change=None, end_day=None, verbose=False, do_plot=None):
-        super().__init__(do_plot=do_plot)
+    def __init__(self, start_day, change=None, end_day=None, verbose=False, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
         self.start_day  = start_day
         self.end_day    = end_day
         self.change     = change
         self.verbose    = verbose
         self.layer_keys = None
         self.contacts   = None
-        self._store_args()
         return
 
 
@@ -429,6 +446,41 @@ class clip_edges(Intervention):
 __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 
+def get_subtargets(subtarget, sim):
+    '''
+    A small helper function to see if subtargeting is a list of indices to use,
+    or a function that needs to be called. If a function, it must take a single
+    argument, a sim object, and return a list of indices. Also validates the values.
+    Currently designed for use with testing interventions, but could be generalized
+    to other interventions.
+
+    Args:
+        subtarget (dict): dict with keys 'inds' and 'vals'; see test_num() for examples of a valid subtarget dictionary
+        sim (Sim): the simulation object
+    '''
+
+    # Validation
+    if 'inds' not in subtarget:
+        errormsg = f'The subtarget dict must have keys "inds" and "vals", but you supplied {subtarget}'
+        raise ValueError(errormsg)
+
+    # Handle the two options of type
+    if callable(subtarget['inds']): # A function has been provided
+        subtarget_inds = subtarget['inds'](sim) # Call the function to get the indices
+    else:
+        subtarget_inds = subtarget['inds'] # The indices are supplied directly
+
+    # Validate the values
+    subtarget_vals = subtarget['vals']
+    if sc.isiterable(subtarget_vals):
+        if len(subtarget_vals) != len(subtarget_inds):
+            errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'
+            raise ValueError(errormsg)
+
+
+    return subtarget_inds, subtarget_vals
+
+
 class test_num(Intervention):
     '''
     Test a fixed number of people per day.
@@ -437,33 +489,34 @@ class test_num(Intervention):
         daily_tests (int or arr): number of tests per day; if integer, use that number every day
         symp_test (float): odds ratio of a symptomatic person testing
         quar_test (float): probability of a person in quarantine testing
-        subtarget (dict): subtarget intervention to people with particular indices (format: {'ind': array of indices, 'val': value to apply}
+        subtarget (dict or func): subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'vals': value(s) to apply}
         sensitivity (float): test sensitivity
         loss_prob (float): probability of the person being lost-to-follow-up
         test_delay (int): days for test result to be known
         start_day (int): day the intervention starts
         end_day (int): day the intervention ends
-        do_plot (bool): whether or not to plot the intervention
+        kwargs (dict): passed to Intervention()
 
     **Examples**::
 
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
-        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'val': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
     '''
 
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, subtarget=None, sensitivity=1.0, loss_prob=0, test_delay=0,
-                 start_day=0, end_day=None, do_plot=None):
-        super().__init__(do_plot=do_plot)
-        self.daily_tests = daily_tests #: Should be a list of length matching time
+                 start_day=0, end_day=None, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
+        self.daily_tests = daily_tests # Should be a list of length matching time
         self.symp_test   = symp_test   # Set probability of testing symptomatics
         self.quar_test   = quar_test
-        self.subtarget   = subtarget    # Set any other testing criteria, e.g. testing by age: {'inds': array of indices of people > 70, 'val': how much more/less likely these people are to tests}
+        self.subtarget   = subtarget  # Set any other testing criteria
         self.sensitivity = sensitivity
         self.loss_prob   = loss_prob
         self.test_delay  = test_delay
         self.start_day   = start_day
         self.end_day     = end_day
-        self._store_args()
         return
 
 
@@ -518,14 +571,8 @@ class test_num(Intervention):
 
         # Handle any other user-specified testing criteria
         if self.subtarget is not None:
-            subtarget_inds  = self.subtarget['inds']
-            if sc.isnumber(self.subtarget['val']):
-                test_probs[subtarget_inds] *= self.subtarget['val']
-            elif sc.isiterable(self.subtarget['val']):
-                if len(self.subtarget['val']) != len(subtarget_inds):
-                    raise ValueError(f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(self.subtarget["val"])})')
-                else:
-                    test_probs[subtarget_inds] = test_probs[subtarget_inds]*self.subtarget['val']
+            subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+            test_probs[subtarget_inds] = test_probs[subtarget_inds]*subtarget_vals
 
         # Don't re-diagnose people
         diag_inds  = cvu.true(sim.people.diagnosed)
@@ -548,11 +595,12 @@ class test_prob(Intervention):
         asymp_prob (float): Probability of testing an asymptomatic (unquarantined) person
         symp_quar_prob (float): Probability of testing a symptomatic quarantined person
         asymp_quar_prob (float): Probability of testing an asymptomatic quarantined person
-        subtarget (dict): subtarget intervention to people with particular indices (format: {'ind': array of indices, 'val': value to apply}
+        subtarget (dict): subtarget intervention to people with particular indices (see test_num() for details)
         test_sensitivity (float): Probability of a true positive
         loss_prob (float): Probability of loss to follow-up
         test_delay (int): How long testing takes
         start_day (int): When to start the intervention
+        kwargs (dict): passed to Intervention()
 
     **Examples**::
 
@@ -560,8 +608,9 @@ class test_prob(Intervention):
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
     '''
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, subtarget=None,
-                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, do_plot=None):
-        super().__init__(do_plot=do_plot)
+                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
         self.symp_quar_prob   = symp_quar_prob  if  symp_quar_prob is not None else  symp_prob
@@ -572,7 +621,6 @@ class test_prob(Intervention):
         self.test_delay       = test_delay
         self.start_day        = start_day
         self.end_day          = end_day
-        self._store_args()
         return
 
 
@@ -598,19 +646,19 @@ class test_prob(Intervention):
         quar_inds       = cvu.true(sim.people.quarantined)
         symp_quar_inds  = quar_inds[cvu.true(sim.people.symptomatic[quar_inds])]
         asymp_quar_inds = quar_inds[cvu.false(sim.people.symptomatic[quar_inds])]
-        if self.subtarget is not None:
-            subtarget_inds  = self.subtarget['inds']
         diag_inds       = cvu.true(sim.people.diagnosed)
 
-        test_probs = np.zeros(sim.n) # Begin by assigning equal tesitng probability to everyone
-        test_probs[symp_inds]       = self.symp_prob
-        test_probs[asymp_inds]      = self.asymp_prob
-        test_probs[symp_quar_inds]  = self.symp_quar_prob
-        test_probs[asymp_quar_inds] = self.asymp_quar_prob
+        # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
+        test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
+        test_probs[symp_inds]       = self.symp_prob       # People with symptoms
+        test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
+        test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
+        test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
         if self.subtarget is not None:
-            test_probs[subtarget_inds]  = self.subtarget['val']
-        test_probs[diag_inds]       = 0.
-        test_inds = cvu.binomial_arr(test_probs).nonzero()[0]
+            subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+            test_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
+        test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
+        test_inds = cvu.binomial_arr(test_probs).nonzero()[0] # Finally, calculate who actually tests
 
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
@@ -629,16 +677,16 @@ class contact_tracing(Intervention):
         end_day     (int):  intervention end day
         test_delay  (int):  number of days a test result takes
         presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
-        do_plot     (bool): whether or not to plot
+        kwargs      (dict): passed to Intervention()
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, do_plot=None):
-        super().__init__(do_plot=do_plot)
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
         self.trace_probs = trace_probs
         self.trace_time  = trace_time
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
-        self._store_args()
         return
 
 

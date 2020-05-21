@@ -1,5 +1,5 @@
 #!/bin/bash
-coverage run --source=../covasim --omit=*cruise_ship*,*webapp* -m pytest test_*
+coverage run --source=../covasim --omit=*webapp* -m pytest test_*
 echo 'Creating HTML report...'
 coverage html
 echo 'Running report...'
