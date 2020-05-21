@@ -356,8 +356,6 @@ class Sim(cvb.BaseSim):
         # Create the seed infections
         inds = cvu.choose(self['pop_size'], self['pop_infected'])
         self.people.infect(inds=inds, layer='seed_infection')
-        self.people.date_infectious[inds] = 0 # Ensure they start off being infectious
-        self.people.infectious[inds] = True
         return
 
 
