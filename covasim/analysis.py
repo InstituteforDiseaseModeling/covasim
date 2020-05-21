@@ -381,8 +381,11 @@ class TransTree(sc.prettyobj):
 
         # Analysis
         counts = np.histogram(self.n_targets, bins)[0]
+
         bins = bins[:-1] # Remove last bin since it's an edge
         total_counts = counts*bins
+        counts = counts*100/counts.sum()
+        total_counts = total_counts*100/total_counts.sum()
         n_bins = len(bins)
         n_trans = sum(total_counts)
         index = np.linspace(0, 100, len(self.n_targets))
@@ -391,37 +394,43 @@ class TransTree(sc.prettyobj):
         sorted_sum = sorted_sum/sorted_sum.max()*100
         change_inds = sc.findinds(np.diff(sorted_arr) != 0)
 
-        fig_args = sc.mergedicts(dict(figsize=(18,12), dpi=150))
-
+        # Plotting
+        fig_args = sc.mergedicts(dict(figsize=(14,10), dpi=150))
         fig = pl.figure(**fig_args)
+        pl.set_cmap('Spectral')
+        pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
 
-        pl.subplot(2,2,1)
-        pl.bar(bins, counts, width=width)
+        pl.subplot(1,2,1)
+        w05 = width*0.5
+        w025 = w05*0.5
+        pl.bar(bins-w025, counts, width=w05, facecolor='k', label='% of events')
+        pl.bar(bins+w025, total_counts, width=w05, facecolor=[0.8,0.1,0.3], label='% of transmissions (events × transmissions per event)')
         pl.xlabel('Number of transmissions per person')
-        pl.ylabel('Number of occurrences in the model')
+        pl.ylabel('Proportion of total (%)')
+        pl.xticks(ticks=bins)
+        pl.legend()
+        pl.title('Proportions of events and transmissions')
 
         pl.subplot(2,2,2)
-        pl.bar(bins, total_counts, width=width)
-        pl.xlabel('Number of transmissions per person')
-        pl.ylabel('Number of transmissions')
-
-        pl.subplot(2,2,3)
         total = 0
         for i in range(n_bins):
             new = total_counts[i]/n_trans*100
             pl.bar(bins[i:], new, width=width, bottom=total)
             total += new
             pl.xlabel('Number of transmissions per person')
-            pl.ylabel('Proportion of total transmissions (%)')
+            pl.ylabel('Proportion of infections caused (%)')
+        pl.title('Proportion of transmissions, by number of transmissions')
 
         pl.subplot(2,2,4)
         pl.plot(index, sorted_sum, lw=2)
         colors = sc.vectocolor(len(change_inds))
         for i in range(len(change_inds)):
-            pl.scatter([index[change_inds[i]]], [sorted_sum[change_inds[i]]], c=[colors[i]], label=f'Transmitted to {i+1} people')
+            pl.scatter([index[change_inds[i]]], [sorted_sum[change_inds[i]]], s=50, zorder=10, c=[colors[i]], label=f'Transmitted to {i+1} people')
         pl.xlabel('Proportion of population, ordered by the number of people they infected (%)')
         pl.ylabel('Proportion of infections caused (%)')
         pl.legend()
+        pl.ylim([0, 100])
+        pl.title('Proportion of transmissions, by proportion of population')
 
         return fig
 
