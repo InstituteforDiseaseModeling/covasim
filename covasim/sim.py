@@ -74,11 +74,10 @@ class Sim(cvb.BaseSim):
         ''' Ensure that metaparameters get used properly before being updated '''
         pars = sc.mergedicts(pars, kwargs)
         if pars:
-            if not create: # Don't run these on creation since the sim object hasn't been populated yet
-                if pars.get('pop_type'):
-                    self.reset_layer_pars(pars, force=False)
-                if pars.get('prog_by_age'):
-                    pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
+            if pars.get('pop_type'):
+                cvpar.reset_layer_pars(pars)
+            if pars.get('prog_by_age'):
+                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
 
@@ -141,20 +140,27 @@ class Sim(cvb.BaseSim):
         return keys
 
 
-    def reset_layer_pars(self, pars=None, layer_keys=None, force=False):
+    def reset_layer_pars(self, layer_keys=None, force=True):
         '''
         Reset the parameters to match the population.
 
         Args:
-            pars (dict): dictionary of parameters used for the update (use stored parameters by default)
             layer_keys (list): override the default layer keys (use stored keys by default)
             force (bool): reset the parameters even if they already exist
         '''
-        if pars is None:
-            pars = self.pars
         if layer_keys is None:
-            layer_keys = self.layer_keys()
-        cvpar.reset_layer_pars(pars=pars, layer_keys=layer_keys, force=force)
+            default_layer_keys = self.layer_keys() # Grab the current keys
+            pop_layer_keys = None
+            if self.people is not None: # If people exist
+                pop_layer_keys = self.people.contacts.keys()
+            elif self.popdict is not None:
+                pop_layer_keys = self.popdict['layer_keys']
+            if pop_layer_keys is None:
+                layer_keys = default_layer_keys
+            else:
+                layer_keys = [k for k in default_layer_keys if k in pop_layer_keys]
+                layer_keys += [k for k in pop_layer_keys if k not in layer_keys]
+        cvpar.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
         return
 
 
@@ -321,7 +327,7 @@ class Sim(cvb.BaseSim):
                 raise ValueError(errormsg)
             if self['verbose']:
                 print(f'Loaded population from {filepath}')
-            self.reset_layer_pars(force=False) # Ensure that layer keys match the loaded population
+            self.reset_layer_pars(force=False, layer_keys=self.popdict['layer_keys']) # Ensure that layer keys match the loaded population
         return
 
 
