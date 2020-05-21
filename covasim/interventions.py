@@ -615,7 +615,8 @@ class test_prob(Intervention):
         elif self.end_day is not None and t > self.end_day:
             return
 
-        symp_inds = cvu.true(sim.people.symptomatic)
+        # Define symptomatics, accounting for ILI prevalence
+        symp_inds  = cvu.true(sim.people.symptomatic)
         if self.ili_prev is not None:
             rel_t = t - self.start_day
             if rel_t < len(self.ili_prev):
@@ -623,10 +624,13 @@ class test_prob(Intervention):
                 ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
                 symp_inds = np.unique(np.concatenate((symp_inds, ili_inds)),0)
 
-        asymp_inds      = cvu.false(sim.people.symptomatic)
+        # Define asymptomatics: those who neither have COVID symptoms nor ILI symptoms
+        asymp_inds = np.setdiff1d(np.arange(sim['pop_size']), symp_inds)
+
+        # Handle quarantine and other testing criteria
         quar_inds       = cvu.true(sim.people.quarantined)
-        symp_quar_inds  = quar_inds[cvu.true(sim.people.symptomatic[quar_inds])]
-        asymp_quar_inds = quar_inds[cvu.false(sim.people.symptomatic[quar_inds])]
+        symp_quar_inds  = np.intersect1d(quar_inds, symp_inds)
+        asymp_quar_inds = np.intersect1d(quar_inds, asymp_inds)
         if self.subtarget is not None:
             subtarget_inds  = self.subtarget['inds']
         diag_inds       = cvu.true(sim.people.diagnosed)
