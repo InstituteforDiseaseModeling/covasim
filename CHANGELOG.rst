@@ -13,7 +13,7 @@ Version 1.2.0 (2020-05-20)
 - Layer keys are now stored inside the ``popdict``, for greater consistency handling loaded populations. Layer key handling has been simplified and made more robust.
 - Loading and saving a population is now controlled by the ``Sim`` object, not by the ``sim.initialize()`` method. Instead of ``sim = cv.Sim(); sim.initialize(save_pop=True)``, you can now simply do ``sim = cv.Sim(save_pop=True``, and it will save when the sim is initialized.
 - Added prevalence and incidence as results.
-- Added ``sim.scaled_pop_size``, which is the population size (the number of agents) times the population scale factor.
+- Added ``sim.scaled_pop_size``, which is the population size (the number of agents) times the population scale factor. This corresponds to the "actual" population size being modeled.
 - Moved the cruise ship code from the core folder into the examples folder.
 - GitHub info: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
 
