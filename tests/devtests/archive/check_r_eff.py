@@ -5,7 +5,7 @@ Check R_eff calculations
 import covasim as cv
 import pylab as pl
 
-sim = cv.Sim(n_days=20, rescale=True, pop_scale=10, pop_infected=1, rand_seed=12)
+sim = cv.Sim(n_days=20, rescale=True, pop_scale=10, pop_infected=10000, rand_seed=1)
 sim.run()
 # sim.compute_r_eff(method='infectious')
 
