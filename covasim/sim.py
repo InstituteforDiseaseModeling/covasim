@@ -656,10 +656,10 @@ class Sim(cvb.BaseSim):
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
             raw_values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
-            if len(raw_values) >= 3: # Can't smooth arrays shorter than this
+            if len(raw_values) >= 3: # Can't smooth arrays shorter than this since the default smoothing kernel has length 3
                 values = sc.smooth(raw_values, smoothing)
-                values[:smoothing] = raw_values[:smoothing] # To avoid numerical effects
-                values[-smoothing:] = raw_values[-smoothing:] # To avoid numerical effects
+                values[:smoothing] = raw_values[:smoothing] # To avoid numerical effects, replace the beginning and end with the original
+                values[-smoothing:] = raw_values[-smoothing:]
             else:
                 values = raw_values
 
