@@ -420,8 +420,9 @@ class TransTree(sc.prettyobj):
             new = total_counts[i]/n_trans*100
             pl.bar(bins[i:], new, width=width, bottom=total, facecolor=colors[i])
             total += new
-            pl.xlabel('Number of transmissions per person')
-            pl.ylabel('Proportion of infections caused (%)')
+        pl.xticks(ticks=bins)
+        pl.xlabel('Number of transmissions per person')
+        pl.ylabel('Proportion of infections caused (%)')
         pl.title('Proportion of transmissions, by number of transmissions')
 
         pl.subplot(2,2,4)
