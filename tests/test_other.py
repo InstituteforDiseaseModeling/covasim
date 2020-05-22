@@ -91,9 +91,10 @@ def test_base():
     len(contacts)
 
     # Transmission tree methods
-    transtree = cv.TransTree(ppl)
+    transtree = sim.make_transtree()
     transtree.plot()
     transtree.animate(animate=False)
+    transtree.plot_histogram()
 
     # Tidy up
     remove_files(json_path, sim_path)

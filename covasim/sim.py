@@ -13,8 +13,9 @@ from . import base as cvb
 from . import defaults as cvd
 from . import parameters as cvpar
 from . import population as cvpop
-from . import interventions as cvi
 from . import plotting as cvplt
+from . import interventions as cvi
+from . import analysis as cva
 
 # Specify all externally visible things this file defines
 __all__ = ['Sim']
@@ -815,6 +816,30 @@ class Sim(cvb.BaseSim):
         self.summary = summary
 
         return summary
+
+
+    def make_transtree(self, output=True, *args, **kwargs):
+        '''
+        Create a TransTree (transmission tree) object, for analyzing the pattern
+        of transmissions in the simulation. See cv.TransTree() for more information.
+
+        Args:
+            output (bool): whether or not to return the TransTree; if not, store in sim.results
+            args   (list): passed to cv.TransTree()
+            kwargs (dict): passed to cv.TransTree()
+
+        **Example**::
+
+            sim = cv.Sim()
+            sim.run()
+            tt = sim.make_transtree()
+        '''
+        tt = cva.TransTree(self, *args, **kwargs)
+        if output:
+            return tt
+        else:
+            self.results.transtree = tt
+            return
 
 
     def plot(self, *args, **kwargs):

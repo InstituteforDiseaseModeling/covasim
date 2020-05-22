@@ -33,14 +33,19 @@ class TransTree(sc.prettyobj):
     NX representation of the transmission tree.
 
     Args:
-        people (People): the sim.people object
+        sim (Sim): the sim object
     '''
 
-    def __init__(self, people):
+    def __init__(self, sim):
 
         # Pull out each of the attributes relevant to transmission
         attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}
 
+        # Pull out the people and some of the sim results
+        people = sim.people
+        self.sim_results = sc.objdict()
+        self.sim_results.t = sim.results['t']
+        self.sim_results.cum_infections = sim.results['cum_infections'].values
         self.n_days = people.t  # people.t should be set to the last simulation timestep in the output (since the Transtree is constructed after the people have been stepped forward in time)
         self.pop_size = len(people)
 
@@ -103,15 +108,11 @@ class TransTree(sc.prettyobj):
 
         This excludes edges corresponding to seeded infections without a source
         """
-        nx = import_nx()
-        if nx:
-            return nx.subgraph_view(self.graph, lambda x: x is not None).edges
-        else:
-            output = []
-            for d in self.infection_log:
-                if d['source'] is not None:
-                    output.append([d['source'], d['target']])
-            return output
+        output = []
+        for d in self.infection_log:
+            if d['source'] is not None:
+                output.append([d['source'], d['target']])
+        return output
 
 
     def make_detailed(self, people, reset=False):
@@ -434,6 +435,13 @@ class TransTree(sc.prettyobj):
         pl.legend()
         pl.ylim([0, 100])
         pl.title('Proportion of transmissions, by proportion of population')
+
+        pl.axes([0.25, 0.65, 0.2, 0.2])
+        berry = [0.8,0.1,0.2]
+        pl.plot(self.sim_results.t, self.sim_results.cum_infections, lw=2, c=berry)
+        pl.xlabel('Day')
+        pl.ylabel('Cumulative infections')
+
 
         return fig
 
