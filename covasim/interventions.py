@@ -454,6 +454,12 @@ def process_daily_data(daily_data, sim, start_day, as_int=False):
     data are supplied as a Pandas series or dataframe with a date index, then it
     reindexes it to match the start date of the simulation. Otherwise, it does
     nothing.
+
+    Args:
+        daily_data (number, dataframe, or series): the data to convert to standardized format
+        sim (Sim): the simulation object
+        start_day (date): the start day of the simulation, in already-converted datetime.date format
+        as_int (bool): whether to convert to an integer
     '''
     if sc.isnumber(daily_data):  # If a number, convert to an array
         if as_int: daily_data = int(daily_data) # Make it an integer
