@@ -8,7 +8,7 @@ Version 1.2.1 (2020-05-21)
 --------------------------
 - Added influenza-like illness (ILI) symptoms to testing interventions. If nonzero, this reduces the effectiveness of symptomatic testing, because you cannot distinguish between people who are symptomatic with COVID and people with other ILI symptoms.
 - Removed an unneeded ``copy()`` in ``single_run()`` because multiprocessing always produces copies of objects via the pickling process.
-- GitHub info: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``9b2dbfb``
+- GitHub info: PR `541 <https://github.com/amath-idm/covasim/pull/541>`__, previous head ``9b2dbfb``
 
 
 Version 1.2.0 (2020-05-20)
