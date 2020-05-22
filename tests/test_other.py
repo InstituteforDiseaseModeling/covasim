@@ -79,8 +79,7 @@ def test_base():
     ppl.person(50)
     people = ppl.to_people()
     ppl.from_people(people)
-    with pytest.raises(sc.KeyNotFoundError):
-        ppl.make_edgelist([{'invalid_key':[0,1,2]}])
+    ppl.make_edgelist([{'new_key':[0,1,2]}])
 
     # Contacts methods
     contacts = ppl.contacts
@@ -251,8 +250,8 @@ def test_population():
         sim.initialize()
 
     # Save/load
-    sim = cv.Sim(pop_size=100, popfile=pop_path)
-    sim.initialize(save_pop=True)
+    sim = cv.Sim(pop_size=100, popfile=pop_path, save_pop=True)
+    sim.initialize()
     cv.Sim(pop_size=100, popfile=pop_path, load_pop=True)
     with pytest.raises(ValueError):
         cv.Sim(pop_size=101, popfile=pop_path, load_pop=True)

@@ -20,15 +20,25 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plotly_sim'
 
 #%% Plotting helper functions
 
-def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None):
-    ''' Handle input arguments -- merge user input with defaults '''
+def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None):
+    ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
     args = sc.objdict()
     args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
     args.plot    = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-    args.scatter = sc.mergedicts({'s':70, 'marker':'s'}, scatter_args)
+    args.scatter = sc.mergedicts({'s':70, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
     args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
     args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
     args.legend  = sc.mergedicts({'loc': 'best', 'frameon':False}, legend_args)
+    args.show    = sc.mergedicts({'data':True, 'interventions':True, 'legend':True, }, show_args)
+
+    # Handle what to show
+    show_keys = ['uncertainty', 'data', 'ticks', 'interventions', 'legend']
+    args.show = {k:True for k in show_keys}
+    if show_args in [True, False]: # Handle all on or all off
+        args.show = {k:show_args for k in show_keys}
+    else:
+        args.show = sc.mergedicts(args.show, show_args)
+
     return args
 
 
@@ -207,13 +217,14 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covas
 #%% Core plotting functions
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
-         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-         log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
+         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
+         as_dates=True, dateformat=None, interval=None, n_cols=1, font_size=18, font_family=None,
+         grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
+         do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args)
     to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
@@ -231,21 +242,26 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
                 label = labels[reskey]
             else:
                 label = res.name
-            if res.low is not None and res.high is not None:
+            if res.low is not None and res.high is not None and args.show['uncertainty']:
                 ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
-            ax.plot(res_t, res.values, label=label, **args.plot, c=color)
-            plot_data(sim, ax, reskey, args.scatter) # Plot the data
-            reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-        plot_interventions(sim, ax) # Plot the interventions
-        title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
+            ax.plot(res_t, res.values, label=label, **args.plot, c=color) # Actually plot the sim!
+            if args.show['data']:
+                plot_data(sim, ax, reskey, args.scatter) # Plot the data
+            if args.show['ticks']:
+                reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+        if args.show['interventions']:
+            plot_interventions(sim, ax) # Plot the interventions
+        if args.show['legend']:
+            title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png')
 
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, as_dates=True, dateformat=None,
-         interval=None, n_cols=1, font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-         log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
+         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
+         as_dates=True, dateformat=None, interval=None, n_cols=1, font_size=18, font_family=None,
+         grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
+         do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
@@ -271,12 +287,17 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
                     label = labels[scenkey]
                 else:
                     label = scendata.name
-                ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
+                if args.show['uncertainty']:
+                    ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
                 ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot) # Plot the actual line
-                plot_data(sim, ax, reskey, args.scatter) # Plot the data
-                plot_interventions(sim, ax) # Plot the interventions
-                reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-        title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
+                if args.show['data']:
+                    plot_data(sim, ax, reskey, args.scatter) # Plot the data
+                if args.show['interventions']:
+                    plot_interventions(sim, ax) # Plot the interventions
+                if args.show['ticks']:
+                    reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+        if args.show['legend']:
+            title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim_scenarios.png')
 

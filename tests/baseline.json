@@ -28,7 +28,9 @@
     "n_critical": 29.0,
     "n_diagnosed": 0.0,
     "n_quarantined": 0.0,
-    "r_eff": 0.8340668844729986,
+    "prevalence": 0.2724087883489315,
+    "incidence": 0.0389281661866108,
+    "r_eff": 1.2600693510012957,
     "doubling_time": 11.954101758225063,
     "test_yield": 0.0
   }

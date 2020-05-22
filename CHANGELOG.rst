@@ -4,6 +4,22 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.2.0 (2020-05-20)
+--------------------------
+- Since parameters can be modified during the run, previously, the sim could not be rerun with the guarantee that the results would be the same. ``sim.run()`` now has a ``restore_pars`` argument (default true), which makes a copy of the parameters just prior to the run to ensure reproducibility.
+- In plotting, by default, data points are now slightly transparent and behind the lines to improve visibility of the model curve.
+- Interventions now have a ``label`` attribute, which can be helpful for finding them if many are used, e.g. ``[interv if interv.label=='Close schools' for interv in sim['interventions']``. There is also a new method, ``intervention.disp()``, which prints out detailed information about an intervention object.
+- Subtargeting of particular people in testing interventions can now be done via a function that gets called dynamically, avoiding the need to initialize the sim prior to creating the intervention.
+- Layer keys are now stored inside the ``popdict``, for greater consistency handling loaded populations. Layer key handling has been simplified and made more robust.
+- Loading and saving a population is now controlled by the ``Sim`` object, not by the ``sim.initialize()`` method. Instead of ``sim = cv.Sim(); sim.initialize(save_pop=True)``, you can now simply do ``sim = cv.Sim(save_pop=True``, and it will save when the sim is initialized.
+- Added prevalence and incidence as results.
+- Added ``sim.scaled_pop_size``, which is the population size (the number of agents) times the population scale factor. This corresponds to the "actual" population size being modeled.
+- Removed the numerical artifact at the beginning and end of the ``R_eff`` calculation due to the smoothing kernel, and confirmed that the spike in ``R_eff`` often seen at the beginning is due to the way the seed infectious progress from exposed to infectious, and not from a bug.
+- Added more flexibility to plotting, including a new ``show_args`` keyword, allowing particular aspects of plotting (e.g., the data or interventions) to be turned on or off.
+- Moved the cruise ship code from the core folder into the examples folder.
+- GitHub info: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
+
+
 Version 1.1.7 (2020-05-19)
 --------------------------
 - Diagnoses are now reported on the day the test was conducted, not the day the person gets their diagnosis. This is to better align with data (which is reported this way), and to avoid a bug in which test yield could be >100%. A new attribute, ``date_pos_test``, was added to the ``sim.people`` object in order to track the date on which a person is given the test which will (after ``test_delay`` days) come back positive.
