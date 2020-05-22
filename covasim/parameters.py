@@ -94,7 +94,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
     pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
     pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
-    pars['ili_prev']       = None # Optional way to pass in ILI symptom prevalence - can also be passed as an argument to testing interventions or read in from a datafile
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)

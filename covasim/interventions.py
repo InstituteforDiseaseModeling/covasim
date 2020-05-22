@@ -448,6 +448,13 @@ __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 # Process daily data
 def process_daily_data(daily_data, sim, start_day, as_int=False):
+    '''
+    This function performs one of two things: if the daily data are supplied as
+    a number, then it converts it to an array of the right length. If the daily
+    data are supplied as a Pandas series or dataframe with a date index, then it
+    reindexes it to match the start date of the simulation. Otherwise, it does
+    nothing.
+    '''
     if sc.isnumber(daily_data):  # If a number, convert to an array
         if as_int: daily_data = int(daily_data) # Make it an integer
         daily_data = np.array([daily_data] * sim.npts)
@@ -546,11 +553,7 @@ class test_num(Intervention):
 
         # Process daily data
         self.daily_tests = process_daily_data(self.daily_tests, sim, self.start_day)
-        if self.ili_prev is None:
-            if sim['ili_prev'] is not None: # See if it's stored in the sim
-                self.ili_prev = sim['ili_prev']
-        if self.ili_prev is not None:
-            self.ili_prev = process_daily_data(self.ili_prev, sim, self.start_day)
+        self.ili_prev    = process_daily_data(self.ili_prev,    sim, self.start_day)
 
         self.initialized = True
 
@@ -650,15 +653,10 @@ class test_prob(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
-        self.start_day   = sim.day(self.start_day)
-        self.end_day     = sim.day(self.end_day)
-        self.days        = [self.start_day, self.end_day]
-
-        if self.ili_prev is None:
-            if sim['ili_prev'] is not None: # See if it's stored in the sim
-                self.ili_prev = sim['ili_prev']
-        if self.ili_prev is not None:
-            self.ili_prev = process_daily_data(self.ili_prev, sim, self.start_day)
+        self.start_day = sim.day(self.start_day)
+        self.end_day   = sim.day(self.end_day)
+        self.days      = [self.start_day, self.end_day]
+        self.ili_prev  = process_daily_data(self.ili_prev, sim, self.start_day)
 
         self.initialized = True
 
