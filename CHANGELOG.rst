@@ -4,6 +4,13 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.2.1 (2020-05-21)
+--------------------------
+- Added influenza-like illness (ILI) symptoms to testing interventions. If nonzero, this reduces the effectiveness of symptomatic testing, because you cannot distinguish between people who are symptomatic with COVID and people with other ILI symptoms.
+- Removed an unneeded ``copy()`` in ``single_run()`` because multiprocessing always produces copies of objects via the pickling process.
+- GitHub info: PR `541 <https://github.com/amath-idm/covasim/pull/541>`__, previous head ``9b2dbfb``
+
+
 Version 1.2.0 (2020-05-20)
 --------------------------
 - Since parameters can be modified during the run, previously, the sim could not be rerun with the guarantee that the results would be the same. ``sim.run()`` now has a ``restore_pars`` argument (default true), which makes a copy of the parameters just prior to the run to ensure reproducibility.
