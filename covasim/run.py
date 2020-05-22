@@ -290,7 +290,7 @@ class MultiSim(sc.prettyobj):
             if inds is None:
                 inds = np.arange(len(self.sims))
             if alpha_range is None:
-                alpha_range = [0.2, 0.8]
+                alpha_range = [1.0, 0.3]
             n_sims = len(inds)
             alphas = np.linspace(alpha_range[0], alpha_range[1], n_sims)
 
@@ -304,8 +304,8 @@ class MultiSim(sc.prettyobj):
                 else:
                     kwargs['setylim'] = False
 
-                plot_args = sc.mergedicts({'alpha':alphas[s]}, plot_args)
-                fig = sim.plot(fig=fig, plot_args=plot_args, show_args=show_args, *args, **kwargs)
+                merged_plot_args = sc.mergedicts({'alpha':alphas[s]}, plot_args) # Need a new variable to avoid overwriting
+                fig = sim.plot(fig=fig, plot_args=merged_plot_args, show_args=show_args, *args, **kwargs)
 
         return fig
 
