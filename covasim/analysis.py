@@ -374,7 +374,7 @@ class TransTree(sc.prettyobj):
         return fig
 
 
-    def plot_histogram(self, bins=None, fig_args=None, width=0.8):
+    def plot_histogram(self, bins=None, fig_args=None, width=0.8, font_size=18):
         ''' Plots a histogram of the number of transmissions '''
         if bins is None:
             max_infections = self.n_targets.max()
@@ -396,7 +396,8 @@ class TransTree(sc.prettyobj):
         change_inds = sc.findinds(np.diff(sorted_arr) != 0)
 
         # Plotting
-        fig_args = sc.mergedicts(dict(figsize=(14,10), dpi=150))
+        fig_args = sc.mergedicts(dict(figsize=(24,15)))
+        pl.rcParams['font.size'] = font_size
         fig = pl.figure(**fig_args)
         pl.set_cmap('Spectral')
         pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
@@ -427,9 +428,9 @@ class TransTree(sc.prettyobj):
         pl.title('Proportion of transmissions, by number of transmissions')
 
         pl.subplot(2,2,4)
-        pl.plot(index, sorted_sum, lw=2, c='k', alpha=0.5)
+        pl.plot(index, sorted_sum, lw=3, c='k', alpha=0.5)
         for i in range(len(change_inds)):
-            pl.scatter([index[change_inds[i]]], [sorted_sum[change_inds[i]]], s=50, zorder=10, c=[colors[i]], label=f'Transmitted to {i+1} people')
+            pl.scatter([index[change_inds[i]]], [sorted_sum[change_inds[i]]], s=150, zorder=10, c=[colors[i]], label=f'Transmitted to {i+1} people')
         pl.xlabel('Proportion of population, ordered by the number of people they infected (%)')
         pl.ylabel('Proportion of infections caused (%)')
         pl.legend()
