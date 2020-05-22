@@ -93,7 +93,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
     pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
 
-
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
     reset_layer_pars(pars)

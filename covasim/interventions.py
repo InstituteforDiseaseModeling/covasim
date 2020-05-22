@@ -446,6 +446,32 @@ class clip_edges(Intervention):
 __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 
+# Process daily data
+def process_daily_data(daily_data, sim, start_day, as_int=False):
+    '''
+    This function performs one of two things: if the daily data are supplied as
+    a number, then it converts it to an array of the right length. If the daily
+    data are supplied as a Pandas series or dataframe with a date index, then it
+    reindexes it to match the start date of the simulation. Otherwise, it does
+    nothing.
+
+    Args:
+        daily_data (number, dataframe, or series): the data to convert to standardized format
+        sim (Sim): the simulation object
+        start_day (date): the start day of the simulation, in already-converted datetime.date format
+        as_int (bool): whether to convert to an integer
+    '''
+    if sc.isnumber(daily_data):  # If a number, convert to an array
+        if as_int: daily_data = int(daily_data) # Make it an integer
+        daily_data = np.array([daily_data] * sim.npts)
+    elif isinstance(daily_data, (pd.Series, pd.DataFrame)):
+        start_date = sim['start_day'] + dt.timedelta(days=start_day)
+        end_date = daily_data.index[-1]
+        dateindex = pd.date_range(start_date, end_date)
+        daily_data = daily_data.reindex(dateindex, fill_value=0).to_numpy()
+    return daily_data
+
+
 def get_subtargets(subtarget, sim):
     '''
     A small helper function to see if subtargeting is a list of indices to use,
@@ -486,11 +512,12 @@ class test_num(Intervention):
     Test a fixed number of people per day.
 
     Args:
-        daily_tests (int or arr): number of tests per day; if integer, use that number every day
+        daily_tests (int or arr or dataframe/series): number of tests per day; if integer, use that number every day
         symp_test (float): odds ratio of a symptomatic person testing
         quar_test (float): probability of a person in quarantine testing
         subtarget (dict or func): subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'vals': value(s) to apply}
         sensitivity (float): test sensitivity
+        ili_prev (float or array or dataframe/series): Prevalence of influenza-like-illness symptoms in the population
         loss_prob (float): probability of the person being lost-to-follow-up
         test_delay (int): days for test result to be known
         start_day (int): day the intervention starts
@@ -504,7 +531,8 @@ class test_num(Intervention):
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
     '''
 
-    def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, subtarget=None, sensitivity=1.0, loss_prob=0, test_delay=0,
+    def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, subtarget=None,
+                 ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
                  start_day=0, end_day=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
@@ -512,6 +540,7 @@ class test_num(Intervention):
         self.symp_test   = symp_test   # Set probability of testing symptomatics
         self.quar_test   = quar_test
         self.subtarget   = subtarget  # Set any other testing criteria
+        self.ili_prev    = ili_prev     # Should be a list of length matching time or a float or a dataframe
         self.sensitivity = sensitivity
         self.loss_prob   = loss_prob
         self.test_delay  = test_delay
@@ -528,14 +557,9 @@ class test_num(Intervention):
         self.end_day     = sim.day(self.end_day)
         self.days        = [self.start_day, self.end_day]
 
-        # Process daily tests -- has to be here rather than init so have access to the sim object
-        if sc.isnumber(self.daily_tests): # If a number, convert to an array
-            self.daily_tests = np.array([int(self.daily_tests)]*sim.npts)
-        elif isinstance(self.daily_tests, (pd.Series, pd.DataFrame)):
-            start_date = sim['start_day'] + dt.timedelta(days=self.start_day)
-            end_date = self.daily_tests.index[-1]
-            dateindex = pd.date_range(start_date, end_date)
-            self.daily_tests = self.daily_tests.reindex(dateindex, fill_value=0).to_numpy()
+        # Process daily data
+        self.daily_tests = process_daily_data(self.daily_tests, sim, self.start_day)
+        self.ili_prev    = process_daily_data(self.ili_prev,    sim, self.start_day)
 
         self.initialized = True
 
@@ -563,10 +587,17 @@ class test_num(Intervention):
 
         test_probs = np.ones(sim.n) # Begin by assigning equal testing probability to everyone
 
-        # Handle symptomatic and quarantine testing
+        # Handle symptomatic testing, taking into account prevalence of ILI symptoms
         symp_inds = cvu.true(sim.people.symptomatic)
-        quar_inds  = cvu.true(sim.people.quarantined)
+        if self.ili_prev is not None:
+            if rel_t < len(self.ili_prev):
+                n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
+                ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
+                symp_inds = np.unique(np.concatenate((symp_inds, ili_inds)),0)
         test_probs[symp_inds] *= self.symp_test
+
+        # Handle quarantine testing
+        quar_inds  = cvu.true(sim.people.quarantined)
         test_probs[quar_inds] *= self.quar_test
 
         # Handle any other user-specified testing criteria
@@ -597,6 +628,7 @@ class test_prob(Intervention):
         asymp_quar_prob (float): Probability of testing an asymptomatic quarantined person
         subtarget (dict): subtarget intervention to people with particular indices (see test_num() for details)
         test_sensitivity (float): Probability of a true positive
+        ili_prev (float or array): Prevalence of influenza-like-illness symptoms in the population
         loss_prob (float): Probability of loss to follow-up
         test_delay (int): How long testing takes
         start_day (int): When to start the intervention
@@ -607,7 +639,7 @@ class test_prob(Intervention):
         interv = cv.test_prob(symp_prob=0.1, asymp_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
     '''
-    def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, subtarget=None,
+    def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, subtarget=None, ili_prev=None,
                  test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
@@ -616,6 +648,7 @@ class test_prob(Intervention):
         self.symp_quar_prob   = symp_quar_prob  if  symp_quar_prob is not None else  symp_prob
         self.asymp_quar_prob  = asymp_quar_prob if asymp_quar_prob is not None else asymp_prob
         self.subtarget        = subtarget
+        self.ili_prev         = ili_prev
         self.test_sensitivity = test_sensitivity
         self.loss_prob        = loss_prob
         self.test_delay       = test_delay
@@ -626,10 +659,13 @@ class test_prob(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
-        self.start_day   = sim.day(self.start_day)
-        self.end_day     = sim.day(self.end_day)
-        self.days        = [self.start_day, self.end_day]
+        self.start_day = sim.day(self.start_day)
+        self.end_day   = sim.day(self.end_day)
+        self.days      = [self.start_day, self.end_day]
+        self.ili_prev  = process_daily_data(self.ili_prev, sim, self.start_day)
+
         self.initialized = True
+
         return
 
 
@@ -641,11 +677,24 @@ class test_prob(Intervention):
         elif self.end_day is not None and t > self.end_day:
             return
 
-        symp_inds       = cvu.true(sim.people.symptomatic)
-        asymp_inds      = cvu.false(sim.people.symptomatic)
+        # Define symptomatics, accounting for ILI prevalence
+        symp_inds  = cvu.true(sim.people.symptomatic)
+        if self.ili_prev is not None:
+            rel_t = t - self.start_day
+            if rel_t < len(self.ili_prev):
+                n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
+                ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
+                symp_inds = np.unique(np.concatenate((symp_inds, ili_inds)),0)
+
+        # Define asymptomatics: those who neither have COVID symptoms nor ILI symptoms
+        asymp_inds = np.setdiff1d(np.arange(sim['pop_size']), symp_inds)
+
+        # Handle quarantine and other testing criteria
         quar_inds       = cvu.true(sim.people.quarantined)
-        symp_quar_inds  = quar_inds[cvu.true(sim.people.symptomatic[quar_inds])]
-        asymp_quar_inds = quar_inds[cvu.false(sim.people.symptomatic[quar_inds])]
+        symp_quar_inds  = np.intersect1d(quar_inds, symp_inds)
+        asymp_quar_inds = np.intersect1d(quar_inds, asymp_inds)
+        if self.subtarget is not None:
+            subtarget_inds  = self.subtarget['inds']
         diag_inds       = cvu.true(sim.people.diagnosed)
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
