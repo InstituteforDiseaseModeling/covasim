@@ -1,5 +1,7 @@
 #!/bin/bash
 # Run both integration and unit tests
+# Requires pytest-parallel:
+#   pip install pytest-parallel
 
 # Change to root folder
 cd ..
@@ -8,10 +10,10 @@ cd ..
 echo "RUNNING ALL TESTS"
 
 echo "STEP 1: RUNNING INTEGRATION TESTS"
-pytest tests/test*.py
+pytest --workers auto tests/test*.py
 
 echo "STEP 2: RUNNING UNIT TESTS"
-pytest tests/unittests/test*.py
+pytest --workers auto tests/unittests/test*.py
 
 echo "STEP 3: RUNNING EXAMPLES"
-pytest ./examples/*.py
+pytest --workers auto ./examples/*.py
