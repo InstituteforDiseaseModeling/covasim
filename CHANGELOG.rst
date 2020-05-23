@@ -7,10 +7,10 @@ All notable changes to the codebase are documented in this file. Note: in many c
 Version 1.2.3 (2020-05-23)
 --------------------------
 - Added ``cv.savefig()``, which is an alias to Matplotlib's ``savefig()`` function, but which saves additional metadata in the figure file. This metadata can be loaded with the new ``cv.get_png_metdata()`` function.
-- Made major changes to ``MultiSim`` plotting, incorporating all the flexibility of both simulation and scenario plotting. By default, with a small number of runs (<= 5), it defaults to scenario-style plotting; else, it defaults to simulation-styleplotting.
+- Major changes to ``MultiSim`` plotting, incorporating all the flexibility of both simulation and scenario plotting. By default, with a small number of runs (<= 5), it defaults to scenario-style plotting; else, it defaults to simulation-style plotting.
 - Default scenario plotting options were updated (e.g., showing deaths instead of hospitalizations).
 - You may merge multiple multisims more merrily now, with e.g. ``msim = cv.MultiSim.merge(msim1, msim2)``.
-- Testing scripts (e.g. ``tests/run_tests``) have been updated to use ``pytest-parallel``, reducing wall-clock time by a factor of 5.
+- Test scripts (e.g. ``tests/run_tests``) have been updated to use ``pytest-parallel``, reducing wall-clock time by a factor of 5.
 - GitHub info: PR `552 <https://github.com/amath-idm/covasim/pull/552>`__, previous head ``28bf02b``
 
 
