@@ -7,6 +7,10 @@ All notable changes to the codebase are documented in this file. Note: in many c
 Version 1.2.2 (2020-05-22)
 --------------------------
 - Changed the syntax of ``cv.clip_edges()`` to match ``cv.change_beta()``. The old format of intervention ``cv.clip_edges(start_day=d1, end_day=d2, change=c)`` should now be written as ``cv.clip_edges(days=[d1, d2], changes=[c, 1.0])``.
+- Changed the syntax for the transmission tree: it now takes the ``Sim`` object rather than the ``People`` object, and typical usage is now ``tt = sim.make_transtree()``.
+- Plots now default to a maximum of 4 rows; this can be overridden using the ``n_cols`` argument, e.g. ``sim.plot(to_plot='overview', n_cols=2)``.
+- Various bugs with ``MultiSim`` plotting were fixed.
+- GitHub info: PR `551 <https://github.com/amath-idm/covasim/pull/551>`__, previous head ``07009eb``
 
 
 Version 1.2.1 (2020-05-21)
