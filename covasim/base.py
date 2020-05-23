@@ -1019,7 +1019,7 @@ class Layer(FlexDict):
         output = {}
         for key in self.meta_keys():
             output[key] = self[key][inds] # Copy to the output object
-            np.delete(self[key], inds) # Remove from the original
+            self[key] = np.delete(self[key], inds) # Remove from the original
         return output
 
 

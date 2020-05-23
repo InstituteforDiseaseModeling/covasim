@@ -428,44 +428,17 @@ class clip_edges(Intervention):
                 desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
                 prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
                 n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
-                if n_to_move>0: # We're moving from the sim to the intervention
-                    source = s_layer # Source is the simulation
-                    target = i_layer # Target is this intervention
+                from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
+                if from_sim: # We're moving from the sim to the intervention
                     inds = cvu.choose(max_n=n_sim, n=n_to_move)
+                    to_move = s_layer.pop_inds(inds)
+                    i_layer.append(to_move)
                 else: # We're moving from the intervention back to the sim
-                    source = i_layer # Source is this intervention
-                    target = s_layer # Target is the simulation
                     inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
+                    to_move = i_layer.pop_inds(inds)
+                    s_layer.append(to_move)
 
-                # Actually make the switch
-                to_move = source.pop_inds(inds)
-                target.append(to_move)
-
-
-                # layer_df = layer.to_df()
-                # to_move = layer_df.iloc[inds]
-                # if verbose:
-                #     print(f'Moving {prop_to_move} of {n_contacts} gives {n_to_move}. Before:\n{layer_df}\nTo move:\n{to_move}')
-                # self.contacts[lkey] = cvb.Layer().from_df(to_move) # Move them here
-                # if verbose:
-                #     print(f'Contacts here: {self.contacts[lkey]}')
-                # layer_df = layer_df.drop(layer_df.index[inds]) # Remove indices
-                # new_layer = cvb.Layer().from_df(layer_df) # Convert back
-                # new_layer.validate()
-                # sim.people.contacts[lkey] = new_layer
-                # if verbose:
-                #     print(f'Remaining contacts: {sim.people.contacts[lkey]}')
-
-        # At the end, move back
-        # if sim.t == self.end_day:
-        #     if verbose:
-        #         print(f'Before:\n{sim.people.contacts}')
-        #     sim.people.add_contacts(self.contacts)
-        #     if verbose:
-        #         print(f'After:\n{sim.people.contacts}')
-        #     self.contacts = None # Reset to save memory
-
-        # Ensure they get deleted
+        # Ensure the edges get deleted at the end
         if sim.t == sim.tvec[-1]:
             self.contacts = None # Reset to save memory
 
