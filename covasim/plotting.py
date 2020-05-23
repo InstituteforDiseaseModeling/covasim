@@ -33,7 +33,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     args.show    = sc.mergedicts({'data':True, 'interventions':True, 'legend':True, }, show_args)
 
     # Handle what to show
-    show_keys = ['uncertainty', 'data', 'ticks', 'interventions', 'legend']
+    show_keys = ['data', 'ticks', 'interventions', 'legend']
     args.show = {k:True for k in show_keys}
     if show_args in [True, False]: # Handle all on or all off
         args.show = {k:show_args for k in show_keys}
@@ -252,7 +252,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
             res_t = sim.results['t']
             color = set_line_options(colors, reskey, res.color) # Choose the color
             label = set_line_options(labels, reskey, res.name) # Choose the label
-            if res.low is not None and res.high is not None and args.show['uncertainty']:
+            if res.low is not None and res.high is not None:
                 ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
             ax.plot(res_t, res.values, label=label, **args.plot, c=color) # Actually plot the sim!
             if args.show['data']:
@@ -291,8 +291,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
                 res_y = scendata.best
                 color = set_line_options(colors, scenkey, default_colors[snum]) # Choose the color
                 label = set_line_options(labels, scenkey, scendata.name) # Choose the label
-                if args.show['uncertainty']:
-                    ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
+                ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
                 ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot) # Plot the actual line
                 if args.show['data']:
                     plot_data(sim, ax, reskey, args.scatter) # Plot the data

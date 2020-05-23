@@ -110,23 +110,34 @@ class MultiSim(sc.prettyobj):
         return keys
 
 
-    def run(self, *args, **kwargs):
+    def run(self, reduce=False, combine=False, *args, **kwargs):
         '''
         Run the actual sims
 
         Args:
+            reduce (bool): whether or not to reduce after running (see reduce())
+            combine (bool): whether or not to combine after running (see combine(), not compatible with reduce)
             kwargs (dict): passed to multi_run() and thence (in part) to sim.run()
 
         Returns:
             None (modifies MultiSim object in place)
         '''
+        # Handle which sims to use
         if self.sims is None:
             sims = self.base_sim
         else:
             sims = self.sims
 
+        # Run
         kwargs = sc.mergedicts(self.run_args, kwargs)
         self.sims = multi_run(sims, *args, **kwargs)
+
+        # Reduce or combine
+        if reduce:
+            self.reduce()
+        elif combine:
+            self.combine()
+
         return
 
 
@@ -138,42 +149,6 @@ class MultiSim(sc.prettyobj):
         self.which = None
         self.results = None
         return
-
-
-    def combine(self, output=False):
-        ''' Combine multiple sims into a single sim with scaled results '''
-
-        n_runs = len(self)
-        combined_sim = sc.dcp(self.sims[0])
-        combined_sim.parallelized = {'parallelized':True, 'combined':True, 'n_runs':n_runs}  # Store how this was parallelized
-        combined_sim['pop_size'] *= n_runs  # Record the number of people
-
-        for s,sim in enumerate(self.sims[1:]): # Skip the first one
-            if combined_sim.people:
-                combined_sim.people += sim.people
-            for key in sim.result_keys():
-                this_res = sim.results[key]
-                combined_sim.results[key].values += this_res.values
-
-        # For non-count results (scale=False), rescale them
-        for key in combined_sim.result_keys():
-            if not combined_sim.results[key].scale:
-                combined_sim.results[key].values /= n_runs
-
-        # Compute and store final results
-        combined_sim.compute_likelihood()
-        combined_sim.compute_summary(verbose=False)
-        self.orig_base_sim = self.base_sim
-        self.base_sim = combined_sim
-        self.results = combined_sim.results
-        self.summary = combined_sim.summary
-
-        self.which = 'combined'
-
-        if output:
-            return self.base_sim
-        else:
-            return
 
 
     def reduce(self, quantiles=None, output=False):
@@ -214,6 +189,42 @@ class MultiSim(sc.prettyobj):
         self.results = reduced_sim.results
         self.summary = reduced_sim.summary
         self.which = 'reduced'
+
+        if output:
+            return self.base_sim
+        else:
+            return
+
+
+    def combine(self, output=False):
+        ''' Combine multiple sims into a single sim with scaled results '''
+
+        n_runs = len(self)
+        combined_sim = sc.dcp(self.sims[0])
+        combined_sim.parallelized = {'parallelized':True, 'combined':True, 'n_runs':n_runs}  # Store how this was parallelized
+        combined_sim['pop_size'] *= n_runs  # Record the number of people
+
+        for s,sim in enumerate(self.sims[1:]): # Skip the first one
+            if combined_sim.people:
+                combined_sim.people += sim.people
+            for key in sim.result_keys():
+                this_res = sim.results[key]
+                combined_sim.results[key].values += this_res.values
+
+        # For non-count results (scale=False), rescale them
+        for key in combined_sim.result_keys():
+            if not combined_sim.results[key].scale:
+                combined_sim.results[key].values /= n_runs
+
+        # Compute and store final results
+        combined_sim.compute_likelihood()
+        combined_sim.compute_summary(verbose=False)
+        self.orig_base_sim = self.base_sim
+        self.base_sim = combined_sim
+        self.results = combined_sim.results
+        self.summary = combined_sim.summary
+
+        self.which = 'combined'
 
         if output:
             return self.base_sim
@@ -266,7 +277,7 @@ class MultiSim(sc.prettyobj):
             return None
 
 
-    def plot(self, to_plot=None, inds=None, plot_sims=False, color_by_sim=True, label_by_sim=None, colors=None, labels=None, alpha_range=None, plot_args=None, show_args=None, **kwargs):
+    def plot(self, to_plot=None, inds=None, plot_sims=False, color_by_sim=None, max_sims=5, colors=None, labels=None, alpha_range=None, plot_args=None, show_args=None, **kwargs):
         '''
         Plot all the sims  -- arguments passed to Sim.plot(). The
         behavior depends on whether or not combine() or reduce() has been called.
@@ -285,11 +296,12 @@ class MultiSim(sc.prettyobj):
             inds         (list) : if not combined or reduced, the indices of the simulations to plot (if None, plot all)
             plot_sims    (bool) : whether to plot individual sims, even if combine() or reduce() has been used
             color_by_sim (bool) : if True, set colors based on the simulation type; otherwise, color by result type; True implies a scenario-style plotting, False implies sim-style plotting
-            label_by_sim (bool) : if True, label the lines in the legend by the simulation rather than by the result type; implies color_by_sim is True
+            max_sims     (int)  : maximum number of sims to use with color-by-sim; can be overriden by other options
             colors       (list) : if supplied, override default colors for color_by_sim
             labels       (list) : if supplied, override default labels for color_by_sim
             alpha_range  (list) : a 2-element list/tuple/array providing the range of alpha values to use to distinguish the lines
-            labels       (list) : a list of labels to be used to
+            plot_args    (dict) : passed to sim.plot()
+            show_args    (dict) : passed to sim.plot()
             kwargs       (dict) : passed to sim.plot()
 
         **Examples**::
@@ -301,6 +313,7 @@ class MultiSim(sc.prettyobj):
             msim.reduce()
             msim.plot() # Plots the combined sim
         '''
+
         # Plot a single curve, possibly with a range
         if not plot_sims and self.which in ['combined', 'reduced']:
             fig = self.base_sim.plot(to_plot=to_plot, colors=colors, **kwargs)
@@ -313,17 +326,24 @@ class MultiSim(sc.prettyobj):
             orig_setylim = kwargs.get('setylim', True)
             kwargs['legend_args'] = sc.mergedicts({'show_legend':True}, kwargs.get('legend_args')) # Only plot the legend the first time
 
+            # Handle indices
+            if inds is None:
+                inds = np.arange(len(self.sims))
+            n_sims = len(inds)
+
+            # Handle what style of plotting to use:
+            if color_by_sim is None:
+                if n_sims <= max_sims:
+                    color_by_sim = True
+                else:
+                    color_by_sim = False
+
             # Handle what to plot
             if to_plot is None:
                 if color_by_sim:
                     to_plot = cvd.get_scen_plots()
                 else:
                     to_plot = cvd.get_sim_plots()
-
-            # Handle indices
-            if inds is None:
-                inds = np.arange(len(self.sims))
-            n_sims = len(inds)
 
             # Handle colors
             if colors is None:
@@ -339,35 +359,34 @@ class MultiSim(sc.prettyobj):
                 if color_by_sim:
                     alpha_range = [1.0, 1.0] # We're using color to distinguish sims, so don't need alpha
                 else:
-                    alpha_range = [1.0, 0.3] # We're using alpha to distinguish sims
+                    alpha_range = [0.8, 0.3] # We're using alpha to distinguish sims
             alphas = np.linspace(alpha_range[0], alpha_range[1], n_sims)
-
-            # Handle labels -- this seems like a very special case, but is actually the default for small numbers of runs
-            max_labels = 5
-            if (labels is None) and (color_by_sim is True) and (label_by_sim is None) and (n_sims <= max_labels):
-                label_by_sim = True
 
             # Plot
             for s,ind in enumerate(inds):
                 sim = self.sims[ind]
 
+                final_plot = (s == n_sims-1) # Check if this is the final plot
+
                 # Handle the legend and labels
-                if s > 0:
-                    show_args = False # Only show things like data the first time it's plotting
-                if s == len(inds)-1:
+                if final_plot:
+                    merged_show_args = show_args
                     kwargs['setylim'] = orig_setylim
                 else:
+                    merged_show_args = False # Only show things like data the last time it's plotting
                     kwargs['setylim'] = False
 
-                # Optionally set the label for the first max_labels sims
-                if labels is None and label_by_sim is True and s<max_labels:
+                # Optionally set the label for the first max_sims sims
+                if labels is None and color_by_sim is True and s<max_sims:
                     merged_labels = sim.label
-                else:
+                elif final_plot:
                     merged_labels = labels
+                else:
+                    merged_labels = ''
 
                 # Actually plot
                 merged_plot_args = sc.mergedicts({'alpha':alphas[s]}, plot_args) # Need a new variable to avoid overwriting
-                fig = sim.plot(fig=fig, colors=colors[s], labels=merged_labels, plot_args=merged_plot_args, show_args=show_args, **kwargs)
+                fig = sim.plot(fig=fig, to_plot=to_plot, colors=colors[s], labels=merged_labels, plot_args=merged_plot_args, show_args=merged_show_args, **kwargs)
 
         return fig
 
@@ -449,6 +468,31 @@ class MultiSim(sc.prettyobj):
 
         self.sims = sims # Restore
         return scenfile
+
+
+    @staticmethod
+    def merge(msim1, msim2, base=False):
+        '''
+        Convenience method for merging two MultiSim objects.
+
+        Args:
+            msim1, msim2 (MultiSim): the two MultiSims to merge
+            base (bool): if True, make a new list of sims from the multisim's two base sims; otherwise, merge the multisim's lists of sims
+
+        Returns:
+            msim (MultiSim): a new MultiSim object
+        '''
+
+        # Make a copy of the multisim
+        msim = MultiSim(base_sim=sc.dcp(msim1.base_sim))
+
+        # Handle different options for combining
+        if base: # Only keep the base sims
+            msim.sims = [sc.dcp(msim1.base_sim), sc.dcp(msim2.base_sim)]
+        else: # Keep all the sims
+            msim.sims = sc.dcp(msim1.sims) + sc.dcp(msim2.sims)
+
+        return msim
 
 
 class Scenarios(cvb.ParsObj):

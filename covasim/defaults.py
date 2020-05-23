@@ -215,11 +215,11 @@ def get_scen_plots(which='default'):
             'Cumulative infections': [
                 'cum_infections',
             ],
-            'Number of people currently infectious': [
-                'n_infectious',
+            'New infections per day': [
+                'new_infections',
             ],
-            'Number of people requiring hospitalization': [
-                'n_severe',
+            'Cumulative deaths': [
+                'cum_deaths',
             ]
         })
     elif which == 'overview':
