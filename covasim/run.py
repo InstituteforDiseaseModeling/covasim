@@ -8,6 +8,7 @@ import pandas as pd
 import sciris as sc
 from collections import defaultdict
 from . import misc as cvm
+from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
 from . import plotting as cvplt
@@ -280,16 +281,16 @@ class MultiSim(sc.prettyobj):
         other options.
 
         Args:
-            to_plot      (list): list or dict of which results to plot; see cv.get_sim_plots                                                                                                         ( ) for structure
-            inds         (list): if not combined or reduced, the indices of the simulations to plot                                                                                          ( if None, plot all)
-            plot_sims    (bool): whether to plot individual sims, even if combine                                                                                                            ( ) or reduce        ( ) has been used
-            color_by_sim (bool): if True, set colors based on the simulation type; otherwise, color by result type; True implies a scenario-style plotting, False implies sim-style plotting
-            label_by_sim (bool): if True, label the lines in the legend by the simulation rather than by the result type; implies color_by_sim is True
-            colors       (list): if supplied, override default colors for color_by_sim
-            labels       (list): if supplied, override default labels for color_by_sim
-            alpha_range  (list): a 2-element list/tuple/array providing the range of alpha values to use to distinguish the lines
-            labels       (list): a list of labels to be used to
-            kwargs       (dict): passed to sim.plot                                                                                                                                          ( )
+            to_plot      (list) : list or dict of which results to plot; see cv.get_sim_plots() for structure
+            inds         (list) : if not combined or reduced, the indices of the simulations to plot (if None, plot all)
+            plot_sims    (bool) : whether to plot individual sims, even if combine() or reduce() has been used
+            color_by_sim (bool) : if True, set colors based on the simulation type; otherwise, color by result type; True implies a scenario-style plotting, False implies sim-style plotting
+            label_by_sim (bool) : if True, label the lines in the legend by the simulation rather than by the result type; implies color_by_sim is True
+            colors       (list) : if supplied, override default colors for color_by_sim
+            labels       (list) : if supplied, override default labels for color_by_sim
+            alpha_range  (list) : a 2-element list/tuple/array providing the range of alpha values to use to distinguish the lines
+            labels       (list) : a list of labels to be used to
+            kwargs       (dict) : passed to sim.plot()
 
         **Examples**::
 
@@ -315,8 +316,9 @@ class MultiSim(sc.prettyobj):
             # Handle what to plot
             if to_plot is None:
                 if color_by_sim:
-
-
+                    to_plot = cvd.get_scen_plots()
+                else:
+                    to_plot = cvd.get_sim_plots()
 
             # Handle indices
             if inds is None:
@@ -340,16 +342,16 @@ class MultiSim(sc.prettyobj):
                     alpha_range = [1.0, 0.3] # We're using alpha to distinguish sims
             alphas = np.linspace(alpha_range[0], alpha_range[1], n_sims)
 
-            # Handle labels
-            if labels is None:
-                if label_by_sim is None:
-
-
-
+            # Handle labels -- this seems like a very special case, but is actually the default for small numbers of runs
+            max_labels = 5
+            if (labels is None) and (color_by_sim is True) and (label_by_sim is None) and (n_sims <= max_labels):
+                label_by_sim = True
 
             # Plot
             for s,ind in enumerate(inds):
                 sim = self.sims[ind]
+
+                # Handle the legend and labels
                 if s > 0:
                     show_args = False # Only show things like data the first time it's plotting
                 if s == len(inds)-1:
@@ -357,8 +359,15 @@ class MultiSim(sc.prettyobj):
                 else:
                     kwargs['setylim'] = False
 
+                # Optionally set the label for the first max_labels sims
+                if labels is None and label_by_sim is True and s<max_labels:
+                    merged_labels = sim.label
+                else:
+                    merged_labels = labels
+
+                # Actually plot
                 merged_plot_args = sc.mergedicts({'alpha':alphas[s]}, plot_args) # Need a new variable to avoid overwriting
-                fig = sim.plot(fig=fig, colors=colors[s], plot_args=merged_plot_args, show_args=show_args, **kwargs)
+                fig = sim.plot(fig=fig, colors=colors[s], labels=merged_labels, plot_args=merged_plot_args, show_args=show_args, **kwargs)
 
         return fig
 
