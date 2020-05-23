@@ -109,7 +109,7 @@ def test_interventions():
     sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, verbose=verbose)
 
     # Intervention conversion
-    ce = cv.InterventionDict(**{'which': 'clip_edges', 'pars': {'start_day': 10, 'end_day':30, 'change': 0.5, 'verbose':True}})
+    ce = cv.InterventionDict(**{'which': 'clip_edges', 'pars': {'days': [10, 30], 'changes': [0.5, 1.0]}})
     print(ce)
     with pytest.raises(sc.KeyNotFoundError):
         cv.InterventionDict(**{'which': 'invalid', 'pars': {'days': 10, 'changes': 0.5}})
@@ -206,7 +206,7 @@ def test_plotting():
     fig_path = 'plotting_test.png'
 
     # Create sim with data and interventions
-    ce = cv.clip_edges(**{'start_day': 10, 'change': 0.5})
+    ce = cv.clip_edges(**{'days': 10, 'changes': 0.5})
     sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, interventions=ce, verbose=verbose)
     sim.run(do_plot=True)
 
