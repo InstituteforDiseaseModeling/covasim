@@ -13,6 +13,7 @@ import datetime as dt
 import matplotlib.ticker as ticker
 import plotly.graph_objects as go
 from . import defaults as cvd
+from . import misc as cvm
 
 
 __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plotly_sim', 'plotly_people', 'plotly_animate']
@@ -196,27 +197,37 @@ def reset_ticks(ax, sim, interval, as_dates):
     return
 
 
-def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png'):
+def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
     ''' Handle saving, figure showing, and what value to return '''
 
     # Handle saving
     if do_save:
-        if fig_path is None: # No figpath provided - see whether do_save is a figpath
-            fig_path = default_name # Just give it a default name
-        fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-        pl.savefig(fig_path)
+        if fig_path is not None: # No figpath provided - see whether do_save is a figpath
+            fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
+        cvm.savefig(filename=fig_path) # Save the figure
 
-    # Show or close the figure
+    # Show the figure
     if do_show:
         pl.show()
-    else:
-        pl.close(fig)
 
     # Return the figure or figures
     if sep_figs:
         return figs
     else:
         return fig
+
+
+def set_line_options(input_args, reskey, default):
+    '''From the supplied line argument, usually a color or label, decide what to use '''
+    if input_args is not None:
+        if isinstance(input_args, dict): # If it's a dict, pull out this value
+            output = input_args[reskey]
+        else: # Otherwise, assume it's the same value for all
+            output = input_args
+    else:
+        output = default # Default value
+    return output
+
 
 
 #%% Core plotting functions
@@ -239,14 +250,8 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
         for reskey in keylabels:
             res = sim.results[reskey]
             res_t = sim.results['t']
-            if colors is not None:
-                color = colors[reskey]
-            else:
-                color = res.color
-            if labels is not None:
-                label = labels[reskey]
-            else:
-                label = res.name
+            color = set_line_options(colors, reskey, res.color) # Choose the color
+            label = set_line_options(labels, reskey, res.name) # Choose the label
             if res.low is not None and res.high is not None and args.show['uncertainty']:
                 ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
             ax.plot(res_t, res.values, label=label, **args.plot, c=color) # Actually plot the sim!
@@ -259,7 +264,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
         if args.show['legend']:
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim.png')
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
 
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
@@ -284,14 +289,8 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
             for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
                 res_y = scendata.best
-                if colors is not None:
-                    color = colors[scenkey]
-                else:
-                    color = default_colors[snum]
-                if labels is not None:
-                    label = labels[scenkey]
-                else:
-                    label = scendata.name
+                color = set_line_options(colors, scenkey, default_colors[snum]) # Choose the color
+                label = set_line_options(labels, scenkey, scendata.name) # Choose the label
                 if args.show['uncertainty']:
                     ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
                 ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot) # Plot the actual line
@@ -304,7 +303,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
         if args.show['legend']:
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covasim_scenarios.png')
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,

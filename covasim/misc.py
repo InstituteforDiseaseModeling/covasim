@@ -4,13 +4,14 @@ Miscellaneous functions that do not belong anywhere else
 
 import numpy as np
 import pandas as pd
+import pylab as pl
 import sciris as sc
 import datetime as dt
 import scipy.stats as sps
 from . import version as cvver
 
 
-__all__ = ['load_data', 'date', 'daydiff', 'load', 'save', 'check_version', 'git_info', 'get_doubling_time', 'poisson_test']
+__all__ = ['load_data', 'date', 'daydiff', 'git_info', 'load', 'save', 'savefig', 'get_png_metadata', 'check_version', 'get_doubling_time', 'poisson_test']
 
 
 def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
@@ -139,6 +140,41 @@ def daydiff(*args):
     return output
 
 
+def git_info(filename=None, check=False, old_info=None, die=False, verbose=True, **kwargs):
+    '''
+    Get current git information and optionally write it to disk.
+
+    Args:
+        filename (str): name of the file to write to or read from
+        check (bool): whether or not to compare two git versions
+        old_info (dict): dictionary of information to check against
+        die (bool): whether or not to raise an exception if the check fails
+
+    **Examples**::
+
+        cv.git_info('covasim_version.json') # Writes to disk
+        cv.git_info('covasim_version.json', check=True) # Checks that current version matches saved file
+    '''
+    info = sc.gitinfo(__file__)
+    if not check: # Just get information
+        if filename is not None:
+            output = sc.savejson(filename, info, **kwargs)
+        else:
+            output = info
+        return output
+    else:
+        if filename is not None:
+            old_info = sc.loadjson(filename, **kwargs)
+        string = ''
+        if info != old_info:
+            string = f'Git information differs: {info} vs. {old_info}'
+            if die:
+                raise ValueError(string)
+            elif verbose:
+                print(string)
+        return
+
+
 def load(*args, **kwargs):
     '''
     Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
@@ -173,6 +209,93 @@ def save(*args, **kwargs):
     return filepath
 
 
+def savefig(filename=None, dpi=None, comments=None, **kwargs):
+    '''
+    Wrapper for Matplotlib's savefig() function which automatically stores Covasim
+    metadata in the figure. By default, saves
+
+    Args:
+        filename (str): name of the file to save to (default, timestamp)
+        dpi (int): resolution of image (default 150)
+        comments (str): additional metadata to save to the figure
+        kwargs (dict): passed to savefig()
+
+
+    **Example**::
+
+        cv.Sim().run(do_plot=True)
+        filename = cv.savefig()
+    '''
+
+    # Handle inputs
+    dpi = kwargs.get('dpi', 150)
+    metadata = kwargs.get('metadata', {})
+
+    if filename is None:
+        now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
+        filename = f'covasim_{now}.png'
+
+    def get_caller():
+        ''' Try to get information on the calling function, but fail gracefully '''
+        try:
+            import inspect
+            result = inspect.getouterframes(inspect.currentframe(), 2)
+            frame = 2
+            fname = str(result[frame][1])
+            lineno = str(result[frame][2])
+            output = f'{fname}, line {lineno}'
+        except Exception as E:
+            output = f'Calling function information not available ({str(E)})'
+        return output
+
+    metadata = {}
+    metadata['Covasim version'] = cvver.__version__
+    gitinfo = git_info()
+    for key,value in gitinfo.items():
+        metadata[f'Covasim {key}'] = value
+    metadata['Covasim current time'] = sc.getdate()
+    metadata['Covasim calling file'] = get_caller()
+    if comments:
+        metadata['Covasim comments'] = comments
+
+    # Save the figure
+    pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
+    return filename
+
+
+def get_png_metadata(filename, output=False):
+    '''
+    Read metadata from a PNG file. For use with images saved with cv.savefig().
+    Requires pillow, an optional dependency.
+
+    Args:
+        filename (str): the name of the file to load the data from
+
+    **Example**::
+
+        cv.Sim().run(do_plot=True)
+        cv.savefig('covasim.png')
+        cv.get_png_metadata('covasim.png')
+    '''
+    try:
+        import PIL
+    except ImportError as E:
+        errormsg = f'Pillow import failed ({str(E)}), please install first (pip install pillow)'
+        raise ImportError(errormsg)
+    im = PIL.Image.open(filename)
+    metadata = {}
+    for key,value in im.info.items():
+        if key.startswith('Covasim'):
+            metadata[key] = value
+            if not output:
+                print(f'{key}: {value}')
+    if output:
+        return metadata
+    else:
+        return
+
+
+
 def check_version(expected, die=False, verbose=True, **kwargs):
     '''
     Get current git information and optionally write it to disk.
@@ -191,41 +314,6 @@ def check_version(expected, die=False, verbose=True, **kwargs):
         elif verbose:
             print(string)
     return compare
-
-
-def git_info(filename=None, check=False, old_info=None, die=False, verbose=True, **kwargs):
-    '''
-    Get current git information and optionally write it to disk.
-
-    Args:
-        filename (str): name of the file to write to or read from
-        check (bool): whether or not to compare two git versions
-        old_info (dict): dictionary of information to check against
-        die (bool): whether or not to raise an exception if the check fails
-
-    **Examples**::
-
-        cv.git_info('covasim_version.json') # Writes to disk
-        cv.git_info('covasim_version.json', check=True) # Checks that current version matches saved file
-    '''
-    info = sc.gitinfo(__file__)
-    if not check: # Just get information
-        if filename is not None:
-            output = sc.savejson(filename, info, **kwargs)
-        else:
-            output = info
-        return output
-    else:
-        if filename is not None:
-            old_info = sc.loadjson(filename, **kwargs)
-        string = ''
-        if info != old_info:
-            string = f'Git information differs: {info} vs. {old_info}'
-            if die:
-                raise ValueError(string)
-            elif verbose:
-                print(string)
-        return
 
 
 def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=None, moving_window=None, exp_approx=False, max_doubling_time=100, eps=1e-3, verbose=None):
