@@ -16,7 +16,6 @@ from .parameters    import *
 from .people        import *
 from .population    import *
 from .interventions import *
+from .analysis      import *
 from .sim           import *
 from .run           import *
-from .analysis      import *
-

@@ -33,19 +33,41 @@ class TransTree(sc.prettyobj):
     NX representation of the transmission tree.
 
     Args:
-        people (People): the sim.people object
+        sim (Sim): the sim object
     '''
 
-    def __init__(self, people):
+    def __init__(self, sim):
 
         # Pull out each of the attributes relevant to transmission
         attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}
 
+        # Pull out the people and some of the sim results
+        people = sim.people
+        self.sim_results = sc.objdict()
+        self.sim_results.t = sim.results['t']
+        self.sim_results.cum_infections = sim.results['cum_infections'].values
         self.n_days = people.t  # people.t should be set to the last simulation timestep in the output (since the Transtree is constructed after the people have been stepped forward in time)
         self.pop_size = len(people)
 
         # Include the basic line list
         self.infection_log = sc.dcp(people.infection_log)
+
+        # Parse into sources and targets
+        self.sources = [None for i in range(self.pop_size)]
+        self.targets = [[]   for i in range(self.pop_size)]
+
+        self.n_targets = np.nan+np.zeros(self.pop_size)
+        for entry in self.infection_log:
+            source = entry['source']
+            target = entry['target']
+            if source:
+                self.sources[target] = source # Each target has at most one source
+                self.targets[source].append(target) # Each source can have multiple targets
+        for i in range(self.pop_size):
+            if self.sources[i] is not None:
+                self.n_targets[i] = len(self.targets[i])
+        self.infected_inds = sc.findinds(~np.isnan(self.n_targets))
+        self.n_targets = self.n_targets[self.infected_inds]
 
         # Include the detailed transmission tree as well
         self.detailed = self.make_detailed(people)
@@ -86,15 +108,11 @@ class TransTree(sc.prettyobj):
 
         This excludes edges corresponding to seeded infections without a source
         """
-        nx = import_nx()
-        if nx:
-            return nx.subgraph_view(self.graph, lambda x: x is not None).edges
-        else:
-            output = []
-            for d in self.infection_log:
-                if d['source'] is not None:
-                    output.append([d['source'], d['target']])
-            return output
+        output = []
+        for d in self.infection_log:
+            if d['source'] is not None:
+                output.append([d['source'], d['target']])
+        return output
 
 
     def make_detailed(self, people, reset=False):
@@ -355,4 +373,76 @@ class TransTree(sc.prettyobj):
 
         return fig
 
+
+    def plot_histogram(self, bins=None, fig_args=None, width=0.8, font_size=18):
+        ''' Plots a histogram of the number of transmissions '''
+        if bins is None:
+            max_infections = self.n_targets.max()
+            bins = np.arange(0, max_infections+2)
+
+        # Analysis
+        counts = np.histogram(self.n_targets, bins)[0]
+
+        bins = bins[:-1] # Remove last bin since it's an edge
+        total_counts = counts*bins
+        # counts = counts*100/counts.sum()
+        # total_counts = total_counts*100/total_counts.sum()
+        n_bins = len(bins)
+        n_trans = sum(total_counts)
+        index = np.linspace(0, 100, len(self.n_targets))
+        sorted_arr = np.sort(self.n_targets)
+        sorted_sum = np.cumsum(sorted_arr)
+        sorted_sum = sorted_sum/sorted_sum.max()*100
+        change_inds = sc.findinds(np.diff(sorted_arr) != 0)
+
+        # Plotting
+        fig_args = sc.mergedicts(dict(figsize=(24,15)))
+        pl.rcParams['font.size'] = font_size
+        fig = pl.figure(**fig_args)
+        pl.set_cmap('Spectral')
+        pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
+        colors = sc.vectocolor(n_bins)
+
+        pl.subplot(1,2,1)
+        w05 = width*0.5
+        w025 = w05*0.5
+        pl.bar(bins-w025, counts, width=w05, facecolor='k', label='Number of events')
+        for i in range(n_bins):
+            label = 'Number of transmissions (events × transmissions per event)' if i==0 else None
+            pl.bar(bins[i]+w025, total_counts[i], width=w05, facecolor=colors[i], label=label)
+        pl.xlabel('Number of transmissions per person')
+        pl.ylabel('Count')
+        pl.xticks(ticks=bins)
+        pl.legend()
+        pl.title('Numbers of events and transmissions')
+
+        pl.subplot(2,2,2)
+        total = 0
+        for i in range(n_bins):
+            new = total_counts[i]/n_trans*100
+            pl.bar(bins[i:], new, width=width, bottom=total, facecolor=colors[i])
+            total += new
+        pl.xticks(ticks=bins)
+        pl.xlabel('Number of transmissions per person')
+        pl.ylabel('Proportion of infections caused (%)')
+        pl.title('Proportion of transmissions, by number of transmissions')
+
+        pl.subplot(2,2,4)
+        pl.plot(index, sorted_sum, lw=3, c='k', alpha=0.5)
+        for i in range(len(change_inds)):
+            pl.scatter([index[change_inds[i]]], [sorted_sum[change_inds[i]]], s=150, zorder=10, c=[colors[i]], label=f'Transmitted to {i+1} people')
+        pl.xlabel('Proportion of population, ordered by the number of people they infected (%)')
+        pl.ylabel('Proportion of infections caused (%)')
+        pl.legend()
+        pl.ylim([0, 100])
+        pl.title('Proportion of transmissions, by proportion of population')
+
+        pl.axes([0.25, 0.65, 0.2, 0.2])
+        berry = [0.8,0.1,0.2]
+        pl.plot(self.sim_results.t, self.sim_results.cum_infections, lw=2, c=berry)
+        pl.xlabel('Day')
+        pl.ylabel('Cumulative infections')
+
+
+        return fig
 

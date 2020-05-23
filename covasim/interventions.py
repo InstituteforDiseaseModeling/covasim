@@ -19,6 +19,33 @@ from . import base as cvb
 __all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence']
 
 
+def find_day(arr, t=None, which='first'):
+    '''
+    Helper function to find if the current simulation time matches any day in the
+    intervention. Although usually never more than one index is returned, it is
+    returned as a list for the sake of easy iteration.
+
+    Args:
+        arr (list): list of days in the intervention, or else a boolean array
+        t (int): current simulation time (can be None if a boolean array is used)
+        which (str): what to return: 'first', 'last', or 'all' indices
+
+    Returns:
+        inds (list): list of matching days; length zero or one unless which is 'all'
+    '''
+    all_inds = sc.findinds(val1=arr, val2=t)
+    if len(all_inds) == 0 or which == 'all':
+        inds = all_inds
+    elif which == 'first':
+        inds = [all_inds[0]]
+    elif which == 'last':
+        inds = [all_inds[-1]]
+    else:
+        errormsg = f'Argument "which" must be "first", "last", or "all", not "{which}"'
+        raise ValueError(errormsg)
+    return inds
+
+
 def InterventionDict(which, pars):
     '''
     Generate an intervention from a dictionary. Although a function, it acts
@@ -215,18 +242,13 @@ class dynamic_pars(Intervention):
         ''' Loop over the parameters, and then loop over the days, applying them if any are found '''
         t = sim.t
         for parkey,parval in self.pars.items():
-            inds = sc.findinds(parval['days'], t) # Look for matches
-            if len(inds):
-                if len(inds)>1:
-                    raise ValueError(f'Duplicate days are not allowed for Dynamic interventions (day={t}, indices={inds})')
+            for ind in find_day(parval['days'], t):
+                self.days.append(t)
+                val = parval['vals'][ind]
+                if isinstance(val, dict):
+                    sim[parkey].update(val) # Set the parameter if a nested dict
                 else:
-                    match = inds[0]
-                    self.days.append(t)
-                    val = parval['vals'][match]
-                    if isinstance(val, dict):
-                        sim[parkey].update(val) # Set the parameter if a nested dict
-                    else:
-                        sim[parkey] = val # Set the parameter if not a dict
+                    sim[parkey] = val # Set the parameter if not a dict
         return
 
 
@@ -265,10 +287,8 @@ class sequence(Intervention):
 
 
     def apply(self, sim):
-        inds = sc.findinds(self.days_arr <= sim.t)
-        if len(inds):
-            idx = max(inds)  # Index of the intervention to apply on this day
-            self.interventions[idx].apply(sim)
+        for ind in find_day(self.days_arr <= sim.t, which='last'):
+            self.interventions[ind].apply(sim)
         return
 
 
@@ -276,6 +296,26 @@ class sequence(Intervention):
 #%% Beta interventions
 
 __all__+= ['change_beta', 'clip_edges']
+
+def process_days_changes(sim, days, changes):
+    '''
+    Ensure lists of days and lists of changes are in consistent format. Used by
+    change_beta and clip_edges.
+    '''
+
+    if sc.isstring(days) or not sc.isiterable(days):
+        days = sc.promotetolist(days)
+    if isinstance(days, list):
+        for d,day in enumerate(days):
+            days[d] = sim.day(day) # Ensure it's an integer and not a string or something
+    days = sc.promotetoarray(days)
+
+    changes = sc.promotetoarray(changes)
+    if len(days) != len(changes):
+        errormsg = f'Number of days supplied ({len(days)}) does not match number of changes in beta ({len(changes)})'
+        raise ValueError(errormsg)
+
+    return days, changes
 
 
 class change_beta(Intervention):
@@ -306,20 +346,9 @@ class change_beta(Intervention):
 
     def initialize(self, sim):
         ''' Fix days and store beta '''
-        if sc.isstring(self.days) or not sc.isiterable(self.days):
-            self.days = sc.promotetolist(self.days)
-        if isinstance(self.days, list):
-            for d,day in enumerate(self.days):
-                self.days[d] = sim.day(day) # Ensure it's an integer and not a string or something
-        self.days = sc.promotetoarray(self.days)
-
-        self.changes = sc.promotetoarray(self.changes)
-        if len(self.days) != len(self.changes):
-            errormsg = f'Number of days supplied ({len(self.days)}) does not match number of changes in beta ({len(self.changes)})'
-            raise ValueError(errormsg)
-
-        self.orig_betas = {}
+        self.days, self.changes = process_days_changes(sim, self.days, self.changes)
         self.layers = sc.promotetolist(self.layers, keepnone=True)
+        self.orig_betas = {}
         for lkey in self.layers:
             if lkey is None:
                 self.orig_betas['overall'] = sim['beta']
@@ -333,11 +362,9 @@ class change_beta(Intervention):
     def apply(self, sim):
 
         # If this day is found in the list, apply the intervention
-        inds = sc.findinds(self.days, sim.t)
-        if len(inds):
+        for ind in find_day(self.days, sim.t):
             for lkey,new_beta in self.orig_betas.items():
-                for ind in inds:
-                    new_beta = new_beta * self.changes[ind]
+                new_beta = new_beta * self.changes[ind]
                 if lkey == 'overall':
                     sim['beta'] = new_beta
                 else:
@@ -348,92 +375,70 @@ class change_beta(Intervention):
 
 class clip_edges(Intervention):
     '''
-    Isolate contacts by moving them from the simulation to this intervention.
+    Isolate contacts by removing them from the simulation. Contacts are treated as
+    "edges", and this intervention works by removing them from sim.people.contacts
+    and storing them internally. When the intervention is over, they are moved back.
 
     Args:
-        start_day (int): the day to isolate contacts
-        end_day (int): the day to end isolating contacts
-        change (float or dict): the proportion of contacts to retain, a la change_beta (1 = no change, 0 = no transmission)
+        days (int or array): the day or array of days to isolate contacts
+        changes (float or array): the changes in the number of contacts (1 = no change, 0 = no contacts)
+        layers (str or list): the layers in which to isolate contacts (if None, then all layers)
         kwargs (dict): passed to Intervention()
 
     **Examples**::
 
         interv = cv.clip_edges(25, 0.3) # On day 25, reduce overall contacts by 70% to 0.3
-        interv = cv.clip_edges(start_day=25, end_day=35, change={'s':0.1}) # On day 25, remove 90% of school contacts, and on day 35, restore them
+        interv = cv.clip_edges([14, 28], [0.7, 1], layers='w') # On day 14, remove 30% of school contacts, and on day 28, restore them
     '''
 
-    def __init__(self, start_day, change=None, end_day=None, verbose=False, **kwargs):
+    def __init__(self, days, changes, layers=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
-        self.start_day  = start_day
-        self.end_day    = end_day
-        self.change     = change
-        self.verbose    = verbose
-        self.layer_keys = None
-        self.contacts   = None
+        self.days     = sc.dcp(days)
+        self.changes  = sc.dcp(changes)
+        self.layers   = sc.dcp(layers)
+        self.contacts = None
         return
 
 
     def initialize(self, sim):
-        ''' Fix the dates '''
-        self.start_day   = sim.day(self.start_day)
-        self.end_day     = sim.day(self.end_day)
-        self.days        = [self.start_day, self.end_day]
+        self.days, self.changes = process_days_changes(sim, self.days, self.changes)
+        if self.layers is None:
+            self.layers = sim.layer_keys()
+        else:
+            self.layers = sc.promotetolist(self.layers)
+        self.contacts = cvb.Contacts(layer_keys=self.layers)
         self.initialized = True
         return
 
 
     def apply(self, sim):
 
-        verbose = self.verbose
-
-        # On the start day, move contacts over
-        if sim.t == self.start_day:
-
-            # If this is the first time it's being run, create the contacts
-            if self.contacts is None:
-                if isinstance(self.change, dict):
-                    self.layer_keys = list(self.change.keys())
-                else:
-                    self.layer_keys = list(sim.people.contacts.keys())
-                    self.change = {key:self.change for key in self.layer_keys}
-                self.contacts = cvb.Contacts(layer_keys=self.layer_keys)
-                if verbose:
-                    print(f'Created contacts: {self.contacts}')
+        # If this day is found in the list, apply the intervention
+        for ind in find_day(self.days, sim.t):
 
             # Do the contact moving
-            for lkey,prop in self.change.items():
-                layer = sim.people.contacts[lkey]
-                if verbose:
-                    print(f'Working on layer {lkey}: {layer}')
-                n_contacts = len(layer)
-                prop_to_move = 1-prop # Calculate the proportion of contacts to move
-                n_to_move = int(prop_to_move*n_contacts)
-                inds = cvu.choose(max_n=n_contacts, n=n_to_move)
-                layer_df = layer.to_df()
-                to_move = layer_df.iloc[inds]
-                if verbose:
-                    print(f'Moving {prop_to_move} of {n_contacts} gives {n_to_move}. Before:\n{layer_df}\nTo move:\n{to_move}')
-                self.contacts[lkey] = cvb.Layer().from_df(to_move) # Move them here
-                if verbose:
-                    print(f'Contacts here: {self.contacts[lkey]}')
-                layer_df = layer_df.drop(layer_df.index[inds]) # Remove indices
-                new_layer = cvb.Layer().from_df(layer_df) # Convert back
-                new_layer.validate()
-                sim.people.contacts[lkey] = new_layer
-                if verbose:
-                    print(f'Remaining contacts: {sim.people.contacts[lkey]}')
+            for lkey in self.layers:
+                s_layer = sim.people.contacts[lkey] # Contact layer in the sim
+                i_layer = self.contacts[lkey] # Contat layer in the intervention
+                n_sim = len(s_layer) # Number of contacts in the simulation layer
+                n_int = len(i_layer) # Number of contacts in the intervention layer
+                n_contacts = n_sim + n_int # Total number of contacts
+                current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
+                desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
+                prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
+                n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
+                from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
+                if from_sim: # We're moving from the sim to the intervention
+                    inds = cvu.choose(max_n=n_sim, n=n_to_move)
+                    to_move = s_layer.pop_inds(inds)
+                    i_layer.append(to_move)
+                else: # We're moving from the intervention back to the sim
+                    inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
+                    to_move = i_layer.pop_inds(inds)
+                    s_layer.append(to_move)
 
-        # At the end, move back
-        if sim.t == self.end_day:
-            if verbose:
-                print(f'Before:\n{sim.people.contacts}')
-            sim.people.add_contacts(self.contacts)
-            if verbose:
-                print(f'After:\n{sim.people.contacts}')
-            self.contacts = None # Reset to save memory
-
-        # If no end day is specified, ensure they get deleted
+        # Ensure the edges get deleted at the end
         if sim.t == sim.tvec[-1]:
             self.contacts = None # Reset to save memory
 

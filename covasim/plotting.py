@@ -64,9 +64,14 @@ def handle_to_plot(which, to_plot, n_cols, sim):
 
     to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
 
-    n_rows = np.ceil(len(to_plot)/n_cols) # Number of subplot rows to have
+    # Handle rows and columns -- assume 5 is the most rows we would want
+    n_plots = len(to_plot)
+    if n_cols is None:
+        max_rows = 4 # Assumption -- if desired, the user can override this by setting n_cols manually
+        n_cols = (n_plots-1)//max_rows + 1 # This gives 1 column for 1-4, 2 for 5-8, etc.
+    n_rows = np.ceil(n_plots/n_cols) # Number of subplot rows to have
 
-    return to_plot, n_rows
+    return to_plot, n_cols, n_rows
 
 
 def create_figs(args, font_size, font_family, sep_figs, fig=None):
@@ -218,14 +223,14 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, default_name='covas
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=1, font_size=18, font_family=None,
+         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=18, font_family=None,
          grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
          do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args)
-    to_plot, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
+    to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
@@ -259,14 +264,14 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=1, font_size=18, font_family=None,
+         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=18, font_family=None,
          grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
          do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    to_plot, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
+    to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Do the plotting
