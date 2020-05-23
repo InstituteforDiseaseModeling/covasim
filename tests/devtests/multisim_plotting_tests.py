@@ -4,9 +4,9 @@ Demonstrate different MultiSim plotting options
 
 import covasim as cv
 
-show_reduced    = 0
-show_several    = 0
-show_many       = 0
+show_reduced    = 1
+show_several    = 1
+show_many       = 1
 show_two_bounds = 1
 
 sim = cv.Sim(verbose=0, pop_size=5000)
@@ -33,10 +33,13 @@ if show_many:
 # Show the plotting of multiple multisims
 if show_two_bounds:
     sa = cv.Sim(verbose=0, beta=0.016, label='High beta')
-    sb = cv.Sim(verbose=0, beta=0.014, label='Low beta')
+    sb = cv.Sim(verbose=0, beta=0.015, label='Moderate beta')
+    sc = cv.Sim(verbose=0, beta=0.014, label='Low beta')
     ma = cv.MultiSim(sa)
     mb = cv.MultiSim(sb)
+    mc = cv.MultiSim(sc)
     ma.run(reduce=True)
     mb.run(reduce=True)
-    m4 = cv.MultiSim.merge(ma, mb, base=True)
+    mc.run(reduce=True)
+    m4 = cv.MultiSim.merge(ma, mb, mc, base=True)
     m4.plot()

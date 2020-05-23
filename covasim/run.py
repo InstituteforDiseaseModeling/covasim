@@ -471,26 +471,38 @@ class MultiSim(sc.prettyobj):
 
 
     @staticmethod
-    def merge(msim1, msim2, base=False):
+    def merge(*args, base=False):
         '''
         Convenience method for merging two MultiSim objects.
 
         Args:
-            msim1, msim2 (MultiSim): the two MultiSims to merge
+            args (MultiSim): the MultiSims to merge (either a list, or separate)
             base (bool): if True, make a new list of sims from the multisim's two base sims; otherwise, merge the multisim's lists of sims
 
         Returns:
             msim (MultiSim): a new MultiSim object
+
+        **Examples**:
+
+            mm1 = cv.MultiSim.merge(msim1, msim2, base=True)
+            mm2 = cv.MultiSim.merge([m1, m2, m3, m4], base=False)
         '''
 
-        # Make a copy of the multisim
-        msim = MultiSim(base_sim=sc.dcp(msim1.base_sim))
+        # Handle arguments
+        if len(args) == 1 and isinstance(args[0], list):
+            args = args[0] # A single list of MultiSims has been provided
+
+        # Create the multisim from the base sim of the first argument
+        msim = MultiSim(base_sim=sc.dcp(args[0].base_sim))
+        msim.sims = []
 
         # Handle different options for combining
         if base: # Only keep the base sims
-            msim.sims = [sc.dcp(msim1.base_sim), sc.dcp(msim2.base_sim)]
+            for ms in args:
+                msim.sims.append(sc.dcp(ms.base_sim))
         else: # Keep all the sims
-            msim.sims = sc.dcp(msim1.sims) + sc.dcp(msim2.sims)
+            for ms in args:
+                msim.sims += sc.dcp(ms.sims)
 
         return msim
 
