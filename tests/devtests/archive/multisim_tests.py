@@ -12,7 +12,12 @@ msim2.run() # Run
 msim2.reduce() # Compute statistics
 msim2.plot() # Plot
 
-sims = [cv.Sim(beta=0.015*(1+0.02*i)) for i in range(5)] # Create sims
-for sim in sims: sim.run() # Run sims in serial
+# Run multiple sims
+n_sims = 5
+betas = [0.015*(1+0.02*i) for i in range(n_sims)]
+labels = [f'beta={beta}' for beta in betas]
+sims = [cv.Sim(beta=betas[i], label=labels[i]) for i in range(n_sims)] # Create sims
+for sim in sims:
+    sim.run()
 msim3 = cv.MultiSim(sims) # Convert to multisim
 msim3.plot() # Plot as single sim

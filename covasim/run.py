@@ -8,6 +8,7 @@ import pandas as pd
 import sciris as sc
 from collections import defaultdict
 from . import misc as cvm
+from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
 from . import plotting as cvplt
@@ -38,10 +39,10 @@ class MultiSim(sc.prettyobj):
     is not provided.
 
     Args:
-        sims (Sim or list): a single sim or a list of sims
-        base_sim (Sim): the sim used for shared properties; if not supplied, the first of the sims provided
-        quantiles (dict): the quantiles to use with reduce(), e.g. [0.1, 0.9] or {'low:'0.1, 'high':0.9}
-        kwargs (dict): stored in run_args and passed to run()
+        sims      (Sim/list) : a single sim or a list of sims
+        base_sim  (Sim)      : the sim used for shared properties; if not supplied, the first of the sims provided
+        quantiles (dict)     : the quantiles to use with reduce                                                   ( ), e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
+        kwargs    (dict)     : stored in run_args and passed to run                                               ( )
 
     Returns:
         msim: a MultiSim object
@@ -109,23 +110,34 @@ class MultiSim(sc.prettyobj):
         return keys
 
 
-    def run(self, *args, **kwargs):
+    def run(self, reduce=False, combine=False, *args, **kwargs):
         '''
         Run the actual sims
 
         Args:
+            reduce (bool): whether or not to reduce after running (see reduce())
+            combine (bool): whether or not to combine after running (see combine(), not compatible with reduce)
             kwargs (dict): passed to multi_run() and thence (in part) to sim.run()
 
         Returns:
             None (modifies MultiSim object in place)
         '''
+        # Handle which sims to use
         if self.sims is None:
             sims = self.base_sim
         else:
             sims = self.sims
 
+        # Run
         kwargs = sc.mergedicts(self.run_args, kwargs)
         self.sims = multi_run(sims, *args, **kwargs)
+
+        # Reduce or combine
+        if reduce:
+            self.reduce()
+        elif combine:
+            self.combine()
+
         return
 
 
@@ -137,42 +149,6 @@ class MultiSim(sc.prettyobj):
         self.which = None
         self.results = None
         return
-
-
-    def combine(self, output=False):
-        ''' Combine multiple sims into a single sim with scaled results '''
-
-        n_runs = len(self)
-        combined_sim = sc.dcp(self.sims[0])
-        combined_sim.parallelized = {'parallelized':True, 'combined':True, 'n_runs':n_runs}  # Store how this was parallelized
-        combined_sim['pop_size'] *= n_runs  # Record the number of people
-
-        for s,sim in enumerate(self.sims[1:]): # Skip the first one
-            if combined_sim.people:
-                combined_sim.people += sim.people
-            for key in sim.result_keys():
-                this_res = sim.results[key]
-                combined_sim.results[key].values += this_res.values
-
-        # For non-count results (scale=False), rescale them
-        for key in combined_sim.result_keys():
-            if not combined_sim.results[key].scale:
-                combined_sim.results[key].values /= n_runs
-
-        # Compute and store final results
-        combined_sim.compute_likelihood()
-        combined_sim.compute_summary(verbose=False)
-        self.orig_base_sim = self.base_sim
-        self.base_sim = combined_sim
-        self.results = combined_sim.results
-        self.summary = combined_sim.summary
-
-        self.which = 'combined'
-
-        if output:
-            return self.base_sim
-        else:
-            return
 
 
     def reduce(self, quantiles=None, output=False):
@@ -220,16 +196,52 @@ class MultiSim(sc.prettyobj):
             return
 
 
+    def combine(self, output=False):
+        ''' Combine multiple sims into a single sim with scaled results '''
+
+        n_runs = len(self)
+        combined_sim = sc.dcp(self.sims[0])
+        combined_sim.parallelized = {'parallelized':True, 'combined':True, 'n_runs':n_runs}  # Store how this was parallelized
+        combined_sim['pop_size'] *= n_runs  # Record the number of people
+
+        for s,sim in enumerate(self.sims[1:]): # Skip the first one
+            if combined_sim.people:
+                combined_sim.people += sim.people
+            for key in sim.result_keys():
+                this_res = sim.results[key]
+                combined_sim.results[key].values += this_res.values
+
+        # For non-count results (scale=False), rescale them
+        for key in combined_sim.result_keys():
+            if not combined_sim.results[key].scale:
+                combined_sim.results[key].values /= n_runs
+
+        # Compute and store final results
+        combined_sim.compute_likelihood()
+        combined_sim.compute_summary(verbose=False)
+        self.orig_base_sim = self.base_sim
+        self.base_sim = combined_sim
+        self.results = combined_sim.results
+        self.summary = combined_sim.summary
+
+        self.which = 'combined'
+
+        if output:
+            return self.base_sim
+        else:
+            return
+
+
     def compare(self, t=-1, sim_inds=None, output=False, do_plot=False, **kwargs):
         '''
         Create a dataframe compare sims at a single point in time.
 
         Args:
-            t (int or str): the day (or date) to do the comparison; default, the end
-            sim_inds (list): list of integers of which sims to include (default: all)
-            output (bool): whether or not to return the comparison as a dataframe
-            do_plot (bool): whether or not to plot the comparison (see also plot_compare())
-            kwargs (dict): passed to plot_compare()
+            t        (int/str) : the day (or date) to do the comparison; default, the end
+            sim_inds (list)    : list of integers of which sims to include (default              : all)
+            output   (bool)    : whether or not to return the comparison as a dataframe
+            do_plot  (bool)    : whether or not to plot the comparison (see also plot_compare())
+            kwargs   (dict)    : passed to plot_compare()
 
         Returns:
             df (dataframe): a dataframe comparison
@@ -265,20 +277,48 @@ class MultiSim(sc.prettyobj):
             return None
 
 
-    def plot(self, inds=None, alpha_range=None, plot_args=None, show_args=None, *args, **kwargs):
+    def plot(self, to_plot=None, inds=None, plot_sims=False, color_by_sim=None, max_sims=5, colors=None, labels=None, alpha_range=None, plot_args=None, show_args=None, **kwargs):
         '''
-        Convenience method for plotting -- arguments passed to Sim.plot(). If
-        plotting multiple sims,
+        Plot all the sims  -- arguments passed to Sim.plot(). The
+        behavior depends on whether or not combine() or reduce() has been called.
+        If so, this function by default plots only the combined/reduced sim (which
+        you can override with plot_sims=True). Otherwise, it plots a separate line
+        for each sim.
+
+        Note that this function is complex because it aims to capture the flexibility
+        of both sim.plot() and scens.plot(). By default, if combine() or reduce()
+        has been used, it will resemble sim.plot(); otherwise, it will resemble
+        scens.plot(). This can be changed via color_by_sim, together with the
+        other options.
 
         Args:
-            inds (list): if not combined or reduced, the indices of the simulations to plot (if None, plot all)
-            alpha_range (list): if not combined or reduced, a 2-element list/tuple/array providing the range of alpha values to use to distinguish the lines
-        '''
-        # Plot a single curve, possibly with a range
-        if self.which in ['combined', 'reduced']:
-            fig = self.base_sim.plot(*args, **kwargs)
+            to_plot      (list) : list or dict of which results to plot; see cv.get_sim_plots() for structure
+            inds         (list) : if not combined or reduced, the indices of the simulations to plot (if None, plot all)
+            plot_sims    (bool) : whether to plot individual sims, even if combine() or reduce() has been used
+            color_by_sim (bool) : if True, set colors based on the simulation type; otherwise, color by result type; True implies a scenario-style plotting, False implies sim-style plotting
+            max_sims     (int)  : maximum number of sims to use with color-by-sim; can be overriden by other options
+            colors       (list) : if supplied, override default colors for color_by_sim
+            labels       (list) : if supplied, override default labels for color_by_sim
+            alpha_range  (list) : a 2-element list/tuple/array providing the range of alpha values to use to distinguish the lines
+            plot_args    (dict) : passed to sim.plot()
+            show_args    (dict) : passed to sim.plot()
+            kwargs       (dict) : passed to sim.plot()
 
-        # PLot individual lines
+        **Examples**::
+
+            sim = cv.Sim()
+            msim = cv.MultiSim(sim)
+            msim.run()
+            msim.plot() # Plots individual sims
+            msim.reduce()
+            msim.plot() # Plots the combined sim
+        '''
+
+        # Plot a single curve, possibly with a range
+        if not plot_sims and self.which in ['combined', 'reduced']:
+            fig = self.base_sim.plot(to_plot=to_plot, colors=colors, **kwargs)
+
+        # PLot individual sims on top of each other
         else:
 
             # Initialize
@@ -286,26 +326,67 @@ class MultiSim(sc.prettyobj):
             orig_setylim = kwargs.get('setylim', True)
             kwargs['legend_args'] = sc.mergedicts({'show_legend':True}, kwargs.get('legend_args')) # Only plot the legend the first time
 
-            # Handle indices and alpha
+            # Handle indices
             if inds is None:
                 inds = np.arange(len(self.sims))
-            if alpha_range is None:
-                alpha_range = [1.0, 0.3]
             n_sims = len(inds)
+
+            # Handle what style of plotting to use:
+            if color_by_sim is None:
+                if n_sims <= max_sims:
+                    color_by_sim = True
+                else:
+                    color_by_sim = False
+
+            # Handle what to plot
+            if to_plot is None:
+                if color_by_sim:
+                    to_plot = cvd.get_scen_plots()
+                else:
+                    to_plot = cvd.get_sim_plots()
+
+            # Handle colors
+            if colors is None:
+                if color_by_sim:
+                    colors = sc.gridcolors(ncolors=n_sims)
+                else:
+                    colors = [None]*n_sims # So we can iterate over it
+            else:
+                colors = [colors]*n_sims # Again, for iteration
+
+            # Handle alpha if not using colors
+            if alpha_range is None:
+                if color_by_sim:
+                    alpha_range = [1.0, 1.0] # We're using color to distinguish sims, so don't need alpha
+                else:
+                    alpha_range = [0.8, 0.3] # We're using alpha to distinguish sims
             alphas = np.linspace(alpha_range[0], alpha_range[1], n_sims)
 
             # Plot
             for s,ind in enumerate(inds):
                 sim = self.sims[ind]
-                if s > 0:
-                    show_args = False # Only show things like data the first time it's plotting
-                if s == len(inds)-1:
+
+                final_plot = (s == n_sims-1) # Check if this is the final plot
+
+                # Handle the legend and labels
+                if final_plot:
+                    merged_show_args = show_args
                     kwargs['setylim'] = orig_setylim
                 else:
+                    merged_show_args = False # Only show things like data the last time it's plotting
                     kwargs['setylim'] = False
 
+                # Optionally set the label for the first max_sims sims
+                if labels is None and color_by_sim is True and s<max_sims:
+                    merged_labels = sim.label
+                elif final_plot:
+                    merged_labels = labels
+                else:
+                    merged_labels = ''
+
+                # Actually plot
                 merged_plot_args = sc.mergedicts({'alpha':alphas[s]}, plot_args) # Need a new variable to avoid overwriting
-                fig = sim.plot(fig=fig, plot_args=merged_plot_args, show_args=show_args, *args, **kwargs)
+                fig = sim.plot(fig=fig, to_plot=to_plot, colors=colors[s], labels=merged_labels, plot_args=merged_plot_args, show_args=merged_show_args, **kwargs)
 
         return fig
 
@@ -336,10 +417,10 @@ class MultiSim(sc.prettyobj):
         each result.
 
         Args:
-            t (int): index of results, passed to compare()
-            sim_inds (list): which sims to include, passed to compare()
-            log_scale (bool): whether to plot with a logarithmic x-axis
-            kwargs (dict): standard plotting arguments, see Sim.plot() for explanation
+            t         (int)  : index of results, passed to compare()
+            sim_inds  (list) : which sims to include, passed to compare()
+            log_scale (bool) : whether to plot with a logarithmic x-axis
+            kwargs    (dict) : standard plotting arguments, see Sim.plot() for explanation
 
         Returns:
             fig (figure): the figure handle
@@ -353,9 +434,9 @@ class MultiSim(sc.prettyobj):
         Save to disk as a gzipped pickle. Load with cv.load(filename).
 
         Args:
-            filename (str or None): the name or path of the file to save to; if None, uses default
-            keep_people (bool): whether or not to store the population in the Sim objects (NB, very large)
-            keywords: passed to makefilepath()
+            filename    (str)  : the name or path of the file to save to; if None, uses default
+            keep_people (bool) : whether or not to store the population in the Sim objects (NB, very large)
+            kwargs      (dict) : passed to makefilepath()
 
         Returns:
             scenfile (str): the validated absolute path to the saved file
@@ -389,16 +470,41 @@ class MultiSim(sc.prettyobj):
         return scenfile
 
 
+    @staticmethod
+    def merge(msim1, msim2, base=False):
+        '''
+        Convenience method for merging two MultiSim objects.
+
+        Args:
+            msim1, msim2 (MultiSim): the two MultiSims to merge
+            base (bool): if True, make a new list of sims from the multisim's two base sims; otherwise, merge the multisim's lists of sims
+
+        Returns:
+            msim (MultiSim): a new MultiSim object
+        '''
+
+        # Make a copy of the multisim
+        msim = MultiSim(base_sim=sc.dcp(msim1.base_sim))
+
+        # Handle different options for combining
+        if base: # Only keep the base sims
+            msim.sims = [sc.dcp(msim1.base_sim), sc.dcp(msim2.base_sim)]
+        else: # Keep all the sims
+            msim.sims = sc.dcp(msim1.sims) + sc.dcp(msim2.sims)
+
+        return msim
+
+
 class Scenarios(cvb.ParsObj):
     '''
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
 
     Args:
-        sim (Sim or None): if supplied, use a pre-created simulation as the basis for the scenarios
-        metapars (dict): meta-parameters for the run, e.g. number of runs; see make_metapars() for structure
-        scenarios (dict): a dictionary defining the scenarios; see examples folder for examples; see below for baseline
-        basepars (dict): a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
-        scenfile (str): a filename for saving (defaults to the creation date)
+        sim       (Sim)  : if supplied, use a pre-created simulation as the basis for the scenarios
+        metapars  (dict) : meta-parameters for the run, e.g. number of runs; see make_metapars() for structure
+        scenarios (dict) : a dictionary defining the scenarios; see examples folder for examples; see below for baseline
+        basepars  (dict) : a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
+        scenfile  (str)  : a filename for saving (defaults to the creation date)
 
     Returns:
         scens: a Scenarios object
@@ -466,9 +572,9 @@ class Scenarios(cvb.ParsObj):
         Run the actual scenarios
 
         Args:
-            debug (bool): if True, runs a single run instead of multiple, which makes debugging easier
-            verbose (int): level of detail to print, passed to sim.run()
-            kwargs (dict): passed to multi_run() and thence to sim.run()
+            debug   (bool) : if True, runs a single run instead of multiple, which makes debugging easier
+            verbose (int)  : level of detail to print, passed to sim.run()
+            kwargs  (dict) : passed to multi_run() and thence to sim.run()
 
         Returns:
             None (modifies Scenarios object in place)
@@ -660,10 +766,10 @@ class Scenarios(cvb.ParsObj):
         Save to disk as a gzipped pickle.
 
         Args:
-            scenfile (str or None): the name or path of the file to save to; if None, uses stored
-            keep_sims (bool): whether or not to store the actual Sim objects in the Scenarios object
-            keep_people (bool): whether or not to store the population in the Sim objects (NB, very large)
-            keywords: passed to makefilepath()
+            scenfile    (str)  : the name or path of the file to save to; if None, uses stored
+            keep_sims   (bool) : whether or not to store the actual Sim objects in the Scenarios object
+            keep_people (bool) : whether or not to store the population in the Sim objects (NB, very large)
+            kwargs      (dict) : passed to makefilepath()
 
         Returns:
             scenfile (str): the validated absolute path to the saved file
@@ -735,16 +841,16 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
     parallelization, but can also be used directly.
 
     Args:
-        sim (Sim): the sim instance to be run
-        ind (int): the index of this sim
-        reseed (bool): whether or not to generate a fresh seed for each run
-        noise (float): the amount of noise to add to each run
-        noisepar (string): the name of the parameter to add noise to
-        keep_people (bool): whether to keep the people after the sim run
-        run_args (dict): arguments passed to sim.run()
-        sim_args (dict): extra parameters to pass to the sim, e.g. 'n_infected'
-        verbose (int): detail to print
-        kwargs (dict): also passed to the sim
+        sim         (Sim)   : the sim instance to be run
+        ind         (int)   : the index of this sim
+        reseed      (bool)  : whether or not to generate a fresh seed for each run
+        noise       (float) : the amount of noise to add to each run
+        noisepar    (str)   : the name of the parameter to add noise to
+        keep_people (bool)  : whether to keep the people after the sim run
+        run_args    (dict)  : arguments passed to sim.run()
+        sim_args    (dict)  : extra parameters to pass to the sim, e.g. 'n_infected'
+        verbose     (int)   : detail to print
+        kwargs      (dict)  : also passed to the sim
 
     Returns:
         sim (Sim): a single sim object with results
@@ -812,19 +918,19 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
     exactly these will be run and most other arguments will be ignored.
 
     Args:
-        sim (Sim or list): the sim instance to be run, or a list of sims.
-        n_runs (int): the number of parallel runs
-        reseed (bool): whether or not to generate a fresh seed for each run
-        noise (float): the amount of noise to add to each run
-        noisepar (string): the name of the parameter to add noise to
-        iterpars (dict): any other parameters to iterate over the runs; see sc.parallelize() for syntax
-        combine (bool): whether or not to combine all results into one sim, rather than return multiple sim objects
-        keep_people (bool): whether to keep the people after the sim run
-        run_args (dict): arguments passed to sim.run()
-        sim_args (dict): extra parameters to pass to the sim
-        par_args (dict): arguments passed to sc.parallelize()
-        verbose (int): detail to print
-        kwargs (dict): also passed to the sim
+        sim        (Sim)   : the sim instance to be run, or a list of sims.
+        n_runs     (int)   : the number of parallel runs
+        reseed     (bool)  : whether or not to generate a fresh seed for each run
+        noise      (float) : the amount of noise to add to each run
+        noisepar   (str)   : the name of the parameter to add noise to
+        iterpars   (dict)  : any other parameters to iterate over the runs; see sc.parallelize                          () for syntax
+        combine    (bool)  : whether or not to combine all results into one sim, rather than return multiple sim objects
+        keep_people(bool)  : whether to keep the people after the sim run
+        run_args   (dict)  : arguments passed to sim.run                                                                ()
+        sim_args   (dict)  : extra parameters to pass to the sim
+        par_args   (dict)  : arguments passed to sc.parallelize                                                         ()
+        verbose    (int)   : detail to print
+        kwargs     (dict)  : also passed to the sim
 
     Returns:
         If combine is True, a single sim object with the combined results from each sim.
