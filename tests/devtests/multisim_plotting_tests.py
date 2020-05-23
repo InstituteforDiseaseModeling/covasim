@@ -1,3 +1,7 @@
+'''
+Demonstrate different MultiSim plotting options
+'''
+
 import covasim as cv
 
 show_reduced    = 0
@@ -26,6 +30,7 @@ if show_many:
     m3.run(n_runs=20)
     m3.plot()
 
+# Show the plotting of multiple multisims
 if show_two_bounds:
     sa = cv.Sim(verbose=0, beta=0.016, label='High beta')
     sb = cv.Sim(verbose=0, beta=0.014, label='Low beta')
