@@ -4,9 +4,9 @@ Demonstrate different MultiSim plotting options
 
 import covasim as cv
 
-show_reduced    = 0
-show_several    = 0
-show_many       = 0
+show_reduced    = 1
+show_several    = 1
+show_many       = 1
 show_two_bounds = 1
 
 sim = cv.Sim(verbose=0, pop_size=5000)
