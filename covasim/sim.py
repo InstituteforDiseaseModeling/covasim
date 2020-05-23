@@ -390,7 +390,8 @@ class Sim(cvb.BaseSim):
 
     def step(self):
         '''
-        Step the simulation forward in time
+        Step the simulation forward in time. Usually, the user would use sim.run()
+        rather than calling sim.step() directly.
         '''
 
         # Set the time and if we have reached the end of the simulation, then do nothing

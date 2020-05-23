@@ -4,6 +4,11 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.2.2 (2020-05-22)
+--------------------------
+- Changed the syntax of ``cv.clip_edges()`` to match ``cv.change_beta()``. The old format of intervention ``cv.clip_edges(start_day=d1, end_day=d2, change=c)`` should now be written as ``cv.clip_edges(days=[d1, d2], changes=[c, 1.0])``.
+
+
 Version 1.2.1 (2020-05-21)
 --------------------------
 - Added influenza-like illness (ILI) symptoms to testing interventions. If nonzero, this reduces the effectiveness of symptomatic testing, because you cannot distinguish between people who are symptomatic with COVID and people with other ILI symptoms.

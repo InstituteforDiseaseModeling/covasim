@@ -957,12 +957,12 @@ class Contacts(FlexDict):
 
 
 class Layer(FlexDict):
-    ''' A tiny class holding a single layer of contacts '''
+    ''' A small class holding a single layer of contacts '''
 
     def __init__(self, **kwargs):
         self.meta = {
-            'p1':    cvd.default_int, # Person 1
-            'p2':    cvd.default_int,  # Person 2
+            'p1':    cvd.default_int,   # Person 1
+            'p2':    cvd.default_int,   # Person 2
             'beta':  cvd.default_float, # Default transmissibility for this contact type
         }
         self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
@@ -993,6 +993,11 @@ class Layer(FlexDict):
         return output
 
 
+    def meta_keys(self):
+        ''' Return the keys for the layer's meta information -- i.e., p1, p2, beta '''
+        return self.meta.keys()
+
+
     def validate(self):
         ''' Check the integrity of the layer: right types, right lengths '''
         n = len(self[self.basekey])
@@ -1003,6 +1008,38 @@ class Layer(FlexDict):
         return
 
 
+    def pop_inds(self, inds):
+        '''
+        "Pop" the specified indices from the edgelist and return them as a dict.
+        Returns in the right format to be used with layer.append().
+
+        Args:
+            inds (int, array, slice): the indices to be removed
+        '''
+        output = {}
+        for key in self.meta_keys():
+            output[key] = self[key][inds] # Copy to the output object
+            np.delete(self[key], inds) # Remove from the original
+        return output
+
+
+    def append(self, contacts):
+        '''
+        Append contacts to the current layer.
+
+        Args:
+            contacts (dict): a dictionary of arrays with keys p1,p2,beta, as returned from layer.pop_inds()
+        '''
+        for key in self.keys():
+            new_arr = contacts[key]
+            n_curr = len(self[key]) # Current number of contacts
+            n_new = len(new_arr) # New contacts to add
+            n_total = n_curr + n_new # New size
+            self[key].resize(n_total, refcheck=False) # Resize to make room, preserving dtype
+            self[key][n_curr:] = new_arr # Copy contacts into the layer
+        return
+
+
     def to_df(self):
         ''' Convert to dataframe '''
         df = pd.DataFrame.from_dict(self)
@@ -1010,8 +1047,8 @@ class Layer(FlexDict):
 
 
     def from_df(self, df):
-        ''' Convert from dataframe '''
-        for key in self.meta.keys():
+        ''' Convert from a dataframe '''
+        for key in self.meta_keys():
             self[key] = df[key].to_numpy()
         return self
 
