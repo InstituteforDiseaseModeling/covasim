@@ -7,8 +7,8 @@ import sciris as sc
 
 T = sc.tic()
 
-pop_type = 'random'
-pop_size = 100000
+pop_type = 'synthpops'
+pop_size = 10001
 n_runs = 10
 
 pars = dict(
