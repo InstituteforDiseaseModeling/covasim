@@ -554,7 +554,7 @@ class Sim(cvb.BaseSim):
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Perform calculations on results
-        self.compute_results()
+        self.compute_results(verbose=verbose)
 
         # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
         self.results = sc.objdict(self.results)
