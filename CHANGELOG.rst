@@ -4,7 +4,7 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
-.. contents:: Contents
+.. contents:: **Contents**
    :local:
    :depth: 1
 
