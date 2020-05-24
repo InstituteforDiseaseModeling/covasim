@@ -4,6 +4,12 @@ What's new
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
 
+Version 1.2.4 (2020-05-24)
+--------------------------
+- Changed the definition of age cutoffs in prognoses to be lower limits rather than upper limits.
+
+
+
 Version 1.2.3 (2020-05-23)
 --------------------------
 - Added ``cv.savefig()``, which is an alias to Matplotlib's ``savefig()`` function, but which saves additional metadata in the figure file. This metadata can be loaded with the new ``cv.get_png_metdata()`` function.
