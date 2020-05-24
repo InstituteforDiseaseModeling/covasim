@@ -566,10 +566,10 @@ class BasePeople(sc.prettyobj):
         self.init_contacts() # Initialize the contacts
         self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
 
-        # Set person properties -- mostly floats
+        # Set person properties -- all floats except for UID
         for key in self.meta.person:
             if key == 'uid':
-                self[key] = np.arange(self.pop_size, dtype=object)
+                self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 

@@ -500,10 +500,6 @@ class Sim(cvb.BaseSim):
         if until:
             until = self.day(until)
 
-        print(f'HELLO KIND SIR, I AM {self.label}')
-        print(np.random.rand())
-        print(cvu.poisson(100000))
-
         # Main simulation loop
         for t in self.tvec:
 

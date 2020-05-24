@@ -29,9 +29,9 @@ class PeopleMeta(sc.prettyobj):
 
     # Set the properties of a person
     person = [
-        'uid',         # Any (int or str, usually)
+        'uid',         # Int
         'age',         # Float
-        'sex',         # Int
+        'sex',         # Float
         'symp_prob',   # Float
         'severe_prob', # Float
         'crit_prob',   # Float

@@ -1,3 +1,4 @@
+==========
 What's new
 ==========
 
@@ -7,7 +8,7 @@ All notable changes to the codebase are documented in this file. Note: in many c
 Version 1.2.4 (2020-05-24)
 --------------------------
 - Changed the definition of age cutoffs in prognoses to be lower limits rather than upper limits.
-
+- Added additional random seed resets to population initialization and just before the run so that populations loaded from disk produce identical results to newly created ones.
 
 
 Version 1.2.3 (2020-05-23)

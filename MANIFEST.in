@@ -1,5 +1,5 @@
 include requirements.txt
 include LICENSE
-recursive-include *.md
+recursive-include *.rst
 recursive-include covasim *.py
 global-exclude *.py[cod] __pycache__

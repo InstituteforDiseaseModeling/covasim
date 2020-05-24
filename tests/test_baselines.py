@@ -216,7 +216,7 @@ def test_benchmark(do_save=do_save):
 
 if __name__ == '__main__':
 
+    json = test_benchmark(do_save=do_save) # Run this first so benchmarking is available even if results are different
     new  = test_baseline()
-    json = test_benchmark(do_save=do_save)
 
     print('Done.')

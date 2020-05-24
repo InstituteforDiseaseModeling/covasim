@@ -22,10 +22,15 @@ s2.initialize()
 s1c = cv.Sim(popfile='p1.pop', load_pop=True, rand_seed=seeds[0], pop_type=pop_type, label='p1c')
 s1c.initialize()
 
+
+def check_eq(a, b):
+    assert np.allclose(a, b, rtol=0, atol=0, equal_nan=True)
+
+
 for key in s1.people.keys():
     print(f'Checking key {key}...')
-    assert (s1.people[key] == s1b.people[key]).all(), f'{key} failed'
-    assert (s1.people[key] == s1c.people[key]).all(), f'{key} failed'
+    check_eq(s1.people[key], s1b.people[key])
+    check_eq(s1.people[key], s1c.people[key])
 
 
 s1.initialize()
