@@ -4,6 +4,14 @@ What's new
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
 
+.. contents:: Contents
+   :local:
+   :depth: 1
+
+
+Versions 1.2.0 - current
+~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 Version 1.2.4 (2020-05-24)
 --------------------------
@@ -51,6 +59,11 @@ Version 1.2.0 (2020-05-20)
 - Added more flexibility to plotting, including a new ``show_args`` keyword, allowing particular aspects of plotting (e.g., the data or interventions) to be turned on or off.
 - Moved the cruise ship code from the core folder into the examples folder.
 - GitHub info: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
+
+
+
+Versions 1.1.0 - 1.1.7
+~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.1.7 (2020-05-19)
@@ -121,6 +134,11 @@ Version 1.1.0 (2020-05-12)
 - GitHub info: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
 
 
+
+Versions 1.0.0 - 1.0.3
+~~~~~~~~~~~~~~~~~~~~~~
+
+
 Version 1.0.3 (2020-05-11)
 --------------------------
 - Added an extra output of ``make_microstructured_contacts()`` to store each person's cluster identifier. Currently, this is only supported for the ``hybrid`` population type, but in future versions, ``synthpops`` will also be supported.
@@ -152,10 +170,15 @@ Version 1.0.0 (2020-05-08)
 - GitHub info: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
 
 
+
+Prerelease versions (0.27 - 0.32)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 Version 0.32.1 (2020-05-06)
 ---------------------------
 - Allow ``until`` to be a date, e.g. ``sim.run(until='2020-05-06')``.
-- Added ``ipywidgets`` dependency since otherwise the webapp breaks due to a `bug <https://github.com/plotly/plotly.py/issues/2443>`__ with the latest Plotly version (4.7). 
+- Added ``ipywidgets`` dependency since otherwise the webapp breaks due to a `bug <https://github.com/plotly/plotly.py/issues/2443>`__ with the latest Plotly version (4.7).
 
 
 Version 0.32.0 (2020-05-05)

@@ -9,8 +9,16 @@ Here are answers to some of the questions that frequently come up among users of
    :depth: 2
 
 
+Parameters
+~~~~~~~~~~
+
+
 What's the relationship between pop_size and pop_scale?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------------------------
+
+boo
+"""
+
 
 Good question.
 
