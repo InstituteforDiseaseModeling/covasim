@@ -22,8 +22,10 @@ s2.initialize()
 s1c = cv.Sim(popfile='p1.pop', load_pop=True, rand_seed=seeds[0], pop_type=pop_type, label='p1c')
 s1c.initialize()
 
-assert s1.people == s1b.people
-assert s1.people == s1c.people
+for key in s1.people.keys():
+    print(f'Checking key {key}...')
+    assert (s1.people[key] == s1b.people[key]).all(), f'{key} failed'
+    assert (s1.people[key] == s1c.people[key]).all(), f'{key} failed'
 
 
 s1.initialize()

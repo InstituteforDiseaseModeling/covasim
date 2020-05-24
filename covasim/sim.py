@@ -336,10 +336,10 @@ class Sim(cvb.BaseSim):
         Create the people.
 
         Args:
-            save_pop (bool): if true, save the population to popfile
-            load_pop (bool): if true, load the population from popfile
+            save_pop (bool): if true, save the population dictionary to popfile
+            load_pop (bool): if true, load the population dictionary from popfile
             popfile (str): filename to load/save the population
-            verbose (int): detail to prnt
+            verbose (int): detail to print
             kwargs (dict): passed to cv.make_people()
         '''
 
