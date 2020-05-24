@@ -73,11 +73,15 @@ class People(cvb.BasePeople):
     def set_prognoses(self, pars=None):
         ''' Set the prognoses for each person based on age during initialization '''
 
+        import sciris as sc
+
+        T = sc.tic()
+
         if pars is None:
             pars = self.pars
 
         def find_cutoff(age_cutoffs, age):
-            return np.argmax(age_cutoffs > age)  # Index of the age bin to use
+            return np.nonzero(age_cutoffs <= age)[0][-1]  # Index of the age bin to use
 
         prognoses = pars['prognoses']
         age_cutoffs = prognoses['age_cutoffs']
@@ -88,6 +92,8 @@ class People(cvb.BasePeople):
         self.death_prob[:]  = prognoses['death_probs'][inds]
         self.rel_sus[:]     = prognoses['sus_ORs'][inds] # Default susceptibilities
         self.rel_trans[:]   = prognoses['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, drawn from a distribution
+
+        sc.toc(T)
 
         return
 
