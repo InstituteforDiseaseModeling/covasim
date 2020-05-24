@@ -665,12 +665,29 @@ class BasePeople(sc.prettyobj):
         return (self[key]==0).sum()
 
 
-    def keys(self, which=None):
-        ''' Returns the name of the states '''
-        if which is None:
-            return self.meta.all_states[:]
-        else:
-            return getattr(self.meta, which)[:]
+    def keys(self):
+        ''' Returns keys for all properties of the people object '''
+        return self.meta.all_states[:]
+
+
+    def person_keys(self):
+        ''' Returns keys specific to a person (e.g., their age) '''
+        return self.meta.person[:]
+
+
+    def state_keys(self):
+        ''' Returns keys for different states of a person (e.g., symptomatic) '''
+        return self.meta.states[:]
+
+
+    def date_keys(self):
+        ''' Returns keys for different event dates (e.g., date a person became symptomatic) '''
+        return self.meta.dates[:]
+
+
+    def dur_keys(self):
+        ''' Returns keys for different durations (e.g., the duration from exposed to infectious) '''
+        return self.meta.durs[:]
 
 
     def layer_keys(self):

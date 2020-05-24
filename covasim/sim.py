@@ -120,11 +120,12 @@ class Sim(cvb.BaseSim):
         '''
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
-        self.set_seed() # Reset the random seed
+        self.set_seed() # Reset the random seed before the population is created
         self.init_results() # Create the results stucture
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.init_interventions()
+        self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized = True
         return
 
@@ -491,12 +492,17 @@ class Sim(cvb.BaseSim):
         else:
             self.validate_pars() # We always want to validate the parameters before running
             self.init_interventions() # And interventions
+            self.set_seed() # Ensure the random number generator is freshly initialized
         if restore_pars:
             orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
         if verbose is None:
             verbose = self['verbose']
         if until:
             until = self.day(until)
+
+        print(f'HELLO KIND SIR, I AM {self.label}')
+        print(np.random.rand())
+        print(cvu.poisson(100000))
 
         # Main simulation loop
         for t in self.tvec:
