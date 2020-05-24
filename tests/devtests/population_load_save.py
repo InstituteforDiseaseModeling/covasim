@@ -5,21 +5,26 @@ import sciris as sc
 T = sc.tic()
 
 seeds = [55, 66]
-pop_type = 'random'
+pop_type = 'synthpops'
+
+pars = dict(
+    pop_type = pop_type,
+    pop_size = 12345,
+    )
 
 lkmap = {'random':'a', 'hybrid':'w', 'synthpops':'w'}
 lkey = lkmap[pop_type]
 
 np.random.seed(seeds[0])
-s1 = cv.Sim(popfile='p1.pop', save_pop=True, rand_seed=seeds[0], pop_type=pop_type, label='p1')
+s1 = cv.Sim(pars, popfile='p1.pop', save_pop=True, rand_seed=seeds[0], label='p1')
 s1.initialize()
 np.random.seed(seeds[0])
-s1b = cv.Sim(popfile='p1b.pop', save_pop=True, rand_seed=seeds[0], pop_type=pop_type, label='p1b')
+s1b = cv.Sim(pars, popfile='p1b.pop', save_pop=True, rand_seed=seeds[0], label='p1b')
 s1b.initialize()
 np.random.seed(seeds[1])
-s2 = cv.Sim(popfile='p2.pop', save_pop=True, rand_seed=seeds[1], pop_type=pop_type, label='p2')
+s2 = cv.Sim(pars, popfile='p2.pop', save_pop=True, rand_seed=seeds[1], label='p2')
 s2.initialize()
-s1c = cv.Sim(popfile='p1.pop', load_pop=True, rand_seed=seeds[0], pop_type=pop_type, label='p1c')
+s1c = cv.Sim(pars, popfile='p1.pop', load_pop=True, rand_seed=seeds[0], label='p1c')
 s1c.initialize()
 
 

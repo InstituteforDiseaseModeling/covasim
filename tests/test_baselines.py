@@ -10,23 +10,51 @@ import covasim as cv
 do_save = False
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
-parameters_filename = sc.thisdir(__file__, 'regression', f'parameters_v{cv.__version__}.json')
-baseline_key = 'summary'
+parameters_filename = sc.thisdir(__file__, 'regression', f'pars_v{cv.__version__}.json')
 
 
-def save_baseline(do_save=do_save):
-    ''' Refresh the baseline results '''
+def make_sim(use_defaults=False):
+    ''' Define a default simulation for testing the baseline -- include hybrid and interventions to increase coverage '''
+
+    # Define the parameters
+    intervs = [cv.change_beta(days=40, changes=0.5), cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)] # Common interventions
+    pars = dict(
+        pop_size      = 20000,    # Population size
+        pop_infected  = 100,      # Number of initial infections -- use more for increased robustness
+        pop_type      = 'hybrid', # Population to use -- "hybrid" is random with household, school,and work structure
+        verbose       = 0,        # Don't print details of the run
+        interventions = intervs   # Include the most common interventions
+    )
+
+    # Create the sim
+    if use_defaults:
+        sim = cv.Sim()
+    else:
+        sim = cv.Sim(pars)
+
+    return sim
+
+
+def save_baseline():
+    '''
+    Refresh the baseline results. This function is not called during standard testing,
+    but instead is called by the update_baseline script.
+    '''
+
     print('Updating baseline values...')
 
-    sim = cv.Sim(verbose=0)
-    sim.run()
-    if do_save:
-        sim.to_json(filename=baseline_filename, keys=baseline_key)
-        sim.export_pars(filename=parameters_filename)
+    # Export default parameters
+    s1 = make_sim(use_defaults=True)
+    s1.export_pars(filename=parameters_filename)
+
+    # Export results
+    s2 = make_sim(use_defaults=False)
+    s2.run()
+    s2.to_json(filename=baseline_filename, keys='summary')
 
     print('Done.')
 
-    return sim
+    return
 
 
 def test_baseline():
@@ -34,10 +62,10 @@ def test_baseline():
 
     # Load existing baseline
     baseline = sc.loadjson(baseline_filename)
-    old = baseline[baseline_key]
+    old = baseline['summary']
 
     # Calculate new baseline
-    sim = cv.Sim(verbose=0)
+    sim = make_sim()
     sim.run()
     new = sim.summary
 

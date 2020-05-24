@@ -26,17 +26,17 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars = {}
 
     # Population parameters
-    pars['pop_size']     = 20e3 # Number ultimately susceptible to CoV
-    pars['pop_infected'] = 10 # Number of initial infections
+    pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
+    pars['pop_infected'] = 10       # Number of initial infections
     pars['pop_type']     = 'random' # What type of population data to use -- random (fastest), synthpops (best), hybrid (compromise), or clustered (not recommended)
-    pars['location']     = None # What location to load data from -- default Seattle
+    pars['location']     = None     # What location to load data from -- default Seattle
 
     # Simulation parameters
     pars['start_day']  = '2020-03-01' # Start day of the simulation
-    pars['end_day']    = None # End day of the simulation
-    pars['n_days']     = 60 # Number of days to run, if end_day isn't specified
-    pars['rand_seed']  = 1 # Random seed, if None, don't reset
-    pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
+    pars['end_day']    = None         # End day of the simulation
+    pars['n_days']     = 60           # Number of days to run, if end_day isn't specified
+    pars['rand_seed']  = 1            # Random seed, if None, don't reset
+    pars['verbose']    = 1            # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
     # Rescaling parameters
     pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
@@ -46,10 +46,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Basic disease transmission
     pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
-    pars['contacts']    = None # The number of contacts per layer; set by reset_layer_pars() below
-    pars['dynam_layer'] = None # Which layers are dynamic; set by reset_layer_pars() below
-    pars['beta_layer']  = None # Transmissibility per layer; set by reset_layer_pars() below
-    pars['n_imports']   = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['contacts']    = None  # The number of contacts per layer; set by reset_layer_pars() below
+    pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
+    pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
+    pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta_dist']   = {'dist':'lognormal','par1':0.84, 'par2':0.3} # Distribution to draw individual level transmissibility; see https://wellcomeopenresearch.org/articles/5-67
     pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 

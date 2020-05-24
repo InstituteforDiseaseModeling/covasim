@@ -470,7 +470,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, verbose=None, restore_pars=True, **kwargs):
+    def run(self, do_plot=False, until=None, verbose=None, restore_pars=True, reset_seed=True, **kwargs):
         '''
         Run the simulation.
 
@@ -479,6 +479,7 @@ class Sim(cvb.BaseSim):
             until (int): day to run until
             verbose (int): level of detail to print (otherwise uses self['verbose'])
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
+            reset_seed (bool): whether to reset the random number stream immediately before run
             kwargs (dict): passed to self.plot()
 
         Returns:
@@ -492,7 +493,8 @@ class Sim(cvb.BaseSim):
         else:
             self.validate_pars() # We always want to validate the parameters before running
             self.init_interventions() # And interventions
-            self.set_seed() # Ensure the random number generator is freshly initialized
+            if reset_seed:
+                self.set_seed() # Ensure the random number generator is freshly initialized
         if restore_pars:
             orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
         if verbose is None:
