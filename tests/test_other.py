@@ -70,7 +70,11 @@ def test_base():
     # BasePeople methods
     ppl = sim.people
     ppl.get(['susceptible', 'infectious'])
-    ppl.keys(which='all_states')
+    ppl.keys()
+    ppl.person_keys()
+    ppl.state_keys()
+    ppl.date_keys()
+    ppl.dur_keys()
     ppl.index()
     ppl._resize_arrays(pop_size=200) # This only resizes the arrays, not actually create new people
     ppl._resize_arrays(pop_size=100) # Change back
