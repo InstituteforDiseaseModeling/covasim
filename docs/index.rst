@@ -12,6 +12,7 @@ Full package reference
 .. toctree::
 
    parameters
+   faq
    whatsnew
    contributing
    webapp
