@@ -1,7 +1,33 @@
+==========
 What's new
 ==========
 
 All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
+
+.. contents:: **Contents**
+   :local:
+   :depth: 1
+
+
+Latest versions
+~~~~~~~~~~~~~~~
+
+
+Version 1.3.0 (2020-05-24)
+--------------------------
+- Changed the default number of work contacts in hybrid from 8 to 16, and halved beta from 1.4 to 0.7, to better capture superspreading events. To restore previous behavior, set ``sim['beta_layer']['w'] = 0.14`` and ``sim['contacts']['w'] = 8``.
+- Initial infections now occur at a distribution of dates instead of all at once; this fixes the artificial spike in ``R_eff`` that occurred at the very beginning of a simulation. This change cannot be undone to restore previous behavior.
+- Changed the definition of age bins in prognoses to be lower limits rather than upper limits. Added an extra set of age bins for 90+.
+- Changed population loading and saving to be based on People objects, not popdicts (syntax is exactly the same, although it is recommended to use ``.ppl`` instead of ``.pop`` for these files).
+- Added additional random seed resets to population initialization and just before the run so that populations loaded from disk produce identical results to newly created ones.
+- Added a new convenience method, ``cv.check_save_info()``, which can be put at the top of a script to check the Covasim version and automatically save the Git info to file.
+- Added additional methods to ``People`` to retrieve different types of keys: e.g., ``sim.people.state_keys()`` returns all the different states a person can be in (e.g., ``symptomatic``).
+- GitHub info: PR `557 <https://github.com/amath-idm/covasim/pull/557>`__, previous head ``aac9f1d``
+
+
+
+Version 1.2 (1.2.0 – 1.2.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.2.3 (2020-05-23)
@@ -44,6 +70,11 @@ Version 1.2.0 (2020-05-20)
 - Added more flexibility to plotting, including a new ``show_args`` keyword, allowing particular aspects of plotting (e.g., the data or interventions) to be turned on or off.
 - Moved the cruise ship code from the core folder into the examples folder.
 - GitHub info: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
+
+
+
+Version 1.1 (1.1.0 – 1.1.7)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.1.7 (2020-05-19)
@@ -114,6 +145,11 @@ Version 1.1.0 (2020-05-12)
 - GitHub info: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
 
 
+
+Version 1.0 (1.0.0 – 1.0.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 Version 1.0.3 (2020-05-11)
 --------------------------
 - Added an extra output of ``make_microstructured_contacts()`` to store each person's cluster identifier. Currently, this is only supported for the ``hybrid`` population type, but in future versions, ``synthpops`` will also be supported.
@@ -145,10 +181,15 @@ Version 1.0.0 (2020-05-08)
 - GitHub info: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
 
 
+
+Prerelease versions (0.27.0 – 0.32.1)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 Version 0.32.1 (2020-05-06)
 ---------------------------
 - Allow ``until`` to be a date, e.g. ``sim.run(until='2020-05-06')``.
-- Added ``ipywidgets`` dependency since otherwise the webapp breaks due to a `bug <https://github.com/plotly/plotly.py/issues/2443>`__ with the latest Plotly version (4.7). 
+- Added ``ipywidgets`` dependency since otherwise the webapp breaks due to a `bug <https://github.com/plotly/plotly.py/issues/2443>`__ with the latest Plotly version (4.7).
 
 
 Version 0.32.0 (2020-05-05)

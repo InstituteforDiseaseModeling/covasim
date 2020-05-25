@@ -120,11 +120,12 @@ class Sim(cvb.BaseSim):
         '''
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
-        self.set_seed() # Reset the random seed
+        self.set_seed() # Reset the random seed before the population is created
         self.init_results() # Create the results stucture
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.init_interventions()
+        self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized = True
         return
 
@@ -308,7 +309,9 @@ class Sim(cvb.BaseSim):
     def load_population(self, popfile=None, **kwargs):
         '''
         Load the population dictionary from file -- typically done automatically
-        as part of sim.initialize(load_pop=True).
+        as part of sim.initialize(load_pop=True). Supports loading either saved
+        population dictionaries (popdicts, file ending .pop by convention), or
+        ready-to-go People objects (file ending .ppl by convention).
 
         Args:
             popfile (str): name of the file to load
@@ -318,15 +321,22 @@ class Sim(cvb.BaseSim):
             popfile = self.popfile
         if popfile is not None:
             filepath = sc.makefilepath(filename=popfile, **kwargs)
-            self.popdict = sc.loadobj(filepath)
-            n_actual = len(self.popdict['uid'])
+            obj = sc.loadobj(filepath)
+            if isinstance(obj, dict):
+                self.popdict = obj
+                n_actual     = len(self.popdict['uid'])
+                layer_keys   = self.popdict['layer_keys']
+            elif isinstance(obj, cvb.BasePeople):
+                self.people = obj
+                n_actual    = len(self.people)
+                layer_keys  = self.people.layer_keys()
             n_expected = self['pop_size']
             if n_actual != n_expected:
                 errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
                 raise ValueError(errormsg)
             if self['verbose']:
                 print(f'Loaded population from {filepath}')
-            self.reset_layer_pars(force=False, layer_keys=self.popdict['layer_keys']) # Ensure that layer keys match the loaded population
+            self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
         return
 
 
@@ -335,10 +345,10 @@ class Sim(cvb.BaseSim):
         Create the people.
 
         Args:
-            save_pop (bool): if true, save the population to popfile
-            load_pop (bool): if true, load the population from popfile
+            save_pop (bool): if true, save the population dictionary to popfile
+            load_pop (bool): if true, load the population dictionary from popfile
             popfile (str): filename to load/save the population
-            verbose (int): detail to prnt
+            verbose (int): detail to print
             kwargs (dict): passed to cv.make_people()
         '''
 
@@ -469,7 +479,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, verbose=None, restore_pars=True, **kwargs):
+    def run(self, do_plot=False, until=None, verbose=None, restore_pars=True, reset_seed=True, **kwargs):
         '''
         Run the simulation.
 
@@ -478,6 +488,7 @@ class Sim(cvb.BaseSim):
             until (int): day to run until
             verbose (int): level of detail to print (otherwise uses self['verbose'])
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
+            reset_seed (bool): whether to reset the random number stream immediately before run
             kwargs (dict): passed to self.plot()
 
         Returns:
@@ -491,6 +502,8 @@ class Sim(cvb.BaseSim):
         else:
             self.validate_pars() # We always want to validate the parameters before running
             self.init_interventions() # And interventions
+            if reset_seed:
+                self.set_seed() # Ensure the random number generator is freshly initialized
         if restore_pars:
             orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
         if verbose is None:
@@ -552,7 +565,7 @@ class Sim(cvb.BaseSim):
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Perform calculations on results
-        self.compute_results()
+        self.compute_results(verbose=verbose)
 
         # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
         self.results = sc.objdict(self.results)

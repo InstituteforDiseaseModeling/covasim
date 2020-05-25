@@ -114,7 +114,7 @@ def test_start_stop(): # If being run via pytest, turn off
     # Test that until works
     sim3 = cv.Sim(pars)
     sim3.run(until=20)
-    sim3.run()
+    sim3.run(reset_seed=False)
 
     # Compare results
     key = 'cum_infections'

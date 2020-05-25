@@ -38,7 +38,7 @@ class MiscellaneousFeatureTests(CovaSimTest):
                          msg="Should be able to parse the pop_infected parameter from the results sheet")
         results_df = simulation_df.parse('Results')
         observed_day_0_exposed = results_df.loc[results_df['t'] == 0, 'n_exposed'].values[0]
-        self.assertEqual(observed_day_0_exposed, test_infected_value,
+        self.assertGreaterEqual(observed_day_0_exposed, test_infected_value,
                          msg="Should be able to parse the day 0 n_exposed value from the results sheet.")
         if not self.is_debugging:
             os.unlink(excel_filename)
@@ -65,3 +65,5 @@ class MiscellaneousFeatureTests(CovaSimTest):
         pass
 
 
+if __name__ == '__main__':
+    unittest.main()

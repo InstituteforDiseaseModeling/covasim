@@ -70,7 +70,11 @@ def test_base():
     # BasePeople methods
     ppl = sim.people
     ppl.get(['susceptible', 'infectious'])
-    ppl.keys(which='all_states')
+    ppl.keys()
+    ppl.person_keys()
+    ppl.state_keys()
+    ppl.date_keys()
+    ppl.dur_keys()
     ppl.index()
     ppl._resize_arrays(pop_size=200) # This only resizes the arrays, not actually create new people
     ppl._resize_arrays(pop_size=100) # Change back
@@ -239,7 +243,7 @@ def test_population():
 
     # Test synthpops
     try:
-        sim = cv.Sim(pop_size=5000, pop_type='synthpops')
+        sim = cv.Sim(pop_size=500, pop_type='synthpops')
         sim.initialize()
     except Exception as E:
         errormsg = f'Synthpops test did not pass:\n{str(E)}\nNote: synthpops is optional so this exception is OK.'

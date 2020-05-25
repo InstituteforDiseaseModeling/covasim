@@ -21,7 +21,8 @@ GitHub_ page. Full information about Covasim is provided in the documentation_.
 .. _GitHub: https://github.com/institutefordiseasemodeling/covasim
 .. _documentation: https://docs.covasim.org
 
-.. contents:: Contents
+
+.. contents:: **Contents**
    :local:
    :depth: 2
 

@@ -455,7 +455,6 @@ class CovaSimTest(unittest.TestCase):
         """
         Simkeys = TestProperties.ParameterKeys.SimulationKeys
         Transkeys = TestProperties.ParameterKeys.TransmissionKeys
-        Progkeys = TestProperties.ParameterKeys.ProgressionKeys
         Hightrans = TestProperties.SpecializedSimulations.Hightransmission
         hightrans_parameters = {
             Simkeys.number_agents : Hightrans.n,

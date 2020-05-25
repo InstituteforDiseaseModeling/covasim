@@ -127,40 +127,6 @@ class SimulationParameterTests(CovaSimTest):
         self.assertEqual(scale_10_pop, 10 * scale_1_pop)
         pass
 
-    def test_initial_infected_count(self):
-        """
-        Set a vanilla number of infections (13)
-        Run sim for one day and verify correct count
-        """
-        infected_0_one_day = {
-            TPKeys.number_agents: 100,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.initial_infected_count: 0
-        }
-        infected_1_one_day = {
-            TPKeys.number_agents: 100,
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.initial_infected_count: 1
-        }
-        infected_321_one_day = {
-            TPKeys.number_agents: 1000,
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.initial_infected_count: 321
-        }
-        self.run_sim(infected_0_one_day)
-        key = TestProperties.ResultsDataKeys.exposed_at_timestep
-        inf_0_pop = self.get_day_zero_channel_value(key)
-        self.run_sim(infected_1_one_day)
-        inf_1_pop = self.get_day_zero_channel_value(key)
-        self.run_sim(infected_321_one_day)
-        inf_321_pop = self.get_day_zero_channel_value(key)
-        self.assertEqual(inf_0_pop, infected_0_one_day[TPKeys.initial_infected_count])
-        self.assertEqual(inf_1_pop, infected_1_one_day[TPKeys.initial_infected_count])
-        self.assertEqual(inf_321_pop, infected_321_one_day[TPKeys.initial_infected_count])
-        pass
 
     def test_random_seed(self):
         """

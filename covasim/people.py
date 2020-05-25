@@ -14,46 +14,24 @@ __all__ = ['People']
 
 class People(cvb.BasePeople):
     '''
-    A class to perform all the operations on the people.
+    A class to perform all the operations on the people. This class is usually
+    not invoked directly, but instead is created automatically by the sim. Most
+    initialization happens in BasePeople.
 
     Args:
         pars (dict): the sim parameters, e.g. sim.pars -- must have pop_size and n_days keys
         strict (bool): whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set
         kwargs (dict): the actual data, e.g. from a popdict, being specified
-
     '''
 
     def __init__(self, pars, strict=True, **kwargs):
         super().__init__(pars)
 
-        # Set person properties -- mostly floats
-        for key in self.meta.person:
-            if key == 'uid':
-                self[key] = np.arange(self.pop_size, dtype=object)
-            else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
-
-        # Set health states -- only susceptible is true by default -- booleans
-        for key in self.meta.states:
-            if key == 'susceptible':
-                self[key] = np.full(self.pop_size, True, dtype=bool)
-            else:
-                self[key] = np.full(self.pop_size, False, dtype=bool)
-
-        # Set dates and durations -- both floats
-        for key in self.meta.dates + self.meta.durs:
-            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
-
-        # Store the dtypes used in a flat dict
-        self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
-        self._lock = True # Stop further attributes from being set
-
-        # Store flows to be computed during simulation
-        self.flows = {key:0 for key in cvd.new_result_flows}
-
-        # Set any values, if supplied
+        # Handle contacts, if supplied (note: they usually are)
         if 'contacts' in kwargs:
             self.add_contacts(kwargs.pop('contacts'))
+
+        # Handle all other values, e.g. age
         for key,value in kwargs.items():
             if strict:
                 self.set(key, value)
@@ -63,31 +41,41 @@ class People(cvb.BasePeople):
         return
 
 
-    def initialize(self, pars=None):
+    def initialize(self):
         ''' Perform initializations '''
-        self.set_prognoses(pars)
+        self.set_prognoses()
         self.validate()
+        self.initialized = True
         return
 
 
-    def set_prognoses(self, pars=None):
-        ''' Set the prognoses for each person based on age during initialization '''
+    def set_prognoses(self):
+        '''
+        Set the prognoses for each person based on age during initialization. Need
+        to reset the seed because viral loads are drawn stochastically.
+        '''
 
-        if pars is None:
-            pars = self.pars
+        pars = self.pars # Shorten
 
         def find_cutoff(age_cutoffs, age):
-            return np.argmax(age_cutoffs > age)  # Index of the age bin to use
+            '''
+            Find which age bin each person belongs to -- e.g. with standard
+            age bins 0, 10, 20, etc., ages [5, 12, 4, 58] would be mapped to
+            indices [0, 1, 0, 5]. Age bins are not guaranteed to be uniform
+            width, which is why this can't be done as an array operation.
+            '''
+            return np.nonzero(age_cutoffs <= age)[0][-1]  # Index of the age bin to use
 
-        prognoses = pars['prognoses']
-        age_cutoffs = prognoses['age_cutoffs']
-        inds = np.fromiter((find_cutoff(age_cutoffs, this_age) for this_age in self.age), dtype=cvd.default_int, count=len(self))
-        self.symp_prob[:]   = prognoses['symp_probs'][inds]
-        self.severe_prob[:] = prognoses['severe_probs'][inds]*pars['prognoses']['comorbidities'][inds]
-        self.crit_prob[:]   = prognoses['crit_probs'][inds]
-        self.death_prob[:]  = prognoses['death_probs'][inds]
-        self.rel_sus[:]     = prognoses['sus_ORs'][inds] # Default susceptibilities
-        self.rel_trans[:]   = prognoses['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, drawn from a distribution
+        cvu.set_seed(pars['rand_seed'])
+
+        progs = pars['prognoses'] # Shorten the name
+        inds = np.fromiter((find_cutoff(progs['age_cutoffs'], this_age) for this_age in self.age), dtype=cvd.default_int, count=len(self)) # Convert ages to indices
+        self.symp_prob[:]   = progs['symp_probs'][inds] # Probability of developing symptoms
+        self.severe_prob[:] = progs['severe_probs'][inds]*progs['comorbidities'][inds] # Severe disease probability is modified by comorbidities
+        self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
+        self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
+        self.rel_sus[:]     = progs['sus_ORs'][inds] # Default susceptibilities
+        self.rel_trans[:]   = progs['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, with viral load drawn from a distribution
 
         return
 
@@ -322,7 +310,9 @@ class People(cvb.BasePeople):
             self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
 
         # Calculate how long before this person can infect other people
-        self.dur_exp2inf[inds]     = cvu.sample(**durpars['exp2inf'], size=n_infections)
+        self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
+        if source is None: # Seed infection or importation -- infect immediately
+            self.dur_exp2inf[inds] -= durpars['exp2inf']['par1'] + durpars['asym2rec']['par1']/2
         self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
 
         # Use prognosis probabilities to determine what happens to them

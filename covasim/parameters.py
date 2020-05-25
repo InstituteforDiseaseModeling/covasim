@@ -26,17 +26,17 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars = {}
 
     # Population parameters
-    pars['pop_size']     = 20e3 # Number ultimately susceptible to CoV
-    pars['pop_infected'] = 10 # Number of initial infections
+    pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
+    pars['pop_infected'] = 10       # Number of initial infections
     pars['pop_type']     = 'random' # What type of population data to use -- random (fastest), synthpops (best), hybrid (compromise), or clustered (not recommended)
-    pars['location']     = None # What location to load data from -- default Seattle
+    pars['location']     = None     # What location to load data from -- default Seattle
 
     # Simulation parameters
     pars['start_day']  = '2020-03-01' # Start day of the simulation
-    pars['end_day']    = None # End day of the simulation
-    pars['n_days']     = 60 # Number of days to run, if end_day isn't specified
-    pars['rand_seed']  = 1 # Random seed, if None, don't reset
-    pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
+    pars['end_day']    = None         # End day of the simulation
+    pars['n_days']     = 60           # Number of days to run, if end_day isn't specified
+    pars['rand_seed']  = 1            # Random seed, if None, don't reset
+    pars['verbose']    = 1            # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
     # Rescaling parameters
     pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
@@ -46,10 +46,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Basic disease transmission
     pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
-    pars['contacts']    = None # The number of contacts per layer; set by reset_layer_pars() below
-    pars['dynam_layer'] = None # Which layers are dynamic; set by reset_layer_pars() below
-    pars['beta_layer']  = None # Transmissibility per layer; set by reset_layer_pars() below
-    pars['n_imports']   = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['contacts']    = None  # The number of contacts per layer; set by reset_layer_pars() below
+    pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
+    pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
+    pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta_dist']   = {'dist':'lognormal','par1':0.84, 'par2':0.3} # Distribution to draw individual level transmissibility; see https://wellcomeopenresearch.org/articles/5-67
     pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
@@ -128,8 +128,8 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
 
     # Specify defaults for hybrid (and SynthPops) -- household, school, work, and community layers (h, s, w, c)
     defaults_h = dict(
-        beta_layer  = dict(h=7.0, s=0.7, w=1.4, c=0.14), # Per-population beta weights; relative
-        contacts    = dict(h=2.7, s=20,  w=8,   c=20),   # Number of contacts per person per day, estimated
+        beta_layer  = dict(h=7.0, s=0.7, w=0.7, c=0.14), # Per-population beta weights; relative
+        contacts    = dict(h=2.7, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
         dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
         iso_factor  = dict(h=0.3, s=0.0, w=0.0, c=0.1),  # Multiply beta by this factor for people in isolation
         quar_factor = dict(h=0.8, s=0.0, w=0.0, c=0.3),  # Multiply beta by this factor for people in quarantine
@@ -176,26 +176,24 @@ def get_prognoses(by_age=True):
         prog_pars (dict): the dictionary of prognosis probabilities
     '''
 
-    max_age = 120 # For the sake of having a finite age cutoff
-
     if not by_age:
         prognoses = dict(
-            age_cutoffs  = np.array([ max_age ]),
-            symp_probs   = np.array([ 0.75 ]),
-            severe_probs = np.array([ 0.2 ]),
-            crit_probs   = np.array([ 0.08 ]),
-            death_probs  = np.array([ 0.02 ]),
+            age_cutoffs  = np.array([0]),
+            symp_probs   = np.array([0.75]),
+            severe_probs = np.array([0.20]),
+            crit_probs   = np.array([0.08]),
+            death_probs  = np.array([0.02]),
         )
     else:
         prognoses = dict(
-            age_cutoffs   = np.array([10,      20,      30,      40,      50,      60,      70,      80,      max_age]), # Age cutoffs (upper limits)
-            sus_ORs       = np.array([0.34,    0.67,    1.00,    1.00,    1.00,    1.00,    1.24,    1.47,    1.47]),    # Odds ratios for relative susceptibility -- from https://science.sciencemag.org/content/early/2020/05/04/science.abb8001; 10-20 and 60-70 bins are the average across the ORs
-            trans_ORs     = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Odds ratios for relative transmissibility -- no evidence of differences
-            comorbidities = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Comorbidities by age -- set to 1 by default since already included in disease progression rates
-            symp_probs    = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90]),    # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
-            severe_probs  = np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, 0.20655, 0.24570]), # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
-            crit_probs    = np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420]), # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
-            death_probs   = np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]), # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
+            age_cutoffs   = np.array([0,       10,      20,      30,      40,      50,      60,      70,      80,      90,]),     # Age cutoffs (lower limits)
+            sus_ORs       = np.array([0.34,    0.67,    1.00,    1.00,    1.00,    1.00,    1.24,    1.47,    1.47,    1.47]),    # Odds ratios for relative susceptibility -- from https://science.sciencemag.org/content/early/2020/05/04/science.abb8001; 10-20 and 60-70 bins are the average across the ORs
+            trans_ORs     = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Odds ratios for relative transmissibility -- no evidence of differences
+            comorbidities = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Comorbidities by age -- set to 1 by default since already included in disease progression rates
+            symp_probs    = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.90]),    # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
+            severe_probs  = np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, 0.20655, 0.24570, 0.24570]), # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
+            crit_probs    = np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420, 0.17420]), # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
+            death_probs   = np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300, 0.09300]), # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
         )
 
     prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given critical symptoms

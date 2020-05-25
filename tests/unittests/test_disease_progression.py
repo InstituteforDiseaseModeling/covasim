@@ -3,7 +3,6 @@ Tests of simulation parameters from
 ../../covasim/README.md
 """
 import unittest
-import pytest
 
 from unittest_support_classes import CovaSimTest, TestProperties
 
@@ -118,6 +117,7 @@ class DiseaseProgressionTests(CovaSimTest):
                 prev_last_day = curr_last_day
         pass
 
+    @unittest.skip("Deprecated due to seed infections now drawing from a distribuion of delays")
     def test_exposure_to_infectiousness_delay_scaling(self):
         """
         Set exposure to infectiousness early simulation, mid simulation,
@@ -147,7 +147,6 @@ class DiseaseProgressionTests(CovaSimTest):
             infectious_channel = self.get_full_result_channel(
                 ResKeys.infectious_at_timestep
             )
-            prev_infectious = None
             agents_on_infectious_day = infectious_channel[exposed_delay]
             if self.is_debugging:
                 print(f"Delay: {exposed_delay}")
@@ -164,7 +163,6 @@ class DiseaseProgressionTests(CovaSimTest):
                     self.assertEqual(infectious_channel[exposed_delay], total_agents,
                                      msg=f"With stddev 0, all {total_agents} agents should turn infectious "
                                          f"on day {exposed_delay}, instead got {agents_on_infectious_day}. ")
-                    prev_infectious = current_infectious
         pass
 
     @unittest.skip("Not fixing deviation tests now")
@@ -257,6 +255,7 @@ class DiseaseProgressionTests(CovaSimTest):
             pass
         pass
 
+    @unittest.skip("Deprecated due to seed infections now drawing from a distribuion of delays")
     def test_mild_infection_duration_scaling(self):
         """
         Make sure that all initial infected cease being infected
@@ -364,6 +363,7 @@ class DiseaseProgressionTests(CovaSimTest):
                 pass
         pass
 
+    @unittest.skip("Deprecated due to seed infections now drawing from a distribuion of delays")
     def test_time_to_die_duration_scaling(self):
         total_agents = 500
         self.set_everyone_critical(num_agents=500, constant_delay=0)
@@ -387,6 +387,7 @@ class DiseaseProgressionTests(CovaSimTest):
             )
             for t in range(len(deaths_today_channel)):
                 curr_deaths = deaths_today_channel[t]
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 if t < TEST_dur:
                     self.assertEqual(curr_deaths, 0,
                                      msg=f"With std 0, all {total_agents} agents should die on "
@@ -408,9 +409,6 @@ class DiseaseProgressionTests(CovaSimTest):
 
         incubation_duration = 30
         incubation_duration_stds = [0, 1, 2, 4]
-        prev_first_day_sympto = None
-        peak_sympto_day_value = 0
-        prev_last_day_sympto = 0
         for TEST_std in incubation_duration_stds:
             test_config = {
                 TestProperties.ParameterKeys.ProgressionKeys.exposed_to_symptomatic: incubation_duration,
