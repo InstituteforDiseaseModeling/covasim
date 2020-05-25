@@ -13,10 +13,16 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.3.1 (2020-05-25)
+--------------------------
+- Modified calculation of ``R_eff`` to include a longer integration period at the beginning, and restored previous method of creating seed infections.
+- Updated default plots to include number of active infections, and removed recoveries.
+
+
 Version 1.3.0 (2020-05-24)
 --------------------------
 - Changed the default number of work contacts in hybrid from 8 to 16, and halved beta from 1.4 to 0.7, to better capture superspreading events. To restore previous behavior, set ``sim['beta_layer']['w'] = 0.14`` and ``sim['contacts']['w'] = 8``.
-- Initial infections now occur at a distribution of dates instead of all at once; this fixes the artificial spike in ``R_eff`` that occurred at the very beginning of a simulation. This change cannot be undone to restore previous behavior.
+- Initial infections now occur at a distribution of dates instead of all at once; this fixes the artificial spike in ``R_eff`` that occurred at the very beginning of a simulation.
 - Changed the definition of age bins in prognoses to be lower limits rather than upper limits. Added an extra set of age bins for 90+.
 - Changed population loading and saving to be based on People objects, not popdicts (syntax is exactly the same, although it is recommended to use ``.ppl`` instead of ``.pop`` for these files).
 - Added additional random seed resets to population initialization and just before the run so that populations loaded from disk produce identical results to newly created ones.

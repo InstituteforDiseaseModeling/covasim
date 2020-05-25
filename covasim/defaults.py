@@ -185,20 +185,17 @@ def get_sim_plots(which='default'):
         plots = sc.odict({
                 'Total counts': [
                     'cum_infections',
-                    'cum_diagnoses',
-                    'cum_recoveries',
+                    'n_infectious',
                 ],
                 'Daily counts': [
                     'new_infections',
                     'new_diagnoses',
-                    'new_recoveries',
-                    'new_deaths',
                 ],
                 'Health outcomes': [
                     'cum_severe',
                     'cum_critical',
                     'cum_deaths',
-                ]
+                ],
         })
     elif which == 'overview':
         plots = sc.dcp(overview_plots)
@@ -220,7 +217,7 @@ def get_scen_plots(which='default'):
             ],
             'Cumulative deaths': [
                 'cum_deaths',
-            ]
+            ],
         })
     elif which == 'overview':
         plots = sc.dcp(overview_plots)

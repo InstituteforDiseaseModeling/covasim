@@ -311,8 +311,6 @@ class People(cvb.BasePeople):
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
-        if source is None: # Seed infection or importation -- infect immediately
-            self.dur_exp2inf[inds] -= durpars['exp2inf']['par1'] + durpars['asym2rec']['par1']/2
         self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
 
         # Use prognosis probabilities to determine what happens to them
