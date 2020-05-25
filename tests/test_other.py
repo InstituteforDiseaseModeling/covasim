@@ -243,7 +243,7 @@ def test_population():
 
     # Test synthpops
     try:
-        sim = cv.Sim(pop_size=5000, pop_type='synthpops')
+        sim = cv.Sim(pop_size=500, pop_type='synthpops')
         sim.initialize()
     except Exception as E:
         errormsg = f'Synthpops test did not pass:\n{str(E)}\nNote: synthpops is optional so this exception is OK.'
