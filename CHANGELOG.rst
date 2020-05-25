@@ -9,19 +9,21 @@ All notable changes to the codebase are documented in this file. Note: in many c
    :depth: 1
 
 
-Versions 1.3.0 - current
-~~~~~~~~~~~~~~~~~~~~~~~~
+Latest versions
+~~~~~~~~~~~~~~~
 
 
 Version 1.3.0 (2020-05-24)
 --------------------------
 - Changed the definition of age cutoffs in prognoses to be lower limits rather than upper limits.
+- Initial infections now occur at a distribution of dates instead of all at once; this fixes the artificial spike in ``R_eff`` that occurred at the very beginning of a simulation.
+- Changed population loading and saving to be based on People objects, not popdicts (syntax is exactly the same, although it is recommended to use ``.ppl`` instead of ``.pop`` for these files).
 - Added additional random seed resets to population initialization and just before the run so that populations loaded from disk produce identical results to newly created ones.
+- GitHub info: PR `557 <https://github.com/amath-idm/covasim/pull/557>`__, previous head ``aac9f1d``
 
 
-
-Versions 1.2.0 - 1.2.3
-~~~~~~~~~~~~~~~~~~~~~~
+Version 1.2 (1.2.0 – 1.2.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.2.3 (2020-05-23)
@@ -67,8 +69,8 @@ Version 1.2.0 (2020-05-20)
 
 
 
-Versions 1.1.0 - 1.1.7
-~~~~~~~~~~~~~~~~~~~~~~
+Version 1.1 (1.1.0 – 1.1.7)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.1.7 (2020-05-19)
@@ -140,8 +142,8 @@ Version 1.1.0 (2020-05-12)
 
 
 
-Versions 1.0.0 - 1.0.3
-~~~~~~~~~~~~~~~~~~~~~~
+Version 1.0 (1.0.0 – 1.0.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.0.3 (2020-05-11)
@@ -176,7 +178,7 @@ Version 1.0.0 (2020-05-08)
 
 
 
-Prerelease versions (0.27.0 - 0.32.1)
+Prerelease versions (0.27.0 – 0.32.1)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
