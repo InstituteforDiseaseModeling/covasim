@@ -117,7 +117,6 @@ class DiseaseProgressionTests(CovaSimTest):
                 prev_last_day = curr_last_day
         pass
 
-    @unittest.skip("Deprecated due to seed infections now drawing from a distribuion of delays")
     def test_exposure_to_infectiousness_delay_scaling(self):
         """
         Set exposure to infectiousness early simulation, mid simulation,
@@ -255,7 +254,6 @@ class DiseaseProgressionTests(CovaSimTest):
             pass
         pass
 
-    @unittest.skip("Deprecated due to seed infections now drawing from a distribuion of delays")
     def test_mild_infection_duration_scaling(self):
         """
         Make sure that all initial infected cease being infected
@@ -363,7 +361,6 @@ class DiseaseProgressionTests(CovaSimTest):
                 pass
         pass
 
-    @unittest.skip("Deprecated due to seed infections now drawing from a distribuion of delays")
     def test_time_to_die_duration_scaling(self):
         total_agents = 500
         self.set_everyone_critical(num_agents=500, constant_delay=0)
@@ -387,7 +384,6 @@ class DiseaseProgressionTests(CovaSimTest):
             )
             for t in range(len(deaths_today_channel)):
                 curr_deaths = deaths_today_channel[t]
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 if t < TEST_dur:
                     self.assertEqual(curr_deaths, 0,
                                      msg=f"With std 0, all {total_agents} agents should die on "
