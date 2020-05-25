@@ -29,7 +29,7 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
         verbose (bool): level of detail to print
         id_len (int): length of ID for each person (default: calculate required length based on the number of people)
         die (bool): whether or not to fail if synthetic populations are requested but not available
-        reset (bool): whether to force population creation even if self.popdict exists
+        reset (bool): whether to force population creation even if self.popdict/self.people exists
 
     Returns:
         None.
@@ -58,7 +58,9 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
             print(f'Warning: not setting ages or contacts for "{location}" since synthpops contacts are pre-generated')
 
     # Actually create the population
-    if sim.popdict and not reset:
+    if sim.people and not reset:
+        return sim.people # If it's already there, just return
+    elif sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
         sim.popdict = None # Once loaded, remove
     else:
@@ -90,7 +92,7 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
             raise FileNotFoundError(errormsg)
         else:
             filepath = sc.makefilepath(filename=popfile)
-            sc.saveobj(filepath, popdict)
+            sc.saveobj(filepath, people)
             if verbose:
                 print(f'Saved population of type "{pop_type}" with {pop_size:n} people to {filepath}')
 
@@ -365,7 +367,7 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
 
     # Finalize
     popdict = {}
-    popdict['uid']        = sc.dcp(list(uid_mapping.values()))
+    popdict['uid']        = np.array(list(uid_mapping.values()), dtype=cvd.default_int)
     popdict['age']        = np.array(ages)
     popdict['sex']        = np.array(sexes)
     popdict['contacts']   = sc.dcp(contacts)

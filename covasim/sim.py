@@ -309,7 +309,9 @@ class Sim(cvb.BaseSim):
     def load_population(self, popfile=None, **kwargs):
         '''
         Load the population dictionary from file -- typically done automatically
-        as part of sim.initialize(load_pop=True).
+        as part of sim.initialize(load_pop=True). Supports loading either saved
+        population dictionaries (popdicts, file ending .pop by convention), or
+        ready-to-go People objects (file ending .ppl by convention).
 
         Args:
             popfile (str): name of the file to load
@@ -319,15 +321,22 @@ class Sim(cvb.BaseSim):
             popfile = self.popfile
         if popfile is not None:
             filepath = sc.makefilepath(filename=popfile, **kwargs)
-            self.popdict = sc.loadobj(filepath)
-            n_actual = len(self.popdict['uid'])
+            obj = sc.loadobj(filepath)
+            if isinstance(obj, dict):
+                self.popdict = obj
+                n_actual     = len(self.popdict['uid'])
+                layer_keys   = self.popdict['layer_keys']
+            elif isinstance(obj, cvb.BasePeople):
+                self.people = obj
+                n_actual    = len(self.people)
+                layer_keys  = self.people.layer_keys()
             n_expected = self['pop_size']
             if n_actual != n_expected:
                 errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
                 raise ValueError(errormsg)
             if self['verbose']:
                 print(f'Loaded population from {filepath}')
-            self.reset_layer_pars(force=False, layer_keys=self.popdict['layer_keys']) # Ensure that layer keys match the loaded population
+            self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
         return
 
 
