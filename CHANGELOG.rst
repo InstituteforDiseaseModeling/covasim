@@ -22,6 +22,7 @@ Version 1.3.0 (2020-05-24)
 - GitHub info: PR `557 <https://github.com/amath-idm/covasim/pull/557>`__, previous head ``aac9f1d``
 
 
+
 Version 1.2 (1.2.0 – 1.2.3)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

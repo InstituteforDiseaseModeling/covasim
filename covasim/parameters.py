@@ -128,8 +128,8 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
 
     # Specify defaults for hybrid (and SynthPops) -- household, school, work, and community layers (h, s, w, c)
     defaults_h = dict(
-        beta_layer  = dict(h=7.0, s=0.7, w=1.4, c=0.14), # Per-population beta weights; relative
-        contacts    = dict(h=2.7, s=20,  w=8,   c=20),   # Number of contacts per person per day, estimated
+        beta_layer  = dict(h=7.0, s=0.7, w=0.7, c=0.14), # Per-population beta weights; relative
+        contacts    = dict(h=2.7, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
         dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
         iso_factor  = dict(h=0.3, s=0.0, w=0.0, c=0.1),  # Multiply beta by this factor for people in isolation
         quar_factor = dict(h=0.8, s=0.0, w=0.0, c=0.3),  # Multiply beta by this factor for people in quarantine
