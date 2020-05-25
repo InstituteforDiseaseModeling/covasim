@@ -7,14 +7,19 @@ import pandas as pd
 import sciris as sc
 import covasim as cv
 
-do_save = False
+do_plot = 1
+do_save = 0
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
 parameters_filename = sc.thisdir(__file__, 'regression', f'pars_v{cv.__version__}.json')
 
 
-def make_sim(use_defaults=False):
-    ''' Define a default simulation for testing the baseline -- include hybrid and interventions to increase coverage '''
+def make_sim(use_defaults=False, do_plot=False):
+    '''
+    Define a default simulation for testing the baseline -- use hybrid and include
+    interventions to increase coverage. If run directly (not via pytest), also
+    plot the sim by default.
+    '''
 
     # Define the parameters
     intervs = [cv.change_beta(days=40, changes=0.5), cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)] # Common interventions
@@ -31,6 +36,12 @@ def make_sim(use_defaults=False):
         sim = cv.Sim()
     else:
         sim = cv.Sim(pars)
+
+    # Optionally plot
+    if do_plot:
+        s2 = sim.copy()
+        s2.run()
+        s2.plot()
 
     return sim
 
@@ -241,9 +252,9 @@ def test_benchmark(do_save=do_save):
 
 
 
-
 if __name__ == '__main__':
 
+    make_sim(do_plot=do_plot)
     json = test_benchmark(do_save=do_save) # Run this first so benchmarking is available even if results are different
     new  = test_baseline()
 

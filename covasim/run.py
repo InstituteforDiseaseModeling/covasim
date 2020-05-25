@@ -174,7 +174,11 @@ class MultiSim(sc.prettyobj):
         for reskey in reskeys:
             raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
             for s,sim in enumerate(self.sims):
-                raw[reskey][:,s] = sim.results[reskey].values
+                vals = sim.results[reskey].values
+                if len(vals) != reduced_sim.npts:
+                    errormsg = f'Cannot reduce sims with inconsistent numbers of days: {reduced_sim.npts} vs. {len(vals)}'
+                    raise ValueError(errormsg)
+                raw[reskey][:,s] = vals
 
         for reskey in reskeys:
             reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
@@ -208,8 +212,11 @@ class MultiSim(sc.prettyobj):
             if combined_sim.people:
                 combined_sim.people += sim.people
             for key in sim.result_keys():
-                this_res = sim.results[key]
-                combined_sim.results[key].values += this_res.values
+                vals = sim.results[key].values
+                if len(vals) != combined_sim.npts:
+                    errormsg = f'Cannot combine sims with inconsistent numbers of days: {combined_sim.npts} vs. {len(vals)}'
+                    raise ValueError(errormsg)
+                combined_sim.results[key].values += vals
 
         # For non-count results (scale=False), rescale them
         for key in combined_sim.result_keys():
