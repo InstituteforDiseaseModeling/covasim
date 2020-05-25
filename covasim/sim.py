@@ -328,6 +328,7 @@ class Sim(cvb.BaseSim):
                 layer_keys   = self.popdict['layer_keys']
             elif isinstance(obj, cvb.BasePeople):
                 self.people = obj
+                self.people.pars = self.pars # Replace the saved parameters with this simulation's
                 n_actual    = len(self.people)
                 layer_keys  = self.people.layer_keys()
             n_expected = self['pop_size']
