@@ -305,7 +305,8 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
 
     # Get git info
     calling_file = sc.makefilepath(get_caller(frame=3, tostring=False)['filename'])
-    cv_info = sc.gitinfo(__file__, verbose=False)
+    cv_info = {'version':cvver.__version__}
+    cv_info.update(sc.gitinfo(__file__, verbose=False))
     caller_info = sc.gitinfo(calling_file, verbose=False)
     caller_info['filename'] = calling_file
     info = {'covasim':cv_info, 'called_by':caller_info}
