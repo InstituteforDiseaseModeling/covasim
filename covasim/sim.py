@@ -354,6 +354,7 @@ class Sim(cvb.BaseSim):
                 errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
                 raise ValueError(errormsg)
             self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
+            self.popfile = None # Once loaded, remove
 
         return
 
