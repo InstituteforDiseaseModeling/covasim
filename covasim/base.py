@@ -1080,7 +1080,7 @@ class Layer(FlexDict):
             n_curr = len(self[key]) # Current number of contacts
             n_new = len(new_arr) # New contacts to add
             n_total = n_curr + n_new # New size
-            self[key].resize(n_total, refcheck=False) # Resize to make room, preserving dtype
+            self[key] = np.resize(self[key], n_total) # Resize to make room, preserving dtype
             self[key][n_curr:] = new_arr # Copy contacts into the layer
         return
 
