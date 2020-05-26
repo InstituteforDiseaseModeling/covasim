@@ -309,19 +309,32 @@ class Sim(cvb.BaseSim):
     def load_population(self, popfile=None, **kwargs):
         '''
         Load the population dictionary from file -- typically done automatically
-        as part of sim.initialize(load_pop=True). Supports loading either saved
-        population dictionaries (popdicts, file ending .pop by convention), or
-        ready-to-go People objects (file ending .ppl by convention).
+        as part of sim.initialize(). Supports loading either saved population
+        dictionaries (popdicts, file ending .pop by convention), or ready-to-go
+        People objects (file ending .ppl by convention). Either object an also be
+        supplied directly.
 
         Args:
-            popfile (str): name of the file to load
+            popfile (str or obj): name of the file if a string; otherwise, the popdict or People object to load
             kwargs (dict): passed to sc.makefilepath()
         '''
+        # Set the file path if not is provided
         if popfile is None and self.popfile is not None:
             popfile = self.popfile
+
+        # Handle the population (if it exists)
         if popfile is not None:
-            filepath = sc.makefilepath(filename=popfile, **kwargs)
-            obj = sc.loadobj(filepath)
+
+            # Load from disk or use directly
+            if isinstance(popfile, str): # It's a string, assume it's a filename
+                filepath = sc.makefilepath(filename=popfile, **kwargs)
+                obj = sc.loadobj(filepath)
+                if self['verbose']:
+                    print(f'Loading population from {filepath}')
+            else:
+                obj = popfile # Use it directly
+
+            # Process the input
             if isinstance(obj, dict):
                 self.popdict = obj
                 n_actual     = len(self.popdict['uid'])
@@ -331,13 +344,17 @@ class Sim(cvb.BaseSim):
                 self.people.pars = self.pars # Replace the saved parameters with this simulation's
                 n_actual    = len(self.people)
                 layer_keys  = self.people.layer_keys()
+            else:
+                errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'
+                raise ValueError(errormsg)
+
+            # Perform validation
             n_expected = self['pop_size']
             if n_actual != n_expected:
                 errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
                 raise ValueError(errormsg)
-            if self['verbose']:
-                print(f'Loaded population from {filepath}')
             self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
+
         return
 
 
