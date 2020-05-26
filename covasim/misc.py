@@ -175,13 +175,20 @@ def save(*args, **kwargs):
     return filepath
 
 
-def get_caller(tostring=True, frame=2):
+def get_caller(frame=2, tostring=True):
         '''
         Try to get information on the calling function, but fail gracefully.
 
         Frame 1 is the current file (this one), so not very useful. Frame 2 is
         the default assuming it is being called directly. Frame 3 is used if
         another function is calling this function internally.
+
+        Args:
+            frame (int): how many frames to descend (e.g. the caller of the caller of the...)
+            tostring (bool): whether to return a string instead of a dict
+
+        Returns:
+            output (str/dict): the filename and line number of the calling function, either as a string or dict
         '''
         try:
             import inspect
