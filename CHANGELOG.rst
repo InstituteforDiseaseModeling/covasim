@@ -12,6 +12,11 @@ All notable changes to the codebase are documented in this file. Note: in many c
 Latest versions
 ~~~~~~~~~~~~~~~
 
+Version 1.3.2 (2020-05-25)
+--------------------------
+- ``People`` and ``popdict`` objects can now be supplied directly to the sim instead of a file name.
+- ``git_info()`` and ``check_save_info()`` now include information from the calling script (not just Covasim). They also now include a ``comments`` field to optionally store additional information.
+
 
 Version 1.3.1 (2020-05-25)
 --------------------------

@@ -2,6 +2,7 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
+import os
 import numpy as np
 import pandas as pd
 import pylab as pl
@@ -174,12 +175,24 @@ def save(*args, **kwargs):
     return filepath
 
 
-def get_caller(tostring=True):
-        ''' Try to get information on the calling function, but fail gracefully '''
+def get_caller(frame=2, tostring=True):
+        '''
+        Try to get information on the calling function, but fail gracefully.
+
+        Frame 1 is the current file (this one), so not very useful. Frame 2 is
+        the default assuming it is being called directly. Frame 3 is used if
+        another function is calling this function internally.
+
+        Args:
+            frame (int): how many frames to descend (e.g. the caller of the caller of the...)
+            tostring (bool): whether to return a string instead of a dict
+
+        Returns:
+            output (str/dict): the filename and line number of the calling function, either as a string or dict
+        '''
         try:
             import inspect
             result = inspect.getouterframes(inspect.currentframe(), 2)
-            frame = 2
             fname = str(result[frame][1])
             lineno = str(result[frame][2])
             if tostring:
@@ -263,7 +276,7 @@ def get_png_metadata(filename, output=False):
         return
 
 
-def git_info(filename=None, check=False, old_info=None, die=False, verbose=True, **kwargs):
+def git_info(filename=None, check=False, comments=None, old_info=None, die=False, indent=2, verbose=True, **kwargs):
     '''
     Get current git information and optionally write it to disk. Simplest usage
     is cv.git_info(__file__)
@@ -271,31 +284,50 @@ def git_info(filename=None, check=False, old_info=None, die=False, verbose=True,
     Args:
         filename (str): name of the file to write to or read from
         check (bool): whether or not to compare two git versions
+        comments (str/dict): additional comments to include in the file
         old_info (dict): dictionary of information to check against
         die (bool): whether or not to raise an exception if the check fails
+        indent (int): how many indents to use when writing the file to disk
+        verbose (bool): detail to print
+        kwargs (dict): passed to loadjson (if check=True) or loadjson (if check=False)
 
     **Examples**::
+
         cv.git_info() # Return information
         cv.git_info(__file__) # Writes to disk
         cv.git_info('covasim_version.gitinfo') # Writes to disk
         cv.git_info('covasim_version.gitinfo', check=True) # Checks that current version matches saved file
     '''
-    # Handle the case where
+
+    # Handle the case where __file__ is supplied as the argument
     if isinstance(filename, str) and filename.endswith('.py'):
         filename = filename.replace('.py', '.gitinfo')
-    info = sc.gitinfo(__file__)
-    if not check: # Just get information
+
+    # Get git info
+    calling_file = sc.makefilepath(get_caller(frame=3, tostring=False)['filename'])
+    cv_info = sc.gitinfo(__file__, verbose=False)
+    caller_info = sc.gitinfo(calling_file, verbose=False)
+    caller_info['filename'] = calling_file
+    info = {'covasim':cv_info, 'called_by':caller_info}
+    if comments:
+        info['comments'] = comments
+
+    # Just get information and optionally write to disk
+    if not check:
         if filename is not None:
-            output = sc.savejson(filename, info, **kwargs)
+            output = sc.savejson(filename, info, indent=indent, **kwargs)
         else:
             output = info
         return output
+
+    # Check if versions match, and optionally raise an error
     else:
         if filename is not None:
             old_info = sc.loadjson(filename, **kwargs)
         string = ''
-        if info != old_info:
-            string = f'Git information differs: {info} vs. {old_info}'
+        old_cv_info = old_info['covasim'] if 'covasim' in old_info else old_info
+        if cv_info != old_cv_info:
+            string = f'Git information differs: {cv_info} vs. {old_cv_info}'
             if die:
                 raise ValueError(string)
             elif verbose:
@@ -323,7 +355,7 @@ def check_version(expected, die=False, verbose=True, **kwargs):
     return compare
 
 
-def check_save_info(expected=None, **kwargs):
+def check_save_info(expected=None, filename=None, **kwargs):
     '''
     A convenience function that bundles check_version with git_info and saves
     automatically to disk from the calling file. The idea is to put this at the
@@ -332,11 +364,13 @@ def check_save_info(expected=None, **kwargs):
 
     Args:
         expected (str): expected version information
+        filename (str): file to save to; if None, guess based on current file name
         kwargs (dict): passed to git_info()
 
-    **Example**::
+    **Examples**::
 
         cv.check_save_info()
+        cv.check_save_info('1.3.2', filename='script.gitinfo', comments='This is the main analysis script')
     '''
 
     # First, check the version if supplied
@@ -344,8 +378,9 @@ def check_save_info(expected=None, **kwargs):
         check_version(expected)
 
     # Now, check and save the git info
-    calling_file = get_caller(tostring=False)['filename']
-    git_info(filename=calling_file, **kwargs)
+    if filename is None:
+        filename = get_caller(tostring=False)['filename']
+    git_info(filename=filename, **kwargs)
 
     return
 
