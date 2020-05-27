@@ -2,7 +2,6 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
-import os
 import numpy as np
 import pandas as pd
 import pylab as pl
@@ -200,8 +199,12 @@ def get_caller(frame=2, tostring=True):
             else:
                 output = {'filename':fname, 'lineno':lineno}
         except Exception as E:
-            output = f'Calling function information not available ({str(E)})'
+            if tostring:
+                output = f'Calling function information not available ({str(E)})'
+            else:
+                output = {'filename':'N/A', 'lineno':'N/A'}
         return output
+
 
 def savefig(filename=None, dpi=None, comments=None, **kwargs):
     '''
