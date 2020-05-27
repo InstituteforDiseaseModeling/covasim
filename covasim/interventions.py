@@ -527,6 +527,9 @@ class test_num(Intervention):
         test_delay (int): days for test result to be known
         start_day (int): day the intervention starts
         end_day (int): day the intervention ends
+        dist (string): name of distribution for delay
+        par1 (float): first parameter controling dist
+        par2 (float): second parameter controling dist
         kwargs (dict): passed to Intervention()
 
     **Examples**::
@@ -551,9 +554,9 @@ class test_num(Intervention):
         self.test_delay  = test_delay
         self.start_day   = start_day
         self.end_day     = end_day
-        self.pdf         = cvu.get_pdf(dist, par1, par2)
+        self.pdf         = cvu.get_pdf(dist, par1, par2) # get the distribution's pdf
         if self.pdf:
-            self.normalize = 1/sum(self.pdf.pdf(np.arange(100)))
+            self.normalize = 1/sum(self.pdf.pdf(np.arange(100))) # for making the average 1
         else:
             self.normalize = 1
         return
