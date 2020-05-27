@@ -39,7 +39,7 @@ pars_state['renames']['hospitalizedCumulative'] = "cum_severe"
 pars_state['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
 
 pars_state['cumulative_fields'] = dict()
-pars_state['cumulative_fields']['cum_in_icu'] = "num_icu"
+pars_state['cumulative_fields']['cum_critical'] = "new_critical"
 pars_state['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
 
 
@@ -78,8 +78,8 @@ parameter_us['renames']['hospitalizedCumulative'] = "cum_severe"
 parameter_us['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
 
 parameter_us['cumulative_fields'] = dict()
-parameter_us['cumulative_fields']['cum_in_icu'] = "num_icu"
-parameter_us['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
+parameter_us['cumulative_fields']['cum_critical'] = "new_critical"
+parameter_us['cumulative_fields']['cum_on_ventilator'] = "n_on_ventilator"
 
 
 parameter_us['fields_to_drop'] = [
