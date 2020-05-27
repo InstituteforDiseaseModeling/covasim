@@ -9,8 +9,20 @@ All notable changes to the codebase are documented in this file. Note: in many c
    :depth: 1
 
 
+~~~~~~~~~~~~~~~
 Latest versions
 ~~~~~~~~~~~~~~~
+
+
+Version 1.4.0 (2020-05-27)
+--------------------------
+- Added a new class, ``cv.Fit()``, that stores information about the fit between the model and the data.
+- GitHub info: PR `### <https://github.com/amath-idm/covasim/pull/###>`__, previous head ``8b157a2``
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.3.x (1.3.0 – 1.3.4)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.3.4 (2020-05-26)
@@ -51,9 +63,9 @@ Version 1.3.0 (2020-05-24)
 - GitHub info: PR `557 <https://github.com/amath-idm/covasim/pull/557>`__, previous head ``aac9f1d``
 
 
-
-Version 1.2 (1.2.0 – 1.2.3)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.2.x (1.2.0 – 1.2.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.2.3 (2020-05-23)
@@ -98,9 +110,9 @@ Version 1.2.0 (2020-05-20)
 - GitHub info: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
 
 
-
-Version 1.1 (1.1.0 – 1.1.7)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.1.x (1.1.0 – 1.1.7)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.1.7 (2020-05-19)
@@ -171,9 +183,9 @@ Version 1.1.0 (2020-05-12)
 - GitHub info: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
 
 
-
-Version 1.0 (1.0.0 – 1.0.3)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.0.x (1.0.0 – 1.0.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.0.3 (2020-05-11)
@@ -207,7 +219,7 @@ Version 1.0.0 (2020-05-08)
 - GitHub info: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
 
 
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Prerelease versions (0.27.0 – 0.32.1)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
