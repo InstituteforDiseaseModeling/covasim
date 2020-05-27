@@ -312,10 +312,11 @@ class Sim(cvb.BaseSim):
         as part of sim.initialize(). Supports loading either saved population
         dictionaries (popdicts, file ending .pop by convention), or ready-to-go
         People objects (file ending .ppl by convention). Either object an also be
-        supplied directly.
+        supplied directly. Once a population file is loaded, it is removed from
+        the Sim object.
 
         Args:
-            popfile (str or obj): name of the file if a string; otherwise, the popdict or People object to load
+            popfile (str or obj): if a string, name of the file; otherwise, the popdict or People object to load
             kwargs (dict): passed to sc.makefilepath()
         '''
         # Set the file path if not is provided
@@ -354,7 +355,7 @@ class Sim(cvb.BaseSim):
                 errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
                 raise ValueError(errormsg)
             self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
-            self.popfile = None # Once loaded, remove
+            self.popfile = None # Once loaded, remove to save memory
 
         return
 
