@@ -17,7 +17,7 @@ from . import plotting as cvplt
 from . import interventions as cvi
 from . import analysis as cva
 
-# Specify all externally visible things this file defines
+# Everything in this file is contained in the Sim class
 __all__ = ['Sim']
 
 
@@ -27,15 +27,15 @@ class Sim(cvb.BaseSim):
     number of time points, and the parameters of the simulation.
 
     Args:
-        pars (dict): parameters to modify from their default values
-        datafile (str): filename of (Excel) data file to load, if any
-        datacols (list): list of column names of the data file to load
-        label (str): the name of the simulation (useful to distinguish in batch runs)
-        simfile (str): the filename for this simulation, if it's saved (default: creation date)
-        popfile (str): the filename to load/save the population for this simulation
-        load_pop (bool): whether to load the population from the named file
-        save_pop (bool): whether to save the population to the named file
-        kwargs (dict): passed to make_pars()
+        pars     (dict):   parameters to modify from their default values
+        datafile (str/df): filename of (Excel, CSV) data file to load, or a pandas dataframe of the data
+        datacols (list):   list of column names of the data to load
+        label    (str):    the name of the simulation (useful to distinguish in batch runs)
+        simfile  (str):    the filename for this simulation, if it's saved (default: creation date)
+        popfile  (str):    the filename to load/save the population for this simulation
+        load_pop (bool):   whether to load the population from the named file
+        save_pop (bool):   whether to save the population to the named file
+        kwargs   (dict):   passed to make_pars()
 
     **Examples**::
 
@@ -103,7 +103,7 @@ class Sim(cvb.BaseSim):
         ''' Load the data to calibrate against, if provided '''
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvm.load_data(filename=datafile, columns=datacols, **kwargs)
+            self.data = cvm.load_data(datafile=datafile, columns=datacols, **kwargs)
 
         return
 
