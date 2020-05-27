@@ -12,6 +12,15 @@ All notable changes to the codebase are documented in this file. Note: in many c
 Latest versions
 ~~~~~~~~~~~~~~~
 
+
+Version 1.3.3 (2020-05-26)
+--------------------------
+- Fixed issue with a loaded population being reloaded when a simulation is re-initialized.
+- Fixed issue with the argument ``dateformat`` not being passed to the right plotting routine.
+- Fixed issue with MultiSim plotting appearing in separate panels when run in a Jupyter notebook.
+- Fixed issue with ``cv.git_info()`` failing to write to file when the calling function could not be found.
+
+
 Version 1.3.2 (2020-05-25)
 --------------------------
 - ``People`` and ``popdict`` objects can now be supplied directly to the sim instead of a file name.
