@@ -29,17 +29,17 @@ pars_state['output_folder'] = "epi_data/covid-tracking"
 
 pars_state['renames'] = dict()
 pars_state['renames']['state'] = "key"
-pars_state['renames']['positiveIncrease'] = "new_positives"
+pars_state['renames']['positiveIncrease'] = "new_diagnoses"
 pars_state['renames']['negativeIncrease'] = "new_negatives"
 pars_state['renames']['totalTestResultsIncrease'] = "new_tests"
-pars_state['renames']['hospitalizedIncrease'] = "new_hospitalized"
-pars_state['renames']['deathIncrease'] = "new_death"
-pars_state['renames']['inIcuCumulative'] = "cum_in_icu"
-pars_state['renames']['hospitalizedCumulative'] = "cum_hospitalized"
+pars_state['renames']['hospitalizedIncrease'] = "new_severe"
+pars_state['renames']['deathIncrease'] = "new_deaths"
+pars_state['renames']['inIcuCumulative'] = "cum_critical"
+pars_state['renames']['hospitalizedCumulative'] = "cum_severe"
 pars_state['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
 
 pars_state['cumulative_fields'] = dict()
-pars_state['cumulative_fields']['cum_in_icu'] = "num_icu"
+pars_state['cumulative_fields']['cum_critical'] = "new_critical"
 pars_state['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
 
 
@@ -68,18 +68,18 @@ parameter_us['load_path'] = "https://covidtracking.com/api/v1/us/daily.csv"
 pars_state['output_folder'] = "epi_data/covid-tracking"
 
 parameter_us['renames'] = dict()
-parameter_us['renames']['positiveIncrease'] = "new_positives"
+parameter_us['renames']['positiveIncrease'] = "new_diagnoses"
 parameter_us['renames']['negativeIncrease'] = "new_negatives"
 parameter_us['renames']['totalTestResultsIncrease'] = "new_tests"
-parameter_us['renames']['hospitalizedIncrease'] = "new_hospitalized"
-parameter_us['renames']['deathIncrease'] = "new_death"
-parameter_us['renames']['inIcuCumulative'] = "cum_in_icu"
-parameter_us['renames']['hospitalizedCumulative'] = "cum_hospitalized"
+parameter_us['renames']['hospitalizedIncrease'] = "new_severe"
+parameter_us['renames']['deathIncrease'] = "new_deaths"
+parameter_us['renames']['inIcuCumulative'] = "cum_critical"
+parameter_us['renames']['hospitalizedCumulative'] = "cum_severe"
 parameter_us['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
 
 parameter_us['cumulative_fields'] = dict()
-parameter_us['cumulative_fields']['cum_in_icu'] = "num_icu"
-parameter_us['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
+parameter_us['cumulative_fields']['cum_critical'] = "new_critical"
+parameter_us['cumulative_fields']['cum_on_ventilator'] = "n_on_ventilator"
 
 
 parameter_us['fields_to_drop'] = [

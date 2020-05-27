@@ -13,6 +13,12 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.3.4 (2020-05-26)
+--------------------------
+- Allowed data to be loaded from a dataframe instead of from file.
+- Fixed data scrapers to use correct column labels.
+
+
 Version 1.3.3 (2020-05-26)
 --------------------------
 - Fixed issue with a loaded population being reloaded when a simulation is re-initialized.

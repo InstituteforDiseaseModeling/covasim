@@ -1,5 +1,4 @@
 import os
-import sys
 import logging
 import pandas as pd
 import sciris as sc
@@ -20,7 +19,7 @@ class Scraper(sc.prettyobj):
         self.renames = parameters.get("renames")
         self.fields_to_drop = parameters.get("fields_to_drop")
         self.cumulative_fields = parameters.get("cumulative_fields")
-        
+
         self.df = None
         self.grouping = None
 
@@ -141,8 +140,8 @@ class Scraper(sc.prettyobj):
             self.log.info(f'Creating {filepath}')
             mini_df = self.df[self.df.key == key_value]
             mini_df.to_csv(filepath)
-        
+
         self.log.info(
             f"There are {len(self.grouping)} entities in this dataset.")
         self.log.info(f"Saved {len(self.df)} records.")
-        
+
