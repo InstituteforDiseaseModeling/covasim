@@ -1,6 +1,5 @@
 from cova_epi_scraper import Scraper
 import pandas as pd
-import os
 
 
 class ECDPScraper(Scraper):
