@@ -65,9 +65,9 @@ class Sim(cvb.BaseSim):
         self.results_ready = False    # Whether or not results are ready
 
         # Now update everything
-        self.set_metadata(simfile, label) # Set the simulation date and filename
+        self.set_metadata(simfile, label)  # Set the simulation date and filename
+        self.update_pars(pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
-        self.update_pars(pars, **kwargs)             # Update the parameters, if provided
         if self.load_pop:
             self.load_population(popfile)      # Load the population, if provided
 
@@ -99,11 +99,13 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def load_data(self, datafile=None, datacols=None, **kwargs):
+    def load_data(self, datafile=None, datacols=None, verbose=None, **kwargs):
         ''' Load the data to calibrate against, if provided '''
+        if verbose is None:
+            verbose = self['verbose']
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvm.load_data(datafile=datafile, columns=datacols, **kwargs)
+            self.data = cvm.load_data(datafile=datafile, columns=datacols, verbose=verbose, **kwargs)
 
         return
 
