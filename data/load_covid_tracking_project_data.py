@@ -68,13 +68,13 @@ parameter_us['load_path'] = "https://covidtracking.com/api/v1/us/daily.csv"
 pars_state['output_folder'] = "epi_data/covid-tracking"
 
 parameter_us['renames'] = dict()
-parameter_us['renames']['positiveIncrease'] = "new_positives"
+parameter_us['renames']['positiveIncrease'] = "new_diagnoses"
 parameter_us['renames']['negativeIncrease'] = "new_negatives"
 parameter_us['renames']['totalTestResultsIncrease'] = "new_tests"
-parameter_us['renames']['hospitalizedIncrease'] = "new_hospitalized"
-parameter_us['renames']['deathIncrease'] = "new_death"
-parameter_us['renames']['inIcuCumulative'] = "cum_in_icu"
-parameter_us['renames']['hospitalizedCumulative'] = "cum_hospitalized"
+parameter_us['renames']['hospitalizedIncrease'] = "new_severe"
+parameter_us['renames']['deathIncrease'] = "new_deaths"
+parameter_us['renames']['inIcuCumulative'] = "cum_critical"
+parameter_us['renames']['hospitalizedCumulative'] = "cum_severe"
 parameter_us['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
 
 parameter_us['cumulative_fields'] = dict()
