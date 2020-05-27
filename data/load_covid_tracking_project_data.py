@@ -29,13 +29,13 @@ pars_state['output_folder'] = "epi_data/covid-tracking"
 
 pars_state['renames'] = dict()
 pars_state['renames']['state'] = "key"
-pars_state['renames']['positiveIncrease'] = "new_positives"
+pars_state['renames']['positiveIncrease'] = "new_diagnoses"
 pars_state['renames']['negativeIncrease'] = "new_negatives"
 pars_state['renames']['totalTestResultsIncrease'] = "new_tests"
-pars_state['renames']['hospitalizedIncrease'] = "new_hospitalized"
+pars_state['renames']['hospitalizedIncrease'] = "new_severe"
 pars_state['renames']['deathIncrease'] = "new_death"
-pars_state['renames']['inIcuCumulative'] = "cum_in_icu"
-pars_state['renames']['hospitalizedCumulative'] = "cum_hospitalized"
+pars_state['renames']['inIcuCumulative'] = "cum_critical"
+pars_state['renames']['hospitalizedCumulative'] = "cum_severe"
 pars_state['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
 
 pars_state['cumulative_fields'] = dict()
