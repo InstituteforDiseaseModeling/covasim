@@ -7,6 +7,8 @@ Numerical utilities for running Covasim
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
 from . import defaults as cvd
+from scipy.stats import lognorm
+from scipy.stats import uniform
 
 # What functions are externally visible -- note, this gets populated in each section below
 __all__ = []
@@ -95,7 +97,7 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
 
 #%% Sampling and seed methods
 
-__all__ += ['sample', 'set_seed']
+__all__ += ['sample', 'get_pdf', 'set_seed']
 
 
 def sample(dist=None, par1=None, par2=None, size=None):
@@ -154,6 +156,26 @@ def sample(dist=None, par1=None, par2=None, size=None):
 
     return samples
 
+def get_pdf(dist='lognormal', par1=10, par2=170):
+    choices = [
+        'None',
+        'uniform',
+        'lognormal',
+        ]
+    if dist=='None' or dist==None:
+        return None
+    elif dist=='uniform':
+        pdf = uniform(loc=par1, scale=par2)
+    elif dist=='lognormal':
+        mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
+        sigma = np.sqrt(np.log(par2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
+        pdf = lognorm(sigma, loc=-0.5, scale=np.exp(mean))
+    else:
+        choicestr = '\n'.join(choices)
+        errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {choicestr}'
+        raise NotImplementedError(errormsg)
+        
+    return pdf
 
 def set_seed(seed=None):
     ''' Reset the random seed -- complicated because of Numba '''
