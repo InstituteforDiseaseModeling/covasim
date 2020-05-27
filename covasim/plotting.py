@@ -175,8 +175,12 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     return
 
 
-def reset_ticks(ax, sim, interval, as_dates):
+def reset_ticks(ax, sim, interval, as_dates, dateformat):
     ''' Set the tick marks, using dates by default '''
+
+    # Set the default -- "Mar-01"
+    if dateformat is None:
+        dateformat = '%b-%d'
 
     # Set the x-axis intervals
     if interval:
@@ -188,7 +192,7 @@ def reset_ticks(ax, sim, interval, as_dates):
 
         @ticker.FuncFormatter
         def date_formatter(x, pos):
-            return (sim['start_day'] + dt.timedelta(days=x)).strftime('%b-%d')
+            return (sim['start_day'] + dt.timedelta(days=x)).strftime(dateformat)
 
         ax.xaxis.set_major_formatter(date_formatter)
         if not interval:
@@ -258,7 +262,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
             if args.show['data']:
                 plot_data(sim, ax, reskey, args.scatter) # Plot the data
             if args.show['ticks']:
-                reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['interventions']:
             plot_interventions(sim, ax) # Plot the interventions
         if args.show['legend']:
@@ -298,7 +302,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
                 if args.show['interventions']:
                     plot_interventions(sim, ax) # Plot the interventions
                 if args.show['ticks']:
-                    reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                    reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['legend']:
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
@@ -340,7 +344,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     plot_data(sim, ax, key, args.scatter) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
-    reset_ticks(ax, sim, interval, as_dates) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+    reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return fig
 
