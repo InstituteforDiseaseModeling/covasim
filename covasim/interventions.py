@@ -301,12 +301,14 @@ __all__+= ['change_beta', 'clip_edges']
 def process_days(sim, days):
     '''
     Ensure lists of days are in consistent format. Used by change_beta, clip_edges,
-    and some analyzers.
+    and some analyzers. If day is 'end' or -1, use the final day of the simulation.
     '''
     if sc.isstring(days) or not sc.isiterable(days):
         days = sc.promotetolist(days)
     if isinstance(days, list):
         for d,day in enumerate(days):
+            if day in ['end', -1]:
+                day = sim['end_day']
             days[d] = sim.day(day) # Ensure it's an integer and not a string or something
     days = sc.promotetoarray(days)
     return days

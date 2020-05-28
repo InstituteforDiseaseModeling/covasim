@@ -18,3 +18,9 @@ sim.run()
 agehist = sim['analyzers'][0]
 hists = agehist.get()
 agehist.plot()
+
+sim = cv.Sim(pars, analyzers=cv.age_histogram(days=['2020-04-01', 'end'], datafile='example_age_data.csv'))
+sim.run()
+agehist = sim['analyzers'][0]
+hists = agehist.get()
+agehist.plot(windows=True)

@@ -143,17 +143,25 @@ class age_histogram(Analyzer):
         self.start_day = None # Store the start date of the simulation
         self.data      = None # Store the loaded data
         self.hists = sc.odict() # Store the actual snapshots
+        self.window_hists = None # Store the histograms for individual windows -- populated by compute_windows()
         return
 
 
     def initialize(self, sim):
 
         # Handle days
-        self.start_day = sim['start_day']
+        self.start_day = cvm.date(sim['start_day'], as_date=False) # Get the start day, as a string
+        self.end_day   = cvm.date(sim['end_day'], as_date=False) # Get the start day, as a string
         if self.days is None:
-            self.days = [sim.tvec[-1]] # If no day is supplied, use the last day
+            self.days = self.end_day # If no day is supplied, use the last day
         self.days = cvi.process_days(sim, self.days) # Ensure days are in the right format
+        self.days = np.sort(self.days) # Ensure they're in order
         self.dates = [sim.date(day) for day in self.days] # Store as date strings
+        max_hist_day = self.days[-1]
+        max_sim_day = sim.day(self.end_day)
+        if max_hist_day > max_sim_day:
+            errormsg = f'Cannot create histogram for {self.dates[-1]} (day {max_hist_day}) because the simulation ends on {self.end_day} (day {max_sim_day})'
+            raise ValueError(errormsg)
 
         # Handle edges and age bins
         if self.edges is None: # Default age bins
@@ -208,11 +216,34 @@ class age_histogram(Analyzer):
         return hists
 
 
-    def plot(self, width=0.8, color='#F8A493', font_size=18, fig_args=None, data_args=None):
+    def compute_windows(self):
+        ''' Convert cumulative histograms to windows '''
+        if len(self.hists)<2:
+            errormsg = f'You must have at least two dates specified to compute a window'
+            raise ValueError(errormsg)
+
+        self.window_hists = sc.objdict()
+        for d,end_date,hists in self.hists.enumitems():
+            if d==0: # Copy the first one
+                start_date = self.start_day
+                self.window_hists[f'{start_date} to {end_date}'] = self.hists[end_date]
+            else:
+                start_date = self.dates[d-1]
+                datekey = f'{start_date} to {end_date}'
+                self.window_hists[datekey] = sc.objdict() # Initialize the dictionary
+                self.window_hists[datekey]['bins'] = self.hists[end_date]['bins']
+                for state in self.states: # Loop over each state
+                    self.window_hists[datekey][state] = self.hists[end_date][state] - self.hists[start_date][state]
+
+        return
+
+
+    def plot(self, windows=False, width=0.8, color='#F8A493', font_size=18, fig_args=None, data_args=None):
         '''
         Simple method for plotting the histograms.
 
         Args:
+            windows (bool): whether to plot windows instead of cumulative counts
             width (float): width of bars
             color (hex or rgb): the color of the bars
             font_size (float): size of font
@@ -231,8 +262,16 @@ class age_histogram(Analyzer):
         n_cols = np.ceil(n_plots/n_rows) # Number of subplot columns to have
         figs = []
 
+        # Handle windows
+        if windows:
+            if self.window_hists is None:
+                self.compute_windows()
+            histsdict = self.window_hists
+        else:
+            histsdict = self.hists
+
         # Make the figure(s)
-        for date,hists in self.hists.items():
+        for date,hists in histsdict.items():
             figs += [pl.figure(**fig_args)]
             pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
             bins = hists['bins']
@@ -247,7 +286,8 @@ class age_histogram(Analyzer):
                 pl.ylabel('Count')
                 pl.xticks(ticks=bins)
                 pl.legend()
-                pl.title(f'Number of people {state} by {date}')
+                preposition = 'from' if windows else 'by'
+                pl.title(f'Number of people {state} {preposition} {date}')
 
         return figs
 
