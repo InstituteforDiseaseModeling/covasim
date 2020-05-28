@@ -1,12 +1,27 @@
-# Testing the new test_num intervention that using a delay from symptom onset
-# to swab. This starts by defining the original test_num from covasim 1.3.2
+'''
+Testing the new test_num intervention that using a delay from symptom onset
+to swab. This starts by defining the original test_num from Covasim 1.3.2.
 
+NOTE: this test relies on several data files that are not included in the repository.
+It is included for completeness.
+'''
+
+import os
 import covasim as cv
 import pylab as pl
 import numpy as np
 import sciris as sc
 from covasim import utils as cvu
 from covasim.interventions import process_daily_data
+
+
+do_save = False
+
+datafile = '20200510_KingCounty_Covasim.csv'
+swabfile = 'WA_Symptoms_to_Swab.csv'
+
+if not os.path.exists(datafile) or not os.path.exists(swabfile):
+    raise FileNotFoundError(f'Cannot find {datafile} or {swabfile}, this test is not available')
 
 
 class test_num_old(cv.Intervention):
@@ -119,8 +134,6 @@ class test_num_old(cv.Intervention):
 
 def single_sim_old(end_day='2020-05-10', rand_seed=1):
 
-    datafile = '20200510_KingCounty_Covasim.csv'
-
     pop_type  = 'hybrid'
     pop_size  = 225000
     pop_scale = 2.25e6/pop_size
@@ -183,8 +196,6 @@ def single_sim_old(end_day='2020-05-10', rand_seed=1):
     return sim
 
 def single_sim_new(end_day='2020-05-10', rand_seed=1, dist='lognormal', par1=10, par2=170):
-
-    datafile = '20200510_KingCounty_Covasim.csv'
 
     pop_type  = 'hybrid'
     pop_size  = 225000
@@ -262,7 +273,7 @@ if __name__ == "__main__":
     stage_old = {'mild': 0, 'sev': 0, 'crit': 0}
     stage_new = {'mild': 0, 'sev': 0, 'crit': 0}
     stage_flat = {'mild': 0, 'sev': 0, 'crit': 0}
-    
+
     start = 1
     end = 2
     n_run = end-start
@@ -281,7 +292,7 @@ if __name__ == "__main__":
        idx = ~np.isnan(sim.people.date_critical)
        stage_old['crit'] += sum(idx[idx_dia])/sum(idx)
        sc.toc(t)
-       
+
        sim = single_sim_new(rand_seed=i)
        t = sc.tic()
        sim.run()
@@ -298,9 +309,10 @@ if __name__ == "__main__":
        sc.toc(t)
        sim.plot(to_plot={'test':['new_tests']})
        pl.show()
-       pl.savefig('testScalingNum.png')
-       pl.close()
-       
+       if do_save:
+           cv.savefig('testScalingNum.png')
+           pl.close()
+
        sim = single_sim_new(rand_seed=i, dist=None)
        t = sc.tic()
        sim.run()
@@ -315,6 +327,7 @@ if __name__ == "__main__":
        idx = ~np.isnan(sim.people.date_critical)
        stage_flat['crit'] += sum(idx[idx_dia])/sum(idx)
        sc.toc(t)
+
     yield_num_old = yield_num_old/n_run
     yield_num_new = yield_num_new/n_run
     yield_num_flat = yield_num_flat/n_run
@@ -327,14 +340,14 @@ if __name__ == "__main__":
     stage_flat['mild'] /= n_run
     stage_flat['sev'] /= n_run
     stage_flat['crit'] /= n_run
-  
-    
+
+
 import pandas as pd
 
 
-data = pd.read_csv('WA_Symptoms_to_Swab.csv')
+data = pd.read_csv(swabfile)
 data = data.loc[data['Test Delay']!='#NAME?',]
-pdf = cvu.get_pdf('lognormal',10,170)                
+pdf = cvu.get_pdf('lognormal',10,170)
 
 
 # Check that not using a distribution gives the same answer as before
@@ -343,9 +356,10 @@ pl.hist(time_num_flat, np.arange(-2.5,25.5), density=True, alpha=.25)
 pl.xlim([-2,20])
 pl.xlabel('Symptom onset to swab')
 pl.ylabel('Percent of tests')
-pl.savefig('testNumOld.png')
 pl.show()
-pl.close()
+if do_save:
+    cv.savefig('testNumOld.png')
+    pl.close()
 
 # See how close the default distribution is the the WA data and what the model
 # produces
@@ -356,31 +370,33 @@ pl.xlim([-2,20])
 pl.xlabel('Symptom onset to swab')
 pl.ylabel('Percent of tests')
 pl.legend(['Data','Distribution','Sim Histogram'])
-pl.savefig('testNumEmperical.png')
 pl.show()
-pl.close()
+if do_save:
+    cv.savefig('testNumEmperical.png')
+    pl.close()
 
 # Make sure we get the same test_yields regruadless of distribution
 pl.plot(yield_num_old)
 pl.plot(yield_num_new)
 pl.plot(yield_num_flat, alpha=.25)
 pl.legend(['test_num_old','test_num_new','test_num_flat'])
-pl.savefig('testYieldNum.png')
 pl.show()
-pl.close()
+if do_save:
+    cv.savefig('testYieldNum.png')
+    pl.close()
 
 # Check who is being tested
 pl.bar(stage_old.keys(), stage_old.values())
 pl.bar(stage_new.keys(), stage_new.values(), alpha=.25)
 pl.legend(['old','new'])
-pl.savefig('stageTestedNum.png')
 pl.show()
-pl.close()
+if do_save:
+    pl.savefig('stageTestedNum.png')
+    pl.close()
 
 
 # Test that it works with no symptomatics.
 # Does fail in the finalize stage with no infections
-datafile = '20200510_KingCounty_Covasim.csv'
 
 pop_type  = 'hybrid'
 pop_size  = 225000
