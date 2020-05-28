@@ -137,6 +137,7 @@ def single_sim_old(end_day='2020-05-10', rand_seed=1):
      'start_day': start_day,
      'n_days': (sc.readdate(end_day)-sc.readdate(start_day)).days,
      'pop_scale': pop_scale,
+     'rescale': True,
      'beta': 0.015,
      'rand_seed': rand_seed,
     }
@@ -201,6 +202,7 @@ def single_sim_new(end_day='2020-05-10', rand_seed=1, dist='lognormal', par1=10,
      'start_day': start_day,
      'n_days': (sc.readdate(end_day)-sc.readdate(start_day)).days,
      'pop_scale': pop_scale,
+     'rescale': True,
      'beta': 0.015,
      'rand_seed': rand_seed,
     }
@@ -294,6 +296,10 @@ if __name__ == "__main__":
        idx = ~np.isnan(sim.people.date_critical)
        stage_new['crit'] += sum(idx[idx_dia])/sum(idx)
        sc.toc(t)
+       sim.plot(to_plot={'test':['new_tests']})
+       pl.show()
+       pl.savefig('testScalingNum.png')
+       pl.close()
        
        sim = single_sim_new(rand_seed=i, dist=None)
        t = sc.tic()
@@ -420,4 +426,4 @@ for lkey,ch in b_ch.items():
 sim.update_pars(interventions=interventions)
 
 sim.initialize()
-sim = sim.run()
+sim = sim.run(until='2020-04-30')
