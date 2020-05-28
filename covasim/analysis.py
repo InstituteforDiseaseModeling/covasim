@@ -336,11 +336,14 @@ class Fit(sc.prettyobj):
             self.sim_inds[key]    = []
             self.data_inds[key]   = []
             self.match_dates[key] = []
+            count = -1
             for d, datum in self.data[key].iteritems():
+                count += 1
                 if np.isfinite(datum):
                     if d in self.sim_dates:
                         self.match_dates[key].append(d)
                         self.sim_inds[key].append(self.sim_dates.index(d))
+                        self.data_inds[key].append(count)
         return
 
 

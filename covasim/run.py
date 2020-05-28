@@ -186,7 +186,6 @@ class MultiSim(sc.prettyobj):
             reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
 
         # Compute and store final results
-        reduced_sim.compute_likelihood()
         reduced_sim.compute_summary(verbose=False)
         self.orig_base_sim = self.base_sim
         self.base_sim = reduced_sim
@@ -224,7 +223,6 @@ class MultiSim(sc.prettyobj):
                 combined_sim.results[key].values /= n_runs
 
         # Compute and store final results
-        combined_sim.compute_likelihood()
         combined_sim.compute_summary(verbose=False)
         self.orig_base_sim = self.base_sim
         self.base_sim = combined_sim

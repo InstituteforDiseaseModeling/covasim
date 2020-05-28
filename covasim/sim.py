@@ -605,7 +605,7 @@ class Sim(cvb.BaseSim):
 
 
     def finalize(self, verbose=None):
-        ''' Compute final results, likelihood, etc. '''
+        ''' Compute final results '''
 
         # Scale the results
         for reskey in self.result_keys():
