@@ -14,14 +14,15 @@ from . import version as cvver
 __all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test']
 
 
-def load_data(datafile, columns=None, calculate=True, verbose=True, **kwargs):
+def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
     '''
     Load data for comparing to the model output, either from file or from a dataframe.
 
     Args:
         datafile (str or df): if a string, the name of the file to load (either Excel or CSV); if a dataframe, use directly
         columns (list): list of column names (otherwise, load all)
-        calculate (bool): whether or not to calculate cumulative values from daily counts
+        calculate (bool): whether to calculate cumulative values from daily counts
+        check_date (bool): whether to check that a 'date' column is present
         kwargs (dict): passed to pd.read_excel()
 
     Returns:
@@ -64,14 +65,14 @@ def load_data(datafile, columns=None, calculate=True, verbose=True, **kwargs):
                     if verbose:
                         print(f'  Automatically adding cumulative column {cum_col} from {col}')
 
-    # Ensure required columns are present
-    if 'date' not in data.columns:
-        errormsg = f'Required column "date" not found; columns are {data.columns}'
-        raise ValueError(errormsg)
-    else:
-        data['date'] = pd.to_datetime(data['date']).dt.date
-
-    data.set_index('date', inplace=True, drop=False) # So sim.data['date'] can still be accessed
+    # Ensure required columns are present and reset the index
+    if check_date:
+        if 'date' not in data.columns:
+            errormsg = f'Required column "date" not found; columns are {data.columns}'
+            raise ValueError(errormsg)
+        else:
+            data['date'] = pd.to_datetime(data['date']).dt.date
+        data.set_index('date', inplace=True, drop=False) # Don't drop so sim.data['date'] can still be accessed
 
     return data
 

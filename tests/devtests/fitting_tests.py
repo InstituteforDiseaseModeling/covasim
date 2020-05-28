@@ -1,5 +1,5 @@
 '''
-Test the age-histogram analyzer.
+Test the fitting to data
 '''
 
 import covasim as cv
@@ -13,7 +13,7 @@ pars = dict(
     interventions = intervs   # Include the most common interventions
 )
 
-sim = cv.Sim(pars, analyzers=cv.age_histogram(datafile='example_age_data.csv'))
+sim = cv.Sim(pars, analyzers=cv.age_histogram())
 sim.run()
 agehist = sim['analyzers'][0]
 hists = agehist.get()

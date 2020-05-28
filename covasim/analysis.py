@@ -119,10 +119,11 @@ class age_histogram(Analyzer):
     the dictionary directly, or use the get() method.
 
     Args:
-        days   (list): list of ints/strings/date objects, the days on which to calculate the histograms (default: last day)
-        states (list): which states of people to record (default: exposed, tested, diagnosed, dead)
-        edges  (list): edges of age bins to use (default: 10 year bins from 0 to 100)
-        kwargs (dict): passed to Intervention()
+        days    (list): list of ints/strings/date objects, the days on which to calculate the histograms (default: last day)
+        states  (list): which states of people to record (default: exposed, tested, diagnosed, dead)
+        edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
+        datafile (str): the name of the data file to load in for comparison, or a dataframe of data (optional)
+        kwargs  (dict): passed to Intervention()
 
     **Example**::
 
@@ -131,14 +132,16 @@ class age_histogram(Analyzer):
         agehist = sim['analyzers'][0].get()
     '''
 
-    def __init__(self, days=None, states=None, edges=None, **kwargs):
+    def __init__(self, days=None, states=None, edges=None, datafile=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.days      = days # To be converted to integer representations
         self.edges     = edges # Edges of age bins
         self.states    = states # States to save
+        self.datafile  = datafile # Data file to load
         self.bins      = None # Age bins, calculated from edges
         self.dates     = None # String representations of dates
         self.start_day = None # Store the start date of the simulation
+        self.data      = None # Store the loaded data
         self.hists = sc.odict() # Store the actual snapshots
         return
 
@@ -163,6 +166,14 @@ class age_histogram(Analyzer):
         self.states = sc.promotetolist(self.states)
         for s,state in enumerate(self.states):
             self.states[s] = state.replace('date_', '') # Allow keys starting with date_ as input, but strip it off here
+
+        # Handle the data file
+        if self.datafile is not None:
+            if sc.isstring(self.datafile):
+                self.data = cvm.load_data(self.datafile, check_date=False)
+            else:
+                self.data = self.datafile # Use it directly
+                self.datafile = None
 
         self.initialized = True
 
@@ -197,32 +208,41 @@ class age_histogram(Analyzer):
         return hists
 
 
-    def plot(self, width=0.8, fig_args=None, font_size=18, color='#F8A493'):
+    def plot(self, width=0.8, color='#F8A493', font_size=18, fig_args=None, data_args=None):
         '''
         Simple method for plotting the histograms.
 
         Args:
             width (float): width of bars
-            fig_args (dict): passed to pl.figure()
-            font_size (float): size of font
             color (hex or rgb): the color of the bars
+            font_size (float): size of font
+            fig_args (dict): passed to pl.figure()
+            data_args (dict): 'width', 'color', and 'offset' arguments for the data
         '''
-        figs = []
-        for date,hists in self.hists.items():
-            fig_args = sc.mergedicts(dict(figsize=(24,15)))
-            pl.rcParams['font.size'] = font_size
-            figs += [pl.figure(**fig_args)]
-            pl.set_cmap('Spectral')
-            pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
 
-            n_plots = len(self.states)
-            n_rows = np.ceil(np.sqrt(n_plots)) # Number of subplot rows to have
-            n_cols = np.ceil(n_plots/n_rows) # Number of subplot columns to have
+        # Handle inputs
+        fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
+        d_args = sc.objdict(sc.mergedicts(dict(width=0.3, color='#000000', offset=0), data_args))
+        pl.rcParams['font.size'] = font_size
+
+        # Initialize
+        n_plots = len(self.states)
+        n_rows = np.ceil(np.sqrt(n_plots)) # Number of subplot rows to have
+        n_cols = np.ceil(n_plots/n_rows) # Number of subplot columns to have
+        figs = []
+
+        # Make the figure(s)
+        for date,hists in self.hists.items():
+            figs += [pl.figure(**fig_args)]
+            pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
             bins = hists['bins']
             barwidth = width*(bins[1] - bins[0]) # Assume uniform width
             for s,state in enumerate(self.states):
                 pl.subplot(n_rows, n_cols, s+1)
                 pl.bar(bins, hists[state], width=barwidth, facecolor=color, label=f'Number {state}')
+                if state in self.data:
+                    data = self.data[state]
+                    pl.bar(bins+d_args.offset, data, width=barwidth*d_args.width, facecolor=d_args.color, label='Data')
                 pl.xlabel('Age')
                 pl.ylabel('Count')
                 pl.xticks(ticks=bins)
@@ -623,7 +643,7 @@ class TransTree(sc.prettyobj):
         change_inds = sc.findinds(np.diff(sorted_arr) != 0)
 
         # Plotting
-        fig_args = sc.mergedicts(dict(figsize=(24,15)))
+        fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
         pl.rcParams['font.size'] = font_size
         fig = pl.figure(**fig_args)
         pl.set_cmap('Spectral')
