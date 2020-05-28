@@ -279,7 +279,7 @@ class age_histogram(Analyzer):
             for s,state in enumerate(self.states):
                 pl.subplot(n_rows, n_cols, s+1)
                 pl.bar(bins, hists[state], width=barwidth, facecolor=color, label=f'Number {state}')
-                if state in self.data:
+                if self.data and state in self.data:
                     data = self.data[state]
                     pl.bar(bins+d_args.offset, data, width=barwidth*d_args.width, facecolor=d_args.color, label='Data')
                 pl.xlabel('Age')
