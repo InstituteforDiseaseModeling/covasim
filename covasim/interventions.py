@@ -539,7 +539,7 @@ class test_num(Intervention):
 
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, subtarget=None,
                  ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
-                 start_day=0, end_day=None, swab_delay_dist=None, **kwargs):
+                 start_day=0, end_day=None, swab_delay_dist={'dist':None}, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.daily_tests = daily_tests # Should be a list of length matching time
