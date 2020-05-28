@@ -130,8 +130,7 @@ def plot_data(sim, ax, key, scatter_args):
     if sim.data is not None and key in sim.data and len(sim.data[key]):
         this_color = sim.results[key].color
         data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
-        ax.scatter(data_t, sim.data[key], c=[this_color], **scatter_args)
-        ax.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+        ax.scatter(data_t, sim.data[key], c=[this_color], label='Data', **scatter_args)
     return
 
 

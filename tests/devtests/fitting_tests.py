@@ -4,17 +4,33 @@ Test the fitting to data
 
 import covasim as cv
 
+datafile = 'target_fit_data.xlsx'
+
 intervs = [cv.change_beta(days=40, changes=0.5), cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)] # Common interventions
 pars = dict(
     pop_size      = 20000,    # Population size
     pop_infected  = 100,      # Number of initial infections -- use more for increased robustness
     pop_type      = 'hybrid', # Population to use -- "hybrid" is random with household, school,and work structure
     verbose       = 0,        # Don't print details of the run
-    interventions = intervs   # Include the most common interventions
+    interventions = intervs,   # Include the most common interventions
+    rand_seed     = 1,
+    beta          = 0.015,
 )
 
-sim = cv.Sim(pars, analyzers=cv.age_histogram())
+target_pars = dict(
+    pop_infected  = 80,
+    beta          = 0.017,
+    rand_seed     = 294873,
+)
+
+target = cv.Sim(pars)
+target.update_pars(target_pars)
+target.run()
+target.to_excel(datafile)
+
+sim = cv.Sim(pars, datafile=datafile)
 sim.run()
-agehist = sim['analyzers'][0]
-hists = agehist.get()
-agehist.plot()
+sim.plot()
+# fit = sim.compute_fit()
+# print(fit.mismatch)
+# fit.plot()

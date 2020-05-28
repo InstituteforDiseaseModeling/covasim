@@ -287,6 +287,11 @@ class BaseSim(ParsObj):
             resdict (dict): dictionary representation of the results
 
         '''
+
+        if not self.results_ready:
+            errormsg = 'Please run the sim before exporting the results'
+            raise RuntimeError(errormsg)
+
         resdict = {}
         resdict['t'] = self.results['t'] # Assume that there is a key for time
 
@@ -402,8 +407,8 @@ class BaseSim(ParsObj):
         '''
         resdict = self.export_results(for_json=False)
         result_df = pd.DataFrame.from_dict(resdict)
-        result_df.index = self.tvec
-        result_df.index.name = 'Day'
+        result_df.index = self.datevec
+        result_df.index.name = 'date'
 
         par_df = pd.DataFrame.from_dict(sc.flattendict(self.pars, sep='_'), orient='index', columns=['Value'])
         par_df.index.name = 'Parameter'
