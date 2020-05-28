@@ -517,18 +517,18 @@ class test_num(Intervention):
     Test a fixed number of people per day.
 
     Args:
-        daily_tests (int or arr or dataframe/series): number of tests per day; if integer, use that number every day
-        symp_test (float): odds ratio of a symptomatic person testing
-        quar_test (float): probability of a person in quarantine testing
-        subtarget (dict or func): subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'vals': value(s) to apply}
-        sensitivity (float): test sensitivity
-        ili_prev (float or array or dataframe/series): Prevalence of influenza-like-illness symptoms in the population
-        loss_prob (float): probability of the person being lost-to-follow-up
-        test_delay (int): days for test result to be known
-        start_day (int): day the intervention starts
-        end_day (int): day the intervention ends
-        swab_delay_dist (dict): distribution for the delay from onset to swab
-        kwargs (dict): passed to Intervention()
+        daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day
+        symp_test   (float) : odds ratio of a symptomatic person testing
+        quar_test   (float) : probability of a person in quarantine testing
+        subtarget   (dict)  : subtarget intervention to people with particular indices                                                 ( format : {'ind' : array of indices, or function to return indices from the sim, 'vals' : value ( s) to apply}
+        sensitivity (float) : test sensitivity
+        ili_prev    (arr)   : Prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
+        loss_prob   (float) : probability of the person being lost-to-follow-up
+        test_delay  (int)   : days for test result to be known
+        start_day   (int)   : day the intervention starts
+        end_day     (int)   : day the intervention ends
+        swab_delay  (dict)  : distribution for the delay from onset to swab
+        kwargs      (dict)  : passed to Intervention                                                                                   ( )
 
     **Examples**::
 
@@ -539,7 +539,7 @@ class test_num(Intervention):
 
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, subtarget=None,
                  ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
-                 start_day=0, end_day=None, swab_delay_dist={'dist':None}, **kwargs):
+                 start_day=0, end_day=None, swab_delay={'dist':None}, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.daily_tests = daily_tests # Should be a list of length matching time
@@ -552,7 +552,7 @@ class test_num(Intervention):
         self.test_delay  = test_delay
         self.start_day   = start_day
         self.end_day     = end_day
-        self.pdf         = cvu.get_pdf(**swab_delay_dist) # get the distribution's pdf
+        self.pdf         = cvu.get_pdf(**swab_delay) # If provided, get the distribution's pdf
         return
 
 
@@ -594,22 +594,18 @@ class test_num(Intervention):
 
         test_probs = np.ones(sim.n) # Begin by assigning equal testing probability to everyone
 
-        
-        # Handle the onset to swab delay
+        # Calculate test probabilities for people with symptoms
         symp_inds = cvu.true(sim.people.symptomatic)
         symp_test = self.symp_test
-        if self.pdf:
-            # Find time since symptom onset
-            symp_time = np.int32(t - sim.people.date_symptomatic[symp_inds])
-            # Find how many people have had symptoms of a set time and invert
-            inv_count = (np.bincount(symp_time)/len(symp_time))
-            count = np.NaN * np.ones(inv_count.shape)
+        if self.pdf: # Handle the onset to swab delay
+            symp_time = int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
+            inv_count = (np.bincount(symp_time)/len(symp_time)) # Find how many people have had symptoms of a set time and invert
+            count = np.nan * np.ones(inv_count.shape) #
             count[inv_count != 0] = 1/inv_count[inv_count != 0]
-            # Put it all together, have to add a small amount because 0.0 will fail
-            symp_test *= self.pdf.pdf(symp_time) * count[symp_time]
-            
+            symp_test *= self.pdf.pdf(symp_time) * count[symp_time] # Put it all together, have to add a small amount because 0.0 will fail
+
         test_probs[symp_inds] *= symp_test
-        
+
         # Handle symptomatic testing, taking into account prevalence of ILI symptoms
         if self.ili_prev is not None:
             if rel_t < len(self.ili_prev):
@@ -617,8 +613,6 @@ class test_num(Intervention):
                 ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
                 ili_inds = np.setdiff1d(ili_inds, symp_inds)
                 test_probs[ili_inds] *= self.symp_test
-                
-        
 
         # Handle quarantine testing
         quar_inds  = cvu.true(sim.people.quarantined)
