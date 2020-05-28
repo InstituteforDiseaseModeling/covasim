@@ -2,7 +2,6 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
-import os
 import numpy as np
 import pandas as pd
 import pylab as pl
@@ -15,12 +14,12 @@ from . import version as cvver
 __all__ = ['load_data', 'date', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test']
 
 
-def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
+def load_data(datafile, columns=None, calculate=True, verbose=True, **kwargs):
     '''
-    Load data for comparing to the model output.
+    Load data for comparing to the model output, either from file or from a dataframe.
 
     Args:
-        filename (str): the name of the file to load (either Excel or CSV)
+        datafile (str or df): if a string, the name of the file to load (either Excel or CSV); if a dataframe, use directly
         columns (list): list of column names (otherwise, load all)
         calculate (bool): whether or not to calculate cumulative values from daily counts
         kwargs (dict): passed to pd.read_excel()
@@ -30,13 +29,19 @@ def load_data(filename, columns=None, calculate=True, verbose=True, **kwargs):
     '''
 
     # Load data
-    if filename.lower().endswith('csv'):
-        raw_data = pd.read_csv(filename, **kwargs)
-    elif filename.lower().endswith('xlsx'):
-        raw_data = pd.read_excel(filename, **kwargs)
+    if isinstance(datafile, str):
+        if datafile.lower().endswith('csv'):
+            raw_data = pd.read_csv(datafile, **kwargs)
+        elif datafile.lower().endswith('xlsx'):
+            raw_data = pd.read_excel(datafile, **kwargs)
+        else:
+            errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {datafile}'
+            raise NotImplementedError(errormsg)
+    elif isinstance(datafile, pd.DataFrame):
+        raw_data = datafile
     else:
-        errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {filename}'
-        raise NotImplementedError(errormsg)
+        errormsg = f'Could not interpret data {type(datafile)}: must be a string or a dataframe'
+        raise TypeError(errormsg)
 
     # Confirm data integrity and simplify
     if columns is not None:
@@ -200,8 +205,12 @@ def get_caller(frame=2, tostring=True):
             else:
                 output = {'filename':fname, 'lineno':lineno}
         except Exception as E:
-            output = f'Calling function information not available ({str(E)})'
+            if tostring:
+                output = f'Calling function information not available ({str(E)})'
+            else:
+                output = {'filename':'N/A', 'lineno':'N/A'}
         return output
+
 
 def savefig(filename=None, dpi=None, comments=None, **kwargs):
     '''
