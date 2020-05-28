@@ -2,7 +2,7 @@
 What's new
 ==========
 
-All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
+All notable changes to the codebase are documented in this file. As of version 1.3, changes that may result in differences in model output, or are required in order to run an old parameter set with the current version, are flagged with the term "Regression information".
 
 .. contents:: **Contents**
    :local:
@@ -20,17 +20,19 @@ Version 1.4.0 (2020-05-27)
 - Added a new parameter, ``sim['analyzers']``, that operates like ``interventions``: it accepts a list of functions or ``Analyzer`` objects.
 - Added two analyzers: ``cv.age_hist`` records age histograms of infections, diagnoses, and deaths; ``cv.snapshot`` makes copies of the ``People`` object at specified points in time.
 - Removed the parameter ``interv_func``; instead, intervention functions can now be appended to ``sim['interventions']``.
-- To migrate an old parameter set to this version, use::
+- Added a new class, ``cv.Fit()``, that stores information about the fit between the model and the data. "Likelihood" is no longer automatically calculated, but instead "mismatch" can be calculated via ``fit = sim.compute_fit()``.
+- Changed the default for the ``rescale`` parameter from ``False`` to ``True``. To return to previous behavior, define ``sim['rescale'] = False`` explicitly.
+- Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
+- Refactored cruise ship example to work again.
+- *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previoius behavior, use::
 
-    pars['analyzers'] = None
-    interv_func = pars.pop('interv_func', None)
+    pars['analyzers'] = None # Add the new parameter key
+    interv_func = pars.pop('interv_func', None) # Remove the deprecated key
     if interv_func:
         pars['interventions'] = interv_func # If no interventions
         pars['interventions'].append(interv_func) # If other interventions are present
+    pars['rescale'] = pars.pop('rescale', False) # Change default to False
 
-- Added a new class, ``cv.Fit()``, that stores information about the fit between the model and the data.
-- Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
-- Refactored cruise ship example to work again.
 - GitHub info: PR `569 <https://github.com/amath-idm/covasim/pull/569>`__, previous head ``8b157a2``
 
 
@@ -61,17 +63,17 @@ Version 1.3.2 (2020-05-25)
 
 Version 1.3.1 (2020-05-25)
 --------------------------
-- Modified calculation of ``R_eff`` to include a longer integration period at the beginning, and restored previous method of creating seed infections.
+- Modified calculation of ``R_eff`` to include a longer integration period at the beginning, and restored previous method of creating seed infections. 
 - Updated default plots to include number of active infections, and removed recoveries.
 
 
 Version 1.3.0 (2020-05-24)
 --------------------------
-- Changed the default number of work contacts in hybrid from 8 to 16, and halved beta from 1.4 to 0.7, to better capture superspreading events. To restore previous behavior, set ``sim['beta_layer']['w'] = 0.14`` and ``sim['contacts']['w'] = 8``.
-- Initial infections now occur at a distribution of dates instead of all at once; this fixes the artificial spike in ``R_eff`` that occurred at the very beginning of a simulation.
+- Changed the default number of work contacts in hybrid from 8 to 16, and halved beta from 1.4 to 0.7, to better capture superspreading events. *Regression information*: To restore previous behavior, set ``sim['beta_layer']['w'] = 0.14`` and ``sim['contacts']['w'] = 8``.
+- Initial infections now occur at a distribution of dates instead of all at once; this fixes the artificial spike in ``R_eff`` that occurred at the very beginning of a simulation. *Regression information*: This change affects results, but was reverted in the next version (1.3.1).
 - Changed the definition of age bins in prognoses to be lower limits rather than upper limits. Added an extra set of age bins for 90+.
 - Changed population loading and saving to be based on People objects, not popdicts (syntax is exactly the same, although it is recommended to use ``.ppl`` instead of ``.pop`` for these files).
-- Added additional random seed resets to population initialization and just before the run so that populations loaded from disk produce identical results to newly created ones.
+- Added additional random seed resets to population initialization and just before the run so that populations loaded from disk produce identical results to newly created ones. *Regression information*: This affects results by changing the random number stream. In most cases, previous behavior can typically be restored by setting ``sim.run(reset_seed=False)``.
 - Added a new convenience method, ``cv.check_save_info()``, which can be put at the top of a script to check the Covasim version and automatically save the Git info to file.
 - Added additional methods to ``People`` to retrieve different types of keys: e.g., ``sim.people.state_keys()`` returns all the different states a person can be in (e.g., ``symptomatic``).
 - GitHub info: PR `557 <https://github.com/amath-idm/covasim/pull/557>`__, previous head ``aac9f1d``
