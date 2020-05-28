@@ -11,7 +11,7 @@ import scipy.stats as sps
 from . import version as cvver
 
 
-__all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test']
+__all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test', 'gof']
 
 
 def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
@@ -678,3 +678,60 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         return zstat_generic2(stat, 1, alternative)
     else:
         return pvalue#, stat
+
+
+def gof(actual, predicted, estimator='median fractional', use_mean=False, use_frac=True, use_squared=False, die=True, eps=1e-9):
+    ''' Calculate the goodness of fit. Default estimator is mean fractional error. '''
+
+    # Handle the estimator argument, if supplied
+    if estimator is not None:
+
+        # Handle default cases by setting input arguments
+        if estimator == 'mean fractional':
+            use_mean = True
+            use_frac = True
+        elif estimator == 'mean absolute':
+            use_mean = True
+            use_frac = False
+        elif estimator == 'median fractional':
+            use_mean = False
+            use_frac = True
+        elif estimator == 'median absolute':
+            use_mean = False
+            use_frac = False
+
+        # Use sklearn
+        else:
+            try:
+                import sklearn.metrics as sm
+                sklearn_gof = getattr(sm, estimator) # Shortcut to e.g. sklearn.metrics.max_error
+            except ImportError as E:
+                raise ImportError(f'You must have sklearn >=0.22.2 installed: {str(E)}')
+            except AttributeError:
+                raise AttributeError(f'Estimator {estimator} is not available; see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter for options')
+
+            output = sklearn_gof(actual, predicted)
+            return output
+
+    # Use default methods here
+    mismatches = abs(actual - predicted)
+
+    if use_squared:
+        mismatches = mismatches**2
+
+    if use_frac:
+        if (actual<0).any() or (predicted<0).any():
+            errormsg = 'WARNING: Calculating fractional errors for non-positive quantities is ill-advised!'
+            if die:
+                raise ValueError(errormsg)
+            else:
+                print(errormsg)
+        else:
+            mismatches /= (actual+eps)
+
+    if use_mean:
+        output = mismatches.mean()
+    else:
+        output = np.median(mismatches)
+
+    return output

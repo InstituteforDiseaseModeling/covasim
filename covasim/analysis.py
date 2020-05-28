@@ -265,7 +265,8 @@ class Fit(sc.prettyobj):
 
     Args:
         sim (Sim): the sim object
-        weights (dict): the relative wieght to place on each result
+        weights (dict): the relative weight to place on each result
+        keys (list): the keys to use in the calculation
         method (str): the method to be used to calculate the goodness-of-fit
         eps (float): to avoid divide-by-zero errors
         initialize (bool): whether to initialize immediately
@@ -279,12 +280,16 @@ class Fit(sc.prettyobj):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, method=None, eps=1e-12, initialize=True, verbose=False):
+    def __init__(self, sim, weights=None, keys=None, method=None, eps=1e-12, initialize=True, verbose=False):
 
         # Handle inputs
         self.weights = weights
         self.eps     = eps
         self.verbose = verbose
+        if weights is None:
+            weights = dict(cum_deaths=20, cum_diagnoses=5)
+        self.weights = weights
+        self.keys    = keys
 
         # Copy data
         if sim.data is None:
@@ -313,9 +318,9 @@ class Fit(sc.prettyobj):
     def initialize(self):
         self.reconcile_inputs() # Find matching values
         self.compute_diffs() # Perform calculations
-        # self.compute_gofs()
-        # self.compute_losses()
-        # self.compute_mismatch()
+        self.compute_gofs()
+        self.compute_losses()
+        self.compute_mismatch()
         return
 
 
@@ -323,8 +328,10 @@ class Fit(sc.prettyobj):
         ''' Find matching keys and indices between the model and the data '''
 
         sim_keys = self.sim_results.keys()
+        sim_keys.remove('t') # WARNING, fix
         data_cols = self.data.columns
-        self.keys = list(set(sim_keys).intersection(data_cols))
+        if self.keys is None:
+            self.keys = list(set(sim_keys).intersection(data_cols))
         if not len(self.keys):
             errormsg = f'No matches found between simulation result keys ({sim_keys}) and data columns ({data_cols})'
             raise sc.KeyNotFoundError(errormsg)
@@ -332,15 +339,17 @@ class Fit(sc.prettyobj):
         self.inds = sc.objdict()
         self.inds.sim  = sc.objdict() # For storing matching indices in the sim
         self.inds.data = sc.objdict() # For storing matching indices in the data
+        self.date_matches = sc.objdict()
         for key in self.keys: # For keys present in both the results and in the data
             self.inds.sim[key]  = []
             self.inds.data[key] = []
+            self.date_matches[key] = []
             count = -1
             for d, datum in self.data[key].iteritems():
                 count += 1
                 if np.isfinite(datum):
                     if d in self.sim_dates:
-                        # self.match.dates[key].append(d)
+                        self.date_matches[key].append(d)
                         self.inds.sim[key].append(self.sim_dates.index(d))
                         self.inds.data[key].append(count)
             self.inds.sim[key]  = np.array(self.inds.sim[key])
@@ -372,6 +381,51 @@ class Fit(sc.prettyobj):
         return
 
 
+    def compute_gofs(self, normalize=True, use_squared=False, use_frac=False):
+        ''' Compute the goodness-of-fit '''
+        self.gofs = sc.objdict()
+        for key in self.keys:
+            actual    = self.pair[key].data
+            predicted = self.pair[key].sim
+
+            if normalize:
+                predicted /= actual.max()
+                actual /= actual.max()
+
+            # Use default methods here
+            mismatches = abs(actual - predicted)
+
+            if use_squared:
+                mismatches = mismatches**2
+
+            if use_frac:
+                mismatches /= (actual+self.eps)
+
+            self.gofs[key] = mismatches
+
+        return
+
+
+    def compute_losses(self):
+        self.losses = sc.objdict()
+        for key in self.keys:
+            if key in self.weights:
+                weight = self.weights[key]
+            else:
+                weight = 1.0
+            self.losses[key] = self.gofs[key]*weight
+        return
+
+
+    def compute_mismatch(self, use_median=True):
+        self.mismatches = sc.objdict()
+        for key in self.keys:
+            if use_median:
+                self.mismatches[key] = np.median(self.losses[key])
+            else:
+                self.mismatches[key] = np.median(self.losses[key])
+        self.mismatch = self.mismatches[:].sum()
+        return self.mismatch
 
 
     # def compute_mismatch(self):
@@ -409,7 +463,7 @@ class Fit(sc.prettyobj):
     #     return loglike
 
 
-    def plot(self, keys=None, font_size=18, fig_args=None):
+    def plot(self, keys=None, font_size=18, fig_args=None, plot_args=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -419,21 +473,45 @@ class Fit(sc.prettyobj):
             keys (list): which keys to plot (default, all)
             font_size (float): size of font
             fig_args (dict): passed to pl.figure()
+            plot_args (dict): passed to pl.plot()
         '''
 
-        fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
+        fig_args = sc.mergedicts(dict(figsize=(40,18)), fig_args)
+        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
         pl.rcParams['font.size'] = font_size
 
         if keys is None:
             keys = self.keys
         n_keys = len(keys)
 
+        loss_ax = None
+        bar_color = [0, 0, 0]
+
         figs = [pl.figure(**fig_args)]
-        pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
+        pl.subplots_adjust(left=0.05, right=0.95, bottom=0.08, top=0.92)
         for k,key in enumerate(keys):
-            pl.subplot(3, n_keys, k*3+1)
-            pl.plot(self.pair[key].sim, label='Simulation')
-            pl.plot(self.pair[key].data, label='Data')
+            dates = self.inds.sim[key] # self.date_matches[key]
+            pl.subplot(3, n_keys, k+1)
+            pl.plot(dates, self.pair[key].sim, label='Simulation', **plot_args)
+            pl.plot(dates, self.pair[key].data, label='Data', **plot_args)
+            pl.title(key)
+            if k == 0:
+                pl.ylabel('Time series')
+                pl.legend()
+
+            pl.subplot(3, n_keys, k+n_keys+1)
+            pl.bar(dates, self.diffs[key], width=0.8, color=bar_color, label='Difference')
+            pl.axhline(0, c='k')
+            if k == 0:
+                pl.ylabel('Differences')
+                pl.legend()
+
+            loss_ax = pl.subplot(3, n_keys, k+2*n_keys+1, sharey=loss_ax)
+            pl.bar(dates, self.losses[key], width=0.8, color=bar_color, label='Losses')
+            pl.xlabel('Day')
+            if k == 0:
+                pl.ylabel('Losses')
+                pl.legend()
 
         return figs
 
