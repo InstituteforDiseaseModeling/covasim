@@ -6,7 +6,9 @@ Numerical utilities for running Covasim
 
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
+import scipy.stats as sps
 from . import defaults as cvd
+
 
 # What functions are externally visible -- note, this gets populated in each section below
 __all__ = []
@@ -95,7 +97,7 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
 
 #%% Sampling and seed methods
 
-__all__ += ['sample', 'set_seed']
+__all__ += ['sample', 'get_pdf', 'set_seed']
 
 
 def sample(dist=None, par1=None, par2=None, size=None):
@@ -138,6 +140,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
     elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
     elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
     elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size)))
+    elif dist == 'neg_binomial':  samples = np.random.negative_binomial(n=par1, p=par2, size=size)
     elif dist in ['lognormal', 'lognormal_int']:
         if par1>0:
             mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
@@ -145,14 +148,44 @@ def sample(dist=None, par1=None, par2=None, size=None):
             samples = np.random.lognormal(mean=mean, sigma=sigma, size=size)
         else:
             samples = np.zeros(size)
-        if dist == 'lognormal_int': samples = np.round(samples)
-    elif dist == 'neg_binomial':  samples = np.random.negative_binomial(n=par1, p=par2, size=size)
+        if dist == 'lognormal_int':
+            samples = np.round(samples)
     else:
         choicestr = '\n'.join(choices)
         errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {choicestr}'
         raise NotImplementedError(errormsg)
 
     return samples
+
+
+def get_pdf(dist=None, par1=None, par2=None):
+    '''
+    Return a probability density function for the specified distribution. This
+    is used for example by test_num to retrieve the distribution of times from
+    symptom-to-swab for testing. For example, for Washington State, these values
+    are dist='lognormal', par1=10, par2=170.
+    '''
+
+    choices = [
+        'none',
+        'uniform',
+        'lognormal',
+        ]
+
+    if dist in ['None', 'none', None]:
+        return None
+    elif dist == 'uniform':
+        pdf = sps.uniform(loc=par1, scale=par2)
+    elif dist == 'lognormal':
+        mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
+        sigma = np.sqrt(np.log(par2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
+        pdf   = sps.lognorm(sigma, loc=-0.5, scale=np.exp(mean))
+    else:
+        choicestr = '\n'.join(choices)
+        errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {choicestr}'
+        raise NotImplementedError(errormsg)
+
+    return pdf
 
 
 def set_seed(seed=None):

@@ -13,6 +13,11 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.3.5 (2020-05-28)
+--------------------------
+- Added ``swab_delay`` argument to ``cv.test_num()``, allowing a distribution of times between when a person develops symptoms and when they go to be tested (i.e., receive a swab) to be specified.
+
+
 Version 1.3.4 (2020-05-26)
 --------------------------
 - Allowed data to be loaded from a dataframe instead of from file.
