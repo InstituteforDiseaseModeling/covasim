@@ -156,12 +156,13 @@ def sample(dist=None, par1=None, par2=None, size=None):
 
     return samples
 
-def get_pdf(dist='lognormal', par1=10, par2=170):
+def get_pdf(dist=None, par1=None, par2=None):#(dist='lognormal', par1=10, par2=170) values for Washington
     choices = [
         'None',
         'uniform',
         'lognormal',
         ]
+    
     if dist=='None' or dist==None:
         return None
     elif dist=='uniform':
@@ -174,7 +175,7 @@ def get_pdf(dist='lognormal', par1=10, par2=170):
         choicestr = '\n'.join(choices)
         errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {choicestr}'
         raise NotImplementedError(errormsg)
-        
+          
     return pdf
 
 def set_seed(seed=None):

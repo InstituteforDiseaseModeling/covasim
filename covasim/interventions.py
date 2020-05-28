@@ -527,9 +527,7 @@ class test_num(Intervention):
         test_delay (int): days for test result to be known
         start_day (int): day the intervention starts
         end_day (int): day the intervention ends
-        dist (string): name of distribution for delay
-        par1 (float): first parameter controling dist
-        par2 (float): second parameter controling dist
+        swab_delay_dist (dict): distribution for the delay from onset to swab
         kwargs (dict): passed to Intervention()
 
     **Examples**::
@@ -541,7 +539,7 @@ class test_num(Intervention):
 
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, subtarget=None,
                  ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
-                 start_day=0, end_day=None, dist='lognormal', par1=10, par2=170, **kwargs):
+                 start_day=0, end_day=None, swab_delay_dist=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.daily_tests = daily_tests # Should be a list of length matching time
@@ -554,11 +552,7 @@ class test_num(Intervention):
         self.test_delay  = test_delay
         self.start_day   = start_day
         self.end_day     = end_day
-        self.pdf         = cvu.get_pdf(dist, par1, par2) # get the distribution's pdf
-        if self.pdf:
-            self.normalize = 1/sum(self.pdf.pdf(np.arange(100))) # for making the average 1
-        else:
-            self.normalize = 1
+        self.pdf         = cvu.get_pdf(**swab_delay_dist) # get the distribution's pdf
         return
 
 
@@ -606,11 +600,11 @@ class test_num(Intervention):
         symp_test = self.symp_test
         if self.pdf:
             # Find time since symptom onset
-            symp_time = np.int32(abs(t - sim.people.date_symptomatic[symp_inds]))
+            symp_time = np.int32(t - sim.people.date_symptomatic[symp_inds])
             # Find how many people have had symptoms of a set time and invert
             inv_count = (np.bincount(symp_time)/len(symp_time))
             count = np.NaN * np.ones(inv_count.shape)
-            count[inv_count != 0] = 1/inv_count[inv_count != 0] * self.normalize
+            count[inv_count != 0] = 1/inv_count[inv_count != 0]
             # Put it all together, have to add a small amount because 0.0 will fail
             symp_test *= self.pdf.pdf(symp_time) * count[symp_time]
             
@@ -621,8 +615,8 @@ class test_num(Intervention):
             if rel_t < len(self.ili_prev):
                 n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
                 ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
-                symp_inds = np.setdiff1d(ili_inds, symp_inds)
-                test_probs[symp_inds] = self.symp_test
+                ili_inds = np.setdiff1d(ili_inds, symp_inds)
+                test_probs[ili_inds] *= self.symp_test
                 
         
 

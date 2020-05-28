@@ -152,7 +152,7 @@ def single_sim_old(end_day='2020-05-10', rand_seed=1):
     b_ch.c = [0.60, 0.40, 0.25]
 
     # Define testing interventions
-    daily_tests = sim.data['new_tests']/pop_scale
+    daily_tests = sim.data['new_tests']
     test_kwargs = {'quar_test': 0, 'sensitivity': 1.0, 'test_delay': 0,
                    'loss_prob': 0}
     interventions = [
@@ -216,11 +216,12 @@ def single_sim_new(end_day='2020-05-10', rand_seed=1, dist='lognormal', par1=10,
     b_ch.c = [0.60, 0.40, 0.25]
 
     # Define testing interventions
-    daily_tests = sim.data['new_tests']/pop_scale
+    daily_tests = sim.data['new_tests']
     test_kwargs = {'quar_test': 0, 'sensitivity': 1.0, 'test_delay': 0,
-                   'loss_prob': 0, 'dist':dist, 'par1':par1, 'par2':par2}
+                   'loss_prob': 0}
     interventions = [
-      cv.test_num(daily_tests=daily_tests, symp_test=70,  start_day='2020-01-27', end_day=None, **test_kwargs),
+      cv.test_num(daily_tests=daily_tests, symp_test=70,  start_day='2020-01-27', end_day=None,
+                  swab_delay_dist={'dist':dist, 'par1':par1, 'par2':par2}, **test_kwargs),
         ]
 
     for lkey,ch in b_ch.items():
@@ -261,7 +262,7 @@ if __name__ == "__main__":
     stage_flat = {'mild': 0, 'sev': 0, 'crit': 0}
     
     start = 1
-    end = 11
+    end = 2
     n_run = end-start
     for i in range(start,end):
        sim = single_sim_old(rand_seed=i)
@@ -358,7 +359,7 @@ pl.plot(yield_num_old)
 pl.plot(yield_num_new)
 pl.plot(yield_num_flat, alpha=.25)
 pl.legend(['test_num_old','test_num_new','test_num_flat'])
-pl.savefig('testYield.png')
+pl.savefig('testYieldNum.png')
 pl.show()
 pl.close()
 
@@ -366,6 +367,57 @@ pl.close()
 pl.bar(stage_old.keys(), stage_old.values())
 pl.bar(stage_new.keys(), stage_new.values(), alpha=.25)
 pl.legend(['old','new'])
-pl.savefig('stageTested.png')
+pl.savefig('stageTestedNum.png')
 pl.show()
 pl.close()
+
+
+# Test that it works with no symptomatics.
+# Does fail in the finalize stage with no infections
+datafile = '20200510_KingCounty_Covasim.csv'
+
+pop_type  = 'hybrid'
+pop_size  = 225000
+pop_scale = 2.25e6/pop_size
+start_day = '2020-01-27'
+end_day   = '2020-05-01'   # for calibration plots
+
+
+pars = {
+ 'verbose': 0,
+ 'pop_size': pop_size,
+ 'pop_infected': 0,   # 300
+ 'pop_type': pop_type,
+ 'start_day': start_day,
+ 'n_days': (sc.readdate(end_day)-sc.readdate(start_day)).days,
+ 'pop_scale': pop_scale,
+ 'beta': 0.015,
+ 'rand_seed': 1,
+}
+
+sim = cv.Sim(pars, datafile=datafile)
+
+# Define beta interventions
+b_days = ['2020-03-04', '2020-03-12', '2020-03-23']
+b_ch = sc.objdict()
+b_ch.h = [1.00, 1.10, 1.20]
+b_ch.s = [1.00, 0.00, 0.00]
+b_ch.w = [0.60, 0.40, 0.25]
+b_ch.c = [0.60, 0.40, 0.25]
+
+# Define testing interventions
+daily_tests = sim.data['new_tests']
+test_kwargs = {'quar_test': 0, 'sensitivity': 1.0, 'test_delay': 0,
+               'loss_prob': 0}
+interventions = [
+  cv.test_num(daily_tests=daily_tests, symp_test=70,  start_day='2020-01-27', end_day=None,
+             swab_delay_dist={'dist':'lognormal', 'par1':10, 'par2':170}, **test_kwargs),
+   ]
+
+for lkey,ch in b_ch.items():
+    interventions.append(cv.change_beta(days=b_days, changes=b_ch[lkey], layers=lkey))
+
+sim.update_pars(interventions=interventions)
+
+sim.initialize()
+sim = sim.run()
