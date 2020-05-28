@@ -636,7 +636,6 @@ class Sim(cvb.BaseSim):
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
-        self.compute_likelihood()
         self.compute_summary(verbose=verbose)
         return
 

@@ -33,6 +33,6 @@ if regenerate:
 sim = cv.Sim(pars, datafile=datafile)
 sim.run()
 sim.plot()
-# fit = sim.compute_fit()
+fit = sim.compute_fit()
 # print(fit.mismatch)
 # fit.plot()

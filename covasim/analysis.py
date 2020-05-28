@@ -268,6 +268,8 @@ class Fit(sc.prettyobj):
         weights (dict): the relative wieght to place on each result
         method (str): the method to be used to calculate the goodness-of-fit
         eps (float): to avoid divide-by-zero errors
+        initialize (bool): whether to initialize immediately
+        verbose (bool): detail to print
 
     **Example**::
 
@@ -277,7 +279,7 @@ class Fit(sc.prettyobj):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, method=None, eps=1e-12, verbose=False):
+    def __init__(self, sim, weights=None, method=None, eps=1e-12, initialize=True, verbose=False):
 
         # Handle inputs
         self.weights = weights
@@ -299,61 +301,82 @@ class Fit(sc.prettyobj):
         for key in sim.result_keys():
             self.sim_results[key] = sim.results[key]
 
-        # Find matching values
-        self.reconcile_inputs()
+        # Copy other things
+        self.sim_dates = sim.datevec.tolist()
 
-        # Perform calculations
-        self.compute_differences()
-        self.compute_gofs()
-        self.compute_losses()
-        self.compute_mismatch()
+        if initialize:
+            self.initialize()
 
-        self.mismatch = None
         return
 
 
-
-    def compute_mismatch(self, weights=None, verbose=None, eps=1e-16):
-        '''
-        Compute the log-likelihood of the current simulation based on the number
-        of new diagnoses.
-
-        Args:
-
-            verbose (bool): detail to print
+    def initialize(self):
+        self.reconcile_inputs() # Find matching values
+        # self.compute_differences() # Perform calculations
+        # self.compute_gofs()
+        # self.compute_losses()
+        # self.compute_mismatch()
+        return
 
 
-        Returns:
-            loglike (float): the log-likelihood of the model given the data
-        '''
+    def reconcile_inputs(self):
+        ''' Find matching keys and indices between the model and the data '''
 
-        if weights is None:
-            weights = {}
+        sim_keys = self.sim_results.keys()
+        data_cols = self.data.columns
+        self.keys = list(set(sim_keys).intersection(data_cols))
+        if not len(self.keys):
+            errormsg = f'No matches found between simulation result keys ({sim_keys}) and data columns ({data_cols})'
+            raise sc.KeyNotFoundError(errormsg)
 
-        loglike = 0
-
-        model_dates = self.datevec.tolist()
-
-        for key in set(self.result_keys()).intersection(self.data.columns): # For keys present in both the results and in the data
-            weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
+        self.sim_inds    = sc.objdict() # For storing matching indices in the sim
+        self.data_inds   = sc.objdict() # For storing matching indices in the data
+        self.match_dates = sc.objdict() # For storing matching dates (same in both)
+        for key in self.keys: # For keys present in both the results and in the data
+            self.sim_inds[key]    = []
+            self.data_inds[key]   = []
+            self.match_dates[key] = []
             for d, datum in self.data[key].iteritems():
                 if np.isfinite(datum):
-                    if d in model_dates:
-                        estimate = self.results[key][model_dates.index(d)]
-                        if np.isfinite(datum) and np.isfinite(estimate):
-                            if (datum == 0) and (estimate == 0):
-                                p = 1.0
-                            else:
-                                p = cvm.poisson_test(datum, estimate)
-                            p = max(p, eps)
-                            logp = pl.log(p)
-                            loglike += weight*logp
-                            sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
+                    if d in self.sim_dates:
+                        self.match_dates[key].append(d)
+                        self.sim_inds[key].append(self.sim_dates.index(d))
+        return
 
-            self.results['likelihood'] = loglike
 
-        sc.printv(f'Likelihood: {loglike}', 1, verbose)
-        return loglike
+    # def compute_mismatch(self):
+    #     '''
+    #     Compute the log-likelihood of the current simulation based on the number
+    #     of new diagnoses.
+    #     '''
+
+    #     if weights is None:
+    #         weights = {}
+
+    #     loglike = 0
+
+    #     model_dates = self.datevec.tolist()
+
+    #     for key in set(self.result_keys()).intersection(self.data.columns): # For keys present in both the results and in the data
+    #         weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
+    #         for d, datum in self.data[key].iteritems():
+    #             if np.isfinite(datum):
+    #                 if d in model_dates:
+    #                     estimate = self.results[key][model_dates.index(d)]
+    #                     if np.isfinite(datum) and np.isfinite(estimate):
+    #                         if (datum == 0) and (estimate == 0):
+    #                             p = 1.0
+    #                         else:
+    #                             p = cvm.poisson_test(datum, estimate)
+    #                         p = max(p, eps)
+    #                         logp = pl.log(p)
+    #                         loglike += weight*logp
+    #                         sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
+
+    #         self.results['likelihood'] = loglike
+
+    #     sc.printv(f'Likelihood: {loglike}', 1, verbose)
+    #     return loglike
 
 
     def plot(self, keys=None, font_size=18, fig_args=None):
@@ -373,6 +396,8 @@ class Fit(sc.prettyobj):
 
         if keys is None:
             keys = self.keys
+
+        figs = []
 
 
         return figs
