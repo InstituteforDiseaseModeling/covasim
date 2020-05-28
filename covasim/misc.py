@@ -11,7 +11,7 @@ import scipy.stats as sps
 from . import version as cvver
 
 
-__all__ = ['load_data', 'date', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test']
+__all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test']
 
 
 def load_data(datafile, columns=None, calculate=True, verbose=True, **kwargs):
@@ -76,14 +76,17 @@ def load_data(datafile, columns=None, calculate=True, verbose=True, **kwargs):
     return data
 
 
-def date(obj, *args, **kwargs):
+def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     '''
     Convert a string or a datetime object to a date object. To convert to an integer
-    from the start day, use sim.date() instead.
+    from the start day, you must supply a start date, or use sim.date() instead.
 
     Args:
         obj (str, date, datetime): the object to convert
         args (str, date, datetime): additional objects to convert
+        start_date (str, date, datetime): the starting date, if an integer is supplied
+        dateformat (str): the format to return the date in
+        as_date (bool): whether to return as a datetime date instead of a string
 
     Returns:
         dates (date or list): either a single date object, or a list of them
@@ -91,10 +94,14 @@ def date(obj, *args, **kwargs):
     **Examples**::
 
         cv.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
+        cv.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
     '''
-    # Convert to list
+
+    # Convert to list and handle other inputs
     obj = sc.promotetolist(obj) # Ensure it's iterable
     obj.extend(args)
+    if dateformat is None:
+        dateformat = '%Y-%m-%d'
 
     dates = []
     for d in obj:
@@ -105,10 +112,18 @@ def date(obj, *args, **kwargs):
                 d = sc.readdate(d).date()
             elif isinstance(d, dt.datetime):
                 d = d.date()
+            elif sc.isnumber(d):
+                if start_date is None:
+                    errormsg = f'To convert the number {d} to a date, you must supply start_date'
+                    raise ValueError(errormsg)
+                d = date(start_date) + dt.timedelta(days=int(d))
             else:
                 errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
                 raise TypeError(errormsg)
-            dates.append(d)
+            if as_date:
+                dates.append(d)
+            else:
+                dates.append(d.strftime(dateformat))
         except Exception as E:
             errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
             raise ValueError(errormsg)
@@ -120,10 +135,61 @@ def date(obj, *args, **kwargs):
     return dates
 
 
+def day(obj, *args, start_day=None):
+    '''
+    Convert a string, date/datetime object, or int to a day (int), the number of
+    days since the start day. See also date() and daydiff(). Used primarily via
+    sim.day() rather than directly.
+
+    Args:
+        obj (str, date, int, or list): convert any of these objects to a day relative to the start day
+        args (list): additional days
+        start_day (str or date): the start day
+
+    Returns:
+        days (int or str): the day(s) in simulation time
+
+    **Example**::
+
+        sim.day('2020-04-05') # Returns 35
+    '''
+
+    # Do not process a day if it's not supplied
+    if obj is None:
+        return None
+
+    # Convert to list
+    if sc.isstring(obj) or sc.isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
+        obj = sc.promotetolist(obj) # Ensure it's iterable
+    obj.extend(args)
+
+    days = []
+    for d in obj:
+        if sc.isnumber(d):
+            days.append(int(d)) # Just convert to an integer
+        else:
+            try:
+                if sc.isstring(d):
+                    d = sc.readdate(d).date()
+                elif isinstance(d, dt.datetime):
+                    d = d.date()
+                d_day = (d - date(start_day)).days # Heavy lifting -- actually compute the day
+                days.append(d_day)
+            except Exception as E:
+                errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
+                raise ValueError(errormsg)
+
+    # Return an integer rather than a list if only one provided
+    if len(days)==1:
+        days = days[0]
+
+    return days
+
+
 def daydiff(*args):
     '''
     Convenience function to find the difference between two or more days. With
-    only one argument, calculate days sin 2020-01-01.
+    only one argument, calculate days since 2020-01-01.
 
     **Example**::
 

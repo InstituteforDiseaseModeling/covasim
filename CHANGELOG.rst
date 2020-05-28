@@ -16,8 +16,22 @@ Latest versions
 
 Version 1.4.0 (2020-05-27)
 --------------------------
+- Added a new class, ``Analyzer``, to perform analyses on a simulation.
+- Added a new parameter, ``sim['analyzers']``, that operates like ``interventions``: it accepts a list of functions or ``Analyzer`` objects.
+- Added two analyzers: ``cv.age_hist`` records age histograms of infections, diagnoses, and deaths; ``cv.snapshot`` makes copies of the ``People`` object at specified points in time.
+- Removed the parameter ``interv_func``; instead, intervention functions can now be appended to ``sim['interventions']``.
+- To migrate an old parameter set to this version, use::
+
+    pars['analyzers'] = None
+    interv_func = pars.pop('interv_func', None)
+    if interv_func:
+        pars['interventions'] = interv_func # If no interventions
+        pars['interventions'].append(interv_func) # If other interventions are present
+
 - Added a new class, ``cv.Fit()``, that stores information about the fit between the model and the data.
-- GitHub info: PR `### <https://github.com/amath-idm/covasim/pull/###>`__, previous head ``8b157a2``
+- Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
+- Refactored cruise ship example to work again.
+- GitHub info: PR `569 <https://github.com/amath-idm/covasim/pull/569>`__, previous head ``8b157a2``
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

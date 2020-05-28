@@ -126,7 +126,8 @@ class Sim(cvb.BaseSim):
         self.init_results() # Create the results stucture
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
-        self.init_interventions()
+        self.init_interventions() # Initialize the interventions
+        self.init_analyzers() # ...and the interventions
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized = True
         return
@@ -246,11 +247,12 @@ class Sim(cvb.BaseSim):
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
 
-        # Handle interventions
+        # Handle interventions and analyzers
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
         for i,interv in enumerate(self['interventions']):
             if isinstance(interv, dict): # It's a dictionary representation of an intervention
                 self['interventions'][i] = cvi.InterventionDict(**interv)
+        self['analyzers'] = sc.promotetolist(self['analyzers'], keepnone=False)
 
         # Optionally handle layer parameters
         if validate_layers:
@@ -394,10 +396,19 @@ class Sim(cvb.BaseSim):
 
     def init_interventions(self):
         ''' Initialize the interventions '''
-        # Initialize interventions
         for intervention in self['interventions']:
-            if not intervention.initialized:
-                intervention.initialize(self)
+            if isinstance(intervention, cvi.Intervention):
+                if not intervention.initialized:
+                    intervention.initialize(self)
+        return
+
+
+    def init_analyzers(self):
+        ''' Initialize the analyzers '''
+        for analyzer in self['analyzers']:
+            if isinstance(analyzer, cva.Analyzer):
+                if not analyzer.initialized:
+                    analyzer.initialize(self)
         return
 
 
@@ -447,9 +458,13 @@ class Sim(cvb.BaseSim):
 
         # Apply interventions
         for intervention in self['interventions']:
-            intervention.apply(self)
-        if self['interv_func'] is not None: # Apply custom intervention function
-            self['interv_func'](self)
+            if isinstance(intervention, cvi.Intervention):
+                intervention.apply(self) # If it's an intervention, call the apply() method
+            elif callable(intervention):
+                intervention(self) # If it's a function, call it directly
+            else:
+                errormsg = f'Intervention {intervention} is neither callable nor an Intervention object'
+                raise ValueError(errormsg)
 
         people.update_states_post() # Check for state changes after interventions
 
@@ -495,6 +510,16 @@ class Sim(cvb.BaseSim):
         # Update counts for this time step: flows
         for key,count in people.flows.items():
             self.results[key][t] += count
+
+        # Apply analyzers -- same syntax as interventions
+        for analyzer in self['analyzers']:
+            if isinstance(analyzer, cva.Analyzer):
+                analyzer.apply(self) # If it's an intervention, call the apply() method
+            elif callable(analyzer):
+                analyzer(self) # If it's a function, call it directly
+            else:
+                errormsg = f'Analyzer {analyzer} is neither callable nor an Analyzer object'
+                raise ValueError(errormsg)
 
         # Tidy up
         self.t += 1
@@ -564,11 +589,20 @@ class Sim(cvb.BaseSim):
         self.finalize(verbose=verbose) # Finalize the results
         sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
         if restore_pars:
-            self.pars = orig_pars # Restore the original parameters
+            self.restore_pars(orig_pars)
         if do_plot: # Optionally plot
             self.plot(**kwargs)
 
         return self.results
+
+
+    def restore_pars(self, orig_pars):
+        ''' Restore the original parameter values, except for the analyzers '''
+        analyzers = self['analyzers'] # Make a copy so these don't get wiped
+        self.pars = orig_pars # Restore the original parameters
+        self['analyzers'] = analyzers # Restore the analyzers
+        return
+
 
 
     def finalize(self, verbose=None):

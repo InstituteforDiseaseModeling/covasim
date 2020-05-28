@@ -209,45 +209,20 @@ class BaseSim(ParsObj):
 
             sim.day('2020-04-05') # Returns 35
         '''
-        # Do not process a day if it's not supplied
-        if day is None:
-            return None
-
-        # Convert to list
-        if sc.isstring(day) or sc.isnumber(day) or isinstance(day, (dt.date, dt.datetime)):
-            day = sc.promotetolist(day) # Ensure it's iterable
-        day.extend(args)
-
-        days = []
-        for d in day:
-            if sc.isnumber(d):
-                days.append(int(d)) # Just convert to an integer
-            else:
-                try:
-                    if sc.isstring(d):
-                        d = sc.readdate(d).date()
-                    elif isinstance(d, dt.datetime):
-                        d = d.date()
-                    d_day = (d - cvm.date(self['start_day'])).days
-                    days.append(d_day)
-                except Exception as E:
-                    errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
-                    raise ValueError(errormsg)
-
-        # Return an integer rather than a list if only one provided
-        if len(days)==1:
-            days = days[0]
-
-        return days
+        return cvm.day(day, *args, start_day=self['start_day'])
 
 
     def date(self, ind, *args, dateformat=None, as_date=False):
         '''
         Convert one or more integer days of simulation time to a date/list of dates --
         by default returns a string, or returns a datetime Date object if as_date is True.
+        See also cv.date(), which provides a partly overlapping set of date conversion
+        features.
 
         Args:
             ind (int, list, or array): the day(s) in simulation time
+            args (list): additional day(s)
+            dateformat (str): the format to return the date in
             as_date (bool): whether to return as a datetime date instead of a string
 
         Returns:

@@ -4,13 +4,232 @@ but which are useful for particular investigations. Currently, this just consist
 of the transmission tree.
 '''
 
-import pylab as pl
 import numpy as np
+import pylab as pl
 import pandas as pd
 import sciris as sc
+from . import misc as cvm
+from . import interventions as cvi
 
 
-__all__ = ['TransTree']
+__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'TransTree']
+
+
+class Analyzer(sc.prettyobj):
+    '''
+    Base class for analyzers. Based on the Intervention class.
+
+    Args:
+        label (str): a label for the intervention (used for ease of identification)
+    '''
+
+    def __init__(self, label=None):
+        self.label = label # e.g. "Record ages"
+        self.initialized = False
+        return
+
+
+    def initialize(self, sim):
+        '''
+        Initialize the analyzer, e.g. convert date strings to integers.
+        '''
+        self.initialized = True
+        return
+
+
+    def apply(self, sim):
+        '''
+        Apply analyzer at each time point. The analyzer has full access to the
+        sim object, and typically stores data/results in itself.
+
+        Args:
+            sim: the Sim instance
+        '''
+        raise NotImplementedError
+
+
+class snapshot(Analyzer):
+    '''
+    Analyzer that takes a "snapshot" of the sim.people array at specified points
+    in time, and saves them to itself. To retrieve them, you can either access
+    the dictionary directly, or use the get() method.
+
+    Args:
+        days (list): list of ints/strings/date objects, the days on which to take the snapshot
+        kwargs (dict): passed to Intervention()
+
+
+    **Example**::
+
+        sim = cv.Sim(analyzers=cv.snapshot('2020-04-04', '2020-04-14'))
+        sim.run()
+        snapshot = sim['analyzers'][0]
+        people = snapshot.snapshots[0]            # Option 1
+        people = snapshot.snapshots['2020-04-04'] # Option 2
+        people = snapshot.get('2020-04-14')       # Option 3
+        people = snapshot.get(34)                 # Option 4
+        people = snapshot.get()                   # Option 5
+    '''
+
+    def __init__(self, days, *args, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        days = sc.promotetolist(days) # Combine multiple days
+        days.extend(args) # Include additional arguments, if present
+        self.days      = days # Converted to integer representations
+        self.dates     = None # String representations
+        self.start_day = None # Store the start date of the simulation
+        self.snapshots = sc.odict() # Store the actual snapshots
+        return
+
+
+    def initialize(self, sim):
+        self.start_day = sim['start_day'] # Store the simulation start day
+        self.days = cvi.process_days(sim, self.days) # Ensure days are in the right format
+        self.dates = [sim.date(day) for day in self.days] # Store as date strings
+        self.initialized = True
+        return
+
+
+    def apply(self, sim):
+        for ind in cvi.find_day(self.days, sim.t):
+            date = self.dates[ind]
+            self.snapshots[date] = sc.dcp(sim.people) # Take snapshot!
+        return
+
+
+    def get(self, key=None):
+        ''' Retrieve a snapshot from the given key (int, str, or date) '''
+        if key is None:
+            key = self.days[0]
+        day  = cvm.day(key, start_day=self.start_day)
+        date = cvm.date(day, start_date=self.start_day, as_date=False)
+        if date in self.snapshots:
+            snapshot = self.snapshots[date]
+        else:
+            dates = ', '.join(list(self.snapshots.keys()))
+            errormsg = f'Could not find snapshot date {date} (day {day}): choices are {dates}'
+            raise sc.KeyNotFoundError(errormsg)
+        return snapshot
+
+
+class age_histogram(Analyzer):
+    '''
+    Analyzer that takes a "snapshot" of the sim.people array at specified points
+    in time, and saves them to itself. To retrieve them, you can either access
+    the dictionary directly, or use the get() method.
+
+    Args:
+        days   (list): list of ints/strings/date objects, the days on which to calculate the histograms (default: last day)
+        states (list): which states of people to record (default: exposed, tested, diagnosed, dead)
+        edges  (list): edges of age bins to use (default: 10 year bins from 0 to 100)
+        kwargs (dict): passed to Intervention()
+
+    **Example**::
+
+        sim = cv.Sim(analyzers=cv.age_histogram())
+        sim.run()
+        agehist = sim['analyzers'][0].get()
+    '''
+
+    def __init__(self, days=None, states=None, edges=None, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self.days      = days # To be converted to integer representations
+        self.edges     = edges # Edges of age bins
+        self.states    = states # States to save
+        self.bins      = None # Age bins, calculated from edges
+        self.dates     = None # String representations of dates
+        self.start_day = None # Store the start date of the simulation
+        self.hists = sc.odict() # Store the actual snapshots
+        return
+
+
+    def initialize(self, sim):
+
+        # Handle days
+        self.start_day = sim['start_day']
+        if self.days is None:
+            self.days = [sim.tvec[-1]] # If no day is supplied, use the last day
+        self.days = cvi.process_days(sim, self.days) # Ensure days are in the right format
+        self.dates = [sim.date(day) for day in self.days] # Store as date strings
+
+        # Handle edges and age bins
+        if self.edges is None: # Default age bins
+            self.edges = np.linspace(0,100,11)
+        self.bins = self.edges[:-1] # Don't include the last edge in the bins
+
+        # Handle states
+        if self.states is None:
+            self.states = ['exposed', 'tested', 'diagnosed', 'dead']
+        self.states = sc.promotetolist(self.states)
+        for s,state in enumerate(self.states):
+            self.states[s] = state.replace('date_', '') # Allow keys starting with date_ as input, but strip it off here
+
+        self.initialized = True
+
+        return
+
+
+    def apply(self, sim):
+        for ind in cvi.find_day(self.days, sim.t):
+            date = self.dates[ind] # Find the date for this index
+            self.hists[date] = sc.objdict() # Initialize the dictionary
+            scale  = sim.rescale_vec[sim.t] # Determine current scale factor
+            age    = sim.people.age # Get the age distribution,since used heavily
+            self.hists[date]['bins'] = self.bins # Copy here for convenience
+            for state in self.states: # Loop over each state
+                inds = sim.people.defined(f'date_{state}') # Pull out people for which this state is defined
+                self.hists[date][state] = np.histogram(age[inds], bins=self.edges)[0]*scale # Actually count the people
+        return
+
+
+    def get(self, key=None):
+        ''' Retrieve a histogram from the given key (int, str, or date) '''
+        if key is None:
+            key = self.days[0]
+        day  = cvm.day(key, start_day=self.start_day)
+        date = cvm.date(day, start_date=self.start_day, as_date=False)
+        if date in self.hists:
+            hists = self.hists[date]
+        else:
+            dates = ', '.join(list(self.hists.keys()))
+            errormsg = f'Could not find histogram date {date} (day {day}): choices are {dates}'
+            raise sc.KeyNotFoundError(errormsg)
+        return hists
+
+
+    def plot(self, width=0.8, fig_args=None, font_size=18, color='#F8A493'):
+        '''
+        Simple method for plotting the histograms.
+
+        Args:
+            width (float): width of bars
+            fig_args (dict): passed to pl.figure()
+            font_size (float): size of font
+            color (hex or rgb): the color of the bars
+        '''
+        figs = []
+        for date,hists in self.hists.items():
+            fig_args = sc.mergedicts(dict(figsize=(24,15)))
+            pl.rcParams['font.size'] = font_size
+            figs += [pl.figure(**fig_args)]
+            pl.set_cmap('Spectral')
+            pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
+
+            n_plots = len(self.states)
+            n_rows = np.ceil(np.sqrt(n_plots)) # Number of subplot rows to have
+            n_cols = np.ceil(n_plots/n_rows) # Number of subplot columns to have
+            bins = hists['bins']
+            barwidth = width*(bins[1] - bins[0]) # Assume uniform width
+            for s,state in enumerate(self.states):
+                pl.subplot(n_rows, n_cols, s+1)
+                pl.bar(bins, hists[state], width=barwidth, facecolor=color, label=f'Number {state}')
+                pl.xlabel('Age')
+                pl.ylabel('Count')
+                pl.xticks(ticks=bins)
+                pl.legend()
+                pl.title(f'Number of people {state} by {date}')
+
+        return figs
 
 
 def import_nx():
@@ -374,8 +593,16 @@ class TransTree(sc.prettyobj):
         return fig
 
 
-    def plot_histogram(self, bins=None, fig_args=None, width=0.8, font_size=18):
-        ''' Plots a histogram of the number of transmissions '''
+    def plot_histogram(self, bins=None, width=0.8, fig_args=None, font_size=18):
+        '''
+        Plots a histogram of the number of transmissions.
+
+        Args:
+            bins (list): bin edges to use for the histogram
+            width (float): width of bars
+            fig_args (dict): passed to pl.figure()
+            font_size (float): size of font
+        '''
         if bins is None:
             max_infections = self.n_targets.max()
             bins = np.arange(0, max_infections+2)

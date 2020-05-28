@@ -297,25 +297,30 @@ class sequence(Intervention):
 
 __all__+= ['change_beta', 'clip_edges']
 
-def process_days_changes(sim, days, changes):
-    '''
-    Ensure lists of days and lists of changes are in consistent format. Used by
-    change_beta and clip_edges.
-    '''
 
+def process_days(sim, days):
+    '''
+    Ensure lists of days are in consistent format. Used by change_beta, clip_edges,
+    and some analyzers.
+    '''
     if sc.isstring(days) or not sc.isiterable(days):
         days = sc.promotetolist(days)
     if isinstance(days, list):
         for d,day in enumerate(days):
             days[d] = sim.day(day) # Ensure it's an integer and not a string or something
     days = sc.promotetoarray(days)
+    return days
 
+
+def process_changes(sim, changes, days):
+    '''
+    Ensure lists of changes are in consistent format. Used by change_beta and clip_edges.
+    '''
     changes = sc.promotetoarray(changes)
     if len(days) != len(changes):
         errormsg = f'Number of days supplied ({len(days)}) does not match number of changes in beta ({len(changes)})'
         raise ValueError(errormsg)
-
-    return days, changes
+    return changes
 
 
 class change_beta(Intervention):
@@ -346,8 +351,9 @@ class change_beta(Intervention):
 
     def initialize(self, sim):
         ''' Fix days and store beta '''
-        self.days, self.changes = process_days_changes(sim, self.days, self.changes)
-        self.layers = sc.promotetolist(self.layers, keepnone=True)
+        self.days    = process_days(sim, self.days)
+        self.changes = process_changes(sim, self.changes, self.days)
+        self.layers  = sc.promotetolist(self.layers, keepnone=True)
         self.orig_betas = {}
         for lkey in self.layers:
             if lkey is None:
@@ -402,7 +408,8 @@ class clip_edges(Intervention):
 
 
     def initialize(self, sim):
-        self.days, self.changes = process_days_changes(sim, self.days, self.changes)
+        self.days    = process_days(sim, self.days)
+        self.changes = process_changes(sim, self.changes, self.days)
         if self.layers is None:
             self.layers = sim.layer_keys()
         else:
