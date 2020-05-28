@@ -12,7 +12,7 @@ from . import misc as cvm
 from . import interventions as cvi
 
 
-__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'TransTree']
+__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'Fit', 'TransTree']
 
 
 class Analyzer(sc.prettyobj):
@@ -252,15 +252,130 @@ class age_histogram(Analyzer):
         return figs
 
 
-def import_nx():
-    ''' Fail gracefully if NetworkX is called for but is not found '''
-    try:
-        import networkx as nx # Optional import
-    except ImportError as E:
-        errormsg = f'WARNING: Could not import networkx ({str(E)}). Some functionality will be disabled. If desired, please install manually, e.g. "pip install networkx".'
-        print(errormsg)
-        nx = None
-    return nx
+class Fit(sc.prettyobj):
+    '''
+    A class for calculating the fit between the model and the data. Note the
+    following terminology is used here:
+
+        - fit: nonspecific term for how well the model matches the data
+        - difference: the absolute numerical differences between the model and the data (one time series per result)
+        - goodness-of-fit: the result of passing the difference through a statistical function, such as mean squared error
+        - loss: the goodness-of-fit for each result multiplied by user-specified weights (one time series per result)
+        - mismatch: the sum of all the loses (a single scalar value) -- this is the value to be minimized during calibration
+
+    Args:
+        sim (Sim): the sim object
+        weights (dict): the relative wieght to place on each result
+        method (str): the method to be used to calculate the goodness-of-fit
+        eps (float): to avoid divide-by-zero errors
+
+    **Example**::
+
+        sim = cv.Sim()
+        sim.run()
+        fit = sim.compute_fit()
+        fit.plot()
+    '''
+
+    def __init__(self, sim, weights=None, method=None, eps=1e-12, verbose=False):
+
+        # Handle inputs
+        self.weights = weights
+        self.eps     = eps
+        self.verbose = verbose
+
+        # Copy data
+        if sim.data is None:
+            errormsg = 'Model fit cannot be calculated until data are loaded'
+            raise RuntimeError(errormsg)
+        self.data = sim.data
+
+        # Copy sim results
+        if not sim.results_ready:
+            errormsg = 'Model fit cannot be calculated until results are run'
+            raise RuntimeError(errormsg)
+        self.sim_results = sc.objdict()
+        self.sim_results.t = sim.results['t']
+        for key in sim.result_keys():
+            self.sim_results[key] = sim.results[key]
+
+        # Find matching values
+        self.reconcile_inputs()
+
+        # Perform calculations
+        self.compute_differences()
+        self.compute_gofs()
+        self.compute_losses()
+        self.compute_mismatch()
+
+        self.mismatch = None
+        return
+
+
+
+    def compute_mismatch(self, weights=None, verbose=None, eps=1e-16):
+        '''
+        Compute the log-likelihood of the current simulation based on the number
+        of new diagnoses.
+
+        Args:
+
+            verbose (bool): detail to print
+
+
+        Returns:
+            loglike (float): the log-likelihood of the model given the data
+        '''
+
+        if weights is None:
+            weights = {}
+
+        loglike = 0
+
+        model_dates = self.datevec.tolist()
+
+        for key in set(self.result_keys()).intersection(self.data.columns): # For keys present in both the results and in the data
+            weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
+            for d, datum in self.data[key].iteritems():
+                if np.isfinite(datum):
+                    if d in model_dates:
+                        estimate = self.results[key][model_dates.index(d)]
+                        if np.isfinite(datum) and np.isfinite(estimate):
+                            if (datum == 0) and (estimate == 0):
+                                p = 1.0
+                            else:
+                                p = cvm.poisson_test(datum, estimate)
+                            p = max(p, eps)
+                            logp = pl.log(p)
+                            loglike += weight*logp
+                            sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
+
+            self.results['likelihood'] = loglike
+
+        sc.printv(f'Likelihood: {loglike}', 1, verbose)
+        return loglike
+
+
+    def plot(self, keys=None, font_size=18, fig_args=None):
+        '''
+        Plot the fit of the model to the data. For each result, plot the data
+        and the model; the difference; and the loss (weighted difference). Also
+        plots the loss as a function of time.
+
+        Args:
+            keys (list): which keys to plot (default, all)
+            font_size (float): size of font
+            fig_args (dict): passed to pl.figure()
+        '''
+
+        fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
+        pl.rcParams['font.size'] = font_size
+
+        if keys is None:
+            keys = self.keys
+
+
+        return figs
 
 
 class TransTree(sc.prettyobj):
@@ -273,9 +388,10 @@ class TransTree(sc.prettyobj):
 
     Args:
         sim (Sim): the sim object
+        to_networkx (bool): whether to convert the graph to a NetworkX object
     '''
 
-    def __init__(self, sim):
+    def __init__(self, sim, to_networkx=False):
 
         # Pull out each of the attributes relevant to transmission
         attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}
@@ -311,11 +427,14 @@ class TransTree(sc.prettyobj):
         # Include the detailed transmission tree as well
         self.detailed = self.make_detailed(people)
 
-        # Check for NetworkX
-        nx = import_nx()
-        if nx:
+        # Optionally convert to NetworkX -- must be done on import since the people object is not kept
+        if to_networkx:
+
+            # Initialization
+            import networkx as nx
             self.graph = nx.DiGraph()
 
+            # Add the nodes
             for i in range(len(people)):
                 d = {}
                 for attr in attrs:

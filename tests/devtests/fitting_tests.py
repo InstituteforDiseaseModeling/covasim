@@ -4,6 +4,7 @@ Test the fitting to data
 
 import covasim as cv
 
+regenerate = 0
 datafile = 'target_fit_data.xlsx'
 
 intervs = [cv.change_beta(days=40, changes=0.5), cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)] # Common interventions
@@ -23,10 +24,11 @@ target_pars = dict(
     rand_seed     = 294873,
 )
 
-target = cv.Sim(pars)
-target.update_pars(target_pars)
-target.run()
-target.to_excel(datafile)
+if regenerate:
+    target = cv.Sim(pars)
+    target.update_pars(target_pars)
+    target.run()
+    target.to_excel(datafile)
 
 sim = cv.Sim(pars, datafile=datafile)
 sim.run()

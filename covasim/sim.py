@@ -825,55 +825,6 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def compute_likelihood(self, weights=None, verbose=None, eps=1e-16):
-        '''
-        Compute the log-likelihood of the current simulation based on the number
-        of new diagnoses.
-
-        Args:
-            weights (dict): the relative wieght to place on each result
-            verbose (bool): detail to print
-            eps (float): to avoid divide-by-zero errors
-
-        Returns:
-            loglike (float): the log-likelihood of the model given the data
-        '''
-
-        if verbose is None:
-            verbose = self['verbose']
-
-        if weights is None:
-            weights = {}
-
-        if self.data is None:
-            return np.nan
-
-        loglike = 0
-
-        model_dates = self.datevec.tolist()
-
-        for key in set(self.result_keys()).intersection(self.data.columns): # For keys present in both the results and in the data
-            weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
-            for d, datum in self.data[key].iteritems():
-                if np.isfinite(datum):
-                    if d in model_dates:
-                        estimate = self.results[key][model_dates.index(d)]
-                        if np.isfinite(datum) and np.isfinite(estimate):
-                            if (datum == 0) and (estimate == 0):
-                                p = 1.0
-                            else:
-                                p = cvm.poisson_test(datum, estimate)
-                            p = max(p, eps)
-                            logp = pl.log(p)
-                            loglike += weight*logp
-                            sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
-
-            self.results['likelihood'] = loglike
-
-        sc.printv(f'Likelihood: {loglike}', 1, verbose)
-        return loglike
-
-
     def compute_summary(self, verbose=None):
         ''' Compute the summary statistics to display at the end of a run '''
 
@@ -890,6 +841,31 @@ class Sim(cvb.BaseSim):
         self.summary = summary
 
         return summary
+
+
+    def compute_fit(self, output=True, *args, **kwargs):
+        '''
+        Compute the fit between the model and the data. See cv.Fit() for more
+        information.
+
+        Args:
+            output (bool): whether or not to return the TransTree; if not, store in sim.results
+            args   (list): passed to cv.Fit()
+            kwargs (dict): passed to cv.Fit()
+
+        **Example**::
+
+            sim = cv.Sim(datafile=data.csv)
+            sim.run()
+            fit = sim.compute_fit()
+            fit.plot()
+        '''
+        fit = cva.Fit(self, *args, **kwargs)
+        if output:
+            return fit
+        else:
+            self.results.fit = fit
+            return
 
 
     def make_transtree(self, output=True, *args, **kwargs):
