@@ -5,7 +5,8 @@ Test the fitting to data
 import covasim as cv
 
 regenerate = 0
-datafile = 'target_fit_data.xlsx'
+# datafile = 'target_fit_data.xlsx'
+datafile = '../example_data.csv'
 
 intervs = [cv.change_beta(days=40, changes=0.5), cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)] # Common interventions
 pars = dict(
@@ -35,4 +36,4 @@ sim.run()
 sim.plot()
 fit = sim.compute_fit()
 # print(fit.mismatch)
-# fit.plot()
+fit.plot()

@@ -312,7 +312,7 @@ class Fit(sc.prettyobj):
 
     def initialize(self):
         self.reconcile_inputs() # Find matching values
-        # self.compute_differences() # Perform calculations
+        self.compute_diffs() # Perform calculations
         # self.compute_gofs()
         # self.compute_losses()
         # self.compute_mismatch()
@@ -329,22 +329,49 @@ class Fit(sc.prettyobj):
             errormsg = f'No matches found between simulation result keys ({sim_keys}) and data columns ({data_cols})'
             raise sc.KeyNotFoundError(errormsg)
 
-        self.sim_inds    = sc.objdict() # For storing matching indices in the sim
-        self.data_inds   = sc.objdict() # For storing matching indices in the data
-        self.match_dates = sc.objdict() # For storing matching dates (same in both)
+        self.inds = sc.objdict()
+        self.inds.sim  = sc.objdict() # For storing matching indices in the sim
+        self.inds.data = sc.objdict() # For storing matching indices in the data
         for key in self.keys: # For keys present in both the results and in the data
-            self.sim_inds[key]    = []
-            self.data_inds[key]   = []
-            self.match_dates[key] = []
+            self.inds.sim[key]  = []
+            self.inds.data[key] = []
             count = -1
             for d, datum in self.data[key].iteritems():
                 count += 1
                 if np.isfinite(datum):
                     if d in self.sim_dates:
-                        self.match_dates[key].append(d)
-                        self.sim_inds[key].append(self.sim_dates.index(d))
-                        self.data_inds[key].append(count)
+                        # self.match.dates[key].append(d)
+                        self.inds.sim[key].append(self.sim_dates.index(d))
+                        self.inds.data[key].append(count)
+            self.inds.sim[key]  = np.array(self.inds.sim[key])
+            self.inds.data[key] = np.array(self.inds.data[key])
+
+        # Convert into paired points
+        self.pair = sc.objdict()
+        for key in self.keys:
+            self.pair[key] = sc.objdict()
+            sim_inds = self.inds.sim[key]
+            data_inds = self.inds.data[key]
+            n_inds = len(sim_inds)
+            self.pair[key].sim  = np.zeros(n_inds)
+            self.pair[key].data = np.zeros(n_inds)
+            for i in range(n_inds):
+                self.pair[key].sim[i]  = self.sim_results[key].values[sim_inds[i]]
+                self.pair[key].data[i] = self.data[key].values[data_inds[i]]
+
         return
+
+
+    def compute_diffs(self, absolute=False):
+        ''' Find the differences between the sim and the data '''
+        self.diffs = sc.objdict()
+        for key in self.keys:
+            self.diffs[key] = self.pair[key].data - self.pair[key].sim
+            if absolute:
+                self.diffs[key] = np.abs(self.diffs[key])
+        return
+
+
 
 
     # def compute_mismatch(self):
@@ -399,9 +426,14 @@ class Fit(sc.prettyobj):
 
         if keys is None:
             keys = self.keys
+        n_keys = len(keys)
 
-        figs = []
-
+        figs = [pl.figure(**fig_args)]
+        pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
+        for k,key in enumerate(keys):
+            pl.subplot(3, n_keys, k*3+1)
+            pl.plot(self.pair[key].sim, label='Simulation')
+            pl.plot(self.pair[key].data, label='Data')
 
         return figs
 
