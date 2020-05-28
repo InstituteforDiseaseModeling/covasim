@@ -185,6 +185,15 @@ This folder contains demonstrations of simple Covasim usage, including an early 
 .. _examples README: ./examples
 
 
+WandB
+~~~~~
+
+Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `Weights and Biases README`_ for more information.
+
+.. _Weights and Biases: https://www.wandb.com/
+.. _Weights and Biases  README: https://github.com/InstituteforDiseaseModeling/covasim/tree/master/examples/wandb
+
+
 Licenses
 --------
 
@@ -197,15 +206,6 @@ Tests
 Integration, development, and unit tests. While not (yet) beautifully curated, these folders contain many usage examples. See the `tests README`_ for more information.
 
 .. _tests README: ./tests
-
-
-Sweep
------
-
-Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `sweep README`_ for more information.
-
-.. _Weights and Biases: https://www.wandb.com/
-.. _sweep README: ./sweep
 
 
 Disclaimer
