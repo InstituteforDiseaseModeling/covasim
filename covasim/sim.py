@@ -604,7 +604,6 @@ class Sim(cvb.BaseSim):
         return
 
 
-
     def finalize(self, verbose=None):
         ''' Compute final results, likelihood, etc. '''
 
