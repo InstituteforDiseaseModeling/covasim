@@ -110,18 +110,16 @@ class MultiSim(sc.prettyobj):
         return keys
 
 
-    def run(self, reduce=False, combine=False, *args, **kwargs):
+    def init_sims(self, **kwargs):
         '''
-        Run the actual sims
+        Initialize the sims, but don't actually run them. Syntax is the same
+        as MultiSim.run(). Note: in most cases you can just call run() directly,
+        there is no need to call this separately.
 
         Args:
-            reduce (bool): whether or not to reduce after running (see reduce())
-            combine (bool): whether or not to combine after running (see combine(), not compatible with reduce)
-            kwargs (dict): passed to multi_run() and thence (in part) to sim.run()
-
-        Returns:
-            None (modifies MultiSim object in place)
+            kwargs  (dict): passed to multi_run()
         '''
+
         # Handle which sims to use
         if self.sims is None:
             sims = self.base_sim
@@ -129,8 +127,33 @@ class MultiSim(sc.prettyobj):
             sims = self.sims
 
         # Run
+        kwargs = sc.mergedicts(self.run_args, kwargs, {'do_run':False}) # Never run, that's the point!
+        self.sims = multi_run(sims, **kwargs)
+
+        return
+
+
+    def run(self, reduce=False, combine=False, **kwargs):
+        '''
+        Run the actual sims
+
+        Args:
+            reduce  (bool): whether or not to reduce after running (see reduce())
+            combine (bool): whether or not to combine after running (see combine(), not compatible with reduce)
+            kwargs  (dict): passed to multi_run()
+
+        Returns:
+            None (modifies MultiSim object in place)
+        '''
+        # Handle which sims to use -- same as init_sims()
+        if self.sims is None:
+            sims = self.base_sim
+        else:
+            sims = self.sims
+
+        # Run
         kwargs = sc.mergedicts(self.run_args, kwargs)
-        self.sims = multi_run(sims, *args, **kwargs)
+        self.sims = multi_run(sims, **kwargs)
 
         # Reduce or combine
         if reduce:
@@ -855,7 +878,7 @@ class Scenarios(cvb.ParsObj):
         return scens
 
 
-def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=False, run_args=None, sim_args=None, verbose=None, **kwargs):
+def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=False, run_args=None, sim_args=None, verbose=None, do_run=True, **kwargs):
     '''
     Convenience function to perform a single simulation run. Mostly used for
     parallelization, but can also be used directly.
@@ -870,6 +893,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
         run_args    (dict)  : arguments passed to sim.run()
         sim_args    (dict)  : extra parameters to pass to the sim, e.g. 'n_infected'
         verbose     (int)   : detail to print
+        do_run      (bool)  : whether to actually run the sim (if not, just initialize it)
         kwargs      (dict)  : also passed to the sim
 
     Returns:
@@ -932,7 +956,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
     return sim
 
 
-def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, verbose=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, verbose=None, **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
@@ -943,12 +967,13 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         reseed     (bool)  : whether or not to generate a fresh seed for each run
         noise      (float) : the amount of noise to add to each run
         noisepar   (str)   : the name of the parameter to add noise to
-        iterpars   (dict)  : any other parameters to iterate over the runs; see sc.parallelize                          () for syntax
+        iterpars   (dict)  : any other parameters to iterate over the runs; see sc.parallelize() for syntax
         combine    (bool)  : whether or not to combine all results into one sim, rather than return multiple sim objects
         keep_people(bool)  : whether to keep the people after the sim run
-        run_args   (dict)  : arguments passed to sim.run                                                                ()
+        run_args   (dict)  : arguments passed to sim.run()
         sim_args   (dict)  : extra parameters to pass to the sim
-        par_args   (dict)  : arguments passed to sc.parallelize                                                         ()
+        do_run     (bool)  : whether to actually run the sim (if not, just initialize it)
+        par_args   (dict)  : arguments passed to sc.parallelize()
         verbose    (int)   : detail to print
         kwargs     (dict)  : also passed to the sim
 
@@ -983,11 +1008,11 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
     if isinstance(sim, cvs.Sim): # Normal case: one sim
         iterkwargs = {'ind':np.arange(n_runs)}
         iterkwargs.update(iterpars)
-        kwargs = dict(sim=sim, reseed=reseed, noise=noise, noisepar=noisepar, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args)
+        kwargs = dict(sim=sim, reseed=reseed, noise=noise, noisepar=noisepar, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
         sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
     elif isinstance(sim, list): # List of sims
         iterkwargs = {'sim':sim}
-        kwargs = dict(verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args)
+        kwargs = dict(verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
         sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
     else:
         errormsg = f'Must be Sim object or list, not {type(sim)}'
