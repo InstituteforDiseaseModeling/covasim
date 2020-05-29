@@ -14,7 +14,7 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
-Version 1.4.0 (2020-05-27)
+Version 1.4.0 (2020-05-28)
 --------------------------
 - Added a new class, ``Analyzer``, to perform analyses on a simulation.
 - Added a new parameter, ``sim['analyzers']``, that operates like ``interventions``: it accepts a list of functions or ``Analyzer`` objects.
@@ -22,6 +22,7 @@ Version 1.4.0 (2020-05-27)
 - Removed the parameter ``interv_func``; instead, intervention functions can now be appended to ``sim['interventions']``.
 - Added a new class, ``cv.Fit()``, that stores information about the fit between the model and the data. "Likelihood" is no longer automatically calculated, but instead "mismatch" can be calculated via ``fit = sim.compute_fit()``.
 - Changed the default for the ``rescale`` parameter from ``False`` to ``True``. To return to previous behavior, define ``sim['rescale'] = False`` explicitly.
+- Added ``MultiSim.init_sims()``, which is not usually necessary, but can be helpful if you want to create the ``Sim`` objects without running them straight away.
 - Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
 - Refactored cruise ship example to work again.
 - *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previoius behavior, use::

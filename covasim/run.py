@@ -41,8 +41,9 @@ class MultiSim(sc.prettyobj):
     Args:
         sims      (Sim/list) : a single sim or a list of sims
         base_sim  (Sim)      : the sim used for shared properties; if not supplied, the first of the sims provided
-        quantiles (dict)     : the quantiles to use with reduce                                                   ( ), e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
-        kwargs    (dict)     : stored in run_args and passed to run                                               ( )
+        quantiles (dict)     : the quantiles to use with reduce(), e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
+        initialize (bool)    : whether or not to initialize the sims (otherwise, initialize them during run)
+        kwargs    (dict)     : stored in run_args and passed to run()
 
     Returns:
         msim: a MultiSim object
@@ -67,7 +68,7 @@ class MultiSim(sc.prettyobj):
         msim.plot() # Plot as single sim
     '''
 
-    def __init__(self, sims=None, base_sim=None, quantiles=None, **kwargs):
+    def __init__(self, sims=None, base_sim=None, quantiles=None, initialize=False, **kwargs):
 
         # Handle inputs
         if base_sim is None:
@@ -83,12 +84,17 @@ class MultiSim(sc.prettyobj):
         if quantiles is None:
             quantiles = make_metapars()['quantiles']
 
-        self.sims = sims
-        self.base_sim = base_sim
+        # Set properties
+        self.sims      = sims
+        self.base_sim  = base_sim
         self.quantiles = quantiles
-        self.run_args = sc.mergedicts(kwargs)
-        self.results = None
-        self.which = None # Whether the multisim is to be reduced, combined, etc.
+        self.run_args  = sc.mergedicts(kwargs)
+        self.results   = None
+        self.which     = None # Whether the multisim is to be reduced, combined, etc.
+
+        # Optionally initialize
+        if initialize:
+            self.init_sims()
 
         return
 
@@ -526,16 +532,92 @@ class MultiSim(sc.prettyobj):
         # Create the multisim from the base sim of the first argument
         msim = MultiSim(base_sim=sc.dcp(args[0].base_sim))
         msim.sims = []
+        msim.chunks = [] # This is used to enable automatic splitting later
 
         # Handle different options for combining
         if base: # Only keep the base sims
-            for ms in args:
+            for i,ms in enumerate(args):
                 msim.sims.append(sc.dcp(ms.base_sim))
+                msim.chunks.append([[i]])
         else: # Keep all the sims
             for ms in args:
+                len_before = len(msim.sims)
                 msim.sims += sc.dcp(ms.sims)
+                len_after= len(msim.sims)
+                msim.chunks.append(list(range(len_before, len_after)))
 
         return msim
+
+
+    def split(self, inds=None, chunks=None):
+        '''
+        Convenience method for splitting one MultiSim into several. You can specify
+        either individual indices of simulations to extract, via inds, or consecutive
+        chunks of indices, via chunks. If this function is called on a merged MultiSim,
+        the chunks can be retrieved automatically and no arguments are necessary.
+
+        Args:
+            inds (list): a list of lists of indices, with each list turned into a MultiSim
+            chunks (int or list): if an int, split the MultiSim into chunks of that length; if a list return chunks of that many sims
+
+        Returns:
+            A list of MultiSim objects
+
+        **Examples**::
+
+            m1 = cv.MultiSim(cv.Sim(label='sim1'), initialize=True)
+            m2 = cv.MultiSim(cv.Sim(label='sim2'), initialize=True)
+            m3 = cv.MultiSim.merge(m1, m2)
+            m3.run()
+            m1b, m2b = m3.split()
+
+            msim = cv.MultiSim(cv.Sim(), n_runs=6)
+            msim.run()
+            m1, m2 = msim.split(inds=[[0,2,4], [1,3,5]])
+            mlist1 = msim.split(chunks=[2,4]) # Equivalent to inds=[[0,1], [2,3,4,5]]
+            mlist2 = msim.split(chunks=3) # Equivalent to inds=[[0,1,2], [3,4,5]]
+        '''
+
+        # Process indices and chunks
+        if inds is None: # Indices not supplied
+            if chunks is None: # Chunks not supplied
+                if hasattr(self, 'chunks'): # Created from a merged MultiSim
+                    inds = self.chunks
+                else: # No indices or chunks and not created from a merge
+                    errormsg = f'If a MultiSim has not been created via merge(), you must supply either inds or chunks to split it'
+                    raise ValueError(errormsg)
+            else: # Chunks supplied, but not inds
+                inds = [] # Initialize
+                sim_inds = np.arange(len(self)) # Indices for the simulations
+                if sc.isiterable(chunks): # e.g. chunks = [2,4]
+                    chunk_inds = np.cumsum(chunks)[:-1]
+                    inds = np.split(sim_inds, chunk_inds)
+                else: # e.g. chunks = 3
+                    inds = np.split(sim_inds, chunks) # This will fail if the length is wrong
+
+        # Do the conversion
+        mlist = []
+        for indlist in inds:
+            sims = sc.dcp([self.sims[i] for i in indlist])
+            msim = MultiSim(sims=sims)
+            mlist.append(msim)
+
+        return mlist
+
+
+    def summarize(self, output=False):
+        ''' Print a brief summary of the MultiSim '''
+        string  = 'MultiSim summary:\n'
+        string += f'  Number of sims: {len(self.sims)}\n'
+        string += f'  Reduced/combined: {self.which}\n'
+        string += f'  Base: {self.base_sim.brief(output=True)}\n'
+        string += f'  Sims:\n'
+        for s,sim in enumerate(self.sims):
+            string += f'    {s}: {sim.brief(output=True)}\n'
+        if not output:
+            print(string)
+        else:
+            return string
 
 
 class Scenarios(cvb.ParsObj):

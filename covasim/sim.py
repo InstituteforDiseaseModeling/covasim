@@ -829,16 +829,62 @@ class Sim(cvb.BaseSim):
         if verbose is None:
             verbose = self['verbose']
 
-        summary = sc.objdict()
-        summary_str = 'Summary:\n'
+        self.summary = sc.objdict()
         for key in self.result_keys():
-            summary[key] = self.results[key][-1]
-            if key.startswith('cum_'):
-                summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
-        sc.printv(summary_str, 1, verbose)
-        self.summary = summary
+            self.summary[key] = self.results[key][-1]
 
-        return summary
+        if verbose:
+            self.summarize()
+
+        return self.summary
+
+
+    def summarize(self, output=False):
+        ''' Print a brief summary of the simulation '''
+        if self.results_ready:
+            summary_str = 'Simulation summary:\n'
+            for key in self.result_keys():
+                if key.startswith('cum_'):
+                    summary_str += f'   {self.summary[key]:5.0f} {self.results[key].name.lower()}\n'
+
+            if not output:
+                print(summary_str)
+            else:
+                return summary_str
+        else:
+            return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
+
+
+
+    def brief(self, output=False):
+        ''' Return a one-line description of a sim '''
+
+        if self.results_ready:
+            infections = self.summary['cum_infections']
+            deaths = self.summary['cum_deaths']
+            results = f'{infections:n}⚙, {deaths:n}☠'
+        else:
+            results = 'not run'
+
+        if self.label:
+            label = f'"{self.label}"'
+        else:
+            label = '<no label>'
+
+        start = cvm.date(self['start_day'], as_date=False)
+        if self['end_day']:
+            end = cvm.date(self['end_day'], as_date=False)
+        else:
+            end = cvm.date(self['n_days'], start_date=start)
+
+        pop_size = self['pop_size']
+        pop_type = self['pop_type']
+        string   = f'Sim({label}; {start}—{end}; pop: {pop_size:n} {pop_type}; epi: {results})'
+
+        if not output:
+            print(string)
+        else:
+            return string
 
 
     def compute_fit(self, output=True, *args, **kwargs):
