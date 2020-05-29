@@ -24,22 +24,38 @@ Analysis
 - Added a new class, ``Analyzer``, to perform analyses on a simulation.
 - Added a new parameter, ``sim['analyzers']``, that operates like ``interventions``: it accepts a list of functions or ``Analyzer`` objects.
 - Added two analyzers: ``cv.age_hist`` records age histograms of infections, diagnoses, and deaths; ``cv.snapshot`` makes copies of the ``People`` object at specified points in time.
-- Removed the parameter ``interv_func``; instead, intervention functions can now be appended to ``sim['interventions']``.
 
 
 Fitting
 ^^^^^^^
 - Added a new class, ``cv.Fit()``, that stores information about the fit between the model and the data. "Likelihood" is no longer automatically calculated, but instead "mismatch" can be calculated via ``fit = sim.compute_fit()``.
+- The Poisson test that was previously used for the "likelihood" calculation has been deprecated; the new default mismatch is based on normalized absolute error.
+- For a plot of how the mismatch is being calculated, use ``fit.plot()``.
 
 MultiSims
 ^^^^^^^^^
+- Added ``multisim.init_sims()``, which is not usually necessary, but can be helpful if you want to create the ``Sim`` objects without running them straight away.
+- Added ``multisim.split()``, easily allowing a merged multisim to be split back into its constituent parts (non-merged multisims can also be split). This can be used for example to create several multisims, merge them together, run them all at the same time in parallel, and then split the back for analysis.
+
+Display functions
+^^^^^^^^^^^^^^^^^
+- Added ``sim.summarize()``, which shows a short review of key sim results (cumulative counts).
+- Added ``sim.brief()``, which shows a one-line summary of the sim.
+- Added ``multisim.summarize()``, which prints a brief summary of all the constituent sims.
+
+Parameter changes
+^^^^^^^^^^^^^^^^^
+- Removed the parameter ``interv_func``; instead, intervention functions can now be appended to ``sim['interventions']``.
 - Changed the default for the ``rescale`` parameter from ``False`` to ``True``. To return to previous behavior, define ``sim['rescale'] = False`` explicitly.
-- Added ``MultiSim.init_sims()``, which is not usually necessary, but can be helpful if you want to create the ``Sim`` objects without running them straight away.
 
 Other changes
 ^^^^^^^^^^^^^
+- Added ``cv.day()`` convenience function to convert a date to an integer number of days (similar to ``cv.daydiff()``; also modified ``cv.date()`` to be able to handle input more flexibly. While ``sim.day()`` and ``sim.date()`` are still the recommended functions, the same functionality is now also available without a ``Sim`` object available.
+- Allowed `cv.load_data()`` to accept non-time-series inputs.
+- Added cumulative diagnoses to default plots.
 - Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
 - Refactored cruise ship example to work again.
+- Various bugfixes (e.g. to plotting arguments, data scrapers, etc.).
 - *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previoius behavior, use::
 
     pars['analyzers'] = None # Add the new parameter key
