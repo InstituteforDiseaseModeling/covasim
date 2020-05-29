@@ -347,7 +347,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
     reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, )
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
 
 
 def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
