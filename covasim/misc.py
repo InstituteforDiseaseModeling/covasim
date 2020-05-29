@@ -11,7 +11,7 @@ import scipy.stats as sps
 from . import version as cvver
 
 
-__all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test', 'gof']
+__all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test', 'compute_gof']
 
 
 def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
@@ -680,58 +680,75 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         return pvalue#, stat
 
 
-def gof(actual, predicted, estimator='median fractional', use_mean=False, use_frac=True, use_squared=False, die=True, eps=1e-9):
-    ''' Calculate the goodness of fit. Default estimator is mean fractional error. '''
+def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=False, as_scalar='none', eps=1e-9, skestimator=None, **kwargs):
+    '''
+    Calculate the goodness of fit. By default use normalized absolute error, but
+    highly customizable. For example, mean squared error is equivalent to
+    setting normalize=False, use_squared=True, as_scalar='mean'.
 
-    # Handle the estimator argument, if supplied
-    if estimator is not None:
+    Args:
+        actual      (arr):   array of actual (data) points
+        predicted   (arr):   corresponding array of predicted (model) points
+        normalize   (bool):  whether to divide the values by the largest value in either series
+        use_frac    (bool):  convert to fractional mismatches rather than absolute
+        use_squared (bool):  square the mismatches
+        as_scalar   (str):   return as a scalar instead of a time series: choices are sum, mean, median
+        eps         (float): to avoid divide-by-zero
+        skestimator (str):   if provided, use this scikit-learn estimator instead
+        kwargs      (dict):  passed to the scikit-learn estimator
 
-        # Handle default cases by setting input arguments
-        if estimator == 'mean fractional':
-            use_mean = True
-            use_frac = True
-        elif estimator == 'mean absolute':
-            use_mean = True
-            use_frac = False
-        elif estimator == 'median fractional':
-            use_mean = False
-            use_frac = True
-        elif estimator == 'median absolute':
-            use_mean = False
-            use_frac = False
+    Returns:
+        gofs (arr): array of goodness-of-fit values, or a single value if as_scalar is True
 
-        # Use sklearn
-        else:
-            try:
-                import sklearn.metrics as sm
-                sklearn_gof = getattr(sm, estimator) # Shortcut to e.g. sklearn.metrics.max_error
-            except ImportError as E:
-                raise ImportError(f'You must have sklearn >=0.22.2 installed: {str(E)}')
-            except AttributeError:
-                raise AttributeError(f'Estimator {estimator} is not available; see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter for options')
+    **Examples**::
 
-            output = sklearn_gof(actual, predicted)
-            return output
+        x1 = np.cumsum(np.random.random(100))
+        x2 = np.cumsum(np.random.random(100))
 
-    # Use default methods here
-    mismatches = abs(actual - predicted)
+        e1 = compute_gof(x1, x2) # Default, normalized absolute error
+        e2 = compute_gof(x1, x2, normalize=False, use_frac=False) # Fractional error
+        e3 = compute_gof(x1, x2, normalize=False, use_squared=True, as_scalar='mean') # Mean squared error
+        e4 = compute_gof(x1, x2, estimator='mean_squared_error') # Scikit-learn's MSE method
+        e5 = compute_gof(x1, x2, as_scalar='median') # Normalized median absolute error -- highly robust
+    '''
 
-    if use_squared:
-        mismatches = mismatches**2
+    # Custom estimator is supplied: use that
+    if skestimator is not None:
+        try:
+            import sklearn.metrics as sm
+            sklearn_gof = getattr(sm, skestimator) # Shortcut to e.g. sklearn.metrics.max_error
+        except ImportError as E:
+            raise ImportError(f'You must have scikit-learn >=0.22.2 installed: {str(E)}')
+        except AttributeError:
+            raise AttributeError(f'Estimator {skestimator} is not available; see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter for options')
+        gof = sklearn_gof(actual, predicted, **kwargs)
+        return gof
 
-    if use_frac:
-        if (actual<0).any() or (predicted<0).any():
-            errormsg = 'WARNING: Calculating fractional errors for non-positive quantities is ill-advised!'
-            if die:
-                raise ValueError(errormsg)
-            else:
-                print(errormsg)
-        else:
-            mismatches /= (actual+eps)
-
-    if use_mean:
-        output = mismatches.mean()
+    # Default case: calculate it manually
     else:
-        output = np.median(mismatches)
+        # Key step -- calculate the mismatch!
+        gofs = abs(np.array(actual) - np.array(predicted))
 
-    return output
+        if normalize and not use_frac:
+            maxmax = max(abs(actual).max(), abs(predicted).max())
+            if maxmax>0:
+                gofs /= maxmax
+
+        if use_frac:
+            if (actual<0).any() or (predicted<0).any():
+                print('Warning: Calculating fractional errors for non-positive quantities is ill-advised!')
+            else:
+                maxvals = np.maximum(actual, predicted) + eps
+                gofs /= maxvals
+
+        if use_squared:
+            gofs = gofs**2
+
+        if as_scalar == 'sum':
+            gofs = np.sum(gofs)
+        elif as_scalar == 'mean':
+            gofs = np.mean(gofs)
+        elif as_scalar == 'median':
+            gofs = np.median(gofs)
+
+        return gofs

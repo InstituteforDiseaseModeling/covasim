@@ -238,7 +238,7 @@ class age_histogram(Analyzer):
         return
 
 
-    def plot(self, windows=False, width=0.8, color='#F8A493', font_size=18, fig_args=None, data_args=None):
+    def plot(self, windows=False, width=0.8, color='#F8A493', font_size=18, fig_args=None, axis_args=None, data_args=None):
         '''
         Simple method for plotting the histograms.
 
@@ -248,11 +248,13 @@ class age_histogram(Analyzer):
             color (hex or rgb): the color of the bars
             font_size (float): size of font
             fig_args (dict): passed to pl.figure()
+            axis_args (dict): passed to pl.subplots_adjust()
             data_args (dict): 'width', 'color', and 'offset' arguments for the data
         '''
 
         # Handle inputs
         fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
+        axis_args = sc.mergedicts(dict(left=0.08, right=0.92, bottom=0.08, top=0.92), axis_args)
         d_args = sc.objdict(sc.mergedicts(dict(width=0.3, color='#000000', offset=0), data_args))
         pl.rcParams['font.size'] = font_size
 
@@ -273,7 +275,7 @@ class age_histogram(Analyzer):
         # Make the figure(s)
         for date,hists in histsdict.items():
             figs += [pl.figure(**fig_args)]
-            pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
+            pl.subplots_adjust(**axis_args)
             bins = hists['bins']
             barwidth = width*(bins[1] - bins[0]) # Assume uniform width
             for s,state in enumerate(self.states):
@@ -438,23 +440,7 @@ class Fit(sc.prettyobj):
         for key in self.keys:
             actual    = sc.dcp(self.pair[key].data)
             predicted = sc.dcp(self.pair[key].sim)
-
-            if normalize:
-                maxmax = max(actual.max(), predicted.max())
-                predicted /= maxmax
-                actual /= maxmax
-
-            # Use default methods here
-            mismatches = abs(actual - predicted)
-
-            if use_squared:
-                mismatches = mismatches**2
-
-            if use_frac:
-                mismatches /= (actual+self.eps)
-
-            self.gofs[key] = mismatches
-
+            self.gofs[key] = cvm.compute_gof(actual, predicted, normalize=True, use_squared=False, use_frac=False)
         return
 
 
@@ -480,42 +466,7 @@ class Fit(sc.prettyobj):
         return self.mismatch
 
 
-    # def compute_mismatch(self):
-    #     '''
-    #     Compute the log-likelihood of the current simulation based on the number
-    #     of new diagnoses.
-    #     '''
-
-    #     if weights is None:
-    #         weights = {}
-
-    #     loglike = 0
-
-    #     model_dates = self.datevec.tolist()
-
-    #     for key in set(self.result_keys()).intersection(self.data.columns): # For keys present in both the results and in the data
-    #         weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
-    #         for d, datum in self.data[key].iteritems():
-    #             if np.isfinite(datum):
-    #                 if d in model_dates:
-    #                     estimate = self.results[key][model_dates.index(d)]
-    #                     if np.isfinite(datum) and np.isfinite(estimate):
-    #                         if (datum == 0) and (estimate == 0):
-    #                             p = 1.0
-    #                         else:
-    #                             p = cvm.poisson_test(datum, estimate)
-    #                         p = max(p, eps)
-    #                         logp = pl.log(p)
-    #                         loglike += weight*logp
-    #                         sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
-
-    #         self.results['likelihood'] = loglike
-
-    #     sc.printv(f'Likelihood: {loglike}', 1, verbose)
-    #     return loglike
-
-
-    def plot(self, keys=None, font_size=18, fig_args=None, plot_args=None):
+    def plot(self, keys=None, font_size=18, fig_args=None, axis_args=None, plot_args=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -525,10 +476,12 @@ class Fit(sc.prettyobj):
             keys (list): which keys to plot (default, all)
             font_size (float): size of font
             fig_args (dict): passed to pl.figure()
+            axis_args (dict): passed to pl.subplots_adjust()
             plot_args (dict): passed to pl.plot()
         '''
 
-        fig_args = sc.mergedicts(dict(figsize=(40,18)), fig_args)
+        fig_args  = sc.mergedicts(dict(figsize=(40,24)), fig_args)
+        axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
         pl.rcParams['font.size'] = font_size
 
@@ -540,10 +493,16 @@ class Fit(sc.prettyobj):
         bar_color = [0, 0, 0]
 
         figs = [pl.figure(**fig_args)]
-        pl.subplots_adjust(left=0.05, right=0.95, bottom=0.08, top=0.92)
+        pl.subplots_adjust(**axis_args)
+        n_rows = 4
         for k,key in enumerate(keys):
             dates = self.inds.sim[key] # self.date_matches[key]
-            pl.subplot(3, n_keys, k+1)
+
+            if k==0:
+                pl.subplot(n_rows, 1, 1)
+                pl.plot(dates, self.pair[key].sim, label='Simulation', **plot_args)
+
+            pl.subplot(n_rows, n_keys, k+1*n_keys+1)
             pl.plot(dates, self.pair[key].sim, label='Simulation', **plot_args)
             pl.plot(dates, self.pair[key].data, label='Data', **plot_args)
             pl.title(key)
@@ -551,14 +510,14 @@ class Fit(sc.prettyobj):
                 pl.ylabel('Time series')
                 pl.legend()
 
-            pl.subplot(3, n_keys, k+n_keys+1)
+            pl.subplot(n_rows, n_keys, k+2*n_keys+1)
             pl.bar(dates, self.diffs[key], width=0.8, color=bar_color, label='Difference')
             pl.axhline(0, c='k')
             if k == 0:
                 pl.ylabel('Differences')
                 pl.legend()
 
-            loss_ax = pl.subplot(3, n_keys, k+2*n_keys+1, sharey=loss_ax)
+            loss_ax = pl.subplot(n_rows, n_keys, k+3*n_keys+1, sharey=loss_ax)
             pl.bar(dates, self.losses[key], width=0.8, color=bar_color, label='Losses')
             pl.xlabel('Day')
             if k == 0:
