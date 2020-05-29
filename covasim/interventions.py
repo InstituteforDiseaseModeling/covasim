@@ -658,7 +658,8 @@ class test_prob(Intervention):
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
     '''
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, subtarget=None, ili_prev=None,
-                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, **kwargs):
+                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None,
+                 swab_delay=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.symp_prob        = symp_prob
@@ -672,6 +673,7 @@ class test_prob(Intervention):
         self.test_delay       = test_delay
         self.start_day        = start_day
         self.end_day          = end_day
+        self.pdf              = cvu.get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
         return
 
 
@@ -695,17 +697,34 @@ class test_prob(Intervention):
         elif self.end_day is not None and t > self.end_day:
             return
 
-        # Define symptomatics, accounting for ILI prevalence
+        # Find probablity for symptomatics to be tested
         symp_inds  = cvu.true(sim.people.symptomatic)
+        symp_prob = self.symp_prob
+        if(self.pdf):
+            # Find time since symptom onset
+            symp_time = np.int32(t - sim.people.date_symptomatic[symp_inds])
+            # Find how many people have had symptoms of a set time and invert
+            inv_count = (np.bincount(symp_time)/len(symp_time))
+            count = np.NaN * np.ones(inv_count.shape)
+            count[inv_count != 0] = 1/inv_count[inv_count != 0]
+            symp_prob = np.ones(len(symp_time))
+            idx = 1 > (symp_time*self.symp_prob)
+            symp_prob[idx] = self.symp_prob/(1-symp_time[idx]*self.symp_prob)
+            # Put it all together, have to add a small amount because 0.0 will fail
+            symp_prob = self.pdf.pdf(symp_time) * symp_prob * count[symp_time]
+            
+        
+        # Define symptomatics, accounting for ILI prevalence
+        ili_inds = []
         if self.ili_prev is not None:
             rel_t = t - self.start_day
             if rel_t < len(self.ili_prev):
                 n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
                 ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
-                symp_inds = np.unique(np.concatenate((symp_inds, ili_inds)),0)
+                ili_inds = np.setdiff1d(ili_inds, symp_inds)
 
         # Define asymptomatics: those who neither have COVID symptoms nor ILI symptoms
-        asymp_inds = np.setdiff1d(np.arange(sim['pop_size']), symp_inds)
+        asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(sim['pop_size']), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
         quar_inds       = cvu.true(sim.people.quarantined)
@@ -717,7 +736,8 @@ class test_prob(Intervention):
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
-        test_probs[symp_inds]       = self.symp_prob       # People with symptoms
+        test_probs[symp_inds]       = symp_prob            # People with symptoms
+        test_probs[ili_inds]        = self.symp_prob       # People with symptoms
         test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
         test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
         test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
