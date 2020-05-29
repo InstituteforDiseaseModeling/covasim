@@ -50,7 +50,7 @@ Parameter changes
 
 Other changes
 ^^^^^^^^^^^^^
-- Added ``cv.day()`` convenience function to convert a date to an integer number of days (similar to ``cv.daydiff()``; also modified ``cv.date()`` to be able to handle input more flexibly. While ``sim.day()`` and ``sim.date()`` are still the recommended functions, the same functionality is now also available without a ``Sim`` object available.
+- Added ``cv.day()`` convenience function to convert a date to an integer number of days (similar to ``cv.daydiff()``); also modified ``cv.date()`` to be able to handle input more flexibly. While ``sim.day()`` and ``sim.date()`` are still the recommended functions, the same functionality is now also available without a ``Sim`` object available.
 - Allowed `cv.load_data()`` to accept non-time-series inputs.
 - Added cumulative diagnoses to default plots.
 - Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
