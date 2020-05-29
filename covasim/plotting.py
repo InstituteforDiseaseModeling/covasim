@@ -315,10 +315,11 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
+    sep_figs = False # Only one figure
     fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Gather results
     res = sim.results[key]
@@ -346,7 +347,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
     reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    return tidy_up(fig, figs, do_save, fig_path, do_show, sep_figs=False)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, )
 
 
 def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
