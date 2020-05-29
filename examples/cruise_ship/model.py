@@ -13,7 +13,7 @@ import numpy as np
 import pylab as pl
 import sciris as sc
 import covasim as cv
-from . import parameters as cova_pars
+import parameters as cova_pars
 
 
 # Specify all externally visible functions this file defines
@@ -392,7 +392,7 @@ class Sim(cv.BaseSim):
                     pl.scatter(self.data['day'], data_mapping[key], c=[this_color], **scatter_args)
             pl.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
             pl.grid(use_grid)
-            cv.fixaxis(self)
+            # cv.fixaxis(self) # Deprecated function
             pl.ylabel('Count')
             pl.xlabel('Days since index case')
             pl.title(title)
@@ -402,7 +402,7 @@ class Sim(cv.BaseSim):
             if isinstance(do_save, str):
                 filename = do_save # It's a string, assume it's a filename
             else:
-                filename = 'covid_abm_results.png' # Just give it a default name
+                filename = 'covasim_cruise_ship_results.png' # Just give it a default name
             pl.savefig(filename)
 
         pl.show()

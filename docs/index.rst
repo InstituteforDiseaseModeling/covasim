@@ -17,7 +17,6 @@ Full package reference
    webapp
    docker
    data
-   sweep
    modules
 
 

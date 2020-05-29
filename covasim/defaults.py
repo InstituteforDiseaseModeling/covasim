@@ -186,6 +186,7 @@ def get_sim_plots(which='default'):
                 'Total counts': [
                     'cum_infections',
                     'n_infectious',
+                    'cum_diagnoses',
                 ],
                 'Daily counts': [
                     'new_infections',

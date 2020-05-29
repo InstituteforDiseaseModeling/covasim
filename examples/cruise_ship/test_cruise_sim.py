@@ -5,7 +5,7 @@ Cruise-ship specific tests
 #%% Imports and settings
 import pytest
 import sciris as sc
-import covasim.cruise_ship as cova
+import cruise_ship as cova
 
 doplot = 1
 

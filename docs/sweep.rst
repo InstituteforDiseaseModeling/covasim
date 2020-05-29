@@ -1,1 +1,0 @@
-.. include:: ../sweep/README.rst

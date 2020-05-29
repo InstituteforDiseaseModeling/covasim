@@ -11,17 +11,18 @@ import scipy.stats as sps
 from . import version as cvver
 
 
-__all__ = ['load_data', 'date', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test']
+__all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test', 'compute_gof']
 
 
-def load_data(datafile, columns=None, calculate=True, verbose=True, **kwargs):
+def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
     '''
     Load data for comparing to the model output, either from file or from a dataframe.
 
     Args:
         datafile (str or df): if a string, the name of the file to load (either Excel or CSV); if a dataframe, use directly
         columns (list): list of column names (otherwise, load all)
-        calculate (bool): whether or not to calculate cumulative values from daily counts
+        calculate (bool): whether to calculate cumulative values from daily counts
+        check_date (bool): whether to check that a 'date' column is present
         kwargs (dict): passed to pd.read_excel()
 
     Returns:
@@ -64,26 +65,29 @@ def load_data(datafile, columns=None, calculate=True, verbose=True, **kwargs):
                     if verbose:
                         print(f'  Automatically adding cumulative column {cum_col} from {col}')
 
-    # Ensure required columns are present
-    if 'date' not in data.columns:
-        errormsg = f'Required column "date" not found; columns are {data.columns}'
-        raise ValueError(errormsg)
-    else:
-        data['date'] = pd.to_datetime(data['date']).dt.date
-
-    data.set_index('date', inplace=True, drop=False) # So sim.data['date'] can still be accessed
+    # Ensure required columns are present and reset the index
+    if check_date:
+        if 'date' not in data.columns:
+            errormsg = f'Required column "date" not found; columns are {data.columns}'
+            raise ValueError(errormsg)
+        else:
+            data['date'] = pd.to_datetime(data['date']).dt.date
+        data.set_index('date', inplace=True, drop=False) # Don't drop so sim.data['date'] can still be accessed
 
     return data
 
 
-def date(obj, *args, **kwargs):
+def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     '''
     Convert a string or a datetime object to a date object. To convert to an integer
-    from the start day, use sim.date() instead.
+    from the start day, you must supply a start date, or use sim.date() instead.
 
     Args:
         obj (str, date, datetime): the object to convert
         args (str, date, datetime): additional objects to convert
+        start_date (str, date, datetime): the starting date, if an integer is supplied
+        dateformat (str): the format to return the date in
+        as_date (bool): whether to return as a datetime date instead of a string
 
     Returns:
         dates (date or list): either a single date object, or a list of them
@@ -91,10 +95,14 @@ def date(obj, *args, **kwargs):
     **Examples**::
 
         cv.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
+        cv.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
     '''
-    # Convert to list
+
+    # Convert to list and handle other inputs
     obj = sc.promotetolist(obj) # Ensure it's iterable
     obj.extend(args)
+    if dateformat is None:
+        dateformat = '%Y-%m-%d'
 
     dates = []
     for d in obj:
@@ -105,10 +113,18 @@ def date(obj, *args, **kwargs):
                 d = sc.readdate(d).date()
             elif isinstance(d, dt.datetime):
                 d = d.date()
+            elif sc.isnumber(d):
+                if start_date is None:
+                    errormsg = f'To convert the number {d} to a date, you must supply start_date'
+                    raise ValueError(errormsg)
+                d = date(start_date) + dt.timedelta(days=int(d))
             else:
                 errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
                 raise TypeError(errormsg)
-            dates.append(d)
+            if as_date:
+                dates.append(d)
+            else:
+                dates.append(d.strftime(dateformat))
         except Exception as E:
             errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
             raise ValueError(errormsg)
@@ -120,10 +136,61 @@ def date(obj, *args, **kwargs):
     return dates
 
 
+def day(obj, *args, start_day=None):
+    '''
+    Convert a string, date/datetime object, or int to a day (int), the number of
+    days since the start day. See also date() and daydiff(). Used primarily via
+    sim.day() rather than directly.
+
+    Args:
+        obj (str, date, int, or list): convert any of these objects to a day relative to the start day
+        args (list): additional days
+        start_day (str or date): the start day
+
+    Returns:
+        days (int or str): the day(s) in simulation time
+
+    **Example**::
+
+        sim.day('2020-04-05') # Returns 35
+    '''
+
+    # Do not process a day if it's not supplied
+    if obj is None:
+        return None
+
+    # Convert to list
+    if sc.isstring(obj) or sc.isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
+        obj = sc.promotetolist(obj) # Ensure it's iterable
+    obj.extend(args)
+
+    days = []
+    for d in obj:
+        if sc.isnumber(d):
+            days.append(int(d)) # Just convert to an integer
+        else:
+            try:
+                if sc.isstring(d):
+                    d = sc.readdate(d).date()
+                elif isinstance(d, dt.datetime):
+                    d = d.date()
+                d_day = (d - date(start_day)).days # Heavy lifting -- actually compute the day
+                days.append(d_day)
+            except Exception as E:
+                errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
+                raise ValueError(errormsg)
+
+    # Return an integer rather than a list if only one provided
+    if len(days)==1:
+        days = days[0]
+
+    return days
+
+
 def daydiff(*args):
     '''
     Convenience function to find the difference between two or more days. With
-    only one argument, calculate days sin 2020-01-01.
+    only one argument, calculate days since 2020-01-01.
 
     **Example**::
 
@@ -611,3 +678,77 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         return zstat_generic2(stat, 1, alternative)
     else:
         return pvalue#, stat
+
+
+def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=False, as_scalar='none', eps=1e-9, skestimator=None, **kwargs):
+    '''
+    Calculate the goodness of fit. By default use normalized absolute error, but
+    highly customizable. For example, mean squared error is equivalent to
+    setting normalize=False, use_squared=True, as_scalar='mean'.
+
+    Args:
+        actual      (arr):   array of actual (data) points
+        predicted   (arr):   corresponding array of predicted (model) points
+        normalize   (bool):  whether to divide the values by the largest value in either series
+        use_frac    (bool):  convert to fractional mismatches rather than absolute
+        use_squared (bool):  square the mismatches
+        as_scalar   (str):   return as a scalar instead of a time series: choices are sum, mean, median
+        eps         (float): to avoid divide-by-zero
+        skestimator (str):   if provided, use this scikit-learn estimator instead
+        kwargs      (dict):  passed to the scikit-learn estimator
+
+    Returns:
+        gofs (arr): array of goodness-of-fit values, or a single value if as_scalar is True
+
+    **Examples**::
+
+        x1 = np.cumsum(np.random.random(100))
+        x2 = np.cumsum(np.random.random(100))
+
+        e1 = compute_gof(x1, x2) # Default, normalized absolute error
+        e2 = compute_gof(x1, x2, normalize=False, use_frac=False) # Fractional error
+        e3 = compute_gof(x1, x2, normalize=False, use_squared=True, as_scalar='mean') # Mean squared error
+        e4 = compute_gof(x1, x2, estimator='mean_squared_error') # Scikit-learn's MSE method
+        e5 = compute_gof(x1, x2, as_scalar='median') # Normalized median absolute error -- highly robust
+    '''
+
+    # Custom estimator is supplied: use that
+    if skestimator is not None:
+        try:
+            import sklearn.metrics as sm
+            sklearn_gof = getattr(sm, skestimator) # Shortcut to e.g. sklearn.metrics.max_error
+        except ImportError as E:
+            raise ImportError(f'You must have scikit-learn >=0.22.2 installed: {str(E)}')
+        except AttributeError:
+            raise AttributeError(f'Estimator {skestimator} is not available; see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter for options')
+        gof = sklearn_gof(actual, predicted, **kwargs)
+        return gof
+
+    # Default case: calculate it manually
+    else:
+        # Key step -- calculate the mismatch!
+        gofs = abs(np.array(actual) - np.array(predicted))
+
+        if normalize and not use_frac:
+            maxmax = max(abs(actual).max(), abs(predicted).max())
+            if maxmax>0:
+                gofs /= maxmax
+
+        if use_frac:
+            if (actual<0).any() or (predicted<0).any():
+                print('Warning: Calculating fractional errors for non-positive quantities is ill-advised!')
+            else:
+                maxvals = np.maximum(actual, predicted) + eps
+                gofs /= maxvals
+
+        if use_squared:
+            gofs = gofs**2
+
+        if as_scalar == 'sum':
+            gofs = np.sum(gofs)
+        elif as_scalar == 'mean':
+            gofs = np.mean(gofs)
+        elif as_scalar == 'median':
+            gofs = np.median(gofs)
+
+        return gofs

@@ -122,7 +122,7 @@ The structure of the ``covasim`` folder is as follows, in the order in which the
 * ``interventions.py``: The ``Intervention`` class, for adding interventions and dynamically modifying parameters, and classes for each of the specific interventions derived from it.
 * ``sim.py``: The ``Sim`` class, which performs most of the heavy lifting: initializing the model, running, and plotting.
 * ``run.py``: Functions for running simulations (e.g. parallel runs and the ``Scenarios`` and ``MultiSim`` classes).
-* ``analysis.py``: The ``TransTree`` class, and other classes and functions for analyzing simulations.
+* ``analysis.py``: The ``Analyzers`` class (for performing analyses on the sim while it's running), the ``Fit`` class (for calculating the fit between the model and the data), the ``TransTree`` class, and other classes and functions for analyzing simulations.
 
 
 Data
@@ -185,6 +185,15 @@ This folder contains demonstrations of simple Covasim usage, including an early 
 .. _examples README: ./examples
 
 
+WandB
+~~~~~
+
+Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `Weights and Biases README`_ for more information.
+
+.. _Weights and Biases: https://www.wandb.com/
+.. _Weights and Biases  README: https://github.com/InstituteforDiseaseModeling/covasim/tree/master/examples/wandb
+
+
 Licenses
 --------
 
@@ -197,15 +206,6 @@ Tests
 Integration, development, and unit tests. While not (yet) beautifully curated, these folders contain many usage examples. See the `tests README`_ for more information.
 
 .. _tests README: ./tests
-
-
-Sweep
------
-
-Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `sweep README`_ for more information.
-
-.. _Weights and Biases: https://www.wandb.com/
-.. _sweep README: ./sweep
 
 
 Disclaimer

@@ -69,7 +69,7 @@ Severity parameters
 Events and interventions
 ------------------------
 * ``interventions`` = The interventions present in this simulation; populated by the user
-* ``interv_func``   = Custom intervention function
+* ``analyzers``     = Custom analysis functions; populated by the user
 * ``timelimit``     = Time limit for the simulation (seconds)
 * ``stopping_func`` = A function to call to stop the sim partway through
 

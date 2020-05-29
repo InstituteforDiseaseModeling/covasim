@@ -126,7 +126,8 @@ class Sim(cvb.BaseSim):
         self.init_results() # Create the results stucture
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
-        self.init_interventions()
+        self.init_interventions() # Initialize the interventions
+        self.init_analyzers() # ...and the interventions
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized = True
         return
@@ -246,11 +247,12 @@ class Sim(cvb.BaseSim):
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
 
-        # Handle interventions
+        # Handle interventions and analyzers
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
         for i,interv in enumerate(self['interventions']):
             if isinstance(interv, dict): # It's a dictionary representation of an intervention
                 self['interventions'][i] = cvi.InterventionDict(**interv)
+        self['analyzers'] = sc.promotetolist(self['analyzers'], keepnone=False)
 
         # Optionally handle layer parameters
         if validate_layers:
@@ -394,10 +396,19 @@ class Sim(cvb.BaseSim):
 
     def init_interventions(self):
         ''' Initialize the interventions '''
-        # Initialize interventions
         for intervention in self['interventions']:
-            if not intervention.initialized:
-                intervention.initialize(self)
+            if isinstance(intervention, cvi.Intervention):
+                if not intervention.initialized:
+                    intervention.initialize(self)
+        return
+
+
+    def init_analyzers(self):
+        ''' Initialize the analyzers '''
+        for analyzer in self['analyzers']:
+            if isinstance(analyzer, cva.Analyzer):
+                if not analyzer.initialized:
+                    analyzer.initialize(self)
         return
 
 
@@ -447,9 +458,13 @@ class Sim(cvb.BaseSim):
 
         # Apply interventions
         for intervention in self['interventions']:
-            intervention.apply(self)
-        if self['interv_func'] is not None: # Apply custom intervention function
-            self['interv_func'](self)
+            if isinstance(intervention, cvi.Intervention):
+                intervention.apply(self) # If it's an intervention, call the apply() method
+            elif callable(intervention):
+                intervention(self) # If it's a function, call it directly
+            else:
+                errormsg = f'Intervention {intervention} is neither callable nor an Intervention object'
+                raise ValueError(errormsg)
 
         people.update_states_post() # Check for state changes after interventions
 
@@ -487,7 +502,6 @@ class Sim(cvb.BaseSim):
                 source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
                 people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey) # Actually infect people
 
-
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people.count(key)
@@ -495,6 +509,16 @@ class Sim(cvb.BaseSim):
         # Update counts for this time step: flows
         for key,count in people.flows.items():
             self.results[key][t] += count
+
+        # Apply analyzers -- same syntax as interventions
+        for analyzer in self['analyzers']:
+            if isinstance(analyzer, cva.Analyzer):
+                analyzer.apply(self) # If it's an intervention, call the apply() method
+            elif callable(analyzer):
+                analyzer(self) # If it's a function, call it directly
+            else:
+                errormsg = f'Analyzer {analyzer} is neither callable nor an Analyzer object'
+                raise ValueError(errormsg)
 
         # Tidy up
         self.t += 1
@@ -564,15 +588,23 @@ class Sim(cvb.BaseSim):
         self.finalize(verbose=verbose) # Finalize the results
         sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
         if restore_pars:
-            self.pars = orig_pars # Restore the original parameters
+            self.restore_pars(orig_pars)
         if do_plot: # Optionally plot
             self.plot(**kwargs)
 
         return self.results
 
 
+    def restore_pars(self, orig_pars):
+        ''' Restore the original parameter values, except for the analyzers '''
+        analyzers = self['analyzers'] # Make a copy so these don't get wiped
+        self.pars = orig_pars # Restore the original parameters
+        self['analyzers'] = analyzers # Restore the analyzers
+        return
+
+
     def finalize(self, verbose=None):
-        ''' Compute final results, likelihood, etc. '''
+        ''' Compute final results '''
 
         # Scale the results
         for reskey in self.result_keys():
@@ -603,7 +635,6 @@ class Sim(cvb.BaseSim):
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
-        self.compute_likelihood()
         self.compute_summary(verbose=verbose)
         return
 
@@ -792,71 +823,93 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def compute_likelihood(self, weights=None, verbose=None, eps=1e-16):
-        '''
-        Compute the log-likelihood of the current simulation based on the number
-        of new diagnoses.
-
-        Args:
-            weights (dict): the relative wieght to place on each result
-            verbose (bool): detail to print
-            eps (float): to avoid divide-by-zero errors
-
-        Returns:
-            loglike (float): the log-likelihood of the model given the data
-        '''
-
-        if verbose is None:
-            verbose = self['verbose']
-
-        if weights is None:
-            weights = {}
-
-        if self.data is None:
-            return np.nan
-
-        loglike = 0
-
-        model_dates = self.datevec.tolist()
-
-        for key in set(self.result_keys()).intersection(self.data.columns): # For keys present in both the results and in the data
-            weight = weights.get(key, 1) # Use the provided weight if present, otherwise default to 1
-            for d, datum in self.data[key].iteritems():
-                if np.isfinite(datum):
-                    if d in model_dates:
-                        estimate = self.results[key][model_dates.index(d)]
-                        if np.isfinite(datum) and np.isfinite(estimate):
-                            if (datum == 0) and (estimate == 0):
-                                p = 1.0
-                            else:
-                                p = cvm.poisson_test(datum, estimate)
-                            p = max(p, eps)
-                            logp = pl.log(p)
-                            loglike += weight*logp
-                            sc.printv(f'  {d}, data={datum:3.0f}, model={estimate:3.0f}, log(p)={logp:10.4f}, loglike={loglike:10.4f}', 2, verbose)
-
-            self.results['likelihood'] = loglike
-
-        sc.printv(f'Likelihood: {loglike}', 1, verbose)
-        return loglike
-
-
     def compute_summary(self, verbose=None):
         ''' Compute the summary statistics to display at the end of a run '''
 
         if verbose is None:
             verbose = self['verbose']
 
-        summary = sc.objdict()
-        summary_str = 'Summary:\n'
+        self.summary = sc.objdict()
         for key in self.result_keys():
-            summary[key] = self.results[key][-1]
-            if key.startswith('cum_'):
-                summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
-        sc.printv(summary_str, 1, verbose)
-        self.summary = summary
+            self.summary[key] = self.results[key][-1]
 
-        return summary
+        if verbose:
+            self.summarize()
+
+        return self.summary
+
+
+    def summarize(self, output=False):
+        ''' Print a brief summary of the simulation '''
+        if self.results_ready:
+            summary_str = 'Simulation summary:\n'
+            for key in self.result_keys():
+                if key.startswith('cum_'):
+                    summary_str += f'   {self.summary[key]:5.0f} {self.results[key].name.lower()}\n'
+
+            if not output:
+                print(summary_str)
+            else:
+                return summary_str
+        else:
+            return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
+
+
+
+    def brief(self, output=False):
+        ''' Return a one-line description of a sim '''
+
+        if self.results_ready:
+            infections = self.summary['cum_infections']
+            deaths = self.summary['cum_deaths']
+            results = f'{infections:n}⚙, {deaths:n}☠'
+        else:
+            results = 'not run'
+
+        if self.label:
+            label = f'"{self.label}"'
+        else:
+            label = '<no label>'
+
+        start = cvm.date(self['start_day'], as_date=False)
+        if self['end_day']:
+            end = cvm.date(self['end_day'], as_date=False)
+        else:
+            end = cvm.date(self['n_days'], start_date=start)
+
+        pop_size = self['pop_size']
+        pop_type = self['pop_type']
+        string   = f'Sim({label}; {start}—{end}; pop: {pop_size:n} {pop_type}; epi: {results})'
+
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def compute_fit(self, output=True, *args, **kwargs):
+        '''
+        Compute the fit between the model and the data. See cv.Fit() for more
+        information.
+
+        Args:
+            output (bool): whether or not to return the TransTree; if not, store in sim.results
+            args   (list): passed to cv.Fit()
+            kwargs (dict): passed to cv.Fit()
+
+        **Example**::
+
+            sim = cv.Sim(datafile=data.csv)
+            sim.run()
+            fit = sim.compute_fit()
+            fit.plot()
+        '''
+        fit = cva.Fit(self, *args, **kwargs)
+        if output:
+            return fit
+        else:
+            self.results.fit = fit
+            return
 
 
     def make_transtree(self, output=True, *args, **kwargs):
