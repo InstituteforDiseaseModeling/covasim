@@ -310,7 +310,8 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None):
+                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None,
+                do_show=True, do_save=False, fig_path=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
@@ -345,7 +346,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
     reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    return fig
+    return tidy_up(fig, figs, do_save, fig_path, do_show, sep_figs=False)
 
 
 def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
