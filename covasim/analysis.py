@@ -386,7 +386,7 @@ class Fit(sc.prettyobj):
         if self.keys is None:
             sim_keys = self.sim_results.keys()
             intersection = list(set(sim_keys).intersection(data_cols)) # Find keys in both the sim and data
-            self.keys = [key for key in intersection if key.startswith('cum_')] # Only keep cumulative keys
+            self.keys = [key for key in sim_keys if key in intersection and key.startswith('cum_')] # Only keep cumulative keys
             if not len(self.keys):
                 errormsg = f'No matches found between simulation result keys ({sim_keys}) and data columns ({data_cols})'
                 raise sc.KeyNotFoundError(errormsg)
