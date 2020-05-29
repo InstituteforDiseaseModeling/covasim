@@ -17,6 +17,8 @@ Latest versions
 Version 1.4.0 (2020-05-28)
 --------------------------
 
+This version contains a large number of changes, including two new classes, ``Analyzer`` and ``Fit``, for performing simulation analyses and fitting the model to data, respectively. These changes are described below.
+
 Analysis
 ^^^^^^^^
 - Added a new class, ``Analyzer``, to perform analyses on a simulation.
