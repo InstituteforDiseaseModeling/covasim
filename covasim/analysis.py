@@ -435,12 +435,12 @@ class Fit(sc.prettyobj):
         return
 
 
-    def compute_gofs(self, normalize=True, use_squared=False, use_frac=False):
+    def compute_gofs(self, **kwargs):
         ''' Compute the goodness-of-fit '''
         for key in self.keys:
             actual    = sc.dcp(self.pair[key].data)
             predicted = sc.dcp(self.pair[key].sim)
-            self.gofs[key] = cvm.compute_gof(actual, predicted, normalize=True, use_squared=False, use_frac=False)
+            self.gofs[key] = cvm.compute_gof(actual, predicted, **kwargs)
         return
 
 
@@ -466,7 +466,7 @@ class Fit(sc.prettyobj):
         return self.mismatch
 
 
-    def plot(self, keys=None, font_size=18, fig_args=None, axis_args=None, plot_args=None):
+    def plot(self, keys=None, width=0.8, font_size=18, fig_args=None, axis_args=None, plot_args=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -474,13 +474,14 @@ class Fit(sc.prettyobj):
 
         Args:
             keys (list): which keys to plot (default, all)
+            width (float): bar width
             font_size (float): size of font
             fig_args (dict): passed to pl.figure()
             axis_args (dict): passed to pl.subplots_adjust()
             plot_args (dict): passed to pl.plot()
         '''
 
-        fig_args  = sc.mergedicts(dict(figsize=(40,24)), fig_args)
+        fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
         pl.rcParams['font.size'] = font_size
@@ -490,36 +491,63 @@ class Fit(sc.prettyobj):
         n_keys = len(keys)
 
         loss_ax = None
-        bar_color = [0, 0, 0]
+        # bar_color = [0, 0, 0]
+        colors = sc.gridcolors(n_keys)
 
         figs = [pl.figure(**fig_args)]
         pl.subplots_adjust(**axis_args)
         n_rows = 4
+        main_ax1 = pl.subplot(n_rows, 2, 1)
+        main_ax2 = pl.subplot(n_rows, 2, 2)
+        bot = sc.objdict()
+        bot.a = np.zeros(self.losses[0].shape)
+        bot.b = np.zeros(self.losses[0].shape)
+        total = 0
         for k,key in enumerate(keys):
             dates = self.inds.sim[key] # self.date_matches[key]
 
-            if k==0:
-                pl.subplot(n_rows, 1, 1)
-                pl.plot(dates, self.pair[key].sim, label='Simulation', **plot_args)
+            for i,ax in enumerate([main_ax1, main_ax2]):
+
+                if i == 0:
+                    data = self.losses[key]
+                    total += self.losses[key].sum()
+                    title = f'Daily total mismatch'
+                else:
+                    data = np.cumsum(self.losses[key])
+                    title = f'Cumulative mismatch: {total:0.3f}'
+
+                ax.bar(dates, data, width=width, bottom=bot[i], color=colors[k], label=f'{key}')
+
+                if i == 0:
+                    bot[i] += self.losses[key]
+                else:
+                    bot[i] += np.cumsum(self.losses[key])
+
+                if k == n_keys-1:
+                    ax.set_ylabel('Time series')
+                    ax.set_xlabel('Day')
+                    ax.set_title(title)
+                    ax.legend()
 
             pl.subplot(n_rows, n_keys, k+1*n_keys+1)
-            pl.plot(dates, self.pair[key].sim, label='Simulation', **plot_args)
-            pl.plot(dates, self.pair[key].data, label='Data', **plot_args)
+            pl.plot(dates, self.pair[key].data, c='k', label='Data', **plot_args)
+            pl.plot(dates, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
             pl.title(key)
             if k == 0:
-                pl.ylabel('Time series')
+                pl.ylabel('Time series (counts)')
                 pl.legend()
 
             pl.subplot(n_rows, n_keys, k+2*n_keys+1)
-            pl.bar(dates, self.diffs[key], width=0.8, color=bar_color, label='Difference')
+            pl.bar(dates, self.diffs[key], width=width, color=colors[k], label='Difference')
             pl.axhline(0, c='k')
             if k == 0:
-                pl.ylabel('Differences')
+                pl.ylabel('Differences (counts)')
                 pl.legend()
 
             loss_ax = pl.subplot(n_rows, n_keys, k+3*n_keys+1, sharey=loss_ax)
-            pl.bar(dates, self.losses[key], width=0.8, color=bar_color, label='Losses')
+            pl.bar(dates, self.losses[key], width=width, color=colors[k], label='Losses')
             pl.xlabel('Day')
+            pl.title(f'Total loss: {self.losses[key].sum():0.3f}')
             if k == 0:
                 pl.ylabel('Losses')
                 pl.legend()
