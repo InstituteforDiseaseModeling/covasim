@@ -8,7 +8,7 @@ regenerate = 0
 datafile = 'target_fit_data.xlsx'
 # datafile = '../example_data.csv'
 
-intervs = [cv.change_beta(days=40, changes=0.5), cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)] # Common interventions
+intervs = []#[cv.change_beta(days=40, changes=0.5), cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)] # Common interventions
 pars = dict(
     pop_size      = 20000,    # Population size
     pop_infected  = 100,      # Number of initial infections -- use more for increased robustness

@@ -309,7 +309,7 @@ class Fit(sc.prettyobj):
         keys (list): the keys to use in the calculation
         method (str): the method to be used to calculate the goodness-of-fit
         eps (float): to avoid divide-by-zero errors
-        initialize (bool): whether to initialize immediately
+        compute (bool): whether to compute the mismatch immediately
         verbose (bool): detail to print
 
     **Example**::
@@ -320,14 +320,14 @@ class Fit(sc.prettyobj):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, keys=None, method=None, eps=1e-12, initialize=True, verbose=False):
+    def __init__(self, sim, weights=None, keys=None, method=None, eps=1e-12, compute=True, verbose=False):
 
         # Handle inputs
         self.weights = weights
         self.eps     = eps
         self.verbose = verbose
         if weights is None:
-            weights = dict(cum_deaths=20, cum_diagnoses=5)
+            weights = dict(cum_deaths=10, cum_diagnoses=5)
         self.weights = weights
         self.keys    = keys
 
@@ -349,37 +349,51 @@ class Fit(sc.prettyobj):
         # Copy other things
         self.sim_dates = sim.datevec.tolist()
 
-        if initialize:
-            self.initialize()
+        # These are populated during initialization
+        self.inds         = sc.objdict() # To store matching indices between the data and the simulation
+        self.inds.sim     = sc.objdict() # For storing matching indices in the sim
+        self.inds.data    = sc.objdict() # For storing matching indices in the data
+        self.date_matches = sc.objdict() # For storing matching dates, largely for plotting
+        self.pair         = sc.objdict() # For storing perfectly paired points between the data and the sim
+        self.diffs        = sc.objdict() # Differences between pairs
+        self.gofs         = sc.objdict() # Goodness-of-fit for differences
+        self.losses       = sc.objdict() # Weighted goodness-of-fit
+        self.mismatches   = sc.objdict() # Final mismatch values
+        self.mismatch     = None # The final value
+
+        if compute:
+            self.compute()
 
         return
 
 
-    def initialize(self):
+    def compute(self):
+        ''' Perform all required computations '''
         self.reconcile_inputs() # Find matching values
         self.compute_diffs() # Perform calculations
         self.compute_gofs()
         self.compute_losses()
         self.compute_mismatch()
-        return
+        return self.mismatch
 
 
     def reconcile_inputs(self):
         ''' Find matching keys and indices between the model and the data '''
 
-        sim_keys = self.sim_results.keys()
-        sim_keys.remove('t') # WARNING, fix
         data_cols = self.data.columns
         if self.keys is None:
-            self.keys = list(set(sim_keys).intersection(data_cols))
-        if not len(self.keys):
-            errormsg = f'No matches found between simulation result keys ({sim_keys}) and data columns ({data_cols})'
+            sim_keys = self.sim_results.keys()
+            intersection = list(set(sim_keys).intersection(data_cols)) # Find keys in both the sim and data
+            self.keys = [key for key in intersection if key.startswith('cum_')] # Only keep cumulative keys
+            if not len(self.keys):
+                errormsg = f'No matches found between simulation result keys ({sim_keys}) and data columns ({data_cols})'
+                raise sc.KeyNotFoundError(errormsg)
+        mismatches = [key for key in self.keys if key not in data_cols]
+        if len(mismatches):
+            mismatchstr = ', '.join(mismatches)
+            errormsg = f'The following requested key(s) were not found in the data: {mismatchstr}'
             raise sc.KeyNotFoundError(errormsg)
 
-        self.inds = sc.objdict()
-        self.inds.sim  = sc.objdict() # For storing matching indices in the sim
-        self.inds.data = sc.objdict() # For storing matching indices in the data
-        self.date_matches = sc.objdict()
         for key in self.keys: # For keys present in both the results and in the data
             self.inds.sim[key]  = []
             self.inds.data[key] = []
@@ -396,7 +410,6 @@ class Fit(sc.prettyobj):
             self.inds.data[key] = np.array(self.inds.data[key])
 
         # Convert into paired points
-        self.pair = sc.objdict()
         for key in self.keys:
             self.pair[key] = sc.objdict()
             sim_inds = self.inds.sim[key]
@@ -413,7 +426,6 @@ class Fit(sc.prettyobj):
 
     def compute_diffs(self, absolute=False):
         ''' Find the differences between the sim and the data '''
-        self.diffs = sc.objdict()
         for key in self.keys:
             self.diffs[key] = self.pair[key].data - self.pair[key].sim
             if absolute:
@@ -423,14 +435,14 @@ class Fit(sc.prettyobj):
 
     def compute_gofs(self, normalize=True, use_squared=False, use_frac=False):
         ''' Compute the goodness-of-fit '''
-        self.gofs = sc.objdict()
         for key in self.keys:
-            actual    = self.pair[key].data
-            predicted = self.pair[key].sim
+            actual    = sc.dcp(self.pair[key].data)
+            predicted = sc.dcp(self.pair[key].sim)
 
             if normalize:
-                predicted /= actual.max()
-                actual /= actual.max()
+                maxmax = max(actual.max(), predicted.max())
+                predicted /= maxmax
+                actual /= maxmax
 
             # Use default methods here
             mismatches = abs(actual - predicted)
@@ -447,7 +459,7 @@ class Fit(sc.prettyobj):
 
 
     def compute_losses(self):
-        self.losses = sc.objdict()
+        ''' Compute the weighted goodness-of-fit '''
         for key in self.keys:
             if key in self.weights:
                 weight = self.weights[key]
@@ -457,13 +469,13 @@ class Fit(sc.prettyobj):
         return
 
 
-    def compute_mismatch(self, use_median=True):
-        self.mismatches = sc.objdict()
+    def compute_mismatch(self, use_median=False):
+        ''' Compute the final mismatch '''
         for key in self.keys:
             if use_median:
                 self.mismatches[key] = np.median(self.losses[key])
             else:
-                self.mismatches[key] = np.median(self.losses[key])
+                self.mismatches[key] = np.sum(self.losses[key])
         self.mismatch = self.mismatches[:].sum()
         return self.mismatch
 
