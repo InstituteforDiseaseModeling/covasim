@@ -110,11 +110,13 @@ class SimulationParameterTests(CovaSimTest):
         scale_2_one_day = {
             TPKeys.number_agents: 100,
             TPKeys.population_scaling_factor: 2,
+            TPKeys.population_rescaling: False,
             TPKeys.number_simulated_days: 1
         }
         scale_10_one_day = {
             TPKeys.number_agents: 100,
             TPKeys.population_scaling_factor: 10,
+            TPKeys.population_rescaling: False,
             TPKeys.number_simulated_days: 1
         }
         self.run_sim(scale_1_one_day)

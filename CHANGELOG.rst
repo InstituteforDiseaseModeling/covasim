@@ -2,20 +2,81 @@
 What's new
 ==========
 
-All notable changes to the codebase are documented in this file. Note: in many cases, changes from multiple patch versions are grouped together, so numbering will not be strictly consecutive.
+All notable changes to the codebase are documented in this file. As of version 1.3, changes that may result in differences in model output, or are required in order to run an old parameter set with the current version, are flagged with the term "Regression information".
 
 .. contents:: **Contents**
    :local:
    :depth: 1
 
 
+~~~~~~~~~~~~~~~
 Latest versions
 ~~~~~~~~~~~~~~~
+
+
+Version 1.4.0 (2020-05-28)
+--------------------------
+
+This version contains a large number of changes, including two new classes, ``Analyzer`` and ``Fit``, for performing simulation analyses and fitting the model to data, respectively. These changes are described below.
+
+Analysis
+^^^^^^^^
+- Added a new class, ``Analyzer``, to perform analyses on a simulation.
+- Added a new parameter, ``sim['analyzers']``, that operates like ``interventions``: it accepts a list of functions or ``Analyzer`` objects.
+- Added two analyzers: ``cv.age_hist`` records age histograms of infections, diagnoses, and deaths; ``cv.snapshot`` makes copies of the ``People`` object at specified points in time.
+
+
+Fitting
+^^^^^^^
+- Added a new class, ``cv.Fit()``, that stores information about the fit between the model and the data. "Likelihood" is no longer automatically calculated, but instead "mismatch" can be calculated via ``fit = sim.compute_fit()``.
+- The Poisson test that was previously used for the "likelihood" calculation has been deprecated; the new default mismatch is based on normalized absolute error.
+- For a plot of how the mismatch is being calculated, use ``fit.plot()``.
+
+MultiSims
+^^^^^^^^^
+- Added ``multisim.init_sims()``, which is not usually necessary, but can be helpful if you want to create the ``Sim`` objects without running them straight away.
+- Added ``multisim.split()``, easily allowing a merged multisim to be split back into its constituent parts (non-merged multisims can also be split). This can be used for example to create several multisims, merge them together, run them all at the same time in parallel, and then split the back for analysis.
+
+Display functions
+^^^^^^^^^^^^^^^^^
+- Added ``sim.summarize()``, which shows a short review of key sim results (cumulative counts).
+- Added ``sim.brief()``, which shows a one-line summary of the sim.
+- Added ``multisim.summarize()``, which prints a brief summary of all the constituent sims.
+
+Parameter changes
+^^^^^^^^^^^^^^^^^
+- Removed the parameter ``interv_func``; instead, intervention functions can now be appended to ``sim['interventions']``.
+- Changed the default for the ``rescale`` parameter from ``False`` to ``True``. To return to previous behavior, define ``sim['rescale'] = False`` explicitly.
+
+Other changes
+^^^^^^^^^^^^^
+- Added ``cv.day()`` convenience function to convert a date to an integer number of days (similar to ``cv.daydiff()``); also modified ``cv.date()`` to be able to handle input more flexibly. While ``sim.day()`` and ``sim.date()`` are still the recommended functions, the same functionality is now also available without a ``Sim`` object available.
+- Allowed `cv.load_data()`` to accept non-time-series inputs.
+- Added cumulative diagnoses to default plots.
+- Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
+- Refactored cruise ship example to work again.
+- Various bugfixes (e.g. to plotting arguments, data scrapers, etc.).
+- *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previoius behavior, use::
+
+    pars['analyzers'] = None # Add the new parameter key
+    interv_func = pars.pop('interv_func', None) # Remove the deprecated key
+    if interv_func:
+        pars['interventions'] = interv_func # If no interventions
+        pars['interventions'].append(interv_func) # If other interventions are present
+    pars['rescale'] = pars.pop('rescale', False) # Change default to False
+
+- *GitHub info*: PR `569 <https://github.com/amath-idm/covasim/pull/569>`__, previous head ``8b157a2``
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.3.x (1.3.0 – 1.3.5)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.3.5 (2020-05-28)
 --------------------------
 - Added ``swab_delay`` argument to ``cv.test_num()``, allowing a distribution of times between when a person develops symptoms and when they go to be tested (i.e., receive a swab) to be specified.
+
 
 
 Version 1.3.4 (2020-05-26)
@@ -40,25 +101,25 @@ Version 1.3.2 (2020-05-25)
 
 Version 1.3.1 (2020-05-25)
 --------------------------
-- Modified calculation of ``R_eff`` to include a longer integration period at the beginning, and restored previous method of creating seed infections.
+- Modified calculation of ``R_eff`` to include a longer integration period at the beginning, and restored previous method of creating seed infections. 
 - Updated default plots to include number of active infections, and removed recoveries.
 
 
 Version 1.3.0 (2020-05-24)
 --------------------------
-- Changed the default number of work contacts in hybrid from 8 to 16, and halved beta from 1.4 to 0.7, to better capture superspreading events. To restore previous behavior, set ``sim['beta_layer']['w'] = 0.14`` and ``sim['contacts']['w'] = 8``.
-- Initial infections now occur at a distribution of dates instead of all at once; this fixes the artificial spike in ``R_eff`` that occurred at the very beginning of a simulation.
+- Changed the default number of work contacts in hybrid from 8 to 16, and halved beta from 1.4 to 0.7, to better capture superspreading events. *Regression information*: To restore previous behavior, set ``sim['beta_layer']['w'] = 0.14`` and ``sim['contacts']['w'] = 8``.
+- Initial infections now occur at a distribution of dates instead of all at once; this fixes the artificial spike in ``R_eff`` that occurred at the very beginning of a simulation. *Regression information*: This change affects results, but was reverted in the next version (1.3.1).
 - Changed the definition of age bins in prognoses to be lower limits rather than upper limits. Added an extra set of age bins for 90+.
 - Changed population loading and saving to be based on People objects, not popdicts (syntax is exactly the same, although it is recommended to use ``.ppl`` instead of ``.pop`` for these files).
-- Added additional random seed resets to population initialization and just before the run so that populations loaded from disk produce identical results to newly created ones.
+- Added additional random seed resets to population initialization and just before the run so that populations loaded from disk produce identical results to newly created ones. *Regression information*: This affects results by changing the random number stream. In most cases, previous behavior can typically be restored by setting ``sim.run(reset_seed=False)``.
 - Added a new convenience method, ``cv.check_save_info()``, which can be put at the top of a script to check the Covasim version and automatically save the Git info to file.
 - Added additional methods to ``People`` to retrieve different types of keys: e.g., ``sim.people.state_keys()`` returns all the different states a person can be in (e.g., ``symptomatic``).
-- GitHub info: PR `557 <https://github.com/amath-idm/covasim/pull/557>`__, previous head ``aac9f1d``
+- *GitHub info*: PR `557 <https://github.com/amath-idm/covasim/pull/557>`__, previous head ``aac9f1d``
 
 
-
-Version 1.2 (1.2.0 – 1.2.3)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.2.x (1.2.0 – 1.2.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.2.3 (2020-05-23)
@@ -68,7 +129,7 @@ Version 1.2.3 (2020-05-23)
 - Default scenario plotting options were updated (e.g., showing deaths instead of hospitalizations).
 - You may merge multiple multisims more merrily now, with e.g. ``msim = cv.MultiSim.merge(msim1, msim2)``.
 - Test scripts (e.g. ``tests/run_tests``) have been updated to use ``pytest-parallel``, reducing wall-clock time by a factor of 5.
-- GitHub info: PR `552 <https://github.com/amath-idm/covasim/pull/552>`__, previous head ``28bf02b``
+- *GitHub info*: PR `552 <https://github.com/amath-idm/covasim/pull/552>`__, previous head ``28bf02b``
 
 
 Version 1.2.2 (2020-05-22)
@@ -77,14 +138,14 @@ Version 1.2.2 (2020-05-22)
 - Changed the syntax for the transmission tree: it now takes the ``Sim`` object rather than the ``People`` object, and typical usage is now ``tt = sim.make_transtree()``.
 - Plots now default to a maximum of 4 rows; this can be overridden using the ``n_cols`` argument, e.g. ``sim.plot(to_plot='overview', n_cols=2)``.
 - Various bugs with ``MultiSim`` plotting were fixed.
-- GitHub info: PR `551 <https://github.com/amath-idm/covasim/pull/551>`__, previous head ``07009eb``
+- *GitHub info*: PR `551 <https://github.com/amath-idm/covasim/pull/551>`__, previous head ``07009eb``
 
 
 Version 1.2.1 (2020-05-21)
 --------------------------
 - Added influenza-like illness (ILI) symptoms to testing interventions. If nonzero, this reduces the effectiveness of symptomatic testing, because you cannot distinguish between people who are symptomatic with COVID and people with other ILI symptoms.
 - Removed an unneeded ``copy()`` in ``single_run()`` because multiprocessing always produces copies of objects via the pickling process.
-- GitHub info: PR `541 <https://github.com/amath-idm/covasim/pull/541>`__, previous head ``9b2dbfb``
+- *GitHub info*: PR `541 <https://github.com/amath-idm/covasim/pull/541>`__, previous head ``9b2dbfb``
 
 
 Version 1.2.0 (2020-05-20)
@@ -100,12 +161,12 @@ Version 1.2.0 (2020-05-20)
 - Removed the numerical artifact at the beginning and end of the ``R_eff`` calculation due to the smoothing kernel, and confirmed that the spike in ``R_eff`` often seen at the beginning is due to the way the seed infectious progress from exposed to infectious, and not from a bug.
 - Added more flexibility to plotting, including a new ``show_args`` keyword, allowing particular aspects of plotting (e.g., the data or interventions) to be turned on or off.
 - Moved the cruise ship code from the core folder into the examples folder.
-- GitHub info: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
+- *GitHub info*: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
 
 
-
-Version 1.1 (1.1.0 – 1.1.7)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.1.x (1.1.0 – 1.1.7)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.1.7 (2020-05-19)
@@ -115,7 +176,7 @@ Version 1.1.7 (2020-05-19)
 - It is now possible to set ``pop_type = None`` if you are supplying a custom population.
 - Population creation functions (including the ``People`` class) have been tidied up with additional docstrings added.
 - Duplication between pre- and post-step state checking has been removed.
-- GitHub info: PR `537 <https://github.com/amath-idm/covasim/pull/537>`__, previous head ``2d55c38``
+- *GitHub info*: PR `537 <https://github.com/amath-idm/covasim/pull/537>`__, previous head ``2d55c38``
 
 
 
@@ -123,7 +184,7 @@ Version 1.1.6 (2020-05-19)
 --------------------------
 - Created an ``analysis.py`` file to support different types of analysis.
 - Moved ``transtree`` from ``sim.people`` into its own class: thus instead of ``sim.people.make_detailed_transtree()``, the new syntax is ``tt = cv.TransTree(sim.people)``.
-- GitHub info: PR `531 <https://github.com/amath-idm/covasim/pull/531>`__, previous head ``998116c``
+- *GitHub info*: PR `531 <https://github.com/amath-idm/covasim/pull/531>`__, previous head ``998116c``
 
 
 Version 1.1.5 (2020-05-18)
@@ -141,7 +202,7 @@ Version 1.1.4 (2020-05-18)
     pars['n_beds_hosp']    = None
 
 - Removed the ``bed_capacity`` result.
-- GitHub info: PR `510 <https://github.com/amath-idm/covasim/pull/510>`__, previous head ``0f6d48c``
+- *GitHub info*: PR `510 <https://github.com/amath-idm/covasim/pull/510>`__, previous head ``0f6d48c``
 
 
 Version 1.1.3 (2020-05-18)
@@ -164,7 +225,7 @@ Version 1.1.1 (2020-05-13)
 - Added ability to pass plotting arguments to ``intervention.plot()``.
 - Removed default noise in scenarios (restore previous behavior by setting ``metapars = dict(noise=0.1)``).
 - Refactored and renamed computed results (e.g., summary stats) in the Sim class.
-- GitHub info: PR `513 <https://github.com/amath-idm/covasim/pull/513>`__, previous head ``973801a``
+- *GitHub info*: PR `513 <https://github.com/amath-idm/covasim/pull/513>`__, previous head ``973801a``
 
 
 Version 1.1.0 (2020-05-12)
@@ -173,12 +234,12 @@ Version 1.1.0 (2020-05-12)
 - Renamed the parameter ``quar_eff`` to ``quar_factor`` (but otherwise left it unchanged).
 - Added the option for presumptive isolation and quarantine in testing interventions.
 - Fixed a bug whereby people who had been in quarantine and were then diagnosed had both diagnosis and quarantine factors applied.
-- GitHub info: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
+- *GitHub info*: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
 
 
-
-Version 1.0 (1.0.0 – 1.0.3)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.0.x (1.0.0 – 1.0.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.0.3 (2020-05-11)
@@ -198,7 +259,7 @@ Version 1.0.1 (2020-05-09)
 - Added argument ``as_date`` for ``sim.date()`` to return a ``datetime`` object instead of a string.
 - Fixed plotting of interventions in the webapp.
 - Removed default 1-hour time limit for simulations.
-- GitHub info: PR `490 <https://github.com/amath-idm/covasim/pull/490>`__, previous head ``9a6c23b``
+- *GitHub info*: PR `490 <https://github.com/amath-idm/covasim/pull/490>`__, previous head ``9a6c23b``
 
 
 Version 1.0.0 (2020-05-08)
@@ -209,10 +270,10 @@ Version 1.0.0 (2020-05-08)
 - Fixed bug in ``cv.save()``.
 - Added ``reset()`` to MultiSim that undoes a ``reduce()`` or ``combine()`` call.
 - General code cleaning: made exceptions raised more consistent, removed unused functions, etc.
-- GitHub info: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
+- *GitHub info*: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
 
 
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Prerelease versions (0.27.0 – 0.32.1)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -227,7 +288,7 @@ Version 0.32.0 (2020-05-05)
 ---------------------------
 - Changed the edges of the contact network from being directed to undirected, halving the amount of memory required and making contact tracing and edge clipping more realistic.
 - Added comorbidities to the prognoses parameters.
-- GitHub info: PR `482 <https://github.com/amath-idm/covasim/pull/482>`__, previous head ``029585f``
+- *GitHub info*: PR `482 <https://github.com/amath-idm/covasim/pull/482>`__, previous head ``029585f``
 
 
 Version 0.31.0 (2020-05-05)
@@ -243,7 +304,7 @@ Version 0.31.0 (2020-05-05)
 - ``sim.export_pars()`` now accepts a filename to save to.
 - Added a ``tests/regression`` folder with previous versions of default parameter values.
 - Changed ``pars['n_beds']`` to interpret 0 or ``None`` as no bed constraint.
-- GitHub info: PR `480 <https://github.com/amath-idm/covasim/pull/480>`__, previous head ``c7171f8``
+- *GitHub info*: PR `480 <https://github.com/amath-idm/covasim/pull/480>`__, previous head ``c7171f8``
 
 
 Version 0.30.4 (2020-05-04)

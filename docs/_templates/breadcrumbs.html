@@ -8,8 +8,8 @@
 
 <div aria-label="breadcrumbs navigation" role="navigation">
     <ul class="wy-breadcrumbs">
-        <li><a href="https://www.idmod.org/documentation">IDM docs</a> &raquo;</li>
-        <li><a href="{{ pathto(master_doc) }}">Covasim</a> &raquo;</li>
+        <li><a href="http://covasim.org">Covasim website</a> &raquo;</li>
+        <li><a href="{{ pathto(master_doc) }}">Documentation</a> &raquo;</li>
         {% for doc in parents %}
         <li><a href="{{ doc.link|e }}">{{ doc.title }}</a> &raquo;</li>
         {% endfor %}
@@ -19,10 +19,6 @@
             {% if display_github %}
             <a github.comhref="https://{{ github_host|default("") }}/{{ github_user }}/{{ github_repo }}/blob/{{
             github_version }}{{ conf_py_path }}{{ pagename }}{{ suffix }}" class="fa fa-github"> Edit on GitHub</a>
-            {% elif display_bitbucket %}
-            <a class="fa fa-bitbucket"
-               href="https://bitbucket.org/{{ bitbucket_user }}/{{ bitbucket_repo }}/src/{{ bitbucket_version}}{{ conf_py_path }}{{ pagename }}{{ suffix }}">
-                Edit on Bitbucket</a>
             {% elif show_source and source_url_prefix %}
             <a href="{{ source_url_prefix }}{{ pagename }}{{ suffix }}">View page source</a>
             {% elif show_source and has_source and sourcename %}

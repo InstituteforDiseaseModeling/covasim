@@ -22,24 +22,23 @@ class CovidUSTrackingProjectScraper(CovidTrackingProjectScraper):
 
 ## Set up parameters 
 pars_state = dict()
-pars_state['title'] = "Covid Tracking Project Scraper for US states"
-pars_state['load_path'] = "https://covidtracking.com/api/v1/states/daily.csv"
-
+pars_state['title']         = "Covid Tracking Project Scraper for US states"
+pars_state['load_path']     = "https://covidtracking.com/api/v1/states/daily.csv"
 pars_state['output_folder'] = "epi_data/covid-tracking"
 
 pars_state['renames'] = dict()
-pars_state['renames']['state'] = "key"
-pars_state['renames']['positiveIncrease'] = "new_diagnoses"
-pars_state['renames']['negativeIncrease'] = "new_negatives"
+pars_state['renames']['state']                    = "key"
+pars_state['renames']['positiveIncrease']         = "new_diagnoses"
+pars_state['renames']['negativeIncrease']         = "new_negatives"
 pars_state['renames']['totalTestResultsIncrease'] = "new_tests"
-pars_state['renames']['hospitalizedIncrease'] = "new_severe"
-pars_state['renames']['deathIncrease'] = "new_deaths"
-pars_state['renames']['inIcuCumulative'] = "cum_critical"
-pars_state['renames']['hospitalizedCumulative'] = "cum_severe"
-pars_state['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
+pars_state['renames']['hospitalizedIncrease']     = "new_hospitalized"
+pars_state['renames']['deathIncrease']            = "new_deaths"
+pars_state['renames']['inIcuCumulative']          = "cum_icu"
+pars_state['renames']['hospitalizedCumulative']   = "cum_hospitalized"
+pars_state['renames']['onVentilatorCumulative']   = "cum_on_ventilator"
 
 pars_state['cumulative_fields'] = dict()
-pars_state['cumulative_fields']['cum_critical'] = "new_critical"
+pars_state['cumulative_fields']['cum_icu']           = "new_icu"
 pars_state['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
 
 
@@ -61,28 +60,27 @@ pars_state['fields_to_drop'] = [
 ]
 
 # Set up US parameters
-parameter_us = dict()
-parameter_us['title'] = "Covid Tracking Project Scraper for US states"
-parameter_us['load_path'] = "https://covidtracking.com/api/v1/us/daily.csv"
+pars_us = dict()
+pars_us['title']         = "Covid Tracking Project Scraper for US states"
+pars_us['load_path']     = "https://covidtracking.com/api/v1/us/daily.csv"
+pars_us['output_folder'] = "epi_data/covid-tracking"
 
-pars_state['output_folder'] = "epi_data/covid-tracking"
+pars_us['renames'] = dict()
+pars_us['renames']['positiveIncrease']         = "new_diagnoses"
+pars_us['renames']['negativeIncrease']         = "new_negatives"
+pars_us['renames']['totalTestResultsIncrease'] = "new_tests"
+pars_us['renames']['hospitalizedIncrease']     = "new_hospitalized"
+pars_us['renames']['deathIncrease']            = "new_deaths"
+pars_us['renames']['inIcuCumulative']          = "cum_icu"
+pars_us['renames']['hospitalizedCumulative']   = "cum_hospitalized"
+pars_us['renames']['onVentilatorCumulative']   = "cum_on_ventilator"
 
-parameter_us['renames'] = dict()
-parameter_us['renames']['positiveIncrease'] = "new_diagnoses"
-parameter_us['renames']['negativeIncrease'] = "new_negatives"
-parameter_us['renames']['totalTestResultsIncrease'] = "new_tests"
-parameter_us['renames']['hospitalizedIncrease'] = "new_severe"
-parameter_us['renames']['deathIncrease'] = "new_deaths"
-parameter_us['renames']['inIcuCumulative'] = "cum_critical"
-parameter_us['renames']['hospitalizedCumulative'] = "cum_severe"
-parameter_us['renames']['onVentilatorCumulative'] = "cum_on_ventilator"
-
-parameter_us['cumulative_fields'] = dict()
-parameter_us['cumulative_fields']['cum_critical'] = "new_critical"
-parameter_us['cumulative_fields']['cum_on_ventilator'] = "n_on_ventilator"
+pars_us['cumulative_fields'] = dict()
+pars_us['cumulative_fields']['cum_icu']           = "new_icu"
+pars_us['cumulative_fields']['cum_on_ventilator'] = "new_on_ventilator"
 
 
-parameter_us['fields_to_drop'] = [
+pars_us['fields_to_drop'] = [
     "hash",
     "dateChecked",
     "fips",
@@ -103,6 +101,6 @@ parameter_us['fields_to_drop'] = [
 # Scrape states
 CovidTrackingProjectScraper(pars_state).scrape()
 # Scrape US
-CovidUSTrackingProjectScraper(parameter_us).scrape()
+CovidUSTrackingProjectScraper(pars_us).scrape()
 
 

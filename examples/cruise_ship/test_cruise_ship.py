@@ -6,7 +6,7 @@ Test that the parameters and data files are being created correctly.
 import pytest
 import pylab as pl
 import sciris as sc
-import covasim.cruise_ship as cova # NOTE: this is the only tests script that doesn't use base
+import cruise_ship as cova # NOTE: this is the only tests script that doesn't use base
 
 do_plot = False
 

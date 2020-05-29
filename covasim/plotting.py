@@ -130,8 +130,7 @@ def plot_data(sim, ax, key, scatter_args):
     if sim.data is not None and key in sim.data and len(sim.data[key]):
         this_color = sim.results[key].color
         data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
-        ax.scatter(data_t, sim.data[key], c=[this_color], **scatter_args)
-        ax.scatter(pl.nan, pl.nan, c=[(0,0,0)], label='Data', **scatter_args)
+        ax.scatter(data_t, sim.data[key], c=[this_color], label='Data', **scatter_args)
     return
 
 
@@ -311,14 +310,16 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None):
+                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None,
+                do_show=True, do_save=False, fig_path=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
+    sep_figs = False # Only one figure
     fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
+    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
 
     # Gather results
     res = sim.results[key]
@@ -346,7 +347,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
     reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    return fig
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
 
 
 def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,

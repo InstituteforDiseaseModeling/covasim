@@ -22,6 +22,7 @@ class TestProperties:
             number_agents = 'pop_size'
             number_contacts = 'contacts'
             population_scaling_factor = 'pop_scale'
+            population_rescaling = 'rescale'
             population_type = 'pop_type'
             initial_infected_count = 'pop_infected'
             start_day = 'start_day'
