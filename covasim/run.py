@@ -126,7 +126,7 @@ class MultiSim(sc.prettyobj):
         else:
             sims = self.sims
 
-        # Run
+        # Initialize the sims but don't run them
         kwargs = sc.mergedicts(self.run_args, kwargs, {'do_run':False}) # Never run, that's the point!
         self.sims = multi_run(sims, **kwargs)
 
@@ -947,7 +947,8 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
             raise sc.KeyNotFoundError(f'Could not set key {key}: not a valid parameter name')
 
     # Run
-    sim.run(**run_args)
+    if do_run:
+        sim.run(**run_args)
 
     # Shrink the sim to save memory
     if not keep_people:
