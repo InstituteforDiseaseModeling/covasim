@@ -620,7 +620,7 @@ class Sim(cvb.BaseSim):
         # Perform calculations on results
         self.results_ready = True # Set this first so self.summary() knows to print the results
         self.initialized = False # To enable re-running
-        self.compute_results(verbose=verbose)
+        self.compute_results(verbose=verbose) # Calculate the rest of the results
         self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
 
         return
