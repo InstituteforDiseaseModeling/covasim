@@ -8,6 +8,7 @@ import sciris as sc
 from collections import defaultdict
 from . import requirements as cvreq
 from . import utils as cvu
+from . import misc as cvm
 from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpars
@@ -92,7 +93,7 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
             raise FileNotFoundError(errormsg)
         else:
             filepath = sc.makefilepath(filename=popfile)
-            sc.saveobj(filepath, people)
+            cvm.save(filepath, people)
             if verbose:
                 print(f'Saved population of type "{pop_type}" with {pop_size:n} people to {filepath}')
 

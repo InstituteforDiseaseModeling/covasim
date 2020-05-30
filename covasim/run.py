@@ -468,7 +468,8 @@ class MultiSim(sc.prettyobj):
 
     def save(self, filename=None, keep_people=False, **kwargs):
         '''
-        Save to disk as a gzipped pickle. Load with cv.load(filename).
+        Save to disk as a gzipped pickle. Load with cv.load(filename) or
+        cv.MultiSim.load(filename).
 
         Args:
             filename    (str)  : the name or path of the file to save to; if None, uses default
@@ -484,7 +485,7 @@ class MultiSim(sc.prettyobj):
         '''
         if filename is None:
             filename = 'covasim.msim'
-        scenfile = sc.makefilepath(filename=filename, **kwargs)
+        msimfile = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
 
         # Store sims seperately
@@ -501,10 +502,33 @@ class MultiSim(sc.prettyobj):
             for sim in sims:
                 obj.sims.append(sim.shrink(in_place=False))
 
-        sc.saveobj(filename=scenfile, obj=obj) # Actually save
+        cvm.save(filename=msimfile, obj=obj) # Actually save
 
         self.sims = sims # Restore
-        return scenfile
+        return msimfile
+
+
+    @staticmethod
+    def load(msimfile, *args, **kwargs):
+        '''
+        Load from disk from a gzipped pickle.
+
+        Args:
+            msimfile (str): the name or path of the file to load from
+            kwargs: passed to cv.load()
+
+        Returns:
+            msim (MultiSim): the loaded MultiSim object
+
+        **Example**::
+
+            msim = cv.MultiSim.load('my-multisim.msim')
+        '''
+        msim = cvm.load(msimfile, *args, **kwargs)
+        if not isinstance(msim, MultiSim):
+            errormsg = f'Cannot load object of {type(msim)} as a MultiSim object'
+            raise TypeError(errormsg)
+        return msim
 
 
     @staticmethod
@@ -931,7 +955,7 @@ class Scenarios(cvb.ParsObj):
                     for sim in sims[key]:
                         obj.sims[key].append(sim.shrink(in_place=False))
 
-        sc.saveobj(filename=scenfile, obj=obj) # Actually save
+        cvm.save(filename=scenfile, obj=obj) # Actually save
 
         self.sims = sims # Restore
         return scenfile
@@ -943,8 +967,8 @@ class Scenarios(cvb.ParsObj):
         Load from disk from a gzipped pickle.
 
         Args:
-            scenfile (str): the name or path of the file to save to
-            kwargs: passed to sc.loadobj()
+            scenfile (str): the name or path of the file to load from
+            kwargs: passed to cv.load()
 
         Returns:
             scens (Scenarios): the loaded scenarios object

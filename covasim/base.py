@@ -462,7 +462,7 @@ class BaseSim(ParsObj):
 
         Args:
             filename (str or None): the name or path of the file to save to; if None, uses stored
-            kwargs: passed to makefilepath()
+            kwargs: passed to sc.makefilepath()
 
         Returns:
             filename (str): the validated absolute path to the saved file
@@ -490,7 +490,7 @@ class BaseSim(ParsObj):
             obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
-        sc.saveobj(filename=filename, obj=obj)
+        cvm.save(filename=filename, obj=obj)
 
         return filename
 
@@ -501,8 +501,8 @@ class BaseSim(ParsObj):
         Load from disk from a gzipped pickle.
 
         Args:
-            filename (str): the name or path of the file to save to
-            kwargs: passed to sc.loadobj()
+            filename (str): the name or path of the file to load from
+            kwargs: passed to cv.load()
 
         Returns:
             sim (Sim): the loaded simulation object

@@ -332,7 +332,7 @@ class Sim(cvb.BaseSim):
             # Load from disk or use directly
             if isinstance(popfile, str): # It's a string, assume it's a filename
                 filepath = sc.makefilepath(filename=popfile, **kwargs)
-                obj = sc.loadobj(filepath)
+                obj = cvm.load(filepath)
                 if self['verbose']:
                     print(f'Loading population from {filepath}')
             else:
