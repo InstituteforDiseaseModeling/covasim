@@ -362,7 +362,7 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
 
     # Add community contacts
     c_contacts, _ = make_random_contacts(pop_size, {'c':sim['contacts']['c']})
-    for i in range(pop_size):
+    for i in range(int(pop_size)):
         contacts[i]['c'] = c_contacts[i]['c'] # Copy over community contacts -- present for everyone
 
     # Finalize
