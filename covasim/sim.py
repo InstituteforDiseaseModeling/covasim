@@ -617,9 +617,12 @@ class Sim(cvb.BaseSim):
             self.results[f'cum_{key}'].values[:] = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
-        # Perform calculations on results
+        # Final settings
+        self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
         self.results_ready = True # Set this first so self.summary() knows to print the results
         self.initialized = False # To enable re-running
+
+        # Perform calculations on results
         self.compute_results(verbose=verbose) # Calculate the rest of the results
         self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
 
