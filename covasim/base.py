@@ -534,7 +534,7 @@ class BasePeople(sc.prettyobj):
 
         # Handle pars and population size
         pars = sc.mergedicts({'pop_size':0, 'n_days':0}, pars)
-        self.pars     = pars
+        self.pars     = pars # Equivalent to self.set_pars(pars)
         self.pop_size = int(pars['pop_size'])
         self.n_days   = int(pars['n_days'])
 
@@ -673,6 +673,15 @@ class BasePeople(sc.prettyobj):
         return (self[key]==0).sum()
 
 
+    def set_pars(self, pars):
+        '''
+        Very simple method to re-link the parameters stored in the people object
+        to the sim containing it: included simply for the sake of being explicit.
+        '''
+        self.pars = pars
+        return
+
+
     def keys(self):
         ''' Returns keys for all properties of the people object '''
         return self.meta.all_states[:]
@@ -710,8 +719,8 @@ class BasePeople(sc.prettyobj):
         return keys
 
 
-    def index(self):
-        ''' The indices of the array '''
+    def indices(self):
+        ''' The indices of each people array '''
         return np.arange(len(self))
 
 

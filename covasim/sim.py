@@ -345,7 +345,7 @@ class Sim(cvb.BaseSim):
                 layer_keys   = self.popdict['layer_keys']
             elif isinstance(obj, cvb.BasePeople):
                 self.people = obj
-                self.people.pars = self.pars # Replace the saved parameters with this simulation's
+                self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
                 n_actual    = len(self.people)
                 layer_keys  = self.people.layer_keys()
             else:
@@ -597,7 +597,8 @@ class Sim(cvb.BaseSim):
     def restore_pars(self, orig_pars):
         ''' Restore the original parameter values, except for the analyzers '''
         analyzers = self['analyzers'] # Make a copy so these don't get wiped
-        self.pars = orig_pars # Restore the original parameters
+        for key,val in orig_pars.items():
+            self.pars[key] = val # So pointers, e.g. in sim.people, get updated as well
         self['analyzers'] = analyzers # Restore the analyzers
         return
 
@@ -932,7 +933,7 @@ class Sim(cvb.BaseSim):
             agehist = sim.make_age_histogram()
             fiagehistt.plot()
         '''
-        agehist = cva.make_age_histogram(self, *args, **kwargs)
+        agehist = cva.age_histogram(self, *args, **kwargs)
         if output:
             return agehist
         else:
