@@ -195,7 +195,6 @@ class age_histogram(Analyzer):
 
 
     def apply(self, sim):
-        print('hiiii i am ', self.days, sim.t)
         for ind in cvi.find_day(self.days, sim.t):
             date = self.dates[ind] # Find the date for this index
             self.hists[date] = sc.objdict() # Initialize the dictionary

@@ -14,6 +14,11 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.4.1 (2020-05-29)
+--------------------------
+- Added ``sim.make_age_histogram()``, as well as the ability to call ``cv.age_histogram(sim)``, as an alternative to adding these as analyzers to a sim.
+
+
 Version 1.4.0 (2020-05-28)
 --------------------------
 
