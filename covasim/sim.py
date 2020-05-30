@@ -912,6 +912,34 @@ class Sim(cvb.BaseSim):
             return
 
 
+    def make_age_histogram(self, output=True, *args, **kwargs):
+        '''
+        Calculate the age histograms of infections, deaths, diagnoses, etc. See
+        cv.age_histogram() for more information. This can be used alternatively
+        to supplying the age histogram as an analyzer to the sim. If used this
+        way, it can only record the final time point since the states of each
+        person are not saved during the sim.
+
+        Args:
+            output (bool): whether or not to return the age histogram; if not, store in sim.results
+            args   (list): passed to cv.age_histogram()
+            kwargs (dict): passed to cv.age_histogram()
+
+        **Example**::
+
+            sim = cv.Sim()
+            sim.run()
+            agehist = sim.make_age_histogram()
+            fiagehistt.plot()
+        '''
+        agehist = cva.make_age_histogram(self, *args, **kwargs)
+        if output:
+            return agehist
+        else:
+            self.results.agehist = agehist
+            return
+
+
     def make_transtree(self, output=True, *args, **kwargs):
         '''
         Create a TransTree (transmission tree) object, for analyzing the pattern
