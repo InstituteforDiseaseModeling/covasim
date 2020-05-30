@@ -1,6 +1,8 @@
 #!/bin/bash
-# Run both integration and unit tests. Requires 
-# pytest-parallel, pytest-cov, and Sphinx. 
+# Run integration and unit tests, check coverage,
+# and check that the documentation builds. Will
+# create some plots. Requires pytest-parallel, 
+# pytest-cov, and Sphinx. 
 
 echo -e "RUNNING ALL TESTS"
 sleep 0.5
@@ -15,7 +17,6 @@ cd unittests; pwd; sleep 0.5
 
 echo -e "\n\n\n\nSTEP 3: RUNNING EXAMPLES"
 cd ../../examples; pwd; sleep 0.5
-for file in *.py; do 
 pytest *.py
 
 echo -e "\n\n\n\nSTEP 4: CALCULATING COVERAGE"
