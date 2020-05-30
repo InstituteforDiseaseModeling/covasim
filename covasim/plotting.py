@@ -437,15 +437,15 @@ def plot_people(people, bins=None, width=1.0, font_size=18, color=None, alpha=0.
     # Plot cumulative distribution
     pl.subplot(n_rows,2,2)
     age_sorted = sorted(people.age)
-    x = np.linspace(0, 100, len(age_sorted)) # Percentage, not hard-coded!
-    pl.plot(x, age_sorted, '-', **plot_args)
+    y = np.linspace(0, 100, len(age_sorted)) # Percentage, not hard-coded!
+    pl.plot(age_sorted, y, '-', **plot_args)
     pl.xlim([0,max_age])
-    pl.ylim([0,max_age])
-    pl.xticks(np.arange(0, 101, gridspace)) # Percentage
-    pl.yticks(np.arange(0, max_age+1, gridspace))
+    pl.ylim([0,100]) # Percentage
+    pl.xticks(np.arange(0, max_age+1, gridspace))
+    pl.yticks(np.arange(0, 101, gridspace)) # Percentage
     pl.grid(True)
-    pl.xlabel('Cumulative proportion of population (%)')
-    pl.ylabel('Age')
+    pl.xlabel('Age')
+    pl.ylabel('Cumulative proportion of population (%)')
     pl.title(f'Cumulative age distribution (mean age: {people.age.mean():0.2f} years)')
 
     # Calculate contacts
