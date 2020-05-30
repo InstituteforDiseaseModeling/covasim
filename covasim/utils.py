@@ -6,8 +6,9 @@ Numerical utilities for running Covasim
 
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
-import scipy.stats as sps
-from . import defaults as cvd
+import random # Used only for resetting the seed
+import scipy.stats as sps # For distributions
+from . import defaults as cvd # To set default types
 
 
 # What functions are externally visible -- note, this gets populated in each section below
@@ -206,6 +207,7 @@ def set_seed(seed=None):
     if seed is None: # Numba can't accept a None seed, so use our just-reinitialized Numpy stream to generate one
         seed = np.random.randint(1e9)
     set_seed_numba(seed)
+    random.seed(seed) # Finally, reset Python's built-in random number generator
 
     return
 
