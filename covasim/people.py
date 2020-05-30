@@ -456,13 +456,15 @@ class People(cvb.BasePeople):
 
     def plot(self, *args, **kwargs):
         '''
-        Plot statistics of the population -- age distribution and numbers of contacts.
+        Plot statistics of the population -- age distribution, numbers of contacts,
+        and overall weight of contacts (number of contacts multiplied by beta per
+        layer).
 
         Args:
             bins (arr): age bins to use (default, 0-100 in one-year bins)
             width (float): bar width
-            color (arr): color for the plots
             font_size (float): size of font
+            alpha (float): transparency of the plots
             fig_args (dict): passed to pl.figure()
             axis_args (dict): passed to pl.subplots_adjust()
             plot_args (dict): passed to pl.plot()

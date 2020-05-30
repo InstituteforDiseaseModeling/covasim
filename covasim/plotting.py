@@ -395,14 +395,19 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
 
 #%% Other plotting functions
-def plot_people(people, bins=None, width=1.0, font_size=18, color=None, alpha=0.6, fig_args=None, axis_args=None, plot_args=None, *args, **kwargs):
+def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=None, axis_args=None, plot_args=None):
     ''' Plot statistics of a population -- see People.plot() for documentation '''
 
     # Handle inputs
     if bins is None:
         bins = np.arange(0,101)
-    if color is None:
-        color = [0.1,0.1,0.1]
+
+    # Set defaults
+    color     = [0.1,0.1,0.1] # Color for the age distribution
+    n_rows    = 3 # Number of rows of plots
+    offset    = 0.5 # For ensuring the full bars show up
+    gridspace = 10 # Spacing of gridlines
+    zorder    = 10 # So plots appear on top of gridlines
 
     # Handle other arguments
     fig_args  = sc.mergedicts(dict(figsize=(30,22)), fig_args)
@@ -419,10 +424,6 @@ def plot_people(people, bins=None, width=1.0, font_size=18, color=None, alpha=0.
     # Create the figure
     fig = pl.figure(**fig_args)
     pl.subplots_adjust(**axis_args)
-    n_rows = 3 # Number of rows of plots
-    offset = 0.5 # For ensuring the full bars show up
-    gridspace = 10 # Spacing of gridlines
-    zorder = 10 # So plots appear on top
 
     # Plot age histogram
     pl.subplot(n_rows,2,1)
@@ -466,7 +467,7 @@ def plot_people(people, bins=None, width=1.0, font_size=18, color=None, alpha=0.
             if w==0:
                 weight = 1
             else:
-                weight = people.pars['beta_layer'][lk]
+                weight = people.pars['beta_layer'][lk]*people.pars['beta']
 
             ax = pl.subplot(n_rows, n_layers, n_layers*(w+1)+i+1, sharey=share_ax)
             pl.bar(bins, contact_counts[lk]*weight, color=layer_colors[i], width=width, zorder=zorder, alpha=alpha)
@@ -480,7 +481,7 @@ def plot_people(people, bins=None, width=1.0, font_size=18, color=None, alpha=0.
             else:
                 share_ax = ax # Update shared axis
                 pl.ylabel('Weighted number of contacts')
-                pl.title(f'Total weight for layer "{lk}": {weight*len(people.contacts[lk]):n}')
+                pl.title(f'Total weight for layer "{lk}": {np.round(weight*len(people.contacts[lk])):n}')
 
     return fig
 
