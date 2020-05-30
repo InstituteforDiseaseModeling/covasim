@@ -534,9 +534,9 @@ class BasePeople(sc.prettyobj):
 
         # Handle pars and population size
         pars = sc.mergedicts({'pop_size':0, 'n_days':0}, pars)
-        self.pars = pars
-        self.pop_size = pars['pop_size']
-        self.n_days = pars['n_days']
+        self.pars     = pars
+        self.pop_size = int(pars['pop_size'])
+        self.n_days   = int(pars['n_days'])
 
         # Other initialization
         self.t = 0 # Keep current simulation time
