@@ -25,10 +25,13 @@ elif cvd.default_precision == 64:
 else:
     raise NotImplementedError
 
+# Specify whether to allow parallel Numba calculation -- about 20% faster, but the random number stream becomes nondeterministic
+parallel = False
+
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat))
+@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat), cache=True, parallel=parallel)
 def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,    load_ratio,    high_cap):
     '''
     Calculate relative transmissibility for time t. Includes time varying
@@ -71,7 +74,7 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True)
+@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True, parallel=parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor):
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
@@ -82,7 +85,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     return rel_trans, rel_sus
 
 
-@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True)
+@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=parallel)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities

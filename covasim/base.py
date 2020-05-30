@@ -699,11 +699,14 @@ class BasePeople(sc.prettyobj):
 
 
     def layer_keys(self):
-        ''' Get the available contact keys -- set by beta_layer rather than contacts since only the former is required '''
+        ''' Get the available contact keys -- try contacts first, then beta_layer '''
         try:
-            keys = list(self.pars['beta_layer'].keys())
-        except: # If not initialized
-            keys = []
+            keys = list(self.contacts.keys())
+        except: # If not fully initialized
+            try:
+                keys = list(self.pars['beta_layer'].keys())
+            except: # If not even partially initialized
+                keys = []
         return keys
 
 
