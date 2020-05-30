@@ -21,19 +21,22 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset=False):
+def make_people(sim, save_pop=False, popfile=None, die=True, reset=False, verbose=None, **kwargs):
     '''
-    Make the actual people for the simulation.
+    Make the actual people for the simulation. Usually called via sim.initialize(),
+    not directly by the user.
 
     Args:
         sim (Sim): the simulation object
-        verbose (bool): level of detail to print
-        id_len (int): length of ID for each person (default: calculate required length based on the number of people)
+        save_pop (bool): whether to save the population to disk
+        popfile (bool): if so, the filename to save to
         die (bool): whether or not to fail if synthetic populations are requested but not available
         reset (bool): whether to force population creation even if self.popdict/self.people exists
+        verbose (bool): level of detail to print
+        kwargs (dict): passed to make_randpop() or make_synthpop()
 
     Returns:
-        None.
+        people (People): people
     '''
 
     # Set inputs and defaults
@@ -67,9 +70,9 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
     else:
         # Create the population
         if pop_type in ['random', 'clustered', 'hybrid']:
-            popdict = make_randpop(sim, microstructure=pop_type)
+            popdict = make_randpop(sim, microstructure=pop_type, **kwargs)
         elif pop_type == 'synthpops':
-            popdict = make_synthpop(sim)
+            popdict = make_synthpop(sim, **kwargs)
         elif pop_type is None:
             errormsg = f'You have set pop_type=None. This is fine, but you must ensure sim.popdict exists before calling make_people().'
             raise ValueError(errormsg)
