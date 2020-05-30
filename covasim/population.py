@@ -326,16 +326,13 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
     '''
     import synthpops as sp # Optional import
 
-    # Reset the seed
-    cvu.set_seed(sim['rand_seed'])
-
     # Handle layer mapping
     default_layer_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
     layer_mapping = sc.mergedicts(default_layer_mapping, layer_mapping)
 
     # Handle other input arguments
     pop_size = sim['pop_size']
-    population = sp.make_population(n=pop_size, generate=generate, **kwargs)
+    population = sp.make_population(n=pop_size, generate=generate, rand_seed=sim['rand_seed'], **kwargs)
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)

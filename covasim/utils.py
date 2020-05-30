@@ -190,7 +190,14 @@ def get_pdf(dist=None, par1=None, par2=None):
 
 
 def set_seed(seed=None):
-    ''' Reset the random seed -- complicated because of Numba '''
+    '''
+    Reset the random seed -- complicated because of Numba, which requires special
+    syntax to reset the seed. This function also resets Python's built-in random
+    number generated.
+
+    Args:
+        seed (int): the random seed
+    '''
 
     @nb.njit((nbint,), cache=True)
     def set_seed_numba(seed):
@@ -207,7 +214,7 @@ def set_seed(seed=None):
     if seed is None: # Numba can't accept a None seed, so use our just-reinitialized Numpy stream to generate one
         seed = np.random.randint(1e9)
     set_seed_numba(seed)
-    random.seed(seed) # Finally, reset Python's built-in random number generator
+    random.seed(seed) # Finally, reset Python's built-in random number generator, just in case (used by SynthPops)
 
     return
 

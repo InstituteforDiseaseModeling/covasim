@@ -290,7 +290,6 @@ def savefig(filename=None, dpi=None, comments=None, **kwargs):
         comments (str): additional metadata to save to the figure
         kwargs (dict): passed to savefig()
 
-
     **Example**::
 
         cv.Sim().run(do_plot=True)

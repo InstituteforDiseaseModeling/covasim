@@ -965,7 +965,6 @@ class Sim(cvb.BaseSim):
         Returns:
             fig: Figure handle
 
-
         **Example**::
 
             sim = cv.Sim()
