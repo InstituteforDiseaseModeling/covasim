@@ -14,6 +14,15 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.4.1 (2020-05-29)
+--------------------------
+- Added ``sim.people.plot()``, which shows the age distribution, and distribution of contacts by age and layer.
+- Added ``sim.make_age_histogram()``, as well as the ability to call ``cv.age_histogram(sim)``, as an alternative to adding these as analyzers to a sim.
+- Updated ``cv.make_synthpop()`` to pass a random seed to SynthPops (note: requires SynthPops version 0.7.1 or later).
+- ``cv.set_seed()`` now also resets ``random.seed()``, to ensure reproducibility among functions that use this (e.g., NetworkX).
+- Corrected ``sim.run()`` so ``sim.t`` is left at the last timestep (instead of one more).
+
+
 Version 1.4.0 (2020-05-28)
 --------------------------
 

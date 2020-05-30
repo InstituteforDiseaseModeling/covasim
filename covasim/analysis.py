@@ -116,23 +116,27 @@ class age_histogram(Analyzer):
     '''
     Analyzer that takes a "snapshot" of the sim.people array at specified points
     in time, and saves them to itself. To retrieve them, you can either access
-    the dictionary directly, or use the get() method.
+    the dictionary directly, or use the get() method. You can also apply this
+    analyzer directly to a sim object.
 
     Args:
         days    (list): list of ints/strings/date objects, the days on which to calculate the histograms (default: last day)
         states  (list): which states of people to record (default: exposed, tested, diagnosed, dead)
         edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
         datafile (str): the name of the data file to load in for comparison, or a dataframe of data (optional)
+        sim      (Sim): only used if the analyzer is being used after a sim has already been run
         kwargs  (dict): passed to Intervention()
 
-    **Example**::
+    **Examples**::
 
         sim = cv.Sim(analyzers=cv.age_histogram())
         sim.run()
         agehist = sim['analyzers'][0].get()
+
+        agehist = cv.age_histogram(sim=sim)
     '''
 
-    def __init__(self, days=None, states=None, edges=None, datafile=None, **kwargs):
+    def __init__(self, days=None, states=None, edges=None, datafile=None, sim=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.days      = days # To be converted to integer representations
         self.edges     = edges # Edges of age bins
@@ -144,6 +148,8 @@ class age_histogram(Analyzer):
         self.data      = None # Store the loaded data
         self.hists = sc.odict() # Store the actual snapshots
         self.window_hists = None # Store the histograms for individual windows -- populated by compute_windows()
+        if sim is not None: # Process a supplied simulation
+            self.from_sim(sim)
         return
 
 
@@ -202,7 +208,7 @@ class age_histogram(Analyzer):
 
 
     def get(self, key=None):
-        ''' Retrieve a histogram from the given key (int, str, or date) '''
+        ''' Retrieve a specific histogram from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
         day  = cvm.day(key, start_day=self.start_day)
@@ -238,6 +244,13 @@ class age_histogram(Analyzer):
         return
 
 
+    def from_sim(self, sim):
+        ''' Create an age histogram from an already run sim '''
+        self.initialize(sim)
+        self.apply(sim)
+        return
+
+
     def plot(self, windows=False, width=0.8, color='#F8A493', font_size=18, fig_args=None, axis_args=None, data_args=None):
         '''
         Simple method for plotting the histograms.
@@ -264,13 +277,16 @@ class age_histogram(Analyzer):
         n_cols = np.ceil(n_plots/n_rows) # Number of subplot columns to have
         figs = []
 
-        # Handle windows
+        # Handle windows and what to plot
         if windows:
             if self.window_hists is None:
                 self.compute_windows()
             histsdict = self.window_hists
         else:
             histsdict = self.hists
+        if not len(histsdict):
+            errormsg = f'Cannot plot since no histograms were recorded (schuled days: {self.days})'
+            raise ValueError(errormsg)
 
         # Make the figure(s)
         for date,hists in histsdict.items():

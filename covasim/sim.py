@@ -4,7 +4,6 @@ Defines the Sim class, Covasim's core class.
 
 #%% Imports
 import numpy as np
-import pylab as pl
 import sciris as sc
 from . import version as cvv
 from . import utils as cvu
@@ -618,13 +617,14 @@ class Sim(cvb.BaseSim):
             self.results[f'cum_{key}'].values[:] = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
-        # Perform calculations on results
-        self.compute_results(verbose=verbose)
-
-        # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
-        self.results = sc.objdict(self.results)
-        self.results_ready = True
+        # Final settings
+        self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
+        self.results_ready = True # Set this first so self.summary() knows to print the results
         self.initialized = False # To enable re-running
+
+        # Perform calculations on results
+        self.compute_results(verbose=verbose) # Calculate the rest of the results
+        self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
 
         return
 
@@ -912,6 +912,34 @@ class Sim(cvb.BaseSim):
             return
 
 
+    def make_age_histogram(self, output=True, *args, **kwargs):
+        '''
+        Calculate the age histograms of infections, deaths, diagnoses, etc. See
+        cv.age_histogram() for more information. This can be used alternatively
+        to supplying the age histogram as an analyzer to the sim. If used this
+        way, it can only record the final time point since the states of each
+        person are not saved during the sim.
+
+        Args:
+            output (bool): whether or not to return the age histogram; if not, store in sim.results
+            args   (list): passed to cv.age_histogram()
+            kwargs (dict): passed to cv.age_histogram()
+
+        **Example**::
+
+            sim = cv.Sim()
+            sim.run()
+            agehist = sim.make_age_histogram()
+            fiagehistt.plot()
+        '''
+        agehist = cva.make_age_histogram(self, *args, **kwargs)
+        if output:
+            return agehist
+        else:
+            self.results.agehist = agehist
+            return
+
+
     def make_transtree(self, output=True, *args, **kwargs):
         '''
         Create a TransTree (transmission tree) object, for analyzing the pattern
@@ -967,7 +995,6 @@ class Sim(cvb.BaseSim):
 
         Returns:
             fig: Figure handle
-
 
         **Example**::
 

@@ -7,6 +7,7 @@ import numpy as np
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
+from . import plotting as cvplt
 
 
 __all__ = ['People']
@@ -449,3 +450,24 @@ class People(cvb.BasePeople):
                     self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time)
 
         return
+
+
+    #%% Analysis methods
+
+    def plot(self, *args, **kwargs):
+        '''
+        Plot statistics of the population -- age distribution, numbers of contacts,
+        and overall weight of contacts (number of contacts multiplied by beta per
+        layer).
+
+        Args:
+            bins (arr): age bins to use (default, 0-100 in one-year bins)
+            width (float): bar width
+            font_size (float): size of font
+            alpha (float): transparency of the plots
+            fig_args (dict): passed to pl.figure()
+            axis_args (dict): passed to pl.subplots_adjust()
+            plot_args (dict): passed to pl.plot()
+        '''
+        fig = cvplt.plot_people(people=self, *args, **kwargs)
+        return fig
