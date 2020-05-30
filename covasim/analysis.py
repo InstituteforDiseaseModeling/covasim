@@ -176,7 +176,7 @@ class age_histogram(Analyzer):
 
         # Handle states
         if self.states is None:
-            self.states = ['exposed', 'tested', 'diagnosed', 'dead']
+            self.states = ['exposed', 'dead', 'tested', 'diagnosed']
         self.states = sc.promotetolist(self.states)
         for s,state in enumerate(self.states):
             self.states[s] = state.replace('date_', '') # Allow keys starting with date_ as input, but strip it off here

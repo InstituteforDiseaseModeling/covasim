@@ -931,9 +931,9 @@ class Sim(cvb.BaseSim):
             sim = cv.Sim()
             sim.run()
             agehist = sim.make_age_histogram()
-            fiagehistt.plot()
+            agehist.plot()
         '''
-        agehist = cva.age_histogram(self, *args, **kwargs)
+        agehist = cva.age_histogram(sim=self, *args, **kwargs)
         if output:
             return agehist
         else:

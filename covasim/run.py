@@ -1041,7 +1041,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
 
     if verbose>=1:
         verb = 'Running' if do_run else 'Creating'
-        print(f'{verb} a simulation using {sim["rand_seed"]} seed and {noisefactor} noise factor')
+        print(f'{verb} a simulation using seed={sim["rand_seed"]} and noise={noiseval}')
 
     # Handle additional arguments
     for key,val in sim_args.items():
