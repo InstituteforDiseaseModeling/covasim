@@ -414,37 +414,133 @@ __all__ += ['true',   'false',   'defined',
 
 
 def true(arr):
-    ''' Returns the indices of the values of the array that are true '''
+    '''
+    Returns the indices of the values of the array that are true: just an alias
+    for arr.nonzero()[0].
+
+    Args:
+        arr (array): any array
+
+    **Example**::
+
+        inds = cv.true(np.array([1,0,0,1,1,0,1]))
+    '''
     return arr.nonzero()[0]
 
+
 def false(arr):
-    ''' Returns the indices of the values of the array that are false '''
+    '''
+    Returns the indices of the values of the array that are false.
+
+    Args:
+        arr (array): any array
+
+    **Example**::
+
+        inds = cv.false(np.array([1,0,0,1,1,0,1]))
+    '''
     return (~arr).nonzero()[0]
 
+
 def defined(arr):
-    ''' Returns the indices of the values of the array that are not-nan '''
+    '''
+    Returns the indices of the values of the array that are not-nan.
+
+    Args:
+        arr (array): any array
+
+    **Example**::
+
+        inds = cv.defined(np.array([1,np.nan,0,np.nan,1,0,1]))
+    '''
     return (~np.isnan(arr)).nonzero()[0]
 
+
 def itrue(arr, inds):
-    ''' Returns the indices that are true in the array -- name is short for indices[true] '''
+    '''
+    Returns the indices that are true in the array -- name is short for indices[true]
+
+    Args:
+        arr (array): a Boolean array, used as a filter
+        inds (array): any other array (usually, an array of indices) of the same size
+
+    **Example**::
+
+        inds = cv.itrue(np.array([True,False,True,True]), inds=np.array([5,22,47,93]))
+    '''
     return inds[arr]
 
+
 def ifalse(arr, inds):
-    ''' Returns the indices that are true in the array -- name is short for indices[false] '''
+    '''
+    Returns the indices that are true in the array -- name is short for indices[false]
+
+    Args:
+        arr (array): a Boolean array, used as a filter
+        inds (array): any other array (usually, an array of indices) of the same size
+
+    **Example**::
+
+        inds = cv.ifalse(np.array([True,False,True,True]), inds=np.array([5,22,47,93]))
+    '''
     return inds[~arr]
 
+
 def idefined(arr, inds):
-    ''' Returns the indices that are true in the array -- name is short for indices[defined] '''
+    '''
+    Returns the indices that are true in the array -- name is short for indices[defined]
+
+    Args:
+        arr (array): any array, used as a filter
+        inds (array): any other array (usually, an array of indices) of the same size
+
+    **Example**::
+
+        inds = cv.idefined(np.array([3,np.nan,np.nan,4]), inds=np.array([5,22,47,93]))
+    '''
     return inds[~np.isnan(arr)]
 
+
 def itruei(arr, inds):
-    ''' Returns the indices that are true in the array -- name is short for indices[true[indices]] '''
+    '''
+    Returns the indices that are true in the array -- name is short for indices[true[indices]]
+
+    Args:
+        arr (array): a Boolean array, used as a filter
+        inds (array): an array of indices for the original array
+
+    **Example**::
+
+        inds = cv.itruei(np.array([True,False,True,True,False,False,True,False]), inds=np.array([0,1,3,5]))
+    '''
     return inds[arr[inds]]
 
+
 def ifalsei(arr, inds):
-    ''' Returns the indices that are false in the array -- name is short for indices[false[indices]] '''
+    '''
+    Returns the indices that are false in the array -- name is short for indices[false[indices]]
+
+    Args:
+        arr (array): a Boolean array, used as a filter
+        inds (array): an array of indices for the original array
+
+    **Example**::
+
+        inds = cv.ifalsei(np.array([True,False,True,True,False,False,True,False]), inds=np.array([0,1,3,5]))
+    '''
     return inds[~arr[inds]]
 
+
 def idefinedi(arr, inds):
-    ''' Returns the indices that are defined in the array -- name is short for indices[defined[indices]] '''
+    '''
+    Returns the indices that are defined in the array -- name is short for indices[defined[indices]]
+
+    Args:
+        arr (array): any array, used as a filter
+        inds (array): an array of indices for the original array
+
+    **Example**::
+
+        inds = cv.idefinedi(np.array([4,np.nan,0,np.nan,np.nan,4,7,4,np.nan]), inds=np.array([0,1,3,5]))
+    '''
     return inds[~np.isnan(arr[inds])]
