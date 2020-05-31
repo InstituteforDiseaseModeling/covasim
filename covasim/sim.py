@@ -524,20 +524,20 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, verbose=None, restore_pars=True, reset_seed=True, **kwargs):
+    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, **kwargs):
         '''
         Run the simulation.
 
         Args:
             do_plot (bool): whether to plot
             until (int): day to run until
-            verbose (int): level of detail to print (otherwise uses self['verbose'])
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
-            kwargs (dict): passed to self.plot()
+            verbose (float): level of detail to print, e.g. 0 = no output, 0.2 = print every 5th day, 1 = print every day
+            kwargs (dict): passed to sim.plot()
 
         Returns:
-            results: the results object (also modifies in-place)
+            results (dict): the results object (also modifies in-place)
         '''
 
         # Initialize
@@ -560,14 +560,15 @@ class Sim(cvb.BaseSim):
         for t in self.tvec:
 
             # Print progress
-            if verbose >= 1:
+            if verbose:
                 elapsed = sc.toc(output=True)
                 simlabel = f'"{self.label}": ' if self.label else ''
                 string = f'  Running {simlabel}{self.datevec[t]} ({t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
                 if verbose >= 2:
                     sc.heading(string)
-                elif verbose == 1:
-                    sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
+                else:
+                    if not (t % int(1.0/verbose)):
+                        sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
 
             # Do the heavy lifting -- actually run the model!
             self.step()

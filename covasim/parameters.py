@@ -142,22 +142,29 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     else:
         defaults = defaults_h
         default_layer_keys = ['h', 's', 'w', 'c'] # NB, these must match defaults_h above
-    if layer_keys is None:
-        layer_keys = default_layer_keys # If not supplied, use the defaults
 
     # Actually set the parameters
     for pkey in layer_pars:
         par = {} # Initialize this parameter
         default_val = defaults_r[pkey]['a'] # Get the default value for this parameter
         if force:
-            default_par = defaults[pkey] # Just use defaults
+            par_dict = defaults[pkey] # Just use defaults
         else:
-            default_par = sc.mergedicts(defaults[pkey], pars.get(pkey, None)) # Use user-supplied parameters if available, else default
+            par_dict = sc.mergedicts(defaults[pkey], pars.get(pkey, None)) # Use user-supplied parameters if available, else default
+
+        # Figure out what the layer keys for this parameter are (may be different between parameters)
+        if layer_keys:
+            par_layer_keys = layer_keys # Use supplied layer keys
+        else:
+            par_layer_keys = list(sc.odict.fromkeys(default_layer_keys + list(par_dict.keys())))  # If not supplied, use the defaults, plus any extra from the par_dict; adapted from https://www.askpython.com/python/remove-duplicate-elements-from-list-python
 
         # Construct this parameter, layer by layer
-        for lkey in layer_keys: # Loop over layers
-            par[lkey] = default_par.get(lkey, default_val) # Get the value for this layer if available, else use the default for random
+        for lkey in par_layer_keys: # Loop over layers
+            par[lkey] = par_dict.get(lkey, default_val) # Get the value for this layer if available, else use the default for random
         pars[pkey] = par # Save this parameter to the dictionary
+
+        if pkey == 'beta_layer':
+            print('hisdoifsdoiudfodi', pkey, force, 'def', defaults[pkey], 'pars', pars.get(pkey, None), par_dict, 'final', par)
 
     return
 
