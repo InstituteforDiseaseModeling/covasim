@@ -14,7 +14,7 @@ from . import defaults as cvd # To set default types
 # What functions are externally visible -- note, this gets populated in each section below
 __all__ = []
 
-# Set dtypes
+# Set dtypes -- note, these cannot be changed after import since Numba functions are precompiled
 nbbool = nb.bool_
 if cvd.default_precision == 32:
     nbint   = nb.int32
