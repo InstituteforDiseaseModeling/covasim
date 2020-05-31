@@ -360,10 +360,9 @@ class Fit(sc.prettyobj):
             errormsg = 'Model fit cannot be calculated until results are run'
             raise RuntimeError(errormsg)
         self.sim_results = sc.objdict()
-        for key in ['t', 'date']:
+        for key in sim.result_keys() + ['t', 'date']:
             self.sim_results[key] = sim.results[key]
-        for key in sim.result_keys():
-            self.sim_results[key] = sim.results[key]
+        self.sim_npts = sim.npts # Number of time points in the sim
 
         # Copy other things
         self.sim_dates = sim.datevec.tolist()
@@ -466,6 +465,17 @@ class Fit(sc.prettyobj):
         for key in self.keys:
             if key in self.weights:
                 weight = self.weights[key]
+                if sc.isiterable(weight): # It's an array
+                    len_wt = len(weight)
+                    len_sim = self.sim_npts
+                    len_match = len(self.gofs[key])
+                    if len_wt == len_match: # If the weight already is the right length, do nothing
+                        pass
+                    elif len_wt == len_sim: # Most typical case: it's the length of the simulation, must trim
+                        weight = weight[self.inds.sim[key]] # Trim to matching indices
+                    else:
+                        errormsg = f'Could not map weight array of length {len_wt} onto simulation of length {len_sim} or data-model matches of length {len_match}'
+                        raise ValueError(errormsg)
             else:
                 weight = 1.0
             self.losses[key] = self.gofs[key]*weight
