@@ -247,13 +247,13 @@ def multinomial(probs, repeats): # No speed gain from Numba
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
-@nb.njit((nbint,), cache=True) # This hugely increases performance
+@nb.njit((nbfloat,), cache=True) # This hugely increases performance
 def poisson(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
 
-@nb.njit((nbint, nbint), cache=True) # This hugely increases performance
+@nb.njit((nbfloat, nbint), cache=True) # This hugely increases performance
 def n_poisson(rate, n):
     ''' A Poisson trial '''
     return np.random.poisson(rate, n)

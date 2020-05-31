@@ -143,7 +143,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
             try:
                 household_size = cvdata.get_household_size(location)
                 if 'h' in sim['contacts']:
-                    sim['contacts']['h'] = household_size
+                    sim['contacts']['h'] = household_size - 1 # Subtract 1 because e.g. each person in a 3-person household has 2 contacts
                 else:
                     keystr = ', '.join(list(sim['contacts'].keys()))
                     print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
@@ -209,7 +209,7 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     p_counts = {}
     for lkey in layer_keys:
         p_counts[lkey] = np.array((cvu.n_poisson(contacts[lkey], pop_size)/2.0).round(), dtype=cvd.default_int)  # Draw the number of Poisson contacts for this person
-        # p_counts[lkey] = np.array((cvu.sample(dist='lognormal_int', par1=contacts[lkey], par2=100, size=pop_size)/2.0).round(), dtype=cvd.default_int)
+        # p_counts[lkey] = np.array((cvu.sample(dist='neg_binomial', par1=contacts[lkey], par2=10, size=pop_size)/2.0).round(), dtype=cvd.default_int)
 
     # Make contacts
     count = 0
@@ -225,7 +225,7 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
 
 
 def make_microstructured_contacts(pop_size, contacts):
-    ''' Create microstructured contacts -- i.e. households, schools, etc. '''
+    ''' Create microstructured contacts -- i.e. for households '''
 
     # Preprocessing -- same as above
     pop_size = int(pop_size) # Number of people

@@ -113,7 +113,7 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
 
     Args:
         pars (dict): the parameters dictionary
-        layer_keys (list): the known keys of the population, if available
+        layer_keys (list): the layer keys of the population, if available
         force (bool): reset the pars even if they already exist
     '''
 
@@ -129,7 +129,7 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     # Specify defaults for hybrid (and SynthPops) -- household, school, work, and community layers (h, s, w, c)
     defaults_h = dict(
         beta_layer  = dict(h=7.0, s=0.7, w=0.7, c=0.14), # Per-population beta weights; relative
-        contacts    = dict(h=2.7, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
+        contacts    = dict(h=2.0, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
         dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
         iso_factor  = dict(h=0.3, s=0.0, w=0.0, c=0.1),  # Multiply beta by this factor for people in isolation
         quar_factor = dict(h=0.8, s=0.0, w=0.0, c=0.3),  # Multiply beta by this factor for people in quarantine
@@ -147,6 +147,8 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     for pkey in layer_pars:
         par = {} # Initialize this parameter
         default_val = defaults_r[pkey]['a'] # Get the default value for this parameter
+
+        # If forcing, we overwrite any existing parameter values
         if force:
             par_dict = defaults[pkey] # Just use defaults
         else:
@@ -162,9 +164,6 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
         for lkey in par_layer_keys: # Loop over layers
             par[lkey] = par_dict.get(lkey, default_val) # Get the value for this layer if available, else use the default for random
         pars[pkey] = par # Save this parameter to the dictionary
-
-        if pkey == 'beta_layer':
-            print('hisdoifsdoiudfodi', pkey, force, 'def', defaults[pkey], 'pars', pars.get(pkey, None), par_dict, 'final', par)
 
     return
 
