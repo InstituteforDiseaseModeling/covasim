@@ -1,4 +1,5 @@
 #!/bin/bash
-# Run development tests
+# Run
 
-pytest dev_test*.py
+echo 'WARNING: these tests are not actively maintained and many are likely to fail'
+pytest -v --workers auto --durations=0 *.py

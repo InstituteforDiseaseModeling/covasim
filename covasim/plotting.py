@@ -404,7 +404,7 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
 
     # Set defaults
     color     = [0.1,0.1,0.1] # Color for the age distribution
-    n_rows    = 3 # Number of rows of plots
+    n_rows    = 4 # Number of rows of plots
     offset    = 0.5 # For ensuring the full bars show up
     gridspace = 10 # Spacing of gridlines
     zorder    = 10 # So plots appear on top of gridlines
@@ -446,7 +446,7 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
     pl.yticks(np.arange(0, 101, gridspace)) # Percentage
     pl.grid(True)
     pl.xlabel('Age')
-    pl.ylabel('Cumulative proportion of population (%)')
+    pl.ylabel('Cumulative proportion (%)')
     pl.title(f'Cumulative age distribution (mean age: {people.age.mean():0.2f} years)')
 
     # Calculate contacts
@@ -462,12 +462,23 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
     # Plot contacts
     layer_colors = sc.gridcolors(n_layers)
     share_ax = None
-    for w in [0,1]: # Plot with unweighted/weighted contacts
+    for w,w_type in enumerate(['total', 'percapita', 'weighted']): # Plot contacts in different ways
         for i,lk in enumerate(lkeys):
-            if w==0:
+            if w_type == 'total':
                 weight = 1
-            else:
+                total_contacts = 2*len(people.contacts[lk]) # x2 since each contact is undirected
+                ylabel = 'Number of contacts'
+                title = f'Total contacts for layer "{lk}": {total_contacts:n}'
+            elif w_type == 'percapita':
+                weight = np.divide(1.0, age_counts, where=age_counts>0)
+                mean_contacts = 2*len(people.contacts[lk])/len(people)
+                ylabel = 'Per capita number of contacts'
+                title = f'Mean contacts for layer "{lk}": {mean_contacts:0.2f}'
+            elif w_type == 'weighted':
                 weight = people.pars['beta_layer'][lk]*people.pars['beta']
+                total_weight = np.round(weight*len(people.contacts[lk]))
+                ylabel = 'Weighted number of contacts'
+                title = f'Total weight for layer "{lk}": {total_weight:n}'
 
             ax = pl.subplot(n_rows, n_layers, n_layers*(w+1)+i+1, sharey=share_ax)
             pl.bar(bins, contact_counts[lk]*weight, color=layer_colors[i], width=width, zorder=zorder, alpha=alpha)
@@ -475,13 +486,10 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
             pl.xticks(np.arange(0, max_age+1, gridspace))
             pl.grid(True)
             pl.xlabel('Age')
-            if w==0:
-                pl.ylabel('Number of contacts')
-                pl.title(f'Total contacts for layer "{lk}": {len(people.contacts[lk]):n}')
-            else:
+            pl.ylabel(ylabel)
+            pl.title(title)
+            if w_type == 'weighted':
                 share_ax = ax # Update shared axis
-                pl.ylabel('Weighted number of contacts')
-                pl.title(f'Total weight for layer "{lk}": {np.round(weight*len(people.contacts[lk])):n}')
 
     return fig
 

@@ -176,7 +176,7 @@ class age_histogram(Analyzer):
 
         # Handle states
         if self.states is None:
-            self.states = ['exposed', 'tested', 'diagnosed', 'dead']
+            self.states = ['exposed', 'dead', 'tested', 'diagnosed']
         self.states = sc.promotetolist(self.states)
         for s,state in enumerate(self.states):
             self.states[s] = state.replace('date_', '') # Allow keys starting with date_ as input, but strip it off here
@@ -360,7 +360,8 @@ class Fit(sc.prettyobj):
             errormsg = 'Model fit cannot be calculated until results are run'
             raise RuntimeError(errormsg)
         self.sim_results = sc.objdict()
-        self.sim_results.t = sim.results['t']
+        for key in ['t', 'date']:
+            self.sim_results[key] = sim.results[key]
         for key in sim.result_keys():
             self.sim_results[key] = sim.results[key]
 
@@ -520,16 +521,19 @@ class Fit(sc.prettyobj):
         bot.b = np.zeros(self.losses[0].shape)
         total = 0
         for k,key in enumerate(keys):
-            dates = self.inds.sim[key] # self.date_matches[key]
+            days = self.inds.sim[key]
+            dates = self.sim_results['date'][days]
 
             for i,ax in enumerate([main_ax1, main_ax2]):
 
                 if i == 0:
                     data = self.losses[key]
                     total += self.losses[key].sum()
+                    ylabel = 'Daily mismatch'
                     title = f'Daily total mismatch'
                 else:
                     data = np.cumsum(self.losses[key])
+                    ylabel = 'Cumulative mismatch'
                     title = f'Cumulative mismatch: {total:0.3f}'
 
                 ax.bar(dates, data, width=width, bottom=bot[i], color=colors[k], label=f'{key}')
@@ -540,28 +544,28 @@ class Fit(sc.prettyobj):
                     bot[i] += np.cumsum(self.losses[key])
 
                 if k == n_keys-1:
-                    ax.set_ylabel('Time series')
-                    ax.set_xlabel('Day')
+                    ax.set_xlabel('Date')
+                    ax.set_ylabel(ylabel)
                     ax.set_title(title)
                     ax.legend()
 
             pl.subplot(n_rows, n_keys, k+1*n_keys+1)
-            pl.plot(dates, self.pair[key].data, c='k', label='Data', **plot_args)
-            pl.plot(dates, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
+            pl.plot(days, self.pair[key].data, c='k', label='Data', **plot_args)
+            pl.plot(days, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
             pl.title(key)
             if k == 0:
                 pl.ylabel('Time series (counts)')
                 pl.legend()
 
             pl.subplot(n_rows, n_keys, k+2*n_keys+1)
-            pl.bar(dates, self.diffs[key], width=width, color=colors[k], label='Difference')
+            pl.bar(days, self.diffs[key], width=width, color=colors[k], label='Difference')
             pl.axhline(0, c='k')
             if k == 0:
                 pl.ylabel('Differences (counts)')
                 pl.legend()
 
             loss_ax = pl.subplot(n_rows, n_keys, k+3*n_keys+1, sharey=loss_ax)
-            pl.bar(dates, self.losses[key], width=width, color=colors[k], label='Losses')
+            pl.bar(days, self.losses[key], width=width, color=colors[k], label='Losses')
             pl.xlabel('Day')
             pl.title(f'Total loss: {self.losses[key].sum():0.3f}')
             if k == 0:
