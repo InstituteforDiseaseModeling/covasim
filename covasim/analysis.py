@@ -605,6 +605,7 @@ class TransTree(sc.prettyobj):
 
         # Pull out the people and some of the sim results
         people = sim.people
+        self.sim_start = sim['start_day'] # Used for filtering later
         self.sim_results = {}
         self.sim_results['t'] = sim.results['t']
         self.sim_results['cum_infections'] = sim.results['cum_infections'].values
@@ -617,19 +618,21 @@ class TransTree(sc.prettyobj):
         # Parse into sources and targets
         self.sources = [None for i in range(self.pop_size)]
         self.targets = [[]   for i in range(self.pop_size)]
+        self.source_dates = [None for i in range(self.pop_size)]
+        self.target_dates = [[]   for i in range(self.pop_size)]
 
-        self.n_targets = np.nan+np.zeros(self.pop_size)
         for entry in self.infection_log:
             source = entry['source']
             target = entry['target']
+            date   = entry['date']
             if source:
                 self.sources[target] = source # Each target has at most one source
                 self.targets[source].append(target) # Each source can have multiple targets
-        for i in range(self.pop_size):
-            if self.sources[i] is not None:
-                self.n_targets[i] = len(self.targets[i])
-        self.infected_inds = sc.findinds(~np.isnan(self.n_targets))
-        self.n_targets = self.n_targets[self.infected_inds]
+                self.source_dates[target] = date # Each target has at most one source
+                self.target_dates[source].append(date) # Each source can have multiple targets
+
+        # Count the number of targets each person has
+        self.n_targets = self.count_targets()
 
         # Include the detailed transmission tree as well
         self.detailed = self.make_detailed(people)
@@ -680,9 +683,46 @@ class TransTree(sc.prettyobj):
         return output
 
 
+    def day(self, day=None, which=None):
+        ''' Convenience function for converting an input to an integer day '''
+        if day is not None:
+            day = cvm.day(day, start_day=self.sim_start)
+        elif which == 'start':
+            day = 0
+        elif which == 'end':
+            day = self.n_days
+        return day
+
+
+    def count_targets(self, start_day=None, end_day=None):
+        '''
+        Count the number of targets each infected person has. If start and/or end
+        days are given, it will only count the targets of people who got infected
+        between those dates (it does not, however, filter on the date the target
+        got infected).
+
+        Args:
+            start_day (int/str): the day on which to start counting people who got infected
+            end_day (int/str): the day on which to stop counting people who got infected
+        '''
+
+        # Handle start and end days
+        start_day = self.day(start_day, which='start')
+        end_day   = self.day(end_day,   which='end')
+
+        n_targets = np.nan+np.zeros(self.pop_size)
+        for i in range(self.pop_size):
+            if self.sources[i] is not None:
+                if self.source_dates[i] >= start_day and self.source_dates[i] <= end_day:
+                    n_targets[i] = len(self.targets[i])
+        n_target_inds = sc.findinds(~np.isnan(n_targets))
+        n_targets = n_targets[n_target_inds]
+        return n_targets
+
+
     def make_detailed(self, people, reset=False):
         ''' Construct a detailed transmission tree, with additional information for each person '''
-        # Reset to look like the line list, but with more detail
+
         detailed = [None]*self.pop_size
 
         for transdict in self.infection_log:
@@ -733,10 +773,14 @@ class TransTree(sc.prettyobj):
         time to transmit.
         """
         n_infected = []
-        for i, node in self.graph.nodes.items():
-            if i is None or np.isnan(node['date_exposed']) or (recovered_only and node['date_recovered']>self.n_days):
-                continue
-            n_infected.append(self.graph.out_degree(i))
+        try:
+            for i, node in self.graph.nodes.items():
+                if i is None or np.isnan(node['date_exposed']) or (recovered_only and node['date_recovered']>self.n_days):
+                    continue
+                n_infected.append(self.graph.out_degree(i))
+        except Exception as E:
+            errormsg = f'Unable to compute r0 ({str(E)}): you may need to reinitialize the transmission tree with to_networkx=True'
+            raise RuntimeError(errormsg)
         return np.mean(n_infected)
 
 
@@ -945,22 +989,29 @@ class TransTree(sc.prettyobj):
         return fig
 
 
-    def plot_histogram(self, bins=None, width=0.8, fig_args=None, font_size=18):
+    def plot_histogram(self, start_day=None, end_day=None, bins=None, width=0.8, fig_args=None, font_size=18):
         '''
         Plots a histogram of the number of transmissions.
 
         Args:
+            start_day (int/str): the day on which to start counting people who got infected
+            end_day (int/str): the day on which to stop counting people who got infected
             bins (list): bin edges to use for the histogram
             width (float): width of bars
             fig_args (dict): passed to pl.figure()
             font_size (float): size of font
         '''
+
+        # Process targets
+        n_targets = self.count_targets(start_day, end_day)
+
+        # Handle bins
         if bins is None:
-            max_infections = self.n_targets.max()
+            max_infections = n_targets.max()
             bins = np.arange(0, max_infections+2)
 
         # Analysis
-        counts = np.histogram(self.n_targets, bins)[0]
+        counts = np.histogram(n_targets, bins)[0]
 
         bins = bins[:-1] # Remove last bin since it's an edge
         total_counts = counts*bins
@@ -968,8 +1019,8 @@ class TransTree(sc.prettyobj):
         # total_counts = total_counts*100/total_counts.sum()
         n_bins = len(bins)
         n_trans = sum(total_counts)
-        index = np.linspace(0, 100, len(self.n_targets))
-        sorted_arr = np.sort(self.n_targets)
+        index = np.linspace(0, 100, len(n_targets))
+        sorted_arr = np.sort(n_targets)
         sorted_sum = np.cumsum(sorted_arr)
         sorted_sum = sorted_sum/sorted_sum.max()*100
         change_inds = sc.findinds(np.diff(sorted_arr) != 0)
@@ -998,13 +1049,12 @@ class TransTree(sc.prettyobj):
         pl.subplot(2,2,2)
         total = 0
         for i in range(n_bins):
-            new = total_counts[i]/n_trans*100
-            pl.bar(bins[i:], new, width=width, bottom=total, facecolor=colors[i])
-            total += new
+            pl.bar(bins[i:], total_counts[i], width=width, bottom=total, facecolor=colors[i])
+            total += total_counts[i]
         pl.xticks(ticks=bins)
         pl.xlabel('Number of transmissions per person')
-        pl.ylabel('Proportion of infections caused (%)')
-        pl.title('Proportion of transmissions, by number of transmissions')
+        pl.ylabel('Number of infections caused')
+        pl.title('Number of transmissions, by transmissions per person')
 
         pl.subplot(2,2,4)
         pl.plot(index, sorted_sum, lw=3, c='k', alpha=0.5)
@@ -1014,13 +1064,18 @@ class TransTree(sc.prettyobj):
         pl.ylabel('Proportion of infections caused (%)')
         pl.legend()
         pl.ylim([0, 100])
+        pl.grid(True)
         pl.title('Proportion of transmissions, by proportion of population')
 
-        pl.axes([0.25, 0.65, 0.2, 0.2])
-        berry = [0.8,0.1,0.2]
+        pl.axes([0.30, 0.65, 0.15, 0.2])
+        berry      = [0.8, 0.1, 0.2]
+        dirty_snow = [0.9, 0.9, 0.9]
+        start_day  = self.day(start_day, which='start')
+        end_day    = self.day(end_day, which='end')
+        pl.axvspan(start_day, end_day, facecolor=dirty_snow)
         pl.plot(self.sim_results['t'], self.sim_results['cum_infections'], lw=2, c=berry)
         pl.xlabel('Day')
-        pl.ylabel('Cumulative infections')
+        pl.ylabel('Cumulatived infections')
 
 
         return fig
