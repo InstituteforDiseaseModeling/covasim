@@ -989,7 +989,7 @@ class TransTree(sc.prettyobj):
         return fig
 
 
-    def plot_histogram(self, start_day=None, end_day=None, bins=None, width=0.8, fig_args=None, font_size=18):
+    def plot_histograms(self, start_day=None, end_day=None, bins=None, width=0.8, fig_args=None, font_size=18):
         '''
         Plots a histogram of the number of transmissions.
 

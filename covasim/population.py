@@ -182,17 +182,15 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     return popdict
 
 
-def make_random_contacts(pop_size, contacts, overshoot=1.2):
+def make_random_contacts(pop_size, contacts, overshoot=1.2, dispersion=None):
     '''
-    Make random static contacts. To use overdispersion in the number of contacts,
-    replace p_counts with something like::
-
-        p_counts[lkey] = np.array((cvu.n_neg_binomial(rate=contacts[lkey], dispersion=0.5, n=pop_size)/2.0).round(), dtype=cvd.default_int)
+    Make random static contacts.
 
     Args:
         pop_size (int): number of agents to create contacts between (N)
         contacts (dict): a dictionary with one entry per layer describing the average number of contacts per person for that layer
         overshoot (float): to avoid needing to take multiple Poisson draws
+        dispersion (float): if not None, use a negative binomial distribution with this dispersion parameter instead of Poisson to make the contacts
 
     Returns:
         contacts_list (list): a list of length N, where each entry is a dictionary by layer, and each dictionary entry is the UIDs of the agent's contacts
@@ -211,7 +209,11 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     all_contacts    = cvu.choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
     p_counts = {}
     for lkey in layer_keys:
-        p_counts[lkey] = np.array((cvu.n_poisson(contacts[lkey], pop_size)/2.0).round(), dtype=cvd.default_int)  # Draw the number of Poisson contacts for this person
+        if dispersion is None:
+            p_count = cvu.n_poisson(contacts[lkey], pop_size) # Draw the number of Poisson contacts for this person
+        else:
+            p_count = cvu.n_neg_binomial(rate=contacts[lkey], dispersion=dispersion, n=pop_size) # Or, from a negative binomial
+        p_counts[lkey] = np.array((p_count/2.0).round(), dtype=cvd.default_int)
 
     # Make contacts
     count = 0

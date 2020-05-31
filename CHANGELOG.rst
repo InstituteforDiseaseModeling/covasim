@@ -14,6 +14,12 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.4.4 (2020-05-31)
+--------------------------
+- Improved transmission tree histogram plotting, including allowing start and end days, and renamed ``plot_histograms()``.
+- Added functions for negative binomial distributions, allowing easier exploration of overdispersion effects: see ``cv.make_random_contacts()``, and, most importantly, ``pars['beta_dist']``.
+
+
 Version 1.4.3 (2020-05-30)
 --------------------------
 - Added ``swab_delay`` to ``cv.test_prob()``, which behaves the same way as for ``cv.test_num()`` (to set the delay between experiencing symptoms and receiving a test).
