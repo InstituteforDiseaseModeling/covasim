@@ -1,5 +1,4 @@
 #!/bin/bash
-# Run
+# Run all dev tests. Note: these are not guaranteed to work.
 
-echo 'WARNING: these tests are not actively maintained and many are likely to fail'
-pytest -v --workers auto --durations=0 *.py
+pytest test_all.py -v --durations=0 --workers=auto
