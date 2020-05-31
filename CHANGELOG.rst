@@ -14,6 +14,12 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.4.3 (2020-05-30)
+--------------------------
+- Added ``swab_delay`` to ``cv.test_prob()``, which behaves the same way as for ``cv.test_num()`` (to set the delay between experiencing symptoms and receiving a test).
+- Allowed weights for a ``Fit`` to be specified as a time series.
+
+
 Version 1.4.2 (2020-05-30)
 --------------------------
 - Renamed ``cv.check_save_info()`` to ``cv.check_save_version()``, and allowed the ``die`` argument to be passed.

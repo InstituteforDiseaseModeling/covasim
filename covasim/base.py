@@ -77,7 +77,7 @@ class Result(object):
         name (str): name of this result, e.g. new_infections
         npts (int): if values is None, precreate it to be of this length
         scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
-        color (str or array): default color for plotting (hex or RGB notation)
+        color (str/arr): default color for plotting (hex or RGB notation)
 
     **Example**::
 
@@ -111,10 +111,16 @@ class Result(object):
         return output
 
     def __getitem__(self, *args, **kwargs):
+        ''' To allow e.g. result[5] instead of result.values[5] '''
         return self.values.__getitem__(*args, **kwargs)
 
     def __setitem__(self, *args, **kwargs):
+        ''' To allow e.g. result[:] = 1 instead of result.values[:] = 1 '''
         return self.values.__setitem__(*args, **kwargs)
+
+    def __len__(self):
+        ''' To allow len(result) instead of len(result.values) '''
+        return len(self.values)
 
     @property
     def npts(self):
