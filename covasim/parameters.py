@@ -50,7 +50,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
     pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta_dist']   = {'dist':'neg_binomial','par1':0.84, 'par2':0.3} # Distribution to draw individual level transmissibility; see https://wellcomeopenresearch.org/articles/5-67
+    pars['beta_dist']   = {'dist':'lognormal','par1':0.84, 'par2':0.3} # Distribution to draw individual level transmissibility; see https://wellcomeopenresearch.org/articles/5-67
     pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
     # Efficacy of protection measures
