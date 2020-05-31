@@ -135,7 +135,8 @@ def sample(dist=None, par1=None, par2=None, size=None):
         'normal_pos',
         'normal_int',
         'lognormal_int',
-        'neg_binomial'
+        'poisson',
+        'neg_binomial',
         ]
 
     # Compute distribution parameters and draw samples
@@ -144,7 +145,8 @@ def sample(dist=None, par1=None, par2=None, size=None):
     elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
     elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
     elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size)))
-    elif dist == 'neg_binomial':  samples = np.random.negative_binomial(n=par1, p=par2, size=size)
+    elif dist == 'poisson':       samples = n_poisson(rate=par1, size=size) # Use Numba version below
+    elif dist == 'neg_binomial':  samples = n_neg_binomial(rate=par1, dispersion=par2, size=size) # Use Numba version below
     elif dist in ['lognormal', 'lognormal_int']:
         if par1>0:
             mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
@@ -225,7 +227,7 @@ def set_seed(seed=None):
 #%% Probabilities -- mostly not jitted since performance gain is minimal
 
 __all__ += ['n_binomial', 'binomial_arr', 'binomial_filter', 'multinomial',
-            'poisson', 'n_poisson', 'choose', 'choose_r', 'choose_w']
+            'poisson', 'n_poisson', 'n_neg_binomial', 'choose', 'choose_r', 'choose_w']
 
 def n_binomial(prob, n):
     ''' Perform n binomial (Bernolli) trials -- return boolean array '''
@@ -257,6 +259,14 @@ def poisson(rate):
 def n_poisson(rate, n):
     ''' A Poisson trial '''
     return np.random.poisson(rate, n)
+
+
+@nb.njit((nbfloat, nbfloat, nbint), cache=True)
+def n_neg_binomial(rate, dispersion, n):
+    ''' A negative binomial trial; with dispersion = ∞, converges to Poisson '''
+    nbn_n = dispersion
+    nbn_p = dispersion/(rate + dispersion)
+    return np.random.negative_binomial(n=nbn_n, p=nbn_p, size=n)
 
 
 @nb.njit((nbint, nbint), cache=True) # This hugely increases performance
