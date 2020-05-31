@@ -446,7 +446,7 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
     pl.yticks(np.arange(0, 101, gridspace)) # Percentage
     pl.grid(True)
     pl.xlabel('Age')
-    pl.ylabel('Cumulative proportion of population (%)')
+    pl.ylabel('Cumulative proportion (%)')
     pl.title(f'Cumulative age distribution (mean age: {people.age.mean():0.2f} years)')
 
     # Calculate contacts
