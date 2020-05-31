@@ -98,7 +98,7 @@ def test_base():
     transtree = sim.make_transtree()
     transtree.plot()
     transtree.animate(animate=False)
-    transtree.plot_histogram()
+    transtree.plot_histograms()
 
     # Tidy up
     remove_files(json_path, sim_path)
