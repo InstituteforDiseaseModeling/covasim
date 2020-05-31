@@ -25,6 +25,12 @@ Version 1.4.2 (2020-05-30)
 - Added an option for parallel execution of Numba functions (see ``utils.py``); although this significantly improves performance (20-30%), it results in non-deterministic results, so is disabled by default.
 - Changed ``People`` to use its own contact layer keys rather than those taken from the parameters.
 - Improved plotting and corrected minor bugs in age histogram and model fit analyzers.
+- *Regression information*:
+
+   - Replace ``cv.check_save_info()`` with ``cv.check_save_version()``.
+   - If you used a non-integer number of contacts, replace it with the integer version (e.g., change 2.7 to 2.0).
+   - If you loaded a household size distribution (e.g. ``cv.Sim(location='nigeria')``), add one to the number of household contacts (but then round down to the nearest integer).
+
 - *GitHub info*: PR `577 <https://github.com/amath-idm/covasim/pull/577>`__, previous head ``a828d29``
 
 
