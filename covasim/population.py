@@ -159,7 +159,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     age_data_range = age_data_max - age_data_min
     age_data_prob  = age_data[:,2]
     age_data_prob /= age_data_prob.sum() # Ensure it sums to 1
-    age_bins       = cvu.multinomial(np.array(age_data_prob, dtype=cvd.default_float), cvd.default_int(pop_size)) # Choose age bins
+    age_bins       = cvu.n_multinomial(age_data_prob, pop_size) # Choose age bins
     ages           = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(pop_size) # Uniformly distribute within this age bin
 
     # Store output
@@ -184,7 +184,10 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
 
 def make_random_contacts(pop_size, contacts, overshoot=1.2):
     '''
-    Make random static contacts.
+    Make random static contacts. To use overdispersion in the number of contacts,
+    replace p_counts with something like::
+
+        p_counts[lkey] = np.array((cvu.n_neg_binomial(rate=contacts[lkey], dispersion=0.5, n=pop_size)/2.0).round(), dtype=cvd.default_int)
 
     Args:
         pop_size (int): number of agents to create contacts between (N)
@@ -209,7 +212,6 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     p_counts = {}
     for lkey in layer_keys:
         p_counts[lkey] = np.array((cvu.n_poisson(contacts[lkey], pop_size)/2.0).round(), dtype=cvd.default_int)  # Draw the number of Poisson contacts for this person
-        # p_counts[lkey] = np.array((cvu.n_neg_binomial(rate=contacts[lkey], dispersion=0.5, n=pop_size)/2.0).round(), dtype=cvd.default_int)
 
     # Make contacts
     count = 0

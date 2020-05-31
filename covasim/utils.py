@@ -145,8 +145,8 @@ def sample(dist=None, par1=None, par2=None, size=None):
     elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
     elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
     elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size)))
-    elif dist == 'poisson':       samples = n_poisson(rate=par1, n=size) # Use Numba version below
-    elif dist == 'neg_binomial':  samples = n_neg_binomial(rate=par1, dispersion=par2, n=size) # Use Numba version below
+    elif dist == 'poisson':       samples = n_poisson(rate=par1, n=size) # Use Numba version below for speed
+    elif dist == 'neg_binomial':  samples = n_neg_binomial(rate=par1, dispersion=par2, n=size) # Use custom version below
     elif dist in ['lognormal', 'lognormal_int']:
         if par1>0:
             mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
@@ -226,44 +226,125 @@ def set_seed(seed=None):
 
 #%% Probabilities -- mostly not jitted since performance gain is minimal
 
-__all__ += ['n_binomial', 'binomial_arr', 'binomial_filter', 'multinomial',
+__all__ += ['n_binomial', 'binomial_filter', 'binomial_arr', 'n_multinomial',
             'poisson', 'n_poisson', 'n_neg_binomial', 'choose', 'choose_r', 'choose_w']
 
 def n_binomial(prob, n):
-    ''' Perform n binomial (Bernolli) trials -- return boolean array '''
+    '''
+    Perform multiple binomial (Bernolli) trials
+
+    Args:
+        prob (float): probability of each trial succeeding
+        n (int): number of trials (size of array)
+
+    Returns:
+        Boolean array of which trials succeeded
+
+    **Example**::
+
+        outcomes = cv.n_binomial(0.5, 100) # Perform 100 coin-flips
+    '''
     return np.random.random(n) < prob
 
 
-def binomial_arr(prob_arr):
-    ''' Binomial (Bernoulli) trials each with different probabilities -- return boolean array '''
-    return np.random.random(len(prob_arr)) < prob_arr
-
-
 def binomial_filter(prob, arr): # No speed gain from Numba
-    ''' Binomial "filter" -- return entries that passed '''
+    '''
+    Binomial "filter" -- the same as n_binomial, except return
+    the elements of arr that succeeded.
+
+    Args:
+        prob (float): probability of each trial succeeding
+        arr (array): the array to be filtered
+
+    Returns:
+        Subset of array for which trials succeeded
+
+    **Example**::
+
+        inds = cv.binomial_filter(0.5, np.arange(20)**2) # Return which values out of the (arbitrary) array passed the coin flip
+    '''
     return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]
 
 
-def multinomial(probs, repeats): # No speed gain from Numba
-    ''' A multinomial trial '''
-    return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
+def binomial_arr(prob_arr):
+    '''
+    Binomial (Bernoulli) trials each with different probabilities.
+
+    Args:
+        prob_arr (array): array of probabilities
+
+    Returns:
+         Boolean array of which trials on the input array succeeded
+
+    **Example**::
+
+        outcomes = cv.binomial_arr([0.1, 0.1, 0.2, 0.2, 0.8, 0.8]) # Perform 6 trials with different probabilities
+    '''
+    return np.random.random(len(prob_arr)) < prob_arr
+
+
+def n_multinomial(probs, n): # No speed gain from Numba
+    '''
+    An array of multinomial trials.
+
+    Args:
+        probs (array): probability of each outcome, which usually should sum to 1
+        n (int): number of trials
+
+    Returns:
+        Array of integer outcomes
+
+    **Example**::
+
+        outcomes = cv.multinomial(np.ones(6)/6.0, 50)+1 # Return 50 die-rolls
+    '''
+    return np.searchsorted(np.cumsum(probs), np.random.random(n))
 
 
 @nb.njit((nbfloat,), cache=True) # This hugely increases performance
 def poisson(rate):
-    ''' A Poisson trial '''
+    '''
+    A Poisson trial.
+
+    Args:
+        rate (float): the rate of the Poisson process
+
+    **Example**::
+
+        outcome = cv.poisson(100) # Single Poisson trial with mean 100
+    '''
     return np.random.poisson(rate, 1)[0]
 
 
-@nb.njit((nbfloat, nbint), cache=True) # This hugely increases performance
+@nb.njit((nbfloat, nbint), cache=True) # Numba hugely increases performance
 def n_poisson(rate, n):
-    ''' A Poisson trial '''
+    '''
+    An array of Poisson trials.
+
+    Args:
+        rate (float): the rate of the Poisson process (mean)
+        n (int): number of trials
+
+    **Example**::
+
+        outcomes = cv.n_poisson(100, 20) # 20 poisson trials with mean 100
+    '''
     return np.random.poisson(rate, n)
 
 
-# @nb.njit((nbfloat, nbfloat, nbint), cache=True)
-def n_neg_binomial(rate, dispersion, n):
-    ''' A negative binomial trial; with dispersion = ∞, converges to Poisson '''
+def n_neg_binomial(rate, dispersion, n): # Numba not used due to incompatible implementation
+    '''
+    An array of negative binomial trials; with dispersion = ∞, converges to Poisson.
+
+    Args:
+        rate (float): the rate of the process (mean, same as Poisson)
+        dispersion (float): amount of dispersion: 0 = infinite, 1 = std is equal to mean, ∞ = Poisson
+        n (int): number of trials
+
+    **Example**::
+
+        outcomes = cv.n_neg_binomial(100, 1, 20) # 20 negative binomial trials with mean 100 and dispersion equal to mean
+    '''
     nbn_n = dispersion
     nbn_p = dispersion/(rate + dispersion)
     return np.random.negative_binomial(n=nbn_n, p=nbn_p, size=n)
@@ -278,10 +359,9 @@ def choose(max_n, n):
         max_n (int): the total number of items
         n (int): the number of items to choose
 
-    **Example**
-    ::
+    **Example**::
 
-        choose(5, 2) will choose 2 out of 5 people with equal probability.
+        choices = cv.choose(5, 2) # choose 2 out of 5 people with equal probability (without repeats)
     '''
     return np.random.choice(max_n, n, replace=False)
 
@@ -297,7 +377,7 @@ def choose_r(max_n, n):
 
     **Example**::
 
-        ``choose(5, 2)`` will choose 2 out of 5 people with equal probability.
+        choices = cv.choose_r(5, 10) # choose 10 out of 5 people with equal probability (with repeats)
     '''
     return np.random.choice(max_n, n, replace=True)
 
@@ -313,7 +393,7 @@ def choose_w(probs, n, unique=True):
 
     **Example**::
 
-        ``choose_w([0.2, 0.5, 0.1, 0.1, 0.1], 2)`` will choose 2 out of 5 people with nonequal probability.
+        choices = cv.choose_w([0.2, 0.5, 0.1, 0.1, 0.1], 2) # choose 2 out of 5 people with nonequal probability.
     '''
     probs = np.array(probs)
     n_choices = len(probs)

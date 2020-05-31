@@ -1064,7 +1064,7 @@ class TransTree(sc.prettyobj):
         label_inds = np.linspace(0, n_change_inds, max_labels).round() # Don't allow more than this many labels
         for i in range(n_change_inds):
             if i in label_inds: # Don't plot more than this many labels
-                label = f'Transmitted to {i+1} people'
+                label = f'Transmitted to {bins[i+1]:n} people'
             else:
                 label = None
             pl.scatter([index[change_inds[i]]], [sorted_sum[change_inds[i]]], s=150, zorder=10, c=[colors[i]], label=label)

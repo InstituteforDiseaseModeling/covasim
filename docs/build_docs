@@ -1,0 +1,6 @@
+#!/bin/bash
+
+echo 'Building docs...'
+make html
+echo 'Docs index:'
+echo "`pwd`/_build/html/index.html"
