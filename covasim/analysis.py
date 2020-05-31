@@ -527,9 +527,11 @@ class Fit(sc.prettyobj):
                 if i == 0:
                     data = self.losses[key]
                     total += self.losses[key].sum()
+                    ylabel = 'Daily mismatch'
                     title = f'Daily total mismatch'
                 else:
                     data = np.cumsum(self.losses[key])
+                    ylabel = 'Cumulative mismatch'
                     title = f'Cumulative mismatch: {total:0.3f}'
 
                 ax.bar(dates, data, width=width, bottom=bot[i], color=colors[k], label=f'{key}')
@@ -540,8 +542,8 @@ class Fit(sc.prettyobj):
                     bot[i] += np.cumsum(self.losses[key])
 
                 if k == n_keys-1:
-                    ax.set_ylabel('Time series')
                     ax.set_xlabel('Day')
+                    ax.set_ylabel(ylabel)
                     ax.set_title(title)
                     ax.legend()
 
