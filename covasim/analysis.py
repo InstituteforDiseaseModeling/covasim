@@ -1018,7 +1018,6 @@ class TransTree(sc.prettyobj):
         # counts = counts*100/counts.sum()
         # total_counts = total_counts*100/total_counts.sum()
         n_bins = len(bins)
-        n_trans = sum(total_counts)
         index = np.linspace(0, 100, len(n_targets))
         sorted_arr = np.sort(n_targets)
         sorted_sum = np.cumsum(sorted_arr)
@@ -1058,8 +1057,14 @@ class TransTree(sc.prettyobj):
 
         pl.subplot(2,2,4)
         pl.plot(index, sorted_sum, lw=3, c='k', alpha=0.5)
-        for i in range(len(change_inds)):
-            pl.scatter([index[change_inds[i]]], [sorted_sum[change_inds[i]]], s=150, zorder=10, c=[colors[i]], label=f'Transmitted to {i+1} people')
+        n_change_inds = len(change_inds)
+        label_inds = np.linspace(0, n_change_inds, 15).round() # Don't allow more than this many labels
+        for i in range(n_change_inds):
+            if i in label_inds: # Don't plot more than this many labels
+                label = f'Transmitted to {i+1} people'
+            else:
+                label = None
+            pl.scatter([index[change_inds[i]]], [sorted_sum[change_inds[i]]], s=150, zorder=10, c=[colors[i]], label=label)
         pl.xlabel('Proportion of population, ordered by the number of people they infected (%)')
         pl.ylabel('Proportion of infections caused (%)')
         pl.legend()

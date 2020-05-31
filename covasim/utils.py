@@ -145,8 +145,8 @@ def sample(dist=None, par1=None, par2=None, size=None):
     elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
     elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
     elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size)))
-    elif dist == 'poisson':       samples = n_poisson(rate=par1, size=size) # Use Numba version below
-    elif dist == 'neg_binomial':  samples = n_neg_binomial(rate=par1, dispersion=par2, size=size) # Use Numba version below
+    elif dist == 'poisson':       samples = n_poisson(rate=par1, n=size) # Use Numba version below
+    elif dist == 'neg_binomial':  samples = n_neg_binomial(rate=par1, dispersion=par2, n=size) # Use Numba version below
     elif dist in ['lognormal', 'lognormal_int']:
         if par1>0:
             mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
@@ -261,7 +261,7 @@ def n_poisson(rate, n):
     return np.random.poisson(rate, n)
 
 
-@nb.njit((nbfloat, nbfloat, nbint), cache=True)
+# @nb.njit((nbfloat, nbfloat, nbint), cache=True)
 def n_neg_binomial(rate, dispersion, n):
     ''' A negative binomial trial; with dispersion = ∞, converges to Poisson '''
     nbn_n = dispersion
