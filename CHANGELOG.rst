@@ -28,8 +28,8 @@ Version 1.4.2 (2020-05-30)
 - *Regression information*:
 
   - Replace ``cv.check_save_info()`` with ``cv.check_save_version()``.
-  - If you used a non-integer number of contacts, replace it with the integer version (e.g., change 2.7 to 2.0).
-  - If you loaded a household size distribution (e.g. ``cv.Sim(location='nigeria')``), add one to the number of household contacts (but then round down to the nearest integer).
+  - If you used a non-integer number of contacts, round down to the nearest integer (e.g., change 2.7 to 2.0).
+  - If you loaded a household size distribution (e.g. ``cv.Sim(location='nigeria')``), add one to the number of household contacts (but then round down).
 
 - *GitHub info*: PR `577 <https://github.com/amath-idm/covasim/pull/577>`__, previous head ``a828d29``
 
