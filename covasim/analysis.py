@@ -1083,7 +1083,7 @@ class TransTree(sc.prettyobj):
         pl.axvspan(start_day, end_day, facecolor=dirty_snow)
         pl.plot(self.sim_results['t'], self.sim_results['cum_infections'], lw=2, c=berry)
         pl.xlabel('Day')
-        pl.ylabel('Cumulatived infections')
+        pl.ylabel('Cumulative infections')
 
 
         return fig
