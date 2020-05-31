@@ -14,6 +14,20 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.4.2 (2020-05-30)
+--------------------------
+- Renamed ``cv.check_save_info()`` to ``cv.check_save_version()``, and allowed the ``die`` argument to be passed.
+- Allowed ``verbose`` to be a float instead of an int; if between 0 and 1, during a model run, it will print out once every ``1/verbose`` days, e.g. ``verbose = 0.2`` will print an update once every 5 days.
+- Updated the default number of household contacts from 2.7 to 2.0 for ``hybrid``, and changed ``cv.poisson()`` to no longer cast to an integer. These two changes cancel out, so default behavior has not changed.
+- Updated the calculation of contacts from household sizes (now uses household size - 1, to remove self-connections).
+- Added ``cv.MultiSim.load()``.
+- Added Numba caching to ``compute_viral_load()``, reducing overall Covasim load time by roughly 50%.
+- Added an option for parallel execution of Numba functions (see ``utils.py``); although this significantly improves performance (20-30%), it results in non-deterministic results, so is disabled by default.
+- Changed ``People`` to use its own contact layer keys rather than those taken from the parameters.
+- Improved plotting and corrected minor bugs in age histogram and model fit analyzers.
+- *GitHub info*: PR `577 <https://github.com/amath-idm/covasim/pull/577>`__, previous head ``a828d29``
+
+
 Version 1.4.1 (2020-05-29)
 --------------------------
 - Added ``sim.people.plot()``, which shows the age distribution, and distribution of contacts by age and layer.
