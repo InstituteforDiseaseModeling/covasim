@@ -6,8 +6,9 @@ Numerical utilities for running Covasim
 
 import numba  as nb # For faster computations
 import numpy  as np # For numerics
-import scipy.stats as sps
-from . import defaults as cvd
+import random # Used only for resetting the seed
+import scipy.stats as sps # For distributions
+from . import defaults as cvd # To set default types
 
 
 # What functions are externally visible -- note, this gets populated in each section below
@@ -24,10 +25,13 @@ elif cvd.default_precision == 64:
 else:
     raise NotImplementedError
 
+# Specify whether to allow parallel Numba calculation -- about 20% faster, but the random number stream becomes nondeterministic
+parallel = False
+
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat))
+@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat), cache=True, parallel=parallel)
 def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,    load_ratio,    high_cap):
     '''
     Calculate relative transmissibility for time t. Includes time varying
@@ -70,7 +74,7 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True)
+@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True, parallel=parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor):
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
@@ -81,7 +85,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     return rel_trans, rel_sus
 
 
-@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True)
+@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=parallel)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
@@ -189,7 +193,14 @@ def get_pdf(dist=None, par1=None, par2=None):
 
 
 def set_seed(seed=None):
-    ''' Reset the random seed -- complicated because of Numba '''
+    '''
+    Reset the random seed -- complicated because of Numba, which requires special
+    syntax to reset the seed. This function also resets Python's built-in random
+    number generated.
+
+    Args:
+        seed (int): the random seed
+    '''
 
     @nb.njit((nbint,), cache=True)
     def set_seed_numba(seed):
@@ -206,6 +217,7 @@ def set_seed(seed=None):
     if seed is None: # Numba can't accept a None seed, so use our just-reinitialized Numpy stream to generate one
         seed = np.random.randint(1e9)
     set_seed_numba(seed)
+    random.seed(seed) # Finally, reset Python's built-in random number generator, just in case (used by SynthPops)
 
     return
 
@@ -235,13 +247,13 @@ def multinomial(probs, repeats): # No speed gain from Numba
     return np.searchsorted(np.cumsum(probs), np.random.random(repeats))
 
 
-@nb.njit((nbint,), cache=True) # This hugely increases performance
+@nb.njit((nbfloat,), cache=True) # This hugely increases performance
 def poisson(rate):
     ''' A Poisson trial '''
     return np.random.poisson(rate, 1)[0]
 
 
-@nb.njit((nbint, nbint), cache=True) # This hugely increases performance
+@nb.njit((nbfloat, nbint), cache=True) # This hugely increases performance
 def n_poisson(rate, n):
     ''' A Poisson trial '''
     return np.random.poisson(rate, n)

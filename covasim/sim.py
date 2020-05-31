@@ -4,7 +4,6 @@ Defines the Sim class, Covasim's core class.
 
 #%% Imports
 import numpy as np
-import pylab as pl
 import sciris as sc
 from . import version as cvv
 from . import utils as cvu
@@ -333,7 +332,7 @@ class Sim(cvb.BaseSim):
             # Load from disk or use directly
             if isinstance(popfile, str): # It's a string, assume it's a filename
                 filepath = sc.makefilepath(filename=popfile, **kwargs)
-                obj = sc.loadobj(filepath)
+                obj = cvm.load(filepath)
                 if self['verbose']:
                     print(f'Loading population from {filepath}')
             else:
@@ -346,7 +345,7 @@ class Sim(cvb.BaseSim):
                 layer_keys   = self.popdict['layer_keys']
             elif isinstance(obj, cvb.BasePeople):
                 self.people = obj
-                self.people.pars = self.pars # Replace the saved parameters with this simulation's
+                self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
                 n_actual    = len(self.people)
                 layer_keys  = self.people.layer_keys()
             else:
@@ -525,20 +524,20 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, verbose=None, restore_pars=True, reset_seed=True, **kwargs):
+    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, **kwargs):
         '''
         Run the simulation.
 
         Args:
             do_plot (bool): whether to plot
             until (int): day to run until
-            verbose (int): level of detail to print (otherwise uses self['verbose'])
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
-            kwargs (dict): passed to self.plot()
+            verbose (float): level of detail to print, e.g. 0 = no output, 0.2 = print every 5th day, 1 = print every day
+            kwargs (dict): passed to sim.plot()
 
         Returns:
-            results: the results object (also modifies in-place)
+            results (dict): the results object (also modifies in-place)
         '''
 
         # Initialize
@@ -561,14 +560,15 @@ class Sim(cvb.BaseSim):
         for t in self.tvec:
 
             # Print progress
-            if verbose >= 1:
+            if verbose:
                 elapsed = sc.toc(output=True)
                 simlabel = f'"{self.label}": ' if self.label else ''
                 string = f'  Running {simlabel}{self.datevec[t]} ({t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
                 if verbose >= 2:
                     sc.heading(string)
-                elif verbose == 1:
-                    sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
+                else:
+                    if not (t % int(1.0/verbose)):
+                        sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
 
             # Do the heavy lifting -- actually run the model!
             self.step()
@@ -598,7 +598,8 @@ class Sim(cvb.BaseSim):
     def restore_pars(self, orig_pars):
         ''' Restore the original parameter values, except for the analyzers '''
         analyzers = self['analyzers'] # Make a copy so these don't get wiped
-        self.pars = orig_pars # Restore the original parameters
+        for key,val in orig_pars.items():
+            self.pars[key] = val # So pointers, e.g. in sim.people, get updated as well
         self['analyzers'] = analyzers # Restore the analyzers
         return
 
@@ -618,13 +619,14 @@ class Sim(cvb.BaseSim):
             self.results[f'cum_{key}'].values[:] = np.cumsum(self.results[f'new_{key}'].values)
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
-        # Perform calculations on results
-        self.compute_results(verbose=verbose)
-
-        # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
-        self.results = sc.objdict(self.results)
-        self.results_ready = True
+        # Final settings
+        self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
+        self.results_ready = True # Set this first so self.summary() knows to print the results
         self.initialized = False # To enable re-running
+
+        # Perform calculations on results
+        self.compute_results(verbose=verbose) # Calculate the rest of the results
+        self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
 
         return
 
@@ -912,6 +914,34 @@ class Sim(cvb.BaseSim):
             return
 
 
+    def make_age_histogram(self, output=True, *args, **kwargs):
+        '''
+        Calculate the age histograms of infections, deaths, diagnoses, etc. See
+        cv.age_histogram() for more information. This can be used alternatively
+        to supplying the age histogram as an analyzer to the sim. If used this
+        way, it can only record the final time point since the states of each
+        person are not saved during the sim.
+
+        Args:
+            output (bool): whether or not to return the age histogram; if not, store in sim.results
+            args   (list): passed to cv.age_histogram()
+            kwargs (dict): passed to cv.age_histogram()
+
+        **Example**::
+
+            sim = cv.Sim()
+            sim.run()
+            agehist = sim.make_age_histogram()
+            agehist.plot()
+        '''
+        agehist = cva.age_histogram(sim=self, *args, **kwargs)
+        if output:
+            return agehist
+        else:
+            self.results.agehist = agehist
+            return
+
+
     def make_transtree(self, output=True, *args, **kwargs):
         '''
         Create a TransTree (transmission tree) object, for analyzing the pattern
@@ -967,7 +997,6 @@ class Sim(cvb.BaseSim):
 
         Returns:
             fig: Figure handle
-
 
         **Example**::
 

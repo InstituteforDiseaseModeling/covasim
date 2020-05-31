@@ -11,7 +11,7 @@ import scipy.stats as sps
 from . import version as cvver
 
 
-__all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_info', 'get_doubling_time', 'poisson_test', 'compute_gof']
+__all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_version', 'get_doubling_time', 'poisson_test', 'compute_gof']
 
 
 def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
@@ -290,7 +290,6 @@ def savefig(filename=None, dpi=None, comments=None, **kwargs):
         comments (str): additional metadata to save to the figure
         kwargs (dict): passed to savefig()
 
-
     **Example**::
 
         cv.Sim().run(do_plot=True)
@@ -432,7 +431,7 @@ def check_version(expected, die=False, verbose=True, **kwargs):
     return compare
 
 
-def check_save_info(expected=None, filename=None, **kwargs):
+def check_save_version(expected=None, filename=None, die=False, verbose=True, **kwargs):
     '''
     A convenience function that bundles check_version with git_info and saves
     automatically to disk from the calling file. The idea is to put this at the
@@ -446,13 +445,13 @@ def check_save_info(expected=None, filename=None, **kwargs):
 
     **Examples**::
 
-        cv.check_save_info()
-        cv.check_save_info('1.3.2', filename='script.gitinfo', comments='This is the main analysis script')
+        cv.check_save_version()
+        cv.check_save_version('1.3.2', filename='script.gitinfo', comments='This is the main analysis script')
     '''
 
     # First, check the version if supplied
     if expected:
-        check_version(expected)
+        check_version(expected, die=die, verbose=verbose)
 
     # Now, check and save the git info
     if filename is None:

@@ -113,7 +113,7 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
 
     Args:
         pars (dict): the parameters dictionary
-        layer_keys (list): the known keys of the population, if available
+        layer_keys (list): the layer keys of the population, if available
         force (bool): reset the pars even if they already exist
     '''
 
@@ -129,7 +129,7 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     # Specify defaults for hybrid (and SynthPops) -- household, school, work, and community layers (h, s, w, c)
     defaults_h = dict(
         beta_layer  = dict(h=7.0, s=0.7, w=0.7, c=0.14), # Per-population beta weights; relative
-        contacts    = dict(h=2.7, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
+        contacts    = dict(h=2.0, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
         dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
         iso_factor  = dict(h=0.3, s=0.0, w=0.0, c=0.1),  # Multiply beta by this factor for people in isolation
         quar_factor = dict(h=0.8, s=0.0, w=0.0, c=0.3),  # Multiply beta by this factor for people in quarantine
@@ -142,21 +142,27 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     else:
         defaults = defaults_h
         default_layer_keys = ['h', 's', 'w', 'c'] # NB, these must match defaults_h above
-    if layer_keys is None:
-        layer_keys = default_layer_keys # If not supplied, use the defaults
 
     # Actually set the parameters
     for pkey in layer_pars:
         par = {} # Initialize this parameter
         default_val = defaults_r[pkey]['a'] # Get the default value for this parameter
+
+        # If forcing, we overwrite any existing parameter values
         if force:
-            default_par = defaults[pkey] # Just use defaults
+            par_dict = defaults[pkey] # Just use defaults
         else:
-            default_par = sc.mergedicts(defaults[pkey], pars.get(pkey, None)) # Use user-supplied parameters if available, else default
+            par_dict = sc.mergedicts(defaults[pkey], pars.get(pkey, None)) # Use user-supplied parameters if available, else default
+
+        # Figure out what the layer keys for this parameter are (may be different between parameters)
+        if layer_keys:
+            par_layer_keys = layer_keys # Use supplied layer keys
+        else:
+            par_layer_keys = list(sc.odict.fromkeys(default_layer_keys + list(par_dict.keys())))  # If not supplied, use the defaults, plus any extra from the par_dict; adapted from https://www.askpython.com/python/remove-duplicate-elements-from-list-python
 
         # Construct this parameter, layer by layer
-        for lkey in layer_keys: # Loop over layers
-            par[lkey] = default_par.get(lkey, default_val) # Get the value for this layer if available, else use the default for random
+        for lkey in par_layer_keys: # Loop over layers
+            par[lkey] = par_dict.get(lkey, default_val) # Get the value for this layer if available, else use the default for random
         pars[pkey] = par # Save this parameter to the dictionary
 
     return

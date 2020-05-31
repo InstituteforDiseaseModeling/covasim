@@ -116,23 +116,27 @@ class age_histogram(Analyzer):
     '''
     Analyzer that takes a "snapshot" of the sim.people array at specified points
     in time, and saves them to itself. To retrieve them, you can either access
-    the dictionary directly, or use the get() method.
+    the dictionary directly, or use the get() method. You can also apply this
+    analyzer directly to a sim object.
 
     Args:
         days    (list): list of ints/strings/date objects, the days on which to calculate the histograms (default: last day)
         states  (list): which states of people to record (default: exposed, tested, diagnosed, dead)
         edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
         datafile (str): the name of the data file to load in for comparison, or a dataframe of data (optional)
+        sim      (Sim): only used if the analyzer is being used after a sim has already been run
         kwargs  (dict): passed to Intervention()
 
-    **Example**::
+    **Examples**::
 
         sim = cv.Sim(analyzers=cv.age_histogram())
         sim.run()
         agehist = sim['analyzers'][0].get()
+
+        agehist = cv.age_histogram(sim=sim)
     '''
 
-    def __init__(self, days=None, states=None, edges=None, datafile=None, **kwargs):
+    def __init__(self, days=None, states=None, edges=None, datafile=None, sim=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.days      = days # To be converted to integer representations
         self.edges     = edges # Edges of age bins
@@ -144,6 +148,8 @@ class age_histogram(Analyzer):
         self.data      = None # Store the loaded data
         self.hists = sc.odict() # Store the actual snapshots
         self.window_hists = None # Store the histograms for individual windows -- populated by compute_windows()
+        if sim is not None: # Process a supplied simulation
+            self.from_sim(sim)
         return
 
 
@@ -170,7 +176,7 @@ class age_histogram(Analyzer):
 
         # Handle states
         if self.states is None:
-            self.states = ['exposed', 'tested', 'diagnosed', 'dead']
+            self.states = ['exposed', 'dead', 'tested', 'diagnosed']
         self.states = sc.promotetolist(self.states)
         for s,state in enumerate(self.states):
             self.states[s] = state.replace('date_', '') # Allow keys starting with date_ as input, but strip it off here
@@ -202,7 +208,7 @@ class age_histogram(Analyzer):
 
 
     def get(self, key=None):
-        ''' Retrieve a histogram from the given key (int, str, or date) '''
+        ''' Retrieve a specific histogram from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
         day  = cvm.day(key, start_day=self.start_day)
@@ -238,6 +244,13 @@ class age_histogram(Analyzer):
         return
 
 
+    def from_sim(self, sim):
+        ''' Create an age histogram from an already run sim '''
+        self.initialize(sim)
+        self.apply(sim)
+        return
+
+
     def plot(self, windows=False, width=0.8, color='#F8A493', font_size=18, fig_args=None, axis_args=None, data_args=None):
         '''
         Simple method for plotting the histograms.
@@ -264,13 +277,16 @@ class age_histogram(Analyzer):
         n_cols = np.ceil(n_plots/n_rows) # Number of subplot columns to have
         figs = []
 
-        # Handle windows
+        # Handle windows and what to plot
         if windows:
             if self.window_hists is None:
                 self.compute_windows()
             histsdict = self.window_hists
         else:
             histsdict = self.hists
+        if not len(histsdict):
+            errormsg = f'Cannot plot since no histograms were recorded (schuled days: {self.days})'
+            raise ValueError(errormsg)
 
         # Make the figure(s)
         for date,hists in histsdict.items():
@@ -344,7 +360,8 @@ class Fit(sc.prettyobj):
             errormsg = 'Model fit cannot be calculated until results are run'
             raise RuntimeError(errormsg)
         self.sim_results = sc.objdict()
-        self.sim_results.t = sim.results['t']
+        for key in ['t', 'date']:
+            self.sim_results[key] = sim.results[key]
         for key in sim.result_keys():
             self.sim_results[key] = sim.results[key]
 
@@ -504,16 +521,19 @@ class Fit(sc.prettyobj):
         bot.b = np.zeros(self.losses[0].shape)
         total = 0
         for k,key in enumerate(keys):
-            dates = self.inds.sim[key] # self.date_matches[key]
+            days = self.inds.sim[key]
+            dates = self.sim_results['date'][days]
 
             for i,ax in enumerate([main_ax1, main_ax2]):
 
                 if i == 0:
                     data = self.losses[key]
                     total += self.losses[key].sum()
+                    ylabel = 'Daily mismatch'
                     title = f'Daily total mismatch'
                 else:
                     data = np.cumsum(self.losses[key])
+                    ylabel = 'Cumulative mismatch'
                     title = f'Cumulative mismatch: {total:0.3f}'
 
                 ax.bar(dates, data, width=width, bottom=bot[i], color=colors[k], label=f'{key}')
@@ -524,28 +544,28 @@ class Fit(sc.prettyobj):
                     bot[i] += np.cumsum(self.losses[key])
 
                 if k == n_keys-1:
-                    ax.set_ylabel('Time series')
-                    ax.set_xlabel('Day')
+                    ax.set_xlabel('Date')
+                    ax.set_ylabel(ylabel)
                     ax.set_title(title)
                     ax.legend()
 
             pl.subplot(n_rows, n_keys, k+1*n_keys+1)
-            pl.plot(dates, self.pair[key].data, c='k', label='Data', **plot_args)
-            pl.plot(dates, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
+            pl.plot(days, self.pair[key].data, c='k', label='Data', **plot_args)
+            pl.plot(days, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
             pl.title(key)
             if k == 0:
                 pl.ylabel('Time series (counts)')
                 pl.legend()
 
             pl.subplot(n_rows, n_keys, k+2*n_keys+1)
-            pl.bar(dates, self.diffs[key], width=width, color=colors[k], label='Difference')
+            pl.bar(days, self.diffs[key], width=width, color=colors[k], label='Difference')
             pl.axhline(0, c='k')
             if k == 0:
                 pl.ylabel('Differences (counts)')
                 pl.legend()
 
             loss_ax = pl.subplot(n_rows, n_keys, k+3*n_keys+1, sharey=loss_ax)
-            pl.bar(dates, self.losses[key], width=width, color=colors[k], label='Losses')
+            pl.bar(days, self.losses[key], width=width, color=colors[k], label='Losses')
             pl.xlabel('Day')
             pl.title(f'Total loss: {self.losses[key].sum():0.3f}')
             if k == 0:

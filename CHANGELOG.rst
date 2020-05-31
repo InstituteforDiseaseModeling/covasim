@@ -2,7 +2,7 @@
 What's new
 ==========
 
-All notable changes to the codebase are documented in this file. As of version 1.3, changes that may result in differences in model output, or are required in order to run an old parameter set with the current version, are flagged with the term "Regression information".
+All notable changes to the codebase are documented in this file. Changes that may result in differences in model output, or are required in order to run an old parameter set with the current version, are flagged with the term "Regression information".
 
 .. contents:: **Contents**
    :local:
@@ -12,6 +12,35 @@ All notable changes to the codebase are documented in this file. As of version 1
 ~~~~~~~~~~~~~~~
 Latest versions
 ~~~~~~~~~~~~~~~
+
+
+Version 1.4.2 (2020-05-30)
+--------------------------
+- Renamed ``cv.check_save_info()`` to ``cv.check_save_version()``, and allowed the ``die`` argument to be passed.
+- Allowed ``verbose`` to be a float instead of an int; if between 0 and 1, during a model run, it will print out once every ``1/verbose`` days, e.g. ``verbose = 0.2`` will print an update once every 5 days.
+- Updated the default number of household contacts from 2.7 to 2.0 for ``hybrid``, and changed ``cv.poisson()`` to no longer cast to an integer. These two changes cancel out, so default behavior has not changed.
+- Updated the calculation of contacts from household sizes (now uses household size - 1, to remove self-connections).
+- Added ``cv.MultiSim.load()``.
+- Added Numba caching to ``compute_viral_load()``, reducing overall Covasim load time by roughly 50%.
+- Added an option for parallel execution of Numba functions (see ``utils.py``); although this significantly improves performance (20-30%), it results in non-deterministic results, so is disabled by default.
+- Changed ``People`` to use its own contact layer keys rather than those taken from the parameters.
+- Improved plotting and corrected minor bugs in age histogram and model fit analyzers.
+- *Regression information*:
+
+  - Replace ``cv.check_save_info()`` with ``cv.check_save_version()``.
+  - If you used a non-integer number of contacts, round down to the nearest integer (e.g., change 2.7 to 2.0).
+  - If you loaded a household size distribution (e.g. ``cv.Sim(location='nigeria')``), add one to the number of household contacts (but then round down).
+
+- *GitHub info*: PR `577 <https://github.com/amath-idm/covasim/pull/577>`__, previous head ``a828d29``
+
+
+Version 1.4.1 (2020-05-29)
+--------------------------
+- Added ``sim.people.plot()``, which shows the age distribution, and distribution of contacts by age and layer.
+- Added ``sim.make_age_histogram()``, as well as the ability to call ``cv.age_histogram(sim)``, as an alternative to adding these as analyzers to a sim.
+- Updated ``cv.make_synthpop()`` to pass a random seed to SynthPops (note: requires SynthPops version 0.7.1 or later).
+- ``cv.set_seed()`` now also resets ``random.seed()``, to ensure reproducibility among functions that use this (e.g., NetworkX).
+- Corrected ``sim.run()`` so ``sim.t`` is left at the last timestep (instead of one more).
 
 
 Version 1.4.0 (2020-05-28)

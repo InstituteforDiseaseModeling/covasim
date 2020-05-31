@@ -305,11 +305,10 @@ def process_days(sim, days):
     '''
     if sc.isstring(days) or not sc.isiterable(days):
         days = sc.promotetolist(days)
-    if isinstance(days, list):
-        for d,day in enumerate(days):
-            if day in ['end', -1]:
-                day = sim['end_day']
-            days[d] = sim.day(day) # Ensure it's an integer and not a string or something
+    for d,day in enumerate(days):
+        if day in ['end', -1]:
+            day = sim['end_day']
+        days[d] = sim.day(day) # Ensure it's an integer and not a string or something
     days = sc.promotetoarray(days)
     return days
 

@@ -8,6 +8,7 @@ import sciris as sc
 from collections import defaultdict
 from . import requirements as cvreq
 from . import utils as cvu
+from . import misc as cvm
 from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpars
@@ -20,19 +21,22 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset=False):
+def make_people(sim, save_pop=False, popfile=None, die=True, reset=False, verbose=None, **kwargs):
     '''
-    Make the actual people for the simulation.
+    Make the actual people for the simulation. Usually called via sim.initialize(),
+    not directly by the user.
 
     Args:
         sim (Sim): the simulation object
-        verbose (bool): level of detail to print
-        id_len (int): length of ID for each person (default: calculate required length based on the number of people)
+        save_pop (bool): whether to save the population to disk
+        popfile (bool): if so, the filename to save to
         die (bool): whether or not to fail if synthetic populations are requested but not available
         reset (bool): whether to force population creation even if self.popdict/self.people exists
+        verbose (bool): level of detail to print
+        kwargs (dict): passed to make_randpop() or make_synthpop()
 
     Returns:
-        None.
+        people (People): people
     '''
 
     # Set inputs and defaults
@@ -66,9 +70,9 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
     else:
         # Create the population
         if pop_type in ['random', 'clustered', 'hybrid']:
-            popdict = make_randpop(sim, microstructure=pop_type)
+            popdict = make_randpop(sim, microstructure=pop_type, **kwargs)
         elif pop_type == 'synthpops':
-            popdict = make_synthpop(sim)
+            popdict = make_synthpop(sim, **kwargs)
         elif pop_type is None:
             errormsg = f'You have set pop_type=None. This is fine, but you must ensure sim.popdict exists before calling make_people().'
             raise ValueError(errormsg)
@@ -92,7 +96,7 @@ def make_people(sim, save_pop=False, popfile=None, verbose=None, die=True, reset
             raise FileNotFoundError(errormsg)
         else:
             filepath = sc.makefilepath(filename=popfile)
-            sc.saveobj(filepath, people)
+            cvm.save(filepath, people)
             if verbose:
                 print(f'Saved population of type "{pop_type}" with {pop_size:n} people to {filepath}')
 
@@ -139,7 +143,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
             try:
                 household_size = cvdata.get_household_size(location)
                 if 'h' in sim['contacts']:
-                    sim['contacts']['h'] = household_size
+                    sim['contacts']['h'] = household_size - 1 # Subtract 1 because e.g. each person in a 3-person household has 2 contacts
                 else:
                     keystr = ', '.join(list(sim['contacts'].keys()))
                     print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
@@ -205,7 +209,7 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
     p_counts = {}
     for lkey in layer_keys:
         p_counts[lkey] = np.array((cvu.n_poisson(contacts[lkey], pop_size)/2.0).round(), dtype=cvd.default_int)  # Draw the number of Poisson contacts for this person
-        # p_counts[lkey] = np.array((cvu.sample(dist='lognormal_int', par1=contacts[lkey], par2=100, size=pop_size)/2.0).round(), dtype=cvd.default_int)
+        # p_counts[lkey] = np.array((cvu.sample(dist='neg_binomial', par1=contacts[lkey], par2=10, size=pop_size)/2.0).round(), dtype=cvd.default_int)
 
     # Make contacts
     count = 0
@@ -221,7 +225,7 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2):
 
 
 def make_microstructured_contacts(pop_size, contacts):
-    ''' Create microstructured contacts -- i.e. households, schools, etc. '''
+    ''' Create microstructured contacts -- i.e. for households '''
 
     # Preprocessing -- same as above
     pop_size = int(pop_size) # Number of people
@@ -332,7 +336,7 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
 
     # Handle other input arguments
     pop_size = sim['pop_size']
-    population = sp.make_population(n=pop_size, generate=generate, **kwargs)
+    population = sp.make_population(n=pop_size, generate=generate, rand_seed=sim['rand_seed'], **kwargs)
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)
@@ -362,7 +366,7 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
 
     # Add community contacts
     c_contacts, _ = make_random_contacts(pop_size, {'c':sim['contacts']['c']})
-    for i in range(pop_size):
+    for i in range(int(pop_size)):
         contacts[i]['c'] = c_contacts[i]['c'] # Copy over community contacts -- present for everyone
 
     # Finalize
