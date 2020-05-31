@@ -4,7 +4,9 @@
 import sciris as sc
 import runpy
 import pytest
+import pylab as pl
 
+pl.switch_backend('agg') # To avoid graphs from appearing -- if you want them, run the scripts directly
 scripts = sc.getfilelist(ext='py')
 
 script_str= "\n".join(scripts)
