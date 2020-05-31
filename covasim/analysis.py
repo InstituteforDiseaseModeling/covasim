@@ -1023,6 +1023,7 @@ class TransTree(sc.prettyobj):
         sorted_sum = np.cumsum(sorted_arr)
         sorted_sum = sorted_sum/sorted_sum.max()*100
         change_inds = sc.findinds(np.diff(sorted_arr) != 0)
+        max_labels = 15 # Maximum number of ticks and legend entries to plot
 
         # Plotting
         fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
@@ -1041,7 +1042,8 @@ class TransTree(sc.prettyobj):
             pl.bar(bins[i]+w025, total_counts[i], width=w05, facecolor=colors[i], label=label)
         pl.xlabel('Number of transmissions per person')
         pl.ylabel('Count')
-        pl.xticks(ticks=bins)
+        if n_bins<max_labels:
+            pl.xticks(ticks=bins)
         pl.legend()
         pl.title('Numbers of events and transmissions')
 
@@ -1050,7 +1052,8 @@ class TransTree(sc.prettyobj):
         for i in range(n_bins):
             pl.bar(bins[i:], total_counts[i], width=width, bottom=total, facecolor=colors[i])
             total += total_counts[i]
-        pl.xticks(ticks=bins)
+        if n_bins<max_labels:
+            pl.xticks(ticks=bins)
         pl.xlabel('Number of transmissions per person')
         pl.ylabel('Number of infections caused')
         pl.title('Number of transmissions, by transmissions per person')
@@ -1058,7 +1061,7 @@ class TransTree(sc.prettyobj):
         pl.subplot(2,2,4)
         pl.plot(index, sorted_sum, lw=3, c='k', alpha=0.5)
         n_change_inds = len(change_inds)
-        label_inds = np.linspace(0, n_change_inds, 15).round() # Don't allow more than this many labels
+        label_inds = np.linspace(0, n_change_inds, max_labels).round() # Don't allow more than this many labels
         for i in range(n_change_inds):
             if i in label_inds: # Don't plot more than this many labels
                 label = f'Transmitted to {i+1} people'
