@@ -344,7 +344,6 @@ if __name__ == "__main__":
 
 import pandas as pd
 
-
 data = pd.read_csv(swabfile)
 data = data.loc[data['Test Delay']!='#NAME?',]
 pdf = cvu.get_pdf('lognormal',10,170)
