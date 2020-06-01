@@ -20,6 +20,7 @@ Version 1.4.4 (2020-05-31)
 - Added functions for negative binomial distributions, allowing easier exploration of overdispersion effects: see ``cv.make_random_contacts()``, and, most importantly, ``pars['beta_dist']``.
 - Renamed ``cv.multinomial()`` to ``cv.n_multinomial()``.
 - Added ``cv.date_range()``.
+- Changed ``cv.day()`` and ``cv.date()`` to assume a start day of 2020-01-01 if not supplied.
 - Added a ``build_docs`` script.
 
 
