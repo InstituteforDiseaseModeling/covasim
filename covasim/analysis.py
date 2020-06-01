@@ -326,7 +326,7 @@ class Fit(sc.prettyobj):
         weights (dict): the relative weight to place on each result
         keys (list): the keys to use in the calculation
         method (str): the method to be used to calculate the goodness-of-fit
-        eps (float): to avoid divide-by-zero errors
+        custom (dict): a custom dictionary of additional data to fit; format is e.g. {'<label>':{'data':[1,2,3], 'sim':[1,2,4], 'weights':2.0}}
         compute (bool): whether to compute the mismatch immediately
         verbose (bool): detail to print
 
@@ -338,15 +338,13 @@ class Fit(sc.prettyobj):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, keys=None, method=None, eps=1e-12, compute=True, verbose=False):
+    def __init__(self, sim, weights=None, keys=None, method=None, custom=None, compute=True, verbose=False):
 
         # Handle inputs
         self.weights = weights
-        self.eps     = eps
+        self.custom  = sc.mergedicts(custom)
         self.verbose = verbose
-        if weights is None:
-            weights = dict(cum_deaths=10, cum_diagnoses=5)
-        self.weights = weights
+        self.weights = sc.mergedicts({'cum_deaths':10, 'cum_diagnoses':5}, weights)
         self.keys    = keys
 
         # Copy data
@@ -439,13 +437,44 @@ class Fit(sc.prettyobj):
                 self.pair[key].sim[i]  = self.sim_results[key].values[sim_inds[i]]
                 self.pair[key].data[i] = self.data[key].values[data_inds[i]]
 
+        # Process custom inputs
+        self.custom_keys = list(self.custom.keys())
+        for key in self.custom.keys():
+
+            # Initialize and do error checking
+            custom = self.custom[key]
+            c_keys = list(custom.keys())
+            if 'sim' not in c_keys or 'data' not in c_keys:
+                errormsg = f'Custom input must have "sim" and "data" keys, not {c_keys}'
+                raise sc.KeyNotFoundError(errormsg)
+            c_data = custom['data']
+            c_sim  = custom['sim']
+            try:
+                assert len(c_data) == len(c_sim)
+            except:
+                errormsg = f'Custom data and sim must be arrays, and be of the same length: data = {c_data}, sim = {c_sim} could not be processed'
+                raise ValueError(errormsg)
+            if key in self.pair:
+                errormsg = f'You cannot use a custom key "{key}" that matches one of the existing keys: {self.pair.keys()}'
+                raise ValueError(errormsg)
+
+            # If all tests pass, simply copy the data
+            self.pair[key] = sc.objdict()
+            self.pair[key].sim  = c_sim
+            self.pair[key].data = c_data
+
+            # Process weight, if available
+            wt = custom.get('weight', 1.0) # Attempt to retrieve key 'weight', or use the default if not provided
+            wt = custom.get('weights', wt) # ...but also try "weights"
+            self.weights[key] = wt # Set the weight
+
         return
 
 
     def compute_diffs(self, absolute=False):
         ''' Find the differences between the sim and the data '''
-        for key in self.keys:
-            self.diffs[key] = self.pair[key].data - self.pair[key].sim
+        for key in self.pair.keys():
+            self.diffs[key] = self.pair[key].sim - self.pair[key].data
             if absolute:
                 self.diffs[key] = np.abs(self.diffs[key])
         return
@@ -453,7 +482,7 @@ class Fit(sc.prettyobj):
 
     def compute_gofs(self, **kwargs):
         ''' Compute the goodness-of-fit '''
-        for key in self.keys:
+        for key in self.pair.keys():
             actual    = sc.dcp(self.pair[key].data)
             predicted = sc.dcp(self.pair[key].sim)
             self.gofs[key] = cvm.compute_gof(actual, predicted, **kwargs)
@@ -462,7 +491,7 @@ class Fit(sc.prettyobj):
 
     def compute_losses(self):
         ''' Compute the weighted goodness-of-fit '''
-        for key in self.keys:
+        for key in self.gofs.keys():
             if key in self.weights:
                 weight = self.weights[key]
                 if sc.isiterable(weight): # It's an array
@@ -484,7 +513,7 @@ class Fit(sc.prettyobj):
 
     def compute_mismatch(self, use_median=False):
         ''' Compute the final mismatch '''
-        for key in self.keys:
+        for key in self.losses.keys():
             if use_median:
                 self.mismatches[key] = np.median(self.losses[key])
             else:
@@ -514,50 +543,54 @@ class Fit(sc.prettyobj):
         pl.rcParams['font.size'] = font_size
 
         if keys is None:
-            keys = self.keys
+            keys = self.keys + self.custom_keys
         n_keys = len(keys)
 
         loss_ax = None
-        # bar_color = [0, 0, 0]
         colors = sc.gridcolors(n_keys)
+        n_rows = 4
 
         figs = [pl.figure(**fig_args)]
         pl.subplots_adjust(**axis_args)
-        n_rows = 4
         main_ax1 = pl.subplot(n_rows, 2, 1)
         main_ax2 = pl.subplot(n_rows, 2, 2)
-        bot = sc.objdict()
-        bot.a = np.zeros(self.losses[0].shape)
-        bot.b = np.zeros(self.losses[0].shape)
-        total = 0
+        bottom = sc.objdict() # Keep track of the bottoms for plotting cumulative
+        bottom.a = np.zeros(self.losses[0].shape)
+        bottom.b = np.zeros(self.losses[0].shape)
         for k,key in enumerate(keys):
-            days = self.inds.sim[key]
-            dates = self.sim_results['date'][days]
+            if key in self.keys: # It's a time series, plot with days and dates
+                days      = self.inds.sim[key] # The "days" axis (or not, for custom keys)
+                daylabel  = 'Day'
+            else: #It's custom, we don't know what it is
+                days      = np.arange(len(self.losses[key])) # Just use indices
+                daylabel  = 'Index'
 
-            for i,ax in enumerate([main_ax1, main_ax2]):
+            # Cumulative totals can't mix daily and non-daily inputs, so skip custom keys
+            if key in self.keys:
+                for i,ax in enumerate([main_ax1, main_ax2]):
 
-                if i == 0:
-                    data = self.losses[key]
-                    total += self.losses[key].sum()
-                    ylabel = 'Daily mismatch'
-                    title = f'Daily total mismatch'
-                else:
-                    data = np.cumsum(self.losses[key])
-                    ylabel = 'Cumulative mismatch'
-                    title = f'Cumulative mismatch: {total:0.3f}'
+                    if i == 0:
+                        data = self.losses[key]
+                        ylabel = 'Daily mismatch'
+                        title = f'Daily total mismatch'
+                    else:
+                        data = np.cumsum(self.losses[key])
+                        ylabel = 'Cumulative mismatch'
+                        title = f'Cumulative mismatch: {self.mismatch:0.3f}'
 
-                ax.bar(dates, data, width=width, bottom=bot[i], color=colors[k], label=f'{key}')
+                    dates = self.sim_results['date'][days] # Show these with dates, rather than days, as a reference point
+                    ax.bar(dates, data, width=width, bottom=bottom[i], color=colors[k], label=f'{key}')
 
-                if i == 0:
-                    bot[i] += self.losses[key]
-                else:
-                    bot[i] += np.cumsum(self.losses[key])
+                    if i == 0:
+                        bottom[i] += self.losses[key]
+                    else:
+                        bottom[i] += np.cumsum(self.losses[key])
 
-                if k == n_keys-1:
-                    ax.set_xlabel('Date')
-                    ax.set_ylabel(ylabel)
-                    ax.set_title(title)
-                    ax.legend()
+                    if k == len(self.keys)-1:
+                        ax.set_xlabel('Date')
+                        ax.set_ylabel(ylabel)
+                        ax.set_title(title)
+                        ax.legend()
 
             pl.subplot(n_rows, n_keys, k+1*n_keys+1)
             pl.plot(days, self.pair[key].data, c='k', label='Data', **plot_args)
@@ -576,7 +609,7 @@ class Fit(sc.prettyobj):
 
             loss_ax = pl.subplot(n_rows, n_keys, k+3*n_keys+1, sharey=loss_ax)
             pl.bar(days, self.losses[key], width=width, color=colors[k], label='Losses')
-            pl.xlabel('Day')
+            pl.xlabel(daylabel)
             pl.title(f'Total loss: {self.losses[key].sum():0.3f}')
             if k == 0:
                 pl.ylabel('Losses')

@@ -14,13 +14,18 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.4.5 (2020-05-31)
+--------------------------
+- Added ``cv.date_range()``.
+- Changed ``cv.day()`` and ``cv.date()`` to assume a start day of 2020-01-01 if not supplied.
+- Added the option to add custom data to a ``Fit`` object, e.g. age histogram data.
+
+
 Version 1.4.4 (2020-05-31)
 --------------------------
 - Improved transmission tree histogram plotting, including allowing start and end days, and renamed ``plot_histograms()``.
 - Added functions for negative binomial distributions, allowing easier exploration of overdispersion effects: see ``cv.make_random_contacts()``, and, most importantly, ``pars['beta_dist']``.
 - Renamed ``cv.multinomial()`` to ``cv.n_multinomial()``.
-- Added ``cv.date_range()``.
-- Changed ``cv.day()`` and ``cv.date()`` to assume a start day of 2020-01-01 if not supplied.
 - Added a ``build_docs`` script.
 
 
