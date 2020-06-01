@@ -474,7 +474,7 @@ class Fit(sc.prettyobj):
     def compute_diffs(self, absolute=False):
         ''' Find the differences between the sim and the data '''
         for key in self.pair.keys():
-            self.diffs[key] = self.pair[key].data - self.pair[key].sim
+            self.diffs[key] = self.pair[key].sim - self.pair[key].data
             if absolute:
                 self.diffs[key] = np.abs(self.diffs[key])
         return
