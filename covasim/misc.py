@@ -225,7 +225,8 @@ def daydiff(*args):
 
 def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=None):
     '''
-    Return a list of dates from the start date to the end date.
+    Return a list of dates from the start date to the end date. To convert a list
+    of days (as integers) to dates, use cv.date() instead.
 
     Args:
         start_date (int/str/date): the starting date, in any format
