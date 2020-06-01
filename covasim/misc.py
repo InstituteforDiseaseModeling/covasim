@@ -11,7 +11,7 @@ import scipy.stats as sps
 from . import version as cvver
 
 
-__all__ = ['load_data', 'date', 'day', 'daydiff', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_version', 'get_doubling_time', 'poisson_test', 'compute_gof']
+__all__ = ['load_data', 'date', 'day', 'daydiff', 'date_range', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_version', 'get_doubling_time', 'poisson_test', 'compute_gof']
 
 
 def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
@@ -80,7 +80,8 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
 def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     '''
     Convert a string or a datetime object to a date object. To convert to an integer
-    from the start day, you must supply a start date, or use sim.date() instead.
+    from the start day, it is recommended you supply a start date, or use sim.date()
+    instead; otherwise, it will calculate the date counting days from 2020-01-01.
 
     Args:
         obj (str, date, datetime): the object to convert
@@ -99,10 +100,14 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     '''
 
     # Convert to list and handle other inputs
+    if isinstance(obj, np.ndarray):
+        obj = obj.tolist() # If it's an array, convert to a list
     obj = sc.promotetolist(obj) # Ensure it's iterable
     obj.extend(args)
     if dateformat is None:
         dateformat = '%Y-%m-%d'
+    if start_date is None:
+        start_date = '2020-01-01'
 
     dates = []
     for d in obj:
@@ -145,7 +150,7 @@ def day(obj, *args, start_day=None):
     Args:
         obj (str, date, int, or list): convert any of these objects to a day relative to the start day
         args (list): additional days
-        start_day (str or date): the start day
+        start_day (str or date): the start day; if none is supplied, return days since 2020-01-01.
 
     Returns:
         days (int or str): the day(s) in simulation time
@@ -158,6 +163,8 @@ def day(obj, *args, start_day=None):
     # Do not process a day if it's not supplied
     if obj is None:
         return None
+    if start_day is None:
+        start_day = '2020-01-01'
 
     # Convert to list
     if sc.isstring(obj) or sc.isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
@@ -211,6 +218,30 @@ def daydiff(*args):
         output = output[0]
 
     return output
+
+
+def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=None):
+    '''
+    Return a list of dates from the start date to the end date.
+
+    Args:
+        start_date (int/str/date): the starting date, in any format
+        end_date (int/str/date): the end date, in any format
+        inclusive (bool): if True (default), return to end_date inclusive; otherwise, stop the day before
+        as_date (bool): if True, return a list of datetime.date objects instead of strings
+        dateformat (str): passed to date()
+
+    **Example**::
+
+        dates = cv.date_range('2020-03-01', '2020-04-04')
+    '''
+    start_day = day(start_date)
+    end_day = day(end_date)
+    if inclusive:
+        end_day += 1
+    days = np.arange(start_day, end_day)
+    dates = date(days, as_date=as_date, dateformat=dateformat)
+    return dates
 
 
 def load(*args, **kwargs):

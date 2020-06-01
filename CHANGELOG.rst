@@ -19,6 +19,7 @@ Version 1.4.4 (2020-05-31)
 - Improved transmission tree histogram plotting, including allowing start and end days, and renamed ``plot_histograms()``.
 - Added functions for negative binomial distributions, allowing easier exploration of overdispersion effects: see ``cv.make_random_contacts()``, and, most importantly, ``pars['beta_dist']``.
 - Renamed ``cv.multinomial()`` to ``cv.n_multinomial()``.
+- Added ``cv.date_range()``.
 - Added a ``build_docs`` script.
 
 
