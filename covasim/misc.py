@@ -82,9 +82,11 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     Convert a string or a datetime object to a date object. To convert to an integer
     from the start day, it is recommended you supply a start date, or use sim.date()
     instead; otherwise, it will calculate the date counting days from 2020-01-01.
+    This means that the output of cv.date() will not necessarily match the output
+    of sim.date() for an integer input.
 
     Args:
-        obj (str, date, datetime): the object to convert
+        obj (str, date, datetime, list, array): the object to convert
         args (str, date, datetime): additional objects to convert
         start_date (str, date, datetime): the starting date, if an integer is supplied
         dateformat (str): the format to return the date in
@@ -97,6 +99,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 
         cv.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
         cv.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
+        cv.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
     '''
 
     # Convert to list and handle other inputs
