@@ -414,19 +414,23 @@ class Sim(cvb.BaseSim):
     def rescale(self):
         ''' Dynamically rescale the population -- used during step() '''
         if self['rescale']:
-            t = self.t
             pop_scale = self['pop_scale']
-            current_scale = self.rescale_vec[t]
+            current_scale = self.rescale_vec[self.t]
             if current_scale < pop_scale: # We have room to rescale
-                n_not_sus = self.people.count_not('susceptible')
-                n_people = len(self.people)
-                if n_not_sus / n_people > self['rescale_threshold']: # Check if we've reached point when we want to rescale
-                    max_ratio = pop_scale/current_scale # We don't want to exceed this
-                    scaling_ratio = min(self['rescale_factor'], max_ratio)
-                    self.rescale_vec[t:] *= scaling_ratio # Update the rescaling factor from here on
-                    n = int(n_people*(1.0-1.0/scaling_ratio)) # For example, rescaling by 2 gives n = 0.5*n_people
-                    new_sus_inds = cvu.choose(max_n=n_people, n=n) # Choose who to make susceptible again
-                    self.people.make_susceptible(new_sus_inds)
+                not_sus_inds = self.people.false('susceptible') # Find everyone not susceptible
+                n_not_sus = len(not_sus_inds) # Number of people who are not susceptible
+                n_people = len(self.people) # Number of people overall
+                current_ratio = n_not_sus/n_people # Current proportion not susceptible
+                threshold = self['rescale_threshold'] # Threshold to trigger rescaling
+                if current_ratio > threshold: # Check if we've reached point when we want to rescale
+                    max_ratio = pop_scale/current_scale # We don't want to exceed the total population size
+                    proposed_ratio = max(current_ratio/threshold, self['rescale_factor']) # The proposed ratio to rescale: the rescale factor, unless we've exceeded it
+                    scaling_ratio = min(proposed_ratio, max_ratio) # We don't want to scale by more than the maximum ratio
+                    self.rescale_vec[self.t:] *= scaling_ratio # Update the rescaling factor from here on
+                    n = int(round(n_not_sus*(1.0-1.0/scaling_ratio))) # For example, rescaling by 2 gives n = 0.5*not_sus_inds
+                    choices = cvu.choose(max_n=n_not_sus, n=n) # Choose who to make susceptible again
+                    new_sus_inds = not_sus_inds[choices] # Convert these back into indices for people
+                    self.people.make_susceptible(new_sus_inds) # Make people susceptible again
         return
 
 
