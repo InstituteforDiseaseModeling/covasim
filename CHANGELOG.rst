@@ -14,6 +14,13 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.4.6 (2020-06-01)
+--------------------------
+- Implemented continuous rescaling: dynamic rescaling can now be used with an arbitrarily small ``rescale_factor``. The amount of rescaling on a given timestep is now either ``rescale_factor`` or the factor that would be required to bring the population below the threshold, whichever is larger.
+- *Regression information*: Results should not be affected unless a simulation was run with too small of a rescaling factor. This change corrects this issue.
+- *GitHub info*: PR `588 <https://github.com/amath-idm/covasim/pull/588>`__, previous head ``4cabddc``
+
+
 Version 1.4.5 (2020-05-31)
 --------------------------
 - Added ``cv.date_range()``.
