@@ -121,7 +121,7 @@ class Intervention:
         _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
         self.input_args = {}
         for key,value in values.items():
-            if key not in ['self', '__class__']: # Skip these two
+            if key not in ['self', '__class__','kwargs']: # Skip these three
                 self.input_args[key] = value
         return
 
