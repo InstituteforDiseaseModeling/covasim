@@ -10,6 +10,7 @@ import sciris as sc
 import inspect
 import datetime as dt
 from . import utils as cvu
+from . import defaults as cvd
 from . import base as cvb
 
 
@@ -606,7 +607,7 @@ class test_num(Intervention):
         symp_inds = cvu.true(sim.people.symptomatic)
         symp_test = self.symp_test
         if self.pdf: # Handle the onset to swab delay
-            symp_time = int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
+            symp_time = cvd.default_int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
             inv_count = (np.bincount(symp_time)/len(symp_time)) # Find how many people have had symptoms of a set time and invert
             count = np.nan * np.ones(inv_count.shape) # Initialize the count
             count[inv_count != 0] = 1/inv_count[inv_count != 0] # Update the counts where defined
@@ -706,7 +707,7 @@ class test_prob(Intervention):
         symp_inds  = cvu.true(sim.people.symptomatic)
         symp_prob = self.symp_prob
         if self.pdf:
-            symp_time = int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
+            symp_time = cvd.default_int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
             inv_count = (np.bincount(symp_time)/len(symp_time)) # Find how many people have had symptoms of a set time and invert
             count = np.NaN * np.ones(inv_count.shape)
             count[inv_count != 0] = 1/inv_count[inv_count != 0]
