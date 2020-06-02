@@ -708,7 +708,7 @@ class test_prob(Intervention):
         if self.pdf:
             symp_time = int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
             inv_count = (np.bincount(symp_time)/len(symp_time)) # Find how many people have had symptoms of a set time and invert
-            count = np.NaN * np.ones(inv_count.shape)
+            count = np.nan * np.ones(inv_count.shape)
             count[inv_count != 0] = 1/inv_count[inv_count != 0]
             symp_prob = np.ones(len(symp_time))
             inds = 1 > (symp_time*self.symp_prob)
@@ -716,19 +716,22 @@ class test_prob(Intervention):
             symp_prob = self.pdf.pdf(symp_time) * symp_prob * count[symp_time]
 
         # Define symptomatics, accounting for ILI prevalence
+        pop_size = sim['pop_size']
         ili_inds = []
         if self.ili_prev is not None:
             rel_t = t - self.start_day
             if rel_t < len(self.ili_prev):
-                n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
-                ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
+                n_ili = int(self.ili_prev[rel_t] * pop_size)  # Number with ILI symptoms on this day
+                ili_inds = cvu.choose(pop_size, n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
                 ili_inds = np.setdiff1d(ili_inds, symp_inds)
 
         # Define asymptomatics: those who neither have COVID symptoms nor ILI symptoms
-        asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(sim['pop_size']), symp_inds), ili_inds)
+        asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(pop_size), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
-        quar_inds       = cvu.true(sim.people.quarantined)
+        quar_inds       = cvu.true(sim.people.date_quarantined==t-1) # TEMP: only test people when they enter quarantine
+        # quar_inds       = cvu.true(sim.people.quarantined) # TEMP: only test people when they enter quarantine
+        print('quar inds', quar_inds)
         symp_quar_inds  = np.intersect1d(quar_inds, symp_inds)
         asymp_quar_inds = np.intersect1d(quar_inds, asymp_inds)
         diag_inds       = cvu.true(sim.people.diagnosed)
