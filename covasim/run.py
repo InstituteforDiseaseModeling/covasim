@@ -392,7 +392,7 @@ class MultiSim(sc.prettyobj):
             # Handle alpha if not using colors
             if alpha_range is None:
                 if color_by_sim:
-                    alpha_range = [1.0, 1.0] # We're using color to distinguish sims, so don't need alpha
+                    alpha_range = [0.8, 0.8] # We're using color to distinguish sims, so don't need alpha
                 else:
                     alpha_range = [0.8, 0.3] # We're using alpha to distinguish sims
             alphas = np.linspace(alpha_range[0], alpha_range[1], n_sims)
