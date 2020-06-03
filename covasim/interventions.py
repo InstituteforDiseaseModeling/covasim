@@ -729,12 +729,12 @@ class test_prob(Intervention):
         asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(pop_size), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
-        # quar_inds       = cvu.true(sim.people.date_quarantined==t-1) # TEMP: only test people when they enter quarantine
-        # quar_inds       = cvu.true(sim.people.quarantined) # TEMP: only test people when they enter quarantine
-        # print('lqi', len(quar_inds), 'quar inds', quar_inds)
-        # symp_quar_inds  = np.intersect1d(quar_inds, symp_inds)
-        # asymp_quar_inds = np.intersect1d(quar_inds, asymp_inds)
-        # diag_inds       = cvu.true(sim.people.diagnosed)
+        quar_inds       = cvu.true(sim.people.date_quarantined==t-1) # TEMP: only test people when they enter quarantine
+        quar_inds       = cvu.true(sim.people.quarantined) # TEMP: only test people when they enter quarantine
+        print('lqi', len(quar_inds), 'quar inds', quar_inds)
+        symp_quar_inds  = np.intersect1d(quar_inds, symp_inds)
+        asymp_quar_inds = np.intersect1d(quar_inds, asymp_inds)
+        diag_inds       = cvu.true(sim.people.diagnosed)
         if self.subtarget is not None:
             subtarget_inds  = self.subtarget['inds']
 
@@ -743,12 +743,12 @@ class test_prob(Intervention):
         test_probs[symp_inds]       = symp_prob            # People with symptoms
         test_probs[ili_inds]        = self.symp_prob       # People with symptoms
         test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
-        # test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
-        # test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
+        test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
+        test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
         if self.subtarget is not None:
             subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
             test_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
-        # test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
+        test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
         test_inds = cvu.binomial_arr(test_probs).nonzero()[0] # Finally, calculate who actually tests
 
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
