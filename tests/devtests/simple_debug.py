@@ -4,7 +4,7 @@ Simplest Covasim usage example.
 
 import covasim as cv
 
-debug = True
+debug = False # Set to True to raise exception on warnings
 if debug:
     import warnings
     warnings.simplefilter("error")
