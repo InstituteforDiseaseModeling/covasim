@@ -6,7 +6,7 @@ import covasim as cv
 
 intervs = [
     cv.change_beta(30, 0.5),
-    cv.test_prob(symp_prob=0.1, start_day=20),
+    cv.test_prob(symp_prob=0.1, start_day=20, do_plot=False),
     ]
 
 s1 = cv.Sim(interventions=intervs)

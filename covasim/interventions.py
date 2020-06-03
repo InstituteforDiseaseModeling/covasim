@@ -122,7 +122,10 @@ class Intervention:
         _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
         self.input_args = {}
         for key,value in values.items():
-            if key not in ['self', '__class__']: # Skip these two
+            if key == 'kwargs': # Store additional kwargs directly
+                for k2,v2 in value.items():
+                    self.input_args[k2] = v2 # These are already a dict
+            elif key not in ['self', '__class__']: # Everything else, but skip these
                 self.input_args[key] = value
         return
 

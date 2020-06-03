@@ -69,7 +69,6 @@ class Sim(cvb.BaseSim):
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
             self.load_population(popfile)      # Load the population, if provided
-
         return
 
 
