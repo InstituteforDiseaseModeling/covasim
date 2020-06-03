@@ -623,7 +623,8 @@ class test_num(Intervention):
                 test_probs[ili_inds] *= self.symp_test
 
         # Handle quarantine testing
-        quar_inds  = cvu.true(sim.people.quarantined) # MODIFY
+        # quar_inds  = cvu.true(sim.people.quarantined) # MODIFY
+        quar_inds  = cvu.true(sim.people.date_quarantined==t-1) # MODIFY
         test_probs[quar_inds] *= self.quar_test
 
         # Handle any other user-specified testing criteria
@@ -729,7 +730,7 @@ class test_prob(Intervention):
         asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(pop_size), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
-        quar_inds       = cvu.true(sim.people.date_quarantined==t-1) # TEMP: only test people when they enter quarantine
+        # quar_inds       = cvu.true(sim.people.date_quarantined==t-1) # TEMP: only test people when they enter quarantine
         quar_inds       = cvu.true(sim.people.quarantined) # TEMP: only test people when they enter quarantine
         print('lqi', len(quar_inds), 'quar inds', quar_inds)
         symp_quar_inds  = np.intersect1d(quar_inds, symp_inds)
