@@ -623,7 +623,7 @@ class test_num(Intervention):
                 test_probs[ili_inds] *= self.symp_test
 
         # Handle quarantine testing
-        quar_inds  = cvu.true(sim.people.quarantined)
+        quar_inds  = cvu.true(sim.people.quarantined) # MODIFY
         test_probs[quar_inds] *= self.quar_test
 
         # Handle any other user-specified testing criteria
