@@ -14,6 +14,14 @@ Latest versions
 ~~~~~~~~~~~~~~~
 
 
+Version 1.4.7 (2020-06-02)
+--------------------------
+- Added ``quar_policy`` argument to ``cv.test_num()`` and ``cv.test_prob()``; by default, people are only tested upon entering quarantine (``'start'``); other options are to test people as they leave quarantine, both as they enter and leave, and every day they are in quarantine (which was the previous default behavior).
+- Requirements have been tidied up; ``python setup.py develop nowebapp`` now only installs minimal packages. In a future version, this may become the default.
+- *Regression information*: To restore previous behavior (not recommended) with using contact tracing, add ``quar_policy='daily'`` to ``cv.test_num()`` and ``cv.test_prob()`` interventions.
+- *GitHub info*: PR `593 <https://github.com/amath-idm/covasim/pull/593>`__, previous head ``89c58e1``
+
+
 Version 1.4.6 (2020-06-01)
 --------------------------
 - Implemented continuous rescaling: dynamic rescaling can now be used with an arbitrarily small ``rescale_factor``. The amount of rescaling on a given timestep is now either ``rescale_factor`` or the factor that would be required to bring the population below the threshold, whichever is larger.
