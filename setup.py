@@ -16,13 +16,15 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 if 'nowebapp' in sys.argv:
-    print('Performing standalone installation -- running as a web application will not work')
+    print('Removing non-essential dependencies -- running as a web application will not work')
     sys.argv.remove('nowebapp')
     webapp_reqs = [
-        'scirisweb',
+        'scirisweb>=0.17.0',
         'gunicorn',
         'plotly',
         'ipywidgets',
+        'fire', # Not strictly a webapp dependency, but not required for core functionality
+        'statsmodels', # Likewise
     ]
     requirements = [req for req in requirements if req not in webapp_reqs]
 
