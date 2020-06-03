@@ -121,7 +121,7 @@ Other changes
 - Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
 - Refactored cruise ship example to work again.
 - Various bugfixes (e.g. to plotting arguments, data scrapers, etc.).
-- *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previoius behavior, use::
+- *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previous behavior, use::
 
     pars['analyzers'] = None # Add the new parameter key
     interv_func = pars.pop('interv_func', None) # Remove the deprecated key
@@ -398,7 +398,7 @@ Version 0.30.1 (2020-05-02)
 ---------------------------
 - Added ``end_day`` as a parameter, allowing an end date to be specified instead of a number of days.
 - ``Sim.run()`` now displays the date being simulated.
-- Added a ``par_args`` arugument to ``multi_run()``, allowing arguments (e.g. ``ncpus``) to be passed to ``sc.parallelize()``.
+- Added a ``par_args`` argument to ``multi_run()``, allowing arguments (e.g. ``ncpus``) to be passed to ``sc.parallelize()``.
 - Added a ``compare()`` method to multisims and stopped people from being saved by default.
 - Fixed bug whereby intervention were not getting initialized if they were added to a sim after it was initialized.
 
