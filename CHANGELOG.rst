@@ -9,9 +9,9 @@ All notable changes to the codebase are documented in this file. Changes that ma
    :depth: 1
 
 
-~~~~~~~~~~~~~~~
-Latest versions
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+Latest versions (1.4.x)
+~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.4.7 (2020-06-02)
