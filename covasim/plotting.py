@@ -169,7 +169,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     if commaticks:
         ylims = ax.get_ylim()
         if ylims[1] >= 1000:
-            sc.commaticks()
+            sc.commaticks(ax=ax)
 
     return
 
