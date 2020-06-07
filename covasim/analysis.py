@@ -993,7 +993,7 @@ class TransTree(sc.prettyobj):
         for day in range(n):
             pl.title(f'Day: {day}')
             pl.xlim([0, n])
-            pl.ylim([0, len(self)])
+            pl.ylim([0, self.pop_size])
             pl.xlabel('Day')
             pl.ylabel('Person')
             flist = frames[day]
@@ -1048,8 +1048,6 @@ class TransTree(sc.prettyobj):
 
         bins = bins[:-1] # Remove last bin since it's an edge
         total_counts = counts*bins
-        # counts = counts*100/counts.sum()
-        # total_counts = total_counts*100/total_counts.sum()
         n_bins = len(bins)
         index = np.linspace(0, 100, len(n_targets))
         sorted_arr = np.sort(n_targets)

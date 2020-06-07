@@ -314,14 +314,13 @@ def get_caller(frame=2, tostring=True):
         return output
 
 
-def savefig(filename=None, dpi=None, comments=None, **kwargs):
+def savefig(filename=None, comments=None, **kwargs):
     '''
     Wrapper for Matplotlib's savefig() function which automatically stores Covasim
     metadata in the figure. By default, saves
 
     Args:
         filename (str): name of the file to save to (default, timestamp)
-        dpi (int): resolution of image (default 150)
         comments (str): additional metadata to save to the figure
         kwargs (dict): passed to savefig()
 
@@ -332,8 +331,8 @@ def savefig(filename=None, dpi=None, comments=None, **kwargs):
     '''
 
     # Handle inputs
-    dpi = kwargs.get('dpi', 150)
-    metadata = kwargs.get('metadata', {})
+    dpi = kwargs.pop('dpi', 150)
+    metadata = kwargs.pop('metadata', {})
 
     if filename is None:
         now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
