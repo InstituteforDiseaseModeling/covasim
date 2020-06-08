@@ -408,7 +408,7 @@ def choose_w(probs, n, unique=True):
 
 #%% Simple array operations
 
-__all__ += ['true',   'false',   'defined',
+__all__ += ['true',   'false',   'defined', 'undefined',
             'itrue',  'ifalse',  'idefined',
             'itruei', 'ifalsei', 'idefinedi']
 
@@ -454,6 +454,20 @@ def defined(arr):
         inds = cv.defined(np.array([1,np.nan,0,np.nan,1,0,1]))
     '''
     return (~np.isnan(arr)).nonzero()[0]
+
+
+def undefined(arr):
+    '''
+    Returns the indices of the values of the array that are not-nan.
+
+    Args:
+        arr (array): any array
+
+    **Example**::
+
+        inds = cv.defined(np.array([1,np.nan,0,np.nan,1,0,1]))
+    '''
+    return np.isnan(arr).nonzero()[0]
 
 
 def itrue(arr, inds):
