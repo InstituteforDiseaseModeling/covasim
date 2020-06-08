@@ -323,7 +323,7 @@ def process_changes(sim, changes, days):
     '''
     changes = sc.promotetoarray(changes)
     if len(days) != len(changes):
-        errormsg = f'Number of days supplied ({len(days)}) does not match number of changes in beta ({len(changes)})'
+        errormsg = f'Number of days supplied ({len(days)}) does not match number of changes ({len(changes)})'
         raise ValueError(errormsg)
     return changes
 
