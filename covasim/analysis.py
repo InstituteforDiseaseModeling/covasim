@@ -329,6 +329,7 @@ class Fit(sc.prettyobj):
         custom (dict): a custom dictionary of additional data to fit; format is e.g. {'<label>':{'data':[1,2,3], 'sim':[1,2,4], 'weights':2.0}}
         compute (bool): whether to compute the mismatch immediately
         verbose (bool): detail to print
+        kwargs (dict): passed to compute_gof()
 
     **Example**::
 
@@ -338,14 +339,15 @@ class Fit(sc.prettyobj):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, keys=None, method=None, custom=None, compute=True, verbose=False):
+    def __init__(self, sim, weights=None, keys=None, method=None, custom=None, compute=True, verbose=False, **kwargs):
 
         # Handle inputs
-        self.weights = weights
-        self.custom  = sc.mergedicts(custom)
-        self.verbose = verbose
-        self.weights = sc.mergedicts({'cum_deaths':10, 'cum_diagnoses':5}, weights)
-        self.keys    = keys
+        self.weights    = weights
+        self.custom     = sc.mergedicts(custom)
+        self.verbose    = verbose
+        self.weights    = sc.mergedicts({'cum_deaths':10, 'cum_diagnoses':5}, weights)
+        self.keys       = keys
+        self.gof_kwargs = kwargs
 
         # Copy data
         if sim.data is None:
@@ -482,6 +484,7 @@ class Fit(sc.prettyobj):
 
     def compute_gofs(self, **kwargs):
         ''' Compute the goodness-of-fit '''
+        kwargs = sc.mergedicts(self.gof_kwargs, kwargs)
         for key in self.pair.keys():
             actual    = sc.dcp(self.pair[key].data)
             predicted = sc.dcp(self.pair[key].sim)
