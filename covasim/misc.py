@@ -745,6 +745,10 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         e5 = compute_gof(x1, x2, as_scalar='median') # Normalized median absolute error -- highly robust
     '''
 
+    # Handle inputs
+    actual    = np.array(sc.dcp(actual))
+    predicted = np.array(sc.dcp(predicted))
+
     # Custom estimator is supplied: use that
     if skestimator is not None:
         try:
@@ -763,9 +767,9 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         gofs = abs(np.array(actual) - np.array(predicted))
 
         if normalize and not use_frac:
-            maxmax = max(abs(actual).max(), abs(predicted).max())
-            if maxmax>0:
-                gofs /= maxmax
+            actual_max = abs(actual).max()
+            if actual_max>0:
+                gofs /= actual_max
 
         if use_frac:
             if (actual<0).any() or (predicted<0).any():
