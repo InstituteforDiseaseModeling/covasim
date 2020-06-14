@@ -558,8 +558,8 @@ class Fit(sc.prettyobj):
         main_ax1 = pl.subplot(n_rows, 2, 1)
         main_ax2 = pl.subplot(n_rows, 2, 2)
         bottom = sc.objdict() # Keep track of the bottoms for plotting cumulative
-        bottom.a = np.zeros(self.losses[0].shape)
-        bottom.b = np.zeros(self.losses[0].shape)
+        bottom.daily = np.zeros(self.sim_npts)
+        bottom.cumul = np.zeros(self.sim_npts)
         for k,key in enumerate(keys):
             if key in self.keys: # It's a time series, plot with days and dates
                 days      = self.inds.sim[key] # The "days" axis (or not, for custom keys)
@@ -582,12 +582,12 @@ class Fit(sc.prettyobj):
                         title = f'Cumulative mismatch: {self.mismatch:0.3f}'
 
                     dates = self.sim_results['date'][days] # Show these with dates, rather than days, as a reference point
-                    ax.bar(dates, data, width=width, bottom=bottom[i], color=colors[k], label=f'{key}')
+                    ax.bar(dates, data, width=width, bottom=bottom[i][self.inds.sim[key]], color=colors[k], label=f'{key}')
 
                     if i == 0:
-                        bottom[i] += self.losses[key]
+                        bottom.daily[self.inds.sim[key]] += self.losses[key]
                     else:
-                        bottom[i] += np.cumsum(self.losses[key])
+                        bottom.cumul = np.cumsum(bottom.daily)
 
                     if k == len(self.keys)-1:
                         ax.set_xlabel('Date')
