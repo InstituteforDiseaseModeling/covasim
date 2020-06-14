@@ -10,7 +10,6 @@ import datetime as dt
 import scipy.stats as sps
 from . import version as cvver
 
-
 __all__ = ['load_data', 'date', 'day', 'daydiff', 'date_range', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_version', 'get_doubling_time', 'poisson_test', 'compute_gof']
 
 
@@ -746,8 +745,8 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
     '''
 
     # Handle inputs
-    actual    = np.array(sc.dcp(actual))
-    predicted = np.array(sc.dcp(predicted))
+    actual    = np.array(sc.dcp(actual), dtype=float)
+    predicted = np.array(sc.dcp(predicted), dtype=float)
 
     # Custom estimator is supplied: use that
     if skestimator is not None:
