@@ -340,8 +340,10 @@ def savefig(filename=None, comments=None, **kwargs):
     metadata = {}
     metadata['Covasim version'] = cvver.__version__
     gitinfo = git_info()
-    for key,value in gitinfo.items():
+    for key,value in gitinfo['covasim'].items():
         metadata[f'Covasim {key}'] = value
+    for key,value in gitinfo['called_by'].items():
+        metadata[f'Covasim caller {key}'] = value
     metadata['Covasim current time'] = sc.getdate()
     metadata['Covasim calling file'] = get_caller()
     if comments:
