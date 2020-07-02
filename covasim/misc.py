@@ -10,7 +10,6 @@ import datetime as dt
 import scipy.stats as sps
 from . import version as cvver
 
-
 __all__ = ['load_data', 'date', 'day', 'daydiff', 'date_range', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_version', 'get_doubling_time', 'poisson_test', 'compute_gof']
 
 
@@ -314,14 +313,13 @@ def get_caller(frame=2, tostring=True):
         return output
 
 
-def savefig(filename=None, dpi=None, comments=None, **kwargs):
+def savefig(filename=None, comments=None, **kwargs):
     '''
     Wrapper for Matplotlib's savefig() function which automatically stores Covasim
     metadata in the figure. By default, saves
 
     Args:
         filename (str): name of the file to save to (default, timestamp)
-        dpi (int): resolution of image (default 150)
         comments (str): additional metadata to save to the figure
         kwargs (dict): passed to savefig()
 
@@ -332,8 +330,8 @@ def savefig(filename=None, dpi=None, comments=None, **kwargs):
     '''
 
     # Handle inputs
-    dpi = kwargs.get('dpi', 150)
-    metadata = kwargs.get('metadata', {})
+    dpi = kwargs.pop('dpi', 150)
+    metadata = kwargs.pop('metadata', {})
 
     if filename is None:
         now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
@@ -342,8 +340,10 @@ def savefig(filename=None, dpi=None, comments=None, **kwargs):
     metadata = {}
     metadata['Covasim version'] = cvver.__version__
     gitinfo = git_info()
-    for key,value in gitinfo.items():
+    for key,value in gitinfo['covasim'].items():
         metadata[f'Covasim {key}'] = value
+    for key,value in gitinfo['called_by'].items():
+        metadata[f'Covasim caller {key}'] = value
     metadata['Covasim current time'] = sc.getdate()
     metadata['Covasim calling file'] = get_caller()
     if comments:
@@ -746,6 +746,10 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         e5 = compute_gof(x1, x2, as_scalar='median') # Normalized median absolute error -- highly robust
     '''
 
+    # Handle inputs
+    actual    = np.array(sc.dcp(actual), dtype=float)
+    predicted = np.array(sc.dcp(predicted), dtype=float)
+
     # Custom estimator is supplied: use that
     if skestimator is not None:
         try:
@@ -764,9 +768,9 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         gofs = abs(np.array(actual) - np.array(predicted))
 
         if normalize and not use_frac:
-            maxmax = max(abs(actual).max(), abs(predicted).max())
-            if maxmax>0:
-                gofs /= maxmax
+            actual_max = abs(actual).max()
+            if actual_max>0:
+                gofs /= actual_max
 
         if use_frac:
             if (actual<0).any() or (predicted<0).any():

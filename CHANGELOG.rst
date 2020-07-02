@@ -9,9 +9,34 @@ All notable changes to the codebase are documented in this file. Changes that ma
    :depth: 1
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (1.4.x)
+Latest versions (1.5.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Version 1.5.0 (2020-07-01)
+--------------------------
+- Based on calibrations to Seattle-King County data, default parameter values have been updated to have higher dispersion and smaller differences between layers.
+- Keywords for computing goodness-of-fit (e.g. ``use_frac``) can now be passed to the ``Fit()`` object.
+- The overview plot (``to_plot='overview'``) has been updated with more plots.
+- Subtargeting of testing interventions is now more flexible: values can now be specified per person.
+- Issues with specifying DPI and for saving calling function information via ``cv.savefig()`` have been addressed.
+- Several minor plotting bugs were fixed.
+- A new function, ``cv.undefined()``, can be used to find indices for which a quantity is *not* defined (e.g., ``cv.undefined(sim.people.date_diagnosed)`` returns the indices of everyone who has never been diagnosed).
+- *Regression information*: To restore previous behavior, use the following parameter changes::
+
+    pars['beta_dist'] = {'dist':'lognormal','par1':0.84, 'par2':0.3}
+    pars['beta_layer'] = dict(h=7.0, s=0.7, w=0.7, c=0.14)
+    pars['iso_factor']  = dict(h=0.3, s=0.0, w=0.0, c=0.1)
+    pars['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3)
+
+- *GitHub info*: PR `596 <https://github.com/amath-idm/covasim/pull/596>`__, previous head ``39b1e52``
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.4.x (1.4.0 – 1.4.7)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.4.7 (2020-06-02)
