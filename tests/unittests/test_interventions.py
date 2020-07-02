@@ -602,9 +602,9 @@ class InterventionTests(CovaSimTest):
                 ideal_diagnoses = target_count * sensitivity
 
                 standard_deviation = sqrt(sensitivity * (1 - sensitivity) * target_count)
-                # 95% confidence interval
-                min_tolerable_diagnoses = ideal_diagnoses - 2 * standard_deviation
-                max_tolerable_diagnoses = ideal_diagnoses + 2 * standard_deviation
+                # 99.7% confidence interval
+                min_tolerable_diagnoses = ideal_diagnoses - 3 * standard_deviation
+                max_tolerable_diagnoses = ideal_diagnoses + 3 * standard_deviation
 
                 if self.is_debugging:
                     print(f"\tMax: {max_tolerable_diagnoses} \n"
