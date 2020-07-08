@@ -41,7 +41,6 @@ class MultiSim(sc.prettyobj):
     Args:
         sims      (Sim/list) : a single sim or a list of sims
         base_sim  (Sim)      : the sim used for shared properties; if not supplied, the first of the sims provided
-        quantiles (dict)     : the quantiles to use with reduce(), e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
         initialize (bool)    : whether or not to initialize the sims (otherwise, initialize them during run)
         kwargs    (dict)     : stored in run_args and passed to run()
 
@@ -68,7 +67,7 @@ class MultiSim(sc.prettyobj):
         msim.plot() # Plot as single sim
     '''
 
-    def __init__(self, sims=None, base_sim=None, quantiles=None, initialize=False, **kwargs):
+    def __init__(self, sims=None, base_sim=None, initialize=False, **kwargs):
 
         # Handle inputs
         if base_sim is None:
@@ -81,13 +80,9 @@ class MultiSim(sc.prettyobj):
                 errormsg = f'If base_sim is not supplied, sims must be either a sims or a list of sims, not {type(sims)}'
                 raise TypeError(errormsg)
 
-        if quantiles is None:
-            quantiles = make_metapars()['quantiles']
-
         # Set properties
         self.sims      = sims
         self.base_sim  = base_sim
-        self.quantiles = quantiles
         self.run_args  = sc.mergedicts(kwargs)
         self.results   = None
         self.which     = None # Whether the multisim is to be reduced, combined, etc.
@@ -180,11 +175,20 @@ class MultiSim(sc.prettyobj):
         return
 
 
-    def reduce(self, quantiles=None, output=False):
-        ''' Combine multiple sims into a single sim with scaled results '''
+    def reduce(self, quantiles=None, use_mean=False, bounds=None, output=False):
+        '''
+        Combine multiple sims into a single sim statistically: by default, use
+        the median value and the 10th and 90th percentiles.
+
+        Args:
+            quantiles (dict): the quantiles to use, e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
+            use_mean (bool): whether to use the mean instead of the median
+
+
+        '''
 
         if quantiles is None:
-            quantiles = self.quantiles
+            quantiles = make_metapars()['quantiles']
         if not isinstance(quantiles, dict):
             try:
                 quantiles = {'low':float(quantiles[0]), 'high':float(quantiles[1])}
@@ -210,7 +214,10 @@ class MultiSim(sc.prettyobj):
                 raw[reskey][:,s] = vals
 
         for reskey in reskeys:
-            reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
+            if use_mean:
+                reduced_sim.results[reskey].values[:] = np.mean(raw[reskey], axis=1) # Changed from median to mean for smoother plots
+            else:
+                reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
             reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
             reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
 
@@ -1064,7 +1071,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
     return sim
 
 
-def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, verbose=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, do_run=True, n_cpus=None, run_args=None, sim_args=None, par_args=None, verbose=None, **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
@@ -1081,6 +1088,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         run_args   (dict)  : arguments passed to sim.run()
         sim_args   (dict)  : extra parameters to pass to the sim
         do_run     (bool)  : whether to actually run the sim (if not, just initialize it)
+        n_cpus     (int)   : the number of CPUs to run on (if blank, set automatically; otherwise, passed to par_args; if 1, do not run in parallel)
         par_args   (dict)  : arguments passed to sc.parallelize()
         verbose    (int)   : detail to print
         kwargs     (dict)  : also passed to the sim
@@ -1099,6 +1107,8 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
     # Handle inputs
     sim_args = sc.mergedicts(sim_args, kwargs) # Handle blank
     par_args = sc.mergedicts(par_args) # Handle blank
+    if n_cpus is not None:
+        par_args['ncpus'] = n_cpus
 
     # Handle iterpars
     if iterpars is None:

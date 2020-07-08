@@ -4,7 +4,7 @@ scipy
 matplotlib
 statsmodels
 numba==0.48
-sciris>=0.17.0
+sciris>=0.17.2
 scirisweb>=0.17.0
 gunicorn
 plotly
