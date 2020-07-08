@@ -178,28 +178,34 @@ class MultiSim(sc.prettyobj):
     def reduce(self, quantiles=None, use_mean=False, bounds=None, output=False):
         '''
         Combine multiple sims into a single sim statistically: by default, use
-        the median value and the 10th and 90th percentiles.
+        the median value and the 10th and 90th percentiles for the lower and upper
+        bounds. If use_mean=True, then use the mean and ±2 standard deviations
+        for lower and upper bounds.
 
         Args:
             quantiles (dict): the quantiles to use, e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
             use_mean (bool): whether to use the mean instead of the median
-
-
+            bounds (float): if use_mean=True, the multiplier on the standard deviation for upper and lower bounds (default 2)
+            output (bool): whether to return the "reduced" sim (in any case, modify the multisim in-place)
         '''
 
-        if quantiles is None:
-            quantiles = make_metapars()['quantiles']
-        if not isinstance(quantiles, dict):
-            try:
-                quantiles = {'low':float(quantiles[0]), 'high':float(quantiles[1])}
-            except Exception as E:
-                errormsg = f'Could not figure out how to convert {quantiles} into a quantiles object: must be a dict with keys low, high or a 2-element array ({str(E)})'
-                raise ValueError(errormsg)
+        if use_mean:
+            if bounds is None:
+                bounds = 2
+        else:
+            if quantiles is None:
+                quantiles = make_metapars()['quantiles']
+            if not isinstance(quantiles, dict):
+                try:
+                    quantiles = {'low':float(quantiles[0]), 'high':float(quantiles[1])}
+                except Exception as E:
+                    errormsg = f'Could not figure out how to convert {quantiles} into a quantiles object: must be a dict with keys low, high or a 2-element array ({str(E)})'
+                    raise ValueError(errormsg)
 
         # Store information on the sims
         n_runs = len(self)
         reduced_sim = sc.dcp(self.sims[0])
-        reduced_sim.parallelized = {'parallelized':True, 'combined':False, 'n_runs':n_runs}  # Store how this was parallelized
+        reduced_sim.metadata = dict(parallelized=True, combined=False, n_runs=n_runs, quantiles=quantiles, use_mean=use_mean, bounds=bounds) # Store how this was parallelized
 
         # Perform the statistics
         raw = {}
@@ -215,11 +221,15 @@ class MultiSim(sc.prettyobj):
 
         for reskey in reskeys:
             if use_mean:
-                reduced_sim.results[reskey].values[:] = np.mean(raw[reskey], axis=1) # Changed from median to mean for smoother plots
+                r_mean = np.mean(raw[reskey], axis=1)
+                r_std = np.std(raw[reskey], axis=1)
+                reduced_sim.results[reskey].values[:] = r_mean
+                reduced_sim.results[reskey].low       = r_mean - bounds*r_std
+                reduced_sim.results[reskey].high      = r_mean + bounds*r_std
             else:
-                reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
-            reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
-            reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
+                reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1)
+                reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
+                reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
 
         # Compute and store final results
         reduced_sim.compute_summary(verbose=False)
@@ -233,6 +243,28 @@ class MultiSim(sc.prettyobj):
             return self.base_sim
         else:
             return
+
+
+    def mean(self, bounds=None, **kwargs):
+        '''
+        Alias for reduce(use_mean=True).
+
+        Args:
+            bounds (float): multiplier on the standard deviation for the upper and lower bounds (default, 2)
+            kwargs (dict): passed to reduce()
+        '''
+        return self.reduce(use_mean=True, bounds=bounds, **kwargs)
+
+
+    def median(self, quantiles=None, **kwargs):
+        '''
+        Alias for reduce(use_mean=False).
+
+        Args:
+            quantiles (list or dict): upper and lower quantiles (default, 0.1 and 0.9)
+            kwargs (dict): passed to reduce()
+        '''
+        return self.reduce(use_mean=False, quantiles=quantiles, **kwargs)
 
 
     def combine(self, output=False):
