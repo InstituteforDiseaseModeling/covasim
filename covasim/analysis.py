@@ -12,7 +12,7 @@ from . import misc as cvm
 from . import interventions as cvi
 
 
-__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'Fit', 'TransTree']
+__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_analyzer', 'Fit', 'TransTree']
 
 
 class Analyzer(sc.prettyobj):
@@ -308,6 +308,85 @@ class age_histogram(Analyzer):
                 pl.title(f'Number of people {state} {preposition} {date}')
 
         return figs
+
+
+class daily_age_analyzer(Analyzer):
+    ''' Calculate daily counts by age, saving for each day of the simulation
+
+    Args:
+        states  (list): which states of people to record (default: exposed, tested, diagnosed, dead)
+        edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
+        kwargs  (dict): passed to Analyzer()
+
+    **Examples**::
+
+        sim = cv.Sim(analyzers=cv.daily_age_analyzer())
+        sim.run()
+        agehist = sim['analyzers'][0].make_df()
+
+    '''
+
+    def __init__(self, states=None, edges=None, **kwargs):
+        super().__init__(**kwargs)
+        self.edges = edges
+        self.bins = None  # Age bins, calculated from edges
+        self.states = states
+        self.results = sc.odict()
+
+    def initialize(self, sim):
+
+        if self.states is None:
+            self.states = ['diagnoses', 'deaths', 'tests', 'severe']
+
+        # Handle edges and age bins
+        if self.edges is None:  # Default age bins
+            self.edges = np.linspace(0, 100, 11)
+        self.bins = self.edges[:-1]  # Don't include the last edge in the bins
+
+        self.initialized = True
+        return
+
+    def apply(self, sim):
+        mapper = {'diagnoses': 'diagnosed', 'deaths': 'dead', 'tests': 'tested', 'severe': 'severe'}
+        df_entry = sc.odict()
+        for state in self.states:
+            inds = sc.findinds(sim.people['date_{}'.format(mapper[state])], sim.t)
+            b, _ = np.histogram(sim.people.age[inds], self.edges)
+            df_entry.update({state: b * sim.rescale_vec[sim.t]})
+        df_entry.update({'age': self.bins})
+        self.results.update({sim.date(sim.t): df_entry})
+
+    def make_df(self):
+        '''Create dataframe totals for each day'''
+        mapper = {f'{k}': f'new_{k}' for k in ['diagnoses', 'deaths', 'tests', 'severe']}
+        df = pd.DataFrame()
+        for date, k in self.results.items():
+            df_ = pd.DataFrame(k)
+            df_['date'] = date
+            df_.rename(mapper, inplace=True, axis=1)
+            df = pd.concat((df, df_))
+        cols = list(df.columns.values)
+        cols = [cols[-1]] + [cols[-2]] + cols[:-2]
+        df = df[cols]
+        return df
+
+    def make_total_df(self):
+        '''Create dataframe totals'''
+        df = self.make_df()
+        cols = list(df.columns)
+        cum_cols = [c for c in cols if c.split('_')[0] == 'new']
+        mapper = {'new_{}'.format(c.split('_')[1]): 'cum_{}'.format(c.split('_')[1]) for c in cum_cols}
+        df_dict = {'age': []}
+        df_dict.update({c: [] for c in mapper.values()})
+        for age, group in df.groupby('age'):
+            cum_vals = group.sum()
+            df_dict['age'].append(age)
+            for k, v in mapper.items():
+                df_dict[v].append(cum_vals[k])
+        df = pd.DataFrame(df_dict)
+        if ('cum_diagnoses' in df.columns) and ('cum_tests' in df.columns):
+            df['yield'] = df['cum_diagnoses'] / df['cum_tests']
+        return df
 
 
 class Fit(sc.prettyobj):
