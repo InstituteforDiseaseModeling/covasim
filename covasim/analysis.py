@@ -380,9 +380,11 @@ class daily_age_analyzer(Analyzer):
         df = df[cols]
         return df
 
-    def make_total_df(self):
+    def make_total_df(self, df=None):
         '''Create dataframe totals'''
-        df = self.make_df()
+
+        if df is None:
+            df = self.make_df()
         cols = list(df.columns)
         cum_cols = [c for c in cols if c.split('_')[0] == 'new']
         mapper = {'new_{}'.format(c.split('_')[1]): 'cum_{}'.format(c.split('_')[1]) for c in cum_cols}
