@@ -17,7 +17,8 @@ class MiscellaneousFeatureTests(CovaSimTest):
 
     def test_xslx_generation(self):
         super().tearDown()
-        excel_filename = "DEBUG_test_xslx_generation.xls"  # NOTE: xslx files won't open in 365 right now
+        root_filename = "DEBUG_test_xslx_generation"
+        excel_filename = f"{root_filename}.xlsx"  # NOTE: xslx files won't open in 365 right now
         if os.path.isfile(excel_filename):
             os.unlink(excel_filename)
             pass
@@ -26,7 +27,7 @@ class MiscellaneousFeatureTests(CovaSimTest):
             'pop_infected': test_infected_value
         }
         self.run_sim(params_dict)
-        self.sim.to_excel(filename=excel_filename)
+        self.sim.to_excel(filename=root_filename)
         simulation_df = pd.ExcelFile(excel_filename)
         expected_sheets = ['Results','Parameters']
         for sheet in expected_sheets:
