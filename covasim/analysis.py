@@ -314,7 +314,7 @@ class daily_age_analyzer(Analyzer):
     ''' Calculate daily counts by age, saving for each day of the simulation
 
     Args:
-        states  (list): which states of people to record (default: exposed, tested, diagnosed, dead)
+        states  (list): which states of people to record (default: ['diagnoses', 'deaths', 'tests', 'severe'])
         edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
         datafile (str): the name of the data file to load in for comparison, or a dataframe of data (optional)
         kwargs  (dict): passed to Analyzer()
