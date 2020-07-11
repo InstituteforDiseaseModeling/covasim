@@ -316,6 +316,7 @@ class daily_age_analyzer(Analyzer):
     Args:
         states  (list): which states of people to record (default: exposed, tested, diagnosed, dead)
         edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
+        datafile (str): the name of the data file to load in for comparison, or a dataframe of data (optional)
         kwargs  (dict): passed to Analyzer()
 
     **Examples**::
@@ -326,12 +327,14 @@ class daily_age_analyzer(Analyzer):
 
     '''
 
-    def __init__(self, states=None, edges=None, **kwargs):
+    def __init__(self, states=None, edges=None, datafile=None, **kwargs):
         super().__init__(**kwargs)
         self.edges = edges
         self.bins = None  # Age bins, calculated from edges
         self.states = states
         self.results = sc.odict()
+        self.datafile = datafile
+        self.data = None
 
     def initialize(self, sim):
 
@@ -342,6 +345,13 @@ class daily_age_analyzer(Analyzer):
         if self.edges is None:  # Default age bins
             self.edges = np.linspace(0, 100, 11)
         self.bins = self.edges[:-1]  # Don't include the last edge in the bins
+
+        # Handle datafile
+        if sc.isstring(self.datafile):
+            self.data = cvm.load_data(self.datafile, check_date=False)
+        else:
+            self.data = self.datafile  # Use it directly
+            self.datafile = None
 
         self.initialized = True
         return
