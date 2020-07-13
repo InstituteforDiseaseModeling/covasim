@@ -18,7 +18,7 @@ class MiscellaneousFeatureTests(CovaSimTest):
     def test_xslx_generation(self):
         super().tearDown()
         self.is_debugging = False
-        root_filename = "DEBUG_test_xslx_generation"
+        root_filename = "DEBUG_test_xlsx_generation"
         excel_filename = f"{root_filename}.xlsx"
         if os.path.isfile(excel_filename):
             os.unlink(excel_filename)
