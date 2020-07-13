@@ -17,8 +17,9 @@ class MiscellaneousFeatureTests(CovaSimTest):
 
     def test_xslx_generation(self):
         super().tearDown()
+        self.is_debugging = True
         root_filename = "DEBUG_test_xslx_generation"
-        excel_filename = f"{root_filename}.xlsx"  # NOTE: xslx files won't open in 365 right now
+        excel_filename = f"{root_filename}.xlsx"
         if os.path.isfile(excel_filename):
             os.unlink(excel_filename)
             pass
