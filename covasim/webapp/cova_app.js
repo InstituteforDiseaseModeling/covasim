@@ -96,7 +96,7 @@ const interventionTableConfig = {
 };
 
 function copyright_year() {
-    const release_year = 2020
+    const release_year = 1999
     const current_year = new Date().getFullYear()
     let range = [release_year]
 
@@ -158,10 +158,12 @@ var vm = new Vue({
                 title: "Covasim",
                 version: 'Unable to connect to server!', // This text will display instead of the version
                 copyright_year: copyright_year(),
+                copyright_owner: "Bill & Melinda Gates Foundation",
                 github_url: "https://github.com/institutefordiseasemodeling/covasim",
                 org_url: "https://idmod.org",
                 docs_url: "http://docs.covasim.org",
                 paper_url: "http://paper.covasim.org",
+                publisher_url: "https://gatesfoundation.org",
                 license: 'Loading...',
                 notice: 'Loading...'
             },
