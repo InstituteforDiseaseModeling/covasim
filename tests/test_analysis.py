@@ -38,18 +38,22 @@ def test_analysis_hist():
         agehist.compute_windows()
     except ValueError:
         raise ValueError("Unable to compute windows")
-
+    
     # checks compute_windows and plot()
     try:
-        agehist.plot(windows=True)
+        # Saving to disk adds 2.45 seconds
+        agehistWindows = agehist.plot(windows=True) #.savefig('books_read.png')
     except:
         raise ValueError("Cannot plot this histogram with windows")
+    # checks that number of windows returned is correct
+    assert len(agehistWindows) == 3, f"Expected 3 figures (fig1, figB, fig_newton), got {len(agehistWindows)}"
 
 
 def test_analysis_fit():
     sim = cv.Sim(datafile="example_data.csv")
     sim.run()
     fit = sim.compute_fit()
+    print(type(fit))
     # battery of tests to test basic fit function functionality
     # tests that running functions does not produce error
     # try/except blocks will be changed to assertRaises once code is formatted as unittest
@@ -62,16 +66,33 @@ def test_analysis_fit():
     except Exception as E:
         raise ValueError(f"Unable to compute differences: {E}")
     try:
+        fit.compute_gofs()
+    except Exception as E:
+        raise ValueError(f"Unable to compute goodness of fit: {E}")
+    try:
         fit.plot()
     except Exception as E:
         raise ValueError(f"Fit plot not being rendered correctly: {E}")
 
-    # testing custom fit inputs
+    # testing custom fit outputs with new data
+    # expected: added data will change outputs
+    initial_gofs = fit.gofs
+    initial_losses = fit.losses
+    initial_diffs = fit.diffs
     customInputs = {'BoomTown':{'data':np.array([1,2,3]), 'sim':np.array([1,2,4]), 'weights':[2.0, 3.0, 4.0]}}
     try:
         customFit = sim.compute_fit(custom=customInputs)
     except:
         raise ValueError("Fitting the model does not work with custom inputs")
+
+    new_gofs = customFit.gofs
+    new_losses = customFit.losses
+    new_diffs = customFit.diffs
+    assert initial_gofs != new_gofs, f"Goodness of fit remains unchanged after adding new data"
+    assert initial_losses != new_losses, f"Losses between data and fit remain unchanged after adding new data"
+    assert initial_diffs != new_diffs, f"Differences between data and fit remains unchanged after adding new data"
+
+    # testing that customFit is different from 
     # TODO: test the following `customFit.reconcile_inputs()`
     # TODO: test difference between data and sim, ensure loss is
 
@@ -85,7 +106,7 @@ def test_trans_tree():
     except RuntimeError:
         pass
 
-#uncomment to check runtime :
+# uncomment to check runtime :
 # import time
 # start_time = time.time()
 
