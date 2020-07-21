@@ -1,5 +1,4 @@
 import covasim as cv
-import unittest
 import numpy as np
 
 
@@ -24,29 +23,24 @@ def test_analysis_snapshot():
 
 def test_analysis_hist():
     # raising multiple histograms to check windows functionality
-    age_analyzer = cv.age_histogram(days=["2020-03-30", "2020-03-31", "2020-04-01"])
+    day_list = ["2020-03-30", "2020-03-31", "2020-04-01"]
+    age_analyzer = cv.age_histogram(days=day_list)
     sim = cv.Sim(analyzers=age_analyzer)
     sim.run()
+    assert age_analyzer.window_hists == None
 
     # checks to make sure dictionary form has right keys
     agehistDict = sim['analyzers'][0].get()
-    assert len(agehistDict.keys()) == 5
+    assert len(agehistDict.keys()) == 5 # TODO: is there a way to know what keys to expect?
 
     # checks to see that compute windows is correct
     agehist = sim['analyzers'][0]
-    try:
-        agehist.compute_windows()
-    except ValueError:
-        raise ValueError("Unable to compute windows")
+    agehist.compute_windows()	    
+    assert len(age_analyzer.window_hists) == len(day_list), "Number of histograms should equal number of days"
     
     # checks compute_windows and plot()
-    try:
-        # Saving to disk adds 2.45 seconds
-        agehistWindows = agehist.plot(windows=True) #.savefig('books_read.png')
-    except:
-        raise ValueError("Cannot plot this histogram with windows")
-    # checks that number of windows returned is correct
-    assert len(agehistWindows) == 3, f"Expected 3 figures (fig1, figB, fig_newton), got {len(agehistWindows)}"
+    plots = agehist.plot(windows=True)  # .savefig('DEBUG_age_histograms.png')
+    assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
 
 
 def test_analysis_fit():
@@ -56,23 +50,7 @@ def test_analysis_fit():
     print(type(fit))
     # battery of tests to test basic fit function functionality
     # tests that running functions does not produce error
-    # try/except blocks will be changed to assertRaises once code is formatted as unittest
-    try:
-        fit.compute_losses()
-    except Exception as E:
-        raise ValueError(f"Unable to compute losses: {E}")
-    try:
-        fit.compute_diffs()
-    except Exception as E:
-        raise ValueError(f"Unable to compute differences: {E}")
-    try:
-        fit.compute_gofs()
-    except Exception as E:
-        raise ValueError(f"Unable to compute goodness of fit: {E}")
-    try:
-        fit.plot()
-    except Exception as E:
-        raise ValueError(f"Fit plot not being rendered correctly: {E}")
+
 
     # testing custom fit outputs with new data
     # expected: added data will change outputs
@@ -80,10 +58,8 @@ def test_analysis_fit():
     initial_losses = fit.losses
     initial_diffs = fit.diffs
     customInputs = {'BoomTown':{'data':np.array([1,2,3]), 'sim':np.array([1,2,4]), 'weights':[2.0, 3.0, 4.0]}}
-    try:
-        customFit = sim.compute_fit(custom=customInputs)
-    except:
-        raise ValueError("Fitting the model does not work with custom inputs")
+    
+    customFit = sim.compute_fit(custom=customInputs)
 
     new_gofs = customFit.gofs
     new_losses = customFit.losses
