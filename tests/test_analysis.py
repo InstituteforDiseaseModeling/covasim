@@ -1,5 +1,4 @@
 import covasim as cv
-import unittest
 import numpy as np
 
 
@@ -24,29 +23,24 @@ def test_analysis_snapshot():
 
 def test_analysis_hist():
     # raising multiple histograms to check windows functionality
-    age_analyzer = cv.age_histogram(days=["2020-03-30", "2020-03-31", "2020-04-01"])
+    day_list = ["2020-03-30", "2020-03-31", "2020-04-01"]
+    age_analyzer = cv.age_histogram(days=day_list)
     sim = cv.Sim(analyzers=age_analyzer)
     sim.run()
+    assert age_analyzer.window_hists == None
 
     # checks to make sure dictionary form has right keys
     agehistDict = sim['analyzers'][0].get()
-    assert len(agehistDict.keys()) == 5
+    assert len(agehistDict.keys()) == 5 # TODO: is there a way to know what keys to expect?
 
     # checks to see that compute windows is correct
     agehist = sim['analyzers'][0]
-    try:
-        agehist.compute_windows()
-    except ValueError:
-        raise ValueError("Unable to compute windows")
-    
+    agehist.compute_windows()
+    assert len(age_analyzer.window_hists) == len(day_list), "Number of histograms should equal number of days"
+
     # checks compute_windows and plot()
-    try:
-        # Saving to disk adds 2.45 seconds
-        agehistWindows = agehist.plot(windows=True) #.savefig('books_read.png')
-    except:
-        raise ValueError("Cannot plot this histogram with windows")
-    # checks that number of windows returned is correct
-    assert len(agehistWindows) == 3, f"Expected 3 figures (fig1, figB, fig_newton), got {len(agehistWindows)}"
+    plots = agehist.plot(windows=True)  # .savefig('DEBUG_age_histograms.png')
+    assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
 
 
 def test_analysis_fit():
