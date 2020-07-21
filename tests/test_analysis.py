@@ -35,9 +35,9 @@ def test_analysis_hist():
 
     # checks to see that compute windows is correct
     agehist = sim['analyzers'][0]
-    agehist.compute_windows()	    
+    agehist.compute_windows()
     assert len(age_analyzer.window_hists) == len(day_list), "Number of histograms should equal number of days"
-    
+
     # checks compute_windows and plot()
     plots = agehist.plot(windows=True)  # .savefig('DEBUG_age_histograms.png')
     assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
