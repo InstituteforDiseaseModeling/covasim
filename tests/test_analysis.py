@@ -6,11 +6,11 @@ import covasim as cv
 import numpy as np
 
 
-# Runtime: 5.83 seconds
+# Runtime: 5.436 seconds
 
 default_pop_size = 1000
 # Tests that snapshot options are accessing correct data
-def test_analysis_snapshot():
+def test_snapshot():
     sim = cv.Sim(pop_size = default_pop_size, analyzers=cv.snapshot('2020-04-04', '2020-04-14'))
     sim.run()
     snapshot = sim['analyzers'][0]
@@ -27,7 +27,7 @@ def test_analysis_snapshot():
 
 
 # Tests that histogram analyzer attaches and reports correctly
-def test_analysis_hist():
+def test_hist():
     # raising multiple histograms to check windows functionality
     day_list = ["2020-03-30", "2020-03-31", "2020-04-01"]
     age_analyzer = cv.age_histogram(days=day_list)
@@ -45,7 +45,7 @@ def test_analysis_hist():
     assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
 
 # Tests that fit object computes statistics without fail
-def test_analysis_fit():
+def test_fit():
     sim = cv.Sim(rand_seed=1, pop_size = default_pop_size, datafile="example_data.csv")
     sim.run()
 
@@ -60,15 +60,17 @@ def test_analysis_fit():
 
     assert fit.mismatch != otherFit.mismatch, f"Differences between fit and data remains unchanged after changing sim seed"
 
-def test_trans_tree():
-    sim = cv.Sim(pop_size = default_pop_size)
-    sim.run()
-    # testing that it catches no graph error
-    tt = sim.make_transtree(to_networkx=False)
-    try:
-        tt.r0()
-    except RuntimeError:
-        pass
+#%% Run as a script
+if __name__ == '__main__':
+    import time
+    start_time = time.time()
+
+    test_snapshot()
+    test_hist()
+    test_fit()
+
+    print("--- %s seconds ---" % (time.time() - start_time))
+
 
 
 
