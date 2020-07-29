@@ -84,8 +84,14 @@ class snapshot(Analyzer):
 
     def initialize(self, sim):
         self.start_day = sim['start_day'] # Store the simulation start day
+        self.end_day   = cvm.date(sim['end_day'], as_date=False) # Store the end day, as a string
         self.days = cvi.process_days(sim, self.days) # Ensure days are in the right format
         self.dates = [sim.date(day) for day in self.days] # Store as date strings
+        max_hist_day = self.days[-1]
+        max_sim_day = sim.day(self.end_day)
+        if max_hist_day > max_sim_day:  # Checks that days are in sim range
+            errormsg = f'Cannot create snapshot for {self.dates[-1]} (day {max_hist_day}) because the simulation ends on {self.end_day} (day {max_sim_day})'
+            raise ValueError(errormsg)
         self.initialized = True
         return
 
