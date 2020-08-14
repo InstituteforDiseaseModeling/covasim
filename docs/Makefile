@@ -3,10 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    = -W
-INTERNALOPTS  = -t internal
 SPHINXBUILD   = sphinx-build
-INDEXBUILD    = python $(BUILDDIR)/../scripts/gti.py
-URLPREFIX	  = "."
 PAPER         =
 BUILDDIR      = _build
 
@@ -23,7 +20,6 @@ help:
 	@echo "  clean      to remove the existing build"
 	@echo "  dirhtml    to make HTML files named index.html in a directory tree"
 	@echo "  singlehtml to make a single large HTML file"
-	@echo "  external   to make standalone HTML files for public release"
 	@echo "  html       to make standalone HTML files"
 	@echo "  pickle     to make pickle files"
 	@echo "  json       to make JSON files"
@@ -47,14 +43,13 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 	@echo "  coverage   to run coverage check of the documentation (if enabled)"
-	@echo "  tipuesearch to make tipue static search content"
 	@echo "  dummy      to check syntax errors of document sources"
 
 .PHONY: clean
 clean:
 	rm -rf $(BUILDDIR)/*
 
-.PHONY: external generate-api
+.PHONY: generate-api
 
 # Generates the API doc
 generate-api:
@@ -63,24 +58,11 @@ generate-api:
 	-rm dummy.rst
 	mv covasim.rst modules.rst
 
-external:
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
-	$(INDEXBUILD) -i $(BUILDDIR)/html -o $(BUILDDIR)/html/_static/tipuesearch/tipuesearch_content.js -u $(URLPREFIX)
-	@echo
-	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
-
 .PHONY: html
 html: generate-api
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(INTERNALOPTS) $(BUILDDIR)/html
-	$(INDEXBUILD) -i $(BUILDDIR)/html -o $(BUILDDIR)/html/_static/tipuesearch/tipuesearch_content.js -u $(URLPREFIX)
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
-
-.PHONY: tipuesearch
-tipuesearch:
-	$(INDEXBUILD) -i $(BUILDDIR)/html -o $(BUILDDIR)/html/_static/tipuesearch/tipuesearch_content.js -u $(URLPREFIX)
-	@echo
-	@echo "Build finished. Updated tipuesearch content is at $(BUILDDIR)/html/_static/tipuesearch/tipuesearch_content.js"
 
 .PHONY: dirhtml
 dirhtml: generate-api
