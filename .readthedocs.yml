@@ -23,7 +23,6 @@ python:
    version: 3.7
    install:
       - requirements: requirements.txt
-      - requirements: covasim/requirements.txt
       - requirements: docs/requirements.txt
       - method: setuptools
         path: .
