@@ -15,8 +15,14 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import subprocess
 import sys
 import sphinx_rtd_theme
+
+if sys.platform in ["linux", "darwin"]:
+    subprocess.check_output(["make", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
+else:
+    subprocess.check_output(["make.bat", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
 
 # -- General configuration ------------------------------------------------
 
