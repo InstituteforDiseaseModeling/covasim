@@ -936,8 +936,8 @@ class Person(sc.prettyobj):
         self.age         = cvd.default_float(age) # Age of the person (in years)
         self.sex         = cvd.default_int(sex) # Female (0) or male (1)
         self.contacts    = contacts # Contacts
-        self.infected = [] #: Record the UIDs of all people this person infected
-        self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
+        # self.infected = [] #: Record the UIDs of all people this person infected
+        # self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
         return
 
 

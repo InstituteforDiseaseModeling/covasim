@@ -50,7 +50,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
     pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta_dist']   = {'dist':'lognormal','par1':0.84, 'par2':0.3} # Distribution to draw individual level transmissibility; use 'neg_binomial' instead of 'lognormal' for more overdispersion; see https://wellcomeopenresearch.org/articles/5-67
+    pars['beta_dist']   = {'dist':'neg_binomial','par1':1.0, 'par2':0.45, 'step':0.01} # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
     pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
     # Efficacy of protection measures
@@ -128,11 +128,11 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
 
     # Specify defaults for hybrid (and SynthPops) -- household, school, work, and community layers (h, s, w, c)
     defaults_h = dict(
-        beta_layer  = dict(h=7.0, s=0.7, w=0.7, c=0.14), # Per-population beta weights; relative
+        beta_layer  = dict(h=3.0, s=0.6, w=0.6, c=0.3), # Per-population beta weights; relative
         contacts    = dict(h=2.0, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
         dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
-        iso_factor  = dict(h=0.3, s=0.0, w=0.0, c=0.1),  # Multiply beta by this factor for people in isolation
-        quar_factor = dict(h=0.8, s=0.0, w=0.0, c=0.3),  # Multiply beta by this factor for people in quarantine
+        iso_factor  = dict(h=0.3, s=0.1, w=0.1, c=0.1),  # Multiply beta by this factor for people in isolation
+        quar_factor = dict(h=0.6, s=0.2, w=0.2, c=0.2),  # Multiply beta by this factor for people in quarantine
     )
 
     # Choose the parameter defaults based on the population type, and get the layer keys

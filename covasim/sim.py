@@ -683,16 +683,14 @@ class Sim(cvb.BaseSim):
         Returns:
             doubling_time (array): the doubling time results array
         '''
+
         cum_infections = self.results['cum_infections'].values
-        self.results['doubling_time'][:window] = np.nan
-        for t in range(window, self.npts):
-            infections_now = cum_infections[t]
-            infections_prev = cum_infections[t-window]
-            r = infections_now/infections_prev
-            if r > 1:  # Avoid divide by zero
-                doubling_time = window*np.log(2)/np.log(r)
-                doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
-                self.results['doubling_time'][t] = doubling_time
+        infections_now = cum_infections[window:]
+        infections_prev = cum_infections[:-window]
+        use = (infections_prev > 0) & (infections_now > infections_prev)
+        doubling_time = window * np.log(2) / np.log(infections_now[use] / infections_prev[use])
+        self.results['doubling_time'][:] = np.nan
+        self.results['doubling_time'][window:][use] = np.minimum(doubling_time, max_doubling_time)
         return self.results['doubling_time'].values
 
 

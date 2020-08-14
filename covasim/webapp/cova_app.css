@@ -58,6 +58,18 @@ fieldset > legend {
     font-size: 2.2rem;
 }
 
+.logo-idm {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-image: url("assets/idm-logo.png");
+    vertical-align: middle;
+}
+.logo-idm:after {
+    content: 'Covasim';
+    color: transparent;
+    font-size: smaller;
+}
+
 /* Themify Icon Overrides*/
 [class^="ti-"], [class*=" ti-"] {
     line-height: inherit;
@@ -152,6 +164,10 @@ fieldset > legend {
 #app > .content > .sidebar .card-header :not(.collapsed) [class^='ti-'][class$='-down'],
 #app > .content > .sidebar .card-header .collapsed [class^='ti-'][class$='-up'] {
     display: none;
+}
+
+#parameters .b-sidebar-body {
+ height: inherit;
 }
 
 #resize-handle {

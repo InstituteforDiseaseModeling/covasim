@@ -329,6 +329,7 @@ class Fit(sc.prettyobj):
         custom (dict): a custom dictionary of additional data to fit; format is e.g. {'<label>':{'data':[1,2,3], 'sim':[1,2,4], 'weights':2.0}}
         compute (bool): whether to compute the mismatch immediately
         verbose (bool): detail to print
+        kwargs (dict): passed to compute_gof()
 
     **Example**::
 
@@ -338,14 +339,15 @@ class Fit(sc.prettyobj):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, keys=None, method=None, custom=None, compute=True, verbose=False):
+    def __init__(self, sim, weights=None, keys=None, method=None, custom=None, compute=True, verbose=False, **kwargs):
 
         # Handle inputs
-        self.weights = weights
-        self.custom  = sc.mergedicts(custom)
-        self.verbose = verbose
-        self.weights = sc.mergedicts({'cum_deaths':10, 'cum_diagnoses':5}, weights)
-        self.keys    = keys
+        self.weights    = weights
+        self.custom     = sc.mergedicts(custom)
+        self.verbose    = verbose
+        self.weights    = sc.mergedicts({'cum_deaths':10, 'cum_diagnoses':5}, weights)
+        self.keys       = keys
+        self.gof_kwargs = kwargs
 
         # Copy data
         if sim.data is None:
@@ -482,6 +484,7 @@ class Fit(sc.prettyobj):
 
     def compute_gofs(self, **kwargs):
         ''' Compute the goodness-of-fit '''
+        kwargs = sc.mergedicts(self.gof_kwargs, kwargs)
         for key in self.pair.keys():
             actual    = sc.dcp(self.pair[key].data)
             predicted = sc.dcp(self.pair[key].sim)
@@ -555,8 +558,8 @@ class Fit(sc.prettyobj):
         main_ax1 = pl.subplot(n_rows, 2, 1)
         main_ax2 = pl.subplot(n_rows, 2, 2)
         bottom = sc.objdict() # Keep track of the bottoms for plotting cumulative
-        bottom.a = np.zeros(self.losses[0].shape)
-        bottom.b = np.zeros(self.losses[0].shape)
+        bottom.daily = np.zeros(self.sim_npts)
+        bottom.cumul = np.zeros(self.sim_npts)
         for k,key in enumerate(keys):
             if key in self.keys: # It's a time series, plot with days and dates
                 days      = self.inds.sim[key] # The "days" axis (or not, for custom keys)
@@ -579,12 +582,12 @@ class Fit(sc.prettyobj):
                         title = f'Cumulative mismatch: {self.mismatch:0.3f}'
 
                     dates = self.sim_results['date'][days] # Show these with dates, rather than days, as a reference point
-                    ax.bar(dates, data, width=width, bottom=bottom[i], color=colors[k], label=f'{key}')
+                    ax.bar(dates, data, width=width, bottom=bottom[i][self.inds.sim[key]], color=colors[k], label=f'{key}')
 
                     if i == 0:
-                        bottom[i] += self.losses[key]
+                        bottom.daily[self.inds.sim[key]] += self.losses[key]
                     else:
-                        bottom[i] += np.cumsum(self.losses[key])
+                        bottom.cumul = np.cumsum(bottom.daily)
 
                     if k == len(self.keys)-1:
                         ax.set_xlabel('Date')
@@ -993,7 +996,7 @@ class TransTree(sc.prettyobj):
         for day in range(n):
             pl.title(f'Day: {day}')
             pl.xlim([0, n])
-            pl.ylim([0, len(self)])
+            pl.ylim([0, self.pop_size])
             pl.xlabel('Day')
             pl.ylabel('Person')
             flist = frames[day]
@@ -1048,8 +1051,6 @@ class TransTree(sc.prettyobj):
 
         bins = bins[:-1] # Remove last bin since it's an edge
         total_counts = counts*bins
-        # counts = counts*100/counts.sum()
-        # total_counts = total_counts*100/total_counts.sum()
         n_bins = len(bins)
         index = np.linspace(0, 100, len(n_targets))
         sorted_arr = np.sort(n_targets)
