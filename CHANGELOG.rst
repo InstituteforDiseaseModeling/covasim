@@ -15,6 +15,14 @@ Latest versions (1.5.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 1.5.1 (2020-08-17)
+--------------------------
+- Modify ``cv.BasePeople.__getitem__()`` to retrieve a person if the item is an integer, so that ``sim.people[5]`` will return a ``cv.Person`` instance
+- Modify ``cv.BasePeople.__iter__`` so that iterating over people e.g. ``for person in sim.people:`` iterates over ``cv.Person`` instances
+- *Regression information*: To restore previous behavior of ``for idx in sim.people:`` use ``for idx in range(len(sim.people)):`` instead
+
+
+
 Version 1.5.0 (2020-07-01)
 --------------------------
 - Based on calibrations to Seattle-King County data, default parameter values have been updated to have higher dispersion and smaller differences between layers.

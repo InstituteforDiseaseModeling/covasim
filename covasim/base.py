@@ -584,7 +584,13 @@ class BasePeople(sc.prettyobj):
 
 
     def __getitem__(self, key):
-        ''' Allow people['attr'] instead of getattr(people, 'attr') '''
+        ''' Allow people['attr'] instead of getattr(people, 'attr')
+            If the key is an integer, alias `people.person()` to return a `Person` instance
+        '''
+
+        if isinstance(key, int):
+            return self.person(key)
+
         try:
             return self.__dict__[key]
         except:
@@ -607,8 +613,9 @@ class BasePeople(sc.prettyobj):
 
 
     def __iter__(self):
-        ''' Define the iterator to just be the indices of the array '''
-        return iter(range(len(self)))
+        ''' Iterate over people '''
+        for i in range(len(self)):
+            yield self[i]
 
 
     def __add__(self, people2):
