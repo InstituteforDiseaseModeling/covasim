@@ -8,13 +8,9 @@ from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 from . import plotting as cvplt
-from collections import defaultdict, Iterable
-import sciris as sc
+from collections import defaultdict
 
 __all__ = ['People']
-
-from scirisweb.sw_datastore import SQLDataStore
-ds = SQLDataStore('sqlite:///test.db')
 
 class People(cvb.BasePeople):
     '''
@@ -235,13 +231,7 @@ class People(cvb.BasePeople):
         n_quarantined = 0
         for ind, end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
-                # pass
-                # self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-
-                if self.date_quarantined[ind] < self.t:
-                    self._pending_quarantine[self.date_end_quarantine[ind]+1].append((ind,self.date_end_quarantine[ind]+1+14))
-
-
+                self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
             elif not (self.dead[ind] | self.recovered[ind] | self.diagnosed[ind]):
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
@@ -252,7 +242,6 @@ class People(cvb.BasePeople):
         end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here
         self.quarantined[end_inds] = False # Release from quarantine
 
-        assert np.all(self.quarantined == np.array(ds.get(('original',self.t))))
         return n_quarantined
 
 
@@ -432,7 +421,6 @@ class People(cvb.BasePeople):
         start_date = self.t if start_date is None else int(start_date)
         period = self.pars['quar_period'] if period is None else int(period)
         for ind in inds:
-            if ind not in {x[0] for x in self._pending_quarantine[start_date]}:
                 self._pending_quarantine[start_date].append((ind, start_date+period))
         return
 
@@ -445,8 +433,6 @@ class People(cvb.BasePeople):
             trace_probs (dict): probability of being able to trace people at each contact layer - should have the same keys as contacts
             trace_time (dict): days it'll take to trace people at each contact layer - should have the same keys as contacts
         '''
-
-        this_step = set()
 
         # Extract the indices of the people who'll be contacted
         traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
@@ -462,19 +448,11 @@ class People(cvb.BasePeople):
                 edge_inds = np.unique(np.concatenate(inds_list)) # Find all edges
 
                 # Check contacts
-
                 contact_inds = cvu.binomial_filter(this_trace_prob, edge_inds) # Filter the indices according to the probability of being able to trace this layer
                 if len(contact_inds):
                     self.known_contact[contact_inds] = True
                     self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
-                    # self.quarantine(contact_inds, self.t+this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified
-                    for a in contact_inds:
-                        if a in this_step:
-                            continue
-                        else:
-                            this_step.add(a)
-                        self.quarantine([a], self.t+this_trace_time)
-
+                    self.quarantine(contact_inds, self.t+this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified
 
         return
 
