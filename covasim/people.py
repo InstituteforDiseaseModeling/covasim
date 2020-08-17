@@ -8,7 +8,7 @@ from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 from . import plotting as cvplt
-
+from collections import defaultdict
 
 __all__ = ['People']
 
@@ -39,7 +39,7 @@ class People(cvb.BasePeople):
             else:
                 self[key] = value
 
-        self._pending_quarantine = set()  # Internal cache to record people that need to be quarantined in the future
+        self._pending_quarantine = defaultdict(list)  # Internal cache to record people that need to be quarantined on each timestep {t:(person, quarantine_end_day)}
         return
 
 
@@ -229,28 +229,19 @@ class People(cvb.BasePeople):
     def check_quar(self):
         '''Update quarantine state'''
 
+        n_quarantined = 0
+        for ind, end_day in self._pending_quarantine[self.t]:
+            if self.quarantined[ind]:
+                self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
+            elif not (self.dead[ind] | self.recovered[ind] | self.diagnosed[ind]):
+                self.quarantined[ind] = True
+                self.date_quarantined[ind] = self.t
+                self.date_end_quarantine[ind] = end_day
+                n_quarantined += 1
 
-        quar_inds = []
-        if self._pending_quarantine:
-            # Go through everyone that is pending quarantine, see if they have reached their date_quarantined, and if so, process them
-            # This could be made more efficient by storing the pending quarantine differently, sorted by the date_quarantined?
-            to_quarantine = np.array(list(self._pending_quarantine))
-            to_quarantine = to_quarantine[self.date_quarantined[to_quarantine] <= self.t]
-            if len(to_quarantine):
-                # Now that we have reached the scheduled quarantine date, we can evaluate whether they actually go
-                # on quarantine or not. They don't need to quarantine if they are
-                # - Diagnosed (and thus already isolating)
-                # - Recovered (since they are no longer susceptible)
-                # - Dead
-                quar_inds = cvu.ifalse(self.dead[to_quarantine] | self.recovered[to_quarantine] | self.diagnosed[to_quarantine], to_quarantine)
-                self.quarantined[quar_inds] = True  # Move these people onto quarantine
-                self._pending_quarantine -= set(to_quarantine) # People pending quarantine that don't need to quarantine can now be removed from pending
-
-        # If some on quarantine has reached the end of their quarantine, release them
+        # If someone on quarantine has reached the end of their quarantine, release them
         end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here
         self.quarantined[end_inds] = False # Release from quarantine
-
-        n_quarantined = len(quar_inds)
 
         return n_quarantined
 
@@ -415,11 +406,12 @@ class People(cvb.BasePeople):
 
     def quarantine(self, inds, start_date=None, period=None):
         '''
-        Schedule quarantine for a person
+        Schedule a quarantine
 
-        If that person is already quarantined, this will extend their quarantine.
-
-        Moving people that are pending quarantine onto quarantine is handled by `People.check_quar`
+        This function will create a request to quarantine a person on the start_date for
+        a period of time. Whether they are on an existing quarantine that gets extended, or
+        whether they are no longer eligible for quarantine, will be checked when the start_date
+        is reached.
 
         Args:
             inds (array): indices of who to quarantine, specified by check_quar()
@@ -433,15 +425,8 @@ class People(cvb.BasePeople):
         if period is None:
             period = self.pars['quar_period']
 
-        # For people that are already on quarantine, extend their quarantine if required
-        extend_quarantine = cvu.itruei(self.quarantined, inds)
-        self.date_end_quarantine[extend_quarantine] = np.maximum(self.date_end_quarantine[extend_quarantine], start_date+period)
-
-        # Otherwise, schedule quarantine
-        new_quarantine = cvu.ifalsei(self.quarantined, inds)
-        self._pending_quarantine.update(new_quarantine)
-        self.date_quarantined[new_quarantine] = start_date
-        self.date_end_quarantine[new_quarantine] = start_date+period
+        for ind in inds:
+            self._pending_quarantine[start_date].append((ind, start_date+period))
 
         return
 
