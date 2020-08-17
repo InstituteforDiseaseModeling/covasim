@@ -232,7 +232,8 @@ class People(cvb.BasePeople):
         n_quarantined = 0
         for ind, end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
-                self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
+                pass
+                # self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
             elif not (self.dead[ind] | self.recovered[ind] | self.diagnosed[ind]):
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
@@ -420,13 +421,13 @@ class People(cvb.BasePeople):
         '''
 
         if start_date is None:
-            start_date = self.t
+            start_date = self.t*np.ones(len(inds))
 
         if period is None:
-            period = self.pars['quar_period']
+            period = self.pars['quar_period']*np.ones(len(inds))
 
-        for ind in inds:
-            self._pending_quarantine[start_date].append((ind, start_date+period))
+        for ind, start, dur in zip(inds, start_date, period):
+            self._pending_quarantine[start].append((ind, start+dur))
 
         return
 
@@ -458,7 +459,7 @@ class People(cvb.BasePeople):
                 if len(contact_inds):
                     self.known_contact[contact_inds] = True
                     self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time)
-                    self.quarantine(contact_inds, self.t+this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified
+                    self.quarantine(contact_inds, self.date_known_contact[contact_inds]) # Schedule quarantine for the notified people to start on the date they will be notified
 
         return
 
