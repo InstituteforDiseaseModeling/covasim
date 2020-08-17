@@ -237,7 +237,11 @@ class People(cvb.BasePeople):
             if self.quarantined[ind]:
                 # pass
                 # self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-                self._pending_quarantine[self.date_end_quarantine[ind]+1].append((ind,self.date_end_quarantine[ind]+1+14))
+
+                if self.date_quarantined[ind] < self.t:
+                    self._pending_quarantine[self.date_end_quarantine[ind]+1].append((ind,self.date_end_quarantine[ind]+1+14))
+
+
             elif not (self.dead[ind] | self.recovered[ind] | self.diagnosed[ind]):
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
