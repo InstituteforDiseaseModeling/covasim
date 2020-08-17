@@ -801,11 +801,7 @@ class BasePeople(sc.prettyobj):
 
     def to_people(self):
         ''' Return all people as a list '''
-        people = []
-        for p in self:
-            person = self.person(p)
-            people.append(person)
-        return people
+        return list(self)
 
 
     def from_people(self, people, resize=True):
