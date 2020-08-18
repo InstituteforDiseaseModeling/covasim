@@ -421,7 +421,7 @@ class People(cvb.BasePeople):
         start_date = self.t if start_date is None else int(start_date)
         period = self.pars['quar_period'] if period is None else int(period)
         for ind in inds:
-                self._pending_quarantine[start_date].append((ind, start_date+period))
+            self._pending_quarantine[start_date].append((ind, start_date + period))
         return
 
 
@@ -452,7 +452,7 @@ class People(cvb.BasePeople):
                 if len(contact_inds):
                     self.known_contact[contact_inds] = True
                     self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
-                    self.quarantine(contact_inds, self.t+this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified
+                    self.quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
 
         return
 
