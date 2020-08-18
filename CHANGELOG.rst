@@ -15,6 +15,17 @@ Latest versions (1.5.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 1.5.2 (2020-08-18)
+--------------------------
+
+- Modify ``cv.People.quarantine()`` to allow it schedule future quarantines, and allow quarantines of varying duration.
+- Update the quarantine pipeline so that ``date_known_contact`` is not removed when someone goes into quarantine.
+- Fixed bug where people identified as known contacts while on quarantine would be re-quarantined at the end of their quarantine for the entire quarantine duration. Now if a quarantine is requested while someone is already on quarantine, their existing quarantine will be correctly extended where required. For example, if someone is quarantined for 14 days on day 0 so they are scheduled to leave quarantine on day 14, and they are then subsequently identified as a known contact of a separate person on day 6 requiring 14 days quarantine, in previous versions of Covasim they would be released from quarantine on day 15, and then immediately quarantined on day 16 until day 30. With this update, their original quarantine would now be extended, so they would be released from quarantine on day 20.
+- *Regression information*:
+    - Scripts that called ``cv.People.quarantine()`` directly would have also had to manually update ``sim.results['new_quarantined']``. This is no longer required, and those commands should now be removed as they will otherwise be double counted
+    - Results are expected to differ slightly because the handling of quarantines being extended has been improved.
+
+
 Version 1.5.1 (2020-08-17)
 --------------------------
 - Modify ``cv.BasePeople.__getitem__()`` to retrieve a person if the item is an integer, so that ``sim.people[5]`` will return a ``cv.Person`` instance
