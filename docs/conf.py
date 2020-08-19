@@ -15,8 +15,14 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import subprocess
 import sys
 import sphinx_rtd_theme
+
+if sys.platform in ["linux", "darwin"]:
+    subprocess.check_output(["make", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
+else:
+    subprocess.check_output(["make.bat", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
 
 # -- General configuration ------------------------------------------------
 
@@ -103,7 +109,7 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # suppress warnings for multiple possible Python references in the namespace
-suppress_warnings = ['ref.python']
+# suppress_warnings = ['ref.python']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -185,16 +191,7 @@ html_static_path = ['_static']
 
 html_context = {
     'css_files': [
-        '_static/theme_overrides.css',
-        '_static/tipuesearch/tipuesearch.css'
-    ],
-    'script_files': [
-        '_static/jquery.js',
-        '_static/tipuesearch/tipuesearch.js',
-        '_static/tipuesearch/tipuesearch_content.js',
-        '_static/tipuesearch/tipuesearch_set.js',
-        '_static/runsearch.js',
-        '_static/tablecollapse.js'
+        '_static/theme_overrides.css'
     ]
 }
 # Add any extra paths that contain custom files (such as robots.txt or
