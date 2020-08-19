@@ -75,7 +75,7 @@ def test_all_interventions():
     sims.change_beta1 = cv.Sim(pars=pars, interventions=i3a)
     sims.clip_edges1  = cv.Sim(pars=pars, interventions=i4a) # Roughly equivalent to change_beta1
     sims.change_beta2 = cv.Sim(pars=pars, interventions=i3b)
-    sims.clip_edges2  = cv.Sim(pars=pars, interventions=i4b) # Roughly euivalent to change_beta2
+    sims.clip_edges2  = cv.Sim(pars=pars, interventions=i4b) # Roughly equivalent to change_beta2
     sims.test_num     = cv.Sim(pars=pars, interventions=i5)
     sims.test_prob    = cv.Sim(pars=pars, interventions=i6)
     sims.tracing      = cv.Sim(pars=pars, interventions=[i7a, i7b])
