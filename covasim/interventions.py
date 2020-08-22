@@ -552,7 +552,10 @@ def get_quar_inds(quar_policy, sim):
 
 class test_num(Intervention):
     '''
-    Test a fixed number of people per day.
+    Test the specified number of people per day. Useful for including historical
+    testing data. The probability of a given person getting a test is dependent
+    on the total number of tests, population size, and odds ratios. Compare this
+    intervention with cv.test_prob().
 
     Args:
         daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day
@@ -676,8 +679,9 @@ class test_num(Intervention):
 
 class test_prob(Intervention):
     '''
-    Test as many people as required based on test probability.
-    Probabilities are OR together, so choose wisely.
+    Assign each person a probability of being tested for COVID based on their
+    symptom state, quarantine state, and other states. Unlike test_num, the
+    total number of tests not specified, but rather is an output.
 
     Args:
         symp_prob (float): Probability of testing a symptomatic (unquarantined) person
@@ -798,7 +802,6 @@ class contact_tracing(Intervention):
         trace_time  (dict): days required to trace, per layer
         start_day   (int):  intervention start day
         end_day     (int):  intervention end day
-        test_delay  (int):  number of days a test result takes
         presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
         kwargs      (dict): passed to Intervention()
     '''
