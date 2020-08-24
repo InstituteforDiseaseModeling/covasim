@@ -73,6 +73,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration for people with critical symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':6.2,  'par2':1.7} # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
 
+    # Optional duration parameters for specifying *different* disease durations for imported or seeded infections, for example if you want newly imported cases to be immediately infectious.
+    pars['dur_imports'] = None
+
     # Severity parameters: probabilities of symptom progression
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe

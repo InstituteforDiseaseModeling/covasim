@@ -295,21 +295,29 @@ class People(cvb.BasePeople):
             source = source[keep]
 
         n_infections = len(inds)
-        durpars      = self.pars['dur']
+
+        # Set duration parameters
+        if layer in ['seed_infection', 'importation'] and self.pars['dur_imports'] is not None:
+            durpars      = self.pars['dur_imports']
+        else:
+            durpars      = self.pars['dur']
 
         # Set states
+        time_of_infection = self.t
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
-        self.date_exposed[inds]  = self.t
+        self.date_exposed[inds]  = time_of_infection
         self.flows['new_infections'] += len(inds)
 
         # Record transmissions
         for i, target in enumerate(inds):
-            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
+            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=time_of_infection, layer=layer))
+
+        # For source infections and imported infections,
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
-        self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
+        self.date_infectious[inds] = self.dur_exp2inf[inds] + time_of_infection
 
         # Use prognosis probabilities to determine what happens to them
         symp_probs = self.pars['rel_symp_prob']*self.symp_prob[inds] # Calculate their actual probability of being symptomatic
