@@ -464,7 +464,21 @@ class Sim(cvb.BaseSim):
             n_imports = self['n_imports']
 
         if n_imports>0:
-            importation_inds = cvu.choose(max_n=len(people), n=n_imports)
+
+            # If provided, specify age of imports
+            if hasattr(self,'age_imports') and self['age_imports'] is not None:
+                if sc.checktype(self['age_imports'], dict):
+                    lims = [self['age_imports']['lower'], self['age_imports']['upper']]
+                elif sc.checktype(self['age_imports'], 'arraylike'):
+                    lims = self['age_imports']
+                age_validated_importation_inds = cvu.true((people.age > lims[0]) & (people.age < lims[1]))
+                max_n = len(age_validated_importation_inds)
+                chosen_importation_inds = cvu.choose(max_n=max_n, n=n_imports)
+                importation_inds = age_validated_importation_inds[chosen_importation_inds]
+            else:
+                max_n = len(people)
+                importation_inds = cvu.choose(max_n=max_n, n=n_imports)
+
             people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
 
         # Apply interventions

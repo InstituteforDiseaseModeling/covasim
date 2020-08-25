@@ -75,7 +75,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Optional parameters for controlling importations
     pars['dur_imports'] = None # For specifying *different* disease durations for imported or seeded infections, for example if you want newly imported cases to be immediately infectious.
-
+    pars['age_imports'] = None # Optional way to specify that imported cases are in a certain age bracket, e.g. pars['age_imports'] = {'lower': 30, 'upper': 70}, pars['age_imports'] = [30,70], pars['age_imports'] = {'lower': 30, 'upper': None}, pars['age_imports'] = [None,70]
 
     # Severity parameters: probabilities of symptom progression
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
