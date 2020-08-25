@@ -454,7 +454,7 @@ class Sim(cvb.BaseSim):
 
         # Handle imported infections
         if sc.checktype(self['n_imports'], dict): # It's a distribution dictionary
-            n_imports = cvu.sample(**self['n_imports'], size=1)
+            n_imports = cvu.sample(**self['n_imports'], size=1)[0]
         elif sc.checktype(self['n_imports'], 'arraylike'): # It's an array or list
             if t > len(self['n_imports']): # Assume no more imports
                 n_imports = 0
