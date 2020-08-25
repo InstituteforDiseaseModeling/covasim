@@ -49,7 +49,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['contacts']    = None  # The number of contacts per layer; set by reset_layer_pars() below
     pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
-    pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['n_imports']   = 0     # Daily imported cases. If an integer is used, this number will be imported each day. If a distribution dictionary is used, the daily number will be sampled from this distribution. If an array is used, the array will be indexed on each timestep to get the number of imports
     pars['beta_dist']   = {'dist':'neg_binomial','par1':1.0, 'par2':0.45, 'step':0.01} # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
     pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
@@ -73,8 +73,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration for people with critical symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':6.2,  'par2':1.7} # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
 
-    # Optional duration parameters for specifying *different* disease durations for imported or seeded infections, for example if you want newly imported cases to be immediately infectious.
-    pars['dur_imports'] = None
+    # Optional parameters for controlling importations
+    pars['dur_imports'] = None # For specifying *different* disease durations for imported or seeded infections, for example if you want newly imported cases to be immediately infectious.
+
 
     # Severity parameters: probabilities of symptom progression
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases

@@ -452,8 +452,17 @@ class Sim(cvb.BaseSim):
         hosp_max = people.count('severe')   > self['n_beds_hosp'] if self['n_beds_hosp'] else False # Check for acute bed constraint
         icu_max  = people.count('critical') > self['n_beds_icu']  if self['n_beds_icu']  else False # Check for ICU bed constraint
 
-        # Randomly infect some people (imported infections)
-        n_imports = cvu.poisson(self['n_imports']) # Imported cases
+        # Handle imported infections
+        if sc.checktype(self['n_imports'], dict): # It's a distribution dictionary
+            n_imports = cvu.sample(**self['n_imports'], size=1)
+        elif sc.checktype(self['n_imports'], 'arraylike'): # It's an array or list
+            if t > len(self['n_imports']): # Assume no more imports
+                n_imports = 0
+            else:
+                n_imports = self['n_imports'][t]
+        elif sc.isnumber(self['n_imports']):
+            n_imports = self['n_imports']
+
         if n_imports>0:
             importation_inds = cvu.choose(max_n=len(people), n=n_imports)
             people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
