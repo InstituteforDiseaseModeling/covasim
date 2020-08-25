@@ -297,7 +297,7 @@ class People(cvb.BasePeople):
         n_infections = len(inds)
 
         # Set duration parameters
-        if layer in ['seed_infection', 'importation'] and self.pars['dur_imports'] is not None:
+        if layer in ['seed_infection', 'importation'] and self.pars.get('dur_imports') and self.pars['dur_imports'] is not None:
             durpars      = self.pars['dur_imports']
         else:
             durpars      = self.pars['dur']
