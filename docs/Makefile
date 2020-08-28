@@ -53,7 +53,7 @@ clean:
 
 # Generates the API doc
 generate-api:
-	-rm covasim_index.rst modules.rst
+	-rm -rf covasim_index.rst modules.rst
 	sphinx-apidoc -f -e -o . ../covasim
 	mv modules.rst covasim_index.rst
 
