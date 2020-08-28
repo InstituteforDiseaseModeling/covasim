@@ -108,7 +108,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def initialize(self, **kwargs):
+    def initialize(self, reset=False, **kwargs):
         '''
         Perform all initializations, including validating the parameters, setting
         the random number seed, creating the results structure, initializing the
@@ -116,16 +116,17 @@ class Sim(cvb.BaseSim):
         and initializing the interventions.
 
         Args:
+            reset (bool): whether or not to reset people, interventions, and analyzers
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
         self.init_results() # Create the results stucture
-        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
+        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
-        self.init_interventions() # Initialize the interventions
-        self.init_analyzers() # ...and the interventions
+        self.init_interventions(reset=reset) # Initialize the interventions
+        self.init_analyzers(reset=reset) # ...and the interventions
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized = True
         return
@@ -392,20 +393,20 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_interventions(self):
+    def init_interventions(self, reset=False):
         ''' Initialize the interventions '''
         for intervention in self['interventions']:
             if isinstance(intervention, cvi.Intervention):
-                if not intervention.initialized:
+                if not intervention.initialized or reset:
                     intervention.initialize(self)
         return
 
 
-    def init_analyzers(self):
+    def init_analyzers(self, reset=False):
         ''' Initialize the analyzers '''
         for analyzer in self['analyzers']:
             if isinstance(analyzer, cva.Analyzer):
-                if not analyzer.initialized:
+                if not analyzer.initialized or reset:
                     analyzer.initialize(self)
         return
 
@@ -545,6 +546,10 @@ class Sim(cvb.BaseSim):
 
         # Initialize
         T = sc.tic()
+        if self.results_ready:
+            errormsg = 'Simulation already run: use sim.reset() before rerunning'
+            raise RuntimeError(errormsg)
+
         if not self.initialized:
             self.initialize()
         else:
@@ -552,6 +557,7 @@ class Sim(cvb.BaseSim):
             self.init_interventions() # And interventions
             if reset_seed:
                 self.set_seed() # Ensure the random number generator is freshly initialized
+
         if restore_pars:
             orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
         if verbose is None:
@@ -632,6 +638,9 @@ class Sim(cvb.BaseSim):
         self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
 
         return
+
+    def reset(self):
+        self.initialize(reset=True)
 
 
     def compute_results(self, verbose=None):
