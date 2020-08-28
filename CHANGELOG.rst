@@ -15,6 +15,12 @@ Latest versions (1.5.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 1.5.3 (2020-08-28)
+--------------------------
+
+- Added a ``sim.reset()`` method, which can be used to reset the state of the simulation between reruns. Rerunning a sim without first resetting now raises an error.
+
+
 Version 1.5.2 (2020-08-18)
 --------------------------
 

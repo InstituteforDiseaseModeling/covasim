@@ -546,7 +546,7 @@ class Sim(cvb.BaseSim):
 
         # Initialize
         T = sc.tic()
-        if self.results_ready:
+        if self.results_ready: # Use results_ready as a proxy for whether a sim has already been run
             errormsg = 'Simulation already run: use sim.reset() before rerunning'
             raise RuntimeError(errormsg)
 
@@ -639,8 +639,11 @@ class Sim(cvb.BaseSim):
 
         return
 
+
     def reset(self):
+        ''' Convenience function for re-initializing a simulation allowing it to be rerun '''
         self.initialize(reset=True)
+        return
 
 
     def compute_results(self, verbose=None):
