@@ -76,9 +76,8 @@ if errorlevel 9009 (
 
 if "%1" == "generate-api" (
     del modules.rst >nul 2>&1
-    del covasim_index.rst >nul 2>&1
     sphinx-apidoc -f -e -o . ../covasim
-    REN modules.rst covasim_index.rst
+    REN modules.rst
 	goto end
 )
 
