@@ -28,7 +28,8 @@ def make_sim(use_defaults=False, do_plot=False):
         pop_infected  = 100,      # Number of initial infections -- use more for increased robustness
         pop_type      = 'hybrid', # Population to use -- "hybrid" is random with household, school,and work structure
         verbose       = 0,        # Don't print details of the run
-        interventions = intervs   # Include the most common interventions
+        interventions = intervs,  # Include the most common interventions
+        rand_seed     = 2,
     )
 
     # Create the sim

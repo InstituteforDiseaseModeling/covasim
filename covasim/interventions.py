@@ -323,7 +323,7 @@ def process_changes(sim, changes, days):
     '''
     changes = sc.promotetoarray(changes)
     if len(days) != len(changes):
-        errormsg = f'Number of days supplied ({len(days)}) does not match number of changes in beta ({len(changes)})'
+        errormsg = f'Number of days supplied ({len(days)}) does not match number of changes ({len(changes)})'
         raise ValueError(errormsg)
     return changes
 
@@ -503,6 +503,9 @@ def get_subtargets(subtarget, sim):
     '''
 
     # Validation
+    if callable(subtarget):
+        subtarget = subtarget(sim)
+
     if 'inds' not in subtarget:
         errormsg = f'The subtarget dict must have keys "inds" and "vals", but you supplied {subtarget}'
         raise ValueError(errormsg)
@@ -514,7 +517,10 @@ def get_subtargets(subtarget, sim):
         subtarget_inds = subtarget['inds'] # The indices are supplied directly
 
     # Validate the values
-    subtarget_vals = subtarget['vals']
+    if callable(subtarget['vals']): # A function has been provided
+        subtarget_vals = subtarget['vals'](sim) # Call the function to get the indices
+    else:
+        subtarget_vals = subtarget['vals'] # The indices are supplied directly
     if sc.isiterable(subtarget_vals):
         if len(subtarget_vals) != len(subtarget_inds):
             errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'

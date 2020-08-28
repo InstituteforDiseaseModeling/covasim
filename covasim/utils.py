@@ -104,7 +104,7 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
 __all__ += ['sample', 'get_pdf', 'set_seed']
 
 
-def sample(dist=None, par1=None, par2=None, size=None):
+def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     '''
     Draw a sample from the distribution specified by the input.
 
@@ -113,6 +113,7 @@ def sample(dist=None, par1=None, par2=None, size=None):
         par1 (float): the "main" distribution parameter (e.g. mean)
         par2 (float): the "secondary" distribution parameter (e.g. std)
         size (int):   the number of samples (default=1)
+        kwargs (dict): passed to individual sampling functions
 
     Returns:
         A length N array of samples
@@ -141,17 +142,17 @@ def sample(dist=None, par1=None, par2=None, size=None):
 
     # Compute distribution parameters and draw samples
     # NB, if adding a new distribution, also add to choices above
-    if   dist == 'uniform':       samples = np.random.uniform(low=par1, high=par2, size=size)
-    elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size)
-    elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size))
-    elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size)))
-    elif dist == 'poisson':       samples = n_poisson(rate=par1, n=size) # Use Numba version below for speed
-    elif dist == 'neg_binomial':  samples = n_neg_binomial(rate=par1, dispersion=par2, n=size) # Use custom version below
+    if   dist == 'uniform':       samples = np.random.uniform(low=par1, high=par2, size=size, **kwargs)
+    elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size, **kwargs)
+    elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs))
+    elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs)))
+    elif dist == 'poisson':       samples = n_poisson(rate=par1, n=size, **kwargs) # Use Numba version below for speed
+    elif dist == 'neg_binomial':  samples = n_neg_binomial(rate=par1, dispersion=par2, n=size, **kwargs) # Use custom version below
     elif dist in ['lognormal', 'lognormal_int']:
         if par1>0:
             mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
             sigma = np.sqrt(np.log(par2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
-            samples = np.random.lognormal(mean=mean, sigma=sigma, size=size)
+            samples = np.random.lognormal(mean=mean, sigma=sigma, size=size, **kwargs)
         else:
             samples = np.zeros(size)
         if dist == 'lognormal_int':
@@ -332,7 +333,7 @@ def n_poisson(rate, n):
     return np.random.poisson(rate, n)
 
 
-def n_neg_binomial(rate, dispersion, n): # Numba not used due to incompatible implementation
+def n_neg_binomial(rate, dispersion, n, step=1): # Numba not used due to incompatible implementation
     '''
     An array of negative binomial trials; with dispersion = ∞, converges to Poisson.
 
@@ -340,14 +341,16 @@ def n_neg_binomial(rate, dispersion, n): # Numba not used due to incompatible im
         rate (float): the rate of the process (mean, same as Poisson)
         dispersion (float): amount of dispersion: 0 = infinite, 1 = std is equal to mean, ∞ = Poisson
         n (int): number of trials
+        step (float): the step size to use if non-integer outputs are desired
 
     **Example**::
 
         outcomes = cv.n_neg_binomial(100, 1, 20) # 20 negative binomial trials with mean 100 and dispersion equal to mean
     '''
     nbn_n = dispersion
-    nbn_p = dispersion/(rate + dispersion)
-    return np.random.negative_binomial(n=nbn_n, p=nbn_p, size=n)
+    nbn_p = dispersion/(rate/step + dispersion)
+    samples = np.random.negative_binomial(n=nbn_n, p=nbn_p, size=n)*step
+    return samples
 
 
 @nb.njit((nbint, nbint), cache=True) # This hugely increases performance
@@ -408,7 +411,7 @@ def choose_w(probs, n, unique=True):
 
 #%% Simple array operations
 
-__all__ += ['true',   'false',   'defined',
+__all__ += ['true',   'false',   'defined', 'undefined',
             'itrue',  'ifalse',  'idefined',
             'itruei', 'ifalsei', 'idefinedi']
 
@@ -454,6 +457,20 @@ def defined(arr):
         inds = cv.defined(np.array([1,np.nan,0,np.nan,1,0,1]))
     '''
     return (~np.isnan(arr)).nonzero()[0]
+
+
+def undefined(arr):
+    '''
+    Returns the indices of the values of the array that are not-nan.
+
+    Args:
+        arr (array): any array
+
+    **Example**::
+
+        inds = cv.defined(np.array([1,np.nan,0,np.nan,1,0,1]))
+    '''
+    return np.isnan(arr).nonzero()[0]
 
 
 def itrue(arr, inds):

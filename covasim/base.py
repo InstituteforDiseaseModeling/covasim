@@ -584,7 +584,13 @@ class BasePeople(sc.prettyobj):
 
 
     def __getitem__(self, key):
-        ''' Allow people['attr'] instead of getattr(people, 'attr') '''
+        ''' Allow people['attr'] instead of getattr(people, 'attr')
+            If the key is an integer, alias `people.person()` to return a `Person` instance
+        '''
+
+        if isinstance(key, int):
+            return self.person(key)
+
         try:
             return self.__dict__[key]
         except:
@@ -607,8 +613,9 @@ class BasePeople(sc.prettyobj):
 
 
     def __iter__(self):
-        ''' Define the iterator to just be the indices of the array '''
-        return iter(range(len(self)))
+        ''' Iterate over people '''
+        for i in range(len(self)):
+            yield self[i]
 
 
     def __add__(self, people2):
@@ -794,11 +801,7 @@ class BasePeople(sc.prettyobj):
 
     def to_people(self):
         ''' Return all people as a list '''
-        people = []
-        for p in self:
-            person = self.person(p)
-            people.append(person)
-        return people
+        return list(self)
 
 
     def from_people(self, people, resize=True):
@@ -936,8 +939,8 @@ class Person(sc.prettyobj):
         self.age         = cvd.default_float(age) # Age of the person (in years)
         self.sex         = cvd.default_int(sex) # Female (0) or male (1)
         self.contacts    = contacts # Contacts
-        self.infected = [] #: Record the UIDs of all people this person infected
-        self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
+        # self.infected = [] #: Record the UIDs of all people this person infected
+        # self.infected_by = None #: Store the UID of the person who caused the infection. If None but person is infected, then it was an externally seeded infection
         return
 
 

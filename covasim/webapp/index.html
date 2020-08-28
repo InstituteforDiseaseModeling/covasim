@@ -34,7 +34,10 @@
 <section id="app" class="row" @mousemove="resize_apply" @mouseup="resize_end">
   <header>
     <b-navbar type="dark" variant="dark">
-      <b-navbar-brand href="#">{{ app.title }}</b-navbar-brand>
+      <b-navbar-brand href="#">
+        <span class="logo-idm"></span>
+        {{ app.title }}
+      </b-navbar-brand>
       <b-navbar-nav class="ml-auto">
         <b-nav-item :href="app.docs_url" target="_blank">Documentation</b-nav-item>
         <b-nav-item :href="app.paper_url" target="_blank">Paper</b-nav-item>
@@ -320,10 +323,10 @@
   <footer>
     <b-navbar type="dark" variant="dark">
       <b-navbar-nav>
-        <b-nav-item  :href="app.org_url" target="_blank">
-          <img src="assets/idm-logo.png" class="logo img-fluid"/>
+        <b-nav-item  :href="app.publisher_url" target="_blank">
+          <img src="assets/bmgf-logo.png" class="logo img-fluid"/>
         </b-nav-item>
-        <b-nav-text>&copy; {{ app.copyright_year }} Institute for Disease Modeling</b-nav-text>
+        <b-nav-text>&copy; {{ app.copyright_year }} {{ app.copyright_owner }}. All rights reserved.</b-nav-text>
       </b-navbar-nav>
       <b-navbar-nav class="ml-auto">
         <b-nav-item :href="app.github_url" target="_blank">

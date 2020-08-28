@@ -602,9 +602,9 @@ class InterventionTests(CovaSimTest):
                 ideal_diagnoses = target_count * sensitivity
 
                 standard_deviation = sqrt(sensitivity * (1 - sensitivity) * target_count)
-                # 95% confidence interval
-                min_tolerable_diagnoses = ideal_diagnoses - 2 * standard_deviation
-                max_tolerable_diagnoses = ideal_diagnoses + 2 * standard_deviation
+                # 99.7% confidence interval
+                min_tolerable_diagnoses = ideal_diagnoses - 3 * standard_deviation
+                max_tolerable_diagnoses = ideal_diagnoses + 3 * standard_deviation
 
                 if self.is_debugging:
                     print(f"\tMax: {max_tolerable_diagnoses} \n"
@@ -678,9 +678,9 @@ class InterventionTests(CovaSimTest):
             )[start_day]
             ideal_test_count = target_count * s_p_o_t
             standard_deviation = sqrt(s_p_o_t * (1 - s_p_o_t) * target_count)
-            # 95% confidence interval
-            min_tolerable_tests = ideal_test_count - 2 * standard_deviation
-            max_tolerable_tests = ideal_test_count + 2 * standard_deviation
+            # 99.7% confidence interval
+            min_tolerable_tests = ideal_test_count - 3 * standard_deviation
+            max_tolerable_tests = ideal_test_count + 3 * standard_deviation
             if self.is_debugging:
                 print(f"Max: {max_tolerable_tests} "
                       f"Min: {min_tolerable_tests} "
@@ -776,7 +776,6 @@ class InterventionTests(CovaSimTest):
         sequence_days = [30, 40]
         sequence_interventions = []
 
-        layer_to_trace = 's' # CK: unused
         layers_to_zero_beta = ['c','h','w']
 
         self.intervention_set_test_prob(symptomatic_prob=1.0,

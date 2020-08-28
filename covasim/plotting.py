@@ -69,8 +69,8 @@ def handle_to_plot(which, to_plot, n_cols, sim):
     n_plots = len(to_plot)
     if n_cols is None:
         max_rows = 4 # Assumption -- if desired, the user can override this by setting n_cols manually
-        n_cols = (n_plots-1)//max_rows + 1 # This gives 1 column for 1-4, 2 for 5-8, etc.
-    n_rows = np.ceil(n_plots/n_cols) # Number of subplot rows to have
+        n_cols = int((n_plots-1)//max_rows + 1) # This gives 1 column for 1-4, 2 for 5-8, etc.
+    n_rows = int(np.ceil(n_plots/n_cols)) # Number of subplot rows to have
 
     return to_plot, n_cols, n_rows
 
@@ -169,7 +169,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     if commaticks:
         ylims = ax.get_ylim()
         if ylims[1] >= 1000:
-            sc.commaticks()
+            sc.commaticks(ax=ax)
 
     return
 
