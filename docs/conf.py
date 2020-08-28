@@ -24,13 +24,13 @@ if sys.platform in ["linux", "darwin"]:
 else:
     subprocess.check_output(["make.bat", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
 
-# CK: Rename "covasim package" to "API reference"
-filename = 'modules.rst'
-with open(filename) as f:
+# Rename "covasim package" to "API reference"
+filename = 'modules.rst' # This must match the Makefile
+with open(filename) as f: # Read exitsting file
     lines = f.readlines()
-lines[0] = "API reference\n"
-lines[1] = "=============\n"
-with open(filename, "w") as f:
+lines[0] = "API reference\n" # Blast away the existing heading and replace with this
+lines[1] = "=============\n" # Ensure the heading is the right length
+with open(filename, "w") as f: # Write new file
     f.writelines(lines)
 
 
