@@ -603,15 +603,13 @@ class Sim(cvb.BaseSim):
 
             # Print progress
             if verbose:
-                t = self.t
-                elapsed = sc.toc(output=True)
                 simlabel = f'"{self.label}": ' if self.label else ''
-                string = f'  Running {simlabel}{self.datevec[t]} ({t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
+                string = f'  Running {simlabel}{self.datevec[self.t]} ({self.t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
                 if verbose >= 2:
                     sc.heading(string)
                 else:
-                    if not (t % int(1.0/verbose)):
-                        sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
+                    if not (self.t % int(1.0/verbose)):
+                        sc.progressbar(self.t+1, self.npts, label=string, length=20, newline=True)
 
             # Do the heavy lifting -- actually run the model!
             self.step()
