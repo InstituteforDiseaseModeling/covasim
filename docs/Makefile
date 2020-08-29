@@ -53,9 +53,7 @@ clean:
 
 # Generates the API doc
 generate-api:
-	rm -rf temp
-	sphinx-apidoc -f --tocfile dummy -o . ../covasim
-	-rm dummy.rst
+	sphinx-apidoc -f -e -o . ../covasim
 	mv covasim.rst modules.rst
 
 .PHONY: html
