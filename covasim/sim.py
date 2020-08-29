@@ -17,8 +17,10 @@ from . import interventions as cvi
 from . import analysis as cva
 
 # Everything in this file is contained in the Sim class
-__all__ = ['Sim']
+__all__ = ['Sim', 'TimestepsExhaustedError']
 
+class TimestepsExhaustedError(Exception):
+    pass
 
 class Sim(cvb.BaseSim):
     '''
@@ -57,7 +59,7 @@ class Sim(cvb.BaseSim):
         self.save_pop      = save_pop # Whether to save the population
         self.data          = None     # The actual data
         self.popdict       = None     # The population dictionary
-        self.t             = None     # The current time in the simulation
+        self.t             = None     # The current time in the simulation (during execution). When accessed outside of `Sim.step()`, its value corresponds to next timestep to be computed. After simulation, it will equal self.npts
         self.people        = None     # Initialize these here so methods that check their length can see they're empty
         self.results       = {}       # For storing results
         self.initialized   = False    # Whether or not initialization is complete
@@ -71,6 +73,22 @@ class Sim(cvb.BaseSim):
             self.load_population(popfile)      # Load the population, if provided
         return
 
+    @property
+    def complete(self):
+        """
+        Check if simulation has timesteps remaining
+
+        A simulation is defined to be 'complete' once all timesteps have been simulated up to
+        the end day. This is separate to whether or not results have been generated using
+        `Sim.finalize()` - the `results_ready` flag tracks whether this step has been performed.
+        In normal usage, `Sim.run()` would automatically finalize and the sim would become
+        complete and have results ready almost concurrently, but this is not necessarily the case
+        (especially if the simulation is stepped externally e.g. if coupling models together)
+
+        Returns: True if no timesteps remain
+
+        """
+        return self.t == self.npts
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
@@ -128,6 +146,7 @@ class Sim(cvb.BaseSim):
         self.init_analyzers() # ...and the interventions
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized = True
+        self._orig_pars = None  # Store original parameters to optionally restore at the end of the simulation
         return
 
 
@@ -440,9 +459,10 @@ class Sim(cvb.BaseSim):
         '''
 
         # Set the time and if we have reached the end of the simulation, then do nothing
+        if self.complete:
+            raise TimestepsExhaustedError('Simulation already complete')
+
         t = self.t
-        if t >= self.npts:
-            return
 
         # Perform initial operations
         self.rescale() # Check if we need to rescale
@@ -527,7 +547,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, **kwargs):
+    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=False, verbose=None, **kwargs):
         '''
         Run the simulation.
 
@@ -543,27 +563,47 @@ class Sim(cvb.BaseSim):
             results (dict): the results object (also modifies in-place)
         '''
 
-        # Initialize
-        T = sc.tic()
-        if not self.initialized:
-            self.initialize()
-        else:
-            self.validate_pars() # We always want to validate the parameters before running
-            self.init_interventions() # And interventions
-            if reset_seed:
-                self.set_seed() # Ensure the random number generator is freshly initialized
-        if restore_pars:
-            orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+        if self.complete:
+            raise TimestepsExhaustedError('Simulation is already complete')
+
+        until = self.npts if until is None else int(until)
+        if until > self.npts:
+            raise TimestepsExhaustedError(f'Requested to run until t={until} but the simulation end is t={self.npts}')
+
         if verbose is None:
             verbose = self['verbose']
-        if until:
-            until = self.day(until)
+
+        # Initialize
+        T = sc.tic()
+
+        if not self.initialized:
+            self.initialize()
+            self._orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+
+        if self.t >= until:
+            # NB. At the start, self.t is None so this check must occur after initialization
+            raise TimestepsExhaustedError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
+
+        if reset_seed:
+            # Reset the RNG. If the simulation is newly created, then the RNG will be reset by `Sim.initialize()` so the use case
+            # for resetting the seed here is if the simulation has been partially run, and changing the seed is required
+            self.set_seed()
 
         # Main simulation loop
-        for t in self.tvec:
+        while self.t < until:
+
+            # Check if we were asked to stop
+            elapsed = sc.toc(T, output=True)
+            if self['timelimit'] and elapsed > self['timelimit']:
+                sc.printv(f"Time limit ({self['timelimit']} s) exceeded", 1, verbose)
+                return
+            elif self['stopping_func'] and self['stopping_func'](self):
+                sc.printv("Stopping function terminated the simulation", 1, verbose)
+                return
 
             # Print progress
             if verbose:
+                t = self.t
                 elapsed = sc.toc(output=True)
                 simlabel = f'"{self.label}": ' if self.label else ''
                 string = f'  Running {simlabel}{self.datevec[t]} ({t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
@@ -576,39 +616,31 @@ class Sim(cvb.BaseSim):
             # Do the heavy lifting -- actually run the model!
             self.step()
 
-            # Check if we were asked to stop
-            elapsed = sc.toc(T, output=True)
-            if self['timelimit'] and elapsed > self['timelimit']:
-                sc.printv(f"Time limit ({self['timelimit']} s) exceeded", 1, verbose)
-                break
-            elif self['stopping_func'] and self['stopping_func'](self):
-                sc.printv("Stopping function terminated the simulation", 1, verbose)
-                break
-            if self.t == until: # If until is specified, just stop here
-                return
-
-        # End of time loop; compute cumulative results outside of the time loop
-        self.finalize(verbose=verbose) # Finalize the results
-        sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
-        if restore_pars:
-            self.restore_pars(orig_pars)
-        if do_plot: # Optionally plot
-            self.plot(**kwargs)
-
-        return self.results
+        # If simulation reached the end, finalize the results
+        if self.complete:
+            self.finalize(verbose=verbose, restore_pars=restore_pars)
+            sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
+            if do_plot: # Optionally plot
+                self.plot(**kwargs)
+            return self.results
 
 
-    def restore_pars(self, orig_pars):
+    def restore_pars(self):
         ''' Restore the original parameter values, except for the analyzers '''
         analyzers = self['analyzers'] # Make a copy so these don't get wiped
-        for key,val in orig_pars.items():
+        for key,val in self._orig_pars.items():
             self.pars[key] = val # So pointers, e.g. in sim.people, get updated as well
         self['analyzers'] = analyzers # Restore the analyzers
         return
 
 
-    def finalize(self, verbose=None):
+    def finalize(self, verbose=None, restore_pars=True):
         ''' Compute final results '''
+
+        if self.results_ready:
+            # Because the results are rescaled in-place, finalizing the sim cannot be run more than once or
+            # otherwise the scale factor will be applied multiple times
+            raise Exception('Simulation has already been finalized')
 
         # Scale the results
         for reskey in self.result_keys():
@@ -623,13 +655,16 @@ class Sim(cvb.BaseSim):
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Final settings
-        self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
         self.results_ready = True # Set this first so self.summary() knows to print the results
-        self.initialized = False # To enable re-running
 
         # Perform calculations on results
         self.compute_results(verbose=verbose) # Calculate the rest of the results
         self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
+
+        if restore_pars and self._orig_pars:
+            self.restore_pars()
+
+        self._orig_pars = None # Reduce storage requirements when simulation is finalized (regardless of whether they were restored or not)
 
         return
 

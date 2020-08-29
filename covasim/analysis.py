@@ -47,6 +47,47 @@ class Analyzer(sc.prettyobj):
         '''
         raise NotImplementedError
 
+    @classmethod
+    def from_sim(cls, sim, *args, **kwargs):
+        '''
+        Create analyzer from sim
+
+        Normally, an analyzer is added to a simulation prior to execution, and the ``apply()`` method is called
+        at every timestep. However, it's possible to create an analyzer after a simulation has been completed and
+        to obtain values from the last timestep. This method
+
+        - Creates an Analyzer of the requested class
+        - Initializes it
+        - Applies it to the state of the ``Sim``
+
+        Args:
+            sim: the Sim instance to construct analyzer from
+            args, kwargs: Extra arguments to pass to the Analyzer's constructor
+
+        **Example**::
+
+            analyzer = cv.age_histogram.from_sim(sim)
+            analyzer = cv.snapshot.from_sim(sim)
+
+        Returns: A new ``Analyzer`` of the requested class
+
+        '''
+        self = cls(*args, **kwargs) # Instantiate the analyzer
+        self.initialize(sim) # Initialize it
+
+        if sim.t > 0:
+            try:
+                sim.t -= 1 # Restore sim.t to the value it would have had during the last timestep (this holds true even if `until` was used)
+                self.apply(sim) # Apply the analyzer as though it were running during execution of the last timestep
+            except Exception as e:
+                raise e  # Raise any exception that may occur
+            finally:
+                sim.t += 1 # Ensure that the simulation time is restored regardless of whether an error occurred or not
+        else:
+            raise Exception('No steps have been simulated yet, at least one step must have been taken before constructing an Analyzer')
+
+        return self
+
 
 class snapshot(Analyzer):
     '''
@@ -136,8 +177,8 @@ class age_histogram(Analyzer):
         agehist = cv.age_histogram(sim=sim)
     '''
 
-    def __init__(self, days=None, states=None, edges=None, datafile=None, sim=None, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
+    def __init__(self, days=None, states=None, edges=None, datafile=None, **kwargs):
+        super().__init__(**kwargs) # Initialize the Analyzer object
         self.days      = days # To be converted to integer representations
         self.edges     = edges # Edges of age bins
         self.states    = states # States to save
@@ -148,8 +189,6 @@ class age_histogram(Analyzer):
         self.data      = None # Store the loaded data
         self.hists = sc.odict() # Store the actual snapshots
         self.window_hists = None # Store the histograms for individual windows -- populated by compute_windows()
-        if sim is not None: # Process a supplied simulation
-            self.from_sim(sim)
         return
 
 
@@ -241,13 +280,6 @@ class age_histogram(Analyzer):
                 for state in self.states: # Loop over each state
                     self.window_hists[datekey][state] = self.hists[end_date][state] - self.hists[start_date][state]
 
-        return
-
-
-    def from_sim(self, sim):
-        ''' Create an age histogram from an already run sim '''
-        self.initialize(sim)
-        self.apply(sim)
         return
 
 

@@ -15,6 +15,19 @@ Latest versions (1.5.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 1.5.3 (2020-08-29)
+--------------------------
+
+- A ``TimestepsExhaustedError`` is now raised if ``sim.run()`` is called in such a way that no timesteps will be taken. This error is a distinct type so that it can be safely caught and ignored if required, but it is anticipated that most of the time, calling ``run()`` and not taking any timesteps, would be an inadvertent error.
+- If the simulation has reached the end, ``sim.run()`` (and ``sim.step()``) will now raise a ``TimestepsExhaustedError``.
+- ``sim.run()`` now defaults to ``reset_seed=False`` so that splitting up a run using ``sim.run(until)`` will produces the same results as running through uninterrupted by default.
+- ``sim.run()`` now only validates parameters as part of initialization. Parameters will always be validated in the normal workflow where ``sim.initialize()`` is called via ``sim.run()``. However, the use case for modifying parameters during a split run or otherwise modifying parameters after initialization suggests that the user should have maximum control over the parameters at this point, so in this specialist workflow, the user is responsible for setting the parameter values correctly and in return, `sim.run()` is guaranteed not to change them.
+- At the end of the simulation, `sim.t` is now equal to `sim.npts` rather than `sim.npts-1`.
+- Added `sim.complete` property attribute, which returns `True` if all timesteps have been executed. This is independent of finalizing results, since if `sim.step()` is being called externally, then finalizing the results may happen separately.
+- Moved ``age_histogram.from_sim(sim)`` into an ``Analyzer`` class method, and deprecated ``age_histogram(sim)``. The new implementation via ``Analyzer.from_sim`` means that all ``Analyzer`` instances can automatically use this method of construction without needing any customization of their methods.
+- *Regression information*: Code that indexed results by ``sim.t`` after the simulation is complete may now raise an out of bounds error and need to use ``sim.t-1`` instead. If this behaviour is encountered in user-defined ``Analyzer`` instances and related to ``from_sim`` construction, the ``Analyzer`` should be updated - in most cases, code relating to the ``from_sim`` workflow can simply be removed and the ``Analyzer`` constructed using the new class method instead. Previously ``sim.t`` corresponded to the last time entry, so in those cases it could be replaced with an index of ``-1`` instead.
+
+
 Version 1.5.2 (2020-08-18)
 --------------------------
 
