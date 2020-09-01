@@ -30,14 +30,14 @@ def test_resuming():
         s1.run(until=0)
     assert s1.initialized # It should still have been initialized though
 
-    s1.run(until=30)
+    s1.run(until=30, reset_seed=False)
     with pytest.raises(cv.TimestepsExhaustedError):
         s1.run(until=30) # Error if running up to the same value
     with pytest.raises(cv.TimestepsExhaustedError):
         s1.run(until=20) # Error if running until a previous timestep
 
-    s1.run(until=45)
-    s1.run()
+    s1.run(until=45, reset_seed=False)
+    s1.run(reset_seed=False)
 
     assert np.all(s0.results['cum_infections'].values == s1.results['cum_infections']) # Results should be identical
 
@@ -92,6 +92,7 @@ def test_run_from_load():
     s1.run()
     s1.save(fn)
     s2 = cv.load(fn)
+    s2.initialize()
     s2.run()
     r1ci = s1.summary['cum_infections']
     r2ci = s2.summary['cum_infections']

@@ -547,7 +547,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=False, verbose=None, **kwargs):
+    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, **kwargs):
         '''
         Run the simulation.
 
@@ -566,7 +566,7 @@ class Sim(cvb.BaseSim):
         if self.complete:
             raise TimestepsExhaustedError('Simulation is already complete')
 
-        until = self.npts if until is None else int(until)
+        until = self.npts if until is None else self.day(until)
         if until > self.npts:
             raise TimestepsExhaustedError(f'Requested to run until t={until} but the simulation end is t={self.npts}')
 
@@ -623,15 +623,6 @@ class Sim(cvb.BaseSim):
             return self.results
 
 
-    def restore_pars(self):
-        ''' Restore the original parameter values, except for the analyzers '''
-        analyzers = self['analyzers'] # Make a copy so these don't get wiped
-        for key,val in self._orig_pars.items():
-            self.pars[key] = val # So pointers, e.g. in sim.people, get updated as well
-        self['analyzers'] = analyzers # Restore the analyzers
-        return
-
-
     def finalize(self, verbose=None, restore_pars=True):
         ''' Compute final results '''
 
@@ -660,7 +651,10 @@ class Sim(cvb.BaseSim):
         self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
 
         if restore_pars and self._orig_pars:
-            self.restore_pars()
+            analyzers = self['analyzers']  # Make a copy so these don't get wiped
+            for key, val in self._orig_pars.items():
+                self.pars[key] = val  # So pointers, e.g. in sim.people, get updated as well
+            self['analyzers'] = analyzers  # Restore the analyzers
 
         self._orig_pars = None # Reduce storage requirements when simulation is finalized (regardless of whether they were restored or not)
 
