@@ -7,6 +7,7 @@ of the transmission tree.
 import numpy as np
 import pylab as pl
 import pandas as pd
+import pickle
 import sciris as sc
 from . import misc as cvm
 from . import interventions as cvi
@@ -75,6 +76,8 @@ class Analyzer(sc.prettyobj):
         self = cls(*args, **kwargs) # Instantiate the analyzer
         self.initialize(sim) # Initialize it
 
+        before = pickle.dumps(self)
+
         if sim.t > 0:
             try:
                 sim.t -= 1 # Restore sim.t to the value it would have had during the last timestep (this holds true even if `until` was used)
@@ -85,6 +88,10 @@ class Analyzer(sc.prettyobj):
                 sim.t += 1 # Ensure that the simulation time is restored regardless of whether an error occurred or not
         else:
             raise Exception('No steps have been simulated yet, at least one step must have been taken before constructing an Analyzer')
+
+        after = pickle.dumps(self)
+        if before == after:
+            print(f'Warning - New {cls.__name__} analyzer did not record any data')
 
         return self
 
