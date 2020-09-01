@@ -460,7 +460,7 @@ class Sim(cvb.BaseSim):
 
         # Set the time and if we have reached the end of the simulation, then do nothing
         if self.complete:
-            raise TimestepsExhaustedError('Simulation already complete')
+            raise TimestepsExhaustedError('Simulation already complete (call `initialize()` to re-run this Sim)')
 
         t = self.t
 
