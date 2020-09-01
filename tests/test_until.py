@@ -69,6 +69,7 @@ def test_until_date():
 
 
 def test_reproducibility():
+    ''' The results of the sim shouldn't be affected by what you do or don't do prior to sim.run() '''
     s1 = cv.Sim(**pars)
     s1.initialize()
     s2 = s1.copy()
@@ -85,6 +86,7 @@ def test_reproducibility():
 
 
 def test_run_from_load():
+    ''' If you run a sim and save it, you should be able to re-run it on load '''
     fn = 'save-load-test.sim'
     s1 = cv.Sim(**pars)
     s1.run()
