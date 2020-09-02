@@ -7,6 +7,7 @@ of the transmission tree.
 import numpy as np
 import pylab as pl
 import pandas as pd
+import pickle
 import sciris as sc
 from . import misc as cvm
 from . import interventions as cvi
@@ -20,7 +21,7 @@ class Analyzer(sc.prettyobj):
     Base class for analyzers. Based on the Intervention class.
 
     Args:
-        label (str): a label for the intervention (used for ease of identification)
+        label (str): a label for the Analyzer (used for ease of identification)
     '''
 
     def __init__(self, label=None):
@@ -75,6 +76,8 @@ class Analyzer(sc.prettyobj):
         self = cls(*args, **kwargs) # Instantiate the analyzer
         self.initialize(sim) # Initialize it
 
+        before = pickle.dumps(self)
+
         if sim.t > 0:
             try:
                 sim.t -= 1 # Restore sim.t to the value it would have had during the last timestep (this holds true even if `until` was used)
@@ -85,6 +88,10 @@ class Analyzer(sc.prettyobj):
                 sim.t += 1 # Ensure that the simulation time is restored regardless of whether an error occurred or not
         else:
             raise Exception('No steps have been simulated yet, at least one step must have been taken before constructing an Analyzer')
+
+        after = pickle.dumps(self)
+        if before == after:
+            print(f'Warning - New {cls.__name__} analyzer did not record any data')
 
         return self
 
@@ -97,7 +104,7 @@ class snapshot(Analyzer):
 
     Args:
         days (list): list of ints/strings/date objects, the days on which to take the snapshot
-        kwargs (dict): passed to Intervention()
+        kwargs (dict): passed to Analyzer()
 
 
     **Example**::
@@ -113,7 +120,7 @@ class snapshot(Analyzer):
     '''
 
     def __init__(self, days, *args, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
+        super().__init__(**kwargs) # Initialize the Analyzer object
         days = sc.promotetolist(days) # Combine multiple days
         days.extend(args) # Include additional arguments, if present
         self.days      = days # Converted to integer representations
@@ -166,7 +173,7 @@ class age_histogram(Analyzer):
         edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
         datafile (str): the name of the data file to load in for comparison, or a dataframe of data (optional)
         sim      (Sim): only used if the analyzer is being used after a sim has already been run
-        kwargs  (dict): passed to Intervention()
+        kwargs  (dict): passed to Analyzer()
 
     **Examples**::
 
