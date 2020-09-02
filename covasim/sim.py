@@ -20,20 +20,10 @@ from . import analysis as cva
 __all__ = ['Sim', 'AlreadyRunError']
 
 
-class AlreadyRunError(RuntimeError):
-    '''
-    This error is raised if a simulation is run in such a way that no timesteps
-    will be taken. This error is a distinct type so that it can be safely caught
-    and ignored if required, but it is anticipated that most of the time, calling
-    sim.run() and not taking any timesteps, would be an inadvertent error.
-    '''
-    pass
-
-
 class Sim(cvb.BaseSim):
     '''
-    The Sim class handles the running of the simulation: the number of children,
-    number of time points, and the parameters of the simulation.
+    The Sim class handles the running of the simulation: the creation of the
+    population and the dynamcis of the epidemic.
 
     Args:
         pars     (dict):   parameters to modify from their default values
@@ -71,7 +61,9 @@ class Sim(cvb.BaseSim):
         self.people        = None     # Initialize these here so methods that check their length can see they're empty
         self.results       = {}       # For storing results
         self.initialized   = False    # Whether or not initialization is complete
+        self.complete      = False    # Whether a simulation has completed running
         self.results_ready = False    # Whether or not results are ready
+        self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Now update everything
         self.set_metadata(simfile, label)  # Set the simulation date and filename
@@ -81,22 +73,22 @@ class Sim(cvb.BaseSim):
             self.load_population(popfile)      # Load the population, if provided
         return
 
-    @property
-    def complete(self):
-        """
-        Check if simulation has timesteps remaining
+    # @property
+    # def complete(self):
+    #     """
+    #     Check if simulation has timesteps remaining
 
-        A simulation is defined to be 'complete' once all timesteps have been simulated up to
-        the end day. This is separate to whether or not results have been generated using
-        `Sim.finalize()` - the `results_ready` flag tracks whether this step has been performed.
-        In normal usage, `Sim.run()` would automatically finalize and the sim would become
-        complete and have results ready almost concurrently, but this is not necessarily the case
-        (especially if the simulation is stepped externally e.g. if coupling models together)
+    #     A simulation is defined to be 'complete' once all timesteps have been simulated up to
+    #     the end day. This is separate to whether or not results have been generated using
+    #     `Sim.finalize()` - the `results_ready` flag tracks whether this step has been performed.
+    #     In normal usage, `Sim.run()` would automatically finalize and the sim would become
+    #     complete and have results ready almost concurrently, but this is not necessarily the case
+    #     (especially if the simulation is stepped externally e.g. if coupling models together)
 
-        Returns: True if no timesteps remain
+    #     Returns: True if no timesteps remain
 
-        """
-        return self.t == self.npts
+    #     """
+    #     return self.t == self.npts
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
@@ -154,7 +146,6 @@ class Sim(cvb.BaseSim):
         self.init_analyzers() # ...and the interventions
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized = True
-        self._orig_pars = None  # Store original parameters to optionally restore at the end of the simulation
         return
 
 
@@ -468,7 +459,7 @@ class Sim(cvb.BaseSim):
 
         # Set the time and if we have reached the end of the simulation, then do nothing
         if self.complete:
-            raise AlreadyRunError('Simulation already complete (call `initialize()` to re-run this Sim)')
+            raise AlreadyRunError('Simulation already complete (call sim.initialize() to re-run)')
 
         t = self.t
 
@@ -552,6 +543,9 @@ class Sim(cvb.BaseSim):
 
         # Tidy up
         self.t += 1
+        if self.t == self.npts:
+            self.complete = True
+
         return
 
 
@@ -571,31 +565,32 @@ class Sim(cvb.BaseSim):
             results (dict): the results object (also modifies in-place)
         '''
 
-        if self.complete:
-            raise AlreadyRunError('Simulation is already complete')
+        # Initialization steps -- start the timer, check that the sim hasn't been run, initialize the sim and the seed
+        T = sc.tic()
+
+        if verbose is None:
+            verbose = self['verbose']
 
         until = self.npts if until is None else self.day(until)
         if until > self.npts:
             raise AlreadyRunError(f'Requested to run until t={until} but the simulation end is t={self.npts}')
 
-        if verbose is None:
-            verbose = self['verbose']
-
-        # Initialize
-        T = sc.tic()
-
-        if not self.initialized:
-            self.initialize()
-            self._orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+        if self.complete:
+            raise AlreadyRunError('Simulation is already complete (call sim.initialize() to re-run)')
 
         if self.t >= until:
             # NB. At the start, self.t is None so this check must occur after initialization
             raise AlreadyRunError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
 
+        if not self.initialized:
+            self.initialize()
+            self._orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+
         if reset_seed:
-            # Reset the RNG. If the simulation is newly created, then the RNG will be reset by `Sim.initialize()` so the use case
+            # Reset the RNG. If the simulation is newly created, then the RNG will be reset by sim.initialize() so the use case
             # for resetting the seed here is if the simulation has been partially run, and changing the seed is required
             self.set_seed()
+
 
         # Main simulation loop
         while self.t < until:
@@ -603,10 +598,10 @@ class Sim(cvb.BaseSim):
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
             if self['timelimit'] and elapsed > self['timelimit']:
-                sc.printv(f"Time limit ({self['timelimit']} s) exceeded", 1, verbose)
+                sc.printv(f"Time limit ({self['timelimit']} s) exceeded; call sim.finalize() to compute results if desired", 1, verbose)
                 return
             elif self['stopping_func'] and self['stopping_func'](self):
-                sc.printv("Stopping function terminated the simulation", 1, verbose)
+                sc.printv("Stopping function terminated the simulation; call sim.finalize() to compute results if desired", 1, verbose)
                 return
 
             # Print progress
@@ -629,6 +624,8 @@ class Sim(cvb.BaseSim):
             if do_plot: # Optionally plot
                 self.plot(**kwargs)
             return self.results
+        else:
+            return # If not complete, return nothing
 
 
     def finalize(self, verbose=None, restore_pars=True):
@@ -893,7 +890,6 @@ class Sim(cvb.BaseSim):
             return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
 
 
-
     def brief(self, output=False):
         ''' Return a one-line description of a sim '''
 
@@ -1058,3 +1054,13 @@ class Sim(cvb.BaseSim):
         '''
         fig = cvplt.plot_result(sim=self, key=key, *args, **kwargs)
         return fig
+
+
+class AlreadyRunError(RuntimeError):
+    '''
+    This error is raised if a simulation is run in such a way that no timesteps
+    will be taken. This error is a distinct type so that it can be safely caught
+    and ignored if required, but it is anticipated that most of the time, calling
+    sim.run() and not taking any timesteps, would be an inadvertent error.
+    '''
+    pass
