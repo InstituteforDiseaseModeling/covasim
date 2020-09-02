@@ -57,7 +57,7 @@ class Sim(cvb.BaseSim):
         self.save_pop      = save_pop # Whether to save the population
         self.data          = None     # The actual data
         self.popdict       = None     # The population dictionary
-        self.t             = None     # The current time in the simulation (during execution). When accessed outside of `Sim.step()`, its value corresponds to next timestep to be computed. After simulation, it will equal self.npts
+        self.t             = None     # The current time in the simulation (during execution); outside of sim.step(), its value corresponds to next timestep to be computed
         self.people        = None     # Initialize these here so methods that check their length can see they're empty
         self.results       = {}       # For storing results
         self.initialized   = False    # Whether or not initialization is complete
