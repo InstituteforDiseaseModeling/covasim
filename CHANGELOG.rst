@@ -20,13 +20,12 @@ Version 1.5.3 (2020-09-01)
 
 - A ``TimestepsExhaustedError`` is now raised if ``sim.run()`` is called in such a way that no timesteps will be taken. This error is a distinct type so that it can be safely caught and ignored if required, but it is anticipated that most of the time, calling ``run()`` and not taking any timesteps, would be an inadvertent error.
 - If the simulation has reached the end, ``sim.run()`` (and ``sim.step()``) will now raise a ``TimestepsExhaustedError``.
-- ``sim.run()`` now defaults to ``reset_seed=False`` so that splitting up a run using ``sim.run(until)`` will produces the same results as running through uninterrupted by default.
 - ``sim.run()`` now only validates parameters as part of initialization. Parameters will always be validated in the normal workflow where ``sim.initialize()`` is called via ``sim.run()``. However, the use case for modifying parameters during a split run or otherwise modifying parameters after initialization suggests that the user should have maximum control over the parameters at this point, so in this specialist workflow, the user is responsible for setting the parameter values correctly and in return, `sim.run()` is guaranteed not to change them.
 - At the end of the simulation, `sim.t` is now equal to `sim.npts` rather than `sim.npts-1`.
 - Added `sim.complete` property attribute, which returns `True` if all timesteps have been executed. This is independent of finalizing results, since if `sim.step()` is being called externally, then finalizing the results may happen separately.
-- Moved ``age_histogram.from_sim(sim)`` into an ``Analyzer`` class method, and deprecated ``age_histogram(sim)``. The new implementation via ``Analyzer.from_sim`` means that all ``Analyzer`` instances can automatically use this method of construction without needing any customization of their methods.
 - *Regression information*: Code that indexed results by ``sim.t`` after the simulation is complete may now raise an out of bounds error and need to use ``sim.t-1`` instead. If this behaviour is encountered in user-defined ``Analyzer`` instances and related to ``from_sim`` construction, the ``Analyzer`` should be updated - in most cases, code relating to the ``from_sim`` workflow can simply be removed and the ``Analyzer`` constructed using the new class method instead. Previously ``sim.t`` corresponded to the last time entry, so in those cases it could be replaced with an index of ``-1`` instead.
-- *GitHub info*: : PR `643 <https://github.com/amath-idm/covasim/pull/643>`__, previous head ``39b1e52``
+- *GitHub info*: : PR `643 <https://github.com/amath-idm/covasim/pull/643>`__, previous head ``9041157``
+
 
 
 Version 1.5.2 (2020-08-18)
@@ -39,7 +38,7 @@ Version 1.5.2 (2020-08-18)
 - *Regression information*:
     - Scripts that called ``cv.People.quarantine()`` directly would have also had to manually update ``sim.results['new_quarantined']``. This is no longer required, and those commands should now be removed as they will otherwise be double counted
     - Results are expected to differ slightly because the handling of quarantines being extended has been improved, and because quarantine duration is now reduced when by the ``trace_time``.
-- *GitHub info*: ###
+- *GitHub info*: PR `624 <https://github.com/amath-idm/covasim/pull/624>`__, previous head ``aaa4d7c``
 
 
 Version 1.5.1 (2020-08-17)
@@ -47,8 +46,7 @@ Version 1.5.1 (2020-08-17)
 - Modify ``cv.BasePeople.__getitem__()`` to retrieve a person if the item is an integer, so that ``sim.people[5]`` will return a ``cv.Person`` instance
 - Modify ``cv.BasePeople.__iter__`` so that iterating over people e.g. ``for person in sim.people:`` iterates over ``cv.Person`` instances
 - *Regression information*: To restore previous behavior of ``for idx in sim.people:`` use ``for idx in range(len(sim.people)):`` instead
-- *GitHub info*: ###
-
+- *GitHub info*: PR `623 <https://github.com/amath-idm/covasim/pull/623>`__, previous head ``775cf35``
 
 
 Version 1.5.0 (2020-07-01)
