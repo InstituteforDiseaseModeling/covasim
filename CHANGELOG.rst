@@ -18,8 +18,8 @@ Latest versions (1.5.x)
 Version 1.5.3 (2020-09-01)
 --------------------------
 
-- A ``TimestepsExhaustedError`` is now raised if ``sim.run()`` is called in such a way that no timesteps will be taken. This error is a distinct type so that it can be safely caught and ignored if required, but it is anticipated that most of the time, calling ``run()`` and not taking any timesteps, would be an inadvertent error.
-- If the simulation has reached the end, ``sim.run()`` (and ``sim.step()``) will now raise a ``TimestepsExhaustedError``.
+- An ``AlreadyRunError`` is now raised if ``sim.run()`` is called in such a way that no timesteps will be taken. This error is a distinct type so that it can be safely caught and ignored if required, but it is anticipated that most of the time, calling ``run()`` and not taking any timesteps, would be an inadvertent error.
+- If the simulation has reached the end, ``sim.run()`` (and ``sim.step()``) will now raise a ``AlreadyRunError``.
 - ``sim.run()`` now only validates parameters as part of initialization. Parameters will always be validated in the normal workflow where ``sim.initialize()`` is called via ``sim.run()``. However, the use case for modifying parameters during a split run or otherwise modifying parameters after initialization suggests that the user should have maximum control over the parameters at this point, so in this specialist workflow, the user is responsible for setting the parameter values correctly and in return, `sim.run()` is guaranteed not to change them.
 - At the end of the simulation, `sim.t` is now equal to `sim.npts` rather than `sim.npts-1`.
 - Added `sim.complete` property attribute, which returns `True` if all timesteps have been executed. This is independent of finalizing results, since if `sim.step()` is being called externally, then finalizing the results may happen separately.

@@ -19,8 +19,16 @@ from . import analysis as cva
 # Everything in this file is contained in the Sim class
 __all__ = ['Sim', 'AlreadyRunError']
 
-class AlreadyRunError(Exception):
+
+class AlreadyRunError(RuntimeError):
+    '''
+    This error is raised if a simulation is run in such a way that no timesteps
+    will be taken. This error is a distinct type so that it can be safely caught
+    and ignored if required, but it is anticipated that most of the time, calling
+    sim.run() and not taking any timesteps, would be an inadvertent error.
+    '''
     pass
+
 
 class Sim(cvb.BaseSim):
     '''
