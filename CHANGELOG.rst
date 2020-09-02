@@ -15,6 +15,12 @@ Latest versions (1.5.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 1.5.4 (2020-09-02)
+--------------------------
+
+- Added ``cv.vaccine()``, which can be used to model vaccine interventions; it can also be used to model therapeutics.
+
+
 Version 1.5.3 (2020-09-01)
 --------------------------
 
