@@ -73,22 +73,6 @@ class Sim(cvb.BaseSim):
             self.load_population(popfile)      # Load the population, if provided
         return
 
-    # @property
-    # def complete(self):
-    #     """
-    #     Check if simulation has timesteps remaining
-
-    #     A simulation is defined to be 'complete' once all timesteps have been simulated up to
-    #     the end day. This is separate to whether or not results have been generated using
-    #     `Sim.finalize()` - the `results_ready` flag tracks whether this step has been performed.
-    #     In normal usage, `Sim.run()` would automatically finalize and the sim would become
-    #     complete and have results ready almost concurrently, but this is not necessarily the case
-    #     (especially if the simulation is stepped externally e.g. if coupling models together)
-
-    #     Returns: True if no timesteps remain
-
-    #     """
-    #     return self.t == self.npts
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
@@ -145,7 +129,9 @@ class Sim(cvb.BaseSim):
         self.init_interventions() # Initialize the interventions
         self.init_analyzers() # ...and the interventions
         self.set_seed() # Reset the random seed again so the random number stream is consistent
-        self.initialized = True
+        self.initialized   = True
+        self.complete      = False
+        self.results_ready = False
         return
 
 
@@ -565,11 +551,20 @@ class Sim(cvb.BaseSim):
             results (dict): the results object (also modifies in-place)
         '''
 
-        # Initialization steps -- start the timer, check that the sim hasn't been run, initialize the sim and the seed
+        # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
         T = sc.tic()
 
         if verbose is None:
             verbose = self['verbose']
+
+        if not self.initialized:
+            self.initialize()
+            self._orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+
+        if reset_seed:
+            # Reset the RNG. If the simulation is newly created, then the RNG will be reset by sim.initialize() so the use case
+            # for resetting the seed here is if the simulation has been partially run, and changing the seed is required
+            self.set_seed()
 
         until = self.npts if until is None else self.day(until)
         if until > self.npts:
@@ -581,16 +576,6 @@ class Sim(cvb.BaseSim):
         if self.t >= until:
             # NB. At the start, self.t is None so this check must occur after initialization
             raise AlreadyRunError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
-
-        if not self.initialized:
-            self.initialize()
-            self._orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
-
-        if reset_seed:
-            # Reset the RNG. If the simulation is newly created, then the RNG will be reset by sim.initialize() so the use case
-            # for resetting the seed here is if the simulation has been partially run, and changing the seed is required
-            self.set_seed()
-
 
         # Main simulation loop
         while self.t < until:
@@ -650,6 +635,7 @@ class Sim(cvb.BaseSim):
 
         # Final settings
         self.results_ready = True # Set this first so self.summary() knows to print the results
+        self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
 
         # Perform calculations on results
         self.compute_results(verbose=verbose) # Calculate the rest of the results

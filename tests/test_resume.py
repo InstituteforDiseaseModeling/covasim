@@ -29,14 +29,14 @@ def test_resuming():
 
     # If until=0 then no timesteps will be taken
     with pytest.raises(cv.AlreadyRunError):
-        s1.run(until=0)
+        s1.run(until=0, reset_seed=False)
     assert s1.initialized # It should still have been initialized though
 
     s1.run(until='2020-01-31', reset_seed=False)
     with pytest.raises(cv.AlreadyRunError):
-        s1.run(until=30) # Error if running up to the same value
+        s1.run(until=30, reset_seed=False) # Error if running up to the same value
     with pytest.raises(cv.AlreadyRunError):
-        s1.run(until=20) # Error if running until a previous timestep
+        s1.run(until=20, reset_seed=False) # Error if running until a previous timestep
 
     s1.run(until=45, reset_seed=False)
     s1.run(reset_seed=False)
