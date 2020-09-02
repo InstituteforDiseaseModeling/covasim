@@ -137,7 +137,7 @@ class age_histogram(Analyzer):
         agehist = cv.age_histogram(sim=sim)
     '''
 
-    def __init__(self, days=None, states=None, edges=None, datafile=None, **kwargs):
+    def __init__(self, days=None, states=None, edges=None, datafile=None, sim=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Analyzer object
         self.days      = days # To be converted to integer representations
         self.edges     = edges # Edges of age bins
@@ -149,6 +149,15 @@ class age_histogram(Analyzer):
         self.data      = None # Store the loaded data
         self.hists = sc.odict() # Store the actual snapshots
         self.window_hists = None # Store the histograms for individual windows -- populated by compute_windows()
+        if sim is not None: # Process a supplied simulation
+            self.from_sim(sim)
+        return
+
+
+    def from_sim(self, sim):
+        ''' Create an age histogram from an already run sim '''
+        self.initialize(sim)
+        self.apply(sim)
         return
 
 
@@ -156,7 +165,7 @@ class age_histogram(Analyzer):
 
         # Handle days
         self.start_day = cvm.date(sim['start_day'], as_date=False) # Get the start day, as a string
-        self.end_day   = cvm.date(sim['end_day'], as_date=False) # Get the start day, as a string
+        self.end_day   = cvm.date(sim['end_day'],   as_date=False) # Get the start day, as a string
         if self.days is None:
             self.days = self.end_day # If no day is supplied, use the last day
         self.days = cvi.process_days(sim, self.days) # Ensure days are in the right format

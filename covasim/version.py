@@ -3,5 +3,5 @@
 __all__ = ['__version__', '__versiondate__', '__license__']
 
 __version__ = '1.5.3'
-__versiondate__ = '2020-08-29'
+__versiondate__ = '2020-09-01'
 __license__ = f'Covasim {__version__} ({__versiondate__}) — © 2020 by IDM'

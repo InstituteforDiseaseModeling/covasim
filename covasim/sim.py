@@ -17,9 +17,9 @@ from . import interventions as cvi
 from . import analysis as cva
 
 # Everything in this file is contained in the Sim class
-__all__ = ['Sim', 'TimestepsExhaustedError']
+__all__ = ['Sim', 'AlreadyRunError']
 
-class TimestepsExhaustedError(Exception):
+class AlreadyRunError(Exception):
     pass
 
 class Sim(cvb.BaseSim):
@@ -460,7 +460,7 @@ class Sim(cvb.BaseSim):
 
         # Set the time and if we have reached the end of the simulation, then do nothing
         if self.complete:
-            raise TimestepsExhaustedError('Simulation already complete (call `initialize()` to re-run this Sim)')
+            raise AlreadyRunError('Simulation already complete (call `initialize()` to re-run this Sim)')
 
         t = self.t
 
@@ -564,11 +564,11 @@ class Sim(cvb.BaseSim):
         '''
 
         if self.complete:
-            raise TimestepsExhaustedError('Simulation is already complete')
+            raise AlreadyRunError('Simulation is already complete')
 
         until = self.npts if until is None else self.day(until)
         if until > self.npts:
-            raise TimestepsExhaustedError(f'Requested to run until t={until} but the simulation end is t={self.npts}')
+            raise AlreadyRunError(f'Requested to run until t={until} but the simulation end is t={self.npts}')
 
         if verbose is None:
             verbose = self['verbose']
@@ -582,7 +582,7 @@ class Sim(cvb.BaseSim):
 
         if self.t >= until:
             # NB. At the start, self.t is None so this check must occur after initialization
-            raise TimestepsExhaustedError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
+            raise AlreadyRunError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
 
         if reset_seed:
             # Reset the RNG. If the simulation is newly created, then the RNG will be reset by `Sim.initialize()` so the use case
