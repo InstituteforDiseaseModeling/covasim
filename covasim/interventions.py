@@ -463,7 +463,6 @@ class clip_edges(Intervention):
 __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 
-# Process daily data
 def process_daily_data(daily_data, sim, start_day, as_int=False):
     '''
     This function performs one of two things: if the daily data are supplied as
@@ -848,5 +847,65 @@ class contact_tracing(Intervention):
 
         if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
             sim.people.trace(trace_from_inds, self.trace_probs, self.trace_time)
+
+        return
+
+
+
+
+#%% Treatment and prevention interventions
+
+__all__+= ['vaccine']
+
+
+class vaccine(Intervention):
+    '''
+    Apply a vaccine to a subset of the population.
+
+    Args:
+        days (int or array): the day or array of days to apply the interventions
+        prob     (float): Probability of being vaccinated (i.e., fraction of the population)
+        rel_sus  (float): Relative change in susceptibility; 0 = perfect, 1 = no effect
+        rel_symp (float): Relative change in symptom probability; 0 = perfect, 1 = no effect
+        subtarget (dict): subtarget intervention to people with particular indices (see test_num() for details)
+        kwargs    (dict): passed to Intervention()
+
+    **Example**::
+
+        interv = cv.vaccine(days=50, prob=0.3, rel_sus=0.5, rel_symp=0.1)
+    '''
+    def __init__(self, days, prob=1.0, rel_sus=0.0, rel_symp=0.0, subtarget=None, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
+        self.days      = sc.dcp(days)
+        self.prob      = prob
+        self.rel_sus   = rel_sus
+        self.rel_symp  = rel_symp
+        self.subtarget = subtarget
+        return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates '''
+        self.days = process_days(sim, self.days)
+        self.initialized = True
+        return
+
+
+    def apply(self, sim):
+        ''' Perform vaccination '''
+
+        # If this day is found in the list, apply the intervention
+        for ind in find_day(self.days, sim.t):
+
+            # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
+            vacc_probs = np.full(sim.n, self.prob) # TODO: don't vaccinate e.g. diagnosed people # Begin by assigning equal testing probability to everyone
+            if self.subtarget is not None:
+                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+                vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
+            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
+
+            sim.people.rel_sus[vacc_inds]    *= self.rel_sus  # TODO: store original susceptibility values
+            sim.people.symp_probs[vacc_inds] *= self.rel_symp # TODO: store original symptom probabilities
 
         return
