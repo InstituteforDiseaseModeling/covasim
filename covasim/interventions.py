@@ -906,6 +906,6 @@ class vaccine(Intervention):
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
 
             sim.people.rel_sus[vacc_inds]    *= self.rel_sus  # TODO: store original susceptibility values
-            sim.people.symp_probs[vacc_inds] *= self.rel_symp # TODO: store original symptom probabilities
+            sim.people.symp_prob[vacc_inds] *= self.rel_symp # TODO: store original symptom probabilities
 
         return
