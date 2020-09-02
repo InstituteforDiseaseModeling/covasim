@@ -41,6 +41,8 @@ def test_resuming():
 
     assert np.all(s0.results['cum_infections'].values == s1.results['cum_infections']) # Results should be identical
 
+    return s1
+
 def test_reset_seed():
     s0 = cv.Sim()
     s1 = s0.copy()
@@ -53,7 +55,7 @@ def test_reset_seed():
     assert np.all(s0.results['cum_infections'].values[0:30] == s1.results['cum_infections'][0:30]) # Results for the first 30 days should be the same
     assert s0.results['cum_infections'].values[31] != s1.results['cum_infections'][31] # Results on day 31 should be different
 
-
+    return s1
 
 #%% CK tests
 
@@ -109,12 +111,12 @@ if __name__ == '__main__':
 
     T = sc.tic()
 
-    test_resuming()
-    test_reset_seed()
+    sa = test_resuming()
+    sb = test_reset_seed()
 
-    s1 = test_until_date()
-    s2 = test_reproducibility()
-    s3 = test_run_from_load()
+    sc = test_until_date()
+    sd = test_reproducibility()
+    se = test_run_from_load()
 
     print('\n'*2)
     sc.toc(T)
