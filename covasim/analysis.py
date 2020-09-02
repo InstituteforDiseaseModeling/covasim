@@ -7,7 +7,6 @@ of the transmission tree.
 import numpy as np
 import pylab as pl
 import pandas as pd
-import pickle
 import sciris as sc
 from . import misc as cvm
 from . import interventions as cvi
@@ -48,52 +47,6 @@ class Analyzer(sc.prettyobj):
         '''
         raise NotImplementedError
 
-    @classmethod
-    def from_sim(cls, sim, *args, **kwargs):
-        '''
-        Create analyzer from sim
-
-        Normally, an analyzer is added to a simulation prior to execution, and the ``apply()`` method is called
-        at every timestep. However, it's possible to create an analyzer after a simulation has been completed and
-        to obtain values from the last timestep. This method
-
-        - Creates an Analyzer of the requested class
-        - Initializes it
-        - Applies it to the state of the ``Sim``
-
-        Args:
-            sim: the Sim instance to construct analyzer from
-            args, kwargs: Extra arguments to pass to the Analyzer's constructor
-
-        **Example**::
-
-            analyzer = cv.age_histogram.from_sim(sim)
-            analyzer = cv.snapshot.from_sim(sim)
-
-        Returns: A new ``Analyzer`` of the requested class
-
-        '''
-        self = cls(*args, **kwargs) # Instantiate the analyzer
-        self.initialize(sim) # Initialize it
-
-        before = pickle.dumps(self)
-
-        if sim.t > 0:
-            try:
-                sim.t -= 1 # Restore sim.t to the value it would have had during the last timestep (this holds true even if `until` was used)
-                self.apply(sim) # Apply the analyzer as though it were running during execution of the last timestep
-            except Exception as e:
-                raise e  # Raise any exception that may occur
-            finally:
-                sim.t += 1 # Ensure that the simulation time is restored regardless of whether an error occurred or not
-        else:
-            raise Exception('No steps have been simulated yet, at least one step must have been taken before constructing an Analyzer')
-
-        after = pickle.dumps(self)
-        if before == after:
-            print(f'Warning - New {cls.__name__} analyzer did not record any data')
-
-        return self
 
 
 class snapshot(Analyzer):
