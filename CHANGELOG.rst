@@ -24,7 +24,7 @@ Version 1.5.3 (2020-09-01)
 - At the end of the simulation, `sim.t` is now equal to `sim.npts` rather than `sim.npts-1`.
 - Added `sim.complete` property attribute, which returns `True` if all timesteps have been executed. This is independent of finalizing results, since if `sim.step()` is being called externally, then finalizing the results may happen separately.
 - *Regression information*: Code that indexed results by ``sim.t`` after the simulation is complete may now raise an out of bounds error and need to use ``sim.t-1`` instead. If this behaviour is encountered in user-defined ``Analyzer`` instances and related to ``from_sim`` construction, the ``Analyzer`` should be updated - in most cases, code relating to the ``from_sim`` workflow can simply be removed and the ``Analyzer`` constructed using the new class method instead. Previously ``sim.t`` corresponded to the last time entry, so in those cases it could be replaced with an index of ``-1`` instead.
-- *GitHub info*: : PR `643 <https://github.com/amath-idm/covasim/pull/643>`__, previous head ``9041157``
+- *GitHub info*: : PR `654 <https://github.com/amath-idm/covasim/pull/654>`__, previous head ``9041157``
 
 
 
