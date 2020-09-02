@@ -541,7 +541,7 @@ class Sim(cvb.BaseSim):
 
         Args:
             do_plot (bool): whether to plot
-            until (int): day to run until
+            until (int/str): day or date to run until
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
             verbose (float): level of detail to print, e.g. 0 = no output, 0.2 = print every 5th day, 1 = print every day
@@ -844,15 +844,24 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def compute_summary(self, verbose=None):
-        ''' Compute the summary statistics to display at the end of a run '''
+    def compute_summary(self, t=None, verbose=None):
+        '''
+        Compute the summary statistics to display at the end of a run.
+
+        Args:
+            t (int/str): day or date to compute summary for
+
+        '''
+
+        if t is None:
+            t = self.day(self.t)
 
         if verbose is None:
             verbose = self['verbose']
 
         self.summary = sc.objdict()
         for key in self.result_keys():
-            self.summary[key] = self.results[key][-1]
+            self.summary[key] = self.results[key][t]
 
         if verbose:
             self.summarize()
@@ -860,7 +869,7 @@ class Sim(cvb.BaseSim):
         return self.summary
 
 
-    def summarize(self, output=False):
+    def summarize(self, t=None, output=False):
         ''' Print a brief summary of the simulation '''
         if self.results_ready:
             summary_str = 'Simulation summary:\n'
