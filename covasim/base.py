@@ -4,6 +4,7 @@ People and Sim classes (e.g. loading, saving, key lookups, etc.), so those class
 can be focused on the disease-specific functionality.
 '''
 
+import numba as nb
 import numpy as np
 import pandas as pd
 import sciris as sc
@@ -1098,3 +1099,41 @@ class Layer(FlexDict):
             self[key] = df[key].to_numpy()
         return self
 
+
+    def get_partners(self, inds):
+        """
+        Get pairing partners
+
+        For some purposes (e.g. contact tracing) it's necessary to find all of the contacts
+        associated with a subset of the people in this layer. Since contacts are bidirectional
+        it's necessary to check both P1 and P2 for the target indices. The return type is a Set
+        so that there is no duplication of indices (otherwise if the Layer has explicit
+        symmetric interactions, they could appear multiple times). This is also for performance so
+        that the calling code doesn't need to perform it's own `unique` operation.
+
+        Args:
+            inds: An array of indices
+
+        Returns: A set of indices for pairing partners
+
+        Example: If there was a layer with
+        - P1 = [1,2,3,4]
+        - P2 = [2,3,1,4]
+        Then `get_partners([1,3]) would return {1,2,3}
+
+        """
+        return _get_partners(self['p1'], self['p2'], inds)
+
+@nb.njit
+def _get_partners(p1,p2,inds):
+    """
+    Numba for Layer.get_partners()
+    """
+    pairing_partners = set()
+    inds = set(inds)
+    for i in range(len(p1)):
+        if p1[i] in inds:
+            pairing_partners.add(p2[i])
+        if p2[i] in inds:
+            pairing_partners.add(p1[i])
+    return pairing_partners
