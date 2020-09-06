@@ -442,9 +442,12 @@ class People(cvb.BasePeople):
 
                 # Find all the contacts of these people
                 partners = self.contacts[lkey].get_partners(inds)
+                if not partners:
+                    continue
 
-                # Check contacts
-                contact_inds = cvu.binomial_filter(this_trace_prob, np.array(list(partners))) # Filter the indices according to the probability of being able to trace this layer
+                partners = np.fromiter(partners, dtype=cvd.default_int)
+                partners.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
+                contact_inds = cvu.binomial_filter(this_trace_prob, partners) # Filter the indices according to the probability of being able to trace this layer
                 if len(contact_inds):
                     self.known_contact[contact_inds] = True
                     self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified

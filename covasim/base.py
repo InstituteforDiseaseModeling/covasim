@@ -1128,6 +1128,11 @@ class Layer(FlexDict):
 def _get_partners(p1,p2,inds):
     """
     Numba for Layer.get_partners()
+
+    A set is returned here rather than a sorted array so that custom tracing interventions can efficiently
+    add extra people. There doesn't appear to be a meaningful performance benefit from incorporating
+    the sorting into the Numba function apart from it making JIT compilation slower.
+
     """
     pairing_partners = set()
     inds = set(inds)
