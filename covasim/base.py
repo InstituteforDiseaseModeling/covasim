@@ -1124,7 +1124,7 @@ class Layer(FlexDict):
         """
         return _get_partners(self['p1'], self['p2'], inds)
 
-@nb.njit
+@nb.njit(cache=True)
 def _get_partners(p1,p2,inds):
     """
     Numba for Layer.get_partners()
