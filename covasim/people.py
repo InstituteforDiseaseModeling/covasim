@@ -441,17 +441,13 @@ class People(cvb.BasePeople):
                 this_trace_time = trace_time[lkey]
 
                 # Find all the contacts of these people
-                partners = self.contacts[lkey].get_partners(inds)
-                if not partners:
-                    continue
-
-                partners = np.fromiter(partners, dtype=cvd.default_int)
-                partners.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
-                contact_inds = cvu.binomial_filter(this_trace_prob, partners) # Filter the indices according to the probability of being able to trace this layer
-                if len(contact_inds):
-                    self.known_contact[contact_inds] = True
-                    self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
-                    self.quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
+                traceable_inds = self.contacts[lkey].find_contacts(inds)
+                if len(traceable_inds):
+                    contact_inds = cvu.binomial_filter(this_trace_prob, traceable_inds) # Filter the indices according to the probability of being able to trace this layer
+                    if len(contact_inds):
+                        self.known_contact[contact_inds] = True
+                        self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
+                        self.quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
 
         return
 

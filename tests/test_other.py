@@ -189,7 +189,7 @@ def test_misc():
 
 
 def test_people():
-    sc.heading('Testing people')
+    sc.heading('Testing people (dynamic layers)')
 
     # Test dynamic layers
     sim = cv.Sim(pop_size=100, n_days=10, verbose=verbose, dynam_layer={'a':1})

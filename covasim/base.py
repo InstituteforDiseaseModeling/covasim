@@ -4,7 +4,6 @@ People and Sim classes (e.g. loading, saving, key lookups, etc.), so those class
 can be focused on the disease-specific functionality.
 '''
 
-import numba as nb
 import numpy as np
 import pandas as pd
 import sciris as sc
@@ -1105,45 +1104,33 @@ class Layer(FlexDict):
         return self
 
 
-    def get_partners(self, inds):
+    def find_contacts(self, inds, as_array=True):
         """
-        Get pairing partners
+        Find all contacts of the specified people
 
         For some purposes (e.g. contact tracing) it's necessary to find all of the contacts
         associated with a subset of the people in this layer. Since contacts are bidirectional
         it's necessary to check both P1 and P2 for the target indices. The return type is a Set
         so that there is no duplication of indices (otherwise if the Layer has explicit
         symmetric interactions, they could appear multiple times). This is also for performance so
-        that the calling code doesn't need to perform it's own `unique` operation.
+        that the calling code doesn't need to perform its own unique() operation. Note that
+        this cannot be used for cases where multiple connections count differently than a single
+        infection, e.g. exposure risk.
 
         Args:
-            inds: An array of indices
+            inds (array): indices of people whose contacts to return
+            as_array (bool): if true, return as sorted array (otherwise, return as unsorted set)
 
-        Returns: A set of indices for pairing partners
+        Returns:
+            contact_inds (array): a set of indices for pairing partners
 
-        Example: If there was a layer with
+        Example: If there were a layer with
         - P1 = [1,2,3,4]
         - P2 = [2,3,1,4]
-        Then `get_partners([1,3]) would return {1,2,3}
-
+        Then find_contacts([1,3]) would return {1,2,3}
         """
-        return _get_partners(self['p1'], self['p2'], inds)
-
-@nb.njit(cache=True)
-def _get_partners(p1,p2,inds):
-    """
-    Numba for Layer.get_partners()
-
-    A set is returned here rather than a sorted array so that custom tracing interventions can efficiently
-    add extra people. There doesn't appear to be a meaningful performance benefit from incorporating
-    the sorting into the Numba function apart from it making JIT compilation slower.
-
-    """
-    pairing_partners = set()
-    inds = set(inds)
-    for i in range(len(p1)):
-        if p1[i] in inds:
-            pairing_partners.add(p2[i])
-        if p2[i] in inds:
-            pairing_partners.add(p1[i])
-    return pairing_partners
+        contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
+        if as_array:
+            contact_inds = np.fromiter(contact_inds, dtype=cvd.default_int)
+            contact_inds.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
+        return contact_inds
