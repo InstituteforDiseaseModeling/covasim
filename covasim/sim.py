@@ -110,7 +110,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def initialize(self, **kwargs):
+    def initialize(self, reset=False, **kwargs):
         '''
         Perform all initializations, including validating the parameters, setting
         the random number seed, creating the results structure, initializing the
@@ -118,13 +118,14 @@ class Sim(cvb.BaseSim):
         and initializing the interventions.
 
         Args:
+            reset (bool): whether or not to reset people even if they already exist
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
         self.init_results() # Create the results stucture
-        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
+        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.init_interventions() # Initialize the interventions
         self.init_analyzers() # ...and the interventions
@@ -185,9 +186,10 @@ class Sim(cvb.BaseSim):
         for lp in layer_pars:
             lp_keys = set(self.pars[lp].keys())
             if not lp_keys == set(layer_keys):
-                errormsg = f'Layer parameters have inconsistent keys with the layer keys {layer_keys}:'
+                errormsg = f'At least one layer parameter is inconsistent with the layer keys; all parameters must have the same keys:'
+                errormsg += f'\nsim.layer_keys() = {layer_keys}'
                 for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
-                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
+                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp2].keys())
                 raise sc.KeyNotFoundError(errormsg)
 
         # Handle mismatches with the population
@@ -295,7 +297,7 @@ class Sim(cvb.BaseSim):
         # Other variables
         self.results['prevalence']    = init_res('Prevalence', scale=False)
         self.results['incidence']     = init_res('Incidence', scale=False)
-        self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
+        self.results['r_eff']         = init_res('Effective reproduction number', scale=False)
         self.results['doubling_time'] = init_res('Doubling time', scale=False)
         self.results['test_yield']    = init_res('Testing yield', scale=False)
 
@@ -366,16 +368,17 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_people(self, save_pop=False, load_pop=False, popfile=None, verbose=None, **kwargs):
+    def init_people(self, save_pop=False, load_pop=False, popfile=None, reset=False, verbose=None, **kwargs):
         '''
         Create the people.
 
         Args:
             save_pop (bool): if true, save the population dictionary to popfile
             load_pop (bool): if true, load the population dictionary from popfile
-            popfile (str): filename to load/save the population
-            verbose (int): detail to print
-            kwargs (dict): passed to cv.make_people()
+            popfile   (str): filename to load/save the population
+            reset    (bool): whether to regenerate the people even if they already exist
+            verbose   (int): detail to print
+            kwargs   (dict): passed to cv.make_people()
         '''
 
         # Handle inputs
@@ -387,7 +390,7 @@ class Sim(cvb.BaseSim):
             self.load_population(popfile=popfile)
 
         # Actually make the people
-        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
+        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize() # Fully initialize the people
 
         # Create the seed infections
@@ -398,19 +401,23 @@ class Sim(cvb.BaseSim):
 
     def init_interventions(self):
         ''' Initialize the interventions '''
+        if self._orig_pars and 'interventions' in self._orig_pars:
+            self['interventions'] = self._orig_pars.pop('interventions') # Restore
+
         for intervention in self['interventions']:
             if isinstance(intervention, cvi.Intervention):
-                if not intervention.initialized:
-                    intervention.initialize(self)
+                intervention.initialize(self)
         return
 
 
     def init_analyzers(self):
         ''' Initialize the analyzers '''
+        if self._orig_pars and 'analyzers' in self._orig_pars:
+            self['analyzers'] = self._orig_pars.pop('analyzers') # Restore
+
         for analyzer in self['analyzers']:
             if isinstance(analyzer, cva.Analyzer):
-                if not analyzer.initialized:
-                    analyzer.initialize(self)
+                analyzer.initialize(self)
         return
 
 
@@ -541,7 +548,7 @@ class Sim(cvb.BaseSim):
 
         Args:
             do_plot (bool): whether to plot
-            until (int): day to run until
+            until (int/str): day or date to run until
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
             verbose (float): level of detail to print, e.g. 0 = no output, 0.2 = print every 5th day, 1 = print every day
@@ -642,12 +649,11 @@ class Sim(cvb.BaseSim):
         self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
 
         if restore_pars and self._orig_pars:
-            analyzers = self['analyzers']  # Make a copy so these don't get wiped
-            for key, val in self._orig_pars.items():
-                self.pars[key] = val  # So pointers, e.g. in sim.people, get updated as well
-            self['analyzers'] = analyzers  # Restore the analyzers
-
-        self._orig_pars = None # Reduce storage requirements when simulation is finalized (regardless of whether they were restored or not)
+            preserved = ['analyzers', 'interventions']
+            orig_pars_keys = list(self._orig_pars.keys()) # Get a list of keys so we can iterate over them
+            for key in orig_pars_keys:
+                if key not in preserved:
+                    self.pars[key] = self._orig_pars.pop(key) # Restore everything except for the analyzers and interventions
 
         return
 
@@ -658,7 +664,7 @@ class Sim(cvb.BaseSim):
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
-        self.compute_summary(verbose=verbose)
+        self.summarize(verbose=verbose, update=True)
         return
 
 
@@ -714,7 +720,7 @@ class Sim(cvb.BaseSim):
 
     def compute_r_eff(self, method='daily', smoothing=2, window=7):
         '''
-        Effective reproductive number based on number of people each person infected.
+        Effective reproduction number based on number of people each person infected.
 
         Args:
             method (str): 'instant' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
@@ -844,34 +850,40 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def compute_summary(self, verbose=None):
-        ''' Compute the summary statistics to display at the end of a run '''
+    def summarize(self, full=False, t=None, verbose=None, output=False, update=True):
+        '''
+        Print a summary of the simulation, drawing from the last time point in the simulation.
 
-        if verbose is None:
-            verbose = self['verbose']
-
-        self.summary = sc.objdict()
-        for key in self.result_keys():
-            self.summary[key] = self.results[key][-1]
-
-        if verbose:
-            self.summarize()
-
-        return self.summary
-
-
-    def summarize(self, output=False):
-        ''' Print a brief summary of the simulation '''
+        Args:
+            full (bool): whether or not to print all results (by default, only cumulative)
+            t (int/str): day or date to compute summary for (by default, the last point)
+            verbose (bool): whether to print to screen (default: same as sim)
+            output (bool): whether to return the summary
+            update (bool): whether to update the summary stored in the sim (sim.summary)
+        '''
         if self.results_ready:
+
+            if t is None:
+                t = self.day(self.t)
+
+            if verbose is None:
+                verbose = self['verbose']
+
+            summary = sc.objdict()
+            for key in self.result_keys():
+                summary[key] = self.results[key][t]
+
             summary_str = 'Simulation summary:\n'
             for key in self.result_keys():
-                if key.startswith('cum_'):
-                    summary_str += f'   {self.summary[key]:5.0f} {self.results[key].name.lower()}\n'
+                if full or key.startswith('cum_'):
+                    summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
 
-            if not output:
+            if verbose:
                 print(summary_str)
-            else:
-                return summary_str
+            if update:
+                self.summary = summary
+            if output:
+                return summary
         else:
             return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
 

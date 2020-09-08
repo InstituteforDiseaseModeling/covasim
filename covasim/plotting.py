@@ -76,13 +76,19 @@ def handle_to_plot(which, to_plot, n_cols, sim):
 
 
 def create_figs(args, font_size, font_family, sep_figs, fig=None):
-    ''' Create the figures and set overall figure properties '''
+    '''
+    Create the figures and set overall figure properties. If a figure is supplied,
+    reset the axes labels for automatic use by other plotting functions (i.e. ax1, ax2, etc.)
+    '''
     if sep_figs:
         fig = None
         figs = []
     else:
         if fig is None:
             fig = pl.figure(**args.fig) # Create the figure if none is supplied
+        else:
+            for i,ax in enumerate(fig.axes):
+                ax.set_label(f'ax{i+1}')
         figs = None
     pl.subplots_adjust(**args.axis)
     pl.rcParams['font.size'] = font_size
@@ -125,12 +131,13 @@ def create_subplots(figs, fig, shareax, n_rows, n_cols, pnum, fig_args, sep_figs
     return ax
 
 
-def plot_data(sim, ax, key, scatter_args):
+def plot_data(sim, ax, key, scatter_args, color=None):
     ''' Add data to the plot '''
     if sim.data is not None and key in sim.data and len(sim.data[key]):
-        this_color = sim.results[key].color
+        if color is None:
+            color = sim.results[key].color
         data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
-        ax.scatter(data_t, sim.data[key], c=[this_color], label='Data', **scatter_args)
+        ax.scatter(data_t, sim.data[key], c=[color], label='Data', **scatter_args)
     return
 
 
@@ -220,11 +227,13 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
         return fig
 
 
-def set_line_options(input_args, reskey, default):
+def set_line_options(input_args, reskey, resnum, default):
     '''From the supplied line argument, usually a color or label, decide what to use '''
     if input_args is not None:
         if isinstance(input_args, dict): # If it's a dict, pull out this value
             output = input_args[reskey]
+        elif isinstance(input_args, list): # If it's a list, ditto
+            output = input_args[resnum]
         else: # Otherwise, assume it's the same value for all
             output = input_args
     else:
@@ -250,16 +259,16 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
     # Do the plotting
     for pnum,title,keylabels in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
-        for reskey in keylabels:
+        for resnum,reskey in enumerate(keylabels):
             res = sim.results[reskey]
             res_t = sim.results['t']
-            color = set_line_options(colors, reskey, res.color) # Choose the color
-            label = set_line_options(labels, reskey, res.name) # Choose the label
+            color = set_line_options(colors, reskey, resnum, res.color) # Choose the color
+            label = set_line_options(labels, reskey, resnum, res.name) # Choose the label
             if res.low is not None and res.high is not None:
                 ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
             ax.plot(res_t, res.values, label=label, **args.plot, c=color) # Actually plot the sim!
             if args.show['data']:
-                plot_data(sim, ax, reskey, args.scatter) # Plot the data
+                plot_data(sim, ax, reskey, args.scatter, color=color) # Plot the data
             if args.show['ticks']:
                 reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['interventions']:
@@ -292,12 +301,12 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
             for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
                 res_y = scendata.best
-                color = set_line_options(colors, scenkey, default_colors[snum]) # Choose the color
-                label = set_line_options(labels, scenkey, scendata.name) # Choose the label
+                color = set_line_options(colors, scenkey, snum, default_colors[snum]) # Choose the color
+                label = set_line_options(labels, scenkey, snum, scendata.name) # Choose the label
                 ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
                 ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot) # Plot the actual line
                 if args.show['data']:
-                    plot_data(sim, ax, reskey, args.scatter) # Plot the data
+                    plot_data(sim, ax, reskey, args.scatter, color=color) # Plot the data
                 if args.show['interventions']:
                     plot_interventions(sim, ax) # Plot the interventions
                 if args.show['ticks']:
@@ -342,7 +351,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     if res.low is not None and res.high is not None:
         ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
     ax.plot(res_t, res.values, c=color, label=label, **args.plot)
-    plot_data(sim, ax, key, args.scatter) # Plot the data
+    plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
     reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)

@@ -302,10 +302,11 @@ class sequence(Intervention):
 __all__+= ['change_beta', 'clip_edges']
 
 
-def process_days(sim, days):
+def process_days(sim, days, return_dates=False):
     '''
     Ensure lists of days are in consistent format. Used by change_beta, clip_edges,
     and some analyzers. If day is 'end' or -1, use the final day of the simulation.
+    Optionally return dates as well as days.
     '''
     if sc.isstring(days) or not sc.isiterable(days):
         days = sc.promotetolist(days)
@@ -313,8 +314,12 @@ def process_days(sim, days):
         if day in ['end', -1]:
             day = sim['end_day']
         days[d] = sim.day(day) # Ensure it's an integer and not a string or something
-    days = sc.promotetoarray(days)
-    return days
+    days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+    if return_dates:
+        dates = [sim.date(day) for day in days] # Store as date strings
+        return days, dates
+    else:
+        return days
 
 
 def process_changes(sim, changes, days):
@@ -436,19 +441,22 @@ class clip_edges(Intervention):
                 n_sim = len(s_layer) # Number of contacts in the simulation layer
                 n_int = len(i_layer) # Number of contacts in the intervention layer
                 n_contacts = n_sim + n_int # Total number of contacts
-                current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
-                desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
-                prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
-                n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
-                from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
-                if from_sim: # We're moving from the sim to the intervention
-                    inds = cvu.choose(max_n=n_sim, n=n_to_move)
-                    to_move = s_layer.pop_inds(inds)
-                    i_layer.append(to_move)
-                else: # We're moving from the intervention back to the sim
-                    inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
-                    to_move = i_layer.pop_inds(inds)
-                    s_layer.append(to_move)
+                if n_contacts:
+                    current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
+                    desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
+                    prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
+                    n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
+                    from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
+                    if from_sim: # We're moving from the sim to the intervention
+                        inds = cvu.choose(max_n=n_sim, n=n_to_move)
+                        to_move = s_layer.pop_inds(inds)
+                        i_layer.append(to_move)
+                    else: # We're moving from the intervention back to the sim
+                        inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
+                        to_move = i_layer.pop_inds(inds)
+                        s_layer.append(to_move)
+                else:
+                    print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
 
         # Ensure the edges get deleted at the end
         if sim.t == sim.tvec[-1]:
@@ -463,7 +471,6 @@ class clip_edges(Intervention):
 __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 
-# Process daily data
 def process_daily_data(daily_data, sim, start_day, as_int=False):
     '''
     This function performs one of two things: if the daily data are supplied as
@@ -848,5 +855,102 @@ class contact_tracing(Intervention):
 
         if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
             sim.people.trace(trace_from_inds, self.trace_probs, self.trace_time)
+
+        return
+
+
+
+
+#%% Treatment and prevention interventions
+
+__all__+= ['vaccine']
+
+
+class vaccine(Intervention):
+    '''
+    Apply a vaccine to a subset of the population. In addition to changing the
+    relative susceptibility and the probability of developing symptoms if still
+    infected, this sintervention stores several types of data:
+
+        - ``vaccinations``:      the number of vaccine doses per person
+        - ``vaccination_dates``: list of dates per person
+        - ``orig_rel_sus``:      relative susceptibility per person at the beginning of the simulation
+        - ``orig_symp_prob``:    probability of developing symptoms per person at the beginning of the simulation
+        - ``mod_rel_sus``:       modifier on default susceptibility due to the vaccine
+        - ``mod_symp_prob``:     modifier on default symptom probability due to the vaccine
+
+    Args:
+        days (int or array): the day or array of days to apply the interventions
+        prob      (float): probability of being vaccinated (i.e., fraction of the population)
+        rel_sus   (float): relative change in susceptibility; 0 = perfect, 1 = no effect
+        rel_symp  (float): relative change in symptom probability for people who still get infected; 0 = perfect, 1 = no effect
+        subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
+        cumulative (bool): whether cumulative doses have cumulative effects (default false); can also be an array for efficacy per dose, with the last entry used for multiple doses; thus True = [1] and False = [1,0]
+        kwargs     (dict): passed to Intervention()
+
+    **Examples**::
+
+        interv = cv.vaccine(days=50, prob=0.3, rel_sus=0.5, rel_symp=0.1)
+        interv = cv.vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative=[1, 0.3, 0.1, 0]) # A vaccine with efficacy up to the 3rd dose
+    '''
+    def __init__(self, days, prob=1.0, rel_sus=0.0, rel_symp=0.0, subtarget=None, cumulative=False, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
+        self.days      = sc.dcp(days)
+        self.prob      = prob
+        self.rel_sus   = rel_sus
+        self.rel_symp  = rel_symp
+        self.subtarget = subtarget
+        if cumulative in [0, False]:
+            cumulative = [1,0] # First dose has full efficacy, second has none
+        elif cumulative in [1, True]:
+            cumulative = [1] # All doses have full efficacy
+        self.cumulative = np.array(cumulative, dtype=cvd.default_float) # Ensure it's an array
+        return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates and store the vaccinations '''
+        self.days = process_days(sim, self.days)
+        self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
+        self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
+        self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
+        self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
+        self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
+        self.mod_symp_prob     = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
+        self.initialized = True
+        return
+
+
+    def apply(self, sim):
+        ''' Perform vaccination '''
+
+        # If this day is found in the list, apply the intervention
+        for ind in find_day(self.days, sim.t):
+
+            # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
+            vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal testing probability to everyone
+            if self.subtarget is not None:
+                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+                vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
+            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
+
+            # Calculate the effect per person
+            vacc_doses = self.vaccinations[vacc_inds] # Calculate current doses
+            eff_doses = np.minimum(vacc_doses, len(self.cumulative)-1) # Convert to a valid index
+            vacc_eff = self.cumulative[eff_doses] # Pull out corresponding effect sizes
+            rel_sus_eff  = (1.0 - vacc_eff) + vacc_eff*self.rel_sus
+            rel_symp_eff = (1.0 - vacc_eff) + vacc_eff*self.rel_symp
+
+            # Apply the vaccine to people
+            sim.people.rel_sus[vacc_inds]   *= rel_sus_eff
+            sim.people.symp_prob[vacc_inds] *= rel_symp_eff
+
+            # Update counters
+            self.mod_rel_sus[vacc_inds]   *= rel_sus_eff
+            self.mod_symp_prob[vacc_inds] *= rel_symp_eff
+            self.vaccinations[vacc_inds] += 1
+            for v_ind in vacc_inds:
+                self.vaccination_dates[v_ind].append(sim.t)
 
         return
