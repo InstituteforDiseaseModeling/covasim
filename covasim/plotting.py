@@ -125,12 +125,13 @@ def create_subplots(figs, fig, shareax, n_rows, n_cols, pnum, fig_args, sep_figs
     return ax
 
 
-def plot_data(sim, ax, key, scatter_args):
+def plot_data(sim, ax, key, scatter_args, color=None):
     ''' Add data to the plot '''
     if sim.data is not None and key in sim.data and len(sim.data[key]):
-        this_color = sim.results[key].color
+        if color is None:
+            color = sim.results[key].color
         data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
-        ax.scatter(data_t, sim.data[key], c=[this_color], label='Data', **scatter_args)
+        ax.scatter(data_t, sim.data[key], c=[color], label='Data', **scatter_args)
     return
 
 
@@ -261,7 +262,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
                 ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
             ax.plot(res_t, res.values, label=label, **args.plot, c=color) # Actually plot the sim!
             if args.show['data']:
-                plot_data(sim, ax, reskey, args.scatter) # Plot the data
+                plot_data(sim, ax, reskey, args.scatter, color=color) # Plot the data
             if args.show['ticks']:
                 reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['interventions']:
@@ -299,7 +300,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
                 ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
                 ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot) # Plot the actual line
                 if args.show['data']:
-                    plot_data(sim, ax, reskey, args.scatter) # Plot the data
+                    plot_data(sim, ax, reskey, args.scatter, color=color) # Plot the data
                 if args.show['interventions']:
                     plot_interventions(sim, ax) # Plot the interventions
                 if args.show['ticks']:
@@ -344,7 +345,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     if res.low is not None and res.high is not None:
         ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
     ax.plot(res_t, res.values, c=color, label=label, **args.plot)
-    plot_data(sim, ax, key, args.scatter) # Plot the data
+    plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
     reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
