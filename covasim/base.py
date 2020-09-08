@@ -452,9 +452,9 @@ class BaseSim(ParsObj):
             shrunken_sim (Sim): a Sim object with the listed attributes removed
         '''
 
-        # By default, skip people (~90% of memory) and the popdict (which is usually empty anyway)
+        # By default, skip people (~90% of memory), the popdict (which is usually empty anyway), and _orig_pars (which is just a backup)
         if skip_attrs is None:
-            skip_attrs = ['popdict', 'people']
+            skip_attrs = ['popdict', 'people', '_orig_pars']
 
         # Create the new object, and copy original dict, skipping the skipped attributes
         if in_place:

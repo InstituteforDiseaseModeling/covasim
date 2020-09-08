@@ -110,7 +110,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def initialize(self, reset=False, **kwargs):
+    def initialize(self, reset=True, **kwargs):
         '''
         Perform all initializations, including validating the parameters, setting
         the random number seed, creating the results structure, initializing the
@@ -118,7 +118,7 @@ class Sim(cvb.BaseSim):
         and initializing the interventions.
 
         Args:
-            reset (bool): whether or not to reset people, interventions, and analyzers
+            reset (bool): whether or not to reset people even if they already exist
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
@@ -127,8 +127,8 @@ class Sim(cvb.BaseSim):
         self.init_results() # Create the results stucture
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
-        self.init_interventions(reset=reset) # Initialize the interventions
-        self.init_analyzers(reset=reset) # ...and the interventions
+        self.init_interventions() # Initialize the interventions
+        self.init_analyzers() # ...and the interventions
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized   = True
         self.complete      = False
@@ -399,21 +399,25 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_interventions(self, reset=False):
+    def init_interventions(self):
         ''' Initialize the interventions '''
+        if self._orig_pars and 'interventions' in self._orig_pars:
+            self['interventions'] = self._orig_pars.pop('interventions') # Restore
+
         for intervention in self['interventions']:
             if isinstance(intervention, cvi.Intervention):
-                if not intervention.initialized or reset:
-                    intervention.initialize(self)
+                intervention.initialize(self)
         return
 
 
-    def init_analyzers(self, reset=False):
+    def init_analyzers(self):
         ''' Initialize the analyzers '''
+        if self._orig_pars and 'analyzers' in self._orig_pars:
+            self['analyzers'] = self._orig_pars.pop('analyzers') # Restore
+
         for analyzer in self['analyzers']:
             if isinstance(analyzer, cva.Analyzer):
-                if not analyzer.initialized or reset:
-                    analyzer.initialize(self)
+                analyzer.initialize(self)
         return
 
 
@@ -645,12 +649,11 @@ class Sim(cvb.BaseSim):
         self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
 
         if restore_pars and self._orig_pars:
-            analyzers = self['analyzers']  # Make a copy so these don't get wiped
-            for key, val in self._orig_pars.items():
-                self.pars[key] = val  # So pointers, e.g. in sim.people, get updated as well
-            self['analyzers'] = analyzers  # Restore the analyzers
-
-        self._orig_pars = None # Reduce storage requirements when simulation is finalized (regardless of whether they were restored or not)
+            preserved = ['analyzers', 'interventions']
+            orig_pars_keys = list(self._orig_pars.keys()) # Get a list of keys so we can iterate over them
+            for key in orig_pars_keys:
+                if key not in preserved:
+                    self.pars[key] = self._orig_pars.pop(key) # Restore everything except for the analyzers and interventions
 
         return
 

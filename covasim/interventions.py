@@ -909,7 +909,7 @@ class vaccine(Intervention):
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
         self.days = process_days(sim, self.days)
-        self.vaccinations      = np.zeros(sim.n) # Number of doses given per person
+        self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
         self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccinatino susceptibility
         self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
