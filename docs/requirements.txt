@@ -1,6 +1,5 @@
-sphinx-rtd-theme
-sphinxcontrib-napoleon
-beautifulsoup4
-sphinx
-plantweb
+sphinx-rtd-theme~=0.5.0
+sphinxcontrib-napoleon~=0.7
+sphinx~=3.2.0
+plantweb~=1.2.1
 pytest
