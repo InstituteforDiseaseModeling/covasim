@@ -10,7 +10,7 @@ To build the docs, follow these steps:
     pip install -r requirements.txt
     ```
 
-2.  Make the documents; there are many build options, but most convenient is::
+2.  Make the documents; there are many build options, but after ``build_docs``, most convenient is::
 
     ```
     make html

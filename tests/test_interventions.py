@@ -67,6 +67,9 @@ def test_all_interventions():
     i8c = cv.test_prob(start_day=38, symp_prob=0.01, asymp_prob=0.0, symp_quar_prob=1.0, asymp_quar_prob=1.0, test_delay=2) # Start testing for TTQ
     i8d = cv.contact_tracing(start_day=40, trace_probs=dict(h=0.9, s=0.7, w=0.7, c=0.3), trace_time=dict(h=0, s=1, w=1, c=3)) # Start tracing for TTQ
 
+    # 9. Vaccine
+    i9a = cv.vaccine(days=20, prob=1.0, rel_sus=1.0, rel_symp=0.0)
+    i9b = cv.vaccine(days=50, prob=1.0, rel_sus=0.0, rel_symp=0.0)
 
     #%% Create and run the simulations
     sims = sc.objdict()
@@ -75,11 +78,12 @@ def test_all_interventions():
     sims.change_beta1 = cv.Sim(pars=pars, interventions=i3a)
     sims.clip_edges1  = cv.Sim(pars=pars, interventions=i4a) # Roughly equivalent to change_beta1
     sims.change_beta2 = cv.Sim(pars=pars, interventions=i3b)
-    sims.clip_edges2  = cv.Sim(pars=pars, interventions=i4b) # Roughly euivalent to change_beta2
+    sims.clip_edges2  = cv.Sim(pars=pars, interventions=i4b) # Roughly equivalent to change_beta2
     sims.test_num     = cv.Sim(pars=pars, interventions=i5)
     sims.test_prob    = cv.Sim(pars=pars, interventions=i6)
     sims.tracing      = cv.Sim(pars=pars, interventions=[i7a, i7b])
     sims.combo        = cv.Sim(pars=pars, interventions=[i8a, i8b, i8c, i8d])
+    sims.vaccine      = cv.Sim(pars=pars, interventions=[i9a, i9b])
 
     for key,sim in sims.items():
         sim.label = key

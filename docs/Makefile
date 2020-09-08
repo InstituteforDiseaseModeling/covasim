@@ -3,10 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    = -W
-INTERNALOPTS  = -t internal
 SPHINXBUILD   = sphinx-build
-INDEXBUILD    = python $(BUILDDIR)/../scripts/gti.py
-URLPREFIX	  = "."
 PAPER         =
 BUILDDIR      = _build
 
@@ -23,7 +20,6 @@ help:
 	@echo "  clean      to remove the existing build"
 	@echo "  dirhtml    to make HTML files named index.html in a directory tree"
 	@echo "  singlehtml to make a single large HTML file"
-	@echo "  external   to make standalone HTML files for public release"
 	@echo "  html       to make standalone HTML files"
 	@echo "  pickle     to make pickle files"
 	@echo "  json       to make JSON files"
@@ -47,74 +43,58 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 	@echo "  coverage   to run coverage check of the documentation (if enabled)"
-	@echo "  tipuesearch to make tipue static search content"
 	@echo "  dummy      to check syntax errors of document sources"
 
 .PHONY: clean
 clean:
 	rm -rf $(BUILDDIR)/*
 
-.PHONY: external generate-api
+.PHONY: generate-api
 
 # Generates the API doc
 generate-api:
-	rm -rf temp
-	sphinx-apidoc -f --tocfile dummy -o . ../covasim
-	-rm dummy.rst
+	sphinx-apidoc -f -e -o . ../covasim
 	mv covasim.rst modules.rst
 
-external:
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
-	$(INDEXBUILD) -i $(BUILDDIR)/html -o $(BUILDDIR)/html/_static/tipuesearch/tipuesearch_content.js -u $(URLPREFIX)
-	@echo
-	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
-
 .PHONY: html
-html: generate-api
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(INTERNALOPTS) $(BUILDDIR)/html
-	$(INDEXBUILD) -i $(BUILDDIR)/html -o $(BUILDDIR)/html/_static/tipuesearch/tipuesearch_content.js -u $(URLPREFIX)
+html: 
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
-
-.PHONY: tipuesearch
-tipuesearch:
-	$(INDEXBUILD) -i $(BUILDDIR)/html -o $(BUILDDIR)/html/_static/tipuesearch/tipuesearch_content.js -u $(URLPREFIX)
-	@echo
-	@echo "Build finished. Updated tipuesearch content is at $(BUILDDIR)/html/_static/tipuesearch/tipuesearch_content.js"
 
 .PHONY: dirhtml
-dirhtml: generate-api
+dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
 .PHONY: singlehtml
-singlehtml: generate-api
+singlehtml: 
 	$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML page is in $(BUILDDIR)/singlehtml."
 
 .PHONY: pickle
-pickle: generate-api
+pickle: 
 	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(BUILDDIR)/pickle
 	@echo
 	@echo "Build finished; now you can process the pickle files."
 
 .PHONY: json
-json: generate-api
+json: 
 	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(BUILDDIR)/json
 	@echo
 	@echo "Build finished; now you can process the JSON files."
 
 .PHONY: htmlhelp
-htmlhelp: generate-api
+htmlhelp: 
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
 	      ".hhp project file in $(BUILDDIR)/htmlhelp."
 
 .PHONY: qthelp
-qthelp: generate-api
+qthelp: 
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(BUILDDIR)/qthelp
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
@@ -124,7 +104,7 @@ qthelp: generate-api
 	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/IDMDocumentation.qhc"
 
 .PHONY: applehelp
-applehelp: generate-api
+applehelp: 
 	$(SPHINXBUILD) -b applehelp $(ALLSPHINXOPTS) $(BUILDDIR)/applehelp
 	@echo
 	@echo "Build finished. The help book is in $(BUILDDIR)/applehelp."
@@ -133,7 +113,7 @@ applehelp: generate-api
 	      "bundle."
 
 .PHONY: devhelp
-devhelp: generate-api
+devhelp: 
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
@@ -143,19 +123,19 @@ devhelp: generate-api
 	@echo "# devhelp"
 
 .PHONY: epub
-epub: generate-api
+epub: 
 	$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(BUILDDIR)/epub
 	@echo
 	@echo "Build finished. The epub file is in $(BUILDDIR)/epub."
 
 .PHONY: epub3
-epub3: generate-api
+epub3: 
 	$(SPHINXBUILD) -b epub3 $(ALLSPHINXOPTS) $(BUILDDIR)/epub3
 	@echo
 	@echo "Build finished. The epub3 file is in $(BUILDDIR)/epub3."
 
 .PHONY: latex
-latex: generate-api
+latex: 
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
@@ -163,14 +143,14 @@ latex: generate-api
 	      "(use \`make latexpdf' here to do that automatically)."
 
 .PHONY: latexpdf
-latexpdf: generate-api
+latexpdf: 
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo "Running LaTeX files through pdflatex..."
 	$(MAKE) -C $(BUILDDIR)/latex all-pdf
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
 .PHONY: latexpdfja
-latexpdfja: generate-api
+latexpdfja: 
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo "Running LaTeX files through platex and dvipdfmx..."
 	$(MAKE) -C $(BUILDDIR)/latex all-pdf-ja
@@ -184,19 +164,19 @@ xelatexpdf:
 	@echo "xelatex finished; the PDF files are in $(BUILDDIR)/latex."
 
 .PHONY: text
-text: generate-api
+text: 
 	$(SPHINXBUILD) -b text $(ALLSPHINXOPTS) $(BUILDDIR)/text
 	@echo
 	@echo "Build finished. The text files are in $(BUILDDIR)/text."
 
 .PHONY: man
-man: generate-api
+man: 
 	$(SPHINXBUILD) -b man $(ALLSPHINXOPTS) $(BUILDDIR)/man
 	@echo
 	@echo "Build finished. The manual pages are in $(BUILDDIR)/man."
 
 .PHONY: texinfo
-texinfo: generate-api
+texinfo: 
 	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) $(BUILDDIR)/texinfo
 	@echo
 	@echo "Build finished. The Texinfo files are in $(BUILDDIR)/texinfo."

@@ -15,8 +15,24 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import subprocess
 import sys
 import sphinx_rtd_theme
+
+if sys.platform in ["linux", "darwin"]:
+    subprocess.check_output(["make", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
+else:
+    subprocess.check_output(["make.bat", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
+
+# Rename "covasim package" to "API reference"
+filename = 'modules.rst' # This must match the Makefile
+with open(filename) as f: # Read exitsting file
+    lines = f.readlines()
+lines[0] = "API reference\n" # Blast away the existing heading and replace with this
+lines[1] = "=============\n" # Ensure the heading is the right length
+with open(filename, "w") as f: # Write new file
+    f.writelines(lines)
+
 
 # -- General configuration ------------------------------------------------
 
@@ -68,7 +84,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Covasim'
-copyright = '2020, Intellectual Ventures Management, LLC (IVM). All rights reserved'
+copyright = '2020, Bill & Melinda Gates Foundation. All rights reserved.'
 author = 'Institute for Disease Modeling'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -103,7 +119,7 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # suppress warnings for multiple possible Python references in the namespace
-suppress_warnings = ['ref.python']
+# suppress_warnings = ['ref.python']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -185,16 +201,7 @@ html_static_path = ['_static']
 
 html_context = {
     'css_files': [
-        '_static/theme_overrides.css',
-        '_static/tipuesearch/tipuesearch.css'
-    ],
-    'script_files': [
-        '_static/jquery.js',
-        '_static/tipuesearch/tipuesearch.js',
-        '_static/tipuesearch/tipuesearch_content.js',
-        '_static/tipuesearch/tipuesearch_set.js',
-        '_static/runsearch.js',
-        '_static/tablecollapse.js'
+        '_static/theme_overrides.css'
     ]
 }
 # Add any extra paths that contain custom files (such as robots.txt or
