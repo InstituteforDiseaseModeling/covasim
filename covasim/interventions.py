@@ -875,6 +875,8 @@ class vaccine(Intervention):
         - ``vaccination_dates``: list of dates per person
         - ``orig_rel_sus``:      relative susceptibility per person at the beginning of the simulation
         - ``orig_symp_prob``:    probability of developing symptoms per person at the beginning of the simulation
+        - ``mod_rel_sus``:       modifier on default susceptibility due to the vaccine
+        - ``mod_symp_prob``:     modifier on default symptom probability due to the vaccine
 
     Args:
         days (int or array): the day or array of days to apply the interventions
@@ -902,7 +904,7 @@ class vaccine(Intervention):
             cumulative = [1,0] # First dose has full efficacy, second has none
         elif cumulative in [1, True]:
             cumulative = [1] # All doses have full efficacy
-        self.cumulative = np.array(cumulative) # Ensure it's an array
+        self.cumulative = np.array(cumulative, dtype=cvd.default_float) # Ensure it's an array
         return
 
 
@@ -911,8 +913,10 @@ class vaccine(Intervention):
         self.days = process_days(sim, self.days)
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
-        self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccinatino susceptibility
+        self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
         self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
+        self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
+        self.mod_symp_prob     = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
         self.initialized = True
         return
 
@@ -932,16 +936,18 @@ class vaccine(Intervention):
 
             # Calculate the effect per person
             vacc_doses = self.vaccinations[vacc_inds] # Calculate current doses
-            eff_doses = np.maximum(vacc_doses, len(self.cumulative)-1) # Convert to a valid index
+            eff_doses = np.minimum(vacc_doses, len(self.cumulative)-1) # Convert to a valid index
             vacc_eff = self.cumulative[eff_doses] # Pull out corresponding effect sizes
-            rel_sus_eff  = (1 - vacc_eff) + vacc_eff*self.rel_sus
-            rel_symp_eff = (1 - vacc_eff) + vacc_eff*self.rel_symp
+            rel_sus_eff  = (1.0 - vacc_eff) + vacc_eff*self.rel_sus
+            rel_symp_eff = (1.0 - vacc_eff) + vacc_eff*self.rel_symp
 
-            # Apply the vaccine
+            # Apply the vaccine to people
             sim.people.rel_sus[vacc_inds]   *= rel_sus_eff
             sim.people.symp_prob[vacc_inds] *= rel_symp_eff
 
             # Update counters
+            self.mod_rel_sus[vacc_inds]   *= rel_sus_eff
+            self.mod_symp_prob[vacc_inds] *= rel_symp_eff
             self.vaccinations[vacc_inds] += 1
             for v_ind in vacc_inds:
                 self.vaccination_dates[v_ind].append(sim.t)

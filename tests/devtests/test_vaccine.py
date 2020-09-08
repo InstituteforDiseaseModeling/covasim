@@ -28,6 +28,6 @@ msim = cv.MultiSim([sim2, sim3])
 msim.run()
 msim.plot()
 
-sim4 = cv.Sim(interventions=cv.vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative=[1, 0.3, 0.1, 0]))
+sim4 = cv.Sim(interventions=cv.vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative=[1, 0.5, 0.5, 0]))
 sim4.run()
 sim4.plot()
