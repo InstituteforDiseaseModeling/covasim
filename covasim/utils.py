@@ -31,7 +31,7 @@ parallel = False
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit(cache=True, parallel=parallel)
+@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat), cache=True, parallel=parallel)
 def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,    load_ratio,    high_cap):
     '''
     Calculate relative transmissibility for time t. Includes time varying
@@ -74,7 +74,7 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(cache=True, parallel=parallel)
+@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True, parallel=parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor):
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
@@ -85,7 +85,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     return rel_trans, rel_sus
 
 
-@nb.njit(cache=True, parallel=parallel)
+@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=parallel)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
@@ -99,13 +99,14 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     return source_inds, target_inds
 
 
-@nb.njit(cache=True)
+@nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=True)
 def find_contacts(p1, p2, inds):
     """
     Numba for Layer.find_contacts()
 
     A set is returned here rather than a sorted array so that custom tracing interventions can efficiently
-    add extra people. For a version with sorting by default, see Layer.find_contacts().
+    add extra people. For a version with sorting by default, see Layer.find_contacts(). Indices must be
+    an int64 array since this is what's returned by true() etc. functions by default.
     """
     pairing_partners = set()
     inds = set(inds)
