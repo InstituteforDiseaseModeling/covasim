@@ -76,13 +76,19 @@ def handle_to_plot(which, to_plot, n_cols, sim):
 
 
 def create_figs(args, font_size, font_family, sep_figs, fig=None):
-    ''' Create the figures and set overall figure properties '''
+    '''
+    Create the figures and set overall figure properties. If a figure is supplied,
+    reset the axes labels for automatic use by other plotting functions (i.e. ax1, ax2, etc.)
+    '''
     if sep_figs:
         fig = None
         figs = []
     else:
         if fig is None:
             fig = pl.figure(**args.fig) # Create the figure if none is supplied
+        else:
+            for i,ax in enumerate(fig.axes):
+                ax.set_label(f'ax{i+1}')
         figs = None
     pl.subplots_adjust(**args.axis)
     pl.rcParams['font.size'] = font_size
