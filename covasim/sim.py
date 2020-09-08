@@ -659,7 +659,7 @@ class Sim(cvb.BaseSim):
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
-        self.compute_summary(verbose=verbose)
+        self.summarize(verbose=verbose)
         return
 
 
@@ -854,15 +854,7 @@ class Sim(cvb.BaseSim):
 
         '''
 
-        if t is None:
-            t = self.day(self.t)
 
-        if verbose is None:
-            verbose = self['verbose']
-
-        self.summary = sc.objdict()
-        for key in self.result_keys():
-            self.summary[key] = self.results[key][t]
 
         if verbose:
             self.summarize()
@@ -870,12 +862,30 @@ class Sim(cvb.BaseSim):
         return self.summary
 
 
-    def summarize(self, t=None, output=False):
-        ''' Print a brief summary of the simulation '''
+    def summarize(self, full=False, t=None, verbose=None, output=False, update=True):
+        '''
+        Print a summary of the simulation, drawing from the last time point in the simulation.
+
+        Args:
+            full (bool): whether or not to print all results (by default, only cumulative)
+
+        '''
         if self.results_ready:
+
+            if t is None:
+                t = self.day(self.t)
+
+            if verbose is None:
+                verbose = self['verbose']
+
+            self.summary = sc.objdict()
+            for key in self.result_keys():
+                self.summary[key] = self.results[key][t]
+
+
             summary_str = 'Simulation summary:\n'
             for key in self.result_keys():
-                if key.startswith('cum_'):
+                if full or key.startswith('cum_'):
                     summary_str += f'   {self.summary[key]:5.0f} {self.results[key].name.lower()}\n'
 
             if not output:
