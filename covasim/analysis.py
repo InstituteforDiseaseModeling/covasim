@@ -187,6 +187,9 @@ class age_histogram(Analyzer):
 
     def from_sim(self, sim):
         ''' Create an age histogram from an already run sim '''
+        if self.days is not None:
+            errormsg = 'If a simulation is being analyzed post-run, no day can be supplied: only the last day of the simulation is available'
+            raise ValueError(errormsg)
         self.initialize(sim)
         self.apply(sim)
         return
