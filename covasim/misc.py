@@ -395,20 +395,21 @@ def get_png_metadata(filename, output=False):
         return
 
 
-def git_info(filename=None, check=False, comments=None, old_info=None, die=False, indent=2, verbose=True, **kwargs):
+def git_info(filename=None, check=False, comments=None, old_info=None, die=False, indent=2, verbose=True, frame=2, **kwargs):
     '''
     Get current git information and optionally write it to disk. Simplest usage
     is cv.git_info(__file__)
 
     Args:
-        filename (str): name of the file to write to or read from
-        check (bool): whether or not to compare two git versions
-        comments (str/dict): additional comments to include in the file
+        filename  (str): name of the file to write to or read from
+        check    (bool): whether or not to compare two git versions
+        comments (dict): additional comments to include in the file
         old_info (dict): dictionary of information to check against
-        die (bool): whether or not to raise an exception if the check fails
-        indent (int): how many indents to use when writing the file to disk
-        verbose (bool): detail to print
-        kwargs (dict): passed to loadjson (if check=True) or loadjson (if check=False)
+        die      (bool): whether or not to raise an exception if the check fails
+        indent    (int): how many indents to use when writing the file to disk
+        verbose  (bool): detail to print
+        frame     (int): how many frames back to look for caller info
+        kwargs   (dict): passed to loadjson (if check=True) or loadjson (if check=False)
 
     **Examples**::
 
@@ -423,7 +424,7 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
         filename = filename.replace('.py', '.gitinfo')
 
     # Get git info
-    calling_file = sc.makefilepath(get_caller(frame=3, tostring=False)['filename'])
+    calling_file = sc.makefilepath(get_caller(frame=frame, tostring=False)['filename'])
     cv_info = {'version':cvver.__version__}
     cv_info.update(sc.gitinfo(__file__, verbose=False))
     caller_info = sc.gitinfo(calling_file, verbose=False)
@@ -500,7 +501,7 @@ def check_save_version(expected=None, filename=None, die=False, verbose=True, **
     # Now, check and save the git info
     if filename is None:
         filename = get_caller(tostring=False)['filename']
-    git_info(filename=filename, **kwargs)
+    git_info(filename=filename, frame=3, **kwargs)
 
     return
 
