@@ -14,6 +14,28 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Latest versions (1.5.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Version 1.5.4 (2020-09-06)
+--------------------------
+
+- Added ``Layer.get_partners()`` to provide an efficient Numba-based method to find pairing partners for contact tracing
+
+
+Version 1.5.4 (2020-09-02)
+--------------------------
+
+- Added ``cv.vaccine()``, which can be used to model vaccine interventions; it can also be used to model therapeutics.
+
+
+Version 1.5.3 (2020-09-01)
+--------------------------
+
+- An ``AlreadyRunError`` is now raised if ``sim.run()`` is called in such a way that no timesteps will be taken. This error is a distinct type so that it can be safely caught and ignored if required, but it is anticipated that most of the time, calling ``run()`` and not taking any timesteps, would be an inadvertent error.
+- If the simulation has reached the end, ``sim.run()`` (and ``sim.step()``) will now raise an ``AlreadyRunError``.
+- ``sim.run()`` now only validates parameters as part of initialization. Parameters will always be validated in the normal workflow where ``sim.initialize()`` is called via ``sim.run()``. However, the use case for modifying parameters during a split run or otherwise modifying parameters after initialization suggests that the user should have maximum control over the parameters at this point, so in this specialist workflow, the user is responsible for setting the parameter values correctly and in return, ``sim.run()`` is guaranteed not to change them.
+- Added a ``sim.complete`` attribute, which is ``True`` if all timesteps have been executed. This is independent of finalizing results, since if ``sim.step()`` is being called externally, then finalizing the results may happen separately.
+- *GitHub info*: : PR `654 <https://github.com/amath-idm/covasim/pull/654>`__, previous head ``9041157``
+
+
 
 Version 1.5.3 (2020-08-28)
 --------------------------
@@ -31,6 +53,7 @@ Version 1.5.2 (2020-08-18)
 - *Regression information*:
     - Scripts that called ``cv.People.quarantine()`` directly would have also had to manually update ``sim.results['new_quarantined']``. This is no longer required, and those commands should now be removed as they will otherwise be double counted
     - Results are expected to differ slightly because the handling of quarantines being extended has been improved, and because quarantine duration is now reduced when by the ``trace_time``.
+- *GitHub info*: PR `624 <https://github.com/amath-idm/covasim/pull/624>`__, previous head ``aaa4d7c``
 
 
 Version 1.5.1 (2020-08-17)
@@ -38,7 +61,7 @@ Version 1.5.1 (2020-08-17)
 - Modify ``cv.BasePeople.__getitem__()`` to retrieve a person if the item is an integer, so that ``sim.people[5]`` will return a ``cv.Person`` instance
 - Modify ``cv.BasePeople.__iter__`` so that iterating over people e.g. ``for person in sim.people:`` iterates over ``cv.Person`` instances
 - *Regression information*: To restore previous behavior of ``for idx in sim.people:`` use ``for idx in range(len(sim.people)):`` instead
-
+- *GitHub info*: PR `623 <https://github.com/amath-idm/covasim/pull/623>`__, previous head ``775cf35``
 
 
 Version 1.5.0 (2020-07-01)

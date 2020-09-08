@@ -226,7 +226,7 @@ class BaseSim(ParsObj):
         features.
 
         Args:
-            ind (int, list, or array): the day(s) in simulation time
+            ind (int, list, or array): the index day(s) in simulation time (NB: strings and date objects are accepted, and will be passed unchanged)
             args (list): additional day(s)
             dateformat (str): the format to return the date in
             as_date (bool): whether to return as a datetime date instead of a string
@@ -236,13 +236,15 @@ class BaseSim(ParsObj):
 
         **Examples**::
 
+            sim = cv.Sim()
             sim.date(34) # Returns '2020-04-04'
             sim.date([34, 54]) # Returns ['2020-04-04', '2020-04-24']
-            sim.date(34, 54, as_dt=True) # Returns [datetime.date(2020, 4, 4), datetime.date(2020, 4, 24)]
+            sim.date([34, '2020-04-24']) # Returns ['2020-04-04', '2020-04-24']
+            sim.date(34, 54, as_date=True) # Returns [datetime.date(2020, 4, 4), datetime.date(2020, 4, 24)]
         '''
 
         # Handle inputs
-        if sc.isnumber(ind): # If it's a number, convert it to a list
+        if not isinstance(ind, list): # If it's a number, string, or dateobj, convert it to a list
             ind = sc.promotetolist(ind)
         ind.extend(args)
         if dateformat is None:
@@ -250,8 +252,11 @@ class BaseSim(ParsObj):
 
         # Do the conversion
         dates = []
-        for i in ind:
-            date_obj = cvm.date(self['start_day']) + dt.timedelta(days=int(i))
+        for raw in ind:
+            if sc.isnumber(raw):
+                date_obj = cvm.date(self['start_day'], as_date=True) + dt.timedelta(days=int(raw))
+            else:
+                date_obj = cvm.date(raw, as_date=True)
             if as_date:
                 dates.append(date_obj)
             else:
@@ -1098,3 +1103,34 @@ class Layer(FlexDict):
             self[key] = df[key].to_numpy()
         return self
 
+
+    def find_contacts(self, inds, as_array=True):
+        """
+        Find all contacts of the specified people
+
+        For some purposes (e.g. contact tracing) it's necessary to find all of the contacts
+        associated with a subset of the people in this layer. Since contacts are bidirectional
+        it's necessary to check both P1 and P2 for the target indices. The return type is a Set
+        so that there is no duplication of indices (otherwise if the Layer has explicit
+        symmetric interactions, they could appear multiple times). This is also for performance so
+        that the calling code doesn't need to perform its own unique() operation. Note that
+        this cannot be used for cases where multiple connections count differently than a single
+        infection, e.g. exposure risk.
+
+        Args:
+            inds (array): indices of people whose contacts to return
+            as_array (bool): if true, return as sorted array (otherwise, return as unsorted set)
+
+        Returns:
+            contact_inds (array): a set of indices for pairing partners
+
+        Example: If there were a layer with
+        - P1 = [1,2,3,4]
+        - P2 = [2,3,1,4]
+        Then find_contacts([1,3]) would return {1,2,3}
+        """
+        contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
+        if as_array:
+            contact_inds = np.fromiter(contact_inds, dtype=cvd.default_int)
+            contact_inds.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
+        return contact_inds
