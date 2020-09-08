@@ -39,7 +39,7 @@ def test_snapshot():
 def test_age_hist():
     sc.heading('Testing age histogram')
 
-    day_list = ["2020-03-30", "2020-03-31", "2020-04-01"]
+    day_list = ["2020-03-20", "2020-04-20"]
     age_analyzer = cv.age_histogram(days=day_list)
     sim = cv.Sim(pars, analyzers=age_analyzer)
     sim.run()
@@ -50,7 +50,7 @@ def test_age_hist():
     assert len(age_analyzer.window_hists) == len(day_list), "Number of histograms should equal number of days"
 
     # checks compute_windows and plot()
-    plots = agehist.plot(windows=True)  # .savefig('DEBUG_age_histograms.png')
+    plots = agehist.plot(windows=True)
     assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
 
     return agehist
@@ -79,7 +79,7 @@ def test_fit():
 def test_transtree():
     sc.heading('Testing transmission tree')
 
-    sim = cv.Sim(pars)
+    sim = cv.Sim(pars, pop_size=100)
     sim.run()
 
     transtree = sim.make_transtree()
