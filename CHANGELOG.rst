@@ -11,19 +11,29 @@ All notable changes to the codebase are documented in this file. Changes that ma
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (1.5.x)
+Latest versions (1.6.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Version 1.5.4 (2020-09-06)
+
+Version 1.6.0 (2020-09-08)
 --------------------------
+- There is a new ``cv.vaccine()`` intervention, which can be used to implement vaccination for subgroups of people. Vaccination can affect susceptibility, symptomaticity, or both. Multiple doses (optionally with diminishing efficacy) can be delivered.
+- ``cv.Layer`` objects have a new highly optimized ``find_contacts()`` method, which reduces time required for the contact tracing by a factor of roughly 2. This method can also be used directly to find the matching contacts for a set of indices, e.g. ``sim.people.contacts['h'].find_contacts([12, 144, 2048])`` will find all contacts of the three people listed.
+- The method ``sim.compute_summary()`` has been removed; ``sim.summarize()`` now serves both purposes. This function previously always took the last time point in the results arrays, but now can take any time point.
+- Data files in formats ``.json`` and ``.xls`` can now be loaded, in addition to the ``.csv`` and ``.xlsx`` formats supported previously.
+- ``sim.date()`` can now handle strings or date objects (previously, it could only handle integers).
+- Additional flexibility has been added to plotting, including user-specified colors for data; custom sim labels; and reusing existing axes for plots.
+- Metadata now saves correctly to PDF and SVG images via ``cv.savefig()``. An issue with ``cv.check_save_version()`` using the wrong calling frame was also fixed.
+- The field ``date_exposed`` has been added to transmission trees.
+- Analyzers now have additional validation to avoid out-of-bounds dates, as well as additional test coverage.
+- *Regression information*:
+- *GitHub info*: PR `664 <https://github.com/amath-idm/covasim/pull/664>`__, previous head ``017a3b7``
 
-- Added ``Layer.get_partners()`` to provide an efficient Numba-based method to find pairing partners for contact tracing
 
 
-Version 1.5.4 (2020-09-02)
---------------------------
-
-- Added ``cv.vaccine()``, which can be used to model vaccine interventions; it can also be used to model therapeutics.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.5.x (1.5.0 – 1.5.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.5.3 (2020-09-01)
@@ -34,13 +44,6 @@ Version 1.5.3 (2020-09-01)
 - ``sim.run()`` now only validates parameters as part of initialization. Parameters will always be validated in the normal workflow where ``sim.initialize()`` is called via ``sim.run()``. However, the use case for modifying parameters during a split run or otherwise modifying parameters after initialization suggests that the user should have maximum control over the parameters at this point, so in this specialist workflow, the user is responsible for setting the parameter values correctly and in return, ``sim.run()`` is guaranteed not to change them.
 - Added a ``sim.complete`` attribute, which is ``True`` if all timesteps have been executed. This is independent of finalizing results, since if ``sim.step()`` is being called externally, then finalizing the results may happen separately.
 - *GitHub info*: : PR `654 <https://github.com/amath-idm/covasim/pull/654>`__, previous head ``9041157``
-
-
-
-Version 1.5.3 (2020-08-28)
---------------------------
-
-- Added a ``sim.reset()`` method, which can be used to reset the state of the simulation between reruns. Rerunning a sim without first resetting now raises an error.
 
 
 Version 1.5.2 (2020-08-18)

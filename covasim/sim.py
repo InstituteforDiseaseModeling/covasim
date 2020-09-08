@@ -110,7 +110,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def initialize(self, reset=True, **kwargs):
+    def initialize(self, reset=False, **kwargs):
         '''
         Perform all initializations, including validating the parameters, setting
         the random number seed, creating the results structure, initializing the
