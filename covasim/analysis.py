@@ -778,7 +778,7 @@ class TransTree(sc.prettyobj):
                 stdict = {'t':target}
 
             # Pull out each of the attributes relevant to transmission
-            attrs = ['age', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
+            attrs = ['age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
             for st,stind in stdict.items():
                 for attr in attrs:
                     ddict[st][attr] = people[attr][stind]
