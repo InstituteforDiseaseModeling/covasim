@@ -436,19 +436,22 @@ class clip_edges(Intervention):
                 n_sim = len(s_layer) # Number of contacts in the simulation layer
                 n_int = len(i_layer) # Number of contacts in the intervention layer
                 n_contacts = n_sim + n_int # Total number of contacts
-                current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
-                desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
-                prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
-                n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
-                from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
-                if from_sim: # We're moving from the sim to the intervention
-                    inds = cvu.choose(max_n=n_sim, n=n_to_move)
-                    to_move = s_layer.pop_inds(inds)
-                    i_layer.append(to_move)
-                else: # We're moving from the intervention back to the sim
-                    inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
-                    to_move = i_layer.pop_inds(inds)
-                    s_layer.append(to_move)
+                if n_contacts:
+                    current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
+                    desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
+                    prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
+                    n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
+                    from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
+                    if from_sim: # We're moving from the sim to the intervention
+                        inds = cvu.choose(max_n=n_sim, n=n_to_move)
+                        to_move = s_layer.pop_inds(inds)
+                        i_layer.append(to_move)
+                    else: # We're moving from the intervention back to the sim
+                        inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
+                        to_move = i_layer.pop_inds(inds)
+                        s_layer.append(to_move)
+                else:
+                    print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
 
         # Ensure the edges get deleted at the end
         if sim.t == sim.tvec[-1]:
