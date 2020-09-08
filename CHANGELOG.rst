@@ -14,6 +14,11 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Latest versions (1.5.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Version 1.5.4 (2020-09-06)
+--------------------------
+
+- Added ``Layer.get_partners()`` to provide an efficient Numba-based method to find pairing partners for contact tracing
+
 
 Version 1.5.4 (2020-09-02)
 --------------------------

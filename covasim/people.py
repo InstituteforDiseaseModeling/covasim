@@ -441,14 +441,13 @@ class People(cvb.BasePeople):
                 this_trace_time = trace_time[lkey]
 
                 # Find all the contacts of these people
-                inds_list = []
-                for k1,k2 in [['p1','p2'],['p2','p1']]: # Loop over the contact network in both directions -- k1,k2 are the keys
-                    in_k1 = np.isin(self.contacts[lkey][k1], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
-                    inds_list.append(self.contacts[lkey][k2][in_k1]) # Find their pairing partner
-                edge_inds = np.unique(np.concatenate(inds_list)) # Find all edges
+                partners = self.contacts[lkey].get_partners(inds)
+                if not partners:
+                    continue
 
-                # Check contacts
-                contact_inds = cvu.binomial_filter(this_trace_prob, edge_inds) # Filter the indices according to the probability of being able to trace this layer
+                partners = np.fromiter(partners, dtype=cvd.default_int)
+                partners.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
+                contact_inds = cvu.binomial_filter(this_trace_prob, partners) # Filter the indices according to the probability of being able to trace this layer
                 if len(contact_inds):
                     self.known_contact[contact_inds] = True
                     self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
