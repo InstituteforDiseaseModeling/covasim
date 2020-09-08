@@ -320,17 +320,17 @@ class Fit(sc.prettyobj):
         - difference: the absolute numerical differences between the model and the data (one time series per result)
         - goodness-of-fit: the result of passing the difference through a statistical function, such as mean squared error
         - loss: the goodness-of-fit for each result multiplied by user-specified weights (one time series per result)
-        - mismatch: the sum of all the loses (a single scalar value) -- this is the value to be minimized during calibration
+        - mismatches: the sum of all the losses (a single scalar value per time series)
+        - mismatch: the sum of the mismatches -- this is the value to be minimized during calibration
 
     Args:
         sim (Sim): the sim object
-        weights (dict): the relative weight to place on each result
+        weights (dict): the relative weight to place on each result (by default: 10 for deaths, 5 for diagnoses, 1 for everything else)
         keys (list): the keys to use in the calculation
-        method (str): the method to be used to calculate the goodness-of-fit
-        custom (dict): a custom dictionary of additional data to fit; format is e.g. {'<label>':{'data':[1,2,3], 'sim':[1,2,4], 'weights':2.0}}
+        custom (dict): a custom dictionary of additional data to fit; format is e.g. {'my_output':{'data':[1,2,3], 'sim':[1,2,4], 'weights':2.0}}
         compute (bool): whether to compute the mismatch immediately
         verbose (bool): detail to print
-        kwargs (dict): passed to compute_gof()
+        kwargs (dict): passed to cv.compute_gof() -- see this function for more detail on goodness-of-fit calculation options
 
     **Example**::
 
@@ -340,7 +340,7 @@ class Fit(sc.prettyobj):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, keys=None, method=None, custom=None, compute=True, verbose=False, **kwargs):
+    def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, **kwargs):
 
         # Handle inputs
         self.weights    = weights

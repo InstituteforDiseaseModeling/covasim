@@ -745,7 +745,7 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         e1 = compute_gof(x1, x2) # Default, normalized absolute error
         e2 = compute_gof(x1, x2, normalize=False, use_frac=False) # Fractional error
         e3 = compute_gof(x1, x2, normalize=False, use_squared=True, as_scalar='mean') # Mean squared error
-        e4 = compute_gof(x1, x2, estimator='mean_squared_error') # Scikit-learn's MSE method
+        e4 = compute_gof(x1, x2, skestimator='mean_squared_error') # Scikit-learn's MSE method
         e5 = compute_gof(x1, x2, as_scalar='median') # Normalized median absolute error -- highly robust
     '''
 
