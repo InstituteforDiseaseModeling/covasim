@@ -414,8 +414,11 @@ class MultiSim(sc.prettyobj):
                     kwargs['setylim'] = False
 
                 # Optionally set the label for the first max_sims sims
-                if labels is None and color_by_sim is True and s<max_sims:
-                    merged_labels = sim.label
+                if color_by_sim is True and s<max_sims:
+                    if labels is None:
+                        merged_labels = sim.label
+                    else:
+                        merged_labels = labels[s]
                 elif final_plot:
                     merged_labels = labels
                 else:
