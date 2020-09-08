@@ -295,7 +295,7 @@ class Sim(cvb.BaseSim):
         # Other variables
         self.results['prevalence']    = init_res('Prevalence', scale=False)
         self.results['incidence']     = init_res('Incidence', scale=False)
-        self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
+        self.results['r_eff']         = init_res('Effective reproduction number', scale=False)
         self.results['doubling_time'] = init_res('Doubling time', scale=False)
         self.results['test_yield']    = init_res('Testing yield', scale=False)
 
@@ -714,7 +714,7 @@ class Sim(cvb.BaseSim):
 
     def compute_r_eff(self, method='daily', smoothing=2, window=7):
         '''
-        Effective reproductive number based on number of people each person infected.
+        Effective reproduction number based on number of people each person infected.
 
         Args:
             method (str): 'instant' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
