@@ -871,6 +871,7 @@ class vaccine(Intervention):
     Apply a vaccine to a subset of the population. In addition to changing the
     relative susceptibility and the probability of developing symptoms if still
     infected, this sintervention stores several types of data:
+
         - ``vaccinations``:      the number of vaccine doses per person
         - ``vaccination_dates``: list of dates per person
         - ``orig_rel_sus``:      relative susceptibility per person at the beginning of the simulation
