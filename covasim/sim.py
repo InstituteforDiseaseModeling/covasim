@@ -368,16 +368,17 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_people(self, save_pop=False, load_pop=False, popfile=None, verbose=None, **kwargs):
+    def init_people(self, save_pop=False, load_pop=False, popfile=None, reset=False, verbose=None, **kwargs):
         '''
         Create the people.
 
         Args:
             save_pop (bool): if true, save the population dictionary to popfile
             load_pop (bool): if true, load the population dictionary from popfile
-            popfile (str): filename to load/save the population
-            verbose (int): detail to print
-            kwargs (dict): passed to cv.make_people()
+            popfile   (str): filename to load/save the population
+            reset    (bool): whether to regenerate the people even if they already exist
+            verbose   (int): detail to print
+            kwargs   (dict): passed to cv.make_people()
         '''
 
         # Handle inputs
@@ -389,7 +390,7 @@ class Sim(cvb.BaseSim):
             self.load_population(popfile=popfile)
 
         # Actually make the people
-        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
+        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize() # Fully initialize the people
 
         # Create the seed infections
