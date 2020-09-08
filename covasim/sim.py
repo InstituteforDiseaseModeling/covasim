@@ -659,7 +659,7 @@ class Sim(cvb.BaseSim):
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
-        self.summarize(verbose=verbose)
+        self.summarize(verbose=verbose, update=True)
         return
 
 
@@ -845,30 +845,16 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def compute_summary(self, t=None, verbose=None):
-        '''
-        Compute the summary statistics to display at the end of a run.
-
-        Args:
-            t (int/str): day or date to compute summary for
-
-        '''
-
-
-
-        if verbose:
-            self.summarize()
-
-        return self.summary
-
-
     def summarize(self, full=False, t=None, verbose=None, output=False, update=True):
         '''
         Print a summary of the simulation, drawing from the last time point in the simulation.
 
         Args:
             full (bool): whether or not to print all results (by default, only cumulative)
-
+            t (int/str): day or date to compute summary for (by default, the last point)
+            verbose (bool): whether to print to screen
+            output (bool): whether to return the summary
+            update (bool): whether to update the summary stored in the sim (sim.summary)
         '''
         if self.results_ready:
 
@@ -878,20 +864,21 @@ class Sim(cvb.BaseSim):
             if verbose is None:
                 verbose = self['verbose']
 
-            self.summary = sc.objdict()
+            summary = sc.objdict()
             for key in self.result_keys():
-                self.summary[key] = self.results[key][t]
-
+                summary[key] = self.results[key][t]
 
             summary_str = 'Simulation summary:\n'
             for key in self.result_keys():
                 if full or key.startswith('cum_'):
-                    summary_str += f'   {self.summary[key]:5.0f} {self.results[key].name.lower()}\n'
+                    summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
 
-            if not output:
+            if verbose:
                 print(summary_str)
-            else:
-                return summary_str
+            if update:
+                self.summary = summary
+            if output:
+                return summary
         else:
             return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
 
