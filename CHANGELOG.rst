@@ -20,11 +20,13 @@ Version 1.6.0 (2020-09-08)
 - There is a new ``cv.vaccine()`` intervention, which can be used to implement vaccination for subgroups of people. Vaccination can affect susceptibility, symptomaticity, or both. Multiple doses (optionally with diminishing efficacy) can be delivered.
 - ``cv.Layer`` objects have a new highly optimized ``find_contacts()`` method, which reduces time required for the contact tracing by a factor of roughly 2. This method can also be used directly to find the matching contacts for a set of indices, e.g. ``sim.people.contacts['h'].find_contacts([12, 144, 2048])`` will find all contacts of the three people listed.
 - The method ``sim.compute_summary()`` has been removed; ``sim.summarize()`` now serves both purposes. This function previously always took the last time point in the results arrays, but now can take any time point.
-- Data files in formats ``.json`` and ``.xls`` can now be loaded, in addition to the ``.csv`` and ``.xlsx`` formats supported previously.
+- A new ``reset`` keyword has been added to ``sim.initialize()``, which will overwrite ``sim.people`` even if it already exists. Similarly, both interventions and analyzers are preserved after a sim run, unless ``sim.initialize()`` is called again (previously, analyzers were preserved but interventions were reset). This is to support storing data in interventions, as used by ``cv.vaccine()``.
 - ``sim.date()`` can now handle strings or date objects (previously, it could only handle integers).
+- Data files in formats ``.json`` and ``.xls`` can now be loaded, in addition to the ``.csv`` and ``.xlsx`` formats supported previously.
 - Additional flexibility has been added to plotting, including user-specified colors for data; custom sim labels; and reusing existing axes for plots.
 - Metadata now saves correctly to PDF and SVG images via ``cv.savefig()``. An issue with ``cv.check_save_version()`` using the wrong calling frame was also fixed.
 - The field ``date_exposed`` has been added to transmission trees.
+- The result "Effective reproductive number" has been renamed "Effective reproduction number".
 - Analyzers now have additional validation to avoid out-of-bounds dates, as well as additional test coverage.
 - *Regression information*:
 - *GitHub info*: PR `664 <https://github.com/amath-idm/covasim/pull/664>`__, previous head ``017a3b7``
