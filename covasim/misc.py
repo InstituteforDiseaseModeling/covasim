@@ -352,6 +352,11 @@ def savefig(filename=None, comments=None, **kwargs):
     if comments:
         metadata['Covasim comments'] = comments
 
+    # Handle different formats
+    lcfn = filename.lower() # Lowercase filename
+    if lcfn.endswith('pdf') or lcfn.endswith('svg'):
+        metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+
     # Save the figure
     pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
     return filename
@@ -360,7 +365,8 @@ def savefig(filename=None, comments=None, **kwargs):
 def get_png_metadata(filename, output=False):
     '''
     Read metadata from a PNG file. For use with images saved with cv.savefig().
-    Requires pillow, an optional dependency.
+    Requires pillow, an optional dependency. Metadata retrieval for PDF and SVG
+    is not currently supported.
 
     Args:
         filename (str): the name of the file to load the data from
