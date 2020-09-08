@@ -28,7 +28,7 @@ Version 1.6.0 (2020-09-08)
 - The field ``date_exposed`` has been added to transmission trees.
 - The result "Effective reproductive number" has been renamed "Effective reproduction number".
 - Analyzers now have additional validation to avoid out-of-bounds dates, as well as additional test coverage.
-- *Regression information*:
+- *Regression information*: No major backwards incompatibilities are introduced by this version. Instances of ``sim.compute_summary()`` should be replaced by ``sim.summarize()``, and results dependent on the original state of an intervention post-simulation should use ``sim._orig_pars['interventions']`` (or perform ``sim.initialize()`` prior to using them) instead of ``sim['interventions']``.
 - *GitHub info*: PR `664 <https://github.com/amath-idm/covasim/pull/664>`__, previous head ``017a3b7``
 
 
@@ -86,6 +86,7 @@ Version 1.5.0 (2020-07-01)
     pars['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3)
 
 - *GitHub info*: PR `596 <https://github.com/amath-idm/covasim/pull/596>`__, previous head ``39b1e52``
+
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -213,6 +214,7 @@ Other changes
 - *GitHub info*: PR `569 <https://github.com/amath-idm/covasim/pull/569>`__, previous head ``8b157a2``
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Versions 1.3.x (1.3.0 – 1.3.5)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -262,6 +264,7 @@ Version 1.3.0 (2020-05-24)
 - *GitHub info*: PR `557 <https://github.com/amath-idm/covasim/pull/557>`__, previous head ``aac9f1d``
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Versions 1.2.x (1.2.0 – 1.2.3)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -309,6 +312,7 @@ Version 1.2.0 (2020-05-20)
 - *GitHub info*: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Versions 1.1.x (1.1.0 – 1.1.7)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -322,7 +326,6 @@ Version 1.1.7 (2020-05-19)
 - Population creation functions (including the ``People`` class) have been tidied up with additional docstrings added.
 - Duplication between pre- and post-step state checking has been removed.
 - *GitHub info*: PR `537 <https://github.com/amath-idm/covasim/pull/537>`__, previous head ``2d55c38``
-
 
 
 Version 1.1.6 (2020-05-19)
@@ -382,6 +385,7 @@ Version 1.1.0 (2020-05-12)
 - *GitHub info*: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Versions 1.0.x (1.0.0 – 1.0.3)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -416,6 +420,7 @@ Version 1.0.0 (2020-05-08)
 - Added ``reset()`` to MultiSim that undoes a ``reduce()`` or ``combine()`` call.
 - General code cleaning: made exceptions raised more consistent, removed unused functions, etc.
 - *GitHub info*: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
+
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
