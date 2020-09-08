@@ -419,7 +419,7 @@ class MultiSim(sc.prettyobj):
                         merged_labels = sim.label
                     else:
                         merged_labels = labels[s]
-                elif final_plot:
+                elif final_plot and not color_by_sim:
                     merged_labels = labels
                 else:
                     merged_labels = ''

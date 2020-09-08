@@ -220,11 +220,13 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
         return fig
 
 
-def set_line_options(input_args, reskey, default):
+def set_line_options(input_args, reskey, resnum, default):
     '''From the supplied line argument, usually a color or label, decide what to use '''
     if input_args is not None:
         if isinstance(input_args, dict): # If it's a dict, pull out this value
             output = input_args[reskey]
+        elif isinstance(input_args, list): # If it's a list, ditto
+            output = input_args[resnum]
         else: # Otherwise, assume it's the same value for all
             output = input_args
     else:
@@ -250,11 +252,11 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
     # Do the plotting
     for pnum,title,keylabels in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
-        for reskey in keylabels:
+        for resnum,reskey in enumerate(keylabels):
             res = sim.results[reskey]
             res_t = sim.results['t']
-            color = set_line_options(colors, reskey, res.color) # Choose the color
-            label = set_line_options(labels, reskey, res.name) # Choose the label
+            color = set_line_options(colors, reskey, resnum, res.color) # Choose the color
+            label = set_line_options(labels, reskey, resnum, res.name) # Choose the label
             if res.low is not None and res.high is not None:
                 ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
             ax.plot(res_t, res.values, label=label, **args.plot, c=color) # Actually plot the sim!
@@ -292,8 +294,8 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
             for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
                 res_y = scendata.best
-                color = set_line_options(colors, scenkey, default_colors[snum]) # Choose the color
-                label = set_line_options(labels, scenkey, scendata.name) # Choose the label
+                color = set_line_options(colors, scenkey, snum, default_colors[snum]) # Choose the color
+                label = set_line_options(labels, scenkey, snum, scendata.name) # Choose the label
                 ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill) # Create the uncertainty bound
                 ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot) # Plot the actual line
                 if args.show['data']:
