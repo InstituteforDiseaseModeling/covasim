@@ -852,7 +852,7 @@ class Sim(cvb.BaseSim):
         Args:
             full (bool): whether or not to print all results (by default, only cumulative)
             t (int/str): day or date to compute summary for (by default, the last point)
-            verbose (bool): whether to print to screen
+            verbose (bool): whether to print to screen (default: same as sim)
             output (bool): whether to return the summary
             update (bool): whether to update the summary stored in the sim (sim.summary)
         '''
