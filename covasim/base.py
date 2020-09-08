@@ -226,7 +226,7 @@ class BaseSim(ParsObj):
         features.
 
         Args:
-            ind (int, list, or array): the day(s) in simulation time
+            ind (int, list, or array): the index day(s) in simulation time (NB: strings and date objects are accepted, and will be passed unchanged)
             args (list): additional day(s)
             dateformat (str): the format to return the date in
             as_date (bool): whether to return as a datetime date instead of a string
@@ -236,13 +236,15 @@ class BaseSim(ParsObj):
 
         **Examples**::
 
+            sim = cv.Sim()
             sim.date(34) # Returns '2020-04-04'
             sim.date([34, 54]) # Returns ['2020-04-04', '2020-04-24']
-            sim.date(34, 54, as_dt=True) # Returns [datetime.date(2020, 4, 4), datetime.date(2020, 4, 24)]
+            sim.date([34, '2020-04-24']) # Returns ['2020-04-04', '2020-04-24']
+            sim.date(34, 54, as_date=True) # Returns [datetime.date(2020, 4, 4), datetime.date(2020, 4, 24)]
         '''
 
         # Handle inputs
-        if sc.isnumber(ind): # If it's a number, convert it to a list
+        if not isinstance(ind, list): # If it's a number, string, or dateobj, convert it to a list
             ind = sc.promotetolist(ind)
         ind.extend(args)
         if dateformat is None:
@@ -250,8 +252,11 @@ class BaseSim(ParsObj):
 
         # Do the conversion
         dates = []
-        for i in ind:
-            date_obj = cvm.date(self['start_day']) + dt.timedelta(days=int(i))
+        for raw in ind:
+            if sc.isnumber(raw):
+                date_obj = cvm.date(self['start_day'], as_date=True) + dt.timedelta(days=int(raw))
+            else:
+                date_obj = cvm.date(raw, as_date=True)
             if as_date:
                 dates.append(date_obj)
             else:

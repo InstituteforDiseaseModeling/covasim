@@ -48,6 +48,22 @@ class Analyzer(sc.prettyobj):
         raise NotImplementedError
 
 
+def validate_recorded_dates(sim, requested_dates, recorded_dates, die=True):
+    '''
+    Helper method to ensure that dates recorded by an analyzer match the ones
+    requested.
+    '''
+    requested_dates = sorted(list(requested_dates))
+    recorded_dates = sorted(list(recorded_dates))
+    if recorded_dates != requested_dates:
+        errormsg = f'The dates {requested_dates} were requested but only {recorded_dates} were recorded: please check the dates fall between {sim.date(sim["start_day"])} and {sim.date(sim["start_day"])} and the sim was actually run'
+        if die:
+            raise RuntimeError(errormsg)
+        else:
+            print(errormsg)
+    return
+
+
 
 class snapshot(Analyzer):
     '''
@@ -56,7 +72,9 @@ class snapshot(Analyzer):
     the dictionary directly, or use the get() method.
 
     Args:
-        days (list): list of ints/strings/date objects, the days on which to take the snapshot
+        days   (list): list of ints/strings/date objects, the days on which to take the snapshot
+        args   (list): additional day(s)
+        die    (bool): whether or not to raise an exception if a date is not found (default true)
         kwargs (dict): passed to Analyzer()
 
 
@@ -72,11 +90,12 @@ class snapshot(Analyzer):
         people = snapshot.get()                   # Option 5
     '''
 
-    def __init__(self, days, *args, **kwargs):
+    def __init__(self, days, *args, die=True, **kwargs):
         super().__init__(**kwargs) # Initialize the Analyzer object
         days = sc.promotetolist(days) # Combine multiple days
         days.extend(args) # Include additional arguments, if present
         self.days      = days # Converted to integer representations
+        self.die       = die  # Whether or not to raise an exception
         self.dates     = None # String representations
         self.start_day = None # Store the start date of the simulation
         self.snapshots = sc.odict() # Store the actual snapshots
@@ -85,13 +104,11 @@ class snapshot(Analyzer):
 
     def initialize(self, sim):
         self.start_day = sim['start_day'] # Store the simulation start day
-        self.end_day   = cvm.date(sim['end_day'], as_date=False) # Store the end day, as a string
-        self.days = cvi.process_days(sim, self.days) # Ensure days are in the right format
-        self.dates = [sim.date(day) for day in self.days] # Store as date strings
-        max_hist_day = self.days[-1]
-        max_sim_day = sim.day(self.end_day)
-        if max_hist_day > max_sim_day:  # Checks that days are in sim range
-            errormsg = f'Cannot create snapshot for {self.dates[-1]} (day {max_hist_day}) because the simulation ends on {self.end_day} (day {max_sim_day})'
+        self.days, self.dates = cvi.process_days(sim, self.days, return_dates=True) # Ensure days are in the right format
+        max_snapshot_day = self.days[-1]
+        max_sim_day = sim.day(sim['end_day'])
+        if max_snapshot_day > max_sim_day:
+            errormsg = f'Cannot create snapshot for {self.dates[-1]} (day {max_snapshot_day}) because the simulation ends on {self.end_day} (day {max_sim_day})'
             raise ValueError(errormsg)
         self.initialized = True
         return
@@ -101,6 +118,11 @@ class snapshot(Analyzer):
         for ind in cvi.find_day(self.days, sim.t):
             date = self.dates[ind]
             self.snapshots[date] = sc.dcp(sim.people) # Take snapshot!
+
+        # On the final timestep, check that everything matches
+        if sim.t == sim.tvec[-1]:
+            validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.snapshots.keys(), die=self.die)
+
         return
 
 
@@ -119,6 +141,7 @@ class snapshot(Analyzer):
         return snapshot
 
 
+
 class age_histogram(Analyzer):
     '''
     Analyzer that takes a "snapshot" of the sim.people array at specified points
@@ -132,6 +155,7 @@ class age_histogram(Analyzer):
         edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
         datafile (str): the name of the data file to load in for comparison, or a dataframe of data (optional)
         sim      (Sim): only used if the analyzer is being used after a sim has already been run
+        die     (bool): whether to raise an exception if dates are not found (default true)
         kwargs  (dict): passed to Analyzer()
 
     **Examples**::
@@ -143,12 +167,13 @@ class age_histogram(Analyzer):
         agehist = cv.age_histogram(sim=sim)
     '''
 
-    def __init__(self, days=None, states=None, edges=None, datafile=None, sim=None, **kwargs):
+    def __init__(self, days=None, states=None, edges=None, datafile=None, sim=None, die=True, **kwargs):
         super().__init__(**kwargs) # Initialize the Analyzer object
         self.days      = days # To be converted to integer representations
         self.edges     = edges # Edges of age bins
         self.states    = states # States to save
         self.datafile  = datafile # Data file to load
+        self.die       = die # Whether to raise an exception if dates are not found
         self.bins      = None # Age bins, calculated from edges
         self.dates     = None # String representations of dates
         self.start_day = None # Store the start date of the simulation
@@ -174,9 +199,7 @@ class age_histogram(Analyzer):
         self.end_day   = cvm.date(sim['end_day'],   as_date=False) # Get the start day, as a string
         if self.days is None:
             self.days = self.end_day # If no day is supplied, use the last day
-        self.days = cvi.process_days(sim, self.days) # Ensure days are in the right format
-        self.days = np.sort(self.days) # Ensure they're in order
-        self.dates = [sim.date(day) for day in self.days] # Store as date strings
+        self.days, self.dates = cvi.process_days(sim, self.days, return_dates=True) # Ensure days are in the right format
         max_hist_day = self.days[-1]
         max_sim_day = sim.day(self.end_day)
         if max_hist_day > max_sim_day:
@@ -218,6 +241,11 @@ class age_histogram(Analyzer):
             for state in self.states: # Loop over each state
                 inds = sim.people.defined(f'date_{state}') # Pull out people for which this state is defined
                 self.hists[date][state] = np.histogram(age[inds], bins=self.edges)[0]*scale # Actually count the people
+
+        # On the final timestep, check that everything matches
+        if sim.t == sim.tvec[-1]:
+            validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.hists.keys(), die=self.die)
+
         return
 
 
