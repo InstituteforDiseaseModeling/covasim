@@ -868,21 +868,29 @@ __all__+= ['vaccine']
 
 class vaccine(Intervention):
     '''
-    Apply a vaccine to a subset of the population.
+    Apply a vaccine to a subset of the population. In addition to changing the
+    relative susceptibility and the probability of developing symptoms if still
+    infected, this sintervention stores several types of data:
+        - ``vaccinations``:      the number of vaccine doses per person
+        - ``vaccination_dates``: list of dates per person
+        - ``orig_rel_sus``:      relative susceptibility per person at the beginning of the simulation
+        - ``orig_symp_prob``:    probability of developing symptoms per person at the beginning of the simulation
 
     Args:
         days (int or array): the day or array of days to apply the interventions
-        prob     (float): Probability of being vaccinated (i.e., fraction of the population)
-        rel_sus  (float): Relative change in susceptibility; 0 = perfect, 1 = no effect
-        rel_symp (float): Relative change in symptom probability; 0 = perfect, 1 = no effect
-        subtarget (dict): subtarget intervention to people with particular indices (see test_num() for details)
-        kwargs    (dict): passed to Intervention()
+        prob      (float): probability of being vaccinated (i.e., fraction of the population)
+        rel_sus   (float): relative change in susceptibility; 0 = perfect, 1 = no effect
+        rel_symp  (float): relative change in symptom probability for people who still get infected; 0 = perfect, 1 = no effect
+        subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
+        cumulative (bool): whether cumulative doses have cumulative effects (default false); can also be an array for efficacy per dose, with the last entry used for multiple doses; thus True = [1] and False = [1,0]
+        kwargs     (dict): passed to Intervention()
 
-    **Example**::
+    **Examples**::
 
         interv = cv.vaccine(days=50, prob=0.3, rel_sus=0.5, rel_symp=0.1)
+        interv = cv.vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative=[1, 0.3, 0.1, 0]) # A vaccine with efficacy up to the 3rd dose
     '''
-    def __init__(self, days, prob=1.0, rel_sus=0.0, rel_symp=0.0, subtarget=None, **kwargs):
+    def __init__(self, days, prob=1.0, rel_sus=0.0, rel_symp=0.0, subtarget=None, cumulative=False, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.days      = sc.dcp(days)
@@ -890,12 +898,21 @@ class vaccine(Intervention):
         self.rel_sus   = rel_sus
         self.rel_symp  = rel_symp
         self.subtarget = subtarget
+        if cumulative in [0, False]:
+            cumulative = [1,0] # First dose has full efficacy, second has none
+        elif cumulative in [1, True]:
+            cumulative = [1] # All doses have full efficacy
+        self.cumulative = np.array(cumulative) # Ensure it's an array
         return
 
 
     def initialize(self, sim):
-        ''' Fix the dates '''
+        ''' Fix the dates and store the vaccinations '''
         self.days = process_days(sim, self.days)
+        self.vaccinations      = np.zeros(sim.n) # Number of doses given per person
+        self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
+        self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccinatino susceptibility
+        self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
         self.initialized = True
         return
 
@@ -907,13 +924,26 @@ class vaccine(Intervention):
         for ind in find_day(self.days, sim.t):
 
             # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
-            vacc_probs = np.full(sim.n, self.prob) # TODO: don't vaccinate e.g. diagnosed people # Begin by assigning equal testing probability to everyone
+            vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal testing probability to everyone
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
                 vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
 
-            sim.people.rel_sus[vacc_inds]    *= self.rel_sus  # TODO: store original susceptibility values
-            sim.people.symp_prob[vacc_inds] *= self.rel_symp # TODO: store original symptom probabilities
+            # Calculate the effect per person
+            vacc_doses = self.vaccinations[vacc_inds] # Calculate current doses
+            eff_doses = np.maximum(vacc_doses, len(self.cumulative)-1) # Convert to a valid index
+            vacc_eff = self.cumulative[eff_doses] # Pull out corresponding effect sizes
+            rel_sus_eff  = (1 - vacc_eff) + vacc_eff*self.rel_sus
+            rel_symp_eff = (1 - vacc_eff) + vacc_eff*self.rel_symp
+
+            # Apply the vaccine
+            sim.people.rel_sus[vacc_inds]   *= rel_sus_eff
+            sim.people.symp_prob[vacc_inds] *= rel_symp_eff
+
+            # Update counters
+            self.vaccinations[vacc_inds] += 1
+            for v_ind in vacc_inds:
+                self.vaccination_dates[v_ind].append(sim.t)
 
         return
