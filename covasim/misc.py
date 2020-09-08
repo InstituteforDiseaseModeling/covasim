@@ -30,12 +30,15 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
 
     # Load data
     if isinstance(datafile, str):
-        if datafile.lower().endswith('csv'):
+        df_lower = datafile.lower()
+        if df_lower.endswith('csv'):
             raw_data = pd.read_csv(datafile, **kwargs)
-        elif datafile.lower().endswith('xlsx'):
+        elif df_lower.endswith('xlsx') or df_lower.endswith('xls'):
             raw_data = pd.read_excel(datafile, **kwargs)
+        elif df_lower.endswith('json'):
+            raw_data = pd.read_json(datafile, **kwargs)
         else:
-            errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {datafile}'
+            errormsg = f'Currently loading is only supported from .csv, .xls/.xlsx, and .json files, not "{datafile}"'
             raise NotImplementedError(errormsg)
     elif isinstance(datafile, pd.DataFrame):
         raw_data = datafile
