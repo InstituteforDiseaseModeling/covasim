@@ -302,10 +302,11 @@ class sequence(Intervention):
 __all__+= ['change_beta', 'clip_edges']
 
 
-def process_days(sim, days):
+def process_days(sim, days, return_dates=False):
     '''
     Ensure lists of days are in consistent format. Used by change_beta, clip_edges,
     and some analyzers. If day is 'end' or -1, use the final day of the simulation.
+    Optionally return dates as well as days.
     '''
     if sc.isstring(days) or not sc.isiterable(days):
         days = sc.promotetolist(days)
@@ -313,8 +314,12 @@ def process_days(sim, days):
         if day in ['end', -1]:
             day = sim['end_day']
         days[d] = sim.day(day) # Ensure it's an integer and not a string or something
-    days = sc.promotetoarray(days)
-    return days
+    days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+    if return_dates:
+        dates = [sim.date(day) for day in days] # Store as date strings
+        return days, dates
+    else:
+        return days
 
 
 def process_changes(sim, changes, days):
