@@ -94,12 +94,6 @@ def test_base():
     contacts.values()
     len(contacts)
 
-    # Transmission tree methods
-    transtree = sim.make_transtree()
-    transtree.plot()
-    transtree.animate(animate=False)
-    transtree.plot_histograms()
-
     # Tidy up
     remove_files(json_path, sim_path)
 
@@ -195,7 +189,7 @@ def test_misc():
 
 
 def test_people():
-    sc.heading('Testing people')
+    sc.heading('Testing people (dynamic layers)')
 
     # Test dynamic layers
     sim = cv.Sim(pop_size=100, n_days=10, verbose=verbose, dynam_layer={'a':1})

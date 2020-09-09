@@ -11,8 +11,41 @@ All notable changes to the codebase are documented in this file. Changes that ma
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (1.5.x)
+Latest versions (1.6.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Version 1.6.0 (2020-09-08)
+--------------------------
+- There is a new ``cv.vaccine()`` intervention, which can be used to implement vaccination for subgroups of people. Vaccination can affect susceptibility, symptomaticity, or both. Multiple doses (optionally with diminishing efficacy) can be delivered.
+- ``cv.Layer`` objects have a new highly optimized ``find_contacts()`` method, which reduces time required for the contact tracing by a factor of roughly 2. This method can also be used directly to find the matching contacts for a set of indices, e.g. ``sim.people.contacts['h'].find_contacts([12, 144, 2048])`` will find all contacts of the three people listed.
+- The method ``sim.compute_summary()`` has been removed; ``sim.summarize()`` now serves both purposes. This function previously always took the last time point in the results arrays, but now can take any time point.
+- A new ``reset`` keyword has been added to ``sim.initialize()``, which will overwrite ``sim.people`` even if it already exists. Similarly, both interventions and analyzers are preserved after a sim run, unless ``sim.initialize()`` is called again (previously, analyzers were preserved but interventions were reset). This is to support storing data in interventions, as used by ``cv.vaccine()``.
+- ``sim.date()`` can now handle strings or date objects (previously, it could only handle integers).
+- Data files in formats ``.json`` and ``.xls`` can now be loaded, in addition to the ``.csv`` and ``.xlsx`` formats supported previously.
+- Additional flexibility has been added to plotting, including user-specified colors for data; custom sim labels; and reusing existing axes for plots.
+- Metadata now saves correctly to PDF and SVG images via ``cv.savefig()``. An issue with ``cv.check_save_version()`` using the wrong calling frame was also fixed.
+- The field ``date_exposed`` has been added to transmission trees.
+- The result "Effective reproductive number" has been renamed "Effective reproduction number".
+- Analyzers now have additional validation to avoid out-of-bounds dates, as well as additional test coverage.
+- *Regression information*: No major backwards incompatibilities are introduced by this version. Instances of ``sim.compute_summary()`` should be replaced by ``sim.summarize()``, and results dependent on the original state of an intervention post-simulation should use ``sim._orig_pars['interventions']`` (or perform ``sim.initialize()`` prior to using them) instead of ``sim['interventions']``.
+- *GitHub info*: PR `664 <https://github.com/amath-idm/covasim/pull/664>`__, previous head ``017a3b7``
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.5.x (1.5.0 – 1.5.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Version 1.5.3 (2020-09-01)
+--------------------------
+
+- An ``AlreadyRunError`` is now raised if ``sim.run()`` is called in such a way that no timesteps will be taken. This error is a distinct type so that it can be safely caught and ignored if required, but it is anticipated that most of the time, calling ``run()`` and not taking any timesteps, would be an inadvertent error.
+- If the simulation has reached the end, ``sim.run()`` (and ``sim.step()``) will now raise an ``AlreadyRunError``.
+- ``sim.run()`` now only validates parameters as part of initialization. Parameters will always be validated in the normal workflow where ``sim.initialize()`` is called via ``sim.run()``. However, the use case for modifying parameters during a split run or otherwise modifying parameters after initialization suggests that the user should have maximum control over the parameters at this point, so in this specialist workflow, the user is responsible for setting the parameter values correctly and in return, ``sim.run()`` is guaranteed not to change them.
+- Added a ``sim.complete`` attribute, which is ``True`` if all timesteps have been executed. This is independent of finalizing results, since if ``sim.step()`` is being called externally, then finalizing the results may happen separately.
+- *GitHub info*: : PR `654 <https://github.com/amath-idm/covasim/pull/654>`__, previous head ``9041157``
 
 
 Version 1.5.2 (2020-08-18)
@@ -25,6 +58,7 @@ Version 1.5.2 (2020-08-18)
 - *Regression information*:
     - Scripts that called ``cv.People.quarantine()`` directly would have also had to manually update ``sim.results['new_quarantined']``. This is no longer required, and those commands should now be removed as they will otherwise be double counted
     - Results are expected to differ slightly because the handling of quarantines being extended has been improved, and because quarantine duration is now reduced when by the ``trace_time``.
+- *GitHub info*: PR `624 <https://github.com/amath-idm/covasim/pull/624>`__, previous head ``aaa4d7c``
 
 
 Version 1.5.1 (2020-08-17)
@@ -32,7 +66,7 @@ Version 1.5.1 (2020-08-17)
 - Modify ``cv.BasePeople.__getitem__()`` to retrieve a person if the item is an integer, so that ``sim.people[5]`` will return a ``cv.Person`` instance
 - Modify ``cv.BasePeople.__iter__`` so that iterating over people e.g. ``for person in sim.people:`` iterates over ``cv.Person`` instances
 - *Regression information*: To restore previous behavior of ``for idx in sim.people:`` use ``for idx in range(len(sim.people)):`` instead
-
+- *GitHub info*: PR `623 <https://github.com/amath-idm/covasim/pull/623>`__, previous head ``775cf35``
 
 
 Version 1.5.0 (2020-07-01)
@@ -52,6 +86,7 @@ Version 1.5.0 (2020-07-01)
     pars['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3)
 
 - *GitHub info*: PR `596 <https://github.com/amath-idm/covasim/pull/596>`__, previous head ``39b1e52``
+
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,6 +214,7 @@ Other changes
 - *GitHub info*: PR `569 <https://github.com/amath-idm/covasim/pull/569>`__, previous head ``8b157a2``
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Versions 1.3.x (1.3.0 – 1.3.5)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -228,6 +264,7 @@ Version 1.3.0 (2020-05-24)
 - *GitHub info*: PR `557 <https://github.com/amath-idm/covasim/pull/557>`__, previous head ``aac9f1d``
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Versions 1.2.x (1.2.0 – 1.2.3)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -275,6 +312,7 @@ Version 1.2.0 (2020-05-20)
 - *GitHub info*: PR `538 <https://github.com/amath-idm/covasim/pull/538>`__, previous head ``451f410``
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Versions 1.1.x (1.1.0 – 1.1.7)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -288,7 +326,6 @@ Version 1.1.7 (2020-05-19)
 - Population creation functions (including the ``People`` class) have been tidied up with additional docstrings added.
 - Duplication between pre- and post-step state checking has been removed.
 - *GitHub info*: PR `537 <https://github.com/amath-idm/covasim/pull/537>`__, previous head ``2d55c38``
-
 
 
 Version 1.1.6 (2020-05-19)
@@ -348,6 +385,7 @@ Version 1.1.0 (2020-05-12)
 - *GitHub info*: PR `502 <https://github.com/amath-idm/covasim/pull/502>`__, previous head ``0230383``
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Versions 1.0.x (1.0.0 – 1.0.3)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -382,6 +420,7 @@ Version 1.0.0 (2020-05-08)
 - Added ``reset()`` to MultiSim that undoes a ``reduce()`` or ``combine()`` call.
 - General code cleaning: made exceptions raised more consistent, removed unused functions, etc.
 - *GitHub info*: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
+
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

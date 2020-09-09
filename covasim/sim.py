@@ -17,13 +17,13 @@ from . import interventions as cvi
 from . import analysis as cva
 
 # Everything in this file is contained in the Sim class
-__all__ = ['Sim']
+__all__ = ['Sim', 'AlreadyRunError']
 
 
 class Sim(cvb.BaseSim):
     '''
-    The Sim class handles the running of the simulation: the number of children,
-    number of time points, and the parameters of the simulation.
+    The Sim class handles the running of the simulation: the creation of the
+    population and the dynamcis of the epidemic.
 
     Args:
         pars     (dict):   parameters to modify from their default values
@@ -57,11 +57,13 @@ class Sim(cvb.BaseSim):
         self.save_pop      = save_pop # Whether to save the population
         self.data          = None     # The actual data
         self.popdict       = None     # The population dictionary
-        self.t             = None     # The current time in the simulation
+        self.t             = None     # The current time in the simulation (during execution); outside of sim.step(), its value corresponds to next timestep to be computed
         self.people        = None     # Initialize these here so methods that check their length can see they're empty
         self.results       = {}       # For storing results
         self.initialized   = False    # Whether or not initialization is complete
+        self.complete      = False    # Whether a simulation has completed running
         self.results_ready = False    # Whether or not results are ready
+        self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Now update everything
         self.set_metadata(simfile, label)  # Set the simulation date and filename
@@ -108,7 +110,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def initialize(self, **kwargs):
+    def initialize(self, reset=False, **kwargs):
         '''
         Perform all initializations, including validating the parameters, setting
         the random number seed, creating the results structure, initializing the
@@ -116,18 +118,21 @@ class Sim(cvb.BaseSim):
         and initializing the interventions.
 
         Args:
+            reset (bool): whether or not to reset people even if they already exist
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
         self.init_results() # Create the results stucture
-        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
+        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.init_interventions() # Initialize the interventions
         self.init_analyzers() # ...and the interventions
         self.set_seed() # Reset the random seed again so the random number stream is consistent
-        self.initialized = True
+        self.initialized   = True
+        self.complete      = False
+        self.results_ready = False
         return
 
 
@@ -181,9 +186,10 @@ class Sim(cvb.BaseSim):
         for lp in layer_pars:
             lp_keys = set(self.pars[lp].keys())
             if not lp_keys == set(layer_keys):
-                errormsg = f'Layer parameters have inconsistent keys with the layer keys {layer_keys}:'
+                errormsg = f'At least one layer parameter is inconsistent with the layer keys; all parameters must have the same keys:'
+                errormsg += f'\nsim.layer_keys() = {layer_keys}'
                 for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
-                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
+                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp2].keys())
                 raise sc.KeyNotFoundError(errormsg)
 
         # Handle mismatches with the population
@@ -291,7 +297,7 @@ class Sim(cvb.BaseSim):
         # Other variables
         self.results['prevalence']    = init_res('Prevalence', scale=False)
         self.results['incidence']     = init_res('Incidence', scale=False)
-        self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
+        self.results['r_eff']         = init_res('Effective reproduction number', scale=False)
         self.results['doubling_time'] = init_res('Doubling time', scale=False)
         self.results['test_yield']    = init_res('Testing yield', scale=False)
 
@@ -362,16 +368,17 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_people(self, save_pop=False, load_pop=False, popfile=None, verbose=None, **kwargs):
+    def init_people(self, save_pop=False, load_pop=False, popfile=None, reset=False, verbose=None, **kwargs):
         '''
         Create the people.
 
         Args:
             save_pop (bool): if true, save the population dictionary to popfile
             load_pop (bool): if true, load the population dictionary from popfile
-            popfile (str): filename to load/save the population
-            verbose (int): detail to print
-            kwargs (dict): passed to cv.make_people()
+            popfile   (str): filename to load/save the population
+            reset    (bool): whether to regenerate the people even if they already exist
+            verbose   (int): detail to print
+            kwargs   (dict): passed to cv.make_people()
         '''
 
         # Handle inputs
@@ -383,7 +390,7 @@ class Sim(cvb.BaseSim):
             self.load_population(popfile=popfile)
 
         # Actually make the people
-        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
+        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize() # Fully initialize the people
 
         # Create the seed infections
@@ -394,19 +401,23 @@ class Sim(cvb.BaseSim):
 
     def init_interventions(self):
         ''' Initialize the interventions '''
+        if self._orig_pars and 'interventions' in self._orig_pars:
+            self['interventions'] = self._orig_pars.pop('interventions') # Restore
+
         for intervention in self['interventions']:
             if isinstance(intervention, cvi.Intervention):
-                if not intervention.initialized:
-                    intervention.initialize(self)
+                intervention.initialize(self)
         return
 
 
     def init_analyzers(self):
         ''' Initialize the analyzers '''
+        if self._orig_pars and 'analyzers' in self._orig_pars:
+            self['analyzers'] = self._orig_pars.pop('analyzers') # Restore
+
         for analyzer in self['analyzers']:
             if isinstance(analyzer, cva.Analyzer):
-                if not analyzer.initialized:
-                    analyzer.initialize(self)
+                analyzer.initialize(self)
         return
 
 
@@ -440,9 +451,10 @@ class Sim(cvb.BaseSim):
         '''
 
         # Set the time and if we have reached the end of the simulation, then do nothing
+        if self.complete:
+            raise AlreadyRunError('Simulation already complete (call sim.initialize() to re-run)')
+
         t = self.t
-        if t >= self.npts:
-            return
 
         # Perform initial operations
         self.rescale() # Check if we need to rescale
@@ -547,6 +559,9 @@ class Sim(cvb.BaseSim):
 
         # Tidy up
         self.t += 1
+        if self.t == self.npts:
+            self.complete = True
+
         return
 
 
@@ -556,7 +571,7 @@ class Sim(cvb.BaseSim):
 
         Args:
             do_plot (bool): whether to plot
-            until (int): day to run until
+            until (int/str): day or date to run until
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
             verbose (float): level of detail to print, e.g. 0 = no output, 0.2 = print every 5th day, 1 = print every day
@@ -566,72 +581,75 @@ class Sim(cvb.BaseSim):
             results (dict): the results object (also modifies in-place)
         '''
 
-        # Initialize
+        # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
         T = sc.tic()
-        if not self.initialized:
-            self.initialize()
-        else:
-            self.validate_pars() # We always want to validate the parameters before running
-            self.init_interventions() # And interventions
-            if reset_seed:
-                self.set_seed() # Ensure the random number generator is freshly initialized
-        if restore_pars:
-            orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+
         if verbose is None:
             verbose = self['verbose']
-        if until:
-            until = self.day(until)
+
+        if not self.initialized:
+            self.initialize()
+            self._orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+
+        if reset_seed:
+            # Reset the RNG. If the simulation is newly created, then the RNG will be reset by sim.initialize() so the use case
+            # for resetting the seed here is if the simulation has been partially run, and changing the seed is required
+            self.set_seed()
+
+        until = self.npts if until is None else self.day(until)
+        if until > self.npts:
+            raise AlreadyRunError(f'Requested to run until t={until} but the simulation end is t={self.npts}')
+
+        if self.complete:
+            raise AlreadyRunError('Simulation is already complete (call sim.initialize() to re-run)')
+
+        if self.t >= until:
+            # NB. At the start, self.t is None so this check must occur after initialization
+            raise AlreadyRunError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
 
         # Main simulation loop
-        for t in self.tvec:
-
-            # Print progress
-            if verbose:
-                elapsed = sc.toc(output=True)
-                simlabel = f'"{self.label}": ' if self.label else ''
-                string = f'  Running {simlabel}{self.datevec[t]} ({t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
-                if verbose >= 2:
-                    sc.heading(string)
-                else:
-                    if not (t % int(1.0/verbose)):
-                        sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
-
-            # Do the heavy lifting -- actually run the model!
-            self.step()
+        while self.t < until:
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
             if self['timelimit'] and elapsed > self['timelimit']:
-                sc.printv(f"Time limit ({self['timelimit']} s) exceeded", 1, verbose)
-                break
+                sc.printv(f"Time limit ({self['timelimit']} s) exceeded; call sim.finalize() to compute results if desired", 1, verbose)
+                return
             elif self['stopping_func'] and self['stopping_func'](self):
-                sc.printv("Stopping function terminated the simulation", 1, verbose)
-                break
-            if self.t == until: # If until is specified, just stop here
+                sc.printv("Stopping function terminated the simulation; call sim.finalize() to compute results if desired", 1, verbose)
                 return
 
-        # End of time loop; compute cumulative results outside of the time loop
-        self.finalize(verbose=verbose) # Finalize the results
-        sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
-        if restore_pars:
-            self.restore_pars(orig_pars)
-        if do_plot: # Optionally plot
-            self.plot(**kwargs)
+            # Print progress
+            if verbose:
+                simlabel = f'"{self.label}": ' if self.label else ''
+                string = f'  Running {simlabel}{self.datevec[self.t]} ({self.t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
+                if verbose >= 2:
+                    sc.heading(string)
+                else:
+                    if not (self.t % int(1.0/verbose)):
+                        sc.progressbar(self.t+1, self.npts, label=string, length=20, newline=True)
 
-        return self.results
+            # Do the heavy lifting -- actually run the model!
+            self.step()
+
+        # If simulation reached the end, finalize the results
+        if self.complete:
+            self.finalize(verbose=verbose, restore_pars=restore_pars)
+            sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
+            if do_plot: # Optionally plot
+                self.plot(**kwargs)
+            return self.results
+        else:
+            return # If not complete, return nothing
 
 
-    def restore_pars(self, orig_pars):
-        ''' Restore the original parameter values, except for the analyzers '''
-        analyzers = self['analyzers'] # Make a copy so these don't get wiped
-        for key,val in orig_pars.items():
-            self.pars[key] = val # So pointers, e.g. in sim.people, get updated as well
-        self['analyzers'] = analyzers # Restore the analyzers
-        return
-
-
-    def finalize(self, verbose=None):
+    def finalize(self, verbose=None, restore_pars=True):
         ''' Compute final results '''
+
+        if self.results_ready:
+            # Because the results are rescaled in-place, finalizing the sim cannot be run more than once or
+            # otherwise the scale factor will be applied multiple times
+            raise Exception('Simulation has already been finalized')
 
         # Scale the results
         for reskey in self.result_keys():
@@ -646,13 +664,19 @@ class Sim(cvb.BaseSim):
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Final settings
-        self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
         self.results_ready = True # Set this first so self.summary() knows to print the results
-        self.initialized = False # To enable re-running
+        self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
 
         # Perform calculations on results
         self.compute_results(verbose=verbose) # Calculate the rest of the results
         self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
+
+        if restore_pars and self._orig_pars:
+            preserved = ['analyzers', 'interventions']
+            orig_pars_keys = list(self._orig_pars.keys()) # Get a list of keys so we can iterate over them
+            for key in orig_pars_keys:
+                if key not in preserved:
+                    self.pars[key] = self._orig_pars.pop(key) # Restore everything except for the analyzers and interventions
 
         return
 
@@ -663,7 +687,7 @@ class Sim(cvb.BaseSim):
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
-        self.compute_summary(verbose=verbose)
+        self.summarize(verbose=verbose, update=True)
         return
 
 
@@ -719,7 +743,7 @@ class Sim(cvb.BaseSim):
 
     def compute_r_eff(self, method='daily', smoothing=2, window=7):
         '''
-        Effective reproductive number based on number of people each person infected.
+        Effective reproduction number based on number of people each person infected.
 
         Args:
             method (str): 'instant' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
@@ -849,37 +873,42 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def compute_summary(self, verbose=None):
-        ''' Compute the summary statistics to display at the end of a run '''
+    def summarize(self, full=False, t=None, verbose=None, output=False, update=True):
+        '''
+        Print a summary of the simulation, drawing from the last time point in the simulation.
 
-        if verbose is None:
-            verbose = self['verbose']
-
-        self.summary = sc.objdict()
-        for key in self.result_keys():
-            self.summary[key] = self.results[key][-1]
-
-        if verbose:
-            self.summarize()
-
-        return self.summary
-
-
-    def summarize(self, output=False):
-        ''' Print a brief summary of the simulation '''
+        Args:
+            full (bool): whether or not to print all results (by default, only cumulative)
+            t (int/str): day or date to compute summary for (by default, the last point)
+            verbose (bool): whether to print to screen (default: same as sim)
+            output (bool): whether to return the summary
+            update (bool): whether to update the summary stored in the sim (sim.summary)
+        '''
         if self.results_ready:
+
+            if t is None:
+                t = self.day(self.t)
+
+            if verbose is None:
+                verbose = self['verbose']
+
+            summary = sc.objdict()
+            for key in self.result_keys():
+                summary[key] = self.results[key][t]
+
             summary_str = 'Simulation summary:\n'
             for key in self.result_keys():
-                if key.startswith('cum_'):
-                    summary_str += f'   {self.summary[key]:5.0f} {self.results[key].name.lower()}\n'
+                if full or key.startswith('cum_'):
+                    summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
 
-            if not output:
+            if verbose:
                 print(summary_str)
-            else:
-                return summary_str
+            if update:
+                self.summary = summary
+            if output:
+                return summary
         else:
             return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
-
 
 
     def brief(self, output=False):
@@ -1046,3 +1075,13 @@ class Sim(cvb.BaseSim):
         '''
         fig = cvplt.plot_result(sim=self, key=key, *args, **kwargs)
         return fig
+
+
+class AlreadyRunError(RuntimeError):
+    '''
+    This error is raised if a simulation is run in such a way that no timesteps
+    will be taken. This error is a distinct type so that it can be safely caught
+    and ignored if required, but it is anticipated that most of the time, calling
+    sim.run() and not taking any timesteps, would be an inadvertent error.
+    '''
+    pass

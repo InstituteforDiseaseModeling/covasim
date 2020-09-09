@@ -30,12 +30,15 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
 
     # Load data
     if isinstance(datafile, str):
-        if datafile.lower().endswith('csv'):
+        df_lower = datafile.lower()
+        if df_lower.endswith('csv'):
             raw_data = pd.read_csv(datafile, **kwargs)
-        elif datafile.lower().endswith('xlsx'):
+        elif df_lower.endswith('xlsx') or df_lower.endswith('xls'):
             raw_data = pd.read_excel(datafile, **kwargs)
+        elif df_lower.endswith('json'):
+            raw_data = pd.read_json(datafile, **kwargs)
         else:
-            errormsg = f'Currently loading is only supported from .csv and .xlsx files, not {datafile}'
+            errormsg = f'Currently loading is only supported from .csv, .xls/.xlsx, and .json files, not "{datafile}"'
             raise NotImplementedError(errormsg)
     elif isinstance(datafile, pd.DataFrame):
         raw_data = datafile
@@ -349,6 +352,11 @@ def savefig(filename=None, comments=None, **kwargs):
     if comments:
         metadata['Covasim comments'] = comments
 
+    # Handle different formats
+    lcfn = filename.lower() # Lowercase filename
+    if lcfn.endswith('pdf') or lcfn.endswith('svg'):
+        metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+
     # Save the figure
     pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
     return filename
@@ -357,7 +365,8 @@ def savefig(filename=None, comments=None, **kwargs):
 def get_png_metadata(filename, output=False):
     '''
     Read metadata from a PNG file. For use with images saved with cv.savefig().
-    Requires pillow, an optional dependency.
+    Requires pillow, an optional dependency. Metadata retrieval for PDF and SVG
+    is not currently supported.
 
     Args:
         filename (str): the name of the file to load the data from
@@ -386,20 +395,21 @@ def get_png_metadata(filename, output=False):
         return
 
 
-def git_info(filename=None, check=False, comments=None, old_info=None, die=False, indent=2, verbose=True, **kwargs):
+def git_info(filename=None, check=False, comments=None, old_info=None, die=False, indent=2, verbose=True, frame=2, **kwargs):
     '''
     Get current git information and optionally write it to disk. Simplest usage
     is cv.git_info(__file__)
 
     Args:
-        filename (str): name of the file to write to or read from
-        check (bool): whether or not to compare two git versions
-        comments (str/dict): additional comments to include in the file
+        filename  (str): name of the file to write to or read from
+        check    (bool): whether or not to compare two git versions
+        comments (dict): additional comments to include in the file
         old_info (dict): dictionary of information to check against
-        die (bool): whether or not to raise an exception if the check fails
-        indent (int): how many indents to use when writing the file to disk
-        verbose (bool): detail to print
-        kwargs (dict): passed to loadjson (if check=True) or loadjson (if check=False)
+        die      (bool): whether or not to raise an exception if the check fails
+        indent    (int): how many indents to use when writing the file to disk
+        verbose  (bool): detail to print
+        frame     (int): how many frames back to look for caller info
+        kwargs   (dict): passed to loadjson (if check=True) or loadjson (if check=False)
 
     **Examples**::
 
@@ -414,7 +424,7 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
         filename = filename.replace('.py', '.gitinfo')
 
     # Get git info
-    calling_file = sc.makefilepath(get_caller(frame=3, tostring=False)['filename'])
+    calling_file = sc.makefilepath(get_caller(frame=frame, tostring=False)['filename'])
     cv_info = {'version':cvver.__version__}
     cv_info.update(sc.gitinfo(__file__, verbose=False))
     caller_info = sc.gitinfo(calling_file, verbose=False)
@@ -491,7 +501,7 @@ def check_save_version(expected=None, filename=None, die=False, verbose=True, **
     # Now, check and save the git info
     if filename is None:
         filename = get_caller(tostring=False)['filename']
-    git_info(filename=filename, **kwargs)
+    git_info(filename=filename, frame=3, **kwargs)
 
     return
 
@@ -742,7 +752,7 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         e1 = compute_gof(x1, x2) # Default, normalized absolute error
         e2 = compute_gof(x1, x2, normalize=False, use_frac=False) # Fractional error
         e3 = compute_gof(x1, x2, normalize=False, use_squared=True, as_scalar='mean') # Mean squared error
-        e4 = compute_gof(x1, x2, estimator='mean_squared_error') # Scikit-learn's MSE method
+        e4 = compute_gof(x1, x2, skestimator='mean_squared_error') # Scikit-learn's MSE method
         e5 = compute_gof(x1, x2, as_scalar='median') # Normalized median absolute error -- highly robust
     '''
 
