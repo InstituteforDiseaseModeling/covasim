@@ -331,10 +331,10 @@ class trigger(Intervention):
             if self.smoothing is not None and sim.t>smoothing:
                 condition_to_check = sum((chosenindicator > sim.t-smoothing) & (chosenindicator <= sim.t))/smoothing
             else:
-                condition_to_check = sum(chosenindicator == sim.t) # Check the number of people who were diagnosed/quarantined/infected/etc
+                condition_to_check = (chosenindicator == sim.t).sum() # Check the number of people who were diagnosed/quarantined/infected/etc
 
         else: # It's a stock variable - no need to apply smoothing or check dates
-            condition_to_check = sum(chosenindicator)
+            condition_to_check = chosenindicator.sum()
 
         # Now check if the condition has been met
         if self.direction=='above':
