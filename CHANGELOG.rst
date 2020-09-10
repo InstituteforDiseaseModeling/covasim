@@ -14,6 +14,9 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Latest versions (1.6.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Version 1.6.1 (2020-09-11)
+--------------------------
+- ``People.person()`` now populates the contacts dictionary when returning a person, so that ``sim.people[0].contacts`` is no longer ``None``
 
 Version 1.6.0 (2020-09-08)
 --------------------------

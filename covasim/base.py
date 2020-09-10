@@ -801,6 +801,13 @@ class BasePeople(sc.prettyobj):
         p = Person()
         for key in self.meta.all_states:
             setattr(p, key, self[key][ind])
+
+        ind = np.array(sc.promotetolist(ind), dtype=np.int64)
+        contacts = {}
+        for lkey, layer in self.contacts.items():
+            contacts[lkey] = layer.find_contacts(ind)
+        p.contacts = contacts
+
         return p
 
 
