@@ -17,7 +17,7 @@ from . import base as cvb
 
 #%% Generic intervention classes
 
-__all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence']
+__all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence', 'trigger']
 
 
 def find_day(arr, t=None, which='first'):
@@ -296,6 +296,62 @@ class sequence(Intervention):
         return
 
 
+class trigger(Intervention):
+    """
+    A class to store information for triggering interventions
+    """
+    def __init__(self, indicator, threshold, direction='above', smoothing=None):
+        """
+        Args:
+            indicator (str): a property of sim.people, e.g. 'date_diagnosed', 'diagnosed'
+            threshold (float):
+            direction (str): can be 'above', 'below', or 'equal'. The trigger is activated if the value of the indicator is above/below/equal to the threshold.
+            smoothing (None or int): if None, the trigger is activated if the indicator is above the threshold on a given day. Can also enter an integer here to use a smoothing window.
+        """
+        super().__init__()
+        self.indicator = indicator
+        self.threshold = threshold
+        self.direction = direction
+        self.smoothing = smoothing
+
+
+    def apply(self, sim):
+        """
+        Check the condition implied by the trigger
+        """
+        # Parse the indicator
+        if not hasattr(sim.people, self.indicator):
+            errormsg = f"You have specified a trigger based on an indicator {self.indicator} that can't be found as an attribute of people."
+            raise ValueError(errormsg)
+
+        # Check whether the trigger condition is met. This is done slightly differently depending on whether it's a stock or flow
+        chosenindicator = getattr(sim.people, self.indicator)
+
+        if self.indicator[:4] == 'date': # It's a flow variable - apply smoothing
+            if self.smoothing is not None and sim.t>smoothing:
+                condition_to_check = sum((chosenindicator > sim.t-smoothing) & (chosenindicator <= sim.t))/smoothing
+            else:
+                condition_to_check = sum(chosenindicator == sim.t) # Check the number of people who were diagnosed/quarantined/infected/etc
+
+        else: # It's a stock variable - no need to apply smoothing or check dates
+            condition_to_check = sum(chosenindicator)
+
+        # Now check if the condition has been met
+        if self.direction=='above':
+            trigger = condition_to_check > self.threshold
+        elif self.direction=='below':
+            trigger = condition_to_check < self.threshold
+        elif self.direction=='equal':
+            trigger = condition_to_check == self.threshold
+        else:
+            errormsg = f"Can't understand trigger condition {self.direction}, please use 'above','below', or 'equal'."
+            raise ValueError(errormsg)
+
+        if trigger: print(f"Triggered on day {sim.t} with {self.indicator}={condition_to_check} compared to a threshold of {self.threshold}")
+
+        return trigger
+
+
 
 #%% Beta interventions
 
@@ -340,6 +396,7 @@ class change_beta(Intervention):
     Args:
         days (int or array): the day or array of days to apply the interventions
         changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
+        trigger (bool): can be used instead of days, and means that the intervention gets applied if the condition is true.
         layers (str or list): the layers in which to change beta
         kwargs (dict): passed to Intervention()
 
@@ -347,15 +404,18 @@ class change_beta(Intervention):
 
         interv = cv.change_beta(25, 0.3) # On day 25, reduce overall beta by 70% to 0.3
         interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools
+        interv = cv.change_beta(0, 0.7, trigger=cv.trigger('date_diagnosed',50)) # Starting from day 0, check each day to see whether daily diagnoses exceed 50; if so reduce beta as people get more cautious
     '''
 
-    def __init__(self, days, changes, layers=None, **kwargs):
+    def __init__(self, days, changes, trigger=None, layers=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
-        self.days       = sc.dcp(days)
-        self.changes    = sc.dcp(changes)
-        self.layers     = sc.dcp(layers)
-        self.orig_betas = None
+        self.days        = sc.dcp(days)
+        self.changes     = sc.dcp(changes)
+        self.trigger     = trigger
+        self.layers      = sc.dcp(layers)
+        self.orig_betas  = None
+        self.active_days = None
         return
 
 
@@ -377,14 +437,26 @@ class change_beta(Intervention):
 
     def apply(self, sim):
 
-        # If this day is found in the list, apply the intervention
-        for ind in find_day(self.days, sim.t):
-            for lkey,new_beta in self.orig_betas.items():
-                new_beta = new_beta * self.changes[ind]
-                if lkey == 'overall':
-                    sim['beta'] = new_beta
-                else:
-                    sim['beta_layer'][lkey] = new_beta
+        # Check which days the intervention is active - either taken straight from the "days" input, or calculated from a trigger condition
+        if self.active_days is None:
+            if self.trigger is not None:
+                if sim.t >= self.days[0]: # Time to check the trigger
+                    trigger_condition = self.trigger.apply(sim) # Check the trigger
+                    if trigger_condition:
+                        self.active_days = np.array([sim.t]) # Activate the change from the current day
+                        print(f"Activating beta_change on day {sim.t}")
+            else:
+                self.active_days  = sc.dcp(self.days)
+
+        # Now apply the intervention over the active days
+        if self.active_days is not None:
+            for ind in find_day(self.active_days, sim.t):
+                for lkey,new_beta in self.orig_betas.items():
+                    new_beta = new_beta * self.changes[ind]
+                    if lkey == 'overall':
+                        sim['beta'] = new_beta
+                    else:
+                        sim['beta_layer'][lkey] = new_beta
 
         return
 
