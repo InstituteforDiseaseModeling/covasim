@@ -219,8 +219,9 @@ class People(cvb.BasePeople):
         # Handle people who were actually diagnosed today
         diag_inds  = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
         self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
+        quarantined = cvu.itruei(self.quarantined, diag_inds)
+        self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
         self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
-        self.date_end_quarantine[diag_inds] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
 
         return len(test_pos_inds)
 
