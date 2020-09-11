@@ -5,10 +5,8 @@
 {% block htmltitle %}
 {{ super() }}
 
-{# Do not add redirect if building on RTD #}
 {% if not READTHEDOCS %}
 <meta name="robots" content="none">
-<meta http-equiv="refresh" content="0; URL={{ rtd_url }}/{{ pagename }}{{ file_suffix }}">
 {% endif %}
 
 {% endblock %}
