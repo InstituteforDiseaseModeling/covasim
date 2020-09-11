@@ -19,6 +19,8 @@ import subprocess
 import sys
 import sphinx_rtd_theme
 
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
 if sys.platform in ["linux", "darwin"]:
     subprocess.check_output(["make", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
 else:
@@ -209,7 +211,8 @@ html_context = {
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.
 #
-html_extra_path = ['robots.txt']
+if not on_rtd:
+    html_extra_path = ['robots.txt']
 
 # If not None, a 'Last updated on:' timestamp is inserted at every page
 # bottom, using the given strftime format.
