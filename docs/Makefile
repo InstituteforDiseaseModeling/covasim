@@ -46,16 +46,16 @@ help:
 	@echo "  dummy      to check syntax errors of document sources"
 
 .PHONY: clean
-clean:
-	rm -rf $(BUILDDIR)/*
+clean: # The -f is to ignore missing files, not to force remove
+	rm -rf $(BUILDDIR)
+	rm -f covasim*.rst
+	rm -f modules.rst
 
 .PHONY: generate-api
 
 # Generates the API doc
 generate-api:
-	rm -rf temp
-	sphinx-apidoc -f --tocfile dummy -o . ../covasim
-	-rm dummy.rst
+	sphinx-apidoc -f -e -M -o . ../covasim
 	mv covasim.rst modules.rst
 
 .PHONY: html

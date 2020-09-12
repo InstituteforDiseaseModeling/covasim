@@ -99,6 +99,25 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     return source_inds, target_inds
 
 
+@nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=True)
+def find_contacts(p1, p2, inds):
+    """
+    Numba for Layer.find_contacts()
+
+    A set is returned here rather than a sorted array so that custom tracing interventions can efficiently
+    add extra people. For a version with sorting by default, see Layer.find_contacts(). Indices must be
+    an int64 array since this is what's returned by true() etc. functions by default.
+    """
+    pairing_partners = set()
+    inds = set(inds)
+    for i in range(len(p1)):
+        if p1[i] in inds:
+            pairing_partners.add(p2[i])
+        if p2[i] in inds:
+            pairing_partners.add(p1[i])
+    return pairing_partners
+
+
 #%% Sampling and seed methods
 
 __all__ += ['sample', 'get_pdf', 'set_seed']

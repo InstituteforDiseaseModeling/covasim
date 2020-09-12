@@ -95,35 +95,6 @@ def test_fileio():
     return json
 
 
-def test_start_stop(): # If being run via pytest, turn off
-    sc.heading('Test starting and stopping')
-
-    pars = {'pop_size': 1000}
-
-    # Create and run a basic simulation
-    sim1 = cv.Sim(pars)
-    sim1.run(verbose=0)
-
-    # Test that step works
-    sim2 = cv.Sim(pars)
-    sim2.initialize()
-    for n in range(sim2.npts):
-        sim2.step()
-    sim2.finalize()
-
-    # Test that until works
-    sim3 = cv.Sim(pars)
-    sim3.run(until=20)
-    sim3.run(reset_seed=False)
-
-    # Compare results
-    key = 'cum_infections'
-    assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Next values do not match'
-    assert (sim1.results[key][:] == sim3.results[key][:]).all(), 'Until values do not match'
-
-    return sim2
-
-
 def test_sim_data(do_plot=False, do_show=False):
     sc.heading('Data test')
 
@@ -168,9 +139,8 @@ if __name__ == '__main__':
     sim0 = test_microsim()
     sim1 = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
     json = test_fileio()
-    sim4 = test_start_stop()
-    sim5 = test_sim_data(do_plot=do_plot, do_show=do_show)
-    sim6 = test_dynamic_resampling(do_plot=do_plot, do_show=do_show)
+    sim2 = test_sim_data(do_plot=do_plot, do_show=do_show)
+    sim3 = test_dynamic_resampling(do_plot=do_plot, do_show=do_show)
 
     sc.toc(T)
     print('Done.')
