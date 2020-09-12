@@ -335,13 +335,14 @@ def process_changes(sim, changes, days):
 
 class change_beta(Intervention):
     '''
-    The most basic intervention -- change beta by a certain amount.
+    The most basic intervention -- change beta (transmission) by a certain amount
+    on a given day or days.
 
     Args:
-        days (int or array): the day or array of days to apply the interventions
-        changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
-        layers (str or list): the layers in which to change beta
-        kwargs (dict): passed to Intervention()
+        days    (int/arr):   the day or array of days to apply the interventions
+        changes (float/arr): the changes in beta (1 = no change, 0 = no transmission)
+        layers  (str/list):  the layers in which to change beta (default: all)
+        kwargs  (dict):      passed to Intervention()
 
     **Examples**::
 
@@ -394,6 +395,7 @@ class clip_edges(Intervention):
     Isolate contacts by removing them from the simulation. Contacts are treated as
     "edges", and this intervention works by removing them from sim.people.contacts
     and storing them internally. When the intervention is over, they are moved back.
+    Similar to change_beta().
 
     Args:
         days (int or array): the day or array of days to isolate contacts
@@ -477,7 +479,8 @@ def process_daily_data(daily_data, sim, start_day, as_int=False):
     a number, then it converts it to an array of the right length. If the daily
     data are supplied as a Pandas series or dataframe with a date index, then it
     reindexes it to match the start date of the simulation. Otherwise, it does
-    nothing.
+    nothing. Note: this is an internal function; it is not for direct use by the
+    user.
 
     Args:
         daily_data (number, dataframe, or series): the data to convert to standardized format
@@ -502,7 +505,7 @@ def get_subtargets(subtarget, sim):
     or a function that needs to be called. If a function, it must take a single
     argument, a sim object, and return a list of indices. Also validates the values.
     Currently designed for use with testing interventions, but could be generalized
-    to other interventions.
+    to other interventions. Not for use by the user.
 
     Args:
         subtarget (dict): dict with keys 'inds' and 'vals'; see test_num() for examples of a valid subtarget dictionary
@@ -541,6 +544,7 @@ def get_quar_inds(quar_policy, sim):
     '''
     Helper function to return the appropriate indices for people in quarantine
     based on the current quarantine testing "policy". Used by test_num and test_prob.
+    Not for use by the user.
 
     Args:
         quar_policy (str): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
@@ -559,22 +563,25 @@ def get_quar_inds(quar_policy, sim):
 
 class test_num(Intervention):
     '''
-    Test a fixed number of people per day.
+    Test the specified number of people per day. Useful for including historical
+    testing data. The probability of a given person getting a test is dependent
+    on the total number of tests, population size, and odds ratios. Compare this
+    intervention with cv.test_prob().
 
     Args:
         daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day
-        symp_test   (float) : odds ratio of a symptomatic person testing
-        quar_test   (float) : probability of a person in quarantine testing
-        quar_policy (str)   : policy for testing in quarantine: options are 'start', 'end', 'both' (start and end), 'daily'
-        subtarget   (dict)  : subtarget intervention to people with particular indices                                                 ( format : {'ind' : array of indices, or function to return indices from the sim, 'vals' : value ( s) to apply}
-        sensitivity (float) : test sensitivity
-        ili_prev    (arr)   : Prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
-        loss_prob   (float) : probability of the person being lost-to-follow-up
-        test_delay  (int)   : days for test result to be known
-        start_day   (int)   : day the intervention starts
+        symp_test   (float) : odds ratio of a symptomatic person testing (default: 100x more likely)
+        quar_test   (float) : probability of a person in quarantine testing (default: no more likely)
+        quar_policy (str)   : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'
+        subtarget   (dict)  : subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'vals': value(s) to apply}
+        ili_prev    (arr)   : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
+        sensitivity (float) : test sensitivity (default 100%, i.e. no false negatives)
+        loss_prob   (float) : probability of the person being lost-to-follow-up (default 0%, i.e. no one lost to follow-up)
+        test_delay  (int)   : days for test result to be known (default 0, i.e. results available instantly)
+        start_day   (int)   : day the intervention starts (default: 0, i.e. first day of the simulation)
         end_day     (int)   : day the intervention ends
-        swab_delay  (dict)  : distribution for the delay from onset to swab
-        kwargs      (dict)  : passed to Intervention                                                                                   ( )
+        swab_delay  (dict)  : distribution for the delay from onset to swab; if this is present, it is used instead of test_delay
+        kwargs      (dict)  : passed to Intervention()
 
     **Examples**::
 
@@ -683,22 +690,24 @@ class test_num(Intervention):
 
 class test_prob(Intervention):
     '''
-    Test as many people as required based on test probability.
-    Probabilities are OR together, so choose wisely.
+    Assign each person a probability of being tested for COVID based on their
+    symptom state, quarantine state, and other states. Unlike test_num, the
+    total number of tests not specified, but rather is an output.
 
     Args:
-        symp_prob (float): Probability of testing a symptomatic (unquarantined) person
-        asymp_prob (float): Probability of testing an asymptomatic (unquarantined) person
-        symp_quar_prob (float): Probability of testing a symptomatic quarantined person
-        asymp_quar_prob (float): Probability of testing an asymptomatic quarantined person
-        quar_policy (str): Policy for testing in quarantine: options are 'start', 'end', 'both' (start and end), 'daily'
-        subtarget (dict): subtarget intervention to people with particular indices (see test_num() for details)
-        test_sensitivity (float): Probability of a true positive
-        ili_prev (float or array): Prevalence of influenza-like-illness symptoms in the population
-        loss_prob (float): Probability of loss to follow-up
-        test_delay (int): How long testing takes
-        start_day (int): When to start the intervention
-        kwargs (dict): passed to Intervention()
+        symp_prob        (float)     : probability of testing a symptomatic (unquarantined) person
+        asymp_prob       (float)     : probability of testing an asymptomatic (unquarantined) person (default: 0)
+        symp_quar_prob   (float)     : probability of testing a symptomatic quarantined person (default: same as symp_prob)
+        asymp_quar_prob  (float)     : probability of testing an asymptomatic quarantined person (default: same as asymp_prob)
+        quar_policy      (str)       : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'
+        subtarget        (dict)      : subtarget intervention to people with particular indices  (see test_num() for details)
+        ili_prev         (float/arr) : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
+        test_sensitivity (float)     : test sensitivity (default 100%, i.e. no false negatives)
+        loss_prob        (float)     : probability of the person being lost-to-follow-up (default 0%, i.e. no one lost to follow-up)
+        test_delay       (int)       : days for test result to be known (default 0, i.e. results available instantly)
+        start_day        (int)       : day the intervention starts (default: 0, i.e. first day of the simulation)
+        end_day          (int)       : day the intervention ends (default: no end)
+        kwargs           (dict)      : passed to Intervention()
 
     **Examples**::
 
@@ -798,16 +807,28 @@ class test_prob(Intervention):
 
 class contact_tracing(Intervention):
     '''
-    Contact tracing of positive people.
+    Contact tracing of people who are diagnosed. When a person is diagnosed positive
+    (by either test_num() or test_prob(); this intervention has no effect if there
+    is not also a testing intervention active), a certain proportion of the index
+    case's contacts (defined by trace_prob) are contacted after a certain number
+    of days (defined by trace_time). After they are contacted, they are placed
+    into quarantine (with effectiveness quar_factor, a simulation parameter) for
+    a certain period (defined by quar_period, another simulation parameter). They
+    may also change their testing probability, if test_prob() is defined.
 
     Args:
-        trace_probs (dict): probability of tracing, per layer
-        trace_time  (dict): days required to trace, per layer
-        start_day   (int):  intervention start day
-        end_day     (int):  intervention end day
-        test_delay  (int):  number of days a test result takes
-        presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
-        kwargs      (dict): passed to Intervention()
+        trace_probs (float/dict): probability of tracing, per layer (default: 100%, i.e. everyone is traced)
+        trace_time  (float/dict): days required to trace, per layer (default: 0, i.e. no delay)
+        start_day   (int):        intervention start day (default: 0, i.e. the start of the simulation)
+        end_day     (int):        intervention end day (default: no end)
+        presumptive (bool):       whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis (default: no)
+        kwargs      (dict):       passed to Intervention()
+
+    **Example**::
+
+        tp = cv.test_prob(symp_prob=0.1, asymp_prob=0.01)
+        ct = cv.contact_tracing(trace_probs=0.5, trace_time=2)
+        sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracing has no effect
     '''
     def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
