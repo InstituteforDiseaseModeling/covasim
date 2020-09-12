@@ -339,10 +339,10 @@ class change_beta(Intervention):
     on a given day or days.
 
     Args:
-        days (int/ array): the day or array of days to apply the interventions
-        changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
-        layers (str or list): the layers in which to change beta
-        kwargs (dict): passed to Intervention()
+        days    (int/arr):   the day or array of days to apply the interventions
+        changes (float/arr): the changes in beta (1 = no change, 0 = no transmission)
+        layers  (str/list):  the layers in which to change beta (default: all)
+        kwargs  (dict):      passed to Intervention()
 
     **Examples**::
 
