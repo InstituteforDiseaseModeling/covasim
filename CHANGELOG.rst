@@ -413,7 +413,7 @@ Version 1.0.1 (2020-05-09)
 - Added argument ``as_date`` for ``sim.date()`` to return a ``datetime`` object instead of a string.
 - Fixed plotting of interventions in the webapp.
 - Removed default 1-hour time limit for simulations.
-- *GitHub info*: PR `490 <https://github.com/amath-idm/covasim/pull/490>`__, previous head ``9a6c23b``
+- *GitHub info*: PR `490 <https://github.com/amath-idm/covasim/pull/490>`__ 
 
 
 Version 1.0.0 (2020-05-08)
@@ -424,7 +424,7 @@ Version 1.0.0 (2020-05-08)
 - Fixed bug in ``cv.save()``.
 - Added ``reset()`` to MultiSim that undoes a ``reduce()`` or ``combine()`` call.
 - General code cleaning: made exceptions raised more consistent, removed unused functions, etc.
-- *GitHub info*: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, previous head ``c8ca32d``
+- *GitHub info*: PR `487 <https://github.com/amath-idm/covasim/pull/487>`__, head ``9a6c23b``
 
 
 
@@ -437,13 +437,14 @@ Version 0.32.1 (2020-05-06)
 ---------------------------
 - Allow ``until`` to be a date, e.g. ``sim.run(until='2020-05-06')``.
 - Added ``ipywidgets`` dependency since otherwise the webapp breaks due to a `bug <https://github.com/plotly/plotly.py/issues/2443>`__ with the latest Plotly version (4.7).
+- *GitHub info*: head ``c8ca32d``
 
 
 Version 0.32.0 (2020-05-05)
 ---------------------------
 - Changed the edges of the contact network from being directed to undirected, halving the amount of memory required and making contact tracing and edge clipping more realistic.
 - Added comorbidities to the prognoses parameters.
-- *GitHub info*: PR `482 <https://github.com/amath-idm/covasim/pull/482>`__, previous 
+- *GitHub info*: PR `482 <https://github.com/amath-idm/covasim/pull/482>`__ 
 
 
 Version 0.31.0 (2020-05-05)
