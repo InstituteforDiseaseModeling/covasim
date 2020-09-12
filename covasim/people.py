@@ -471,3 +471,60 @@ class People(cvb.BasePeople):
         '''
         fig = cvplt.plot_people(people=self, *args, **kwargs)
         return fig
+
+    def story(self, uid):
+        p = self[uid]
+
+        if not p.susceptible:
+            if np.isnan(p.date_symptomatic):
+                print(f'{uid} is a {p.age:.0f} year old that had asymptomatic COVID')
+            else:
+                print(f'{uid} is a {p.age:.0f} year old that contracted COVID')
+        else:
+            print(f'{uid} is a {p.age:.0f} year old')
+
+        if 'H' in p.contacts and len(p.contacts['H']):
+            print(f'{uid} lives with {len(p.contacts["H"])} people')
+        else:
+            print(f'{uid} lives alone')
+
+        if 'W' in p.contacts and len(p.contacts['W']):
+            print(f'{uid} works with {len(p.contacts["W"])} people')
+        else:
+            print(f'{uid} works alone')
+
+        events = []
+
+        dates = {
+        'date_critical': 'became critically ill and needed ICU care',
+        'date_dead': 'died',
+        'date_diagnosed': 'was diagnosed with COVID',
+        'date_end_quarantine': 'ended quarantine',
+        'date_infectious': 'became infectious',
+        'date_known_contact': f'was notified they may have been exposed to COVID',
+        'date_pos_test': 'recieved their positive test result',
+        'date_quarantined': 'entered quarantine',
+        'date_recovered': 'recovered',
+        'date_severe': 'developed severe symptoms and needed hospitalization',
+        'date_symptomatic': 'became symptomatic',
+        'date_tested': 'was tested for COVID',
+        }
+
+        for attribute, message in dates.items():
+            date = getattr(p,attribute)
+            if not np.isnan(date):
+                events.append((date, message))
+
+        for infection in self.infection_log:
+            if infection['target'] == uid:
+                if infection["layer"]:
+                    events.append((infection['date'], f'was infected with COVID by {infection["source"]} at {infection["layer"]}'))
+                else:
+                    events.append((infection['date'], f'was infected with COVID as a seed infection'))
+
+            if infection['source'] == uid:
+                x = len([a for a in self.infection_log if a['source'] == infection['target']])
+                events.append((infection['date'],f'gave COVID to {infection["target"]} at {infection["layer"]} ({x} secondary infections)'))
+
+        for day, event in sorted(events, key=lambda x: x[0]):
+            print(f'On Day {day:.0f}, {uid} {event}')
