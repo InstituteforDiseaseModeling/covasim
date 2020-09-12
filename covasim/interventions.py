@@ -286,6 +286,8 @@ class sequence(Intervention):
         ''' Fix the dates '''
         self.days = [sim.day(day) for day in self.days]
         self.days_arr = np.array(self.days + [sim.npts])
+        for intervention in self.interventions:
+            intervention.initialize(sim)
         self.initialized = True
         return
 
