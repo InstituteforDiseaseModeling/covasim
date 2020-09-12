@@ -443,7 +443,7 @@ Version 0.32.0 (2020-05-05)
 ---------------------------
 - Changed the edges of the contact network from being directed to undirected, halving the amount of memory required and making contact tracing and edge clipping more realistic.
 - Added comorbidities to the prognoses parameters.
-- *GitHub info*: PR `482 <https://github.com/amath-idm/covasim/pull/482>`__, previous head ``029585f``
+- *GitHub info*: PR `482 <https://github.com/amath-idm/covasim/pull/482>`__, previous 
 
 
 Version 0.31.0 (2020-05-05)
@@ -459,7 +459,7 @@ Version 0.31.0 (2020-05-05)
 - ``sim.export_pars()`` now accepts a filename to save to.
 - Added a ``tests/regression`` folder with previous versions of default parameter values.
 - Changed ``pars['n_beds']`` to interpret 0 or ``None`` as no bed constraint.
-- *GitHub info*: PR `480 <https://github.com/amath-idm/covasim/pull/480>`__, previous head ``c7171f8``
+- *GitHub info*: PR `480 <https://github.com/amath-idm/covasim/pull/480>`__, head ``029585f``, previous head ``c7171f8``
 
 
 Version 0.30.4 (2020-05-04)
