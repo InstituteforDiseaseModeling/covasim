@@ -807,15 +807,28 @@ class test_prob(Intervention):
 
 class contact_tracing(Intervention):
     '''
-    Contact tracing of positive people.
+    Contact tracing of people who are diagnosed. When a person is diagnosed positive
+    (by either test_num() or test_prob(); this intervention has no effect if there
+    is not also a testing intervention active), a certain proportion of the index
+    case's contacts (defined by trace_prob) are contacted after a certain number
+    of days (defined by trace_time). After they are contacted, they are placed
+    into quarantine (with effectiveness quar_factor, a simulation parameter) for
+    a certain period (defined by quar_period, another simulation parameter). They
+    may also change their testing probability, if test_prob() is defined.
 
     Args:
-        trace_probs (dict): probability of tracing, per layer
-        trace_time  (dict): days required to trace, per layer
-        start_day   (int):  intervention start day
-        end_day     (int):  intervention end day
-        presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
-        kwargs      (dict): passed to Intervention()
+        trace_probs (float/dict): probability of tracing, per layer (default: 100%, i.e. everyone is traced)
+        trace_time  (float/dict): days required to trace, per layer (default: 0, i.e. no delay)
+        start_day   (int):        intervention start day (default: 0, i.e. the start of the simulation)
+        end_day     (int):        intervention end day (default: no end)
+        presumptive (bool):       whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis (default: no)
+        kwargs      (dict):       passed to Intervention()
+
+    **Example**::
+
+        tp = cv.test_prob(symp_prob=0.1, asymp_prob=0.01)
+        ct = cv.contact_tracing(trace_probs=0.5, trace_time=2)
+        sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracing has no effect
     '''
     def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
