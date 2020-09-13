@@ -10,15 +10,15 @@ The scientific paper describing Covasim is available at http://paper.covasim.org
 
 Other papers that have been written using Covasim include:
 
-1. **Controlling COVID-19 via test-trace-quarantine**. Kerr CC, Mistry D, Stuart RM, Rosenfeld R, Hart G, Núñez RC, Selvaraj P, Cohen JA, Abeysuriya RG, George L, Hagedorn B, Jastrzębski M, Fagalde M, Duchin J, Famulare M, Klein DJ (2020). *medRxiv* 2020.07.15.20154765; doi: https://doi.org/10.1101/2020.07.15.20154765.
+1. **Controlling COVID-19 via test-trace-quarantine**. Kerr CC, Mistry D, Stuart RM, Rosenfeld R, Hart G, Núñez RC, Selvaraj P, Cohen JA, Abeysuriya RG, George L, Hagedorn B, Jastrzębski M, Fagalde M, Duchin J, Famulare M, Klein DJ (under review). *medRxiv* 2020.07.15.20154765; doi: https://doi.org/10.1101/2020.07.15.20154765.
 
 2. **Determining the optimal strategy for reopening schools, the impact of test and trace interventions, and the risk of occurrence of a second COVID-19 epidemic wave in the UK: a modelling study**. Panovska-Griffiths J, Kerr CC, Stuart RM, Mistry D, Klein DJ, Viner R, Bonnell C (2020). *Lancet Child and Adolescent Health* S2352-4642(20) 30250-9. doi: https://doi.org10.1016/S2352-4642(20)30250-9.
 
-3. **Modelling the impact of reducing control measures on the COVID-19 pandemic in a low transmission setting**. Scott N, Palmer A, Delport D, Abeysuriya RG, Stuart RM, Kerr CC, Mistry D, Klein DJ, Sacks-Davis R, Heath K, Hainsworth S, Pedrana A, Stoove M, Wilson DP, Hellard M (2020). *medRxiv* 2020.06.11.20127027; doi: https://doi.org/10.1101/2020.06.11.20127027.
+3. **Modelling the impact of reducing control measures on the COVID-19 pandemic in a low transmission setting**. Scott N, Palmer A, Delport D, Abeysuriya RG, Stuart RM, Kerr CC, Mistry D, Klein DJ, Sacks-Davis R, Heath K, Hainsworth S, Pedrana A, Stoove M, Wilson DP, Hellard M (in press). *Medical Journal of Australia* [`Preprint <https://www.mja.com.au/journal/2020/modelling-impact-reducing-control-measures-covid-19-pandemic-low-transmission-setting>`__, 2 September 2020]; doi: https://doi.org/10.1101/2020.06.11.20127027.
 
-4. **The role of masks in reducing the risk of new waves of COVID-19 in low transmission settings: a modeling study**. Stuart RM, Abeysuriya RG, Kerr CC, Mistry D, Klein DJ, Gray R, Hellard M, Scott N (2020). *medRxiv* 2020.09.02.20186742; doi: https://doi.org/10.1101/2020.09.02.20186742.
+4. **The role of masks in reducing the risk of new waves of COVID-19 in low transmission settings: a modeling study**. Stuart RM, Abeysuriya RG, Kerr CC, Mistry D, Klein DJ, Gray R, Hellard M, Scott N (under review). *medRxiv* 2020.09.02.20186742; doi: https://doi.org/10.1101/2020.09.02.20186742.
 
-5. **Schools are not islands: Balancing COVID-19 risk and educational benefits using structural and temporal countermeasures**. Cohen JA, Mistry D, Kerr CC, Klein DJ (2020). *medRxiv* 2020.09.08.20190942; doi: https://doi.org/10.1101/2020.09.08.20190942.
+5. **Schools are not islands: Balancing COVID-19 risk and educational benefits using structural and temporal countermeasures**. Cohen JA, Mistry D, Kerr CC, Klein DJ (under review). *medRxiv* 2020.09.08.20190942; doi: https://doi.org/10.1101/2020.09.08.20190942.
 
 
 The Covasim webapp is available at http://app.covasim.org.
