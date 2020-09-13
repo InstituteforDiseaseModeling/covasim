@@ -14,6 +14,13 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Latest versions (1.6.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Version 1.6.1 (2020-09-13)
+--------------------------
+- Unpinned ``numba`` from version 0.48. Version 0.49 `changed the seed <https://numba.pydata.org/numba-doc/latest/release-notes.html#version-0-49-0-apr-16-2020>`__ used for ``np.random.choice()``, meaning that results from versions >=0.49 will differ from versions <=0.48. Version 0.49 was also significantly slower for some operations, which is why the switch was not made at the time, but this no longer appears to impact Covasim.
+- *Regression information*: No changes to the Covasim codebase were made; however, No major backwards incompatibilities are introduced by this version. Instances of ``sim.compute_summary()`` should be replaced by ``sim.summarize()``, and results dependent on the original state of an intervention post-simulation should use ``sim._orig_pars['interventions']`` (or perform ``sim.initialize()`` prior to using them) instead of ``sim['interventions']``.
+- *GitHub info*: PR `664 <https://github.com/amath-idm/covasim/pull/664>`__
+
+
 
 Version 1.6.0 (2020-09-08)
 --------------------------

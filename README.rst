@@ -2,16 +2,24 @@
 Covasim
 =======
 
-Covasim is a stochastic agent-based simulator designed to be used for COVID-19
-(novel coronavirus, SARS-CoV-2) epidemic analyses. These include projections of
-indicators such as numbers of infections and peak hospital demand. Covasim can
-also be used to explore the potential impact of different interventions, including
-social distancing, school closures, testing, contact tracing, and quarantine.
+Covasim is a stochastic agent-based simulator designed to be used for COVID-19 (novel coronavirus, SARS-CoV-2) epidemic analyses. These include projections of indicators such as numbers of infections and peak hospital demand. Covasim can also be used to explore the potential impact of different interventions, including social distancing, school closures, testing, contact tracing, quarantine, and vaccination.
 
-The scientific paper describing Covasim is available at http://paper.covasim.org.
-The recommended citation is:
+The scientific paper describing Covasim is available at http://paper.covasim.org. The recommended citation is:
 
     Kerr CC, Stuart RM, Mistry D, Abeysuriya RG, Hart G, Rosenfeld R, Selvaraj P, Núñez RC, Hagedorn B, George L, Izzo A, Palmer A, Delport D, Bennette C, Wagner B, Chang S, Cohen JA, Panovska-Griffiths J, Jastrzębski M, Oron AP, Wenger E, Famulare M, Klein DJ (2020). **Covasim: an agent-based model of COVID-19 dynamics and interventions**. *medRxiv* 2020.05.10.20097469; doi: https://doi.org/10.1101/2020.05.10.20097469.
+
+Other papers that have been written using Covasim include:
+
+1. Kerr CC, Mistry D, Stuart RM, Rosenfeld R, Hart G, Núñez RC, Selvaraj P, Cohen JA, Abeysuriya RG, George L, Hagedorn B, Jastrzębski M, Fagalde M, Duchin J, Famulare M, Klein DJ (2020). **Controlling COVID-19 via test-trace-quarantine**. *medRxiv* 2020.07.15.20154765; doi: https://doi.org/10.1101/2020.07.15.20154765.
+
+2. Panovska-Griffiths J, Kerr CC, Stuart RM, Mistry D, Klein DJ, Viner R, Bonnell C (2020). **Determining the optimal strategy for reopening schools, the impact of test and trace interventions, and the risk of occurrence of a second COVID-19 epidemic wave in the UK: a modelling study**. *Lancet Child and Adolescent Health* S2352-4642(20) 30250-9. doi: https://doi.org10.1016/S2352-4642(20)30250-9.
+
+3. Scott N, Palmer A, Delport D, Abeysuriya RG, Stuart RM, Kerr CC, Mistry D, Klein DJ, Sacks-Davis R, Heath K, Hainsworth S, Pedrana A, Stoove M, Wilson DP, Hellard M (2020). **Modelling the impact of reducing control measures on the COVID-19 pandemic in a low transmission setting**. *medRxiv* 2020.06.11.20127027; doi: https://doi.org/10.1101/2020.06.11.20127027.
+
+4. Stuart RM, Abeysuriya RG, Kerr CC, Mistry D, Klein DJ, Gray R, Hellard M, Scott N (2020). **The role of masks in reducing the risk of new waves of COVID-19 in low transmission settings: a modeling study**. *medRxiv* 2020.09.02.20186742; doi: https://doi.org/10.1101/2020.09.02.20186742.
+
+5. Cohen JA, Mistry D, Kerr CC, Klein DJ (2020). **Schools are not islands: Balancing COVID-19 risk and educational benefits using structural and temporal countermeasures**. *medRxiv* 2020.09.08.20190942; doi: https://doi.org/10.1101/2020.09.08.20190942.
+
 
 The Covasim webapp is available at http://app.covasim.org.
 
@@ -50,16 +58,14 @@ Install with ``pip install covasim``. If everything is working, the following Py
   sim.plot()
 
 
-Detailed installation instructions
+GitHub installation instructions
 ==================================
 
-1.  Clone a copy of the repository. If you intend to make changes to the code,
-    we recommend that you fork it first.
+1.  Clone a copy of the repository. If you intend to make changes to the code, we recommend that you fork it first.
 
 2.  (Optional) Create and activate a virtual environment.
 
-3.  Navigate to the root of the repository and install the Covasim Python package
-    using one of the following options:
+3.  Navigate to the root of the repository and install the Covasim Python package using one of the following options:
 
     *   To install with web app support (recommended)::
 
@@ -69,12 +75,11 @@ Detailed installation instructions
 
           python setup.py develop nowebapp
 
-    *   To install Covasim and optional dependencies (be aware this may fail
-        since it relies on private packages), enter::
+    *   To install Covasim and optional dependencies (be aware this may fail since it relies on private packages), enter::
 
           python setup.py develop full
 
-    The module should then be importable via ``import covasim``.
+    The module should then be importable via ``import covasim as cv``.
 
 
 Usage examples
