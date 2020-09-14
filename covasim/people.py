@@ -477,11 +477,11 @@ class People(cvb.BasePeople):
 
     def story(self, uid, *args):
         '''
-        Print out a short history of the named individual.
+        Print out a short history of events in the life of the specified individual.
 
         Args:
-            uid (int/list): the person or people whose story is being recounted
-            args (list): extra people whose stories to print
+            uid (int/list): the person or people whose story is being regaled
+            args (list): these people will tell their stories too
 
         **Example**::
 
