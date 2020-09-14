@@ -4,11 +4,13 @@ Defines the Person class and functions associated with making people.
 
 #%% Imports
 import numpy as np
+import sciris as sc
+from collections import defaultdict
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 from . import plotting as cvplt
-from collections import defaultdict
+
 
 __all__ = ['People']
 
@@ -219,8 +221,9 @@ class People(cvb.BasePeople):
         # Handle people who were actually diagnosed today
         diag_inds  = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
         self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
+        quarantined = cvu.itruei(self.quarantined, diag_inds)
+        self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
         self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
-        self.date_end_quarantine[diag_inds] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
 
         return len(test_pos_inds)
 
@@ -441,18 +444,13 @@ class People(cvb.BasePeople):
                 this_trace_time = trace_time[lkey]
 
                 # Find all the contacts of these people
-                inds_list = []
-                for k1,k2 in [['p1','p2'],['p2','p1']]: # Loop over the contact network in both directions -- k1,k2 are the keys
-                    in_k1 = np.isin(self.contacts[lkey][k1], inds).nonzero()[0] # Get all the indices of the pairs that each person is in
-                    inds_list.append(self.contacts[lkey][k2][in_k1]) # Find their pairing partner
-                edge_inds = np.unique(np.concatenate(inds_list)) # Find all edges
-
-                # Check contacts
-                contact_inds = cvu.binomial_filter(this_trace_prob, edge_inds) # Filter the indices according to the probability of being able to trace this layer
-                if len(contact_inds):
-                    self.known_contact[contact_inds] = True
-                    self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
-                    self.quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
+                traceable_inds = self.contacts[lkey].find_contacts(inds)
+                if len(traceable_inds):
+                    contact_inds = cvu.binomial_filter(this_trace_prob, traceable_inds) # Filter the indices according to the probability of being able to trace this layer
+                    if len(contact_inds):
+                        self.known_contact[contact_inds] = True
+                        self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
+                        self.quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
 
         return
 
@@ -475,3 +473,111 @@ class People(cvb.BasePeople):
         '''
         fig = cvplt.plot_people(people=self, *args, **kwargs)
         return fig
+
+
+    def story(self, uid, *args):
+        '''
+        Print out a short history of events in the life of the specified individual.
+
+        Args:
+            uid (int/list): the person or people whose story is being regaled
+            args (list): these people will tell their stories too
+
+        **Example**::
+
+            sim = cv.Sim(pop_type='hybrid', verbose=0)
+            sim.run()
+            sim.people.story(12)
+            sim.people.story(795)
+        '''
+
+        def label_lkey(lkey):
+            ''' Friendly name for common layer keys '''
+            if lkey.lower() == 'a':
+                llabel = 'default contact'
+            if lkey.lower() == 'h':
+                llabel = 'household'
+            elif lkey.lower() == 's':
+                llabel = 'school'
+            elif lkey.lower() == 'w':
+                llabel = 'workplace'
+            elif lkey.lower() == 'c':
+                llabel = 'community'
+            else:
+                llabel = f'"{lkey}"'
+            return llabel
+
+        uids = sc.promotetolist(uid)
+        uids.extend(args)
+
+        for uid in uids:
+
+            p = self[uid]
+            sex = 'female' if p.sex == 0 else 'male'
+
+            intro = f'\nThis is the story of {uid}, a {p.age:.0f} year old {sex}'
+
+            if not p.susceptible:
+                if np.isnan(p.date_symptomatic):
+                    print(f'{intro}, who had asymptomatic COVID.')
+                else:
+                    print(f'{intro}, who had symptomatic COVID.')
+            else:
+                print(f'{intro}, who did not contract COVID.')
+
+            total_contacts = 0
+            no_contacts = []
+            for lkey in p.contacts.keys():
+                llabel = label_lkey(lkey)
+                n_contacts = len(p.contacts[lkey])
+                total_contacts += n_contacts
+                if n_contacts:
+                    print(f'{uid} is connected to {n_contacts} people in the {llabel} layer')
+                else:
+                    no_contacts.append(llabel)
+            if len(no_contacts):
+                nc_string = ', '.join(no_contacts)
+                print(f'{uid} has no contacts in the {nc_string} layer(s)')
+            print(f'{uid} has {total_contacts} contacts in total')
+
+            events = []
+
+            dates = {
+            'date_critical'       : 'became critically ill and needed ICU care',
+            'date_dead'           : 'died ☹',
+            'date_diagnosed'      : 'was diagnosed with COVID',
+            'date_end_quarantine' : 'ended quarantine',
+            'date_infectious'     : 'became infectious',
+            'date_known_contact'  : 'was notified they may have been exposed to COVID',
+            'date_pos_test'       : 'recieved their positive test result',
+            'date_quarantined'    : 'entered quarantine',
+            'date_recovered'      : 'recovered',
+            'date_severe'         : 'developed severe symptoms and needed hospitalization',
+            'date_symptomatic'    : 'became symptomatic',
+            'date_tested'         : 'was tested for COVID',
+            }
+
+            for attribute, message in dates.items():
+                date = getattr(p,attribute)
+                if not np.isnan(date):
+                    events.append((date, message))
+
+            for infection in self.infection_log:
+                lkey = infection['layer']
+                llabel = label_lkey(lkey)
+                if infection['target'] == uid:
+                    if lkey:
+                        events.append((infection['date'], f'was infected with COVID by {infection["source"]} via the {llabel} layer'))
+                    else:
+                        events.append((infection['date'], f'was infected with COVID as a seed infection'))
+
+                if infection['source'] == uid:
+                    x = len([a for a in self.infection_log if a['source'] == infection['target']])
+                    events.append((infection['date'],f'gave COVID to {infection["target"]} via the {llabel} layer ({x} secondary infections)'))
+
+            if len(events):
+                for day, event in sorted(events, key=lambda x: x[0]):
+                    print(f'On day {day:.0f}, {uid} {event}')
+            else:
+                print(f'Nothing happened to {uid} during the simulation.')
+        return

@@ -19,6 +19,8 @@ import subprocess
 import sys
 import sphinx_rtd_theme
 
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
 if sys.platform in ["linux", "darwin"]:
     subprocess.check_output(["make", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
 else:
@@ -200,6 +202,7 @@ html_favicon = "images/favicon.ico"
 html_static_path = ['_static']
 
 html_context = {
+    'rtd_url': 'https://docs.idmod.org/projects/covasim/en/latest',
     'css_files': [
         '_static/theme_overrides.css'
     ]
@@ -208,7 +211,8 @@ html_context = {
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.
 #
-# html_extra_path = []
+if not on_rtd:
+    html_extra_path = ['robots.txt']
 
 # If not None, a 'Last updated on:' timestamp is inserted at every page
 # bottom, using the given strftime format.
@@ -258,7 +262,7 @@ html_show_sphinx = False
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
 #
-html_use_opensearch = 'www.idmod.org/docs/'
+html_use_opensearch = 'docs.idmod.org/projects/covasim/en/latest'
 
 # This is the file name suffix for HTML files (e.g. ".xhtml").
 # html_file_suffix = None

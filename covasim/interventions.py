@@ -286,6 +286,8 @@ class sequence(Intervention):
         ''' Fix the dates '''
         self.days = [sim.day(day) for day in self.days]
         self.days_arr = np.array(self.days + [sim.npts])
+        for intervention in self.interventions:
+            intervention.initialize(sim)
         self.initialized = True
         return
 
@@ -302,10 +304,11 @@ class sequence(Intervention):
 __all__+= ['change_beta', 'clip_edges']
 
 
-def process_days(sim, days):
+def process_days(sim, days, return_dates=False):
     '''
     Ensure lists of days are in consistent format. Used by change_beta, clip_edges,
     and some analyzers. If day is 'end' or -1, use the final day of the simulation.
+    Optionally return dates as well as days.
     '''
     if sc.isstring(days) or not sc.isiterable(days):
         days = sc.promotetolist(days)
@@ -313,8 +316,12 @@ def process_days(sim, days):
         if day in ['end', -1]:
             day = sim['end_day']
         days[d] = sim.day(day) # Ensure it's an integer and not a string or something
-    days = sc.promotetoarray(days)
-    return days
+    days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+    if return_dates:
+        dates = [sim.date(day) for day in days] # Store as date strings
+        return days, dates
+    else:
+        return days
 
 
 def process_changes(sim, changes, days):
@@ -330,13 +337,14 @@ def process_changes(sim, changes, days):
 
 class change_beta(Intervention):
     '''
-    The most basic intervention -- change beta by a certain amount.
+    The most basic intervention -- change beta (transmission) by a certain amount
+    on a given day or days.
 
     Args:
-        days (int or array): the day or array of days to apply the interventions
-        changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
-        layers (str or list): the layers in which to change beta
-        kwargs (dict): passed to Intervention()
+        days    (int/arr):   the day or array of days to apply the interventions
+        changes (float/arr): the changes in beta (1 = no change, 0 = no transmission)
+        layers  (str/list):  the layers in which to change beta (default: all)
+        kwargs  (dict):      passed to Intervention()
 
     **Examples**::
 
@@ -389,6 +397,7 @@ class clip_edges(Intervention):
     Isolate contacts by removing them from the simulation. Contacts are treated as
     "edges", and this intervention works by removing them from sim.people.contacts
     and storing them internally. When the intervention is over, they are moved back.
+    Similar to change_beta().
 
     Args:
         days (int or array): the day or array of days to isolate contacts
@@ -436,19 +445,22 @@ class clip_edges(Intervention):
                 n_sim = len(s_layer) # Number of contacts in the simulation layer
                 n_int = len(i_layer) # Number of contacts in the intervention layer
                 n_contacts = n_sim + n_int # Total number of contacts
-                current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
-                desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
-                prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
-                n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
-                from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
-                if from_sim: # We're moving from the sim to the intervention
-                    inds = cvu.choose(max_n=n_sim, n=n_to_move)
-                    to_move = s_layer.pop_inds(inds)
-                    i_layer.append(to_move)
-                else: # We're moving from the intervention back to the sim
-                    inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
-                    to_move = i_layer.pop_inds(inds)
-                    s_layer.append(to_move)
+                if n_contacts:
+                    current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
+                    desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
+                    prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
+                    n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
+                    from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
+                    if from_sim: # We're moving from the sim to the intervention
+                        inds = cvu.choose(max_n=n_sim, n=n_to_move)
+                        to_move = s_layer.pop_inds(inds)
+                        i_layer.append(to_move)
+                    else: # We're moving from the intervention back to the sim
+                        inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
+                        to_move = i_layer.pop_inds(inds)
+                        s_layer.append(to_move)
+                else:
+                    print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
 
         # Ensure the edges get deleted at the end
         if sim.t == sim.tvec[-1]:
@@ -463,14 +475,14 @@ class clip_edges(Intervention):
 __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 
-# Process daily data
 def process_daily_data(daily_data, sim, start_day, as_int=False):
     '''
     This function performs one of two things: if the daily data are supplied as
     a number, then it converts it to an array of the right length. If the daily
     data are supplied as a Pandas series or dataframe with a date index, then it
     reindexes it to match the start date of the simulation. Otherwise, it does
-    nothing.
+    nothing. Note: this is an internal function; it is not for direct use by the
+    user.
 
     Args:
         daily_data (number, dataframe, or series): the data to convert to standardized format
@@ -495,7 +507,7 @@ def get_subtargets(subtarget, sim):
     or a function that needs to be called. If a function, it must take a single
     argument, a sim object, and return a list of indices. Also validates the values.
     Currently designed for use with testing interventions, but could be generalized
-    to other interventions.
+    to other interventions. Not for use by the user.
 
     Args:
         subtarget (dict): dict with keys 'inds' and 'vals'; see test_num() for examples of a valid subtarget dictionary
@@ -534,6 +546,7 @@ def get_quar_inds(quar_policy, sim):
     '''
     Helper function to return the appropriate indices for people in quarantine
     based on the current quarantine testing "policy". Used by test_num and test_prob.
+    Not for use by the user.
 
     Args:
         quar_policy (str): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
@@ -552,22 +565,25 @@ def get_quar_inds(quar_policy, sim):
 
 class test_num(Intervention):
     '''
-    Test a fixed number of people per day.
+    Test the specified number of people per day. Useful for including historical
+    testing data. The probability of a given person getting a test is dependent
+    on the total number of tests, population size, and odds ratios. Compare this
+    intervention with cv.test_prob().
 
     Args:
         daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day
-        symp_test   (float) : odds ratio of a symptomatic person testing
-        quar_test   (float) : probability of a person in quarantine testing
-        quar_policy (str)   : policy for testing in quarantine: options are 'start', 'end', 'both' (start and end), 'daily'
-        subtarget   (dict)  : subtarget intervention to people with particular indices                                                 ( format : {'ind' : array of indices, or function to return indices from the sim, 'vals' : value ( s) to apply}
-        sensitivity (float) : test sensitivity
-        ili_prev    (arr)   : Prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
-        loss_prob   (float) : probability of the person being lost-to-follow-up
-        test_delay  (int)   : days for test result to be known
-        start_day   (int)   : day the intervention starts
+        symp_test   (float) : odds ratio of a symptomatic person testing (default: 100x more likely)
+        quar_test   (float) : probability of a person in quarantine testing (default: no more likely)
+        quar_policy (str)   : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'
+        subtarget   (dict)  : subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'vals': value(s) to apply}
+        ili_prev    (arr)   : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
+        sensitivity (float) : test sensitivity (default 100%, i.e. no false negatives)
+        loss_prob   (float) : probability of the person being lost-to-follow-up (default 0%, i.e. no one lost to follow-up)
+        test_delay  (int)   : days for test result to be known (default 0, i.e. results available instantly)
+        start_day   (int)   : day the intervention starts (default: 0, i.e. first day of the simulation)
         end_day     (int)   : day the intervention ends
-        swab_delay  (dict)  : distribution for the delay from onset to swab
-        kwargs      (dict)  : passed to Intervention                                                                                   ( )
+        swab_delay  (dict)  : distribution for the delay from onset to swab; if this is present, it is used instead of test_delay
+        kwargs      (dict)  : passed to Intervention()
 
     **Examples**::
 
@@ -676,22 +692,24 @@ class test_num(Intervention):
 
 class test_prob(Intervention):
     '''
-    Test as many people as required based on test probability.
-    Probabilities are OR together, so choose wisely.
+    Assign each person a probability of being tested for COVID based on their
+    symptom state, quarantine state, and other states. Unlike test_num, the
+    total number of tests not specified, but rather is an output.
 
     Args:
-        symp_prob (float): Probability of testing a symptomatic (unquarantined) person
-        asymp_prob (float): Probability of testing an asymptomatic (unquarantined) person
-        symp_quar_prob (float): Probability of testing a symptomatic quarantined person
-        asymp_quar_prob (float): Probability of testing an asymptomatic quarantined person
-        quar_policy (str): Policy for testing in quarantine: options are 'start', 'end', 'both' (start and end), 'daily'
-        subtarget (dict): subtarget intervention to people with particular indices (see test_num() for details)
-        test_sensitivity (float): Probability of a true positive
-        ili_prev (float or array): Prevalence of influenza-like-illness symptoms in the population
-        loss_prob (float): Probability of loss to follow-up
-        test_delay (int): How long testing takes
-        start_day (int): When to start the intervention
-        kwargs (dict): passed to Intervention()
+        symp_prob        (float)     : probability of testing a symptomatic (unquarantined) person
+        asymp_prob       (float)     : probability of testing an asymptomatic (unquarantined) person (default: 0)
+        symp_quar_prob   (float)     : probability of testing a symptomatic quarantined person (default: same as symp_prob)
+        asymp_quar_prob  (float)     : probability of testing an asymptomatic quarantined person (default: same as asymp_prob)
+        quar_policy      (str)       : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'
+        subtarget        (dict)      : subtarget intervention to people with particular indices  (see test_num() for details)
+        ili_prev         (float/arr) : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
+        test_sensitivity (float)     : test sensitivity (default 100%, i.e. no false negatives)
+        loss_prob        (float)     : probability of the person being lost-to-follow-up (default 0%, i.e. no one lost to follow-up)
+        test_delay       (int)       : days for test result to be known (default 0, i.e. results available instantly)
+        start_day        (int)       : day the intervention starts (default: 0, i.e. first day of the simulation)
+        end_day          (int)       : day the intervention ends (default: no end)
+        kwargs           (dict)      : passed to Intervention()
 
     **Examples**::
 
@@ -791,16 +809,28 @@ class test_prob(Intervention):
 
 class contact_tracing(Intervention):
     '''
-    Contact tracing of positive people.
+    Contact tracing of people who are diagnosed. When a person is diagnosed positive
+    (by either test_num() or test_prob(); this intervention has no effect if there
+    is not also a testing intervention active), a certain proportion of the index
+    case's contacts (defined by trace_prob) are contacted after a certain number
+    of days (defined by trace_time). After they are contacted, they are placed
+    into quarantine (with effectiveness quar_factor, a simulation parameter) for
+    a certain period (defined by quar_period, another simulation parameter). They
+    may also change their testing probability, if test_prob() is defined.
 
     Args:
-        trace_probs (dict): probability of tracing, per layer
-        trace_time  (dict): days required to trace, per layer
-        start_day   (int):  intervention start day
-        end_day     (int):  intervention end day
-        test_delay  (int):  number of days a test result takes
-        presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
-        kwargs      (dict): passed to Intervention()
+        trace_probs (float/dict): probability of tracing, per layer (default: 100%, i.e. everyone is traced)
+        trace_time  (float/dict): days required to trace, per layer (default: 0, i.e. no delay)
+        start_day   (int):        intervention start day (default: 0, i.e. the start of the simulation)
+        end_day     (int):        intervention end day (default: no end)
+        presumptive (bool):       whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis (default: no)
+        kwargs      (dict):       passed to Intervention()
+
+    **Example**::
+
+        tp = cv.test_prob(symp_prob=0.1, asymp_prob=0.01)
+        ct = cv.contact_tracing(trace_probs=0.5, trace_time=2)
+        sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracing has no effect
     '''
     def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
@@ -848,5 +878,102 @@ class contact_tracing(Intervention):
 
         if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
             sim.people.trace(trace_from_inds, self.trace_probs, self.trace_time)
+
+        return
+
+
+
+
+#%% Treatment and prevention interventions
+
+__all__+= ['vaccine']
+
+
+class vaccine(Intervention):
+    '''
+    Apply a vaccine to a subset of the population. In addition to changing the
+    relative susceptibility and the probability of developing symptoms if still
+    infected, this sintervention stores several types of data:
+
+        - ``vaccinations``:      the number of vaccine doses per person
+        - ``vaccination_dates``: list of dates per person
+        - ``orig_rel_sus``:      relative susceptibility per person at the beginning of the simulation
+        - ``orig_symp_prob``:    probability of developing symptoms per person at the beginning of the simulation
+        - ``mod_rel_sus``:       modifier on default susceptibility due to the vaccine
+        - ``mod_symp_prob``:     modifier on default symptom probability due to the vaccine
+
+    Args:
+        days (int or array): the day or array of days to apply the interventions
+        prob      (float): probability of being vaccinated (i.e., fraction of the population)
+        rel_sus   (float): relative change in susceptibility; 0 = perfect, 1 = no effect
+        rel_symp  (float): relative change in symptom probability for people who still get infected; 0 = perfect, 1 = no effect
+        subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
+        cumulative (bool): whether cumulative doses have cumulative effects (default false); can also be an array for efficacy per dose, with the last entry used for multiple doses; thus True = [1] and False = [1,0]
+        kwargs     (dict): passed to Intervention()
+
+    **Examples**::
+
+        interv = cv.vaccine(days=50, prob=0.3, rel_sus=0.5, rel_symp=0.1)
+        interv = cv.vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative=[1, 0.3, 0.1, 0]) # A vaccine with efficacy up to the 3rd dose
+    '''
+    def __init__(self, days, prob=1.0, rel_sus=0.0, rel_symp=0.0, subtarget=None, cumulative=False, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so the intervention can be recreated
+        self.days      = sc.dcp(days)
+        self.prob      = prob
+        self.rel_sus   = rel_sus
+        self.rel_symp  = rel_symp
+        self.subtarget = subtarget
+        if cumulative in [0, False]:
+            cumulative = [1,0] # First dose has full efficacy, second has none
+        elif cumulative in [1, True]:
+            cumulative = [1] # All doses have full efficacy
+        self.cumulative = np.array(cumulative, dtype=cvd.default_float) # Ensure it's an array
+        return
+
+
+    def initialize(self, sim):
+        ''' Fix the dates and store the vaccinations '''
+        self.days = process_days(sim, self.days)
+        self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
+        self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
+        self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
+        self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
+        self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
+        self.mod_symp_prob     = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
+        self.initialized = True
+        return
+
+
+    def apply(self, sim):
+        ''' Perform vaccination '''
+
+        # If this day is found in the list, apply the intervention
+        for ind in find_day(self.days, sim.t):
+
+            # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
+            vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal testing probability to everyone
+            if self.subtarget is not None:
+                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+                vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
+            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
+
+            # Calculate the effect per person
+            vacc_doses = self.vaccinations[vacc_inds] # Calculate current doses
+            eff_doses = np.minimum(vacc_doses, len(self.cumulative)-1) # Convert to a valid index
+            vacc_eff = self.cumulative[eff_doses] # Pull out corresponding effect sizes
+            rel_sus_eff  = (1.0 - vacc_eff) + vacc_eff*self.rel_sus
+            rel_symp_eff = (1.0 - vacc_eff) + vacc_eff*self.rel_symp
+
+            # Apply the vaccine to people
+            sim.people.rel_sus[vacc_inds]   *= rel_sus_eff
+            sim.people.symp_prob[vacc_inds] *= rel_symp_eff
+
+            # Update counters
+            self.mod_rel_sus[vacc_inds]   *= rel_sus_eff
+            self.mod_symp_prob[vacc_inds] *= rel_symp_eff
+            self.vaccinations[vacc_inds] += 1
+            for v_ind in vacc_inds:
+                self.vaccination_dates[v_ind].append(sim.t)
 
         return

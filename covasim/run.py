@@ -215,7 +215,7 @@ class MultiSim(sc.prettyobj):
             reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
 
         # Compute and store final results
-        reduced_sim.compute_summary(verbose=False)
+        reduced_sim.summarize(verbose=False, update=True)
         self.orig_base_sim = self.base_sim
         self.base_sim = reduced_sim
         self.results = reduced_sim.results
@@ -252,7 +252,7 @@ class MultiSim(sc.prettyobj):
                 combined_sim.results[key].values /= n_runs
 
         # Compute and store final results
-        combined_sim.compute_summary(verbose=False)
+        combined_sim.summarize(verbose=False, update=True)
         self.orig_base_sim = self.base_sim
         self.base_sim = combined_sim
         self.results = combined_sim.results
@@ -414,9 +414,12 @@ class MultiSim(sc.prettyobj):
                     kwargs['setylim'] = False
 
                 # Optionally set the label for the first max_sims sims
-                if labels is None and color_by_sim is True and s<max_sims:
-                    merged_labels = sim.label
-                elif final_plot:
+                if color_by_sim is True and s<max_sims:
+                    if labels is None:
+                        merged_labels = sim.label
+                    else:
+                        merged_labels = labels[s]
+                elif final_plot and not color_by_sim:
                     merged_labels = labels
                 else:
                     merged_labels = ''
