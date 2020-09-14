@@ -802,7 +802,6 @@ class BasePeople(sc.prettyobj):
         for key in self.meta.all_states:
             setattr(p, key, self[key][ind])
 
-        ind = np.array(sc.promotetolist(ind), dtype=np.int64)
         contacts = {}
         for lkey, layer in self.contacts.items():
             contacts[lkey] = layer.find_contacts(ind)
@@ -1136,6 +1135,8 @@ class Layer(FlexDict):
         - P2 = [2,3,1,4]
         Then find_contacts([1,3]) would return {1,2,3}
         """
+        if not isinstance(inds, np.ndarray):
+            inds = sc.promotetoarray(inds)
         contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
         if as_array:
             contact_inds = np.fromiter(contact_inds, dtype=cvd.default_int)

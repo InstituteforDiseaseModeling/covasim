@@ -488,6 +488,23 @@ class People(cvb.BasePeople):
             sim.people.story(12)
             sim.people.story(795)
         '''
+
+        def label_lkey(lkey):
+            ''' Friendly name for common layer keys '''
+            if lkey.lower() == 'a':
+                llabel = 'default contact'
+            if lkey.lower() == 'h':
+                llabel = 'household'
+            elif lkey.lower() == 's':
+                llabel = 'school'
+            elif lkey.lower() == 'w':
+                llabel = 'workplace'
+            elif lkey.lower() == 'c':
+                llabel = 'community'
+            else:
+                llabel = f'"{lkey}"'
+            return llabel
+
         p = self[uid]
         sex = 'female' if p.sex == 0 else 'male'
 
@@ -504,14 +521,15 @@ class People(cvb.BasePeople):
         total_contacts = 0
         no_contacts = []
         for lkey in p.contacts.keys():
+            llabel = label_lkey(lkey)
             n_contacts = len(p.contacts[lkey])
             total_contacts += n_contacts
             if n_contacts:
-                print(f'{uid} is connected to {n_contacts} people in the "{lkey}" layer')
+                print(f'{uid} is connected to {n_contacts} people in the {llabel} layer')
             else:
-                no_contacts.append(lkey)
+                no_contacts.append(llabel)
         if len(no_contacts):
-            nc_string = '"' + '", "'.join(no_contacts) + '"'
+            nc_string = ', '.join(no_contacts)
             print(f'{uid} has no contacts in the {nc_string} layer(s)')
         print(f'{uid} has {total_contacts} contacts in total')
 
@@ -539,15 +557,16 @@ class People(cvb.BasePeople):
 
         for infection in self.infection_log:
             lkey = infection['layer']
+            llabel = label_lkey(lkey)
             if infection['target'] == uid:
                 if lkey:
-                    events.append((infection['date'], f'was infected with COVID by {infection["source"]} via layer "{lkey}"'))
+                    events.append((infection['date'], f'was infected with COVID by {infection["source"]} via the {llabel} layer'))
                 else:
                     events.append((infection['date'], f'was infected with COVID as a seed infection'))
 
             if infection['source'] == uid:
                 x = len([a for a in self.infection_log if a['source'] == infection['target']])
-                events.append((infection['date'],f'gave COVID to {infection["target"]} via layer "{lkey}" ({x} secondary infections)'))
+                events.append((infection['date'],f'gave COVID to {infection["target"]} via the {llabel} layer ({x} secondary infections)'))
 
         if len(events):
             for day, event in sorted(events, key=lambda x: x[0]):
