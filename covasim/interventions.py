@@ -328,8 +328,8 @@ class trigger(Intervention):
         chosenindicator = getattr(sim.people, self.indicator)
 
         if self.indicator[:4] == 'date': # It's a flow variable - apply smoothing
-            if self.smoothing is not None and sim.t>smoothing:
-                condition_to_check = sum((chosenindicator > sim.t-smoothing) & (chosenindicator <= sim.t))/smoothing
+            if self.smoothing is not None and sim.t>self.smoothing:
+                condition_to_check = ((chosenindicator > sim.t-self.smoothing) & (chosenindicator <= sim.t)).sum()/self.smoothing
             else:
                 condition_to_check = (chosenindicator == sim.t).sum() # Check the number of people who were diagnosed/quarantined/infected/etc
 
