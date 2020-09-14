@@ -21,15 +21,20 @@ def make_sim(use_defaults=False, do_plot=False):
     plot the sim by default.
     '''
 
+    # Define the interventions
+    cb = cv.change_beta(days=40, changes=0.5)
+    tp = cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)
+    ct = cv.contact_tracing(trace_probs=0.3, start_day=50)
+
     # Define the parameters
-    intervs = [cv.change_beta(days=40, changes=0.5), cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)] # Common interventions
     pars = dict(
-        pop_size      = 20000,    # Population size
-        pop_infected  = 100,      # Number of initial infections -- use more for increased robustness
-        pop_type      = 'hybrid', # Population to use -- "hybrid" is random with household, school,and work structure
-        verbose       = 0,        # Don't print details of the run
-        interventions = intervs,  # Include the most common interventions
-        rand_seed     = 2,
+        pop_size      = 20000,        # Population size
+        pop_infected  = 100,          # Number of initial infections -- use more for increased robustness
+        pop_type      = 'hybrid',     # Population to use -- "hybrid" is random with household, school,and work structure
+        n_days        = 60,           # Number of days to simulate
+        verbose       = 0,            # Don't print details of the run
+        rand_seed     = 2,            # Set a non-default seed
+        interventions = [cb, tp, ct], # Include the most common interventions
     )
 
     # Create the sim

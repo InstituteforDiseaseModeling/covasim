@@ -59,7 +59,10 @@ def test_age_hist():
 def test_fit():
     sc.heading('Testing fitting function')
 
-    sim = cv.Sim(pars, rand_seed=1, datafile="example_data.csv")
+    # Create a testing intervention to ensure some fit to data
+    tp = cv.test_prob(0.1)
+
+    sim = cv.Sim(pars, rand_seed=1, interventions=tp, datafile="example_data.csv")
     sim.run()
 
     # Checking that Fit can handle custom input
@@ -67,7 +70,7 @@ def test_fit():
     fit1 = sim.compute_fit(custom=custom_inputs, compute=True)
 
     # Test that different seed will change compute results
-    sim2 = cv.Sim(pars, rand_seed=2, datafile="example_data.csv")
+    sim2 = cv.Sim(pars, rand_seed=2, interventions=tp, datafile="example_data.csv")
     sim2.run()
     fit2 = sim2.compute_fit(custom=custom_inputs)
 
