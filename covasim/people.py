@@ -472,42 +472,64 @@ class People(cvb.BasePeople):
         fig = cvplt.plot_people(people=self, *args, **kwargs)
         return fig
 
-    def story(self, uid):
+
+    def story(self, uid, output=False):
+        '''
+        Print out a short history of the named individual.
+
+        Args:
+            uid (int): the person whose story is being recounted
+            output (bool): whether to return the days and events of their life
+
+        **Example**::
+
+            sim = cv.Sim(pop_type='hybrid', verbose=0)
+            sim.run()
+            sim.people.story(12)
+            sim.people.story(795)
+        '''
         p = self[uid]
+        sex = 'female' if p.sex == 0 else 'male'
+
+        intro = f'\nThis is the story of {uid}, a {p.age:.0f} year old {sex}'
 
         if not p.susceptible:
             if np.isnan(p.date_symptomatic):
-                print(f'{uid} is a {p.age:.0f} year old that had asymptomatic COVID')
+                print(f'{intro}, who had asymptomatic COVID.')
             else:
-                print(f'{uid} is a {p.age:.0f} year old that contracted COVID')
+                print(f'{intro}, who had symptomatic COVID.')
         else:
-            print(f'{uid} is a {p.age:.0f} year old')
+            print(f'{intro}, who did not contract COVID.')
 
-        if 'H' in p.contacts and len(p.contacts['H']):
-            print(f'{uid} lives with {len(p.contacts["H"])} people')
-        else:
-            print(f'{uid} lives alone')
-
-        if 'W' in p.contacts and len(p.contacts['W']):
-            print(f'{uid} works with {len(p.contacts["W"])} people')
-        else:
-            print(f'{uid} works alone')
+        total_contacts = 0
+        no_contacts = []
+        for lkey in p.contacts.keys():
+            n_contacts = len(p.contacts[lkey])
+            total_contacts += n_contacts
+            if n_contacts:
+                print(f'{uid} is connected to {n_contacts} people in the "{lkey}" layer')
+            else:
+                no_contacts.append(lkey)
+        if len(no_contacts):
+            nc_string = '"' + '", "'.join(no_contacts) + '"'
+            print(f'{uid} has no contacts in the {nc_string} layer(s)')
+        print(f'{uid} has {total_contacts} contacts in total')
 
         events = []
 
         dates = {
-        'date_critical': 'became critically ill and needed ICU care',
-        'date_dead': 'died',
-        'date_diagnosed': 'was diagnosed with COVID',
-        'date_end_quarantine': 'ended quarantine',
-        'date_infectious': 'became infectious',
-        'date_known_contact': f'was notified they may have been exposed to COVID',
-        'date_pos_test': 'recieved their positive test result',
-        'date_quarantined': 'entered quarantine',
-        'date_recovered': 'recovered',
-        'date_severe': 'developed severe symptoms and needed hospitalization',
-        'date_symptomatic': 'became symptomatic',
-        'date_tested': 'was tested for COVID',
+        'date_critical'       : 'became critically ill and needed ICU care',
+        'date_dead'           : 'died ☹',
+        'date_diagnosed'      : 'was diagnosed with COVID',
+        'date_end_quarantine' : 'ended quarantine',
+        'date_infectious'     : 'became infectious',
+        'date_known_contact'  : 'was notified they may have been exposed to COVID',
+        'date_pos_test'       : 'recieved their positive test result',
+        'date_quarantined'    : 'entered quarantine',
+        'date_recovered'      : 'recovered',
+        'date_severe'         : 'developed severe symptoms and needed hospitalization',
+        'date_symptomatic'    : 'became symptomatic',
+        'date_tested'         : 'was tested for COVID',
         }
 
         for attribute, message in dates.items():
@@ -516,15 +538,21 @@ class People(cvb.BasePeople):
                 events.append((date, message))
 
         for infection in self.infection_log:
+            lkey = infection['layer']
             if infection['target'] == uid:
-                if infection["layer"]:
-                    events.append((infection['date'], f'was infected with COVID by {infection["source"]} at {infection["layer"]}'))
+                if lkey:
+                    events.append((infection['date'], f'was infected with COVID by {infection["source"]} via layer "{lkey}"'))
                 else:
                     events.append((infection['date'], f'was infected with COVID as a seed infection'))
 
             if infection['source'] == uid:
                 x = len([a for a in self.infection_log if a['source'] == infection['target']])
-                events.append((infection['date'],f'gave COVID to {infection["target"]} at {infection["layer"]} ({x} secondary infections)'))
+                events.append((infection['date'],f'gave COVID to {infection["target"]} via layer "{lkey}" ({x} secondary infections)'))
 
-        for day, event in sorted(events, key=lambda x: x[0]):
-            print(f'On Day {day:.0f}, {uid} {event}')
+        if len(events):
+            for day, event in sorted(events, key=lambda x: x[0]):
+                print(f'On day {day:.0f}, {uid} {event}')
+        else:
+            print(f'Nothing happened to {uid} during the simulation.')
+        if output:
+            return events

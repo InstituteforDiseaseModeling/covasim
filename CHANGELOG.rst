@@ -14,16 +14,15 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Latest versions (1.6.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Version 1.6.1 (2020-09-11)
---------------------------
-- ``People.person()`` now populates the contacts dictionary when returning a person, so that ``sim.people[0].contacts`` is no longer ``None``
 
 Version 1.6.1 (2020-09-13)
 --------------------------
 - Unpinned ``numba`` from version 0.48. Version 0.49 `changed the seed <https://numba.pydata.org/numba-doc/latest/release-notes.html#version-0-49-0-apr-16-2020>`__ used for ``np.random.choice()``, meaning that results from versions >=0.49 will differ from versions <=0.48. Version 0.49 was also significantly slower for some operations, which is why the switch was not made at the time, but this no longer appears to impact Covasim.
+- ``People.person()`` now populates the contacts dictionary when returning a person, so that e.g. ``sim.people[0].contacts`` is no longer ``None``.
+- There is a new ``story()`` method for ``People`` that prints a history of an individual person, e.g. ``sim.people.story(35)``.
 - The baseline test in ``test_baseline.py`` has been updated to include contact tracing, giving greater code coverage for regression changes.
 - *Regression information*: No changes to the Covasim codebase were made; however, new installations of Covasim (or if you update Numba manually) will have a different random number stream. To return previous results, use the previous version of Numba: ``pip install numba==0.48.0``.
-- *GitHub info*: PR `677 <https://github.com/amath-idm/covasim/pull/677>`__
+- *GitHub info*: PRs `669 <https://github.com/amath-idm/covasim/pull/669>`__, `677 <https://github.com/amath-idm/covasim/pull/677>`__
 
 
 Version 1.6.0 (2020-09-08)
