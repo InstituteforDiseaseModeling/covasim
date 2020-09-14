@@ -58,8 +58,8 @@ def test_reset_seed():
     s1.run(until=until)
     s1.run(reset_seed=True)
 
-    assert np.all(s0.results['cum_infections'][:until] == s1.results['cum_infections'][:until]) # Results for the first 30 days should be the same
-    assert not np.all(s0.results['cum_infections'][until:] != s1.results['cum_infections'][until:]) # Results should be different
+    assert     np.all(s0.results['cum_infections'][:until] == s1.results['cum_infections'][:until]) # Results for the first 30 days should be the same
+    assert not np.all(s0.results['cum_infections'][until:] == s1.results['cum_infections'][until:]) # Results should be different
 
     return s1
 
