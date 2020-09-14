@@ -3,7 +3,7 @@ pandas
 scipy
 matplotlib
 statsmodels
-numba==0.48
+numba
 sciris>=0.17.0
 scirisweb>=0.17.0
 gunicorn

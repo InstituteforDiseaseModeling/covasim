@@ -66,7 +66,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     url='http://covasim.org',
-    keywords=["Covid-19", "coronavirus", "SARS-CoV-2", "stochastic", "agent-based model"],
+    keywords=["Covid-19", "coronavirus", "SARS-CoV-2", "stochastic", "agent-based model", "interventions", "epidemiology"],
     platforms=["OS Independent"],
     classifiers=CLASSIFIERS,
     packages=find_packages(),
