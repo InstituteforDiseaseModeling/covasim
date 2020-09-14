@@ -18,6 +18,7 @@ Latest versions (1.6.x)
 Version 1.6.1 (2020-09-13)
 --------------------------
 - Unpinned ``numba`` from version 0.48. Version 0.49 `changed the seed <https://numba.pydata.org/numba-doc/latest/release-notes.html#version-0-49-0-apr-16-2020>`__ used for ``np.random.choice()``, meaning that results from versions >=0.49 will differ from versions <=0.48. Version 0.49 was also significantly slower for some operations, which is why the switch was not made at the time, but this no longer appears to impact Covasim.
+- The baseline test in ``test_baseline.py`` has been updated to include contact tracing, giving greater code coverage for regression changes.
 - *Regression information*: No changes to the Covasim codebase were made; however, new installations of Covasim (or if you update Numba manually) will have a different random number stream. To return previous results, use the previous version of Numba: ``pip install numba==0.48.0``.
 - *GitHub info*: PR `677 <https://github.com/amath-idm/covasim/pull/677>`__
 
