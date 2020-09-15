@@ -61,7 +61,7 @@ autodoc_default_options = {
     'members': None
 }
 
-autodoc_mock_imports = []
+autodoc_mock_imports = ['llvmlite']
 
 
 napoleon_google_docstring = True
