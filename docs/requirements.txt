@@ -3,3 +3,4 @@ sphinxcontrib-napoleon~=0.7
 sphinx~=3.2.0
 plantweb~=1.2.1
 pytest
+numba==0.48.0

@@ -21,12 +21,13 @@ formats:
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
-   version: 3.7
-   install:
-      - requirements: docs/requirements.txt
-      - method: setuptools
-        path: .
-        
+  version: 3.7
+  install:
+    - requirements: docs/requirements.txt
+    - method: setuptools
+      path: .
+  system_packages: true
+    
 # Optionally rank topics in search results, between -10 (lower) and 10 (higher).
 # 0 is normal rank, not no rank
 
