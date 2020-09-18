@@ -686,6 +686,11 @@ class TransTree(sc.prettyobj):
         self.n_days = people.t  # people.t should be set to the last simulation timestep in the output (since the Transtree is constructed after the people have been stepped forward in time)
         self.pop_size = len(people)
 
+        # Check that rescaling is not on
+        if sim['rescale']:
+            errormsg = 'Warning: transmission tree results are unreliable when dynamic rescaling is on, since agents are reused! Please rerun with rescale=False and pop_scale=1 for reliable results.'
+            print(errormsg)
+
         # Include the basic line list
         self.infection_log = sc.dcp(people.infection_log)
 
