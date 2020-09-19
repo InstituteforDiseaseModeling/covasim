@@ -538,7 +538,6 @@ def get_subtargets(subtarget, sim):
             errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'
             raise ValueError(errormsg)
 
-
     return subtarget_inds, subtarget_vals
 
 
@@ -548,18 +547,27 @@ def get_quar_inds(quar_policy, sim):
     based on the current quarantine testing "policy". Used by test_num and test_prob.
     Not for use by the user.
 
+    If quar_policy is a number or a list of numbers, then it is interpreted as
+    the number of days after the start of quarantine when a test is performed.
+    It can also be a function that returns the list of indices.
+
     Args:
-        quar_policy (str): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
+        quar_policy (str, int, func): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
         sim (Sim): the simulation object
     '''
     t = sim.t
     all_quar_inds = cvu.true(sim.people.quarantined)
-    if   quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day before
+    if   quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day before since testing usually happens before contact tracing
     elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t)
     elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t)])
     elif quar_policy == 'daily': quar_test_inds = all_quar_inds
+    elif sc.isnumber(quar_policy) or isinstance(quar_policy, list):
+        quar_policy = sc.promotetolist(quar_policy)
+        quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
+    elif callable(quar_policy):
+        quar_test_inds = quar_policy(sim)
     else:
-        errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be start, end, both, or daily'
+        errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be a string (start, end, both, daily), int, or function'
         raise ValueError(errormsg)
     return quar_test_inds, all_quar_inds
 
@@ -575,7 +583,7 @@ class test_num(Intervention):
         daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day
         symp_test   (float) : odds ratio of a symptomatic person testing (default: 100x more likely)
         quar_test   (float) : probability of a person in quarantine testing (default: no more likely)
-        quar_policy (str)   : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'
+        quar_policy (str)   : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
         subtarget   (dict)  : subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'vals': value(s) to apply}
         ili_prev    (arr)   : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
         sensitivity (float) : test sensitivity (default 100%, i.e. no false negatives)
@@ -702,7 +710,7 @@ class test_prob(Intervention):
         asymp_prob       (float)     : probability of testing an asymptomatic (unquarantined) person (default: 0)
         symp_quar_prob   (float)     : probability of testing a symptomatic quarantined person (default: same as symp_prob)
         asymp_quar_prob  (float)     : probability of testing an asymptomatic quarantined person (default: same as asymp_prob)
-        quar_policy      (str)       : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'
+        quar_policy      (str)       : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
         subtarget        (dict)      : subtarget intervention to people with particular indices  (see test_num() for details)
         ili_prev         (float/arr) : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
         test_sensitivity (float)     : test sensitivity (default 100%, i.e. no false negatives)
