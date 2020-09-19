@@ -650,11 +650,11 @@ class test_num(Intervention):
         # Check that there are still tests
         rel_t = t - self.start_day
         if rel_t < len(self.daily_tests):
-            n_tests = int(self.daily_tests[rel_t]/sim.rescale_vec[t])  # Number of tests for this day -- rescaled
+            n_tests = int(self.daily_tests[rel_t]/sim['pop_scale'])  # Number of tests for this day -- rescaled
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
-                sim.results['new_tests'][t] += n_tests
+                sim.results['new_tests'][t] += n_tests*sim['pop_scale']/sim.rescale_vec[t] # Correct for scaling that may be applied
         else:
             return
 

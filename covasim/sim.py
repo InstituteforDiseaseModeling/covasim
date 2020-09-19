@@ -686,13 +686,19 @@ class Sim(cvb.BaseSim):
     def compute_yield(self):
         '''
         Compute test yield -- number of positive tests divided by the total number
-        of tests.
+        of tests, also called test positivity rate. Relative yield is with respect
+        to prevalence: i.e., how the yield compares to what the yield would be from
+        choosing a person at random from the population.
         '''
+        # Absolute yield
         res = self.results
-        inds = cvu.true(res['new_tests'].values) # Pull out non-zero numbers of tests
-        denom = res['n_infectious'][inds] / (res['n_alive'][inds] - res['cum_diagnoses'][inds]) # Alive + undiagnosed people might test; infectious people will test positive
+        inds = cvu.true(res['new_tests'][:]) # Pull out non-zero numbers of tests
         self.results['test_yield'][inds] = res['new_diagnoses'][inds]/res['new_tests'][inds] # Calculate the yield
-        self.results['rel_test_yield'][inds] = self.results['test_yield'][inds]/denom # Calculate the relative yield
+
+        # Relative yield
+        rel_inds = cvu.true(res['n_infectious'][:]) # To avoid divide by zero if no one is infectious
+        denom = res['n_infectious'][rel_inds] / (res['n_alive'][rel_inds] - res['cum_diagnoses'][rel_inds]) # Alive + undiagnosed people might test; infectious people will test positive
+        self.results['rel_test_yield'][rel_inds] = self.results['test_yield'][rel_inds]/denom # Calculate the relative yield
         return
 
 
