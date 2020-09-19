@@ -788,6 +788,14 @@ class test_prob(Intervention):
         if self.subtarget is not None:
             subtarget_inds  = self.subtarget['inds']
 
+        print('TEMP')
+        asymp_quar_inds = np.setdiff1d(asymp_quar_inds, np.concatenate([diag_inds]))
+        symp_quar_inds  = np.setdiff1d(symp_quar_inds, np.concatenate([diag_inds]))
+        asymp_inds      = np.setdiff1d(asymp_inds, np.concatenate([diag_inds, asymp_quar_inds]))
+        # ili_inds        = np.setdiff1d(ili_inds, np.concatenate([diag_inds, symp_quar_inds]))
+        symp_inds       = np.setdiff1d(symp_inds, np.concatenate([diag_inds, symp_quar_inds]))
+
+
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
         test_probs[symp_inds]       = symp_prob            # People with symptoms
@@ -800,6 +808,22 @@ class test_prob(Intervention):
             test_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
         test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
         test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
+
+        print(f'>>>DEBUG: {sim.t} {len(quar_inds) }symp={sum(sim.people.symptomatic[quar_inds])} asymp={sum(~sim.people.symptomatic[quar_inds])}')
+        sum_symp_inds = sum(test_probs[symp_inds])
+        sum_ili_inds = sum(test_probs[ili_inds])
+        sum_asymp_inds = sum(test_probs[asymp_inds])
+        sum_symp_quar_inds = sum(test_probs[symp_quar_inds])
+        sum_asymp_quar_inds = sum(test_probs[asymp_quar_inds])
+        tot = sum_symp_inds + sum_ili_inds + sum_asymp_inds + sum_symp_quar_inds + sum_asymp_quar_inds
+        print(f'Predicted symp_inds       : {sum_symp_inds}')
+        print(f'Predicted ili_inds        : {sum_ili_inds}')
+        print(f'Predicted asymp_inds      : {sum_asymp_inds}')
+        print(f'Predicted symp_quar_inds  : {sum_symp_quar_inds}')
+        print(f'Predicted asymp_quar_inds : {sum_asymp_quar_inds}')
+        print(f'Predicted tot             : {tot}')
+        print(f'Actual tot                : {len(test_inds)}')
+        print('\n\n')
 
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
