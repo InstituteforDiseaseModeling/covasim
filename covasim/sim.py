@@ -295,11 +295,13 @@ class Sim(cvb.BaseSim):
         self.results['n_susceptible'].scale = 'static'
 
         # Other variables
-        self.results['prevalence']    = init_res('Prevalence', scale=False)
-        self.results['incidence']     = init_res('Incidence', scale=False)
-        self.results['r_eff']         = init_res('Effective reproduction number', scale=False)
-        self.results['doubling_time'] = init_res('Doubling time', scale=False)
-        self.results['test_yield']    = init_res('Testing yield', scale=False)
+        self.results['n_alive']        = init_res('Number of people alive', scale=False)
+        self.results['prevalence']     = init_res('Prevalence', scale=False)
+        self.results['incidence']      = init_res('Incidence', scale=False)
+        self.results['r_eff']          = init_res('Effective reproduction number', scale=False)
+        self.results['doubling_time']  = init_res('Doubling time', scale=False)
+        self.results['test_yield']     = init_res('Testing yield', scale=False)
+        self.results['rel_test_yield'] = init_res('Relative testing yield', scale=False)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -307,8 +309,8 @@ class Sim(cvb.BaseSim):
         else:
             scale = self['pop_scale']
         self.rescale_vec   = scale*np.ones(self.npts) # Not included in the results, but used to scale them
-        self.results['t']    = self.tvec
         self.results['date'] = self.datevec
+        self.results['t']    = self.tvec
         self.results_ready   = False
 
         return
@@ -674,30 +676,23 @@ class Sim(cvb.BaseSim):
         people divided by the number of people who are alive. Incidence is the number
         of new infections per day divided by the susceptible population.
         '''
-        n_exposed = self.results['n_exposed'].values # Number of people currently infected
-        n_alive = self.scaled_pop_size - self.results['cum_deaths'].values # Number of people still alive
-        n_susceptible = self.results['n_susceptible'].values # Number of people still susceptible
-        new_infections = self.results['new_infections'].values # Number of new infections
-        self.results['prevalence'][:] = n_exposed/n_alive # Calculate the prevalence
-        self.results['incidence'][:] = new_infections/n_susceptible # Calculate the incidence
+        res = self.results
+        self.results['n_alive'][:] = self.scaled_pop_size - res['cum_deaths'].values # Number of people still alive
+        self.results['prevalence'][:] = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
+        self.results['incidence'][:]  = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         return
 
 
-    def compute_yield(self, relative=False):
+    def compute_yield(self):
         '''
         Compute test yield -- number of positive tests divided by the total number
-        of tests. If relative is true, then also divide by the prevalence
+        of tests.
         '''
         res = self.results
-        n_diags = res['new_diagnoses'].values # Number of positive tests
-        n_tests = res['new_tests'].values # Total number of tests
-        inds = cvu.true(n_tests) # Pull out non-zero numbers of tests
-        if relative:
-            n_alive = self.scaled_pop_size - self.results['cum_deaths'].values # Number of people still alive
-            prev = res['n_infectious'].values[inds]/n_alive[inds]
-        else:
-            prev = 1 # Do not correct for prevalence
-        self.results['test_yield'].values[inds] = n_diags[inds]/n_tests[inds]/prev # Calculate the yield
+        inds = cvu.true(res['new_tests'].values) # Pull out non-zero numbers of tests
+        denom = res['n_infectious'][inds] / (res['n_alive'][inds] - res['cum_diagnoses'][inds]) # Alive + undiagnosed people might test; infectious people will test positive
+        self.results['test_yield'][inds] = res['new_diagnoses'][inds]/res['new_tests'][inds] # Calculate the yield
+        self.results['rel_test_yield'][inds] = self.results['test_yield'][inds]/denom # Calculate the relative yield
         return
 
 
