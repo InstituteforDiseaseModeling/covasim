@@ -791,7 +791,7 @@ class test_prob(Intervention):
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
         test_probs[symp_inds]       = symp_prob            # People with symptoms
-        test_probs[ili_inds]        = symp_prob+0.02            # People with symptoms
+        test_probs[ili_inds]        = symp_prob            # People with symptoms
         test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
         test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
         test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
@@ -800,14 +800,6 @@ class test_prob(Intervention):
             test_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
         test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
         test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
-
-        print(f'>>>>>>>>>>>>>DEBUG {sim.t}')
-        print(f'symp_inds:       {len(symp_inds)} {sum(test_probs==symp_prob)}')
-        print(f'ili_inds:        {len(ili_inds)} {sum(test_probs==symp_prob+0.02)}')
-        print(f'asymp_inds:      {len(asymp_inds)} {sum(test_probs==self.asymp_prob)}')
-        print(f'symp_quar_inds:  {len(symp_quar_inds)} {sum(test_probs==self.symp_quar_prob)}')
-        print(f'asymp_quar_inds: {len(asymp_quar_inds)} {sum(test_probs==self.asymp_quar_prob)}')
-        print(f'diag_inds:       {len(diag_inds)} {sum(test_probs==0.0)}')
 
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
