@@ -553,14 +553,15 @@ def get_quar_inds(quar_policy, sim):
         sim (Sim): the simulation object
     '''
     t = sim.t
-    if   quar_policy == 'start': quar_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day before
-    elif quar_policy == 'end':   quar_inds = cvu.true(sim.people.date_end_quarantine==t)
-    elif quar_policy == 'both':  quar_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t)])
-    elif quar_policy == 'daily': quar_inds = cvu.true(sim.people.quarantined)
+    all_quar_inds = cvu.true(sim.people.quarantined)
+    if   quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day before
+    elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t)
+    elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t)])
+    elif quar_policy == 'daily': quar_test_inds = all_quar_inds
     else:
         errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be start, end, both, or daily'
         raise ValueError(errormsg)
-    return quar_inds
+    return quar_test_inds, all_quar_inds
 
 
 class test_num(Intervention):
@@ -671,8 +672,8 @@ class test_num(Intervention):
                 test_probs[ili_inds] *= self.symp_test
 
         # Handle quarantine testing
-        quar_inds = get_quar_inds(self.quar_policy, sim)
-        test_probs[quar_inds] *= self.quar_test
+        quar_test_inds, _ = get_quar_inds(self.quar_policy, sim)
+        test_probs[quar_test_inds] *= self.quar_test
 
         # Handle any other user-specified testing criteria
         if self.subtarget is not None:
@@ -781,20 +782,14 @@ class test_prob(Intervention):
         asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(pop_size), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
-        quar_inds = get_quar_inds(self.quar_policy, sim)
-        symp_quar_inds  = np.intersect1d(quar_inds, symp_inds)
-        asymp_quar_inds = np.intersect1d(quar_inds, asymp_inds)
+        quar_test_inds, all_quar_inds = get_quar_inds(self.quar_policy, sim)
+        symp_quar_inds  = np.intersect1d(quar_test_inds, symp_inds)
+        asymp_quar_inds = np.intersect1d(quar_test_inds, asymp_inds)
+        symp_inds       = np.setdiff1d(symp_inds, all_quar_inds) # Remove all people in quarantine, not just those scheduled to test
+        asymp_inds      = np.setdiff1d(asymp_inds, all_quar_inds)
         diag_inds       = cvu.true(sim.people.diagnosed)
         if self.subtarget is not None:
             subtarget_inds  = self.subtarget['inds']
-
-        print('TEMP')
-        asymp_quar_inds = np.setdiff1d(asymp_quar_inds, np.concatenate([diag_inds]))
-        symp_quar_inds  = np.setdiff1d(symp_quar_inds, np.concatenate([diag_inds]))
-        asymp_inds      = np.setdiff1d(asymp_inds, np.concatenate([diag_inds, asymp_quar_inds]))
-        # ili_inds        = np.setdiff1d(ili_inds, np.concatenate([diag_inds, symp_quar_inds]))
-        symp_inds       = np.setdiff1d(symp_inds, np.concatenate([diag_inds, symp_quar_inds]))
-
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
@@ -809,7 +804,7 @@ class test_prob(Intervention):
         test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
         test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
 
-        print(f'>>>DEBUG: {sim.t} {len(quar_inds) }symp={sum(sim.people.symptomatic[quar_inds])} asymp={sum(~sim.people.symptomatic[quar_inds])}')
+        print(f'>>>DEBUG: {sim.t} {len(quar_test_inds)} {len(all_quar_inds)} symp={sum(sim.people.symptomatic[quar_test_inds])} asymp={sum(~sim.people.symptomatic[quar_test_inds])}')
         sum_symp_inds = sum(test_probs[symp_inds])
         sum_ili_inds = sum(test_probs[ili_inds])
         sum_asymp_inds = sum(test_probs[asymp_inds])
