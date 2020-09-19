@@ -683,12 +683,21 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def compute_yield(self):
-        ''' Compute test yield -- number of positive tests divided by the total number of tests '''
-        n_diags = self.results['new_diagnoses'].values # Number of positive tests
-        n_tests = self.results['new_tests'].values # Total number of tests
+    def compute_yield(self, relative=False):
+        '''
+        Compute test yield -- number of positive tests divided by the total number
+        of tests. If relative is true, then also divide by the prevalence
+        '''
+        res = self.results
+        n_diags = res['new_diagnoses'].values # Number of positive tests
+        n_tests = res['new_tests'].values # Total number of tests
         inds = cvu.true(n_tests) # Pull out non-zero numbers of tests
-        self.results['test_yield'].values[inds] = n_diags[inds]/n_tests[inds] # Calculate the yield
+        if relative:
+            n_alive = self.scaled_pop_size - self.results['cum_deaths'].values # Number of people still alive
+            prev = res['n_infectious'].values[inds]/n_alive[inds]
+        else:
+            prev = 1 # Do not correct for prevalence
+        self.results['test_yield'].values[inds] = n_diags[inds]/n_tests[inds]/prev # Calculate the yield
         return
 
 
