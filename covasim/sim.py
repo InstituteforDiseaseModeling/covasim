@@ -674,10 +674,12 @@ class Sim(cvb.BaseSim):
         '''
         Compute prevalence and incidence. Prevalence is the current number of infected
         people divided by the number of people who are alive. Incidence is the number
-        of new infections per day divided by the susceptible population.
+        of new infections per day divided by the susceptible population. Also calculate
+        the number of people alive, and recalculate susceptibles to handle scaling.
         '''
         res = self.results
-        self.results['n_alive'][:] = self.scaled_pop_size - res['cum_deaths'].values # Number of people still alive
+        self.results['n_alive'][:] = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
+        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:]
         self.results['prevalence'][:] = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]  = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         return
