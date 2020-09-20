@@ -556,21 +556,20 @@ def get_quar_inds(quar_policy, sim):
         sim (Sim): the simulation object
     '''
     t = sim.t
-    all_quar_inds = cvu.true(sim.people.quarantined)
     if   quar_policy is None:    quar_test_inds = np.array([])
     elif quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day before since testing usually happens before contact tracing
     elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t)
     elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t)])
-    elif quar_policy == 'daily': quar_test_inds = all_quar_inds
-    elif sc.isnumber(quar_policy) or isinstance(quar_policy, list):
-        quar_policy = sc.promotetolist(quar_policy)
+    elif quar_policy == 'daily': quar_test_inds = cvu.true(sim.people.quarantined)
+    elif sc.isnumber(quar_policy) or (sc.isiterable(quar_policy) and not sc.isstring(quar_policy)):
+        quar_policy = sc.promotetoarray(quar_policy)
         quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
     elif callable(quar_policy):
         quar_test_inds = quar_policy(sim)
     else:
-        errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be a string (start, end, both, daily), int, or function'
+        errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be a string (start, end, both, daily), int, list, array, set, tuple, or function'
         raise ValueError(errormsg)
-    return quar_test_inds, all_quar_inds
+    return quar_test_inds
 
 
 class test_num(Intervention):
@@ -799,11 +798,9 @@ class test_prob(Intervention):
         asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(pop_size), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
-        quar_test_inds, all_quar_inds = get_quar_inds(self.quar_policy, sim)
+        quar_test_inds = get_quar_inds(self.quar_policy, sim)
         symp_quar_inds  = np.intersect1d(quar_test_inds, symp_inds)
         asymp_quar_inds = np.intersect1d(quar_test_inds, asymp_inds)
-        symp_inds       = np.setdiff1d(symp_inds, quar_test_inds) # Remove all people in quarantine, not just those scheduled to test
-        asymp_inds      = np.setdiff1d(asymp_inds, all_quar_inds)
         diag_inds       = cvu.true(sim.people.diagnosed)
         if self.subtarget is not None:
             subtarget_inds  = self.subtarget['inds']
