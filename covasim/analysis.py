@@ -688,8 +688,8 @@ class TransTree(sc.prettyobj):
 
         # Check that rescaling is not on
         if sim['rescale']:
-            errormsg = 'Warning: transmission tree results are unreliable when dynamic rescaling is on, since agents are reused! Please rerun with rescale=False and pop_scale=1 for reliable results.'
-            print(errormsg)
+            warningmsg = 'Warning: transmission tree results are unreliable when dynamic rescaling is on, since agents are reused! Please rerun with rescale=False and pop_scale=1 for reliable results.'
+            print(warningmsg)
 
         # Include the basic line list
         self.infection_log = sc.dcp(people.infection_log)
