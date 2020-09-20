@@ -552,7 +552,7 @@ def get_quar_inds(quar_policy, sim):
     It can also be a function that returns the list of indices.
 
     Args:
-        quar_policy (str, int, func): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
+        quar_policy (str, int, list, func): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
         sim (Sim): the simulation object
     '''
     t = sim.t
@@ -680,7 +680,7 @@ class test_num(Intervention):
                 test_probs[ili_inds] *= self.symp_test
 
         # Handle quarantine testing
-        quar_test_inds, _ = get_quar_inds(self.quar_policy, sim)
+        quar_test_inds = get_quar_inds(self.quar_policy, sim)
         test_probs[quar_test_inds] *= self.quar_test
 
         # Handle any other user-specified testing criteria
