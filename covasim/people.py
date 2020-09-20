@@ -20,12 +20,19 @@ class People(cvb.BasePeople):
     not invoked directly, but instead is created automatically by the sim. Most
     initialization happens in BasePeople. The only required input argument is the
     population size, but typically the full parameters dictionary will get passed
-    instead since it will be needed eventually.
+    instead since it will be needed before the People object is initialized.
 
     Args:
         pars (dict): the sim parameters, e.g. sim.pars -- alternatively, if a number, interpreted as pop_size
         strict (bool): whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set
         kwargs (dict): the actual data, e.g. from a popdict, being specified
+
+    ::Examples::
+
+        ppl1 = cv.People(2000)
+
+        sim = cv.Sim()
+        ppl2 = cv.People(sim.pars)
     '''
 
     def __init__(self, pars, strict=True, **kwargs):
@@ -61,6 +68,9 @@ class People(cvb.BasePeople):
         '''
 
         pars = self.pars # Shorten
+        if 'prognoses' not in pars:
+            errormsg = 'This people object does not have the required parameters ("prognoses"). Create a sim (or parameters), then do e.g. people.set_pars(sim.pars).'
+            raise sc.KeyNotFoundError(errormsg)
 
         def find_cutoff(age_cutoffs, age):
             '''

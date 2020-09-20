@@ -541,7 +541,7 @@ class BasePeople(sc.prettyobj):
 
     '''
 
-    def __init__(self, pars=None, **kwargs):
+    def __init__(self, pars, **kwargs):
 
         # Handle pars and population size
         if sc.isnumber(pars): # Interpret as a population size
