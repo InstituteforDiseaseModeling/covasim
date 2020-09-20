@@ -701,7 +701,7 @@ class test_num(Intervention):
             n_tests = cvu.randround(n_tests*in_frac) # Recompute the number of tests
 
         # Now choose who gets tested and test them
-        n_tests = min(n_tests, len(cvu.true(test_probs))) # Don't try to test more people than have nonzero testing probability
+        n_tests = min(n_tests, (test_probs!=0).sum()) # Don't try to test more people than have nonzero testing probability
         test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True)
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
