@@ -649,7 +649,7 @@ class test_num(Intervention):
         # Check that there are still tests
         rel_t = t - self.start_day
         if rel_t < len(self.daily_tests):
-            n_tests = cvu.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests -- to be replaced with randround()
+            n_tests = cvu.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
@@ -694,14 +694,14 @@ class test_num(Intervention):
 
         # With dynamic rescaling, we have to correct for uninfected people outside of the population who would test
         if sim.rescale_vec[t]/sim['pop_scale'] < 1: # We still have rescaling to do
-            in_pop_tot_prob = test_probs.sum()*sim.rescale_vec[t]
+            in_pop_tot_prob = test_probs.sum()*sim.rescale_vec[t] # Total "testing weight" of people in the subsampled population
             out_pop_tot_prob = sim.scaled_pop_size - sim.rescale_vec[t]*sim['pop_size'] # Find out how many people are missing and assign them each weight 1
             in_frac = in_pop_tot_prob/(in_pop_tot_prob + out_pop_tot_prob) # Fraction of tests which should fall in the sample population
             n_tests = cvu.randround(n_tests*in_frac) # Recompute the number of tests
 
         # Now choose who gets tested and test them
         n_tests = min(n_tests, (test_probs!=0).sum()) # Don't try to test more people than have nonzero testing probability
-        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True)
+        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True) # Choose who actually tests
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return
@@ -807,8 +807,8 @@ class test_prob(Intervention):
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
-        test_probs[symp_inds]       = symp_prob            # People with symptoms
-        test_probs[ili_inds]        = symp_prob            # People with symptoms
+        test_probs[symp_inds]       = symp_prob            # People with symptoms (true positive)
+        test_probs[ili_inds]        = symp_prob            # People with symptoms (false positive)
         test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
         test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
         test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine

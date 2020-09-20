@@ -644,7 +644,7 @@ class Sim(cvb.BaseSim):
 
         # Scale the results
         for reskey in self.result_keys():
-            if self.results[reskey].scale in ['dynamic', True]: # "Dynamic" is left for backwards compatibility
+            if self.results[reskey].scale: # Scale the result dynamically
                 self.results[reskey].values *= self.rescale_vec
 
         # Calculate cumulative results
@@ -688,10 +688,10 @@ class Sim(cvb.BaseSim):
         the number of people alive, and recalculate susceptibles to handle scaling.
         '''
         res = self.results
-        self.results['n_alive'][:] = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
+        self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
         self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:]
-        self.results['prevalence'][:] = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
-        self.results['incidence'][:]  = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
+        self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
+        self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         return
 
 
