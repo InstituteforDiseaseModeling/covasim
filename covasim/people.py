@@ -18,10 +18,12 @@ class People(cvb.BasePeople):
     '''
     A class to perform all the operations on the people. This class is usually
     not invoked directly, but instead is created automatically by the sim. Most
-    initialization happens in BasePeople.
+    initialization happens in BasePeople. The only required input argument is the
+    population size, but typically the full parameters dictionary will get passed
+    instead since it will be needed eventually.
 
     Args:
-        pars (dict): the sim parameters, e.g. sim.pars -- must have pop_size and n_days keys
+        pars (dict): the sim parameters, e.g. sim.pars -- alternatively, if a number, interpreted as pop_size
         strict (bool): whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set
         kwargs (dict): the actual data, e.g. from a popdict, being specified
     '''
