@@ -689,7 +689,7 @@ class Sim(cvb.BaseSim):
         '''
         res = self.results
         self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
-        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:]
+        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         return
@@ -708,9 +708,9 @@ class Sim(cvb.BaseSim):
         self.results['test_yield'][inds] = res['new_diagnoses'][inds]/res['new_tests'][inds] # Calculate the yield
 
         # Relative yield
-        rel_inds = cvu.true(res['n_infectious'][:]) # To avoid divide by zero if no one is infectious
-        denom = res['n_infectious'][rel_inds] / (res['n_alive'][rel_inds] - res['cum_diagnoses'][rel_inds]) # Alive + undiagnosed people might test; infectious people will test positive
-        self.results['rel_test_yield'][rel_inds] = self.results['test_yield'][rel_inds]/denom # Calculate the relative yield
+        inds = cvu.true(res['n_infectious'][:]) # To avoid divide by zero if no one is infectious
+        denom = res['n_infectious'][inds] / (res['n_alive'][inds] - res['cum_diagnoses'][inds]) # Alive + undiagnosed people might test; infectious people will test positive
+        self.results['rel_test_yield'][inds] = self.results['test_yield'][inds]/denom # Calculate the relative yield
         return
 
 

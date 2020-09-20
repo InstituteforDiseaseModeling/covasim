@@ -431,10 +431,21 @@ def choose_w(probs, n, unique=True):
 
 def randround(x):
     '''
-    Round a float, list, or array probabilistically to the nearest integer.
+    Round a float, list, or array probabilistically to the nearest integer. Works
+    for both positive and negative values.
 
-    To move to Sciris eventually. Based on
-    https://stackoverflow.com/questions/19045971/random-rounding-to-integer-in-python
+    To move to Sciris eventually. Adapted from:
+        https://stackoverflow.com/questions/19045971/random-rounding-to-integer-in-python
+
+    Args:
+        x (int, list, arr): the floating point numbers to probabilistically convert to the nearest integer
+
+    Returns:
+        Array of integers
+
+    **Example**::
+
+        cv.randround(np.random.randn(20))
     '''
     if isinstance(x, np.ndarray):
         output = np.array(np.floor(x+np.random.random(x.size)), dtype=int)
