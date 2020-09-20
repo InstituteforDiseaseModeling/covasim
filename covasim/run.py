@@ -78,7 +78,7 @@ class MultiSim(sc.prettyobj):
             elif isinstance(sims, list):
                 base_sim = sims[0]
             else:
-                errormsg = f'If base_sim is not supplied, sims must be either a sims or a list of sims, not {type(sims)}'
+                errormsg = f'If base_sim is not supplied, sims must be either a single sim (treated as base_sim) or a list of sims, not {type(sims)}'
                 raise TypeError(errormsg)
 
         if quantiles is None:
