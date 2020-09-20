@@ -650,15 +650,15 @@ class test_num(Intervention):
         # Check that there are still tests
         rel_t = t - self.start_day
         if rel_t < len(self.daily_tests):
-            n_tests = int(self.daily_tests[rel_t]/sim['pop_scale'])  # Number of tests for this day -- rescaled
+            n_tests = cvu.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests -- to be replaced with randround()
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
-                sim.results['new_tests'][t] += n_tests*sim['pop_scale']/sim.rescale_vec[t] # Correct for scaling that may be applied
+                sim.results['new_tests'][t] += n_tests
         else:
             return
 
-        test_probs = np.ones(sim.n) # Begin by assigning equal testing probability to everyone
+        test_probs = np.ones(sim.n) # Begin by assigning equal testing weight (converted to a probability) to everyone
 
         # Calculate test probabilities for people with symptoms
         symp_inds = cvu.true(sim.people.symptomatic)
@@ -691,10 +691,18 @@ class test_num(Intervention):
 
         # Don't re-diagnose people
         diag_inds  = cvu.true(sim.people.diagnosed)
-        test_probs[diag_inds] = 0.
+        test_probs[diag_inds] = 0.0
+
+        # With dynamic rescaling, we have to correct for uninfected people outside of the population who would test
+        if sim.rescale_vec[t]/sim['pop_scale'] < 1: # We still have rescaling to do
+            in_pop_tot_prob = test_probs.sum()*sim.rescale_vec[t]
+            out_pop_tot_prob = sim.scaled_pop_size - sim.rescale_vec[t]*sim['pop_size'] # Find out how many people are missing and assign them each weight 1
+            in_frac = in_pop_tot_prob/(in_pop_tot_prob + out_pop_tot_prob) # Fraction of tests which should fall in the sample population
+            n_tests = cvu.randround(n_tests*in_frac) # Recompute the number of tests
 
         # Now choose who gets tested and test them
-        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=False)
+        n_tests = min(n_tests, len(cvu.true(test_probs))) # Don't try to test more people than have nonzero testing probability
+        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True)
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return

@@ -292,7 +292,6 @@ class Sim(cvb.BaseSim):
         # Stock variables
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
-        self.results['n_susceptible'].scale = 'static'
 
         # Other variables
         self.results['n_alive']        = init_res('Number of people alive', scale=False)
@@ -582,8 +581,7 @@ class Sim(cvb.BaseSim):
         if self.complete:
             raise AlreadyRunError('Simulation is already complete (call sim.initialize() to re-run)')
 
-        if self.t >= until:
-            # NB. At the start, self.t is None so this check must occur after initialization
+        if self.t >= until: # NB. At the start, self.t is None so this check must occur after initialization
             raise AlreadyRunError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
 
         # Main simulation loop
@@ -632,14 +630,12 @@ class Sim(cvb.BaseSim):
 
         # Scale the results
         for reskey in self.result_keys():
-            if self.results[reskey].scale == 'dynamic':
+            if self.results[reskey].scale in ['dynamic', True]: # "Dynamic" is left for backwards compatibility
                 self.results[reskey].values *= self.rescale_vec
-            elif self.results[reskey].scale == 'static':
-                self.results[reskey].values *= self['pop_scale']
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            self.results[f'cum_{key}'].values[:] = np.cumsum(self.results[f'new_{key}'].values)
+            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:])
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Final settings

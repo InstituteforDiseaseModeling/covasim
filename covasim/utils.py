@@ -247,7 +247,8 @@ def set_seed(seed=None):
 #%% Probabilities -- mostly not jitted since performance gain is minimal
 
 __all__ += ['n_binomial', 'binomial_filter', 'binomial_arr', 'n_multinomial',
-            'poisson', 'n_poisson', 'n_neg_binomial', 'choose', 'choose_r', 'choose_w']
+            'poisson', 'n_poisson', 'n_neg_binomial', 'choose', 'choose_r', 'choose_w',
+            'randround']
 
 def n_binomial(prob, n):
     '''
@@ -426,6 +427,22 @@ def choose_w(probs, n, unique=True):
     else: # Weights are all zero, choose uniformly
         probs = np.ones(n_choices)/n_choices
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
+
+
+def randround(x):
+    '''
+    Round a float, list, or array probabilistically to the nearest integer.
+
+    To move to Sciris eventually. Based on
+    https://stackoverflow.com/questions/19045971/random-rounding-to-integer-in-python
+    '''
+    if isinstance(x, np.ndarray):
+        output = np.array(np.floor(x+np.random.random(x.size)), dtype=int)
+    elif isinstance (x, list):
+        output = [randround(i) for i in x]
+    else:
+        output = int(np.floor(x+np.random.random()))
+    return output
 
 
 #%% Simple array operations
