@@ -9,10 +9,22 @@ All notable changes to the codebase are documented in this file. Changes that ma
    :depth: 1
 
 
+~~~~~~~~~~~~~~~~~~~~~~~
+Latest versions (1.7.x)
+~~~~~~~~~~~~~~~~~~~~~~~
 
-~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (1.6.x)
-~~~~~~~~~~~~~~~~~~~~~~~
+
+Version 1.7.0 (2020-09-20)
+--------------------------
+- 
+- *Regression information*: 
+- *GitHub info*: PR `684 <https://github.com/amath-idm/covasim/pull/669>`__, `684 <https://github.com/amath-idm/covasim/pull/677>`__
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.6.x (1.6.0 – 1.6.1)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.6.1 (2020-09-13)
