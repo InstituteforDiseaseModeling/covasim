@@ -538,7 +538,6 @@ def get_subtargets(subtarget, sim):
             errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'
             raise ValueError(errormsg)
 
-
     return subtarget_inds, subtarget_vals
 
 
@@ -548,19 +547,29 @@ def get_quar_inds(quar_policy, sim):
     based on the current quarantine testing "policy". Used by test_num and test_prob.
     Not for use by the user.
 
+    If quar_policy is a number or a list of numbers, then it is interpreted as
+    the number of days after the start of quarantine when a test is performed.
+    It can also be a function that returns the list of indices.
+
     Args:
-        quar_policy (str): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
+        quar_policy (str, int, list, func): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
         sim (Sim): the simulation object
     '''
     t = sim.t
-    if   quar_policy == 'start': quar_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day before
-    elif quar_policy == 'end':   quar_inds = cvu.true(sim.people.date_end_quarantine==t)
-    elif quar_policy == 'both':  quar_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t)])
-    elif quar_policy == 'daily': quar_inds = cvu.true(sim.people.quarantined)
+    if   quar_policy is None:    quar_test_inds = np.array([])
+    elif quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day before since testing usually happens before contact tracing
+    elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t)
+    elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t)])
+    elif quar_policy == 'daily': quar_test_inds = cvu.true(sim.people.quarantined)
+    elif sc.isnumber(quar_policy) or (sc.isiterable(quar_policy) and not sc.isstring(quar_policy)):
+        quar_policy = sc.promotetoarray(quar_policy)
+        quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
+    elif callable(quar_policy):
+        quar_test_inds = quar_policy(sim)
     else:
-        errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be start, end, both, or daily'
+        errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be a string (start, end, both, daily), int, list, array, set, tuple, or function'
         raise ValueError(errormsg)
-    return quar_inds
+    return quar_test_inds
 
 
 class test_num(Intervention):
@@ -574,7 +583,7 @@ class test_num(Intervention):
         daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day
         symp_test   (float) : odds ratio of a symptomatic person testing (default: 100x more likely)
         quar_test   (float) : probability of a person in quarantine testing (default: no more likely)
-        quar_policy (str)   : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'
+        quar_policy (str)   : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
         subtarget   (dict)  : subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'vals': value(s) to apply}
         ili_prev    (arr)   : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
         sensitivity (float) : test sensitivity (default 100%, i.e. no false negatives)
@@ -640,7 +649,7 @@ class test_num(Intervention):
         # Check that there are still tests
         rel_t = t - self.start_day
         if rel_t < len(self.daily_tests):
-            n_tests = int(self.daily_tests[rel_t]/sim.rescale_vec[t])  # Number of tests for this day -- rescaled
+            n_tests = cvu.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
@@ -648,7 +657,7 @@ class test_num(Intervention):
         else:
             return
 
-        test_probs = np.ones(sim.n) # Begin by assigning equal testing probability to everyone
+        test_probs = np.ones(sim.n) # Begin by assigning equal testing weight (converted to a probability) to everyone
 
         # Calculate test probabilities for people with symptoms
         symp_inds = cvu.true(sim.people.symptomatic)
@@ -671,8 +680,8 @@ class test_num(Intervention):
                 test_probs[ili_inds] *= self.symp_test
 
         # Handle quarantine testing
-        quar_inds = get_quar_inds(self.quar_policy, sim)
-        test_probs[quar_inds] *= self.quar_test
+        quar_test_inds = get_quar_inds(self.quar_policy, sim)
+        test_probs[quar_test_inds] *= self.quar_test
 
         # Handle any other user-specified testing criteria
         if self.subtarget is not None:
@@ -681,10 +690,18 @@ class test_num(Intervention):
 
         # Don't re-diagnose people
         diag_inds  = cvu.true(sim.people.diagnosed)
-        test_probs[diag_inds] = 0.
+        test_probs[diag_inds] = 0.0
+
+        # With dynamic rescaling, we have to correct for uninfected people outside of the population who would test
+        if sim.rescale_vec[t]/sim['pop_scale'] < 1: # We still have rescaling to do
+            in_pop_tot_prob = test_probs.sum()*sim.rescale_vec[t] # Total "testing weight" of people in the subsampled population
+            out_pop_tot_prob = sim.scaled_pop_size - sim.rescale_vec[t]*sim['pop_size'] # Find out how many people are missing and assign them each weight 1
+            in_frac = in_pop_tot_prob/(in_pop_tot_prob + out_pop_tot_prob) # Fraction of tests which should fall in the sample population
+            n_tests = cvu.randround(n_tests*in_frac) # Recompute the number of tests
 
         # Now choose who gets tested and test them
-        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=False)
+        n_tests = min(n_tests, (test_probs!=0).sum()) # Don't try to test more people than have nonzero testing probability
+        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True) # Choose who actually tests
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return
@@ -701,7 +718,7 @@ class test_prob(Intervention):
         asymp_prob       (float)     : probability of testing an asymptomatic (unquarantined) person (default: 0)
         symp_quar_prob   (float)     : probability of testing a symptomatic quarantined person (default: same as symp_prob)
         asymp_quar_prob  (float)     : probability of testing an asymptomatic quarantined person (default: same as asymp_prob)
-        quar_policy      (str)       : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'
+        quar_policy      (str)       : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
         subtarget        (dict)      : subtarget intervention to people with particular indices  (see test_num() for details)
         ili_prev         (float/arr) : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
         test_sensitivity (float)     : test sensitivity (default 100%, i.e. no false negatives)
@@ -781,17 +798,17 @@ class test_prob(Intervention):
         asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(pop_size), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
-        quar_inds = get_quar_inds(self.quar_policy, sim)
-        symp_quar_inds  = np.intersect1d(quar_inds, symp_inds)
-        asymp_quar_inds = np.intersect1d(quar_inds, asymp_inds)
+        quar_test_inds = get_quar_inds(self.quar_policy, sim)
+        symp_quar_inds  = np.intersect1d(quar_test_inds, symp_inds)
+        asymp_quar_inds = np.intersect1d(quar_test_inds, asymp_inds)
         diag_inds       = cvu.true(sim.people.diagnosed)
         if self.subtarget is not None:
             subtarget_inds  = self.subtarget['inds']
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
-        test_probs[symp_inds]       = symp_prob            # People with symptoms
-        test_probs[ili_inds]        = self.symp_prob       # People with symptoms
+        test_probs[symp_inds]       = symp_prob            # People with symptoms (true positive)
+        test_probs[ili_inds]        = symp_prob            # People with symptoms (false positive)
         test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
         test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
         test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
@@ -801,6 +818,7 @@ class test_prob(Intervention):
         test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
         test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
 
+        # Actually test people
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 

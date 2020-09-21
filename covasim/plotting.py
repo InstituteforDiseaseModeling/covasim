@@ -144,7 +144,8 @@ def plot_data(sim, ax, key, scatter_args, color=None):
 def plot_interventions(sim, ax):
     ''' Add interventions to the plot '''
     for intervention in sim['interventions']:
-        intervention.plot(sim, ax)
+        if hasattr(intervention, 'plot'): # Don't plot e.g. functions
+            intervention.plot(sim, ax)
     return
 
 

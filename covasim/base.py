@@ -76,7 +76,7 @@ class Result(object):
     Args:
         name (str): name of this result, e.g. new_infections
         npts (int): if values is None, precreate it to be of this length
-        scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
+        scale (bool): whether or not the value scales by population scale factor
         color (str/arr): default color for plotting (hex or RGB notation)
 
     **Example**::
@@ -87,7 +87,7 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale='dynamic', color=None):
+    def __init__(self, name=None, npts=None, scale=True, color=None):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
@@ -537,17 +537,17 @@ class BasePeople(sc.prettyobj):
     interesting happens in the People class.
 
     Args:
-        pars (dict): a dictionary with, at minimum, keys 'pop_size' and 'n_days'
+        pars (dict): a dictionary with, at minimum, key 'pop_size' (if a number, converted to a dict)
 
     '''
 
-    def __init__(self, pars=None, **kwargs):
+    def __init__(self, pars, **kwargs):
 
         # Handle pars and population size
-        pars = sc.mergedicts({'pop_size':0, 'n_days':0}, pars)
+        if sc.isnumber(pars): # Interpret as a population size
+            pars = {'pop_size':pars} # Ensure it's a dictionary
         self.pars     = pars # Equivalent to self.set_pars(pars)
         self.pop_size = int(pars['pop_size'])
-        self.n_days   = int(pars['n_days'])
 
         # Other initialization
         self.t = 0 # Keep current simulation time

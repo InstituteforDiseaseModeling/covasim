@@ -292,14 +292,15 @@ class Sim(cvb.BaseSim):
         # Stock variables
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
-        self.results['n_susceptible'].scale = 'static'
 
         # Other variables
-        self.results['prevalence']    = init_res('Prevalence', scale=False)
-        self.results['incidence']     = init_res('Incidence', scale=False)
-        self.results['r_eff']         = init_res('Effective reproduction number', scale=False)
-        self.results['doubling_time'] = init_res('Doubling time', scale=False)
-        self.results['test_yield']    = init_res('Testing yield', scale=False)
+        self.results['n_alive']        = init_res('Number of people alive', scale=False)
+        self.results['prevalence']     = init_res('Prevalence', scale=False)
+        self.results['incidence']      = init_res('Incidence', scale=False)
+        self.results['r_eff']          = init_res('Effective reproduction number', scale=False)
+        self.results['doubling_time']  = init_res('Doubling time', scale=False)
+        self.results['test_yield']     = init_res('Testing yield', scale=False)
+        self.results['rel_test_yield'] = init_res('Relative testing yield', scale=False)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -307,8 +308,8 @@ class Sim(cvb.BaseSim):
         else:
             scale = self['pop_scale']
         self.rescale_vec   = scale*np.ones(self.npts) # Not included in the results, but used to scale them
-        self.results['t']    = self.tvec
         self.results['date'] = self.datevec
+        self.results['t']    = self.tvec
         self.results_ready   = False
 
         return
@@ -400,13 +401,27 @@ class Sim(cvb.BaseSim):
 
 
     def init_interventions(self):
-        ''' Initialize the interventions '''
+        ''' Initialize and validate the interventions '''
         if self._orig_pars and 'interventions' in self._orig_pars:
             self['interventions'] = self._orig_pars.pop('interventions') # Restore
 
-        for intervention in self['interventions']:
+        trace_ind = np.nan # Index of the tracing intervention(s)
+        test_ind = np.nan # Index of the tracing intervention(s)
+        for i,intervention in enumerate(self['interventions']):
             if isinstance(intervention, cvi.Intervention):
                 intervention.initialize(self)
+                if isinstance(intervention, (cvi.contact_tracing)):
+                    trace_ind = np.fmin(trace_ind, i) # Find the earliest-scheduled tracing intervention
+                elif isinstance(intervention, (cvi.test_num, cvi.test_prob)):
+                    test_ind = np.fmax(test_ind, i) # Find the latest-scheduled testing intervention
+
+        if not np.isnan(trace_ind):
+            if np.isnan(test_ind):
+                errormsg = 'You have defined a contact tracing intervention but no testing intervention, which has no effect. Please define at least one testing intervention.'
+                raise RuntimeError(errormsg)
+            elif trace_ind < test_ind:
+                errormsg = f'Contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates an artificial delay. Please reorder the interentions.'
+                raise RuntimeError(errormsg)
         return
 
 
@@ -580,8 +595,7 @@ class Sim(cvb.BaseSim):
         if self.complete:
             raise AlreadyRunError('Simulation is already complete (call sim.initialize() to re-run)')
 
-        if self.t >= until:
-            # NB. At the start, self.t is None so this check must occur after initialization
+        if self.t >= until: # NB. At the start, self.t is None so this check must occur after initialization
             raise AlreadyRunError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
 
         # Main simulation loop
@@ -630,14 +644,12 @@ class Sim(cvb.BaseSim):
 
         # Scale the results
         for reskey in self.result_keys():
-            if self.results[reskey].scale == 'dynamic':
+            if self.results[reskey].scale: # Scale the result dynamically
                 self.results[reskey].values *= self.rescale_vec
-            elif self.results[reskey].scale == 'static':
-                self.results[reskey].values *= self['pop_scale']
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            self.results[f'cum_{key}'].values[:] = np.cumsum(self.results[f'new_{key}'].values)
+            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:])
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Final settings
@@ -672,23 +684,33 @@ class Sim(cvb.BaseSim):
         '''
         Compute prevalence and incidence. Prevalence is the current number of infected
         people divided by the number of people who are alive. Incidence is the number
-        of new infections per day divided by the susceptible population.
+        of new infections per day divided by the susceptible population. Also calculate
+        the number of people alive, and recalculate susceptibles to handle scaling.
         '''
-        n_exposed = self.results['n_exposed'].values # Number of people currently infected
-        n_alive = self.scaled_pop_size - self.results['cum_deaths'].values # Number of people still alive
-        n_susceptible = self.results['n_susceptible'].values # Number of people still susceptible
-        new_infections = self.results['new_infections'].values # Number of new infections
-        self.results['prevalence'][:] = n_exposed/n_alive # Calculate the prevalence
-        self.results['incidence'][:] = new_infections/n_susceptible # Calculate the incidence
+        res = self.results
+        self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
+        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
+        self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
+        self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         return
 
 
     def compute_yield(self):
-        ''' Compute test yield -- number of positive tests divided by the total number of tests '''
-        n_diags = self.results['new_diagnoses'].values # Number of positive tests
-        n_tests = self.results['new_tests'].values # Total number of tests
-        inds = cvu.true(n_tests) # Pull out non-zero numbers of tests
-        self.results['test_yield'].values[inds] = n_diags[inds]/n_tests[inds] # Calculate the yield
+        '''
+        Compute test yield -- number of positive tests divided by the total number
+        of tests, also called test positivity rate. Relative yield is with respect
+        to prevalence: i.e., how the yield compares to what the yield would be from
+        choosing a person at random from the population.
+        '''
+        # Absolute yield
+        res = self.results
+        inds = cvu.true(res['new_tests'][:]) # Pull out non-zero numbers of tests
+        self.results['test_yield'][inds] = res['new_diagnoses'][inds]/res['new_tests'][inds] # Calculate the yield
+
+        # Relative yield
+        inds = cvu.true(res['n_infectious'][:]) # To avoid divide by zero if no one is infectious
+        denom = res['n_infectious'][inds] / (res['n_alive'][inds] - res['cum_diagnoses'][inds]) # Alive + undiagnosed people might test; infectious people will test positive
+        self.results['rel_test_yield'][inds] = self.results['test_yield'][inds]/denom # Calculate the relative yield
         return
 
 

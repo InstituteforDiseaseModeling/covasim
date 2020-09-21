@@ -456,20 +456,34 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
         return
 
 
-def check_version(expected, die=False, verbose=True, **kwargs):
+def check_version(expected, die=False, verbose=True):
     '''
-    Get current git information and optionally write it to disk.
+    Get current git information and optionally write it to disk. The expected
+    version string may optionally start with '>=' or '<=' (== is implied otherwise),
+    but other operators (e.g. ~=) are not supported. Note that e.g. '>' is interpreted
+    to mean '>='.
 
     Args:
         expected (str): expected version information
         die (bool): whether or not to raise an exception if the check fails
+
+    **Example**::
+
+        cv.check_version('>=1.7.0', die=True) # Will raise an exception if an older version is used
     '''
+    if expected.startswith('>'):
+        valid = 1
+    elif expected.startswith('<'):
+        valid = -1
+    else:
+        valid = 0 # Assume == is the only valid comparison
+    expected = expected.lstrip('<=>') # Remove comparator information
     version = cvver.__version__
     compare = sc.compareversions(version, expected) # Returns -1, 0, or 1
     relation = ['older', '', 'newer'][compare+1] # Picks the right string
-    if relation: # Not empty, print warning
+    if relation: # Versions mismatch, print warning or raise error
         string = f'Note: Covasim is {relation} than expected ({version} vs. {expected})'
-        if die:
+        if die and compare != valid:
             raise ValueError(string)
         elif verbose:
             print(string)
