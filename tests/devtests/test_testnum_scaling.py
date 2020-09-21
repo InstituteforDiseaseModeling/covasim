@@ -1,3 +1,7 @@
+'''
+Compare test_num and test_prob for different scaling options to ensure consistent results.
+'''
+
 import sciris as sc
 import pylab as pl
 import covasim as cv

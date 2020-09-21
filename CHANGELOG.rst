@@ -16,8 +16,8 @@ Latest versions (1.7.x)
 
 Version 1.7.0 (2020-09-20)
 --------------------------
-- The way in which ``test_num`` handles rescaling has changed, taking into account the non-modeled population. It now behaves more consistently throughout the dynamic rescaling period.
-- Two new results have been added: ``n_alive`` (total number of people minus deaths) and ``rel_test_yield`` (the proportion of tests that are positive relative to a random sample from the population). In addition, the ``n_susceptible`` calculation has been updates for simulations with dynamic rescaling to reflect the number of people rather than the number of agents.
+- The way in which ``test_num`` handles rescaling has changed, taking into account the non-modeled population. It now behaves more consistently throughout the dynamic rescaling period. In addition, it previously used sampling with replacement, whereas now it uses sampling without replacement. While this does not affect results in most cases, it can make a difference if certain subgroups (e.g. people with severe disease) have very high testing rates.
+- Two new results have been added: ``n_alive`` (total number of people minus deaths) and ``rel_test_yield`` (the proportion of tests that are positive relative to a random sample from the population). In addition, the ``n_susceptible`` calculation has been updated for simulations with dynamic rescaling to reflect the number of people rather than the number of agents.
 - There are additional options for the quarantine policy in the ``test_prob`` intervention. For example, you can now test people on entry and 5 days into quarantine by specifing ``quar_policy=[0,5]``.
 - A new method ``cv.randround()`` has been introduced which will probabilistically round a float to an integer -- for example, 3.2 will be rounded up 20% of the time and rounded down 80% of the time. This is used to ensure accurate mean values for small numbers.
 - ``cv.check_version()`` can now take a comparison, e.g. ``cv.check_version('>=1.7.0')``.
