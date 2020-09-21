@@ -16,9 +16,16 @@ Latest versions (1.7.x)
 
 Version 1.7.0 (2020-09-20)
 --------------------------
-- 
-- *Regression information*: 
-- *GitHub info*: PR `684 <https://github.com/amath-idm/covasim/pull/669>`__, `684 <https://github.com/amath-idm/covasim/pull/677>`__
+- The way in which ``test_num`` handles rescaling has changed, taking into account the non-modeled population. It now behaves more consistently throughout the dynamic rescaling period.
+- Two new results have been added: ``n_alive`` (total number of people minus deaths) and ``rel_test_yield`` (the proportion of tests that are positive relative to a random sample from the population). In addition, the ``n_susceptible`` calculation has been updates for simulations with dynamic rescaling to reflect the number of people rather than the number of agents.
+- There are additional options for the quarantine policy in the ``test_prob`` intervention. For example, you can now test people on entry and 5 days into quarantine by specifing ``quar_policy=[0,5]``.
+- A new method ``cv.randround()`` has been introduced which will probabilistically round a float to an integer -- for example, 3.2 will be rounded up 20% of the time and rounded down 80% of the time. This is used to ensure accurate mean values for small numbers.
+- ``cv.check_version()`` can now take a comparison, e.g. ``cv.check_version('>=1.7.0')``.
+- A ``People`` object can now be created with a single number, representing the number of people. However, to be fully initialized, it still needs the other model parameters. This change lets the people and their connections be created first, and then inserted into a sim later.
+- Additional checking is performed on interventions to ensure they are in the correct order (i.e., testing before tracing).
+- The ``Result`` object used to have several scaling options, but now it simply has ``True`` (corresponding to the previous ``'dynamic'``) and ``False``. The ``static`` scaling option has been removed since it is no longer used by any result types.
+- *Regression information*: sims that used ``test_num`` may now produce different results, given the changes for sample-without-replacement and dynamic rescaling. Previous behavior had the effect of artificially inflating the effectiveness of ``test_num`` before and during dynamic rescaling, since all tests were assigned to the modeled subpopulation. As a result, to get comparable results as before, test efficacy (loosely parameterized by ``symp_test``) should increase. Although there is not an exact relationship, to give an example, a simulation with ``symp_test=7`` and ``pop_scale=10`` previously may correspond to ``symp_test=25`` now. This change means that ``symp_test`` behaves consistently across the simulation period, so whereas previously this parameter may have needed to change over time, it should now be possible to use a single value (typically the last one used).
+- *GitHub info*: PR `684 <https://github.com/amath-idm/covasim/pull/684>`__
 
 
 
@@ -34,7 +41,7 @@ Version 1.6.1 (2020-09-13)
 - There is a new ``story()`` method for ``People`` that prints a history of an individual person, e.g. ``sim.people.story(35)``.
 - The baseline test in ``test_baseline.py`` has been updated to include contact tracing, giving greater code coverage for regression changes.
 - *Regression information*: No changes to the Covasim codebase were made; however, new installations of Covasim (or if you update Numba manually) will have a different random number stream. To return previous results, use the previous version of Numba: ``pip install numba==0.48.0``.
-- *GitHub info*: PRs `669 <https://github.com/amath-idm/covasim/pull/669>`__, `677 <https://github.com/amath-idm/covasim/pull/677>`__
+- *GitHub info*: PRs `669 <https://github.com/amath-idm/covasim/pull/669>`__, `677 <https://github.com/amath-idm/covasim/pull/677>`__, head ``756e8eab``
 
 
 Version 1.6.0 (2020-09-08)
