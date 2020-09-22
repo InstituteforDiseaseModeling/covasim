@@ -400,8 +400,15 @@ class clip_edges(Intervention):
     Isolate contacts by removing them from the simulation. Contacts are treated as
     "edges", and this intervention works by removing them from sim.people.contacts
     and storing them internally. When the intervention is over, they are moved back.
-    Similar to change_beta(). This is the most appropriate intervention for modeling
-    school and workplace closures and other mobility reductions.
+    This intervention has quite similar effects as change_beta(), but is more appropriate
+    for modeling the effects of mobility reductions such as school and workplace
+    closures. The main difference is that since clip_edges() actually removes contacts,
+    it affects the number of people who would be traced and placed in quarantine
+    if an individual tests positive. It also alters the structure of the network
+    -- i.e., compared to a baseline case of 20 contacts and a 2% chance of infecting
+    each, there are slightly different statistics for a beta reduction (i.e., 20 contacts
+    and a 1% chance of infecting each) versus an edge clipping (i.e., 10 contacts
+    and a 2% chance of infecting each).
 
     Args:
         days (int or array): the day or array of days to isolate contacts
