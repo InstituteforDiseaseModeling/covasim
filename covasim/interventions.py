@@ -338,7 +338,10 @@ def process_changes(sim, changes, days):
 class change_beta(Intervention):
     '''
     The most basic intervention -- change beta (transmission) by a certain amount
-    on a given day or days.
+    on a given day or days. This can be used to represent physical distancing (although
+    clip_edges() is more appropriate for overall changes in mobility, e.g. school
+    or workplace closures), as well as hand-washing, masks, and other behavioral
+    changes that affect transmission rates.
 
     Args:
         days    (int/arr):   the day or array of days to apply the interventions
@@ -397,7 +400,8 @@ class clip_edges(Intervention):
     Isolate contacts by removing them from the simulation. Contacts are treated as
     "edges", and this intervention works by removing them from sim.people.contacts
     and storing them internally. When the intervention is over, they are moved back.
-    Similar to change_beta().
+    Similar to change_beta(). This is the most appropriate intervention for modeling
+    school and workplace closures and other mobility reductions.
 
     Args:
         days (int or array): the day or array of days to isolate contacts
