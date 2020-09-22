@@ -529,6 +529,12 @@ class Sim(cvb.BaseSim):
             # Calculate actual transmission
             for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
                 source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
+                source_diag = sum(self.people.diagnosed[source_inds])
+                target_diag = sum(self.people.diagnosed[target_inds])
+                source_quar = sum(self.people.quarantined[source_inds])
+                target_quar = sum(self.people.quarantined[target_inds])
+                if sum([source_diag, target_diag, source_quar, target_quar]):
+                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey) # Actually infect people
 
         # Update counts for this time step: stocks

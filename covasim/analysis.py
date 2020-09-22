@@ -820,7 +820,7 @@ class TransTree(sc.prettyobj):
                 stdict = {'t':target}
 
             # Pull out each of the attributes relevant to transmission
-            attrs = ['age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
+            attrs = ['age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_end_quarantine', 'date_severe', 'date_critical', 'date_known_contact']
             for st,stind in stdict.items():
                 for attr in attrs:
                     ddict[st][attr] = people[attr][stind]
@@ -828,11 +828,14 @@ class TransTree(sc.prettyobj):
                 for attr in attrs:
                     if attr.startswith('date_'):
                         is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
-                        ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
+                        if attr == 'date_quarantined': # This has an end date specified
+                            ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] and not (ddict['s']['date_end_quarantine'] <= ddict['date'])
+                        elif attr != 'date_end_quarantine': # This is not a state
+                            ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
 
                 ddict['s']['is_asymp']   = np.isnan(people.date_symptomatic[source])
                 ddict['s']['is_presymp'] = ~ddict['s']['is_asymp'] and ~ddict['s']['is_symptomatic'] # Not asymptomatic and not currently symptomatic
-            ddict['t']['is_quarantined'] = ddict['t']['date_quarantined'] <= ddict['date'] # This is the only target date that it makes sense to define since it can happen before infection
+            ddict['t']['is_quarantined'] = ddict['t']['date_quarantined'] <= ddict['date'] and not (ddict['t']['date_end_quarantine'] <= ddict['date']) # This is the only target date that it makes sense to define since it can happen before infection
 
             detailed[target] = ddict
 
@@ -875,15 +878,15 @@ class TransTree(sc.prettyobj):
             target = ddict['t']
 
             tdict = {}
-            tdict['date'] =  ddict['date']
-            tdict['layer'] =  ddict['layer']
-            tdict['s_asymp'] =  np.isnan(source['date_symptomatic']) # True if they *never* became symptomatic
+            tdict['date']      =  ddict['date']
+            tdict['layer']     =  ddict['layer']
+            tdict['s_asymp']   = np.isnan(source['date_symptomatic']) # True if they *never* became symptomatic
             tdict['s_presymp'] =  ~tdict['s_asymp'] and tdict['date']<source['date_symptomatic'] # True if they became symptomatic after the transmission date
-            tdict['s_sev'] = source['date_severe'] < tdict['date']
-            tdict['s_crit'] = source['date_critical'] < tdict['date']
-            tdict['s_diag'] = source['date_diagnosed'] < tdict['date']
-            tdict['s_quar'] = source['date_quarantined'] < tdict['date']
-            tdict['t_quar'] = target['date_quarantined'] < tdict['date'] # What if the target was released from quarantine?
+            tdict['s_sev']     = source['date_severe'] < tdict['date']
+            tdict['s_crit']    = source['date_critical'] < tdict['date']
+            tdict['s_diag']    = source['date_diagnosed'] < tdict['date']
+            tdict['s_quar']    = source['date_quarantined'] <= tdict['date'] and not (source['date_end_quarantine'] <= tdict['date'])
+            tdict['t_quar']    = target['date_quarantined'] <= tdict['date'] and not (target['date_end_quarantine'] <= tdict['date'])
             ttlist.append(tdict)
 
         df = pd.DataFrame(ttlist).rename(columns={'date': 'Day'})
