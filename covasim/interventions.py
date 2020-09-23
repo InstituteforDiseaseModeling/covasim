@@ -574,9 +574,9 @@ def get_quar_inds(quar_policy, sim):
     '''
     t = sim.t
     if   quar_policy is None:    quar_test_inds = np.array([])
-    elif quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day before since testing usually happens before contact tracing
-    elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t)
-    elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t)])
+    elif quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day after since testing usually happens before contact tracing
+    elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t+1) # +1 since they are released on date_end_quarantine, so do the day before
+    elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t+1)])
     elif quar_policy == 'daily': quar_test_inds = cvu.true(sim.people.quarantined)
     elif sc.isnumber(quar_policy) or (sc.isiterable(quar_policy) and not sc.isstring(quar_policy)):
         quar_policy = sc.promotetoarray(quar_policy)

@@ -282,20 +282,20 @@ class People(cvb.BasePeople):
 
 
     def check_quar(self):
-        '''Update quarantine state'''
+        ''' Update quarantine state '''
 
-        n_quarantined = 0
-        for ind, end_day in self._pending_quarantine[self.t]:
+        n_quarantined = 0 # Number of people entering quarantine
+        for ind,end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
                 self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-            elif not (self.dead[ind] | self.recovered[ind] | self.diagnosed[ind]):
+            elif not (self.dead[ind] or self.diagnosed[ind]):
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
                 self.date_end_quarantine[ind] = end_day
                 n_quarantined += 1
 
         # If someone on quarantine has reached the end of their quarantine, release them
-        end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here
+        end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here (~)
         self.quarantined[end_inds] = False # Release from quarantine
 
         return n_quarantined
@@ -457,9 +457,10 @@ class People(cvb.BasePeople):
         return
 
 
-    def quarantine(self, inds, start_date=None, period=None):
+    def schedule_quarantine(self, inds, start_date=None, period=None):
         '''
-        Schedule a quarantine. Not to be called by the user.
+        Schedule a quarantine. Not to be called by the user, see the contact_tracing()
+        intervention.
 
         This function will create a request to quarantine a person on the start_date for
         a period of time. Whether they are on an existing quarantine that gets extended, or
@@ -503,7 +504,7 @@ class People(cvb.BasePeople):
                     if len(contact_inds):
                         self.known_contact[contact_inds] = True # Unlike quarantined, which toggles off when a person leaves quarantine, this stays true
                         self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
-                        self.quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
+                        self.schedule_quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']) # Schedule quarantine for the notified people to start on the date they will be notified
 
         return
 
