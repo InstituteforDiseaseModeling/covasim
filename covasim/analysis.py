@@ -1,7 +1,6 @@
 '''
 Additional analysis functions that are not part of the core Covasim workflow,
-but which are useful for particular investigations. Currently, this just consists
-of the transmission tree.
+but which are useful for particular investigations.
 '''
 
 import numpy as np
@@ -18,7 +17,12 @@ __all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_stats', 'Fit', 'Trans
 
 class Analyzer(sc.prettyobj):
     '''
-    Base class for analyzers. Based on the Intervention class.
+    Base class for analyzers. Based on the Intervention class. Analyzers are used
+    to provide more detailed information about a simulation than is available by
+    default -- for example, pulling states out of sim.people on a particular timestep
+    before it gets updated in the next timestep.
+
+    To retrieve a particular analyzer from a sim, use sim.get_analyzer().
 
     Args:
         label (str): a label for the Analyzer (used for ease of identification)
@@ -41,7 +45,8 @@ class Analyzer(sc.prettyobj):
     def apply(self, sim):
         '''
         Apply analyzer at each time point. The analyzer has full access to the
-        sim object, and typically stores data/results in itself.
+        sim object, and typically stores data/results in itself. This is the core
+        method which each analyzer object needs to implement.
 
         Args:
             sim: the Sim instance

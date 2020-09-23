@@ -81,6 +81,8 @@ class Intervention:
     dict format, which they can be recreated from. To display all the attributes
     of the intervention, use disp() instead.
 
+    To retrieve a particular intervention from a sim, use sim.get_intervention().
+
     Args:
         label (str): a label for the intervention (used for plotting, and for ease of identification)
         show_label (bool): whether or not to include the label, if provided, in the legend
@@ -141,7 +143,8 @@ class Intervention:
 
     def apply(self, sim):
         '''
-        Apply intervention
+        Apply the intervention. This is the core method which each intervention
+        object needs to implement.
 
         Function signature matches existing intervention definition
         This method gets called at each timestep and must be implemented
@@ -158,7 +161,7 @@ class Intervention:
 
     def plot(self, sim, ax=None, **kwargs):
         '''
-        Call function during plotting
+        Plot the intervention
 
         This can be used to do things like add vertical lines on days when
         interventions take place. Can be disabled by setting self.do_plot=False.
@@ -193,7 +196,10 @@ class Intervention:
         one-way export to produce a JSON-compatible representation of the
         intervention. In the first instance, the object dict will be returned.
         However, if an intervention itself contains non-standard variables as
-        attributes, then its `to_json` method will need to handle those
+        attributes, then its `to_json` method will need to handle those.
+
+        Note that simply printing an intervention will usually return a representation
+        that can be used to recreate it.
 
         Returns:
             JSON-serializable representation (typically a dict, but could be anything else)
