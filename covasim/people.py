@@ -264,7 +264,7 @@ class People(cvb.BasePeople):
 
     def make_susceptible(self, inds):
         '''
-        Make person susceptible. This is used during dynamic resampling
+        Make a set of people susceptible. This is used during dynamic resampling.
         '''
         for key in self.meta.states:
             if key == 'susceptible':
@@ -387,16 +387,14 @@ class People(cvb.BasePeople):
 
     def test(self, inds, test_sensitivity=1.0, loss_prob=0.0, test_delay=0):
         '''
-        Method to test people
+        Method to test people. Not to be called by the user, see the test_num()
+        and test_prob() interventions.
 
         Args:
             inds: indices of who to test
             test_sensitivity (float): probability of a true positive
             loss_prob (float): probability of loss to follow-up
             test_delay (int): number of days before test results are ready
-
-        Returns:
-            Whether or not this person tested positive
         '''
 
         inds = np.unique(inds)
@@ -420,7 +418,7 @@ class People(cvb.BasePeople):
 
     def quarantine(self, inds, start_date=None, period=None):
         '''
-        Schedule a quarantine
+        Schedule a quarantine. Not to be called by the user.
 
         This function will create a request to quarantine a person on the start_date for
         a period of time. Whether they are on an existing quarantine that gets extended, or
@@ -442,7 +440,9 @@ class People(cvb.BasePeople):
 
     def trace(self, inds, trace_probs, trace_time):
         '''
-        Trace the contacts of the people provided
+        Trace the contacts of the people provided. Not to be called by the user,
+        see the contact_tracing() intervention.
+
         Args:
             inds (array): indices of whose contacts to trace
             trace_probs (dict): probability of being able to trace people at each contact layer - should have the same keys as contacts
@@ -450,7 +450,7 @@ class People(cvb.BasePeople):
         '''
 
         # Extract the indices of the people who'll be contacted
-        traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
+        traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.0} # Only trace if there's a non-zero tracing probability
         for lkey,this_trace_prob in traceable_layers.items():
             if self.pars['beta_layer'][lkey]: # Skip if beta is 0 for this layer
                 this_trace_time = trace_time[lkey]
@@ -460,7 +460,7 @@ class People(cvb.BasePeople):
                 if len(traceable_inds):
                     contact_inds = cvu.binomial_filter(this_trace_prob, traceable_inds) # Filter the indices according to the probability of being able to trace this layer
                     if len(contact_inds):
-                        self.known_contact[contact_inds] = True
+                        self.known_contact[contact_inds] = True # Unlike quaratined, which toggles off when a person leaves quarantine, this stays true
                         self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
                         self.quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
 

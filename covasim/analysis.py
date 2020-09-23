@@ -487,7 +487,8 @@ class daily_stats(Analyzer):
             string = '\n' + string + '\n\n'
             return string
 
-        report  = f'*** Statistics report for day {sim.t} ***\n\n'
+        datestr = f'day {sim.t} ({sim.date(sim.t)})'
+        report  = f'*** Statistics report for {datestr} ***\n\n'
         report += f'Overall stocks:'
         report += make_entry('stocks', show_empty=False)
         report += f'Transmission target statistics:'
@@ -498,7 +499,7 @@ class daily_stats(Analyzer):
         report += make_entry('test')
         report += f'Quarantine statistics:'
         report += make_entry('quar')
-        report += f'*** End of report for day {sim.t} ***\n'
+        report += f'*** End of report for day {datestr} ***\n'
 
         return report
 
