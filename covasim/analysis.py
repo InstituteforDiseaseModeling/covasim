@@ -357,7 +357,7 @@ class daily_stats(Analyzer):
         days (list): days on which to print out statistics (if None, assume all)
         keys (list): list of states of people to provide statistics on (if None, assume all)
         verbose (bool): whether to print on each timestep
-        reporter (func): if supplied, a custom parser of the stats object into a report
+        reporter (func): if supplied, a custom parser of the stats object into a report (see make_report() function for syntax)
 
     **Example**::
 
@@ -463,28 +463,9 @@ class daily_stats(Analyzer):
 
             # Turn into report
             if self.reporter is not None:
-                report = self.reporter(stats)
+                report = self.reporter(self, sim, stats)
             else:
-
-                def make_entry(basekey, show_empty=True):
-                    string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if k != 'empty'])
-                    if show_empty:
-                        string += f'\n  Empty states: {stats[basekey].empty}'
-                    string = '\n' + string + '\n\n'
-                    return string
-
-                report  = f'*** Statistics report for day {sim.t} ***\n\n'
-                report += f'Overall stocks:'
-                report += make_entry('stocks', show_empty=False)
-                report += f'Transmission target statistics:'
-                report += make_entry('trans')
-                report += f'Transmission source statistics:'
-                report += make_entry('source')
-                report += f'Testing statistics:'
-                report += make_entry('test')
-                report += f'Quarantine statistics:'
-                report += make_entry('quar')
-                report += f'*** End of report for day {sim.t} ***\n'
+                report = self.make_report(sim, stats)
 
             # Save
             today = sim.date(sim.t)
@@ -492,8 +473,35 @@ class daily_stats(Analyzer):
             self.reports[today] = report
 
             if self.verbose:
-                print(self.reports[today])
+                print(report)
         return
+
+
+    def make_report(self, sim, stats):
+        ''' Turn the statistics into a report '''
+
+        def make_entry(basekey, show_empty=True):
+            string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if k != 'empty'])
+            if show_empty:
+                string += f'\n  Empty states: {stats[basekey].empty}'
+            string = '\n' + string + '\n\n'
+            return string
+
+        report  = f'*** Statistics report for day {sim.t} ***\n\n'
+        report += f'Overall stocks:'
+        report += make_entry('stocks', show_empty=False)
+        report += f'Transmission target statistics:'
+        report += make_entry('trans')
+        report += f'Transmission source statistics:'
+        report += make_entry('source')
+        report += f'Testing statistics:'
+        report += make_entry('test')
+        report += f'Quarantine statistics:'
+        report += make_entry('quar')
+        report += f'*** End of report for day {sim.t} ***\n'
+
+        return report
+
 
 
 class Fit(sc.prettyobj):
