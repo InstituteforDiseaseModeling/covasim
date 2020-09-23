@@ -391,13 +391,6 @@ class daily_stats(Analyzer):
         return
 
 
-    def getlen(self, inds):
-        ''' Get the number of indices '''
-        if isinstance(inds, str):
-            inds = self.inds[inds]
-        return len(inds)
-
-
     def interlen(self, inds1, inds2):
         ''' Handle either keys to precomputed indices or lists of indices '''
         if isinstance(inds1, str):
@@ -424,13 +417,17 @@ class daily_stats(Analyzer):
 
             # Basic stocks
             for key in self.keys:
-                stats.stocks[key] = self.getlen(key)
+                stats.stocks[key] = len(self.inds[key])
 
             # Transmission stats
             newinfs = cvu.true(ppl.date_exposed == sim.t)
-            stats.trans.new_infections = self.getlen(newinfs)
+            stats.trans.new_infections = len(newinfs)
             for key in ['known_contact', 'quarantined']:
-                stats.trans[key] = self.interlen(newinfs, key)
+                n_people = self.interlen(newinfs, key)
+                if n_people:
+                    stats.trans[key] = n_people
+                else:
+                    stats.trans.empty.append(key)
 
             # Source stats
             inflog = sim.people.infection_log
@@ -439,7 +436,6 @@ class daily_stats(Analyzer):
             stats.source.new_sources = len(sourceinds)
             for key in self.keys:
                 n_people = self.interlen(sourceinds, key)
-                print(n_people)
                 if n_people:
                     stats.source[key] = n_people
                 else:
@@ -457,8 +453,8 @@ class daily_stats(Analyzer):
 
             # Quarantine stats
             stats.quar.in_quarantine = stats.stocks.quarantined
-            stats.quar.entered_quar  = cvu.true(ppl.date_quarantined == sim.t)
-            stats.quar.left_quar     = cvu.true(ppl.date_end_quarantine == sim.t)
+            stats.quar.entered_quar  = len(cvu.true(ppl.date_quarantined == sim.t))
+            stats.quar.left_quar     = len(cvu.true(ppl.date_end_quarantine == sim.t))
             for key in self.keys:
                 n_people = self.interlen('quarantined', key)
                 if n_people:
@@ -470,15 +466,26 @@ class daily_stats(Analyzer):
             if self.reporter is not None:
                 report = self.reporter(stats)
             else:
-                report = f'''
-                    *** Statistics report for day {sim.t} ***
 
-                    Overall stocks:
-                        {stats.stocks.key}=
+                def make_entry(basekey, show_empty=True):
+                    string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if k != 'empty'])
+                    if show_empty:
+                        string += f'\n  Empty states: {stats[basekey].empty}'
+                    string = '\n' + string + '\n\n'
+                    return string
 
-
-                    '''
-
+                report  = f'*** Statistics report for day {sim.t} ***\n\n'
+                report += f'Overall stocks:'
+                report += make_entry('stocks', show_empty=False)
+                report += f'Transmission target statistics:'
+                report += make_entry('trans')
+                report += f'Transmission source statistics:'
+                report += make_entry('source')
+                report += f'Testing statistics:'
+                report += make_entry('test')
+                report += f'Quarantine statistics:'
+                report += make_entry('quar')
+                report += f'*** End of report for day {sim.t} ***\n'
 
             # Save
             today = sim.date(sim.t)
