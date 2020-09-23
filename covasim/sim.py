@@ -436,6 +436,40 @@ class Sim(cvb.BaseSim):
         return
 
 
+    def get_intervention(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+        '''
+        Find the matching intervention(s) by label, index, or type. If None, return
+        the last intervention in the list.
+
+        Args:
+            label (str, int, list, Intervention): the label, index, or type of intervention to get; if a list, iterate over one of those types
+            partial (bool): if true, return partial matches (e.g. 'beta' will match all beta interventions)
+            as_list (bool): if true, always return a list even if one or no entries were found (otherwise, only return a list for multiple matching interventions)
+            as_inds (bool): if true, return matching indices instead of the actual interventions
+            die (bool): if true and as_list is false, raise an exception if an intervention is not found
+
+        **Examples**::
+
+            tp = cv.test_prob(symp_prob=0.1)
+            cb = cv.change_beta(days=0.5, changes=0.3, label='NPI')
+            sim = cv.Sim(interventions=[tp, cb])
+            cb = sim.get_intervention('NPI')
+            cb = sim.get_intervention(cv.change_beta)
+            cb = sim.get_intervention(1)
+            cb = sim.get_intervention()
+            tp, cb = sim.get_intervention([0,1])
+            ind = sim.get_intervention(cv.change_beta, as_inds=True) # Returns [1]
+        '''
+        return self._get_ia('interventions', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
+
+
+    def get_analyzer(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+        '''
+        Same as get_intervention(), but for analyzers.
+        '''
+        return self._get_ia('analyzers', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
+
+
     def rescale(self):
         ''' Dynamically rescale the population -- used during step() '''
         if self['rescale']:

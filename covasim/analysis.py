@@ -358,21 +358,24 @@ class daily_stats(Analyzer):
         keys (list): list of states of people to provide statistics on (if None, assume all)
         verbose (bool): whether to print on each timestep
         reporter (func): if supplied, a custom parser of the stats object into a report (see make_report() function for syntax)
+        save_inds (bool): whether to save the indices of every infection at every timestep (also recoverable from the infection log)
 
     **Example**::
 
         sim = cv.Sim(analyzers=cv.daily_stats())
         sim.run()
+        sim['analyzers'][0].plot()
     '''
 
-    def __init__(self, days=None, keys=None, verbose=True, reporter=None, **kwargs):
+    def __init__(self, days=None, keys=None, verbose=True, reporter=None, save_inds=False, **kwargs):
         super().__init__(**kwargs) # Initialize the Analyzer object
-        self.days     = days # Converted to integer representations
-        self.keys     = keys # The default keys to print out
-        self.verbose  = verbose # Print on each timestep
-        self.reporter = reporter # Custom way of reporting the stats
-        self.stats    = sc.objdict() # Store the actual stats
-        self.reports  = sc.objdict() # Textual representation of the statistics
+        self.days      = days # Converted to integer representations
+        self.keys      = keys # The default keys to print out
+        self.verbose   = verbose # Print on each timestep
+        self.reporter  = reporter # Custom way of reporting the stats
+        self.stats     = sc.objdict() # Store the actual stats
+        self.reports   = sc.objdict() # Textual representation of the statistics
+        self.save_inds = save_inds # Whether to save infection log indices
         return
 
 
@@ -385,18 +388,24 @@ class daily_stats(Analyzer):
         if self.keys is None:
             self.keys =  ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'known_contact', 'quarantined', 'diagnosed', 'recovered', 'dead']
 
+        self.basekeys = ['stocks', 'trans', 'source', 'test', 'quar'] # Categories of things to plot
         self._inflogind = 0 # Don't keep going back to old infection log entries
         self.initialized = True
         return
 
 
-    def interlen(self, inds1, inds2):
+    def interlen(self, inds1, inds2, inds3=None):
         ''' Handle either keys to precomputed indices or lists of indices '''
         if isinstance(inds1, str):
             inds1 = self.inds[inds1]
         if isinstance(inds2, str):
             inds2 = self.inds[inds2]
-        return len(np.intersect1d(inds1, inds2))
+        if isinstance(inds3, str):
+            inds3 = self.inds[inds3]
+        if inds3 is None:
+            return len(np.intersect1d(inds1, inds2, assume_unique=True))
+        else:
+            return len(np.intersect1d(np.intersect1d(inds1, inds2, assume_unique=True), inds3, assume_unique=True))
 
 
     def apply(self, sim):
@@ -405,9 +414,10 @@ class daily_stats(Analyzer):
             ppl = sim.people
             stats = sc.objdict()
 
-            for basekey in ['stocks', 'trans', 'source', 'test', 'quar']:
+            stats.empty = sc.objdict()
+            for basekey in self.basekeys:
                 stats[basekey] = sc.objdict()
-                stats[basekey].empty = []
+                stats.empty[basekey] = []
 
             # Get the indices for each of the states
             self.inds = {}
@@ -426,11 +436,12 @@ class daily_stats(Analyzer):
                 if n_people:
                     stats.trans[key] = n_people
                 else:
-                    stats.trans.empty.append(key)
+                    stats.empty.trans.append(key)
 
             # Source stats
             inflog = sim.people.infection_log
-            sourceinds = list(set([e['source'] for e in inflog[self._inflogind:] if (e['date']==sim.t and e['source'] is not None)]))
+            infloginds = [i for i,e in enumerate(inflog) if (e['date']==sim.t and e['source'] is not None)]
+            sourceinds = list(set([inflog[i]['source'] for i in infloginds]))
             self._inflogind = len(inflog) # Skip old entries
             stats.source.new_sources = len(sourceinds)
             for key in self.keys:
@@ -438,7 +449,25 @@ class daily_stats(Analyzer):
                 if n_people:
                     stats.source[key] = n_people
                 else:
-                    stats.source.empty.append(key)
+                    stats.empty.source.append(key)
+
+            stats.extra = sc.objdict() # Additional quantities not stored in the main counts
+            stats.extra.layer_counts = {k:0 for k in sim.layer_keys()}
+            for i in infloginds:
+                stats.extra.layer_counts[inflog[i]['layer']] += 1
+            stats.extra.symp    = self.interlen(sourceinds, 'symptomatic') # Redefine in case empty above
+            stats.extra.presymp = self.interlen(sourceinds, ppl.false('symptomatic'), cvu.defined(ppl.date_symptomatic))
+            stats.extra.asymp   = self.interlen(sourceinds, ppl.false('symptomatic'), cvu.undefined(ppl.date_symptomatic))
+            per_factor = 100/max(1, stats.source.new_sources) # Convert to a percentage and avoid division by zero
+            stats.extra.per_symp    = stats.extra.symp*per_factor # Percentage symptomatic
+            stats.extra.per_presymp = stats.extra.presymp*per_factor
+            stats.extra.per_asymp   = stats.extra.asymp*per_factor
+
+            if self.save_inds:
+                stats.inds = sc.objdict() # Additional quantities not stored in the main counts
+                stats.inds.inflog  = infloginds
+                stats.inds.targets = newinfs
+                stats.inds.sources = sourceinds
 
             # Testing stats
             newtests = cvu.true(ppl.date_tested == sim.t)
@@ -448,18 +477,18 @@ class daily_stats(Analyzer):
                 if n_people:
                     stats.test[key] = n_people
                 else:
-                    stats.test.empty.append(key)
+                    stats.empty.test.append(key)
 
             # Quarantine stats
             stats.quar.in_quarantine = stats.stocks.quarantined
             stats.quar.entered_quar  = len(cvu.true(ppl.date_quarantined == sim.t))
-            stats.quar.left_quar     = len(cvu.true(ppl.date_end_quarantine == sim.t))
+            stats.quar.finished_quar = len(cvu.true(ppl.date_end_quarantine == sim.t))
             for key in self.keys:
                 n_people = self.interlen('quarantined', key)
                 if n_people:
                     stats.quar[key] = n_people
                 else:
-                    stats.quar.empty.append(key)
+                    stats.empty.quar.append(key)
 
             # Turn into report
             if self.reporter is not None:
@@ -477,32 +506,71 @@ class daily_stats(Analyzer):
         return
 
 
-    def make_report(self, sim, stats):
+    def make_report(self, sim, stats, show_empty='count'):
         ''' Turn the statistics into a report '''
 
-        def make_entry(basekey, show_empty=True):
+        def make_entry(basekey, show_empty=show_empty):
             string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if k != 'empty'])
-            if show_empty:
-                string += f'\n  Empty states: {stats[basekey].empty}'
-            string = '\n' + string + '\n\n'
+            if show_empty is True:
+                string += f'\n  Empty states: {stats.empty[basekey]}'
+            elif show_empty == 'count':
+                string += f'\n  Number of empty states: {len(stats.empty[basekey])}'
+            string = '\n' + string + '\n'
             return string
 
         datestr = f'day {sim.t} ({sim.date(sim.t)})'
         report  = f'*** Statistics report for {datestr} ***\n\n'
         report += f'Overall stocks:'
         report += make_entry('stocks', show_empty=False)
-        report += f'Transmission target statistics:'
+        report += f'  Derived statistics:\n'
+        report += f'    Percentage infectious: {stats.stocks.infectious/sim["pop_size"]*100:6.3f}%\n'
+        report += f'    Percentage dead:       {stats.stocks.dead/sim["pop_size"]*100:6.3f}%\n'
+        report += f'\nTransmission target statistics:'
         report += make_entry('trans')
-        report += f'Transmission source statistics:'
+        report += f'  Infections by layer:\n'
+        report += '\n'.join([f'    {k} = {v}' for k,v in stats.extra.layer_counts.items()])
+        report += f'\n\nTransmission source statistics:'
         report += make_entry('source')
-        report += f'Testing statistics:'
+        report += f'  Derived statistics:\n'
+        report += f'    Pre-symptomatic: {stats.extra.presymp} ({stats.extra.per_presymp:0.1f})%\n'
+        report += f'    Asymptomatic:    {stats.extra.asymp} ({stats.extra.per_asymp:0.1f})%\n'
+        report += f'    Symptomatic:     {stats.extra.symp} ({stats.extra.per_symp:0.1f})%\n'
+        report += f'\nTesting statistics:'
         report += make_entry('test')
-        report += f'Quarantine statistics:'
+        report += f'  Derived statistics:\n'
+        # report += f'    Pre-symptomatic: {stats.extra.presymp} ({stats.extra.per_presymp:0.1f})%\n'
+        # report += f'    Asymptomatic:    {stats.extra.asymp} ({stats.extra.per_asymp:0.1f})%\n'
+        # report += f'    Symptomatic:     {stats.extra.symp} ({stats.extra.per_symp:0.1f})%\n'
+        report += f'\nQuarantine statistics:'
         report += make_entry('quar')
-        report += f'*** End of report for day {datestr} ***\n'
+        report += f'\n*** End of report for day {datestr} ***\n'
 
         return report
 
+
+    def plot(self, keys=None, fig_args=None, axis_args=None, plot_args=None, font_size=None):
+        '''
+        Plot each of the states of the model
+
+        Args:
+            keys (list): which keys to plot (default, all)
+            width (float): bar width
+            font_size (float): size of font
+            fig_args (dict): passed to pl.figure()
+            axis_args (dict): passed to pl.subplots_adjust()
+            plot_args (dict): passed to pl.plot()
+        '''
+
+        fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
+        axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
+        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
+        pl.rcParams['font.size'] = font_size
+
+        if keys is None:
+            keys = self.keys + self.custom_keys
+        n_keys = len(keys)
+
+        return
 
 
 class Fit(sc.prettyobj):

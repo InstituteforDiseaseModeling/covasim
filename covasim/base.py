@@ -529,6 +529,62 @@ class BaseSim(ParsObj):
         return sim
 
 
+    def _get_ia(self, which, label=None, partial=False, as_list=False, as_inds=False, die=True):
+        ''' Helper method for get_intervention() and get_analyzer(); see get_intervention() docstring '''
+
+        # Handle inputs
+        if which not in ['interventions', 'analyzers']:
+            errormsg = f'This method is only defined for interventions and analyzers, not "{which}"'
+            raise ValueError(errormsg)
+        if label is None:
+            label = -1 # Get the last element
+        labels = sc.promotetolist(label)
+        ia_list = self.pars[which] # List of interventions or analyzers
+        n_ia = len(ia_list) # Number of interventions/analyzers
+
+        # Calculate the matches
+        matches = []
+        match_inds = []
+        for label in labels:
+            if sc.isnumber(label):
+                matches.append(ia_list[label])
+                label = n_ia - label if label<0 else label # Convert to a positive number
+                match_inds.append(label)
+            elif sc.isstring(label) or isinstance(label, type):
+                for ind,ia_obj in enumerate(ia_list):
+                    if sc.isstring(label):
+                        if ia_obj.label == label:
+                            matches.append(ia_obj)
+                            match_inds.append(ind)
+                    elif isinstance(label, type):
+                        if isinstance(ia_obj, label):
+                            matches.append(ia_obj)
+                            match_inds.append(ind)
+                    else:
+                        errormsg = f'Could not interpret label type "{type(label)}": should be str, int, or {which}'
+                        raise TypeError(errormsg)
+
+        # Parse the output options
+        matches = [ia_list[ind] for ind in match_inds] # Pull out the actual interventions/analyzers
+        if not (as_list or as_inds): # Normal case, return actual interventions
+            if len(matches) == 0:
+                if die:
+                    errormsg = f'No {which} matching "{label}" were found'
+                    raise ValueError(errormsg)
+                else:
+                    output = None
+            elif len(matches) == 1:
+                output = matches[0]
+            else:
+                output = matches # If more than one match, just return all, same as as_list = True
+        elif as_list:
+            output = matches
+        elif as_inds:
+            output = match_inds
+
+        return output
+
+
 #%% Define people classes
 
 class BasePeople(sc.prettyobj):
