@@ -431,7 +431,7 @@ class daily_stats(Analyzer):
 
             # Source stats
             inflog = sim.people.infection_log
-            sourceinds = [entry['source'] for entry in inflog[self._inflogind:] if (entry['date']==sim.t and entry['source'] is not None)] # WARNING, probably slow!
+            sourceinds = list(set([e['source'] for e in inflog[self._inflogind:] if (e['date']==sim.t and e['source'] is not None)]))
             self._inflogind = len(inflog) # Skip old entries
             stats.source.new_sources = len(sourceinds)
             for key in self.keys:
