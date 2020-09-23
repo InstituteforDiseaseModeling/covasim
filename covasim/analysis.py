@@ -430,6 +430,7 @@ class daily_stats(Analyzer):
 
             # Initialize
             ppl = sim.people
+            all_inds = np.arange(len(ppl))
             stats = sc.objdict()
             stats.empty = sc.objdict()
             for basekey in self.basekeys:
@@ -473,9 +474,10 @@ class daily_stats(Analyzer):
                     stats.empty.test.append(key)
 
             # Quarantine stats
-            stats.quar.in_quarantine = stats.stocks.quarantined # Duplicates stats.quar.quarantined, but all other categories start with the total so pull this out for consistency
+            q_inds = np.union1d(self.inds['quarantined'], cvu.true(ppl.date_end_quarantine == sim.t)) # Append people who finished quarantine today
             eq_inds = cvu.true(ppl.date_quarantined == sim.t) # People entering quarantine
             fq_inds = cvu.true(ppl.date_end_quarantine == sim.t+1) # People finishing quarantine; +1 since on the date of quarantine end, they are released back and can get infected at normal rates
+            stats.quar.in_quarantine = len(q_inds) # Similar to stats.quar.quarantined, but slightly more
             stats.quar.entered_quar  = len(eq_inds)
             stats.quar.finished_quar = len(fq_inds)
             for key in self.keys:
@@ -501,22 +503,20 @@ class daily_stats(Analyzer):
             # Calculate extras for quarantine testing
             t_inds = newtests # Everyone who tested this timestep
             d_inds = self.intersect(newtests, 'infectious') # Everyone infectious will test positive
-            q_inds = self.inds['quarantined']
-            nq_inds = ppl.false('quarantined')
-            for tk,ti in zip(['test', 'diag'], [t_inds, d_inds]): # People tested vs diagnosed
+            u_inds = self.intersect('infectious', ppl.false('diagnosed'))
+            nq_inds = np.setdiff1d(all_inds, q_inds) # We can't use ppl.false('quarantined') since that will miss people who left quarantine because they were diagnosed
+            for tk,ti in zip(['test', 'diag', 'undiag'], [t_inds, d_inds, u_inds]): # People tested vs diagnosed
                 for sk,si in zip(['symp', 'asymp'], [symp_inds, asymp_inds]): # Symptomatic vs asymptomatic
                     for qk,qi in zip(['q', 'nq', 'eq', 'fq'], [q_inds, nq_inds, eq_inds, fq_inds]): # In quarantine, not in quarantine, entering quarantine, finishing quarantine
                         stats.extra[f'{tk}_{sk}_{qk}']  = len(self.intersect(ti, si,  qi)) # E.g. stats.extra.diag_asymp_nq = len(self.intersect(d_inds, asymp_inds, nq_inds))
 
             # Final calculations
-            quar_denom = max(1,stats.quar.in_quarantine) # Avoid divide by zero
             stats.extra.prev = stats.stocks.infectious/sim["pop_size"] # Overall prevalence
             stats.extra.dead = stats.stocks.dead/sim["pop_size"] # Fraction dead
-            stats.extra.quar_prev = stats.quar.infectious/quar_denom # Prevalence of people in quarantine
-            stats.extra.quar_prev   = len(self.intersect(q_inds, 'infectious'))/max(1,len(q_inds)) # Prevalence of people in quarantine
-            stats.extra.e_quar_prev = len(self.intersect(eq_inds, 'infectious'))/max(1,len(eq_inds)) # Prevalence of people entering quarantine
-            stats.extra.f_quar_prev = len(self.intersect(fq_inds, 'infectious'))/max(1,len(fq_inds)) # Prevalence of people finishing quarantine
-            stats.extra.non_quar_prev = (stats.stocks.infectious - stats.quar.infectious)/(sim["pop_size"] - quar_denom) # Prevalence of people outside quarantine
+            stats.extra.quar_prev     = len(self.intersect(q_inds, 'infectious'))/max(1,len(q_inds)) # Prevalence of people in quarantine
+            stats.extra.e_quar_prev   = len(self.intersect(eq_inds, 'infectious'))/max(1,len(eq_inds)) # Prevalence of people entering quarantine
+            stats.extra.f_quar_prev   = len(self.intersect(fq_inds, 'infectious'))/max(1,len(fq_inds)) # Prevalence of people finishing quarantine
+            stats.extra.non_quar_prev = len(self.intersect(nq_inds, 'infectious'))/max(1,len(nq_inds)) # Prevalence of people outside quarantine
 
             # Indices aren't usually saved for memory reasons, but may be helpful for extra debugging
             if self.save_inds:
@@ -598,6 +598,11 @@ class daily_stats(Analyzer):
         report += f'      Symp/asymp in quar:     {stats.extra.diag_symp_q}/{stats.extra.diag_asymp_q}\n'
         report += f'      Symp/asymp enter quar:  {stats.extra.diag_symp_eq}/{stats.extra.diag_asymp_eq}\n'
         report += f'      Symp/asymp finish quar: {stats.extra.diag_symp_fq}/{stats.extra.diag_asymp_fq}\n'
+        report += f'    Undiagnosed:\n'
+        report += f'      Symp/asymp not in quar: {stats.extra.undiag_symp_nq}/{stats.extra.undiag_asymp_nq}\n'
+        report += f'      Symp/asymp in quar:     {stats.extra.undiag_symp_q}/{stats.extra.undiag_asymp_q}\n'
+        report += f'      Symp/asymp enter quar:  {stats.extra.undiag_symp_eq}/{stats.extra.undiag_asymp_eq}\n'
+        report += f'      Symp/asymp finish quar: {stats.extra.undiag_symp_fq}/{stats.extra.undiag_asymp_fq}\n'
         report += f'\nQuarantine statistics:'
         report += make_entry('quar')
         report += f'  Derived statistics:\n'

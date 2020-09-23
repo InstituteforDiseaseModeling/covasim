@@ -504,7 +504,8 @@ class People(cvb.BasePeople):
                     if len(contact_inds):
                         self.known_contact[contact_inds] = True # Unlike quarantined, which toggles off when a person leaves quarantine, this stays true
                         self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
-                        self.schedule_quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']) # Schedule quarantine for the notified people to start on the date they will be notified
+                        self.schedule_quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
+
 
         return
 
