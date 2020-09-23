@@ -131,8 +131,10 @@ class Result(object):
 
 class BaseSim(ParsObj):
     '''
-    The BaseSim class handles the running of the simulation: the number of people,
-    number of time points, and the parameters of the simulation.
+    The BaseSim class stores various methods useful for the Sim that are not directly
+    related to simulating the epidemic. It is not used outside of the Sim object,
+    so the separation of methods into the BaseSim and Sim classes is purely to keep
+    each one of manageable size.
     '''
 
     def __init__(self, *args, **kwargs):
@@ -646,12 +648,9 @@ class BaseSim(ParsObj):
 
 class BasePeople(sc.prettyobj):
     '''
-    A class to handle all the boilerplate for people -- note that everything
-    interesting happens in the People class.
-
-    Args:
-        pars (dict): a dictionary with, at minimum, key 'pop_size' (if a number, converted to a dict)
-
+    A class to handle all the boilerplate for people -- note that as with the
+    BaseSim vs Sim classes, everything interesting happens in the People class,
+    whereas this class exists to handle the less interesting implementation details.
     '''
 
     def __init__(self, pars, **kwargs):
@@ -789,7 +788,7 @@ class BasePeople(sc.prettyobj):
         return (~np.isnan(self[key])).nonzero()[0]
 
 
-    def not_defined(self, key):
+    def undefined(self, key):
         ''' Return indices of people who are nan '''
         return np.isnan(self[key]).nonzero()[0]
 
