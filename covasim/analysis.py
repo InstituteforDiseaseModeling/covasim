@@ -8,7 +8,6 @@ import numpy as np
 import pylab as pl
 import pandas as pd
 import sciris as sc
-import textwrap as tw
 from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
@@ -490,13 +489,11 @@ class daily_stats(Analyzer):
             # Save
             today = sim.date(sim.t)
             self.stats[today] = stats
-            self.reports[today] = tw.dedent(report)
+            self.reports[today] = report
 
             if self.verbose:
                 print(self.reports[today])
         return
-
-
 
 
 class Fit(sc.prettyobj):
