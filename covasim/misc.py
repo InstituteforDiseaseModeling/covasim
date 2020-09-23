@@ -174,6 +174,8 @@ def day(obj, *args, start_day=None):
     # Convert to list
     if sc.isstring(obj) or sc.isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
         obj = sc.promotetolist(obj) # Ensure it's iterable
+    elif isinstance(obj, np.ndarray):
+        obj = obj.tolist() # Convert to list if it's an array
     obj.extend(args)
 
     days = []
