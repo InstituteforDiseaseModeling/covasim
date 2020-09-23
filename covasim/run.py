@@ -1134,15 +1134,15 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
 
     # Actually run!
     if parallel:
-        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
+        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args) # Run in parallel
     else:
         sims = []
         n_sims = len(list(iterkwargs.values())[0]) # Must have length >=1 and all entries must be the same length
         for s in range(n_sims):
             this_iter = {k:v[s] for k,v in iterkwargs.items()} # Pull out items specific to this iteration
             this_iter.update(kwargs) # Merge with the kwargs
-            this_iter['sim'] = this_iter['sim'].copy() # Ensure we have a fresh sim
-            sim = single_run(**this_iter)
+            this_iter['sim'] = this_iter['sim'].copy() # Ensure we have a fresh sim; this happens implicitly on pickling with multiprocessing
+            sim = single_run(**this_iter) # Run in series
             sims.append(sim)
 
     return sims
