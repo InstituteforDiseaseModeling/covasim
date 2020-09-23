@@ -556,63 +556,74 @@ class BaseSim(ParsObj):
 
 
     def _get_ia(self, which, label=None, partial=False, as_list=False, as_inds=False, die=True):
-        ''' Helper method for get_intervention() and get_analyzer(); see get_intervention() docstring '''
+        ''' Helper method for get_interventions() and get_analyzers(); see get_interventions() docstring '''
 
         # Handle inputs
         if which not in ['interventions', 'analyzers']:
             errormsg = f'This method is only defined for interventions and analyzers, not "{which}"'
             raise ValueError(errormsg)
-        if label is None:
-            label = -1 # Get the last element
-        labels = sc.promotetolist(label)
+
         ia_list = self.pars[which] # List of interventions or analyzers
         n_ia = len(ia_list) # Number of interventions/analyzers
 
-        # Calculate the matches
-        matches = []
-        match_inds = []
-        for label in labels:
-            if sc.isnumber(label):
-                matches.append(ia_list[label])
-                label = n_ia + label if label<0 else label # Convert to a positive number
-                match_inds.append(label)
-            elif sc.isstring(label) or isinstance(label, type):
-                for ind,ia_obj in enumerate(ia_list):
-                    if sc.isstring(label) and ia_obj.label == label or (partial and (label in str(ia_obj.label))):
-                        matches.append(ia_obj)
-                        match_inds.append(ind)
-                    elif isinstance(label, type) and isinstance(ia_obj, label):
-                        matches.append(ia_obj)
-                        match_inds.append(ind)
-            else:
-                errormsg = f'Could not interpret label type "{type(label)}": should be str, int, or {which}'
-                raise TypeError(errormsg)
+        if label == 'summary': # Print a summary of the interventions
+            df = pd.DataFrame(columns=['ind', 'label', 'type'])
+            for ind,ia_obj in enumerate(ia_list):
+                df = df.append(dict(ind=ind, label=str(ia_obj.label), type=type(ia_obj)), ignore_index=True)
+            print(f'Summary of {which}:')
+            print(df)
+            return
 
-        # Parse the output options
-        matches = [ia_list[ind] for ind in match_inds] # Pull out the actual interventions/analyzers
-        if not (as_list or as_inds): # Normal case, return actual interventions
-            if len(matches) == 0:
-                if die:
-                    errormsg = f'No {which} matching "{label}" were found'
-                    raise ValueError(errormsg)
+        else: # Standard usage case
+            if label is None:
+                label = -1 # Get the last element
+            labels = sc.promotetolist(label)
+
+            # Calculate the matches
+            matches = []
+            match_inds = []
+            for label in labels:
+                if sc.isnumber(label):
+                    matches.append(ia_list[label]) # This will raise an exception if an invalid index is given
+                    label = n_ia + label if label<0 else label # Convert to a positive number
+                    match_inds.append(label)
+                elif sc.isstring(label) or isinstance(label, type):
+                    for ind,ia_obj in enumerate(ia_list):
+                        if sc.isstring(label) and ia_obj.label == label or (partial and (label in str(ia_obj.label))):
+                            matches.append(ia_obj)
+                            match_inds.append(ind)
+                        elif isinstance(label, type) and isinstance(ia_obj, label):
+                            matches.append(ia_obj)
+                            match_inds.append(ind)
                 else:
-                    output = None
-            elif len(matches) == 1:
-                output = matches[0]
-            else:
-                output = matches # If more than one match, just return all, same as as_list = True
-        elif as_list:
-            output = matches
-        elif as_inds:
-            output = match_inds
+                    errormsg = f'Could not interpret label type "{type(label)}": should be str, int, or {which} class'
+                    raise TypeError(errormsg)
 
-        return output
+            # Parse the output options
+            if not (as_list or as_inds): # Normal case, return actual interventions
+                if len(matches) == 0:
+                    if die:
+                        errormsg = f'No {which} matching "{label}" were found'
+                        raise ValueError(errormsg)
+                    else:
+                        output = None
+                elif len(matches) == 1:
+                    output = matches[0]
+                else:
+                    output = matches # If more than one match, just return all, same as as_list = True
+            elif as_list:
+                output = matches
+            elif as_inds:
+                output = match_inds
+
+            return output
 
 
-    def get_intervention(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+    def get_interventions(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
         '''
         Find the matching intervention(s) by label, index, or type. If None, return
-        the last intervention in the list.
+        the last intervention in the list. If the label provided is "summary", then
+        print a summary of the interventions (index, label, type).
 
         Args:
             label (str, int, list, Intervention): the label, index, or type of intervention to get; if a list, iterate over one of those types
@@ -626,20 +637,21 @@ class BaseSim(ParsObj):
             tp = cv.test_prob(symp_prob=0.1)
             cb = cv.change_beta(days=0.5, changes=0.3, label='NPI')
             sim = cv.Sim(interventions=[tp, cb])
-            cb = sim.get_intervention('NPI')
-            cb = sim.get_intervention('NP', partial=True)
-            cb = sim.get_intervention(cv.change_beta)
-            cb = sim.get_intervention(1)
-            cb = sim.get_intervention()
-            tp, cb = sim.get_intervention([0,1])
-            ind = sim.get_intervention(cv.change_beta, as_inds=True) # Returns [1]
+            cb = sim.get_interventions('NPI')
+            cb = sim.get_interventions('NP', partial=True)
+            cb = sim.get_interventions(cv.change_beta)
+            cb = sim.get_interventions(1)
+            cb = sim.get_interventions()
+            tp, cb = sim.get_interventions([0,1])
+            ind = sim.get_interventions(cv.change_beta, as_inds=True) # Returns [1]
+            sim.get_interventions('summary') # Prints a summary
         '''
         return self._get_ia('interventions', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
 
 
-    def get_analyzer(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+    def get_analyzers(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
         '''
-        Same as get_intervention(), but for analyzers.
+        Same as get_interventions(), but for analyzers.
         '''
         return self._get_ia('analyzers', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
 

@@ -356,7 +356,12 @@ class age_histogram(Analyzer):
 
 class daily_stats(Analyzer):
     '''
-    Print out daily statistics about the simulation. Warning -- slows things down noticeably.
+    Print out daily statistics about the simulation. Note that this analyzer takes
+    a considerable amount of time, so should be used primarily for debugging, not
+    in production code. To keep the intervention but toggle it off, pass an empty
+    list of days.
+
+    To show the stats for a day after a run has finished, use e.g. ``daily_stats.report('2020-04-04')``.
 
     Args:
         days (list): days on which to print out statistics (if None, assume all)
@@ -378,9 +383,9 @@ class daily_stats(Analyzer):
         self.keys      = keys # The default keys to print out
         self.verbose   = verbose # Print on each timestep
         self.reporter  = reporter # Custom way of reporting the stats
+        self.save_inds = save_inds # Whether to save infection log indices
         self.stats     = sc.objdict() # Store the actual stats
         self.reports   = sc.objdict() # Textual representation of the statistics
-        self.save_inds = save_inds # Whether to save infection log indices
         return
 
 
@@ -400,26 +405,32 @@ class daily_stats(Analyzer):
         return
 
 
-    def intersect(self, inds1, inds2, inds3=None):
-        ''' Handle either keys to precomputed indices or lists of indices '''
-        if isinstance(inds1, str):
-            inds1 = self.inds[inds1]
-        if isinstance(inds2, str):
-            inds2 = self.inds[inds2]
-        if isinstance(inds3, str):
-            inds3 = self.inds[inds3]
-        if inds3 is None:
-            return np.intersect1d(inds1, inds2, assume_unique=True)
-        else:
-            return np.intersect1d(np.intersect1d(inds1, inds2, assume_unique=True), inds3, assume_unique=True)
+    def intersect(self, *args):
+        '''
+        Compute the intersection between arrays of indices, handling either keys
+        to precomputed indices or lists of indices. With two array inputs, simply
+        performs np.intersect1d(arr1, arr2).
+        '''
+        # Optionally pull precomputed indices
+        args = list(args) # Convert from tuple to list
+        for i,inds in enumerate(args):
+            if isinstance(inds, str):
+                args[i] = self.inds[inds]
+
+        # Find the intersection
+        output = args[0] # Start with the first set of indices
+        for inds in args[1:]: # Loop over remaining sets
+            output = np.intersect1d(output, inds, assume_unique=True)
+
+        return output
 
 
     def apply(self, sim):
         for ind in cvi.find_day(self.days, sim.t):
 
+            # Initialize
             ppl = sim.people
             stats = sc.objdict()
-
             stats.empty = sc.objdict()
             for basekey in self.basekeys:
                 stats[basekey] = sc.objdict()
@@ -444,7 +455,7 @@ class daily_stats(Analyzer):
 
             # Source stats
             inflog = sim.people.infection_log
-            infloginds = [i for i,e in enumerate(inflog) if (e['date']==sim.t and e['source'] is not None)]
+            infloginds = [i for i,e in enumerate(inflog) if (e['date']==sim.t and e['source'] is not None)] # Person was infected today and was not a seed infection
             sourceinds = list(set([inflog[i]['source'] for i in infloginds]))
             self._inflogind = len(inflog) # Skip old entries
             stats.source.new_sources = len(sourceinds)
@@ -462,9 +473,9 @@ class daily_stats(Analyzer):
                     stats.empty.test.append(key)
 
             # Quarantine stats
-            stats.quar.in_quarantine = stats.stocks.quarantined # Duplicate, but make more obvious
-            eq_inds = cvu.true(ppl.date_quarantined == sim.t)
-            fq_inds = cvu.true(ppl.date_end_quarantine == sim.t+1)
+            stats.quar.in_quarantine = stats.stocks.quarantined # Duplicates stats.quar.quarantined, but all other categories start with the total so pull this out for consistency
+            eq_inds = cvu.true(ppl.date_quarantined == sim.t) # People entering quarantine
+            fq_inds = cvu.true(ppl.date_end_quarantine == sim.t+1) # People finishing quarantine; +1 since on the date of quarantine end, they are released back and can get infected at normal rates
             stats.quar.entered_quar  = len(eq_inds)
             stats.quar.finished_quar = len(fq_inds)
             for key in self.keys:
@@ -492,13 +503,13 @@ class daily_stats(Analyzer):
             d_inds = self.intersect(newtests, 'infectious') # Everyone infectious will test positive
             q_inds = self.inds['quarantined']
             nq_inds = ppl.false('quarantined')
-            for tk,ti in zip(['test', 'diag'], [t_inds, d_inds]):
-                for sk,si in zip(['symp', 'asymp'], [symp_inds, asymp_inds]):
-                    for qk,qi in zip(['q', 'nq', 'eq', 'fq'], [q_inds, nq_inds, eq_inds, fq_inds]):
+            for tk,ti in zip(['test', 'diag'], [t_inds, d_inds]): # People tested vs diagnosed
+                for sk,si in zip(['symp', 'asymp'], [symp_inds, asymp_inds]): # Symptomatic vs asymptomatic
+                    for qk,qi in zip(['q', 'nq', 'eq', 'fq'], [q_inds, nq_inds, eq_inds, fq_inds]): # In quarantine, not in quarantine, entering quarantine, finishing quarantine
                         stats.extra[f'{tk}_{sk}_{qk}']  = len(self.intersect(ti, si,  qi)) # E.g. stats.extra.diag_asymp_nq = len(self.intersect(d_inds, asymp_inds, nq_inds))
 
             # Final calculations
-            quar_denom = max(1,stats.quar.in_quarantine)
+            quar_denom = max(1,stats.quar.in_quarantine) # Avoid divide by zero
             stats.extra.prev = stats.stocks.infectious/sim["pop_size"] # Overall prevalence
             stats.extra.dead = stats.stocks.dead/sim["pop_size"] # Fraction dead
             stats.extra.quar_prev = stats.quar.infectious/quar_denom # Prevalence of people in quarantine
@@ -507,7 +518,7 @@ class daily_stats(Analyzer):
             stats.extra.f_quar_prev = len(self.intersect(fq_inds, 'infectious'))/max(1,len(fq_inds)) # Prevalence of people finishing quarantine
             stats.extra.non_quar_prev = (stats.stocks.infectious - stats.quar.infectious)/(sim["pop_size"] - quar_denom) # Prevalence of people outside quarantine
 
-            # Indices aren't usually saved, but maybe helpful for extra debugging
+            # Indices aren't usually saved for memory reasons, but may be helpful for extra debugging
             if self.save_inds:
                 stats.inds = sc.objdict()
                 stats.inds.inflog  = infloginds
@@ -548,7 +559,8 @@ class daily_stats(Analyzer):
         ''' Turn the statistics into a report '''
 
         def make_entry(basekey, show_empty=show_empty):
-            string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if v])
+            ''' For each key, print the key and the count if the count is >0, and optionally any empty estates '''
+            string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if v>0])
             if show_empty is True:
                 string += f'\n  Empty states: {stats.empty[basekey]}'
             elif show_empty == 'count':
@@ -599,7 +611,7 @@ class daily_stats(Analyzer):
 
 
     def transpose(self, keys=None):
-        ''' Transpose the data from a list of dicts to a dict of lists '''
+        ''' Transpose the data from a list-of-dicts-of-dicts to a dict-of-dicts-of-lists '''
         if keys is None:
             keys = self.basekeys + self.extrakeys
 
@@ -621,12 +633,12 @@ class daily_stats(Analyzer):
 
     def plot(self, fig_args=None, axis_args=None, plot_args=None, font_size=12):
         '''
-        Plot each of the states of the model
+        Plot the daily statistics recordered. Some overlap with e.g. ``sim.plot(to_plot='overview')``.
 
         Args:
-            fig_args (dict): passed to pl.figure()
-            axis_args (dict): passed to pl.subplots_adjust()
-            plot_args (dict): passed to pl.plot()
+            fig_args  (dict):  passed to pl.figure()
+            axis_args (dict):  passed to pl.subplots_adjust()
+            plot_args (dict):  passed to pl.plot()
             font_size (float): size of font
         '''
 
@@ -637,10 +649,10 @@ class daily_stats(Analyzer):
 
         # Transform the data into time series
         data = self.transpose()
+
+        # Do the plotting
         n_plots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
         numrc = int(np.ceil(np.sqrt(n_plots))) # Number of rows and columns
-
-        print(f'Making {n_plots} plots...')
         fig, axs = pl.subplots(nrows=numrc, ncols=numrc, **fig_args)
         pl.subplots_adjust(**axis_args)
 
@@ -654,7 +666,7 @@ class daily_stats(Analyzer):
                 ax.plot(y, **plot_args)
                 ax.set_title(f'{k1}: {k2}')
 
-        return
+        return fig
 
 
 
