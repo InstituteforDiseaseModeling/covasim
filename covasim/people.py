@@ -17,10 +17,10 @@ __all__ = ['People']
 class People(cvb.BasePeople):
     '''
     A class to perform all the operations on the people. This class is usually
-    not invoked directly, but instead is created automatically by the sim. Most
-    initialization happens in BasePeople. The only required input argument is the
-    population size, but typically the full parameters dictionary will get passed
-    instead since it will be needed before the People object is initialized.
+    not invoked directly, but instead is created automatically by the sim. The
+    only required input argument is the population size, but typically the full
+    parameters dictionary will get passed instead since it will be needed before
+    the People object is initialized.
 
     Args:
         pars (dict): the sim parameters, e.g. sim.pars -- alternatively, if a number, interpreted as pop_size
@@ -36,7 +36,48 @@ class People(cvb.BasePeople):
     '''
 
     def __init__(self, pars, strict=True, **kwargs):
-        super().__init__(pars)
+
+        # Handle pars and population size
+        if sc.isnumber(pars): # Interpret as a population size
+            pars = {'pop_size':pars} # Ensure it's a dictionary
+        self.pars     = pars # Equivalent to self.set_pars(pars)
+        self.pop_size = int(pars['pop_size'])
+
+        # Other initialization
+        self.t = 0 # Keep current simulation time
+        self._lock = False # Prevent further modification of keys
+        self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
+        self.contacts = None
+        self.init_contacts() # Initialize the contacts
+        self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
+
+        # Set person properties -- all floats except for UID
+        for key in self.meta.person:
+            if key == 'uid':
+                self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
+            else:
+                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+
+        # Set health states -- only susceptible is true by default -- booleans
+        for key in self.meta.states:
+            if key == 'susceptible':
+                self[key] = np.full(self.pop_size, True, dtype=bool)
+            else:
+                self[key] = np.full(self.pop_size, False, dtype=bool)
+
+        # Set dates and durations -- both floats
+        for key in self.meta.dates + self.meta.durs:
+            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+
+        # Store the dtypes used in a flat dict
+        self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
+        self._lock = True # Stop further keys from being set (does not affect attributes)
+
+        # Store flows to be computed during simulation
+        self.flows = {key:0 for key in cvd.new_result_flows}
+
+        # Although we have called init(), we still need to call initialize()
+        self.initialized = False
 
         # Handle contacts, if supplied (note: they usually are)
         if 'contacts' in kwargs:

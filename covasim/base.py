@@ -653,53 +653,6 @@ class BasePeople(sc.prettyobj):
     whereas this class exists to handle the less interesting implementation details.
     '''
 
-    def __init__(self, pars, **kwargs):
-
-        # Handle pars and population size
-        if sc.isnumber(pars): # Interpret as a population size
-            pars = {'pop_size':pars} # Ensure it's a dictionary
-        self.pars     = pars # Equivalent to self.set_pars(pars)
-        self.pop_size = int(pars['pop_size'])
-
-        # Other initialization
-        self.t = 0 # Keep current simulation time
-        self._lock = False # Prevent further modification of keys
-        self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
-        self.contacts = None
-        self.init_contacts() # Initialize the contacts
-        self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
-
-        # Set person properties -- all floats except for UID
-        for key in self.meta.person:
-            if key == 'uid':
-                self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
-            else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
-
-        # Set health states -- only susceptible is true by default -- booleans
-        for key in self.meta.states:
-            if key == 'susceptible':
-                self[key] = np.full(self.pop_size, True, dtype=bool)
-            else:
-                self[key] = np.full(self.pop_size, False, dtype=bool)
-
-        # Set dates and durations -- both floats
-        for key in self.meta.dates + self.meta.durs:
-            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
-
-        # Store the dtypes used in a flat dict
-        self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
-        self._lock = True # Stop further keys from being set (does not affect attributes)
-
-        # Store flows to be computed during simulation
-        self.flows = {key:0 for key in cvd.new_result_flows}
-
-        # Although we have called init(), we still need to call initialize()
-        self.initialized = False
-
-        return
-
-
     def __getitem__(self, key):
         ''' Allow people['attr'] instead of getattr(people, 'attr')
             If the key is an integer, alias `people.person()` to return a `Person` instance
