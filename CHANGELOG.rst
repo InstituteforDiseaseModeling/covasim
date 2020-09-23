@@ -19,7 +19,10 @@ Version 1.7.1 (2020-09-22)
 - Added new methods, ``sim.get_interventions()`` and ``sim.get_analyzers()``, which return interventions or analyzers based on the index, label, or type.
 - Added a new analyzer, ``cv.daily_stats()``, which can print out and plot detailed information about the state of the simulation on each day.
 - MultiSims can now be run without parallelization; use ``msim.run(parallel=False)``. This can be useful for debugging, or for parallelizing across rather than within MultiSims (since ``multiprocessing`` calls cannot be nested).
+- ``sim.people.not_defined()`` has been renamed ``sim.people.undefined()``.
 - Corrected the transmission tree plot to account for people who have left quarantine.
+- Code has been moved between ``sim.py``, ``people.py``, and ``base.py`` to better reflect the division between "the simulation" (the first two files) and "the housekeeping" (the last file).
+- *Regression info*: Only user scripts that explicitly call ``sim.people.not_defined()`` should require updating. Transmission tree results for people in quarantine may differ slightly from before.
 - *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__
 
 

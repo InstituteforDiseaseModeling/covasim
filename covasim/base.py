@@ -626,7 +626,7 @@ class BaseSim(ParsObj):
         print a summary of the interventions (index, label, type).
 
         Args:
-            label (str, int, list, Intervention): the label, index, or type of intervention to get; if a list, iterate over one of those types
+            label (str, int, Intervention, list): the label, index, or type of intervention to get; if a list, iterate over one of those types
             partial (bool): if true, return partial matches (e.g. 'beta' will match all beta interventions)
             as_list (bool): if true, always return a list even if one or no entries were found (otherwise, only return a list for multiple matching interventions)
             as_inds (bool): if true, return matching indices instead of the actual interventions
