@@ -399,7 +399,7 @@ class daily_stats(Analyzer):
         return
 
 
-    def interlen(self, inds1, inds2, inds3=None):
+    def intersect(self, inds1, inds2, inds3=None):
         ''' Handle either keys to precomputed indices or lists of indices '''
         if isinstance(inds1, str):
             inds1 = self.inds[inds1]
@@ -408,9 +408,9 @@ class daily_stats(Analyzer):
         if isinstance(inds3, str):
             inds3 = self.inds[inds3]
         if inds3 is None:
-            return len(np.intersect1d(inds1, inds2, assume_unique=True))
+            return np.intersect1d(inds1, inds2, assume_unique=True)
         else:
-            return len(np.intersect1d(np.intersect1d(inds1, inds2, assume_unique=True), inds3, assume_unique=True))
+            return np.intersect1d(np.intersect1d(inds1, inds2, assume_unique=True), inds3, assume_unique=True)
 
 
     def apply(self, sim):
@@ -437,10 +437,8 @@ class daily_stats(Analyzer):
             newinfs = cvu.true(ppl.date_exposed == sim.t)
             stats.trans.new_infections = len(newinfs)
             for key in ['known_contact', 'quarantined']:
-                n_people = self.interlen(newinfs, key)
-                if n_people:
-                    stats.trans[key] = n_people
-                else:
+                stats.trans[key] = len(self.intersect(newinfs, key))
+                if not stats.trans[key]:
                     stats.empty.trans.append(key)
 
             # Source stats
@@ -450,50 +448,74 @@ class daily_stats(Analyzer):
             self._inflogind = len(inflog) # Skip old entries
             stats.source.new_sources = len(sourceinds)
             for key in self.keys:
-                n_people = self.interlen(sourceinds, key)
-                if n_people:
-                    stats.source[key] = n_people
-                else:
+                stats.source[key] = len(self.intersect(sourceinds, key))
+                if not stats.source[key]:
                     stats.empty.source.append(key)
-
-            stats.extra = sc.objdict() # Additional quantities not stored in the main counts
-            stats.extra.layer_counts = {k:0 for k in sim.layer_keys()}
-            for i in infloginds:
-                stats.extra.layer_counts[inflog[i]['layer']] += 1
-            stats.extra.symp    = self.interlen(sourceinds, 'symptomatic') # Redefine in case empty above
-            stats.extra.presymp = self.interlen(sourceinds, ppl.false('symptomatic'), cvu.defined(ppl.date_symptomatic))
-            stats.extra.asymp   = self.interlen(sourceinds, ppl.false('symptomatic'), cvu.undefined(ppl.date_symptomatic))
-            per_factor = 100/max(1, stats.source.new_sources) # Convert to a percentage and avoid division by zero
-            stats.extra.per_symp    = stats.extra.symp*per_factor # Percentage symptomatic
-            stats.extra.per_presymp = stats.extra.presymp*per_factor
-            stats.extra.per_asymp   = stats.extra.asymp*per_factor
-
-            if self.save_inds:
-                stats.inds = sc.objdict() # Additional quantities not stored in the main counts
-                stats.inds.inflog  = infloginds
-                stats.inds.targets = newinfs
-                stats.inds.sources = sourceinds
 
             # Testing stats
             newtests = cvu.true(ppl.date_tested == sim.t)
             stats.test.new_tests = len(newtests)
             for key in self.keys:
-                n_people = self.interlen(newtests,key)
-                if n_people:
-                    stats.test[key] = n_people
-                else:
+                stats.test[key] = len(self.intersect(newtests,key))
+                if not stats.test[key]:
                     stats.empty.test.append(key)
 
             # Quarantine stats
-            stats.quar.in_quarantine = stats.stocks.quarantined
-            stats.quar.entered_quar  = len(cvu.true(ppl.date_quarantined == sim.t))
-            stats.quar.finished_quar = len(cvu.true(ppl.date_end_quarantine == sim.t))
+            stats.quar.in_quarantine = stats.stocks.quarantined # Duplicate, but make more obvious
+            eq_inds = cvu.true(ppl.date_quarantined == sim.t)
+            fq_inds = cvu.true(ppl.date_end_quarantine == sim.t+1)
+            stats.quar.entered_quar  = len(eq_inds)
+            stats.quar.finished_quar = len(fq_inds)
             for key in self.keys:
-                n_people = self.interlen('quarantined', key)
-                if n_people:
-                    stats.quar[key] = n_people
-                else:
+                stats.quar[key] = len(self.intersect('quarantined', key))
+                if not stats.quar[key]:
                     stats.empty.quar.append(key)
+
+            # Calculate extras for the source
+            stats.extra = sc.objdict() # Additional quantities not stored in the main counts
+            stats.extra.layer_counts = {k:0 for k in sim.layer_keys()}
+            for i in infloginds:
+                stats.extra.layer_counts[inflog[i]['layer']] += 1
+            symp_inds = self.inds['symptomatic']
+            asymp_inds = ppl.false('symptomatic')
+            stats.extra.symp    = len(self.intersect(sourceinds, 'symptomatic')) # Redefine in case empty above
+            stats.extra.presymp = len(self.intersect(sourceinds, asymp_inds, ppl.defined('date_symptomatic')))
+            stats.extra.asymp   = len(self.intersect(sourceinds, asymp_inds,  ppl.undefined('date_symptomatic')))
+            per_factor = 100/max(1, stats.source.new_sources) # Convert to a percentage and avoid division by zero
+            stats.extra.per_symp    = stats.extra.symp*per_factor # Percentage symptomatic
+            stats.extra.per_presymp = stats.extra.presymp*per_factor
+            stats.extra.per_asymp   = stats.extra.asymp*per_factor
+
+            # Calculate extras for quarantine testing
+            t_inds = newtests # Everyone who tested this timestep
+            d_inds = self.intersect(newtests, 'infectious') # Everyone infectious will test positive
+            q_inds = self.inds['quarantined']
+            nq_inds = ppl.false('quarantined')
+            for tk,ti in zip(['test', 'diag'], [t_inds, d_inds]):
+                for sk,si in zip(['symp', 'asymp'], [symp_inds, asymp_inds]):
+                    for qk,qi in zip(['q', 'nq', 'eq', 'fq'], [q_inds, nq_inds, eq_inds, fq_inds]):
+                        stats.extra[f'{tk}_{sk}_{qk}']  = len(self.intersect(ti, si,  qi)) # E.g. stats.extra.diag_asymp_nq = len(self.intersect(d_inds, asymp_inds, nq_inds))
+
+            # Final calculations
+            quar_denom = max(1,stats.quar.in_quarantine)
+            stats.extra.prev = stats.stocks.infectious/sim["pop_size"] # Overall prevalence
+            stats.extra.dead = stats.stocks.dead/sim["pop_size"] # Fraction dead
+            stats.extra.quar_prev = stats.quar.infectious/quar_denom # Prevalence of people in quarantine
+            stats.extra.quar_prev   = len(self.intersect(q_inds, 'infectious'))/max(1,len(q_inds)) # Prevalence of people in quarantine
+            stats.extra.e_quar_prev = len(self.intersect(eq_inds, 'infectious'))/max(1,len(eq_inds)) # Prevalence of people entering quarantine
+            stats.extra.f_quar_prev = len(self.intersect(fq_inds, 'infectious'))/max(1,len(fq_inds)) # Prevalence of people finishing quarantine
+            stats.extra.non_quar_prev = (stats.stocks.infectious - stats.quar.infectious)/(sim["pop_size"] - quar_denom) # Prevalence of people outside quarantine
+
+            # Indices aren't usually saved, but maybe helpful for extra debugging
+            if self.save_inds:
+                stats.inds = sc.objdict()
+                stats.inds.inflog  = infloginds
+                stats.inds.targets = newinfs
+                stats.inds.sources = sourceinds
+                stats.inds.t_inds = t_inds
+                stats.inds.d_inds = d_inds
+                stats.inds.eq_inds = eq_inds
+                stats.inds.fq_inds = fq_inds
 
             # Turn into report
             if self.reporter is not None:
@@ -507,7 +529,17 @@ class daily_stats(Analyzer):
             self.reports[today] = report
 
             if self.verbose:
-                print(report)
+                self.report(today)
+
+        return
+
+
+    def report(self, day=None):
+        ''' Print out one or all reports -- take a date string or an int '''
+        if day is None:
+            print(self.reports)
+        else:
+            print(self.reports[day])
         return
 
 
@@ -515,7 +547,7 @@ class daily_stats(Analyzer):
         ''' Turn the statistics into a report '''
 
         def make_entry(basekey, show_empty=show_empty):
-            string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if k != 'empty'])
+            string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if v])
             if show_empty is True:
                 string += f'\n  Empty states: {stats.empty[basekey]}'
             elif show_empty == 'count':
@@ -528,8 +560,8 @@ class daily_stats(Analyzer):
         report += f'Overall stocks:'
         report += make_entry('stocks', show_empty=False)
         report += f'  Derived statistics:\n'
-        report += f'    Percentage infectious: {stats.stocks.infectious/sim["pop_size"]*100:6.3f}%\n'
-        report += f'    Percentage dead:       {stats.stocks.dead/sim["pop_size"]*100:6.3f}%\n'
+        report += f'    Percentage infectious: {stats.extra.prev*100:6.3f}%\n'
+        report += f'    Percentage dead:       {stats.extra.dead*100:6.3f}%\n'
         report += f'\nTransmission target statistics:'
         report += make_entry('trans')
         report += f'  Infections by layer:\n'
@@ -543,11 +575,23 @@ class daily_stats(Analyzer):
         report += f'\nTesting statistics:'
         report += make_entry('test')
         report += f'  Derived statistics:\n'
-        # report += f'    Pre-symptomatic: {stats.extra.presymp} ({stats.extra.per_presymp:0.1f})%\n'
-        # report += f'    Asymptomatic:    {stats.extra.asymp} ({stats.extra.per_asymp:0.1f})%\n'
-        # report += f'    Symptomatic:     {stats.extra.symp} ({stats.extra.per_symp:0.1f})%\n'
+        report += f'    Tests:\n'
+        report += f'      Symp/asymp not in quar: {stats.extra.test_symp_nq}/{stats.extra.test_asymp_nq}\n'
+        report += f'      Symp/asymp in quar:     {stats.extra.test_symp_q}/{stats.extra.test_asymp_q}\n'
+        report += f'      Symp/asymp enter quar:  {stats.extra.test_symp_eq}/{stats.extra.test_asymp_eq}\n'
+        report += f'      Symp/asymp finish quar: {stats.extra.test_symp_fq}/{stats.extra.test_asymp_fq}\n'
+        report += f'    Diagnoses:\n'
+        report += f'      Symp/asymp not in quar: {stats.extra.diag_symp_nq}/{stats.extra.diag_asymp_nq}\n'
+        report += f'      Symp/asymp in quar:     {stats.extra.diag_symp_q}/{stats.extra.diag_asymp_q}\n'
+        report += f'      Symp/asymp enter quar:  {stats.extra.diag_symp_eq}/{stats.extra.diag_asymp_eq}\n'
+        report += f'      Symp/asymp finish quar: {stats.extra.diag_symp_fq}/{stats.extra.diag_asymp_fq}\n'
         report += f'\nQuarantine statistics:'
         report += make_entry('quar')
+        report += f'  Derived statistics:\n'
+        report += f'    Percentage infectious not in quarantine:    {stats.extra.non_quar_prev*100:6.3f}%\n'
+        report += f'    Percentage infectious in quarantine:        {stats.extra.quar_prev*100:6.3f}%\n'
+        report += f'    Percentage infectious entering quarantine:  {stats.extra.e_quar_prev*100:6.3f}%\n'
+        report += f'    Percentage infectious finishing quarantine: {stats.extra.f_quar_prev*100:6.3f}%\n'
         report += f'\n*** End of report for day {datestr} ***\n'
 
         return report
