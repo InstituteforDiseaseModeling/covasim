@@ -454,6 +454,7 @@ class Sim(cvb.BaseSim):
             cb = cv.change_beta(days=0.5, changes=0.3, label='NPI')
             sim = cv.Sim(interventions=[tp, cb])
             cb = sim.get_intervention('NPI')
+            cb = sim.get_intervention('NP', partial=True)
             cb = sim.get_intervention(cv.change_beta)
             cb = sim.get_intervention(1)
             cb = sim.get_intervention()

@@ -548,21 +548,19 @@ class BaseSim(ParsObj):
         for label in labels:
             if sc.isnumber(label):
                 matches.append(ia_list[label])
-                label = n_ia - label if label<0 else label # Convert to a positive number
+                label = n_ia + label if label<0 else label # Convert to a positive number
                 match_inds.append(label)
             elif sc.isstring(label) or isinstance(label, type):
                 for ind,ia_obj in enumerate(ia_list):
-                    if sc.isstring(label):
-                        if ia_obj.label == label:
-                            matches.append(ia_obj)
-                            match_inds.append(ind)
-                    elif isinstance(label, type):
-                        if isinstance(ia_obj, label):
-                            matches.append(ia_obj)
-                            match_inds.append(ind)
-                    else:
-                        errormsg = f'Could not interpret label type "{type(label)}": should be str, int, or {which}'
-                        raise TypeError(errormsg)
+                    if sc.isstring(label) and ia_obj.label == label or (partial and (label in str(ia_obj.label))):
+                        matches.append(ia_obj)
+                        match_inds.append(ind)
+                    elif isinstance(label, type) and isinstance(ia_obj, label):
+                        matches.append(ia_obj)
+                        match_inds.append(ind)
+            else:
+                errormsg = f'Could not interpret label type "{type(label)}": should be str, int, or {which}'
+                raise TypeError(errormsg)
 
         # Parse the output options
         matches = [ia_list[ind] for ind in match_inds] # Pull out the actual interventions/analyzers

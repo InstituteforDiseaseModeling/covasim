@@ -16,6 +16,7 @@ Latest versions (1.7.x)
 
 Version 1.7.1 (2020-09-22)
 --------------------------
+- Added new methods, ``sim.get_intervention()`` and ``sim.get_analyzer()``, which return interventions or analyzers based on the index, label, or type.
 - Added a new analyzer, ``cv.daily_stats()``, which prints out detailed information about the state of the simulation on each day.
 - Corrected the transmission tree plot to account for people who have left quarantine.
 - *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__
