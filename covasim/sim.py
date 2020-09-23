@@ -5,7 +5,6 @@ Defines the Sim class, Covasim's core class.
 #%% Imports
 import numpy as np
 import sciris as sc
-from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
 from . import base as cvb
@@ -23,7 +22,9 @@ __all__ = ['Sim', 'AlreadyRunError']
 class Sim(cvb.BaseSim):
     '''
     The Sim class handles the running of the simulation: the creation of the
-    population and the dynamcis of the epidemic.
+    population and the dynamcis of the epidemic. This class handles the mechanics
+    of the actual simulation, while BaseSim takes care of housekeeping (saving,
+    loading, exporting, etc.).
 
     Args:
         pars     (dict):   parameters to modify from their default values
@@ -71,31 +72,6 @@ class Sim(cvb.BaseSim):
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
             self.load_population(popfile)      # Load the population, if provided
-        return
-
-
-    def update_pars(self, pars=None, create=False, **kwargs):
-        ''' Ensure that metaparameters get used properly before being updated '''
-        pars = sc.mergedicts(pars, kwargs)
-        if pars:
-            if pars.get('pop_type'):
-                cvpar.reset_layer_pars(pars, force=False)
-            if pars.get('prog_by_age'):
-                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
-            super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
-        return
-
-
-    def set_metadata(self, simfile, label):
-        ''' Set the metadata for the simulation -- creation time and filename '''
-        self.created = sc.now()
-        self.version = cvv.__version__
-        self.git_info = cvm.git_info()
-        if simfile is None:
-            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            self.simfile = f'covasim_{datestr}.sim'
-        if label is not None:
-            self.label = label
         return
 
 
@@ -434,41 +410,6 @@ class Sim(cvb.BaseSim):
             if isinstance(analyzer, cva.Analyzer):
                 analyzer.initialize(self)
         return
-
-
-    def get_intervention(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
-        '''
-        Find the matching intervention(s) by label, index, or type. If None, return
-        the last intervention in the list.
-
-        Args:
-            label (str, int, list, Intervention): the label, index, or type of intervention to get; if a list, iterate over one of those types
-            partial (bool): if true, return partial matches (e.g. 'beta' will match all beta interventions)
-            as_list (bool): if true, always return a list even if one or no entries were found (otherwise, only return a list for multiple matching interventions)
-            as_inds (bool): if true, return matching indices instead of the actual interventions
-            die (bool): if true and as_list is false, raise an exception if an intervention is not found
-
-        **Examples**::
-
-            tp = cv.test_prob(symp_prob=0.1)
-            cb = cv.change_beta(days=0.5, changes=0.3, label='NPI')
-            sim = cv.Sim(interventions=[tp, cb])
-            cb = sim.get_intervention('NPI')
-            cb = sim.get_intervention('NP', partial=True)
-            cb = sim.get_intervention(cv.change_beta)
-            cb = sim.get_intervention(1)
-            cb = sim.get_intervention()
-            tp, cb = sim.get_intervention([0,1])
-            ind = sim.get_intervention(cv.change_beta, as_inds=True) # Returns [1]
-        '''
-        return self._get_ia('interventions', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
-
-
-    def get_analyzer(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
-        '''
-        Same as get_intervention(), but for analyzers.
-        '''
-        return self._get_ia('analyzers', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
 
 
     def rescale(self):

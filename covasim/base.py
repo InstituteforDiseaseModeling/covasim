@@ -8,9 +8,11 @@ import numpy as np
 import pandas as pd
 import sciris as sc
 import datetime as dt
+from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
+from . import parameters as cvpar
 
 # Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
@@ -137,15 +139,37 @@ class BaseSim(ParsObj):
         super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
         return
 
+    def update_pars(self, pars=None, create=False, **kwargs):
+        ''' Ensure that metaparameters get used properly before being updated '''
+        pars = sc.mergedicts(pars, kwargs)
+        if pars:
+            if pars.get('pop_type'):
+                cvpar.reset_layer_pars(pars, force=False)
+            if pars.get('prog_by_age'):
+                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
+            super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
+        return
+
+
+    def set_metadata(self, simfile, label):
+        ''' Set the metadata for the simulation -- creation time and filename '''
+        self.created = sc.now()
+        self.version = cvv.__version__
+        self.git_info = cvm.git_info()
+        if simfile is None:
+            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
+            self.simfile = f'covasim_{datestr}.sim'
+        if label is not None:
+            self.label = label
+        return
+
+
     def set_seed(self, seed=-1):
         '''
         Set the seed for the random number stream from the stored or supplied value
 
         Args:
             seed (None or int): if no argument, use current seed; if None, randomize; otherwise, use and store supplied seed
-
-        Returns:
-            None
         '''
         # Unless no seed is supplied, reset it
         if seed != -1:
@@ -581,6 +605,41 @@ class BaseSim(ParsObj):
             output = match_inds
 
         return output
+
+
+    def get_intervention(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+        '''
+        Find the matching intervention(s) by label, index, or type. If None, return
+        the last intervention in the list.
+
+        Args:
+            label (str, int, list, Intervention): the label, index, or type of intervention to get; if a list, iterate over one of those types
+            partial (bool): if true, return partial matches (e.g. 'beta' will match all beta interventions)
+            as_list (bool): if true, always return a list even if one or no entries were found (otherwise, only return a list for multiple matching interventions)
+            as_inds (bool): if true, return matching indices instead of the actual interventions
+            die (bool): if true and as_list is false, raise an exception if an intervention is not found
+
+        **Examples**::
+
+            tp = cv.test_prob(symp_prob=0.1)
+            cb = cv.change_beta(days=0.5, changes=0.3, label='NPI')
+            sim = cv.Sim(interventions=[tp, cb])
+            cb = sim.get_intervention('NPI')
+            cb = sim.get_intervention('NP', partial=True)
+            cb = sim.get_intervention(cv.change_beta)
+            cb = sim.get_intervention(1)
+            cb = sim.get_intervention()
+            tp, cb = sim.get_intervention([0,1])
+            ind = sim.get_intervention(cv.change_beta, as_inds=True) # Returns [1]
+        '''
+        return self._get_ia('interventions', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
+
+
+    def get_analyzer(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+        '''
+        Same as get_intervention(), but for analyzers.
+        '''
+        return self._get_ia('analyzers', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
 
 
 #%% Define people classes
