@@ -394,6 +394,7 @@ class daily_stats(Analyzer):
             self.keys =  ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'known_contact', 'quarantined', 'diagnosed', 'recovered', 'dead']
 
         self.basekeys = ['stocks', 'trans', 'source', 'test', 'quar'] # Categories of things to plot
+        self.extrakeys = ['layer_counts', 'extra']
         self._inflogind = 0 # Don't keep going back to old infection log entries
         self.initialized = True
         return
@@ -473,9 +474,6 @@ class daily_stats(Analyzer):
 
             # Calculate extras for the source
             stats.extra = sc.objdict() # Additional quantities not stored in the main counts
-            stats.extra.layer_counts = {k:0 for k in sim.layer_keys()}
-            for i in infloginds:
-                stats.extra.layer_counts[inflog[i]['layer']] += 1
             symp_inds = self.inds['symptomatic']
             asymp_inds = ppl.false('symptomatic')
             stats.extra.symp    = len(self.intersect(sourceinds, 'symptomatic')) # Redefine in case empty above
@@ -485,6 +483,9 @@ class daily_stats(Analyzer):
             stats.extra.per_symp    = stats.extra.symp*per_factor # Percentage symptomatic
             stats.extra.per_presymp = stats.extra.presymp*per_factor
             stats.extra.per_asymp   = stats.extra.asymp*per_factor
+            stats.layer_counts = {k:0 for k in sim.layer_keys()}
+            for i in infloginds:
+                stats.layer_counts[inflog[i]['layer']] += 1
 
             # Calculate extras for quarantine testing
             t_inds = newtests # Everyone who tested this timestep
@@ -565,7 +566,7 @@ class daily_stats(Analyzer):
         report += f'\nTransmission target statistics:'
         report += make_entry('trans')
         report += f'  Infections by layer:\n'
-        report += '\n'.join([f'    {k} = {v}' for k,v in stats.extra.layer_counts.items()])
+        report += '\n'.join([f'    {k} = {v}' for k,v in stats.layer_counts.items()])
         report += f'\n\nTransmission source statistics:'
         report += make_entry('source')
         report += f'  Derived statistics:\n'
@@ -597,17 +598,36 @@ class daily_stats(Analyzer):
         return report
 
 
-    def plot(self, keys=None, fig_args=None, axis_args=None, plot_args=None, font_size=None):
+    def transpose(self, keys=None):
+        ''' Transpose the data from a list of dicts to a dict of lists '''
+        if keys is None:
+            keys = self.basekeys + self.extrakeys
+
+        # Initialize
+        data = {}
+        for k1 in keys:
+            data[k1] = {}
+            for k2 in self.stats[0][k1].keys():
+                data[k1][k2] = []
+
+        # Populate
+        for stats in self.stats.values():
+            for k1 in keys:
+                for k2 in stats[k1].keys():
+                    data[k1][k2].append(stats[k1][k2])
+
+        return data
+
+
+    def plot(self, fig_args=None, axis_args=None, plot_args=None, font_size=12):
         '''
         Plot each of the states of the model
 
         Args:
-            keys (list): which keys to plot (default, all)
-            width (float): bar width
-            font_size (float): size of font
             fig_args (dict): passed to pl.figure()
             axis_args (dict): passed to pl.subplots_adjust()
             plot_args (dict): passed to pl.plot()
+            font_size (float): size of font
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
@@ -615,15 +635,27 @@ class daily_stats(Analyzer):
         plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
         pl.rcParams['font.size'] = font_size
 
-        if keys is None:
-            keys = self.basekeys
-        n_keys = len(keys)
+        # Transform the data into time series
+        data = self.transpose()
+        n_plots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
+        numrc = int(np.ceil(np.sqrt(n_plots))) # Number of rows and columns
 
-        fig = pl.figure(**fig_args)
+        print(f'Making {n_plots} plots...')
+        fig, axs = pl.subplots(nrows=numrc, ncols=numrc, **fig_args)
         pl.subplots_adjust(**axis_args)
-        main_ax1 = pl.subplot(n_rows, 2, 1)
+
+        count = -1
+        for k1 in data.keys():
+            for k2 in data[k1].keys():
+                count += 1
+                row,col = np.unravel_index(count, (numrc,numrc))
+                ax = axs[row,col]
+                y = data[k1][k2]
+                ax.plot(y, **plot_args)
+                ax.set_title(f'{k1}: {k2}')
 
         return
+
 
 
 class Fit(sc.prettyobj):

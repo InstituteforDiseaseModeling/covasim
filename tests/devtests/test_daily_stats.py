@@ -2,7 +2,10 @@
 Test daily stats analyzer
 '''
 
+import sciris as sc
 import covasim as cv
+
+T = sc.tic()
 
 pars = dict(
     pop_type = 'hybrid',
@@ -17,3 +20,6 @@ sim = cv.Sim(pars, interventions=[tp, ct], analyzers=cv.daily_stats())
 sim.run()
 sim.plot(to_plot='overview')
 ds = sim.get_analyzer()
+ds.plot()
+
+sc.toc(T)
