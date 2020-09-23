@@ -572,8 +572,12 @@ class daily_stats(Analyzer):
         pl.rcParams['font.size'] = font_size
 
         if keys is None:
-            keys = self.keys + self.custom_keys
+            keys = self.basekeys
         n_keys = len(keys)
+
+        fig = pl.figure(**fig_args)
+        pl.subplots_adjust(**axis_args)
+        main_ax1 = pl.subplot(n_rows, 2, 1)
 
         return
 
