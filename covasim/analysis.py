@@ -8,11 +8,13 @@ import numpy as np
 import pylab as pl
 import pandas as pd
 import sciris as sc
+import textwrap as tw
+from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
 
 
-__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'Fit', 'TransTree']
+__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_stats', 'Fit', 'TransTree']
 
 
 class Analyzer(sc.prettyobj):
@@ -346,6 +348,148 @@ class age_histogram(Analyzer):
                 pl.title(f'Number of people {state} {preposition} {date}')
 
         return figs
+
+
+class daily_stats(Analyzer):
+    '''
+    Print out daily statistics about the simulation. Warning -- slows things down noticeably.
+
+    Args:
+        days (list): days on which to print out statistics (if None, assume all)
+        keys (list): list of states of people to provide statistics on (if None, assume all)
+        verbose (bool): whether to print on each timestep
+        reporter (func): if supplied, a custom parser of the stats object into a report
+
+    **Example**::
+
+        sim = cv.Sim(analyzers=cv.daily_stats())
+        sim.run()
+    '''
+
+    def __init__(self, days=None, keys=None, verbose=True, reporter=None, **kwargs):
+        super().__init__(**kwargs) # Initialize the Analyzer object
+        self.days     = days # Converted to integer representations
+        self.keys     = keys # The default keys to print out
+        self.verbose  = verbose # Print on each timestep
+        self.reporter = reporter # Custom way of reporting the stats
+        self.stats    = sc.objdict() # Store the actual stats
+        self.reports  = sc.objdict() # Textual representation of the statistics
+        return
+
+
+    def initialize(self, sim):
+        if self.days is None:
+            self.days = sc.dcp(sim.tvec)
+        else:
+            self.days = sim.day(self.days)
+
+        if self.keys is None:
+            self.keys =  ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'known_contact', 'quarantined', 'diagnosed', 'recovered', 'dead']
+
+        self._inflogind = 0 # Don't keep going back to old infection log entries
+        self.initialized = True
+        return
+
+
+    def getlen(self, inds):
+        ''' Get the number of indices '''
+        if isinstance(inds, str):
+            inds = self.inds[inds]
+        return len(inds)
+
+
+    def interlen(self, inds1, inds2):
+        ''' Handle either keys to precomputed indices or lists of indices '''
+        if isinstance(inds1, str):
+            inds1 = self.inds[inds1]
+        if isinstance(inds2, str):
+            inds2 = self.inds[inds2]
+        return len(np.intersect1d(inds1, inds2))
+
+
+    def apply(self, sim):
+        for ind in cvi.find_day(self.days, sim.t):
+
+            ppl = sim.people
+            stats = sc.objdict()
+
+            for basekey in ['stocks', 'trans', 'source', 'test', 'quar']:
+                stats[basekey] = sc.objdict()
+                stats[basekey].empty = []
+
+            # Get the indices for each of the states
+            self.inds = {}
+            for key in self.keys:
+                self.inds[key] = ppl.true(key)
+
+            # Basic stocks
+            for key in self.keys:
+                stats.stocks[key] = self.getlen(key)
+
+            # Transmission stats
+            newinfs = cvu.true(ppl.date_exposed == sim.t)
+            stats.trans.new_infections = self.getlen(newinfs)
+            for key in ['known_contact', 'quarantined']:
+                stats.trans[key] = self.interlen(newinfs, key)
+
+            # Source stats
+            inflog = sim.people.infection_log
+            sourceinds = [entry['source'] for entry in inflog[self._inflogind:] if (entry['date']==sim.t and entry['source'] is not None)] # WARNING, probably slow!
+            self._inflogind = len(inflog) # Skip old entries
+            stats.source.new_sources = len(sourceinds)
+            for key in self.keys:
+                n_people = self.interlen(sourceinds, key)
+                print(n_people)
+                if n_people:
+                    stats.source[key] = n_people
+                else:
+                    stats.source.empty.append(key)
+
+            # Testing stats
+            newtests = cvu.true(ppl.date_tested == sim.t)
+            stats.test.new_tests = len(newtests)
+            for key in self.keys:
+                n_people = self.interlen(newtests,key)
+                if n_people:
+                    stats.test[key] = n_people
+                else:
+                    stats.test.empty.append(key)
+
+            # Quarantine stats
+            stats.quar.in_quarantine = stats.stocks.quarantined
+            stats.quar.entered_quar  = cvu.true(ppl.date_quarantined == sim.t)
+            stats.quar.left_quar     = cvu.true(ppl.date_end_quarantine == sim.t)
+            for key in self.keys:
+                n_people = self.interlen('quarantined', key)
+                if n_people:
+                    stats.quar[key] = n_people
+                else:
+                    stats.quar.empty.append(key)
+
+            # Turn into report
+            if self.reporter is not None:
+                report = self.reporter(stats)
+            else:
+                report = f'''
+                    *** Statistics report for day {sim.t} ***
+
+                    Overall stocks:
+                        {stats.stocks.key}=
+
+
+                    '''
+
+
+            # Save
+            today = sim.date(sim.t)
+            self.stats[today] = stats
+            self.reports[today] = tw.dedent(report)
+
+            if self.verbose:
+                print(self.reports[today])
+        return
+
+
 
 
 class Fit(sc.prettyobj):
