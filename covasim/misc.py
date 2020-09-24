@@ -10,73 +10,10 @@ import datetime as dt
 import scipy.stats as sps
 from . import version as cvver
 
-__all__ = ['load_data', 'date', 'day', 'daydiff', 'date_range', 'load', 'save', 'savefig', 'get_png_metadata', 'git_info', 'check_version', 'check_save_version', 'get_doubling_time', 'poisson_test', 'compute_gof']
 
+#%% Day and date functions
 
-def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
-    '''
-    Load data for comparing to the model output, either from file or from a dataframe.
-
-    Args:
-        datafile (str or df): if a string, the name of the file to load (either Excel or CSV); if a dataframe, use directly
-        columns (list): list of column names (otherwise, load all)
-        calculate (bool): whether to calculate cumulative values from daily counts
-        check_date (bool): whether to check that a 'date' column is present
-        kwargs (dict): passed to pd.read_excel()
-
-    Returns:
-        data (dataframe): pandas dataframe of the loaded data
-    '''
-
-    # Load data
-    if isinstance(datafile, str):
-        df_lower = datafile.lower()
-        if df_lower.endswith('csv'):
-            raw_data = pd.read_csv(datafile, **kwargs)
-        elif df_lower.endswith('xlsx') or df_lower.endswith('xls'):
-            raw_data = pd.read_excel(datafile, **kwargs)
-        elif df_lower.endswith('json'):
-            raw_data = pd.read_json(datafile, **kwargs)
-        else:
-            errormsg = f'Currently loading is only supported from .csv, .xls/.xlsx, and .json files, not "{datafile}"'
-            raise NotImplementedError(errormsg)
-    elif isinstance(datafile, pd.DataFrame):
-        raw_data = datafile
-    else:
-        errormsg = f'Could not interpret data {type(datafile)}: must be a string or a dataframe'
-        raise TypeError(errormsg)
-
-    # Confirm data integrity and simplify
-    if columns is not None:
-        for col in columns:
-            if col not in raw_data.columns:
-                errormsg = f'Column "{col}" is missing from the loaded data'
-                raise ValueError(errormsg)
-        data = raw_data[columns]
-    else:
-        data = raw_data
-
-    # Calculate any cumulative columns that are missing
-    if calculate:
-        columns = data.columns
-        for col in columns:
-            if col.startswith('new'):
-                cum_col = col.replace('new_', 'cum_')
-                if cum_col not in columns:
-                    data[cum_col] = np.cumsum(data[col])
-                    if verbose:
-                        print(f'  Automatically adding cumulative column {cum_col} from {col}')
-
-    # Ensure required columns are present and reset the index
-    if check_date:
-        if 'date' not in data.columns:
-            errormsg = f'Required column "date" not found; columns are {data.columns}'
-            raise ValueError(errormsg)
-        else:
-            data['date'] = pd.to_datetime(data['date']).dt.date
-        data.set_index('date', inplace=True, drop=False) # Don't drop so sim.data['date'] can still be accessed
-
-    return data
+__all__ = ['date', 'day', 'daydiff', 'date_range']
 
 
 def date(obj, *args, start_date=None, dateformat=None, as_date=True):
@@ -252,6 +189,78 @@ def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=N
     return dates
 
 
+
+#%% Loading/saving functions
+
+__all__ += ['load_data', 'load', 'save']
+
+
+def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
+    '''
+    Load data for comparing to the model output, either from file or from a dataframe.
+
+    Args:
+        datafile (str or df): if a string, the name of the file to load (either Excel or CSV); if a dataframe, use directly
+        columns (list): list of column names (otherwise, load all)
+        calculate (bool): whether to calculate cumulative values from daily counts
+        check_date (bool): whether to check that a 'date' column is present
+        kwargs (dict): passed to pd.read_excel()
+
+    Returns:
+        data (dataframe): pandas dataframe of the loaded data
+    '''
+
+    # Load data
+    if isinstance(datafile, str):
+        df_lower = datafile.lower()
+        if df_lower.endswith('csv'):
+            raw_data = pd.read_csv(datafile, **kwargs)
+        elif df_lower.endswith('xlsx') or df_lower.endswith('xls'):
+            raw_data = pd.read_excel(datafile, **kwargs)
+        elif df_lower.endswith('json'):
+            raw_data = pd.read_json(datafile, **kwargs)
+        else:
+            errormsg = f'Currently loading is only supported from .csv, .xls/.xlsx, and .json files, not "{datafile}"'
+            raise NotImplementedError(errormsg)
+    elif isinstance(datafile, pd.DataFrame):
+        raw_data = datafile
+    else:
+        errormsg = f'Could not interpret data {type(datafile)}: must be a string or a dataframe'
+        raise TypeError(errormsg)
+
+    # Confirm data integrity and simplify
+    if columns is not None:
+        for col in columns:
+            if col not in raw_data.columns:
+                errormsg = f'Column "{col}" is missing from the loaded data'
+                raise ValueError(errormsg)
+        data = raw_data[columns]
+    else:
+        data = raw_data
+
+    # Calculate any cumulative columns that are missing
+    if calculate:
+        columns = data.columns
+        for col in columns:
+            if col.startswith('new'):
+                cum_col = col.replace('new_', 'cum_')
+                if cum_col not in columns:
+                    data[cum_col] = np.cumsum(data[col])
+                    if verbose:
+                        print(f'  Automatically adding cumulative column {cum_col} from {col}')
+
+    # Ensure required columns are present and reset the index
+    if check_date:
+        if 'date' not in data.columns:
+            errormsg = f'Required column "date" not found; columns are {data.columns}'
+            raise ValueError(errormsg)
+        else:
+            data['date'] = pd.to_datetime(data['date']).dt.date
+        data.set_index('date', inplace=True, drop=False) # Don't drop so sim.data['date'] can still be accessed
+
+    return data
+
+
 def load(*args, **kwargs):
     '''
     Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
@@ -286,42 +295,19 @@ def save(*args, **kwargs):
     return filepath
 
 
-def get_caller(frame=2, tostring=True):
-        '''
-        Try to get information on the calling function, but fail gracefully.
 
-        Frame 1 is the current file (this one), so not very useful. Frame 2 is
-        the default assuming it is being called directly. Frame 3 is used if
-        another function is calling this function internally.
+#%% Figure/plotting functions
 
-        Args:
-            frame (int): how many frames to descend (e.g. the caller of the caller of the...)
-            tostring (bool): whether to return a string instead of a dict
-
-        Returns:
-            output (str/dict): the filename and line number of the calling function, either as a string or dict
-        '''
-        try:
-            import inspect
-            result = inspect.getouterframes(inspect.currentframe(), 2)
-            fname = str(result[frame][1])
-            lineno = str(result[frame][2])
-            if tostring:
-                output = f'{fname}, line {lineno}'
-            else:
-                output = {'filename':fname, 'lineno':lineno}
-        except Exception as E:
-            if tostring:
-                output = f'Calling function information not available ({str(E)})'
-            else:
-                output = {'filename':'N/A', 'lineno':'N/A'}
-        return output
+__all__ += ['savefig', 'get_rows_cols']
 
 
 def savefig(filename=None, comments=None, **kwargs):
     '''
     Wrapper for Matplotlib's savefig() function which automatically stores Covasim
-    metadata in the figure. By default, saves
+    metadata in the figure. By default, saves (git) information from both the Covasim
+    version and the calling function. Additional comments can be added to the saved
+    file as well. These can be retrieved via cv.get_png_metadata(). Metadata can
+    also be stored for SVG and PDF formats, but cannot be automatically retrieved.
 
     Args:
         filename (str): name of the file to save to (default, timestamp)
@@ -364,37 +350,80 @@ def savefig(filename=None, comments=None, **kwargs):
     return filename
 
 
-def get_png_metadata(filename, output=False):
+def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
     '''
-    Read metadata from a PNG file. For use with images saved with cv.savefig().
-    Requires pillow, an optional dependency. Metadata retrieval for PDF and SVG
-    is not currently supported.
+    Convert a number (usually of plots) to a number of required rows and columns.
+    If nrows or ncols is provided, the other will be calculated. Ties are broken
+    in favor of more rows (i.e. 7x6 is preferred to 6x7).
 
     Args:
-        filename (str): the name of the file to load the data from
+        n (int): the number (of plots) to accommodate
+        nrows (int): if supplied, keep this fixed and calculate the columns
+        ncols (int): if supplied, keep this fixed and calculate the rows
+        ratio (float): sets the number of rows relative to the number of columns (i.e. for 100 plots, 1 will give 10x10, 4 will give 20x5, etc.).
 
-    **Example**::
+    Returns:
+        A tuple of ints for the number of rows and the number of columns (which, of course, you can reverse)
 
-        cv.Sim().run(do_plot=True)
-        cv.savefig('covasim.png')
-        cv.get_png_metadata('covasim.png')
+    **Examples**::
+
+        nrows,ncols = cv.get_rows_cols(36) # Returns 6,6
+        nrows,ncols = cv.get_rows_cols(37) # Returns 7,6
+        nrows,ncols = cv.get_rows_cols(100, ratio=2) # Returns 15,7
+        nrows,ncols = cv.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
     '''
-    try:
-        import PIL
-    except ImportError as E:
-        errormsg = f'Pillow import failed ({str(E)}), please install first (pip install pillow)'
-        raise ImportError(errormsg)
-    im = PIL.Image.open(filename)
-    metadata = {}
-    for key,value in im.info.items():
-        if key.startswith('Covasim'):
-            metadata[key] = value
-            if not output:
-                print(f'{key}: {value}')
-    if output:
-        return metadata
+
+    # Simple cases -- calculate the one missing
+    if nrows is not None:
+        ncols = int(np.ceil(n/nrows))
+    elif ncols is not None:
+        nrows = int(np.ceil(n/ncols))
+
+    # Standard case -- calculate both
     else:
-        return
+        guess = np.sqrt(n)
+        nrows = int(np.ceil(guess*np.sqrt(ratio)))
+        ncols = int(np.ceil(n/nrows)) # Could also call recursively!
+
+    return nrows,ncols
+
+
+
+#%% Versioning functions
+
+__all__ += ['get_caller', 'git_info', 'check_version', 'check_save_version', 'get_png_metadata']
+
+
+def get_caller(frame=2, tostring=True):
+        '''
+        Try to get information on the calling function, but fail gracefully.
+
+        Frame 1 is the current file (this one), so not very useful. Frame 2 is
+        the default assuming it is being called directly. Frame 3 is used if
+        another function is calling this function internally.
+
+        Args:
+            frame (int): how many frames to descend (e.g. the caller of the caller of the...)
+            tostring (bool): whether to return a string instead of a dict
+
+        Returns:
+            output (str/dict): the filename and line number of the calling function, either as a string or dict
+        '''
+        try:
+            import inspect
+            result = inspect.getouterframes(inspect.currentframe(), 2)
+            fname = str(result[frame][1])
+            lineno = str(result[frame][2])
+            if tostring:
+                output = f'{fname}, line {lineno}'
+            else:
+                output = {'filename':fname, 'lineno':lineno}
+        except Exception as E:
+            if tostring:
+                output = f'Calling function information not available ({str(E)})'
+            else:
+                output = {'filename':'N/A', 'lineno':'N/A'}
+        return output
 
 
 def git_info(filename=None, check=False, comments=None, old_info=None, die=False, indent=2, verbose=True, frame=2, **kwargs):
@@ -520,6 +549,45 @@ def check_save_version(expected=None, filename=None, die=False, verbose=True, **
     git_info(filename=filename, frame=3, **kwargs)
 
     return
+
+
+def get_png_metadata(filename, output=False):
+    '''
+    Read metadata from a PNG file. For use with images saved with cv.savefig().
+    Requires pillow, an optional dependency. Metadata retrieval for PDF and SVG
+    is not currently supported.
+
+    Args:
+        filename (str): the name of the file to load the data from
+
+    **Example**::
+
+        cv.Sim().run(do_plot=True)
+        cv.savefig('covasim.png')
+        cv.get_png_metadata('covasim.png')
+    '''
+    try:
+        import PIL
+    except ImportError as E:
+        errormsg = f'Pillow import failed ({str(E)}), please install first (pip install pillow)'
+        raise ImportError(errormsg)
+    im = PIL.Image.open(filename)
+    metadata = {}
+    for key,value in im.info.items():
+        if key.startswith('Covasim'):
+            metadata[key] = value
+            if not output:
+                print(f'{key}: {value}')
+    if output:
+        return metadata
+    else:
+        return
+
+
+
+#%% Simulation/statistics functions
+
+__all__ += ['get_doubling_time', 'poisson_test', 'compute_gof']
 
 
 def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=None, moving_window=None, exp_approx=False, max_doubling_time=100, eps=1e-3, verbose=None):

@@ -656,9 +656,9 @@ class daily_stats(Analyzer):
         data = self.transpose()
 
         # Do the plotting
-        n_plots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
-        numrc = int(np.ceil(np.sqrt(n_plots))) # Number of rows and columns
-        fig, axs = pl.subplots(nrows=numrc, ncols=numrc, **fig_args)
+        nplots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
+        nrows,ncols = cvm.get_rows_cols(nplots)
+        fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
         pl.subplots_adjust(**axis_args)
 
         count = -1
