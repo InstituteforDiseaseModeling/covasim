@@ -400,7 +400,6 @@ class daily_stats(Analyzer):
 
         self.basekeys = ['stocks', 'trans', 'source', 'test', 'quar'] # Categories of things to plot
         self.extrakeys = ['layer_counts', 'extra']
-        self._inflogind = 0 # Don't keep going back to old infection log entries
         self.initialized = True
         return
 
@@ -458,7 +457,6 @@ class daily_stats(Analyzer):
             inflog = sim.people.infection_log
             infloginds = [i for i,e in enumerate(inflog) if (e['date']==sim.t and e['source'] is not None)] # Person was infected today and was not a seed infection
             sourceinds = list(set([inflog[i]['source'] for i in infloginds]))
-            self._inflogind = len(inflog) # Skip old entries
             stats.source.new_sources = len(sourceinds)
             for key in self.keys:
                 stats.source[key] = len(self.intersect(sourceinds, key))
@@ -559,7 +557,7 @@ class daily_stats(Analyzer):
         ''' Turn the statistics into a report '''
 
         def make_entry(basekey, show_empty=show_empty):
-            ''' For each key, print the key and the count if the count is >0, and optionally any empty estates '''
+            ''' For each key, print the key and the count if the count is >0, and optionally any empty states '''
             string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if v>0])
             if show_empty is True:
                 string += f'\n  Empty states: {stats.empty[basekey]}'

@@ -352,7 +352,8 @@ def savefig(filename=None, comments=None, **kwargs):
 
 def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
     '''
-    Convert a number (usually of plots) to a number of required rows and columns.
+    If you have 37 plots, then how many rows and columns of axes do you know? This
+    function convert a number (i.e. of plots) to a number of required rows and columns.
     If nrows or ncols is provided, the other will be calculated. Ties are broken
     in favor of more rows (i.e. 7x6 is preferred to 6x7).
 
@@ -388,12 +389,26 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
     return nrows,ncols
 
 
-def maximize(fig=None):
-    ''' Maximize the provided figure, or current figure if none is provided. '''
+def maximize(fig=None, die=False):
+    '''
+    Maximize the current (or supplied) figure. Note: not guaranteed to work for
+    all Matplotlib backends (e.g., agg).
+
+    Args:
+        fig (Figure): the figure object; if not supplied, use the current active figure
+        die (bool): whether to propagate an exception if encountered (default no)
+    '''
     if fig is not None:
         pl.figure(fig.number) # Set the current figure
-    mng = pl.get_current_fig_manager()
-    mng.window.showMaximized()
+    try:
+        mng = pl.get_current_fig_manager()
+        mng.window.showMaximized()
+    except Exception as E:
+        errormsg = f'Warning: maximizing the figure failed: {str(E)}'
+        if die:
+            raise RuntimeError(errormsg) from E
+        else:
+            print(errormsg)
     return
 
 
@@ -578,7 +593,7 @@ def get_png_metadata(filename, output=False):
         import PIL
     except ImportError as E:
         errormsg = f'Pillow import failed ({str(E)}), please install first (pip install pillow)'
-        raise ImportError(errormsg)
+        raise ImportError(errormsg) from E
     im = PIL.Image.open(filename)
     metadata = {}
     for key,value in im.info.items():
@@ -600,12 +615,13 @@ __all__ += ['get_doubling_time', 'poisson_test', 'compute_gof']
 
 def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=None, moving_window=None, exp_approx=False, max_doubling_time=100, eps=1e-3, verbose=None):
     '''
-    Method to calculate doubling time.
+    Alternate method to calculate doubling time (one is already implemented in
+    the sim object).
 
     **Examples**::
 
-        get_doubling_time(sim, interval=[3,30]) # returns the doubling time over the given interval (single float)
-        get_doubling_time(sim, interval=[3,30], moving_window=3) # returns doubling times calculated over moving windows (array)
+        cv.get_doubling_time(sim, interval=[3,30]) # returns the doubling time over the given interval (single float)
+        cv.get_doubling_time(sim, interval=[3,30], moving_window=3) # returns doubling times calculated over moving windows (array)
     '''
 
     # Set verbose level

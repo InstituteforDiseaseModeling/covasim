@@ -143,15 +143,13 @@ class Intervention:
 
     def apply(self, sim):
         '''
-        Apply the intervention. This is the core method which each intervention
-        object needs to implement.
-
-        Function signature matches existing intervention definition
-        This method gets called at each timestep and must be implemented
-        by derived classes
+        Apply the intervention. This is the core method which each drived intervention
+        class must implement. This method gets called at each timestep and can make
+        arbitrary changes to the Sim object, as well as storing or modifying the
+        state of the intervention.
 
         Args:
-            sim: The Sim instance
+            sim: the Sim instance
 
         Returns:
             None
