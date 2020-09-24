@@ -636,7 +636,7 @@ class daily_stats(Analyzer):
         return data
 
 
-    def plot(self, fig_args=None, axis_args=None, plot_args=None, font_size=12):
+    def plot(self, fig_args=None, axis_args=None, plot_args=None, font_size=12, do_show=True):
         '''
         Plot the daily statistics recordered. Some overlap with e.g. ``sim.plot(to_plot='overview')``.
 
@@ -645,6 +645,7 @@ class daily_stats(Analyzer):
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
             font_size (float): size of font
+            do_show   (bool):  whether to show the plot
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
@@ -670,6 +671,9 @@ class daily_stats(Analyzer):
                 y = data[k1][k2]
                 ax.plot(y, **plot_args)
                 ax.set_title(f'{k1}: {k2}')
+
+        if do_show:
+            pl.show()
 
         return fig
 
@@ -890,19 +894,20 @@ class Fit(sc.prettyobj):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, font_size=18, fig_args=None, axis_args=None, plot_args=None):
+    def plot(self, keys=None, width=0.8, font_size=18, fig_args=None, axis_args=None, plot_args=None, do_show=True):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
         plots the loss as a function of time.
 
         Args:
-            keys (list): which keys to plot (default, all)
-            width (float): bar width
+            keys      (list):  which keys to plot (default, all)
+            width     (float): bar width
             font_size (float): size of font
-            fig_args (dict): passed to pl.figure()
-            axis_args (dict): passed to pl.subplots_adjust()
-            plot_args (dict): passed to pl.plot()
+            fig_args  (dict):  passed to pl.figure()
+            axis_args (dict):  passed to pl.subplots_adjust()
+            plot_args (dict):  passed to pl.plot()
+            do_show   (bool):  whether to show the plot
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
@@ -983,6 +988,9 @@ class Fit(sc.prettyobj):
                 pl.ylabel('Losses')
                 pl.legend()
 
+        if do_show:
+            pl.show()
+
         return figs
 
 
@@ -1014,7 +1022,7 @@ class TransTree(sc.prettyobj):
         self.pop_size = len(people)
 
         # Check that rescaling is not on
-        if sim['rescale']:
+        if sim['rescale'] and sim['pop_scale']>1:
             warningmsg = 'Warning: transmission tree results are unreliable when dynamic rescaling is on, since agents are reused! Please rerun with rescale=False and pop_scale=1 for reliable results.'
             print(warningmsg)
 
@@ -1193,10 +1201,18 @@ class TransTree(sc.prettyobj):
         return np.mean(n_infected)
 
 
-    def plot(self, *args, **kwargs):
-        ''' Plot the transmission tree '''
+    def plot(self, fig_args=None, plot_args=None, do_show=True):
+        '''
+        Plot the transmission tree.
 
-        fig_args = kwargs.get('fig_args', dict(figsize=(16, 10)))
+        Args:
+            fig_args  (dict):  passed to pl.figure()
+            plot_args (dict):  passed to pl.plot()
+            do_show   (bool):  whether to show the plot
+        '''
+
+        fig_args = sc.mergedicts(dict(figsize=(16, 10)), fig_args)
+        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
 
         ttlist = []
         for source_ind, target_ind in self.transmissions:
@@ -1235,7 +1251,7 @@ class TransTree(sc.prettyobj):
         def plot_quantity(key, title, i):
             dat = df.groupby(['Day', key]).size().unstack(key)
             ax = pl.subplot(r, c, i);
-            dat.plot(ax=ax, legend=None)
+            dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
 
@@ -1249,6 +1265,9 @@ class TransTree(sc.prettyobj):
         }
         for i, (key, title) in enumerate(to_plot.items()):
             plot_quantity(key, title, i + 1)
+
+        if do_show:
+            pl.show()
 
         return fig
 
