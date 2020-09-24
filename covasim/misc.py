@@ -298,7 +298,7 @@ def save(*args, **kwargs):
 
 #%% Figure/plotting functions
 
-__all__ += ['savefig', 'get_rows_cols']
+__all__ += ['savefig', 'get_rows_cols', 'maximize']
 
 
 def savefig(filename=None, comments=None, **kwargs):
@@ -387,6 +387,14 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
 
     return nrows,ncols
 
+
+def maximize(fig=None):
+    ''' Maximize the provided figure, or current figure if none is provided. '''
+    if fig is not None:
+        pl.figure(fig.number) # Set the current figure
+    mng = pl.get_current_fig_manager()
+    mng.window.showMaximized()
+    return
 
 
 #%% Versioning functions

@@ -20,7 +20,7 @@ Version 1.7.1 (2020-09-23)
 - Added a new analyzer, ``cv.daily_stats()``, which can print out and plot detailed information about the state of the simulation on each day.
 - MultiSims can now be run without parallelization; use ``msim.run(parallel=False)``. This can be useful for debugging, or for parallelizing across rather than within MultiSims (since ``multiprocessing`` calls cannot be nested).
 - ``sim.people.not_defined()`` has been renamed ``sim.people.undefined()``.
-- A new helper function ``cv.get_rows_cols()`` has been added to convert a number (usually of plots) into the required number of rows and columns.
+- New helper functions have been added: ``cv.maximize()`` maximizes the current figure, and ``cv.get_rows_cols()`` converts a number (usually a number of plots) into the required number of rows and columns. Both will eventually be moved to Sciris.
 - Corrected the transmission tree plot to account for people who have left quarantine.
 - Code has been moved between ``sim.py``, ``people.py``, and ``base.py`` to better reflect the division between "the simulation" (the first two files) and "the housekeeping" (the last file).
 - *Regression info*: Changes to quarantine will mean that simulations that used contact tracing will show different results (although since recovered people do not transmit, differences should mostly just be stochastic). For backwards incompatibility, only user scripts that explicitly call ``sim.people.not_defined()`` should require updating.
