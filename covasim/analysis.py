@@ -648,7 +648,7 @@ class daily_stats(Analyzer):
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
-        axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
+        axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
         plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
         pl.rcParams['font.size'] = font_size
 
@@ -665,7 +665,7 @@ class daily_stats(Analyzer):
         for k1 in data.keys():
             for k2 in data[k1].keys():
                 count += 1
-                row,col = np.unravel_index(count, (numrc,numrc))
+                row,col = np.unravel_index(count, (nrows,ncols))
                 ax = axs[row,col]
                 y = data[k1][k2]
                 ax.plot(y, **plot_args)

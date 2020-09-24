@@ -288,7 +288,7 @@ class People(cvb.BasePeople):
         for ind,end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
                 self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-            elif not (self.dead[ind] or self.diagnosed[ind]):
+            elif not (self.dead[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
                 self.date_end_quarantine[ind] = end_day
