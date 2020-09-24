@@ -20,6 +20,7 @@ Other papers that have been written using Covasim include:
 
 5. **Schools are not islands: Balancing COVID-19 risk and educational benefits using structural and temporal countermeasures**. Cohen JA, Mistry D, Kerr CC, Klein DJ (under review). *medRxiv* 2020.09.08.20190942; doi: https://doi.org/10.1101/2020.09.08.20190942.
 
+(Note: if you have written a paper or report using Covasim, we'd love to know about it! Please write to us `here <mailto:covasim@idmod.org>`__.)
 
 The Covasim webapp is available at http://app.covasim.org.
 
