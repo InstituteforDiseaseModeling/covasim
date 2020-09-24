@@ -475,7 +475,7 @@ class daily_stats(Analyzer):
 
             # Quarantine stats
             q_inds = np.union1d(self.inds['quarantined'], cvu.true(ppl.date_end_quarantine == sim.t)) # Append people who finished quarantine today
-            eq_inds = cvu.true(ppl.date_quarantined == sim.t) # People entering quarantine
+            eq_inds = cvu.true(ppl.date_quarantined == sim.t-1) # People entering quarantine the day before (their first full day of quarantine)
             fq_inds = cvu.true(ppl.date_end_quarantine == sim.t+1) # People finishing quarantine; +1 since on the date of quarantine end, they are released back and can get infected at normal rates
             stats.quar.in_quarantine = len(q_inds) # Similar to stats.quar.quarantined, but slightly more
             stats.quar.entered_quar  = len(eq_inds)
