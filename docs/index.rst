@@ -11,8 +11,8 @@ Full package reference
 
 .. toctree::
 
-   parameters
    whatsnew
+   parameters
    contributing
    webapp
    docker

@@ -14,6 +14,19 @@ Latest versions (1.7.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 1.7.1 (2020-09-23)
+--------------------------
+- Added two new methods, ``sim.get_interventions()`` and ``sim.get_analyzers()``, which return interventions or analyzers based on the index, label, or type.
+- Added a new analyzer, ``cv.daily_stats()``, which can print out and plot detailed information about the state of the simulation on each day.
+- MultiSims can now be run without parallelization; use ``msim.run(parallel=False)``. This can be useful for debugging, or for parallelizing across rather than within MultiSims (since ``multiprocessing`` calls cannot be nested).
+- ``sim.people.not_defined()`` has been renamed ``sim.people.undefined()``.
+- New helper functions have been added: ``cv.maximize()`` maximizes the current figure, and ``cv.get_rows_cols()`` converts a number (usually a number of plots) into the required number of rows and columns. Both will eventually be moved to Sciris.
+- The transmission tree plot has been corrected to account for people who have left quarantine. The definition of "quarantine end" for the sake of testing (``quar_policy='end'`` for ``cv.test_num()`` and ``cv.test_prob()``) has also been shifted up by a day (since by ``date_end_quarantine``, people are no longer in quarantine by the end of the day, so tests were not being counted as happening in quarantine).
+- Code has been moved between ``sim.py``, ``people.py``, and ``base.py`` to better reflect the division between "the simulation" (the first two files) and "the housekeeping" (the last file).
+- *Regression info*: Scripts that used ``quar_policy='end'`` may now provide stochastically different results. User scripts that explicitly call ``sim.people.not_defined()`` should be updated to call ``sim.people.undefined()`` instead.
+- *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__
+
+
 Version 1.7.0 (2020-09-20)
 --------------------------
 - The way in which ``test_num`` handles rescaling has changed, taking into account the non-modeled population. It now behaves more consistently throughout the dynamic rescaling period. In addition, it previously used sampling with replacement, whereas now it uses sampling without replacement. While this does not affect results in most cases, it can make a difference if certain subgroups (e.g. people with severe disease) have very high testing rates.
@@ -25,7 +38,7 @@ Version 1.7.0 (2020-09-20)
 - Additional checking is performed on interventions to ensure they are in the correct order (i.e., testing before tracing).
 - The ``Result`` object used to have several scaling options, but now it simply has ``True`` (corresponding to the previous ``'dynamic'``) and ``False``. The ``static`` scaling option has been removed since it is no longer used by any result types.
 - *Regression information*: sims that used ``test_num`` may now produce different results, given the changes for sample-without-replacement and dynamic rescaling. Previous behavior had the effect of artificially inflating the effectiveness of ``test_num`` before and during dynamic rescaling, since all tests were assigned to the modeled subpopulation. As a result, to get comparable results as before, test efficacy (loosely parameterized by ``symp_test``) should increase. Although there is not an exact relationship, to give an example, a simulation with ``symp_test=7`` and ``pop_scale=10`` previously may correspond to ``symp_test=25`` now. This change means that ``symp_test`` behaves consistently across the simulation period, so whereas previously this parameter may have needed to change over time, it should now be possible to use a single value (typically the last one used).
-- *GitHub info*: PR `684 <https://github.com/amath-idm/covasim/pull/684>`__
+- *GitHub info*: PR `684 <https://github.com/amath-idm/covasim/pull/684>`__, head ``bfb9f66``
 
 
 

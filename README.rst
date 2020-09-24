@@ -20,6 +20,7 @@ Other papers that have been written using Covasim include:
 
 5. **Schools are not islands: Balancing COVID-19 risk and educational benefits using structural and temporal countermeasures**. Cohen JA, Mistry D, Kerr CC, Klein DJ (under review). *medRxiv* 2020.09.08.20190942; doi: https://doi.org/10.1101/2020.09.08.20190942.
 
+(Note: if you have written a paper or report using Covasim, we'd love to know about it! Please write to us `here <mailto:covasim@idmod.org>`__.)
 
 The Covasim webapp is available at http://app.covasim.org.
 
@@ -112,16 +113,16 @@ The model consists of two core classes: the ``Person`` class (which contains
 information on health state), and the ``Sim`` class (which contains methods for
 running, calculating results, plotting, etc.).
 
-The structure of the ``covasim`` folder is as follows, in the order in which the modules are imported, building from most fundamental to most complex:
+The structure of the ``covasim`` folder is as follows, roughly in the order in which the modules are imported, building from most fundamental to most complex:
 
 * ``version.py``: Version, date, and license information.
 * ``requirements.py``: A simple module to check that imports succeeded, and turn off features if they didn't.
 * ``utils.py``: Functions for choosing random numbers, many based on Numba, plus other helper functions.
 * ``misc.py``: Miscellaneous helper functions.
 * ``defaults.py``: The default colors, plots, etc. used by Covasim.
+* ``parameters.py``: Functions for creating the parameters dictionary and loading the input data.
 * ``plotting.py``: Plotting scripts, including Plotly graphs for the webapp (used in other Covasim classes, and hence defined first).
 * ``base.py``: The ``ParsObj`` class, the fundamental class used in Covasim, plus basic methods of the ``BaseSim`` and ``BasePeople`` classes, and associated functions.
-* ``parameters.py``: Functions for creating the parameters dictionary and loading the input data.
 * ``people.py``: The ``People`` class, for handling updates of state for each person.
 * ``population.py``: Functions for creating populations of people, including age, contacts, etc.
 * ``interventions.py``: The ``Intervention`` class, for adding interventions and dynamically modifying parameters, and classes for each of the specific interventions derived from it.

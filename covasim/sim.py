@@ -5,7 +5,6 @@ Defines the Sim class, Covasim's core class.
 #%% Imports
 import numpy as np
 import sciris as sc
-from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
 from . import base as cvb
@@ -23,7 +22,9 @@ __all__ = ['Sim', 'AlreadyRunError']
 class Sim(cvb.BaseSim):
     '''
     The Sim class handles the running of the simulation: the creation of the
-    population and the dynamcis of the epidemic.
+    population and the dynamcis of the epidemic. This class handles the mechanics
+    of the actual simulation, while BaseSim takes care of housekeeping (saving,
+    loading, exporting, etc.).
 
     Args:
         pars     (dict):   parameters to modify from their default values
@@ -71,31 +72,6 @@ class Sim(cvb.BaseSim):
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
             self.load_population(popfile)      # Load the population, if provided
-        return
-
-
-    def update_pars(self, pars=None, create=False, **kwargs):
-        ''' Ensure that metaparameters get used properly before being updated '''
-        pars = sc.mergedicts(pars, kwargs)
-        if pars:
-            if pars.get('pop_type'):
-                cvpar.reset_layer_pars(pars, force=False)
-            if pars.get('prog_by_age'):
-                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
-            super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
-        return
-
-
-    def set_metadata(self, simfile, label):
-        ''' Set the metadata for the simulation -- creation time and filename '''
-        self.created = sc.now()
-        self.version = cvv.__version__
-        self.git_info = cvm.git_info()
-        if simfile is None:
-            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            self.simfile = f'covasim_{datestr}.sim'
-        if label is not None:
-            self.label = label
         return
 
 

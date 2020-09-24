@@ -17,10 +17,10 @@ __all__ = ['People']
 class People(cvb.BasePeople):
     '''
     A class to perform all the operations on the people. This class is usually
-    not invoked directly, but instead is created automatically by the sim. Most
-    initialization happens in BasePeople. The only required input argument is the
-    population size, but typically the full parameters dictionary will get passed
-    instead since it will be needed before the People object is initialized.
+    not invoked directly, but instead is created automatically by the sim. The
+    only required input argument is the population size, but typically the full
+    parameters dictionary will get passed instead since it will be needed before
+    the People object is initialized.
 
     Args:
         pars (dict): the sim parameters, e.g. sim.pars -- alternatively, if a number, interpreted as pop_size
@@ -36,7 +36,48 @@ class People(cvb.BasePeople):
     '''
 
     def __init__(self, pars, strict=True, **kwargs):
-        super().__init__(pars)
+
+        # Handle pars and population size
+        if sc.isnumber(pars): # Interpret as a population size
+            pars = {'pop_size':pars} # Ensure it's a dictionary
+        self.pars     = pars # Equivalent to self.set_pars(pars)
+        self.pop_size = int(pars['pop_size'])
+
+        # Other initialization
+        self.t = 0 # Keep current simulation time
+        self._lock = False # Prevent further modification of keys
+        self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
+        self.contacts = None
+        self.init_contacts() # Initialize the contacts
+        self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
+
+        # Set person properties -- all floats except for UID
+        for key in self.meta.person:
+            if key == 'uid':
+                self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
+            else:
+                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+
+        # Set health states -- only susceptible is true by default -- booleans
+        for key in self.meta.states:
+            if key == 'susceptible':
+                self[key] = np.full(self.pop_size, True, dtype=bool)
+            else:
+                self[key] = np.full(self.pop_size, False, dtype=bool)
+
+        # Set dates and durations -- both floats
+        for key in self.meta.dates + self.meta.durs:
+            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+
+        # Store the dtypes used in a flat dict
+        self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
+        self._lock = True # Stop further keys from being set (does not affect attributes)
+
+        # Store flows to be computed during simulation
+        self.flows = {key:0 for key in cvd.new_result_flows}
+
+        # Although we have called init(), we still need to call initialize()
+        self.initialized = False
 
         # Handle contacts, if supplied (note: they usually are)
         if 'contacts' in kwargs:
@@ -241,20 +282,20 @@ class People(cvb.BasePeople):
 
 
     def check_quar(self):
-        '''Update quarantine state'''
+        ''' Update quarantine state '''
 
-        n_quarantined = 0
-        for ind, end_day in self._pending_quarantine[self.t]:
+        n_quarantined = 0 # Number of people entering quarantine
+        for ind,end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
                 self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-            elif not (self.dead[ind] | self.recovered[ind] | self.diagnosed[ind]):
+            elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
                 self.date_end_quarantine[ind] = end_day
                 n_quarantined += 1
 
         # If someone on quarantine has reached the end of their quarantine, release them
-        end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here
+        end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here (~)
         self.quarantined[end_inds] = False # Release from quarantine
 
         return n_quarantined
@@ -264,7 +305,7 @@ class People(cvb.BasePeople):
 
     def make_susceptible(self, inds):
         '''
-        Make person susceptible. This is used during dynamic resampling
+        Make a set of people susceptible. This is used during dynamic resampling.
         '''
         for key in self.meta.states:
             if key == 'susceptible':
@@ -387,16 +428,14 @@ class People(cvb.BasePeople):
 
     def test(self, inds, test_sensitivity=1.0, loss_prob=0.0, test_delay=0):
         '''
-        Method to test people
+        Method to test people. Not to be called by the user, see the test_num()
+        and test_prob() interventions.
 
         Args:
             inds: indices of who to test
             test_sensitivity (float): probability of a true positive
             loss_prob (float): probability of loss to follow-up
             test_delay (int): number of days before test results are ready
-
-        Returns:
-            Whether or not this person tested positive
         '''
 
         inds = np.unique(inds)
@@ -418,9 +457,10 @@ class People(cvb.BasePeople):
         return
 
 
-    def quarantine(self, inds, start_date=None, period=None):
+    def schedule_quarantine(self, inds, start_date=None, period=None):
         '''
-        Schedule a quarantine
+        Schedule a quarantine. Not to be called by the user, see the contact_tracing()
+        intervention.
 
         This function will create a request to quarantine a person on the start_date for
         a period of time. Whether they are on an existing quarantine that gets extended, or
@@ -442,7 +482,9 @@ class People(cvb.BasePeople):
 
     def trace(self, inds, trace_probs, trace_time):
         '''
-        Trace the contacts of the people provided
+        Trace the contacts of the people provided. Not to be called by the user,
+        see the contact_tracing() intervention.
+
         Args:
             inds (array): indices of whose contacts to trace
             trace_probs (dict): probability of being able to trace people at each contact layer - should have the same keys as contacts
@@ -450,7 +492,7 @@ class People(cvb.BasePeople):
         '''
 
         # Extract the indices of the people who'll be contacted
-        traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
+        traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.0} # Only trace if there's a non-zero tracing probability
         for lkey,this_trace_prob in traceable_layers.items():
             if self.pars['beta_layer'][lkey]: # Skip if beta is 0 for this layer
                 this_trace_time = trace_time[lkey]
@@ -460,9 +502,10 @@ class People(cvb.BasePeople):
                 if len(traceable_inds):
                     contact_inds = cvu.binomial_filter(this_trace_prob, traceable_inds) # Filter the indices according to the probability of being able to trace this layer
                     if len(contact_inds):
-                        self.known_contact[contact_inds] = True
+                        self.known_contact[contact_inds] = True # Unlike quarantined, which toggles off when a person leaves quarantine, this stays true
                         self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
-                        self.quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
+                        self.schedule_quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
+
 
         return
 

@@ -36,7 +36,8 @@ class MultiSim(sc.prettyobj):
     '''
     Class for running multiple copies of a simulation. The parameter n_runs
     controls how many copies of the simulation there will be, if a list of sims
-    is not provided.
+    is not provided. This is the main class that's used to run multiple versions
+    of a simulation (e.g., with different random seeds).
 
     Args:
         sims      (Sim/list) : a single sim or a list of sims
@@ -650,6 +651,9 @@ class MultiSim(sc.prettyobj):
 class Scenarios(cvb.ParsObj):
     '''
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
+    Note that most users are recommended to use MultiSim rather than Scenarios,
+    as it gives more control over run options. Scenarios should be used primarily
+    for quick invesigations. See the examples folder for example usage.
 
     Args:
         sim       (Sim)  : if supplied, use a pre-created simulation as the basis for the scenarios
@@ -721,7 +725,7 @@ class Scenarios(cvb.ParsObj):
 
     def run(self, debug=False, keep_people=False, verbose=None, **kwargs):
         '''
-        Run the actual scenarios
+        Run the specified scenarios.
 
         Args:
             debug   (bool) : if True, runs a single run instead of multiple, which makes debugging easier
@@ -1067,7 +1071,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
     return sim
 
 
-def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, verbose=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, parallel=True, verbose=None, **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
@@ -1083,8 +1087,9 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         keep_people(bool)  : whether to keep the people after the sim run
         run_args   (dict)  : arguments passed to sim.run()
         sim_args   (dict)  : extra parameters to pass to the sim
-        do_run     (bool)  : whether to actually run the sim (if not, just initialize it)
         par_args   (dict)  : arguments passed to sc.parallelize()
+        do_run     (bool)  : whether to actually run the sim (if not, just initialize it)
+        parallel   (bool)  : whether to run in parallel using multiprocessing (else, just run in a loop)
         verbose    (int)   : detail to print
         kwargs     (dict)  : also passed to the sim
 
@@ -1120,13 +1125,24 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         iterkwargs = {'ind':np.arange(n_runs)}
         iterkwargs.update(iterpars)
         kwargs = dict(sim=sim, reseed=reseed, noise=noise, noisepar=noisepar, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
-        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
     elif isinstance(sim, list): # List of sims
         iterkwargs = {'sim':sim}
         kwargs = dict(verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
-        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
     else:
         errormsg = f'Must be Sim object or list, not {type(sim)}'
         raise TypeError(errormsg)
+
+    # Actually run!
+    if parallel:
+        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args) # Run in parallel
+    else:
+        sims = []
+        n_sims = len(list(iterkwargs.values())[0]) # Must have length >=1 and all entries must be the same length
+        for s in range(n_sims):
+            this_iter = {k:v[s] for k,v in iterkwargs.items()} # Pull out items specific to this iteration
+            this_iter.update(kwargs) # Merge with the kwargs
+            this_iter['sim'] = this_iter['sim'].copy() # Ensure we have a fresh sim; this happens implicitly on pickling with multiprocessing
+            sim = single_run(**this_iter) # Run in series
+            sims.append(sim)
 
     return sims
