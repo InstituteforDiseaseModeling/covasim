@@ -378,26 +378,33 @@ class Sim(cvb.BaseSim):
 
     def init_interventions(self):
         ''' Initialize and validate the interventions '''
+
+        # Initialization
         if self._orig_pars and 'interventions' in self._orig_pars:
             self['interventions'] = self._orig_pars.pop('interventions') # Restore
 
-        trace_ind = np.nan # Index of the tracing intervention(s)
-        test_ind = np.nan # Index of the tracing intervention(s)
         for i,intervention in enumerate(self['interventions']):
             if isinstance(intervention, cvi.Intervention):
                 intervention.initialize(self)
-                if isinstance(intervention, (cvi.contact_tracing)):
-                    trace_ind = np.fmin(trace_ind, i) # Find the earliest-scheduled tracing intervention
-                elif isinstance(intervention, (cvi.test_num, cvi.test_prob)):
-                    test_ind = np.fmax(test_ind, i) # Find the latest-scheduled testing intervention
+
+        # Validation
+        trace_ind = np.nan # Index of the tracing intervention(s)
+        test_ind = np.nan # Index of the tracing intervention(s)
+        for i,intervention in enumerate(self['interventions']):
+            if isinstance(intervention, (cvi.contact_tracing)):
+                trace_ind = np.fmin(trace_ind, i) # Find the earliest-scheduled tracing intervention
+            elif isinstance(intervention, (cvi.test_num, cvi.test_prob)):
+                test_ind = np.fmax(test_ind, i) # Find the latest-scheduled testing intervention
 
         if not np.isnan(trace_ind):
+            warningmsg = ''
             if np.isnan(test_ind):
-                errormsg = 'You have defined a contact tracing intervention but no testing intervention, which has no effect. Please define at least one testing intervention.'
-                raise RuntimeError(errormsg)
+                warningmsg = 'Note: you have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
             elif trace_ind < test_ind:
-                errormsg = f'Contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates an artificial delay. Please reorder the interentions.'
-                raise RuntimeError(errormsg)
+                warningmsg = f'Note: contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates a 1-day delay. Unless this is intentional, please reorder the interentions.'
+            if self['verbose'] and warningmsg:
+                print(warningmsg)
+
         return
 
 

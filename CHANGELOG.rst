@@ -14,17 +14,25 @@ Latest versions (1.7.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 1.7.2 (2020-09-24)
+--------------------------
+- Changed the intervention validation introduced in version 1.7.1 from an exception to a printed warning, to accommodate for custom-defined interventions.
+- Docstrings were clarified to indicate that usage guidance is a recommendation, not a requirement.
+- *GitHub info*: PR `693 <https://github.com/amath-idm/covasim/pull/693>`__
+
+
 Version 1.7.1 (2020-09-23)
 --------------------------
 - Added two new methods, ``sim.get_interventions()`` and ``sim.get_analyzers()``, which return interventions or analyzers based on the index, label, or type.
 - Added a new analyzer, ``cv.daily_stats()``, which can print out and plot detailed information about the state of the simulation on each day.
 - MultiSims can now be run without parallelization; use ``msim.run(parallel=False)``. This can be useful for debugging, or for parallelizing across rather than within MultiSims (since ``multiprocessing`` calls cannot be nested).
-- ``sim.people.not_defined()`` has been renamed ``sim.people.undefined()``.
+- ``sim.people.not_defined()`` has been renamed ``sim.people.undefined()``, and ``sim.people.quarantine()`` has been renamed ``sim.people.schedule_quarantine()``, since it does not actually place people in quarantine.
 - New helper functions have been added: ``cv.maximize()`` maximizes the current figure, and ``cv.get_rows_cols()`` converts a number (usually a number of plots) into the required number of rows and columns. Both will eventually be moved to Sciris.
 - The transmission tree plot has been corrected to account for people who have left quarantine. The definition of "quarantine end" for the sake of testing (``quar_policy='end'`` for ``cv.test_num()`` and ``cv.test_prob()``) has also been shifted up by a day (since by ``date_end_quarantine``, people are no longer in quarantine by the end of the day, so tests were not being counted as happening in quarantine).
+- Additional validation is done on intervention order to ensure that testing interventions are defined before tracing interventions.
 - Code has been moved between ``sim.py``, ``people.py``, and ``base.py`` to better reflect the division between "the simulation" (the first two files) and "the housekeeping" (the last file).
-- *Regression info*: Scripts that used ``quar_policy='end'`` may now provide stochastically different results. User scripts that explicitly call ``sim.people.not_defined()`` should be updated to call ``sim.people.undefined()`` instead.
-- *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__
+- *Regression info*: Scripts that used ``quar_policy='end'`` may now provide stochastically different results. User scripts that explicitly call ``sim.people.not_defined()`` or ``sim.people.quarantine()`` should be updated to call ``sim.people.undefined()`` and ``sim.people.schedule_quarantine()`` instead.
+- *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__, head ``a00b779``
 
 
 Version 1.7.0 (2020-09-20)
@@ -99,7 +107,7 @@ Version 1.5.2 (2020-08-18)
 - Quarantine duration via ``cv.People.trace()`` is now based on time since tracing, not time since notification, as people are typically instructed to isolate for a period after their last contact with the confirmed case, whenever that was. This results in an overall decrease in time spent in quarantine when the ``trace_time`` is greater than 0.
 - *Regression information*:
     - Scripts that called ``cv.People.quarantine()`` directly would have also had to manually update ``sim.results['new_quarantined']``. This is no longer required, and those commands should now be removed as they will otherwise be double counted
-    - Results are expected to differ slightly because the handling of quarantines being extended has been improved, and because quarantine duration is now reduced when by the ``trace_time``.
+    - Results are expected to differ slightly because the handling of quarantines being extended has been improved, and because quarantine duration is now reduced by the ``trace_time``.
 - *GitHub info*: PR `624 <https://github.com/amath-idm/covasim/pull/624>`__, head ``9041157f``
 
 

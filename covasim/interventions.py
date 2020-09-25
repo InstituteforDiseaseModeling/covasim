@@ -496,8 +496,7 @@ def process_daily_data(daily_data, sim, start_day, as_int=False):
     a number, then it converts it to an array of the right length. If the daily
     data are supplied as a Pandas series or dataframe with a date index, then it
     reindexes it to match the start date of the simulation. Otherwise, it does
-    nothing. Note: this is an internal function; it is not for direct use by the
-    user.
+    nothing.
 
     Args:
         daily_data (number, dataframe, or series): the data to convert to standardized format
@@ -522,7 +521,7 @@ def get_subtargets(subtarget, sim):
     or a function that needs to be called. If a function, it must take a single
     argument, a sim object, and return a list of indices. Also validates the values.
     Currently designed for use with testing interventions, but could be generalized
-    to other interventions. Not for use by the user.
+    to other interventions. Not typically called directly by the user.
 
     Args:
         subtarget (dict): dict with keys 'inds' and 'vals'; see test_num() for examples of a valid subtarget dictionary
