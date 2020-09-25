@@ -3,7 +3,6 @@ Compare test_num and test_prob for different scaling options to ensure consisten
 '''
 
 import sciris as sc
-import pylab as pl
 import covasim as cv
 
 pars = dict(
@@ -59,5 +58,4 @@ for sim in msim.sims:
     sim.results['new_quarantined'] = sim.results['rel_test_yield']
 
 fig = msim.plot(to_plot='overview')
-mng = pl.get_current_fig_manager()
-mng.window.showMaximized()
+cv.maximize()
