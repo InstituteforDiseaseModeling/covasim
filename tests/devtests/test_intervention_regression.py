@@ -5,9 +5,9 @@ earlier versions of Covasim verson.
 Instructions:
     1. Copy to a new file (since this file will disappear when you check out the other branch)
     2. Set 'old' and 'new' version labels
-    2. Check out an earlier Covasim version (e.g. git checkout v1.6.1)
+    2. Check out an earlier Covasim version (e.g. "git checkout v1.6.1")
     3. Run
-    4. Check out Covasim a later version (e.g. git checkout v1.6.1 or git checkout master)
+    4. Check out Covasim a later version (e.g. "git checkout v1.7.2" or "git checkout master")
     5. Run
 
 At least between 1.6.1 and 1.7.2, should be a change in test_num but not in test_prob.
