@@ -399,9 +399,9 @@ class Sim(cvb.BaseSim):
         if not np.isnan(trace_ind):
             warningmsg = ''
             if np.isnan(test_ind):
-                warningmsg = 'You have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
+                warningmsg = 'Note: you have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
             elif trace_ind < test_ind:
-                warningmsg = f'Contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates a 1-day delay. Unless this is intentional, please reorder the interentions.'
+                warningmsg = f'Note: contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates a 1-day delay. Unless this is intentional, please reorder the interentions.'
             if self['verbose'] and warningmsg:
                 print(warningmsg)
 
