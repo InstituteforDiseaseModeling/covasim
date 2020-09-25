@@ -18,7 +18,7 @@ Version 1.7.2 (2020-09-24)
 --------------------------
 - Changed the intervention validation introduced in version 1.7.1 from an exception to a printed warning, to accommodate for custom-defined interventions.
 - Docstrings were clarified to indicate that usage guidance is a recommendation, not a requirement.
-- *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__
+- *GitHub info*: PR `693 <https://github.com/amath-idm/covasim/pull/693>`__
 
 
 Version 1.7.1 (2020-09-23)
