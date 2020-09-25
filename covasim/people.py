@@ -428,8 +428,8 @@ class People(cvb.BasePeople):
 
     def test(self, inds, test_sensitivity=1.0, loss_prob=0.0, test_delay=0):
         '''
-        Method to test people. Not to be called by the user, see the test_num()
-        and test_prob() interventions.
+        Method to test people. Typically not to be called by the user directly;
+        see the test_num() and test_prob() interventions.
 
         Args:
             inds: indices of who to test
@@ -459,8 +459,8 @@ class People(cvb.BasePeople):
 
     def schedule_quarantine(self, inds, start_date=None, period=None):
         '''
-        Schedule a quarantine. Not to be called by the user, see the contact_tracing()
-        intervention.
+        Schedule a quarantine. Typically not called by the user directly except
+        via a custom intervention; see the contact_tracing() intervention instead.
 
         This function will create a request to quarantine a person on the start_date for
         a period of time. Whether they are on an existing quarantine that gets extended, or
@@ -482,8 +482,8 @@ class People(cvb.BasePeople):
 
     def trace(self, inds, trace_probs, trace_time):
         '''
-        Trace the contacts of the people provided. Not to be called by the user,
-        see the contact_tracing() intervention.
+        Trace the contacts of the people provided. Typically not to be called by
+        the user directly; see the contact_tracing() intervention.
 
         Args:
             inds (array): indices of whose contacts to trace

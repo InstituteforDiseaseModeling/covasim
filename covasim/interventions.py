@@ -522,7 +522,7 @@ def get_subtargets(subtarget, sim):
     or a function that needs to be called. If a function, it must take a single
     argument, a sim object, and return a list of indices. Also validates the values.
     Currently designed for use with testing interventions, but could be generalized
-    to other interventions. Not for use by the user.
+    to other interventions. Not intended for use by the user.
 
     Args:
         subtarget (dict): dict with keys 'inds' and 'vals'; see test_num() for examples of a valid subtarget dictionary
