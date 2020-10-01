@@ -203,6 +203,7 @@ html_static_path = ['_static']
 
 html_context = {
     'rtd_url': 'https://docs.idmod.org/projects/covasim/en/latest',
+    'theme_vcs_pageview_mode': 'edit',
     'css_files': [
         '_static/theme_overrides.css'
     ]
