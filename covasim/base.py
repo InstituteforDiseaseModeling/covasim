@@ -1127,6 +1127,29 @@ class Layer(FlexDict):
         return output
 
 
+    def __contains__(self, item):
+        """
+        Check if a person is present in a layer
+
+        Args:
+            item: Person index
+
+        Returns: True if person index appears in any interactions
+
+        """
+        return (item in self['p1']) or (item in self['p2'])
+
+    @property
+    def members(self):
+        """
+        Return sorted array of all members
+
+        Returns:
+
+        """
+        return np.unique([self['p1'], self['p2']])
+
+
     def meta_keys(self):
         ''' Return the keys for the layer's meta information -- i.e., p1, p2, beta '''
         return self.meta.keys()
