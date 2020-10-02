@@ -12,7 +12,7 @@ import datetime as dt
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
-
+from collections import defaultdict
 
 
 #%% Generic intervention classes
@@ -856,6 +856,7 @@ class contact_tracing(Intervention):
         start_day   (int):        intervention start day (default: 0, i.e. the start of the simulation)
         end_day     (int):        intervention end day (default: no end)
         presumptive (bool):       whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis (default: no)
+        quar_period (int):        number of days to quarantine when notified as a known contact. Default value is pars['quar_period']
         kwargs      (dict):       passed to Intervention()
 
     **Example**::
@@ -864,7 +865,7 @@ class contact_tracing(Intervention):
         ct = cv.contact_tracing(trace_probs=0.5, trace_time=2)
         sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracing has no effect
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, **kwargs):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, quar_period=None,  **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.trace_probs = trace_probs
@@ -872,6 +873,7 @@ class contact_tracing(Intervention):
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
+        self.quar_period = None  #: If quar_period is None, it will be drawn from sim.pars at initialization
         return
 
 
@@ -884,6 +886,8 @@ class contact_tracing(Intervention):
             self.trace_probs = 1.0
         if self.trace_time is None:
             self.trace_time = 0.0
+        if self.quar_period is None:
+            self.quar_period = sim.pars['quar_period']
         if sc.isnumber(self.trace_probs):
             val = self.trace_probs
             self.trace_probs = {k:val for k in sim.people.layer_keys()}
@@ -895,25 +899,100 @@ class contact_tracing(Intervention):
 
 
     def apply(self, sim):
+        '''
+        Trace and notify contacts
+
+        Tracing involves three steps that can independently be overloaded or extended
+        by derived classes
+
+        - Select which confirmed cases get interviewed by contact tracers
+        - Identify the contacts of the confirmed case
+        - Notify those contacts that they have been exposed and need to take some action
+
+        '''
         t = sim.t
         if t < self.start_day:
             return
         elif self.end_day is not None and t > self.end_day:
             return
 
-        # Figure out whom to test and trace
+        trace_inds = self.select_cases(sim)
+        contacts = self.identify_contacts(sim, trace_inds)
+        self.notify_contacts(sim, contacts)
+        return contacts
+
+    def select_cases(self, sim):
+        '''
+        Return people to be traced at this time step
+
+        Args:
+            sim:
+
+        Returns: Array of people indexes to contact
+
+        '''
         if not self.presumptive:
-            trace_from_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
+            return cvu.true(sim.people.date_diagnosed == sim.t) # Diagnosed this time step, time to trace
         else:
-            just_tested = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
-            trace_from_inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
-
-        if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
-            sim.people.trace(trace_from_inds, self.trace_probs, self.trace_time)
-
-        return
+            just_tested = cvu.true(sim.people.date_tested == sim.t) # Tested this time step, time to trace
+            return cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
 
 
+    def identify_contacts(self, sim, trace_inds):
+        '''
+        Return contacts to notify by trace time
+
+        In the base class, the trace time is the same per-layer, but derived classes might
+        provide different functionality e.g. sampling the trace time from a distribution. The
+        return value of this method is a dict keyed by trace time so that the `Person` object
+        can be easily updated in `contact_tracing.notify_contacts`
+
+        Args:
+            sim:
+            trace_inds: Indices of people to trace
+
+        Returns: {trace_time: np.array(inds)} dictionary storing which people to notify
+
+        '''
+
+        if not len(trace_inds):
+            return dict()
+
+        contacts = defaultdict(list)
+
+        for lkey, this_trace_prob in self.trace_probs.items():
+
+            if this_trace_prob == 0:
+                continue
+
+            traceable_inds = sim.people.contacts[lkey].find_contacts(trace_inds)
+            if len(traceable_inds):
+                contacts[self.trace_time[lkey]].extend(cvu.binomial_filter(this_trace_prob, traceable_inds)) # Filter the indices according to the probability of being able to trace this layer
+
+        array_contacts = {}
+        for trace_time, inds in contacts.items():
+            array_contacts[trace_time] = np.fromiter(inds, dtype=cvd.default_int)
+        return array_contacts
+
+
+    def notify_contacts(self, sim, contacts: dict):
+        '''
+        Notify contacts
+
+        This method represents notifying people that they have had contact with a confirmed case.
+        In this base class, that involves
+
+        - Setting the 'known_contact' flag and recording the 'date_known_contact'
+        - Scheduling quarantine
+
+        Args:
+            sim:
+            contacts: {trace_time: np.array(inds)} dictionary storing which people to notify
+        '''
+        for trace_time, contact_inds in contacts.items():
+            sim.people.known_contact[contact_inds] = True
+            sim.people.date_known_contact[contact_inds] = np.fmin(sim.people.date_known_contact[contact_inds], sim.t + trace_time)
+            sim.people.schedule_quarantine(contact_inds, start_date=sim.t + trace_time, period=self.quar_period - trace_time)  # Schedule quarantine for the notified people to start on the date they will be notified
 
 
 #%% Treatment and prevention interventions

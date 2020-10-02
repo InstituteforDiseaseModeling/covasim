@@ -13,6 +13,12 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Latest versions (1.7.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Version 1.7.4 (2020-10-02)
+--------------------------
+- Refactored `cv.contact_tracing()` so that derived classes can extend individual parts of contact tracing without having to re-implement the entire intervention
+- Moved `people.trace` to `contact_tracing` so that the tracing step can be extended via custom interventions
+- *Regression info*: Custom interventions calling `people.trace` should inherit from `cv.contact_tracing` instead and use `contact_tracing.identify_contacts` and `contact_tracing.notify_contacts` to replace `people.trace`. In most cases however, it would be possible to overload one of the contact tracing steps rather than `contact_tracing.apply`, which thus eliminates the need to call `people.trace` entirely.
+
 
 Version 1.7.2 (2020-09-24)
 --------------------------
