@@ -37,6 +37,8 @@ class People(cvb.BasePeople):
 
     def __init__(self, pars, strict=True, **kwargs):
 
+        print('__init__ PEOPLE')
+
         # Handle pars and population size
         if sc.isnumber(pars): # Interpret as a population size
             pars = {'pop_size':pars} # Ensure it's a dictionary
@@ -48,6 +50,8 @@ class People(cvb.BasePeople):
         self._lock = False # Prevent further modification of keys
         self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
         self.contacts = None
+        self.schools = dict()
+        self.school_types = dict()
         self.init_contacts() # Initialize the contacts
         self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
 

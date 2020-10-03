@@ -31,7 +31,7 @@ parallel = False
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat), cache=True, parallel=parallel)
+@nb.njit(             (nb.int32, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat), cache=True, parallel=parallel)
 def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,    load_ratio,    high_cap):
     '''
     Calculate relative transmissibility for time t. Includes time varying

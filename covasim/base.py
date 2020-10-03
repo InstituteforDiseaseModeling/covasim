@@ -718,11 +718,12 @@ class BasePeople(sc.prettyobj):
 
     def set(self, key, value, die=True):
         ''' Ensure sizes and dtypes match '''
-        current = self[key]
-        value = np.array(value, dtype=self._dtypes[key]) # Ensure it's the right type
-        if die and len(value) != len(current):
-            errormsg = f'Length of new array does not match current ({len(value)} vs. {len(current)})'
-            raise IndexError(errormsg)
+        # COMMENTING FOR .schools
+        #current = self[key]
+        #value = np.array(value, dtype=self._dtypes[key]) # Ensure it's the right type
+        #if die and len(value) != len(current):
+        #    errormsg = f'Length of new array does not match current ({len(value)} vs. {len(current)})'
+        #    raise IndexError(errormsg)
         self[key] = value
         return
 
@@ -1214,6 +1215,11 @@ class Layer(FlexDict):
         """
         if not isinstance(inds, np.ndarray):
             inds = sc.promotetoarray(inds)
+
+        print('find_contacts from base with:\n')
+        print('P1:', self['p1'])
+        print('P2:', self['p2'])
+        print('inds:', inds)
         contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
         if as_array:
             contact_inds = np.fromiter(contact_inds, dtype=cvd.default_int)

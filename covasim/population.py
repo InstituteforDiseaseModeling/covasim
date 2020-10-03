@@ -85,7 +85,12 @@ def make_people(sim, save_pop=False, popfile=None, die=True, reset=False, verbos
         sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
-    people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
+    people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'],
+                          contacts=popdict['contacts'], school_id=popdict['school_id'],
+                          schools=popdict['schools'], school_types=popdict['school_types'],
+                          student_flag=popdict['student_flag'], teacher_flag=popdict['teacher_flag'],
+                          staff_flag=popdict['staff_flag'], school_type_by_person=popdict['school_type_by_person'])
+    people.popdict = popdict
 
     average_age = sum(popdict['age']/pop_size)
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
@@ -168,6 +173,13 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     popdict['age'] = ages
     popdict['sex'] = sexes
 
+    school_ids = None
+    schools_dict = None
+    school_types = None
+    teacher_flag = None
+    student_flag = None
+    staff_flag = None
+
     # Actually create the contacts
     if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, sim['contacts'])
     elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'])
@@ -178,6 +190,12 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
 
     popdict['contacts']   = contacts
     popdict['layer_keys'] = layer_keys
+    popdict['school_id'] = school_ids
+    popdict['schools'] = schools_dict
+    popdict['school_types'] = school_types
+    popdict['teacher_flag'] = teacher_flag
+    popdict['student_flag'] = student_flag
+    popdict['staff_flag'] = staff_flag
 
     return popdict
 
@@ -333,19 +351,50 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
         sim.run()
     '''
     import synthpops as sp # Optional import
-
+    
+    pop_size = sim['pop_size']
     # Handle layer mapping
+    with_school_types = False
+    if 'with_school_types' in kwargs:
+        with_school_types = kwargs.get('with_school_types')
+        if with_school_types:
+            school_ids = [None] * int(pop_size)
+            teacher_flag = [False] * int(pop_size)
+            staff_flag = [False] * int(pop_size)
+            student_flag = [False] * int(pop_size)
+            school_types = {'pk': [], 'es': [], 'ms': [], 'hs': [], 'uv': []}
+            school_type_by_person = [None] * int(pop_size)
+            schools = dict()
+    if 'with_facilities' in kwargs:
+        with_facilities = kwargs.get('with_facilities')
+        if with_facilities:
+            layer_mapping = {'LTCF': 'l'}
     default_layer_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
     layer_mapping = sc.mergedicts(default_layer_mapping, layer_mapping)
 
     # Handle other input arguments
-    pop_size = sim['pop_size']
     population = sp.make_population(n=pop_size, generate=generate, rand_seed=sim['rand_seed'], **kwargs)
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)
         ages.append(person['age'])
         sexes.append(person['sex'])
+        if with_school_types:
+            if person['scid'] is not None:
+                school_ids[uid] = person['scid']
+                school_type_by_person[uid] = person['sc_type']
+                if person['scid'] not in school_types[person['sc_type']]:
+                    school_types[person['sc_type']].append(person['scid'])
+                if person['scid'] in schools:
+                    schools[person['scid']].append(uid)
+                else:
+                    schools[person['scid']] = [uid]
+                if person['sc_teacher'] is not None:
+                    teacher_flag[uid] = True
+                elif person['sc_student'] is not None:
+                    student_flag[uid] = True
+                elif person['sc_staff'] is not None:
+                    staff_flag[uid] = True
 
     # Replace contact UIDs with ints
     uid_mapping = {uid:u for u,uid in enumerate(uids)}
@@ -380,5 +429,21 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
     popdict['sex']        = np.array(sexes)
     popdict['contacts']   = sc.dcp(contacts)
     popdict['layer_keys'] = list(layer_mapping.values())
+    if with_school_types:
+        popdict['school_id'] = np.array(school_ids)
+        popdict['schools'] = schools
+        popdict['teacher_flag'] = teacher_flag
+        popdict['student_flag'] = student_flag
+        popdict['staff_flag'] = staff_flag
+        popdict['school_types'] = school_types
+        popdict['school_type_by_person'] = school_type_by_person
+    else:
+        popdict['school_id'] = None
+        popdict['schools'] = None
+        popdict['teacher_flag'] = None
+        popdict['student_flag'] = None
+        popdict['staff_flag'] = None
+        popdict['school_types'] = None
+        popdict['school_type_by_person'] = None
 
     return popdict
