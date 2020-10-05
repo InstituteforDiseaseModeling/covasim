@@ -7,7 +7,7 @@ data/epi_data
 
 # Other files
 .idea
-.pop
+*.pop
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
