@@ -2231,23 +2231,28 @@ class new_schools(Intervention):
         self.test_frac  = test_frac # probability that anyone who screens positive is tested
         self.schedule   = schedule # dictionary
 
+        self.schools = []
+
     def initialize(self, sim):
         # Create schools
         self.school_types = sim.people.school_types # Dict with keys of school types (e.g. 'es') and values of list of school ids (e.g. [1,5])
 
         sdf = sim.people.contacts['s'].to_df()
 
-        for sct, scids in self.school_types.items():
-            for scid in scids:
-                uids = sim.people.schools[scid] # Dict with keys of school_id and values of uids in that school
-                print(sct, scid, uids)
+        for school_type, scids in self.school_types.items():
+            for school_id in scids:
+                uids = sim.people.schools[school_id] # Dict with keys of school_id and values of uids in that school
+                print(school_type, school_id, uids)
 
                 # Want 's'-layer edge list associated with uids
                 s_subset = sdf.loc[ (sdf['p1'].isin(uids)) | (sdf['p2'].isin(uids))]
                 print(s_subset)
-                sid_layer = cvb.Layer()
-                sid_layer.from_df(s_subset)
-                print(sid_layer)
+                this_school_layer = cvb.Layer().from_df(s_subset)
+                print(this_school_layer)
+                sch = School(school_id, school_type, uids, this_school_layer, is_hybrid, sim)
+                print(sch)
+                self.schools.append(sch)
+
 
                 #print(sim.people.contacts['s'].find_contacts(uids))
                 #for cuid in sim.people.contacts['s'].find_contacts(uids):

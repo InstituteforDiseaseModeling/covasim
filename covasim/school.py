@@ -18,7 +18,7 @@ class FullTimeContactManager():
 
 class School():
 
-    def __init__(self, school_id, school_type, uids, is_hybrid, sim):
+    def __init__(self, school_id, school_type, uids, layer, is_hybrid, sim):
         self.school_id = school_iud
         self.school_type = school_type
         self.uids = uids
