@@ -1013,7 +1013,7 @@ class vaccine(Intervention):
 
 #%% School interventions
 
-__all__ += ['close_schools', 'reopen_schools', 'set_rel_trans']
+__all__ += ['set_rel_trans', 'close_schools', 'reopen_schools']
 
 
 class set_rel_trans(Intervention):
@@ -1042,9 +1042,121 @@ class set_rel_trans(Intervention):
         t = sim.t
 
         if t == self.start_day:
-            under_10 = [i for i in range(len(sim.people.age)) if sim.people.age[i] <= self.age]
-            for ind in under_10:
+            under_age = [i for i in range(len(sim.people.age)) if sim.people.age[i] <= self.age]
+            for ind in under_age:
                 sim.people.rel_trans[ind] = sim.people.rel_trans[ind] * self.changes
+
+
+class close_schools(Intervention):
+    '''
+        Shuts down and then reopens schools (possibly with a different network), by type and start day.
+
+        Args:
+            start_day   (dict)              : dictionary with school type as key and value is start_day, or string containing start day for the 's' layer
+            day_schools_closed (str)        : day to close school layer
+            pop_file (People object)        : People object with different network structure
+            kwargs      (dict)              : passed to Intervention
+
+        **Examples**
+            iterv = cv.close_schools(day_schools_closed = '2020-03-12', start_day = '2020-09-01')
+            iterv = cv.close_schools(day_schools_closed = '2020-03-12', start_day = {'pk': '2020-09-01',
+            'es': 2020-09-01, 'ms': 2020-09-01, 'hs':2020-09-01, 'uv': None})
+            iterv = cv.close_schools(day_schools_closed = '2020-03-12', start_day = {'pk': '2020-09-01',
+            'es': 2020-09-01, 'ms': 2020-09-01, 'hs':2020-09-01, 'uv': None}. pop_file='kc_synthpops_clustered.ppl')
+        '''
+
+    def __init__(self, start_day=None, day_schools_closed=None, pop_file=None, **kwargs):
+        super().__init__(**kwargs)  # Initialize the Intervention object
+        self._store_args()  # Store the input arguments so that intervention can be recreated
+        self.start_day          = start_day
+        self.day_schools_closed = day_schools_closed
+        self.pop_file           = pop_file
+        self.school_types       = None
+        self.contacts           = None  # list of school contacts that will need to be restored at end_day
+        self.num_schools        = None
+        self.new_school_network = None
+        return
+
+    def initialize(self, sim):
+        if self.day_schools_closed is None:
+            self.day_schools_closed = sim.day('2020-03-12')
+        else:
+            self.day_schools_closed = sim.day(self.day_schools_closed)
+
+        # figure out how many schools there are and create contact list by school:
+        self.num_schools = len(sim.people.schools)
+        self.contacts = [None] * self.num_schools
+
+        if isinstance(self.start_day, dict):
+            self.school_types = sim.people.school_types
+            for school_type, day in self.start_day.items():
+                self.start_day[school_type] = sim.day(day)
+        elif isinstance(self.start_day, str):
+            self.start_day = sim.day(self.start_day)
+
+        if self.pop_file is not None:
+            self.load_population()
+
+        self.initialized = True
+        return
+
+    def apply(self, sim):
+        t = sim.t
+
+        if t == self.day_schools_closed:
+            for school_id in range(self.num_schools - 1): # DJK -1?
+                inds_to_remove = sim.people.schools[school_id]
+                self.contacts[school_id] = self.remove_contacts(inds_to_remove, 's', sim)
+
+        else:
+            if isinstance(self.start_day, dict):
+                for s_type, day in self.start_day.items():
+                    if day is not None:
+                        if t == day:
+                            schools = self.school_types[s_type]
+                            if self.pop_file is not None:
+                                sim.people.contacts['s'].append(self.new_school_network)
+                            else:
+                                for school in schools:
+                                    if self.contacts[school] is not None:
+                                        sim.people.contacts['s'].append(self.contacts[school])
+
+
+            elif self.start_day is not None:
+                if t == self.start_day:
+                    if self.pop_file is not None:
+                        sim.people.contacts['s'].append(self.new_school_network)
+                    else:
+                        for school_id in range(self.num_schools - 1): # DJK -1?
+                            sim.people.contacts['s'].append(self.contacts[school_id])
+
+    def remove_contacts(self, inds, layer, sim):
+        '''Finds all contacts of a layer for a set of inds and returns an edgelist that was removed'''
+        inds_list = []
+
+        # Loop over the contact network in both directions -- k1,k2 are the keys
+        for k1, k2 in [['p1', 'p2'],
+                       ['p2', 'p1']]:
+
+            # Get all the indices of the pairs that each person is in
+            in_k1 = np.isin(sim.people.contacts[layer][k1], inds).nonzero()[0]
+            inds_list.append(in_k1)  # Find their pairing partner
+        edge_inds = np.unique(np.concatenate(inds_list))  # Find all edges
+        return (sim.people.contacts[layer].pop_inds(edge_inds))
+
+    def load_population(self):
+        # Load pop_file if str else use directly for school contacts
+        popfile = self.pop_file
+        # Load from disk or use directly
+        if isinstance(popfile, str):  # It's a string, assume it's a filename
+            filepath = sc.makefilepath(filename=popfile)
+            obj = cvm.load(filepath)
+        else:
+            obj = popfile  # Use it directly
+
+        self.new_school_network = obj['contacts']['s']
+
+        return
 
 
 class reopen_schools(Intervention):
@@ -1076,13 +1188,17 @@ class reopen_schools(Intervention):
                  schedule=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so that intervention can be recreated
+
+        # Store arguments
         self.start_day                      = start_day
         self.ili_prev                       = ili_prev
         self.test_freq                      = test_freq # int of frequency of diagnostic testing
         self.num_pos                        = num_pos
         self.trace                          = trace # whether or not you trace contacts of all diagnosed patients
         self.test                           = test # probability that anyone who screens positive is tested
-        self.schedule                       = schedule
+        self.schedule                       = schedule # dictionary
+
+        # DJK TODO: Consolidate - separate structures to avoid mixing state and reporting variables
         self.date_reopen                    = None # list of dates to reopen school by
         self.contacts                       = None # list of school contacts that will need to be restored at end_day
         self.closed                         = None # whether or not each school type is closed currently
@@ -1116,7 +1232,7 @@ class reopen_schools(Intervention):
         self.num_students                   = None
         self.school_types_open              = None
         self.school_types_closed            = None
-        self.first_day                      = '2020-09-01'
+        self.first_day                      = '2020-09-01' # DJK: Hard coded or expectation to overwrite after init?
         return
 
     def day_of_week(self, date):
@@ -1125,8 +1241,8 @@ class reopen_schools(Intervention):
         return dayname
 
     def date2group(self, date, verbose=False):
-        ''' Convert a date to a day of the week and then to a policy '''
-        if self.schedule:
+        ''' Convert a date to a day of the week and then to a policy (no_school, all, A, B, or distance)'''
+        if self.schedule: # DJK: is not None?
             mapping = {
                 'Monday':    'A',
                 'Tuesday':   'A',
@@ -1162,12 +1278,6 @@ class reopen_schools(Intervention):
         self.school_types = sim.people.school_types
         self.num_schools = len(sim.people.schools)
         self.num_students = dict()
-        if isinstance(self.start_day, dict):
-            self.school_types = sim.people.school_types
-            for school_type, day in self.start_day.items():
-                self.start_day[school_type] = sim.day(day)
-        elif self.start_day is not None:
-            self.start_day = sim.day(self.start_day)
         self.school_closures = 0
         self.date_reopen = [None] * self.num_schools
         self.end_day = 14
@@ -1175,12 +1285,21 @@ class reopen_schools(Intervention):
         self.total_days = self.sim_end_day - sim.day(self.first_day) + 1
         self.total_weeks = int(self.total_days/7)
 
-        # Calculate schedule
+        # Determine start_day
+        if isinstance(self.start_day, dict):
+            self.school_types = sim.people.school_types
+            for school_type, day in self.start_day.items():
+                self.start_day[school_type] = sim.day(day)
+        elif self.start_day is not None:
+            self.start_day = sim.day(self.start_day)
+
+        # Determine which group is in school on each day
         self.schedule_byday = []
         for t in sim.tvec:
             group = self.date2group(sim.date(t))
             self.schedule_byday.append(group)
 
+        # Prepare contacts and various reporting vars based on schedule
         if self.schedule is not None:
             self.contacts = {
                 'A': [None] * self.num_schools,
@@ -1202,6 +1321,8 @@ class reopen_schools(Intervention):
             self.num_students_at_home = [0] * self.num_schools
             self.students_at_home = dict()
             self.contacts_of_students_at_home = [None] * self.num_schools
+
+        # More variable initializations
         self.closed = [False] * self.num_schools
         if self.trace is None:
             self.trace = 1.0
@@ -1209,6 +1330,8 @@ class reopen_schools(Intervention):
             self.test = 0.5
         if self.test_freq is not None:
             self.next_test_day = sim.day(self.first_day)
+
+        # Initialize the school_info dictionary # DJK: could be as separate class
         sim.school_info = dict()  # create a dict to hold information
         sim.school_info['num_traced'] = 0
         sim.school_info['num_tested'] = 0
@@ -1244,10 +1367,11 @@ class reopen_schools(Intervention):
         sim.school_info['num_hs'] = 0
         sim.school_info['num_es'] = 0
         sim.school_info['num_ms'] = 0
+
         ## determine which types are reopening (from cv.close_schools)
         self.types_to_check = []
         for intv in sim['interventions']:
-            print('*', intv.label)
+            # Look for an intervention with label "close_school" from which to determine the school types that will need to reopen
             if intv.label == 'close_schools':
                 if isinstance(intv.start_day, int):
                     self.types_to_check = ['es', 'ms', 'hs']
@@ -1255,20 +1379,24 @@ class reopen_schools(Intervention):
                     self.types_to_check = []
                     for s_type, val in intv.start_day.items():
                         if val is not None:
-                            if s_type != 'pk' and s_type != 'uv':
+                            if s_type != 'pk' and s_type != 'uv': # DJK: Why exclude pk and uv here?
                                 self.types_to_check.append(s_type)
                 else:
                     self.types_to_check = []
 
+        # Initialization of more school_info
         for s_type in self.types_to_check:
             schools = self.school_types[s_type]
             name = 'num_' + s_type
             sim.school_info[name] = len(schools)*sim['pop_scale']
             self.count_people(schools, sim)
+
         all_types = ['es', 'ms', 'hs']
         for s_type in all_types:
             schools = self.school_types[s_type]
-            self.count_school_days(schools, sim, s_type)
+            self.count_school_days(schools, sim, s_type) # DJK confusing
+
+        # Initialization
         sim.school_info['test_pos'] = 0
         sim.school_info['num_teacher_cases'] = 0
         sim.school_info['num_student_cases'] = 0
@@ -1671,6 +1799,10 @@ class reopen_schools(Intervention):
         # trace contacts of diagnosed person and remove their student contacts from school for 14 days
         sim.people.trace(inds, trace_probs={'h': 1, 'c': 0, 'w': 0, 's': 1},
                          trace_time={'h': 2, 'c': 2, 'w': 2, 's': 2})
+
+        # DJK: What about the delay?
+        # DJK: Can just use .quarantined?
+        # DJK: Only works with trace_probs of 1?
         for student in inds:
             contacts_list = self.remove_contacts(student, sim.people.contacts['s'])
             contacts = contacts_list['p1']
@@ -1786,7 +1918,7 @@ class reopen_schools(Intervention):
                 sim.school_info['num_teachers_tested'] += self.rescale*len(teachers_tested)
                 sim.school_info['num_staff_tested'] += self.rescale*len(staff_tested)
                 # choose which contacts get traced
-                inds_covid = cvu.itrue(sim.people.infectious[inds_to_test], inds_to_test)
+                inds_covid = cvu.itrue(sim.people.infectious[inds_to_test], inds_to_test) # TODO: Test sensitivity here?
                 num_covid_pos += self.rescale*len(inds_covid)
                 sim.school_info['test_pos'] += self.rescale*len(inds_covid)
                 if len(inds_covid) > 0:
@@ -1824,6 +1956,7 @@ class reopen_schools(Intervention):
                 if len(teacher_inds_in_school)>0:
                     asymp_teacher_inds = [x for x in teacher_inds_in_school if x not in inds_meet_condition]
                     if len(asymp_teacher_inds) > 0:
+                        # Test teachers who are in school who don't meet screening conditions (diagnosed, symptomatic, ~recovered, ~dead)
                         sim.people.test(asymp_teacher_inds, test_delay=0)
                         sim.school_info['num_teachers_tested'] += self.rescale*len(asymp_teacher_inds)
                         sim.school_info['num_tested'] += self.rescale*len(asymp_teacher_inds)
@@ -1843,6 +1976,7 @@ class reopen_schools(Intervention):
                 if len(staff_inds_in_school)>0:
                     asymp_staff_inds = [x for x in staff_inds_in_school if x not in inds_meet_condition]
                     if len(asymp_staff_inds) > 0:
+                        # Test staff who are in school who don't meet screening conditions (diagnosed, symptomatic, ~recovered, ~dead)
                         sim.people.test(asymp_staff_inds, test_delay=0)
                         staff_inds_covid = cvu.itrue(sim.people.infectious[np.array(asymp_staff_inds)], np.array(asymp_staff_inds))
                         num_covid_pos += self.rescale*len(staff_inds_covid)
@@ -2083,114 +2217,4 @@ class reopen_schools(Intervention):
             else:
                 self.contacts_of_students_at_home[school_id]['timer'][inds_to_update] = np.repeat(3 + sim.t,
                                                                                                   len(inds_to_update))
-        return
-
-
-class close_schools(Intervention):
-    '''
-        Shuts down and then reopens schools, by type and start day.
-
-        Args:
-            start_day   (dict)              : dictionary with school type as key and value is start_day
-            day_schools_closed (str)        : day to close school layer
-            pop_file (People object)        : People object with different network structure
-            kwargs      (dict)              : passed to Intervention
-
-        **Examples**
-            iterv = cv.close_schools(day_schools_closed = '2020-03-12', start_day = '2020-09-01')
-            iterv = cv.close_schools(day_schools_closed = '2020-03-12', start_day = {'pk': '2020-09-01',
-            'es': 2020-09-01, 'ms': 2020-09-01, 'hs':2020-09-01, 'uv': None})
-            iterv = cv.close_schools(day_schools_closed = '2020-03-12', start_day = {'pk': '2020-09-01',
-            'es': 2020-09-01, 'ms': 2020-09-01, 'hs':2020-09-01, 'uv': None}. pop_file='kc_synthpops_clustered.ppl')
-        '''
-
-    def __init__(self, start_day=None, day_schools_closed=None, pop_file=None, **kwargs):
-        super().__init__(**kwargs)  # Initialize the Intervention object
-        self._store_args()  # Store the input arguments so that intervention can be recreated
-        self.start_day          = start_day
-        self.day_schools_closed = day_schools_closed
-        self.pop_file           = pop_file
-        self.school_types       = None
-        self.contacts           = None  # list of school contacts that will need to be restored at end_day
-        self.num_schools        = None
-        self.new_school_network = None
-        return
-
-    def initialize(self, sim):
-        if self.day_schools_closed is None:
-            self.day_schools_closed = sim.day('2020-03-12')
-        else:
-            self.day_schools_closed = sim.day(self.day_schools_closed)
-
-        # figure out how many schools there are and create contact list by school:
-        self.num_schools = len(sim.people.schools)
-        self.contacts = [None] * self.num_schools
-
-        if isinstance(self.start_day, dict):
-            self.school_types = sim.people.school_types
-            for school_type, day in self.start_day.items():
-                self.start_day[school_type] = sim.day(day)
-        elif isinstance(self.start_day, str):
-            self.start_day = sim.day(self.start_day)
-
-        if self.pop_file is not None:
-            self.load_population()
-
-        self.initialized = True
-        return
-
-    def apply(self, sim):
-        t = sim.t
-
-        if t == self.day_schools_closed:
-            for school_id in range(self.num_schools - 1):
-                inds_to_remove = sim.people.schools[school_id]
-                self.contacts[school_id] = self.remove_contacts(inds_to_remove, 's', sim)
-
-        else:
-            if isinstance(self.start_day, dict):
-                for s_type, day in self.start_day.items():
-                    if day is not None:
-                        if t == day:
-                            schools = self.school_types[s_type]
-                            if self.pop_file is not None:
-                                sim.people.contacts['s'].append(self.new_school_network)
-                            else:
-                                for school in schools:
-                                    if self.contacts[school] is not None:
-                                        sim.people.contacts['s'].append(self.contacts[school])
-
-
-            elif self.start_day is not None:
-                if t == self.start_day:
-                    if self.pop_file is not None:
-                        sim.people.contacts['s'].append(self.new_school_network)
-                    else:
-                        for school_id in range(self.num_schools - 1):
-                            sim.people.contacts['s'].append(self.contacts[school_id])
-
-    def remove_contacts(self, inds, layer, sim):
-        '''Finds all contacts of a layer for a set of inds and returns an edgelist that was removed'''
-        inds_list = []
-        for k1, k2 in [['p1', 'p2'],
-                       ['p2',
-                        'p1']]:  # Loop over the contact network in both directions -- k1,k2 are the keys
-            in_k1 = np.isin(sim.people.contacts[layer][k1], inds).nonzero()[
-                0]  # Get all the indices of the pairs that each person is in
-            inds_list.append(in_k1)  # Find their pairing partner
-        edge_inds = np.unique(np.concatenate(inds_list))  # Find all edges
-        return (sim.people.contacts[layer].pop_inds(edge_inds))
-
-    def load_population(self):
-        # set filepath
-        popfile = self.pop_file
-        # Load from disk or use directly
-        if isinstance(popfile, str):  # It's a string, assume it's a filename
-            filepath = sc.makefilepath(filename=popfile)
-            obj = cvm.load(filepath)
-        else:
-            obj = popfile  # Use it directly
-
-        self.new_school_network = obj['contacts']['s']
-
         return

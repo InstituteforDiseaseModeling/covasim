@@ -39,7 +39,7 @@ class PeopleMeta(sc.prettyobj):
         'death_prob',  # Float
         'rel_trans',   # Float
         'rel_sus',     # Float
-        'school_id',  # Int
+        'school_id',   # Int
         'teacher_flag',
         'student_flag',
         'staff_flag',

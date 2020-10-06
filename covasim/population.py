@@ -351,7 +351,7 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
         sim.run()
     '''
     import synthpops as sp # Optional import
-    
+
     pop_size = sim['pop_size']
     # Handle layer mapping
     with_school_types = False

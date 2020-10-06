@@ -37,8 +37,6 @@ class People(cvb.BasePeople):
 
     def __init__(self, pars, strict=True, **kwargs):
 
-        print('__init__ PEOPLE')
-
         # Handle pars and population size
         if sc.isnumber(pars): # Interpret as a population size
             pars = {'pop_size':pars} # Ensure it's a dictionary
