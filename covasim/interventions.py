@@ -2235,10 +2235,7 @@ class new_schools(Intervention):
         # Create schools
         self.school_types = sim.people.school_types # Dict with keys of school types (e.g. 'es') and values of list of school ids (e.g. [1,5])
 
-        s_layer_df = sim.people.contacts['s'].to_df()
-
-        print(s_layer_df)
-        exit()
+        sdf = sim.people.contacts['s'].to_df()
 
         for sct, scids in self.school_types.items():
             for scid in scids:
@@ -2246,7 +2243,12 @@ class new_schools(Intervention):
                 print(sct, scid, uids)
 
                 # Want 's'-layer edge list associated with uids
-                print(sim.people.contacts['s'])
+                s_subset = sdf.loc[ (sdf['p1'].isin(uids)) | (sdf['p2'].isin(uids))]
+                print(s_subset)
+                sid_layer = cvb.Layer()
+                sid_layer.from_df(s_subset)
+                print(sid_layer)
+
                 #print(sim.people.contacts['s'].find_contacts(uids))
                 #for cuid in sim.people.contacts['s'].find_contacts(uids):
                     #sim.people.contacts['s'].pop_inds
