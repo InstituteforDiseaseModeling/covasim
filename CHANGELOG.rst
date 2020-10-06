@@ -13,6 +13,10 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Latest versions (1.7.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Version 1.7.3 (2020-09-30)
+--------------------------
+- Changed ``test_prob.apply()`` and ``test_num.apply()`` to return the indices of people that were tested
+- ``cvm.date(None)`` returns ``None`` instead of an empty list. Both ``cvm.date()`` and ``cvm.day()`` no longer raise errors if the list of inputs includes ``None`` entries
 
 Version 1.7.2 (2020-09-24)
 --------------------------
