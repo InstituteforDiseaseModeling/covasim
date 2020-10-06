@@ -1607,11 +1607,15 @@ class reopen_schools(Intervention):
                                 lost = sim['pop_scale']*self.num_students[s_type]
                                 sim.school_info['school_days_lost'] += lost
                                 sim.school_info['school_days_lost_dict'][s_type] += lost
+
             if self.test_freq is not None:
+                # If testing today, schedule the next_test_day by adding the routine testing frequency
+                # Routine testing is accomplished in check_condition, which is called above
+                # DJK: TODO - make test_freq and associated variables a dictionary by type (students, teachers, staff) to have dependent frequencies
                 if t == self.next_test_day and t < (self.sim_end_day - 2):
                     self.next_test_day += self.test_freq
                     if self.next_test_day <= len(self.schedule_byday):
-                        if not self.schedule_byday[self.next_test_day]:
+                        if not self.schedule_byday[self.next_test_day]: # DJK: schedule_byday appears to be consistently defined, so can remove and remove +2 here and above
                             self.next_test_day += 2
 
             sim.school_info['num_staff_infectious'].append(self.num_staff_infectious)
@@ -1933,65 +1937,63 @@ class reopen_schools(Intervention):
                     if len(inds_to_trace) > 0:
                         self.trace_contacts(inds_to_trace, sim, school_id, group)
 
-        # determine if we are doing any diagnostic testing among teachers today
-        if self.next_test_day is not None:
-            next_test_day = self.next_test_day
-        else:
-            next_test_day = None
-
-        if next_test_day is not None:
-            if t == next_test_day:
-                if already_home > 0:
-                    if group in ['A', 'B']:
-                        students_at_home = self.students_at_home[group][school_id]
-                    else:
-                        students_at_home = self.students_at_home[school_id]
-                    if isinstance(students_at_home, int):
-                        students_at_home = [students_at_home]
+        # determine if we are doing any routine diagnostic testing among teachers & staff today
+        if self.next_test_day is not None and t == self.next_test_day:
+            # Time for routine testing
+            if already_home > 0:
+                if group in ['A', 'B']:
+                    students_at_home = self.students_at_home[group][school_id]
                 else:
-                    students_at_home = []
+                    students_at_home = self.students_at_home[school_id]
+                if isinstance(students_at_home, int):
+                    students_at_home = [students_at_home]
+            else:
+                students_at_home = []
 
-                in_school = [x for x in school if x not in students_at_home]
-                teacher_inds_in_school = [x for x in in_school if x in self.teacher_inds]
-                if len(teacher_inds_in_school)>0:
-                    asymp_teacher_inds = [x for x in teacher_inds_in_school if x not in inds_meet_condition]
-                    if len(asymp_teacher_inds) > 0:
-                        # Test teachers who are in school who don't meet screening conditions (diagnosed, symptomatic, ~recovered, ~dead)
-                        sim.people.test(asymp_teacher_inds, test_delay=0)
-                        sim.school_info['num_teachers_tested'] += self.rescale*len(asymp_teacher_inds)
-                        sim.school_info['num_tested'] += self.rescale*len(asymp_teacher_inds)
-                        teacher_inds_covid = cvu.itrue(sim.people.infectious[np.array(asymp_teacher_inds)], np.array(asymp_teacher_inds))
-                        num_covid_pos += self.rescale*len(teacher_inds_covid)
-                        if len(teacher_inds_covid) > 0:
-                            sim.school_info['num_teachers_test_pos'] += self.rescale*len(teacher_inds_covid)
-                            traced = cvu.n_binomial(self.trace, len(teacher_inds_covid))
-                            inds_to_trace = teacher_inds_covid[traced]
-                            if len(inds_to_trace) > 0:
-                                self.trace_contacts(inds_to_trace, sim, school_id, group)
-                            not_in_inds_meet_condition = [x for x in teacher_inds_covid.tolist() if
-                                                          x not in inds_meet_condition]
-                            inds_meet_condition += not_in_inds_meet_condition
+            in_school = [x for x in school if x not in students_at_home]
 
-                staff_inds_in_school = [x for x in in_school if x in self.staff_inds]
-                if len(staff_inds_in_school)>0:
-                    asymp_staff_inds = [x for x in staff_inds_in_school if x not in inds_meet_condition]
-                    if len(asymp_staff_inds) > 0:
-                        # Test staff who are in school who don't meet screening conditions (diagnosed, symptomatic, ~recovered, ~dead)
-                        sim.people.test(asymp_staff_inds, test_delay=0)
-                        staff_inds_covid = cvu.itrue(sim.people.infectious[np.array(asymp_staff_inds)], np.array(asymp_staff_inds))
-                        num_covid_pos += self.rescale*len(staff_inds_covid)
-                        sim.school_info['test_pos'] += self.rescale*len(staff_inds_covid)
-                        sim.school_info['num_staff_tested'] += self.rescale*len(asymp_staff_inds)
-                        sim.school_info['num_tested'] += self.rescale*len(asymp_staff_inds)
-                        if len(staff_inds_covid) > 0:
-                            sim.school_info['num_staff_test_pos'] += self.rescale*len(staff_inds_covid)
-                            traced = cvu.n_binomial(self.trace, len(staff_inds_covid))
-                            inds_to_trace = staff_inds_covid[traced]
-                            if len(inds_to_trace) > 0:
-                                self.trace_contacts(inds_to_trace, sim, school_id, group)
-                            not_in_inds_meet_condition = [x for x in staff_inds_covid.tolist() if
-                                                          x not in inds_meet_condition]
-                            inds_meet_condition += not_in_inds_meet_condition
+            # Routine testing for teachers
+            teacher_inds_in_school = [x for x in in_school if x in self.teacher_inds]
+            if len(teacher_inds_in_school)>0:
+                asymp_teacher_inds = [x for x in teacher_inds_in_school if x not in inds_meet_condition]
+                if len(asymp_teacher_inds) > 0:
+                    # Test teachers who are in school who don't meet screening conditions (diagnosed, symptomatic, ~recovered, ~dead)
+                    sim.people.test(asymp_teacher_inds, test_delay=0)
+                    sim.school_info['num_teachers_tested'] += self.rescale*len(asymp_teacher_inds)
+                    sim.school_info['num_tested'] += self.rescale*len(asymp_teacher_inds)
+                    teacher_inds_covid = cvu.itrue(sim.people.infectious[np.array(asymp_teacher_inds)], np.array(asymp_teacher_inds))
+                    num_covid_pos += self.rescale*len(teacher_inds_covid)
+                    if len(teacher_inds_covid) > 0:
+                        sim.school_info['num_teachers_test_pos'] += self.rescale*len(teacher_inds_covid)
+                        traced = cvu.n_binomial(self.trace, len(teacher_inds_covid))
+                        inds_to_trace = teacher_inds_covid[traced]
+                        if len(inds_to_trace) > 0:
+                            self.trace_contacts(inds_to_trace, sim, school_id, group)
+                        not_in_inds_meet_condition = [x for x in teacher_inds_covid.tolist() if
+                                                      x not in inds_meet_condition]
+                        inds_meet_condition += not_in_inds_meet_condition
+
+            # Routine testing for staff
+            staff_inds_in_school = [x for x in in_school if x in self.staff_inds]
+            if len(staff_inds_in_school)>0:
+                asymp_staff_inds = [x for x in staff_inds_in_school if x not in inds_meet_condition]
+                if len(asymp_staff_inds) > 0:
+                    # Test staff who are in school who don't meet screening conditions (diagnosed, symptomatic, ~recovered, ~dead)
+                    sim.people.test(asymp_staff_inds, test_delay=0)
+                    staff_inds_covid = cvu.itrue(sim.people.infectious[np.array(asymp_staff_inds)], np.array(asymp_staff_inds))
+                    num_covid_pos += self.rescale*len(staff_inds_covid)
+                    sim.school_info['test_pos'] += self.rescale*len(staff_inds_covid)
+                    sim.school_info['num_staff_tested'] += self.rescale*len(asymp_staff_inds)
+                    sim.school_info['num_tested'] += self.rescale*len(asymp_staff_inds)
+                    if len(staff_inds_covid) > 0:
+                        sim.school_info['num_staff_test_pos'] += self.rescale*len(staff_inds_covid)
+                        traced = cvu.n_binomial(self.trace, len(staff_inds_covid))
+                        inds_to_trace = staff_inds_covid[traced]
+                        if len(inds_to_trace) > 0:
+                            self.trace_contacts(inds_to_trace, sim, school_id, group)
+                        not_in_inds_meet_condition = [x for x in staff_inds_covid.tolist() if
+                                                      x not in inds_meet_condition]
+                        inds_meet_condition += not_in_inds_meet_condition
 
         if self.num_pos is not None:
             if num_covid_pos >= self.num_pos:
