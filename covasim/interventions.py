@@ -1013,7 +1013,7 @@ class vaccine(Intervention):
 
 #%% School interventions
 
-__all__ += ['set_rel_trans', 'close_schools', 'reopen_schools']
+__all__ += ['set_rel_trans', 'close_schools', 'reopen_schools', 'new_schools']
 
 
 class set_rel_trans(Intervention):
@@ -1208,9 +1208,9 @@ class reopen_schools(Intervention):
         self.total_weeks                    = None
         self.end_day                        = None
         self.sim_end_day                    = None
-        self.num_students_at_home           = None
-        self.students_at_home               = None
-        self.contacts_of_students_at_home   = None
+        self.num_people_at_home             = None
+        self.people_at_home                 = None
+        self.contacts_of_people_at_home     = None
         self.next_test_day                  = None
         self.teacher_inds                   = None
         self.student_inds                   = None
@@ -1305,22 +1305,22 @@ class reopen_schools(Intervention):
                 'A': [None] * self.num_schools,
                 'B': [None] * self.num_schools
             }
-            self.num_students_at_home = {
+            self.num_people_at_home = {
                 'A': [0] * self.num_schools,
                 'B': [0] * self.num_schools
             }
-            self.students_at_home = dict()
-            self.students_at_home['A'] = dict()
-            self.students_at_home['B'] = dict()
-            self.contacts_of_students_at_home = {
+            self.people_at_home = dict()
+            self.people_at_home['A'] = dict()
+            self.people_at_home['B'] = dict()
+            self.contacts_of_people_at_home = {
                 'A': [None] * self.num_schools,
                 'B': [None] * self.num_schools
             }
         else:
             self.contacts = [None] * self.num_schools
-            self.num_students_at_home = [0] * self.num_schools
-            self.students_at_home = dict()
-            self.contacts_of_students_at_home = [None] * self.num_schools
+            self.num_people_at_home = [0] * self.num_schools
+            self.people_at_home = dict()
+            self.contacts_of_people_at_home = [None] * self.num_schools
 
         # More variable initializations
         self.closed = [False] * self.num_schools
@@ -1333,40 +1333,17 @@ class reopen_schools(Intervention):
 
         # Initialize the school_info dictionary # DJK: could be as separate class
         sim.school_info = dict()  # create a dict to hold information
-        sim.school_info['num_traced'] = 0
-        sim.school_info['num_tested'] = 0
-        sim.school_info['num_teachers_tested'] = 0
-        sim.school_info['num_teachers_test_pos'] = 0
-        sim.school_info['num_teachers_screen_pos'] = 0
-        sim.school_info['num_teachers'] = 0
+        for var in ['num_traced', 'num_tested', 'num_teachers_tested', 'num_teachers_test_pos', 'num_teachers_screen_pos', 'num_teachers', 'num_staff_tested', 'num_staff_test_pos', 'num_staff_screen_pos', 'num_staff', 'num_students_tested', 'num_students_test_pos', 'num_students_screen_pos', 'num_students', 'school_days_lost', 'num_es', 'num_ms', 'num_hs', 'school_days_gained', 'total_student_school_days']:
+            sim.school_info[var] = 0
 
-        sim.school_info['num_staff_tested'] = 0
-        sim.school_info['num_staff_test_pos'] = 0
-        sim.school_info['num_staff_screen_pos'] = 0
-        sim.school_info['num_staff'] = 0
+        for var in ['num_students_infectious', 'num_staff_infectious', 'num_diagnosed', 'num_undiagnosed', 'num_staff_asymptomatic', 'num_students_asymptomatic']:
+            sim.school_info[var] = []
 
-        sim.school_info['num_students_tested'] = 0
-        sim.school_info['num_students_test_pos'] = 0
-        sim.school_info['num_students_screen_pos'] = 0
-        sim.school_info['num_students'] = 0
         sim.school_info['num_students_dict'] = {}
-
-        sim.school_info['num_students_infectious'] = []
-        sim.school_info['num_staff_infectious'] = []
-        sim.school_info['num_diagnosed'] = []
-        sim.school_info['num_undiagnosed'] = []
-        sim.school_info['num_staff_asymptomatic'] = []
-        sim.school_info['num_students_asymptomatic'] = []
-        sim.school_info['school_days_lost'] = 0
         sim.school_info['school_days_lost_dict'] = {k:0 for k in list(self.school_types.keys()) + ['symp_quar']} # Same as above, but broken down by type
-        sim.school_info['school_days_gained'] = 0
-        sim.school_info['total_student_school_days'] = 0
         sim.school_info['es_with_a_case'] = [0] * (self.sim_end_day + 1)
         sim.school_info['ms_with_a_case'] = [0] * (self.sim_end_day + 1)
         sim.school_info['hs_with_a_case'] = [0] * (self.sim_end_day + 1)
-        sim.school_info['num_hs'] = 0
-        sim.school_info['num_es'] = 0
-        sim.school_info['num_ms'] = 0
 
         ## determine which types are reopening (from cv.close_schools)
         self.types_to_check = []
@@ -1422,6 +1399,7 @@ class reopen_schools(Intervention):
         # check if school is open or not
         for intv in sim['interventions']:
             if intv.label == 'close_schools':
+                #N.B. start_day here is from the close_schools intervention, representing the day schools reopen
                 if isinstance(intv.start_day, int):
                     self.school_types_open = ['es', 'ms', 'hs']
                 elif intv.start_day is None:
@@ -1432,18 +1410,14 @@ class reopen_schools(Intervention):
                             self.school_types_closed.append(s_type)
                         else:
                             self.school_types_open.append(s_type)
-        if 'pk' in self.school_types_closed:
-            self.school_types_closed.remove('pk')
-        if 'uv' in self.school_types_closed:
-            self.school_types_closed.remove('uv')
 
-        if 'pk' in self.school_types_open:
-            self.school_types_open.remove('pk')
-        if 'uv' in self.school_types_open:
-            self.school_types_open.remove('uv')
+        # Hard code that we are not going to reopen pre-K or universities in this analysis
+        self.school_types_closed = [stc for stc in self.school_types_closed if stc not in ['pk', 'uv']]
+        self.school_types_open   = [sto for sto in self.school_types_open   if sto not in ['pk', 'uv']]
 
         self.initialized = True
         return
+
 
     def apply(self, sim):
         t = sim.t
@@ -1471,6 +1445,7 @@ class reopen_schools(Intervention):
                             self.schools_bygroup['A'][school] = groupA + teachers + staff
                             groupB = [i for i in students if i not in groupA]
                             self.schools_bygroup['B'][school] = groupB + teachers + staff
+                            # Remove groupA students from the 's' layer and store in contacts_bygroup['A']
                             students_to_add_groupA = self.remove_contacts(groupA, sim.people.contacts['s'])
                             self.remove_contacts(groupB, students_to_add_groupA)
                             students_that_exist_groupA = self.contacts_bygroup['A']
@@ -1570,36 +1545,41 @@ class reopen_schools(Intervention):
                                 sim.school_info['school_days_lost_dict'][s_type] += lost
                                 sim.school_info['school_days_gained'] += lost # Gained is same as lost
                                 for key in sim.people.contacts['s'].keys():
-                                    sim.people.contacts['s'][key] = self.contacts_bygroup[group][key]
+                                    sim.people.contacts['s'][key] = self.contacts_bygroup[group][key] # Load in group contacts
+
                             for i in self.school_types[s_type]:
                                 if self.closed[i]:
                                     if t == self.date_reopen[i]:
                                         self.reopen_school(sim, i)
                                     else:
-                                        self.check_on_students_at_home(sim, i)
+                                        self.check_on_people_at_home(sim, i)
                                 else:
                                     self.check_condition(sim, i, s_type, group)
                                     if group == 'all':
                                         #all in person
                                         self.count_school_days_lost(i, sim, group)
-                                        if self.num_students_at_home[i] > 0:
-                                            self.check_on_students_at_home(sim, i, group)
-                                            if t in self.contacts_of_students_at_home[i]['timer']:
-                                                self.return_students_to_school(sim, i, group)
+                                        if self.num_people_at_home[i] > 0:
+                                            self.check_on_people_at_home(sim, i, group)
+                                            if t in self.contacts_of_people_at_home[i]['timer']:
+                                                self.return_to_school(sim, i, group)
                                     else:
                                         self.count_school_days_lost(i, sim, group)
                                         # either A or B day
-                                        if self.num_students_at_home[group][i] > 0:
-                                            self.check_on_students_at_home(sim, i, group)
-                                            if len(self.contacts_of_students_at_home[group][i]['timer']) > 0:
-                                                min_time = min(self.contacts_of_students_at_home[group][i]['timer'])
+                                        if self.num_people_at_home[group][i] > 0:
+                                            self.check_on_people_at_home(sim, i, group)
+                                            if len(self.contacts_of_people_at_home[group][i]['timer']) > 0:
+                                                min_time = min(self.contacts_of_people_at_home[group][i]['timer'])
                                                 if t >= min_time:
-                                                    self.return_students_to_school(sim, i, group)
+                                                    self.return_to_school(sim, i, group)
+
+                        # DJK: what is this doing? Replacing contacts_bygroup with contacts?
+                        # Oh, above we loaded the appropriate group into contacts, now "returning" them to contacts_bygroup
                         if group in ['A', 'B']:
                             for key in sim.people.contacts['s'].keys():
                                 self.contacts_bygroup[group][key] = sim.people.contacts['s'][key]
+
                 else:
-                    if t >= sim.day(self.first_day):
+                    if t >= sim.day(self.first_day): # t must be before (<) the start day for this school type:
                         group = self.schedule_byday[t]
                         if group != 'no_school':
                             if s_type in self.school_types_closed and self.num_students[s_type]:
@@ -1630,13 +1610,13 @@ class reopen_schools(Intervention):
                         if t == self.date_reopen[i]:
                             self.reopen_school(sim, i)
                         else:
-                            self.check_on_students_at_home(sim, i)
+                            self.check_on_people_at_home(sim, i)
                     else:
                         self.check_condition(sim, i, None)
-                        if self.num_students_at_home[i] > 0:
-                            self.check_on_students_at_home(sim, i)
-                            if t in self.contacts_of_students_at_home[i]['timer']:
-                                self.return_students_to_school(sim, i)
+                        if self.num_people_at_home[i] > 0:
+                            self.check_on_people_at_home(sim, i)
+                            if t in self.contacts_of_people_at_home[i]['timer']:
+                                self.return_to_school(sim, i)
                 if self.next_test_day is not None:
                     self.next_test_day += self.test_freq
         else:
@@ -1648,7 +1628,7 @@ class reopen_schools(Intervention):
                         lost = sim['pop_scale']*self.num_students[s_type]
                         sim.school_info['school_days_lost'] += lost
                         sim.school_info['school_days_lost_dict'][s_type] += lost
-                #If school is as normal (no intervention)
+                    #If school is as normal (no intervention)
                     for s_type in self.school_types_open:
                         sim.school_info['school_days_gained'] += sim['pop_scale']*self.num_students[s_type]
                         schools = self.school_types[s_type]
@@ -1832,7 +1812,7 @@ class reopen_schools(Intervention):
                     sim.school_info['num_students_test_pos'] += self.rescale*len(student_pos)
                     sim.school_info['num_teachers_test_pos'] += self.rescale*len(teachers_pos)
                     sim.school_info['num_staff_test_pos'] += self.rescale*len(staff_pos)
-                self.remove_students_from_school(sim, school_id, contacts, group)
+                self.remove_from_school(sim, school_id, contacts, group)
         return
 
     def check_condition(self, sim, school_id, school_type, group=None):
@@ -1880,24 +1860,24 @@ class reopen_schools(Intervention):
         staff_tested = []
         inds_meet_condition = []
         if group in ['A', 'B']:
-            already_home = self.num_students_at_home[group][school_id]
+            already_home = self.num_people_at_home[group][school_id]
         else:
-            already_home = self.num_students_at_home[school_id]
+            already_home = self.num_people_at_home[school_id]
 
         if already_home > 0:
             if group in ['A', 'B']:
-                students_at_home = self.students_at_home[group][school_id]
+                people_at_home = self.people_at_home[group][school_id]
             else:
-                students_at_home = self.students_at_home[school_id]
+                people_at_home = self.people_at_home[school_id]
 
-            students_with_diagnosed_covid_at_home = cvu.itrue(sim.people.diagnosed[np.array(students_at_home)], np.array(students_at_home))
+            students_with_diagnosed_covid_at_home = cvu.itrue(sim.people.diagnosed[np.array(people_at_home)], np.array(people_at_home))
             students_with_diagnosed_covid_at_home = np.array(students_with_diagnosed_covid_at_home)[~sim.people.recovered[students_with_diagnosed_covid_at_home]].tolist()
             students_with_diagnosed_covid_at_home = np.array(students_with_diagnosed_covid_at_home)[~sim.people.dead[students_with_diagnosed_covid_at_home]].tolist()
             num_covid_pos += self.rescale*len(students_with_diagnosed_covid_at_home)
-            if isinstance(students_at_home, int):
-                students_at_home = [students_at_home]
-            infectious_in_school = [x for x in school_infectious.tolist() if x not in students_at_home]
-            inds_in_school = [x for x in school if x not in students_at_home]
+            if isinstance(people_at_home, int):
+                people_at_home = [people_at_home]
+            infectious_in_school = [x for x in school_infectious.tolist() if x not in people_at_home]
+            inds_in_school = [x for x in school if x not in people_at_home]
             if len(inds_in_school)>0:
                 inds_meet_condition = self.screen(sim, inds_in_school)
         else:
@@ -1938,19 +1918,20 @@ class reopen_schools(Intervention):
                         self.trace_contacts(inds_to_trace, sim, school_id, group)
 
         # determine if we are doing any routine diagnostic testing among teachers & staff today
+        print(self.next_test_day) # TEMP
         if self.next_test_day is not None and t == self.next_test_day:
             # Time for routine testing
             if already_home > 0:
                 if group in ['A', 'B']:
-                    students_at_home = self.students_at_home[group][school_id]
+                    people_at_home = self.people_at_home[group][school_id]
                 else:
-                    students_at_home = self.students_at_home[school_id]
-                if isinstance(students_at_home, int):
-                    students_at_home = [students_at_home]
+                    people_at_home = self.people_at_home[school_id]
+                if isinstance(people_at_home, int):
+                    people_at_home = [people_at_home]
             else:
-                students_at_home = []
+                people_at_home = []
 
-            in_school = [x for x in school if x not in students_at_home]
+            in_school = [x for x in school if x not in people_at_home]
 
             # Routine testing for teachers
             teacher_inds_in_school = [x for x in in_school if x in self.teacher_inds]
@@ -1962,6 +1943,7 @@ class reopen_schools(Intervention):
                     sim.school_info['num_teachers_tested'] += self.rescale*len(asymp_teacher_inds)
                     sim.school_info['num_tested'] += self.rescale*len(asymp_teacher_inds)
                     teacher_inds_covid = cvu.itrue(sim.people.infectious[np.array(asymp_teacher_inds)], np.array(asymp_teacher_inds))
+                    print(f'Teacher testing: {self.rescale*len(teacher_inds_covid)} pos of {self.rescale*len(asymp_teacher_inds)}')
                     num_covid_pos += self.rescale*len(teacher_inds_covid)
                     if len(teacher_inds_covid) > 0:
                         sim.school_info['num_teachers_test_pos'] += self.rescale*len(teacher_inds_covid)
@@ -1981,6 +1963,7 @@ class reopen_schools(Intervention):
                     # Test staff who are in school who don't meet screening conditions (diagnosed, symptomatic, ~recovered, ~dead)
                     sim.people.test(asymp_staff_inds, test_delay=0)
                     staff_inds_covid = cvu.itrue(sim.people.infectious[np.array(asymp_staff_inds)], np.array(asymp_staff_inds))
+                    print(f'Staff testing: {self.rescale*len(staff_inds_covid)} pos of {self.rescale*len(asymp_staff_inds)}')
                     num_covid_pos += self.rescale*len(staff_inds_covid)
                     sim.school_info['test_pos'] += self.rescale*len(staff_inds_covid)
                     sim.school_info['num_staff_tested'] += self.rescale*len(asymp_staff_inds)
@@ -1999,18 +1982,18 @@ class reopen_schools(Intervention):
             if num_covid_pos >= self.num_pos:
                 self.close_school(sim, school_id)
             elif len(inds_meet_condition) > 0:
-                self.remove_students_from_school(sim, school_id, inds_meet_condition, group)
+                self.remove_from_school(sim, school_id, inds_meet_condition, group)
         elif len(inds_meet_condition) > 0:
-            self.remove_students_from_school(sim, school_id, inds_meet_condition, group)
+            self.remove_from_school(sim, school_id, inds_meet_condition, group)
 
         return
 
     def close_school(self, sim, school_id):
         ''' Closes a school, removes contacts, and sets reopen date. IF there are any students from school
-        currently at home, adds their contacts to school for future use and resets students_at_home'''
+        currently at home, adds their contacts to school for future use and resets people_at_home'''
 
         # retrieve edge-list of anyone currently at home
-        contacts_of_students_at_home = self.contacts_of_students_at_home[school_id]
+        contacts_of_people_at_home = self.contacts_of_people_at_home[school_id]
 
         # list of students to send home
         school = sim.people.schools[school_id]
@@ -2020,21 +2003,21 @@ class reopen_schools(Intervention):
                 inds_to_remove += classroom
         else:
             inds_to_remove = school
-        if contacts_of_students_at_home is not None:
-            students_at_home = self.students_at_home[school_id]
-            if isinstance(students_at_home, int):
-                students_at_home = [students_at_home]
+        if contacts_of_people_at_home is not None:
+            people_at_home = self.people_at_home[school_id]
+            if isinstance(people_at_home, int):
+                people_at_home = [people_at_home]
             if isinstance(inds_to_remove, int):
                 inds_to_remove = [inds_to_remove]
-            inds_to_remove = [x for x in inds_to_remove if x not in students_at_home]
+            inds_to_remove = [x for x in inds_to_remove if x not in people_at_home]
             students_to_remove = self.remove_contacts(inds_to_remove, sim.people.contacts['s'])
             self.contacts[school_id] = {}
             keys = ['p1', 'p2', 'beta']
             for key in keys:
-                new_array = np.array(contacts_of_students_at_home[key].tolist() + students_to_remove[key].tolist())
+                new_array = np.array(contacts_of_people_at_home[key].tolist() + students_to_remove[key].tolist())
                 self.contacts[school_id][key] = new_array
-            self.contacts_of_students_at_home[school_id] = None
-            self.num_students_at_home[school_id] = 0
+            self.contacts_of_people_at_home[school_id] = None
+            self.num_people_at_home[school_id] = 0
         else:
             self.contacts[school_id] = self.remove_contacts(inds_to_remove, sim.people.contacts['s'])
         self.closed[school_id] = True
@@ -2067,124 +2050,123 @@ class reopen_schools(Intervention):
             contacts[key] = np.delete(value, edge_inds)  # Remove from the original
         return output
 
-    def remove_students_from_school(self, sim, school_id, students, group=None):
+    def remove_from_school(self, sim, school_id, inds, group=None):
 
         if group == 'A' or group == 'B':
-            contacts_at_home = self.contacts_of_students_at_home[group][school_id]
-            num_students_at_home = self.num_students_at_home[group][school_id]
+            contacts_at_home = self.contacts_of_people_at_home[group][school_id]
+            num_people_at_home = self.num_people_at_home[group][school_id]
         else:
-            contacts_at_home = self.contacts_of_students_at_home[school_id]
-            num_students_at_home = self.num_students_at_home[school_id]
+            contacts_at_home = self.contacts_of_people_at_home[school_id]
+            num_people_at_home = self.num_people_at_home[school_id]
 
         if contacts_at_home is not None:
             if group == 'A' or group == 'B':
-                students_at_home = self.students_at_home[group][school_id]
+                people_at_home = self.people_at_home[group][school_id]
             else:
-                students_at_home = self.students_at_home[school_id]
-            students_to_add = self.remove_contacts(students, sim.people.contacts['s'])
+                people_at_home = self.people_at_home[school_id]
+            students_to_add = self.remove_contacts(inds, sim.people.contacts['s'])
             students_to_add['timer'] = np.array([sim.t + self.end_day] * len(students_to_add['p1']))
             students_that_exist = contacts_at_home
             keys = ['p1', 'p2', 'beta', 'timer']
             for key in keys:
                 new_array = np.array(students_to_add[key].tolist() + students_that_exist[key].tolist())
                 contacts_at_home[key] = new_array
-            if isinstance(students, int):
-                students = [students]
-            if isinstance(students_at_home, int):
-                students_at_home = [students_at_home]
-            students_at_home = students_at_home + students
+            if isinstance(inds, int):
+                inds = [inds]
+            if isinstance(people_at_home, int):
+                people_at_home = [people_at_home]
+            people_at_home = people_at_home + inds
         else:
-            contacts_at_home = self.remove_contacts(students, sim.people.contacts['s'])
+            contacts_at_home = self.remove_contacts(inds, sim.people.contacts['s'])
             contacts_at_home['timer'] = np.array([sim.t + self.end_day] * len(contacts_at_home['p1']))
-            if isinstance(students, int):
-                students = [students]
-            students_at_home = students
-        num_students_at_home += len(students)
-        # student_inds = [x for x in students if x in self.student_inds]
+            if isinstance(inds, int):
+                inds = [inds]
+            people_at_home = inds
+        num_people_at_home += len(inds)
+        # student_inds = [x for x in inds if x in self.student_inds]
         # sim.school_info['school_days_lost'] += (self.end_day * len(student_inds))
 
-        # update contacts, students, and number
-
+        # update contacts, inds, and number
         if group == 'A' or group == 'B':
-            self.contacts_of_students_at_home[group][school_id] = contacts_at_home
-            self.students_at_home[group][school_id] = students_at_home
-            self.num_students_at_home[group][school_id] = num_students_at_home
+            self.contacts_of_people_at_home[group][school_id] = contacts_at_home
+            self.people_at_home[group][school_id] = people_at_home
+            self.num_people_at_home[group][school_id] = num_people_at_home
         else:
-            self.contacts_of_students_at_home[school_id] = contacts_at_home
-            self.students_at_home[school_id] = students_at_home
-            self.num_students_at_home[school_id] = num_students_at_home
+            self.contacts_of_people_at_home[school_id] = contacts_at_home
+            self.people_at_home[school_id] = people_at_home
+            self.num_people_at_home[school_id] = num_people_at_home
         return
 
-    def return_students_to_school(self, sim, school_id, group=None):
+    def return_to_school(self, sim, school_id, group=None):
         # retrieve dictionary of those whose timer is up
         if group == 'A' or group == 'B':
-            contacts_of_all_students_at_home = self.contacts_of_students_at_home[group][school_id]
-            timers = contacts_of_all_students_at_home['timer']
+            contacts_of_all_people_at_home = self.contacts_of_people_at_home[group][school_id]
+            timers = contacts_of_all_people_at_home['timer']
             inds = sc.findinds(timers <= sim.t)
             contacts_to_return = {}
             keys = ['p1', 'p2', 'beta']
             for key in keys:
-                contacts_to_return[key] = contacts_of_all_students_at_home[key][inds]
-                self.contacts_of_students_at_home[group][school_id][key] = np.delete(
-                    self.contacts_of_students_at_home[group][school_id][key], [inds])
+                contacts_to_return[key] = contacts_of_all_people_at_home[key][inds]
+                self.contacts_of_people_at_home[group][school_id][key] = np.delete(
+                    self.contacts_of_people_at_home[group][school_id][key], [inds])
 
-            self.contacts_of_students_at_home[group][school_id]['timer'] = np.delete(
-                self.contacts_of_students_at_home[group][school_id]['timer'],
+            self.contacts_of_people_at_home[group][school_id]['timer'] = np.delete(
+                self.contacts_of_people_at_home[group][school_id]['timer'],
                 [inds])
 
             sim.people.contacts['s'].append(contacts_to_return)
             contacts_returned = contacts_to_return['p1']
             contacts_returned = np.append(contacts_returned, contacts_to_return['p2'])
             contacts_returned = np.unique(contacts_returned)
-            if isinstance(self.students_at_home[group][school_id], int):
-                students_returned = [self.students_at_home[group][school_id]]
+            if isinstance(self.people_at_home[group][school_id], int):
+                students_returned = [self.people_at_home[group][school_id]]
             else:
-                students_returned = set(contacts_returned).intersection(set(self.students_at_home[group][school_id]))
+                students_returned = set(contacts_returned).intersection(set(self.people_at_home[group][school_id]))
                 students_returned = list(students_returned)
-            self.num_students_at_home[group][school_id] -= len(students_returned)
-            if isinstance(self.students_at_home[group][school_id], int):
-                self.students_at_home[group][school_id] = [self.students_at_home[group][school_id]]
-            self.students_at_home[group][school_id] = self.students_at_home[group][school_id][
-                self.students_at_home[group][school_id] != students_returned]
+            self.num_people_at_home[group][school_id] -= len(students_returned)
+            if isinstance(self.people_at_home[group][school_id], int):
+                self.people_at_home[group][school_id] = [self.people_at_home[group][school_id]]
+            self.people_at_home[group][school_id] = self.people_at_home[group][school_id][
+                self.people_at_home[group][school_id] != students_returned]
         else:
-            contacts_of_all_students_at_home = self.contacts_of_students_at_home[school_id]
-            timers = contacts_of_all_students_at_home['timer']
+            contacts_of_all_people_at_home = self.contacts_of_people_at_home[school_id]
+            timers = contacts_of_all_people_at_home['timer']
             inds = sc.findinds(timers <= sim.t)
             contacts_to_return = {}
             keys = ['p1', 'p2', 'beta']
             for key in keys:
-                contacts_to_return[key] = contacts_of_all_students_at_home[key][inds]
-                self.contacts_of_students_at_home[school_id][key] = np.delete(
-                    self.contacts_of_students_at_home[school_id][key], [inds])
+                contacts_to_return[key] = contacts_of_all_people_at_home[key][inds]
+                self.contacts_of_people_at_home[school_id][key] = np.delete(
+                    self.contacts_of_people_at_home[school_id][key], [inds])
 
-            self.contacts_of_students_at_home[school_id]['timer'] = np.delete(
-                self.contacts_of_students_at_home[school_id]['timer'],
+            self.contacts_of_people_at_home[school_id]['timer'] = np.delete(
+                self.contacts_of_people_at_home[school_id]['timer'],
                 [inds])
 
             sim.people.contacts['s'].append(contacts_to_return)
             contacts_returned = contacts_to_return['p1']
             contacts_returned = np.append(contacts_returned, contacts_to_return['p2'])
             contacts_returned = np.unique(contacts_returned)
-            if isinstance(self.students_at_home[school_id], int):
-                students_returned = [self.students_at_home[school_id]]
+            if isinstance(self.people_at_home[school_id], int):
+                students_returned = [self.people_at_home[school_id]]
             else:
-                students_returned = set(contacts_returned).intersection(set(self.students_at_home[school_id]))
+                students_returned = set(contacts_returned).intersection(set(self.people_at_home[school_id]))
                 students_returned = list(students_returned)
-            self.num_students_at_home[school_id] -= len(students_returned)
-            if isinstance(self.students_at_home[school_id], int):
-                self.students_at_home[school_id] = [self.students_at_home[school_id]]
-            self.students_at_home[school_id] = self.students_at_home[school_id][
-                self.students_at_home[school_id] != students_returned]
+            self.num_people_at_home[school_id] -= len(students_returned)
+            if isinstance(self.people_at_home[school_id], int):
+                self.people_at_home[school_id] = [self.people_at_home[school_id]]
+            self.people_at_home[school_id] = self.people_at_home[school_id][
+                self.people_at_home[school_id] != students_returned]
         return
 
-    def check_on_students_at_home(self, sim, school_id, group=None):
+    def check_on_people_at_home(self, sim, school_id, group=None):
         if self.closed[school_id]:
             students = sim.people.schools[school_id]
         else:
             if group == 'A' or group == 'B':
-                students = self.students_at_home[group][school_id]
+                students = self.people_at_home[group][school_id]
             else:
-                students = self.students_at_home[school_id]
+                students = self.people_at_home[school_id]
             if isinstance(students, int):
                 students = [students]
 
@@ -2200,23 +2182,89 @@ class reopen_schools(Intervention):
 
     def update_timers(self, school_id, inds, sim, group=None):
         if group == 'A' or group == 'B':
-            contacts_of_all_students_at_home = self.contacts_of_students_at_home[group][school_id]
+            contacts_of_all_people_at_home = self.contacts_of_people_at_home[group][school_id]
         else:
-            contacts_of_all_students_at_home = self.contacts_of_students_at_home[school_id]
+            contacts_of_all_people_at_home = self.contacts_of_people_at_home[school_id]
         for student in inds:
-            inds_to_update = sc.findinds(contacts_of_all_students_at_home['p1'] == student)
-            inds_to_update = np.append(inds_to_update, sc.findinds(contacts_of_all_students_at_home['p2'] == student))
+            inds_to_update = sc.findinds(contacts_of_all_people_at_home['p1'] == student)
+            inds_to_update = np.append(inds_to_update, sc.findinds(contacts_of_all_people_at_home['p2'] == student))
             inds_to_update = np.unique(inds_to_update)
-            contacts_of_student = sc.findinds(contacts_of_all_students_at_home['p1'] == student)
-            contacts_of_student = np.append(contacts_of_student, sc.findinds(contacts_of_all_students_at_home['p2'] == student))
+            contacts_of_student = sc.findinds(contacts_of_all_people_at_home['p1'] == student)
+            contacts_of_student = np.append(contacts_of_student, sc.findinds(contacts_of_all_people_at_home['p2'] == student))
             # if len(contacts_of_student) > 0:
                 # contact = contacts_of_student[0]
-                # timer = contacts_of_all_students_at_home['timer'][contact]
+                # timer = contacts_of_all_people_at_home['timer'][contact]
                 # sim.school_info['school_days_lost'] -= (timer - sim.t + 3)
             if group == 'A' or group == 'B':
-                self.contacts_of_students_at_home[group][school_id]['timer'][inds_to_update] = \
+                self.contacts_of_people_at_home[group][school_id]['timer'][inds_to_update] = \
                     np.repeat(3+sim.t, len(inds_to_update))
             else:
-                self.contacts_of_students_at_home[school_id]['timer'][inds_to_update] = np.repeat(3 + sim.t,
+                self.contacts_of_people_at_home[school_id]['timer'][inds_to_update] = np.repeat(3 + sim.t,
                                                                                                   len(inds_to_update))
+
+class new_schools(Intervention):
+    '''
+    Specifies reopening strategy.
+
+    Args:
+        ili_prev    (float or dict)     : Prevalence of influenza-like-illness symptoms in the population
+        num_pos     (int)               : number of covid positive cases per school that triggers school closure
+        trace       (float)             : probability of tracing contacts of diagnosed covid+
+        test        (float)             : probability of testing screen positive
+        test_freq   (int)               : frequency of testing teachers (1 = daily, 2 = every other day, ...)
+        schedule    (bool or dict)      : whether or not to schedule partially remote (if dict, by type, otherwise for all types)
+        kwargs      (dict)              : passed to Intervention
+
+    **Examples**
+        TODO
+    '''
+
+    def __init__(self, start_day=None, ili_prev=None, test_freq=None, trace_frac=None, test_frac=None, schedule=None, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
+        self._store_args() # Store the input arguments so that intervention can be recreated
+
+        # Store arguments
+        self.start_day  = start_day
+        self.ili_prev   = ili_prev
+        self.test_freq  = test_freq # int of frequency of diagnostic testing
+        self.trace_frac = trace_frac # whether or not you trace contacts of all diagnosed patients
+        self.test_frac  = test_frac # probability that anyone who screens positive is tested
+        self.schedule   = schedule # dictionary
+
+    def initialize(self, sim):
+        # Create schools
+        self.school_types = sim.people.school_types # Dict with keys of school types (e.g. 'es') and values of list of school ids (e.g. [1,5])
+
+        s_layer_df = sim.people.contacts['s'].to_df()
+
+        print(s_layer_df)
+        exit()
+
+        for sct, scids in self.school_types.items():
+            for scid in scids:
+                uids = sim.people.schools[scid] # Dict with keys of school_id and values of uids in that school
+                print(sct, scid, uids)
+
+                # Want 's'-layer edge list associated with uids
+                print(sim.people.contacts['s'])
+                #print(sim.people.contacts['s'].find_contacts(uids))
+                #for cuid in sim.people.contacts['s'].find_contacts(uids):
+                    #sim.people.contacts['s'].pop_inds
+                exit()
+
+        people = [item for sublist in sim.people.schools.values() for item in sublist]
+        print(len(people))
+
+        print(sim.people) # school_type_by_person:, school_types, schools, stuent_flag, staff_flag, teacher_flag
+
+        self.initialized = True
         return
+
+
+    def apply(self, sim):
+
+        t = sim.t
+        self.rescale = sim.rescale_vec[t] # Current rescaling factor for counts
+
+        return
+
