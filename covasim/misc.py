@@ -41,6 +41,9 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         cv.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
     '''
 
+    if obj is None:
+        return None
+
     # Convert to list and handle other inputs
     if isinstance(obj, np.ndarray):
         obj = obj.tolist() # If it's an array, convert to a list
@@ -53,6 +56,9 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 
     dates = []
     for d in obj:
+        if d is None:
+            dates.append(d)
+            continue
         try:
             if type(d) == dt.date: # Do not use isinstance, since must be the exact type
                 pass
@@ -117,7 +123,9 @@ def day(obj, *args, start_day=None):
 
     days = []
     for d in obj:
-        if sc.isnumber(d):
+        if d is None:
+            days.append(d)
+        elif sc.isnumber(d):
             days.append(int(d)) # Just convert to an integer
         else:
             try:
