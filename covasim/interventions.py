@@ -718,7 +718,7 @@ class test_num(Intervention):
         test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True) # Choose who actually tests
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
-        return
+        return test_inds
 
 
 class test_prob(Intervention):
@@ -836,7 +836,7 @@ class test_prob(Intervention):
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
-        return
+        return test_inds
 
 
 class contact_tracing(Intervention):

@@ -13,11 +13,20 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Latest versions (1.7.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+
 Version 1.7.4 (2020-10-02)
 --------------------------
 - Refactored `cv.contact_tracing()` so that derived classes can extend individual parts of contact tracing without having to re-implement the entire intervention
 - Moved `people.trace` to `contact_tracing` so that the tracing step can be extended via custom interventions
 - *Regression info*: Custom interventions calling `people.trace` should inherit from `cv.contact_tracing` instead and use `contact_tracing.identify_contacts` and `contact_tracing.notify_contacts` to replace `people.trace`. In most cases however, it would be possible to overload one of the contact tracing steps rather than `contact_tracing.apply`, which thus eliminates the need to call `people.trace` entirely.
+- *GitHub info*: PR `702 <https://github.com/amath-idm/covasim/pull/702>`__
+
+
+Version 1.7.3 (2020-09-30)
+--------------------------
+- Changed ``test_prob.apply()`` and ``test_num.apply()`` to return the indices of people that were tested
+- ``cvm.date(None)`` returns ``None`` instead of an empty list. Both ``cvm.date()`` and ``cvm.day()`` no longer raise errors if the list of inputs includes ``None`` entries
+- *GitHub info*: PR `693 <https://github.com/amath-idm/covasim/pull/693>`__
 
 
 Version 1.7.2 (2020-09-24)
