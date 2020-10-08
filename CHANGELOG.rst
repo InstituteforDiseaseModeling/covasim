@@ -26,7 +26,7 @@ Version 1.7.3 (2020-09-30)
 --------------------------
 - Changed ``test_prob.apply()`` and ``test_num.apply()`` to return the indices of people that were tested
 - ``cvm.date(None)`` returns ``None`` instead of an empty list. Both ``cvm.date()`` and ``cvm.day()`` no longer raise errors if the list of inputs includes ``None`` entries
-- *GitHub info*: PR `693 <https://github.com/amath-idm/covasim/pull/693>`__
+- *GitHub info*: PR `699 <https://github.com/amath-idm/covasim/pull/699>`__
 
 
 Version 1.7.2 (2020-09-24)
@@ -47,7 +47,7 @@ Version 1.7.1 (2020-09-23)
 - Additional validation is done on intervention order to ensure that testing interventions are defined before tracing interventions.
 - Code has been moved between ``sim.py``, ``people.py``, and ``base.py`` to better reflect the division between "the simulation" (the first two files) and "the housekeeping" (the last file).
 - *Regression info*: Scripts that used ``quar_policy='end'`` may now provide stochastically different results. User scripts that explicitly call ``sim.people.not_defined()`` or ``sim.people.quarantine()`` should be updated to call ``sim.people.undefined()`` and ``sim.people.schedule_quarantine()`` instead.
-- *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__, head ``a00b779``
+- *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__
 
 
 Version 1.7.0 (2020-09-20)
