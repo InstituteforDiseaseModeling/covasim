@@ -8,9 +8,11 @@ import numpy as np
 import pandas as pd
 import sciris as sc
 import datetime as dt
+from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
+from . import parameters as cvpar
 
 # Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
@@ -76,7 +78,7 @@ class Result(object):
     Args:
         name (str): name of this result, e.g. new_infections
         npts (int): if values is None, precreate it to be of this length
-        scale (str): whether or not the value scales by population size; options are "dynamic", "static", or False
+        scale (bool): whether or not the value scales by population scale factor
         color (str/arr): default color for plotting (hex or RGB notation)
 
     **Example**::
@@ -87,7 +89,7 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale='dynamic', color=None):
+    def __init__(self, name=None, npts=None, scale=True, color=None):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
@@ -129,13 +131,40 @@ class Result(object):
 
 class BaseSim(ParsObj):
     '''
-    The BaseSim class handles the running of the simulation: the number of people,
-    number of time points, and the parameters of the simulation.
+    The BaseSim class stores various methods useful for the Sim that are not directly
+    related to simulating the epidemic. It is not used outside of the Sim object,
+    so the separation of methods into the BaseSim and Sim classes is purely to keep
+    each one of manageable size.
     '''
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
         return
+
+    def update_pars(self, pars=None, create=False, **kwargs):
+        ''' Ensure that metaparameters get used properly before being updated '''
+        pars = sc.mergedicts(pars, kwargs)
+        if pars:
+            if pars.get('pop_type'):
+                cvpar.reset_layer_pars(pars, force=False)
+            if pars.get('prog_by_age'):
+                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
+            super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
+        return
+
+
+    def set_metadata(self, simfile, label):
+        ''' Set the metadata for the simulation -- creation time and filename '''
+        self.created = sc.now()
+        self.version = cvv.__version__
+        self.git_info = cvm.git_info()
+        if simfile is None:
+            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
+            self.simfile = f'covasim_{datestr}.sim'
+        if label is not None:
+            self.label = label
+        return
+
 
     def set_seed(self, seed=-1):
         '''
@@ -143,9 +172,6 @@ class BaseSim(ParsObj):
 
         Args:
             seed (None or int): if no argument, use current seed; if None, randomize; otherwise, use and store supplied seed
-
-        Returns:
-            None
         '''
         # Unless no seed is supplied, reset it
         if seed != -1:
@@ -529,64 +555,115 @@ class BaseSim(ParsObj):
         return sim
 
 
+    def _get_ia(self, which, label=None, partial=False, as_list=False, as_inds=False, die=True):
+        ''' Helper method for get_interventions() and get_analyzers(); see get_interventions() docstring '''
+
+        # Handle inputs
+        if which not in ['interventions', 'analyzers']:
+            errormsg = f'This method is only defined for interventions and analyzers, not "{which}"'
+            raise ValueError(errormsg)
+
+        ia_list = self.pars[which] # List of interventions or analyzers
+        n_ia = len(ia_list) # Number of interventions/analyzers
+
+        if label == 'summary': # Print a summary of the interventions
+            df = pd.DataFrame(columns=['ind', 'label', 'type'])
+            for ind,ia_obj in enumerate(ia_list):
+                df = df.append(dict(ind=ind, label=str(ia_obj.label), type=type(ia_obj)), ignore_index=True)
+            print(f'Summary of {which}:')
+            print(df)
+            return
+
+        else: # Standard usage case
+            if label is None:
+                label = -1 # Get the last element
+            labels = sc.promotetolist(label)
+
+            # Calculate the matches
+            matches = []
+            match_inds = []
+            for label in labels:
+                if sc.isnumber(label):
+                    matches.append(ia_list[label]) # This will raise an exception if an invalid index is given
+                    label = n_ia + label if label<0 else label # Convert to a positive number
+                    match_inds.append(label)
+                elif sc.isstring(label) or isinstance(label, type):
+                    for ind,ia_obj in enumerate(ia_list):
+                        if sc.isstring(label) and ia_obj.label == label or (partial and (label in str(ia_obj.label))):
+                            matches.append(ia_obj)
+                            match_inds.append(ind)
+                        elif isinstance(label, type) and isinstance(ia_obj, label):
+                            matches.append(ia_obj)
+                            match_inds.append(ind)
+                else:
+                    errormsg = f'Could not interpret label type "{type(label)}": should be str, int, or {which} class'
+                    raise TypeError(errormsg)
+
+            # Parse the output options
+            if not (as_list or as_inds): # Normal case, return actual interventions
+                if len(matches) == 0:
+                    if die:
+                        errormsg = f'No {which} matching "{label}" were found'
+                        raise ValueError(errormsg)
+                    else:
+                        output = None
+                elif len(matches) == 1:
+                    output = matches[0]
+                else:
+                    output = matches # If more than one match, just return all, same as as_list = True
+            elif as_list:
+                output = matches
+            elif as_inds:
+                output = match_inds
+
+            return output
+
+
+    def get_interventions(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+        '''
+        Find the matching intervention(s) by label, index, or type. If None, return
+        the last intervention in the list. If the label provided is "summary", then
+        print a summary of the interventions (index, label, type).
+
+        Args:
+            label (str, int, Intervention, list): the label, index, or type of intervention to get; if a list, iterate over one of those types
+            partial (bool): if true, return partial matches (e.g. 'beta' will match all beta interventions)
+            as_list (bool): if true, always return a list even if one or no entries were found (otherwise, only return a list for multiple matching interventions)
+            as_inds (bool): if true, return matching indices instead of the actual interventions
+            die (bool): if true and as_list is false, raise an exception if an intervention is not found
+
+        **Examples**::
+
+            tp = cv.test_prob(symp_prob=0.1)
+            cb = cv.change_beta(days=0.5, changes=0.3, label='NPI')
+            sim = cv.Sim(interventions=[tp, cb])
+            cb = sim.get_interventions('NPI')
+            cb = sim.get_interventions('NP', partial=True)
+            cb = sim.get_interventions(cv.change_beta)
+            cb = sim.get_interventions(1)
+            cb = sim.get_interventions()
+            tp, cb = sim.get_interventions([0,1])
+            ind = sim.get_interventions(cv.change_beta, as_inds=True) # Returns [1]
+            sim.get_interventions('summary') # Prints a summary
+        '''
+        return self._get_ia('interventions', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
+
+
+    def get_analyzers(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+        '''
+        Same as get_interventions(), but for analyzers.
+        '''
+        return self._get_ia('analyzers', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
+
+
 #%% Define people classes
 
 class BasePeople(sc.prettyobj):
     '''
-    A class to handle all the boilerplate for people -- note that everything
-    interesting happens in the People class.
-
-    Args:
-        pars (dict): a dictionary with, at minimum, keys 'pop_size' and 'n_days'
-
+    A class to handle all the boilerplate for people -- note that as with the
+    BaseSim vs Sim classes, everything interesting happens in the People class,
+    whereas this class exists to handle the less interesting implementation details.
     '''
-
-    def __init__(self, pars=None, **kwargs):
-
-        # Handle pars and population size
-        pars = sc.mergedicts({'pop_size':0, 'n_days':0}, pars)
-        self.pars     = pars # Equivalent to self.set_pars(pars)
-        self.pop_size = int(pars['pop_size'])
-        self.n_days   = int(pars['n_days'])
-
-        # Other initialization
-        self.t = 0 # Keep current simulation time
-        self._lock = False # Prevent further modification of keys
-        self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
-        self.contacts = None
-        self.init_contacts() # Initialize the contacts
-        self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
-
-        # Set person properties -- all floats except for UID
-        for key in self.meta.person:
-            if key == 'uid':
-                self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
-            else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
-
-        # Set health states -- only susceptible is true by default -- booleans
-        for key in self.meta.states:
-            if key == 'susceptible':
-                self[key] = np.full(self.pop_size, True, dtype=bool)
-            else:
-                self[key] = np.full(self.pop_size, False, dtype=bool)
-
-        # Set dates and durations -- both floats
-        for key in self.meta.dates + self.meta.durs:
-            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
-
-        # Store the dtypes used in a flat dict
-        self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
-        self._lock = True # Stop further keys from being set (does not affect attributes)
-
-        # Store flows to be computed during simulation
-        self.flows = {key:0 for key in cvd.new_result_flows}
-
-        # Although we have called init(), we still need to call initialize()
-        self.initialized = False
-
-        return
-
 
     def __getitem__(self, key):
         ''' Allow people['attr'] instead of getattr(people, 'attr')
@@ -676,7 +753,7 @@ class BasePeople(sc.prettyobj):
         return (~np.isnan(self[key])).nonzero()[0]
 
 
-    def not_defined(self, key):
+    def undefined(self, key):
         ''' Return indices of people who are nan '''
         return np.isnan(self[key]).nonzero()[0]
 
@@ -801,6 +878,12 @@ class BasePeople(sc.prettyobj):
         p = Person()
         for key in self.meta.all_states:
             setattr(p, key, self[key][ind])
+
+        contacts = {}
+        for lkey, layer in self.contacts.items():
+            contacts[lkey] = layer.find_contacts(ind)
+        p.contacts = contacts
+
         return p
 
 
@@ -1129,6 +1212,8 @@ class Layer(FlexDict):
         - P2 = [2,3,1,4]
         Then find_contacts([1,3]) would return {1,2,3}
         """
+        if not isinstance(inds, np.ndarray):
+            inds = sc.promotetoarray(inds)
         contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
         if as_array:
             contact_inds = np.fromiter(contact_inds, dtype=cvd.default_int)

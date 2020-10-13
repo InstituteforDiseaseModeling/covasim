@@ -12,7 +12,7 @@ import datetime as dt
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
-
+from collections import defaultdict
 
 
 #%% Generic intervention classes
@@ -81,6 +81,8 @@ class Intervention:
     dict format, which they can be recreated from. To display all the attributes
     of the intervention, use disp() instead.
 
+    To retrieve a particular intervention from a sim, use sim.get_intervention().
+
     Args:
         label (str): a label for the intervention (used for plotting, and for ease of identification)
         show_label (bool): whether or not to include the label, if provided, in the legend
@@ -141,14 +143,13 @@ class Intervention:
 
     def apply(self, sim):
         '''
-        Apply intervention
-
-        Function signature matches existing intervention definition
-        This method gets called at each timestep and must be implemented
-        by derived classes
+        Apply the intervention. This is the core method which each drived intervention
+        class must implement. This method gets called at each timestep and can make
+        arbitrary changes to the Sim object, as well as storing or modifying the
+        state of the intervention.
 
         Args:
-            sim: The Sim instance
+            sim: the Sim instance
 
         Returns:
             None
@@ -158,7 +159,7 @@ class Intervention:
 
     def plot(self, sim, ax=None, **kwargs):
         '''
-        Call function during plotting
+        Plot the intervention
 
         This can be used to do things like add vertical lines on days when
         interventions take place. Can be disabled by setting self.do_plot=False.
@@ -193,7 +194,10 @@ class Intervention:
         one-way export to produce a JSON-compatible representation of the
         intervention. In the first instance, the object dict will be returned.
         However, if an intervention itself contains non-standard variables as
-        attributes, then its `to_json` method will need to handle those
+        attributes, then its `to_json` method will need to handle those.
+
+        Note that simply printing an intervention will usually return a representation
+        that can be used to recreate it.
 
         Returns:
             JSON-serializable representation (typically a dict, but could be anything else)
@@ -286,6 +290,8 @@ class sequence(Intervention):
         ''' Fix the dates '''
         self.days = [sim.day(day) for day in self.days]
         self.days_arr = np.array(self.days + [sim.npts])
+        for intervention in self.interventions:
+            intervention.initialize(sim)
         self.initialized = True
         return
 
@@ -391,13 +397,17 @@ def process_changes(sim, changes, days):
 
 class change_beta(Intervention):
     '''
-    The most basic intervention -- change beta by a certain amount.
+    The most basic intervention -- change beta (transmission) by a certain amount
+    on a given day or days. This can be used to represent physical distancing (although
+    clip_edges() is more appropriate for overall changes in mobility, e.g. school
+    or workplace closures), as well as hand-washing, masks, and other behavioral
+    changes that affect transmission rates.
 
     Args:
         days (int or array): the day or array of days to apply the interventions
-        changes (float or array): the changes in beta (1 = no change, 0 = no transmission)
+        changes (float/arr): the changes in beta (1 = no change, 0 = no transmission)
         trigger (bool): can be used instead of days, and means that the intervention gets applied if the condition is true.
-        layers (str or list): the layers in which to change beta
+        layers  (str/list):  the layers in which to change beta (default: all)
         kwargs (dict): passed to Intervention()
 
     **Examples**::
@@ -466,6 +476,15 @@ class clip_edges(Intervention):
     Isolate contacts by removing them from the simulation. Contacts are treated as
     "edges", and this intervention works by removing them from sim.people.contacts
     and storing them internally. When the intervention is over, they are moved back.
+    This intervention has quite similar effects as change_beta(), but is more appropriate
+    for modeling the effects of mobility reductions such as school and workplace
+    closures. The main difference is that since clip_edges() actually removes contacts,
+    it affects the number of people who would be traced and placed in quarantine
+    if an individual tests positive. It also alters the structure of the network
+    -- i.e., compared to a baseline case of 20 contacts and a 2% chance of infecting
+    each, there are slightly different statistics for a beta reduction (i.e., 20 contacts
+    and a 1% chance of infecting each) versus an edge clipping (i.e., 10 contacts
+    and a 2% chance of infecting each).
 
     Args:
         days (int or array): the day or array of days to isolate contacts
@@ -574,7 +593,7 @@ def get_subtargets(subtarget, sim):
     or a function that needs to be called. If a function, it must take a single
     argument, a sim object, and return a list of indices. Also validates the values.
     Currently designed for use with testing interventions, but could be generalized
-    to other interventions.
+    to other interventions. Not typically called directly by the user.
 
     Args:
         subtarget (dict): dict with keys 'inds' and 'vals'; see test_num() for examples of a valid subtarget dictionary
@@ -605,7 +624,6 @@ def get_subtargets(subtarget, sim):
             errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'
             raise ValueError(errormsg)
 
-
     return subtarget_inds, subtarget_vals
 
 
@@ -613,40 +631,54 @@ def get_quar_inds(quar_policy, sim):
     '''
     Helper function to return the appropriate indices for people in quarantine
     based on the current quarantine testing "policy". Used by test_num and test_prob.
+    Not for use by the user.
+
+    If quar_policy is a number or a list of numbers, then it is interpreted as
+    the number of days after the start of quarantine when a test is performed.
+    It can also be a function that returns the list of indices.
 
     Args:
-        quar_policy (str): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
+        quar_policy (str, int, list, func): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
         sim (Sim): the simulation object
     '''
     t = sim.t
-    if   quar_policy == 'start': quar_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day before
-    elif quar_policy == 'end':   quar_inds = cvu.true(sim.people.date_end_quarantine==t)
-    elif quar_policy == 'both':  quar_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t)])
-    elif quar_policy == 'daily': quar_inds = cvu.true(sim.people.quarantined)
+    if   quar_policy is None:    quar_test_inds = np.array([])
+    elif quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day after since testing usually happens before contact tracing
+    elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t+1) # +1 since they are released on date_end_quarantine, so do the day before
+    elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t+1)])
+    elif quar_policy == 'daily': quar_test_inds = cvu.true(sim.people.quarantined)
+    elif sc.isnumber(quar_policy) or (sc.isiterable(quar_policy) and not sc.isstring(quar_policy)):
+        quar_policy = sc.promotetoarray(quar_policy)
+        quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
+    elif callable(quar_policy):
+        quar_test_inds = quar_policy(sim)
     else:
-        errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be start, end, both, or daily'
+        errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be a string (start, end, both, daily), int, list, array, set, tuple, or function'
         raise ValueError(errormsg)
-    return quar_inds
+    return quar_test_inds
 
 
 class test_num(Intervention):
     '''
-    Test a fixed number of people per day.
+    Test the specified number of people per day. Useful for including historical
+    testing data. The probability of a given person getting a test is dependent
+    on the total number of tests, population size, and odds ratios. Compare this
+    intervention with cv.test_prob().
 
     Args:
         daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day
-        symp_test   (float) : odds ratio of a symptomatic person testing
-        quar_test   (float) : probability of a person in quarantine testing
-        quar_policy (str)   : policy for testing in quarantine: options are 'start', 'end', 'both' (start and end), 'daily'
-        subtarget   (dict)  : subtarget intervention to people with particular indices                                                 ( format : {'ind' : array of indices, or function to return indices from the sim, 'vals' : value ( s) to apply}
-        sensitivity (float) : test sensitivity
-        ili_prev    (arr)   : Prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
-        loss_prob   (float) : probability of the person being lost-to-follow-up
-        test_delay  (int)   : days for test result to be known
-        start_day   (int)   : day the intervention starts
+        symp_test   (float) : odds ratio of a symptomatic person testing (default: 100x more likely)
+        quar_test   (float) : probability of a person in quarantine testing (default: no more likely)
+        quar_policy (str)   : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
+        subtarget   (dict)  : subtarget intervention to people with particular indices (format: {'ind': array of indices, or function to return indices from the sim, 'vals': value(s) to apply}
+        ili_prev    (arr)   : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
+        sensitivity (float) : test sensitivity (default 100%, i.e. no false negatives)
+        loss_prob   (float) : probability of the person being lost-to-follow-up (default 0%, i.e. no one lost to follow-up)
+        test_delay  (int)   : days for test result to be known (default 0, i.e. results available instantly)
+        start_day   (int)   : day the intervention starts (default: 0, i.e. first day of the simulation)
         end_day     (int)   : day the intervention ends
-        swab_delay  (dict)  : distribution for the delay from onset to swab
-        kwargs      (dict)  : passed to Intervention                                                                                   ( )
+        swab_delay  (dict)  : distribution for the delay from onset to swab; if this is present, it is used instead of test_delay
+        kwargs      (dict)  : passed to Intervention()
 
     **Examples**::
 
@@ -703,7 +735,7 @@ class test_num(Intervention):
         # Check that there are still tests
         rel_t = t - self.start_day
         if rel_t < len(self.daily_tests):
-            n_tests = int(self.daily_tests[rel_t]/sim.rescale_vec[t])  # Number of tests for this day -- rescaled
+            n_tests = cvu.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
@@ -711,7 +743,7 @@ class test_num(Intervention):
         else:
             return
 
-        test_probs = np.ones(sim.n) # Begin by assigning equal testing probability to everyone
+        test_probs = np.ones(sim.n) # Begin by assigning equal testing weight (converted to a probability) to everyone
 
         # Calculate test probabilities for people with symptoms
         symp_inds = cvu.true(sim.people.symptomatic)
@@ -734,8 +766,8 @@ class test_num(Intervention):
                 test_probs[ili_inds] *= self.symp_test
 
         # Handle quarantine testing
-        quar_inds = get_quar_inds(self.quar_policy, sim)
-        test_probs[quar_inds] *= self.quar_test
+        quar_test_inds = get_quar_inds(self.quar_policy, sim)
+        test_probs[quar_test_inds] *= self.quar_test
 
         # Handle any other user-specified testing criteria
         if self.subtarget is not None:
@@ -744,33 +776,43 @@ class test_num(Intervention):
 
         # Don't re-diagnose people
         diag_inds  = cvu.true(sim.people.diagnosed)
-        test_probs[diag_inds] = 0.
+        test_probs[diag_inds] = 0.0
+
+        # With dynamic rescaling, we have to correct for uninfected people outside of the population who would test
+        if sim.rescale_vec[t]/sim['pop_scale'] < 1: # We still have rescaling to do
+            in_pop_tot_prob = test_probs.sum()*sim.rescale_vec[t] # Total "testing weight" of people in the subsampled population
+            out_pop_tot_prob = sim.scaled_pop_size - sim.rescale_vec[t]*sim['pop_size'] # Find out how many people are missing and assign them each weight 1
+            in_frac = in_pop_tot_prob/(in_pop_tot_prob + out_pop_tot_prob) # Fraction of tests which should fall in the sample population
+            n_tests = cvu.randround(n_tests*in_frac) # Recompute the number of tests
 
         # Now choose who gets tested and test them
-        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=False)
+        n_tests = min(n_tests, (test_probs!=0).sum()) # Don't try to test more people than have nonzero testing probability
+        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True) # Choose who actually tests
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
-        return
+        return test_inds
 
 
 class test_prob(Intervention):
     '''
-    Test as many people as required based on test probability.
-    Probabilities are OR together, so choose wisely.
+    Assign each person a probability of being tested for COVID based on their
+    symptom state, quarantine state, and other states. Unlike test_num, the
+    total number of tests not specified, but rather is an output.
 
     Args:
-        symp_prob (float): Probability of testing a symptomatic (unquarantined) person
-        asymp_prob (float): Probability of testing an asymptomatic (unquarantined) person
-        symp_quar_prob (float): Probability of testing a symptomatic quarantined person
-        asymp_quar_prob (float): Probability of testing an asymptomatic quarantined person
-        quar_policy (str): Policy for testing in quarantine: options are 'start', 'end', 'both' (start and end), 'daily'
-        subtarget (dict): subtarget intervention to people with particular indices (see test_num() for details)
-        test_sensitivity (float): Probability of a true positive
-        ili_prev (float or array): Prevalence of influenza-like-illness symptoms in the population
-        loss_prob (float): Probability of loss to follow-up
-        test_delay (int): How long testing takes
-        start_day (int): When to start the intervention
-        kwargs (dict): passed to Intervention()
+        symp_prob        (float)     : probability of testing a symptomatic (unquarantined) person
+        asymp_prob       (float)     : probability of testing an asymptomatic (unquarantined) person (default: 0)
+        symp_quar_prob   (float)     : probability of testing a symptomatic quarantined person (default: same as symp_prob)
+        asymp_quar_prob  (float)     : probability of testing an asymptomatic quarantined person (default: same as asymp_prob)
+        quar_policy      (str)       : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
+        subtarget        (dict)      : subtarget intervention to people with particular indices  (see test_num() for details)
+        ili_prev         (float/arr) : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
+        test_sensitivity (float)     : test sensitivity (default 100%, i.e. no false negatives)
+        loss_prob        (float)     : probability of the person being lost-to-follow-up (default 0%, i.e. no one lost to follow-up)
+        test_delay       (int)       : days for test result to be known (default 0, i.e. results available instantly)
+        start_day        (int)       : day the intervention starts (default: 0, i.e. first day of the simulation)
+        end_day          (int)       : day the intervention ends (default: no end)
+        kwargs           (dict)      : passed to Intervention()
 
     **Examples**::
 
@@ -842,17 +884,17 @@ class test_prob(Intervention):
         asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(pop_size), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
-        quar_inds = get_quar_inds(self.quar_policy, sim)
-        symp_quar_inds  = np.intersect1d(quar_inds, symp_inds)
-        asymp_quar_inds = np.intersect1d(quar_inds, asymp_inds)
+        quar_test_inds = get_quar_inds(self.quar_policy, sim)
+        symp_quar_inds  = np.intersect1d(quar_test_inds, symp_inds)
+        asymp_quar_inds = np.intersect1d(quar_test_inds, asymp_inds)
         diag_inds       = cvu.true(sim.people.diagnosed)
         if self.subtarget is not None:
             subtarget_inds  = self.subtarget['inds']
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
-        test_probs[symp_inds]       = symp_prob            # People with symptoms
-        test_probs[ili_inds]        = self.symp_prob       # People with symptoms
+        test_probs[symp_inds]       = symp_prob            # People with symptoms (true positive)
+        test_probs[ili_inds]        = symp_prob            # People with symptoms (false positive)
         test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
         test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
         test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
@@ -862,26 +904,40 @@ class test_prob(Intervention):
         test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
         test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
 
+        # Actually test people
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
-        return
+        return test_inds
 
 
 class contact_tracing(Intervention):
     '''
-    Contact tracing of positive people.
+    Contact tracing of people who are diagnosed. When a person is diagnosed positive
+    (by either test_num() or test_prob(); this intervention has no effect if there
+    is not also a testing intervention active), a certain proportion of the index
+    case's contacts (defined by trace_prob) are contacted after a certain number
+    of days (defined by trace_time). After they are contacted, they are placed
+    into quarantine (with effectiveness quar_factor, a simulation parameter) for
+    a certain period (defined by quar_period, another simulation parameter). They
+    may also change their testing probability, if test_prob() is defined.
 
     Args:
-        trace_probs (dict): probability of tracing, per layer
-        trace_time  (dict): days required to trace, per layer
-        start_day   (int):  intervention start day
-        end_day     (int):  intervention end day
-        test_delay  (int):  number of days a test result takes
-        presumptive (bool): whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis
-        kwargs      (dict): passed to Intervention()
+        trace_probs (float/dict): probability of tracing, per layer (default: 100%, i.e. everyone is traced)
+        trace_time  (float/dict): days required to trace, per layer (default: 0, i.e. no delay)
+        start_day   (int):        intervention start day (default: 0, i.e. the start of the simulation)
+        end_day     (int):        intervention end day (default: no end)
+        presumptive (bool):       whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis (default: no)
+        quar_period (int):        number of days to quarantine when notified as a known contact. Default value is pars['quar_period']
+        kwargs      (dict):       passed to Intervention()
+
+    **Example**::
+
+        tp = cv.test_prob(symp_prob=0.1, asymp_prob=0.01)
+        ct = cv.contact_tracing(trace_probs=0.5, trace_time=2)
+        sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracing has no effect
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, **kwargs):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, quar_period=None,  **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.trace_probs = trace_probs
@@ -889,6 +945,7 @@ class contact_tracing(Intervention):
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
+        self.quar_period = None  #: If quar_period is None, it will be drawn from sim.pars at initialization
         return
 
 
@@ -901,6 +958,8 @@ class contact_tracing(Intervention):
             self.trace_probs = 1.0
         if self.trace_time is None:
             self.trace_time = 0.0
+        if self.quar_period is None:
+            self.quar_period = sim.pars['quar_period']
         if sc.isnumber(self.trace_probs):
             val = self.trace_probs
             self.trace_probs = {k:val for k in sim.people.layer_keys()}
@@ -912,24 +971,96 @@ class contact_tracing(Intervention):
 
 
     def apply(self, sim):
+        '''
+        Trace and notify contacts
+
+        Tracing involves three steps that can independently be overloaded or extended
+        by derived classes
+
+        - Select which confirmed cases get interviewed by contact tracers
+        - Identify the contacts of the confirmed case
+        - Notify those contacts that they have been exposed and need to take some action
+        '''
         t = sim.t
         if t < self.start_day:
             return
         elif self.end_day is not None and t > self.end_day:
             return
 
-        # Figure out whom to test and trace
+        trace_inds = self.select_cases(sim)
+        contacts = self.identify_contacts(sim, trace_inds)
+        self.notify_contacts(sim, contacts)
+        return contacts
+
+
+    def select_cases(self, sim):
+        '''
+        Return people to be traced at this time step
+        '''
         if not self.presumptive:
-            trace_from_inds = cvu.true(sim.people.date_diagnosed == t) # Diagnosed this time step, time to trace
+            inds = cvu.true(sim.people.date_diagnosed == sim.t) # Diagnosed this time step, time to trace
         else:
-            just_tested = cvu.true(sim.people.date_tested == t) # Tested this time step, time to trace
-            trace_from_inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
+            just_tested = cvu.true(sim.people.date_tested == sim.t) # Tested this time step, time to trace
+            inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
+        return inds
 
-        if len(trace_from_inds): # If there are any just-diagnosed people, go trace their contacts
-            sim.people.trace(trace_from_inds, self.trace_probs, self.trace_time)
 
+    def identify_contacts(self, sim, trace_inds):
+        '''
+        Return contacts to notify by trace time
+
+        In the base class, the trace time is the same per-layer, but derived classes might
+        provide different functionality e.g. sampling the trace time from a distribution. The
+        return value of this method is a dict keyed by trace time so that the `Person` object
+        can be easily updated in `contact_tracing.notify_contacts`
+
+        Args:
+            sim: Simulation object
+            trace_inds: Indices of people to trace
+
+        Returns: {trace_time: np.array(inds)} dictionary storing which people to notify
+        '''
+
+        if not len(trace_inds):
+            return dict()
+
+        contacts = defaultdict(list)
+
+        for lkey, this_trace_prob in self.trace_probs.items():
+
+            if this_trace_prob == 0:
+                continue
+
+            traceable_inds = sim.people.contacts[lkey].find_contacts(trace_inds)
+            if len(traceable_inds):
+                contacts[self.trace_time[lkey]].extend(cvu.binomial_filter(this_trace_prob, traceable_inds)) # Filter the indices according to the probability of being able to trace this layer
+
+        array_contacts = {}
+        for trace_time, inds in contacts.items():
+            array_contacts[trace_time] = np.fromiter(inds, dtype=cvd.default_int)
+
+        return array_contacts
+
+
+    def notify_contacts(self, sim, contacts):
+        '''
+        Notify contacts
+
+        This method represents notifying people that they have had contact with a confirmed case.
+        In this base class, that involves
+
+        - Setting the 'known_contact' flag and recording the 'date_known_contact'
+        - Scheduling quarantine
+
+        Args:
+            sim: Simulation object
+            contacts: {trace_time: np.array(inds)} dictionary storing which people to notify
+        '''
+        for trace_time, contact_inds in contacts.items():
+            sim.people.known_contact[contact_inds] = True
+            sim.people.date_known_contact[contact_inds] = np.fmin(sim.people.date_known_contact[contact_inds], sim.t + trace_time)
+            sim.people.schedule_quarantine(contact_inds, start_date=sim.t + trace_time, period=self.quar_period - trace_time)  # Schedule quarantine for the notified people to start on the date they will be notified
         return
-
 
 
 

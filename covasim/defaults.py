@@ -5,8 +5,9 @@ Set the defaults across each of the different files.
 import numpy as np
 import sciris as sc
 
-# Specify all externally visible functions this file defines
+# Specify all externally visible functions this file defines -- other things are available as e.g. cv.defaults.default_int
 __all__ = ['get_colors', 'get_sim_plots', 'get_scen_plots']
+
 
 #%% Specify what data types to use
 

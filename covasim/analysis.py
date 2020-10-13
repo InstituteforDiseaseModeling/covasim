@@ -1,23 +1,28 @@
 '''
 Additional analysis functions that are not part of the core Covasim workflow,
-but which are useful for particular investigations. Currently, this just consists
-of the transmission tree.
+but which are useful for particular investigations.
 '''
 
 import numpy as np
 import pylab as pl
 import pandas as pd
 import sciris as sc
+from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
 
 
-__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'Fit', 'TransTree']
+__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_stats', 'Fit', 'TransTree']
 
 
 class Analyzer(sc.prettyobj):
     '''
-    Base class for analyzers. Based on the Intervention class.
+    Base class for analyzers. Based on the Intervention class. Analyzers are used
+    to provide more detailed information about a simulation than is available by
+    default -- for example, pulling states out of sim.people on a particular timestep
+    before it gets updated in the next timestep.
+
+    To retrieve a particular analyzer from a sim, use sim.get_analyzer().
 
     Args:
         label (str): a label for the Analyzer (used for ease of identification)
@@ -40,7 +45,8 @@ class Analyzer(sc.prettyobj):
     def apply(self, sim):
         '''
         Apply analyzer at each time point. The analyzer has full access to the
-        sim object, and typically stores data/results in itself.
+        sim object, and typically stores data/results in itself. This is the core
+        method which each analyzer object needs to implement.
 
         Args:
             sim: the Sim instance
@@ -348,6 +354,329 @@ class age_histogram(Analyzer):
         return figs
 
 
+class daily_stats(Analyzer):
+    '''
+    Print out daily statistics about the simulation. Note that this analyzer takes
+    a considerable amount of time, so should be used primarily for debugging, not
+    in production code. To keep the intervention but toggle it off, pass an empty
+    list of days.
+
+    To show the stats for a day after a run has finished, use e.g. ``daily_stats.report('2020-04-04')``.
+
+    Args:
+        days (list): days on which to print out statistics (if None, assume all)
+        keys (list): list of states of people to provide statistics on (if None, assume all)
+        verbose (bool): whether to print on each timestep
+        reporter (func): if supplied, a custom parser of the stats object into a report (see make_report() function for syntax)
+        save_inds (bool): whether to save the indices of every infection at every timestep (also recoverable from the infection log)
+
+    **Example**::
+
+        sim = cv.Sim(analyzers=cv.daily_stats())
+        sim.run()
+        sim['analyzers'][0].plot()
+    '''
+
+    def __init__(self, days=None, keys=None, verbose=True, reporter=None, save_inds=False, **kwargs):
+        super().__init__(**kwargs) # Initialize the Analyzer object
+        self.days      = days # Converted to integer representations
+        self.keys      = keys # The default keys to print out
+        self.verbose   = verbose # Print on each timestep
+        self.reporter  = reporter # Custom way of reporting the stats
+        self.save_inds = save_inds # Whether to save infection log indices
+        self.stats     = sc.objdict() # Store the actual stats
+        self.reports   = sc.objdict() # Textual representation of the statistics
+        return
+
+
+    def initialize(self, sim):
+        if self.days is None:
+            self.days = sc.dcp(sim.tvec)
+        else:
+            self.days = sim.day(self.days)
+
+        if self.keys is None:
+            self.keys =  ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'known_contact', 'quarantined', 'diagnosed', 'recovered', 'dead']
+
+        self.basekeys = ['stocks', 'trans', 'source', 'test', 'quar'] # Categories of things to plot
+        self.extrakeys = ['layer_counts', 'extra']
+        self.initialized = True
+        return
+
+
+    def intersect(self, *args):
+        '''
+        Compute the intersection between arrays of indices, handling either keys
+        to precomputed indices or lists of indices. With two array inputs, simply
+        performs np.intersect1d(arr1, arr2).
+        '''
+        # Optionally pull precomputed indices
+        args = list(args) # Convert from tuple to list
+        for i,inds in enumerate(args):
+            if isinstance(inds, str):
+                args[i] = self.inds[inds]
+
+        # Find the intersection
+        output = args[0] # Start with the first set of indices
+        for inds in args[1:]: # Loop over remaining sets
+            output = np.intersect1d(output, inds, assume_unique=True)
+
+        return output
+
+
+    def apply(self, sim):
+        for ind in cvi.find_day(self.days, sim.t):
+
+            # Initialize
+            ppl = sim.people
+            all_inds = np.arange(len(ppl))
+            stats = sc.objdict()
+            stats.empty = sc.objdict()
+            for basekey in self.basekeys:
+                stats[basekey] = sc.objdict()
+                stats.empty[basekey] = []
+
+            # Get the indices for each of the states
+            self.inds = {}
+            for key in self.keys:
+                self.inds[key] = ppl.true(key)
+
+            # Basic stocks
+            for key in self.keys:
+                stats.stocks[key] = len(self.inds[key])
+
+            # Transmission stats
+            newinfs = cvu.true(ppl.date_exposed == sim.t)
+            stats.trans.new_infections = len(newinfs)
+            for key in ['known_contact', 'quarantined']:
+                stats.trans[key] = len(self.intersect(newinfs, key))
+                if not stats.trans[key]:
+                    stats.empty.trans.append(key)
+
+            # Source stats
+            inflog = sim.people.infection_log
+            infloginds = [i for i,e in enumerate(inflog) if (e['date']==sim.t and e['source'] is not None)] # Person was infected today and was not a seed infection
+            sourceinds = list(set([inflog[i]['source'] for i in infloginds]))
+            stats.source.new_sources = len(sourceinds)
+            for key in self.keys:
+                stats.source[key] = len(self.intersect(sourceinds, key))
+                if not stats.source[key]:
+                    stats.empty.source.append(key)
+
+            # Testing stats
+            newtests = cvu.true(ppl.date_tested == sim.t)
+            stats.test.new_tests = len(newtests)
+            for key in self.keys:
+                stats.test[key] = len(self.intersect(newtests,key))
+                if not stats.test[key]:
+                    stats.empty.test.append(key)
+
+            # Quarantine stats
+            q_inds = np.union1d(self.inds['quarantined'], cvu.true(ppl.date_end_quarantine == sim.t)) # Append people who finished quarantine today
+            eq_inds = cvu.true(ppl.date_quarantined == sim.t-1) # People entering quarantine the day before (their first full day of quarantine)
+            fq_inds = cvu.true(ppl.date_end_quarantine == sim.t+1) # People finishing quarantine; +1 since on the date of quarantine end, they are released back and can get infected at normal rates
+            stats.quar.in_quarantine = len(q_inds) # Similar to stats.quar.quarantined, but slightly more
+            stats.quar.entered_quar  = len(eq_inds)
+            stats.quar.finished_quar = len(fq_inds)
+            for key in self.keys:
+                stats.quar[key] = len(self.intersect('quarantined', key))
+                if not stats.quar[key]:
+                    stats.empty.quar.append(key)
+
+            # Calculate extras for the source
+            stats.extra = sc.objdict() # Additional quantities not stored in the main counts
+            symp_inds = self.inds['symptomatic']
+            asymp_inds = ppl.false('symptomatic')
+            stats.extra.symp    = len(self.intersect(sourceinds, 'symptomatic')) # Redefine in case empty above
+            stats.extra.presymp = len(self.intersect(sourceinds, asymp_inds, ppl.defined('date_symptomatic')))
+            stats.extra.asymp   = len(self.intersect(sourceinds, asymp_inds,  ppl.undefined('date_symptomatic')))
+            per_factor = 100/max(1, stats.source.new_sources) # Convert to a percentage and avoid division by zero
+            stats.extra.per_symp    = stats.extra.symp*per_factor # Percentage symptomatic
+            stats.extra.per_presymp = stats.extra.presymp*per_factor
+            stats.extra.per_asymp   = stats.extra.asymp*per_factor
+            stats.layer_counts = {k:0 for k in sim.layer_keys()}
+            for i in infloginds:
+                stats.layer_counts[inflog[i]['layer']] += 1
+
+            # Calculate extras for quarantine testing
+            t_inds = newtests # Everyone who tested this timestep
+            d_inds = self.intersect(newtests, 'infectious') # Everyone infectious will test positive
+            u_inds = self.intersect('infectious', ppl.false('diagnosed'))
+            nq_inds = np.setdiff1d(all_inds, q_inds) # We can't use ppl.false('quarantined') since that will miss people who left quarantine because they were diagnosed
+            for tk,ti in zip(['test', 'diag', 'undiag'], [t_inds, d_inds, u_inds]): # People tested vs diagnosed
+                for sk,si in zip(['symp', 'asymp'], [symp_inds, asymp_inds]): # Symptomatic vs asymptomatic
+                    for qk,qi in zip(['q', 'nq', 'eq', 'fq'], [q_inds, nq_inds, eq_inds, fq_inds]): # In quarantine, not in quarantine, entering quarantine, finishing quarantine
+                        stats.extra[f'{tk}_{sk}_{qk}']  = len(self.intersect(ti, si,  qi)) # E.g. stats.extra.diag_asymp_nq = len(self.intersect(d_inds, asymp_inds, nq_inds))
+
+            # Final calculations
+            stats.extra.prev = stats.stocks.infectious/sim["pop_size"] # Overall prevalence
+            stats.extra.dead = stats.stocks.dead/sim["pop_size"] # Fraction dead
+            stats.extra.quar_prev     = len(self.intersect(q_inds, 'infectious'))/max(1,len(q_inds)) # Prevalence of people in quarantine
+            stats.extra.e_quar_prev   = len(self.intersect(eq_inds, 'infectious'))/max(1,len(eq_inds)) # Prevalence of people entering quarantine
+            stats.extra.f_quar_prev   = len(self.intersect(fq_inds, 'infectious'))/max(1,len(fq_inds)) # Prevalence of people finishing quarantine
+            stats.extra.non_quar_prev = len(self.intersect(nq_inds, 'infectious'))/max(1,len(nq_inds)) # Prevalence of people outside quarantine
+
+            # Indices aren't usually saved for memory reasons, but may be helpful for extra debugging
+            if self.save_inds:
+                stats.inds = sc.objdict()
+                stats.inds.inflog  = infloginds
+                stats.inds.targets = newinfs
+                stats.inds.sources = sourceinds
+                stats.inds.t_inds = t_inds
+                stats.inds.d_inds = d_inds
+                stats.inds.eq_inds = eq_inds
+                stats.inds.fq_inds = fq_inds
+
+            # Turn into report
+            if self.reporter is not None:
+                report = self.reporter(self, sim, stats)
+            else:
+                report = self.make_report(sim, stats)
+
+            # Save
+            today = sim.date(sim.t)
+            self.stats[today] = stats
+            self.reports[today] = report
+
+            if self.verbose:
+                self.report(today)
+
+        return
+
+
+    def report(self, day=None):
+        ''' Print out one or all reports -- take a date string or an int '''
+        if day is None:
+            print(self.reports)
+        else:
+            print(self.reports[day])
+        return
+
+
+    def make_report(self, sim, stats, show_empty='count'):
+        ''' Turn the statistics into a report '''
+
+        def make_entry(basekey, show_empty=show_empty):
+            ''' For each key, print the key and the count if the count is >0, and optionally any empty states '''
+            string  = '\n'.join([f'  {k:13s} = {v}' for k,v in stats[basekey].items() if v>0])
+            if show_empty is True:
+                string += f'\n  Empty states: {stats.empty[basekey]}'
+            elif show_empty == 'count':
+                string += f'\n  Number of empty states: {len(stats.empty[basekey])}'
+            string = '\n' + string + '\n'
+            return string
+
+        datestr = f'day {sim.t} ({sim.date(sim.t)})'
+        report  = f'*** Statistics report for {datestr} ***\n\n'
+        report += f'Overall stocks:'
+        report += make_entry('stocks', show_empty=False)
+        report += f'  Derived statistics:\n'
+        report += f'    Percentage infectious: {stats.extra.prev*100:6.3f}%\n'
+        report += f'    Percentage dead:       {stats.extra.dead*100:6.3f}%\n'
+        report += f'\nTransmission target statistics:'
+        report += make_entry('trans')
+        report += f'  Infections by layer:\n'
+        report += '\n'.join([f'    {k} = {v}' for k,v in stats.layer_counts.items()])
+        report += f'\n\nTransmission source statistics:'
+        report += make_entry('source')
+        report += f'  Derived statistics:\n'
+        report += f'    Pre-symptomatic: {stats.extra.presymp} ({stats.extra.per_presymp:0.1f})%\n'
+        report += f'    Asymptomatic:    {stats.extra.asymp} ({stats.extra.per_asymp:0.1f})%\n'
+        report += f'    Symptomatic:     {stats.extra.symp} ({stats.extra.per_symp:0.1f})%\n'
+        report += f'\nTesting statistics:'
+        report += make_entry('test')
+        report += f'  Derived statistics:\n'
+        report += f'    Tests:\n'
+        report += f'      Symp/asymp not in quar: {stats.extra.test_symp_nq}/{stats.extra.test_asymp_nq}\n'
+        report += f'      Symp/asymp in quar:     {stats.extra.test_symp_q}/{stats.extra.test_asymp_q}\n'
+        report += f'      Symp/asymp enter quar:  {stats.extra.test_symp_eq}/{stats.extra.test_asymp_eq}\n'
+        report += f'      Symp/asymp finish quar: {stats.extra.test_symp_fq}/{stats.extra.test_asymp_fq}\n'
+        report += f'    Diagnoses:\n'
+        report += f'      Symp/asymp not in quar: {stats.extra.diag_symp_nq}/{stats.extra.diag_asymp_nq}\n'
+        report += f'      Symp/asymp in quar:     {stats.extra.diag_symp_q}/{stats.extra.diag_asymp_q}\n'
+        report += f'      Symp/asymp enter quar:  {stats.extra.diag_symp_eq}/{stats.extra.diag_asymp_eq}\n'
+        report += f'      Symp/asymp finish quar: {stats.extra.diag_symp_fq}/{stats.extra.diag_asymp_fq}\n'
+        report += f'    Undiagnosed:\n'
+        report += f'      Symp/asymp not in quar: {stats.extra.undiag_symp_nq}/{stats.extra.undiag_asymp_nq}\n'
+        report += f'      Symp/asymp in quar:     {stats.extra.undiag_symp_q}/{stats.extra.undiag_asymp_q}\n'
+        report += f'      Symp/asymp enter quar:  {stats.extra.undiag_symp_eq}/{stats.extra.undiag_asymp_eq}\n'
+        report += f'      Symp/asymp finish quar: {stats.extra.undiag_symp_fq}/{stats.extra.undiag_asymp_fq}\n'
+        report += f'\nQuarantine statistics:'
+        report += make_entry('quar')
+        report += f'  Derived statistics:\n'
+        report += f'    Percentage infectious not in quarantine:    {stats.extra.non_quar_prev*100:6.3f}%\n'
+        report += f'    Percentage infectious in quarantine:        {stats.extra.quar_prev*100:6.3f}%\n'
+        report += f'    Percentage infectious entering quarantine:  {stats.extra.e_quar_prev*100:6.3f}%\n'
+        report += f'    Percentage infectious finishing quarantine: {stats.extra.f_quar_prev*100:6.3f}%\n'
+        report += f'\n*** End of report for day {datestr} ***\n'
+
+        return report
+
+
+    def transpose(self, keys=None):
+        ''' Transpose the data from a list-of-dicts-of-dicts to a dict-of-dicts-of-lists '''
+        if keys is None:
+            keys = self.basekeys + self.extrakeys
+
+        # Initialize
+        data = {}
+        for k1 in keys:
+            data[k1] = {}
+            for k2 in self.stats[0][k1].keys():
+                data[k1][k2] = []
+
+        # Populate
+        for stats in self.stats.values():
+            for k1 in keys:
+                for k2 in stats[k1].keys():
+                    data[k1][k2].append(stats[k1][k2])
+
+        return data
+
+
+    def plot(self, fig_args=None, axis_args=None, plot_args=None, font_size=12, do_show=True):
+        '''
+        Plot the daily statistics recordered. Some overlap with e.g. ``sim.plot(to_plot='overview')``.
+
+        Args:
+            fig_args  (dict):  passed to pl.figure()
+            axis_args (dict):  passed to pl.subplots_adjust()
+            plot_args (dict):  passed to pl.plot()
+            font_size (float): size of font
+            do_show   (bool):  whether to show the plot
+        '''
+
+        fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
+        axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
+        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
+        pl.rcParams['font.size'] = font_size
+
+        # Transform the data into time series
+        data = self.transpose()
+
+        # Do the plotting
+        nplots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
+        nrows,ncols = cvm.get_rows_cols(nplots)
+        fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
+        pl.subplots_adjust(**axis_args)
+
+        count = -1
+        for k1 in data.keys():
+            for k2 in data[k1].keys():
+                count += 1
+                row,col = np.unravel_index(count, (nrows,ncols))
+                ax = axs[row,col]
+                y = data[k1][k2]
+                ax.plot(y, **plot_args)
+                ax.set_title(f'{k1}: {k2}')
+
+        if do_show:
+            pl.show()
+
+        return fig
+
+
+
 class Fit(sc.prettyobj):
     '''
     A class for calculating the fit between the model and the data. Note the
@@ -563,19 +892,20 @@ class Fit(sc.prettyobj):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, font_size=18, fig_args=None, axis_args=None, plot_args=None):
+    def plot(self, keys=None, width=0.8, font_size=18, fig_args=None, axis_args=None, plot_args=None, do_show=True):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
         plots the loss as a function of time.
 
         Args:
-            keys (list): which keys to plot (default, all)
-            width (float): bar width
+            keys      (list):  which keys to plot (default, all)
+            width     (float): bar width
             font_size (float): size of font
-            fig_args (dict): passed to pl.figure()
-            axis_args (dict): passed to pl.subplots_adjust()
-            plot_args (dict): passed to pl.plot()
+            fig_args  (dict):  passed to pl.figure()
+            axis_args (dict):  passed to pl.subplots_adjust()
+            plot_args (dict):  passed to pl.plot()
+            do_show   (bool):  whether to show the plot
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
@@ -656,6 +986,9 @@ class Fit(sc.prettyobj):
                 pl.ylabel('Losses')
                 pl.legend()
 
+        if do_show:
+            pl.show()
+
         return figs
 
 
@@ -685,6 +1018,11 @@ class TransTree(sc.prettyobj):
         self.sim_results['cum_infections'] = sim.results['cum_infections'].values
         self.n_days = people.t  # people.t should be set to the last simulation timestep in the output (since the Transtree is constructed after the people have been stepped forward in time)
         self.pop_size = len(people)
+
+        # Check that rescaling is not on
+        if sim['rescale'] and sim['pop_scale']>1:
+            warningmsg = 'Warning: transmission tree results are unreliable when dynamic rescaling is on, since agents are reused! Please rerun with rescale=False and pop_scale=1 for reliable results.'
+            print(warningmsg)
 
         # Include the basic line list
         self.infection_log = sc.dcp(people.infection_log)
@@ -815,7 +1153,7 @@ class TransTree(sc.prettyobj):
                 stdict = {'t':target}
 
             # Pull out each of the attributes relevant to transmission
-            attrs = ['age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact']
+            attrs = ['age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_end_quarantine', 'date_severe', 'date_critical', 'date_known_contact']
             for st,stind in stdict.items():
                 for attr in attrs:
                     ddict[st][attr] = people[attr][stind]
@@ -823,11 +1161,14 @@ class TransTree(sc.prettyobj):
                 for attr in attrs:
                     if attr.startswith('date_'):
                         is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
-                        ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
+                        if attr == 'date_quarantined': # This has an end date specified
+                            ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] and not (ddict['s']['date_end_quarantine'] <= ddict['date'])
+                        elif attr != 'date_end_quarantine': # This is not a state
+                            ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
 
                 ddict['s']['is_asymp']   = np.isnan(people.date_symptomatic[source])
                 ddict['s']['is_presymp'] = ~ddict['s']['is_asymp'] and ~ddict['s']['is_symptomatic'] # Not asymptomatic and not currently symptomatic
-            ddict['t']['is_quarantined'] = ddict['t']['date_quarantined'] <= ddict['date'] # This is the only target date that it makes sense to define since it can happen before infection
+            ddict['t']['is_quarantined'] = ddict['t']['date_quarantined'] <= ddict['date'] and not (ddict['t']['date_end_quarantine'] <= ddict['date']) # This is the only target date that it makes sense to define since it can happen before infection
 
             detailed[target] = ddict
 
@@ -858,10 +1199,18 @@ class TransTree(sc.prettyobj):
         return np.mean(n_infected)
 
 
-    def plot(self, *args, **kwargs):
-        ''' Plot the transmission tree '''
+    def plot(self, fig_args=None, plot_args=None, do_show=True):
+        '''
+        Plot the transmission tree.
 
-        fig_args = kwargs.get('fig_args', dict(figsize=(16, 10)))
+        Args:
+            fig_args  (dict):  passed to pl.figure()
+            plot_args (dict):  passed to pl.plot()
+            do_show   (bool):  whether to show the plot
+        '''
+
+        fig_args = sc.mergedicts(dict(figsize=(16, 10)), fig_args)
+        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
 
         ttlist = []
         for source_ind, target_ind in self.transmissions:
@@ -870,15 +1219,15 @@ class TransTree(sc.prettyobj):
             target = ddict['t']
 
             tdict = {}
-            tdict['date'] =  ddict['date']
-            tdict['layer'] =  ddict['layer']
-            tdict['s_asymp'] =  np.isnan(source['date_symptomatic']) # True if they *never* became symptomatic
+            tdict['date']      =  ddict['date']
+            tdict['layer']     =  ddict['layer']
+            tdict['s_asymp']   = np.isnan(source['date_symptomatic']) # True if they *never* became symptomatic
             tdict['s_presymp'] =  ~tdict['s_asymp'] and tdict['date']<source['date_symptomatic'] # True if they became symptomatic after the transmission date
-            tdict['s_sev'] = source['date_severe'] < tdict['date']
-            tdict['s_crit'] = source['date_critical'] < tdict['date']
-            tdict['s_diag'] = source['date_diagnosed'] < tdict['date']
-            tdict['s_quar'] = source['date_quarantined'] < tdict['date']
-            tdict['t_quar'] = target['date_quarantined'] < tdict['date'] # What if the target was released from quarantine?
+            tdict['s_sev']     = source['date_severe'] < tdict['date']
+            tdict['s_crit']    = source['date_critical'] < tdict['date']
+            tdict['s_diag']    = source['date_diagnosed'] < tdict['date']
+            tdict['s_quar']    = source['date_quarantined'] <= tdict['date'] and not (source['date_end_quarantine'] <= tdict['date'])
+            tdict['t_quar']    = target['date_quarantined'] <= tdict['date'] and not (target['date_end_quarantine'] <= tdict['date'])
             ttlist.append(tdict)
 
         df = pd.DataFrame(ttlist).rename(columns={'date': 'Day'})
@@ -900,7 +1249,7 @@ class TransTree(sc.prettyobj):
         def plot_quantity(key, title, i):
             dat = df.groupby(['Day', key]).size().unstack(key)
             ax = pl.subplot(r, c, i);
-            dat.plot(ax=ax, legend=None)
+            dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
 
@@ -914,6 +1263,9 @@ class TransTree(sc.prettyobj):
         }
         for i, (key, title) in enumerate(to_plot.items()):
             plot_quantity(key, title, i + 1)
+
+        if do_show:
+            pl.show()
 
         return fig
 

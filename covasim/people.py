@@ -4,28 +4,80 @@ Defines the Person class and functions associated with making people.
 
 #%% Imports
 import numpy as np
+import sciris as sc
+from collections import defaultdict
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 from . import plotting as cvplt
-from collections import defaultdict
+
 
 __all__ = ['People']
 
 class People(cvb.BasePeople):
     '''
     A class to perform all the operations on the people. This class is usually
-    not invoked directly, but instead is created automatically by the sim. Most
-    initialization happens in BasePeople.
+    not invoked directly, but instead is created automatically by the sim. The
+    only required input argument is the population size, but typically the full
+    parameters dictionary will get passed instead since it will be needed before
+    the People object is initialized.
 
     Args:
-        pars (dict): the sim parameters, e.g. sim.pars -- must have pop_size and n_days keys
+        pars (dict): the sim parameters, e.g. sim.pars -- alternatively, if a number, interpreted as pop_size
         strict (bool): whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set
         kwargs (dict): the actual data, e.g. from a popdict, being specified
+
+    ::Examples::
+
+        ppl1 = cv.People(2000)
+
+        sim = cv.Sim()
+        ppl2 = cv.People(sim.pars)
     '''
 
     def __init__(self, pars, strict=True, **kwargs):
-        super().__init__(pars)
+
+        # Handle pars and population size
+        if sc.isnumber(pars): # Interpret as a population size
+            pars = {'pop_size':pars} # Ensure it's a dictionary
+        self.pars     = pars # Equivalent to self.set_pars(pars)
+        self.pop_size = int(pars['pop_size'])
+
+        # Other initialization
+        self.t = 0 # Keep current simulation time
+        self._lock = False # Prevent further modification of keys
+        self.meta = cvd.PeopleMeta() # Store list of keys and dtypes
+        self.contacts = None
+        self.init_contacts() # Initialize the contacts
+        self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
+
+        # Set person properties -- all floats except for UID
+        for key in self.meta.person:
+            if key == 'uid':
+                self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
+            else:
+                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+
+        # Set health states -- only susceptible is true by default -- booleans
+        for key in self.meta.states:
+            if key == 'susceptible':
+                self[key] = np.full(self.pop_size, True, dtype=bool)
+            else:
+                self[key] = np.full(self.pop_size, False, dtype=bool)
+
+        # Set dates and durations -- both floats
+        for key in self.meta.dates + self.meta.durs:
+            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+
+        # Store the dtypes used in a flat dict
+        self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
+        self._lock = True # Stop further keys from being set (does not affect attributes)
+
+        # Store flows to be computed during simulation
+        self.flows = {key:0 for key in cvd.new_result_flows}
+
+        # Although we have called init(), we still need to call initialize()
+        self.initialized = False
 
         # Handle contacts, if supplied (note: they usually are)
         if 'contacts' in kwargs:
@@ -57,6 +109,9 @@ class People(cvb.BasePeople):
         '''
 
         pars = self.pars # Shorten
+        if 'prognoses' not in pars:
+            errormsg = 'This people object does not have the required parameters ("prognoses"). Create a sim (or parameters), then do e.g. people.set_pars(sim.pars).'
+            raise sc.KeyNotFoundError(errormsg)
 
         def find_cutoff(age_cutoffs, age):
             '''
@@ -219,27 +274,28 @@ class People(cvb.BasePeople):
         # Handle people who were actually diagnosed today
         diag_inds  = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
         self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
+        quarantined = cvu.itruei(self.quarantined, diag_inds)
+        self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
         self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
-        self.date_end_quarantine[diag_inds] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
 
         return len(test_pos_inds)
 
 
     def check_quar(self):
-        '''Update quarantine state'''
+        ''' Update quarantine state '''
 
-        n_quarantined = 0
-        for ind, end_day in self._pending_quarantine[self.t]:
+        n_quarantined = 0 # Number of people entering quarantine
+        for ind,end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
                 self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-            elif not (self.dead[ind] | self.recovered[ind] | self.diagnosed[ind]):
+            elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
                 self.date_end_quarantine[ind] = end_day
                 n_quarantined += 1
 
         # If someone on quarantine has reached the end of their quarantine, release them
-        end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here
+        end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here (~)
         self.quarantined[end_inds] = False # Release from quarantine
 
         return n_quarantined
@@ -249,7 +305,7 @@ class People(cvb.BasePeople):
 
     def make_susceptible(self, inds):
         '''
-        Make person susceptible. This is used during dynamic resampling
+        Make a set of people susceptible. This is used during dynamic resampling.
         '''
         for key in self.meta.states:
             if key == 'susceptible':
@@ -380,16 +436,14 @@ class People(cvb.BasePeople):
 
     def test(self, inds, test_sensitivity=1.0, loss_prob=0.0, test_delay=0):
         '''
-        Method to test people
+        Method to test people. Typically not to be called by the user directly;
+        see the test_num() and test_prob() interventions.
 
         Args:
             inds: indices of who to test
             test_sensitivity (float): probability of a true positive
             loss_prob (float): probability of loss to follow-up
             test_delay (int): number of days before test results are ready
-
-        Returns:
-            Whether or not this person tested positive
         '''
 
         inds = np.unique(inds)
@@ -411,9 +465,10 @@ class People(cvb.BasePeople):
         return
 
 
-    def quarantine(self, inds, start_date=None, period=None):
+    def schedule_quarantine(self, inds, start_date=None, period=None):
         '''
-        Schedule a quarantine
+        Schedule a quarantine. Typically not called by the user directly except
+        via a custom intervention; see the contact_tracing() intervention instead.
 
         This function will create a request to quarantine a person on the start_date for
         a period of time. Whether they are on an existing quarantine that gets extended, or
@@ -432,32 +487,6 @@ class People(cvb.BasePeople):
             self._pending_quarantine[start_date].append((ind, start_date + period))
         return
 
-
-    def trace(self, inds, trace_probs, trace_time):
-        '''
-        Trace the contacts of the people provided
-        Args:
-            inds (array): indices of whose contacts to trace
-            trace_probs (dict): probability of being able to trace people at each contact layer - should have the same keys as contacts
-            trace_time (dict): days it'll take to trace people at each contact layer - should have the same keys as contacts
-        '''
-
-        # Extract the indices of the people who'll be contacted
-        traceable_layers = {k:v for k,v in trace_probs.items() if v != 0.} # Only trace if there's a non-zero tracing probability
-        for lkey,this_trace_prob in traceable_layers.items():
-            if self.pars['beta_layer'][lkey]: # Skip if beta is 0 for this layer
-                this_trace_time = trace_time[lkey]
-
-                # Find all the contacts of these people
-                traceable_inds = self.contacts[lkey].find_contacts(inds)
-                if len(traceable_inds):
-                    contact_inds = cvu.binomial_filter(this_trace_prob, traceable_inds) # Filter the indices according to the probability of being able to trace this layer
-                    if len(contact_inds):
-                        self.known_contact[contact_inds] = True
-                        self.date_known_contact[contact_inds]  = np.fmin(self.date_known_contact[contact_inds], self.t+this_trace_time) # Record just first time they were notified
-                        self.quarantine(contact_inds, self.t+this_trace_time, self.pars['quar_period']-this_trace_time) # Schedule quarantine for the notified people to start on the date they will be notified. Note that the quarantine duration is based on the time since last contact, rather than time since notified
-
-        return
 
     #%% Analysis methods
 
@@ -478,3 +507,111 @@ class People(cvb.BasePeople):
         '''
         fig = cvplt.plot_people(people=self, *args, **kwargs)
         return fig
+
+
+    def story(self, uid, *args):
+        '''
+        Print out a short history of events in the life of the specified individual.
+
+        Args:
+            uid (int/list): the person or people whose story is being regaled
+            args (list): these people will tell their stories too
+
+        **Example**::
+
+            sim = cv.Sim(pop_type='hybrid', verbose=0)
+            sim.run()
+            sim.people.story(12)
+            sim.people.story(795)
+        '''
+
+        def label_lkey(lkey):
+            ''' Friendly name for common layer keys '''
+            if lkey.lower() == 'a':
+                llabel = 'default contact'
+            if lkey.lower() == 'h':
+                llabel = 'household'
+            elif lkey.lower() == 's':
+                llabel = 'school'
+            elif lkey.lower() == 'w':
+                llabel = 'workplace'
+            elif lkey.lower() == 'c':
+                llabel = 'community'
+            else:
+                llabel = f'"{lkey}"'
+            return llabel
+
+        uids = sc.promotetolist(uid)
+        uids.extend(args)
+
+        for uid in uids:
+
+            p = self[uid]
+            sex = 'female' if p.sex == 0 else 'male'
+
+            intro = f'\nThis is the story of {uid}, a {p.age:.0f} year old {sex}'
+
+            if not p.susceptible:
+                if np.isnan(p.date_symptomatic):
+                    print(f'{intro}, who had asymptomatic COVID.')
+                else:
+                    print(f'{intro}, who had symptomatic COVID.')
+            else:
+                print(f'{intro}, who did not contract COVID.')
+
+            total_contacts = 0
+            no_contacts = []
+            for lkey in p.contacts.keys():
+                llabel = label_lkey(lkey)
+                n_contacts = len(p.contacts[lkey])
+                total_contacts += n_contacts
+                if n_contacts:
+                    print(f'{uid} is connected to {n_contacts} people in the {llabel} layer')
+                else:
+                    no_contacts.append(llabel)
+            if len(no_contacts):
+                nc_string = ', '.join(no_contacts)
+                print(f'{uid} has no contacts in the {nc_string} layer(s)')
+            print(f'{uid} has {total_contacts} contacts in total')
+
+            events = []
+
+            dates = {
+            'date_critical'       : 'became critically ill and needed ICU care',
+            'date_dead'           : 'died ☹',
+            'date_diagnosed'      : 'was diagnosed with COVID',
+            'date_end_quarantine' : 'ended quarantine',
+            'date_infectious'     : 'became infectious',
+            'date_known_contact'  : 'was notified they may have been exposed to COVID',
+            'date_pos_test'       : 'recieved their positive test result',
+            'date_quarantined'    : 'entered quarantine',
+            'date_recovered'      : 'recovered',
+            'date_severe'         : 'developed severe symptoms and needed hospitalization',
+            'date_symptomatic'    : 'became symptomatic',
+            'date_tested'         : 'was tested for COVID',
+            }
+
+            for attribute, message in dates.items():
+                date = getattr(p,attribute)
+                if not np.isnan(date):
+                    events.append((date, message))
+
+            for infection in self.infection_log:
+                lkey = infection['layer']
+                llabel = label_lkey(lkey)
+                if infection['target'] == uid:
+                    if lkey:
+                        events.append((infection['date'], f'was infected with COVID by {infection["source"]} via the {llabel} layer'))
+                    else:
+                        events.append((infection['date'], f'was infected with COVID as a seed infection'))
+
+                if infection['source'] == uid:
+                    x = len([a for a in self.infection_log if a['source'] == infection['target']])
+                    events.append((infection['date'],f'gave COVID to {infection["target"]} via the {llabel} layer ({x} secondary infections)'))
+
+            if len(events):
+                for day, event in sorted(events, key=lambda x: x[0]):
+                    print(f'On day {day:.0f}, {uid} {event}')
+            else:
+                print(f'Nothing happened to {uid} during the simulation.')
+        return

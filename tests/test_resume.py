@@ -49,16 +49,17 @@ def test_resuming():
 
 def test_reset_seed():
     sc.heading('Test that resetting a simulation works')
+
+    until = 30
     s0 = cv.Sim(pars)
     s1 = s0.copy()
     s0.run()
 
-    s1.run(until=30)
+    s1.run(until=until)
     s1.run(reset_seed=True)
 
-    assert not np.all(s0.results['cum_infections'].values == s1.results['cum_infections']) # Results should be different
-    assert np.all(s0.results['cum_infections'].values[0:30] == s1.results['cum_infections'][0:30]) # Results for the first 30 days should be the same
-    assert s0.results['cum_infections'].values[31] != s1.results['cum_infections'][31] # Results on day 31 should be different
+    assert     np.all(s0.results['cum_infections'][:until] == s1.results['cum_infections'][:until]) # Results for the first 30 days should be the same
+    assert not np.all(s0.results['cum_infections'][until:] == s1.results['cum_infections'][until:]) # Results should be different
 
     return s1
 

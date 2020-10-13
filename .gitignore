@@ -1,5 +1,5 @@
 # Custom -- docs build files
-docs/covasim.*.rst
+docs/covasim*.rst
 docs/modules.rst
 
 # Data files

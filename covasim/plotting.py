@@ -70,7 +70,7 @@ def handle_to_plot(which, to_plot, n_cols, sim):
     if n_cols is None:
         max_rows = 4 # Assumption -- if desired, the user can override this by setting n_cols manually
         n_cols = int((n_plots-1)//max_rows + 1) # This gives 1 column for 1-4, 2 for 5-8, etc.
-    n_rows = int(np.ceil(n_plots/n_cols)) # Number of subplot rows to have
+    n_rows,n_cols = cvm.get_rows_cols(n_plots, ncols=n_cols) # Inconsistent naming due to Covasim/Matplotlib conventions
 
     return to_plot, n_cols, n_rows
 
@@ -144,7 +144,8 @@ def plot_data(sim, ax, key, scatter_args, color=None):
 def plot_interventions(sim, ax):
     ''' Add interventions to the plot '''
     for intervention in sim['interventions']:
-        intervention.plot(sim, ax)
+        if hasattr(intervention, 'plot'): # Don't plot e.g. functions
+            intervention.plot(sim, ax)
     return
 
 
