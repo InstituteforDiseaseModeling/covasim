@@ -1143,9 +1143,6 @@ class Layer(FlexDict):
     def members(self):
         """
         Return sorted array of all members
-
-        Returns:
-
         """
         return np.unique([self['p1'], self['p2']])
 
