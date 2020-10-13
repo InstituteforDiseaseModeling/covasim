@@ -297,9 +297,9 @@ class sequence(Intervention):
 
 
     def apply(self, sim):
-        for ind in find_day(self.days_arr <= sim.t, which='last'):
-            self.interventions[ind].apply(sim)
-        return
+        ind = find_day(self.days_arr <= sim.t, which='last')
+        if ind:
+            return self.interventions[ind[0]].apply(sim)
 
 
 
@@ -718,7 +718,7 @@ class test_num(Intervention):
         test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True) # Choose who actually tests
         sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
-        return
+        return test_inds
 
 
 class test_prob(Intervention):
@@ -836,7 +836,7 @@ class test_prob(Intervention):
         sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
-        return
+        return test_inds
 
 
 class contact_tracing(Intervention):
@@ -908,7 +908,6 @@ class contact_tracing(Intervention):
         - Select which confirmed cases get interviewed by contact tracers
         - Identify the contacts of the confirmed case
         - Notify those contacts that they have been exposed and need to take some action
-
         '''
         t = sim.t
         if t < self.start_day:
@@ -921,21 +920,17 @@ class contact_tracing(Intervention):
         self.notify_contacts(sim, contacts)
         return contacts
 
+
     def select_cases(self, sim):
         '''
         Return people to be traced at this time step
-
-        Args:
-            sim:
-
-        Returns: Array of people indexes to contact
-
         '''
         if not self.presumptive:
-            return cvu.true(sim.people.date_diagnosed == sim.t) # Diagnosed this time step, time to trace
+            inds = cvu.true(sim.people.date_diagnosed == sim.t) # Diagnosed this time step, time to trace
         else:
             just_tested = cvu.true(sim.people.date_tested == sim.t) # Tested this time step, time to trace
-            return cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
+            inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
+        return inds
 
 
     def identify_contacts(self, sim, trace_inds):
@@ -948,11 +943,10 @@ class contact_tracing(Intervention):
         can be easily updated in `contact_tracing.notify_contacts`
 
         Args:
-            sim:
+            sim: Simulation object
             trace_inds: Indices of people to trace
 
         Returns: {trace_time: np.array(inds)} dictionary storing which people to notify
-
         '''
 
         if not len(trace_inds):
@@ -972,10 +966,11 @@ class contact_tracing(Intervention):
         array_contacts = {}
         for trace_time, inds in contacts.items():
             array_contacts[trace_time] = np.fromiter(inds, dtype=cvd.default_int)
+
         return array_contacts
 
 
-    def notify_contacts(self, sim, contacts: dict):
+    def notify_contacts(self, sim, contacts):
         '''
         Notify contacts
 
@@ -986,13 +981,15 @@ class contact_tracing(Intervention):
         - Scheduling quarantine
 
         Args:
-            sim:
+            sim: Simulation object
             contacts: {trace_time: np.array(inds)} dictionary storing which people to notify
         '''
         for trace_time, contact_inds in contacts.items():
             sim.people.known_contact[contact_inds] = True
             sim.people.date_known_contact[contact_inds] = np.fmin(sim.people.date_known_contact[contact_inds], sim.t + trace_time)
             sim.people.schedule_quarantine(contact_inds, start_date=sim.t + trace_time, period=self.quar_period - trace_time)  # Schedule quarantine for the notified people to start on the date they will be notified
+        return
+
 
 
 #%% Treatment and prevention interventions
