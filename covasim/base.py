@@ -950,7 +950,7 @@ class BasePeople(sc.prettyobj):
         # Ensure the columns are right and add values if supplied
         for lkey, new_layer in new_contacts.items():
             n = len(new_layer['p1'])
-            if 'beta' not in new_layer or len(new_layer['beta']) != n:
+            if 'beta' not in new_layer.keys() or len(new_layer['beta']) != n:
                 if beta is None:
                     beta = 1.0
                 beta = cvd.default_float(beta)
