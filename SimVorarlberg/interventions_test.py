@@ -1,5 +1,6 @@
 import covasim as cv
 from SimVorarlberg.pars import pars
+from SimVorarlberg.specialInterventions.testIntervention import change_beta_by_age
 
 # Run options
 do_plot = 1
@@ -49,6 +50,12 @@ if __name__ == '__main__':
             'name': 'closing schools by setting beta to 0',
             'pars': {
                 'interventions': cv.change_beta(days=intervention_start_day, changes=0, layers=['s'])
+            }
+        },
+        'cb_55': {
+            'name': 'change beta for persons of age 55 an higher',
+            'pars': {
+                'interventions': change_beta_by_age(days=intervention_start_day, changes=0, age=55)
             }
         },
     }
