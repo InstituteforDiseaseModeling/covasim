@@ -6,21 +6,19 @@ from  covasim.interventions import process_changes, process_days, process_daily_
 
 class change_beta_by_age(Intervention):
     '''
-    Isolate contacts by removing them from the simulation. Contacts are treated as
-    "edges", and this intervention works by removing them from sim.people.contacts
-    and storing them internally. When the intervention is over, they are moved back.
-    Similar to change_beta().
+    Change beta (transmission) by a certain amount on a given day or days, constrained by the persons age
 
     Args:
         days (int or array): the day or array of days to isolate contacts
         changes (float or array): the changes in the number of contacts (1 = no change, 0 = no contacts)
-        layers (str or list): the layers in which to isolate contacts (if None, then all layers)
+        age (int): the age on which the beta should be changed
         kwargs (dict): passed to Intervention()
 
-    **Examples**::
+    **Example**::
 
-        interv = cv.clip_edges(25, 0.3) # On day 25, reduce overall contacts by 70% to 0.3
-        interv = cv.clip_edges([14, 28], [0.7, 1], layers='w') # On day 14, remove 30% of school contacts, and on day 28, restore them
+        from SimVorarlberg.specialInterventions.testIntervention import change_beta_by_age
+
+        change_beta_by_age(days=intervention_start_day, changes=0, age=55)
     '''
 
     def __init__(self, days, changes, age=None, **kwargs):
