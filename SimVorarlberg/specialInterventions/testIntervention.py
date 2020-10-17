@@ -1,8 +1,8 @@
 import sciris as sc
-from covasim import utils as cvu
 from covasim import base as cvb
 from covasim import Intervention
-from  covasim.interventions import process_changes, process_days, process_daily_data, find_day
+from covasim.interventions import process_changes, process_days, find_day
+
 
 class change_beta_by_age(Intervention):
     '''
@@ -22,25 +22,23 @@ class change_beta_by_age(Intervention):
     '''
 
     def __init__(self, days, changes, age=None, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
-        self.days     = sc.dcp(days)
-        self.changes  = sc.dcp(changes)
-        self.age   = sc.dcp(age)
+        super().__init__(**kwargs)  # Initialize the Intervention object
+        self._store_args()  # Store the input arguments so the intervention can be recreated
+        self.days = sc.dcp(days)
+        self.changes = sc.dcp(changes)
+        self.age = sc.dcp(age)
         self.contacts = None
         return
 
-
     def initialize(self, sim):
-        self.days    = process_days(sim, self.days)
+        self.days = process_days(sim, self.days)
         self.changes = process_changes(sim, self.changes, self.days)
         if self.age is None:
             self.age = 50
 
-        self.contacts = cvb.Contacts(layer_keys=None) #all Layers
+        self.contacts = cvb.Contacts(layer_keys=sim.layer_keys())  # all Layers
         self.initialized = True
         return
-
 
     def apply(self, sim):
 
@@ -49,30 +47,21 @@ class change_beta_by_age(Intervention):
 
             for lkey in sim.people.contacts.keys():
 
-                s_layer= sim.people.contacts[lkey]
+                s_layer = sim.people.contacts[lkey]
 
-                i = 0
+                for i in range(0, len(s_layer)):
 
-                for person in s_layer['p1']:
-                    age_of_p1 = sim.people.age[person]
+                    id_p1 = s_layer['p1'][i]
+                    id_p2 = s_layer['p2'][i]
 
-                    if age_of_p1 >= self.age:
-                        s_layer['beta'][i] = self.changes
+                    age_p1 = sim.people.age[id_p1]
+                    age_p2 = sim.people.age[id_p2]
 
-                    i = i+1
-
-                i = 0
-
-                for person in s_layer['p2']:
-                    age_of_p2 = sim.people.age[person]
-
-                    if age_of_p2 >= self.age:
-                        s_layer['beta'][i] = self.changes
-
-                    i = i + 1
+                    if age_p1 >= self.age or age_p2 >= self.age:
+                        s_layer['beta'][i] = self.changes[ind]
 
         # Ensure the edges get deleted at the end
         if sim.t == sim.tvec[-1]:
-            self.contacts = None # Reset to save memory
+            self.contacts = None  # Reset to save memory
 
         return
