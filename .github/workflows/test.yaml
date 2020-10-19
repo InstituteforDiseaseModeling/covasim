@@ -35,7 +35,7 @@ jobs:
       - name: Install Covasim
         run: |
           python setup.py develop --install-dir ~/.cache/site-packages
-          pip install pytest<6
+          pip install "pytest<6"
       - name: Run integration tests
         working-directory: ./tests
         run: pytest test*.py --durations=0 # Run actual tests
