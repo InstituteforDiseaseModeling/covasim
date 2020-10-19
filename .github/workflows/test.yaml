@@ -36,6 +36,7 @@ jobs:
         run: |
           python setup.py develop --install-dir ~/.cache/site-packages
           python -m pip install "pytest<6"
+          python -m pip install attrs
       - name: Run integration tests
         working-directory: ./tests
         run: python -m pytest test*.py --durations=0 # Run actual tests
