@@ -443,7 +443,6 @@ class People(cvb.BasePeople):
         inds = np.unique(inds)
         self.tested[inds] = True
         self.date_tested[inds] = self.t # Only keep the last time they tested
-        self.date_results[inds] = self.t + test_delay # Keep date when next results will be returned
 
         is_infectious = cvu.itruei(self.infectious, inds)
         pos_test      = cvu.n_binomial(test_sensitivity, len(is_infectious))
@@ -613,7 +612,6 @@ class People(cvb.BasePeople):
             'date_severe'         : 'developed severe symptoms and needed hospitalization',
             'date_symptomatic'    : 'became symptomatic',
             'date_tested'         : 'was tested for COVID',
-            'date_results'        : 'received COVID test results',
             }
 
             for attribute, message in dates.items():

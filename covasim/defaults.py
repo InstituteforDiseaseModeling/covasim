@@ -65,7 +65,6 @@ class PeopleMeta(sc.prettyobj):
     # Set the dates various events took place: these are floats per person -- used in people.py
     dates = [f'date_{state}' for state in states] # Convert each state into a date
     dates.append('date_pos_test') # Store the date when a person tested which will come back positive
-    dates.append('date_results') # Store the date when a test will come back, regardless of outcome
     dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
 
     # Duration of different states: these are floats per person -- used in people.py
