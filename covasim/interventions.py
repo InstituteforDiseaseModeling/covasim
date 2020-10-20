@@ -703,7 +703,7 @@ class test_num(Intervention):
             test_probs[subtarget_inds] = test_probs[subtarget_inds]*subtarget_vals
 
         # Don't re-diagnose people
-        diag_inds  = cvu.true(sim.people.diagnosed)
+        diag_inds = cvu.true(sim.people.diagnosed)
         test_probs[diag_inds] = 0.0
 
         # With dynamic rescaling, we have to correct for uninfected people outside of the population who would test
@@ -1918,7 +1918,6 @@ class reopen_schools(Intervention):
                         self.trace_contacts(inds_to_trace, sim, school_id, group)
 
         # determine if we are doing any routine diagnostic testing among teachers & staff today
-        print(self.next_test_day) # TEMP
         if self.next_test_day is not None and t == self.next_test_day:
             # Time for routine testing
             if already_home > 0:
