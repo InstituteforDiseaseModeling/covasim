@@ -20,6 +20,7 @@ Version 1.7.5 (2020-10-13)
     - ``Layer.members`` returns an array of all people with interactions in the layer
     - ``__contains__`` is implemented so ``uid in layer`` can be used
 - ``cv.sequence.apply()`` passes on the underlying intervention's return value rather than always returning ``None``
+- *GitHub info*: PR `709 <https://github.com/amath-idm/covasim/pull/709>`__
 
 
 Version 1.7.4 (2020-10-02)
