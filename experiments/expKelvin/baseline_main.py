@@ -6,7 +6,7 @@ import random
 pars = {
     'pop_size': 40000,
     'pop_type': 'synthpops',
-    'rand_seed': random.randint(0, 99999),
+    #'rand_seed': random.randint(0, 99999),
 }
 
 sim = cv.Sim(pars)
@@ -39,10 +39,10 @@ pars_dict = sc.objdict(
     pop_size     = 40e3,    # Population size
     location = "Vorarlberg",
     pop_infected = 10,       # Number of initial infections
-    n_days       = 90,       # Number of days to simulate
+    n_days       = 30,       # Number of days to simulate
     pop_scale = 10,
     n_beds_icu = 30,
-    n_beds_hosp = 80,
+    n_beds_hosp = 700,
     contacts = 0.5
 )
 
@@ -53,3 +53,5 @@ if __name__ == "__main__":
     
     mysim.run()
     #mysim.to_json('baseline_exp_results.json')
+
+    
