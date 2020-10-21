@@ -14,6 +14,15 @@ Latest versions (1.7.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 1.7.5 (2020-10-13)
+--------------------------
+- Added extra convenience methods to ``Layer`` objects
+    - ``Layer.members`` returns an array of all people with interactions in the layer
+    - ``__contains__`` is implemented so ``uid in layer`` can be used
+- ``cv.sequence.apply()`` passes on the underlying intervention's return value rather than always returning ``None``
+- *GitHub info*: PR `709 <https://github.com/amath-idm/covasim/pull/709>`__
+
+
 Version 1.7.4 (2020-10-02)
 --------------------------
 - Refactored `cv.contact_tracing()` so that derived classes can extend individual parts of contact tracing without having to re-implement the entire intervention
