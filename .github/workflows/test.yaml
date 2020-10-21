@@ -26,7 +26,7 @@ jobs:
           architecture: x64
       - name: Cache Packages
         id: cache-packages
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.cache/ # This path is specific to Ubuntu
           key: packages-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }} # Look to see if there is a cache hit for the corresponding requirements file
