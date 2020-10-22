@@ -21,19 +21,20 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-def make_people(sim, save_pop=False, popfile=None, die=True, reset=False, verbose=None, **kwargs):
+def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset=False, verbose=None, **kwargs):
     '''
     Make the actual people for the simulation. Usually called via sim.initialize(),
     not directly by the user.
 
     Args:
-        sim (Sim): the simulation object
-        save_pop (bool): whether to save the population to disk
-        popfile (bool): if so, the filename to save to
-        die (bool): whether or not to fail if synthetic populations are requested but not available
-        reset (bool): whether to force population creation even if self.popdict/self.people exists
-        verbose (bool): level of detail to print
-        kwargs (dict): passed to make_randpop() or make_synthpop()
+        sim      (Sim)  : the simulation object
+        popdict  (dict) : if supplied, use this population dictionary rather than generate a new one
+        save_pop (bool) : whether to save the population to disk
+        popfile  (bool) : if so, the filename to save to
+        die      (bool) : whether or not to fail if synthetic populations are requested but not available
+        reset    (bool) : whether to force population creation even if self.popdict/self.people exists
+        verbose  (bool) : level of detail to print
+        kwargs   (dict) : passed to make_randpop() or make_synthpop()
 
     Returns:
         people (People): people
@@ -67,7 +68,7 @@ def make_people(sim, save_pop=False, popfile=None, die=True, reset=False, verbos
     elif sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
         sim.popdict = None # Once loaded, remove
-    else:
+    elif popdict is None: # Main use case: no popdict is supplied
         # Create the population
         if pop_type in ['random', 'clustered', 'hybrid']:
             popdict = make_randpop(sim, microstructure=pop_type, **kwargs)
@@ -315,14 +316,14 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
 
 
 
-def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
+def make_synthpop(sim, population=None, layer_mapping=None, **kwargs):
     '''
     Make a population using SynthPops, including contacts. Usually called automatically,
     but can also be called manually.
 
     Args:
         sim (Sim): a Covasim simulation object
-        generate (bool): whether or not to generate a new population (otherwise, tries to load a pre-generated one)
+        population (list): a pre-generated SynthPops population (otherwise, create a new one)
         layer_mapping (dict): a custom mapping from SynthPops layers to Covasim layers
         kwars (dict): passed to sp.make_population()
 
@@ -332,15 +333,20 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
         sim.popdict = cv.make_synthpop(sim)
         sim.run()
     '''
-    import synthpops as sp # Optional import
+    try:
+        import synthpops as sp # Optional import
+    except ModuleNotFoundError as E:
+        errormsg = f'Please install the optional SynthPops module first, e.g. pip install synthpops' # Also caught in make_people()
+        raise ModuleNotFoundError(errormsg) from E
 
     # Handle layer mapping
-    default_layer_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
+    default_layer_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c', 'LTCF':'l'} # Remap keys from old names to new names
     layer_mapping = sc.mergedicts(default_layer_mapping, layer_mapping)
 
     # Handle other input arguments
     pop_size = sim['pop_size']
-    population = sp.make_population(n=pop_size, generate=generate, rand_seed=sim['rand_seed'], **kwargs)
+    if population is None:
+        population = sp.make_population(n=pop_size, rand_seed=sim['rand_seed'], **kwargs)
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)
