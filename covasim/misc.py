@@ -471,7 +471,7 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
         indent    (int): how many indents to use when writing the file to disk
         verbose  (bool): detail to print
         frame     (int): how many frames back to look for caller info
-        kwargs   (dict): passed to loadjson (if check=True) or loadjson (if check=False)
+        kwargs   (dict): passed to sc.loadjson() (if check=True) or sc.savejson() (if check=False)
 
     **Examples**::
 
@@ -562,12 +562,13 @@ def check_save_version(expected=None, filename=None, die=False, verbose=True, **
     Args:
         expected (str): expected version information
         filename (str): file to save to; if None, guess based on current file name
-        kwargs (dict): passed to git_info()
+        kwargs (dict): passed to git_info(), and thence to sc.savejson()
 
     **Examples**::
 
         cv.check_save_version()
         cv.check_save_version('1.3.2', filename='script.gitinfo', comments='This is the main analysis script')
+        cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
     '''
 
     # First, check the version if supplied
