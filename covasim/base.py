@@ -1234,6 +1234,7 @@ class Layer(FlexDict):
         """
         if not isinstance(inds, np.ndarray):
             inds = sc.promotetoarray(inds)
+
         contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
         if as_array:
             contact_inds = np.fromiter(contact_inds, dtype=cvd.default_int)
