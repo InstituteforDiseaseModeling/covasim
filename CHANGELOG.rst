@@ -14,6 +14,13 @@ Latest versions (1.7.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+
+Version 1.7.6 (2020-10-23)
+--------------------------
+- Added additional flexibility to ``cv.People``, ``cv.make_people()``, and ``cv.make_synthpop()`` to allow easier modification of different types of people (e.g. the raw output of SynthPops, the popdict, and the ``People`` object).
+- *GitHub info*: PR `712 <https://github.com/amath-idm/covasim/pull/712>`__
+
+
 Version 1.7.5 (2020-10-13)
 --------------------------
 - Added extra convenience methods to ``Layer`` objects

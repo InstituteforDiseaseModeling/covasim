@@ -71,7 +71,7 @@ class People(cvb.BasePeople):
 
         # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
-        self._lock = True # Stop further keys from being set (does not affect attributes)
+        self._lock = strict # If strict is true, stop further keys from being set (does not affect attributes)
 
         # Store flows to be computed during simulation
         self.flows = {key:0 for key in cvd.new_result_flows}
