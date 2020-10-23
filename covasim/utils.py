@@ -31,7 +31,7 @@ parallel = False
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit(             (nb.int32, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat), cache=True, parallel=parallel)
+@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat), cache=True, parallel=parallel)
 def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,    load_ratio,    high_cap):
     '''
     Calculate relative transmissibility for time t. Includes time varying
@@ -85,7 +85,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     return rel_trans, rel_sus
 
 
-@nb.njit#(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=parallel)
+@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=parallel)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
@@ -99,8 +99,7 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     return source_inds, target_inds
 
 
-#@nb.njit((nbint[::1], nbint[::1], nb.int64[::1]), cache=True) # Extra ::1 converts from A (no particular layout) to C (contiguous)
-@nb.njit #((nb.int64[::1], nb.int64[::1], nb.int64[::1]), cache=True) # Extra ::1 converts from A (no particular layout) to C (contiguous)
+@nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=True)
 def find_contacts(p1, p2, inds):
     """
     Numba for Layer.find_contacts()

@@ -39,11 +39,6 @@ class PeopleMeta(sc.prettyobj):
         'death_prob',  # Float
         'rel_trans',   # Float
         'rel_sus',     # Float
-        'school_id',   # Int
-        'teacher_flag',
-        'student_flag',
-        'staff_flag',
-        'school_type_by_person'
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py

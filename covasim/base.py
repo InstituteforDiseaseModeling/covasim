@@ -718,12 +718,11 @@ class BasePeople(sc.prettyobj):
 
     def set(self, key, value, die=True):
         ''' Ensure sizes and dtypes match '''
-        # COMMENTING FOR .schools
-        #current = self[key]
-        #value = np.array(value, dtype=self._dtypes[key]) # Ensure it's the right type
-        #if die and len(value) != len(current):
-        #    errormsg = f'Length of new array does not match current ({len(value)} vs. {len(current)})'
-        #    raise IndexError(errormsg)
+        current = self[key]
+        value = np.array(value, dtype=self._dtypes[key]) # Ensure it's the right type
+        if die and len(value) != len(current):
+            errormsg = f'Length of new array does not match current ({len(value)} vs. {len(current)})'
+            raise IndexError(errormsg)
         self[key] = value
         return
 
