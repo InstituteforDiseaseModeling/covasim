@@ -316,16 +316,19 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
 
 
 
-def make_synthpop(sim, population=None, layer_mapping=None, **kwargs):
+def make_synthpop(sim=None, population=None, layer_mapping=None, community_contacts=None, **kwargs):
     '''
     Make a population using SynthPops, including contacts. Usually called automatically,
-    but can also be called manually.
+    but can also be called manually. Either a simulation object or a population must
+    be supplied; if a population is supplied, transform it into the correct format;
+    otherise, create the population and then transform it.
 
     Args:
         sim (Sim): a Covasim simulation object
         population (list): a pre-generated SynthPops population (otherwise, create a new one)
         layer_mapping (dict): a custom mapping from SynthPops layers to Covasim layers
-        kwars (dict): passed to sp.make_population()
+        community_contacts (int): if a simulation is not supplied, create this many community contacts on average
+        kwargs (dict): passed to sp.make_population()
 
     **Example**::
 
@@ -344,9 +347,22 @@ def make_synthpop(sim, population=None, layer_mapping=None, **kwargs):
     layer_mapping = sc.mergedicts(default_layer_mapping, layer_mapping)
 
     # Handle other input arguments
-    pop_size = sim['pop_size']
     if population is None:
+        if sim is None:
+            errormsg = 'Either a simulation or a population must be supplied'
+            raise ValueError(errormsg)
+        pop_size = sim['pop_size']
         population = sp.make_population(n=pop_size, rand_seed=sim['rand_seed'], **kwargs)
+
+    if community_contacts is None:
+        if sim is not None:
+            community_contacts = sim['contacts']['c']
+        else:
+            errormsg = 'If a simulation is not supplied, the number of community contacts must be specified'
+            raise ValueError(errormsg)
+
+    # Create the basic lists
+    pop_size = len(population)
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)
@@ -375,7 +391,7 @@ def make_synthpop(sim, population=None, layer_mapping=None, **kwargs):
         contacts.append(int_contacts)
 
     # Add community contacts
-    c_contacts, _ = make_random_contacts(pop_size, {'c':sim['contacts']['c']})
+    c_contacts, _ = make_random_contacts(pop_size, {'c':community_contacts})
     for i in range(int(pop_size)):
         contacts[i]['c'] = c_contacts[i]['c'] # Copy over community contacts -- present for everyone
 
