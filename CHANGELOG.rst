@@ -14,6 +14,37 @@ Latest versions (1.7.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+
+Version 1.7.6 (2020-10-23)
+--------------------------
+- Added additional flexibility to ``cv.People``, ``cv.make_people()``, and ``cv.make_synthpop()`` to allow easier modification of different types of people (e.g. the raw output of SynthPops, the popdict, and the ``People`` object).
+- *GitHub info*: PR `712 <https://github.com/amath-idm/covasim/pull/712>`__
+
+
+Version 1.7.5 (2020-10-13)
+--------------------------
+- Added extra convenience methods to ``Layer`` objects
+    - ``Layer.members`` returns an array of all people with interactions in the layer
+    - ``__contains__`` is implemented so ``uid in layer`` can be used
+- ``cv.sequence.apply()`` passes on the underlying intervention's return value rather than always returning ``None``
+- *GitHub info*: PR `709 <https://github.com/amath-idm/covasim/pull/709>`__
+
+
+Version 1.7.4 (2020-10-02)
+--------------------------
+- Refactored `cv.contact_tracing()` so that derived classes can extend individual parts of contact tracing without having to re-implement the entire intervention
+- Moved `people.trace` to `contact_tracing` so that the tracing step can be extended via custom interventions
+- *Regression info*: Custom interventions calling `people.trace` should inherit from `cv.contact_tracing` instead and use `contact_tracing.identify_contacts` and `contact_tracing.notify_contacts` to replace `people.trace`. In most cases however, it would be possible to overload one of the contact tracing steps rather than `contact_tracing.apply`, which thus eliminates the need to call `people.trace` entirely.
+- *GitHub info*: PR `702 <https://github.com/amath-idm/covasim/pull/702>`__
+
+
+Version 1.7.3 (2020-09-30)
+--------------------------
+- Changed ``test_prob.apply()`` and ``test_num.apply()`` to return the indices of people that were tested
+- ``cvm.date(None)`` returns ``None`` instead of an empty list. Both ``cvm.date()`` and ``cvm.day()`` no longer raise errors if the list of inputs includes ``None`` entries
+- *GitHub info*: PR `699 <https://github.com/amath-idm/covasim/pull/699>`__
+
+
 Version 1.7.2 (2020-09-24)
 --------------------------
 - Changed the intervention validation introduced in version 1.7.1 from an exception to a printed warning, to accommodate for custom-defined interventions.
@@ -32,7 +63,7 @@ Version 1.7.1 (2020-09-23)
 - Additional validation is done on intervention order to ensure that testing interventions are defined before tracing interventions.
 - Code has been moved between ``sim.py``, ``people.py``, and ``base.py`` to better reflect the division between "the simulation" (the first two files) and "the housekeeping" (the last file).
 - *Regression info*: Scripts that used ``quar_policy='end'`` may now provide stochastically different results. User scripts that explicitly call ``sim.people.not_defined()`` or ``sim.people.quarantine()`` should be updated to call ``sim.people.undefined()`` and ``sim.people.schedule_quarantine()`` instead.
-- *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__, head ``a00b779``
+- *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__
 
 
 Version 1.7.0 (2020-09-20)

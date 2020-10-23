@@ -41,6 +41,9 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         cv.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
     '''
 
+    if obj is None:
+        return None
+
     # Convert to list and handle other inputs
     if isinstance(obj, np.ndarray):
         obj = obj.tolist() # If it's an array, convert to a list
@@ -53,6 +56,9 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 
     dates = []
     for d in obj:
+        if d is None:
+            dates.append(d)
+            continue
         try:
             if type(d) == dt.date: # Do not use isinstance, since must be the exact type
                 pass
@@ -117,7 +123,9 @@ def day(obj, *args, start_day=None):
 
     days = []
     for d in obj:
-        if sc.isnumber(d):
+        if d is None:
+            days.append(d)
+        elif sc.isnumber(d):
             days.append(int(d)) # Just convert to an integer
         else:
             try:
@@ -463,7 +471,7 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
         indent    (int): how many indents to use when writing the file to disk
         verbose  (bool): detail to print
         frame     (int): how many frames back to look for caller info
-        kwargs   (dict): passed to loadjson (if check=True) or loadjson (if check=False)
+        kwargs   (dict): passed to sc.loadjson() (if check=True) or sc.savejson() (if check=False)
 
     **Examples**::
 
@@ -554,12 +562,13 @@ def check_save_version(expected=None, filename=None, die=False, verbose=True, **
     Args:
         expected (str): expected version information
         filename (str): file to save to; if None, guess based on current file name
-        kwargs (dict): passed to git_info()
+        kwargs (dict): passed to git_info(), and thence to sc.savejson()
 
     **Examples**::
 
         cv.check_save_version()
         cv.check_save_version('1.3.2', filename='script.gitinfo', comments='This is the main analysis script')
+        cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
     '''
 
     # First, check the version if supplied

@@ -21,19 +21,20 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-def make_people(sim, save_pop=False, popfile=None, die=True, reset=False, verbose=None, **kwargs):
+def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset=False, verbose=None, **kwargs):
     '''
     Make the actual people for the simulation. Usually called via sim.initialize(),
     not directly by the user.
 
     Args:
-        sim (Sim): the simulation object
-        save_pop (bool): whether to save the population to disk
-        popfile (bool): if so, the filename to save to
-        die (bool): whether or not to fail if synthetic populations are requested but not available
-        reset (bool): whether to force population creation even if self.popdict/self.people exists
-        verbose (bool): level of detail to print
-        kwargs (dict): passed to make_randpop() or make_synthpop()
+        sim      (Sim)  : the simulation object
+        popdict  (dict) : if supplied, use this population dictionary rather than generate a new one
+        save_pop (bool) : whether to save the population to disk
+        popfile  (bool) : if so, the filename to save to
+        die      (bool) : whether or not to fail if synthetic populations are requested but not available
+        reset    (bool) : whether to force population creation even if self.popdict/self.people exists
+        verbose  (bool) : level of detail to print
+        kwargs   (dict) : passed to make_randpop() or make_synthpop()
 
     Returns:
         people (People): people
@@ -67,7 +68,7 @@ def make_people(sim, save_pop=False, popfile=None, die=True, reset=False, verbos
     elif sim.popdict and not reset:
         popdict = sim.popdict # Use stored one
         sim.popdict = None # Once loaded, remove
-    else:
+    elif popdict is None: # Main use case: no popdict is supplied
         # Create the population
         if pop_type in ['random', 'clustered', 'hybrid']:
             popdict = make_randpop(sim, microstructure=pop_type, **kwargs)
@@ -85,12 +86,7 @@ def make_people(sim, save_pop=False, popfile=None, die=True, reset=False, verbos
         sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
 
     # Actually create the people
-    people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'],
-                          contacts=popdict['contacts'], school_id=popdict['school_id'],
-                          schools=popdict['schools'], school_types=popdict['school_types'],
-                          student_flag=popdict['student_flag'], teacher_flag=popdict['teacher_flag'],
-                          staff_flag=popdict['staff_flag'], school_type_by_person=popdict['school_type_by_person'])
-    people.popdict = popdict
+    people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
 
     average_age = sum(popdict['age']/pop_size)
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
@@ -173,13 +169,6 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     popdict['age'] = ages
     popdict['sex'] = sexes
 
-    school_ids = None
-    schools_dict = None
-    school_types = None
-    teacher_flag = None
-    student_flag = None
-    staff_flag = None
-
     # Actually create the contacts
     if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, sim['contacts'])
     elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'])
@@ -190,12 +179,6 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
 
     popdict['contacts']   = contacts
     popdict['layer_keys'] = layer_keys
-    popdict['school_id'] = school_ids
-    popdict['schools'] = schools_dict
-    popdict['school_types'] = school_types
-    popdict['teacher_flag'] = teacher_flag
-    popdict['student_flag'] = student_flag
-    popdict['staff_flag'] = staff_flag
 
     return popdict
 
@@ -333,16 +316,19 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
 
 
 
-def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
+def make_synthpop(sim=None, population=None, layer_mapping=None, community_contacts=None, **kwargs):
     '''
     Make a population using SynthPops, including contacts. Usually called automatically,
-    but can also be called manually.
+    but can also be called manually. Either a simulation object or a population must
+    be supplied; if a population is supplied, transform it into the correct format;
+    otherise, create the population and then transform it.
 
     Args:
         sim (Sim): a Covasim simulation object
-        generate (bool): whether or not to generate a new population (otherwise, tries to load a pre-generated one)
+        population (list): a pre-generated SynthPops population (otherwise, create a new one)
         layer_mapping (dict): a custom mapping from SynthPops layers to Covasim layers
-        kwars (dict): passed to sp.make_population()
+        community_contacts (int): if a simulation is not supplied, create this many community contacts on average
+        kwargs (dict): passed to sp.make_population()
 
     **Example**::
 
@@ -350,51 +336,38 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
         sim.popdict = cv.make_synthpop(sim)
         sim.run()
     '''
-    import synthpops as sp # Optional import
+    try:
+        import synthpops as sp # Optional import
+    except ModuleNotFoundError as E:
+        errormsg = f'Please install the optional SynthPops module first, e.g. pip install synthpops' # Also caught in make_people()
+        raise ModuleNotFoundError(errormsg) from E
 
-    pop_size = sim['pop_size']
     # Handle layer mapping
-    with_school_types = False
-    if 'with_school_types' in kwargs:
-        with_school_types = kwargs.get('with_school_types')
-        if with_school_types:
-            school_ids = [None] * int(pop_size)
-            teacher_flag = [False] * int(pop_size)
-            staff_flag = [False] * int(pop_size)
-            student_flag = [False] * int(pop_size)
-            school_types = {'pk': [], 'es': [], 'ms': [], 'hs': [], 'uv': []}
-            school_type_by_person = [None] * int(pop_size)
-            schools = dict()
-    if 'with_facilities' in kwargs:
-        with_facilities = kwargs.get('with_facilities')
-        if with_facilities:
-            layer_mapping = {'LTCF': 'l'}
-    default_layer_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c'} # Remap keys from old names to new names
+    default_layer_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c', 'LTCF':'l'} # Remap keys from old names to new names
     layer_mapping = sc.mergedicts(default_layer_mapping, layer_mapping)
 
     # Handle other input arguments
-    population = sp.make_population(n=pop_size, generate=generate, rand_seed=sim['rand_seed'], **kwargs)
+    if population is None:
+        if sim is None:
+            errormsg = 'Either a simulation or a population must be supplied'
+            raise ValueError(errormsg)
+        pop_size = sim['pop_size']
+        population = sp.make_population(n=pop_size, rand_seed=sim['rand_seed'], **kwargs)
+
+    if community_contacts is None:
+        if sim is not None:
+            community_contacts = sim['contacts']['c']
+        else:
+            errormsg = 'If a simulation is not supplied, the number of community contacts must be specified'
+            raise ValueError(errormsg)
+
+    # Create the basic lists
+    pop_size = len(population)
     uids, ages, sexes, contacts = [], [], [], []
     for uid,person in population.items():
         uids.append(uid)
         ages.append(person['age'])
         sexes.append(person['sex'])
-        if with_school_types:
-            if person['scid'] is not None:
-                school_ids[uid] = person['scid']
-                school_type_by_person[uid] = person['sc_type']
-                if person['scid'] not in school_types[person['sc_type']]:
-                    school_types[person['sc_type']].append(person['scid'])
-                if person['scid'] in schools:
-                    schools[person['scid']].append(uid)
-                else:
-                    schools[person['scid']] = [uid]
-                if person['sc_teacher'] is not None:
-                    teacher_flag[uid] = True
-                elif person['sc_student'] is not None:
-                    student_flag[uid] = True
-                elif person['sc_staff'] is not None:
-                    staff_flag[uid] = True
 
     # Replace contact UIDs with ints
     uid_mapping = {uid:u for u,uid in enumerate(uids)}
@@ -418,7 +391,7 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
         contacts.append(int_contacts)
 
     # Add community contacts
-    c_contacts, _ = make_random_contacts(pop_size, {'c':sim['contacts']['c']})
+    c_contacts, _ = make_random_contacts(pop_size, {'c':community_contacts})
     for i in range(int(pop_size)):
         contacts[i]['c'] = c_contacts[i]['c'] # Copy over community contacts -- present for everyone
 
@@ -429,21 +402,5 @@ def make_synthpop(sim, generate=True, layer_mapping=None, **kwargs):
     popdict['sex']        = np.array(sexes)
     popdict['contacts']   = sc.dcp(contacts)
     popdict['layer_keys'] = list(layer_mapping.values())
-    if with_school_types:
-        popdict['school_id'] = np.array(school_ids)
-        popdict['schools'] = schools
-        popdict['teacher_flag'] = teacher_flag
-        popdict['student_flag'] = student_flag
-        popdict['staff_flag'] = staff_flag
-        popdict['school_types'] = school_types
-        popdict['school_type_by_person'] = school_type_by_person
-    else:
-        popdict['school_id'] = None
-        popdict['schools'] = None
-        popdict['teacher_flag'] = None
-        popdict['student_flag'] = None
-        popdict['staff_flag'] = None
-        popdict['school_types'] = None
-        popdict['school_type_by_person'] = None
 
     return popdict

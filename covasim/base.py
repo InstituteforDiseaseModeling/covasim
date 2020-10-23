@@ -951,7 +951,7 @@ class BasePeople(sc.prettyobj):
         # Ensure the columns are right and add values if supplied
         for lkey, new_layer in new_contacts.items():
             n = len(new_layer['p1'])
-            if 'beta' not in new_layer or len(new_layer['beta']) != n:
+            if 'beta' not in new_layer.keys() or len(new_layer['beta']) != n:
                 if beta is None:
                     beta = 1.0
                 beta = cvd.default_float(beta)
@@ -1126,6 +1126,26 @@ class Layer(FlexDict):
         output = f'Layer({keys_str})\n'
         output += self.to_df().__repr__()
         return output
+
+
+    def __contains__(self, item):
+        """
+        Check if a person is present in a layer
+
+        Args:
+            item: Person index
+
+        Returns: True if person index appears in any interactions
+
+        """
+        return (item in self['p1']) or (item in self['p2'])
+
+    @property
+    def members(self):
+        """
+        Return sorted array of all members
+        """
+        return np.unique([self['p1'], self['p2']])
 
 
     def meta_keys(self):
