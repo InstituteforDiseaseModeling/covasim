@@ -1,6 +1,6 @@
 import covasim as cv
 import sciris as sc
-from SimVorarlberg.pars import pars
+from experiments.SimVorarlberg.pars import pars
 
 if __name__ == '__main__':
 

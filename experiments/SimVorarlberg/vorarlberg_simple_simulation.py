@@ -1,5 +1,5 @@
 import covasim as cv
-from SimVorarlberg.pars import pars
+from experiments.SimVorarlberg.pars import pars
 
 if __name__ == '__main__':
 
