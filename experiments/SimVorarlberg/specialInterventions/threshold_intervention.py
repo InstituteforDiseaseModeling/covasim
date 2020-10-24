@@ -55,11 +55,16 @@ class threshold_intervention(Intervention):
     Args:
         key (string or array): given key value(s) to be observed
         threshold (int or array): value on witch a given intervention should take place
-        intervention (Intervention or array): intervention(s) to be applied
+        intervention_th_exceeded (Intervention or array): intervention(s) to be applied for exceeded threshold
+        intervention_th_underrun (Intervention or array): intervention(s) to be applied for underrun threshold
         kwargs (dict): passed to Intervention()
 
     **Example**::
 
+        intervention_over_th = cv.change_beta(0, 0.3)
+        intervention_under_th = cv.change_beta(0, 1)
+
+        th_intervention = threshold_intervention('n_severe', 20, intervention_over_th, intervention_under_th)
 
     '''
 
