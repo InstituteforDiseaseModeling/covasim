@@ -1,6 +1,7 @@
 import covasim as cv
 import sciris as sc
 import random
+import json
 
 
 pars = {
@@ -52,6 +53,11 @@ if __name__ == "__main__":
     #multiSim.run()
     
     mysim.run()
-    #mysim.to_json('baseline_exp_results.json')
+    mysim.to_json('baseline_exp_results.json')
+
+    with open('baseline_exp_results.json') as f: 
+        data = json.load(f)
+    
+    print(data['summary']['cum_infectious'])
 
     

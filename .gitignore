@@ -1,3 +1,7 @@
+# Custom
+*.json
+*.csv
+
 # Custom -- docs build files
 docs/covasim*.rst
 docs/modules.rst
@@ -142,4 +146,3 @@ dmypy.json
 
 # Node.js and NPM
 node_modules
-baseline_exp_results.json
