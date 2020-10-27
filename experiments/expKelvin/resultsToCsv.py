@@ -90,15 +90,14 @@ def makeRunsAndSaveResultsAsCSV(fileName = "baselineExperiment.csv", numberOfRan
                     cum_critical = list(data['results']['cum_critical'][key]['best'])[-1]
                     cum_deaths = list(data['results']['cum_deaths'][key]['best'])[-1]
 
-                    f = open("baselineExperiment.csv","a+")
-                    f.write(str(20) + "," + str(key) + ","
+                    f = open(fileName,"a+")
+                    f.write(str(pop_seed) + "," + str(key) + ","
                             + str(cum_infections) + "," 
                             + str(cum_recoveries) + ","
                             + str(cum_symptomatic) + ","
                             + str(cum_severe) + ","
                             + str(cum_critical) + ","
                             + str(cum_deaths) + "\n")
-
                     f.close()
                 
             else:
@@ -144,6 +143,6 @@ scenarios = {'baseline': {
               },
              }
 
-makeRunsAndSaveResultsAsCSV(scenarios=scenarios, numberOfRandomPop=1)
+makeRunsAndSaveResultsAsCSV(fileName = "test0.csv", scenarios=scenarios, numberOfRandomPop=1)
 
     
