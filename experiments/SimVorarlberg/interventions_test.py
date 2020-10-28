@@ -1,6 +1,6 @@
 import covasim as cv
-from SimVorarlberg.pars import pars
-from SimVorarlberg.specialInterventions.testIntervention import change_beta_by_age
+from experiments.SimVorarlberg.pars import pars
+from experiments.SimVorarlberg.specialInterventions.testIntervention import change_beta_by_age
 
 # Run options
 do_plot = 1
