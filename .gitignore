@@ -8,6 +8,8 @@ data/epi_data
 # Other files
 .idea
 *.pop
+*.msim
+*.sim
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

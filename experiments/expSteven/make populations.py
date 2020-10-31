@@ -5,7 +5,7 @@ import random
 
 if __name__ == '__main__':
 
-    sim = cv.Sim(pars, rand_seed=random.randint(0, 99999))
+    sim = cv.Sim(pars, rand_seed=1)
 
     people = cv.make_synthpop(sim=sim, max_contacts=None, generate=True, with_industry_code=False, with_facilities=False,
                     use_two_group_reduction=True, average_LTCF_degree=20, ltcf_staff_age_min=20, ltcf_staff_age_max=60,
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     filepath = sc.makefilepath(filename='pop1.pop')
     cv.save(filepath, people)
 
-    sim = cv.Sim(pars, rand_seed=random.randint(0, 99999))
+    sim = cv.Sim(pars, rand_seed=2)
 
     people = cv.make_synthpop(sim=sim, max_contacts=None, generate=True, with_industry_code=False, with_facilities=False,
                     use_two_group_reduction=True, average_LTCF_degree=20, ltcf_staff_age_min=20, ltcf_staff_age_max=60,
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     filepath = sc.makefilepath(filename='pop2.pop')
     cv.save(filepath, people)
 
-    sim = cv.Sim(pars, rand_seed=random.randint(0, 99999))
+    sim = cv.Sim(pars, rand_seed=3)
 
     people = cv.make_synthpop(sim=sim, max_contacts=None, generate=True, with_industry_code=False, with_facilities=False,
                     use_two_group_reduction=True, average_LTCF_degree=20, ltcf_staff_age_min=20, ltcf_staff_age_max=60,
