@@ -17,11 +17,6 @@ metapars = dict(
     quantiles = {'low':0.1, 'high':0.9},
 )
 
-pars = {
-            'pop_size': 40000,
-            'pop_type': 'synthpops'
-        }
-
 def makeRunsAndSaveResultsAsCSV(fileName = "baselineExperiment.csv", numberOfRandomPop=2, scenarios: dict = None):
 
     f = open(fileName,"w+")
@@ -31,9 +26,14 @@ def makeRunsAndSaveResultsAsCSV(fileName = "baselineExperiment.csv", numberOfRan
     for i in range(numberOfRandomPop):
         pop_seed = random.randint(0, 999999)
 
+        pars = {
+            'pop_size': 40000,
+            'pop_type': 'synthpops',
+            'rand_seed': pop_seed
+        }
+
         sim = cv.Sim(pars)
 
-        # it always creates the same population
         popdict = cv.make_people(sim,
                                 generate=True,
                                 save_pop=True,popfile='baseline_exp.pop',
@@ -81,8 +81,8 @@ def makeRunsAndSaveResultsAsCSV(fileName = "baselineExperiment.csv", numberOfRan
                 # results - cum_inf - scenario - best
 
                 # get the scenario keys / names
-                scenarios = data['scenarios'].keys()
-                for key in scenarios:
+                scenarioData = data['scenarios'].keys()
+                for key in scenarioData:
                     cum_infections = list(data['results']['cum_infections'][key]['best'])[-1]
                     cum_recoveries = list(data['results']['cum_recoveries'][key]['best'])[-1]
                     cum_symptomatic = list(data['results']['cum_symptomatic'][key]['best'])[-1]
@@ -118,7 +118,7 @@ def makeRunsAndSaveResultsAsCSV(fileName = "baselineExperiment.csv", numberOfRan
                     + str(data['summary']['cum_deaths']) + "\n")
                 f.close()
 
-# Define the actual scenarios
+# scenarios
 start_day = '2020-04-04'
 scenarios = {'baseline': {
               'name':'Baseline',
@@ -143,6 +143,6 @@ scenarios = {'baseline': {
               },
              }
 
-makeRunsAndSaveResultsAsCSV(fileName = "test0.csv", scenarios=scenarios, numberOfRandomPop=1)
+makeRunsAndSaveResultsAsCSV(fileName = "test0.csv", scenarios=scenarios, numberOfRandomPop=2)
 
     
