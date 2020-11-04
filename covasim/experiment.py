@@ -1,10 +1,11 @@
 import covasim as cv
 
 import sciris as sc
-
+import os
 standardPars = pars = sc.objdict(
     pop_size        = 40000,
     pop_infected    = 10,
+    start_day       = '2020-03-01',
     pop_type        = 'synthpops',
     location        = 'Vorarlberg',
     n_days          = 180,
@@ -14,15 +15,49 @@ standardPars = pars = sc.objdict(
     n_beds_icu      = 30,      # source: https://vbgv1.orf.at/stories/493214 (2011 no recent data found)
     iso_factor      = dict(h=1, s=1, w=1, c=1)
 )
-def plot_res(scenarios):
-    fig1 = scenarios.plot(do_show=True, to_plot=sc.odict(
+
+def summarize_results(scenarios,summaryPath):
+    t = len(scenarios.results[0]['timeline']['best'])-1
+
+    summaryStr = 'Simulation summary:\n'
+    for key in scenarios.result_keys():
+                if key.startswith('cum_'):
+                    summaryStr += key+': '+str(round(scenarios.results[key]['timeline']['best'][t],3))+'\n'
+                    #summary_str += f'   {summary[key]:5.0f} {key}\n'
+    print(summaryStr)
+    
+    summaryFile = open(summaryPath,'w')
+    summaryFile.write(summaryStr)
+    summaryFile.close()
+
+
+def plot_res(scenarios,expName = 'res'):
+    notCreated = True
+    targetDirectory = os.path.join('Results',expName)
+    cnt = 0
+    while(notCreated):
+        try:
+            os.mkdir(targetDirectory+str(cnt))
+        except OSError:
+            print("CreationFailed")
+            cnt+=1
+        else:
+            notCreated = False
+    
+    filePath = os.path.join(targetDirectory+str(cnt),expName+'Results.xlsx')
+    scenarios.to_excel(filePath)
+    summaryPath = os.path.join(targetDirectory+str(cnt),expName+'Summary.txt')
+    summarize_results(scenarios,summaryPath)
+    figPath = os.path.join(targetDirectory+str(cnt),expName+'Results.png')
+    scenarios.plot(do_show=True,do_save=True,fig_path=figPath, to_plot=sc.odict(
 
         {
-            'cumulativ diagnoses':['cum_diagnoses'],
-            'new diagnoses': ['new_diagnoses'],
+            'cumulativ diagnoses':['cum_infections'],
+            'new diagnoses': ['new_infections'],
             'deaths': ['cum_deaths']
         }
     ))
+
 
 def run_experiment(expName = 'stand_name', scenarios = None, pars = None, metapars = None):
     if pars == None:
@@ -46,10 +81,10 @@ def run_experiment(expName = 'stand_name', scenarios = None, pars = None, metapa
                   }
               },
             }
-    vlbgSimulation = cv.sim.Sim(pars=pars, load_pop=True, popfile='voriPop.pop')
+    vlbgSimulation = cv.sim.Sim(pars=pars, load_pop=True, popfile='vlbgPop40000.pop')
    
     scens = cv.Scenarios(sim=vlbgSimulation, metapars=metapars, scenarios=scenarios)
 
     scens.run(verbose=1)
     
-    plot_res(scens)
+    plot_res(scens,expName=expName)
