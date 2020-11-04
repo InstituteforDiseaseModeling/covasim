@@ -19,3 +19,4 @@ from .interventions import *
 from .analysis      import *
 from .sim           import *
 from .run           import *
+from .experiment    import *
