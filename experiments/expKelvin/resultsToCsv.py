@@ -13,7 +13,7 @@ metapars = dict(
     n_runs    = 1, # Number of parallel runs; change to 3 for quick, 11 for real
     noise     = 0.1, # Use noise, optionally
     noisepar  = 'beta',
-    rand_seed = 1,
+    rand_seed = None,
     quantiles = {'low':0.1, 'high':0.9},
 )
 
@@ -25,11 +25,12 @@ def makeRunsAndSaveResultsAsCSV(fileName = "baselineExperiment.csv", numberOfRan
 
     for i in range(numberOfRandomPop):
         pop_seed = random.randint(0, 999999)
+        pop_seed = i # delete afterwards
 
         pars = {
             'pop_size': 40000,
             'pop_type': 'synthpops',
-            'rand_seed': pop_seed
+            'rand_seed': i #was pop_seed
         }
 
         sim = cv.Sim(pars)
@@ -61,7 +62,7 @@ def makeRunsAndSaveResultsAsCSV(fileName = "baselineExperiment.csv", numberOfRan
             pop_size     = 40e3,    # Population size
             location = "Vorarlberg",
             pop_infected = 10,       # Number of initial infections
-            n_days       = 45,       # Number of days to simulate
+            n_days       = 100,       # Number of days to simulate
             pop_scale = 10,
             n_beds_icu = 30,
             n_beds_hosp = 700,
@@ -143,6 +144,6 @@ scenarios = {'baseline': {
               },
              }
 
-makeRunsAndSaveResultsAsCSV(fileName = "test0.csv", scenarios=scenarios, numberOfRandomPop=2)
+makeRunsAndSaveResultsAsCSV(fileName = "5pop_baseline0.csv", scenarios=None, numberOfRandomPop=5)
 
     

@@ -12,12 +12,13 @@ pars = pars = sc.objdict(
     pop_infected    = 10,
     pop_type        = 'synthpops',
     location        = 'Vorarlberg',
-    n_days          = 120,
+    n_days          = 180,
     verbose         = 1,
     pop_scale       = 10,
     n_beds_hosp     = 700 ,  #source: http://www.kaz.bmg.gv.at/fileadmin/user_upload/Betten/1_T_Betten_SBETT.pdf (2019)
     n_beds_icu      = 30,      # source: https://vbgv1.orf.at/stories/493214 (2011 no recent data found)
-    iso_factor      = dict(h=1, s=1, w=1, c=1), # change this afterwards 
+    iso_factor      = dict(h=0.3, s=0.1, w=0.1, c=0.1), # change this afterwards; default: 0.3, 0.1, 0.1, 0.1
+    #quar_factor = dict(h=0.8, s=0.0, w=0.0, c=0.1),
     start_day       = start_day
 )
 
