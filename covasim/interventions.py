@@ -297,9 +297,9 @@ class sequence(Intervention):
 
 
     def apply(self, sim):
-        for ind in find_day(self.days_arr <= sim.t, which='last'):
-            self.interventions[ind].apply(sim)
-        return
+        ind = find_day(self.days_arr <= sim.t, which='last')
+        if ind:
+            return self.interventions[ind[0]].apply(sim)
 
 
 class trigger(Intervention):
