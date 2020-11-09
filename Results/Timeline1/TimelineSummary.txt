@@ -1,0 +1,11 @@
+Simulation summary:
+cum_infections: 1309.0
+cum_infectious: 1306.0
+cum_tests: 20250.0
+cum_diagnoses: 912.0
+cum_recoveries: 1276.0
+cum_symptomatic: 906.0
+cum_severe: 62.0
+cum_critical: 11.0
+cum_deaths: 7.0
+cum_quarantined: 7252.0
