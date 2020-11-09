@@ -92,6 +92,8 @@ def plot_res_diagnoses(scenarios,expName = 'res'):
 def run_experiment(expName = 'stand_name', scenarios = None, pars = None, metapars = None, do_plot = True):
     if pars == None:
         pars = standardPars
+    else:
+        pars = sc.mergedicts(standardPars, pars)
 
     if metapars == None:
         metapars = dict(
