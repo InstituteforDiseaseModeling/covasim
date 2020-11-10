@@ -4,10 +4,9 @@ import sciris as sc
 #from experiments import experiment 
 
 pars = sc.objdict(
-    pop_size        = 40000,
+    pop_size        = 40e3,
     pop_infected    = 30,
     start_day       = '2020-03-01',
-    pop_type        = 'synthpops',
     location        = 'Vorarlberg',
     n_days          = 80,
     verbose         = 1,
@@ -25,34 +24,34 @@ if __name__ == "__main__":
     reduced_masks_date = '2020-06-15'
     
     scenarios = {
-                'timeline': {
-                'name':'Intervention Timeline in Austria',
-                'pars': {
-                    'interventions': [
-                            #Basistestrate
-                            cv.test_num(daily_tests=250,symp_test=100,quar_test=0.9,quar_policy='start',test_delay=2),
-                            cv.contact_tracing(trace_probs=0.5,trace_time=2),
-                            ##Lockdown 16.03
-                            
-                            cv.clip_edges(days=lockdown1_date,changes=0.6,layers='w'),
-                            cv.clip_edges(days=lockdown1_date,changes=0.15,layers='s'),
-                            cv.clip_edges(days=lockdown1_date,changes=0.4,layers='c'),
-                            cv.change_beta(days=lockdown1_date,changes=0.7),
+            'timeline': {
+              'name':'Intervention Timeline in Austria',
+              'pars': {
+                  'interventions': [
+                        #Basistestrate
+                        cv.test_num(daily_tests=250,symp_test=100,quar_test=0.9,quar_policy='start',test_delay=2),
+                        cv.contact_tracing(trace_probs=0.5,trace_time=2),
+                        ##Lockdown 16.03
+                        cv.clip_edges(days=lockdown1_date,changes=0.60,layers='w'),
+                        cv.clip_edges(days=lockdown1_date,changes=0.15,layers='s'),
+                        cv.clip_edges(days=lockdown1_date,changes=0.4,layers='c'),
+                        cv.change_beta(days=lockdown1_date,changes=0.7),
 
-                            ## Eröffnung Geschaefte
-                            cv.clip_edges(days=lockdown1_store_opening_date,changes=0.5,layers='c'),
+                        ## Eröffnung Geschaefte
+                        cv.clip_edges(days=lockdown1_store_opening_date,changes=0.5,layers='c'),
 
-                            ##Eroeffnung Schulen
-                            cv.clip_edges(days=lockdown1_school_opening_date,changes=0.8,layers='s'),
+                        ##Eroeffnung Schulen
+                        cv.clip_edges(days=lockdown1_school_opening_date,changes=0.8,layers='s'),
+                        cv.clip_edges(days=lockdown1_school_opening_date,changes=0.65,layers='w'),
+                        ##Eroeffnung Gastronomie
+                        cv.clip_edges(days=lockdown1_restaurant_opening_date,changes=0.5,layers='c'),
+                        cv.clip_edges(days=lockdown1_restaurant_opening_date,changes=0.7,layers='w'),
+                        ##Reduktion Maskenpflicht
+                        cv.change_beta(days=reduced_masks_date,changes=0.9)
+                        ]
+                  }
+              },
+            }
 
-                            ##Eroeffnung Gastronomie
-                            cv.clip_edges(days=lockdown1_restaurant_opening_date,changes=0.5,layers='c'),
-
-                            ##Reduktion Maskenpflicht
-                            cv.change_beta(days=reduced_masks_date,changes=0.9)
-                            ]
-                    }
-                },
-                }
-
-    cv.experiment.run_experiment(expName = 'timeline',scenarios = scenarios)
+    scens = cv.experiment.run_experiment(expName = 'Timeline',scenarios = scenarios, pars=pars,do_plot=False)
+    cv.experiment.plot_res_diagnoses(scens,expName = 'Timeline')
