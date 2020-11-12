@@ -2,16 +2,17 @@
 Set the defaults across each of the different files.
 '''
 
+import os
 import numpy as np
 import sciris as sc
 
 # Specify all externally visible functions this file defines -- other things are available as e.g. cv.defaults.default_int
-__all__ = ['get_colors', 'get_sim_plots', 'get_scen_plots']
+__all__ = ['default_float', 'default_int', 'get_colors', 'get_sim_plots', 'get_scen_plots']
 
 
 #%% Specify what data types to use
 
-default_precision = 32 # Use this by default for speed and memory efficiency
+default_precision = os.getenv('COVASIM_PRECISION', 32) # Use this by default for speed and memory efficiency
 result_float = np.float64 # Always use float64 for results, for simplicity
 if default_precision == 32:
     default_float = np.float32

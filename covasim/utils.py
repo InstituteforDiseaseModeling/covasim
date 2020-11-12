@@ -99,7 +99,7 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     return source_inds, target_inds
 
 
-@nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=True)
+@nb.njit((nbint[:], nbint[:], nbint[:]), cache=True)
 def find_contacts(p1, p2, inds):
     """
     Numba for Layer.find_contacts()

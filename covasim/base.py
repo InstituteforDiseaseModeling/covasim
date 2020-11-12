@@ -1232,11 +1232,17 @@ class Layer(FlexDict):
         - P2 = [2,3,1,4]
         Then find_contacts([1,3]) would return {1,2,3}
         """
+
+        # Check types
         if not isinstance(inds, np.ndarray):
             inds = sc.promotetoarray(inds)
+        if inds.dtype != cvd.default_int:
+            inds = np.array(inds, dtype=cvd.default_int)
 
+        # Find the contacts
         contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
         if as_array:
             contact_inds = np.fromiter(contact_inds, dtype=cvd.default_int)
             contact_inds.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
+
         return contact_inds
