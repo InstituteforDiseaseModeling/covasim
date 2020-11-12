@@ -11,7 +11,6 @@ import pylab as pl
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
-import plotly.graph_objects as go
 from . import defaults as cvd
 from . import misc as cvm
 
@@ -505,6 +504,34 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
 
 
 #%% Plotly functions
+
+def import_plotly():
+    ''' Try to import Plotly, but fail quietly if not available '''
+
+    # Try to import Plotly normally
+    try:
+        import plotly.graph_objects as go
+        return go
+
+    # If that failed, handle it gracefully
+    except Exception as E:
+
+        class PlotlyImportFailed(object):
+            ''' Define a micro-class to give a helpful error message if the import failed '''
+
+            def __init__(self, E):
+                self.E = E
+
+            def __getattr__(self, attr):
+                errormsg = f'Plotly import failed: {str(self.E)}. Plotly plotting is not available. Please install Plotly first.'
+                raise ImportError(errormsg)
+
+        go = PlotlyImportFailed(E)
+        return go
+
+# Load Plotly
+go = import_plotly()
+
 
 def get_individual_states(sim):
     ''' Helper function to convert people into integers '''
