@@ -21,12 +21,28 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people
 
 #%% Plotting helper functions
 
+def set_plot_options(font_size=None, font_family=None, dpi=None):
+    ''' Set global plot options '''
+
+    # Reset options if provided
+    if font_size:    cvo.font_size   = font_size
+    if font_family:  cvo.font_family = font_family
+    if dpi:          cvo.dpi         = dpi
+
+    # Set Matplotlib options -- these intentionally skip 0 values, which are used as a default
+    if cvo.font_size:   pl.rcParams['font.size']   = cvo.font_size
+    if cvo.font_family: pl.rcParams['font.family'] = cvo.font_family
+    if cvo.dpi:         pl.rcParams['figure.dpi']  = cvo.dpi
+
+    return
+
+
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
     args = sc.objdict()
     args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
-    args.plot    = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-    args.scatter = sc.mergedicts({'s':70, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
+    args.plot    = sc.mergedicts({'lw': 1.5, 'alpha': 0.7}, plot_args)
+    args.scatter = sc.mergedicts({'s':35, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
     args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
     args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
     args.legend  = sc.mergedicts({'loc': 'best', 'frameon':False}, legend_args)
@@ -75,7 +91,7 @@ def handle_to_plot(which, to_plot, n_cols, sim):
     return to_plot, n_cols, n_rows
 
 
-def create_figs(args, font_size, font_family, sep_figs, fig=None):
+def create_figs(args, sep_figs, fig=None):
     '''
     Create the figures and set overall figure properties. If a figure is supplied,
     reset the axes labels for automatic use by other plotting functions (i.e. ax1, ax2, etc.)
@@ -91,12 +107,6 @@ def create_figs(args, font_size, font_family, sep_figs, fig=None):
                 ax.set_label(f'ax{i+1}')
         figs = None
     pl.subplots_adjust(**args.axis)
-    if font_size is None:
-        font_size = cvo.font_size
-    if font_size: # This intentionally skips font size 0, which is used as a default
-        pl.rcParams['font.size'] = font_size
-    if font_family:
-        pl.rcParams['font.family'] = font_family
     return fig, figs, None # Initialize axis to be None
 
 
@@ -250,15 +260,15 @@ def set_line_options(input_args, reskey, resnum, default):
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=None, font_family=None,
-         grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
-         do_show=True, sep_figs=False, fig=None):
+         as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
+         setylim=True, log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
+    set_plot_options()
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
+    fig, figs, ax = create_figs(args, sep_figs, fig)
 
     # Do the plotting
     for pnum,title,keylabels in to_plot.enumitems():
@@ -285,15 +295,15 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=None, font_family=None,
-         grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
-         do_show=True, sep_figs=False, fig=None):
+         as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
+         setylim=True, log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
+    set_plot_options()
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
+    fig, figs, ax = create_figs(args, sep_figs, fig)
 
     # Do the plotting
     default_colors = sc.gridcolors(ncolors=len(scens.sims))
@@ -322,17 +332,18 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                font_size=None, font_family=None, grid=False, commaticks=True, setylim=True,
-                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None,
-                do_show=True, do_save=False, fig_path=None):
+                grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
+                interval=None, color=None, label=None, fig=None, do_show=True, do_save=False,
+                fig_path=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
     sep_figs = False # Only one figure
     fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
+    set_plot_options()
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
+    fig, figs, ax = create_figs(args, sep_figs, fig)
 
     # Gather results
     res = sim.results[key]
@@ -364,15 +375,16 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
 
 
 def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                font_size=None, font_family=None, grid=False, commaticks=True, setylim=True,
-                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None):
+                grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
+                interval=None, color=None, label=None, fig=None):
     ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
 
     # Handle inputs
+    set_plot_options()
     fig_args  = sc.mergedicts({'figsize':(16,16)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
+    fig, figs, ax = create_figs(args, sep_figs=False, fig=fig)
 
     # Map from results into different categories
     mapping = {
@@ -408,7 +420,7 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
 
 #%% Other plotting functions
-def plot_people(people, bins=None, width=1.0, font_size=None, alpha=0.6, fig_args=None, axis_args=None, plot_args=None):
+def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_args=None, plot_args=None):
     ''' Plot statistics of a population -- see People.plot() for documentation '''
 
     # Handle inputs
@@ -423,10 +435,10 @@ def plot_people(people, bins=None, width=1.0, font_size=None, alpha=0.6, fig_arg
     zorder    = 10 # So plots appear on top of gridlines
 
     # Handle other arguments
+    set_plot_options()
     fig_args  = sc.mergedicts(dict(figsize=(30,22)), fig_args)
     axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
     plot_args = sc.mergedicts(dict(lw=3, alpha=0.6, markersize=10, c=color, zorder=10), plot_args)
-    pl.rcParams['font.size'] = font_size
 
     # Compute statistics
     min_age = min(bins)
@@ -533,9 +545,6 @@ def import_plotly():
         go = PlotlyImportFailed(E)
         return go
 
-# Load Plotly
-go = import_plotly()
-
 
 def get_individual_states(sim):
     ''' Helper function to convert people into integers '''
@@ -587,6 +596,7 @@ plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
 
 def plotly_interventions(sim, fig, add_to_legend=False):
     ''' Add vertical lines for interventions to the plot '''
+    go = import_plotly() # Load Plotly
     if sim['interventions']:
         for interv in sim['interventions']:
             if hasattr(interv, 'days'):
@@ -601,6 +611,7 @@ def plotly_interventions(sim, fig, add_to_legend=False):
 def plotly_sim(sim, do_show=False):
     ''' Main simulation results -- parallel of sim.plot() '''
 
+    go = import_plotly() # Load Plotly
     plots = []
     to_plot = cvd.get_sim_plots()
     for p,title,keylabels in to_plot.enumitems():
@@ -630,8 +641,9 @@ def plotly_sim(sim, do_show=False):
 
 def plotly_people(sim, do_show=False):
     ''' Plot a "cascade" of people moving through different states '''
-    z, states = get_individual_states(sim)
 
+    go = import_plotly() # Load Plotly
+    z, states = get_individual_states(sim)
     fig = go.Figure()
 
     for state in states[::-1]:  # Reverse order for plotting
@@ -659,6 +671,7 @@ def plotly_people(sim, do_show=False):
 def plotly_animate(sim, do_show=False):
     ''' Plot an animation of each person in the sim '''
 
+    go = import_plotly() # Load Plotly
     z, states = get_individual_states(sim)
 
     min_color = min(states, key=lambda x: x['value'])['value']

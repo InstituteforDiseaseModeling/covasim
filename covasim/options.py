@@ -12,6 +12,12 @@ import os
 # Set the default font size -- if 0, use Matplotlib default
 font_size = int(os.getenv('COVASIM_FONT_SIZE', 0))
 
+# Set the font family
+font_family = os.getenv('COVASIM_FONT_FAMILY', '')
+
+# Set the default font size -- if 0, use Matplotlib default
+dpi = int(os.getenv('COVASIM_DPI', 0))
+
 # Set default verbosity
 verbose = float(os.getenv('COVASIM_VERBOSE', 1.0))
 
