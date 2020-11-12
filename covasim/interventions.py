@@ -873,12 +873,12 @@ class contact_tracing(Intervention):
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
-        self.quar_period = None  #: If quar_period is None, it will be drawn from sim.pars at initialization
+        self.quar_period = quar_period  #: If quar_period is None, it will be drawn from sim.pars at initialization
         return
 
 
     def initialize(self, sim):
-        ''' Fix the dates and dictionaries '''
+        ''' Process the dates and dictionaries '''
         self.start_day = sim.day(self.start_day)
         self.end_day   = sim.day(self.end_day)
         self.days      = [self.start_day, self.end_day]
