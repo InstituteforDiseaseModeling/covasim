@@ -39,8 +39,8 @@ jobs:
       - name: Run integration tests
         working-directory: ./tests
         run: |
-          pip install pytest pytest-parallel
-          pytest test*.py --workers auto --durations=0 # Run actual tests
+          pip install pytest
+          pytest test*.py --durations=0 # Run actual tests
       - name: Run unit tests
         working-directory: ./tests/unittests
-        run: pytest test*.py --workers auto --durations=0 # Run actual tests
+        run: pytest test*.py --durations=0 # Run actual tests
