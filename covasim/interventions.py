@@ -297,9 +297,9 @@ class sequence(Intervention):
 
 
     def apply(self, sim):
-        ind = find_day(self.days_arr <= sim.t, which='last')
-        if ind:
-            return self.interventions[ind[0]].apply(sim)
+        inds = find_day(self.days_arr <= sim.t, which='last')
+        if len(inds):
+            return self.interventions[inds[0]].apply(sim)
 
 
 

@@ -1236,7 +1236,7 @@ class Layer(FlexDict):
         # Check types
         if not isinstance(inds, np.ndarray):
             inds = sc.promotetoarray(inds)
-        if inds.dtype != np.int64:
+        if inds.dtype != np.int64: # This is int64 since indices often come from cv.true(), which returns int64
             inds = np.array(inds, dtype=np.int64)
 
         # Find the contacts
