@@ -555,7 +555,7 @@ class BaseSim(ParsObj):
         return sim
 
 
-    def _get_ia(self, which, label=None, partial=False, as_list=False, as_inds=False, die=True):
+    def _get_ia(self, which, label=None, partial=False, as_list=False, as_inds=False, die=True, first=False):
         ''' Helper method for get_interventions() and get_analyzers(); see get_interventions() docstring '''
 
         # Handle inputs
@@ -575,8 +575,9 @@ class BaseSim(ParsObj):
             return
 
         else: # Standard usage case
+            position = 0 if first else -1 # Choose either the first or last element
             if label is None:
-                label = -1 # Get the last element
+                label = position # Get the last element
             labels = sc.promotetolist(label)
 
             # Calculate the matches
@@ -600,60 +601,87 @@ class BaseSim(ParsObj):
                     raise TypeError(errormsg)
 
             # Parse the output options
-            if not (as_list or as_inds): # Normal case, return actual interventions
+            if as_inds:
+                output = match_inds
+            elif as_list:
+                output = matches
+            else: # Normal case, return actual interventions
                 if len(matches) == 0:
                     if die:
                         errormsg = f'No {which} matching "{label}" were found'
                         raise ValueError(errormsg)
                     else:
                         output = None
-                elif len(matches) == 1:
-                    output = matches[0]
                 else:
-                    output = matches # If more than one match, just return all, same as as_list = True
-            elif as_list:
-                output = matches
-            elif as_inds:
-                output = match_inds
+                    output = matches[position] # Return either the first or last match
 
             return output
 
 
-    def get_interventions(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+    def get_interventions(self, label=None, partial=False, as_inds=False):
         '''
         Find the matching intervention(s) by label, index, or type. If None, return
-        the last intervention in the list. If the label provided is "summary", then
-        print a summary of the interventions (index, label, type).
+        all interventions. If the label provided is "summary", then print a summary
+        of the interventions (index, label, type).
 
         Args:
             label (str, int, Intervention, list): the label, index, or type of intervention to get; if a list, iterate over one of those types
             partial (bool): if true, return partial matches (e.g. 'beta' will match all beta interventions)
-            as_list (bool): if true, always return a list even if one or no entries were found (otherwise, only return a list for multiple matching interventions)
             as_inds (bool): if true, return matching indices instead of the actual interventions
-            die (bool): if true and as_list is false, raise an exception if an intervention is not found
 
         **Examples**::
 
             tp = cv.test_prob(symp_prob=0.1)
-            cb = cv.change_beta(days=0.5, changes=0.3, label='NPI')
-            sim = cv.Sim(interventions=[tp, cb])
-            cb = sim.get_interventions('NPI')
-            cb = sim.get_interventions('NP', partial=True)
-            cb = sim.get_interventions(cv.change_beta)
-            cb = sim.get_interventions(1)
-            cb = sim.get_interventions()
-            tp, cb = sim.get_interventions([0,1])
-            ind = sim.get_interventions(cv.change_beta, as_inds=True) # Returns [1]
+            cb1 = cv.change_beta(days=5, changes=0.3, label='NPI')
+            cb2 = cv.change_beta(days=10, changes=0.3, label='Masks')
+            sim = cv.Sim(interventions=[tp, cb1, cb2])
+            cb1, cb2 = sim.get_interventions(cv.change_beta)
+            tp, cb2 = sim.get_interventions([0,2])
+            ind = sim.get_interventions(cv.change_beta, as_inds=True) # Returns [1,2]
             sim.get_interventions('summary') # Prints a summary
         '''
-        return self._get_ia('interventions', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
+        return self._get_ia('interventions', label=label, partial=partial, as_inds=as_inds, as_list=True)
 
 
-    def get_analyzers(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+    def get_intervention(self, label=None, partial=False, first=False, die=True):
+        '''
+        Like get_interventions(), find the matching intervention(s) by label,
+        index, or type. If more than one intervention matches, return the last
+        by default. If no label is provided, return the last intervention in the list.
+
+        Args:
+            label (str, int, Intervention, list): the label, index, or type of intervention to get; if a list, iterate over one of those types
+            partial (bool): if true, return partial matches (e.g. 'beta' will match all beta interventions)
+            first (bool): if true, return first matching intervention (otherwise, return last)
+            die (bool): whether to raise an exception if no intervention is found
+
+        **Examples**::
+
+            tp = cv.test_prob(symp_prob=0.1)
+            cb = cv.change_beta(days=5, changes=0.3, label='NPI')
+            sim = cv.Sim(interventions=[tp, cb])
+            cb = sim.get_intervention('NPI')
+            cb = sim.get_intervention('NP', partial=True)
+            cb = sim.get_intervention(cv.change_beta)
+            cb = sim.get_intervention(1)
+            cb = sim.get_intervention()
+            tp = sim.get_intervention(first=True)
+        '''
+        return self._get_ia('interventions', label=label, partial=partial, first=first, die=die, as_inds=False, as_list=False)
+
+
+    def get_analyzers(self, label=None, partial=False, as_inds=False):
         '''
         Same as get_interventions(), but for analyzers.
         '''
-        return self._get_ia('analyzers', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
+        return self._get_ia('analyzers', label=label, partial=partial, as_list=True, as_inds=as_inds)
+
+
+    def get_analyzer(self, label=None, partial=False, first=False, die=True):
+        '''
+        Same as get_intervention(), but for analyzers.
+        '''
+        return self._get_ia('analyzers', label=label, partial=partial, first=first, die=die, as_inds=False, as_list=False)
 
 
 #%% Define people classes
