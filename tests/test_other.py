@@ -213,9 +213,12 @@ def test_plotting():
     print('↑ May print a warning about zero values')
 
     # Handle Plotly functions
-    cv.plotly_sim(sim)
-    cv.plotly_people(sim)
-    cv.plotly_animate(sim)
+    try:
+        cv.plotly_sim(sim)
+        cv.plotly_people(sim)
+        cv.plotly_animate(sim)
+    except Exception as E:
+        print(f'Plotly plotting failed ({str(E)}), but not essential so continuing')
 
     # Tidy up
     remove_files(fig_path)
@@ -267,11 +270,6 @@ def test_requirements():
     cv.requirements.min_versions['sciris'] = '99.99.99'
     with pytest.raises(ImportError):
         cv.requirements.check_sciris()
-
-    cv.requirements.min_versions['scirisweb'] = '99.99.99'
-    cv.requirements.check_scirisweb()
-    with pytest.raises(ImportError):
-        cv.requirements.check_scirisweb(die=True)
 
     cv.requirements.check_synthpops()
 
