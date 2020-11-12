@@ -7,7 +7,8 @@ print(__license__)
 from . import requirements
 
 #%% Import the actual model
-from .defaults      import * # No dependencies
+from .options       import * # No dependencies
+from .defaults      import * # Depends on options
 from .parameters    import * # No dependencies
 from .misc          import * # Depends on version
 from .utils         import * # Depends on defaults

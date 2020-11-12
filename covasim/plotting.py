@@ -90,7 +90,11 @@ def create_figs(args, font_size, font_family, sep_figs, fig=None):
                 ax.set_label(f'ax{i+1}')
         figs = None
     pl.subplots_adjust(**args.axis)
-    pl.rcParams['font.size'] = font_size
+    print('sodfiu', font_size, cvd.default_font_size)
+    if font_size is None:
+        font_size = cvd.default_font_size
+    if font_size: # This intentionally skips font size 0, which is used as a default
+        pl.rcParams['font.size'] = font_size
     if font_family:
         pl.rcParams['font.family'] = font_family
     return fig, figs, None # Initialize axis to be None
@@ -246,7 +250,7 @@ def set_line_options(input_args, reskey, resnum, default):
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=18, font_family=None,
+         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=None, font_family=None,
          grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
          do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
@@ -281,7 +285,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=18, font_family=None,
+         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=None, font_family=None,
          grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
          do_show=True, sep_figs=False, fig=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
@@ -318,7 +322,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
+                font_size=None, font_family=None, grid=False, commaticks=True, setylim=True,
                 as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None,
                 do_show=True, do_save=False, fig_path=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
@@ -360,7 +364,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
 
 
 def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
+                font_size=None, font_family=None, grid=False, commaticks=True, setylim=True,
                 as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None):
     ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
 
@@ -404,7 +408,7 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
 
 #%% Other plotting functions
-def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=None, axis_args=None, plot_args=None):
+def plot_people(people, bins=None, width=1.0, font_size=None, alpha=0.6, fig_args=None, axis_args=None, plot_args=None):
     ''' Plot statistics of a population -- see People.plot() for documentation '''
 
     # Handle inputs

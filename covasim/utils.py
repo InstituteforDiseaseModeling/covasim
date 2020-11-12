@@ -8,6 +8,7 @@ import numba  as nb # For faster computations
 import numpy  as np # For numerics
 import random # Used only for resetting the seed
 import scipy.stats as sps # For distributions
+from . import options as cvo # To set precision
 from . import defaults as cvd # To set default types
 
 
@@ -16,10 +17,10 @@ __all__ = []
 
 # Set dtypes -- note, these cannot be changed after import since Numba functions are precompiled
 nbbool = nb.bool_
-if cvd.default_precision == 32:
+if cvo.default_precision == 32:
     nbint   = nb.int32
     nbfloat = nb.float32
-elif cvd.default_precision == 64:
+elif cvo.default_precision == 64:
     nbint   = nb.int64
     nbfloat = nb.float64
 else:
