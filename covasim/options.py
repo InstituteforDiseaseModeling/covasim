@@ -1,10 +1,10 @@
 '''
-Define options for Covasim. Note that font size can be set directly, e.g.
+Define options for Covasim. Note that font size and verbose can be set directly, e.g.
 
     cv.options.font_size = 18
 
-but if other options are set, cv.options.reload() must be called to recompile
-the Numba functions.
+but if precision or parallel options are set, cv.options.apply() must be called
+to recompile the Numba functions.
 '''
 
 import os
