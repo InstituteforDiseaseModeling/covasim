@@ -24,7 +24,7 @@ Other papers that have been written using Covasim include:
 
 (Note: if you have written a paper or report using Covasim, we'd love to know about it! Please write to us `here <mailto:covasim@idmod.org>`__.)
 
-The Covasim webapp is available at http://app.covasim.org.
+The Covasim webapp is available at http://app.covasim.org, and the repository for it is available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__.
 
 Questions or comments can be directed to covasim@idmod.org, or on this project's
 GitHub_ page. Full information about Covasim is provided in the documentation_.
@@ -74,10 +74,6 @@ GitHub installation instructions
 
           python setup.py develop
 
-    *   To install as a standalone Python model without webapp support::
-
-          python setup.py develop nowebapp
-
     *   To install Covasim and optional dependencies (be aware this may fail since it relies on private packages), enter::
 
           python setup.py develop full
@@ -107,13 +103,9 @@ follows:
 Module structure
 ================
 
-All core model code is located in the ``covasim`` subfolder; standard usage is
-``import covasim as cv``. The other subfolders, ``data``, and ``webapp``, are
-also described below.
+All core model code is located in the ``covasim`` subfolder; standard usage is ``import covasim as cv``. The ``data`` subfolder is described below.
 
-The model consists of two core classes: the ``Person`` class (which contains
-information on health state), and the ``Sim`` class (which contains methods for
-running, calculating results, plotting, etc.).
+The model consists of two core classes: the ``Person`` class (which contains information on health state), and the ``Sim`` class (which contains methods for running, calculating results, plotting, etc.).
 
 The structure of the ``covasim`` folder is as follows, roughly in the order in which the modules are imported, building from most fundamental to most complex:
 
@@ -138,14 +130,6 @@ Data
 
 This folder contains loading scripts for the epidemiological data in the root ``data`` folder, as well as data on age distributions for different countries and household sizes.
 
-
-
-Webapp
-------
-
-For running the interactive web application. See the `webapp README`_ for more information.
-
-.. _webapp README: https://github.com/InstituteforDiseaseModeling/covasim/tree/master/covasim/webapp
 
 
 Other folders
@@ -174,15 +158,6 @@ Scripts to automatically scrape data (including demographics and COVID epidemiol
 and the data files themselves (which are not part of the repository). See the `data README`_ for more information.
 
 .. _data README: ./data
-
-
-Docker
-------
-
-This folder contains the ``Dockerfile`` and other files that allow Covasim to be
-run as a webapp via Docker. See the `Docker README`_ for more information.
-
-.. _Docker README: ./docker
 
 
 Examples
@@ -219,13 +194,4 @@ Integration, development, and unit tests. While not (yet) beautifully curated, t
 Disclaimer
 ==========
 
-The code in this repository was developed by IDM to support our research in
-disease transmission and managing epidemics. We’ve made it publicly available
-under the Creative Commons Attribution-ShareAlike 4.0 International License to
-provide others with a better understanding of our research and an opportunity to
-build upon it for their own work. We make no representations that the code works
-as intended or that we will provide support, address issues that are found, or
-accept pull requests. You are welcome to create your own fork and modify the
-code to suit your own modeling needs as contemplated under the Creative Commons
-Attribution-ShareAlike 4.0 International License. See the contributing and code of conduct
-READMEs for more information.
+The code in this repository was developed by IDM to support our research in disease transmission and managing epidemics. We’ve made it publicly available under the Creative Commons Attribution-ShareAlike 4.0 International License to provide others with a better understanding of our research and an opportunity to build upon it for their own work. We make no representations that the code works as intended or that we will provide support, address issues that are found, or accept pull requests. You are welcome to create your own fork and modify the code to suit your own modeling needs as contemplated under the Creative Commons Attribution-ShareAlike 4.0 International License. See the contributing and code of conduct READMEs for more information.
