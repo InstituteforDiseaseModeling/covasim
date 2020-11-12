@@ -11,6 +11,7 @@ import pylab as pl
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
+from . import options as cvo
 from . import defaults as cvd
 from . import misc as cvm
 
@@ -90,9 +91,8 @@ def create_figs(args, font_size, font_family, sep_figs, fig=None):
                 ax.set_label(f'ax{i+1}')
         figs = None
     pl.subplots_adjust(**args.axis)
-    print('sodfiu', font_size, cvd.default_font_size)
     if font_size is None:
-        font_size = cvd.default_font_size
+        font_size = cvo.font_size
     if font_size: # This intentionally skips font size 0, which is used as a default
         pl.rcParams['font.size'] = font_size
     if font_family:

@@ -4,6 +4,7 @@ Set the parameters for Covasim.
 
 import numpy as np
 import sciris as sc
+from . import options as cvo
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
@@ -36,7 +37,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['end_day']    = None         # End day of the simulation
     pars['n_days']     = 60           # Number of days to run, if end_day isn't specified
     pars['rand_seed']  = 1            # Random seed, if None, don't reset
-    pars['verbose']    = 1            # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
+    pars['verbose']    = cvo.options  # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
     # Rescaling parameters
     pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million

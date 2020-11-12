@@ -7,6 +7,7 @@ Python, since the precision is used to compile the Numba functions in utils.py.
 '''
 
 import numpy as np
+import numba as nb
 import sciris as sc
 from . import options as cvo
 
@@ -20,9 +21,13 @@ result_float = np.float64 # Always use float64 for results, for simplicity
 if cvo.precision == 32:
     default_float = np.float32
     default_int   = np.int32
+    nbfloat       = nb.float32
+    nbint         = nb.int32
 elif cvo.precision == 64:
     default_float = np.float64
     default_int   = np.int64
+    nbfloat       = nb.float64
+    nbint         = nb.int64
 else:
     raise NotImplementedError(f'Precision must be either 32 bit or 64 bit, not {cvo.precision}')
 

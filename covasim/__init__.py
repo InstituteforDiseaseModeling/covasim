@@ -1,15 +1,15 @@
-#%% Print version and license information
-from .version import __version__, __versiondate__, __license__
-print(__license__)
-
-
-#%% Check that requirements are met
+# Check that requirements are met and set options
 from . import requirements
+from . import options
 
-#%% Import the actual model
-from .options       import * # No dependencies
+# Import the version and print the license unless verbosity is disabled
+from .version import __version__, __versiondate__, __license__
+if options.verbose:
+    print(__license__)
+
+# Import the actual model
 from .defaults      import * # Depends on options
-from .parameters    import * # No dependencies
+from .parameters    import * # Depends on options
 from .misc          import * # Depends on version
 from .utils         import * # Depends on defaults
 from .plotting      import * # Depends on defaults, misc
