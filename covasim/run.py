@@ -171,6 +171,20 @@ class MultiSim(sc.prettyobj):
         return
 
 
+    def shrink(self, **kwargs):
+        '''
+        Not to be confused with reduce(), this shrinks each sim in the msim;
+        see sim.shrink() for more information.
+
+        Args:
+            kwargs (dict): passed to sim.shrink() for each sim
+        '''
+        self.base_sim.shrink(**kwargs)
+        for sim in self.sims:
+            sim.shrink(**kwargs)
+        return
+
+
     def reset(self):
         ''' Undo a combine() or reduce() by resetting the base sim, which, and results '''
         if hasattr(self, 'orig_base_sim'):
@@ -182,7 +196,16 @@ class MultiSim(sc.prettyobj):
 
 
     def reduce(self, quantiles=None, output=False):
-        ''' Combine multiple sims into a single sim with scaled results '''
+        '''
+        Combine multiple sims into a single sim with scaled results.
+
+        Named for
+        the reduce step in MapReduce; not be confused with shrink().
+
+        Args:
+            quantiles
+
+        '''
 
         if quantiles is None:
             quantiles = self.quantiles
@@ -1077,21 +1100,21 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
     exactly these will be run and most other arguments will be ignored.
 
     Args:
-        sim        (Sim)   : the sim instance to be run, or a list of sims.
-        n_runs     (int)   : the number of parallel runs
-        reseed     (bool)  : whether or not to generate a fresh seed for each run
-        noise      (float) : the amount of noise to add to each run
-        noisepar   (str)   : the name of the parameter to add noise to
-        iterpars   (dict)  : any other parameters to iterate over the runs; see sc.parallelize() for syntax
-        combine    (bool)  : whether or not to combine all results into one sim, rather than return multiple sim objects
-        keep_people(bool)  : whether to keep the people after the sim run
-        run_args   (dict)  : arguments passed to sim.run()
-        sim_args   (dict)  : extra parameters to pass to the sim
-        par_args   (dict)  : arguments passed to sc.parallelize()
-        do_run     (bool)  : whether to actually run the sim (if not, just initialize it)
-        parallel   (bool)  : whether to run in parallel using multiprocessing (else, just run in a loop)
-        verbose    (int)   : detail to print
-        kwargs     (dict)  : also passed to the sim
+        sim         (Sim)   : the sim instance to be run, or a list of sims.
+        n_runs      (int)   : the number of parallel runs
+        reseed      (bool)  : whether or not to generate a fresh seed for each run
+        noise       (float) : the amount of noise to add to each run
+        noisepar    (str)   : the name of the parameter to add noise to
+        iterpars    (dict)  : any other parameters to iterate over the runs; see sc.parallelize() for syntax
+        combine     (bool)  : whether or not to combine all results into one sim, rather than return multiple sim objects
+        keep_people (bool)  : whether to keep the people after the sim run (default false)
+        run_args    (dict)  : arguments passed to sim.run()
+        sim_args    (dict)  : extra parameters to pass to the sim
+        par_args    (dict)  : arguments passed to sc.parallelize()
+        do_run      (bool)  : whether to actually run the sim (if not, just initialize it)
+        parallel    (bool)  : whether to run in parallel using multiprocessing (else, just run in a loop)
+        verbose     (int)   : detail to print
+        kwargs      (dict)  : also passed to the sim
 
     Returns:
         If combine is True, a single sim object with the combined results from each sim.
