@@ -17,8 +17,8 @@ jobs:
         run: print("::set-env name=GITHUB_OWNER::{}".format('${{github.repository}}'.split('/')[0]))
       - name: Set PYTHONPATH
         run: |
-          mkdir -p $HOME/.cache/site-packages
-          echo "::set-env name=PYTHONPATH::$HOME/.cache/site-packages"
+          mkdir -p $HOME/.cache/site-packages${{ matrix.python-version }}
+          echo "::set-env name=PYTHONPATH::$HOME/.cache/site-packages${{ matrix.python-version }}"
       - name: Checkout sources
         uses: actions/checkout@v2
       - uses: actions/setup-python@master
@@ -27,7 +27,7 @@ jobs:
           architecture: x64
       - name: Cache Packages
         id: cache-packages
-        uses: actions/cache@v2
+        uses: actions/cache@v1
         with:
           path: ~/.cache/ # This path is specific to Ubuntu
           key: packages-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }} # Look to see if there is a cache hit for the corresponding requirements file
@@ -35,7 +35,7 @@ jobs:
             packages-${{ runner.os }}-${{ matrix.python-version }}- # Pip install first will make setup.py much faster and the cache will make pip install fast
       - name: Install Covasim
         # run: python setup.py develop --install-dir ~/.cache/site-packages
-        run: python setup.py develop --install-dir ~/.cache/site-packages
+        run: python setup.py develop --install-dir ~/.cache/site-packages${{ matrix.python-version }}
       - name: Run integration tests
         working-directory: ./tests
         run: |
