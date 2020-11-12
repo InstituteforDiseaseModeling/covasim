@@ -1236,8 +1236,8 @@ class Layer(FlexDict):
         # Check types
         if not isinstance(inds, np.ndarray):
             inds = sc.promotetoarray(inds)
-        if inds.dtype != cvd.default_int:
-            inds = np.array(inds, dtype=cvd.default_int)
+        if inds.dtype != np.int64:
+            inds = np.array(inds, dtype=np.int64)
 
         # Find the contacts
         contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
