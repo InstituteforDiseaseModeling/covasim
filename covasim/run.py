@@ -3,6 +3,7 @@ Functions and classes for running multiple Covasim runs.
 '''
 
 #%% Imports
+import sys
 import numpy as np
 import pandas as pd
 import sciris as sc
@@ -1208,6 +1209,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
  '''
                 print(E)
                 print(errormsg)
+                sys.exit()
             else: # For all other runtime errors, raise the exception
                 raise E
     else:
