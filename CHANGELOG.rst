@@ -23,25 +23,18 @@ This version contains a number of major updates.
 Highlights
 ^^^^^^^^^^
 - **Parameters**: All default parameter estimates have been updated in line with the latest literature, including the presymptomatic duration and age-dependent susceptibility, symptomaticity, and infection fatality rates.
-- **Webapp**: The webapp has been moved to a separate Python package, ``covasim_webapp`` (available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__
 - **Plotting**: Plotting defaults have been updated to support a wider range of systems, and users now have greater control over plotting options.
+- **Webapp**: The webapp has been moved to a separate Python package, ``covasim_webapp`` (available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__
 
 Parameter updates
 ^^^^^^^^^^^^^^^^^
-- 
-
-Webapp
-^^^^^^
-- The webapp has been moved to a separate repository and ``pip`` package, in order to improve installation and load times of Covasim.
-- Since web dependencies are no longer included, installation talks about half as long, as does importing Covasim.
-- The ``docker`` and ``.platform`` folders have been moved to ``covasim_webapp``.
-
+- TBC
 
 Plotting and options
 ^^^^^^^^^^^^^^^^^^^^
 - Plotting defaults have been updated to work better on a wider variety of systems.
 - A new ``options`` module has been added that lets the user specify plotting and run options.
-- Plot options that were previously set on a per-figure basis (e.g. font size) are now set globally.
+- Plot options that were previously set on a per-figure basis (e.g. font size, font family) are now set globally via the ``options`` module, e.g. ``cv.options.font_size = 18``.
 - If plots are too small, you can increase the DPI (default 100), e.g. ``cv.options.dpi = 200``. If they are too large, you can decrease it, e.g. ``cv.options.dpi = 50``.
 - In addition, you can also change whether Covasim uses 32-bit or 64-bit arithmetic. To use 64-bit (which is about 20% slower and uses about 40% more memory), use
 
@@ -50,16 +43,30 @@ Plotting and options
     cv.options.precision = 64
     cv.options.apply()
 
-- In addition to being set programmatically, options can also now be set via environment variables. For example, you can set ``COVASIM_DPI`` to change the default DPI.
+- Options can also now be set via environment variables. For example, you can set ``COVASIM_DPI`` to change the default DPI, and ``COVASIM_VERBOSE`` to set the default verbosity. For example, ``export COVASIM_VERBOSE=0`` is equivalent to ``cv.options.verbose = 0``.
 
+Webapp
+^^^^^^
+- The webapp has been moved to a separate repository and ``pip`` package, in order to improve installation and load times of Covasim.
+- The ``docker`` and ``.platform`` folders have been moved to ``covasim_webapp``.
+- Since web dependencies are no longer included, installing and importing Covasim both take half as much time as they did in the previous version.
 
-Analysis
+Bugfixes
 ^^^^^^^^
-- Added
+- The ``quar_period`` argument is now correctly passed to the ``cv.contact_tracing()`` intervention.
+- If the user supplies an incorrect type to ``cv.Layer.find_contacts()``, this is now caught and corrected.
+- If multiprocessing (e.g. ``msim.run()``) is called outside a ``main`` block on Windows, this leads to a cryptic error. This error is now caught more elegantly.
 
-Other
-^^^^^
-- Temp
+Other updates
+^^^^^^^^^^^^^
+- Two new functions have been added, ``sim.get_intervention()`` and ``sim.get_analyzer()``. These act very similarly to e.g. ``sim.get_interventions()``, except return the last matching intervention/analyzer, rather than returning a list of interventions/analyzers.
+- MultiSims now have a ``shrink()`` method, which shrinks both the base sim and the other sims they contain.
+- MultiSims also provide options to compute statistics using either the mean or the median; this can be done via the ``msim.reduce(use_mean=True)`` method. Two convenience methods, ``msim.mean()`` and ``msim.median()``, have also been added as shortcuts.
+- The argument ``n_cpus`` can now be supplied directly to ``cv.multirun()`` and ``msim.run()``.
+
+Regression information
+^^^^^^^^^^^^^^^^^^^^^^
+- TBC
 - *GitHub info*: PR `730 <https://github.com/amath-idm/covasim/pull/730>`__
 
 
@@ -109,7 +116,7 @@ Version 1.7.2 (2020-09-24)
 Version 1.7.1 (2020-09-23)
 --------------------------
 - Added two new methods, ``sim.get_interventions()`` and ``sim.get_analyzers()``, which return interventions or analyzers based on the index, label, or type.
-- Added a new analyzer, ``cv.daily_stats()``, which can print out and plot detailed information about the state of the simulation on each day.
+- Added a new analyzer, ``cv.daily_stats()``, which can print out and plot detailed inform ation about the state of the simulation on each day.
 - MultiSims can now be run without parallelization; use ``msim.run(parallel=False)``. This can be useful for debugging, or for parallelizing across rather than within MultiSims (since ``multiprocessing`` calls cannot be nested).
 - ``sim.people.not_defined()`` has been renamed ``sim.people.undefined()``, and ``sim.people.quarantine()`` has been renamed ``sim.people.schedule_quarantine()``, since it does not actually place people in quarantine.
 - New helper functions have been added: ``cv.maximize()`` maximizes the current figure, and ``cv.get_rows_cols()`` converts a number (usually a number of plots) into the required number of rows and columns. Both will eventually be moved to Sciris.
