@@ -496,6 +496,7 @@ class People(cvb.BasePeople):
             fig_args (dict): passed to pl.figure()
             axis_args (dict): passed to pl.subplots_adjust()
             plot_args (dict): passed to pl.plot()
+            do_show (bool): whether to show the plot
         '''
         fig = cvplt.plot_people(people=self, *args, **kwargs)
         return fig

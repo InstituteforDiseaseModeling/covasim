@@ -420,7 +420,7 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
 
 #%% Other plotting functions
-def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_args=None, plot_args=None):
+def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_args=None, plot_args=None, do_show=True):
     ''' Plot statistics of a population -- see People.plot() for documentation '''
 
     # Handle inputs
@@ -515,6 +515,9 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
             pl.title(title)
             if w_type == 'weighted':
                 share_ax = ax # Update shared axis
+
+    if do_show:
+        pl.show()
 
     return fig
 
