@@ -310,7 +310,7 @@ class age_histogram(Analyzer):
         '''
 
         # Handle inputs
-        fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
+        fig_args = sc.mergedicts(dict(figsize=(12,8)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.08, right=0.92, bottom=0.08, top=0.92), axis_args)
         d_args = sc.objdict(sc.mergedicts(dict(width=0.3, color='#000000', offset=0), data_args))
         pl.rcParams['font.size'] = font_size
@@ -646,7 +646,7 @@ class daily_stats(Analyzer):
             do_show   (bool):  whether to show the plot
         '''
 
-        fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
+        fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
         plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
         pl.rcParams['font.size'] = font_size
@@ -908,7 +908,7 @@ class Fit(sc.prettyobj):
             do_show   (bool):  whether to show the plot
         '''
 
-        fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
+        fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
         pl.rcParams['font.size'] = font_size
@@ -1209,7 +1209,7 @@ class TransTree(sc.prettyobj):
             do_show   (bool):  whether to show the plot
         '''
 
-        fig_args = sc.mergedicts(dict(figsize=(16, 10)), fig_args)
+        fig_args = sc.mergedicts(dict(figsize=(8, 5)), fig_args)
         plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
 
         ttlist = []
@@ -1296,7 +1296,7 @@ class TransTree(sc.prettyobj):
         verbose = kwargs.get('verbose', False)
         msize = kwargs.get('markersize', 10)
         sus_color = kwargs.get('sus_color', [0.5, 0.5, 0.5])
-        fig_args = kwargs.get('fig_args', dict(figsize=(24, 16)))
+        fig_args = kwargs.get('fig_args', dict(figsize=(12, 8)))
         axis_args = kwargs.get('axis_args', dict(left=0.10, bottom=0.05, right=0.85, top=0.97, wspace=0.25, hspace=0.25))
         plot_args = kwargs.get('plot_args', dict(lw=2, alpha=0.5))
         delay = kwargs.get('delay', 0.2)
@@ -1450,7 +1450,7 @@ class TransTree(sc.prettyobj):
         max_labels = 15 # Maximum number of ticks and legend entries to plot
 
         # Plotting
-        fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
+        fig_args = sc.mergedicts(dict(figsize=(12,8)), fig_args)
         pl.rcParams['font.size'] = font_size
         fig = pl.figure(**fig_args)
         pl.set_cmap('Spectral')

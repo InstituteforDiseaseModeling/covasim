@@ -40,7 +40,7 @@ def set_plot_options(font_size=None, font_family=None, dpi=None):
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
     args = sc.objdict()
-    args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
+    args.fig     = sc.mergedicts({'figsize': (10, 8)}, fig_args)
     args.plot    = sc.mergedicts({'lw': 1.5, 'alpha': 0.7}, plot_args)
     args.scatter = sc.mergedicts({'s':35, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
     args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
@@ -339,7 +339,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
 
     # Handle inputs
     sep_figs = False # Only one figure
-    fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
+    fig_args  = sc.mergedicts({'figsize':(8,4)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     set_plot_options()
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
@@ -381,7 +381,7 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
     # Handle inputs
     set_plot_options()
-    fig_args  = sc.mergedicts({'figsize':(16,16)}, fig_args)
+    fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
     fig, figs, ax = create_figs(args, sep_figs=False, fig=fig)
@@ -436,7 +436,7 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
 
     # Handle other arguments
     set_plot_options()
-    fig_args  = sc.mergedicts(dict(figsize=(30,22)), fig_args)
+    fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
     axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
     plot_args = sc.mergedicts(dict(lw=3, alpha=0.6, markersize=10, c=color, zorder=10), plot_args)
 
