@@ -1190,7 +1190,26 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
 
     # Actually run!
     if parallel:
-        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args) # Run in parallel
+        try:
+            sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args) # Run in parallel
+        except RuntimeError as E: # Handle missing __main__ on Windows
+            if 'freeze_support' in E.args[0]: # For this error, proceed
+                errormsg = f'''
+ Warning! It appears you are trying to run with multiprocessing on Windows outside
+ of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
+ for more information. The correct format to use is e.g.
+
+     import covasim as cv
+     sim = cv.Sim()
+     msim = cv.MultiSim(sim)
+
+     if __name__ == '__main__':
+         msim.run()
+ '''
+                print(E)
+                print(errormsg)
+            else: # For all other runtime errors, raise the exception
+                raise E
     else:
         sims = []
         n_sims = len(list(iterkwargs.values())[0]) # Must have length >=1 and all entries must be the same length
