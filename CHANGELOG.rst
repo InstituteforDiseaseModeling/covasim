@@ -18,7 +18,17 @@ Latest versions (2.0.x)
 Version 2.0.0 (2020-11-13)
 --------------------------
 
-This version contains a large number of changes, including two new classes, ``Analyzer`` and ``Fit``, for performing simulation analyses and fitting the model to data, respectively. These changes are described below.
+This version contains a number of major updates.
+
+Highlights
+^^^^^^^^^^
+- **Parameters**: All default parameter estimates have been updated in line with the latest literature, including the presymptomatic duration and age-dependent susceptibility, symptomaticity, and infection fatality rates.
+- **Webapp**: The webapp has been moved to a separate Python package, ``covasim_webapp`` (available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__
+- **Plotting**: Plotting defaults have been updated to support a wider range of systems, and users now have greater control over plotting options.
+
+Parameter updates
+^^^^^^^^^^^^^^^^^
+- 
 
 Analysis
 ^^^^^^^^
