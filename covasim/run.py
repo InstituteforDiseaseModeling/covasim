@@ -3,7 +3,6 @@ Functions and classes for running multiple Covasim runs.
 '''
 
 #%% Imports
-import sys
 import numpy as np
 import pandas as pd
 import sciris as sc
@@ -1194,7 +1193,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         try:
             sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args) # Run in parallel
         except RuntimeError as E: # Handle missing __main__ on Windows
-            if 'freeze_support' in E.args[0]: # For this error, proceed
+            if 'freeze_support' in E.args[0]: # For this error, add additional information
                 errormsg = f'''
  Warning! It appears you are trying to run with multiprocessing on Windows outside
  of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
@@ -1207,9 +1206,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
      if __name__ == '__main__':
          msim.run()
  '''
-                print(E)
-                print(errormsg)
-                sys.exit()
+                raise RuntimeError(errormsg) from E
             else: # For all other runtime errors, raise the exception
                 raise E
     else:
