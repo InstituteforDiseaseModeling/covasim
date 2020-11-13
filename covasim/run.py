@@ -1195,9 +1195,9 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         except RuntimeError as E: # Handle if run outside of __main__ on Windows
             if 'freeze_support' in E.args[0]: # For this error, add additional information
                 errormsg = '''
- Warning! It appears you are trying to run with multiprocessing on Windows outside
+ Uh oh! It appears you are trying to run with multiprocessing on Windows outside
  of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
- for more information. The correct format to use is e.g.
+ for more information. The correct syntax to use is e.g.
 
      import covasim as cv
      sim = cv.Sim()
