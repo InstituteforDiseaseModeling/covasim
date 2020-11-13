@@ -43,7 +43,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     args.fig     = sc.mergedicts({'figsize': (10, 8)}, fig_args)
     args.plot    = sc.mergedicts({'lw': 1.5, 'alpha': 0.7}, plot_args)
     args.scatter = sc.mergedicts({'s':35, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
-    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
+    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.08, 'right': 0.95, 'top': 0.95, 'wspace': 0.30, 'hspace': 0.30}, axis_args)
     args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
     args.legend  = sc.mergedicts({'loc': 'best', 'frameon':False}, legend_args)
     args.show    = sc.mergedicts({'data':True, 'interventions':True, 'legend':True, }, show_args)
@@ -339,7 +339,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
 
     # Handle inputs
     sep_figs = False # Only one figure
-    fig_args  = sc.mergedicts({'figsize':(8,4)}, fig_args)
+    fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     set_plot_options()
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
