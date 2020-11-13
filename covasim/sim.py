@@ -66,6 +66,8 @@ class Sim(cvb.BaseSim):
         self.results_ready = False    # Whether or not results are ready
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
+        self.static_contacts_recorded = False
+
         # Now update everything
         self.set_metadata(simfile, label)  # Set the simulation date and filename
         self.update_pars(pars, **kwargs)   # Update the parameters, if provided
@@ -268,6 +270,8 @@ class Sim(cvb.BaseSim):
         # Stock variables
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
+        
+        self.results["evol"] = {"state":  {}, "contacts": {}}
 
         # Other variables
         self.results['n_alive']        = init_res('Number of people alive', scale=False)
@@ -461,6 +465,18 @@ class Sim(cvb.BaseSim):
         contacts = people.update_contacts() # Compute new contacts
         hosp_max = people.count('severe')   > self['n_beds_hosp'] if self['n_beds_hosp'] else False # Check for acute bed constraint
         icu_max  = people.count('critical') > self['n_beds_icu']  if self['n_beds_icu']  else False # Check for ICU bed constraint
+        if not self.static_contacts_recorded:
+            self.static_contacts_recorded = True
+            self.results["static_contacts"] = {}
+            for k in ["infectious", "susceptible", "symptomatic", "diagnosed", "quarantined"]:
+                self.results["evol"]["state"][k] = []
+            for lkey,layer in contacts.items():
+                if not self.pars["dynam_layer"][lkey]:
+                    self.results["static_contacts"][lkey] = np.zeros([people.infectious.size] * 2, dtype=np.bool)
+                    self.results["static_contacts"][lkey][layer["p1"], layer["p2"]] = True
+                    self.results["static_contacts"][lkey][layer["p2"], layer["p1"]] = True
+                else:
+                    self.results["evol"]["contacts"][lkey] = []
 
         # Randomly infect some people (imported infections)
         n_imports = cvu.poisson(self['n_imports']) # Imported cases
@@ -491,10 +507,19 @@ class Sim(cvb.BaseSim):
         date_dead    = people.date_dead
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
+        for k, v in [("infectious",  np.copy(people.infectious)),
+                     ("susceptible", np.copy(people.susceptible)),
+                     ("symptomatic", np.copy(people.symptomatic)),
+                     ("diagnosed", np.copy(people.diagnosed)),
+                     ("quarantined", np.copy(people.quarantined)),]:
+            self.results["evol"]["state"][k].append(v)
+
         for lkey,layer in contacts.items():
             p1 = layer['p1']
             p2 = layer['p2']
             betas   = layer['beta']
+
+
 
             # Compute relative transmission and susceptibility
             rel_trans   = people.rel_trans
@@ -510,6 +535,11 @@ class Sim(cvb.BaseSim):
             rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor)
 
             # Calculate actual transmission
+            if self.pars["dynam_layer"][lkey]:
+                adj = np.zeros([inf.size] * 2, dtype=np.bool)
+                adj[layer["p1"], layer["p2"]] = True
+                adj[layer["p2"], layer["p1"]] = True
+                self.results["evol"]["contacts"][lkey].append(adj)
             for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
                 source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
                 people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey) # Actually infect people
@@ -536,7 +566,6 @@ class Sim(cvb.BaseSim):
         self.t += 1
         if self.t == self.npts:
             self.complete = True
-
         return
 
 
