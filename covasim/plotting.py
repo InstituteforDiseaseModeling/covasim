@@ -42,7 +42,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     args = sc.objdict()
     args.fig     = sc.mergedicts({'figsize': (10, 8)}, fig_args)
     args.plot    = sc.mergedicts({'lw': 1.5, 'alpha': 0.7}, plot_args)
-    args.scatter = sc.mergedicts({'s':35, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
+    args.scatter = sc.mergedicts({'s':20, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
     args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.08, 'right': 0.95, 'top': 0.95, 'wspace': 0.30, 'hspace': 0.30}, axis_args)
     args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
     args.legend  = sc.mergedicts({'loc': 'best', 'frameon':False}, legend_args)
@@ -438,7 +438,7 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
     set_plot_options()
     fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
     axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
-    plot_args = sc.mergedicts(dict(lw=3, alpha=0.6, markersize=10, c=color, zorder=10), plot_args)
+    plot_args = sc.mergedicts(dict(lw=1.5, alpha=0.6, c=color, zorder=10), plot_args)
 
     # Compute statistics
     min_age = min(bins)

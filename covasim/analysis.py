@@ -648,7 +648,7 @@ class daily_stats(Analyzer):
 
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
-        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
+        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
         pl.rcParams['font.size'] = font_size
 
         # Transform the data into time series
@@ -910,7 +910,7 @@ class Fit(sc.prettyobj):
 
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
-        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
+        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
         pl.rcParams['font.size'] = font_size
 
         if keys is None:
@@ -1210,7 +1210,7 @@ class TransTree(sc.prettyobj):
         '''
 
         fig_args = sc.mergedicts(dict(figsize=(8, 5)), fig_args)
-        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
+        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
 
         ttlist = []
         for source_ind, target_ind in self.transmissions:
@@ -1294,11 +1294,11 @@ class TransTree(sc.prettyobj):
         # Settings
         animate = kwargs.get('animate', True)
         verbose = kwargs.get('verbose', False)
-        msize = kwargs.get('markersize', 10)
+        msize = kwargs.get('markersize', 5)
         sus_color = kwargs.get('sus_color', [0.5, 0.5, 0.5])
         fig_args = kwargs.get('fig_args', dict(figsize=(12, 8)))
         axis_args = kwargs.get('axis_args', dict(left=0.10, bottom=0.05, right=0.85, top=0.97, wspace=0.25, hspace=0.25))
-        plot_args = kwargs.get('plot_args', dict(lw=2, alpha=0.5))
+        plot_args = kwargs.get('plot_args', dict(lw=1, alpha=0.5))
         delay = kwargs.get('delay', 0.2)
         font_size = kwargs.get('font_size', 18)
         colors = kwargs.get('colors', None)
@@ -1408,7 +1408,7 @@ class TransTree(sc.prettyobj):
             for tdq in tlist: pl.plot(t_d, t_t, 'o', c=t_c, markersize=msize * 2, fillstyle='none')  # Tested; No alpha for this
             for tdq in dlist: pl.plot(t_d, t_t, 's', c=t_c, markersize=msize * 1.2, **plot_args)  # Diagnosed
             for tdq in qlist: pl.plot(t_d, t_t, 'x', c=t_c, markersize=msize * 2.0)  # Quarantine; no alpha for this
-            pl.plot([0, day], [0.5, 0.5], c='k', lw=5)  # Plot the endless march of time
+            pl.plot([0, day], [0.5, 0.5], c='k', lw=3)  # Plot the endless march of time
             if animate:  # Whether to animate
                 pl.pause(delay)
 
@@ -1483,7 +1483,7 @@ class TransTree(sc.prettyobj):
         pl.title('Number of transmissions, by transmissions per person')
 
         pl.subplot(2,2,4)
-        pl.plot(index, sorted_sum, lw=3, c='k', alpha=0.5)
+        pl.plot(index, sorted_sum, lw=1.5, c='k', alpha=0.5)
         n_change_inds = len(change_inds)
         label_inds = np.linspace(0, n_change_inds, max_labels).round() # Don't allow more than this many labels
         for i in range(n_change_inds):
@@ -1505,7 +1505,7 @@ class TransTree(sc.prettyobj):
         start_day  = self.day(start_day, which='start')
         end_day    = self.day(end_day, which='end')
         pl.axvspan(start_day, end_day, facecolor=dirty_snow)
-        pl.plot(self.sim_results['t'], self.sim_results['cum_infections'], lw=2, c=berry)
+        pl.plot(self.sim_results['t'], self.sim_results['cum_infections'], lw=1, c=berry)
         pl.xlabel('Day')
         pl.ylabel('Cumulative infections')
 
