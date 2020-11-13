@@ -30,6 +30,29 @@ Parameter updates
 ^^^^^^^^^^^^^^^^^
 - 
 
+Webapp
+^^^^^^
+- The webapp has been moved to a separate repository and ``pip`` package, in order to improve installation and load times of Covasim.
+- Since web dependencies are no longer included, installation talks about half as long, as does importing Covasim.
+- The ``docker`` and ``.platform`` folders have been moved to ``covasim_webapp``.
+
+
+Plotting and options
+^^^^^^^^^^^^^^^^^^^^
+- Plotting defaults have been updated to work better on a wider variety of systems.
+- A new ``options`` module has been added that lets the user specify plotting and run options.
+- Plot options that were previously set on a per-figure basis (e.g. font size) are now set globally.
+- If plots are too small, you can increase the DPI (default 100), e.g. ``cv.options.dpi = 200``. If they are too large, you can decrease it, e.g. ``cv.options.dpi = 50``.
+- In addition, you can also change whether Covasim uses 32-bit or 64-bit arithmetic. To use 64-bit (which is about 20% slower and uses about 40% more memory), use
+
+.. code-block:: python
+
+    cv.options.precision = 64
+    cv.options.apply()
+
+- In addition to being set programmatically, options can also now be set via environment variables. For example, you can set ``COVASIM_DPI`` to change the default DPI.
+
+
 Analysis
 ^^^^^^^^
 - Added
@@ -37,7 +60,7 @@ Analysis
 Other
 ^^^^^
 - Temp
-- *GitHub info*: PR `712 <https://github.com/amath-idm/covasim/pull/712>`__
+- *GitHub info*: PR `730 <https://github.com/amath-idm/covasim/pull/730>`__
 
 
 
