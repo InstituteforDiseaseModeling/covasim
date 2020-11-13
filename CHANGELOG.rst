@@ -9,10 +9,31 @@ All notable changes to the codebase are documented in this file. Changes that ma
    :depth: 1
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (1.7.x)
+Latest versions (2.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+
+Version 2.0.0 (2020-11-13)
+--------------------------
+
+This version contains a large number of changes, including two new classes, ``Analyzer`` and ``Fit``, for performing simulation analyses and fitting the model to data, respectively. These changes are described below.
+
+Analysis
+^^^^^^^^
+- Added
+
+Other
+^^^^^
+- Temp
+- *GitHub info*: PR `712 <https://github.com/amath-idm/covasim/pull/712>`__
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.7.x (1.6.0 – 1.7.6)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.7.6 (2020-10-23)
