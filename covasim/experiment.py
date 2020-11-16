@@ -10,9 +10,8 @@ standardPars = pars = sc.objdict(
     n_days          = 180,
     verbose         = 1,
     pop_scale       = 10,
-    n_beds_hosp     = 700 ,  #source: http://www.kaz.bmg.gv.at/fileadmin/user_upload/Betten/1_T_Betten_SBETT.pdf (2019)
-    n_beds_icu      = 30,      # source: https://vbgv1.orf.at/stories/493214 (2011 no recent data found)
-    iso_factor      = dict(h=1, s=1, w=1, c=1)
+    n_beds_hosp     = 700,
+    n_beds_icu      = 30,
 )
 
 def summarize_results(scenarios,summaryPath):
@@ -40,7 +39,7 @@ def plot_res(scenarios,expName = 'res'):
     cnt = 0
     while(notCreated):
         try:
-            os.mkdir(targetDirectory+str(cnt))
+            os.makedirs(targetDirectory+str(cnt))
         except OSError:
             print("CreationFailed")
             cnt+=1
@@ -67,7 +66,7 @@ def plot_res_diagnoses(scenarios,expName = 'res'):
     cnt = 0
     while(notCreated):
         try:
-            os.mkdir(targetDirectory+str(cnt))
+            os.makedirs(targetDirectory+str(cnt))
         except OSError:
             print("Creation Failed")
             cnt+=1
