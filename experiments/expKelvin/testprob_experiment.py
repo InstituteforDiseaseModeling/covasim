@@ -1,5 +1,6 @@
 import covasim as cv
 import sciris as sc
+import pars.py as parsed
 
 # Run options
 do_plot = 1
@@ -34,12 +35,14 @@ metapars = dict(
 sequenceIntervention = [
                             cv.test_prob(symp_prob=0.1, asymp_prob=0.002),
                             cv.test_prob(symp_prob=0.3, asymp_prob=0.1),
-                            cv.test_prob(symp_prob=0.95, asymp_prob=0.8)
+                            cv.test_prob(symp_prob=0.95, asymp_prob=0.8),
                         ]
 
 sim = cv.Sim(pars)
 sim.init_people(load_pop=True, popfile='voriPop.pop')
 
+# sterblichkeit 
+# 400 tote max!
 
 scenarios = { 'day_one': {
               'name':'Day One Testing',
@@ -53,7 +56,7 @@ scenarios = { 'day_one': {
               'name':'sequence0 - testing',
               'pars': {
                   'interventions': [
-                        cv.sequence(days=[25, 50, 75], interventions=sequenceIntervention)
+                        cv.sequence(days=[45, 90, 135], interventions=sequenceIntervention)
                     ]
                   }
             },
@@ -101,3 +104,4 @@ if __name__ == '__main__':
     scens.run(verbose=verbose)
     if do_plot:
         fig1 = scens.plot(do_show=do_show)
+
