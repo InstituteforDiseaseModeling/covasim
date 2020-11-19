@@ -466,7 +466,7 @@ class Sim(cvb.BaseSim):
         if sc.checktype(self['n_imports'], dict): # It's a distribution dictionary
             n_imports = cvu.sample(**self['n_imports'], size=1)[0]
         elif sc.checktype(self['n_imports'], 'arraylike'): # It's an array or list
-            if t > len(self['n_imports']): # Assume no more imports
+            if t > len(self['n_imports'])-1: # Assume no more imports
                 n_imports = 0
             else:
                 n_imports = self['n_imports'][t]

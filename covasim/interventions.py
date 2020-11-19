@@ -463,6 +463,7 @@ class change_beta(Intervention):
             for ind in find_day(self.active_days, sim.t):
                 for lkey,new_beta in self.orig_betas.items():
                     new_beta = new_beta * self.changes[ind]
+                    print(f"New beta value: {new_beta}")
                     if lkey == 'overall':
                         sim['beta'] = new_beta
                     else:
@@ -498,13 +499,15 @@ class clip_edges(Intervention):
         interv = cv.clip_edges([14, 28], [0.7, 1], layers='w') # On day 14, remove 30% of school contacts, and on day 28, restore them
     '''
 
-    def __init__(self, days, changes, layers=None, **kwargs):
+    def __init__(self, days, changes, trigger=None, layers=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.days     = sc.dcp(days)
         self.changes  = sc.dcp(changes)
+        self.trigger     = trigger
         self.layers   = sc.dcp(layers)
         self.contacts = None
+        self.active_days = None
         return
 
 
@@ -522,32 +525,43 @@ class clip_edges(Intervention):
 
     def apply(self, sim):
 
-        # If this day is found in the list, apply the intervention
-        for ind in find_day(self.days, sim.t):
+        # Check which days the intervention is active - either taken straight from the "days" input, or calculated from a trigger condition
+        if self.active_days is None:
+            if self.trigger is not None:
+                if sim.t >= self.days[0]: # Time to check the trigger
+                    trigger_condition = self.trigger.apply(sim) # Check the trigger
+                    if trigger_condition:
+                        self.active_days = np.array([sim.t]) # Activate the change from the current day
+                        print(f"Activating clip_edges on day {sim.t}")
+            else:
+                self.active_days  = sc.dcp(self.days)
 
-            # Do the contact moving
-            for lkey in self.layers:
-                s_layer = sim.people.contacts[lkey] # Contact layer in the sim
-                i_layer = self.contacts[lkey] # Contat layer in the intervention
-                n_sim = len(s_layer) # Number of contacts in the simulation layer
-                n_int = len(i_layer) # Number of contacts in the intervention layer
-                n_contacts = n_sim + n_int # Total number of contacts
-                if n_contacts:
-                    current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
-                    desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
-                    prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
-                    n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
-                    from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
-                    if from_sim: # We're moving from the sim to the intervention
-                        inds = cvu.choose(max_n=n_sim, n=n_to_move)
-                        to_move = s_layer.pop_inds(inds)
-                        i_layer.append(to_move)
-                    else: # We're moving from the intervention back to the sim
-                        inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
-                        to_move = i_layer.pop_inds(inds)
-                        s_layer.append(to_move)
-                else:
-                    print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
+        # Now apply the intervention over the active days
+        if self.active_days is not None:
+            for ind in find_day(self.active_days, sim.t):
+                # Do the contact moving
+                for lkey in self.layers:
+                    s_layer = sim.people.contacts[lkey] # Contact layer in the sim
+                    i_layer = self.contacts[lkey] # Contat layer in the intervention
+                    n_sim = len(s_layer) # Number of contacts in the simulation layer
+                    n_int = len(i_layer) # Number of contacts in the intervention layer
+                    n_contacts = n_sim + n_int # Total number of contacts
+                    if n_contacts:
+                        current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
+                        desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
+                        prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
+                        n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
+                        from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
+                        if from_sim: # We're moving from the sim to the intervention
+                            inds = cvu.choose(max_n=n_sim, n=n_to_move)
+                            to_move = s_layer.pop_inds(inds)
+                            i_layer.append(to_move)
+                        else: # We're moving from the intervention back to the sim
+                            inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
+                            to_move = i_layer.pop_inds(inds)
+                            s_layer.append(to_move)
+                    else:
+                        print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
 
         # Ensure the edges get deleted at the end
         if sim.t == sim.tvec[-1]:
