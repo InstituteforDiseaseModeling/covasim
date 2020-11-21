@@ -55,7 +55,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
     # Efficacy of protection measures
-    pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
+    pars['asymp_factor'] = 1.0 # 0.35 # Multiply beta by this factor for asymptomatic cases; see Buitrago-Garcia et al., https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.1003346
     pars['iso_factor']   = None # Multiply beta by this factor for diganosed cases to represent isolation; set by reset_layer_pars() below
     pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
     pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
