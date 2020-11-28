@@ -12,11 +12,10 @@ Full package reference
 .. toctree::
 
    whatsnew
+   tutorials/README
    parameters
-   contributing
-   webapp
-   docker
    data
+   contributing
    modules
 
 
