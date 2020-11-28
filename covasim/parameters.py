@@ -109,13 +109,16 @@ layer_pars = ['beta_layer', 'contacts', 'dynam_layer', 'iso_factor', 'quar_facto
 
 def reset_layer_pars(pars, layer_keys=None, force=False):
     '''
-    Small helper function to set layer-specific parameters. If layer keys are not
-    provided, then set them based on the population type.
+    Helper function to set layer-specific parameters. If layer keys are not provided,
+    then set them based on the population type. This function is not usually called
+    directly by the user, although it can sometimes be used to fix layer key mismatches
+    (i.e. if the contact layers in the population do not match the parameters). More
+    commonly, however, mismatches need to be fixed explicitly.
 
     Args:
         pars (dict): the parameters dictionary
         layer_keys (list): the layer keys of the population, if available
-        force (bool): reset the pars even if they already exist
+        force (bool): reset the parameters even if they already exist
     '''
 
     # Specify defaults for random -- layer 'a' for 'all'
@@ -139,9 +142,11 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
 
     # Specify defaults for SynthPops -- same as hybrid but with LTCF layer (l)
     layer_defaults['synthpops'] = sc.dcp(layer_defaults['hybrid'])
-    for pkey in layer_pars:
-        layer_defaults['synthpops'][pkey]['l'] = layer_defaults['synthpops'][pkey]['h']
-    layer_defaults['synthpops']['beta_layer']['l'] = 1.5 # Reset beta for LTCFs to be half of households
+    layer_defaults['synthpops']['beta_layer']['l']  = 1.5 # Reset beta for LTCFs to be half of households
+    layer_defaults['synthpops']['contacts']['l']    = 10  # Number of contacts is usually/always overwritten by SynthPops
+    layer_defaults['synthpops']['dynam_layer']['l'] = 0   # Not dynamic
+    layer_defaults['synthpops']['iso_factor']['l']  = 0.2 # Between households and workplaces
+    layer_defaults['synthpops']['quar_factor']['l'] = 0.3 # Between households and workplaces
 
     # Choose the parameter defaults based on the population type, and get the layer keys
     try:
@@ -149,7 +154,7 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     except Exception as E:
         errormsg = f'Cannot load defaults for population type "{pars["pop_type"]}": must be hybrid, random, or synthpops'
         raise sc.KeyNotFoundError(errormsg) from E
-    default_layer_keys = list(defaults.keys())
+    default_layer_keys = list(defaults['beta_layer'].keys()) # All layers should be the same, but use beta_layer for convenience
 
     # Actually set the parameters
     for pkey in layer_pars:
@@ -176,7 +181,6 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     return
 
 
-
 def get_prognoses(by_age=True):
     '''
     Return the default parameter values for prognoses
@@ -184,13 +188,13 @@ def get_prognoses(by_age=True):
     The prognosis probabilities are conditional given the previous disease state.
 
     Args:
-        by_age (bool): whether or not to use age-specific values
+        by_age (bool): whether to use age-specific values (default true)
 
     Returns:
         prog_pars (dict): the dictionary of prognosis probabilities
     '''
 
-    if not by_age:
+    if not by_age: # All rough estimates -- almost always, prognoses by age (below) are used instead
         prognoses = dict(
             age_cutoffs  = np.array([0]),
             symp_probs   = np.array([0.75]),
@@ -205,10 +209,9 @@ def get_prognoses(by_age=True):
             trans_ORs     = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Odds ratios for relative transmissibility -- no evidence of differences
             comorbidities = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Comorbidities by age -- set to 1 by default since already included in disease progression rates
             symp_probs    = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.90]),    # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
-
             severe_probs  = np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, 0.20655, 0.24570, 0.24570]), # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf) # UPDATE
             crit_probs    = np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420, 0.17420]), # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf) # UPDATE
-            death_probs   = np.array([2e-05, 2e-05, 9.5e-05, 0.00032, 0.00098, 0.00265, 0.007655, 0.024385, 0.08292, 0.08292]) # Overall probability of dying -- from O'Driscoll et al., https://www.nature.com/articles/s41586-020-2918-0 # UPDATE WITH BRAZEAU
+            death_probs   = np.array([0.00002, 0.00002, 0.00010, 0.00032, 0.00098, 0.00265, 0.00766, 0.02439, 0.08292, 0.08292]), # Overall probability of dying -- from O'Driscoll et al., https://www.nature.com/articles/s41586-020-2918-0 # UPDATE WITH BRAZEAU
         )
 
     prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given critical symptoms
