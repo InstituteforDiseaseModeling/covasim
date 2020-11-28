@@ -811,7 +811,7 @@ class Sim(cvb.BaseSim):
 
         # Method not recognized
         else:
-            errormsg = f'Method must be "daily", "infected", or "outcome", not "{method}"'
+            errormsg = f'Method must be "daily", "infectious", or "outcome", not "{method}"'
             raise ValueError(errormsg)
 
         # Set the values and return
