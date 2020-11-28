@@ -10,6 +10,7 @@ Full package reference
 ======================
 
 .. toctree::
+   :maxdepth: 4
 
    whatsnew
    tutorials/README
