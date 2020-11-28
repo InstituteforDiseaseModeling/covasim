@@ -55,7 +55,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
     # Efficacy of protection measures
-    pars['asymp_factor'] = 1.0 # 0.35 # Multiply beta by this factor for asymptomatic cases; see Buitrago-Garcia et al., https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.1003346
+    pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
     pars['iso_factor']   = None # Multiply beta by this factor for diganosed cases to represent isolation; set by reset_layer_pars() below
     pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
     pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
@@ -201,7 +201,7 @@ def get_prognoses(by_age=True):
 
             severe_probs  = np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, 0.20655, 0.24570, 0.24570]), # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf) # UPDATE
             crit_probs    = np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420, 0.17420]), # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf) # UPDATE
-            death_probs   = np.array([2e-05, 2e-05, 9.5e-05, 0.00032, 0.00098, 0.00265, 0.007655, 0.024385, 0.08292]) # Overall probability of dying -- from O'Driscoll et al., https://www.nature.com/articles/s41586-020-2918-0
+            death_probs   = np.array([2e-05, 2e-05, 9.5e-05, 0.00032, 0.00098, 0.00265, 0.007655, 0.024385, 0.08292, 0.08292]) # Overall probability of dying -- from O'Driscoll et al., https://www.nature.com/articles/s41586-020-2918-0 # UPDATE WITH BRAZEAU
         )
 
     prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given critical symptoms
