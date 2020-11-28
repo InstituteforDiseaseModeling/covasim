@@ -9,7 +9,7 @@ Python, since the precision is used to compile the Numba functions in utils.py.
 import numpy as np
 import numba as nb
 import sciris as sc
-from . import options as cvo
+from .settings import options as cvo # To set options
 
 # Specify all externally visible functions this file defines -- other things are available as e.g. cv.defaults.default_int
 __all__ = ['default_float', 'default_int', 'get_colors', 'get_sim_plots', 'get_scen_plots']

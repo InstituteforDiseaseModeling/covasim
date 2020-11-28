@@ -1,15 +1,15 @@
 # Check that requirements are met and set options
 from . import requirements
-from .options import *
+from .settings import *
 
 # Import the version and print the license unless verbosity is disabled
 from .version import __version__, __versiondate__, __license__
-if options.verbose:
+if settings.options.verbose:
     print(__license__)
 
 # Import the actual model
-from .defaults      import * # Depends on options
-from .parameters    import * # Depends on options
+from .defaults      import * # Depends on settings
+from .parameters    import * # Depends on settings
 from .misc          import * # Depends on version
 from .utils         import * # Depends on defaults
 from .plotting      import * # Depends on defaults, misc

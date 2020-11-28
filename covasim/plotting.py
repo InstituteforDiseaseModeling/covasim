@@ -21,6 +21,8 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people
 
 #%% Plotting helper functions
 
+do_show = cvo.show
+
 def set_plot_options(font_size=None, font_family=None, dpi=None):
     ''' Set global plot options '''
 
@@ -261,7 +263,7 @@ def set_line_options(input_args, reskey, resnum, default):
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
          as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
-         setylim=True, log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
+         setylim=True, log_scale=False, colors=None, labels=None, do_show=do_show, sep_figs=False, fig=None):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
@@ -296,7 +298,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
          as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
-         setylim=True, log_scale=False, colors=None, labels=None, do_show=True, sep_figs=False, fig=None):
+         setylim=True, log_scale=False, colors=None, labels=None, do_show=do_show, sep_figs=False, fig=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
@@ -333,7 +335,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
-                interval=None, color=None, label=None, fig=None, do_show=True, do_save=False,
+                interval=None, color=None, label=None, fig=None, do_show=do_show, do_save=False,
                 fig_path=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
@@ -420,7 +422,7 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
 
 #%% Other plotting functions
-def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_args=None, plot_args=None, do_show=True):
+def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_args=None, plot_args=None, do_show=do_show):
     ''' Plot statistics of a population -- see People.plot() for documentation '''
 
     # Handle inputs
@@ -611,7 +613,8 @@ def plotly_interventions(sim, fig, add_to_legend=False):
                             fig.add_trace(go.Scatter(x=[interv_date], y=[0], mode='lines', name='Intervention change', line=dict(width=0.5, dash='dash')))
     return
 
-def plotly_sim(sim, do_show=False):
+
+def plotly_sim(sim, do_show=do_show):
     ''' Main simulation results -- parallel of sim.plot() '''
 
     go = import_plotly() # Load Plotly
@@ -642,7 +645,7 @@ def plotly_sim(sim, do_show=False):
     return plots
 
 
-def plotly_people(sim, do_show=False):
+def plotly_people(sim, do_show=do_show):
     ''' Plot a "cascade" of people moving through different states '''
 
     go = import_plotly() # Load Plotly
@@ -671,7 +674,7 @@ def plotly_people(sim, do_show=False):
     return fig
 
 
-def plotly_animate(sim, do_show=False):
+def plotly_animate(sim, do_show=do_show):
     ''' Plot an animation of each person in the sim '''
 
     go = import_plotly() # Load Plotly

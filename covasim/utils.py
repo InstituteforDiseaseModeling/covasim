@@ -8,7 +8,7 @@ import numba  as nb # For faster computations
 import numpy  as np # For numerics
 import random # Used only for resetting the seed
 import scipy.stats as sps # For distributions
-from . import options as cvo # To set options
+from .settings import options as cvo # To set options
 from . import defaults as cvd # To set default types
 
 

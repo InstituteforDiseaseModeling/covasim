@@ -24,6 +24,12 @@ options.font_family = os.getenv('COVASIM_FONT_FAMILY', '')
 # Set the default font size -- if 0, use Matplotlib default
 options.dpi = int(os.getenv('COVASIM_DPI', 0))
 
+# Set whether or not to show figures -- default true
+options.show = int(os.getenv('COVASIM_SHOW', 1))
+
+# Set the figure backend -- only works globally
+options.backend = os.getenv('COVASIM_BACKEND', '')
+
 # Set default verbosity
 options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
 
@@ -34,7 +40,7 @@ options.precision = int(os.getenv('COVASIM_PRECISION', 32))
 options.numba_parallel = bool(int(os.getenv('COVASIM_NUMBA_PARALLEL', 0)))
 
 # Specify which keys require a reload
-matplotlib_keys = ['font_size', 'font_family', 'dpi']
+matplotlib_keys = ['font_size', 'font_family', 'dpi', 'backend']
 numba_keys = ['precision', 'numba_parallel']
 
 
@@ -43,33 +49,35 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
     Set a parameter or parameters.
 
     Args:
-        key (str): the parameter to modify
-        value (varies): the value to specify
-        set_global (bool): if true (default), sets plotting options globally (rather than just for Covasim)
-        kwargs (dict): if supplied, set multiple key-value pairs
+        key        (str):    the parameter to modify
+        value      (varies): the value to specify
+        set_global (bool):   if true (default), sets plotting options globally (rather than just for Covasim)
+        kwargs     (dict):   if supplied, set multiple key-value pairs
 
     Options are:
 
-        - ``font_size``: The font size used for the plots (default: 10)
-        - ``font_family``: The font family/face used for the plots (default: Open Sans)
-        - ``dpi``: The overall DPI for the figure (default: 100)
-        - ``verbose``: Default verbosity for simulations to use (default: 1)
-        - ``precision``: The arithmetic to use in calculations (default: 32; other option is 64)
-        - ``numba_parallel``: Whether to use parallel threads in Numba (default false, since gives non-reproducible results)
+        - font_size:      the font size used for the plots (default: 10)
+        - font_family:    the font family/face used for the plots (default: Open Sans)
+        - dpi:            the overall DPI for the figure (default: 100)
+        - show:           whether to show figures (default true)
+        - backend:        which Matplotlib backend to use (must be set globally)
+        - verbose:        default verbosity for simulations to use (default: 1)
+        - precision:      the arithmetic to use in calculations (default: 32; other option is 64)
+        - numba_parallel: whether to parallelize Numba (default false; faster but gives non-reproducible results)
 
     **Examples**::
 
         cv.options.set('font_size', 18)
-        cv.options.set(font_size=18, precision=64)
+        cv.options.set(font_size=18, show=False, backend='agg', precision=64)
     '''
     if key is not None:
         kwargs = sc.mergedicts(kwargs, {key:value})
     reload_required = False
     for key,value in kwargs.items():
         if key not in options:
-            keylist = [k for k in options.keys() if k not in ['set', 'apply']] # These are not keys
+            keylist = [k for k in options.keys() if k != 'set'] # Set is not a key
             keys = '\n'.join(keylist)
-            errormsg = f'Option "{key}" not recognized; options are:\n{keys}'
+            errormsg = f'Option "{key}" not recognized; options are:\n{keys}\n\nSee help(cv.options.set) for more information.'
             raise sc.KeyNotFoundError(errormsg)
         else:
             options[key] = value
@@ -88,6 +96,7 @@ def set_matplotlib_global(key, value):
     if   key == 'font_size':   pl.rc('font', size=value)
     elif key == 'font_family': pl.rc('font', family=value)
     elif key == 'dpi':         pl.rc('figure', dpi=value)
+    elif key == 'backend':     pl.switch_backend(value)
     else: raise sc.KeyNotFoundError(f'Key {key} not found')
     return
 

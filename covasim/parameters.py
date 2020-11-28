@@ -4,7 +4,7 @@ Set the parameters for Covasim.
 
 import numpy as np
 import sciris as sc
-from . import options as cvo
+from .settings import options as cvo # To set options
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
