@@ -1,10 +1,8 @@
 '''
-Define options for Covasim. Note that font size and verbose can be set directly, e.g.
+Define options for Covasim, mostly plotting and Numba options. All options should
+be set using set(), e.g.::
 
-    cv.options.set('font_size', 18)
-
-but if precision or parallel options are set, cv.options.apply() must be called
-to recompile the Numba functions.
+    cv.options.set(font_size=18)
 '''
 
 import os
@@ -80,12 +78,12 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
             if key in matplotlib_keys and set_global:
                 set_matplotlib_global(key, value)
     if reload_required:
-        options.apply()
+        reload_numba()
     return
 
 
 def set_matplotlib_global(key, value):
-    ''' Set a global option for Matplotlib '''
+    ''' Set a global option for Matplotlib -- not for users '''
     import pylab as pl
     if   key == 'font_size':   pl.rc('font', size=value)
     elif key == 'font_family': pl.rc('font', family=value)
@@ -94,10 +92,10 @@ def set_matplotlib_global(key, value):
     return
 
 
-def apply():
+def reload_numba():
     '''
     Apply changes to Numba functions -- reloading modules is necessary for
-    changes to propogate.
+    changes to propogate. Not necessary if cv.options.set() is used.
 
     **Example**::
 
@@ -116,6 +114,5 @@ def apply():
     return
 
 
-# Add these here to be more accessible to the user
+# Add this here to be more accessible to the user
 options.set = set_option
-options.apply = apply
