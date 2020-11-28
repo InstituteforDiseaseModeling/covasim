@@ -1,6 +1,6 @@
 # Check that requirements are met and set options
 from . import requirements
-from . import options
+from .options import *
 
 # Import the version and print the license unless verbosity is disabled
 from .version import __version__, __versiondate__, __license__
