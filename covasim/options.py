@@ -25,7 +25,7 @@ options.font_family = os.getenv('COVASIM_FONT_FAMILY', '')
 options.dpi = int(os.getenv('COVASIM_DPI', 0))
 
 # Set default verbosity
-options.verbose = float(os.getenv('COVASIM_VERBOSE', 1.0))
+options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
 
 # Set default arithmetic precision -- use 32-bit by default for speed and memory efficiency
 options.precision = int(os.getenv('COVASIM_PRECISION', 32))

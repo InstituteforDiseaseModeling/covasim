@@ -540,7 +540,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, **kwargs):
+    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, output=False, **kwargs):
         '''
         Run the simulation.
 
@@ -549,7 +549,8 @@ class Sim(cvb.BaseSim):
             until (int/str): day or date to run until
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
-            verbose (float): level of detail to print, e.g. 0 = no output, 0.2 = print every 5th day, 1 = print every day
+            verbose (float): level of detail to print, e.g. 0 = no output, 0.1 = print every 10th day, 1 = print every day
+            output (bool): whether to return the results dictionary as output
             kwargs (dict): passed to sim.plot()
 
         Returns:
@@ -612,7 +613,10 @@ class Sim(cvb.BaseSim):
             sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
             if do_plot: # Optionally plot
                 self.plot(**kwargs)
-            return self.results
+            if output:
+                return self.results
+            else:
+                return
         else:
             return # If not complete, return nothing
 
