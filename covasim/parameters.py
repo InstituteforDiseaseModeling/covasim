@@ -4,7 +4,7 @@ Set the parameters for Covasim.
 
 import numpy as np
 import sciris as sc
-from .settings import options as cvo # To set options
+from .settings import options as cvo # For setting global options
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
@@ -18,8 +18,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     Args:
         set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
-        prog_by_age (bool): whether or not to use age-based severity, mortality etc.
-        kwargs (dict): any additional kwargs are interpreted as parameter names
+        prog_by_age   (bool): whether or not to use age-based severity, mortality etc.
+        kwargs        (dict): any additional kwargs are interpreted as parameter names
 
     Returns:
         pars (dict): the parameters of the simulation
@@ -28,8 +28,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Population parameters
     pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
-    pars['pop_infected'] = 10       # Number of initial infections
-    pars['pop_type']     = 'random' # What type of population data to use -- random (fastest), synthpops (best), hybrid (compromise), or clustered (not recommended)
+    pars['pop_infected'] = 20       # Number of initial infections
+    pars['pop_type']     = 'hybrid' # What type of population data to use -- 'hybrid' (default), 'random' (fastest), 'synthpops' (best)
     pars['location']     = None     # What location to load data from -- default Seattle
 
     # Simulation parameters
@@ -51,8 +51,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
     pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta_dist']   = {'dist':'neg_binomial','par1':1.0, 'par2':0.45, 'step':0.01} # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
-    pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+    pars['beta_dist']   = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
+    pars['viral_dist']  = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
@@ -62,17 +62,17 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
-    pars['dur']['exp2inf']  = {'dist':'lognormal_int', 'par1':4.6, 'par2':4.8} # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sim duration
-    pars['dur']['inf2sym']  = {'dist':'lognormal_int', 'par1':1.0, 'par2':0.9} # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538
-    pars['dur']['sym2sev']  = {'dist':'lognormal_int', 'par1':6.6, 'par2':4.9} # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538
-    pars['dur']['sev2crit'] = {'dist':'lognormal_int', 'par1':3.0, 'par2':7.4} # Duration from severe symptoms to requiring ICU; see Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044
+    pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.6, par2=4.8) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sim duration
+    pars['dur']['inf2sym']  = dict(dist='lognormal_int', par1=1.0, par2=0.9) # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538
+    pars['dur']['sym2sev']  = dict(dist='lognormal_int', par1=6.6, par2=4.9) # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538
+    pars['dur']['sev2crit'] = dict(dist='lognormal_int', par1=3.0, par2=7.4) # Duration from severe symptoms to requiring ICU; see Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044
 
     # Duration parameters: time for disease recovery
-    pars['dur']['asym2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration for asymptomatic people to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['mild2rec'] = {'dist':'lognormal_int', 'par1':8.0,  'par2':2.0} # Duration for people with mild symptoms to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['sev2rec']  = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration for people with severe symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
-    pars['dur']['crit2rec'] = {'dist':'lognormal_int', 'par1':14.0, 'par2':2.4} # Duration for people with critical symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
-    pars['dur']['crit2die'] = {'dist':'lognormal_int', 'par1':6.2,  'par2':1.7} # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+    pars['dur']['asym2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for asymptomatic people to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+    pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for people with mild symptoms to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+    pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=14.0, par2=2.4) # Duration for people with severe symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+    pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=14.0, par2=2.4) # Duration for people with critical symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+    pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=6.2,  par2=1.7) # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
 
     # Severity parameters: probabilities of symptom progression
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
@@ -119,7 +119,8 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     '''
 
     # Specify defaults for random -- layer 'a' for 'all'
-    defaults_r = dict(
+    layer_defaults = {}
+    layer_defaults['random'] = dict(
         beta_layer  = dict(a=1.0), # Default beta
         contacts    = dict(a=20),  # Default number of contacts
         dynam_layer = dict(a=0),   # Do not use dynamic layers by default
@@ -127,27 +128,33 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
         quar_factor = dict(a=0.3), # Assumed quarantine factor
     )
 
-    # Specify defaults for hybrid (and SynthPops) -- household, school, work, and community layers (h, s, w, c)
-    defaults_h = dict(
-        beta_layer  = dict(h=3.0, s=0.6, w=0.6, c=0.3), # Per-population beta weights; relative; see Table S14 of https://science.sciencemag.org/content/sci/suppl/2020/04/28/science.abb8001.DC1/abb8001_Zhang_SM.pdf
+    # Specify defaults for hybrid -- household, school, work, and community layers (h, s, w, c)
+    layer_defaults['hybrid'] = dict(
+        beta_layer  = dict(h=3.0, s=0.6, w=0.6, c=0.3),  # Per-population beta weights; relative; see Table S14 of https://science.sciencemag.org/content/sci/suppl/2020/04/28/science.abb8001.DC1/abb8001_Zhang_SM.pdf
         contacts    = dict(h=2.0, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
         dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
         iso_factor  = dict(h=0.3, s=0.1, w=0.1, c=0.1),  # Multiply beta by this factor for people in isolation
         quar_factor = dict(h=0.6, s=0.2, w=0.2, c=0.2),  # Multiply beta by this factor for people in quarantine
     )
 
+    # Specify defaults for SynthPops -- same as hybrid but with LTCF layer (l)
+    layer_defaults['synthpops'] = sc.dcp(layer_defaults['hybrid'])
+    for pkey in layer_pars:
+        layer_defaults['synthpops'][pkey]['l'] = layer_defaults['synthpops'][pkey]['h']
+    layer_defaults['synthpops']['beta_layer']['l'] = 1.5 # Reset beta for LTCFs to be half of households
+
     # Choose the parameter defaults based on the population type, and get the layer keys
-    if pars['pop_type'] == 'random':
-        defaults = defaults_r
-        default_layer_keys = ['a'] # Although this could be retrieved from the dictionary, make it explicit
-    else:
-        defaults = defaults_h
-        default_layer_keys = ['h', 's', 'w', 'c'] # NB, these must match defaults_h above
+    try:
+        defaults = layer_defaults[pars['pop_type']]
+    except Exception as E:
+        errormsg = f'Cannot load defaults for population type "{pars["pop_type"]}": must be hybrid, random, or synthpops'
+        raise sc.KeyNotFoundError(errormsg) from E
+    default_layer_keys = list(defaults.keys())
 
     # Actually set the parameters
     for pkey in layer_pars:
         par = {} # Initialize this parameter
-        default_val = defaults_r[pkey]['a'] # Get the default value for this parameter
+        default_val = layer_defaults['random'][pkey]['a'] # Get the default value for this parameter
 
         # If forcing, we overwrite any existing parameter values
         if force:
@@ -187,9 +194,9 @@ def get_prognoses(by_age=True):
         prognoses = dict(
             age_cutoffs  = np.array([0]),
             symp_probs   = np.array([0.75]),
-            severe_probs = np.array([0.20]),
-            crit_probs   = np.array([0.08]),
-            death_probs  = np.array([0.02]),
+            severe_probs = np.array([0.10]),
+            crit_probs   = np.array([0.04]),
+            death_probs  = np.array([0.01]),
         )
     else:
         prognoses = dict(
