@@ -51,6 +51,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
+    'sphinx.ext.viewcode',  # Add a link to the Python source code for classes, functions etc.
     'plantweb.directive',
     'nbsphinx',
 ]
@@ -401,3 +402,11 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 # intersphinx_mapping = {'https://docs.python.org/': None}
+
+# Configure nbsphinx
+nbsphinx_kernel_name = "python"
+nbsphinx_timeout = -1  # Disable timeout for slow cells
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg', 'pdf'}",
+    "--InlineBackend.rc=figure.dpi=96",
+]

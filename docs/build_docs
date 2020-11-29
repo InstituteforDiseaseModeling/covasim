@@ -1,7 +1,11 @@
 #!/bin/bash
 
+start=$SECONDS
 echo 'Building docs...'
 make clean
 make html
-echo 'Docs index:'
+duration=$(( SECONDS - start ))
+
+echo "Docs built after $duration seconds."
+echo "Index:"
 echo "`pwd`/_build/html/index.html"
