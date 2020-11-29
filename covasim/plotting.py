@@ -230,9 +230,15 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
         cvm.savefig(filename=fig_path) # Save the figure
 
-    # Show the figure
+    # Show the figure, or close it
     if do_show or cvo.show:
         pl.show()
+    else:
+        if sep_figs:
+            for fig in figs:
+                pl.close(fig)
+        else:
+            pl.close(fig)
 
     # Return the figure or figures
     if sep_figs:
