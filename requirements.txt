@@ -4,4 +4,4 @@ scipy
 matplotlib
 statsmodels
 numba
-sciris>=0.17.2
+sciris>=0.18.0
