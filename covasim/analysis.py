@@ -136,8 +136,8 @@ class snapshot(Analyzer):
         ''' Retrieve a snapshot from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
-        day  = cvm.day(key, start_day=self.start_day)
-        date = cvm.date(day, start_date=self.start_day, as_date=False)
+        day  = sc.day(key, start_day=self.start_day)
+        date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.snapshots:
             snapshot = self.snapshots[date]
         else:
@@ -204,8 +204,8 @@ class age_histogram(Analyzer):
     def initialize(self, sim):
 
         # Handle days
-        self.start_day = cvm.date(sim['start_day'], as_date=False) # Get the start day, as a string
-        self.end_day   = cvm.date(sim['end_day'],   as_date=False) # Get the start day, as a string
+        self.start_day = sc.date(sim['start_day'], as_date=False) # Get the start day, as a string
+        self.end_day   = sc.date(sim['end_day'],   as_date=False) # Get the start day, as a string
         if self.days is None:
             self.days = self.end_day # If no day is supplied, use the last day
         self.days, self.dates = cvi.process_days(sim, self.days, return_dates=True) # Ensure days are in the right format
@@ -262,8 +262,8 @@ class age_histogram(Analyzer):
         ''' Retrieve a specific histogram from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
-        day  = cvm.day(key, start_day=self.start_day)
-        date = cvm.date(day, start_date=self.start_day, as_date=False)
+        day  = sc.day(key, start_day=self.start_day)
+        date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.hists:
             hists = self.hists[date]
         else:
@@ -276,7 +276,7 @@ class age_histogram(Analyzer):
     def compute_windows(self):
         ''' Convert cumulative histograms to windows '''
         if len(self.hists)<2:
-            errormsg = f'You must have at least two dates specified to compute a window'
+            errormsg = 'You must have at least two dates specified to compute a window'
             raise ValueError(errormsg)
 
         self.window_hists = sc.objdict()
@@ -568,42 +568,42 @@ class daily_stats(Analyzer):
 
         datestr = f'day {sim.t} ({sim.date(sim.t)})'
         report  = f'*** Statistics report for {datestr} ***\n\n'
-        report += f'Overall stocks:'
+        report += 'Overall stocks:'
         report += make_entry('stocks', show_empty=False)
-        report += f'  Derived statistics:\n'
+        report += '  Derived statistics:\n'
         report += f'    Percentage infectious: {stats.extra.prev*100:6.3f}%\n'
         report += f'    Percentage dead:       {stats.extra.dead*100:6.3f}%\n'
-        report += f'\nTransmission target statistics:'
+        report += '\nTransmission target statistics:'
         report += make_entry('trans')
-        report += f'  Infections by layer:\n'
+        report += '  Infections by layer:\n'
         report += '\n'.join([f'    {k} = {v}' for k,v in stats.layer_counts.items()])
-        report += f'\n\nTransmission source statistics:'
+        report += '\n\nTransmission source statistics:'
         report += make_entry('source')
-        report += f'  Derived statistics:\n'
+        report += '  Derived statistics:\n'
         report += f'    Pre-symptomatic: {stats.extra.presymp} ({stats.extra.per_presymp:0.1f})%\n'
         report += f'    Asymptomatic:    {stats.extra.asymp} ({stats.extra.per_asymp:0.1f})%\n'
         report += f'    Symptomatic:     {stats.extra.symp} ({stats.extra.per_symp:0.1f})%\n'
-        report += f'\nTesting statistics:'
+        report += '\nTesting statistics:'
         report += make_entry('test')
-        report += f'  Derived statistics:\n'
-        report += f'    Tests:\n'
+        report += '  Derived statistics:\n'
+        report += '    Tests:\n'
         report += f'      Symp/asymp not in quar: {stats.extra.test_symp_nq}/{stats.extra.test_asymp_nq}\n'
         report += f'      Symp/asymp in quar:     {stats.extra.test_symp_q}/{stats.extra.test_asymp_q}\n'
         report += f'      Symp/asymp enter quar:  {stats.extra.test_symp_eq}/{stats.extra.test_asymp_eq}\n'
         report += f'      Symp/asymp finish quar: {stats.extra.test_symp_fq}/{stats.extra.test_asymp_fq}\n'
-        report += f'    Diagnoses:\n'
+        report += '    Diagnoses:\n'
         report += f'      Symp/asymp not in quar: {stats.extra.diag_symp_nq}/{stats.extra.diag_asymp_nq}\n'
         report += f'      Symp/asymp in quar:     {stats.extra.diag_symp_q}/{stats.extra.diag_asymp_q}\n'
         report += f'      Symp/asymp enter quar:  {stats.extra.diag_symp_eq}/{stats.extra.diag_asymp_eq}\n'
         report += f'      Symp/asymp finish quar: {stats.extra.diag_symp_fq}/{stats.extra.diag_asymp_fq}\n'
-        report += f'    Undiagnosed:\n'
+        report += '    Undiagnosed:\n'
         report += f'      Symp/asymp not in quar: {stats.extra.undiag_symp_nq}/{stats.extra.undiag_asymp_nq}\n'
         report += f'      Symp/asymp in quar:     {stats.extra.undiag_symp_q}/{stats.extra.undiag_asymp_q}\n'
         report += f'      Symp/asymp enter quar:  {stats.extra.undiag_symp_eq}/{stats.extra.undiag_asymp_eq}\n'
         report += f'      Symp/asymp finish quar: {stats.extra.undiag_symp_fq}/{stats.extra.undiag_asymp_fq}\n'
-        report += f'\nQuarantine statistics:'
+        report += '\nQuarantine statistics:'
         report += make_entry('quar')
-        report += f'  Derived statistics:\n'
+        report += '  Derived statistics:\n'
         report += f'    Percentage infectious not in quarantine:    {stats.extra.non_quar_prev*100:6.3f}%\n'
         report += f'    Percentage infectious in quarantine:        {stats.extra.quar_prev*100:6.3f}%\n'
         report += f'    Percentage infectious entering quarantine:  {stats.extra.e_quar_prev*100:6.3f}%\n'
@@ -656,7 +656,7 @@ class daily_stats(Analyzer):
 
         # Do the plotting
         nplots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
-        nrows,ncols = cvm.get_rows_cols(nplots)
+        nrows,ncols = sc.get_rows_cols(nplots)
         fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
         pl.subplots_adjust(**axis_args)
 
@@ -943,7 +943,7 @@ class Fit(sc.prettyobj):
                     if i == 0:
                         data = self.losses[key]
                         ylabel = 'Daily mismatch'
-                        title = f'Daily total mismatch'
+                        title = 'Daily total mismatch'
                     else:
                         data = np.cumsum(self.losses[key])
                         ylabel = 'Cumulative mismatch'
@@ -1098,7 +1098,7 @@ class TransTree(sc.prettyobj):
     def day(self, day=None, which=None):
         ''' Convenience function for converting an input to an integer day '''
         if day is not None:
-            day = cvm.day(day, start_day=self.sim_start)
+            day = sc.day(day, start_day=self.sim_start)
         elif which == 'start':
             day = 0
         elif which == 'end':

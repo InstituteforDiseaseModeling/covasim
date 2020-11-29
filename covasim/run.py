@@ -1072,6 +1072,17 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
         sim = cv.single_run(sim) # Run it, equivalent(ish) to sim.run()
     '''
 
+    # np.random.rand()
+    # sc.tic()
+    # a = ind
+    # a += ind
+    # for i in range(int(1)):
+    #     a += float(ind)*1e-8
+    # sc.timedsleep(np.random.rand())
+    # sc.toc()
+
+    # print('hi i am', a)
+
     # Set sim and run arguments
     sim_args = sc.mergedicts(sim_args, kwargs)
     run_args = sc.mergedicts({'verbose':verbose}, run_args)
@@ -1160,9 +1171,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
 
     # Handle inputs
     sim_args = sc.mergedicts(sim_args, kwargs) # Handle blank
-    par_args = sc.mergedicts(par_args) # Handle blank
-    if n_cpus is not None:
-        par_args['ncpus'] = n_cpus
+    par_args = sc.mergedicts({'ncpus':n_cpus}, par_args) # Handle blank
 
     # Handle iterpars
     if iterpars is None:

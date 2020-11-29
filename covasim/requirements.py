@@ -5,11 +5,9 @@ or errors if not.
 
 #%% Housekeeping
 
-__all__ = ['available', 'min_versions', 'check_sciris', 'check_synthpops']
+__all__ = ['min_versions', 'check_sciris', 'check_synthpops']
 
-
-available = {} # Make this available at the module level
-min_versions = {'sciris':'0.17.2'}
+min_versions = {'sciris':'0.18.0'}
 
 
 #%% Check dependencies

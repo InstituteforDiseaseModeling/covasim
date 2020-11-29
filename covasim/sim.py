@@ -198,14 +198,14 @@ class Sim(cvb.BaseSim):
         start_day = self['start_day'] # Shorten
         if start_day in [None, 0]: # Use default start day
             start_day = '2020-03-01'
-        self['start_day'] = cvm.date(start_day)
+        self['start_day'] = sc.date(start_day)
 
         # Handle end day and n_days
         end_day = self['end_day']
         n_days = self['n_days']
         if end_day:
-            self['end_day'] = cvm.date(end_day)
-            n_days = cvm.daydiff(self['start_day'], self['end_day'])
+            self['end_day'] = sc.date(end_day)
+            n_days = sc.daydiff(self['start_day'], self['end_day'])
             if n_days <= 0:
                 errormsg = f"Number of days must be >0, but you supplied start={str(self['start_day'])} and end={str(self['end_day'])}, which gives n_days={n_days}"
                 raise ValueError(errormsg)
@@ -912,11 +912,11 @@ class Sim(cvb.BaseSim):
         else:
             label = '<no label>'
 
-        start = cvm.date(self['start_day'], as_date=False)
+        start = sc.date(self['start_day'], as_date=False)
         if self['end_day']:
-            end = cvm.date(self['end_day'], as_date=False)
+            end = sc.date(self['end_day'], as_date=False)
         else:
-            end = cvm.date(self['n_days'], start_date=start)
+            end = sc.date(self['n_days'], start_date=start)
 
         pop_size = self['pop_size']
         pop_type = self['pop_type']

@@ -241,7 +241,7 @@ class BaseSim(ParsObj):
 
             sim.day('2020-04-05') # Returns 35
         '''
-        return cvm.day(day, *args, start_day=self['start_day'])
+        return sc.day(day, *args, start_day=self['start_day'])
 
 
     def date(self, ind, *args, dateformat=None, as_date=False):
@@ -280,9 +280,9 @@ class BaseSim(ParsObj):
         dates = []
         for raw in ind:
             if sc.isnumber(raw):
-                date_obj = cvm.date(self['start_day'], as_date=True) + dt.timedelta(days=int(raw))
+                date_obj = sc.date(self['start_day'], as_date=True) + dt.timedelta(days=int(raw))
             else:
-                date_obj = cvm.date(raw, as_date=True)
+                date_obj = sc.date(raw, as_date=True)
             if as_date:
                 dates.append(date_obj)
             else:

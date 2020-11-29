@@ -6,201 +6,23 @@ import numpy as np
 import pandas as pd
 import pylab as pl
 import sciris as sc
-import datetime as dt
 import scipy.stats as sps
 from . import version as cvver
 
 
-#%% Day and date functions
+#%% Convenience imports from Sciris
 
 __all__ = ['date', 'day', 'daydiff', 'date_range']
 
-
-def date(obj, *args, start_date=None, dateformat=None, as_date=True):
-    '''
-    Convert a string or a datetime object to a date object. To convert to an integer
-    from the start day, it is recommended you supply a start date, or use sim.date()
-    instead; otherwise, it will calculate the date counting days from 2020-01-01.
-    This means that the output of cv.date() will not necessarily match the output
-    of sim.date() for an integer input.
-
-    Args:
-        obj (str, date, datetime, list, array): the object to convert
-        args (str, date, datetime): additional objects to convert
-        start_date (str, date, datetime): the starting date, if an integer is supplied
-        dateformat (str): the format to return the date in
-        as_date (bool): whether to return as a datetime date instead of a string
-
-    Returns:
-        dates (date or list): either a single date object, or a list of them
-
-    **Examples**::
-
-        cv.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-        cv.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
-        cv.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
-    '''
-
-    if obj is None:
-        return None
-
-    # Convert to list and handle other inputs
-    if isinstance(obj, np.ndarray):
-        obj = obj.tolist() # If it's an array, convert to a list
-    obj = sc.promotetolist(obj) # Ensure it's iterable
-    obj.extend(args)
-    if dateformat is None:
-        dateformat = '%Y-%m-%d'
-    if start_date is None:
-        start_date = '2020-01-01'
-
-    dates = []
-    for d in obj:
-        if d is None:
-            dates.append(d)
-            continue
-        try:
-            if type(d) == dt.date: # Do not use isinstance, since must be the exact type
-                pass
-            elif sc.isstring(d):
-                d = sc.readdate(d).date()
-            elif isinstance(d, dt.datetime):
-                d = d.date()
-            elif sc.isnumber(d):
-                if start_date is None:
-                    errormsg = f'To convert the number {d} to a date, you must supply start_date'
-                    raise ValueError(errormsg)
-                d = date(start_date) + dt.timedelta(days=int(d))
-            else:
-                errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
-                raise TypeError(errormsg)
-            if as_date:
-                dates.append(d)
-            else:
-                dates.append(d.strftime(dateformat))
-        except Exception as E:
-            errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
-            raise ValueError(errormsg)
-
-    # Return an integer rather than a list if only one provided
-    if len(dates)==1:
-        dates = dates[0]
-
-    return dates
-
-
-def day(obj, *args, start_day=None):
-    '''
-    Convert a string, date/datetime object, or int to a day (int), the number of
-    days since the start day. See also date() and daydiff(). Used primarily via
-    sim.day() rather than directly.
-
-    Args:
-        obj (str, date, int, or list): convert any of these objects to a day relative to the start day
-        args (list): additional days
-        start_day (str or date): the start day; if none is supplied, return days since 2020-01-01.
-
-    Returns:
-        days (int or str): the day(s) in simulation time
-
-    **Example**::
-
-        sim.day('2020-04-05') # Returns 35
-    '''
-
-    # Do not process a day if it's not supplied
-    if obj is None:
-        return None
-    if start_day is None:
-        start_day = '2020-01-01'
-
-    # Convert to list
-    if sc.isstring(obj) or sc.isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
-        obj = sc.promotetolist(obj) # Ensure it's iterable
-    elif isinstance(obj, np.ndarray):
-        obj = obj.tolist() # Convert to list if it's an array
-    obj.extend(args)
-
-    days = []
-    for d in obj:
-        if d is None:
-            days.append(d)
-        elif sc.isnumber(d):
-            days.append(int(d)) # Just convert to an integer
-        else:
-            try:
-                if sc.isstring(d):
-                    d = sc.readdate(d).date()
-                elif isinstance(d, dt.datetime):
-                    d = d.date()
-                d_day = (d - date(start_day)).days # Heavy lifting -- actually compute the day
-                days.append(d_day)
-            except Exception as E:
-                errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
-                raise ValueError(errormsg)
-
-    # Return an integer rather than a list if only one provided
-    if len(days)==1:
-        days = days[0]
-
-    return days
-
-
-def daydiff(*args):
-    '''
-    Convenience function to find the difference between two or more days. With
-    only one argument, calculate days since 2020-01-01.
-
-    **Example**::
-
-        since_ny = cv.daydiff('2020-03-20') # Returns 79 days since Jan. 1st
-        diff     = cv.daydiff('2020-03-20', '2020-04-05') # Returns 16
-        diffs    = cv.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
-    '''
-    days = [date(day) for day in args]
-    if len(days) == 1:
-        days.insert(0, date('2020-01-01')) # With one date, return days since Jan. 1st
-
-    output = []
-    for i in range(len(days)-1):
-        diff = (days[i+1] - days[i]).days
-        output.append(diff)
-
-    if len(output) == 1:
-        output = output[0]
-
-    return output
-
-
-def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=None):
-    '''
-    Return a list of dates from the start date to the end date. To convert a list
-    of days (as integers) to dates, use cv.date() instead.
-
-    Args:
-        start_date (int/str/date): the starting date, in any format
-        end_date (int/str/date): the end date, in any format
-        inclusive (bool): if True (default), return to end_date inclusive; otherwise, stop the day before
-        as_date (bool): if True, return a list of datetime.date objects instead of strings
-        dateformat (str): passed to date()
-
-    **Example**::
-
-        dates = cv.date_range('2020-03-01', '2020-04-04')
-    '''
-    start_day = day(start_date)
-    end_day = day(end_date)
-    if inclusive:
-        end_day += 1
-    days = np.arange(start_day, end_day)
-    dates = date(days, as_date=as_date, dateformat=dateformat)
-    return dates
-
+date       = sc.date
+day        = sc.day
+daydiff    = sc.daydiff
+date_range = sc.date_range
 
 
 #%% Loading/saving functions
 
-__all__ += ['load_data', 'load', 'save']
+__all__ += ['load_data', 'load', 'save', 'savefig']
 
 
 def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
@@ -303,12 +125,6 @@ def save(*args, **kwargs):
     return filepath
 
 
-
-#%% Figure/plotting functions
-
-__all__ += ['savefig', 'get_rows_cols', 'maximize']
-
-
 def savefig(filename=None, comments=None, **kwargs):
     '''
     Wrapper for Matplotlib's savefig() function which automatically stores Covasim
@@ -344,7 +160,7 @@ def savefig(filename=None, comments=None, **kwargs):
     for key,value in gitinfo['called_by'].items():
         metadata[f'Covasim caller {key}'] = value
     metadata['Covasim current time'] = sc.getdate()
-    metadata['Covasim calling file'] = get_caller()
+    metadata['Covasim calling file'] = sc.get_caller()
     if comments:
         metadata['Covasim comments'] = comments
 
@@ -358,103 +174,10 @@ def savefig(filename=None, comments=None, **kwargs):
     return filename
 
 
-def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
-    '''
-    If you have 37 plots, then how many rows and columns of axes do you know? This
-    function convert a number (i.e. of plots) to a number of required rows and columns.
-    If nrows or ncols is provided, the other will be calculated. Ties are broken
-    in favor of more rows (i.e. 7x6 is preferred to 6x7).
-
-    Args:
-        n (int): the number (of plots) to accommodate
-        nrows (int): if supplied, keep this fixed and calculate the columns
-        ncols (int): if supplied, keep this fixed and calculate the rows
-        ratio (float): sets the number of rows relative to the number of columns (i.e. for 100 plots, 1 will give 10x10, 4 will give 20x5, etc.).
-
-    Returns:
-        A tuple of ints for the number of rows and the number of columns (which, of course, you can reverse)
-
-    **Examples**::
-
-        nrows,ncols = cv.get_rows_cols(36) # Returns 6,6
-        nrows,ncols = cv.get_rows_cols(37) # Returns 7,6
-        nrows,ncols = cv.get_rows_cols(100, ratio=2) # Returns 15,7
-        nrows,ncols = cv.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
-    '''
-
-    # Simple cases -- calculate the one missing
-    if nrows is not None:
-        ncols = int(np.ceil(n/nrows))
-    elif ncols is not None:
-        nrows = int(np.ceil(n/ncols))
-
-    # Standard case -- calculate both
-    else:
-        guess = np.sqrt(n)
-        nrows = int(np.ceil(guess*np.sqrt(ratio)))
-        ncols = int(np.ceil(n/nrows)) # Could also call recursively!
-
-    return nrows,ncols
-
-
-def maximize(fig=None, die=False):
-    '''
-    Maximize the current (or supplied) figure. Note: not guaranteed to work for
-    all Matplotlib backends (e.g., agg).
-
-    Args:
-        fig (Figure): the figure object; if not supplied, use the current active figure
-        die (bool): whether to propagate an exception if encountered (default no)
-    '''
-    if fig is not None:
-        pl.figure(fig.number) # Set the current figure
-    try:
-        mng = pl.get_current_fig_manager()
-        mng.window.showMaximized()
-    except Exception as E:
-        errormsg = f'Warning: maximizing the figure failed: {str(E)}'
-        if die:
-            raise RuntimeError(errormsg) from E
-        else:
-            print(errormsg)
-    return
-
 
 #%% Versioning functions
 
-__all__ += ['get_caller', 'git_info', 'check_version', 'check_save_version', 'get_png_metadata']
-
-
-def get_caller(frame=2, tostring=True):
-        '''
-        Try to get information on the calling function, but fail gracefully.
-
-        Frame 1 is the current file (this one), so not very useful. Frame 2 is
-        the default assuming it is being called directly. Frame 3 is used if
-        another function is calling this function internally.
-
-        Args:
-            frame (int): how many frames to descend (e.g. the caller of the caller of the...)
-            tostring (bool): whether to return a string instead of a dict
-
-        Returns:
-            output (str/dict): the filename and line number of the calling function, either as a string or dict
-        '''
-        try:
-            import inspect
-            result = inspect.getouterframes(inspect.currentframe(), 2)
-            fname = str(result[frame][1])
-            lineno = str(result[frame][2])
-            if tostring:
-                output = f'{fname}, line {lineno}'
-            else:
-                output = {'filename':fname, 'lineno':lineno}
-        except Exception as E:
-            if tostring:
-                output = f'Calling function information not available ({str(E)})'
-            else:
-                output = {'filename':'N/A', 'lineno':'N/A'}
-        return output
+__all__ += ['git_info', 'check_version', 'check_save_version', 'get_png_metadata']
 
 
 def git_info(filename=None, check=False, comments=None, old_info=None, die=False, indent=2, verbose=True, frame=2, **kwargs):
@@ -486,7 +209,7 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
         filename = filename.replace('.py', '.gitinfo')
 
     # Get git info
-    calling_file = sc.makefilepath(get_caller(frame=frame, tostring=False)['filename'])
+    calling_file = sc.makefilepath(sc.get_caller(frame=frame, tostring=False)['filename'])
     cv_info = {'version':cvver.__version__}
     cv_info.update(sc.gitinfo(__file__, verbose=False))
     caller_info = sc.gitinfo(calling_file, verbose=False)
@@ -577,7 +300,7 @@ def check_save_version(expected=None, filename=None, die=False, verbose=True, **
 
     # Now, check and save the git info
     if filename is None:
-        filename = get_caller(tostring=False)['filename']
+        filename = sc.get_caller(tostring=False)['filename']
     git_info(filename=filename, frame=3, **kwargs)
 
     return
@@ -640,10 +363,10 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
     # Validate inputs: series
     if series is None or isinstance(series, str):
         if not sim.results_ready:
-            raise Exception(f"Results not ready, cannot calculate doubling time")
+            raise Exception("Results not ready, cannot calculate doubling time")
         else:
             if series is None or series not in sim.result_keys():
-                sc.printv(f"Series not supplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
+                sc.printv("Series not supplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
                 series='cum_infections'
             series = sim.results[series].values
     else:
@@ -664,7 +387,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
     # Deal with moving window
     if moving_window is not None:
         if not sc.isnumber(moving_window):
-            sc.printv(f"Moving window should be an integer; ignoring and calculating single result", 1, verbose)
+            sc.printv("Moving window should be an integer; ignoring and calculating single result", 1, verbose)
             doubling_time = get_doubling_time(sim, series=series, start_day=start_day, end_day=end_day, moving_window=None, exp_approx=exp_approx)
 
         else:
@@ -698,7 +421,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
                     doubling_time = int_length * np.log(2) / np.log(r)
                     doubling_time = min(doubling_time, max_doubling_time)  # Otherwise, it's unbounded
             else:
-                raise ValueError(f"Can't calculate doubling time with exponential approximation when initial value is zero.")
+                raise ValueError("Can't calculate doubling time with exponential approximation when initial value is zero.")
         else:
 
             if np.any(series[start_day:end_day]): # Deal with zero values if possible
