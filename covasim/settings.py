@@ -11,33 +11,41 @@ import sciris as sc
 __all__ = ['options']
 
 
-# Options acts like a class, but is actually an objdict for simplicity
-options = sc.objdict()
+def set_default_options():
+    ''' Set the default options for Covasim '''
+
+    # Options acts like a class, but is actually an objdict for simplicity
+    options = sc.objdict()
+
+    # Set the default font size -- if 0, use Matplotlib default
+    options.font_size = int(os.getenv('COVASIM_FONT_SIZE', 0))
+
+    # Set the font family
+    options.font_family = os.getenv('COVASIM_FONT_FAMILY', '')
+
+    # Set the default font size -- if 0, use Matplotlib default
+    options.dpi = int(os.getenv('COVASIM_DPI', 0))
+
+    # Set whether or not to show figures -- default true
+    options.show = int(os.getenv('COVASIM_SHOW', 1))
+
+    # Set the figure backend -- only works globally
+    options.backend = os.getenv('COVASIM_BACKEND', '')
+
+    # Set default verbosity
+    options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
+
+    # Set default arithmetic precision -- use 32-bit by default for speed and memory efficiency
+    options.precision = int(os.getenv('COVASIM_PRECISION', 32))
+
+    # Specify whether to allow parallel Numba calculation -- about 20% faster, but the random number stream becomes nondeterministic
+    options.numba_parallel = bool(int(os.getenv('COVASIM_NUMBA_PARALLEL', 0)))
+
+    return options
 
 
-# Set the default font size -- if 0, use Matplotlib default
-options.font_size = int(os.getenv('COVASIM_FONT_SIZE', 0))
-
-# Set the font family
-options.font_family = os.getenv('COVASIM_FONT_FAMILY', '')
-
-# Set the default font size -- if 0, use Matplotlib default
-options.dpi = int(os.getenv('COVASIM_DPI', 0))
-
-# Set whether or not to show figures -- default true
-options.show = int(os.getenv('COVASIM_SHOW', 1))
-
-# Set the figure backend -- only works globally
-options.backend = os.getenv('COVASIM_BACKEND', '')
-
-# Set default verbosity
-options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
-
-# Set default arithmetic precision -- use 32-bit by default for speed and memory efficiency
-options.precision = int(os.getenv('COVASIM_PRECISION', 32))
-
-# Specify whether to allow parallel Numba calculation -- about 20% faster, but the random number stream becomes nondeterministic
-options.numba_parallel = bool(int(os.getenv('COVASIM_NUMBA_PARALLEL', 0)))
+# Actually set the options
+options = set_default_options()
 
 # Specify which keys require a reload
 matplotlib_keys = ['font_size', 'font_family', 'dpi', 'backend']
@@ -73,6 +81,7 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
     if key is not None:
         kwargs = sc.mergedicts(kwargs, {key:value})
     reload_required = False
+    default_options = set_default_options()
     for key,value in kwargs.items():
         if key not in options:
             keylist = [k for k in options.keys() if k != 'set'] # Set is not a key
@@ -80,6 +89,8 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
             errormsg = f'Option "{key}" not recognized; options are:\n{keys}\n\nSee help(cv.options.set) for more information.'
             raise sc.KeyNotFoundError(errormsg)
         else:
+            if value is None:
+                value = default_options[key]
             options[key] = value
             if key in numba_keys:
                 reload_required = True

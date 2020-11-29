@@ -21,21 +21,6 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people
 
 #%% Plotting helper functions
 
-def set_plot_options(font_size=None, font_family=None, dpi=None):
-    ''' Set global plot options '''
-
-    # Reset options if provided
-    if font_size:    cvo.font_size   = font_size
-    if font_family:  cvo.font_family = font_family
-    if dpi:          cvo.dpi         = dpi
-
-    # Set Matplotlib options -- these intentionally skip 0 values, which are used as a default
-    if cvo.font_size:   pl.rcParams['font.size']   = cvo.font_size
-    if cvo.font_family: pl.rcParams['font.family'] = cvo.font_family
-    if cvo.dpi:         pl.rcParams['figure.dpi']  = cvo.dpi
-
-    return
-
 
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
@@ -271,7 +256,6 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
-    set_plot_options()
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
     fig, figs, ax = create_figs(args, sep_figs, fig)
@@ -306,7 +290,6 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
-    set_plot_options()
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
     fig, figs, ax = create_figs(args, sep_figs, fig)
@@ -347,7 +330,6 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     sep_figs = False # Only one figure
     fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
-    set_plot_options()
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
     fig, figs, ax = create_figs(args, sep_figs, fig)
 
@@ -386,7 +368,6 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
     ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
 
     # Handle inputs
-    set_plot_options()
     fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
@@ -441,7 +422,6 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
     zorder    = 10 # So plots appear on top of gridlines
 
     # Handle other arguments
-    set_plot_options()
     fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
     axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.35), axis_args)
     plot_args = sc.mergedicts(dict(lw=1.5, alpha=0.6, c=color, zorder=10), plot_args)
