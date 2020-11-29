@@ -663,7 +663,7 @@ class test_num(Intervention):
         # Check that there are still tests
         rel_t = t - self.start_day
         if rel_t < len(self.daily_tests):
-            n_tests = cvu.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests
+            n_tests = sc.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
@@ -711,7 +711,7 @@ class test_num(Intervention):
             in_pop_tot_prob = test_probs.sum()*sim.rescale_vec[t] # Total "testing weight" of people in the subsampled population
             out_pop_tot_prob = sim.scaled_pop_size - sim.rescale_vec[t]*sim['pop_size'] # Find out how many people are missing and assign them each weight 1
             in_frac = in_pop_tot_prob/(in_pop_tot_prob + out_pop_tot_prob) # Fraction of tests which should fall in the sample population
-            n_tests = cvu.randround(n_tests*in_frac) # Recompute the number of tests
+            n_tests = sc.randround(n_tests*in_frac) # Recompute the number of tests
 
         # Now choose who gets tested and test them
         n_tests = min(n_tests, (test_probs!=0).sum()) # Don't try to test more people than have nonzero testing probability
