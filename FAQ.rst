@@ -20,7 +20,7 @@ For more complex use cases (e.g. running across multiple virtual machines), we r
 What method is best for saving simulation objects?
 ---------------------------------------------------------------------------------------------------------------
 
-The recommended way to save a simulation is simply via ``sim.save(filename)``. By default, this does *not* save the people, since they are very large (i.e., 7 MB vs. 7 KB for 100,000 agents). However, if you really want to save the people, pass ``keep_people=True``.
+The recommended way to save a simulation is simply via ``sim.save(filename)``. By default, this does *not* save the people, since they are very large (i.e., 7 KB without people vs. 7 MB with people for 100,000 agents). However, if you really want to save the people, pass ``keep_people=True``.
 
 To load, you can use ``cv.load(filename)`` or ``cv.Sim.load(filename)`` (they are identical except for type checking). Under the hood, Covasim uses ``sc.saveobj()`` from `Sciris <http://sciris.org>`__, which in turn is a gzipped pickle. If you need a more "portable" format, you can use ``sim.to_json()``, but note that this will only save the results and the parameters, not the full sim object.
 

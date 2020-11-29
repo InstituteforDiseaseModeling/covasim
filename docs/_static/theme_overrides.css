@@ -25,9 +25,14 @@ h1, h2, .rst-content .toctree-wrapper p.caption, h3, h4, h5, h6, legend {
     margin-bottom: 0.5em;
 }
 
+h1 {
+    margin-bottom: 1.0em;
+}
+
 h2 {
     font-size: 125%;
     color: #0055af !important;
+    margin-bottom: 1.0em;
 }
 
 h3 {
