@@ -16,6 +16,8 @@ Full package reference
    tutorials/README
    parameters
    data
+   faq
+   glossary
    contributing
    modules
 

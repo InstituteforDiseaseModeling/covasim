@@ -207,7 +207,7 @@ def test_benchmark(do_save=do_save):
     for r in range(repeats):
 
         # Create the sim
-        sim = cv.Sim(verbose=0)
+        sim = cv.Sim(verbose=0, pop_type='random')
 
         # Time initialization
         t0 = sc.tic()
