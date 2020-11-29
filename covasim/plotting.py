@@ -598,7 +598,7 @@ def plotly_interventions(sim, fig, add_to_legend=False):
     return
 
 
-def plotly_sim(sim, do_show=None):
+def plotly_sim(sim, do_show=False):
     ''' Main simulation results -- parallel of sim.plot() '''
 
     go = import_plotly() # Load Plotly
@@ -629,7 +629,7 @@ def plotly_sim(sim, do_show=None):
     return plots
 
 
-def plotly_people(sim, do_show=None):
+def plotly_people(sim, do_show=False):
     ''' Plot a "cascade" of people moving through different states '''
 
     go = import_plotly() # Load Plotly
@@ -652,13 +652,13 @@ def plotly_people(sim, do_show=None):
     fig.update_layout(yaxis_range=(0, sim.n))
     fig.update_layout(title={'text': 'Numbers of people by health state'}, yaxis_title='People', autosize=True, **plotly_legend)
 
-    if do_show or cvo.show:
+    if do_show:
         fig.show()
 
     return fig
 
 
-def plotly_animate(sim, do_show=None):
+def plotly_animate(sim, do_show=False):
     ''' Plot an animation of each person in the sim '''
 
     go = import_plotly() # Load Plotly
@@ -777,7 +777,7 @@ def plotly_animate(sim, do_show=None):
 
     fig.update_layout(title={'text': 'Epidemic over time'}, **plotly_legend)
 
-    if do_show or cvo.show:
+    if do_show:
         fig.show()
 
     return fig
