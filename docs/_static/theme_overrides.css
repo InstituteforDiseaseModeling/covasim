@@ -22,16 +22,32 @@ footer p {
 
 h1, h2, .rst-content .toctree-wrapper p.caption, h3, h4, h5, h6, legend {
     font-family: "Montserrat", "Lato", "Open Sans", sans-serif;
+    margin-bottom: 0.5em;
+}
+
+h2 {
+    font-size: 125%;
+    color: #0055af !important;
+}
+
+h3 {
+    font-size: 115%;
+    color: #38761d;
+}
+
+h4 {
+    font-size: 105%;
+    color: #bf9000;
 }
 
 .wy-menu p.caption {
     color: #e3e3e3;
 }
 
-.section li p.first {
+/*.section li p.first {
     margin-top: 8px;
     margin-bottom: 3px;
-}
+}*/
 
 div.document span.search-highlight {
     background-color: yellow;

@@ -1,6 +1,6 @@
-==========================
-Frequently asked questions
-==========================
+===
+FAQ
+===
 
 This document contains answers to frequently (and some not so frequently) asked questions. If there are others you'd like to see included, please email us at covasim@idmod.org.
 
@@ -81,6 +81,22 @@ Is it possible to model interacting geographical regions?
 Possible, but not easy. Your best option is to create a single simulation where the contact network structure reflects the different regions. Please `email us <mailto:covasim@idmod.org>`__ for more information.
 
 
+I really don't like Python, can I run Covasim via R?
+---------------------------------------------------------------------------------
+
+Actually, you can! For example:
+
+.. code-block:: R
+
+    library(reticulate)
+    cv <- import('covasim')
+    sim <- cv$Sim()
+    sim$run()
+    sim$plot()
+
+(NB: if the above doesn't bring up a figure, try adding ``plt <- import('matplotlib.pyplot')`` and ``plt$show()``.)
+
+
 
 Conceptual questions
 ^^^^^^^^^^^^^^^^^^^^
@@ -113,6 +129,26 @@ This example illustrates the three different ways to simulation a population of 
 Note that using the full population and using dynamic rescaling give virtually identical results, whereas static scaling gives slightly different results.
 
 
+Are test results counted from swab date or result date?
+---------------------------------------------------------------------------------
+
+The results are reported for the date of the test which came back positive, not the the date of diagnosis. This reason for this is that in most places, this is how the data are reported -- if they do 100 tests on August 1st, say, and there is a 2-4 day test delay so 15 of these tests come back positive on August 2nd, 3rd, 4th, then in most places, this would be reported as 100 tests on August 1st, 10 diagnoses on August 1st (even though the lab work was done over August 2-4), and 90 negative tests on August 1st. The reason for doing it this way -- both in real world reporting and in the model -- is because otherwise you have a situation where if there is a big change in the number of tests from day to day, you could have more diagnoses on that day than tests. However, in terms of the model, the test delay is still being correctly taken into account. Specifically, ``sim.people.date_pos_test`` is used to (temporarily) store the date of the positive test, which is what's shown in the plots, but sim.people.date_diagnosed has the correct (true) diagnosis date for each person. 
+For example::
+
+    import covasim as cv
+    tn = cv.test_num(daily_tests=100, start_day=10, test_delay=10)
+    sim = cv.Sim(interventions=tn)
+    sim.run()
+    sim.plot(to_plot=['new_infections', 'new_tests', 'new_diagnoses'])
+
+shows that positive tests start coming back on day 10 (the start day of the intervention), but::
+
+    np.nanmin(sim.people.date_diagnosed)
+    Out[11]: 20.0
+
+shows that the earliest date a person is actually diagnosed is on day 20 (the start day of the intervention plus the test delay).
+
+
 Is the underlying model capable of generating oscillations?
 ---------------------------------------------------------------------------------
 
@@ -142,7 +178,6 @@ The webapp is limited by the results needing to be returned before the request t
 Why do parallel simulations fail on Windows or in Jupyter notebooks? 
 ---------------------------------------------------------------------------------
 
-`blah <sdfh>`__
 If you are running on Windows, because of the way Python's ``multiprocessing`` library is implemented, you must start the run from inside a ``__main__`` block (see discussion `here <https://stackoverflow.com/questions/20222534/python-multiprocessing-on-windows-if-name-main>`__).
 For example, instead of this::
 
@@ -162,4 +197,4 @@ do this::
         msim.run()
         msim.plot()
 
-For Jupyter notebooks, parallelization is more difficult (see discussion `here <https://stackoverflow.com/a/23641560/4613606>`__. Effectively, the ``msim.run()`` (or other parallel command) must be inside a separate ``.py`` file, and not part of the notebook itself.
+For Jupyter notebooks, parallelization is more difficult (see discussion `here <https://stackoverflow.com/a/23641560/4613606>`__). Effectively, the ``msim.run()`` (or other parallel command) must be inside a separate ``.py`` file, and not part of the notebook itself.
