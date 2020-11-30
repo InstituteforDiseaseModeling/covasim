@@ -17,7 +17,7 @@ __all__ = ['date', 'day', 'daydiff', 'date_range']
 date       = sc.date
 day        = sc.day
 daydiff    = sc.daydiff
-date_range = sc.date_range
+date_range = sc.daterange
 
 
 #%% Loading/saving functions
@@ -160,7 +160,7 @@ def savefig(filename=None, comments=None, **kwargs):
     for key,value in gitinfo['called_by'].items():
         metadata[f'Covasim caller {key}'] = value
     metadata['Covasim current time'] = sc.getdate()
-    metadata['Covasim calling file'] = sc.get_caller()
+    metadata['Covasim calling file'] = sc.getcaller()
     if comments:
         metadata['Covasim comments'] = comments
 
@@ -209,7 +209,7 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
         filename = filename.replace('.py', '.gitinfo')
 
     # Get git info
-    calling_file = sc.makefilepath(sc.get_caller(frame=frame, tostring=False)['filename'])
+    calling_file = sc.makefilepath(sc.getcaller(frame=frame, tostring=False)['filename'])
     cv_info = {'version':cvver.__version__}
     cv_info.update(sc.gitinfo(__file__, verbose=False))
     caller_info = sc.gitinfo(calling_file, verbose=False)
@@ -300,7 +300,7 @@ def check_save_version(expected=None, filename=None, die=False, verbose=True, **
 
     # Now, check and save the git info
     if filename is None:
-        filename = sc.get_caller(tostring=False)['filename']
+        filename = sc.getcaller(tostring=False)['filename']
     git_info(filename=filename, frame=3, **kwargs)
 
     return
