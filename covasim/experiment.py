@@ -6,6 +6,7 @@ standardPars = pars = sc.objdict(
     pop_size        = 40000,
     pop_infected    = 10,
     start_day       = '2020-03-01',
+    pop_type        = 'synthpops',
     location        = 'Vorarlberg',
     n_days          = 180,
     verbose         = 1,
