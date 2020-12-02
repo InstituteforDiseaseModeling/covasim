@@ -23,15 +23,15 @@ For more complex use cases (e.g. running across multiple virtual machines), we r
 What method is best for saving simulation objects?
 ---------------------------------------------------------------------------------------------------------------
 
-The recommended way to save a simulation is simply via ``sim.save(filename)``. By default, this does *not* save the people, since they are very large (i.e., 7 KB without people vs. 7 MB with people for 100,000 agents). However, if you really want to save the people, pass ``keep_people=True``.
+The recommended way to save a simulation is simply via ``sim.save(filename)``. By default, this does *not* save the people (``sim.people``), since they are very large (i.e., 7 KB without people vs. 7 MB with people for 100,000 agents). However, if you really want to save the people, pass ``keep_people=True``.
 
 To load, you can use ``cv.load(filename)`` or ``cv.Sim.load(filename)`` (they are identical except for type checking). Under the hood, Covasim uses ``sc.saveobj()`` from `Sciris <http://sciris.org>`__, which in turn is a gzipped pickle. If you need a more "portable" format, you can use ``sim.to_json()``, but note that this will only save the results and the parameters, not the full sim object.
 
 
-Does covasim support time-dependent parameters?
+Does Covasim support time-dependent parameters?
 ---------------------------------------------------------------------------------
 
-Typically, parameters are held constant for the duration of the simulation. However, it is possible to modify them dynamically -- see the ``cv.dynamic_pars()`` "intervention".
+Typically, parameters are held constant for the duration of the simulation. However, it is possible to modify them dynamically – see the ``cv.dynamic_pars()`` "intervention".
 
 
 How can you introduce new infections into a simulation?
@@ -87,7 +87,7 @@ Possible, but not easy. Your best option is to create a single simulation where 
 I really don't like Python, can I run Covasim via R?
 ---------------------------------------------------------------------------------
 
-Actually, you can! For example:
+Actually, you can! R's `reticulate <https://rstudio.github.io/reticulate/>`__ package lets you easily interface between Python and R. For example:
 
 .. code-block:: R
 
@@ -107,17 +107,19 @@ Conceptual questions
 What are the relationships between population size, number of agents, population scaling, and total population?
 ---------------------------------------------------------------------------------------------------------------
 
-The terms are a bit confusing and will likely be refactored in a future version of Covasim. The ``pop_size`` parameter actually controls the number of agents in the simulation. In many cases this is the same as the "total population size" or "scaled population size" being simulated, i.e., the actual number of people, which is available in the simulation as ``sim.scaled_pop_size``. However, ``pop_scale`` is greater than 1, the total population size will be greater than the number of agents. Some examples might help make this clearer:
+The terms are a bit confusing and may be refactored in a future version of Covasim. The ``pop_size`` parameter actually controls the number of *agents* in the simulation. In many cases this is the same as the "total population size" or "scaled population size" being simulated, i.e., the actual number of people. The "actual number of people" (not agents) is available in the simulation as ``sim.scaled_pop_size``. If (and only if) ``pop_scale`` is greater than 1, the total population size will be greater than the number of agents. Some examples might help make this clearer:
 
 *Example 1*. You want to simulate a population of 100,000 people. This will only take a few seconds to run, so you set ``pop_size = 100e3`` and ``pop_scale = 1``. In this example the population size is 100,000, the scaled population size is 100,000, the number of agents is 100,000, and the number of people being represented is also 100,000. Life is simple and you are happy.
 
-*Example 2*. You want to simulate a population of 1,000,000 people. This would take too long to run easily (several minutes per run), so you set ``pop_size = 200e3`` and ``pop_scale = 5`` with dyamic rescaling on (``rescale = True``). In this example the (simulated) population size is 200,000, the (final) scaled population size is 1,000,000, the number of agents is always 200,000, and the (final) number of people being represented is 1,000,000. Since dynamic rescaling is on, when the simulation starts, one agent represents one person, but only 200,000 people are included in the simulation (the other 800,000 are not infected and are not exposed to anyone who is infected, so are ignored). As more and more people become infected -- say, 10,000 infections -- 200,000 people is no longer enough to accurately represent the epidemic, since 10,000 infections out of 200,000 people is prevalence of 5%, whereas the real prevalence is 1% (10,000 infections out of 1,000,000 people). Dynamic rescaling kicks in (``rescale_threshold = 0.05``, the current prevalence level), and half of the infected people are converted back to susceptibles (``rescale_factor = 2``). There are now 5,000 infected *agents* in the model, corresponding to 10,000 infected *people*, i.e. one agent now counts as (represents) two people. This is equivalent to saying that for any given infected agent in the model (e.g., a 57-year-old woman who has 2 household contacts and 8 workplace contacts), there is another identical person in the population.
+*Example 2*. You want to simulate a population of 1,000,000 people. This would take too long to run easily (several minutes per run), so you set ``pop_size = 200e3`` and ``pop_scale = 5`` with dyamic rescaling on (``rescale = True``). In this example the (simulated) population size is 200,000, the (final) scaled population size is 1,000,000, the number of agents is always 200,000, and the (final) number of people being represented is 1,000,000. Since dynamic rescaling is on, when the simulation starts, one agent represents one person, but only 200,000 people are included in the simulation (the other 800,000 are not infected and are not exposed to anyone who is infected, so are not represented in the sim). As more and more people become infected – say, 10,000 infections – 200,000 people is no longer enough to accurately represent the epidemic, since 10,000 infections out of 200,000 people is prevalence of 5%, whereas the real prevalence is 1% (10,000 infections out of 1,000,000 people). Dynamic rescaling kicks in (``rescale_threshold = 0.05``, the current prevalence level), and half of the infected people are converted back to susceptibles (``rescale_factor = 2``). There are now 5,000 infected *agents* in the model, corresponding to 10,000 infected *people*, i.e. one agent now counts as (represents) two people. This is equivalent to saying that for any given agent in the model (e.g., an infected 57-year-old woman who has 2 household contacts and 8 workplace contacts), there is another identical person somewhere else in the population.
 
 *Example 3*. As in example 2, but you turn dynamic rescaling off. In this case, from the very beginning of the simulation, one agent represents 5 people (since ``pop_scale = 5``). This is basically the same as running a simulation of 200,000 agents with ``pop_scale = 1`` and then multiplying the results (e.g., cumulative number of infections) by a factor of 5 after the simulation finishes running: each infection counts as 5 infections, each death counts as 5 deaths, etc. Note that with dynamic rescaling off, the number of seed infections should be divided by ``pop_scale`` in order to give the same results
 
 **TLDR?** Except for a few corner cases (e.g., calculating transmission trees), you should get nearly identical results with and without dynamic rescaling, so feel free to use it (it's turned on by default). That said, it's always best to use as small of a population scale factor as you can, although once you reach roughly 200,000 agents, using more agents shouldn't make much difference.
 
 This example illustrates the three different ways to simulation a population of 100,000 people::
+
+.. code-block:: python
 
     import covasim as cv
 
@@ -135,8 +137,10 @@ Note that using the full population and using dynamic rescaling give virtually i
 Are test results counted from swab date or result date?
 ---------------------------------------------------------------------------------
 
-The results are reported for the date of the test which came back positive, not the the date of diagnosis. This reason for this is that in most places, this is how the data are reported -- if they do 100 tests on August 1st, say, and there is a 2-4 day test delay so 15 of these tests come back positive on August 2nd, 3rd, 4th, then in most places, this would be reported as 100 tests on August 1st, 10 diagnoses on August 1st (even though the lab work was done over August 2-4), and 90 negative tests on August 1st. The reason for doing it this way -- both in real world reporting and in the model -- is because otherwise you have a situation where if there is a big change in the number of tests from day to day, you could have more diagnoses on that day than tests. However, in terms of the model, the test delay is still being correctly taken into account. Specifically, ``sim.people.date_pos_test`` is used to (temporarily) store the date of the positive test, which is what's shown in the plots, but sim.people.date_diagnosed has the correct (true) diagnosis date for each person. 
+The results are reported for the date of the test which came back positive, not the the date of diagnosis. This reason for this is that in most places, this is how the data are reported – if they do 100 tests on August 1st, say, and there is a 2-4 day test delay so 15 of these tests come back positive on August 2nd, 3rd, 4th, then in most places, this would be reported as 100 tests on August 1st, 10 diagnoses on August 1st (even though the lab work was done over August 2-4), and 90 negative tests on August 1st. The reason for doing it this way – both in real world reporting and in the model – is because otherwise you have a situation where if there is a big change in the number of tests from day to day, you could have more diagnoses on that day than tests. However, in terms of the model, the test delay is still being correctly taken into account. Specifically, ``sim.people.date_pos_test`` is used to (temporarily) store the date of the positive test, which is what's shown in the plots, but sim.people.date_diagnosed has the correct (true) diagnosis date for each person. 
 For example::
+
+.. code-block:: python
 
     import covasim as cv
     tn = cv.test_num(daily_tests=100, start_day=10, test_delay=10)
@@ -146,8 +150,10 @@ For example::
 
 shows that positive tests start coming back on day 10 (the start day of the intervention), but::
 
-    np.nanmin(sim.people.date_diagnosed)
-    Out[11]: 20.0
+.. code-block:: python
+
+    >>> np.nanmin(sim.people.date_diagnosed)
+    20.0
 
 shows that the earliest date a person is actually diagnosed is on day 20 (the start day of the intervention plus the test delay).
 
@@ -155,7 +161,7 @@ shows that the earliest date a person is actually diagnosed is on day 20 (the st
 Is the underlying model capable of generating oscillations?
 ---------------------------------------------------------------------------------
 
-Yes, although oscillatory modes are not a natural state of the system -- you can get them with a combination of high infection rates, low testing rates, and high contact tracing rates with significant delays. This will create little clusters that grow stochastically until someone gets tested, then most of the cluster gets traced and shut down, but a few people usually escape to start the next cluster.
+Yes, although oscillatory modes are not a natural state of the system – you can get them with a combination of high infection rates, low testing rates, and high contact tracing rates with significant delays. This will create little clusters that grow stochastically until someone gets tested, then most of the cluster gets traced and shut down, but a few people usually escape to start the next cluster.
 
 
 
@@ -184,6 +190,8 @@ Why do parallel simulations fail on Windows or in Jupyter notebooks?
 If you are running on Windows, because of the way Python's ``multiprocessing`` library is implemented, you must start the run from inside a ``__main__`` block (see discussion `here <https://stackoverflow.com/questions/20222534/python-multiprocessing-on-windows-if-name-main>`__).
 For example, instead of this::
 
+.. code-block:: python
+
     import covasim as cv
     sims = [cv.Sim(pop_infected=100, beta=0.005*i, label=f'Beta factor {i}') for i in range(5)]
     msim = cv.MultiSim(sims)
@@ -191,6 +199,8 @@ For example, instead of this::
     msim.plot()
 
 do this::
+
+.. code-block:: python
 
     import covasim as cv
     sims = [cv.Sim(pop_infected=100, beta=0.005*i, label=f'Beta factor {i}') for i in range(5)]
@@ -200,4 +210,4 @@ do this::
         msim.run()
         msim.plot()
 
-For Jupyter notebooks, parallelization is more difficult (see discussion `here <https://stackoverflow.com/a/23641560/4613606>`__). Effectively, the ``msim.run()`` (or other parallel command) must be inside a separate ``.py`` file, and not part of the notebook itself.
+When parallelizing inside Jupyter notebooks, sometimes a "Duplicate signature" error will be encountered. This is because of how multiprocessing conflicts with Jupyter's internal threading (see discussion `here <https://stackoverflow.com/a/23641560/4613606>`__). One solution is to move ``msim.run()`` (or other parallel command) to a separate ``.py`` file, and not have it be part of the notebook itself.
