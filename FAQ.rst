@@ -43,12 +43,16 @@ These are referred to as *importations*. You can set the ``n_imports`` parameter
 How do you set custom prognoses parameters (mortality rate, susceptibility etc.)?
 ---------------------------------------------------------------------------------
 
-Most parameters can be set quite simply, e.g.::
+Most parameters can be set quite simply, e.g.:
+
+.. code-block:: python
 
     import covasim as cv
     sim = cv.Sim(beta=0.008)
 
-or::
+or:
+
+.. code-block:: python
 
     import covasim as cv
     pars = dict(beta=0.008, verbose=0)
@@ -60,7 +64,9 @@ However, prognoses parameters are a bit different since they're a dictionary of 
     sim = cv.Sim()
     sim['prognoses']['death_probs'][-1] *= 2 # Double the risk of death in the oldest age group
 
-Another option is to create the parameters first, then modify them and provide them to the sim::
+Another option is to create the parameters first, then modify them and provide them to the sim:
+
+.. code-block:: python
 
     import covasim as cv
     prognoses = cv.get_prognoses()
@@ -117,7 +123,7 @@ The terms are a bit confusing and may be refactored in a future version of Covas
 
 **TLDR?** Except for a few corner cases (e.g., calculating transmission trees), you should get nearly identical results with and without dynamic rescaling, so feel free to use it (it's turned on by default). That said, it's always best to use as small of a population scale factor as you can, although once you reach roughly 200,000 agents, using more agents shouldn't make much difference.
 
-This example illustrates the three different ways to simulation a population of 100,000 people::
+This example illustrates the three different ways to simulation a population of 100,000 people:
 
 .. code-block:: python
 
@@ -138,7 +144,7 @@ Are test results counted from swab date or result date?
 ---------------------------------------------------------------------------------
 
 The results are reported for the date of the test which came back positive, not the the date of diagnosis. This reason for this is that in most places, this is how the data are reported – if they do 100 tests on August 1st, say, and there is a 2-4 day test delay so 15 of these tests come back positive on August 2nd, 3rd, 4th, then in most places, this would be reported as 100 tests on August 1st, 10 diagnoses on August 1st (even though the lab work was done over August 2-4), and 90 negative tests on August 1st. The reason for doing it this way – both in real world reporting and in the model – is because otherwise you have a situation where if there is a big change in the number of tests from day to day, you could have more diagnoses on that day than tests. However, in terms of the model, the test delay is still being correctly taken into account. Specifically, ``sim.people.date_pos_test`` is used to (temporarily) store the date of the positive test, which is what's shown in the plots, but sim.people.date_diagnosed has the correct (true) diagnosis date for each person. 
-For example::
+For example:
 
 .. code-block:: python
 
@@ -148,7 +154,7 @@ For example::
     sim.run()
     sim.plot(to_plot=['new_infections', 'new_tests', 'new_diagnoses'])
 
-shows that positive tests start coming back on day 10 (the start day of the intervention), but::
+shows that positive tests start coming back on day 10 (the start day of the intervention), but:
 
 .. code-block:: python
 
@@ -188,7 +194,7 @@ Why do parallel simulations fail on Windows or in Jupyter notebooks?
 ---------------------------------------------------------------------------------
 
 If you are running on Windows, because of the way Python's ``multiprocessing`` library is implemented, you must start the run from inside a ``__main__`` block (see discussion `here <https://stackoverflow.com/questions/20222534/python-multiprocessing-on-windows-if-name-main>`__).
-For example, instead of this::
+For example, instead of this:
 
 .. code-block:: python
 
@@ -198,7 +204,7 @@ For example, instead of this::
     msim.run()
     msim.plot()
 
-do this::
+do this:
 
 .. code-block:: python
 
