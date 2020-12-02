@@ -12,9 +12,6 @@ jobs:
         python-version: ['3.8']
     name: Run tests
     steps:
-      - name: Set repo owner env variable
-        shell: python
-        run: print("::set-env name=GITHUB_OWNER::{}".format('${{github.repository}}'.split('/')[0]))
       - name: Checkout sources
         uses: actions/checkout@v2
       - uses: actions/setup-python@master
