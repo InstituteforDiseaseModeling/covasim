@@ -91,7 +91,7 @@ def test_baseline():
     old_keys = set(old.keys())
     new_keys = set(new.keys())
     if old_keys != new_keys:
-        errormsg = f"Keys don't match!\n"
+        errormsg = "Keys don't match!\n"
         missing = list(old_keys - new_keys)
         extra   = list(new_keys - old_keys)
         if missing:

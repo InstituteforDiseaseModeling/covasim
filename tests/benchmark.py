@@ -1,11 +1,13 @@
-# Benchmark the simulation
+'''
+Benchmark the simulation
+'''
 
 import sciris as sc
 import covasim as cv
+from test_baselines import make_sim
 
-sim = cv.Sim()
-sim['n_days'] = 180
-to_profile = 'step' # Must be one of the options listed below...currently only 1
+sim = make_sim(use_defaults=False, do_plot=False) # Use the same sim as from the regression/benchmarking tests
+to_profile = 'run' # Must be one of the options listed below...currently only 1
 
 func_options = {
     'make_contacts': cv.make_random_contacts,
