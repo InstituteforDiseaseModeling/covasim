@@ -104,7 +104,7 @@ class Result(object):
 
     def __repr__(self, *args, **kwargs):
         ''' Use pretty repr, like sc.prettyobj, but displaying full values '''
-        output  = sc.prepr(self, skip=['values', 'low', 'high'])
+        output  = sc.prepr(self, skip=['values', 'low', 'high'], use_repr=False)
         output += 'values:\n' + repr(self.values)
         if self.low is not None:
             output += '\nlow:\n' + repr(self.low)
