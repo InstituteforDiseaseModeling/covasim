@@ -1038,6 +1038,7 @@ class Sim(cvb.BaseSim):
             colors       (dict): Custom color for each result, must be a dictionary with one entry per result key in to_plot
             sep_figs     (bool): Whether to show separate figures for different results instead of subplots
             fig          (fig):  Handle of existing figure to plot into
+            ax           (axes): Axes instance to plot into
 
         Returns:
             fig: Figure handle

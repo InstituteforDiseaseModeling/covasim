@@ -76,7 +76,7 @@ def handle_to_plot(which, to_plot, n_cols, sim):
     return to_plot, n_cols, n_rows
 
 
-def create_figs(args, sep_figs, fig=None):
+def create_figs(args, sep_figs, fig=None, ax=None):
     '''
     Create the figures and set overall figure properties. If a figure is supplied,
     reset the axes labels for automatic use by other plotting functions (i.e. ax1, ax2, etc.)
@@ -86,13 +86,16 @@ def create_figs(args, sep_figs, fig=None):
         figs = []
     else:
         if fig is None:
-            fig = pl.figure(**args.fig) # Create the figure if none is supplied
+            if ax is None:
+                fig = pl.figure(**args.fig) # Create the figure if none is supplied
+            else:
+                fig = ax.figure
         else:
-            for i,ax in enumerate(fig.axes):
-                ax.set_label(f'ax{i+1}')
+            for i,fax in enumerate(fig.axes):
+                fax.set_label(f'ax{i+1}')
         figs = None
     pl.subplots_adjust(**args.axis)
-    return fig, figs, None # Initialize axis to be None
+    return fig, figs
 
 
 def create_subplots(figs, fig, shareax, n_rows, n_cols, pnum, fig_args, sep_figs, log_scale, title):
@@ -252,13 +255,14 @@ def set_line_options(input_args, reskey, resnum, default):
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
          as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
-         setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False, fig=None):
+         setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
+         fig=None, ax=None):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
-    fig, figs, ax = create_figs(args, sep_figs, fig)
+    fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Do the plotting
     for pnum,title,keylabels in to_plot.enumitems():
@@ -286,13 +290,14 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
          as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
-         setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False, fig=None):
+         setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
+         fig=None, ax=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
-    fig, figs, ax = create_figs(args, sep_figs, fig)
+    fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Do the plotting
     default_colors = sc.gridcolors(ncolors=len(scens.sims))
@@ -322,8 +327,8 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
-                interval=None, color=None, label=None, fig=None, do_show=None, do_save=False,
-                fig_path=None):
+                interval=None, color=None, label=None, do_show=None, do_save=False,
+                fig_path=None, fig=None, ax=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
@@ -331,7 +336,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
-    fig, figs, ax = create_figs(args, sep_figs, fig)
+    fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Gather results
     res = sim.results[key]
@@ -340,13 +345,11 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
         color = res.color
 
     # Reuse the figure, if available
-    try:
-        if fig.axes[0].get_label() == 'plot_result':
-            ax = fig.axes[0]
-    except:
-        pass
     if ax is None: # Otherwise, make a new one
-        ax = pl.subplot(111, label='plot_result')
+        try:
+            ax = fig.axes[0]
+        except:
+            ax = fig.add_subplot(111, label='ax1')
 
     # Do the plotting
     if label is None:
@@ -371,7 +374,7 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
     fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
-    fig, figs, ax = create_figs(args, sep_figs=False, fig=fig)
+    fig, figs = create_figs(args, sep_figs=False, fig=fig)
 
     # Map from results into different categories
     mapping = {
@@ -407,7 +410,8 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
 
 #%% Other plotting functions
-def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_args=None, plot_args=None, do_show=None):
+def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_args=None,
+                plot_args=None, do_show=None, fig=None):
     ''' Plot statistics of a population -- see People.plot() for documentation '''
 
     # Handle inputs
@@ -433,7 +437,8 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
     age_counts = np.histogram(people.age, edges)[0]
 
     # Create the figure
-    fig = pl.figure(**fig_args)
+    if fig is None:
+        fig = pl.figure(**fig_args)
     pl.subplots_adjust(**axis_args)
 
     # Plot age histogram

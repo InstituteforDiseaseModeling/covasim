@@ -892,7 +892,8 @@ class Fit(sc.prettyobj):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, font_size=18, fig_args=None, axis_args=None, plot_args=None, do_show=True):
+    def plot(self, keys=None, width=0.8, font_size=18, fig_args=None, axis_args=None,
+             plot_args=None, do_show=True, fig=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -906,6 +907,10 @@ class Fit(sc.prettyobj):
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
             do_show   (bool):  whether to show the plot
+            fig       (fig):   if supplied, use this figure to plot in
+
+        Returns:
+            Figure object
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
@@ -921,7 +926,8 @@ class Fit(sc.prettyobj):
         colors = sc.gridcolors(n_keys)
         n_rows = 4
 
-        figs = [pl.figure(**fig_args)]
+        if fig is None:
+            fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         main_ax1 = pl.subplot(n_rows, 2, 1)
         main_ax2 = pl.subplot(n_rows, 2, 2)
@@ -989,7 +995,7 @@ class Fit(sc.prettyobj):
         if do_show:
             pl.show()
 
-        return figs
+        return fig
 
 
 class TransTree(sc.prettyobj):
@@ -1046,8 +1052,8 @@ class TransTree(sc.prettyobj):
         # Count the number of targets each person has
         self.n_targets = self.count_targets()
 
-        # Include the detailed transmission tree as well
-        self.detailed = self.make_detailed(people)
+        # Include the detailed transmission tree as well, as a list and as a dataframe
+        self.make_detailed(people)
 
         # Optionally convert to NetworkX -- must be done on import since the people object is not kept
         if to_networkx:
@@ -1172,45 +1178,9 @@ class TransTree(sc.prettyobj):
 
             detailed[target] = ddict
 
-        return detailed
+        self.detailed = detailed
 
-
-    def r0(self, recovered_only=False):
-        """
-        Return average number of transmissions per person
-
-        This doesn't include seed transmissions. By default, it also doesn't adjust
-        for length of infection (e.g. people infected towards the end of the simulation
-        will have fewer transmissions because their infection may extend past the end
-        of the simulation, these people are not included). If 'recovered_only=True'
-        then the downstream transmissions will only be included for people that recover
-        before the end of the simulation, thus ensuring they all had the same amount of
-        time to transmit.
-        """
-        n_infected = []
-        try:
-            for i, node in self.graph.nodes.items():
-                if i is None or np.isnan(node['date_exposed']) or (recovered_only and node['date_recovered']>self.n_days):
-                    continue
-                n_infected.append(self.graph.out_degree(i))
-        except Exception as E:
-            errormsg = f'Unable to compute r0 ({str(E)}): you may need to reinitialize the transmission tree with to_networkx=True'
-            raise RuntimeError(errormsg)
-        return np.mean(n_infected)
-
-
-    def plot(self, fig_args=None, plot_args=None, do_show=True):
-        '''
-        Plot the transmission tree.
-
-        Args:
-            fig_args  (dict):  passed to pl.figure()
-            plot_args (dict):  passed to pl.plot()
-            do_show   (bool):  whether to show the plot
-        '''
-
-        fig_args = sc.mergedicts(dict(figsize=(8, 5)), fig_args)
-        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
+        # Also re-parse the infection log and convert to a dataframe
 
         ttlist = []
         for source_ind, target_ind in self.transmissions:
@@ -1241,13 +1211,57 @@ class TransTree(sc.prettyobj):
         df.loc[df['s_sev'], 'Severity'] = 'Severe'
         df.loc[df['s_crit'], 'Severity'] = 'Critical'
 
-        fig = pl.figure(**fig_args)
+        self.df = df
+
+        return
+
+
+    def r0(self, recovered_only=False):
+        """
+        Return average number of transmissions per person
+
+        This doesn't include seed transmissions. By default, it also doesn't adjust
+        for length of infection (e.g. people infected towards the end of the simulation
+        will have fewer transmissions because their infection may extend past the end
+        of the simulation, these people are not included). If 'recovered_only=True'
+        then the downstream transmissions will only be included for people that recover
+        before the end of the simulation, thus ensuring they all had the same amount of
+        time to transmit.
+        """
+        n_infected = []
+        try:
+            for i, node in self.graph.nodes.items():
+                if i is None or np.isnan(node['date_exposed']) or (recovered_only and node['date_recovered']>self.n_days):
+                    continue
+                n_infected.append(self.graph.out_degree(i))
+        except Exception as E:
+            errormsg = f'Unable to compute r0 ({str(E)}): you may need to reinitialize the transmission tree with to_networkx=True'
+            raise RuntimeError(errormsg)
+        return np.mean(n_infected)
+
+
+    def plot(self, fig_args=None, plot_args=None, do_show=True, fig=None):
+        '''
+        Plot the transmission tree.
+
+        Args:
+            fig_args  (dict):  passed to pl.figure()
+            plot_args (dict):  passed to pl.plot()
+            do_show   (bool):  whether to show the plot
+            fig       (fig):   if supplied, use this figure
+        '''
+
+        fig_args = sc.mergedicts(dict(figsize=(8, 5)), fig_args)
+        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
+
+        if fig is None:
+            fig = pl.figure(**fig_args)
         i = 1;
         r = 2;
         c = 3
 
         def plot_quantity(key, title, i):
-            dat = df.groupby(['Day', key]).size().unstack(key)
+            dat = self.df.groupby(['Day', key]).size().unstack(key)
             ax = pl.subplot(r, c, i);
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
@@ -1286,23 +1300,25 @@ class TransTree(sc.prettyobj):
             font_size  (int):   size of the font
             colors     (list):  color of each person
             cmap       (str):   colormap for each person (if colors is not supplied)
+            fig        (fig):   if supplied, use this figure
 
         Returns:
             fig: the figure object
         '''
 
         # Settings
-        animate = kwargs.get('animate', True)
-        verbose = kwargs.get('verbose', False)
-        msize = kwargs.get('markersize', 5)
+        animate   = kwargs.get('animate', True)
+        verbose   = kwargs.get('verbose', False)
+        msize     = kwargs.get('markersize', 5)
         sus_color = kwargs.get('sus_color', [0.5, 0.5, 0.5])
-        fig_args = kwargs.get('fig_args', dict(figsize=(12, 8)))
+        fig_args  = kwargs.get('fig_args', dict(figsize=(12, 8)))
         axis_args = kwargs.get('axis_args', dict(left=0.10, bottom=0.05, right=0.85, top=0.97, wspace=0.25, hspace=0.25))
         plot_args = kwargs.get('plot_args', dict(lw=1, alpha=0.5))
-        delay = kwargs.get('delay', 0.2)
+        delay     = kwargs.get('delay', 0.2)
         font_size = kwargs.get('font_size', 18)
-        colors = kwargs.get('colors', None)
-        cmap = kwargs.get('cmap', 'parula')
+        colors    = kwargs.get('colors', None)
+        cmap      = kwargs.get('cmap', 'parula')
+        fig       = kwargs.get('fig', None)
         pl.rcParams['font.size'] = font_size
         if colors is None:
             colors = sc.vectocolor(self.pop_size, cmap=cmap)
@@ -1364,7 +1380,8 @@ class TransTree(sc.prettyobj):
                 frames[0].append(frame)
 
         # Configure plotting
-        fig = pl.figure(**fig_args)
+        if fig is None:
+            fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         ax = fig.add_subplot(1, 1, 1)
 
@@ -1415,7 +1432,8 @@ class TransTree(sc.prettyobj):
         return fig
 
 
-    def plot_histograms(self, start_day=None, end_day=None, bins=None, width=0.8, fig_args=None, font_size=18):
+    def plot_histograms(self, start_day=None, end_day=None, bins=None, width=0.8,
+                        fig_args=None, font_size=18, fig=None):
         '''
         Plots a histogram of the number of transmissions.
 
@@ -1426,6 +1444,7 @@ class TransTree(sc.prettyobj):
             width (float): width of bars
             fig_args (dict): passed to pl.figure()
             font_size (float): size of font
+            fig (fig): if supplied, use this figure
         '''
 
         # Process targets
@@ -1452,7 +1471,8 @@ class TransTree(sc.prettyobj):
         # Plotting
         fig_args = sc.mergedicts(dict(figsize=(12,8)), fig_args)
         pl.rcParams['font.size'] = font_size
-        fig = pl.figure(**fig_args)
+        if fig is None:
+            fig = pl.figure(**fig_args)
         pl.set_cmap('Spectral')
         pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
         colors = sc.vectocolor(n_bins)
