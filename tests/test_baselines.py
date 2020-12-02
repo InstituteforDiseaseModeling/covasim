@@ -7,14 +7,14 @@ import pandas as pd
 import sciris as sc
 import covasim as cv
 
-do_plot = 1
+do_plot = 0
 do_save = 0
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
 parameters_filename = sc.thisdir(__file__, 'regression', f'pars_v{cv.__version__}.json')
 
 
-def make_sim(use_defaults=False, do_plot=False):
+def make_sim(use_defaults=False, do_plot=False, **kwargs):
     '''
     Define a default simulation for testing the baseline -- use hybrid and include
     interventions to increase coverage. If run directly (not via pytest), also
@@ -28,14 +28,15 @@ def make_sim(use_defaults=False, do_plot=False):
 
     # Define the parameters
     pars = dict(
-        pop_size      = 20000,        # Population size
+        pop_size      = 100000,        # Population size
         pop_infected  = 100,          # Number of initial infections -- use more for increased robustness
         pop_type      = 'hybrid',     # Population to use -- "hybrid" is random with household, school,and work structure
-        n_days        = 60,           # Number of days to simulate
+        n_days        = 180,           # Number of days to simulate
         verbose       = 0,            # Don't print details of the run
         rand_seed     = 2,            # Set a non-default seed
         interventions = [cb, tp, ct], # Include the most common interventions
     )
+    pars = sc.mergedicts(pars, kwargs)
 
     # Create the sim
     if use_defaults:
@@ -207,7 +208,7 @@ def test_benchmark(do_save=do_save):
     for r in range(repeats):
 
         # Create the sim
-        sim = cv.Sim(verbose=0, pop_type='random')
+        sim = make_sim(verbose=0)
 
         # Time initialization
         t0 = sc.tic()
@@ -260,8 +261,8 @@ def test_benchmark(do_save=do_save):
 
 if __name__ == '__main__':
 
-    make_sim(do_plot=do_plot)
+    # make_sim(do_plot=do_plot)
     json = test_benchmark(do_save=do_save) # Run this first so benchmarking is available even if results are different
-    new  = test_baseline()
+    # new  = test_baseline()
 
     print('Done.')
