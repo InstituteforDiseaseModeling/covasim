@@ -28,10 +28,10 @@ def make_sim(use_defaults=False, do_plot=False, **kwargs):
 
     # Define the parameters
     pars = dict(
-        pop_size      = 100000,        # Population size
+        pop_size      = 20e3,         # Population size
         pop_infected  = 100,          # Number of initial infections -- use more for increased robustness
         pop_type      = 'hybrid',     # Population to use -- "hybrid" is random with household, school,and work structure
-        n_days        = 180,           # Number of days to simulate
+        n_days        = 60,           # Number of days to simulate
         verbose       = 0,            # Don't print details of the run
         rand_seed     = 2,            # Set a non-default seed
         interventions = [cb, tp, ct], # Include the most common interventions
