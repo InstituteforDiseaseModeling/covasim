@@ -225,10 +225,7 @@ def get_prognoses(by_age=True, version=None):
             crit_probs    = np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420, 0.17420]), # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
             death_probs   = np.array([0.00002, 0.00002, 0.00010, 0.00032, 0.00098, 0.00265, 0.00766, 0.02439, 0.08292, 0.16190]), # Overall probability of dying -- from O'Driscoll et al., https://www.nature.com/articles/s41586-020-2918-0; last data point from Brazeau et al., https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/covid-19/report-34-ifr/
         )
-
-    prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given critical symptoms
-    prognoses['crit_probs']   /= prognoses['severe_probs'] # Conditional probability of symptoms becoming critical, given severe
-    prognoses['severe_probs'] /= prognoses['symp_probs']   # Conditional probability of symptoms becoming severe, given symptomatic
+    prognoses = relative_prognoses(prognoses) # Convert to conditional probabilities
 
     # If version is specified, load old parameters
     if version is not None:
@@ -247,3 +244,33 @@ def get_prognoses(by_age=True, version=None):
             raise ValueError(errormsg)
 
     return prognoses
+
+
+def relative_prognoses(prognoses):
+    '''
+    Convenience function to revert absolute prognoses into relative (conditional)
+    ones. Internally, Covasim uses relative prognoses.
+    '''
+    out = sc.dcp(prognoses)
+    out['death_probs']  /= out['crit_probs']   # Conditional probability of dying, given critical symptoms
+    out['crit_probs']   /= out['severe_probs'] # Conditional probability of symptoms becoming critical, given severe
+    out['severe_probs'] /= out['symp_probs']   # Conditional probability of symptoms becoming severe, given symptomatic
+    return out
+
+
+def absolute_prognoses(prognoses):
+    '''
+    Convenience function to revert relative (conditional) prognoses into absolute
+    ones. Used to convert internally used relative prognoses into more readable
+    absolute ones.
+
+    **Example**::
+
+        sim = cv.Sim()
+        abs_progs = cv.parameters.absolute_prognoses(sim['prognoses'])
+    '''
+    out = sc.dcp(prognoses)
+    out['severe_probs'] *= out['symp_probs']   # Absolute probability of severe symptoms
+    out['crit_probs']   *= out['severe_probs'] # Absolute probability of critical symptoms
+    out['death_probs']  *= out['crit_probs']   # Absolute probability of dying
+    return out

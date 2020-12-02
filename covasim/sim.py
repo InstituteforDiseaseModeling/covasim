@@ -35,6 +35,7 @@ class Sim(cvb.BaseSim):
         popfile  (str):    the filename to load/save the population for this simulation
         load_pop (bool):   whether to load the population from the named file
         save_pop (bool):   whether to save the population to the named file
+        version  (str):    if supplied, use default parameters from this version of Covasim instead of the latest
         kwargs   (dict):   passed to make_pars()
 
     **Examples**::
@@ -43,9 +44,11 @@ class Sim(cvb.BaseSim):
         sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, save_pop=False, **kwargs):
+    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None,
+                 popfile=None, load_pop=False, save_pop=False, version=None, **kwargs):
+
         # Create the object
-        default_pars = cvpar.make_pars() # Start with default pars
+        default_pars = cvpar.make_pars(version=version) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
@@ -64,6 +67,7 @@ class Sim(cvb.BaseSim):
         self.initialized   = False    # Whether or not initialization is complete
         self.complete      = False    # Whether a simulation has completed running
         self.results_ready = False    # Whether or not results are ready
+        self._default_ver  = version  # Default version of parameters used
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Now update everything
@@ -71,7 +75,8 @@ class Sim(cvb.BaseSim):
         self.update_pars(pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
-            self.load_population(popfile)      # Load the population, if provided
+            self.load_population(popfile)  # Load the population, if provided
+
         return
 
 

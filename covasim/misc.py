@@ -23,7 +23,7 @@ date_range = sc.daterange
 
 #%% Loading/saving functions
 
-__all__ += ['load_data', 'load', 'save', 'savefig']
+__all__ += ['load_data', 'load', 'save', 'migrate', 'savefig']
 
 
 def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
@@ -109,6 +109,7 @@ def load(*args, **kwargs):
         cmp = check_version(v_obj, verbose=False)
         if cmp != 0:
             print(f'Note: you have Covasim v{v_curr}, but are loading an object from v{v_obj}')
+            obj = migrate(obj, v_obj, v_curr)
     return obj
 
 
@@ -124,6 +125,50 @@ def save(*args, **kwargs):
     '''
     filepath = sc.saveobj(*args, **kwargs)
     return filepath
+
+
+def migrate(obj, verbose=True, die=False):
+    '''
+    Define migrations allowing compatibility between different versions of saved
+    files. Usually invoked automatically upon load, but can be called directly by
+    the user to load custom objects, e.g. lists of sims.
+
+    Args:
+        obj (any): the object to migrate (must be a Sim or MultiSim)
+
+    Returns:
+        The migrated object
+
+    **Example**::
+
+        sims = cv.load('my-list-of-sims.obj')
+        sims = [cv.migrate(sim) for sim in sims]
+    '''
+    from .base import BaseSim  # Import here to avoid recursion
+    from .run import MultiSim
+
+    if not hasattr(obj, 'version'):
+        errormsg = f'Object {obj} does not have a "version" attribute; cannot be migrated'
+        raise ValueError(errormsg)
+
+    # Migrations for simulations
+    if isinstance(obj, BaseSim):
+        if sc.compareversions(obj.version, '2.0.0') == -1: # Migrate from <2.0 to 2.0
+            if not hasattr(obj, '_default_ver'):
+                obj._default_ver = None # Add attribute
+
+    # Migrations for MultiSims -- use recursion
+    elif isinstance(obj, MultiSim):
+        obj.base_sim = migrate(obj.base_sim)
+        obj.sims = [migrate(sim) for sim in obj.sims]
+
+    # Otherwise
+    else:
+        errormsg = f'Object {obj} does have a version attribute, but type {type(obj)} cannot be migrated'
+        if verbose: print(errormsg)
+        elif die: raise TypeError(errormsg)
+
+    return obj
 
 
 def savefig(filename=None, comments=None, **kwargs):
