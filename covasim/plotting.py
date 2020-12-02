@@ -622,7 +622,7 @@ def plotly_sim(sim, do_show=False):
 
         plots.append(fig)
 
-    if do_show or cvo.show:
+    if do_show:
         for fig in plots:
             fig.show()
 

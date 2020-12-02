@@ -34,7 +34,7 @@ def find_day(arr, t=None, which='first'):
     Returns:
         inds (list): list of matching days; length zero or one unless which is 'all'
     '''
-    all_inds = sc.findinds(val1=arr, val2=t)
+    all_inds = sc.findinds(arr=arr, val=t)
     if len(all_inds) == 0 or which == 'all':
         inds = all_inds
     elif which == 'first':

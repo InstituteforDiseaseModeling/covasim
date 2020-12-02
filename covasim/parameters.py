@@ -29,7 +29,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     # Population parameters
     pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
     pars['pop_infected'] = 20       # Number of initial infections
-    pars['pop_type']     = 'hybrid' # What type of population data to use -- 'hybrid' (default), 'random' (fastest), 'synthpops' (best)
+    pars['pop_type']     = 'random' # What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise)
     pars['location']     = None     # What location to load data from -- default Seattle
 
     # Simulation parameters
@@ -156,7 +156,7 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
         defaults = layer_defaults[pars['pop_type']]
     except Exception as E:
         errormsg = f'Cannot load defaults for population type "{pars["pop_type"]}": must be hybrid, random, or synthpops'
-        raise sc.KeyNotFoundError(errormsg) from E
+        raise ValueError(errormsg) from E
     default_layer_keys = list(defaults['beta_layer'].keys()) # All layers should be the same, but use beta_layer for convenience
 
     # Actually set the parameters
