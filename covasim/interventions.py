@@ -716,7 +716,7 @@ class test_num(Intervention):
         # Now choose who gets tested and test them
         n_tests = min(n_tests, (test_probs!=0).sum()) # Don't try to test more people than have nonzero testing probability
         test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True) # Choose who actually tests
-        sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
+        sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return test_inds
 
@@ -735,7 +735,7 @@ class test_prob(Intervention):
         quar_policy      (str)       : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
         subtarget        (dict)      : subtarget intervention to people with particular indices  (see test_num() for details)
         ili_prev         (float/arr) : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
-        test_sensitivity (float)     : test sensitivity (default 100%, i.e. no false negatives)
+        sensitivity      (float)     : test sensitivity (default 100%, i.e. no false negatives)
         loss_prob        (float)     : probability of the person being lost-to-follow-up (default 0%, i.e. no one lost to follow-up)
         test_delay       (int)       : days for test result to be known (default 0, i.e. results available instantly)
         start_day        (int)       : day the intervention starts (default: 0, i.e. first day of the simulation)
@@ -748,7 +748,7 @@ class test_prob(Intervention):
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
     '''
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, quar_policy=None, subtarget=None, ili_prev=None,
-                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, **kwargs):
+                 sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.symp_prob        = symp_prob
@@ -758,7 +758,7 @@ class test_prob(Intervention):
         self.quar_policy      = quar_policy if quar_policy else 'start'
         self.subtarget        = subtarget
         self.ili_prev         = ili_prev
-        self.test_sensitivity = test_sensitivity
+        self.sensitivity      = sensitivity
         self.loss_prob        = loss_prob
         self.test_delay       = test_delay
         self.start_day        = start_day
@@ -833,7 +833,7 @@ class test_prob(Intervention):
         test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
 
         # Actually test people
-        sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
+        sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
         return test_inds
