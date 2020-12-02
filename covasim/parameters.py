@@ -133,20 +133,23 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
 
     # Specify defaults for hybrid -- household, school, work, and community layers (h, s, w, c)
     layer_defaults['hybrid'] = dict(
-        beta_layer  = dict(h=3.0, s=0.6, w=0.6, c=0.3),  # Per-population beta weights; relative; see Table S14 of https://science.sciencemag.org/content/sci/suppl/2020/04/28/science.abb8001.DC1/abb8001_Zhang_SM.pdf
+        beta_layer  = dict(h=3.0, s=0.6, w=0.6, c=0.3),  # Per-population beta weights; relative; in part based on Table S14 of https://science.sciencemag.org/content/sci/suppl/2020/04/28/science.abb8001.DC1/abb8001_Zhang_SM.pdf
         contacts    = dict(h=2.0, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
         dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
         iso_factor  = dict(h=0.3, s=0.1, w=0.1, c=0.1),  # Multiply beta by this factor for people in isolation
         quar_factor = dict(h=0.6, s=0.2, w=0.2, c=0.2),  # Multiply beta by this factor for people in quarantine
     )
 
-    # Specify defaults for SynthPops -- same as hybrid but with LTCF layer (l)
+    # Specify defaults for SynthPops -- same as hybrid except for LTCF layer (l)
+    l_pars = dict(beta_layer=1.5,
+                  contacts=10,
+                  dynam_layer=0,
+                  iso_factor=0.2,
+                  quar_factor=0.3
+    )
     layer_defaults['synthpops'] = sc.dcp(layer_defaults['hybrid'])
-    layer_defaults['synthpops']['beta_layer']['l']  = 1.5 # Reset beta for LTCFs to be half of households
-    layer_defaults['synthpops']['contacts']['l']    = 10  # Number of contacts is usually/always overwritten by SynthPops
-    layer_defaults['synthpops']['dynam_layer']['l'] = 0   # Not dynamic
-    layer_defaults['synthpops']['iso_factor']['l']  = 0.2 # Between households and workplaces
-    layer_defaults['synthpops']['quar_factor']['l'] = 0.3 # Between households and workplaces
+    for key,val in l_pars.items():
+        layer_defaults['synthpops'][key]['l'] = val
 
     # Choose the parameter defaults based on the population type, and get the layer keys
     try:
@@ -209,9 +212,9 @@ def get_prognoses(by_age=True):
             trans_ORs     = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Odds ratios for relative transmissibility -- no evidence of differences
             comorbidities = np.array([1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00,    1.00]),    # Comorbidities by age -- set to 1 by default since already included in disease progression rates
             symp_probs    = np.array([0.50,    0.55,    0.60,    0.65,    0.70,    0.75,    0.80,    0.85,    0.90,    0.90]),    # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
-            severe_probs  = np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, 0.20655, 0.24570, 0.24570]), # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf) # UPDATE
-            crit_probs    = np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420, 0.17420]), # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf) # UPDATE
-            death_probs   = np.array([0.00002, 0.00002, 0.00010, 0.00032, 0.00098, 0.00265, 0.00766, 0.02439, 0.08292, 0.08292]), # Overall probability of dying -- from O'Driscoll et al., https://www.nature.com/articles/s41586-020-2918-0 # UPDATE WITH BRAZEAU
+            severe_probs  = np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, 0.20655, 0.24570, 0.24570]), # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
+            crit_probs    = np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420, 0.17420]), # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
+            death_probs   = np.array([0.00002, 0.00002, 0.00010, 0.00032, 0.00098, 0.00265, 0.00766, 0.02439, 0.08292, 0.16190]), # Overall probability of dying -- from O'Driscoll et al., https://www.nature.com/articles/s41586-020-2918-0; last data point from Brazeau et al., https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/covid-19/report-34-ifr/
         )
 
     prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given critical symptoms
