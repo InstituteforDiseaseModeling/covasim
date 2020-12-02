@@ -106,8 +106,8 @@ class Intervention:
             which = json['which']
             pars = json['pars']
             output = f"cv.InterventionDict('{which}', pars={pars})"
-        except:
-            output = sc.prepr(self, use_repr=False)
+        except Exception as E:
+            output = str(self) + f' ({str(E)})' # If that fails, print why
         return output
 
 
