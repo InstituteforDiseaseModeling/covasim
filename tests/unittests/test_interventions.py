@@ -345,115 +345,6 @@ class InterventionTests(CovaSimTest):
                              msg=f"With all layers at 0 beta, the cumulative infections at {last_intervention_day}"
                                  f" should be the same as at the end.")
 
-    @unittest.skip("TODO: re-enable when synthpops is guaranteed to be here")
-    def test_change_beta_layers_synthpops(self):
-        self.is_debugging = False
-        initial_infected = 10
-        params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 60,
-            SimKeys.initial_infected_count: initial_infected
-        }
-        self.set_simulation_parameters(params_dict=params)
-        day_of_change = 25
-        change_multipliers = [0.0]
-        layer_keys = ['c','s','w','h']
-
-        sequence_days = []
-        sequence_interventions = []
-        current_layers = []
-
-        for k in layer_keys: # Zero out one layer at a time
-            day_of_change += 5
-            current_layers.append(k)
-            self.intervention_set_changebeta(
-                days_array=[day_of_change],
-                multiplier_array=change_multipliers,
-                layers=current_layers
-            )
-            sequence_days.append(day_of_change)
-            sequence_interventions.append(self.interventions)
-            self.interventions = None
-            pass
-        self.intervention_build_sequence(day_list=sequence_days,
-                                         intervention_list=sequence_interventions)
-        self.run_sim(population_type='synthpops')
-        last_intervention_day = sequence_days[-1]
-        first_intervention_day = sequence_days[0]
-        cum_infections_channel= self.get_full_result_channel(ResultsKeys.infections_cumulative)
-        self.assertGreater(cum_infections_channel[sequence_days[0]-1],
-                           initial_infected,
-                           msg=f"Before intervention at day {sequence_days[0]}, there should be infections happening.")
-        self.assertGreater(cum_infections_channel[last_intervention_day],
-                           cum_infections_channel[first_intervention_day],
-                           msg=f"Cumulative infections should grow with only some layers enabled.")
-        self.assertEqual(cum_infections_channel[last_intervention_day],
-                         cum_infections_channel[-1],
-                         msg=f"With all layers at 0 beta, the cumulative infections at {last_intervention_day}"
-                             f" should be the same as at the end.")
-
-    # endregion
-
-    # region test_prob
-    def verify_perfect_test_prob(self, start_day, test_delay, test_sensitivity,
-                                 target_pop_count_channel,
-                                 target_pop_new_channel,
-                                 target_test_count_channel=None):
-        if test_sensitivity < 1.0:
-            raise ValueError("This test method only works with perfect test "
-                             f"sensitivity. {test_sensitivity} won't cut it.")
-        new_tests = self.get_full_result_channel(
-            channel=ResultsKeys.tests_at_timestep
-        )
-        new_diagnoses = self.get_full_result_channel(
-            channel=ResultsKeys.diagnoses_at_timestep
-        )
-        target_count = target_pop_count_channel
-        target_new = target_pop_new_channel
-        pre_test_days = range(0, start_day)
-        for d in pre_test_days:
-            self.assertEqual(new_tests[d],
-                             0,
-                             msg=f"Should be no testing before day {start_day}. Got some at {d}")
-            self.assertEqual(new_diagnoses[d],
-                             0,
-                             msg=f"Should be no diagnoses before day {start_day}. Got some at {d}")
-            pass
-        if self.is_debugging:
-            print("DEBUGGING")
-            print(f"Start day is {start_day}")
-            print(f"new tests before, on, and after start day: {new_tests[start_day-1:start_day+2]}")
-            print(f"new diagnoses before, on, after start day: {new_diagnoses[start_day-1:start_day+2]}")
-            print(f"target count before, on, after start day: {target_count[start_day-1:start_day+2]}")
-            pass
-
-        self.assertEqual(new_tests[start_day],
-                         target_test_count_channel[start_day],
-                         msg=f"Should have each of the {target_test_count_channel[start_day]} targets"
-                             f" get tested at day {start_day}. Got {new_tests[start_day]} instead.")
-        self.assertEqual(new_diagnoses[start_day + test_delay],
-                         target_count[start_day],
-                         msg=f"Should have each of the {target_count[start_day]} targets "
-                             f"get diagnosed at day {start_day + test_delay} with sensitivity {test_sensitivity} "
-                             f"and delay {test_delay}. Got {new_diagnoses[start_day + test_delay]} instead.")
-        post_test_days = range(start_day + 1, len(new_tests))
-        if target_pop_new_channel:
-            for d in post_test_days[:test_delay]:
-                symp_today = target_new[d]
-                diag_today = new_diagnoses[d + test_delay]
-                test_today = new_tests[d]
-
-                self.assertEqual(symp_today,
-                                 test_today,
-                                 msg=f"Should have each of the {symp_today} newly symptomatics get"
-                                     f" tested on day {d}. Got {test_today} instead.")
-                self.assertEqual(symp_today,
-                                 diag_today,
-                                 msg=f"Should have each of the {symp_today} newly symptomatics get"
-                                     f" diagnosed on day {d + test_delay} with sensitivity {test_sensitivity}."
-                                     f" Got {test_today} instead.")
-            pass
-        pass
 
     def test_test_prob_perfect_asymptomatic(self):
         '''
@@ -828,12 +719,6 @@ class InterventionTests(CovaSimTest):
         self.assertLess(infections_after_quarantine, infections_before_quarantine,
                         msg=f"10 Days after change beta but before quarantine: {infections_before_quarantine} "
                             f"should be less than 10 days after: {infections_after_quarantine}")
-
-    @unittest.skip("NYI")
-    def test_contact_tracing_perfect_by_layer(self):
-        # TODO: loop through the layers and reproduce the school test above
-        pass
-    # endregion
 
 
 if __name__ == '__main__':
