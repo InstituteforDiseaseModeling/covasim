@@ -345,6 +345,66 @@ class InterventionTests(CovaSimTest):
                              msg=f"With all layers at 0 beta, the cumulative infections at {last_intervention_day}"
                                  f" should be the same as at the end.")
 
+    def verify_perfect_test_prob(self, start_day, test_delay, test_sensitivity,
+                                 target_pop_count_channel,
+                                 target_pop_new_channel,
+                                 target_test_count_channel=None):
+        if test_sensitivity < 1.0:
+            raise ValueError("This test method only works with perfect test "
+                             f"sensitivity. {test_sensitivity} won't cut it.")
+        new_tests = self.get_full_result_channel(
+            channel=ResultsKeys.tests_at_timestep
+        )
+        new_diagnoses = self.get_full_result_channel(
+            channel=ResultsKeys.diagnoses_at_timestep
+        )
+        target_count = target_pop_count_channel
+        target_new = target_pop_new_channel
+        pre_test_days = range(0, start_day)
+        for d in pre_test_days:
+            self.assertEqual(new_tests[d],
+                             0,
+                             msg=f"Should be no testing before day {start_day}. Got some at {d}")
+            self.assertEqual(new_diagnoses[d],
+                             0,
+                             msg=f"Should be no diagnoses before day {start_day}. Got some at {d}")
+            pass
+        if self.is_debugging:
+            print("DEBUGGING")
+            print(f"Start day is {start_day}")
+            print(f"new tests before, on, and after start day: {new_tests[start_day-1:start_day+2]}")
+            print(f"new diagnoses before, on, after start day: {new_diagnoses[start_day-1:start_day+2]}")
+            print(f"target count before, on, after start day: {target_count[start_day-1:start_day+2]}")
+            pass
+
+        self.assertEqual(new_tests[start_day],
+                         target_test_count_channel[start_day],
+                         msg=f"Should have each of the {target_test_count_channel[start_day]} targets"
+                             f" get tested at day {start_day}. Got {new_tests[start_day]} instead.")
+        self.assertEqual(new_diagnoses[start_day + test_delay],
+                         target_count[start_day],
+                         msg=f"Should have each of the {target_count[start_day]} targets "
+                             f"get diagnosed at day {start_day + test_delay} with sensitivity {test_sensitivity} "
+                             f"and delay {test_delay}. Got {new_diagnoses[start_day + test_delay]} instead.")
+        post_test_days = range(start_day + 1, len(new_tests))
+        if target_pop_new_channel:
+            for d in post_test_days[:test_delay]:
+                symp_today = target_new[d]
+                diag_today = new_diagnoses[d + test_delay]
+                test_today = new_tests[d]
+
+                self.assertEqual(symp_today,
+                                 test_today,
+                                 msg=f"Should have each of the {symp_today} newly symptomatics get"
+                                     f" tested on day {d}. Got {test_today} instead.")
+                self.assertEqual(symp_today,
+                                 diag_today,
+                                 msg=f"Should have each of the {symp_today} newly symptomatics get"
+                                     f" diagnosed on day {d + test_delay} with sensitivity {test_sensitivity}."
+                                     f" Got {test_today} instead.")
+            pass
+        pass
+
 
     def test_test_prob_perfect_asymptomatic(self):
         '''
