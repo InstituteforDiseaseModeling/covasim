@@ -1099,7 +1099,7 @@ class Contacts(FlexDict):
 
     def __repr__(self):
         ''' Use slightly customized repr'''
-        keys_str = ', '.join(self.keys())
+        keys_str = ', '.join([str(k) for k in self.keys()])
         output = f'Contacts({keys_str})\n'
         for key in self.keys():
             output += f'\n"{key}": '
