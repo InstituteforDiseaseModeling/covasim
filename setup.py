@@ -1,8 +1,8 @@
 '''
 Covasim installation. Requirements are listed in requirements.txt. There are two
 options:
-    python setup.py develop          # standard install, includes webapp, does not include optional libraries
-    python setup.py develop full     # full install, including optional libraries (NB: these libraries are not available publicly yet)
+    python setup.py develop      # standard install, does not include optional libraries
+    python setup.py develop full # full install, including optional libraries (NB: these libraries are not available publicly yet)
 '''
 
 import os
@@ -31,8 +31,8 @@ versionpath = os.path.join(cwd, 'covasim', 'version.py')
 version = runpy.run_path(versionpath)['__version__']
 
 # Get the documentation
-with open(os.path.join(cwd, 'README.rst'), "r") as fh:
-    long_description = fh.read()
+with open(os.path.join(cwd, 'README.rst'), "r") as f:
+    long_description = f.read()
 
 CLASSIFIERS = [
     "Environment :: Console",

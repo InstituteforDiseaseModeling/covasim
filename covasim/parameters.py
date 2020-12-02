@@ -5,11 +5,12 @@ Set the parameters for Covasim.
 import numpy as np
 import sciris as sc
 from .settings import options as cvo # For setting global options
+from . import misc as cvm
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
 
-def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
+def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     '''
     Create the parameters for the simulation. Typically, this function is used
     internally rather than called by the user; e.g. typical use would be to do
@@ -20,6 +21,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
         set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
         prog_by_age   (bool): whether or not to use age-based severity, mortality etc.
         kwargs        (dict): any additional kwargs are interpreted as parameter names
+        version       (str):  if supplied, use parameters from this Covasim version
 
     Returns:
         pars (dict): the parameters of the simulation
@@ -98,7 +100,14 @@ def make_pars(set_prognoses=False, prog_by_age=True, **kwargs):
     pars.update(kwargs)
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
-        pars['prognoses'] = get_prognoses(pars['prog_by_age']) # Default to age-specific prognoses
+        pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
+
+    # If version is specified, load old parameters
+    if version is not None:
+        version_pars = cvm.get_version_pars(version)
+        for key in pars.keys(): # Only loop over keys that have been populated
+            if key in version_pars: # Only replace keys that exist in the old version
+                pars[key] = version_pars[key]
 
     return pars
 
@@ -184,7 +193,7 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     return
 
 
-def get_prognoses(by_age=True):
+def get_prognoses(by_age=True, version=None):
     '''
     Return the default parameter values for prognoses
 
@@ -220,5 +229,21 @@ def get_prognoses(by_age=True):
     prognoses['death_probs']  /= prognoses['crit_probs']   # Conditional probability of dying, given critical symptoms
     prognoses['crit_probs']   /= prognoses['severe_probs'] # Conditional probability of symptoms becoming critical, given severe
     prognoses['severe_probs'] /= prognoses['symp_probs']   # Conditional probability of symptoms becoming severe, given symptomatic
+
+    # If version is specified, load old parameters
+    if version is not None:
+        version_pars = cvm.get_version_pars(version)
+        version_prognoses = version_pars['prognoses']
+        for key in version_prognoses.keys(): # Only loop over keys that have been populated
+            if key in version_pars: # Only replace keys that exist in the old version
+                prognoses[key] = version_pars[key]
+
+    # Check that lengths match
+    expected_len = len(prognoses['age_cutoffs'])
+    for key,val in prognoses.items():
+        this_len = len(prognoses[key])
+        if this_len != expected_len:
+            errormsg = f'Lengths mismatch in prognoses: {expected_len} age bins specified, but key "{key}" has {this_len} entries'
+            raise ValueError(errormsg)
 
     return prognoses

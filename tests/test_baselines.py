@@ -11,7 +11,7 @@ do_plot = 0
 do_save = 0
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
-parameters_filename = sc.thisdir(__file__, 'regression', f'pars_v{cv.__version__}.json')
+parameters_filename = sc.thisdir(cv.__file__, 'regression', f'pars_v{cv.__version__}.json')
 
 
 def make_sim(use_defaults=False, do_plot=False, **kwargs):
@@ -261,8 +261,8 @@ def test_benchmark(do_save=do_save):
 
 if __name__ == '__main__':
 
-    # make_sim(do_plot=do_plot)
+    make_sim(do_plot=do_plot)
     json = test_benchmark(do_save=do_save) # Run this first so benchmarking is available even if results are different
-    # new  = test_baseline()
+    new  = test_baseline()
 
     print('Done.')

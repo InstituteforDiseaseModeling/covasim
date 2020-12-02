@@ -33,4 +33,4 @@ Run all tests, with parallelization, and showing how long each test took.
 update_baseline
 ---------------
 
-The test ``test_baselines.py`` checks to see if results changed unintentionally. If you *intended* to change them, run this script to update the saved results. It also writes default parameter values to the ``./regression`` folder.
+The test ``test_baselines.py`` checks to see if results changed unintentionally. If you *intended* to change them, run this script to update the saved results. It also writes default parameter values to the ``../covasim/regression`` folder.

@@ -2,6 +2,7 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
+import os
 import numpy as np
 import pandas as pd
 import pylab as pl
@@ -177,7 +178,7 @@ def savefig(filename=None, comments=None, **kwargs):
 
 #%% Versioning functions
 
-__all__ += ['git_info', 'check_version', 'check_save_version', 'get_png_metadata']
+__all__ += ['git_info', 'check_version', 'check_save_version', 'get_version_pars', 'get_png_metadata']
 
 
 def git_info(filename=None, check=False, comments=None, old_info=None, die=False, indent=2, verbose=True, frame=2, **kwargs):
@@ -306,6 +307,45 @@ def check_save_version(expected=None, filename=None, die=False, verbose=True, **
     return
 
 
+def get_version_pars(version, verbose=True):
+    '''
+    Function for loading parameters from the specified version.
+
+    Args:
+        version (str): the version to load parameters from
+
+    Returns:
+        Dictionary of parameters from that version
+    '''
+    regression_folder = sc.thisdir(__file__, 'regression')
+    pattern = 'pars_v*.json'
+    requested = pattern.replace('*', version)
+    filepaths = sc.getfilelist(regression_folder, pattern=pattern)
+    files = [os.path.basename(f) for f in filepaths]
+    if requested in files: # If there's an exact match
+        match = requested
+    else: # No match, find the nearest matching file
+        withmatch = files + [requested] # Add this version
+        withmatch.sort() # Sort the files
+        index = withmatch.index(requested)
+        if index>0:
+            match = withmatch[index-1] # Get latest earlier version -- note that this assumes versions are in alphabetical order, which they currently are!
+        else:
+            filestr = '\n'.join(files)
+            errormsg = f'Could not find version {version} among options:\n{filestr}'
+            raise ValueError(errormsg)
+
+    # Load the parameters
+    pars = sc.loadjson(filename=match, folder=regression_folder)
+    if verbose:
+        if match == requested:
+            print(f'Loaded parameters from {match}')
+        else:
+            print(f'No exact match for parameters "{version}" found; using "{match}" instead')
+
+    return pars
+
+
 def get_png_metadata(filename, output=False):
     '''
     Read metadata from a PNG file. For use with images saved with cv.savefig().
@@ -337,7 +377,6 @@ def get_png_metadata(filename, output=False):
         return metadata
     else:
         return
-
 
 
 #%% Simulation/statistics functions
