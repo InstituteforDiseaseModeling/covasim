@@ -58,7 +58,9 @@ or:
     pars = dict(beta=0.008, verbose=0)
     sim = cv.Sim(pars)
 
-However, prognoses parameters are a bit different since they're a dictionary of dictionaries of arrays. Usually the easiest solution is to create the simulation first, and then modify these parameters before initializing the sim::
+However, prognoses parameters are a bit different since they're a dictionary of dictionaries of arrays. Usually the easiest solution is to create the simulation first, and then modify these parameters before initializing the sim:
+
+.. code-block:: python
 
     import covasim as cv
     sim = cv.Sim()
@@ -95,7 +97,7 @@ I really don't like Python, can I run Covasim via R?
 
 Actually, you can! R's `reticulate <https://rstudio.github.io/reticulate/>`__ package lets you easily interface between Python and R. For example:
 
-.. code-block:: R
+.. code-block:: S
 
     library(reticulate)
     cv <- import('covasim')

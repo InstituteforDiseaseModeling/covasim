@@ -116,7 +116,7 @@ Version 1.7.2 (2020-09-24)
 Version 1.7.1 (2020-09-23)
 --------------------------
 - Added two new methods, ``sim.get_interventions()`` and ``sim.get_analyzers()``, which return interventions or analyzers based on the index, label, or type.
-- Added a new analyzer, ``cv.daily_stats()``, which can print out and plot detailed inform ation about the state of the simulation on each day.
+- Added a new analyzer, ``cv.daily_stats()``, which can print out and plot detailed information about the state of the simulation on each day.
 - MultiSims can now be run without parallelization; use ``msim.run(parallel=False)``. This can be useful for debugging, or for parallelizing across rather than within MultiSims (since ``multiprocessing`` calls cannot be nested).
 - ``sim.people.not_defined()`` has been renamed ``sim.people.undefined()``, and ``sim.people.quarantine()`` has been renamed ``sim.people.schedule_quarantine()``, since it does not actually place people in quarantine.
 - New helper functions have been added: ``cv.maximize()`` maximizes the current figure, and ``cv.get_rows_cols()`` converts a number (usually a number of plots) into the required number of rows and columns. Both will eventually be moved to Sciris.
@@ -354,7 +354,9 @@ Other changes
 - Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
 - Refactored cruise ship example to work again.
 - Various bugfixes (e.g. to plotting arguments, data scrapers, etc.).
-- *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previous behavior, use::
+- *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previous behavior, use:
+
+.. code-block:: python
 
     pars['analyzers'] = None # Add the new parameter key
     interv_func = pars.pop('interv_func', None) # Remove the deprecated key
@@ -499,7 +501,9 @@ Version 1.1.5 (2020-05-18)
 
 Version 1.1.4 (2020-05-18)
 --------------------------
-- Added a new hospital bed capacity constraint and renamed health system capacity parameters. To migrate an older set of parameters to this version, set::
+- Added a new hospital bed capacity constraint and renamed health system capacity parameters. To migrate an older set of parameters to this version, set:
+
+.. code-block:: python
 
     pars['no_icu_factor']  = pars.pop('OR_no_treat')
     pars['n_beds_icu']     = pars.pop('n_beds')
