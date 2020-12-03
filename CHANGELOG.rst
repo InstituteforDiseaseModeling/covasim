@@ -54,7 +54,8 @@ Bugfixes
 - The ``quar_period`` argument is now correctly passed to the ``cv.contact_tracing()`` intervention. (Thanks to Scott McCrae for finding this bug.)
 - If the user supplies an incorrect type to ``cv.Layer.find_contacts()``, this is now caught and corrected. (Thanks to user sba5827 for finding this bug.)
 - Non-string layer keys no longer raise an exception.
-- If multiprocessing (e.g. ``msim.run()``) is called outside a ``main`` block on Windows, this leads to a cryptic error. This error is now caught more elegantly.
+- Parallelization in Jupyter notebooks (e.g. ``msim.run()``) should now work without crashing.
+- If parallelization (e.g. ``msim.run()``) is called outside a ``main`` block on Windows, this leads to a cryptic error. This error is now caught more elegantly.
 - Interventions now print out with their actual name (previously they all printed out as ``InterventionDict``).
 - The keyword argument ``test_sensitivity`` for ``cv.test_prob()`` has been renamed ``sensitivity``, for consistency with ``cv.test_num()``.
 
@@ -66,6 +67,7 @@ Other changes
 - The argument ``n_cpus`` can now be supplied directly to ``cv.multirun()`` and ``msim.run()``.
 - The types ``cv.default_float`` and ``cv.default_int`` are now available at the top level (previously they had to be accessed by e.g. ``cv.defaults.default_float``).
 - Transmission trees now contain additional output; after ``tt = sim.make_transtree()``, a dataframe of key results is contained in ``tt.df``.
+- The default number of seed infections has been changed from 10 to 20 for greater numerical stability. (Note that this placeholder value should be overridden for all actual applications.) 
 - ``sim.run()`` no longer returns the results object by default (if you want it, set ``output=True``).
 
 Documentation
@@ -77,6 +79,7 @@ Regression information
 - To restore previous default parameters for simulations, use e.g. ``sim = cv.Sim(version='1.7.6')``. Note that this does not affect saved sims (which store their own parameters).
 - Any scripts that specify the ``test_sensitivity`` keyword for the ``test_prob`` intervention will need to rename that variable to ``sensitivity``.
 - Any scripts that used ``results = sim.run()`` will need to be updated to ``results = sim.run(output=True)``.
+- Any scripts that passed formatting options directly to plots should set these as options instead; e.g. ``sim.plot(font_size=18)`` should now be ``cv.options.set(font_size=18); sim.plot()``.
 - *GitHub info*: PR `738 <https://github.com/amath-idm/covasim/pull/738>`__
 
 

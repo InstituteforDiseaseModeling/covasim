@@ -9,8 +9,8 @@ if settings.options.verbose:
 
 # Import the actual model
 from .defaults      import * # Depends on settings
-from .parameters    import * # Depends on settings
 from .misc          import * # Depends on version
+from .parameters    import * # Depends on settings, misc
 from .utils         import * # Depends on defaults
 from .plotting      import * # Depends on defaults, misc
 from .base          import * # Depends on version, misc, defaults, parameters, utils
