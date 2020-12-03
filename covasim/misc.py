@@ -92,14 +92,23 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
     return data
 
 
-def load(*args, **kwargs):
+def load(*args, do_migrate=True, **kwargs):
     '''
     Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
     cv.Scenarios.load().
 
+    Args:
+        filename (str): file to load
+        do_migrate (bool): whether to migrate if loading an old object
+        args (list): passed to sc.loadobj()
+        kwargs (dict): passed to sc.loadobj()
+
+    Returns:
+        Loaded object
+
     **Examples**::
 
-        sim = cv.load('calib.sim')
+        sim = cv.load('calib.sim') # Equivalent to cv.Sim.load('calib.sim')
         scens = cv.load(filename='school-closures.scens', folder='schools')
     '''
     obj = sc.loadobj(*args, **kwargs)
@@ -109,7 +118,8 @@ def load(*args, **kwargs):
         cmp = check_version(v_obj, verbose=False)
         if cmp != 0:
             print(f'Note: you have Covasim v{v_curr}, but are loading an object from v{v_obj}')
-            obj = migrate(obj, v_obj, v_curr)
+            if do_migrate:
+                obj = migrate(obj, v_obj, v_curr)
     return obj
 
 
@@ -118,9 +128,18 @@ def save(*args, **kwargs):
     Convenience method for sc.saveobj() and equivalent to cv.Sim.save() or
     cv.Scenarios.save().
 
+    Args:
+        filename (str): file to save to
+        obj (object): object to save
+        args (list): passed to sc.saveobj()
+        kwargs (dict): passed to sc.saveobj()
+
+    Returns:
+        Filename the object is saved to
+
     **Examples**::
 
-        cv.save('calib.sim', sim)
+        cv.save('calib.sim', sim) # Equivalent to sim.save('calib.sim')
         cv.save(filename='school-closures.scens', folder='schools', obj=scens)
     '''
     filepath = sc.saveobj(*args, **kwargs)
@@ -146,6 +165,7 @@ def migrate(obj, verbose=True, die=False):
     '''
     from .base import BaseSim  # Import here to avoid recursion
     from .run import MultiSim
+    from .interventions import test_prob
 
     if not hasattr(obj, 'version'):
         errormsg = f'Object {obj} does not have a "version" attribute; cannot be migrated'
@@ -153,14 +173,27 @@ def migrate(obj, verbose=True, die=False):
 
     # Migrations for simulations
     if isinstance(obj, BaseSim):
-        if sc.compareversions(obj.version, '2.0.0') == -1: # Migrate from <2.0 to 2.0
-            if not hasattr(obj, '_default_ver'):
-                obj._default_ver = None # Add attribute
+        sim = obj
+        if sc.compareversions(sim.version, '2.0.0') == -1: # Migrate from <2.0 to 2.0
+
+            # Add missing attribute
+            if not hasattr(sim, '_default_ver'):
+                sim._default_ver = None
+
+            # Rename intervention attribute
+            tps = sim.get_interventions(test_prob)
+            for tp in tps:
+                try:
+                    tp.sensitivity = tp.test_sensitivity
+                    del tp.test_sensitivity
+                except:
+                    pass
 
     # Migrations for MultiSims -- use recursion
     elif isinstance(obj, MultiSim):
-        obj.base_sim = migrate(obj.base_sim)
-        obj.sims = [migrate(sim) for sim in obj.sims]
+        msim = obj
+        msim.base_sim = migrate(msim.base_sim)
+        msim.sims = [migrate(sim) for sim in msim.sims]
 
     # Otherwise
     else:
