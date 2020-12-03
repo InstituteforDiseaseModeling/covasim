@@ -66,6 +66,7 @@ Other changes
 - The argument ``n_cpus`` can now be supplied directly to ``cv.multirun()`` and ``msim.run()``.
 - The types ``cv.default_float`` and ``cv.default_int`` are now available at the top level (previously they had to be accessed by e.g. ``cv.defaults.default_float``).
 - Transmission trees now contain additional output; after ``tt = sim.make_transtree()``, a dataframe of key results is contained in ``tt.df``.
+- ``sim.run()`` no longer returns the results object by default (if you want it, set ``output=True``).
 
 Documentation
 ^^^^^^^^^^^^^
@@ -75,6 +76,7 @@ Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
 - To restore previous default parameters for simulations, use e.g. ``sim = cv.Sim(version='1.7.6')``. Note that this does not affect saved sims (which store their own parameters).
 - Any scripts that specify the ``test_sensitivity`` keyword for the ``test_prob`` intervention will need to rename that variable to ``sensitivity``.
+- Any scripts that used ``results = sim.run()`` will need to be updated to ``results = sim.run(output=True)``.
 - *GitHub info*: PR `738 <https://github.com/amath-idm/covasim/pull/738>`__
 
 
