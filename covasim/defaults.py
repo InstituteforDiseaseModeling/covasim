@@ -1,9 +1,9 @@
 '''
 Set the defaults across each of the different files.
 
-To change the default precision from 32 bit (default) to 64 bit, set the
-COVASIM_PRECISION environment variable. This cannot be set easily from within
-Python, since the precision is used to compile the Numba functions in utils.py.
+To change the default precision from 32 bit (default) to 64 bit, use::
+
+    cv.options.set(precision=64)
 '''
 
 import numpy as np

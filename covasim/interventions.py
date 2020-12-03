@@ -105,9 +105,10 @@ class Intervention:
             json = self.to_json()
             which = json['which']
             pars = json['pars']
-            output = f"cv.InterventionDict('{which}', pars={pars})"
+            parstr = ', '.join([f'{k}={v}' for k,v in pars.items()])
+            output = f"cv.{which}({parstr})"
         except Exception as E:
-            output = str(self) + f' ({str(E)})' # If that fails, print why
+            output = type(self) + f' ({str(E)})' # If that fails, print why
         return output
 
 
