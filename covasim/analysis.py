@@ -1250,6 +1250,7 @@ class TransTree(sc.prettyobj):
 
         if fig is None:
             fig = pl.figure(**fig_args)
+        pl.subplots_adjust(bottom=0.1, top=0.95, left=0.1, right=0.95, wspace=0.4, hspace=0.4)
         i = 1;
         r = 2;
         c = 3
