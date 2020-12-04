@@ -26,6 +26,8 @@ Other papers that have been written using Covasim include:
 
 The Covasim webapp is available at http://app.covasim.org, and the repository for it is available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__.
 
+Covasim was developed by the `Institute for Disease Modeling <https://idmod.org/>`__, with additional contributions from the `University of Copenhagen <https://www.math.ku.dk/english>`__, the `Burnet Institute <https://www.burnet.edu.au/>`__, `GitHub <https://github.com/>`__, and `Microsoft <https://www.microsoft.com/en-us/ai/ai-for-health-covid-data>`__.
+
 Questions or comments can be directed to covasim@idmod.org, or on this project's
 GitHub_ page. Full information about Covasim is provided in the documentation_.
 

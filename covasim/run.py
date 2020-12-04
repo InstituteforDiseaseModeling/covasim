@@ -12,6 +12,7 @@ from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
 from . import plotting as cvplt
+from .settings import options as cvo
 
 
 # Specify all externally visible functions this file defines
@@ -27,7 +28,7 @@ def make_metapars():
         noisepar  = 'beta',
         rand_seed = 1,
         quantiles = {'low':0.1, 'high':0.9},
-        verbose   = 1,
+        verbose   = cvo.verbose,
     )
     return metapars
 
