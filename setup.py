@@ -20,6 +20,7 @@ if 'full' in sys.argv:
     full_reqs = [
         'plotly',
         'fire',
+        'optuna',
         'synthpops',
         'parestlib',
     ]

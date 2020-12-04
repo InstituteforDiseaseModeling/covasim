@@ -120,7 +120,17 @@ __all__ += ['sample', 'get_pdf', 'set_seed']
 
 def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     '''
-    Draw a sample from the distribution specified by the input.
+    Draw a sample from the distribution specified by the input. The available
+    distributions are:
+
+    - 'uniform'       : uniform distribution from low=par1 to high=par2; mean is equal to (par1+par2)/2
+    - 'normal'        : normal distribution with mean=par1 and std=par2
+    - 'lognormal'     : lognormal distribution with mean=par1 and std=par2 (parameters are for the lognormal distribution, *not* the underlying normal distribution)
+    - 'normal_pos'    : right-sided normal distribution (i.e. only positive values), with mean=par1 and std=par2 *of the underlying normal distribution*
+    - 'normal_int'    : normal distribution with mean=par1 and std=par2, returns only integer values
+    - 'lognormal_int' : lognormal distribution with mean=par1 and std=par2, returns only integer values
+    - 'poisson'       : Poisson distribution with rate=par1 (par2 is not used); mean and variance are equal to par1
+    - 'neg_binomial'  : negative binomial distribution with mean=par1 and k=par2; converges to Poisson with k=∞
 
     Args:
         dist (str):   the distribution to sample from
@@ -134,13 +144,21 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
 
     **Examples**::
 
-        sample() # returns Unif(0,1)
-        sample(dist='normal', par1=3, par2=0.5) # returns Normal(μ=3, σ=0.5)
+        cv.sample() # returns Unif(0,1)
+        cv.sample(dist='normal', par1=3, par2=0.5) # returns Normal(μ=3, σ=0.5)
+        cv.sample(dist='lognormal_int', par1=5, par2=3) # returns a lognormally distributed set of values with mean 5 and std 3
 
     Notes:
         Lognormal distributions are parameterized with reference to the underlying normal distribution (see:
         https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.random.lognormal.html), but this
-        function assumes the user wants to specify the mean and variance of the lognormal distribution.
+        function assumes the user wants to specify the mean and std of the lognormal distribution.
+
+        Negative binomial distributions are parameterized with reference to the mean and dispersion parameter k
+        (see: https://en.wikipedia.org/wiki/Negative_binomial_distribution). The r parameter of the underlying
+        distribution is then calculated from the desired mean and k. For a small mean (~1), a dispersion parameter
+        of ∞ corresponds to the variance and standard deviation being equal to the mean (i.e., Poisson). For a
+        large mean (e.g. >100), a dispersion parameter of 1 corresponds to the standard deviation being equal to
+        the mean.
     '''
 
     choices = [
@@ -349,17 +367,18 @@ def n_poisson(rate, n):
 
 def n_neg_binomial(rate, dispersion, n, step=1): # Numba not used due to incompatible implementation
     '''
-    An array of negative binomial trials; with dispersion = ∞, converges to Poisson.
+    An array of negative binomial trials. See cv.sample() for more explanation.
 
     Args:
         rate (float): the rate of the process (mean, same as Poisson)
-        dispersion (float): amount of dispersion: 0 = infinite, 1 = std is equal to mean, ∞ = Poisson
+        dispersion (float):  dispersion parameter; lower is more dispersion, i.e. 0 = infinite, ∞ = Poisson
         n (int): number of trials
         step (float): the step size to use if non-integer outputs are desired
 
     **Example**::
 
-        outcomes = cv.n_neg_binomial(100, 1, 20) # 20 negative binomial trials with mean 100 and dispersion equal to mean
+        outcomes = cv.n_neg_binomial(100, 1, 50) # 50 negative binomial trials with mean 100 and dispersion roughly equal to mean (large-mean limit)
+        outcomes = cv.n_neg_binomial(1, 100, 20) # 20 negative binomial trials with mean 1 and dispersion still roughly equal to mean (approximately Poisson)
     '''
     nbn_n = dispersion
     nbn_p = dispersion/(rate/step + dispersion)

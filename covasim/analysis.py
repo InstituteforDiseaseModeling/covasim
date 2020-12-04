@@ -1251,25 +1251,24 @@ class TransTree(sc.prettyobj):
         if fig is None:
             fig = pl.figure(**fig_args)
         pl.subplots_adjust(bottom=0.1, top=0.95, left=0.1, right=0.95, wspace=0.4, hspace=0.4)
-        i = 1;
-        r = 2;
-        c = 3
+        n_rows = 2
+        n_cols = 3
 
         def plot_quantity(key, title, i):
             dat = self.df.groupby(['Day', key]).size().unstack(key)
-            ax = pl.subplot(r, c, i);
+            ax = pl.subplot(n_rows, n_cols, i);
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
 
-        to_plot = {
-            'layer': 'Layer',
-            'Stage': 'Source stage',
-            's_diag': 'Source diagnosed',
-            's_quar': 'Source quarantined',
-            't_quar': 'Target quarantined',
-            'Severity': 'Symptomatic source severity'
-        }
+        to_plot = dict(
+            layer    = 'Layer',
+            Stage    = 'Source stage',
+            s_diag   = 'Source diagnosed',
+            s_quar   = 'Source quarantined',
+            t_quar   = 'Target quarantined',
+            Severity = 'Symptomatic source severity',
+        )
         for i, (key, title) in enumerate(to_plot.items()):
             plot_quantity(key, title, i + 1)
 
