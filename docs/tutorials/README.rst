@@ -14,3 +14,4 @@ These tutorials walk through how to use Covasim.
     t6
     t7
     t8
+    t9
