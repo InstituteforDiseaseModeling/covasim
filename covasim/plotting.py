@@ -11,9 +11,9 @@ import pylab as pl
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
-from . import options as cvo
-from . import defaults as cvd
 from . import misc as cvm
+from . import defaults as cvd
+from .settings import options as cvo
 
 
 __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']

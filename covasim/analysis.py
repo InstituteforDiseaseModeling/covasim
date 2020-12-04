@@ -10,6 +10,7 @@ import sciris as sc
 from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
+from .settings import options as cvo
 
 
 __all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_stats', 'Fit', 'TransTree']
@@ -168,7 +169,7 @@ class age_histogram(Analyzer):
 
         sim = cv.Sim(analyzers=cv.age_histogram())
         sim.run()
-        agehist = sim['analyzers'][0].get()
+        agehist = sim.get_analyzer()
 
         agehist = cv.age_histogram(sim=sim)
     '''
@@ -295,7 +296,7 @@ class age_histogram(Analyzer):
         return
 
 
-    def plot(self, windows=False, width=0.8, color='#F8A493', font_size=18, fig_args=None, axis_args=None, data_args=None):
+    def plot(self, windows=False, width=0.8, color='#F8A493', fig_args=None, axis_args=None, data_args=None):
         '''
         Simple method for plotting the histograms.
 
@@ -303,7 +304,6 @@ class age_histogram(Analyzer):
             windows (bool): whether to plot windows instead of cumulative counts
             width (float): width of bars
             color (hex or rgb): the color of the bars
-            font_size (float): size of font
             fig_args (dict): passed to pl.figure()
             axis_args (dict): passed to pl.subplots_adjust()
             data_args (dict): 'width', 'color', and 'offset' arguments for the data
@@ -313,12 +313,10 @@ class age_histogram(Analyzer):
         fig_args = sc.mergedicts(dict(figsize=(12,8)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.08, right=0.92, bottom=0.08, top=0.92), axis_args)
         d_args = sc.objdict(sc.mergedicts(dict(width=0.3, color='#000000', offset=0), data_args))
-        pl.rcParams['font.size'] = font_size
 
         # Initialize
         n_plots = len(self.states)
-        n_rows = np.ceil(np.sqrt(n_plots)) # Number of subplot rows to have
-        n_cols = np.ceil(n_plots/n_rows) # Number of subplot columns to have
+        n_rows, n_cols = sc.get_rows_cols(n_plots)
         figs = []
 
         # Handle windows and what to plot
@@ -634,7 +632,7 @@ class daily_stats(Analyzer):
         return data
 
 
-    def plot(self, fig_args=None, axis_args=None, plot_args=None, font_size=12, do_show=True):
+    def plot(self, fig_args=None, axis_args=None, plot_args=None, do_show=None):
         '''
         Plot the daily statistics recordered. Some overlap with e.g. ``sim.plot(to_plot='overview')``.
 
@@ -642,14 +640,12 @@ class daily_stats(Analyzer):
             fig_args  (dict):  passed to pl.figure()
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
-            font_size (float): size of font
             do_show   (bool):  whether to show the plot
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
-        pl.rcParams['font.size'] = font_size
 
         # Transform the data into time series
         data = self.transpose()
@@ -670,7 +666,7 @@ class daily_stats(Analyzer):
                 ax.plot(y, **plot_args)
                 ax.set_title(f'{k1}: {k2}')
 
-        if do_show:
+        if do_show or cvo.show:
             pl.show()
 
         return fig
@@ -892,8 +888,8 @@ class Fit(sc.prettyobj):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, font_size=18, fig_args=None, axis_args=None,
-             plot_args=None, do_show=True, fig=None):
+    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None,
+             plot_args=None, do_show=None, fig=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -902,7 +898,6 @@ class Fit(sc.prettyobj):
         Args:
             keys      (list):  which keys to plot (default, all)
             width     (float): bar width
-            font_size (float): size of font
             fig_args  (dict):  passed to pl.figure()
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
@@ -916,7 +911,6 @@ class Fit(sc.prettyobj):
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
-        pl.rcParams['font.size'] = font_size
 
         if keys is None:
             keys = self.keys + self.custom_keys
@@ -992,7 +986,7 @@ class Fit(sc.prettyobj):
                 pl.ylabel('Losses')
                 pl.legend()
 
-        if do_show:
+        if do_show or cvo.show:
             pl.show()
 
         return fig
@@ -1240,7 +1234,7 @@ class TransTree(sc.prettyobj):
         return np.mean(n_infected)
 
 
-    def plot(self, fig_args=None, plot_args=None, do_show=True, fig=None):
+    def plot(self, fig_args=None, plot_args=None, do_show=None, fig=None):
         '''
         Plot the transmission tree.
 
@@ -1278,7 +1272,7 @@ class TransTree(sc.prettyobj):
         for i, (key, title) in enumerate(to_plot.items()):
             plot_quantity(key, title, i + 1)
 
-        if do_show:
+        if do_show or cvo.show:
             pl.show()
 
         return fig
@@ -1297,7 +1291,6 @@ class TransTree(sc.prettyobj):
             axis_args  (dict):  arguments passed to pl.subplots_adjust()
             plot_args  (dict):  arguments passed to pl.plot()
             delay      (float): delay between frames in seconds
-            font_size  (int):   size of the font
             colors     (list):  color of each person
             cmap       (str):   colormap for each person (if colors is not supplied)
             fig        (fig):   if supplied, use this figure
@@ -1315,11 +1308,9 @@ class TransTree(sc.prettyobj):
         axis_args = kwargs.get('axis_args', dict(left=0.10, bottom=0.05, right=0.85, top=0.97, wspace=0.25, hspace=0.25))
         plot_args = kwargs.get('plot_args', dict(lw=1, alpha=0.5))
         delay     = kwargs.get('delay', 0.2)
-        font_size = kwargs.get('font_size', 18)
         colors    = kwargs.get('colors', None)
         cmap      = kwargs.get('cmap', 'parula')
         fig       = kwargs.get('fig', None)
-        pl.rcParams['font.size'] = font_size
         if colors is None:
             colors = sc.vectocolor(self.pop_size, cmap=cmap)
 
@@ -1432,8 +1423,7 @@ class TransTree(sc.prettyobj):
         return fig
 
 
-    def plot_histograms(self, start_day=None, end_day=None, bins=None, width=0.8,
-                        fig_args=None, font_size=18, fig=None):
+    def plot_histograms(self, start_day=None, end_day=None, bins=None, width=0.8, fig_args=None, fig=None):
         '''
         Plots a histogram of the number of transmissions.
 
@@ -1443,7 +1433,6 @@ class TransTree(sc.prettyobj):
             bins (list): bin edges to use for the histogram
             width (float): width of bars
             fig_args (dict): passed to pl.figure()
-            font_size (float): size of font
             fig (fig): if supplied, use this figure
         '''
 
@@ -1470,7 +1459,6 @@ class TransTree(sc.prettyobj):
 
         # Plotting
         fig_args = sc.mergedicts(dict(figsize=(12,8)), fig_args)
-        pl.rcParams['font.size'] = font_size
         if fig is None:
             fig = pl.figure(**fig_args)
         pl.set_cmap('Spectral')
