@@ -493,18 +493,31 @@ __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 def process_daily_data(daily_data, sim, start_day, as_int=False):
     '''
-    This function performs one of two things: if the daily data are supplied as
+    This function performs one of three things: if the daily test data are supplied as
     a number, then it converts it to an array of the right length. If the daily
     data are supplied as a Pandas series or dataframe with a date index, then it
-    reindexes it to match the start date of the simulation. Otherwise, it does
-    nothing.
+    reindexes it to match the start date of the simulation. If the daily data are
+    supplied as a string, then it will convert it to a column and try to read from
+    that. Otherwise, it does nothing.
 
     Args:
-        daily_data (number, dataframe, or series): the data to convert to standardized format
+        daily_data (str, number, dataframe, or series): the data to convert to standardized format
         sim (Sim): the simulation object
         start_day (date): the start day of the simulation, in already-converted datetime.date format
         as_int (bool): whether to convert to an integer
     '''
+    # Handle string arguments
+    if sc.isstring(daily_data):
+        if daily_data == 'data':
+            daily_data = sim.data['new_tests'] # Use default name
+        else:
+            try:
+                daily_data = sim.data[daily_data]
+            except Exception as E:
+                errormsg = f'Tried to load testing data from sim.data["{daily_data}"], but that failed: {str(E)}.\nPlease ensure data are loaded into the sim and the column exists.'
+                raise ValueError(errormsg) from E
+
+    # Handle other arguments
     if sc.isnumber(daily_data):  # If a number, convert to an array
         if as_int: daily_data = int(daily_data) # Make it an integer
         daily_data = np.array([daily_data] * sim.npts)
@@ -513,6 +526,7 @@ def process_daily_data(daily_data, sim, start_day, as_int=False):
         end_date = daily_data.index[-1]
         dateindex = pd.date_range(start_date, end_date)
         daily_data = daily_data.reindex(dateindex, fill_value=0).to_numpy()
+
     return daily_data
 
 
@@ -595,7 +609,7 @@ class test_num(Intervention):
     intervention with cv.test_prob().
 
     Args:
-        daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day
+        daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day; if 'data' or another string, use loaded data
         symp_test   (float) : odds ratio of a symptomatic person testing (default: 100x more likely)
         quar_test   (float) : probability of a person in quarantine testing (default: no more likely)
         quar_policy (str)   : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
@@ -614,6 +628,8 @@ class test_num(Intervention):
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests='data') # Take number of tests from loaded data using default column name (new_tests)
+        interv = cv.test_num(daily_tests='swabs_per_day') # Take number of tests from loaded data using a custom column name
     '''
 
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, quar_policy=None, subtarget=None,
