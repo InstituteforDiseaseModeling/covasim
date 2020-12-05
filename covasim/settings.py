@@ -3,9 +3,14 @@ Define options for Covasim, mostly plotting and Numba options. All options shoul
 be set using set(), e.g.::
 
     cv.options.set(font_size=18)
+
+To reset default options, use::
+
+    cv.options.set('default')
 '''
 
 import os
+import pylab as pl
 import sciris as sc
 
 __all__ = ['options']
@@ -18,19 +23,19 @@ def set_default_options():
     options = sc.objdict()
 
     # Set the default font size -- if 0, use Matplotlib default
-    options.font_size = int(os.getenv('COVASIM_FONT_SIZE', 0))
+    options.font_size = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
 
     # Set the font family
-    options.font_family = os.getenv('COVASIM_FONT_FAMILY', '')
+    options.font_family = os.getenv('COVASIM_FONT_FAMILY', pl.rcParams['font.family'])
 
     # Set the default font size -- if 0, use Matplotlib default
-    options.dpi = int(os.getenv('COVASIM_DPI', 0))
+    options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
 
     # Set whether or not to show figures -- default true
     options.show = int(os.getenv('COVASIM_SHOW', 1))
 
     # Set the figure backend -- only works globally
-    options.backend = os.getenv('COVASIM_BACKEND', '')
+    options.backend = os.getenv('COVASIM_BACKEND', pl.get_backend())
 
     # Set default verbosity
     options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
@@ -46,6 +51,7 @@ def set_default_options():
 
 # Actually set the options
 options = set_default_options()
+orig_options = sc.dcp(options) # Make a copy for referring back to later
 
 # Specify which keys require a reload
 matplotlib_keys = ['font_size', 'font_family', 'dpi', 'backend']
@@ -54,11 +60,13 @@ numba_keys = ['precision', 'numba_parallel']
 
 def set_option(key=None, value=None, set_global=True, **kwargs):
     '''
-    Set a parameter or parameters.
+    Set a parameter or parameters. Use cv.options.set('defaults') to reset all
+    values to default, or cv.options.set(dpi='default') to reset one parameter
+    to default.
 
     Args:
         key        (str):    the parameter to modify
-        value      (varies): the value to specify
+        value      (varies): the value to specify; use None or 'default' to reset to default
         set_global (bool):   if true (default), sets plotting options globally (rather than just for Covasim)
         kwargs     (dict):   if supplied, set multiple key-value pairs
 
@@ -77,11 +85,17 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
 
         cv.options.set('font_size', 18)
         cv.options.set(font_size=18, show=False, backend='agg', precision=64)
+        cv.options.set('default') # Reset to default options
     '''
     if key is not None:
         kwargs = sc.mergedicts(kwargs, {key:value})
     reload_required = False
-    default_options = set_default_options()
+
+    # Reset to defaults
+    if key in ['default', 'defaults']:
+        kwargs = orig_options # Reset everything to default
+
+    # Reset options
     for key,value in kwargs.items():
         if key not in options:
             keylist = [k for k in options.keys() if k != 'set'] # Set is not a key
@@ -89,8 +103,8 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
             errormsg = f'Option "{key}" not recognized; options are:\n{keys}\n\nSee help(cv.options.set) for more information.'
             raise sc.KeyNotFoundError(errormsg)
         else:
-            if value is None:
-                value = default_options[key]
+            if value in [None, 'default']:
+                value = orig_options[key]
             options[key] = value
             if key in numba_keys:
                 reload_required = True
@@ -104,11 +118,12 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
 def set_matplotlib_global(key, value):
     ''' Set a global option for Matplotlib -- not for users '''
     import pylab as pl
-    if   key == 'font_size':   pl.rc('font', size=value)
-    elif key == 'font_family': pl.rc('font', family=value)
-    elif key == 'dpi':         pl.rc('figure', dpi=value)
-    elif key == 'backend':     pl.switch_backend(value)
-    else: raise sc.KeyNotFoundError(f'Key {key} not found')
+    if value: # Don't try to reset any of these to a None value
+        if   key == 'font_size':   pl.rc('font', size=value)
+        elif key == 'font_family': pl.rc('font', family=value)
+        elif key == 'dpi':         pl.rc('figure', dpi=value)
+        elif key == 'backend':     pl.switch_backend(value)
+        else: raise sc.KeyNotFoundError(f'Key {key} not found')
     return
 
 

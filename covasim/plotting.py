@@ -47,6 +47,11 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
 def handle_to_plot(which, to_plot, n_cols, sim):
     ''' Handle which quantities to plot '''
 
+    # Check that results are ready
+    if not sim.results_ready:
+        errormsg = 'Cannot plot since results are not ready yet -- did you run the sim?'
+        raise RuntimeError(errormsg)
+
     # If not specified or specified as a string, load defaults
     if to_plot is None or isinstance(to_plot, str):
         if which == 'sim':
