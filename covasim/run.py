@@ -143,10 +143,15 @@ class MultiSim(sc.prettyobj):
         Args:
             reduce  (bool): whether or not to reduce after running (see reduce())
             combine (bool): whether or not to combine after running (see combine(), not compatible with reduce)
-            kwargs  (dict): passed to multi_run()
+            kwargs  (dict): passed to multi_run(); use run_args to pass arguments to sim.run()
 
         Returns:
             None (modifies MultiSim object in place)
+
+        **Examples**::
+
+            msim.run()
+            msim.run(run_args=dict(until='2020-0601', restore_pars=False))
         '''
         # Handle which sims to use -- same as init_sims()
         if self.sims is None:

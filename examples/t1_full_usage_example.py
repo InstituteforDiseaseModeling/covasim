@@ -19,5 +19,5 @@ pars = dict(
 s1 = cv.Sim(pars, label='Default')
 s2 = cv.Sim(pars, interventions=protect_elderly, label='Protect the elderly')
 msim = cv.MultiSim([s1, s2])
-msim.run(parallel=False) # NB, Jupyter notebooks can't run in parallel by default
+msim.run()
 fig = msim.plot(to_plot=['cum_deaths', 'cum_infections'])
