@@ -2,6 +2,9 @@
 Covasim
 =======
 
+About Covasim
+=============
+
 Covasim is a stochastic agent-based simulator designed to be used for COVID-19 (novel coronavirus, SARS-CoV-2) epidemic analyses. These include projections of indicators such as numbers of infections and peak hospital demand. Covasim can also be used to explore the potential impact of different interventions, including social distancing, school closures, testing, contact tracing, quarantine, and vaccination.
 
 The scientific paper describing Covasim is available at http://paper.covasim.org. The recommended citation is:
@@ -63,8 +66,10 @@ Install with ``pip install covasim``. If everything is working, the following Py
   sim.plot()
 
 
-GitHub installation instructions
-==================================
+Full installation instructions
+==============================
+
+If you would rather download the source code rather than using the ``pip`` package, follow these steps:
 
 1.  Clone a copy of the repository. If you intend to make changes to the code, we recommend that you fork it first.
 
@@ -86,8 +91,7 @@ GitHub installation instructions
 Usage examples
 ==============
 
-There are several examples in the `examples` directory. These can be run as
-follows:
+There are several examples in the ``examples`` folder. These can be run as follows:
 
 * ``python examples/simple.py``
 
@@ -100,6 +104,8 @@ follows:
 * ``python examples/run_scenarios.py``
 
   This shows a more complex example, including running an intervention scenario, plotting uncertainty, and performing a health systems analysis.
+
+Other examples in that folder are taken from the tutorials.
 
 
 Module structure
@@ -127,11 +133,7 @@ The structure of the ``covasim`` folder is as follows, roughly in the order in w
 * ``run.py``: Functions for running simulations (e.g. parallel runs and the ``Scenarios`` and ``MultiSim`` classes).
 * ``analysis.py``: The ``Analyzers`` class (for performing analyses on the sim while it's running), the ``Fit`` class (for calculating the fit between the model and the data), the ``TransTree`` class, and other classes and functions for analyzing simulations.
 
-
-Data
-----
-
-This folder contains loading scripts for the epidemiological data in the root ``data`` folder, as well as data on age distributions for different countries and household sizes.
+The ``data`` folder within the Covasim package contains loading scripts for the epidemiological data in the root ``data`` folder, as well as data on age distributions for different countries and household sizes.
 
 
 
@@ -149,35 +151,41 @@ This folder contains a command-line interface (CLI) version of Covasim; example 
   covasim --pars "{pop_size:20000, pop_infected:1, n_days:360, rand_seed:1}"
 
 Note: the CLI is currently not compatible with Windows. You will need to add
-this folder to your path to run from other folders. See the `bin README`_ for more information.
-
-.. _bin README: ./bin
+this folder to your path to run from other folders.
 
 
 Data
 ----
 
 Scripts to automatically scrape data (including demographics and COVID epidemiology data),
-and the data files themselves (which are not part of the repository). See the `data README`_ for more information.
+and the data files themselves (which are not part of the repository).
 
-.. _data README: ./data
+
+Tutorials
+---------
+
+This folder contains Jupyter notebooks for nine tutorials that walk you through using Covasim, from absolute basics to advanced topics such as calibration and creating custom populations.
 
 
 Examples
 --------
 
-This folder contains demonstrations of simple Covasim usage, including an early application of Covasim to the Diamond Princess cruise ship. See the `examples README`_ for more information.
-
-.. _examples README: ./examples
+This folder contains demonstrations of simple Covasim usage, with most examples taken from the tutorials. 
 
 
-WandB
-~~~~~
+Cruise ship
+~~~~~~~~~~~
 
-Utilities for hyperparameter sweeps, using `Weights and Biases`_. See the `Weights and Biases README`_ for more information.
+An early application of Covasim to the Diamond Princess cruise ship.
 
+
+Calibration
+~~~~~~~~~~~
+
+Examples of how to calibrate simulations, including `Optuna`_ (also covered in the tutorial) and `Weights and Biases`_.
+
+.. _Optuna: https://optuna.org/
 .. _Weights and Biases: https://www.wandb.com/
-.. _Weights and Biases  README: https://github.com/InstituteforDiseaseModeling/covasim/tree/master/examples/wandb
 
 
 Licenses

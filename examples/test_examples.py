@@ -1,5 +1,5 @@
 '''
-Run examples/*.py using pytest
+Run the non-tutorial examples using pytest
 '''
 
 import pylab as pl

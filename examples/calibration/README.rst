@@ -1,8 +1,17 @@
 ====================
-Run parameter sweeps
+Running calibrations
 ====================
 
-Utilities for parameter sweeps, using `Weights and Biases`_. These instructions are a minimal subset of `these docs`_.
+Optuna
+======
+
+The file ``optuna_example.py`` in the parent ``examples`` folder includes a complete example, taken from Tutorial 7, for running a simple calibration.
+
+
+Weights and Biases
+==================
+
+The remaining files are an example of calibration using `Weights and Biases`_. These instructions are a minimal subset of `these docs`_.
 
 .. _Weights and Biases: https://www.wandb.com/
 .. _these docs: https://docs.wandb.com/sweeps

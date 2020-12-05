@@ -1,25 +1,21 @@
 ==================
-Welcome to |Cov_s|
+Welcome to Covasim
 ==================
 
-.. include:: ../README.rst
-   :start-line: 4
+Covasim is a stochastic agent-based simulator, written in Python, for exploring and analyzing the COVID-19 epidemic.
 
-======================
-Full package reference
-======================
+Contents
+========
 
 .. toctree::
    :maxdepth: 4
 
-   whatsnew
+   overview
    tutorials/README
+   whatsnew
    parameters
    data
    faq
    glossary
    contributing
    modules
-
-
-

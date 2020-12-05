@@ -4,3 +4,4 @@ sphinx
 plantweb
 pytest
 nbsphinx
+optuna
