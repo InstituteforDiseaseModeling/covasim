@@ -150,7 +150,7 @@ def plot_data(sim, ax, key, scatter_args, color=None):
 def plot_interventions(sim, ax):
     ''' Add interventions to the plot '''
     for intervention in sim['interventions']:
-        if hasattr(intervention, 'plot'): # Don't plot e.g. functions
+        if hasattr(intervention, 'plot_intervention'): # Don't plot e.g. functions
             intervention.plot_intervention(sim, ax)
     return
 
@@ -224,9 +224,12 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
         cvm.savefig(filename=fig_path) # Save the figure
 
     # Show the figure, or close it
-    if do_show or cvo.show:
+    if do_show is None:
+        do_show = cvo.show
+
+    if do_show:
         pl.show()
-    else:
+    elif cvo.close:
         if sep_figs:
             for fig in figs:
                 pl.close(fig)

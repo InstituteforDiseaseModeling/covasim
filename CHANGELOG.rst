@@ -15,7 +15,7 @@ Latest versions (2.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Version 2.0.0 (2020-11-13)
+Version 2.0.0 (2020-12-05)
 --------------------------
 
 This version contains a number of major updates. Note: this version requires Sciris 1.0, so when upgrading to this version, you may also need to upgrade Sciris (``pip install sciris --upgrade``).
@@ -37,11 +37,11 @@ Plotting and options
 ^^^^^^^^^^^^^^^^^^^^
 - Plotting defaults have been updated to work better on a wider variety of systems.
 - Almost all plotting functions now take both ``fig`` and ``ax`` keywords, which let you pass in existing figures/axes to be used by the plot.
-- A new ``options`` module has been added that lets the user specify plotting and run options.
+- A new ``options`` module has been added that lets the user specify plotting and run options; see ``cv.options.help()`` for a list of the options.
 - Plot options that were previously set on a per-figure basis (e.g. font size, font family) are now set globally via the ``options`` module, e.g. ``cv.options.set(font_size=18)``.
 - If plots are too small, you can increase the DPI (default 100), e.g. ``cv.options.set(dpi=200)``. If they are too large, you can decrease it, e.g. ``cv.options.set(dpi=50)``.
 - In addition, you can also change whether Covasim uses 32-bit or 64-bit arithmetic. To use 64-bit (which is about 20% slower and uses about 40% more memory), use ``cv.options.set(precision=64)``.
-- Options can also now be set via environment variables. For example, you can set ``COVASIM_DPI`` to change the default DPI, and ``COVASIM_VERBOSE`` to set the default verbosity. For example, ``export COVASIM_VERBOSE=0`` is equivalent to ``cv.options.set(verbose=0)``.
+- Options can also now be set via environment variables. For example, you can set ``COVASIM_DPI`` to change the default DPI, and ``COVASIM_VERBOSE`` to set the default verbosity. For example, ``export COVASIM_VERBOSE=0`` is equivalent to ``cv.options.set(verbose=0)``. See ``cv.options.help()`` for the full list.
 - The built-in intervention plotting method was renamed from ``plot()`` to ``plot_intervention()``, allowing the user to define custom plotting functions that do something different.
 
 Webapp

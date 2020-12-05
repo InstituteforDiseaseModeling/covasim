@@ -418,6 +418,7 @@ class MultiSim(sc.prettyobj):
             # Initialize
             fig          = kwargs.pop('fig', None)
             orig_show    = kwargs.get('do_show', None)
+            orig_close   = cvo.close
             orig_setylim = kwargs.get('setylim', True)
             kwargs['legend_args'] = sc.mergedicts({'show_legend':True}, kwargs.get('legend_args')) # Only plot the legend the first time
 
@@ -468,10 +469,12 @@ class MultiSim(sc.prettyobj):
                     merged_show_args  = show_args
                     kwargs['do_show'] = orig_show
                     kwargs['setylim'] = orig_setylim
+                    cvo.set(close=orig_close) # Reset original closing settings
                 else:
                     merged_show_args  = False # Only show things like data the last time it's plotting
                     kwargs['do_show'] = False # On top of that, don't show the plot at all unless it's the last time
-                    kwargs['setylim'] = False
+                    kwargs['setylim'] = False # Don't set the y limits until we have all the data
+                    cvo.set(close=False) # Do not close figures if we're in the middle of plotting
 
                 # Optionally set the label for the first max_sims sims
                 if color_by_sim is True and s<max_sims:

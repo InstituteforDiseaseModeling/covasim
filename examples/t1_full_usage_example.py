@@ -4,6 +4,7 @@ Full Covasim usage example, including a custom intervention
 
 import covasim as cv
 
+# Custom intervention -- see Tutorial 5
 def protect_elderly(sim):
     if sim.t == sim.day('2020-04-01'):
         elderly = sim.people.age>70
@@ -16,6 +17,7 @@ pars = dict(
     verbose = 0,
 )
 
+# Running with multisims -- see Tutorial 3
 s1 = cv.Sim(pars, label='Default')
 s2 = cv.Sim(pars, interventions=protect_elderly, label='Protect the elderly')
 msim = cv.MultiSim([s1, s2])

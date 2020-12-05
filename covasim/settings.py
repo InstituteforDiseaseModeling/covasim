@@ -17,40 +17,47 @@ __all__ = ['options']
 
 
 def set_default_options():
-    ''' Set the default options for Covasim '''
+    '''
+    Set the default options for Covasim -- not to be called by the user, use
+    ``cv.options.set('defaults')`` instead.
+    '''
 
     # Options acts like a class, but is actually an objdict for simplicity
-    options = sc.objdict()
+    optdesc = sc.objdict() # Help for the options
+    options = sc.objdict() # The options
 
-    # Set the default font size -- if 0, use Matplotlib default
-    options.font_size = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
-
-    # Set the font family
-    options.font_family = os.getenv('COVASIM_FONT_FAMILY', pl.rcParams['font.family'])
-
-    # Set the default font size -- if 0, use Matplotlib default
-    options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
-
-    # Set whether or not to show figures -- default true
-    options.show = int(os.getenv('COVASIM_SHOW', 1))
-
-    # Set the figure backend -- only works globally
-    options.backend = os.getenv('COVASIM_BACKEND', pl.get_backend())
-
-    # Set default verbosity
+    optdesc.verbose = 'Set default level of verbosity (i.e. logging detail)'
     options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
 
-    # Set default arithmetic precision -- use 32-bit by default for speed and memory efficiency
+    optdesc.show = 'Set whether or not to show figures (i.e. call pl.show() automatically)'
+    options.show = int(os.getenv('COVASIM_SHOW', True))
+
+    optdesc.close = 'Set whether or not to close figures (i.e. call pl.close() automatically)'
+    options.close = int(os.getenv('COVASIM_CLOSE', False))
+
+    optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
+    options.backend = os.getenv('COVASIM_BACKEND', pl.get_backend())
+
+    optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
+    options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
+
+    optdesc.font_size = 'Set the default font size'
+    options.font_size = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
+
+    optdesc.font_family = 'Set the default font family (e.g., Arial)'
+    options.font_family = os.getenv('COVASIM_FONT_FAMILY', pl.rcParams['font.family'])
+
+    optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
     options.precision = int(os.getenv('COVASIM_PRECISION', 32))
 
-    # Specify whether to allow parallel Numba calculation -- about 20% faster, but the random number stream becomes nondeterministic
+    optdesc.numba_parallel = 'Set Numba multithreading -- about 20% faster, but simulations become nondeterministic'
     options.numba_parallel = bool(int(os.getenv('COVASIM_NUMBA_PARALLEL', 0)))
 
-    return options
+    return options, optdesc
 
 
 # Actually set the options
-options = set_default_options()
+options, optdesc = set_default_options()
 orig_options = sc.dcp(options) # Make a copy for referring back to later
 
 # Specify which keys require a reload
@@ -60,33 +67,36 @@ numba_keys = ['precision', 'numba_parallel']
 
 def set_option(key=None, value=None, set_global=True, **kwargs):
     '''
-    Set a parameter or parameters. Use cv.options.set('defaults') to reset all
-    values to default, or cv.options.set(dpi='default') to reset one parameter
-    to default.
+    Set a parameter or parameters. Use ``cv.options.set('defaults')`` to reset all
+    values to default, or ``cv.options.set(dpi='default')`` to reset one parameter
+    to default. See ``cv.options.help()`` for more information.
 
     Args:
-        key        (str):    the parameter to modify
+        key        (str):    the parameter to modify, or 'defaults' to reset eerything to default values
         value      (varies): the value to specify; use None or 'default' to reset to default
         set_global (bool):   if true (default), sets plotting options globally (rather than just for Covasim)
         kwargs     (dict):   if supplied, set multiple key-value pairs
 
-    Options are:
+    Options are (see also ``cv.options.help()``):
 
-        - font_size:      the font size used for the plots (default: 10)
-        - font_family:    the font family/face used for the plots (default: Open Sans)
-        - dpi:            the overall DPI for the figure (default: 100)
-        - show:           whether to show figures (default true)
-        - backend:        which Matplotlib backend to use (must be set globally)
-        - verbose:        default verbosity for simulations to use (default: 1)
-        - precision:      the arithmetic to use in calculations (default: 32; other option is 64)
-        - numba_parallel: whether to parallelize Numba (default false; faster but gives non-reproducible results)
+        - verbose:        default verbosity for simulations to use
+        - font_size:      the font size used for the plots
+        - font_family:    the font family/face used for the plots
+        - dpi:            the overall DPI for the figure
+        - show:           whether to show figures
+        - close:          whether to close the figures
+        - backend:        which Matplotlib backend to use
+
+        - precision:      the arithmetic to use in calculations
+        - numba_parallel: whether to parallelize Numba
 
     **Examples**::
 
         cv.options.set('font_size', 18)
         cv.options.set(font_size=18, show=False, backend='agg', precision=64)
-        cv.options.set('default') # Reset to default options
+        cv.options.set('defaults') # Reset to default options
     '''
+
     if key is not None:
         kwargs = sc.mergedicts(kwargs, {key:value})
     reload_required = False
@@ -98,9 +108,9 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
     # Reset options
     for key,value in kwargs.items():
         if key not in options:
-            keylist = [k for k in options.keys() if k != 'set'] # Set is not a key
+            keylist = orig_options.keys()
             keys = '\n'.join(keylist)
-            errormsg = f'Option "{key}" not recognized; options are:\n{keys}\n\nSee help(cv.options.set) for more information.'
+            errormsg = f'Option "{key}" not recognized; options are "defaults" or:\n{keys}\n\nSee help(cv.options.set) for more information.'
             raise sc.KeyNotFoundError(errormsg)
         else:
             if value in [None, 'default']:
@@ -113,6 +123,44 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
     if reload_required:
         reload_numba()
     return
+
+
+def get_help(output=False):
+    '''
+    Print information about options.
+
+    Args:
+        output (bool): whether to return a list of the options
+
+    **Example**::
+
+        cv.options.help()
+    '''
+
+    optdict = sc.objdict()
+    for key in orig_options.keys():
+        entry = sc.objdict()
+        entry.key = key
+        entry.current = options[key]
+        entry.default = orig_options[key]
+        entry.variable = f'COVASIM_{key.upper()}' # NB, hard-coded above!
+        entry.desc = optdesc[key]
+        optdict[key] = entry
+
+    # Convert to a dataframe for nice printing
+    print('Covasim global options ("Environment" = name of corresponding environment variable):')
+    for key,entry in optdict.items():
+        print(f'\n{key}')
+        changestr = '' if entry.current == entry.default else ' (modified)'
+        print(f'      Current: {entry.current}{changestr}')
+        print(f'      Default: {entry.default}')
+        print(f'  Environment: {entry.variable}')
+        print(f'  Description: {entry.desc}')
+
+    if output:
+        return optdict
+    else:
+        return
 
 
 def set_matplotlib_global(key, value):
@@ -149,5 +197,6 @@ def reload_numba():
     return
 
 
-# Add this here to be more accessible to the user
+# Add these here to be more accessible to the user
 options.set = set_option
+options.help = get_help
