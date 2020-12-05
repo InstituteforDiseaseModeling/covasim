@@ -64,7 +64,7 @@ sim = cv.Sim(pars, interventions=protect, label='Protect the elderly')
 # Run and plot
 msim = cv.MultiSim([orig_sim, sim])
 msim.run()
-msim.plot(to_plot=['cum_deaths', 'cum_infections'])
+msim.plot()
 
 # Plot intervention
 protect = msim.sims[1].get_intervention(protect_elderly) # Find intervention by type
