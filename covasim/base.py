@@ -868,6 +868,11 @@ class BasePeople(sc.prettyobj):
                     if verbose:
                         print(f'Resizing "{key}" from {actual_len} to {expected_len}')
                     self._resize_arrays(keys=key)
+
+        # Check that the layers are valid
+        for layer in self.contacts.values():
+            layer.validate()
+
         return
 
 
@@ -951,7 +956,9 @@ class BasePeople(sc.prettyobj):
 
 
     def add_contacts(self, contacts, lkey=None, beta=None):
-        ''' Add new contacts to the array '''
+        '''
+        Add new contacts to the array. See also contacts.add_layer().
+        '''
 
         # If no layer key is supplied and it can't be worked out from defaults, use the first layer
         if lkey is None:
@@ -1118,6 +1125,38 @@ class Contacts(FlexDict):
         return output
 
 
+    def add_layer(self, **kwargs):
+        '''
+        Small method to add one or more layers to the contacts. Layers should
+        be provided as keyword arguments.
+
+        **Example**::
+
+            hospitals_layer = cv.Layer()
+            sim.people.contacts.add_layer(hospitals=layer)
+        '''
+        for lkey,layer in kwargs.items():
+            layer.validate()
+            self[lkey] = layer
+        return
+
+
+    def pop_layer(self, *args):
+        '''
+        Remove the layer(s) from the contacts.
+
+        **Example**::
+
+            sim.people.contacts.pop_layer('hospitals')
+
+        Note: while included here for convenience, this operation is equivalent
+        to simply popping the key from the contacts dictionary.
+        '''
+        for lkey in args:
+            self.pop(lkey)
+        return
+
+
 class Layer(FlexDict):
     ''' A small class holding a single layer of contacts '''
 
@@ -1185,8 +1224,15 @@ class Layer(FlexDict):
         n = len(self[self.basekey])
         for key,dtype in self.meta.items():
             if dtype:
-                assert self[key].dtype == dtype
-            assert n == len(self[key])
+                actual = self[key].dtype
+                expected = dtype
+                if actual != expected:
+                    errormsg = f'Expecting dtype "{expected}" for layer key "{key}"; got "{actual}"'
+                    raise TypeError(errormsg)
+            actual_n = len(self[key])
+            if n != actual_n:
+                errormsg = f'Expecting length {n} for layer key "{key}"; got {actual_n}'
+                raise TypeError(errormsg)
         return
 
 
