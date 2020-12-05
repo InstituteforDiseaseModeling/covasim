@@ -257,4 +257,8 @@ nbsphinx_execute_arguments = [
 ]
 
 # Modify this to not rerun the Jupyter notebook cells -- usually set by build_docs
-nbsphinx_execute = os.getenv('NBSPHINX_EXECUTE', ['auto', 'never'][1])
+nb_ex_default = ['auto', 'never'][0]
+nb_ex = os.getenv('NBSPHINX_EXECUTE')
+if not nb_ex: nb_ex = nb_ex_default
+print(f'\n\nBuilding Jupyter notebooks with build option: {nb_ex}\n\n')
+nbsphinx_execute = nb_ex

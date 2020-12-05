@@ -674,7 +674,7 @@ class MultiSim(sc.prettyobj):
                 if hasattr(self, 'chunks'): # Created from a merged MultiSim
                     inds = self.chunks
                 else: # No indices or chunks and not created from a merge
-                    errormsg = f'If a MultiSim has not been created via merge(), you must supply either inds or chunks to split it'
+                    errormsg = 'If a MultiSim has not been created via merge(), you must supply either inds or chunks to split it'
                     raise ValueError(errormsg)
             else: # Chunks supplied, but not inds
                 inds = [] # Initialize
@@ -701,13 +701,21 @@ class MultiSim(sc.prettyobj):
         string += f'  Number of sims: {len(self.sims)}\n'
         string += f'  Reduced/combined: {self.which}\n'
         string += f'  Base: {self.base_sim.brief(output=True)}\n'
-        string += f'  Sims:\n'
+        string += '  Sims:\n'
         for s,sim in enumerate(self.sims):
             string += f'    {s}: {sim.brief(output=True)}\n'
         if not output:
             print(string)
         else:
             return string
+
+
+    def brief(self):
+        ''' Print the sims, briefly '''
+        for s,sim in enumerate(self.sims):
+            print(f'{s}: {sim.brief(output=True)}')
+        return
+
 
 
 class Scenarios(cvb.ParsObj):

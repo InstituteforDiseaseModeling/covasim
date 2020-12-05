@@ -25,6 +25,7 @@ Highlights
 - **Parameters**: Default infection fatality ratio estimates have been updated in line with the latest literature.
 - **Plotting**: Plotting defaults have been updated to support a wider range of systems, and users now have greater control over plotting options.
 - **Webapp**: The webapp has been moved to a separate Python package, ``covasim_webapp`` (available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__)
+- **Documentation**: A comprehensive set of tutorials has been added, along with a glossary and FAQ; see https://docs.covasim.org or look in the ``docs/tutorials`` folder.
 
 Parameter updates
 ^^^^^^^^^^^^^^^^^
@@ -64,7 +65,7 @@ Other changes
 ^^^^^^^^^^^^^
 - Two new functions have been added, ``sim.get_intervention()`` and ``sim.get_analyzer()``. These act very similarly to e.g. ``sim.get_interventions()``, except they return the last matching intervention/analyzer, rather than returning a list of interventions/analyzers.
 - There is a new verbose option: ``cv.Sim(verbose='brief').run()`` will print a single line of output when the sim finishes (namely, ``sim.brief()``).
-- MultiSims now have a ``shrink()`` method, which shrinks both the base sim and the other sims they contain.
+- MultiSims now have a ``shrink()`` method, which shrinks both the base sim and the other sims they contain. MultiSims also have a ``brief()`` method, which prints out one line per sim (even briefer than ``msim.summarize()``).
 - MultiSims also provide options to compute statistics using either the mean or the median; this can be done via the ``msim.reduce(use_mean=True)`` method. Two convenience methods, ``msim.mean()`` and ``msim.median()``, have also been added as shortcuts.
 - Contacts now have new methods for handling layers, ``sim.people.contacts.add_layer()`` and ``sim.people.contacts.pop_layer()``. Additional validation on layers is also performed.
 - There is a new function, ``cv.data.get_valid_locations()``, that lists locations for which demographic data are available.

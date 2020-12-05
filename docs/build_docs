@@ -6,7 +6,8 @@
 # Otherwise, Jupyter notebooks will not be rebuilt.
 
 start=$SECONDS
-NBSPHINX_EXECUTE=$1
+export NBSPHINX_EXECUTE=$1
+
 echo 'Building docs...'
 make clean
 make html
