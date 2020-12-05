@@ -642,8 +642,8 @@ class test_num(Intervention):
     **Examples**::
 
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
-        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
-        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': cv.true(sim.people.age>50), 'vals': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: cv.true(sim.people.age>50), 'vals': 1.2}) # People over 50 are 20% more likely to test
         interv = cv.test_num(daily_tests='data') # Take number of tests from loaded data using default column name (new_tests)
         interv = cv.test_num(daily_tests='swabs_per_day') # Take number of tests from loaded data using a custom column name
     '''
