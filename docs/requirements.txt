@@ -1,8 +1,11 @@
+pytest
 sphinx-rtd-theme
 sphinxcontrib-napoleon
 sphinx
 plantweb
-pytest
+ipykernel
 nbsphinx
+pandoc
+pypandoc
 optuna
 numba==0.48
