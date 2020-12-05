@@ -243,6 +243,13 @@ class Sim(cvb.BaseSim):
         if validate_layers:
             self.validate_layer_pars()
 
+        # Handle verbose
+        if self['verbose'] == 'brief':
+            self['verbose'] = -1
+        if not sc.isnumber(self['verbose']):
+            errormsg = f'Verbose argument should be either "brief", -1, or a float, not {type(self["verbose"])} "{self["verbose"]}"'
+            raise ValueError(errormsg)
+
         return
 
 
@@ -366,7 +373,7 @@ class Sim(cvb.BaseSim):
         # Handle inputs
         if verbose is None:
             verbose = self['verbose']
-        if verbose:
+        if verbose>0:
             print(f'Initializing sim with {self["pop_size"]:0n} people for {self["n_days"]} days')
         if load_pop and self.popdict is None:
             self.load_population(popfile=popfile)
@@ -554,7 +561,7 @@ class Sim(cvb.BaseSim):
             until (int/str): day or date to run until
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
-            verbose (float): level of detail to print, e.g. 0 = no output, 0.1 = print every 10th day, 1 = print every day
+            verbose (float): level of detail to print, e.g. -1 = one-line output, 0 = no output, 0.1 = print every 10th day, 1 = print every day
             output (bool): whether to return the results dictionary as output
             kwargs (dict): passed to sim.plot()
 
@@ -565,12 +572,12 @@ class Sim(cvb.BaseSim):
         # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
         T = sc.tic()
 
-        if verbose is None:
-            verbose = self['verbose']
-
         if not self.initialized:
             self.initialize()
             self._orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+
+        if verbose is None:
+            verbose = self['verbose']
 
         if reset_seed:
             # Reset the RNG. If the simulation is newly created, then the RNG will be reset by sim.initialize() so the use case
@@ -605,7 +612,7 @@ class Sim(cvb.BaseSim):
                 string = f'  Running {simlabel}{self.datevec[self.t]} ({self.t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
                 if verbose >= 2:
                     sc.heading(string)
-                else:
+                elif verbose>0:
                     if not (self.t % int(1.0/verbose)):
                         sc.progressbar(self.t+1, self.npts, label=string, length=20, newline=True)
 
@@ -892,12 +899,18 @@ class Sim(cvb.BaseSim):
                 if full or key.startswith('cum_'):
                     summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
 
-            if verbose:
-                print(summary_str)
             if update:
                 self.summary = summary
+
+            if verbose:
+                if verbose>0:
+                    print(summary_str)
+                else:
+                    self.brief()
+
             if output:
                 return summary
+
         else:
             return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
 
@@ -925,7 +938,7 @@ class Sim(cvb.BaseSim):
 
         pop_size = self['pop_size']
         pop_type = self['pop_type']
-        string   = f'Sim({label}; {start}—{end}; pop: {pop_size:n} {pop_type}; epi: {results})'
+        string   = f'Sim({label}; {start} to {end}; pop: {pop_size:n} {pop_type}; epi: {results})'
 
         if not output:
             print(string)
