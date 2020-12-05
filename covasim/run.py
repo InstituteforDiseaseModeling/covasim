@@ -412,7 +412,7 @@ class MultiSim(sc.prettyobj):
 
             # Initialize
             fig          = kwargs.pop('fig', None)
-            orig_show    = kwargs.get('do_show', True)
+            orig_show    = kwargs.get('do_show', None)
             orig_setylim = kwargs.get('setylim', True)
             kwargs['legend_args'] = sc.mergedicts({'show_legend':True}, kwargs.get('legend_args')) # Only plot the legend the first time
 

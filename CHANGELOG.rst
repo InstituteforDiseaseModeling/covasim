@@ -62,6 +62,7 @@ Bugfixes
 Other changes
 ^^^^^^^^^^^^^
 - Two new functions have been added, ``sim.get_intervention()`` and ``sim.get_analyzer()``. These act very similarly to e.g. ``sim.get_interventions()``, except they return the last matching intervention/analyzer, rather than returning a list of interventions/analyzers.
+- There is a new verbose option: ``cv.Sim(verbose='brief').run()`` will print a single line of output when the sim finishes (namely, ``sim.brief()``).
 - MultiSims now have a ``shrink()`` method, which shrinks both the base sim and the other sims they contain.
 - MultiSims also provide options to compute statistics using either the mean or the median; this can be done via the ``msim.reduce(use_mean=True)`` method. Two convenience methods, ``msim.mean()`` and ``msim.median()``, have also been added as shortcuts.
 - The argument ``n_cpus`` can now be supplied directly to ``cv.multirun()`` and ``msim.run()``.

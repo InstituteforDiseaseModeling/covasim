@@ -1135,7 +1135,7 @@ class Layer(FlexDict):
 
         # Set data, if provided
         for key,value in kwargs.items():
-            self[key] = value
+            self[key] = np.array(value, dtype=self.meta[key])
 
         return
 
