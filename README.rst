@@ -77,11 +77,11 @@ If you would rather download the source code rather than using the ``pip`` packa
 
 3.  Navigate to the root of the repository and install the Covasim Python package using one of the following options:
 
-    *   To install with web app support (recommended)::
+    *   For normal installation (recommended)::
 
           python setup.py develop
 
-    *   To install Covasim and optional dependencies (be aware this may fail since it relies on private packages), enter::
+    *   To install Covasim and optional dependencies (be aware this may fail since it relies on nonstandard packages)::
 
           python setup.py develop full
 
