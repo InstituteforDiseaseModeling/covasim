@@ -5,3 +5,4 @@ plantweb
 pytest
 nbsphinx
 optuna
+numba==0.48
