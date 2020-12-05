@@ -256,5 +256,5 @@ nbsphinx_execute_arguments = [
     "--InlineBackend.rc=figure.dpi=96",
 ]
 
-# Uncomment this to not rerun the Jupyter notebook cells
-nbsphinx_execute = 'never'
+# Modify this to not rerun the Jupyter notebook cells -- usually set by build_docs
+nbsphinx_execute = os.getenv('NBSPHINX_EXECUTE', ['auto', 'never'][1])

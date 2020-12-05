@@ -1,6 +1,12 @@
 #!/bin/bash
+#
+# To rebuild notebooks, type
+#  ./build_docs auto
+#
+# Otherwise, Jupyter notebooks will not be rebuilt.
 
 start=$SECONDS
+NBSPHINX_EXECUTE=$1
 echo 'Building docs...'
 make clean
 make html

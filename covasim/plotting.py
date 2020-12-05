@@ -44,11 +44,11 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     return args
 
 
-def handle_to_plot(which, to_plot, n_cols, sim):
+def handle_to_plot(which, to_plot, n_cols, sim, check_ready=True):
     ''' Handle which quantities to plot '''
 
     # Check that results are ready
-    if not sim.results_ready:
+    if check_ready and not sim.results_ready:
         errormsg = 'Cannot plot since results are not ready yet -- did you run the sim?'
         raise RuntimeError(errormsg)
 
@@ -304,7 +304,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
+    to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Do the plotting
