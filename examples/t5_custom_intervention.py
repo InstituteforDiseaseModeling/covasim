@@ -20,6 +20,7 @@ class protect_elderly(cv.Intervention):
     def initialize(self, sim):
         self.start_day  = sim.day(self.start_day)
         self.end_day    = sim.day(self.end_day)
+        self.days       = [self.start_day, self.end_day]
         self.elderly    = sim.people.age > self.age_cutoff # Find the elderly people here
         self.exposed    = np.zeros(sim.npts) # Initialize results
         self.tvec       = sim.tvec # Copy the time vector into this intervention
@@ -38,7 +39,7 @@ class protect_elderly(cv.Intervention):
 
         return
 
-    def plot_exposed(self):
+    def plot(self):
         pl.figure()
         pl.plot(self.tvec, self.exposed)
         pl.xlabel('Day')
@@ -67,4 +68,4 @@ msim.plot(to_plot=['cum_deaths', 'cum_infections'])
 
 # Plot intervention
 protect = msim.sims[1].get_intervention(protect_elderly) # Find intervention by type
-protect.plot_exposed()
+protect.plot()

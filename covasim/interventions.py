@@ -158,7 +158,7 @@ class Intervention:
         raise NotImplementedError
 
 
-    def plot(self, sim, ax=None, **kwargs):
+    def plot_intervention(self, sim, ax=None, **kwargs):
         '''
         Plot the intervention
 

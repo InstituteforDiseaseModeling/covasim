@@ -42,6 +42,7 @@ Plotting and options
 - If plots are too small, you can increase the DPI (default 100), e.g. ``cv.options.set(dpi=200)``. If they are too large, you can decrease it, e.g. ``cv.options.set(dpi=50)``.
 - In addition, you can also change whether Covasim uses 32-bit or 64-bit arithmetic. To use 64-bit (which is about 20% slower and uses about 40% more memory), use ``cv.options.set(precision=64)``.
 - Options can also now be set via environment variables. For example, you can set ``COVASIM_DPI`` to change the default DPI, and ``COVASIM_VERBOSE`` to set the default verbosity. For example, ``export COVASIM_VERBOSE=0`` is equivalent to ``cv.options.set(verbose=0)``.
+- The built-in intervention plotting method was renamed from ``plot()`` to ``plot_intervention()``, allowing the user to define custom plotting functions that do something different.
 
 Webapp
 ^^^^^^
@@ -82,6 +83,7 @@ Regression information
 - Any scripts that specify the ``test_sensitivity`` keyword for the ``test_prob`` intervention will need to rename that variable to ``sensitivity``.
 - Any scripts that used ``results = sim.run()`` will need to be updated to ``results = sim.run(output=True)``.
 - Any scripts that passed formatting options directly to plots should set these as options instead; e.g. ``sim.plot(font_size=18)`` should now be ``cv.options.set(font_size=18); sim.plot()``.
+- Any custom interventions that defined a custom ``plot()`` method should use ``plot_interventions()`` instead.
 - *GitHub info*: PR `738 <https://github.com/amath-idm/covasim/pull/738>`__
 
 

@@ -151,7 +151,7 @@ def plot_interventions(sim, ax):
     ''' Add interventions to the plot '''
     for intervention in sim['interventions']:
         if hasattr(intervention, 'plot'): # Don't plot e.g. functions
-            intervention.plot(sim, ax)
+            intervention.plot_intervention(sim, ax)
     return
 
 
