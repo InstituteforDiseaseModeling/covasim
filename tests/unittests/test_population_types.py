@@ -13,7 +13,7 @@ class PopulationTypeTests(CovaSimTest):
         pass
 
     def test_different_pop_types(self):
-        pop_types = ['random', 'hybrid', 'clustered']  #, 'synthpops']
+        pop_types = ['random', 'hybrid']  #, 'synthpops']
         results = {}
         short_sample = {
             TPKeys.number_agents: 1000,

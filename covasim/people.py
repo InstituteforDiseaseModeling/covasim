@@ -489,13 +489,15 @@ class People(cvb.BasePeople):
         layer).
 
         Args:
-            bins (arr): age bins to use (default, 0-100 in one-year bins)
-            width (float): bar width
-            font_size (float): size of font
-            alpha (float): transparency of the plots
-            fig_args (dict): passed to pl.figure()
-            axis_args (dict): passed to pl.subplots_adjust()
-            plot_args (dict): passed to pl.plot()
+            bins      (arr)   : age bins to use (default, 0-100 in one-year bins)
+            width     (float) : bar width
+            font_size (float) : size of font
+            alpha     (float) : transparency of the plots
+            fig_args  (dict)  : passed to pl.figure()
+            axis_args (dict)  : passed to pl.subplots_adjust()
+            plot_args (dict)  : passed to pl.plot()
+            do_show   (bool)  : whether to show the plot
+            fig       (fig)   : handle of existing figure to plot into
         '''
         fig = cvplt.plot_people(people=self, *args, **kwargs)
         return fig

@@ -12,6 +12,7 @@ from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
 from . import plotting as cvplt
+from .settings import options as cvo
 
 
 # Specify all externally visible functions this file defines
@@ -27,7 +28,7 @@ def make_metapars():
         noisepar  = 'beta',
         rand_seed = 1,
         quantiles = {'low':0.1, 'high':0.9},
-        verbose   = 1,
+        verbose   = cvo.verbose,
     )
     return metapars
 
@@ -42,7 +43,6 @@ class MultiSim(sc.prettyobj):
     Args:
         sims      (Sim/list) : a single sim or a list of sims
         base_sim  (Sim)      : the sim used for shared properties; if not supplied, the first of the sims provided
-        quantiles (dict)     : the quantiles to use with reduce(), e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
         initialize (bool)    : whether or not to initialize the sims (otherwise, initialize them during run)
         kwargs    (dict)     : stored in run_args and passed to run()
 
@@ -69,7 +69,7 @@ class MultiSim(sc.prettyobj):
         msim.plot() # Plot as single sim
     '''
 
-    def __init__(self, sims=None, base_sim=None, quantiles=None, initialize=False, **kwargs):
+    def __init__(self, sims=None, base_sim=None, initialize=False, **kwargs):
 
         # Handle inputs
         if base_sim is None:
@@ -82,13 +82,9 @@ class MultiSim(sc.prettyobj):
                 errormsg = f'If base_sim is not supplied, sims must be either a single sim (treated as base_sim) or a list of sims, not {type(sims)}'
                 raise TypeError(errormsg)
 
-        if quantiles is None:
-            quantiles = make_metapars()['quantiles']
-
         # Set properties
         self.sims      = sims
         self.base_sim  = base_sim
-        self.quantiles = quantiles
         self.run_args  = sc.mergedicts(kwargs)
         self.results   = None
         self.which     = None # Whether the multisim is to be reduced, combined, etc.
@@ -147,10 +143,15 @@ class MultiSim(sc.prettyobj):
         Args:
             reduce  (bool): whether or not to reduce after running (see reduce())
             combine (bool): whether or not to combine after running (see combine(), not compatible with reduce)
-            kwargs  (dict): passed to multi_run()
+            kwargs  (dict): passed to multi_run(); use run_args to pass arguments to sim.run()
 
         Returns:
             None (modifies MultiSim object in place)
+
+        **Examples**::
+
+            msim.run()
+            msim.run(run_args=dict(until='2020-0601', restore_pars=False))
         '''
         # Handle which sims to use -- same as init_sims()
         if self.sims is None:
@@ -171,6 +172,20 @@ class MultiSim(sc.prettyobj):
         return
 
 
+    def shrink(self, **kwargs):
+        '''
+        Not to be confused with reduce(), this shrinks each sim in the msim;
+        see sim.shrink() for more information.
+
+        Args:
+            kwargs (dict): passed to sim.shrink() for each sim
+        '''
+        self.base_sim.shrink(**kwargs)
+        for sim in self.sims:
+            sim.shrink(**kwargs)
+        return
+
+
     def reset(self):
         ''' Undo a combine() or reduce() by resetting the base sim, which, and results '''
         if hasattr(self, 'orig_base_sim'):
@@ -181,22 +196,37 @@ class MultiSim(sc.prettyobj):
         return
 
 
-    def reduce(self, quantiles=None, output=False):
-        ''' Combine multiple sims into a single sim with scaled results '''
+    def reduce(self, quantiles=None, use_mean=False, bounds=None, output=False):
+        '''
+        Combine multiple sims into a single sim statistically: by default, use
+        the median value and the 10th and 90th percentiles for the lower and upper
+        bounds. If use_mean=True, then use the mean and ±2 standard deviations
+        for lower and upper bounds.
 
-        if quantiles is None:
-            quantiles = self.quantiles
-        if not isinstance(quantiles, dict):
-            try:
-                quantiles = {'low':float(quantiles[0]), 'high':float(quantiles[1])}
-            except Exception as E:
-                errormsg = f'Could not figure out how to convert {quantiles} into a quantiles object: must be a dict with keys low, high or a 2-element array ({str(E)})'
-                raise ValueError(errormsg)
+        Args:
+            quantiles (dict): the quantiles to use, e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
+            use_mean (bool): whether to use the mean instead of the median
+            bounds (float): if use_mean=True, the multiplier on the standard deviation for upper and lower bounds (default 2)
+            output (bool): whether to return the "reduced" sim (in any case, modify the multisim in-place)
+        '''
+
+        if use_mean:
+            if bounds is None:
+                bounds = 2
+        else:
+            if quantiles is None:
+                quantiles = make_metapars()['quantiles']
+            if not isinstance(quantiles, dict):
+                try:
+                    quantiles = {'low':float(quantiles[0]), 'high':float(quantiles[1])}
+                except Exception as E:
+                    errormsg = f'Could not figure out how to convert {quantiles} into a quantiles object: must be a dict with keys low, high or a 2-element array ({str(E)})'
+                    raise ValueError(errormsg)
 
         # Store information on the sims
         n_runs = len(self)
         reduced_sim = sc.dcp(self.sims[0])
-        reduced_sim.parallelized = {'parallelized':True, 'combined':False, 'n_runs':n_runs}  # Store how this was parallelized
+        reduced_sim.metadata = dict(parallelized=True, combined=False, n_runs=n_runs, quantiles=quantiles, use_mean=use_mean, bounds=bounds) # Store how this was parallelized
 
         # Perform the statistics
         raw = {}
@@ -211,9 +241,16 @@ class MultiSim(sc.prettyobj):
                 raw[reskey][:,s] = vals
 
         for reskey in reskeys:
-            reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
-            reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
-            reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
+            if use_mean:
+                r_mean = np.mean(raw[reskey], axis=1)
+                r_std = np.std(raw[reskey], axis=1)
+                reduced_sim.results[reskey].values[:] = r_mean
+                reduced_sim.results[reskey].low       = r_mean - bounds*r_std
+                reduced_sim.results[reskey].high      = r_mean + bounds*r_std
+            else:
+                reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1)
+                reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
+                reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
 
         # Compute and store final results
         reduced_sim.summarize(verbose=False, update=True)
@@ -227,6 +264,28 @@ class MultiSim(sc.prettyobj):
             return self.base_sim
         else:
             return
+
+
+    def mean(self, bounds=None, **kwargs):
+        '''
+        Alias for reduce(use_mean=True).
+
+        Args:
+            bounds (float): multiplier on the standard deviation for the upper and lower bounds (default, 2)
+            kwargs (dict): passed to reduce()
+        '''
+        return self.reduce(use_mean=True, bounds=bounds, **kwargs)
+
+
+    def median(self, quantiles=None, **kwargs):
+        '''
+        Alias for reduce(use_mean=False).
+
+        Args:
+            quantiles (list or dict): upper and lower quantiles (default, 0.1 and 0.9)
+            kwargs (dict): passed to reduce()
+        '''
+        return self.reduce(use_mean=False, quantiles=quantiles, **kwargs)
 
 
     def combine(self, output=False):
@@ -358,7 +417,8 @@ class MultiSim(sc.prettyobj):
 
             # Initialize
             fig          = kwargs.pop('fig', None)
-            orig_show    = kwargs.get('do_show', True)
+            orig_show    = kwargs.get('do_show', None)
+            orig_close   = cvo.close
             orig_setylim = kwargs.get('setylim', True)
             kwargs['legend_args'] = sc.mergedicts({'show_legend':True}, kwargs.get('legend_args')) # Only plot the legend the first time
 
@@ -409,10 +469,12 @@ class MultiSim(sc.prettyobj):
                     merged_show_args  = show_args
                     kwargs['do_show'] = orig_show
                     kwargs['setylim'] = orig_setylim
+                    cvo.set(close=orig_close) # Reset original closing settings
                 else:
                     merged_show_args  = False # Only show things like data the last time it's plotting
                     kwargs['do_show'] = False # On top of that, don't show the plot at all unless it's the last time
-                    kwargs['setylim'] = False
+                    kwargs['setylim'] = False # Don't set the y limits until we have all the data
+                    cvo.set(close=False) # Do not close figures if we're in the middle of plotting
 
                 # Optionally set the label for the first max_sims sims
                 if color_by_sim is True and s<max_sims:
@@ -612,7 +674,7 @@ class MultiSim(sc.prettyobj):
                 if hasattr(self, 'chunks'): # Created from a merged MultiSim
                     inds = self.chunks
                 else: # No indices or chunks and not created from a merge
-                    errormsg = f'If a MultiSim has not been created via merge(), you must supply either inds or chunks to split it'
+                    errormsg = 'If a MultiSim has not been created via merge(), you must supply either inds or chunks to split it'
                     raise ValueError(errormsg)
             else: # Chunks supplied, but not inds
                 inds = [] # Initialize
@@ -639,13 +701,21 @@ class MultiSim(sc.prettyobj):
         string += f'  Number of sims: {len(self.sims)}\n'
         string += f'  Reduced/combined: {self.which}\n'
         string += f'  Base: {self.base_sim.brief(output=True)}\n'
-        string += f'  Sims:\n'
+        string += '  Sims:\n'
         for s,sim in enumerate(self.sims):
             string += f'    {s}: {sim.brief(output=True)}\n'
         if not output:
             print(string)
         else:
             return string
+
+
+    def brief(self):
+        ''' Print the sims, briefly '''
+        for s,sim in enumerate(self.sims):
+            print(f'{s}: {sim.brief(output=True)}')
+        return
+
 
 
 class Scenarios(cvb.ParsObj):
@@ -1071,27 +1141,28 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
     return sim
 
 
-def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, parallel=True, verbose=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, parallel=True, n_cpus=None, verbose=None, **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
 
     Args:
-        sim        (Sim)   : the sim instance to be run, or a list of sims.
-        n_runs     (int)   : the number of parallel runs
-        reseed     (bool)  : whether or not to generate a fresh seed for each run
-        noise      (float) : the amount of noise to add to each run
-        noisepar   (str)   : the name of the parameter to add noise to
-        iterpars   (dict)  : any other parameters to iterate over the runs; see sc.parallelize() for syntax
-        combine    (bool)  : whether or not to combine all results into one sim, rather than return multiple sim objects
-        keep_people(bool)  : whether to keep the people after the sim run
-        run_args   (dict)  : arguments passed to sim.run()
-        sim_args   (dict)  : extra parameters to pass to the sim
-        par_args   (dict)  : arguments passed to sc.parallelize()
-        do_run     (bool)  : whether to actually run the sim (if not, just initialize it)
-        parallel   (bool)  : whether to run in parallel using multiprocessing (else, just run in a loop)
-        verbose    (int)   : detail to print
-        kwargs     (dict)  : also passed to the sim
+        sim         (Sim)   : the sim instance to be run, or a list of sims.
+        n_runs      (int)   : the number of parallel runs
+        reseed      (bool)  : whether or not to generate a fresh seed for each run
+        noise       (float) : the amount of noise to add to each run
+        noisepar    (str)   : the name of the parameter to add noise to
+        iterpars    (dict)  : any other parameters to iterate over the runs; see sc.parallelize() for syntax
+        combine     (bool)  : whether or not to combine all results into one sim, rather than return multiple sim objects
+        keep_people (bool)  : whether to keep the people after the sim run (default false)
+        run_args    (dict)  : arguments passed to sim.run()
+        sim_args    (dict)  : extra parameters to pass to the sim
+        par_args    (dict)  : arguments passed to sc.parallelize()
+        do_run      (bool)  : whether to actually run the sim (if not, just initialize it)
+        parallel    (bool)  : whether to run in parallel using multiprocessing (else, just run in a loop)
+        n_cpus      (int)   : the number of CPUs to run on (if blank, set automatically; otherwise, passed to par_args)
+        verbose     (int)   : detail to print
+        kwargs      (dict)  : also passed to the sim
 
     Returns:
         If combine is True, a single sim object with the combined results from each sim.
@@ -1106,7 +1177,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
 
     # Handle inputs
     sim_args = sc.mergedicts(sim_args, kwargs) # Handle blank
-    par_args = sc.mergedicts(par_args) # Handle blank
+    par_args = sc.mergedicts({'ncpus':n_cpus}, par_args) # Handle blank
 
     # Handle iterpars
     if iterpars is None:
@@ -1134,8 +1205,28 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
 
     # Actually run!
     if parallel:
-        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args) # Run in parallel
-    else:
+        try:
+            sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args) # Run in parallel
+        except RuntimeError as E: # Handle if run outside of __main__ on Windows
+            if 'freeze_support' in E.args[0]: # For this error, add additional information
+                errormsg = '''
+ Uh oh! It appears you are trying to run with multiprocessing on Windows outside
+ of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
+ for more information. The correct syntax to use is e.g.
+
+     import covasim as cv
+     sim = cv.Sim()
+     msim = cv.MultiSim(sim)
+
+     if __name__ == '__main__':
+         msim.run()
+
+Alternatively, to run without multiprocessing, set parallel=False.
+ '''
+                raise RuntimeError(errormsg) from E
+            else: # For all other runtime errors, raise the original exception
+                raise E
+    else: # Run in serial, not in parallel
         sims = []
         n_sims = len(list(iterkwargs.values())[0]) # Must have length >=1 and all entries must be the same length
         for s in range(n_sims):

@@ -35,6 +35,7 @@ class Sim(cvb.BaseSim):
         popfile  (str):    the filename to load/save the population for this simulation
         load_pop (bool):   whether to load the population from the named file
         save_pop (bool):   whether to save the population to the named file
+        version  (str):    if supplied, use default parameters from this version of Covasim instead of the latest
         kwargs   (dict):   passed to make_pars()
 
     **Examples**::
@@ -43,9 +44,11 @@ class Sim(cvb.BaseSim):
         sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, save_pop=False, **kwargs):
+    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None,
+                 popfile=None, load_pop=False, save_pop=False, version=None, **kwargs):
+
         # Create the object
-        default_pars = cvpar.make_pars() # Start with default pars
+        default_pars = cvpar.make_pars(version=version) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Set attributes
@@ -64,6 +67,7 @@ class Sim(cvb.BaseSim):
         self.initialized   = False    # Whether or not initialization is complete
         self.complete      = False    # Whether a simulation has completed running
         self.results_ready = False    # Whether or not results are ready
+        self._default_ver  = version  # Default version of parameters used
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Now update everything
@@ -71,7 +75,8 @@ class Sim(cvb.BaseSim):
         self.update_pars(pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
-            self.load_population(popfile)      # Load the population, if provided
+            self.load_population(popfile)  # Load the population, if provided
+
         return
 
 
@@ -162,7 +167,7 @@ class Sim(cvb.BaseSim):
         for lp in layer_pars:
             lp_keys = set(self.pars[lp].keys())
             if not lp_keys == set(layer_keys):
-                errormsg = f'At least one layer parameter is inconsistent with the layer keys; all parameters must have the same keys:'
+                errormsg = 'At least one layer parameter is inconsistent with the layer keys; all parameters must have the same keys:'
                 errormsg += f'\nsim.layer_keys() = {layer_keys}'
                 for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
                     errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp2].keys())
@@ -198,14 +203,14 @@ class Sim(cvb.BaseSim):
         start_day = self['start_day'] # Shorten
         if start_day in [None, 0]: # Use default start day
             start_day = '2020-03-01'
-        self['start_day'] = cvm.date(start_day)
+        self['start_day'] = sc.date(start_day)
 
         # Handle end day and n_days
         end_day = self['end_day']
         n_days = self['n_days']
         if end_day:
-            self['end_day'] = cvm.date(end_day)
-            n_days = cvm.daydiff(self['start_day'], self['end_day'])
+            self['end_day'] = sc.date(end_day)
+            n_days = sc.daydiff(self['start_day'], self['end_day'])
             if n_days <= 0:
                 errormsg = f"Number of days must be >0, but you supplied start={str(self['start_day'])} and end={str(self['end_day'])}, which gives n_days={n_days}"
                 raise ValueError(errormsg)
@@ -237,6 +242,13 @@ class Sim(cvb.BaseSim):
         # Optionally handle layer parameters
         if validate_layers:
             self.validate_layer_pars()
+
+        # Handle verbose
+        if self['verbose'] == 'brief':
+            self['verbose'] = -1
+        if not sc.isnumber(self['verbose']):
+            errormsg = f'Verbose argument should be either "brief", -1, or a float, not {type(self["verbose"])} "{self["verbose"]}"'
+            raise ValueError(errormsg)
 
         return
 
@@ -361,7 +373,7 @@ class Sim(cvb.BaseSim):
         # Handle inputs
         if verbose is None:
             verbose = self['verbose']
-        if verbose:
+        if verbose>0:
             print(f'Initializing sim with {self["pop_size"]:0n} people for {self["n_days"]} days')
         if load_pop and self.popdict is None:
             self.load_population(popfile=popfile)
@@ -540,7 +552,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, **kwargs):
+    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, output=False, **kwargs):
         '''
         Run the simulation.
 
@@ -549,7 +561,8 @@ class Sim(cvb.BaseSim):
             until (int/str): day or date to run until
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
-            verbose (float): level of detail to print, e.g. 0 = no output, 0.2 = print every 5th day, 1 = print every day
+            verbose (float): level of detail to print, e.g. -1 = one-line output, 0 = no output, 0.1 = print every 10th day, 1 = print every day
+            output (bool): whether to return the results dictionary as output
             kwargs (dict): passed to sim.plot()
 
         Returns:
@@ -559,12 +572,12 @@ class Sim(cvb.BaseSim):
         # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
         T = sc.tic()
 
-        if verbose is None:
-            verbose = self['verbose']
-
         if not self.initialized:
             self.initialize()
             self._orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+
+        if verbose is None:
+            verbose = self['verbose']
 
         if reset_seed:
             # Reset the RNG. If the simulation is newly created, then the RNG will be reset by sim.initialize() so the use case
@@ -599,7 +612,7 @@ class Sim(cvb.BaseSim):
                 string = f'  Running {simlabel}{self.datevec[self.t]} ({self.t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
                 if verbose >= 2:
                     sc.heading(string)
-                else:
+                elif verbose>0:
                     if not (self.t % int(1.0/verbose)):
                         sc.progressbar(self.t+1, self.npts, label=string, length=20, newline=True)
 
@@ -612,7 +625,10 @@ class Sim(cvb.BaseSim):
             sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
             if do_plot: # Optionally plot
                 self.plot(**kwargs)
-            return self.results
+            if output:
+                return self.results
+            else:
+                return
         else:
             return # If not complete, return nothing
 
@@ -883,12 +899,18 @@ class Sim(cvb.BaseSim):
                 if full or key.startswith('cum_'):
                     summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
 
-            if verbose:
-                print(summary_str)
             if update:
                 self.summary = summary
+
+            if verbose:
+                if verbose>0:
+                    print(summary_str)
+                else:
+                    self.brief()
+
             if output:
                 return summary
+
         else:
             return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
 
@@ -908,15 +930,15 @@ class Sim(cvb.BaseSim):
         else:
             label = '<no label>'
 
-        start = cvm.date(self['start_day'], as_date=False)
+        start = sc.date(self['start_day'], as_date=False)
         if self['end_day']:
-            end = cvm.date(self['end_day'], as_date=False)
+            end = sc.date(self['end_day'], as_date=False)
         else:
-            end = cvm.date(self['n_days'], start_date=start)
+            end = sc.date(self['n_days'], start_date=start)
 
         pop_size = self['pop_size']
         pop_type = self['pop_type']
-        string   = f'Sim({label}; {start}—{end}; pop: {pop_size:n} {pop_type}; epi: {results})'
+        string   = f'Sim({label}; {start} to {end}; pop: {pop_size:n} {pop_type}; epi: {results})'
 
         if not output:
             print(string)
@@ -1029,6 +1051,7 @@ class Sim(cvb.BaseSim):
             colors       (dict): Custom color for each result, must be a dictionary with one entry per result key in to_plot
             sep_figs     (bool): Whether to show separate figures for different results instead of subplots
             fig          (fig):  Handle of existing figure to plot into
+            ax           (axes): Axes instance to plot into
 
         Returns:
             fig: Figure handle

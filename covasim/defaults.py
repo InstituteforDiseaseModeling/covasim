@@ -1,26 +1,35 @@
 '''
 Set the defaults across each of the different files.
+
+To change the default precision from 32 bit (default) to 64 bit, use::
+
+    cv.options.set(precision=64)
 '''
 
 import numpy as np
+import numba as nb
 import sciris as sc
+from .settings import options as cvo # To set options
 
 # Specify all externally visible functions this file defines -- other things are available as e.g. cv.defaults.default_int
-__all__ = ['get_colors', 'get_sim_plots', 'get_scen_plots']
+__all__ = ['default_float', 'default_int', 'get_colors', 'get_sim_plots', 'get_scen_plots']
 
 
 #%% Specify what data types to use
 
-default_precision = 32 # Use this by default for speed and memory efficiency
 result_float = np.float64 # Always use float64 for results, for simplicity
-if default_precision == 32:
+if cvo.precision == 32:
     default_float = np.float32
     default_int   = np.int32
-elif default_precision == 64:
+    nbfloat       = nb.float32
+    nbint         = nb.int32
+elif cvo.precision == 64:
     default_float = np.float64
     default_int   = np.int64
+    nbfloat       = nb.float64
+    nbint         = nb.int64
 else:
-    raise NotImplementedError
+    raise NotImplementedError(f'Precision must be either 32 bit or 64 bit, not {cvo.precision}')
 
 
 #%% Define all properties of people

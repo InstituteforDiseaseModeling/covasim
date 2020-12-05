@@ -5,10 +5,12 @@ https://covidtracking.com
 '''
 
 from cova_epi_scraper import Scraper
-import datetime as dt
+import sciris as sc
 
 def covid_tracking_date_to_date(d):
-    return dt.date((d // 10000), ((d % 1000) // 100), (d % 1000) % 100)
+    ''' Date is in format e.g. 20201031 '''
+    out = sc.readdate(str(d)) # Should be a supported format
+    return out
 
 class CovidTrackingProjectScraper(Scraper):
     def create_date(self):
@@ -45,7 +47,6 @@ pars_state['cumulative_fields']['cum_on_ventilator'] = "num_on_ventilator"
 pars_state['fields_to_drop'] = [
     "hash",
     "dateChecked",
-    "fips",
     "totalTestResults",
     "posNeg",
     "positive",
@@ -83,7 +84,6 @@ pars_us['cumulative_fields']['cum_on_ventilator'] = "new_on_ventilator"
 pars_us['fields_to_drop'] = [
     "hash",
     "dateChecked",
-    "fips",
     "totalTestResults",
     "posNeg",
     "positive",

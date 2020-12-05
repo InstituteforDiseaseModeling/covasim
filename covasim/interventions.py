@@ -12,6 +12,7 @@ import datetime as dt
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
+from . import parameters as cvpar
 from collections import defaultdict
 
 
@@ -34,7 +35,7 @@ def find_day(arr, t=None, which='first'):
     Returns:
         inds (list): list of matching days; length zero or one unless which is 'all'
     '''
-    all_inds = sc.findinds(val1=arr, val2=t)
+    all_inds = sc.findinds(arr=arr, val=t)
     if len(all_inds) == 0 or which == 'all':
         inds = all_inds
     elif which == 'first':
@@ -105,9 +106,10 @@ class Intervention:
             json = self.to_json()
             which = json['which']
             pars = json['pars']
-            output = f"cv.InterventionDict('{which}', pars={pars})"
-        except:
-            output = sc.prepr(self)
+            parstr = ', '.join([f'{k}={v}' for k,v in pars.items()])
+            output = f"cv.{which}({parstr})"
+        except Exception as E:
+            output = type(self) + f' ({str(E)})' # If that fails, print why
         return output
 
 
@@ -157,7 +159,7 @@ class Intervention:
         raise NotImplementedError
 
 
-    def plot(self, sim, ax=None, **kwargs):
+    def plot_intervention(self, sim, ax=None, **kwargs):
         '''
         Plot the intervention
 
@@ -218,18 +220,33 @@ class dynamic_pars(Intervention):
     then subkeys 'days' and 'vals' are either a scalar or list of when the change(s)
     should take effect and what the new value should be, respectively.
 
+    You can also pass parameters to change directly as keyword arguments.
+
     Args:
         pars (dict): described above
         kwargs (dict): passed to Intervention()
 
     **Examples**::
 
+        interv = cv.dynamic_pars(n_imports=dict(days=10, vals=100))
         interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'rel_death_prob':{'days':30, 'vals':2.0}}) # Change beta, and make diagnosed people stop transmitting
+
     '''
 
-    def __init__(self, pars, **kwargs):
+    def __init__(self, pars=None, **kwargs):
+
+        # Find valid sim parameters and move matching keyword arguments to the pars dict
+        pars = sc.mergedicts(pars) # Ensure it's a dictionary
+        sim_par_keys = list(cvpar.make_pars().keys()) # Get valid sim parameters
+        kwarg_keys = [k for k in kwargs.keys() if k in sim_par_keys]
+        for kkey in kwarg_keys:
+            pars[kkey] = kwargs.pop(kkey)
+
+        # Do standard initialization
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
+
+        # Handle the rest of the initialization
         subkeys = ['days', 'vals']
         for parkey in pars.keys():
             for subkey in subkeys:
@@ -297,9 +314,9 @@ class sequence(Intervention):
 
 
     def apply(self, sim):
-        ind = find_day(self.days_arr <= sim.t, which='last')
-        if ind:
-            return self.interventions[ind[0]].apply(sim)
+        inds = find_day(self.days_arr <= sim.t, which='last')
+        if len(inds):
+            return self.interventions[inds[0]].apply(sim)
 
 
 
@@ -492,18 +509,31 @@ __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 def process_daily_data(daily_data, sim, start_day, as_int=False):
     '''
-    This function performs one of two things: if the daily data are supplied as
+    This function performs one of three things: if the daily test data are supplied as
     a number, then it converts it to an array of the right length. If the daily
     data are supplied as a Pandas series or dataframe with a date index, then it
-    reindexes it to match the start date of the simulation. Otherwise, it does
-    nothing.
+    reindexes it to match the start date of the simulation. If the daily data are
+    supplied as a string, then it will convert it to a column and try to read from
+    that. Otherwise, it does nothing.
 
     Args:
-        daily_data (number, dataframe, or series): the data to convert to standardized format
+        daily_data (str, number, dataframe, or series): the data to convert to standardized format
         sim (Sim): the simulation object
         start_day (date): the start day of the simulation, in already-converted datetime.date format
         as_int (bool): whether to convert to an integer
     '''
+    # Handle string arguments
+    if sc.isstring(daily_data):
+        if daily_data == 'data':
+            daily_data = sim.data['new_tests'] # Use default name
+        else:
+            try:
+                daily_data = sim.data[daily_data]
+            except Exception as E:
+                errormsg = f'Tried to load testing data from sim.data["{daily_data}"], but that failed: {str(E)}.\nPlease ensure data are loaded into the sim and the column exists.'
+                raise ValueError(errormsg) from E
+
+    # Handle other arguments
     if sc.isnumber(daily_data):  # If a number, convert to an array
         if as_int: daily_data = int(daily_data) # Make it an integer
         daily_data = np.array([daily_data] * sim.npts)
@@ -512,6 +542,7 @@ def process_daily_data(daily_data, sim, start_day, as_int=False):
         end_date = daily_data.index[-1]
         dateindex = pd.date_range(start_date, end_date)
         daily_data = daily_data.reindex(dateindex, fill_value=0).to_numpy()
+
     return daily_data
 
 
@@ -594,7 +625,7 @@ class test_num(Intervention):
     intervention with cv.test_prob().
 
     Args:
-        daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day
+        daily_tests (arr)   : number of tests per day, can be int, array, or dataframe/series; if integer, use that number every day; if 'data' or another string, use loaded data
         symp_test   (float) : odds ratio of a symptomatic person testing (default: 100x more likely)
         quar_test   (float) : probability of a person in quarantine testing (default: no more likely)
         quar_policy (str)   : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
@@ -611,8 +642,10 @@ class test_num(Intervention):
     **Examples**::
 
         interv = cv.test_num(daily_tests=[0.10*n_people]*npts)
-        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
-        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: sim.people.age>50, 'vals': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': cv.true(sim.people.age>50), 'vals': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda sim: cv.true(sim.people.age>50), 'vals': 1.2}) # People over 50 are 20% more likely to test
+        interv = cv.test_num(daily_tests='data') # Take number of tests from loaded data using default column name (new_tests)
+        interv = cv.test_num(daily_tests='swabs_per_day') # Take number of tests from loaded data using a custom column name
     '''
 
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, quar_policy=None, subtarget=None,
@@ -663,7 +696,7 @@ class test_num(Intervention):
         # Check that there are still tests
         rel_t = t - self.start_day
         if rel_t < len(self.daily_tests):
-            n_tests = cvu.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests
+            n_tests = sc.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
                 return
             else:
@@ -711,12 +744,12 @@ class test_num(Intervention):
             in_pop_tot_prob = test_probs.sum()*sim.rescale_vec[t] # Total "testing weight" of people in the subsampled population
             out_pop_tot_prob = sim.scaled_pop_size - sim.rescale_vec[t]*sim['pop_size'] # Find out how many people are missing and assign them each weight 1
             in_frac = in_pop_tot_prob/(in_pop_tot_prob + out_pop_tot_prob) # Fraction of tests which should fall in the sample population
-            n_tests = cvu.randround(n_tests*in_frac) # Recompute the number of tests
+            n_tests = sc.randround(n_tests*in_frac) # Recompute the number of tests
 
         # Now choose who gets tested and test them
         n_tests = min(n_tests, (test_probs!=0).sum()) # Don't try to test more people than have nonzero testing probability
         test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True) # Choose who actually tests
-        sim.people.test(test_inds, self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
+        sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return test_inds
 
@@ -735,7 +768,7 @@ class test_prob(Intervention):
         quar_policy      (str)       : policy for testing in quarantine: options are 'start' (default), 'end', 'both' (start and end), 'daily'; can also be a number or a function, see get_quar_inds()
         subtarget        (dict)      : subtarget intervention to people with particular indices  (see test_num() for details)
         ili_prev         (float/arr) : prevalence of influenza-like-illness symptoms in the population; can be float, array, or dataframe/series
-        test_sensitivity (float)     : test sensitivity (default 100%, i.e. no false negatives)
+        sensitivity      (float)     : test sensitivity (default 100%, i.e. no false negatives)
         loss_prob        (float)     : probability of the person being lost-to-follow-up (default 0%, i.e. no one lost to follow-up)
         test_delay       (int)       : days for test result to be known (default 0, i.e. results available instantly)
         start_day        (int)       : day the intervention starts (default: 0, i.e. first day of the simulation)
@@ -748,7 +781,7 @@ class test_prob(Intervention):
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
     '''
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, quar_policy=None, subtarget=None, ili_prev=None,
-                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, **kwargs):
+                 sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.symp_prob        = symp_prob
@@ -758,7 +791,7 @@ class test_prob(Intervention):
         self.quar_policy      = quar_policy if quar_policy else 'start'
         self.subtarget        = subtarget
         self.ili_prev         = ili_prev
-        self.test_sensitivity = test_sensitivity
+        self.sensitivity      = sensitivity
         self.loss_prob        = loss_prob
         self.test_delay       = test_delay
         self.start_day        = start_day
@@ -833,7 +866,7 @@ class test_prob(Intervention):
         test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
 
         # Actually test people
-        sim.people.test(test_inds, test_sensitivity=self.test_sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
+        sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
         return test_inds
@@ -873,12 +906,12 @@ class contact_tracing(Intervention):
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
-        self.quar_period = None  #: If quar_period is None, it will be drawn from sim.pars at initialization
+        self.quar_period = quar_period  #: If quar_period is None, it will be drawn from sim.pars at initialization
         return
 
 
     def initialize(self, sim):
-        ''' Fix the dates and dictionaries '''
+        ''' Process the dates and dictionaries '''
         self.start_day = sim.day(self.start_day)
         self.end_day   = sim.day(self.end_day)
         self.days      = [self.start_day, self.end_day]

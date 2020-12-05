@@ -1,12 +1,12 @@
 {
   "time": {
-    "initialize": 0.167,
-    "run": 0.16
+    "initialize": 0.471,
+    "run": 0.495
   },
   "parameters": {
     "pop_size": 20000,
-    "pop_type": "random",
+    "pop_type": "hybrid",
     "n_days": 60
   },
-  "cpu_performance": 1.0049070427282927
+  "cpu_performance": 0.9940972211252934
 }

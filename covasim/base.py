@@ -104,7 +104,7 @@ class Result(object):
 
     def __repr__(self, *args, **kwargs):
         ''' Use pretty repr, like sc.prettyobj, but displaying full values '''
-        output  = sc.prepr(self, skip=['values', 'low', 'high'])
+        output  = sc.prepr(self, skip=['values', 'low', 'high'], use_repr=False)
         output += 'values:\n' + repr(self.values)
         if self.low is not None:
             output += '\nlow:\n' + repr(self.low)
@@ -241,7 +241,7 @@ class BaseSim(ParsObj):
 
             sim.day('2020-04-05') # Returns 35
         '''
-        return cvm.day(day, *args, start_day=self['start_day'])
+        return sc.day(day, *args, start_day=self['start_day'])
 
 
     def date(self, ind, *args, dateformat=None, as_date=False):
@@ -280,9 +280,9 @@ class BaseSim(ParsObj):
         dates = []
         for raw in ind:
             if sc.isnumber(raw):
-                date_obj = cvm.date(self['start_day'], as_date=True) + dt.timedelta(days=int(raw))
+                date_obj = sc.date(self['start_day'], as_date=True) + dt.timedelta(days=int(raw))
             else:
-                date_obj = cvm.date(raw, as_date=True)
+                date_obj = sc.date(raw, as_date=True)
             if as_date:
                 dates.append(date_obj)
             else:
@@ -555,7 +555,7 @@ class BaseSim(ParsObj):
         return sim
 
 
-    def _get_ia(self, which, label=None, partial=False, as_list=False, as_inds=False, die=True):
+    def _get_ia(self, which, label=None, partial=False, as_list=False, as_inds=False, die=True, first=False):
         ''' Helper method for get_interventions() and get_analyzers(); see get_interventions() docstring '''
 
         # Handle inputs
@@ -575,8 +575,9 @@ class BaseSim(ParsObj):
             return
 
         else: # Standard usage case
+            position = 0 if first else -1 # Choose either the first or last element
             if label is None:
-                label = -1 # Get the last element
+                label = position # Get the last element
             labels = sc.promotetolist(label)
 
             # Calculate the matches
@@ -600,60 +601,87 @@ class BaseSim(ParsObj):
                     raise TypeError(errormsg)
 
             # Parse the output options
-            if not (as_list or as_inds): # Normal case, return actual interventions
+            if as_inds:
+                output = match_inds
+            elif as_list:
+                output = matches
+            else: # Normal case, return actual interventions
                 if len(matches) == 0:
                     if die:
                         errormsg = f'No {which} matching "{label}" were found'
                         raise ValueError(errormsg)
                     else:
                         output = None
-                elif len(matches) == 1:
-                    output = matches[0]
                 else:
-                    output = matches # If more than one match, just return all, same as as_list = True
-            elif as_list:
-                output = matches
-            elif as_inds:
-                output = match_inds
+                    output = matches[position] # Return either the first or last match
 
             return output
 
 
-    def get_interventions(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+    def get_interventions(self, label=None, partial=False, as_inds=False):
         '''
         Find the matching intervention(s) by label, index, or type. If None, return
-        the last intervention in the list. If the label provided is "summary", then
-        print a summary of the interventions (index, label, type).
+        all interventions. If the label provided is "summary", then print a summary
+        of the interventions (index, label, type).
 
         Args:
             label (str, int, Intervention, list): the label, index, or type of intervention to get; if a list, iterate over one of those types
             partial (bool): if true, return partial matches (e.g. 'beta' will match all beta interventions)
-            as_list (bool): if true, always return a list even if one or no entries were found (otherwise, only return a list for multiple matching interventions)
             as_inds (bool): if true, return matching indices instead of the actual interventions
-            die (bool): if true and as_list is false, raise an exception if an intervention is not found
 
         **Examples**::
 
             tp = cv.test_prob(symp_prob=0.1)
-            cb = cv.change_beta(days=0.5, changes=0.3, label='NPI')
-            sim = cv.Sim(interventions=[tp, cb])
-            cb = sim.get_interventions('NPI')
-            cb = sim.get_interventions('NP', partial=True)
-            cb = sim.get_interventions(cv.change_beta)
-            cb = sim.get_interventions(1)
-            cb = sim.get_interventions()
-            tp, cb = sim.get_interventions([0,1])
-            ind = sim.get_interventions(cv.change_beta, as_inds=True) # Returns [1]
+            cb1 = cv.change_beta(days=5, changes=0.3, label='NPI')
+            cb2 = cv.change_beta(days=10, changes=0.3, label='Masks')
+            sim = cv.Sim(interventions=[tp, cb1, cb2])
+            cb1, cb2 = sim.get_interventions(cv.change_beta)
+            tp, cb2 = sim.get_interventions([0,2])
+            ind = sim.get_interventions(cv.change_beta, as_inds=True) # Returns [1,2]
             sim.get_interventions('summary') # Prints a summary
         '''
-        return self._get_ia('interventions', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
+        return self._get_ia('interventions', label=label, partial=partial, as_inds=as_inds, as_list=True)
 
 
-    def get_analyzers(self, label=None, partial=False, as_list=False, as_inds=False, die=True):
+    def get_intervention(self, label=None, partial=False, first=False, die=True):
+        '''
+        Like get_interventions(), find the matching intervention(s) by label,
+        index, or type. If more than one intervention matches, return the last
+        by default. If no label is provided, return the last intervention in the list.
+
+        Args:
+            label (str, int, Intervention, list): the label, index, or type of intervention to get; if a list, iterate over one of those types
+            partial (bool): if true, return partial matches (e.g. 'beta' will match all beta interventions)
+            first (bool): if true, return first matching intervention (otherwise, return last)
+            die (bool): whether to raise an exception if no intervention is found
+
+        **Examples**::
+
+            tp = cv.test_prob(symp_prob=0.1)
+            cb = cv.change_beta(days=5, changes=0.3, label='NPI')
+            sim = cv.Sim(interventions=[tp, cb])
+            cb = sim.get_intervention('NPI')
+            cb = sim.get_intervention('NP', partial=True)
+            cb = sim.get_intervention(cv.change_beta)
+            cb = sim.get_intervention(1)
+            cb = sim.get_intervention()
+            tp = sim.get_intervention(first=True)
+        '''
+        return self._get_ia('interventions', label=label, partial=partial, first=first, die=die, as_inds=False, as_list=False)
+
+
+    def get_analyzers(self, label=None, partial=False, as_inds=False):
         '''
         Same as get_interventions(), but for analyzers.
         '''
-        return self._get_ia('analyzers', label=label, partial=partial, as_list=as_list, as_inds=as_inds, die=die)
+        return self._get_ia('analyzers', label=label, partial=partial, as_list=True, as_inds=as_inds)
+
+
+    def get_analyzer(self, label=None, partial=False, first=False, die=True):
+        '''
+        Same as get_intervention(), but for analyzers.
+        '''
+        return self._get_ia('analyzers', label=label, partial=partial, first=first, die=die, as_inds=False, as_list=False)
 
 
 #%% Define people classes
@@ -840,6 +868,11 @@ class BasePeople(sc.prettyobj):
                     if verbose:
                         print(f'Resizing "{key}" from {actual_len} to {expected_len}')
                     self._resize_arrays(keys=key)
+
+        # Check that the layers are valid
+        for layer in self.contacts.values():
+            layer.validate()
+
         return
 
 
@@ -923,7 +956,9 @@ class BasePeople(sc.prettyobj):
 
 
     def add_contacts(self, contacts, lkey=None, beta=None):
-        ''' Add new contacts to the array '''
+        '''
+        Add new contacts to the array. See also contacts.add_layer().
+        '''
 
         # If no layer key is supplied and it can't be worked out from defaults, use the first layer
         if lkey is None:
@@ -1071,7 +1106,7 @@ class Contacts(FlexDict):
 
     def __repr__(self):
         ''' Use slightly customized repr'''
-        keys_str = ', '.join(self.keys())
+        keys_str = ', '.join([str(k) for k in self.keys()])
         output = f'Contacts({keys_str})\n'
         for key in self.keys():
             output += f'\n"{key}": '
@@ -1088,6 +1123,38 @@ class Contacts(FlexDict):
             except:
                 pass
         return output
+
+
+    def add_layer(self, **kwargs):
+        '''
+        Small method to add one or more layers to the contacts. Layers should
+        be provided as keyword arguments.
+
+        **Example**::
+
+            hospitals_layer = cv.Layer()
+            sim.people.contacts.add_layer(hospitals=layer)
+        '''
+        for lkey,layer in kwargs.items():
+            layer.validate()
+            self[lkey] = layer
+        return
+
+
+    def pop_layer(self, *args):
+        '''
+        Remove the layer(s) from the contacts.
+
+        **Example**::
+
+            sim.people.contacts.pop_layer('hospitals')
+
+        Note: while included here for convenience, this operation is equivalent
+        to simply popping the key from the contacts dictionary.
+        '''
+        for lkey in args:
+            self.pop(lkey)
+        return
 
 
 class Layer(FlexDict):
@@ -1107,7 +1174,7 @@ class Layer(FlexDict):
 
         # Set data, if provided
         for key,value in kwargs.items():
-            self[key] = value
+            self[key] = np.array(value, dtype=self.meta[key])
 
         return
 
@@ -1157,8 +1224,15 @@ class Layer(FlexDict):
         n = len(self[self.basekey])
         for key,dtype in self.meta.items():
             if dtype:
-                assert self[key].dtype == dtype
-            assert n == len(self[key])
+                actual = self[key].dtype
+                expected = dtype
+                if actual != expected:
+                    errormsg = f'Expecting dtype "{expected}" for layer key "{key}"; got "{actual}"'
+                    raise TypeError(errormsg)
+            actual_n = len(self[key])
+            if n != actual_n:
+                errormsg = f'Expecting length {n} for layer key "{key}"; got {actual_n}'
+                raise TypeError(errormsg)
         return
 
 
@@ -1232,11 +1306,17 @@ class Layer(FlexDict):
         - P2 = [2,3,1,4]
         Then find_contacts([1,3]) would return {1,2,3}
         """
+
+        # Check types
         if not isinstance(inds, np.ndarray):
             inds = sc.promotetoarray(inds)
+        if inds.dtype != np.int64: # This is int64 since indices often come from cv.true(), which returns int64
+            inds = np.array(inds, dtype=np.int64)
 
+        # Find the contacts
         contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
         if as_array:
             contact_inds = np.fromiter(contact_inds, dtype=cvd.default_int)
             contact_inds.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
+
         return contact_inds
