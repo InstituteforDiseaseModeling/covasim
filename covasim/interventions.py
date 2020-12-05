@@ -12,6 +12,7 @@ import datetime as dt
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
+from . import parameters as cvpar
 from collections import defaultdict
 
 
@@ -219,18 +220,33 @@ class dynamic_pars(Intervention):
     then subkeys 'days' and 'vals' are either a scalar or list of when the change(s)
     should take effect and what the new value should be, respectively.
 
+    You can also pass parameters to change directly as keyword arguments.
+
     Args:
         pars (dict): described above
         kwargs (dict): passed to Intervention()
 
     **Examples**::
 
+        interv = cv.dynamic_pars(n_imports=dict(days=10, vals=100))
         interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'rel_death_prob':{'days':30, 'vals':2.0}}) # Change beta, and make diagnosed people stop transmitting
+
     '''
 
-    def __init__(self, pars, **kwargs):
+    def __init__(self, pars=None, **kwargs):
+
+        # Find valid sim parameters and move matching keyword arguments to the pars dict
+        pars = sc.mergedicts(pars) # Ensure it's a dictionary
+        sim_par_keys = list(cvpar.make_pars().keys()) # Get valid sim parameters
+        kwarg_keys = [k for k in kwargs.keys() if k in sim_par_keys]
+        for kkey in kwarg_keys:
+            pars[kkey] = kwargs.pop(kkey)
+
+        # Do standard initialization
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
+
+        # Handle the rest of the initialization
         subkeys = ['days', 'vals']
         for parkey in pars.keys():
             for subkey in subkeys:
