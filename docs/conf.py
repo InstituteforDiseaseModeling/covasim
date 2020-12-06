@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 import sphinx_rtd_theme
+import covasim as cv
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
@@ -82,7 +83,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Covasim'
-copyright = '2020, Bill & Melinda Gates Foundation. All rights reserved.'
+copyright = f'2020, Bill & Melinda Gates Foundation. All rights reserved.\nThese docs were built for Covasim version {cv.__version__}.\n'
 author = 'Institute for Disease Modeling'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -90,7 +91,6 @@ author = 'Institute for Disease Modeling'
 # built documents.
 #
 # The short X.Y version.
-import covasim as cv
 version = cv.__version__
 # The full version, including alpha/beta/rc tags.
 release = cv.__version__
@@ -102,15 +102,6 @@ release = cv.__version__
 # Usually you set "language" from the command line for these cases.
 language = None
 
-# There are two options for replacing |today|: either, you set today to some
-# non-false value, then it is used:
-#
-# today = ''
-#
-# Else, today_fmt is used as the format for a strftime call.
-#
-# today_fmt = '%B %d, %Y'
-
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
@@ -118,8 +109,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # suppress warnings for multiple possible Python references in the namespace
 # suppress_warnings = ['ref.python']
-
-
 pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
@@ -127,7 +116,6 @@ todo_include_todos = False
 
 # RST epilog is added to the end of every topic. Useful for replace
 # directives to use across the docset.
-
 rst_epilog = "\n.. include:: /variables.txt"
 
 # -- Options for HTML output ----------------------------------------------
@@ -167,20 +155,15 @@ if not on_rtd:
 # bottom, using the given strftime format.
 # The empty string is equivalent to '%b %d, %Y'.
 #
-html_last_updated_fmt = 'Y%-%b-%d'
+html_last_updated_fmt = '%Y-%b-%d'
 
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = False
 
-# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
-#
-# html_show_copyright = True
-
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-#
 html_use_opensearch = 'docs.idmod.org/projects/covasim/en/latest'
 
 # Output file base name for HTML help builder.

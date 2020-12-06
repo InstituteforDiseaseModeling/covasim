@@ -9,7 +9,7 @@ from . import country_age_data    as cad
 from . import state_age_data      as sad
 from . import household_size_data as hsd
 
-__all__ = ['get_country_aliases', 'map_entries', 'get_valid_locations', 'get_age_distribution', 'get_household_size']
+__all__ = ['get_country_aliases', 'map_entries', 'show_locations', 'get_age_distribution', 'get_household_size']
 
 
 def get_country_aliases():
@@ -88,9 +88,9 @@ def map_entries(json, location):
     return entries
 
 
-def get_valid_locations(location=None, output=False):
+def show_locations(location=None, output=False):
     '''
-    Print a list of valid locations.
+    Print a list of available locations.
 
     Args:
         location (str): if provided, only check if this location is in the list
@@ -98,16 +98,16 @@ def get_valid_locations(location=None, output=False):
 
     **Examples**::
 
-        cv.data.get_valid_locations() # Print a list of valid locations
-        cv.data.get_valid_locations('lithuania') # Check if Lithuania is a valid location
-        cv.data.get_valid_locations('Viet-Nam') # Check if Viet-Nam is a valid location
+        cv.data.show_locations() # Print a list of valid locations
+        cv.data.show_locations('lithuania') # Check if Lithuania is a valid location
+        cv.data.show_locations('Viet-Nam') # Check if Viet-Nam is a valid location
     '''
-    country_json   = cad.get()
-    state_json     = sad.get()
+    country_json   = sc.dcp(cad.data)
+    state_json     = sc.dcp(sad.data)
     aliases        = get_country_aliases()
 
     age_data       = sc.mergedicts(state_json, country_json, aliases) # Countries will overwrite states, e.g. Georgia
-    household_data = hsd.get()
+    household_data = sc.dcp(hsd.data)
 
     loclist = sc.objdict()
     loclist.age_distributions = sorted(list(age_data.keys()))
@@ -146,8 +146,8 @@ def get_age_distribution(location=None):
     '''
 
     # Load the raw data
-    country_json = cad.get()
-    state_json   = sad.get()
+    country_json   = sc.dcp(cad.data)
+    state_json     = sc.dcp(sad.data)
     json = sc.mergedicts(state_json, country_json) # Countries will overwrite states, e.g. Georgia
     entries = map_entries(json, location)
 
@@ -183,7 +183,7 @@ def get_household_size(location=None):
         house_size (float): Size of household, or dict if multiple locations
     '''
     # Load the raw data
-    json = hsd.get()
+    json = sc.dcp(hsd.data)
 
     result = map_entries(json, location)
     if len(result) == 1:

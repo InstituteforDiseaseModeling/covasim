@@ -13,6 +13,7 @@ from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
 from . import parameters as cvpar
+from .settings import options as cvo
 
 # Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
@@ -20,7 +21,50 @@ __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', '
 
 #%% Define simulation classes
 
-class ParsObj(sc.prettyobj):
+class FlexPretty(sc.prettyobj):
+    '''
+    A class that by default changes the display type depending on the current level
+    of verbosity.
+    '''
+
+    def __repr__(self):
+        ''' Set display options based on current level of verbosity '''
+        try:
+            if cvo['verbose']:
+                string = self._disp()
+            else:
+                string = self._brief()
+        except Exception as E:
+            string = sc.objectid(self)
+            string += f'Warning, something went wrong printing object:\n{str(E)}'
+        return string
+
+    def _disp(self):
+        ''' Verbose output -- use Sciris' pretty repr by default '''
+        return sc.prepr(self)
+
+    def disp(self, output=False):
+        ''' Print or output verbose representation of the object '''
+        string = self._disp()
+        if not output:
+            print(string)
+        else:
+            return string
+
+    def _brief(self):
+        ''' Brief output -- use a one-line output, a la Python's default '''
+        return sc.objectid(self)
+
+    def brief(self, output=False):
+        ''' Print or output a brief representation of the object '''
+        string = self._brief()
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+class ParsObj(FlexPretty):
     '''
     A class based around performing operations on a self.pars dict.
     '''
@@ -28,6 +72,7 @@ class ParsObj(sc.prettyobj):
     def __init__(self, pars):
         self.update_pars(pars, create=True)
         return
+
 
     def __getitem__(self, key):
         ''' Allow sim['par_name'] instead of sim.pars['par_name'] '''
@@ -47,6 +92,9 @@ class ParsObj(sc.prettyobj):
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
         return
+
+
+
 
     def update_pars(self, pars=None, create=False):
         '''
@@ -129,6 +177,14 @@ class Result(object):
         return len(self.values)
 
 
+def set_metadata(obj):
+    ''' Set standard metadata for an object '''
+    obj.created = sc.now()
+    obj.version = cvv.__version__
+    obj.git_info = cvm.git_info()
+    return
+
+
 class BaseSim(ParsObj):
     '''
     The BaseSim class stores various methods useful for the Sim that are not directly
@@ -140,6 +196,50 @@ class BaseSim(ParsObj):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
         return
+
+
+    def _disp(self):
+        '''
+        Print a verbose display of the sim object. Used by repr(). See sim.disp()
+        for the user version. Equivalent to sc.prettyobj().
+        '''
+        return sc.prepr(self)
+
+
+    def _brief(self):
+        '''
+        Return a one-line description of a sim -- used internally and by repr();
+        see sim.brief() for the user version.
+        '''
+        # Try to get a detailed description of the sim...
+        try:
+            if self.results_ready:
+                infections = self.summary['cum_infections']
+                deaths = self.summary['cum_deaths']
+                results = f'{infections:n}⚙, {deaths:n}☠'
+            else:
+                results = 'not run'
+
+            # Set label string
+            labelstr = f'"{self.label}"' if self.label else '<no label>'
+
+            start = sc.date(self['start_day'], as_date=False)
+            if self['end_day']:
+                end = sc.date(self['end_day'], as_date=False)
+            else:
+                end = sc.date(self['n_days'], start_date=start)
+
+            pop_size = self['pop_size']
+            pop_type = self['pop_type']
+            string   = f'Sim({labelstr}; {start} to {end}; pop: {pop_size:n} {pop_type}; epi: {results})'
+
+        # ...but if anything goes wrong, return the default with a warning
+        except Exception as E:
+            string = sc.objectid(self)
+            string += f'Warning, sim appears to be malformed:\n{str(E)}'
+
+        return string
+
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
@@ -153,16 +253,12 @@ class BaseSim(ParsObj):
         return
 
 
-    def set_metadata(self, simfile, label):
+    def set_metadata(self, simfile):
         ''' Set the metadata for the simulation -- creation time and filename '''
-        self.created = sc.now()
-        self.version = cvv.__version__
-        self.git_info = cvm.git_info()
+        set_metadata(self)
         if simfile is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             self.simfile = f'covasim_{datestr}.sim'
-        if label is not None:
-            self.label = label
         return
 
 
@@ -686,7 +782,7 @@ class BaseSim(ParsObj):
 
 #%% Define people classes
 
-class BasePeople(sc.prettyobj):
+class BasePeople(FlexPretty):
     '''
     A class to handle all the boilerplate for people -- note that as with the
     BaseSim vs Sim classes, everything interesting happens in the People class,
@@ -742,6 +838,25 @@ class BasePeople(sc.prettyobj):
         newpeople.set('uid', np.arange(len(newpeople)))
 
         return newpeople
+
+
+    def _brief(self):
+        '''
+        Return a one-line description of the people -- used internally and by repr();
+        see people.brief() for the user version.
+        '''
+        try:
+            layerstr = ', '.join([str(k) for k in self.layer_keys()])
+            string   = f'People(n={len(self):0n}; layers: {layerstr})'
+        except Exception as E:
+            string = sc.objectid(self)
+            string += f'Warning, multisim appears to be malformed:\n{str(E)}'
+        return string
+
+
+    def summarize(self, output=False):
+        ''' Print a summary of the people -- same as brief '''
+        return self.brief(output=output)
 
 
     def set(self, key, value, die=True):

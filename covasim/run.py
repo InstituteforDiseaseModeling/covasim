@@ -33,7 +33,7 @@ def make_metapars():
     return metapars
 
 
-class MultiSim(sc.prettyobj):
+class MultiSim(cvb.FlexPretty):
     '''
     Class for running multiple copies of a simulation. The parameter n_runs
     controls how many copies of the simulation there will be, if a list of sims
@@ -43,6 +43,7 @@ class MultiSim(sc.prettyobj):
     Args:
         sims      (Sim/list) : a single sim or a list of sims
         base_sim  (Sim)      : the sim used for shared properties; if not supplied, the first of the sims provided
+        label      (str)     : the name of the multisim
         initialize (bool)    : whether or not to initialize the sims (otherwise, initialize them during run)
         kwargs    (dict)     : stored in run_args and passed to run()
 
@@ -69,7 +70,7 @@ class MultiSim(sc.prettyobj):
         msim.plot() # Plot as single sim
     '''
 
-    def __init__(self, sims=None, base_sim=None, initialize=False, **kwargs):
+    def __init__(self, sims=None, base_sim=None, label=None, initialize=False, **kwargs):
 
         # Handle inputs
         if base_sim is None:
@@ -85,9 +86,11 @@ class MultiSim(sc.prettyobj):
         # Set properties
         self.sims      = sims
         self.base_sim  = base_sim
+        self.label     = label
         self.run_args  = sc.mergedicts(kwargs)
         self.results   = None
         self.which     = None # Whether the multisim is to be reduced, combined, etc.
+        cvb.set_metadata(self) # Set version, date, and git info
 
         # Optionally initialize
         if initialize:
@@ -208,6 +211,13 @@ class MultiSim(sc.prettyobj):
             use_mean (bool): whether to use the mean instead of the median
             bounds (float): if use_mean=True, the multiplier on the standard deviation for upper and lower bounds (default 2)
             output (bool): whether to return the "reduced" sim (in any case, modify the multisim in-place)
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim())
+            msim.run()
+            msim.reduce()
+            msim.summarize()
         '''
 
         if use_mean:
@@ -253,7 +263,7 @@ class MultiSim(sc.prettyobj):
                 reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
 
         # Compute and store final results
-        reduced_sim.summarize(verbose=False, update=True)
+        reduced_sim.compute_summary()
         self.orig_base_sim = self.base_sim
         self.base_sim = reduced_sim
         self.results = reduced_sim.results
@@ -268,7 +278,7 @@ class MultiSim(sc.prettyobj):
 
     def mean(self, bounds=None, **kwargs):
         '''
-        Alias for reduce(use_mean=True).
+        Alias for reduce(use_mean=True). See reduce() for full description.
 
         Args:
             bounds (float): multiplier on the standard deviation for the upper and lower bounds (default, 2)
@@ -279,7 +289,7 @@ class MultiSim(sc.prettyobj):
 
     def median(self, quantiles=None, **kwargs):
         '''
-        Alias for reduce(use_mean=False).
+        Alias for reduce(use_mean=False). See reduce() for full description.
 
         Args:
             quantiles (list or dict): upper and lower quantiles (default, 0.1 and 0.9)
@@ -289,7 +299,16 @@ class MultiSim(sc.prettyobj):
 
 
     def combine(self, output=False):
-        ''' Combine multiple sims into a single sim with scaled results '''
+        '''
+        Combine multiple sims into a single sim with scaled results.
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim())
+            msim.run()
+            msim.combine()
+            msim.summarize()
+        '''
 
         n_runs = len(self)
         combined_sim = sc.dcp(self.sims[0])
@@ -312,7 +331,7 @@ class MultiSim(sc.prettyobj):
                 combined_sim.results[key].values /= n_runs
 
         # Compute and store final results
-        combined_sim.summarize(verbose=False, update=True)
+        combined_sim.compute_summary()
         self.orig_base_sim = self.base_sim
         self.base_sim = combined_sim
         self.results = combined_sim.results
@@ -326,13 +345,13 @@ class MultiSim(sc.prettyobj):
             return
 
 
-    def compare(self, t=-1, sim_inds=None, output=False, do_plot=False, **kwargs):
+    def compare(self, t=None, sim_inds=None, output=False, do_plot=False, **kwargs):
         '''
         Create a dataframe compare sims at a single point in time.
 
         Args:
             t        (int/str) : the day (or date) to do the comparison; default, the end
-            sim_inds (list)    : list of integers of which sims to include (default              : all)
+            sim_inds (list)    : list of integers of which sims to include (default: all)
             output   (bool)    : whether or not to return the comparison as a dataframe
             do_plot  (bool)    : whether or not to plot the comparison (see also plot_compare())
             kwargs   (dict)    : passed to plot_compare()
@@ -340,6 +359,13 @@ class MultiSim(sc.prettyobj):
         Returns:
             df (dataframe): a dataframe comparison
         '''
+
+        # Handle time
+        if t is None:
+            t = -1
+            daystr = 'the last day'
+        else:
+            daystr = f'day {t}'
 
         # Handle the indices
         if sim_inds is None:
@@ -349,13 +375,14 @@ class MultiSim(sc.prettyobj):
         resdict = defaultdict(dict)
         for i,s in enumerate(sim_inds):
             sim = self.sims[s]
+            day = sim.day(t) # Unlikely, but different sims might have different start days
             label = sim.label
             if not label: # Give it a label if it doesn't have one
                 label = f'Sim {i}'
             if label in resdict: # Avoid duplicates
                 label += f' ({i})'
             for reskey in sim.result_keys():
-                val = sim.results[reskey].values[t]
+                val = sim.results[reskey].values[day]
                 if reskey not in ['r_eff', 'doubling_time']:
                     val = int(val)
                 resdict[label][reskey] = val
@@ -364,11 +391,11 @@ class MultiSim(sc.prettyobj):
             self.plot_compare(**kwargs)
 
         df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coercion
-        if output:
-            return df
-        else:
+        if not output:
+            print(f'Results for {daystr} in each sim:')
             print(df)
-            return None
+        else:
+            return df
 
 
     def plot(self, to_plot=None, inds=None, plot_sims=False, color_by_sim=None, max_sims=5, colors=None, labels=None, alpha_range=None, plot_args=None, show_args=None, **kwargs):
@@ -695,27 +722,90 @@ class MultiSim(sc.prettyobj):
         return mlist
 
 
-    def summarize(self, output=False):
-        ''' Print a brief summary of the MultiSim '''
-        string  = 'MultiSim summary:\n'
-        string += f'  Number of sims: {len(self.sims)}\n'
-        string += f'  Reduced/combined: {self.which}\n'
-        string += f'  Base: {self.base_sim.brief(output=True)}\n'
-        string += '  Sims:\n'
-        for s,sim in enumerate(self.sims):
-            string += f'    {s}: {sim.brief(output=True)}\n'
+    def disp(self, output=False):
+        '''
+        Display a verbose description of a multisim. See also multisim.summarize()
+        (medium length output) and multisim.brief() (short output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim(verbose=0), label='Example multisim')
+            msim.run()
+            msim.disp() # Displays detailed output
+        '''
+        string = self._disp()
         if not output:
             print(string)
         else:
             return string
 
 
-    def brief(self):
-        ''' Print the sims, briefly '''
-        for s,sim in enumerate(self.sims):
-            print(f'{s}: {sim.brief(output=True)}')
-        return
+    def summarize(self, output=False):
+        '''
+        Print a moderate length summary of the MultiSim. See also multisim.disp()
+        (detailed output) and multisim.brief() (short output).
 
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim(verbose=0), label='Example multisim')
+            msim.run()
+            msim.summarize() # Prints moderate length output
+        '''
+        labelstr = f' "{self.label}"' if self.label else ''
+        simlenstr = f'{len(self.sims)}' if self.sims else '0'
+        string  = f'MultiSim{labelstr} summary:\n'
+        string += f'  Number of sims: {simlenstr}\n'
+        string += f'  Reduced/combined: {self.which}\n'
+        string += f'  Base: {self.base_sim.brief(output=True)}\n'
+        if self.sims:
+            string += '  Sims:\n'
+            for s,sim in enumerate(self.sims):
+                string += f'    {s}: {sim.brief(output=True)}\n'
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def _brief(self):
+        '''
+        Return a brief description of a multisim -- used internally and by repr();
+        see multisim.brief() for the user version.
+        '''
+        try:
+            labelstr = f'"{self.label}"; ' if self.label else ''
+            string   = f'MultiSim({labelstr}n_sims: {len(self.sims)}; base: {self.base_sim.brief(output=True)})'
+        except Exception as E:
+            string = sc.objectid(self)
+            string += f'Warning, multisim appears to be malformed:\n{str(E)}'
+        return string
+
+
+    def brief(self, output=False):
+        '''
+        Print a compact representation of the multisim. See also multisim.disp()
+        (detailed output) and multisim.summarize() (medium length output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim(verbose=0), label='Example multisim')
+            msim.run()
+            msim.brief() # Prints one-line output
+         '''
+        string = self._brief()
+        if not output:
+            print(string)
+        else:
+            return string
 
 
 class Scenarios(cvb.ParsObj):
@@ -731,23 +821,29 @@ class Scenarios(cvb.ParsObj):
         scenarios (dict) : a dictionary defining the scenarios; see examples folder for examples; see below for baseline
         basepars  (dict) : a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
         scenfile  (str)  : a filename for saving (defaults to the creation date)
+        label     (str)  : the name of the scenarios
+
+    **Example**::
+
+        scens = cv.Scenarios()
 
     Returns:
         scens: a Scenarios object
     '''
 
-    def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, scenfile=None):
+    def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, scenfile=None, label=None):
 
         # For this object, metapars are the foundation
         default_pars = make_metapars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
+        cvb.set_metadata(self) # Set version, date, and git info
 
         # Handle filename
-        self.created = sc.now()
         if scenfile is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             scenfile = f'covasim_scenarios_{datestr}.scens'
         self.scenfile = scenfile
+        self.label = label
 
         # Handle scenarios -- by default, create the simplest possible baseline scenario
         if scenarios is None:
@@ -870,23 +966,53 @@ class Scenarios(cvb.ParsObj):
 
         #%% Print statistics
         if verbose:
-            sc.heading('Results for last day in each scenario:')
-            x = defaultdict(dict)
-            scenkeys = list(self.scenarios.keys())
-            for scenkey in scenkeys:
-                for reskey in reskeys:
-                    val = self.results[reskey][scenkey].best[-1]
-                    if reskey not in ['r_eff', 'doubling_time']:
-                        val = int(val)
-                    x[scenkey][reskey] = val
-            df = pd.DataFrame.from_dict(x).astype(object)
-            print(df)
-            print()
+            self.compare()
 
         # Save details about the run
         self._kept_people = keep_people
 
         return
+
+
+    def compare(self, t=None, output=False):
+        '''
+        Print out a comparison of each scenario.
+
+        Args:
+            t (int/str)   : the day (or date) to do the comparison; default, the end
+            output (bool) : if true, return the dataframe instead of printing output
+
+        **Example**::
+
+            scenarios = {'base': {'name':'Base','pars': {}}, 'beta': {'name':'Beta', 'pars': {'beta': 0.020}}}
+            scens = cv.Scenarios(scenarios=scenarios, label='Example scenarios')
+            scens.run()
+            scens.compare(t=30) # Prints comparison for day 30
+        '''
+
+        # Handle time
+        if t is None:
+            t = -1
+            daystr = 'the last day'
+        else:
+            daystr = f'day {t}'
+        day = self.base_sim.day(t) # Unlike MultiSims, scenarios must have the same start day
+
+        # Compute dataframe
+        x = defaultdict(dict)
+        for scenkey in self.scenarios.keys():
+            for reskey in self.result_keys():
+                val = self.results[reskey][scenkey].best[day]
+                if reskey not in ['r_eff', 'doubling_time']:
+                    val = int(val)
+                x[scenkey][reskey] = val
+        df = pd.DataFrame.from_dict(x).astype(object)
+
+        if not output:
+            print(f'Results for {daystr} in each scenario:')
+            print(df)
+        else:
+            return df
 
 
     def plot(self, *args, **kwargs):
@@ -1059,6 +1185,94 @@ class Scenarios(cvb.ParsObj):
             errormsg = f'Cannot load object of {type(scens)} as a Scenarios object'
             raise TypeError(errormsg)
         return scens
+
+
+    def disp(self, output=False):
+        '''
+        Display a verbose description of the scenarios. See also scenarios.summarize()
+        (medium length output) and scenarios.brief() (short output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            scens = cv.Scenarios(cv.Sim(), label='Example scenarios')
+            scens.run(verbose=0) # Run silently
+            scens.disp() # Displays detailed output
+        '''
+        string = self._disp()
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def summarize(self, output=False):
+        '''
+        Print a moderate length summary of the scenarios. See also scenarios.disp()
+        (detailed output) and scenarios.brief() (short output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            scens = cv.Scenarios(cv.Sim(), label='Example scenarios')
+            scens.run(verbose=0) # Run silently
+            scens.summarize() # Prints moderate length output
+        '''
+        labelstr = f' "{self.label}"' if self.label else ''
+        string  = f'Scenarios{labelstr} summary:\n'
+        string += f'  Number of scenarios: {len(self.sims)}\n'
+        string += f'  Base: {self.base_sim.brief(output=True)}\n'
+        if self.sims:
+            string +=  '  Scenarios:\n'
+            for k,key,simlist in self.sims.enumitems():
+                keystr = f'      {k}: "{key}"\n'
+                string += keystr
+                for s,sim in enumerate(simlist):
+                    simstr = f'{sim.brief(output=True)}'
+                    string += '          ' + f'{s}: {simstr}\n'
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def _brief(self):
+        '''
+        Return a brief description of the scenarios -- used internally and by repr();
+        see scenarios.brief() for the user version.
+        '''
+        try:
+            labelstr = f'"{self.label}"; ' if self.label else ''
+            string   = f'Scenarios({labelstr}n_scenarios: {len(self.sims)}; base: {self.base_sim.brief(output=True)})'
+        except Exception as E:
+            string = sc.objectid(self)
+            string += f'Warning, scenarios appear to be malformed:\n{str(E)}'
+        return string
+
+
+    def brief(self, output=False):
+        '''
+        Print a compact representation of the scenarios. See also scenarios.disp()
+        (detailed output) and scenarios.summarize() (medium length output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            scens = cv.Scenarios(label='Example scenarios')
+            scens.run()
+            scens.brief() # Prints one-line output
+         '''
+        string = self._brief()
+        if not output:
+            print(string)
+        else:
+            return string
 
 
 def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=False, run_args=None, sim_args=None, verbose=None, do_run=True, **kwargs):

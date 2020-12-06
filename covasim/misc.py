@@ -8,7 +8,7 @@ import pandas as pd
 import pylab as pl
 import sciris as sc
 import scipy.stats as sps
-from . import version as cvver
+from . import version as cvv
 
 
 #%% Convenience imports from Sciris
@@ -113,7 +113,7 @@ def load(*args, do_migrate=True, **kwargs):
     '''
     obj = sc.loadobj(*args, **kwargs)
     if hasattr(obj, 'version'):
-        v_curr = cvver.__version__
+        v_curr = cvv.__version__
         v_obj = obj.version
         cmp = check_version(v_obj, verbose=False)
         if cmp != 0:
@@ -146,14 +146,19 @@ def save(*args, **kwargs):
     return filepath
 
 
-def migrate(obj, verbose=True, die=False):
+def migrate(obj, update=True, verbose=True, die=False):
     '''
     Define migrations allowing compatibility between different versions of saved
     files. Usually invoked automatically upon load, but can be called directly by
     the user to load custom objects, e.g. lists of sims.
 
+    Currently supported objects are sims, multisims, scenarios, and people.
+
     Args:
-        obj (any): the object to migrate (must be a Sim or MultiSim)
+        obj (any): the object to migrate
+        update (bool): whether to update version information to current version after successful migration
+        verbose (bool): whether to print warnings if something goes wrong
+        die (bool): whether to raise an exception if something goes wrong
 
     Returns:
         The migrated object
@@ -163,25 +168,28 @@ def migrate(obj, verbose=True, die=False):
         sims = cv.load('my-list-of-sims.obj')
         sims = [cv.migrate(sim) for sim in sims]
     '''
-    from .base import BaseSim  # Import here to avoid recursion
-    from .run import MultiSim
-    from .interventions import test_prob
-
-    if not hasattr(obj, 'version'):
-        errormsg = f'Object {obj} does not have a "version" attribute; cannot be migrated'
-        raise ValueError(errormsg)
+    from . import base as cvb
+    from . import run as cvr
+    from . import interventions as cvi
 
     # Migrations for simulations
-    if isinstance(obj, BaseSim):
+    if isinstance(obj, cvb.BaseSim):
         sim = obj
+
+        # Migration from <2.0.0 to 2.0.0
         if sc.compareversions(sim.version, '2.0.0') == -1: # Migrate from <2.0 to 2.0
+            if verbose: print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
 
             # Add missing attribute
             if not hasattr(sim, '_default_ver'):
                 sim._default_ver = None
 
+            # Recursively migrate people if needed
+            if sim.people:
+                sim.people = migrate(sim.people, update=update)
+
             # Rename intervention attribute
-            tps = sim.get_interventions(test_prob)
+            tps = sim.get_interventions(cvi.test_prob)
             for tp in tps:
                 try:
                     tp.sensitivity = tp.test_sensitivity
@@ -189,17 +197,43 @@ def migrate(obj, verbose=True, die=False):
                 except:
                     pass
 
-    # Migrations for MultiSims -- use recursion
-    elif isinstance(obj, MultiSim):
-        msim = obj
-        msim.base_sim = migrate(msim.base_sim)
-        msim.sims = [migrate(sim) for sim in msim.sims]
+    # Migrations for People
+    elif isinstance(obj, cvb.BasePeople):
+        ppl = obj
+        if not hasattr(ppl, 'version'): # For people prior to 2.0
+            if verbose: print(f'Migrating people from version <2.0 to version {cvv.__version__}')
+            cvb.set_metadata(ppl) # Set all metadata
 
-    # Otherwise
+    # Migrations for MultiSims -- use recursion
+    elif isinstance(obj, cvr.MultiSim):
+        msim = obj
+        msim.base_sim = migrate(msim.base_sim, update=update)
+        msim.sims = [migrate(sim, update=update) for sim in msim.sims]
+        if not hasattr(msim, 'version'): # For msims prior to 2.0
+            if verbose: print(f'Migrating multisim from version <2.0 to version {cvv.__version__}')
+            cvb.set_metadata(msim) # Set all metadata
+            msim.label = None
+
+    # Migrations for Scenarios
+    elif isinstance(obj, cvr.Scenarios):
+        scens = obj
+        scens.base_sim = migrate(scens.base_sim, update=update)
+        for key,simlist in scens.sims.items():
+            scens.sims[key] = [migrate(sim, update=update) for sim in simlist] # Nested loop
+        if not hasattr(scens, 'version'): # For scenarios prior to 2.0
+            if verbose: print(f'Migrating scenarios from version <2.0 to version {cvv.__version__}')
+            cvb.set_metadata(scens) # Set all metadata
+            scens.label = None
+
+    # Unreconized object type
     else:
-        errormsg = f'Object {obj} does have a version attribute, but type {type(obj)} cannot be migrated'
+        errormsg = f'Object {obj} of type {type(obj)} is not understood and cannot be migrated: must be a sim, multisim, scenario, or people object'
         if verbose: print(errormsg)
         elif die: raise TypeError(errormsg)
+
+    # If requested, update the stored version to the current version
+    if update:
+        obj.version = cvv.__version__
 
     return obj
 
@@ -232,7 +266,7 @@ def savefig(filename=None, comments=None, **kwargs):
         filename = f'covasim_{now}.png'
 
     metadata = {}
-    metadata['Covasim version'] = cvver.__version__
+    metadata['Covasim version'] = cvv.__version__
     gitinfo = git_info()
     for key,value in gitinfo['covasim'].items():
         metadata[f'Covasim {key}'] = value
@@ -289,7 +323,7 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
 
     # Get git info
     calling_file = sc.makefilepath(sc.getcaller(frame=frame, tostring=False)['filename'])
-    cv_info = {'version':cvver.__version__}
+    cv_info = {'version':cvv.__version__}
     cv_info.update(sc.gitinfo(__file__, verbose=False))
     caller_info = sc.gitinfo(calling_file, verbose=False)
     caller_info['filename'] = calling_file
@@ -342,7 +376,7 @@ def check_version(expected, die=False, verbose=True):
     else:
         valid = 0 # Assume == is the only valid comparison
     expected = expected.lstrip('<=>') # Remove comparator information
-    version = cvver.__version__
+    version = cvv.__version__
     compare = sc.compareversions(version, expected) # Returns -1, 0, or 1
     relation = ['older', '', 'newer'][compare+1] # Picks the right string
     if relation: # Versions mismatch, print warning or raise error

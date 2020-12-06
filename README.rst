@@ -121,7 +121,7 @@ The structure of the ``covasim`` folder is as follows, roughly in the order in w
 * ``requirements.py``: A simple module to check that imports succeeded, and turn off features if they didn't.
 * ``utils.py``: Functions for choosing random numbers, many based on Numba, plus other helper functions.
 * ``misc.py``: Miscellaneous helper functions.
-* ``options.py``: User-customizable options for Covasim (e.g. default font size).
+* ``settings.py``: User-customizable options for Covasim (e.g. default font size).
 * ``defaults.py``: The default colors, plots, etc. used by Covasim.
 * ``parameters.py``: Functions for creating the parameters dictionary and loading the input data.
 * ``plotting.py``: Plotting scripts, including Plotly graphs for the webapp (used in other Covasim classes, and hence defined first).

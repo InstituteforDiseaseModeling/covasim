@@ -71,7 +71,7 @@ class Sim(cvb.BaseSim):
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Now update everything
-        self.set_metadata(simfile, label)  # Set the simulation date and filename
+        self.set_metadata(simfile)  # Set the simulation date and filename
         self.update_pars(pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
@@ -666,6 +666,13 @@ class Sim(cvb.BaseSim):
                 if key not in preserved:
                     self.pars[key] = self._orig_pars.pop(key) # Restore everything except for the analyzers and interventions
 
+        # Optionally print summary output
+        if verbose: # Verbose is any non-zero value
+            if verbose>0: # Verbose is any positive number
+                self.summarize() # Print medium-length summary of the sim
+            else:
+                self.brief() # Print brief summary of the sim
+
         return
 
 
@@ -675,7 +682,7 @@ class Sim(cvb.BaseSim):
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
-        self.summarize(verbose=verbose, update=True)
+        self.compute_summary()
         return
 
 
@@ -827,7 +834,7 @@ class Sim(cvb.BaseSim):
 
         # Method not recognized
         else:
-            errormsg = f'Method must be "daily", "infected", or "outcome", not "{method}"'
+            errormsg = f'Method must be "daily", "infectious", or "outcome", not "{method}"'
             raise ValueError(errormsg)
 
         # Set the values and return
@@ -871,75 +878,108 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def summarize(self, full=False, t=None, verbose=None, output=False, update=True):
+    def compute_summary(self, full=None, t=None, update=True, output=False):
         '''
-        Print a summary of the simulation, drawing from the last time point in the simulation.
+        Compute the summary dict and string for the sim. Used internally; see
+        sim.summarize() for the user version.
 
         Args:
             full (bool): whether or not to print all results (by default, only cumulative)
             t (int/str): day or date to compute summary for (by default, the last point)
-            verbose (bool): whether to print to screen (default: same as sim)
+            update (bool): whether to update the stored sim.summary
             output (bool): whether to return the summary
-            update (bool): whether to update the summary stored in the sim (sim.summary)
         '''
-        if self.results_ready:
+        if t is None:
+            t = self.day(self.t)
 
-            if t is None:
-                t = self.day(self.t)
+        # Compute the summary
+        summary = sc.objdict()
+        for key in self.result_keys():
+            summary[key] = self.results[key][t]
 
-            if verbose is None:
-                verbose = self['verbose']
+        # Update the stored state
+        if update:
+            self.summary = summary
 
-            summary = sc.objdict()
-            for key in self.result_keys():
-                summary[key] = self.results[key][t]
-
-            summary_str = 'Simulation summary:\n'
-            for key in self.result_keys():
-                if full or key.startswith('cum_'):
-                    summary_str += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
-
-            if update:
-                self.summary = summary
-
-            if verbose:
-                if verbose>0:
-                    print(summary_str)
-                else:
-                    self.brief()
-
-            if output:
-                return summary
-
+        # Optionally return
+        if output:
+            return summary
         else:
-            return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
+            return
+
+
+    def summarize(self, full=False, t=None, output=False):
+        '''
+        Print a medium-length summary of the simulation, drawing from the last time
+        point in the simulation by default. Called by default at the end of a sim run.
+        See also sim.disp() (detailed output) and sim.brief() (short output).
+
+        Args:
+            full (bool): whether or not to print all results (by default, only cumulative)
+            t (int/str): day or date to compute summary for (by default, the last point)
+            output (bool): whether to return the summary instead of printing it
+
+        **Examples**::
+
+            sim = cv.Sim(label='Example sim', verbose=0) # Set to run silently
+            sim.run() # Run the sim
+            sim.summarize() # Print medium-length summary of the sim
+            sim.summarize(t=24, full=True) # Print a "slice" of all sim results on day 24
+        '''
+        # Compute the summary
+        summary = self.compute_summary(full=full, t=t, update=False, output=True)
+
+        # Construct the output string
+        labelstr = f' "{self.label}"' if self.label else ''
+        string = f'Simulation{labelstr} summary:\n'
+        for key in self.result_keys():
+            if full or key.startswith('cum_'):
+                string += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
+
+        # Print or return string
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def disp(self, output=False):
+        '''
+        Display a verbose description of a sim. See also sim.summarize() (medium
+        length output) and sim.brief() (short output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            sim = cv.Sim(label='Example sim', verbose=0) # Set to run silently
+            sim.run() # Run the sim
+            sim.disp() # Displays detailed output
+        '''
+        string = self._disp()
+        if not output:
+            print(string)
+        else:
+            return string
 
 
     def brief(self, output=False):
-        ''' Return a one-line description of a sim '''
+        '''
+        Print a one-line description of a sim. See also sim.disp() (detailed output)
+        and sim.summarize() (medium length output). The symbol "⚙" is used to show
+        infections, and "☠" is used to show deaths.
 
-        if self.results_ready:
-            infections = self.summary['cum_infections']
-            deaths = self.summary['cum_deaths']
-            results = f'{infections:n}⚙, {deaths:n}☠'
-        else:
-            results = 'not run'
+        Args:
+            output (bool): if true, return a string instead of printing output
 
-        if self.label:
-            label = f'"{self.label}"'
-        else:
-            label = '<no label>'
+        **Example**::
 
-        start = sc.date(self['start_day'], as_date=False)
-        if self['end_day']:
-            end = sc.date(self['end_day'], as_date=False)
-        else:
-            end = sc.date(self['n_days'], start_date=start)
-
-        pop_size = self['pop_size']
-        pop_type = self['pop_type']
-        string   = f'Sim({label}; {start} to {end}; pop: {pop_size:n} {pop_type}; epi: {results})'
-
+            sim = cv.Sim(label='Example sim', verbose=0) # Set to run silently
+            sim.run() # Run the sim
+            sim.brief() # Prints one-line output
+        '''
+        string = self._brief()
         if not output:
             print(string)
         else:

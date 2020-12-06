@@ -6,6 +6,7 @@ Defines the Person class and functions associated with making people.
 import numpy as np
 import sciris as sc
 from collections import defaultdict
+from . import version as cvv
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
@@ -42,6 +43,8 @@ class People(cvb.BasePeople):
             pars = {'pop_size':pars} # Ensure it's a dictionary
         self.pars     = pars # Equivalent to self.set_pars(pars)
         self.pop_size = int(pars['pop_size'])
+        self.location = pars.get('location') # Try to get location, but set to None otherwise
+        self.version  = cvv.__version__ # Store version info
 
         # Other initialization
         self.t = 0 # Keep current simulation time
