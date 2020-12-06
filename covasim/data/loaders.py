@@ -88,9 +88,9 @@ def map_entries(json, location):
     return entries
 
 
-def get_valid_locations(location=None, output=False):
+def show_locations(location=None, output=False):
     '''
-    Print a list of valid locations.
+    Print a list of available locations.
 
     Args:
         location (str): if provided, only check if this location is in the list
@@ -98,9 +98,9 @@ def get_valid_locations(location=None, output=False):
 
     **Examples**::
 
-        cv.data.get_valid_locations() # Print a list of valid locations
-        cv.data.get_valid_locations('lithuania') # Check if Lithuania is a valid location
-        cv.data.get_valid_locations('Viet-Nam') # Check if Viet-Nam is a valid location
+        cv.data.show_locations() # Print a list of valid locations
+        cv.data.show_locations('lithuania') # Check if Lithuania is a valid location
+        cv.data.show_locations('Viet-Nam') # Check if Viet-Nam is a valid location
     '''
     country_json   = sc.dcp(cad.data)
     state_json     = sc.dcp(sad.data)
