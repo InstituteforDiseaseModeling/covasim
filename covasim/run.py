@@ -345,13 +345,13 @@ class MultiSim(cvb.FlexPretty):
             return
 
 
-    def compare(self, t=-1, sim_inds=None, output=False, do_plot=False, **kwargs):
+    def compare(self, t=None, sim_inds=None, output=False, do_plot=False, **kwargs):
         '''
         Create a dataframe compare sims at a single point in time.
 
         Args:
             t        (int/str) : the day (or date) to do the comparison; default, the end
-            sim_inds (list)    : list of integers of which sims to include (default              : all)
+            sim_inds (list)    : list of integers of which sims to include (default: all)
             output   (bool)    : whether or not to return the comparison as a dataframe
             do_plot  (bool)    : whether or not to plot the comparison (see also plot_compare())
             kwargs   (dict)    : passed to plot_compare()
@@ -359,6 +359,13 @@ class MultiSim(cvb.FlexPretty):
         Returns:
             df (dataframe): a dataframe comparison
         '''
+
+        # Handle time
+        if t is None:
+            t = -1
+            daystr = 'the last day'
+        else:
+            daystr = f'day {t}'
 
         # Handle the indices
         if sim_inds is None:
@@ -368,13 +375,14 @@ class MultiSim(cvb.FlexPretty):
         resdict = defaultdict(dict)
         for i,s in enumerate(sim_inds):
             sim = self.sims[s]
+            day = sim.day(t) # Unlikely, but different sims might have different start days
             label = sim.label
             if not label: # Give it a label if it doesn't have one
                 label = f'Sim {i}'
             if label in resdict: # Avoid duplicates
                 label += f' ({i})'
             for reskey in sim.result_keys():
-                val = sim.results[reskey].values[t]
+                val = sim.results[reskey].values[day]
                 if reskey not in ['r_eff', 'doubling_time']:
                     val = int(val)
                 resdict[label][reskey] = val
@@ -383,11 +391,11 @@ class MultiSim(cvb.FlexPretty):
             self.plot_compare(**kwargs)
 
         df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coercion
-        if output:
-            return df
-        else:
+        if not output:
+            print(f'Results for {daystr} in each sim:')
             print(df)
-            return None
+        else:
+            return df
 
 
     def plot(self, to_plot=None, inds=None, plot_sims=False, color_by_sim=None, max_sims=5, colors=None, labels=None, alpha_range=None, plot_args=None, show_args=None, **kwargs):
@@ -750,13 +758,15 @@ class MultiSim(cvb.FlexPretty):
             msim.summarize() # Prints moderate length output
         '''
         labelstr = f' "{self.label}"' if self.label else ''
+        simlenstr = f'{len(self.sims)}' if self.sims else '0'
         string  = f'MultiSim{labelstr} summary:\n'
-        string += f'  Number of sims: {len(self.sims)}\n'
+        string += f'  Number of sims: {simlenstr}\n'
         string += f'  Reduced/combined: {self.which}\n'
         string += f'  Base: {self.base_sim.brief(output=True)}\n'
-        string += '  Sims:\n'
-        for s,sim in enumerate(self.sims):
-            string += f'    {s}: {sim.brief(output=True)}\n'
+        if self.sims:
+            string += '  Sims:\n'
+            for s,sim in enumerate(self.sims):
+                string += f'    {s}: {sim.brief(output=True)}\n'
         if not output:
             print(string)
         else:
@@ -770,7 +780,7 @@ class MultiSim(cvb.FlexPretty):
         '''
         try:
             labelstr = f'"{self.label}"; ' if self.label else ''
-            string   = f'MultiSim({labelstr}nsims: {len(self.sims)}; base: {self.base_sim.brief(output=True)})'
+            string   = f'MultiSim({labelstr}n_sims: {len(self.sims)}; base: {self.base_sim.brief(output=True)})'
         except Exception as E:
             string = sc.objectid(self)
             string += f'Warning, multisim appears to be malformed:\n{str(E)}'
@@ -956,23 +966,53 @@ class Scenarios(cvb.ParsObj):
 
         #%% Print statistics
         if verbose:
-            sc.heading('Results for last day in each scenario:')
-            x = defaultdict(dict)
-            scenkeys = list(self.scenarios.keys())
-            for scenkey in scenkeys:
-                for reskey in reskeys:
-                    val = self.results[reskey][scenkey].best[-1]
-                    if reskey not in ['r_eff', 'doubling_time']:
-                        val = int(val)
-                    x[scenkey][reskey] = val
-            df = pd.DataFrame.from_dict(x).astype(object)
-            print(df)
-            print()
+            self.compare()
 
         # Save details about the run
         self._kept_people = keep_people
 
         return
+
+
+    def compare(self, t=None, output=False):
+        '''
+        Print out a comparison of each scenario.
+
+        Args:
+            t (int/str)   : the day (or date) to do the comparison; default, the end
+            output (bool) : if true, return the dataframe instead of printing output
+
+        **Example**::
+
+            scenarios = {'base': {'name':'Base','pars': {}}, 'beta': {'name':'Beta', 'pars': {'beta': 0.020}}}
+            scens = cv.Scenarios(scenarios=scenarios, label='Example scenarios')
+            scens.run()
+            scens.compare(t=30) # Prints comparison for day 30
+        '''
+
+        # Handle time
+        if t is None:
+            t = -1
+            daystr = 'the last day'
+        else:
+            daystr = f'day {t}'
+        day = self.base_sim.day(t) # Unlike MultiSims, scenarios must have the same start day
+
+        # Compute dataframe
+        x = defaultdict(dict)
+        for scenkey in self.scenarios.keys():
+            for reskey in self.result_keys():
+                val = self.results[reskey][scenkey].best[day]
+                if reskey not in ['r_eff', 'doubling_time']:
+                    val = int(val)
+                x[scenkey][reskey] = val
+        df = pd.DataFrame.from_dict(x).astype(object)
+
+        if not output:
+            print(f'Results for {daystr} in each scenario:')
+            print(df)
+        else:
+            return df
 
 
     def plot(self, *args, **kwargs):
@@ -1186,13 +1226,14 @@ class Scenarios(cvb.ParsObj):
         string  = f'Scenarios{labelstr} summary:\n'
         string += f'  Number of scenarios: {len(self.sims)}\n'
         string += f'  Base: {self.base_sim.brief(output=True)}\n'
-        string +=  '  Scenarios:\n'
-        for k,key,simlist in self.sims.enumitems():
-            keystr = f'      {k}: "{key}"\n'
-            string += keystr
-            for s,sim in enumerate(simlist):
-                simstr = f'{sim.brief(output=True)}'
-                string += '          ' + f'{s}: {simstr}\n'
+        if self.sims:
+            string +=  '  Scenarios:\n'
+            for k,key,simlist in self.sims.enumitems():
+                keystr = f'      {k}: "{key}"\n'
+                string += keystr
+                for s,sim in enumerate(simlist):
+                    simstr = f'{sim.brief(output=True)}'
+                    string += '          ' + f'{s}: {simstr}\n'
         if not output:
             print(string)
         else:
@@ -1206,7 +1247,7 @@ class Scenarios(cvb.ParsObj):
         '''
         try:
             labelstr = f'"{self.label}"; ' if self.label else ''
-            string   = f'Scenarios({labelstr}nsims: {len(self.sims)}; base: {self.base_sim.brief(output=True)})'
+            string   = f'Scenarios({labelstr}n_scenarios: {len(self.sims)}; base: {self.base_sim.brief(output=True)})'
         except Exception as E:
             string = sc.objectid(self)
             string += f'Warning, scenarios appear to be malformed:\n{str(E)}'

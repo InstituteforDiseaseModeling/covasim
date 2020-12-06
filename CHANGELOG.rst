@@ -23,8 +23,9 @@ This version contains a number of major updates. Note: this version requires Sci
 Highlights
 ^^^^^^^^^^
 - **Parameters**: Default infection fatality ratio estimates have been updated in line with the latest literature.
-- **Plotting**: Plotting defaults have been updated to support a wider range of systems, and users now have greater control over plotting options.
-- **Webapp**: The webapp has been moved to a separate Python package, ``covasim_webapp`` (available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__)
+- **Plotting**: Plotting defaults have been updated to support a wider range of systems, and users now have greater control over plotting and options.
+- **New functions**: New methods have been added to display objects in different levels of detail; new methods have also been added for working with data, adding contacts, and analyzing multisims.
+- **Webapp**: The webapp has been moved to a separate Python package, ``covasim_webapp`` (available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__).
 - **Documentation**: A comprehensive set of tutorials has been added, along with a glossary and FAQ; see https://docs.covasim.org or look in the ``docs/tutorials`` folder.
 
 Parameter updates
@@ -62,19 +63,25 @@ Bugfixes
 - Interventions now print out with their actual name (previously they all printed out as ``InterventionDict``).
 - The keyword argument ``test_sensitivity`` for ``cv.test_prob()`` has been renamed ``sensitivity``, for consistency with ``cv.test_num()``.
 
+New functions and methods
+^^^^^^^^^^^^^^^^^^^^^^^^^
+- Sims, multisims, scenarios, and people objects now have ``disp()``, ``summarize()``, and ``brief()`` methods, which display full detail, moderate detail, and very little detail about each. If ``cv.options.verbose`` is 0, then ``brief()`` will be used to display objects; otherwise, ``disp()`` will be used.
+- Two new functions have been added, ``sim.get_intervention()`` and ``sim.get_analyzer()``. These act very similarly to e.g. ``sim.get_interventions()``, except they return the last matching intervention/analyzer, rather than returning a list of interventions/analyzers.
+- MultiSims now have a ``shrink()`` method, which shrinks both the base sim and the other sims they contain.
+- MultiSims also provide options to compute statistics using either the mean or the median; this can be done via the ``msim.reduce(use_mean=True)`` method. Two convenience methods, ``msim.mean()`` and ``msim.median()``, have also been added as shortcuts.
+- Scenarios now have a ``scens.compare()`` method, which (like the multisim equivalent) creates a dataframe comparing results across scenarios.
+- Contacts now have new methods for handling layers, ``sim.people.contacts.add_layer()`` and ``sim.people.contacts.pop_layer()``. Additional validation on layers is also performed.
+- There is a new function, ``cv.data.show_locations()``, that lists locations for which demographic data are available. You can also now edit the data dictionaries directly, by modifying e.g. ``cv.data.country_age_data.data`` (suggested by `Andrea Cattaneo <https://github.com/InstituteforDiseaseModeling/covasim/issues/273>`__).
+
 Other changes
 ^^^^^^^^^^^^^
-- Two new functions have been added, ``sim.get_intervention()`` and ``sim.get_analyzer()``. These act very similarly to e.g. ``sim.get_interventions()``, except they return the last matching intervention/analyzer, rather than returning a list of interventions/analyzers.
-- There is a new verbose option: ``cv.Sim(verbose='brief').run()`` will print a single line of output when the sim finishes (namely, ``sim.brief()``).
-- MultiSims now have a ``shrink()`` method, which shrinks both the base sim and the other sims they contain. MultiSims also have a ``brief()`` method, which prints out one line per sim (even briefer than ``msim.summarize()``).
-- MultiSims also provide options to compute statistics using either the mean or the median; this can be done via the ``msim.reduce(use_mean=True)`` method. Two convenience methods, ``msim.mean()`` and ``msim.median()``, have also been added as shortcuts.
-- Contacts now have new methods for handling layers, ``sim.people.contacts.add_layer()`` and ``sim.people.contacts.pop_layer()``. Additional validation on layers is also performed.
-- There is a new function, ``cv.data.show_locations()``, that lists locations for which demographic data are available. You can also now edit the data dictionaries directly, by modifying e.g. ``cv.data.country_age_data.data``.
+- There is a new verbose option for sims: ``cv.Sim(verbose='brief').run()`` will print a single line of output when the sim finishes (namely, ``sim.brief()``).
 - The argument ``n_cpus`` can now be supplied directly to ``cv.multirun()`` and ``msim.run()``.
 - The types ``cv.default_float`` and ``cv.default_int`` are now available at the top level (previously they had to be accessed by e.g. ``cv.defaults.default_float``).
 - Transmission trees now contain additional output; after ``tt = sim.make_transtree()``, a dataframe of key results is contained in ``tt.df``.
 - The default number of seed infections has been changed from 10 to 20 for greater numerical stability. (Note that this placeholder value should be overridden for all actual applications.) 
 - ``sim.run()`` no longer returns the results object by default (if you want it, set ``output=True``).
+- A migrations module has been added (in ``misc.py``). Objects are  now automatically migrated to the current version of Covasim whene loaded The function ``cv.migrate()`` can also be called explicitly on objects if needed.
 
 Documentation
 ^^^^^^^^^^^^^
@@ -87,7 +94,7 @@ Regression information
 - Any scripts that used ``results = sim.run()`` will need to be updated to ``results = sim.run(output=True)``.
 - Any scripts that passed formatting options directly to plots should set these as options instead; e.g. ``sim.plot(font_size=18)`` should now be ``cv.options.set(font_size=18); sim.plot()``.
 - Any custom interventions that defined a custom ``plot()`` method should use ``plot_interventions()`` instead.
-- *GitHub info*: PR `738 <https://github.com/amath-idm/covasim/pull/738>`__
+- *GitHub info*: PRs `738 <https://github.com/amath-idm/covasim/pull/738>`__, `740 <https://github.com/amath-idm/covasim/pull/740>`__
 
 
 

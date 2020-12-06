@@ -840,14 +840,6 @@ class BasePeople(FlexPretty):
         return newpeople
 
 
-    def _disp(self):
-        '''
-        Print a verbose display of the people object. Used by repr(). See people.disp()
-        for the user version. Equivalent to sc.prettyobj().
-        '''
-        return sc.prepr(self)
-
-
     def _brief(self):
         '''
         Return a one-line description of the people -- used internally and by repr();
@@ -860,6 +852,11 @@ class BasePeople(FlexPretty):
             string = sc.objectid(self)
             string += f'Warning, multisim appears to be malformed:\n{str(E)}'
         return string
+
+
+    def summarize(self, output=False):
+        ''' Print a summary of the people -- same as brief '''
+        return self.brief(output=output)
 
 
     def set(self, key, value, die=True):
