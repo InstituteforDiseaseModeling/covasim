@@ -13,7 +13,7 @@ Full contents
    :maxdepth: 4
 
    overview
-   tutorials
+   tutorials/README
    whatsnew
    parameters
    data
