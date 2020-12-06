@@ -55,7 +55,8 @@ Bugfixes
 ^^^^^^^^
 - The ``quar_period`` argument is now correctly passed to the ``cv.contact_tracing()`` intervention. (Thanks to Scott McCrae for finding this bug.)
 - If the user supplies an incorrect type to ``cv.Layer.find_contacts()``, this is now caught and corrected. (Thanks to user sba5827 for finding this bug.)
-- Non-string layer keys no longer raise an exception.
+- Non-string ``Layer`` keys no longer raise an exception.
+- The ``sim.compute_r_eff()`` error message now gives correct instructions (contributed by `Andrea Cattaneo <https://github.com/InstituteforDiseaseModeling/covasim/pull/295>`__).
 - Parallelization in Jupyter notebooks (e.g. ``msim.run()``) should now work without crashing.
 - If parallelization (e.g. ``msim.run()``) is called outside a ``main`` block on Windows, this leads to a cryptic error. This error is now caught more elegantly.
 - Interventions now print out with their actual name (previously they all printed out as ``InterventionDict``).
@@ -68,7 +69,7 @@ Other changes
 - MultiSims now have a ``shrink()`` method, which shrinks both the base sim and the other sims they contain. MultiSims also have a ``brief()`` method, which prints out one line per sim (even briefer than ``msim.summarize()``).
 - MultiSims also provide options to compute statistics using either the mean or the median; this can be done via the ``msim.reduce(use_mean=True)`` method. Two convenience methods, ``msim.mean()`` and ``msim.median()``, have also been added as shortcuts.
 - Contacts now have new methods for handling layers, ``sim.people.contacts.add_layer()`` and ``sim.people.contacts.pop_layer()``. Additional validation on layers is also performed.
-- There is a new function, ``cv.data.get_valid_locations()``, that lists locations for which demographic data are available. You can also now edit the data dictionaries directly, by modifying e.g. ``cv.data.country_age_data.data``.
+- There is a new function, ``cv.data.show_locations()``, that lists locations for which demographic data are available. You can also now edit the data dictionaries directly, by modifying e.g. ``cv.data.country_age_data.data``.
 - The argument ``n_cpus`` can now be supplied directly to ``cv.multirun()`` and ``msim.run()``.
 - The types ``cv.default_float`` and ``cv.default_int`` are now available at the top level (previously they had to be accessed by e.g. ``cv.defaults.default_float``).
 - Transmission trees now contain additional output; after ``tt = sim.make_transtree()``, a dataframe of key results is contained in ``tt.df``.

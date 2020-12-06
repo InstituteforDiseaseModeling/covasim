@@ -9,7 +9,7 @@ from . import country_age_data    as cad
 from . import state_age_data      as sad
 from . import household_size_data as hsd
 
-__all__ = ['get_country_aliases', 'map_entries', 'get_valid_locations', 'get_age_distribution', 'get_household_size']
+__all__ = ['get_country_aliases', 'map_entries', 'show_locations', 'get_age_distribution', 'get_household_size']
 
 
 def get_country_aliases():
