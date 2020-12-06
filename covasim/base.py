@@ -13,6 +13,7 @@ from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
 from . import parameters as cvpar
+from .settings import options as cvo
 
 # Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
@@ -20,7 +21,29 @@ __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', '
 
 #%% Define simulation classes
 
-class ParsObj(sc.prettyobj):
+class FlexPretty(sc.prettyobj):
+    '''
+    A class that by default changes the display type depending on the current level
+    of verbosity.
+    '''
+
+    def __repr__(self):
+        ''' Set display options based on current level of verbosity '''
+        if cvo['verbose']:
+            return self.disp()
+        else:
+            return self.brief()
+
+    def disp(self):
+        ''' Use Sciris' pretty repr by default '''
+        return sc.prepr(self)
+
+    def brief(self):
+        ''' Use a one-line output '''
+        return
+
+
+class ParsObj(FlexPretty):
     '''
     A class based around performing operations on a self.pars dict.
     '''
@@ -28,6 +51,7 @@ class ParsObj(sc.prettyobj):
     def __init__(self, pars):
         self.update_pars(pars, create=True)
         return
+
 
     def __getitem__(self, key):
         ''' Allow sim['par_name'] instead of sim.pars['par_name'] '''
@@ -47,6 +71,9 @@ class ParsObj(sc.prettyobj):
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
         return
+
+
+
 
     def update_pars(self, pars=None, create=False):
         '''
@@ -140,6 +167,7 @@ class BaseSim(ParsObj):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs) # Initialize and set the parameters as attributes
         return
+
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
