@@ -75,7 +75,7 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
         elif pop_type == 'synthpops':
             popdict = make_synthpop(sim, **kwargs)
         elif pop_type is None:
-            errormsg = f'You have set pop_type=None. This is fine, but you must ensure sim.popdict exists before calling make_people().'
+            errormsg = 'You have set pop_type=None. This is fine, but you must ensure sim.popdict exists before calling make_people().'
             raise ValueError(errormsg)
         else:
             errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
@@ -83,7 +83,7 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
 
     # Ensure prognoses are set
     if sim['prognoses'] is None:
-        sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'])
+        sim['prognoses'] = cvpars.get_prognoses(sim['prog_by_age'], version=sim._default_ver)
 
     # Actually create the people
     people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people

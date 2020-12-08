@@ -4,9 +4,4 @@ scipy
 matplotlib
 statsmodels
 numba
-sciris>=0.17.0
-scirisweb>=0.17.0
-gunicorn
-plotly
-ipywidgets
-fire
+sciris>=1.0.0

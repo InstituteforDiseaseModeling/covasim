@@ -11,9 +11,9 @@ import pylab as pl
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
-import plotly.graph_objects as go
-from . import defaults as cvd
 from . import misc as cvm
+from . import defaults as cvd
+from .settings import options as cvo
 
 
 __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']
@@ -21,13 +21,14 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people
 
 #%% Plotting helper functions
 
+
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
     args = sc.objdict()
-    args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
-    args.plot    = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
-    args.scatter = sc.mergedicts({'s':70, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
-    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
+    args.fig     = sc.mergedicts({'figsize': (10, 8)}, fig_args)
+    args.plot    = sc.mergedicts({'lw': 1.5, 'alpha': 0.7}, plot_args)
+    args.scatter = sc.mergedicts({'s':20, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
+    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.08, 'right': 0.95, 'top': 0.95, 'wspace': 0.30, 'hspace': 0.30}, axis_args)
     args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
     args.legend  = sc.mergedicts({'loc': 'best', 'frameon':False}, legend_args)
     args.show    = sc.mergedicts({'data':True, 'interventions':True, 'legend':True, }, show_args)
@@ -43,8 +44,13 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     return args
 
 
-def handle_to_plot(which, to_plot, n_cols, sim):
+def handle_to_plot(which, to_plot, n_cols, sim, check_ready=True):
     ''' Handle which quantities to plot '''
+
+    # Check that results are ready
+    if check_ready and not sim.results_ready:
+        errormsg = 'Cannot plot since results are not ready yet -- did you run the sim?'
+        raise RuntimeError(errormsg)
 
     # If not specified or specified as a string, load defaults
     if to_plot is None or isinstance(to_plot, str):
@@ -70,12 +76,12 @@ def handle_to_plot(which, to_plot, n_cols, sim):
     if n_cols is None:
         max_rows = 4 # Assumption -- if desired, the user can override this by setting n_cols manually
         n_cols = int((n_plots-1)//max_rows + 1) # This gives 1 column for 1-4, 2 for 5-8, etc.
-    n_rows,n_cols = cvm.get_rows_cols(n_plots, ncols=n_cols) # Inconsistent naming due to Covasim/Matplotlib conventions
+    n_rows,n_cols = sc.get_rows_cols(n_plots, ncols=n_cols) # Inconsistent naming due to Covasim/Matplotlib conventions
 
     return to_plot, n_cols, n_rows
 
 
-def create_figs(args, font_size, font_family, sep_figs, fig=None):
+def create_figs(args, sep_figs, fig=None, ax=None):
     '''
     Create the figures and set overall figure properties. If a figure is supplied,
     reset the axes labels for automatic use by other plotting functions (i.e. ax1, ax2, etc.)
@@ -85,16 +91,16 @@ def create_figs(args, font_size, font_family, sep_figs, fig=None):
         figs = []
     else:
         if fig is None:
-            fig = pl.figure(**args.fig) # Create the figure if none is supplied
+            if ax is None:
+                fig = pl.figure(**args.fig) # Create the figure if none is supplied
+            else:
+                fig = ax.figure
         else:
-            for i,ax in enumerate(fig.axes):
-                ax.set_label(f'ax{i+1}')
+            for i,fax in enumerate(fig.axes):
+                fax.set_label(f'ax{i+1}')
         figs = None
     pl.subplots_adjust(**args.axis)
-    pl.rcParams['font.size'] = font_size
-    if font_family:
-        pl.rcParams['font.family'] = font_family
-    return fig, figs, None # Initialize axis to be None
+    return fig, figs
 
 
 def create_subplots(figs, fig, shareax, n_rows, n_cols, pnum, fig_args, sep_figs, log_scale, title):
@@ -144,8 +150,8 @@ def plot_data(sim, ax, key, scatter_args, color=None):
 def plot_interventions(sim, ax):
     ''' Add interventions to the plot '''
     for intervention in sim['interventions']:
-        if hasattr(intervention, 'plot'): # Don't plot e.g. functions
-            intervention.plot(sim, ax)
+        if hasattr(intervention, 'plot_intervention'): # Don't plot e.g. functions
+            intervention.plot_intervention(sim, ax)
     return
 
 
@@ -217,9 +223,18 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
         cvm.savefig(filename=fig_path) # Save the figure
 
-    # Show the figure
+    # Show the figure, or close it
+    if do_show is None:
+        do_show = cvo.show
+
     if do_show:
         pl.show()
+    elif cvo.close:
+        if sep_figs:
+            for fig in figs:
+                pl.close(fig)
+        else:
+            pl.close(fig)
 
     # Return the figure or figures
     if sep_figs:
@@ -247,15 +262,15 @@ def set_line_options(input_args, reskey, resnum, default):
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=18, font_family=None,
-         grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
-         do_show=True, sep_figs=False, fig=None):
+         as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
+         setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
+         fig=None, ax=None):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
+    fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Do the plotting
     for pnum,title,keylabels in to_plot.enumitems():
@@ -282,15 +297,15 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, font_size=18, font_family=None,
-         grid=False, commaticks=True, setylim=True, log_scale=False, colors=None, labels=None,
-         do_show=True, sep_figs=False, fig=None):
+         as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
+         setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
+         fig=None, ax=None):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
-    to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
+    to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
+    fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Do the plotting
     default_colors = sc.gridcolors(ncolors=len(scens.sims))
@@ -319,17 +334,17 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None,
-                do_show=True, do_save=False, fig_path=None):
+                grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
+                interval=None, color=None, label=None, do_show=None, do_save=False,
+                fig_path=None, fig=None, ax=None):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
     sep_figs = False # Only one figure
-    fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
+    fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
+    fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Gather results
     res = sim.results[key]
@@ -338,13 +353,11 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
         color = res.color
 
     # Reuse the figure, if available
-    try:
-        if fig.axes[0].get_label() == 'plot_result':
-            ax = fig.axes[0]
-    except:
-        pass
     if ax is None: # Otherwise, make a new one
-        ax = pl.subplot(111, label='plot_result')
+        try:
+            ax = fig.axes[0]
+        except:
+            ax = fig.add_subplot(111, label='ax1')
 
     # Do the plotting
     if label is None:
@@ -361,15 +374,15 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
 
 
 def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                font_size=18, font_family=None, grid=False, commaticks=True, setylim=True,
-                as_dates=True, dateformat=None, interval=None, color=None, label=None, fig=None):
+                grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
+                interval=None, color=None, label=None, fig=None):
     ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
 
     # Handle inputs
-    fig_args  = sc.mergedicts({'figsize':(16,16)}, fig_args)
+    fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
-    fig, figs, ax = create_figs(args, font_size, font_family, sep_figs=False, fig=fig)
+    fig, figs = create_figs(args, sep_figs=False, fig=fig)
 
     # Map from results into different categories
     mapping = {
@@ -405,7 +418,8 @@ def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=No
 
 
 #%% Other plotting functions
-def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=None, axis_args=None, plot_args=None):
+def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_args=None,
+                plot_args=None, do_show=None, fig=None):
     ''' Plot statistics of a population -- see People.plot() for documentation '''
 
     # Handle inputs
@@ -420,10 +434,9 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
     zorder    = 10 # So plots appear on top of gridlines
 
     # Handle other arguments
-    fig_args  = sc.mergedicts(dict(figsize=(30,22)), fig_args)
-    axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
-    plot_args = sc.mergedicts(dict(lw=3, alpha=0.6, markersize=10, c=color, zorder=10), plot_args)
-    pl.rcParams['font.size'] = font_size
+    fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
+    axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.35), axis_args)
+    plot_args = sc.mergedicts(dict(lw=1.5, alpha=0.6, c=color, zorder=10), plot_args)
 
     # Compute statistics
     min_age = min(bins)
@@ -432,7 +445,8 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
     age_counts = np.histogram(people.age, edges)[0]
 
     # Create the figure
-    fig = pl.figure(**fig_args)
+    if fig is None:
+        fig = pl.figure(**fig_args)
     pl.subplots_adjust(**axis_args)
 
     # Plot age histogram
@@ -481,12 +495,12 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
                 title = f'Total contacts for layer "{lk}": {total_contacts:n}'
             elif w_type == 'percapita':
                 weight = np.divide(1.0, age_counts, where=age_counts>0)
-                mean_contacts = 2*len(people.contacts[lk])/len(people)
+                mean_contacts = 2*len(people.contacts[lk])/len(people) # Factor of 2 since edges are bi-directional
                 ylabel = 'Per capita number of contacts'
                 title = f'Mean contacts for layer "{lk}": {mean_contacts:0.2f}'
             elif w_type == 'weighted':
                 weight = people.pars['beta_layer'][lk]*people.pars['beta']
-                total_weight = np.round(weight*len(people.contacts[lk]))
+                total_weight = np.round(weight*2*len(people.contacts[lk]))
                 ylabel = 'Weighted number of contacts'
                 title = f'Total weight for layer "{lk}": {total_weight:n}'
 
@@ -501,10 +515,38 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
             if w_type == 'weighted':
                 share_ax = ax # Update shared axis
 
+    if do_show or cvo.show:
+        pl.show()
+
     return fig
 
 
 #%% Plotly functions
+
+def import_plotly():
+    ''' Try to import Plotly, but fail quietly if not available '''
+
+    # Try to import Plotly normally
+    try:
+        import plotly.graph_objects as go
+        return go
+
+    # If that failed, handle it gracefully
+    except Exception as E:
+
+        class PlotlyImportFailed(object):
+            ''' Define a micro-class to give a helpful error message if the import failed '''
+
+            def __init__(self, E):
+                self.E = E
+
+            def __getattr__(self, attr):
+                errormsg = f'Plotly import failed: {str(self.E)}. Plotly plotting is not available. Please install Plotly first.'
+                raise ImportError(errormsg)
+
+        go = PlotlyImportFailed(E)
+        return go
+
 
 def get_individual_states(sim):
     ''' Helper function to convert people into integers '''
@@ -556,6 +598,7 @@ plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
 
 def plotly_interventions(sim, fig, add_to_legend=False):
     ''' Add vertical lines for interventions to the plot '''
+    go = import_plotly() # Load Plotly
     if sim['interventions']:
         for interv in sim['interventions']:
             if hasattr(interv, 'days'):
@@ -567,9 +610,11 @@ def plotly_interventions(sim, fig, add_to_legend=False):
                             fig.add_trace(go.Scatter(x=[interv_date], y=[0], mode='lines', name='Intervention change', line=dict(width=0.5, dash='dash')))
     return
 
+
 def plotly_sim(sim, do_show=False):
     ''' Main simulation results -- parallel of sim.plot() '''
 
+    go = import_plotly() # Load Plotly
     plots = []
     to_plot = cvd.get_sim_plots()
     for p,title,keylabels in to_plot.enumitems():
@@ -599,8 +644,9 @@ def plotly_sim(sim, do_show=False):
 
 def plotly_people(sim, do_show=False):
     ''' Plot a "cascade" of people moving through different states '''
-    z, states = get_individual_states(sim)
 
+    go = import_plotly() # Load Plotly
+    z, states = get_individual_states(sim)
     fig = go.Figure()
 
     for state in states[::-1]:  # Reverse order for plotting
@@ -628,6 +674,7 @@ def plotly_people(sim, do_show=False):
 def plotly_animate(sim, do_show=False):
     ''' Plot an animation of each person in the sim '''
 
+    go = import_plotly() # Load Plotly
     z, states = get_individual_states(sim)
 
     min_color = min(states, key=lambda x: x['value'])['value']

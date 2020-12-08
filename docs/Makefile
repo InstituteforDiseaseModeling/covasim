@@ -50,6 +50,7 @@ clean: # The -f is to ignore missing files, not to force remove
 	rm -rf $(BUILDDIR)
 	rm -f covasim*.rst
 	rm -f modules.rst
+	cd tutorials; ./clean_outputs
 
 .PHONY: generate-api
 

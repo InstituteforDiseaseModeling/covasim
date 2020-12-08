@@ -2,8 +2,6 @@
 Tests of simulation parameters from
 ../../covasim/README.md
 """
-import unittest
-import pytest
 
 from unittest_support_classes import CovaSimTest, TestProperties
 
@@ -101,9 +99,7 @@ class DiseaseMortalityTests(CovaSimTest):
         """
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
-        end_sample_size = 10 # last few days most interesting
         death_probs = [0.01, 0.05, 0.10, 0.15]
-        # old_ratio_sum = 0
         old_cumulative_deaths = 0
         for death_prob in death_probs:
             prob_dict = {
@@ -117,24 +113,11 @@ class DiseaseMortalityTests(CovaSimTest):
             recoveries_at_timestep_channel = self.get_full_result_channel(
                 ResKeys.recovered_at_timestep
             )
-            # new_ratio = []
-            # for x in range(len(deaths_at_timestep_channel) - end_sample_size, len(deaths_at_timestep_channel)):
-            #     new_ratio.append(deaths_at_timestep_channel[x]/
-            #                      recoveries_at_timestep_channel[x])
-            #     pass
-            # self.assertGreater(sum(new_ratio), old_ratio_sum,
-            #                    msg="As cfr increases, ratio should increase")
             cumulative_deaths = self.get_day_final_channel_value(
                 ResKeys.deaths_cumulative
             )
             self.assertGreaterEqual(cumulative_deaths, old_cumulative_deaths,
                                     msg="Should be more deaths with higer ratio")
             old_cumulative_deaths = cumulative_deaths
-            # old_ratio_sum = sum(new_ratio)
         pass
 
-    @unittest.skip("P3")
-    def test_cfr_by_age(self):
-        pass
-
-    # TODO: Define these as per parameter definitions

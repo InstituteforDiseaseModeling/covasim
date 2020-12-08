@@ -12,68 +12,42 @@ footer p {
     margin-bottom: 0px;
 }
 
-.wy-nav-content {
-    max-width: none;
-}
-
-.wy-side-nav-search {
-    background-color: #0073a3;
-}
-
 h1, h2, .rst-content .toctree-wrapper p.caption, h3, h4, h5, h6, legend {
     font-family: "Montserrat", "Lato", "Open Sans", sans-serif;
+    margin-bottom: 0.5em;
 }
 
-.wy-menu p.caption {
-    color: #e3e3e3;
+h1 {
+    margin-bottom: 1.0em;
 }
 
-.section li p.first {
-    margin-top: 8px;
-    margin-bottom: 3px;
+h2 {
+    font-size: 125%;
+    color: #0055af !important;
+    margin-bottom: 1.0em;
+}
+
+h3 {
+    font-size: 115%;
+    color: #38761d;
+}
+
+h4 {
+    font-size: 105%;
+    color: #bf9000;
 }
 
 div.document span.search-highlight {
     background-color: yellow;
 }
 
-img.math {
-    width: auto;
-}
-
 .btn {
     margin-bottom: 10px;
 }
 
-.highlight-json::before {
-    content: "↕ Click to expand JSON example";
-    padding: 8px 0 8px 10px;
+.rst-content table.docutils:not(.field-list) tr:nth-child(2n-1) td, .wy-table-backed, .wy-table-odd td, .wy-table-striped tr:nth-child(2n-1) td {
+    background-color: #acf;
 }
-
-.highlight-json .highlight {
-    display: none;
-}
-
-.highlight-json.expanded::before {
-    content: "↕ Click to collapse JSON example";
-    padding: 8px 0 8px 10px;
-}
-
-.highlight-json.expanded {
-    height: auto;
-    border-bottom: 1px solid !important;
-}
-
-.highlight-json.expanded > .highlight {
-    display: block;
-}
-
-.highlight-json {
-    height: 35px; /* Collapsed by default */
-    overflow: hidden;
-    background-color: #f3f6f6 !important;
-    position: relative;
-    border-bottom: 3px solid !important;
-    border-bottom-color: #ced3d3 !important;
-    padding-top: 5px !important;
+tr.row-even {
+    background-color: #def;
 }

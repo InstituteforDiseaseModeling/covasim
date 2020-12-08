@@ -1,9 +1,0 @@
-version: "2"
-services:
-  covasim:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile
-    image: idmod/covasim:latest
-    ports:
-      - 8000:80

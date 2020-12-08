@@ -9,10 +9,98 @@ All notable changes to the codebase are documented in this file. Changes that ma
    :depth: 1
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (1.7.x)
+Latest versions (2.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+
+Version 2.0.0 (2020-12-05)
+--------------------------
+
+This version contains a number of major updates. Note: this version requires Sciris 1.0, so when upgrading to this version, you may also need to upgrade Sciris (``pip install sciris --upgrade``).
+
+Highlights
+^^^^^^^^^^
+- **Parameters**: Default infection fatality ratio estimates have been updated in line with the latest literature.
+- **Plotting**: Plotting defaults have been updated to support a wider range of systems, and users now have greater control over plotting and options.
+- **New functions**: New methods have been added to display objects in different levels of detail; new methods have also been added for working with data, adding contacts, and analyzing multisims.
+- **Webapp**: The webapp has been moved to a separate Python package, ``covasim_webapp`` (available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__).
+- **Documentation**: A comprehensive set of tutorials has been added, along with a glossary and FAQ; see https://docs.covasim.org or look in the ``docs/tutorials`` folder.
+
+Parameter updates
+^^^^^^^^^^^^^^^^^
+- The infection fatality rate rate has been updated to use O'Driscoll et al. (https://www.nature.com/articles/s41586-020-2918-0). We also validated against other estimates, most notably Brazeau et al. (https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/covid-19/report-34-ifr). The new estimates have similar estimates for older ages, but tend to be lower for younger ages, especially the 60–70 age category.
+- While we have not made any updates to the hospitalization rate, viral load distribution, or infectious durations at this time, we are currently reviewing the literature on these parameters and may be making updates relatively soon.
+- A new ``version`` option has been added to sims, to use an earlier version of parameters if desired. For example, you can use Covasim version 2.0 but with default parameters from the previous version (1.7.6) via ``sim = cv.Sim(version='1.7.6')``. If you wish to load and inspect parameters without making a sim, you can use e.g. ``cv.get_version_pars('1.7.6')``.
+- A ``cv.migration()`` function has also been added. Covasim sims and multisims are "migrated" (updated to have the right structure) automatically if loading old versions. However, you may wish to call this function explicitly if you're migrating a custom saved object (e.g., a list of sims).
+
+Plotting and options
+^^^^^^^^^^^^^^^^^^^^
+- Plotting defaults have been updated to work better on a wider variety of systems.
+- Almost all plotting functions now take both ``fig`` and ``ax`` keywords, which let you pass in existing figures/axes to be used by the plot.
+- A new ``options`` module has been added that lets the user specify plotting and run options; see ``cv.options.help()`` for a list of the options.
+- Plot options that were previously set on a per-figure basis (e.g. font size, font family) are now set globally via the ``options`` module, e.g. ``cv.options.set(font_size=18)``.
+- If plots are too small, you can increase the DPI (default 100), e.g. ``cv.options.set(dpi=200)``. If they are too large, you can decrease it, e.g. ``cv.options.set(dpi=50)``.
+- In addition, you can also change whether Covasim uses 32-bit or 64-bit arithmetic. To use 64-bit (which is about 20% slower and uses about 40% more memory), use ``cv.options.set(precision=64)``.
+- Options can also now be set via environment variables. For example, you can set ``COVASIM_DPI`` to change the default DPI, and ``COVASIM_VERBOSE`` to set the default verbosity. For example, ``export COVASIM_VERBOSE=0`` is equivalent to ``cv.options.set(verbose=0)``. See ``cv.options.help()`` for the full list.
+- The built-in intervention plotting method was renamed from ``plot()`` to ``plot_intervention()``, allowing the user to define custom plotting functions that do something different.
+
+Webapp
+^^^^^^
+- The webapp has been moved to a separate repository and ``pip`` package, in order to improve installation and load times of Covasim.
+- The ``docker`` and ``.platform`` folders have been moved to ``covasim_webapp``.
+- Since web dependencies are no longer included, installing and importing Covasim both take half as much time as they did previously.
+
+Bugfixes
+^^^^^^^^
+- The ``quar_period`` argument is now correctly passed to the ``cv.contact_tracing()`` intervention. (Thanks to Scott McCrae for finding this bug.)
+- If the user supplies an incorrect type to ``cv.Layer.find_contacts()``, this is now caught and corrected. (Thanks to user sba5827 for finding this bug.)
+- Non-string ``Layer`` keys no longer raise an exception.
+- The ``sim.compute_r_eff()`` error message now gives correct instructions (contributed by `Andrea Cattaneo <https://github.com/InstituteforDiseaseModeling/covasim/pull/295>`__).
+- Parallelization in Jupyter notebooks (e.g. ``msim.run()``) should now work without crashing.
+- If parallelization (e.g. ``msim.run()``) is called outside a ``main`` block on Windows, this leads to a cryptic error. This error is now caught more elegantly.
+- Interventions now print out with their actual name (previously they all printed out as ``InterventionDict``).
+- The keyword argument ``test_sensitivity`` for ``cv.test_prob()`` has been renamed ``sensitivity``, for consistency with ``cv.test_num()``.
+
+New functions and methods
+^^^^^^^^^^^^^^^^^^^^^^^^^
+- Sims, multisims, scenarios, and people objects now have ``disp()``, ``summarize()``, and ``brief()`` methods, which display full detail, moderate detail, and very little detail about each. If ``cv.options.verbose`` is 0, then ``brief()`` will be used to display objects; otherwise, ``disp()`` will be used.
+- Two new functions have been added, ``sim.get_intervention()`` and ``sim.get_analyzer()``. These act very similarly to e.g. ``sim.get_interventions()``, except they return the last matching intervention/analyzer, rather than returning a list of interventions/analyzers.
+- MultiSims now have a ``shrink()`` method, which shrinks both the base sim and the other sims they contain.
+- MultiSims also provide options to compute statistics using either the mean or the median; this can be done via the ``msim.reduce(use_mean=True)`` method. Two convenience methods, ``msim.mean()`` and ``msim.median()``, have also been added as shortcuts.
+- Scenarios now have a ``scens.compare()`` method, which (like the multisim equivalent) creates a dataframe comparing results across scenarios.
+- Contacts now have new methods for handling layers, ``sim.people.contacts.add_layer()`` and ``sim.people.contacts.pop_layer()``. Additional validation on layers is also performed.
+- There is a new function, ``cv.data.show_locations()``, that lists locations for which demographic data are available. You can also now edit the data dictionaries directly, by modifying e.g. ``cv.data.country_age_data.data`` (suggested by `Andrea Cattaneo <https://github.com/InstituteforDiseaseModeling/covasim/issues/273>`__).
+
+Other changes
+^^^^^^^^^^^^^
+- There is a new verbose option for sims: ``cv.Sim(verbose='brief').run()`` will print a single line of output when the sim finishes (namely, ``sim.brief()``).
+- The argument ``n_cpus`` can now be supplied directly to ``cv.multirun()`` and ``msim.run()``.
+- The types ``cv.default_float`` and ``cv.default_int`` are now available at the top level (previously they had to be accessed by e.g. ``cv.defaults.default_float``).
+- Transmission trees now contain additional output; after ``tt = sim.make_transtree()``, a dataframe of key results is contained in ``tt.df``.
+- The default number of seed infections has been changed from 10 to 20 for greater numerical stability. (Note that this placeholder value should be overridden for all actual applications.) 
+- ``sim.run()`` no longer returns the results object by default (if you want it, set ``output=True``).
+- A migrations module has been added (in ``misc.py``). Objects are  now automatically migrated to the current version of Covasim whene loaded The function ``cv.migrate()`` can also be called explicitly on objects if needed.
+
+Documentation
+^^^^^^^^^^^^^
+- A glossary, FAQ, and tutorials have been added. All are available from https://docs.covasim.org.
+
+Regression information
+^^^^^^^^^^^^^^^^^^^^^^
+- To restore previous default parameters for simulations, use e.g. ``sim = cv.Sim(version='1.7.6')``. Note that this does not affect saved sims (which store their own parameters).
+- Any scripts that specify the ``test_sensitivity`` keyword for the ``test_prob`` intervention will need to rename that variable to ``sensitivity``.
+- Any scripts that used ``results = sim.run()`` will need to be updated to ``results = sim.run(output=True)``.
+- Any scripts that passed formatting options directly to plots should set these as options instead; e.g. ``sim.plot(font_size=18)`` should now be ``cv.options.set(font_size=18); sim.plot()``.
+- Any custom interventions that defined a custom ``plot()`` method should use ``plot_interventions()`` instead.
+- *GitHub info*: PRs `738 <https://github.com/amath-idm/covasim/pull/738>`__, `740 <https://github.com/amath-idm/covasim/pull/740>`__
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 1.7.x (1.6.0 – 1.7.6)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 1.7.6 (2020-10-23)
@@ -293,7 +381,9 @@ Other changes
 - Moved ``sweeps`` (Weights & Biases) to ``examples/wandb``.
 - Refactored cruise ship example to work again.
 - Various bugfixes (e.g. to plotting arguments, data scrapers, etc.).
-- *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previous behavior, use::
+- *Regression information*: To migrate an old parameter set ``pars`` to this version and to restore previous behavior, use:
+
+.. code-block:: python
 
     pars['analyzers'] = None # Add the new parameter key
     interv_func = pars.pop('interv_func', None) # Remove the deprecated key
@@ -438,7 +528,9 @@ Version 1.1.5 (2020-05-18)
 
 Version 1.1.4 (2020-05-18)
 --------------------------
-- Added a new hospital bed capacity constraint and renamed health system capacity parameters. To migrate an older set of parameters to this version, set::
+- Added a new hospital bed capacity constraint and renamed health system capacity parameters. To migrate an older set of parameters to this version, set:
+
+.. code-block:: python
 
     pars['no_icu_factor']  = pars.pop('OR_no_treat')
     pars['n_beds_icu']     = pars.pop('n_beds')

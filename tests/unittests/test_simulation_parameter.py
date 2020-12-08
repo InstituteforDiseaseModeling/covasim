@@ -180,52 +180,6 @@ class SimulationParameterTests(CovaSimTest):
                              f"be distinct.")
         pass
 
-    @unittest.skip('Disabled to improve test suite speed')
-    def test_timelimit(self):
-        """
-        Start timer, run a simulation with many
-        persons and a very short time limit
-        Verify that the simulation exits after time
-        limit expired.
-        """
-        short_time_limit = {
-            TPKeys.time_limit: 0.5
-        }
-        med_time_limit = {
-            TPKeys.time_limit: 1.0
-        }
-        long_time_limit = {
-            TPKeys.time_limit: 15.0
-        }
-        self.run_sim(params_dict=short_time_limit)
-        infections_channel_short = self.get_full_result_channel(
-            ResKeys.infectious_at_timestep
-        )
-        self.run_sim(params_dict=med_time_limit)
-        infections_channel_med = self.get_full_result_channel(
-            ResKeys.infectious_at_timestep
-        )
-        self.run_sim(params_dict=long_time_limit)
-        infections_channel_long = self.get_full_result_channel(
-            ResKeys.infectious_at_timestep
-        )
-        def remove_zeros(channel):
-            while 0 in channel:
-                channel.remove(0)
-                pass
-            return channel
-        infections_channel_long = remove_zeros(infections_channel_long)
-        infections_channel_med = remove_zeros(infections_channel_med)
-        infections_channel_short = remove_zeros(infections_channel_short)
-        self.assertGreaterEqual(len(infections_channel_long), len(infections_channel_med))
-        self.assertGreaterEqual(len(infections_channel_med), len(infections_channel_short))
-        if self.is_debugging:
-            print(f"Short sim length: {len(infections_channel_short)}")
-            print(f"Med sim length: {len(infections_channel_med)}")
-            print(f"Long sim length: {len(infections_channel_long)}")
-        pass
-    pass
-
 
 if __name__ == '__main__':
     unittest.main()

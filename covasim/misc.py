@@ -2,205 +2,28 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
+import os
 import numpy as np
 import pandas as pd
 import pylab as pl
 import sciris as sc
-import datetime as dt
 import scipy.stats as sps
-from . import version as cvver
+from . import version as cvv
 
 
-#%% Day and date functions
+#%% Convenience imports from Sciris
 
 __all__ = ['date', 'day', 'daydiff', 'date_range']
 
-
-def date(obj, *args, start_date=None, dateformat=None, as_date=True):
-    '''
-    Convert a string or a datetime object to a date object. To convert to an integer
-    from the start day, it is recommended you supply a start date, or use sim.date()
-    instead; otherwise, it will calculate the date counting days from 2020-01-01.
-    This means that the output of cv.date() will not necessarily match the output
-    of sim.date() for an integer input.
-
-    Args:
-        obj (str, date, datetime, list, array): the object to convert
-        args (str, date, datetime): additional objects to convert
-        start_date (str, date, datetime): the starting date, if an integer is supplied
-        dateformat (str): the format to return the date in
-        as_date (bool): whether to return as a datetime date instead of a string
-
-    Returns:
-        dates (date or list): either a single date object, or a list of them
-
-    **Examples**::
-
-        cv.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-        cv.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
-        cv.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
-    '''
-
-    if obj is None:
-        return None
-
-    # Convert to list and handle other inputs
-    if isinstance(obj, np.ndarray):
-        obj = obj.tolist() # If it's an array, convert to a list
-    obj = sc.promotetolist(obj) # Ensure it's iterable
-    obj.extend(args)
-    if dateformat is None:
-        dateformat = '%Y-%m-%d'
-    if start_date is None:
-        start_date = '2020-01-01'
-
-    dates = []
-    for d in obj:
-        if d is None:
-            dates.append(d)
-            continue
-        try:
-            if type(d) == dt.date: # Do not use isinstance, since must be the exact type
-                pass
-            elif sc.isstring(d):
-                d = sc.readdate(d).date()
-            elif isinstance(d, dt.datetime):
-                d = d.date()
-            elif sc.isnumber(d):
-                if start_date is None:
-                    errormsg = f'To convert the number {d} to a date, you must supply start_date'
-                    raise ValueError(errormsg)
-                d = date(start_date) + dt.timedelta(days=int(d))
-            else:
-                errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
-                raise TypeError(errormsg)
-            if as_date:
-                dates.append(d)
-            else:
-                dates.append(d.strftime(dateformat))
-        except Exception as E:
-            errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
-            raise ValueError(errormsg)
-
-    # Return an integer rather than a list if only one provided
-    if len(dates)==1:
-        dates = dates[0]
-
-    return dates
-
-
-def day(obj, *args, start_day=None):
-    '''
-    Convert a string, date/datetime object, or int to a day (int), the number of
-    days since the start day. See also date() and daydiff(). Used primarily via
-    sim.day() rather than directly.
-
-    Args:
-        obj (str, date, int, or list): convert any of these objects to a day relative to the start day
-        args (list): additional days
-        start_day (str or date): the start day; if none is supplied, return days since 2020-01-01.
-
-    Returns:
-        days (int or str): the day(s) in simulation time
-
-    **Example**::
-
-        sim.day('2020-04-05') # Returns 35
-    '''
-
-    # Do not process a day if it's not supplied
-    if obj is None:
-        return None
-    if start_day is None:
-        start_day = '2020-01-01'
-
-    # Convert to list
-    if sc.isstring(obj) or sc.isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
-        obj = sc.promotetolist(obj) # Ensure it's iterable
-    elif isinstance(obj, np.ndarray):
-        obj = obj.tolist() # Convert to list if it's an array
-    obj.extend(args)
-
-    days = []
-    for d in obj:
-        if d is None:
-            days.append(d)
-        elif sc.isnumber(d):
-            days.append(int(d)) # Just convert to an integer
-        else:
-            try:
-                if sc.isstring(d):
-                    d = sc.readdate(d).date()
-                elif isinstance(d, dt.datetime):
-                    d = d.date()
-                d_day = (d - date(start_day)).days # Heavy lifting -- actually compute the day
-                days.append(d_day)
-            except Exception as E:
-                errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
-                raise ValueError(errormsg)
-
-    # Return an integer rather than a list if only one provided
-    if len(days)==1:
-        days = days[0]
-
-    return days
-
-
-def daydiff(*args):
-    '''
-    Convenience function to find the difference between two or more days. With
-    only one argument, calculate days since 2020-01-01.
-
-    **Example**::
-
-        since_ny = cv.daydiff('2020-03-20') # Returns 79 days since Jan. 1st
-        diff     = cv.daydiff('2020-03-20', '2020-04-05') # Returns 16
-        diffs    = cv.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
-    '''
-    days = [date(day) for day in args]
-    if len(days) == 1:
-        days.insert(0, date('2020-01-01')) # With one date, return days since Jan. 1st
-
-    output = []
-    for i in range(len(days)-1):
-        diff = (days[i+1] - days[i]).days
-        output.append(diff)
-
-    if len(output) == 1:
-        output = output[0]
-
-    return output
-
-
-def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=None):
-    '''
-    Return a list of dates from the start date to the end date. To convert a list
-    of days (as integers) to dates, use cv.date() instead.
-
-    Args:
-        start_date (int/str/date): the starting date, in any format
-        end_date (int/str/date): the end date, in any format
-        inclusive (bool): if True (default), return to end_date inclusive; otherwise, stop the day before
-        as_date (bool): if True, return a list of datetime.date objects instead of strings
-        dateformat (str): passed to date()
-
-    **Example**::
-
-        dates = cv.date_range('2020-03-01', '2020-04-04')
-    '''
-    start_day = day(start_date)
-    end_day = day(end_date)
-    if inclusive:
-        end_day += 1
-    days = np.arange(start_day, end_day)
-    dates = date(days, as_date=as_date, dateformat=dateformat)
-    return dates
-
+date       = sc.date
+day        = sc.day
+daydiff    = sc.daydiff
+date_range = sc.daterange
 
 
 #%% Loading/saving functions
 
-__all__ += ['load_data', 'load', 'save']
+__all__ += ['load_data', 'load', 'save', 'migrate', 'savefig']
 
 
 def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
@@ -269,23 +92,34 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
     return data
 
 
-def load(*args, **kwargs):
+def load(*args, do_migrate=True, **kwargs):
     '''
     Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
     cv.Scenarios.load().
 
+    Args:
+        filename (str): file to load
+        do_migrate (bool): whether to migrate if loading an old object
+        args (list): passed to sc.loadobj()
+        kwargs (dict): passed to sc.loadobj()
+
+    Returns:
+        Loaded object
+
     **Examples**::
 
-        sim = cv.load('calib.sim')
+        sim = cv.load('calib.sim') # Equivalent to cv.Sim.load('calib.sim')
         scens = cv.load(filename='school-closures.scens', folder='schools')
     '''
     obj = sc.loadobj(*args, **kwargs)
     if hasattr(obj, 'version'):
-        v_curr = cvver.__version__
+        v_curr = cvv.__version__
         v_obj = obj.version
         cmp = check_version(v_obj, verbose=False)
         if cmp != 0:
             print(f'Note: you have Covasim v{v_curr}, but are loading an object from v{v_obj}')
+            if do_migrate:
+                obj = migrate(obj, v_obj, v_curr)
     return obj
 
 
@@ -294,19 +128,114 @@ def save(*args, **kwargs):
     Convenience method for sc.saveobj() and equivalent to cv.Sim.save() or
     cv.Scenarios.save().
 
+    Args:
+        filename (str): file to save to
+        obj (object): object to save
+        args (list): passed to sc.saveobj()
+        kwargs (dict): passed to sc.saveobj()
+
+    Returns:
+        Filename the object is saved to
+
     **Examples**::
 
-        cv.save('calib.sim', sim)
+        cv.save('calib.sim', sim) # Equivalent to sim.save('calib.sim')
         cv.save(filename='school-closures.scens', folder='schools', obj=scens)
     '''
     filepath = sc.saveobj(*args, **kwargs)
     return filepath
 
 
+def migrate(obj, update=True, verbose=True, die=False):
+    '''
+    Define migrations allowing compatibility between different versions of saved
+    files. Usually invoked automatically upon load, but can be called directly by
+    the user to load custom objects, e.g. lists of sims.
 
-#%% Figure/plotting functions
+    Currently supported objects are sims, multisims, scenarios, and people.
 
-__all__ += ['savefig', 'get_rows_cols', 'maximize']
+    Args:
+        obj (any): the object to migrate
+        update (bool): whether to update version information to current version after successful migration
+        verbose (bool): whether to print warnings if something goes wrong
+        die (bool): whether to raise an exception if something goes wrong
+
+    Returns:
+        The migrated object
+
+    **Example**::
+
+        sims = cv.load('my-list-of-sims.obj')
+        sims = [cv.migrate(sim) for sim in sims]
+    '''
+    from . import base as cvb
+    from . import run as cvr
+    from . import interventions as cvi
+
+    # Migrations for simulations
+    if isinstance(obj, cvb.BaseSim):
+        sim = obj
+
+        # Migration from <2.0.0 to 2.0.0
+        if sc.compareversions(sim.version, '2.0.0') == -1: # Migrate from <2.0 to 2.0
+            if verbose: print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
+
+            # Add missing attribute
+            if not hasattr(sim, '_default_ver'):
+                sim._default_ver = None
+
+            # Recursively migrate people if needed
+            if sim.people:
+                sim.people = migrate(sim.people, update=update)
+
+            # Rename intervention attribute
+            tps = sim.get_interventions(cvi.test_prob)
+            for tp in tps:
+                try:
+                    tp.sensitivity = tp.test_sensitivity
+                    del tp.test_sensitivity
+                except:
+                    pass
+
+    # Migrations for People
+    elif isinstance(obj, cvb.BasePeople):
+        ppl = obj
+        if not hasattr(ppl, 'version'): # For people prior to 2.0
+            if verbose: print(f'Migrating people from version <2.0 to version {cvv.__version__}')
+            cvb.set_metadata(ppl) # Set all metadata
+
+    # Migrations for MultiSims -- use recursion
+    elif isinstance(obj, cvr.MultiSim):
+        msim = obj
+        msim.base_sim = migrate(msim.base_sim, update=update)
+        msim.sims = [migrate(sim, update=update) for sim in msim.sims]
+        if not hasattr(msim, 'version'): # For msims prior to 2.0
+            if verbose: print(f'Migrating multisim from version <2.0 to version {cvv.__version__}')
+            cvb.set_metadata(msim) # Set all metadata
+            msim.label = None
+
+    # Migrations for Scenarios
+    elif isinstance(obj, cvr.Scenarios):
+        scens = obj
+        scens.base_sim = migrate(scens.base_sim, update=update)
+        for key,simlist in scens.sims.items():
+            scens.sims[key] = [migrate(sim, update=update) for sim in simlist] # Nested loop
+        if not hasattr(scens, 'version'): # For scenarios prior to 2.0
+            if verbose: print(f'Migrating scenarios from version <2.0 to version {cvv.__version__}')
+            cvb.set_metadata(scens) # Set all metadata
+            scens.label = None
+
+    # Unreconized object type
+    else:
+        errormsg = f'Object {obj} of type {type(obj)} is not understood and cannot be migrated: must be a sim, multisim, scenario, or people object'
+        if verbose: print(errormsg)
+        elif die: raise TypeError(errormsg)
+
+    # If requested, update the stored version to the current version
+    if update:
+        obj.version = cvv.__version__
+
+    return obj
 
 
 def savefig(filename=None, comments=None, **kwargs):
@@ -337,14 +266,14 @@ def savefig(filename=None, comments=None, **kwargs):
         filename = f'covasim_{now}.png'
 
     metadata = {}
-    metadata['Covasim version'] = cvver.__version__
+    metadata['Covasim version'] = cvv.__version__
     gitinfo = git_info()
     for key,value in gitinfo['covasim'].items():
         metadata[f'Covasim {key}'] = value
     for key,value in gitinfo['called_by'].items():
         metadata[f'Covasim caller {key}'] = value
     metadata['Covasim current time'] = sc.getdate()
-    metadata['Covasim calling file'] = get_caller()
+    metadata['Covasim calling file'] = sc.getcaller()
     if comments:
         metadata['Covasim comments'] = comments
 
@@ -358,103 +287,10 @@ def savefig(filename=None, comments=None, **kwargs):
     return filename
 
 
-def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
-    '''
-    If you have 37 plots, then how many rows and columns of axes do you know? This
-    function convert a number (i.e. of plots) to a number of required rows and columns.
-    If nrows or ncols is provided, the other will be calculated. Ties are broken
-    in favor of more rows (i.e. 7x6 is preferred to 6x7).
-
-    Args:
-        n (int): the number (of plots) to accommodate
-        nrows (int): if supplied, keep this fixed and calculate the columns
-        ncols (int): if supplied, keep this fixed and calculate the rows
-        ratio (float): sets the number of rows relative to the number of columns (i.e. for 100 plots, 1 will give 10x10, 4 will give 20x5, etc.).
-
-    Returns:
-        A tuple of ints for the number of rows and the number of columns (which, of course, you can reverse)
-
-    **Examples**::
-
-        nrows,ncols = cv.get_rows_cols(36) # Returns 6,6
-        nrows,ncols = cv.get_rows_cols(37) # Returns 7,6
-        nrows,ncols = cv.get_rows_cols(100, ratio=2) # Returns 15,7
-        nrows,ncols = cv.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
-    '''
-
-    # Simple cases -- calculate the one missing
-    if nrows is not None:
-        ncols = int(np.ceil(n/nrows))
-    elif ncols is not None:
-        nrows = int(np.ceil(n/ncols))
-
-    # Standard case -- calculate both
-    else:
-        guess = np.sqrt(n)
-        nrows = int(np.ceil(guess*np.sqrt(ratio)))
-        ncols = int(np.ceil(n/nrows)) # Could also call recursively!
-
-    return nrows,ncols
-
-
-def maximize(fig=None, die=False):
-    '''
-    Maximize the current (or supplied) figure. Note: not guaranteed to work for
-    all Matplotlib backends (e.g., agg).
-
-    Args:
-        fig (Figure): the figure object; if not supplied, use the current active figure
-        die (bool): whether to propagate an exception if encountered (default no)
-    '''
-    if fig is not None:
-        pl.figure(fig.number) # Set the current figure
-    try:
-        mng = pl.get_current_fig_manager()
-        mng.window.showMaximized()
-    except Exception as E:
-        errormsg = f'Warning: maximizing the figure failed: {str(E)}'
-        if die:
-            raise RuntimeError(errormsg) from E
-        else:
-            print(errormsg)
-    return
-
 
 #%% Versioning functions
 
-__all__ += ['get_caller', 'git_info', 'check_version', 'check_save_version', 'get_png_metadata']
-
-
-def get_caller(frame=2, tostring=True):
-        '''
-        Try to get information on the calling function, but fail gracefully.
-
-        Frame 1 is the current file (this one), so not very useful. Frame 2 is
-        the default assuming it is being called directly. Frame 3 is used if
-        another function is calling this function internally.
-
-        Args:
-            frame (int): how many frames to descend (e.g. the caller of the caller of the...)
-            tostring (bool): whether to return a string instead of a dict
-
-        Returns:
-            output (str/dict): the filename and line number of the calling function, either as a string or dict
-        '''
-        try:
-            import inspect
-            result = inspect.getouterframes(inspect.currentframe(), 2)
-            fname = str(result[frame][1])
-            lineno = str(result[frame][2])
-            if tostring:
-                output = f'{fname}, line {lineno}'
-            else:
-                output = {'filename':fname, 'lineno':lineno}
-        except Exception as E:
-            if tostring:
-                output = f'Calling function information not available ({str(E)})'
-            else:
-                output = {'filename':'N/A', 'lineno':'N/A'}
-        return output
+__all__ += ['git_info', 'check_version', 'check_save_version', 'get_version_pars', 'get_png_metadata']
 
 
 def git_info(filename=None, check=False, comments=None, old_info=None, die=False, indent=2, verbose=True, frame=2, **kwargs):
@@ -486,8 +322,8 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
         filename = filename.replace('.py', '.gitinfo')
 
     # Get git info
-    calling_file = sc.makefilepath(get_caller(frame=frame, tostring=False)['filename'])
-    cv_info = {'version':cvver.__version__}
+    calling_file = sc.makefilepath(sc.getcaller(frame=frame, tostring=False)['filename'])
+    cv_info = {'version':cvv.__version__}
     cv_info.update(sc.gitinfo(__file__, verbose=False))
     caller_info = sc.gitinfo(calling_file, verbose=False)
     caller_info['filename'] = calling_file
@@ -540,7 +376,7 @@ def check_version(expected, die=False, verbose=True):
     else:
         valid = 0 # Assume == is the only valid comparison
     expected = expected.lstrip('<=>') # Remove comparator information
-    version = cvver.__version__
+    version = cvv.__version__
     compare = sc.compareversions(version, expected) # Returns -1, 0, or 1
     relation = ['older', '', 'newer'][compare+1] # Picks the right string
     if relation: # Versions mismatch, print warning or raise error
@@ -577,10 +413,49 @@ def check_save_version(expected=None, filename=None, die=False, verbose=True, **
 
     # Now, check and save the git info
     if filename is None:
-        filename = get_caller(tostring=False)['filename']
+        filename = sc.getcaller(tostring=False)['filename']
     git_info(filename=filename, frame=3, **kwargs)
 
     return
+
+
+def get_version_pars(version, verbose=True):
+    '''
+    Function for loading parameters from the specified version.
+
+    Args:
+        version (str): the version to load parameters from
+
+    Returns:
+        Dictionary of parameters from that version
+    '''
+    regression_folder = sc.thisdir(__file__, 'regression')
+    pattern = 'pars_v*.json'
+    requested = pattern.replace('*', version)
+    filepaths = sc.getfilelist(regression_folder, pattern=pattern)
+    files = [os.path.basename(f) for f in filepaths]
+    if requested in files: # If there's an exact match
+        match = requested
+    else: # No match, find the nearest matching file
+        withmatch = files + [requested] # Add this version
+        withmatch.sort() # Sort the files
+        index = withmatch.index(requested)
+        if index>0:
+            match = withmatch[index-1] # Get latest earlier version -- note that this assumes versions are in alphabetical order, which they currently are!
+        else:
+            filestr = '\n'.join(files)
+            errormsg = f'Could not find version {version} among options:\n{filestr}'
+            raise ValueError(errormsg)
+
+    # Load the parameters
+    pars = sc.loadjson(filename=match, folder=regression_folder)
+    if verbose:
+        if match == requested:
+            print(f'Loaded parameters from {match}')
+        else:
+            print(f'No exact match for parameters "{version}" found; using "{match}" instead')
+
+    return pars
 
 
 def get_png_metadata(filename, output=False):
@@ -616,7 +491,6 @@ def get_png_metadata(filename, output=False):
         return
 
 
-
 #%% Simulation/statistics functions
 
 __all__ += ['get_doubling_time', 'poisson_test', 'compute_gof']
@@ -640,10 +514,10 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
     # Validate inputs: series
     if series is None or isinstance(series, str):
         if not sim.results_ready:
-            raise Exception(f"Results not ready, cannot calculate doubling time")
+            raise Exception("Results not ready, cannot calculate doubling time")
         else:
             if series is None or series not in sim.result_keys():
-                sc.printv(f"Series not supplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
+                sc.printv("Series not supplied or not found in results; defaulting to use cumulative exposures", 1, verbose)
                 series='cum_infections'
             series = sim.results[series].values
     else:
@@ -664,7 +538,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
     # Deal with moving window
     if moving_window is not None:
         if not sc.isnumber(moving_window):
-            sc.printv(f"Moving window should be an integer; ignoring and calculating single result", 1, verbose)
+            sc.printv("Moving window should be an integer; ignoring and calculating single result", 1, verbose)
             doubling_time = get_doubling_time(sim, series=series, start_day=start_day, end_day=end_day, moving_window=None, exp_approx=exp_approx)
 
         else:
@@ -698,7 +572,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
                     doubling_time = int_length * np.log(2) / np.log(r)
                     doubling_time = min(doubling_time, max_doubling_time)  # Otherwise, it's unbounded
             else:
-                raise ValueError(f"Can't calculate doubling time with exponential approximation when initial value is zero.")
+                raise ValueError("Can't calculate doubling time with exponential approximation when initial value is zero.")
         else:
 
             if np.any(series[start_day:end_day]): # Deal with zero values if possible

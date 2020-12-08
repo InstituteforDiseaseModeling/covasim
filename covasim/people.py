@@ -6,6 +6,7 @@ Defines the Person class and functions associated with making people.
 import numpy as np
 import sciris as sc
 from collections import defaultdict
+from . import version as cvv
 from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
@@ -42,6 +43,8 @@ class People(cvb.BasePeople):
             pars = {'pop_size':pars} # Ensure it's a dictionary
         self.pars     = pars # Equivalent to self.set_pars(pars)
         self.pop_size = int(pars['pop_size'])
+        self.location = pars.get('location') # Try to get location, but set to None otherwise
+        self.version  = cvv.__version__ # Store version info
 
         # Other initialization
         self.t = 0 # Keep current simulation time
@@ -497,13 +500,15 @@ class People(cvb.BasePeople):
         layer).
 
         Args:
-            bins (arr): age bins to use (default, 0-100 in one-year bins)
-            width (float): bar width
-            font_size (float): size of font
-            alpha (float): transparency of the plots
-            fig_args (dict): passed to pl.figure()
-            axis_args (dict): passed to pl.subplots_adjust()
-            plot_args (dict): passed to pl.plot()
+            bins      (arr)   : age bins to use (default, 0-100 in one-year bins)
+            width     (float) : bar width
+            font_size (float) : size of font
+            alpha     (float) : transparency of the plots
+            fig_args  (dict)  : passed to pl.figure()
+            axis_args (dict)  : passed to pl.subplots_adjust()
+            plot_args (dict)  : passed to pl.plot()
+            do_show   (bool)  : whether to show the plot
+            fig       (fig)   : handle of existing figure to plot into
         '''
         fig = cvplt.plot_people(people=self, *args, **kwargs)
         return fig

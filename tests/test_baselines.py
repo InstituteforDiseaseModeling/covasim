@@ -11,10 +11,10 @@ do_plot = 1
 do_save = 0
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
-parameters_filename = sc.thisdir(__file__, 'regression', f'pars_v{cv.__version__}.json')
+parameters_filename = sc.thisdir(cv.__file__, 'regression', f'pars_v{cv.__version__}.json')
 
 
-def make_sim(use_defaults=False, do_plot=False):
+def make_sim(use_defaults=False, do_plot=False, **kwargs):
     '''
     Define a default simulation for testing the baseline -- use hybrid and include
     interventions to increase coverage. If run directly (not via pytest), also
@@ -28,7 +28,7 @@ def make_sim(use_defaults=False, do_plot=False):
 
     # Define the parameters
     pars = dict(
-        pop_size      = 20000,        # Population size
+        pop_size      = 20e3,         # Population size
         pop_infected  = 100,          # Number of initial infections -- use more for increased robustness
         pop_type      = 'hybrid',     # Population to use -- "hybrid" is random with household, school,and work structure
         n_days        = 60,           # Number of days to simulate
@@ -36,6 +36,7 @@ def make_sim(use_defaults=False, do_plot=False):
         rand_seed     = 2,            # Set a non-default seed
         interventions = [cb, tp, ct], # Include the most common interventions
     )
+    pars = sc.mergedicts(pars, kwargs)
 
     # Create the sim
     if use_defaults:
@@ -91,7 +92,7 @@ def test_baseline():
     old_keys = set(old.keys())
     new_keys = set(new.keys())
     if old_keys != new_keys:
-        errormsg = f"Keys don't match!\n"
+        errormsg = "Keys don't match!\n"
         missing = list(old_keys - new_keys)
         extra   = list(new_keys - old_keys)
         if missing:
@@ -207,7 +208,7 @@ def test_benchmark(do_save=do_save):
     for r in range(repeats):
 
         # Create the sim
-        sim = cv.Sim(verbose=0)
+        sim = make_sim(verbose=0)
 
         # Time initialization
         t0 = sc.tic()

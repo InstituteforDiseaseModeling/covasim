@@ -345,56 +345,6 @@ class InterventionTests(CovaSimTest):
                              msg=f"With all layers at 0 beta, the cumulative infections at {last_intervention_day}"
                                  f" should be the same as at the end.")
 
-    @unittest.skip("TODO: re-enable when synthpops is guaranteed to be here")
-    def test_change_beta_layers_synthpops(self):
-        self.is_debugging = False
-        initial_infected = 10
-        params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 60,
-            SimKeys.initial_infected_count: initial_infected
-        }
-        self.set_simulation_parameters(params_dict=params)
-        day_of_change = 25
-        change_multipliers = [0.0]
-        layer_keys = ['c','s','w','h']
-
-        sequence_days = []
-        sequence_interventions = []
-        current_layers = []
-
-        for k in layer_keys: # Zero out one layer at a time
-            day_of_change += 5
-            current_layers.append(k)
-            self.intervention_set_changebeta(
-                days_array=[day_of_change],
-                multiplier_array=change_multipliers,
-                layers=current_layers
-            )
-            sequence_days.append(day_of_change)
-            sequence_interventions.append(self.interventions)
-            self.interventions = None
-            pass
-        self.intervention_build_sequence(day_list=sequence_days,
-                                         intervention_list=sequence_interventions)
-        self.run_sim(population_type='synthpops')
-        last_intervention_day = sequence_days[-1]
-        first_intervention_day = sequence_days[0]
-        cum_infections_channel= self.get_full_result_channel(ResultsKeys.infections_cumulative)
-        self.assertGreater(cum_infections_channel[sequence_days[0]-1],
-                           initial_infected,
-                           msg=f"Before intervention at day {sequence_days[0]}, there should be infections happening.")
-        self.assertGreater(cum_infections_channel[last_intervention_day],
-                           cum_infections_channel[first_intervention_day],
-                           msg=f"Cumulative infections should grow with only some layers enabled.")
-        self.assertEqual(cum_infections_channel[last_intervention_day],
-                         cum_infections_channel[-1],
-                         msg=f"With all layers at 0 beta, the cumulative infections at {last_intervention_day}"
-                             f" should be the same as at the end.")
-
-    # endregion
-
-    # region test_prob
     def verify_perfect_test_prob(self, start_day, test_delay, test_sensitivity,
                                  target_pop_count_channel,
                                  target_pop_new_channel,
@@ -454,6 +404,7 @@ class InterventionTests(CovaSimTest):
                                      f" Got {test_today} instead.")
             pass
         pass
+
 
     def test_test_prob_perfect_asymptomatic(self):
         '''
@@ -828,12 +779,6 @@ class InterventionTests(CovaSimTest):
         self.assertLess(infections_after_quarantine, infections_before_quarantine,
                         msg=f"10 Days after change beta but before quarantine: {infections_before_quarantine} "
                             f"should be less than 10 days after: {infections_after_quarantine}")
-
-    @unittest.skip("NYI")
-    def test_contact_tracing_perfect_by_layer(self):
-        # TODO: loop through the layers and reproduce the school test above
-        pass
-    # endregion
 
 
 if __name__ == '__main__':

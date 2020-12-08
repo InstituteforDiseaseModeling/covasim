@@ -7,7 +7,11 @@ Simple script for running the Covid-19 agent-based model
 print('Importing...')
 import sciris as sc
 import covasim as cv
-import fire
+try:
+    import fire # Optional import
+except ModuleNotFoundError as E:
+    errormsg = f'Please install the "fire" module first, e.g. pip install fire' # Also caught in make_people()
+    raise ModuleNotFoundError(errormsg) from E
 
 # Set filename if saving
 version  = 'v0'

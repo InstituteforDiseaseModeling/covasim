@@ -10,6 +10,7 @@ import sciris as sc
 from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
+from .settings import options as cvo
 
 
 __all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_stats', 'Fit', 'TransTree']
@@ -136,8 +137,8 @@ class snapshot(Analyzer):
         ''' Retrieve a snapshot from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
-        day  = cvm.day(key, start_day=self.start_day)
-        date = cvm.date(day, start_date=self.start_day, as_date=False)
+        day  = sc.day(key, start_day=self.start_day)
+        date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.snapshots:
             snapshot = self.snapshots[date]
         else:
@@ -168,7 +169,7 @@ class age_histogram(Analyzer):
 
         sim = cv.Sim(analyzers=cv.age_histogram())
         sim.run()
-        agehist = sim['analyzers'][0].get()
+        agehist = sim.get_analyzer()
 
         agehist = cv.age_histogram(sim=sim)
     '''
@@ -204,8 +205,8 @@ class age_histogram(Analyzer):
     def initialize(self, sim):
 
         # Handle days
-        self.start_day = cvm.date(sim['start_day'], as_date=False) # Get the start day, as a string
-        self.end_day   = cvm.date(sim['end_day'],   as_date=False) # Get the start day, as a string
+        self.start_day = sc.date(sim['start_day'], as_date=False) # Get the start day, as a string
+        self.end_day   = sc.date(sim['end_day'],   as_date=False) # Get the start day, as a string
         if self.days is None:
             self.days = self.end_day # If no day is supplied, use the last day
         self.days, self.dates = cvi.process_days(sim, self.days, return_dates=True) # Ensure days are in the right format
@@ -262,8 +263,8 @@ class age_histogram(Analyzer):
         ''' Retrieve a specific histogram from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
-        day  = cvm.day(key, start_day=self.start_day)
-        date = cvm.date(day, start_date=self.start_day, as_date=False)
+        day  = sc.day(key, start_day=self.start_day)
+        date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.hists:
             hists = self.hists[date]
         else:
@@ -276,7 +277,7 @@ class age_histogram(Analyzer):
     def compute_windows(self):
         ''' Convert cumulative histograms to windows '''
         if len(self.hists)<2:
-            errormsg = f'You must have at least two dates specified to compute a window'
+            errormsg = 'You must have at least two dates specified to compute a window'
             raise ValueError(errormsg)
 
         self.window_hists = sc.objdict()
@@ -295,7 +296,7 @@ class age_histogram(Analyzer):
         return
 
 
-    def plot(self, windows=False, width=0.8, color='#F8A493', font_size=18, fig_args=None, axis_args=None, data_args=None):
+    def plot(self, windows=False, width=0.8, color='#F8A493', fig_args=None, axis_args=None, data_args=None):
         '''
         Simple method for plotting the histograms.
 
@@ -303,22 +304,19 @@ class age_histogram(Analyzer):
             windows (bool): whether to plot windows instead of cumulative counts
             width (float): width of bars
             color (hex or rgb): the color of the bars
-            font_size (float): size of font
             fig_args (dict): passed to pl.figure()
             axis_args (dict): passed to pl.subplots_adjust()
             data_args (dict): 'width', 'color', and 'offset' arguments for the data
         '''
 
         # Handle inputs
-        fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
+        fig_args = sc.mergedicts(dict(figsize=(12,8)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.08, right=0.92, bottom=0.08, top=0.92), axis_args)
         d_args = sc.objdict(sc.mergedicts(dict(width=0.3, color='#000000', offset=0), data_args))
-        pl.rcParams['font.size'] = font_size
 
         # Initialize
         n_plots = len(self.states)
-        n_rows = np.ceil(np.sqrt(n_plots)) # Number of subplot rows to have
-        n_cols = np.ceil(n_plots/n_rows) # Number of subplot columns to have
+        n_rows, n_cols = sc.get_rows_cols(n_plots)
         figs = []
 
         # Handle windows and what to plot
@@ -568,42 +566,42 @@ class daily_stats(Analyzer):
 
         datestr = f'day {sim.t} ({sim.date(sim.t)})'
         report  = f'*** Statistics report for {datestr} ***\n\n'
-        report += f'Overall stocks:'
+        report += 'Overall stocks:'
         report += make_entry('stocks', show_empty=False)
-        report += f'  Derived statistics:\n'
+        report += '  Derived statistics:\n'
         report += f'    Percentage infectious: {stats.extra.prev*100:6.3f}%\n'
         report += f'    Percentage dead:       {stats.extra.dead*100:6.3f}%\n'
-        report += f'\nTransmission target statistics:'
+        report += '\nTransmission target statistics:'
         report += make_entry('trans')
-        report += f'  Infections by layer:\n'
+        report += '  Infections by layer:\n'
         report += '\n'.join([f'    {k} = {v}' for k,v in stats.layer_counts.items()])
-        report += f'\n\nTransmission source statistics:'
+        report += '\n\nTransmission source statistics:'
         report += make_entry('source')
-        report += f'  Derived statistics:\n'
+        report += '  Derived statistics:\n'
         report += f'    Pre-symptomatic: {stats.extra.presymp} ({stats.extra.per_presymp:0.1f})%\n'
         report += f'    Asymptomatic:    {stats.extra.asymp} ({stats.extra.per_asymp:0.1f})%\n'
         report += f'    Symptomatic:     {stats.extra.symp} ({stats.extra.per_symp:0.1f})%\n'
-        report += f'\nTesting statistics:'
+        report += '\nTesting statistics:'
         report += make_entry('test')
-        report += f'  Derived statistics:\n'
-        report += f'    Tests:\n'
+        report += '  Derived statistics:\n'
+        report += '    Tests:\n'
         report += f'      Symp/asymp not in quar: {stats.extra.test_symp_nq}/{stats.extra.test_asymp_nq}\n'
         report += f'      Symp/asymp in quar:     {stats.extra.test_symp_q}/{stats.extra.test_asymp_q}\n'
         report += f'      Symp/asymp enter quar:  {stats.extra.test_symp_eq}/{stats.extra.test_asymp_eq}\n'
         report += f'      Symp/asymp finish quar: {stats.extra.test_symp_fq}/{stats.extra.test_asymp_fq}\n'
-        report += f'    Diagnoses:\n'
+        report += '    Diagnoses:\n'
         report += f'      Symp/asymp not in quar: {stats.extra.diag_symp_nq}/{stats.extra.diag_asymp_nq}\n'
         report += f'      Symp/asymp in quar:     {stats.extra.diag_symp_q}/{stats.extra.diag_asymp_q}\n'
         report += f'      Symp/asymp enter quar:  {stats.extra.diag_symp_eq}/{stats.extra.diag_asymp_eq}\n'
         report += f'      Symp/asymp finish quar: {stats.extra.diag_symp_fq}/{stats.extra.diag_asymp_fq}\n'
-        report += f'    Undiagnosed:\n'
+        report += '    Undiagnosed:\n'
         report += f'      Symp/asymp not in quar: {stats.extra.undiag_symp_nq}/{stats.extra.undiag_asymp_nq}\n'
         report += f'      Symp/asymp in quar:     {stats.extra.undiag_symp_q}/{stats.extra.undiag_asymp_q}\n'
         report += f'      Symp/asymp enter quar:  {stats.extra.undiag_symp_eq}/{stats.extra.undiag_asymp_eq}\n'
         report += f'      Symp/asymp finish quar: {stats.extra.undiag_symp_fq}/{stats.extra.undiag_asymp_fq}\n'
-        report += f'\nQuarantine statistics:'
+        report += '\nQuarantine statistics:'
         report += make_entry('quar')
-        report += f'  Derived statistics:\n'
+        report += '  Derived statistics:\n'
         report += f'    Percentage infectious not in quarantine:    {stats.extra.non_quar_prev*100:6.3f}%\n'
         report += f'    Percentage infectious in quarantine:        {stats.extra.quar_prev*100:6.3f}%\n'
         report += f'    Percentage infectious entering quarantine:  {stats.extra.e_quar_prev*100:6.3f}%\n'
@@ -634,7 +632,7 @@ class daily_stats(Analyzer):
         return data
 
 
-    def plot(self, fig_args=None, axis_args=None, plot_args=None, font_size=12, do_show=True):
+    def plot(self, fig_args=None, axis_args=None, plot_args=None, do_show=None):
         '''
         Plot the daily statistics recordered. Some overlap with e.g. ``sim.plot(to_plot='overview')``.
 
@@ -642,21 +640,19 @@ class daily_stats(Analyzer):
             fig_args  (dict):  passed to pl.figure()
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
-            font_size (float): size of font
             do_show   (bool):  whether to show the plot
         '''
 
-        fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
+        fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
-        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
-        pl.rcParams['font.size'] = font_size
+        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
 
         # Transform the data into time series
         data = self.transpose()
 
         # Do the plotting
         nplots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
-        nrows,ncols = cvm.get_rows_cols(nplots)
+        nrows,ncols = sc.get_rows_cols(nplots)
         fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
         pl.subplots_adjust(**axis_args)
 
@@ -670,7 +666,7 @@ class daily_stats(Analyzer):
                 ax.plot(y, **plot_args)
                 ax.set_title(f'{k1}: {k2}')
 
-        if do_show:
+        if do_show or cvo.show:
             pl.show()
 
         return fig
@@ -892,7 +888,8 @@ class Fit(sc.prettyobj):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, font_size=18, fig_args=None, axis_args=None, plot_args=None, do_show=True):
+    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None,
+             plot_args=None, do_show=None, fig=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -901,17 +898,19 @@ class Fit(sc.prettyobj):
         Args:
             keys      (list):  which keys to plot (default, all)
             width     (float): bar width
-            font_size (float): size of font
             fig_args  (dict):  passed to pl.figure()
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
             do_show   (bool):  whether to show the plot
+            fig       (fig):   if supplied, use this figure to plot in
+
+        Returns:
+            Figure object
         '''
 
-        fig_args  = sc.mergedicts(dict(figsize=(36,22)), fig_args)
+        fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
-        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
-        pl.rcParams['font.size'] = font_size
+        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
 
         if keys is None:
             keys = self.keys + self.custom_keys
@@ -921,7 +920,8 @@ class Fit(sc.prettyobj):
         colors = sc.gridcolors(n_keys)
         n_rows = 4
 
-        figs = [pl.figure(**fig_args)]
+        if fig is None:
+            fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         main_ax1 = pl.subplot(n_rows, 2, 1)
         main_ax2 = pl.subplot(n_rows, 2, 2)
@@ -943,7 +943,7 @@ class Fit(sc.prettyobj):
                     if i == 0:
                         data = self.losses[key]
                         ylabel = 'Daily mismatch'
-                        title = f'Daily total mismatch'
+                        title = 'Daily total mismatch'
                     else:
                         data = np.cumsum(self.losses[key])
                         ylabel = 'Cumulative mismatch'
@@ -986,10 +986,10 @@ class Fit(sc.prettyobj):
                 pl.ylabel('Losses')
                 pl.legend()
 
-        if do_show:
+        if do_show or cvo.show:
             pl.show()
 
-        return figs
+        return fig
 
 
 class TransTree(sc.prettyobj):
@@ -1046,8 +1046,8 @@ class TransTree(sc.prettyobj):
         # Count the number of targets each person has
         self.n_targets = self.count_targets()
 
-        # Include the detailed transmission tree as well
-        self.detailed = self.make_detailed(people)
+        # Include the detailed transmission tree as well, as a list and as a dataframe
+        self.make_detailed(people)
 
         # Optionally convert to NetworkX -- must be done on import since the people object is not kept
         if to_networkx:
@@ -1098,7 +1098,7 @@ class TransTree(sc.prettyobj):
     def day(self, day=None, which=None):
         ''' Convenience function for converting an input to an integer day '''
         if day is not None:
-            day = cvm.day(day, start_day=self.sim_start)
+            day = sc.day(day, start_day=self.sim_start)
         elif which == 'start':
             day = 0
         elif which == 'end':
@@ -1172,45 +1172,9 @@ class TransTree(sc.prettyobj):
 
             detailed[target] = ddict
 
-        return detailed
+        self.detailed = detailed
 
-
-    def r0(self, recovered_only=False):
-        """
-        Return average number of transmissions per person
-
-        This doesn't include seed transmissions. By default, it also doesn't adjust
-        for length of infection (e.g. people infected towards the end of the simulation
-        will have fewer transmissions because their infection may extend past the end
-        of the simulation, these people are not included). If 'recovered_only=True'
-        then the downstream transmissions will only be included for people that recover
-        before the end of the simulation, thus ensuring they all had the same amount of
-        time to transmit.
-        """
-        n_infected = []
-        try:
-            for i, node in self.graph.nodes.items():
-                if i is None or np.isnan(node['date_exposed']) or (recovered_only and node['date_recovered']>self.n_days):
-                    continue
-                n_infected.append(self.graph.out_degree(i))
-        except Exception as E:
-            errormsg = f'Unable to compute r0 ({str(E)}): you may need to reinitialize the transmission tree with to_networkx=True'
-            raise RuntimeError(errormsg)
-        return np.mean(n_infected)
-
-
-    def plot(self, fig_args=None, plot_args=None, do_show=True):
-        '''
-        Plot the transmission tree.
-
-        Args:
-            fig_args  (dict):  passed to pl.figure()
-            plot_args (dict):  passed to pl.plot()
-            do_show   (bool):  whether to show the plot
-        '''
-
-        fig_args = sc.mergedicts(dict(figsize=(16, 10)), fig_args)
-        plot_args = sc.mergedicts(dict(lw=4, alpha=0.5, marker='o'), plot_args)
+        # Also re-parse the infection log and convert to a dataframe
 
         ttlist = []
         for source_ind, target_ind in self.transmissions:
@@ -1241,30 +1205,74 @@ class TransTree(sc.prettyobj):
         df.loc[df['s_sev'], 'Severity'] = 'Severe'
         df.loc[df['s_crit'], 'Severity'] = 'Critical'
 
-        fig = pl.figure(**fig_args)
-        i = 1;
-        r = 2;
-        c = 3
+        self.df = df
+
+        return
+
+
+    def r0(self, recovered_only=False):
+        """
+        Return average number of transmissions per person
+
+        This doesn't include seed transmissions. By default, it also doesn't adjust
+        for length of infection (e.g. people infected towards the end of the simulation
+        will have fewer transmissions because their infection may extend past the end
+        of the simulation, these people are not included). If 'recovered_only=True'
+        then the downstream transmissions will only be included for people that recover
+        before the end of the simulation, thus ensuring they all had the same amount of
+        time to transmit.
+        """
+        n_infected = []
+        try:
+            for i, node in self.graph.nodes.items():
+                if i is None or np.isnan(node['date_exposed']) or (recovered_only and node['date_recovered']>self.n_days):
+                    continue
+                n_infected.append(self.graph.out_degree(i))
+        except Exception as E:
+            errormsg = f'Unable to compute r0 ({str(E)}): you may need to reinitialize the transmission tree with to_networkx=True'
+            raise RuntimeError(errormsg)
+        return np.mean(n_infected)
+
+
+    def plot(self, fig_args=None, plot_args=None, do_show=None, fig=None):
+        '''
+        Plot the transmission tree.
+
+        Args:
+            fig_args  (dict):  passed to pl.figure()
+            plot_args (dict):  passed to pl.plot()
+            do_show   (bool):  whether to show the plot
+            fig       (fig):   if supplied, use this figure
+        '''
+
+        fig_args = sc.mergedicts(dict(figsize=(8, 5)), fig_args)
+        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
+
+        if fig is None:
+            fig = pl.figure(**fig_args)
+        pl.subplots_adjust(bottom=0.1, top=0.95, left=0.1, right=0.95, wspace=0.4, hspace=0.4)
+        n_rows = 2
+        n_cols = 3
 
         def plot_quantity(key, title, i):
-            dat = df.groupby(['Day', key]).size().unstack(key)
-            ax = pl.subplot(r, c, i);
+            dat = self.df.groupby(['Day', key]).size().unstack(key)
+            ax = pl.subplot(n_rows, n_cols, i);
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
 
-        to_plot = {
-            'layer': 'Layer',
-            'Stage': 'Source stage',
-            's_diag': 'Source diagnosed',
-            's_quar': 'Source quarantined',
-            't_quar': 'Target quarantined',
-            'Severity': 'Symptomatic source severity'
-        }
+        to_plot = dict(
+            layer    = 'Layer',
+            Stage    = 'Source stage',
+            s_diag   = 'Source diagnosed',
+            s_quar   = 'Source quarantined',
+            t_quar   = 'Target quarantined',
+            Severity = 'Symptomatic source severity',
+        )
         for i, (key, title) in enumerate(to_plot.items()):
             plot_quantity(key, title, i + 1)
 
-        if do_show:
+        if do_show or cvo.show:
             pl.show()
 
         return fig
@@ -1283,27 +1291,26 @@ class TransTree(sc.prettyobj):
             axis_args  (dict):  arguments passed to pl.subplots_adjust()
             plot_args  (dict):  arguments passed to pl.plot()
             delay      (float): delay between frames in seconds
-            font_size  (int):   size of the font
             colors     (list):  color of each person
             cmap       (str):   colormap for each person (if colors is not supplied)
+            fig        (fig):   if supplied, use this figure
 
         Returns:
             fig: the figure object
         '''
 
         # Settings
-        animate = kwargs.get('animate', True)
-        verbose = kwargs.get('verbose', False)
-        msize = kwargs.get('markersize', 10)
+        animate   = kwargs.get('animate', True)
+        verbose   = kwargs.get('verbose', False)
+        msize     = kwargs.get('markersize', 5)
         sus_color = kwargs.get('sus_color', [0.5, 0.5, 0.5])
-        fig_args = kwargs.get('fig_args', dict(figsize=(24, 16)))
+        fig_args  = kwargs.get('fig_args', dict(figsize=(12, 8)))
         axis_args = kwargs.get('axis_args', dict(left=0.10, bottom=0.05, right=0.85, top=0.97, wspace=0.25, hspace=0.25))
-        plot_args = kwargs.get('plot_args', dict(lw=2, alpha=0.5))
-        delay = kwargs.get('delay', 0.2)
-        font_size = kwargs.get('font_size', 18)
-        colors = kwargs.get('colors', None)
-        cmap = kwargs.get('cmap', 'parula')
-        pl.rcParams['font.size'] = font_size
+        plot_args = kwargs.get('plot_args', dict(lw=1, alpha=0.5))
+        delay     = kwargs.get('delay', 0.2)
+        colors    = kwargs.get('colors', None)
+        cmap      = kwargs.get('cmap', 'parula')
+        fig       = kwargs.get('fig', None)
         if colors is None:
             colors = sc.vectocolor(self.pop_size, cmap=cmap)
 
@@ -1364,7 +1371,8 @@ class TransTree(sc.prettyobj):
                 frames[0].append(frame)
 
         # Configure plotting
-        fig = pl.figure(**fig_args)
+        if fig is None:
+            fig = pl.figure(**fig_args)
         pl.subplots_adjust(**axis_args)
         ax = fig.add_subplot(1, 1, 1)
 
@@ -1408,14 +1416,14 @@ class TransTree(sc.prettyobj):
             for tdq in tlist: pl.plot(t_d, t_t, 'o', c=t_c, markersize=msize * 2, fillstyle='none')  # Tested; No alpha for this
             for tdq in dlist: pl.plot(t_d, t_t, 's', c=t_c, markersize=msize * 1.2, **plot_args)  # Diagnosed
             for tdq in qlist: pl.plot(t_d, t_t, 'x', c=t_c, markersize=msize * 2.0)  # Quarantine; no alpha for this
-            pl.plot([0, day], [0.5, 0.5], c='k', lw=5)  # Plot the endless march of time
+            pl.plot([0, day], [0.5, 0.5], c='k', lw=3)  # Plot the endless march of time
             if animate:  # Whether to animate
                 pl.pause(delay)
 
         return fig
 
 
-    def plot_histograms(self, start_day=None, end_day=None, bins=None, width=0.8, fig_args=None, font_size=18):
+    def plot_histograms(self, start_day=None, end_day=None, bins=None, width=0.8, fig_args=None, fig=None):
         '''
         Plots a histogram of the number of transmissions.
 
@@ -1425,7 +1433,7 @@ class TransTree(sc.prettyobj):
             bins (list): bin edges to use for the histogram
             width (float): width of bars
             fig_args (dict): passed to pl.figure()
-            font_size (float): size of font
+            fig (fig): if supplied, use this figure
         '''
 
         # Process targets
@@ -1450,9 +1458,9 @@ class TransTree(sc.prettyobj):
         max_labels = 15 # Maximum number of ticks and legend entries to plot
 
         # Plotting
-        fig_args = sc.mergedicts(dict(figsize=(24,15)), fig_args)
-        pl.rcParams['font.size'] = font_size
-        fig = pl.figure(**fig_args)
+        fig_args = sc.mergedicts(dict(figsize=(12,8)), fig_args)
+        if fig is None:
+            fig = pl.figure(**fig_args)
         pl.set_cmap('Spectral')
         pl.subplots_adjust(left=0.08, right=0.92, bottom=0.08, top=0.92)
         colors = sc.vectocolor(n_bins)
@@ -1483,7 +1491,7 @@ class TransTree(sc.prettyobj):
         pl.title('Number of transmissions, by transmissions per person')
 
         pl.subplot(2,2,4)
-        pl.plot(index, sorted_sum, lw=3, c='k', alpha=0.5)
+        pl.plot(index, sorted_sum, lw=1.5, c='k', alpha=0.5)
         n_change_inds = len(change_inds)
         label_inds = np.linspace(0, n_change_inds, max_labels).round() # Don't allow more than this many labels
         for i in range(n_change_inds):
@@ -1505,7 +1513,7 @@ class TransTree(sc.prettyobj):
         start_day  = self.day(start_day, which='start')
         end_day    = self.day(end_day, which='end')
         pl.axvspan(start_day, end_day, facecolor=dirty_snow)
-        pl.plot(self.sim_results['t'], self.sim_results['cum_infections'], lw=2, c=berry)
+        pl.plot(self.sim_results['t'], self.sim_results['cum_infections'], lw=1, c=berry)
         pl.xlabel('Day')
         pl.ylabel('Cumulative infections')
 
