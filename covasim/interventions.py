@@ -335,9 +335,9 @@ class trigger(Intervention):
 
         if self.indicator[:4] == 'date': # It's a flow variable - apply smoothing
             if self.smoothing is not None and sim.t>self.smoothing:
-                condition_to_check = ((chosenindicator > sim.t-self.smoothing) & (chosenindicator <= sim.t)).sum()/self.smoothing
+                condition_to_check = ((chosenindicator > sim.t-self.smoothing-1) & (chosenindicator <= sim.t-1)).sum()/self.smoothing
             else:
-                condition_to_check = (chosenindicator == sim.t).sum() # Check the number of people who were diagnosed/quarantined/infected/etc
+                condition_to_check = (chosenindicator == sim.t-1).sum() # Check the number of people who were diagnosed/quarantined/infected/etc
 
         else: # It's a stock variable - no need to apply smoothing or check dates
             condition_to_check = chosenindicator.sum()
@@ -834,7 +834,7 @@ class test_prob(Intervention):
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
     '''
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, quar_policy=None, subtarget=None, ili_prev=None,
-                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, **kwargs):
+                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, trigger=None, triggered_vals=None, swab_delay=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.symp_prob        = symp_prob
@@ -849,6 +849,9 @@ class test_prob(Intervention):
         self.test_delay       = test_delay
         self.start_day        = start_day
         self.end_day          = end_day
+        self.trigger          = trigger
+        self.triggered_vals   = triggered_vals
+        self.active_days      = None
         self.pdf              = cvu.get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
         return
 
@@ -873,7 +876,16 @@ class test_prob(Intervention):
 
         # Find probablity for symptomatics to be tested
         symp_inds  = cvu.true(sim.people.symptomatic)
-        symp_prob = self.symp_prob
+        if self.trigger is not None:
+            trigger_condition = self.trigger.apply(sim)  # Check the trigger
+            if trigger_condition:
+                symp_prob = self.triggered_vals['symp_prob']
+                print(f"Activating test_prob change on day {sim.t}")
+            else:
+                symp_prob = self.symp_prob
+        else:
+            symp_prob = self.symp_prob
+
         if self.pdf:
             symp_time = cvd.default_int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
             inv_count = (np.bincount(symp_time)/len(symp_time)) # Find how many people have had symptoms of a set time and invert
@@ -898,7 +910,7 @@ class test_prob(Intervention):
         asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(pop_size), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
-        quar_test_inds = get_quar_inds(self.quar_policy, sim)
+        quar_test_inds  = get_quar_inds(self.quar_policy, sim)
         symp_quar_inds  = np.intersect1d(quar_test_inds, symp_inds)
         asymp_quar_inds = np.intersect1d(quar_test_inds, asymp_inds)
         diag_inds       = cvu.true(sim.people.diagnosed)
