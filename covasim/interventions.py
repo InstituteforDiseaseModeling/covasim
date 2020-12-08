@@ -867,11 +867,7 @@ class test_prob(Intervention):
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
     '''
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, quar_policy=None, subtarget=None, ili_prev=None,
-<<<<<<< HEAD
-                 test_sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, trigger=None, triggered_vals=None, swab_delay=None, **kwargs):
-=======
-                 sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, **kwargs):
->>>>>>> master
+                 sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, trigger=None, triggered_vals=None, swab_delay=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.symp_prob        = symp_prob
