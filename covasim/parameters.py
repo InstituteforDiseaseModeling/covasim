@@ -52,15 +52,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['contacts']    = None  # The number of contacts per layer; set by reset_layer_pars() below
     pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
-<<<<<<< HEAD
     pars['n_imports']   = 0     # Daily imported cases. If an integer is used, this number will be imported each day. If a distribution dictionary is used, the daily number will be sampled from this distribution. If an array is used, the array will be indexed on each timestep to get the number of imports
-    pars['beta_dist']   = {'dist':'neg_binomial','par1':1.0, 'par2':0.45, 'step':0.01} # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
-    pars['viral_dist']  = {'frac_time':0.3, 'load_ratio':2, 'high_cap':4} # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
-=======
-    pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta_dist']   = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
     pars['viral_dist']  = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
->>>>>>> master
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
