@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 import sphinx_rtd_theme
+from datetime import datetime
 import covasim as cv
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
@@ -83,7 +84,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Covasim'
-copyright = f'2020, Bill & Melinda Gates Foundation. All rights reserved.\nThese docs were built for Covasim version {cv.__version__}.\n'
+copyright = f'1999 - {datetime.today().year}, Bill & Melinda Gates Foundation. All rights reserved.\nThese docs were built for Covasim version {cv.__version__}.\n'
 author = 'Institute for Disease Modeling'
 
 # The version info for the project you're documenting, acts as replacement for
