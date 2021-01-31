@@ -417,7 +417,7 @@ class MultiSim(cvb.FlexPretty):
             inds         (list) : if not combined or reduced, the indices of the simulations to plot (if None, plot all)
             plot_sims    (bool) : whether to plot individual sims, even if combine() or reduce() has been used
             color_by_sim (bool) : if True, set colors based on the simulation type; otherwise, color by result type; True implies a scenario-style plotting, False implies sim-style plotting
-            max_sims     (int)  : maximum number of sims to use with color-by-sim; can be overriden by other options
+            max_sims     (int)  : maximum number of sims to use with color-by-sim; can be overridden by other options
             colors       (list) : if supplied, override default colors for color_by_sim
             labels       (list) : if supplied, override default labels for color_by_sim
             alpha_range  (list) : a 2-element list/tuple/array providing the range of alpha values to use to distinguish the lines
@@ -581,7 +581,7 @@ class MultiSim(cvb.FlexPretty):
         msimfile = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
 
-        # Store sims seperately
+        # Store sims separately
         sims = self.sims
         self.sims = None # Remove for now
 
@@ -813,7 +813,7 @@ class Scenarios(cvb.ParsObj):
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
     Note that most users are recommended to use MultiSim rather than Scenarios,
     as it gives more control over run options. Scenarios should be used primarily
-    for quick invesigations. See the examples folder for example usage.
+    for quick investigations. See the examples folder for example usage.
 
     Args:
         sim       (Sim)  : if supplied, use a pre-created simulation as the basis for the scenarios
@@ -1136,7 +1136,7 @@ class Scenarios(cvb.ParsObj):
         scenfile = sc.makefilepath(filename=scenfile, **kwargs)
         self.scenfile = scenfile # Store the actual saved filename
 
-        # Store sims seperately
+        # Store sims separately
         sims = self.sims
         self.sims = None # Remove for now
 

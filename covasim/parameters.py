@@ -58,7 +58,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['iso_factor']   = None # Multiply beta by this factor for diganosed cases to represent isolation; set by reset_layer_pars() below
+    pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
     pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
     pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
 
@@ -112,7 +112,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     return pars
 
 
-# Define which parametrs need to be specified as a dictionary by layer -- define here so it's available at the module level for sim.py
+# Define which parameters need to be specified as a dictionary by layer -- define here so it's available at the module level for sim.py
 layer_pars = ['beta_layer', 'contacts', 'dynam_layer', 'iso_factor', 'quar_factor']
 
 

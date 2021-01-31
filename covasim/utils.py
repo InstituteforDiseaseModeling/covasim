@@ -26,18 +26,18 @@ parallel = cvo.numba_parallel
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat, nbfloat, nbfloat), cache=True, parallel=parallel)
-def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,    load_ratio,    high_cap):
+@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat,   nbfloat,    nbfloat), cache=True, parallel=parallel)
+def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time, load_ratio, high_cap):
     '''
     Calculate relative transmissibility for time t. Includes time varying
-    viral load, pre/asymptomatic factor, diagonsis factor, etc.
+    viral load, pre/asymptomatic factor, diagnosis factor, etc.
 
     Args:
         t: (int) timestep
         time_start: (float[]) individuals' infectious date
         time_recovered: (float[]) individuals' recovered date
         time_dead: (float[]) individuals' death date
-        frac_time: (float) frac of time in high load
+        frac_time: (float) fraction of time in high load
         load_ratio: (float) ratio for high to low viral load
         high_cap: (float) cap on the number of days with high viral load
 
@@ -75,8 +75,8 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_iso     = ~diag +  diag * iso_factor # Isolation factor, changes e.g. [0,1] with a factor of 0.2 to [1,0.2]
     f_quar    = ~quar +  quar * quar_factor # Quarantine, changes e.g. [0,1] with a factor of 0.5 to [1,0.5]
-    rel_trans = rel_trans * inf * f_quar * f_asymp * f_iso * beta_layer * viral_load # Recalulate transmisibility
-    rel_sus   = rel_sus   * sus * f_quar # Recalulate susceptibility
+    rel_trans = rel_trans * inf * f_quar * f_asymp * f_iso * beta_layer * viral_load # Recalculate transmissibility
+    rel_sus   = rel_sus   * sus * f_quar # Recalculate susceptibility
     return rel_trans, rel_sus
 
 
@@ -360,7 +360,7 @@ def n_poisson(rate, n):
 
     **Example**::
 
-        outcomes = cv.n_poisson(100, 20) # 20 poisson trials with mean 100
+        outcomes = cv.n_poisson(100, 20) # 20 Poisson trials with mean 100
     '''
     return np.random.poisson(rate, n)
 
