@@ -849,8 +849,6 @@ class test_prob(Intervention):
         symp_quar_inds  = np.intersect1d(quar_test_inds, symp_inds)
         asymp_quar_inds = np.intersect1d(quar_test_inds, asymp_inds)
         diag_inds       = cvu.true(sim.people.diagnosed)
-        if self.subtarget is not None:
-            subtarget_inds  = self.subtarget['inds']
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
