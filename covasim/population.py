@@ -321,7 +321,7 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
     Make a population using SynthPops, including contacts. Usually called automatically,
     but can also be called manually. Either a simulation object or a population must
     be supplied; if a population is supplied, transform it into the correct format;
-    otherise, create the population and then transform it.
+    otherwise, create the population and then transform it.
 
     Args:
         sim (Sim): a Covasim simulation object

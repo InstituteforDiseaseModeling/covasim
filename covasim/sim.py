@@ -22,7 +22,7 @@ __all__ = ['Sim', 'AlreadyRunError']
 class Sim(cvb.BaseSim):
     '''
     The Sim class handles the running of the simulation: the creation of the
-    population and the dynamcis of the epidemic. This class handles the mechanics
+    population and the dynamics of the epidemic. This class handles the mechanics
     of the actual simulation, while BaseSim takes care of housekeeping (saving,
     loading, exporting, etc.).
 
@@ -105,7 +105,7 @@ class Sim(cvb.BaseSim):
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
-        self.init_results() # Create the results stucture
+        self.init_results() # Create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.init_interventions() # Initialize the interventions
@@ -163,7 +163,7 @@ class Sim(cvb.BaseSim):
             if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
                 self[lp] = {k:val for k in layer_keys}
 
-        # Handle key mismaches
+        # Handle key mismatches
         for lp in layer_pars:
             lp_keys = set(self.pars[lp].keys())
             if not lp_keys == set(layer_keys):

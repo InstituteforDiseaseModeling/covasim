@@ -72,7 +72,7 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
     to default. See ``cv.options.help()`` for more information.
 
     Args:
-        key        (str):    the parameter to modify, or 'defaults' to reset eerything to default values
+        key        (str):    the parameter to modify, or 'defaults' to reset everything to default values
         value      (varies): the value to specify; use None or 'default' to reset to default
         set_global (bool):   if true (default), sets plotting options globally (rather than just for Covasim)
         kwargs     (dict):   if supplied, set multiple key-value pairs
@@ -178,7 +178,7 @@ def set_matplotlib_global(key, value):
 def reload_numba():
     '''
     Apply changes to Numba functions -- reloading modules is necessary for
-    changes to propogate. Not necessary if cv.options.set() is used.
+    changes to propagate. Not necessary if cv.options.set() is used.
 
     **Example**::
 
