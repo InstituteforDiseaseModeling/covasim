@@ -5,5 +5,5 @@ Version and license information.
 __all__ = ['__version__', '__versiondate__', '__license__']
 
 __version__ = '2.0.1'
-__versiondate__ = '2020-01-30'
-__license__ = f'Covasim {__version__} ({__versiondate__}) — © 2020 by IDM'
+__versiondate__ = '2020-01-31'
+__license__ = f'Covasim {__version__} ({__versiondate__}) — © 2021 by IDM'
