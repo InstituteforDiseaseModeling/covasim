@@ -9,16 +9,29 @@ All notable changes to the codebase are documented in this file. Changes that ma
    :depth: 1
 
 
+~~~~~~~~~~~~~~~~~~~~
+Future release plans
+~~~~~~~~~~~~~~~~~~~~
+
+These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
+
+- Improved handling of vaccination, including more detailed targeting options, waning immunity, etc.
+- Mechanistic handling of different strains
+- Additional flexibility in plotting options (e.g. date ranges, per-plot DPI)
+- Expanded tutorials (health care workers, vaccination, calibration, exercises, etc.)
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~
 Latest versions (2.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Version 2.0.1 (2021-01-30)
+Version 2.0.1 (2021-01-31)
 --------------------------
-- Pinned ``xlrd`` version to 1.2.0 due to a bug introduced in the current version (see `here <https://stackoverflow.com/questions/65250207/pandas-cannot-open-an-excel-xlsx-file>`__ for details).
+- Pinned ``xlrd`` version to 1.2.0 due to a bug introduced in the ``2.0.1`` version of ``xlrd`` (see `here <https://stackoverflow.com/questions/65250207/pandas-cannot-open-an-excel-xlsx-file>`__ for details).
 - Fixed a bug that prevented a function from being supplied as ``subtarget`` for ``cv.test_prob()``.
+- Fixed a bug that prevented regression parameters (e.g. ``cv.Sim(version='1.7.5')``) from working when Covasim was installed via ``pip``.
+- Fixed typos in docstrings and tutorials.
 - *GitHub info*: PR `775 <https://github.com/amath-idm/covasim/pull/775>`__
 
 
@@ -129,7 +142,7 @@ Version 1.7.4 (2020-10-02)
 --------------------------
 - Refactored `cv.contact_tracing()` so that derived classes can extend individual parts of contact tracing without having to re-implement the entire intervention
 - Moved `people.trace` to `contact_tracing` so that the tracing step can be extended via custom interventions
-- *Regression info*: Custom interventions calling `people.trace` should inherit from `cv.contact_tracing` instead and use `contact_tracing.identify_contacts` and `contact_tracing.notify_contacts` to replace `people.trace`. In most cases however, it would be possible to overload one of the contact tracing steps rather than `contact_tracing.apply`, which thus eliminates the need to call `people.trace` entirely.
+- *Regression information*: Custom interventions calling `people.trace` should inherit from `cv.contact_tracing` instead and use `contact_tracing.identify_contacts` and `contact_tracing.notify_contacts` to replace `people.trace`. In most cases however, it would be possible to overload one of the contact tracing steps rather than `contact_tracing.apply`, which thus eliminates the need to call `people.trace` entirely.
 - *GitHub info*: PR `702 <https://github.com/amath-idm/covasim/pull/702>`__
 
 
@@ -157,7 +170,7 @@ Version 1.7.1 (2020-09-23)
 - The transmission tree plot has been corrected to account for people who have left quarantine. The definition of "quarantine end" for the sake of testing (``quar_policy='end'`` for ``cv.test_num()`` and ``cv.test_prob()``) has also been shifted up by a day (since by ``date_end_quarantine``, people are no longer in quarantine by the end of the day, so tests were not being counted as happening in quarantine).
 - Additional validation is done on intervention order to ensure that testing interventions are defined before tracing interventions.
 - Code has been moved between ``sim.py``, ``people.py``, and ``base.py`` to better reflect the division between "the simulation" (the first two files) and "the housekeeping" (the last file).
-- *Regression info*: Scripts that used ``quar_policy='end'`` may now provide stochastically different results. User scripts that explicitly call ``sim.people.not_defined()`` or ``sim.people.quarantine()`` should be updated to call ``sim.people.undefined()`` and ``sim.people.schedule_quarantine()`` instead.
+- *Regression information*: Scripts that used ``quar_policy='end'`` may now provide stochastically different results. User scripts that explicitly call ``sim.people.not_defined()`` or ``sim.people.quarantine()`` should be updated to call ``sim.people.undefined()`` and ``sim.people.schedule_quarantine()`` instead.
 - *GitHub info*: PR `690 <https://github.com/amath-idm/covasim/pull/690>`__
 
 
