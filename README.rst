@@ -44,7 +44,7 @@ Covasim has been used for analyses in over a dozen countries, both to inform pol
 
 6. **The potential contribution of face coverings to the control of SARS-CoV-2 transmission in schools and broader society in the UK: a modelling study**. Panovska-Griffiths J, Kerr CC, Waites W, Stuart RM, Mistry D, Foster D, Klein DJ, Viner R, Bonnell C (under review; posted 2020-10-08). *medRxiv* 2020.09.28.20202937; doi: https://doi.org/10.1101/2020.09.28.20202937.
 
-7. **COVID-19 reopening strategies at the county level in the face of uncertainty: Multiple Models for Outbreak Decision Support**. Shea K, Borchering RK, Probert WJM et al (under review; posted 2020-11-05). *medRxiv* 2020.11.03.20225409; doi: https://doi.org/10.1101/2020.11.03.20225409.
+7. **COVID-19 reopening strategies at the county level in the face of uncertainty: Multiple Models for Outbreak Decision Support**. Shea K, Borchering RK, Probert WJM, et al. (under review; posted 2020-11-05). *medRxiv* 2020.11.03.20225409; doi: https://doi.org/10.1101/2020.11.03.20225409.
 
 8. **Lessons learned from Vietnam's COVID-19 response: the role of adaptive behaviour change and testing in epidemic control**. Pham QD, Stuart RM, Nguyen TV, Luong QC, Tran DQ, Phan LT, Dang TQ, Tran DN, Mistry D, Klein DJ, Abeysuriya RG, Oron AP, Kerr CC (under review; posted 2020-12-19). *medRxiv* 2020.12.18.20248454; doi: https://doi.org/10.1101/2020.12.18.20248454.
 
