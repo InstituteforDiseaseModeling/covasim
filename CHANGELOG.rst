@@ -15,13 +15,11 @@ Latest versions (2.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
 Version 2.0.1 (2021-01-30)
 --------------------------
-- Pinned xlrd version to 1.2.0 due to a bug introduced in the current version (see `here <https://stackoverflow.com/questions/65250207/pandas-cannot-open-an-excel-xlsx-file>`__ for details).
+- Pinned ``xlrd`` version to 1.2.0 due to a bug introduced in the current version (see `here <https://stackoverflow.com/questions/65250207/pandas-cannot-open-an-excel-xlsx-file>`__ for details).
 - Fixed a bug that prevented a function from being supplied as ``subtarget`` for ``cv.test_prob()``.
-
-
+- *GitHub info*: PR `775 <https://github.com/amath-idm/covasim/pull/775>`__
 
 
 Version 2.0.0 (2020-12-05)
