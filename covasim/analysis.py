@@ -634,7 +634,7 @@ class daily_stats(Analyzer):
 
     def plot(self, fig_args=None, axis_args=None, plot_args=None, do_show=None):
         '''
-        Plot the daily statistics recordered. Some overlap with e.g. ``sim.plot(to_plot='overview')``.
+        Plot the daily statistics recorded. Some overlap with e.g. ``sim.plot(to_plot='overview')``.
 
         Args:
             fig_args  (dict):  passed to pl.figure()

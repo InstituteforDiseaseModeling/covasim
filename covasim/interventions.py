@@ -88,7 +88,7 @@ class Intervention:
         label (str): a label for the intervention (used for plotting, and for ease of identification)
         show_label (bool): whether or not to include the label, if provided, in the legend
         do_plot (bool): whether or not to plot the intervention
-        line_args (dict): arguments passed to pl.axvline() whe plotting
+        line_args (dict): arguments passed to pl.axvline() when plotting
     '''
     def __init__(self, label=None, show_label=True, do_plot=None, line_args=None):
         self.label = label # e.g. "Close schools"
@@ -145,7 +145,7 @@ class Intervention:
 
     def apply(self, sim):
         '''
-        Apply the intervention. This is the core method which each drived intervention
+        Apply the intervention. This is the core method which each derived intervention
         class must implement. This method gets called at each timestep and can make
         arbitrary changes to the Sim object, as well as storing or modifying the
         state of the intervention.
@@ -473,7 +473,7 @@ class clip_edges(Intervention):
             # Do the contact moving
             for lkey in self.layers:
                 s_layer = sim.people.contacts[lkey] # Contact layer in the sim
-                i_layer = self.contacts[lkey] # Contat layer in the intervention
+                i_layer = self.contacts[lkey] # Contact layer in the intervention
                 n_sim = len(s_layer) # Number of contacts in the simulation layer
                 n_int = len(i_layer) # Number of contacts in the intervention layer
                 n_contacts = n_sim + n_int # Total number of contacts
@@ -1032,7 +1032,7 @@ class vaccine(Intervention):
     '''
     Apply a vaccine to a subset of the population. In addition to changing the
     relative susceptibility and the probability of developing symptoms if still
-    infected, this sintervention stores several types of data:
+    infected, this intervention stores several types of data:
 
         - ``vaccinations``:      the number of vaccine doses per person
         - ``vaccination_dates``: list of dates per person
