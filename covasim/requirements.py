@@ -32,7 +32,7 @@ def check_synthpops(verbose=False, die=False):
 
     # Check synthpops -- optional dependency
     try:
-        import synthpops # noqa
+        import synthpops
         return synthpops
     except ImportError as E:
         import_error = f'Synthpops (for detailed demographic data) is not available ({str(E)})\n'

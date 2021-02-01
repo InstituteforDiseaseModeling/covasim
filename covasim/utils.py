@@ -27,7 +27,7 @@ parallel = cvo.numba_parallel
 #%% The core Covasim functions -- compute the infections
 
 @nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat,   nbfloat,    nbfloat), cache=True, parallel=parallel)
-def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time, load_ratio, high_cap):
+def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time, load_ratio, high_cap): # pragma: no cover
     '''
     Calculate relative transmissibility for time t. Includes time varying
     viral load, pre/asymptomatic factor, diagnosis factor, etc.
@@ -70,7 +70,7 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
 
 
 @nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True, parallel=parallel)
-def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor):
+def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor): # pragma: no cover
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_iso     = ~diag +  diag * iso_factor # Isolation factor, changes e.g. [0,1] with a factor of 0.2 to [1,0.2]
@@ -95,7 +95,7 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
 
 
 @nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=True)
-def find_contacts(p1, p2, inds):
+def find_contacts(p1, p2, inds): # pragma: no cover
     """
     Numba for Layer.find_contacts()
 

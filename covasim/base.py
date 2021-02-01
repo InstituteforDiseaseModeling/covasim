@@ -83,6 +83,7 @@ class ParsObj(FlexPretty):
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
 
+
     def __setitem__(self, key, value):
         ''' Ditto '''
         if key in self.pars:
@@ -92,8 +93,6 @@ class ParsObj(FlexPretty):
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
         return
-
-
 
 
     def update_pars(self, pars=None, create=False):
@@ -248,7 +247,7 @@ class BaseSim(ParsObj):
             if pars.get('pop_type'):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
-                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
+                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
 
@@ -1248,7 +1247,7 @@ class Contacts(FlexDict):
         **Example**::
 
             hospitals_layer = cv.Layer()
-            sim.people.contacts.add_layer(hospitals=layer)
+            sim.people.contacts.add_layer(hospitals=hospitals_layer)
         '''
         for lkey,layer in kwargs.items():
             layer.validate()

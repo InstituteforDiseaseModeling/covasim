@@ -3,19 +3,19 @@ Execute analysis tools in order to broadly cover basic functionality of analysis
 '''
 
 import numpy as np
-import pylab as pl
 import sciris as sc
 import covasim as cv
 
 
 #%% General settings
 
-do_plot = 1
+do_plot = 1 # Whether to plot when run interactively
+cv.options.set(interactive=False) # Assume not running interactively
 
 pars = dict(
     pop_size = 1000,
     verbose = 0,
-    )
+)
 
 
 #%% Define tests
@@ -24,15 +24,15 @@ def test_snapshot():
     sc.heading('Testing snapshot analyzer')
     sim = cv.Sim(pars, analyzers=cv.snapshot('2020-04-04', '2020-04-14'))
     sim.run()
-    snapshot = sim['analyzers'][0]
+    snapshot = sim.get_analyzer()
     people1 = snapshot.snapshots[0]            # Option 1
     people2 = snapshot.snapshots['2020-04-04'] # Option 2
     people3 = snapshot.get('2020-04-14')       # Option 3
     people4 = snapshot.get(34)                 # Option 4
     people5 = snapshot.get()                   # Option 5
 
-    assert people1 == people2, f'Snapshot options should match but do not'
-    assert people3 != people4, f'Snapshot options should not match but do'
+    assert people1 == people2, 'Snapshot options should match but do not'
+    assert people3 != people4, 'Snapshot options should not match but do'
     return people5
 
 
@@ -45,15 +45,29 @@ def test_age_hist():
     sim.run()
 
     # Checks to see that compute windows returns correct number of results
-    agehist = sim['analyzers'][0]
+    agehist = sim.get_analyzer()
     agehist.compute_windows()
+    agehist.get() # Not used, but check get
+    agehist.get(day_list[1])
     assert len(age_analyzer.window_hists) == len(day_list), "Number of histograms should equal number of days"
 
-    # checks compute_windows and plot()
-    plots = agehist.plot(windows=True)
-    assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
+    # Check plot()
+    if do_plot:
+        plots = agehist.plot(windows=True)
+        assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
 
     return agehist
+
+
+def test_daily_stats():
+    sc.heading('Testing daily stats analyzer')
+    ds = cv.daily_stats(days=['2020-04-04', '2020-04-14'], save_inds=True)
+    sim = cv.Sim(pars, analyzers=ds)
+    sim.run()
+    daily = sim.get_analyzer()
+    if do_plot:
+        daily.plot()
+    return daily
 
 
 def test_fit():
@@ -74,7 +88,10 @@ def test_fit():
     sim2.run()
     fit2 = sim2.compute_fit(custom=custom_inputs)
 
-    assert fit1.mismatch != fit2.mismatch, f"Differences between fit and data remains unchanged after changing sim seed"
+    assert fit1.mismatch != fit2.mismatch, "Differences between fit and data remains unchanged after changing sim seed"
+
+    if do_plot:
+        fit1.plot()
 
     return fit1
 
@@ -86,9 +103,18 @@ def test_transtree():
     sim.run()
 
     transtree = sim.make_transtree()
-    transtree.plot()
-    transtree.animate(animate=False)
-    transtree.plot_histograms()
+    print(len(transtree))
+    if do_plot:
+        transtree.plot()
+        transtree.animate(animate=False)
+        transtree.plot_histograms()
+
+    # Try networkx, but don't worry about failures
+    try:
+        tt = sim.make_transtree(to_networkx=True)
+        tt.r0()
+    except ImportError as E:
+        print(f'Could not test conversion to networkx ({str(E)})')
 
     return transtree
 
@@ -96,14 +122,13 @@ def test_transtree():
 #%% Run as a script
 if __name__ == '__main__':
 
-    # We need to create plots to test plotting, but can use a non-GUI backend
-    if not do_plot:
-        pl.switch_backend('agg')
-
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     snapshot  = test_snapshot()
     agehist   = test_age_hist()
+    daily     = test_daily_stats()
     fit       = test_fit()
     transtree = test_transtree()
 

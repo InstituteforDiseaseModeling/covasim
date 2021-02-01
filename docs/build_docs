@@ -13,6 +13,10 @@ make clean
 make html
 duration=$(( SECONDS - start ))
 
+echo 'Cleaning up tutorial files...'
+cd tutorials
+./clean_outputs
+
 echo "Docs built after $duration seconds."
 echo "Index:"
 echo "`pwd`/_build/html/index.html"

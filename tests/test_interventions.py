@@ -4,12 +4,16 @@ Demonstrate all interventions, taken from intervention docstrings
 
 #%% Housekeeping
 
+import os
 import sciris as sc
 import pylab as pl
 import covasim as cv
+import pytest
 
-do_plot = 1
 verbose = 0
+do_plot = 1 # Whether to plot when run interactively
+cv.options.set(interactive=False) # Assume not running interactively
+csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 
 
 def test_all_interventions():
@@ -71,7 +75,7 @@ def test_all_interventions():
     i9a = cv.vaccine(days=20, prob=1.0, rel_sus=1.0, rel_symp=0.0)
     i9b = cv.vaccine(days=50, prob=1.0, rel_sus=0.0, rel_symp=0.0)
 
-    #%% Create and run the simulations
+    #%% Create the simulations
     sims = sc.objdict()
     sims.dynamic      = cv.Sim(pars=pars, interventions=[i1a, i1b])
     sims.sequence     = cv.Sim(pars=pars, interventions=i2)
@@ -85,10 +89,18 @@ def test_all_interventions():
     sims.combo        = cv.Sim(pars=pars, interventions=[i8a, i8b, i8c, i8d])
     sims.vaccine      = cv.Sim(pars=pars, interventions=[i9a, i9b])
 
+    # Run the simualations
     for key,sim in sims.items():
         sim.label = key
         sim.run(verbose=verbose)
 
+    # Test intervention retrieval methods
+    sim = sims.combo
+    ce1, ce2 = sim.get_interventions(cv.clip_edges)
+    ce, tp = sim.get_interventions([0,2])
+    inds = sim.get_interventions(cv.clip_edges, as_inds=True) # Returns [0,1]
+    assert inds == [0,1]
+    sim.get_interventions('summary') # Prints a summary
 
     #%% Plotting
     if do_plot:
@@ -104,12 +116,39 @@ def test_all_interventions():
     return
 
 
+def test_data_interventions():
+    sc.heading('Testing data interventions and other special cases')
+
+    # Create sim
+    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, verbose=verbose)
+
+    # Intervention conversion
+    ce = cv.InterventionDict(**{'which': 'clip_edges', 'pars': {'days': [10, 30], 'changes': [0.5, 1.0]}})
+    print(ce)
+    with pytest.raises(sc.KeyNotFoundError):
+        cv.InterventionDict(**{'which': 'invalid', 'pars': {'days': 10, 'changes': 0.5}})
+
+    # Test numbers and contact tracing
+    tn1 = cv.test_num(10, start_day=3, end_day=20, ili_prev=0.1, swab_delay={'dist':'uniform', 'par1':1, 'par2':3})
+    tn2 = cv.test_num(daily_tests='data', quar_policy=[0,5], subtarget={'inds': lambda sim: cv.true(sim.people.age>50), 'vals': 1.2})
+    ct = cv.contact_tracing()
+
+    # Create and run
+    sim['interventions'] = [ce, tn1, tn2, ct]
+    sim.run()
+
+    return
+
 
 #%% Run as a script
 if __name__ == '__main__':
+
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     test_all_interventions()
+    test_data_interventions()
 
     sc.toc(T)
     print('Done.')

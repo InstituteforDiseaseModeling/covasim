@@ -3,4 +3,4 @@
 #   pip install pytest-parallel
 
 export COVASIM_SHOW=0 # Don't show plots
-pytest test*.py --workers auto --durations=0
+pytest test_*.py --workers auto --durations=0

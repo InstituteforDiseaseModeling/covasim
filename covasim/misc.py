@@ -2,7 +2,6 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
-import os
 import numpy as np
 import pandas as pd
 import pylab as pl
@@ -228,8 +227,12 @@ def migrate(obj, update=True, verbose=True, die=False):
     # Unreconized object type
     else:
         errormsg = f'Object {obj} of type {type(obj)} is not understood and cannot be migrated: must be a sim, multisim, scenario, or people object'
-        if verbose: print(errormsg)
-        elif die: raise TypeError(errormsg)
+        if die:
+            raise TypeError(errormsg)
+        elif verbose:
+            print(errormsg)
+            return
+
 
     # If requested, update the stored version to the current version
     if update:
@@ -429,31 +432,43 @@ def get_version_pars(version, verbose=True):
     Returns:
         Dictionary of parameters from that version
     '''
-    regression_folder = sc.thisdir(__file__, 'regression')
-    pattern = 'pars_v*.json'
-    requested = pattern.replace('*', version)
-    filepaths = sc.getfilelist(regression_folder, pattern=pattern)
-    files = [os.path.basename(f) for f in filepaths]
-    if requested in files: # If there's an exact match
-        match = requested
-    else: # No match, find the nearest matching file
-        withmatch = files + [requested] # Add this version
-        withmatch.sort() # Sort the files
-        index = withmatch.index(requested)
-        if index>0:
-            match = withmatch[index-1] # Get latest earlier version -- note that this assumes versions are in alphabetical order, which they currently are!
-        else:
-            filestr = '\n'.join(files)
-            errormsg = f'Could not find version {version} among options:\n{filestr}'
-            raise ValueError(errormsg)
+
+    # Define mappings for available sets of parameters -- from the changelog
+    match_map = {
+        '0.30.4': ['0.30.4'],
+        '0.31.0': ['0.31.0'],
+        '0.32.0': ['0.32.0'],
+        '1.0.0': ['1.0.0'],
+        '1.0.1': [f'1.0.{i}' for i in range(1,4)],
+        '1.1.0': ['1.1.0'],
+        '1.1.1': [f'1.1.{i}' for i in range(1,3)],
+        '1.1.3': [f'1.1.{i}' for i in range(3,8)],
+        '1.2.0': [f'1.2.{i}' for i in range(4)],
+        '1.3.0': [f'1.3.{i}' for i in range(6)],
+        '1.4.0': [f'1.4.{i}' for i in range(9)],
+        '1.5.0': [f'1.5.{i}' for i in range(4)],
+        '1.6.0': [f'1.6.{i}' for i in range(2)],
+        '1.7.0': [f'1.7.{i}' for i in range(7)],
+        '2.0.0': [f'2.0.{i}' for i in range(3)],
+    }
+
+    # Find and check the match
+    match = None
+    for ver,verlist in match_map.items():
+        if version in verlist:
+            match = ver
+            break
+    if match is None:
+        options = '\n'.join(sum(match_map.values(), []))
+        errormsg = f'Could not find version "{version}" among options:\n{options}'
+        raise ValueError(errormsg)
 
     # Load the parameters
-    pars = sc.loadjson(filename=match, folder=regression_folder)
+    filename = f'pars_v{match}.json'
+    regression_folder = sc.thisdir(__file__, 'regression')
+    pars = sc.loadjson(filename=filename, folder=regression_folder)
     if verbose:
-        if match == requested:
-            print(f'Loaded parameters from {match}')
-        else:
-            print(f'No exact match for parameters "{version}" found; using "{match}" instead')
+        print(f'Loaded parameters from {match}')
 
     return pars
 

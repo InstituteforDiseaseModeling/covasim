@@ -10,7 +10,7 @@ import sciris as sc
 from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
-from .settings import options as cvo
+from . import settings as cvset
 
 
 __all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_stats', 'Fit', 'TransTree']
@@ -363,7 +363,6 @@ class daily_stats(Analyzer):
 
     Args:
         days (list): days on which to print out statistics (if None, assume all)
-        keys (list): list of states of people to provide statistics on (if None, assume all)
         verbose (bool): whether to print on each timestep
         reporter (func): if supplied, a custom parser of the stats object into a report (see make_report() function for syntax)
         save_inds (bool): whether to save the indices of every infection at every timestep (also recoverable from the infection log)
@@ -375,10 +374,9 @@ class daily_stats(Analyzer):
         sim['analyzers'][0].plot()
     '''
 
-    def __init__(self, days=None, keys=None, verbose=True, reporter=None, save_inds=False, **kwargs):
+    def __init__(self, days=None, verbose=True, reporter=None, save_inds=False, **kwargs):
         super().__init__(**kwargs) # Initialize the Analyzer object
         self.days      = days # Converted to integer representations
-        self.keys      = keys # The default keys to print out
         self.verbose   = verbose # Print on each timestep
         self.reporter  = reporter # Custom way of reporting the stats
         self.save_inds = save_inds # Whether to save infection log indices
@@ -393,9 +391,7 @@ class daily_stats(Analyzer):
         else:
             self.days = sim.day(self.days)
 
-        if self.keys is None:
-            self.keys =  ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'known_contact', 'quarantined', 'diagnosed', 'recovered', 'dead']
-
+        self.keys =  ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'known_contact', 'quarantined', 'diagnosed', 'recovered', 'dead']
         self.basekeys = ['stocks', 'trans', 'source', 'test', 'quar'] # Categories of things to plot
         self.extrakeys = ['layer_counts', 'extra']
         self.initialized = True
@@ -666,8 +662,7 @@ class daily_stats(Analyzer):
                 ax.plot(y, **plot_args)
                 ax.set_title(f'{k1}: {k2}')
 
-        if do_show or cvo.show:
-            pl.show()
+        cvset.handle_show(do_show) # Whether or not to call pl.show()
 
         return fig
 
@@ -986,8 +981,7 @@ class Fit(sc.prettyobj):
                 pl.ylabel('Losses')
                 pl.legend()
 
-        if do_show or cvo.show:
-            pl.show()
+        cvset.handle_show(do_show) # Whether or not to call pl.show()
 
         return fig
 
@@ -1272,8 +1266,7 @@ class TransTree(sc.prettyobj):
         for i, (key, title) in enumerate(to_plot.items()):
             plot_quantity(key, title, i + 1)
 
-        if do_show or cvo.show:
-            pl.show()
+        cvset.handle_show(do_show) # Whether or not to call pl.show()
 
         return fig
 

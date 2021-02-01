@@ -38,6 +38,9 @@ def set_default_options():
     optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
     options.backend = os.getenv('COVASIM_BACKEND', pl.get_backend())
 
+    optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
+    options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
+
     optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
     options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
 
@@ -65,17 +68,16 @@ matplotlib_keys = ['font_size', 'font_family', 'dpi', 'backend']
 numba_keys = ['precision', 'numba_parallel']
 
 
-def set_option(key=None, value=None, set_global=True, **kwargs):
+def set_option(key=None, value=None, **kwargs):
     '''
     Set a parameter or parameters. Use ``cv.options.set('defaults')`` to reset all
     values to default, or ``cv.options.set(dpi='default')`` to reset one parameter
     to default. See ``cv.options.help()`` for more information.
 
     Args:
-        key        (str):    the parameter to modify, or 'defaults' to reset everything to default values
-        value      (varies): the value to specify; use None or 'default' to reset to default
-        set_global (bool):   if true (default), sets plotting options globally (rather than just for Covasim)
-        kwargs     (dict):   if supplied, set multiple key-value pairs
+        key    (str):    the parameter to modify, or 'defaults' to reset everything to default values
+        value  (varies): the value to specify; use None or 'default' to reset to default
+        kwargs (dict):   if supplied, set multiple key-value pairs
 
     Options are (see also ``cv.options.help()``):
 
@@ -86,14 +88,15 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
         - show:           whether to show figures
         - close:          whether to close the figures
         - backend:        which Matplotlib backend to use
-
+        - interactive:    convenience method to set show, close, and backend
         - precision:      the arithmetic to use in calculations
         - numba_parallel: whether to parallelize Numba
 
     **Examples**::
 
-        cv.options.set('font_size', 18)
-        cv.options.set(font_size=18, show=False, backend='agg', precision=64)
+        cv.options.set('font_size', 18) # Larger font
+        cv.options.set(font_size=18, show=False, backend='agg', precision=64) # Larger font, non-interactive plots, higher precision
+        cv.options.set(interactive=False) # Turn off interactive plots
         cv.options.set('defaults') # Reset to default options
     '''
 
@@ -104,6 +107,20 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
     # Reset to defaults
     if key in ['default', 'defaults']:
         kwargs = orig_options # Reset everything to default
+
+    # Handle interactivity
+    if 'interactive' in kwargs.keys():
+        interactive = kwargs['interactive']
+        if interactive in [None, 'default']:
+            interactive = orig_options['interactive']
+        if interactive:
+            kwargs['show'] = True
+            kwargs['close'] = False
+            kwargs['backend'] = orig_options['backend']
+        else:
+            kwargs['show'] = False
+            kwargs['close'] = True
+            kwargs['backend'] = 'agg'
 
     # Reset options
     for key,value in kwargs.items():
@@ -118,8 +135,9 @@ def set_option(key=None, value=None, set_global=True, **kwargs):
             options[key] = value
             if key in numba_keys:
                 reload_required = True
-            if key in matplotlib_keys and set_global:
+            if key in matplotlib_keys:
                 set_matplotlib_global(key, value)
+
     if reload_required:
         reload_numba()
     return
@@ -173,6 +191,17 @@ def set_matplotlib_global(key, value):
         elif key == 'backend':     pl.switch_backend(value)
         else: raise sc.KeyNotFoundError(f'Key {key} not found')
     return
+
+
+def handle_show(do_show):
+    ''' Convenience function to handle the slightly complex logic of show -- not for users '''
+    if do_show is None:  # If not supplied, reset to global value
+        do_show = options.show
+        if options.backend == 'agg': # Cannot show plots for a non-interactive backend
+            do_show = False
+    if do_show: # Now check whether to show
+        pl.show()
+    return do_show
 
 
 def reload_numba():

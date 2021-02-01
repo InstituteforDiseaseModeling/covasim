@@ -104,7 +104,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # If version is specified, load old parameters
     if version is not None:
-        version_pars = cvm.get_version_pars(version)
+        version_pars = cvm.get_version_pars(version, verbose=pars['verbose'])
         for key in pars.keys(): # Only loop over keys that have been populated
             if key in version_pars: # Only replace keys that exist in the old version
                 pars[key] = version_pars[key]
@@ -229,11 +229,10 @@ def get_prognoses(by_age=True, version=None):
 
     # If version is specified, load old parameters
     if version is not None:
-        version_pars = cvm.get_version_pars(version)
-        version_prognoses = version_pars['prognoses']
+        version_prognoses = cvm.get_version_pars(version, verbose=False)['prognoses']
         for key in version_prognoses.keys(): # Only loop over keys that have been populated
-            if key in version_pars: # Only replace keys that exist in the old version
-                prognoses[key] = version_pars[key]
+            if key in version_prognoses: # Only replace keys that exist in the old version
+                prognoses[key] = np.array(version_prognoses[key])
 
     # Check that lengths match
     expected_len = len(prognoses['age_cutoffs'])

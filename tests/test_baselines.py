@@ -3,7 +3,6 @@ Compare current results to baseline
 """
 
 import numpy as np
-import pandas as pd
 import sciris as sc
 import covasim as cv
 
@@ -12,6 +11,7 @@ do_save = 0
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
 parameters_filename = sc.thisdir(cv.__file__, 'regression', f'pars_v{cv.__version__}.json')
+cv.options.set(interactive=False) # Assume not running interactively
 
 
 def make_sim(use_defaults=False, do_plot=False, **kwargs):
@@ -83,90 +83,11 @@ def test_baseline():
     old = baseline['summary']
 
     # Calculate new baseline
-    sim = make_sim()
-    sim.run()
-    new = sim.summary
+    new = make_sim()
+    new.run()
 
-    # Compare keys
-    errormsg = ''
-    old_keys = set(old.keys())
-    new_keys = set(new.keys())
-    if old_keys != new_keys:
-        errormsg = "Keys don't match!\n"
-        missing = list(old_keys - new_keys)
-        extra   = list(new_keys - old_keys)
-        if missing:
-            errormsg += f'  Missing old keys: {missing}\n'
-        if extra:
-            errormsg += f'  Extra new keys: {extra}\n'
-
-    mismatches = {}
-    for key in new.keys(): # To ensure order
-        if key in old_keys: # If a key is missing, don't count it as a mismatch
-            old_val = old[key] if key in old else 'not present'
-            new_val = new[key] if key in new else 'not present'
-            if old_val != new_val:
-                mismatches[key] = {'old': old_val, 'new': new_val}
-
-    if len(mismatches):
-        errormsg = '\nThe following values have changed from the previous baseline!\n'
-        errormsg += 'If this is intentional, please rerun "tests/update_baseline" and commit.\n'
-        errormsg += 'Mismatches:\n'
-        df = pd.DataFrame.from_dict(mismatches).transpose()
-        diff   = []
-        ratio  = []
-        change = []
-        small_change = 1e-3 # Define a small change, e.g. a rounding error
-        for mdict in mismatches.values():
-            old = mdict['old']
-            new = mdict['new']
-            if sc.isnumber(new) and sc.isnumber(old) and old>0:
-                this_diff  = new - old
-                this_ratio = new/old
-                abs_ratio  = max(this_ratio, 1.0/this_ratio)
-
-                # Set the character to use
-                if abs_ratio<small_change:
-                    change_char = '≈'
-                elif new > old:
-                    change_char = '↑'
-                elif new < old:
-                    change_char = '↓'
-                else:
-                    errormsg = f'Could not determine relationship between old={old} and new={new}'
-                    raise ValueError(errormsg)
-
-                # Set how many repeats it should have
-                repeats = 1
-                if abs_ratio >= 1.1:
-                    repeats = 2
-                if abs_ratio >= 2:
-                    repeats = 3
-                if abs_ratio >= 10:
-                    repeats = 4
-
-                this_change = change_char*repeats
-            else:
-                this_diff   = np.nan
-                this_ratio  = np.nan
-                this_change = 'N/A'
-
-            diff.append(this_diff)
-            ratio.append(this_ratio)
-            change.append(this_change)
-
-        df['diff']   = diff
-        df['ratio']  = ratio
-        for col in ['old', 'new', 'diff', 'ratio']:
-            df[col] = df[col].round(decimals=3)
-        df['change'] = change
-        errormsg += str(df)
-
-    # Raise an error if mismatches were found
-    if errormsg:
-        raise ValueError(errormsg)
-    else:
-        print('Baseline matches')
+    # Compute the comparison
+    cv.diff_sims(old, new, die=True)
 
     return new
 
@@ -261,8 +182,14 @@ def test_benchmark(do_save=do_save):
 
 if __name__ == '__main__':
 
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
+    T = sc.tic()
+
     make_sim(do_plot=do_plot)
     json = test_benchmark(do_save=do_save) # Run this first so benchmarking is available even if results are different
     new  = test_baseline()
 
+    print('\n'*2)
+    sc.toc(T)
     print('Done.')

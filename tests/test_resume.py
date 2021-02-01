@@ -11,7 +11,6 @@ import sciris as sc
 import covasim as cv
 
 # Simulation and test parameters
-doplot = 0
 pars = dict(pop_size=1e3, verbose=0)
 
 

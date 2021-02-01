@@ -8,13 +8,13 @@ import os
 import pytest
 import sciris as sc
 import covasim as cv
-import pylab as pl
 
 do_plot = 1
 verbose = 0
 debug   = 1 # This runs without parallelization; faster with pytest
 csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 xlsx_file = os.path.join(sc.thisdir(), 'example_data.xlsx')
+cv.options.set(interactive=False) # Assume not running interactively
 
 
 def remove_files(*args):
@@ -84,6 +84,7 @@ def test_base():
     people = ppl.to_people()
     ppl.from_people(people)
     ppl.make_edgelist([{'new_key':[0,1,2]}])
+    ppl.brief()
 
     # Contacts methods
     contacts = ppl.contacts
@@ -93,6 +94,15 @@ def test_base():
         contacts['invalid_key']
     contacts.values()
     len(contacts)
+    print(contacts)
+    print(contacts['a'])
+
+    # Layer methods
+    hospitals_layer = cv.Layer()
+    contacts.add_layer(hospitals=hospitals_layer)
+    contacts.pop_layer('hospitals')
+    df = hospitals_layer.to_df()
+    hospitals_layer.from_df(df)
 
     # Tidy up
     remove_files(json_path, sim_path)
@@ -100,36 +110,14 @@ def test_base():
     return
 
 
-def test_interventions():
-    sc.heading('Testing interventions')
-
-    # Create sim
-    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, verbose=verbose)
-
-    # Intervention conversion
-    ce = cv.InterventionDict(**{'which': 'clip_edges', 'pars': {'days': [10, 30], 'changes': [0.5, 1.0]}})
-    print(ce)
-    with pytest.raises(sc.KeyNotFoundError):
-        cv.InterventionDict(**{'which': 'invalid', 'pars': {'days': 10, 'changes': 0.5}})
-
-    # Test numbers and contact tracing
-    tn1 = cv.test_num(10, start_day=3, end_day=20)
-    tn2 = cv.test_num(daily_tests=sim.data['new_tests'])
-    ct = cv.contact_tracing()
-
-    # Create and run
-    sim['interventions'] = [ce, tn1, tn2, ct]
-    sim.run()
-
-    return
-
-
-
 def test_misc():
     sc.heading('Testing miscellaneous functions')
 
     sim_path = 'test_misc.sim'
     json_path = 'test_misc.json'
+    gitinfo_path = 'test_misc.gitinfo'
+    fig_path = 'test_misc.png'
+    fig_comments = 'Test comment'
 
     # Data loading
     cv.load_data(csv_file)
@@ -156,8 +144,13 @@ def test_misc():
 
     cv.daydiff('2020-04-04')
 
+    # Run sim for more investigations
+    sim = cv.Sim(pop_size=500, verbose=0)
+    sim.run()
+    sim.plot(do_show=False)
+
     # Saving and loading
-    sim = cv.Sim()
+    cv.savefig(fig_path, comments=fig_comments)
     cv.save(filename=sim_path, obj=sim)
     cv.load(filename=sim_path)
 
@@ -182,18 +175,38 @@ def test_misc():
     with pytest.raises(ValueError):
         cv.poisson_test(c1, c2, method='not a method')
 
+    # Test locations
+    for location in [None, 'viet-nam']:
+        cv.data.show_locations(location)
+
+    # Test versions
+    with pytest.raises(ValueError):
+        cv.check_save_version('1.3.2', die=True)
+    cv.check_save_version(cv.__version__, filename=gitinfo_path, comments='Test')
+
+    # Test PNG
+    try:
+        metadata = cv.get_png_metadata(fig_path, output=True)
+        assert metadata['Covasim version'] == cv.__version__
+        assert metadata['Covasim comments'] == fig_comments
+    except ImportError as E:
+        print(f'Cannot test PNG function since pillow not installed ({str(E)}), skipping')
+
     # Tidy up
-    remove_files(sim_path, json_path)
+    remove_files(sim_path, json_path, fig_path, gitinfo_path)
 
     return
 
 
 def test_people():
-    sc.heading('Testing people (dynamic layers)')
+    sc.heading('Testing people')
 
     # Test dynamic layers
     sim = cv.Sim(pop_size=100, n_days=10, verbose=verbose, dynam_layer={'a':1})
     sim.run()
+    sim.people.plot()
+    for person in [25, 79]:
+        sim.people.story(person)
 
     return
 
@@ -211,6 +224,7 @@ def test_plotting():
     # Handle lesser-used plotting options
     sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], interval=5, do_save=True, fig_path=fig_path)
     print('↑ May print a warning about zero values')
+
 
     # Handle Plotly functions
     try:
@@ -395,17 +409,21 @@ def test_sim():
     return
 
 
+def test_settings():
+    sc.heading('Testing settings')
+    cv.options.help()
+    cv.options.set(numba_parallel=False) # Don't actually change the default, but call this method
+    return
+
+
 #%% Run as a script
 if __name__ == '__main__':
 
-    # We need to create plots to test plotting, but can use a non-GUI backend
-    if not do_plot:
-        pl.switch_backend('agg')
-
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     test_base()
-    test_interventions()
     test_misc()
     test_people()
     test_plotting()
@@ -413,6 +431,7 @@ if __name__ == '__main__':
     test_requirements()
     test_run()
     test_sim()
+    test_settings()
 
     print('\n'*2)
     sc.toc(T)

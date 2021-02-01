@@ -1,6 +1,14 @@
 #!/bin/bash
-coverage run --source=../covasim --omit=*webapp* -m pytest test_*
+# Note that although the script runs when parallelized, the coverage results are wrong.
+
+echo 'Running tests...'
+coverage run --source=../covasim -m pytest test_*.py
+
 echo 'Creating HTML report...'
 coverage html
+
 echo 'Running report...'
 coverage report
+
+echo 'Report location:'
+echo "`pwd`/htmlcov/index.html"

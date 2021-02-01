@@ -13,7 +13,7 @@ import datetime as dt
 import matplotlib.ticker as ticker
 from . import misc as cvm
 from . import defaults as cvd
-from .settings import options as cvo
+from . import settings as cvset
 
 
 __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']
@@ -224,12 +224,9 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
         cvm.savefig(filename=fig_path) # Save the figure
 
     # Show the figure, or close it
-    if do_show is None:
-        do_show = cvo.show
+    do_show = cvset.handle_show(do_show)
 
-    if do_show:
-        pl.show()
-    elif cvo.close:
+    if cvset.options.close and not do_show:
         if sep_figs:
             for fig in figs:
                 pl.close(fig)
@@ -515,8 +512,7 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
             if w_type == 'weighted':
                 share_ax = ax # Update shared axis
 
-    if do_show or cvo.show:
-        pl.show()
+    cvset.handle_show(do_show)
 
     return fig
 
