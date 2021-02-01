@@ -12,7 +12,6 @@ import sciris as sc
 import covasim as cv
 
 pop_size = 500
-beta = 0.01
 filename = 'example_regression.sim'
 version = '1.7.0'
 
@@ -20,7 +19,7 @@ version = '1.7.0'
 def make_sim(do_save=False):
 
     # Shared settings
-    pars = dict(pop_size=pop_size, beta=beta, verbose=0)
+    pars = dict(pop_size=pop_size, verbose=0)
 
     # Versioning was introduced in 2.0
     if cv.check_version('2.0.0', verbose=False) >= 0:
@@ -39,7 +38,7 @@ def make_sim(do_save=False):
 def test_migration_regression():
     sc.heading('Testing migration and regression...')
 
-    sim1 = cv.MultiSim.load(filename)
+    sim1 = cv.load(filename)
     sim2 = make_sim()
 
     # Check that they match
