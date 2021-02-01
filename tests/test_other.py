@@ -8,13 +8,13 @@ import os
 import pytest
 import sciris as sc
 import covasim as cv
-import pylab as pl
 
 do_plot = 1
 verbose = 0
 debug   = 1 # This runs without parallelization; faster with pytest
 csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 xlsx_file = os.path.join(sc.thisdir(), 'example_data.xlsx')
+cv.options.set(interactive=False) # Assume not running interactively
 
 
 def remove_files(*args):
@@ -398,10 +398,8 @@ def test_sim():
 #%% Run as a script
 if __name__ == '__main__':
 
-    # We need to create plots to test plotting, but can use a non-GUI backend
-    if not do_plot:
-        pl.switch_backend('agg')
-
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     test_base()

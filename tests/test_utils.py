@@ -10,8 +10,8 @@ import pylab as pl
 import sciris as sc
 import covasim as cv
 
-
-doplot = 0
+do_plot = 0
+cv.options.set(interactive=False) # Assume not running interactively
 
 
 #%% Define the tests
@@ -64,14 +64,14 @@ def test_poisson():
     assert s1 == l1
     assert s2 > l2
     assert s3 < l3
-    print(f'Poisson assertions passed:')
+    print('Poisson assertions passed:')
     print(f'f(10,10) {s1} == {l1}')
     print(f'f(10,15) {s2} > {l2}')
     print(f'f(0,100) {s3} < {l3}')
     return s3
 
 
-def test_samples(doplot=False):
+def test_samples(do_plot=False):
     sc.heading('Samples distribution')
 
     n = 10000
@@ -88,7 +88,7 @@ def test_samples(doplot=False):
         'neg_binomial'
         ]
 
-    if doplot:
+    if do_plot:
         pl.figure(figsize=(20,14))
 
     # Run the samples
@@ -107,7 +107,7 @@ def test_samples(doplot=False):
             par2 = 5
         results[choice] = cv.sample(dist=choice, par1=par1, par2=par2, size=n)
 
-        if doplot:
+        if do_plot:
             pl.subplot(nsqr, nsqr, c+1)
             pl.hist(x=results[choice], bins=nbins)
             pl.title(f'dist={choice}, par1={par1}, par2={par2}')
@@ -174,11 +174,13 @@ def test_doubling_time():
 #%% Run as a script
 if __name__ == '__main__':
 
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     rnd1    = test_rand()
     rnd2    = test_poisson()
-    samples = test_samples(doplot=doplot)
+    samples = test_samples(do_plot=do_plot)
     people1 = test_choose()
     people2 = test_choose_w()
     dt      = test_doubling_time()

@@ -8,8 +8,6 @@ import pytest
 import sciris as sc
 import covasim as cv
 
-do_plot = False
-
 
 #%% Define the tests
 def test_parameters():

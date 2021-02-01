@@ -9,19 +9,17 @@ import covasim as cv
 
 do_plot = 1
 do_save = 0
-do_show = 1
 debug   = 1
 verbose = 0
+cv.options.set(interactive=False) # Assume not running interactively
+
 
 #%% Define the tests
-
 
 def test_singlerun():
     sc.heading('Single run test')
 
-    iterpars = {'beta': 0.035,
-                }
-
+    iterpars = {'beta': 0.035}
     sim = cv.Sim(verbose=verbose)
     sim['n_days'] = 20
     sim['pop_size'] = 1000
@@ -117,10 +115,11 @@ def test_simple_scenarios(do_plot=False):
     for path in [json_path, xlsx_path]:
         print(f'Removing {path}')
         os.remove(path)
+
     return scens
 
 
-def test_complex_scenarios(do_plot=False, do_show=True, do_save=False, fig_path=None):
+def test_complex_scenarios(do_plot=False, do_save=False, fig_path=None):
     sc.heading('Test impact of reducing delay time for finding contacts of positives')
 
     n_runs = 3
@@ -199,13 +198,16 @@ def test_complex_scenarios(do_plot=False, do_show=True, do_save=False, fig_path=
             'new_quarantined'
         ]
         fig_args = dict(figsize=(24,16))
-        scens.plot(do_save=do_save, do_show=do_show, to_plot=to_plot, fig_path=fig_path, n_cols=2, fig_args=fig_args)
+        scens.plot(do_save=do_save, to_plot=to_plot, fig_path=fig_path, n_cols=2, fig_args=fig_args)
 
     return scens
 
 
 #%% Run as a script
 if __name__ == '__main__':
+
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     sim1   = test_singlerun()

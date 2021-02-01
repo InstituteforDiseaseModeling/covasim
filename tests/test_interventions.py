@@ -8,8 +8,9 @@ import sciris as sc
 import pylab as pl
 import covasim as cv
 
-do_plot = 1
 verbose = 0
+do_plot = 1 # Whether to plot when run interactively
+cv.options.set(interactive=False) # Assume not running interactively
 
 
 def test_all_interventions():
@@ -107,6 +108,9 @@ def test_all_interventions():
 
 #%% Run as a script
 if __name__ == '__main__':
+
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     test_all_interventions()

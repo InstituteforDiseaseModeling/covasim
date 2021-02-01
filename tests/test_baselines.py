@@ -12,6 +12,7 @@ do_save = 0
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
 parameters_filename = sc.thisdir(cv.__file__, 'regression', f'pars_v{cv.__version__}.json')
+cv.options.set(interactive=False) # Assume not running interactively
 
 
 def make_sim(use_defaults=False, do_plot=False, **kwargs):
@@ -261,8 +262,14 @@ def test_benchmark(do_save=do_save):
 
 if __name__ == '__main__':
 
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
+    T = sc.tic()
+
     make_sim(do_plot=do_plot)
     json = test_benchmark(do_save=do_save) # Run this first so benchmarking is available even if results are different
     new  = test_baseline()
 
+    print('\n'*2)
+    sc.toc(T)
     print('Done.')

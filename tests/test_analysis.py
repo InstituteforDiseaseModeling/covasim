@@ -9,13 +9,13 @@ import covasim as cv
 
 #%% General settings
 
-cv.options.set(backend='agg') # Do not plot if run non-interactively
 do_plot = 1 # Whether to plot when run interactively
+cv.options.set(interactive=False) # Assume not running interactively
 
 pars = dict(
     pop_size = 1000,
     verbose = 0,
-    )
+)
 
 
 #%% Define tests
@@ -96,10 +96,8 @@ def test_transtree():
 #%% Run as a script
 if __name__ == '__main__':
 
-    # We need to create plots to test plotting, but can use a non-GUI backend
-    if do_plot:
-        cv.options.set(backend='default')
-
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     snapshot  = test_snapshot()
