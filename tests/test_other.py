@@ -84,6 +84,7 @@ def test_base():
     people = ppl.to_people()
     ppl.from_people(people)
     ppl.make_edgelist([{'new_key':[0,1,2]}])
+    ppl.brief()
 
     # Contacts methods
     contacts = ppl.contacts
@@ -93,36 +94,18 @@ def test_base():
         contacts['invalid_key']
     contacts.values()
     len(contacts)
+    print(contacts)
+    print(contacts['a'])
+
+    # Layer methods
+    hospitals_layer = cv.Layer()
+    contacts.add_layer(hospitals=hospitals_layer)
+    contacts.pop_layer('hospitals')
 
     # Tidy up
     remove_files(json_path, sim_path)
 
     return
-
-
-def test_interventions():
-    sc.heading('Testing interventions')
-
-    # Create sim
-    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, verbose=verbose)
-
-    # Intervention conversion
-    ce = cv.InterventionDict(**{'which': 'clip_edges', 'pars': {'days': [10, 30], 'changes': [0.5, 1.0]}})
-    print(ce)
-    with pytest.raises(sc.KeyNotFoundError):
-        cv.InterventionDict(**{'which': 'invalid', 'pars': {'days': 10, 'changes': 0.5}})
-
-    # Test numbers and contact tracing
-    tn1 = cv.test_num(10, start_day=3, end_day=20)
-    tn2 = cv.test_num(daily_tests=sim.data['new_tests'])
-    ct = cv.contact_tracing()
-
-    # Create and run
-    sim['interventions'] = [ce, tn1, tn2, ct]
-    sim.run()
-
-    return
-
 
 
 def test_misc():
@@ -194,6 +177,8 @@ def test_people():
     # Test dynamic layers
     sim = cv.Sim(pop_size=100, n_days=10, verbose=verbose, dynam_layer={'a':1})
     sim.run()
+    for person in [25, 79]:
+        sim.people.story(person)
 
     return
 
@@ -403,7 +388,6 @@ if __name__ == '__main__':
     T = sc.tic()
 
     test_base()
-    test_interventions()
     test_misc()
     test_people()
     test_plotting()

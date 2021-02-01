@@ -1,4 +1,5 @@
 #!/bin/bash
+# Note that although the script runs when parallelized, the coverage results are wrong.
 
 echo 'Running tests...'
 coverage run --source=../covasim -m pytest test_*

@@ -45,6 +45,9 @@ def test_microsim():
         }
     sim.update_pars(pars)
     sim.run()
+    sim.disp()
+    sim.summarize()
+    sim.brief()
 
     return sim
 

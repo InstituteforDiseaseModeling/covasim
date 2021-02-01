@@ -1248,7 +1248,7 @@ class Contacts(FlexDict):
         **Example**::
 
             hospitals_layer = cv.Layer()
-            sim.people.contacts.add_layer(hospitals=layer)
+            sim.people.contacts.add_layer(hospitals=hospitals_layer)
         '''
         for lkey,layer in kwargs.items():
             layer.validate()

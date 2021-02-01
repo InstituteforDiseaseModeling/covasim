@@ -24,7 +24,7 @@ def test_snapshot():
     sc.heading('Testing snapshot analyzer')
     sim = cv.Sim(pars, analyzers=cv.snapshot('2020-04-04', '2020-04-14'))
     sim.run()
-    snapshot = sim['analyzers'][0]
+    snapshot = sim.get_analyzer()
     people1 = snapshot.snapshots[0]            # Option 1
     people2 = snapshot.snapshots['2020-04-04'] # Option 2
     people3 = snapshot.get('2020-04-14')       # Option 3
@@ -45,15 +45,26 @@ def test_age_hist():
     sim.run()
 
     # Checks to see that compute windows returns correct number of results
-    agehist = sim['analyzers'][0]
+    agehist = sim.get_analyzer()
     agehist.compute_windows()
     assert len(age_analyzer.window_hists) == len(day_list), "Number of histograms should equal number of days"
 
-    # checks compute_windows and plot()
-    plots = agehist.plot(windows=True)
-    assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
+    # Checks compute_windows and plot()
+    if do_plot:
+        plots = agehist.plot(windows=True)
+        assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
 
     return agehist
+
+
+def test_daily_stats():
+    sc.heading('Testing daily stats analyzer')
+    sim = cv.Sim(pars, analyzers=cv.daily_stats(days=['2020-04-04', '2020-04-14']))
+    sim.run()
+    daily = sim.get_analyzer()
+    if do_plot:
+        daily.plot()
+    return daily
 
 
 def test_fit():
@@ -76,6 +87,9 @@ def test_fit():
 
     assert fit1.mismatch != fit2.mismatch, "Differences between fit and data remains unchanged after changing sim seed"
 
+    if do_plot:
+        fit1.plot()
+
     return fit1
 
 
@@ -86,9 +100,10 @@ def test_transtree():
     sim.run()
 
     transtree = sim.make_transtree()
-    transtree.plot()
-    transtree.animate(animate=False)
-    transtree.plot_histograms()
+    if do_plot:
+        transtree.plot()
+        transtree.animate(animate=False)
+        transtree.plot_histograms()
 
     return transtree
 
@@ -102,6 +117,7 @@ if __name__ == '__main__':
 
     snapshot  = test_snapshot()
     agehist   = test_age_hist()
+    daily     = test_daily_stats()
     fit       = test_fit()
     transtree = test_transtree()
 

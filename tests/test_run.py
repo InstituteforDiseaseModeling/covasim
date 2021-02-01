@@ -67,6 +67,11 @@ def test_multisim_reduce(do_plot=False): # If being run via pytest, turn off
     msim = cv.MultiSim(sim, n_runs=n_runs, noise=0.1)
     msim.run(verbose=verbose)
     msim.reduce()
+    msim.mean()
+    msim.median()
+    msim.disp()
+    msim.summarize()
+    msim.brief()
     if do_plot:
         msim.plot()
 
@@ -111,6 +116,9 @@ def test_simple_scenarios(do_plot=False):
         scens.plot()
     scens.to_json(json_path)
     scens.to_excel(xlsx_path)
+    scens.disp()
+    scens.summarize()
+    scens.brief()
 
     for path in [json_path, xlsx_path]:
         print(f'Removing {path}')
