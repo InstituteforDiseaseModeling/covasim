@@ -2,7 +2,7 @@
 # Note that although the script runs when parallelized, the coverage results are wrong.
 
 echo 'Running tests...'
-coverage run --source=../covasim -m pytest test_*
+coverage run --source=../covasim -m pytest test_*.py
 
 echo 'Creating HTML report...'
 coverage html

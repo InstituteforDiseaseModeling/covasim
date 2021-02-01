@@ -187,7 +187,7 @@ def test_misc():
         metadata = cv.get_png_metadata(fig_path, output=True)
         assert metadata['Covasim version'] == cv.__version__
         assert metadata['Covasim comments'] == fig_comments
-    except ModuleNotFoundError as E:
+    except ImportError as E:
         print(f'Cannot test PNG function since pillow not installed ({str(E)}), skipping')
 
     # Tidy up
