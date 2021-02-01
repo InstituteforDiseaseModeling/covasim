@@ -131,6 +131,7 @@ def test_multisim_advanced():
     assert np.allclose(m1.summary[:], m1b.summary[:], rtol=0, atol=0, equal_nan=True)
     os.remove(msim_path)
 
+    # Check merging/splitting
     merged1 = cv.MultiSim.merge(m1, m2)
     merged2 = cv.MultiSim.merge([m1, m2], base=True)
     m1c, m2c = merged1.split()
