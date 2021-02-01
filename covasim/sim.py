@@ -1177,7 +1177,8 @@ def diff_sims(sim1, sim2, output=False, die=False):
         if key in sim1_keys: # If a key is missing, don't count it as a mismatch
             sim1_val = sim1[key] if key in sim1 else 'not present'
             sim2_val = sim2[key] if key in sim2 else 'not present'
-            if sim1_val != sim2_val:
+            both_nan = sc.isnumber(sim1_val, isnan=True) and sc.isnumber(sim2_val, isnan=True)
+            if sim1_val != sim2_val and not both_nan:
                 mismatches[key] = {'sim1': sim1_val, 'sim2': sim2_val}
 
     if len(mismatches):
@@ -1190,7 +1191,8 @@ def diff_sims(sim1, sim2, output=False, die=False):
         for mdict in mismatches.values():
             old = mdict['sim1']
             new = mdict['sim2']
-            if sc.isnumber(new) and sc.isnumber(old) and old>0:
+            numeric = sc.isnumber(sim1_val) and sc.isnumber(sim2_val)
+            if numeric and old>0:
                 this_diff  = new - old
                 this_ratio = new/old
                 abs_ratio  = max(this_ratio, 1.0/this_ratio)
@@ -1225,8 +1227,8 @@ def diff_sims(sim1, sim2, output=False, die=False):
             ratio.append(this_ratio)
             change.append(this_change)
 
-        df['diff']   = diff
-        df['ratio']  = ratio
+        df['diff'] = diff
+        df['ratio'] = ratio
         for col in ['sim1', 'sim2', 'diff', 'ratio']:
             df[col] = df[col].round(decimals=3)
         df['change'] = change

@@ -3,7 +3,6 @@ Compare current results to baseline
 """
 
 import numpy as np
-import pandas as pd
 import sciris as sc
 import covasim as cv
 
