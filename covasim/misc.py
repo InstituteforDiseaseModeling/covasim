@@ -2,7 +2,6 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
-import os
 import numpy as np
 import pandas as pd
 import pylab as pl
@@ -430,7 +429,7 @@ def get_version_pars(version, verbose=True):
         Dictionary of parameters from that version
     '''
 
-    # Define mappings for available sets of parameters
+    # Define mappings for available sets of parameters -- from the changelog
     match_map = {
         '0.30.4': ['0.30.4'],
         '0.31.0': ['0.31.0'],

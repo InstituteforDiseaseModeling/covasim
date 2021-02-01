@@ -113,6 +113,9 @@ def test_misc():
 
     sim_path = 'test_misc.sim'
     json_path = 'test_misc.json'
+    gitinfo_path = 'test_misc.gitinfo'
+    fig_path = 'test_misc.png'
+    fig_comments = 'Test comment'
 
     # Data loading
     cv.load_data(csv_file)
@@ -139,8 +142,13 @@ def test_misc():
 
     cv.daydiff('2020-04-04')
 
+    # Run sim for more investigations
+    sim = cv.Sim(pop_size=500, verbose=0)
+    sim.run()
+    sim.plot(do_show=False)
+
     # Saving and loading
-    sim = cv.Sim()
+    cv.savefig(fig_path, comments=fig_comments)
     cv.save(filename=sim_path, obj=sim)
     cv.load(filename=sim_path)
 
@@ -169,8 +177,21 @@ def test_misc():
     for location in [None, 'viet-nam']:
         cv.data.show_locations(location)
 
+    # Test versions
+    with pytest.raises(ValueError):
+        cv.check_save_version('1.3.2', die=True)
+    cv.check_save_version(cv.__version__, filename=gitinfo_path, comments='Test')
+
+    # Test PNG
+    try:
+        metadata = cv.get_png_metadata(fig_path, output=True)
+        assert metadata['Covasim version'] == cv.__version__
+        assert metadata['Covasim comments'] == fig_comments
+    except ModuleNotFoundError as E:
+        print(f'Cannot test PNG function since pillow not installed ({str(E)}), skipping')
+
     # Tidy up
-    remove_files(sim_path, json_path)
+    remove_files(sim_path, json_path, fig_path, gitinfo_path)
 
     return
 
