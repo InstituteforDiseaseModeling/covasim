@@ -10,16 +10,18 @@ not checked in) and running:
 
 import sciris as sc
 import covasim as cv
+import pytest
 
 pop_size = 500
 filename = 'example_regression.sim'
 version = '1.7.0'
 
 
-def make_sim(do_save=False):
+def make_sim(do_save=False, **kwargs):
 
     # Shared settings
     pars = dict(pop_size=pop_size, verbose=0)
+    pars.update(kwargs)
 
     # Versioning was introduced in 2.0
     if cv.check_version('2.0.0', verbose=False) >= 0:
@@ -43,6 +45,11 @@ def test_migration_regression():
 
     # Check that they match
     cv.diff_sims(sim1, sim2, die=True)
+
+    # Confirm that non-matching sims don't match
+    sim3 = make_sim(beta=0.02123)
+    with pytest.raises(ValueError):
+        cv.diff_sims(sim1, sim3, die=True)
 
     return sim1, sim2
 
