@@ -101,6 +101,8 @@ def test_base():
     hospitals_layer = cv.Layer()
     contacts.add_layer(hospitals=hospitals_layer)
     contacts.pop_layer('hospitals')
+    df = hospitals_layer.to_df()
+    hospitals_layer.from_df(df)
 
     # Tidy up
     remove_files(json_path, sim_path)

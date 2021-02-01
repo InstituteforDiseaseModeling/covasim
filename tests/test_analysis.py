@@ -47,9 +47,11 @@ def test_age_hist():
     # Checks to see that compute windows returns correct number of results
     agehist = sim.get_analyzer()
     agehist.compute_windows()
+    agehist.get() # Not used, but check get
+    agehist.get(day_list[1])
     assert len(age_analyzer.window_hists) == len(day_list), "Number of histograms should equal number of days"
 
-    # Checks compute_windows and plot()
+    # Check plot()
     if do_plot:
         plots = agehist.plot(windows=True)
         assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
@@ -59,7 +61,8 @@ def test_age_hist():
 
 def test_daily_stats():
     sc.heading('Testing daily stats analyzer')
-    sim = cv.Sim(pars, analyzers=cv.daily_stats(days=['2020-04-04', '2020-04-14']))
+    ds = cv.daily_stats(days=['2020-04-04', '2020-04-14'], save_inds=True)
+    sim = cv.Sim(pars, analyzers=ds)
     sim.run()
     daily = sim.get_analyzer()
     if do_plot:
@@ -100,10 +103,18 @@ def test_transtree():
     sim.run()
 
     transtree = sim.make_transtree()
+    print(len(transtree))
     if do_plot:
         transtree.plot()
         transtree.animate(animate=False)
         transtree.plot_histograms()
+
+    # Try networkx, but don't worry about failures
+    try:
+        tt = sim.make_transtree(to_networkx=True)
+        tt.r0()
+    except ImportError as E:
+        print(f'Could not test conversion to networkx ({str(E)})')
 
     return transtree
 

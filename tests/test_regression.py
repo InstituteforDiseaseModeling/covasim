@@ -37,8 +37,8 @@ def make_sim(do_save=False, **kwargs):
     return sim
 
 
-def test_migration_regression():
-    sc.heading('Testing migration and regression...')
+def test_regression():
+    sc.heading('Testing regression...')
 
     sim1 = cv.load(filename)
     sim2 = make_sim()
@@ -54,6 +54,35 @@ def test_migration_regression():
     return sim1, sim2
 
 
+def test_migration():
+    sc.heading('Testing migration...')
+
+    # Create sim and people
+    base = make_sim()
+    base.people.version = version
+    sim = cv.load(filename)
+    sim.people = base.people
+
+    # Create msim
+    msim = cv.MultiSim(base_sim=sim)
+    del msim.version # To simulate <2.0.0
+    msim.init_sims()
+
+    # Create scenarios
+    scens = cv.Scenarios(sim=sim)
+    del scens.version # To simulate <2.0.0
+
+    # Try migrations
+    new_sim = cv.migrate(sim, die=True)
+    new_msim = cv.migrate(msim, die=True)
+    new_scens = cv.migrate(scens, die=True)
+
+    # Try something un-migratable
+    with pytest.raises(TypeError):
+        cv.migrate('Strings are not migratable', die=True)
+
+    return new_sim, new_msim, new_scens
+
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -61,7 +90,8 @@ if __name__ == '__main__':
     # Start timing and optionally enable interactive plotting
     T = sc.tic()
 
-    sim1, sim2 = test_migration_regression()
+    sim1, sim2 = test_regression()
+    sim, msim, scens = test_migration()
 
     sc.toc(T)
     print('Done.')

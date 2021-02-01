@@ -227,8 +227,12 @@ def migrate(obj, update=True, verbose=True, die=False):
     # Unreconized object type
     else:
         errormsg = f'Object {obj} of type {type(obj)} is not understood and cannot be migrated: must be a sim, multisim, scenario, or people object'
-        if verbose: print(errormsg)
-        elif die: raise TypeError(errormsg)
+        if die:
+            raise TypeError(errormsg)
+        elif verbose:
+            print(errormsg)
+            return
+
 
     # If requested, update the stored version to the current version
     if update:
