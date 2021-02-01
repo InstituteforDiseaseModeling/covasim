@@ -48,10 +48,6 @@ class Sim(cvb.BaseSim):
     def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None,
                  popfile=None, load_pop=False, save_pop=False, version=None, **kwargs):
 
-        # Create the object
-        default_pars = cvpar.make_pars(version=version) # Start with default pars
-        super().__init__(default_pars) # Initialize and set the parameters as attributes
-
         # Set attributes
         self.label         = label    # The label/name of the simulation
         self.created       = None     # The datetime the sim was created
@@ -71,6 +67,10 @@ class Sim(cvb.BaseSim):
         self.results_ready = False    # Whether or not results are ready
         self._default_ver  = version  # Default version of parameters used
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
+
+        # Update the parameters
+        default_pars = cvpar.make_pars(version=version) # Start with default pars
+        super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
