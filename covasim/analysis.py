@@ -10,7 +10,7 @@ import sciris as sc
 from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
-from .settings import options as cvo
+from . import settings as cvset
 
 
 __all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_stats', 'Fit', 'TransTree']
@@ -666,8 +666,7 @@ class daily_stats(Analyzer):
                 ax.plot(y, **plot_args)
                 ax.set_title(f'{k1}: {k2}')
 
-        if do_show or cvo.show:
-            pl.show()
+        cvset.handle_show(do_show) # Whether or not to call pl.show()
 
         return fig
 
@@ -986,8 +985,7 @@ class Fit(sc.prettyobj):
                 pl.ylabel('Losses')
                 pl.legend()
 
-        if do_show or cvo.show:
-            pl.show()
+        cvset.handle_show(do_show) # Whether or not to call pl.show()
 
         return fig
 
@@ -1272,8 +1270,7 @@ class TransTree(sc.prettyobj):
         for i, (key, title) in enumerate(to_plot.items()):
             plot_quantity(key, title, i + 1)
 
-        if do_show or cvo.show:
-            pl.show()
+        cvset.handle_show(do_show) # Whether or not to call pl.show()
 
         return fig
 

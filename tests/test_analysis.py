@@ -3,14 +3,14 @@ Execute analysis tools in order to broadly cover basic functionality of analysis
 '''
 
 import numpy as np
-import pylab as pl
 import sciris as sc
 import covasim as cv
 
 
 #%% General settings
 
-do_plot = 1
+cv.options.set(backend='agg') # Do not plot if run non-interactively
+do_plot = 1 # Whether to plot when run interactively
 
 pars = dict(
     pop_size = 1000,
@@ -31,8 +31,8 @@ def test_snapshot():
     people4 = snapshot.get(34)                 # Option 4
     people5 = snapshot.get()                   # Option 5
 
-    assert people1 == people2, f'Snapshot options should match but do not'
-    assert people3 != people4, f'Snapshot options should not match but do'
+    assert people1 == people2, 'Snapshot options should match but do not'
+    assert people3 != people4, 'Snapshot options should not match but do'
     return people5
 
 
@@ -74,7 +74,7 @@ def test_fit():
     sim2.run()
     fit2 = sim2.compute_fit(custom=custom_inputs)
 
-    assert fit1.mismatch != fit2.mismatch, f"Differences between fit and data remains unchanged after changing sim seed"
+    assert fit1.mismatch != fit2.mismatch, "Differences between fit and data remains unchanged after changing sim seed"
 
     return fit1
 
@@ -97,8 +97,8 @@ def test_transtree():
 if __name__ == '__main__':
 
     # We need to create plots to test plotting, but can use a non-GUI backend
-    if not do_plot:
-        pl.switch_backend('agg')
+    if do_plot:
+        cv.options.set(backend='default')
 
     T = sc.tic()
 
