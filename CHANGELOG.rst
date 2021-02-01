@@ -26,10 +26,16 @@ Latest versions (2.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
 Version 2.0.2 (2021-02-01)
 --------------------------
-- Added a new method, ``cv.compare_sims()``, that allows two simulations to be quickly compared.
+- Added a new option to easily turn on/off interactive plotting: e.g., simply set ``cv.options.set(interactive=False)`` to turn off interactive plotting. This meta-option sets the other options ``show``, ``close``, and ``backend``.
+- Changed the logic of ``do_show``, such that ``do_show=False`` will never show a plot, even if ``cv.options.show`` is ``True``.
+- Added a new method, ``cv.diff_sims()``, that allows the differences in results between two simulations to be quickly calculated.
+- Removed the ``keys`` argument from ``cv.daily_stats()``, since non-default keys are had to validate.
+- Fixed a bug that prevented prognoses parameters from being correctly set to those from an earlier version.
+- Added an R usage example to the ``examples`` folder (matching the one in the FAQ).
+- Added additional tests, increasing test coverage from 72% to 88%.
+- *GitHub info*: PR `779 <https://github.com/amath-idm/covasim/pull/779>`__
 
 
 Version 2.0.1 (2021-01-31)
