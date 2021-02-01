@@ -16,8 +16,8 @@ from . import plotting as cvplt
 from . import interventions as cvi
 from . import analysis as cva
 
-# Everything in this file is contained in the Sim class
-__all__ = ['Sim', 'compare_sims', 'AlreadyRunError']
+# Almost everything in this file is contained in the Sim class
+__all__ = ['Sim', 'diff_sims', 'AlreadyRunError']
 
 
 class Sim(cvb.BaseSim):
@@ -1129,9 +1129,10 @@ class Sim(cvb.BaseSim):
         return fig
 
 
-def compare_sims(sim1, sim2, output=False, die=False):
+def diff_sims(sim1, sim2, output=False, die=False):
     '''
-    Compare the summaries of two simulations and print whether they differ.
+    Compute the difference of the summaries of two simulations, and print any
+    values which differ.
 
     Args:
         sim1 (sim/dict): either a simulation object or the sim.summary dictionary
@@ -1146,7 +1147,7 @@ def compare_sims(sim1, sim2, output=False, die=False):
         s2 = cv.Sim(beta=0.02)
         s1.run()
         s2.run()
-        cv.compare_sims(s1, s2)
+        cv.diff_sims(s1, s2)
     '''
 
     if isinstance(sim1, Sim):

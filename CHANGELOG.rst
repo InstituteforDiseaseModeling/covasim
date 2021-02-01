@@ -26,6 +26,12 @@ Latest versions (2.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+
+Version 2.0.2 (2021-02-01)
+--------------------------
+- Added a new method, ``cv.compare_sims()``, that allows two simulations to be quickly compared.
+
+
 Version 2.0.1 (2021-01-31)
 --------------------------
 - Pinned ``xlrd`` version to 1.2.0 due to a bug introduced in the ``2.0.1`` version of ``xlrd`` (see `here <https://stackoverflow.com/questions/65250207/pandas-cannot-open-an-excel-xlsx-file>`__ for details).
@@ -149,7 +155,7 @@ Version 1.7.4 (2020-10-02)
 Version 1.7.3 (2020-09-30)
 --------------------------
 - Changed ``test_prob.apply()`` and ``test_num.apply()`` to return the indices of people that were tested
-- ``cvm.date(None)`` returns ``None`` instead of an empty list. Both ``cvm.date()`` and ``cvm.day()`` no longer raise errors if the list of inputs includes ``None`` entries
+- ``cvm.date(None)`` returns ``None`` instead of an empty list. Both ``cvm.date()`` and ``cvm.day()`` no longer raise errors if the list of inputs includes ``None`` entries.
 - *GitHub info*: PR `699 <https://github.com/amath-idm/covasim/pull/699>`__
 
 
