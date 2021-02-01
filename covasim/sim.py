@@ -4,6 +4,7 @@ Defines the Sim class, Covasim's core class.
 
 #%% Imports
 import numpy as np
+import pandas as pd
 import sciris as sc
 from . import utils as cvu
 from . import misc as cvm
@@ -16,7 +17,7 @@ from . import interventions as cvi
 from . import analysis as cva
 
 # Everything in this file is contained in the Sim class
-__all__ = ['Sim', 'AlreadyRunError']
+__all__ = ['Sim', 'compare_sims', 'AlreadyRunError']
 
 
 class Sim(cvb.BaseSim):
@@ -64,6 +65,7 @@ class Sim(cvb.BaseSim):
         self.t             = None     # The current time in the simulation (during execution); outside of sim.step(), its value corresponds to next timestep to be computed
         self.people        = None     # Initialize these here so methods that check their length can see they're empty
         self.results       = {}       # For storing results
+        self.summary       = None     # For storing a summary of the results
         self.initialized   = False    # Whether or not initialization is complete
         self.complete      = False    # Whether a simulation has completed running
         self.results_ready = False    # Whether or not results are ready
@@ -878,7 +880,7 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def compute_summary(self, full=None, t=None, update=True, output=False):
+    def compute_summary(self, full=None, t=None, update=True, output=False, require_run=False):
         '''
         Compute the summary dict and string for the sim. Used internally; see
         sim.summarize() for the user version.
@@ -888,11 +890,16 @@ class Sim(cvb.BaseSim):
             t (int/str): day or date to compute summary for (by default, the last point)
             update (bool): whether to update the stored sim.summary
             output (bool): whether to return the summary
+            require_run (bool): whether to raise an exception if simulations have not been run yet
         '''
         if t is None:
             t = self.day(self.t)
 
         # Compute the summary
+        if require_run and not self.results_ready:
+            errormsg = 'Simulation not yet run'
+            raise RuntimeError(errormsg)
+
         summary = sc.objdict()
         for key in self.result_keys():
             summary[key] = self.results[key][t]
@@ -1120,6 +1127,122 @@ class Sim(cvb.BaseSim):
         '''
         fig = cvplt.plot_result(sim=self, key=key, *args, **kwargs)
         return fig
+
+
+def compare_sims(sim1, sim2, output=False, die=False):
+    '''
+    Compare the summaries of two simulations and print whether they differ.
+
+    Args:
+        sim1 (sim/dict): either a simulation object or the sim.summary dictionary
+        sim2 (sim/dict): ditto
+        output (bool): whether to return the output as a string (otherwise print)
+        die (bool): whether to raise an exception if the sims don't match
+        require_run (bool): require that the simulations have been run
+
+    **Example**::
+
+        s1 = cv.Sim(beta=0.01)
+        s2 = cv.Sim(beta=0.02)
+        s1.run()
+        s2.run()
+        cv.compare_sims(s1, s2)
+    '''
+
+    if isinstance(sim1, Sim):
+        sim1 = sim1.compute_summary(update=False, output=True, require_run=True)
+    if isinstance(sim2, Sim):
+        sim2 = sim2.compute_summary(update=False, output=True, require_run=True)
+    for sim in [sim1, sim2]:
+        if not isinstance(sim, dict):
+            errormsg = f'Cannot compare object of type {type(sim)}, must be a sim or a sim.summary dict'
+            raise TypeError(errormsg)
+
+    # Compare keys
+    mismatchmsg = ''
+    sim1_keys = set(sim1.keys())
+    sim2_keys = set(sim2.keys())
+    if sim1_keys != sim2_keys:
+        mismatchmsg = "Keys don't match!\n"
+        missing = list(sim1_keys - sim2_keys)
+        extra   = list(sim2_keys - sim1_keys)
+        if missing:
+            mismatchmsg += f'  Missing sim1 keys: {missing}\n'
+        if extra:
+            mismatchmsg += f'  Extra sim2 keys: {extra}\n'
+
+    mismatches = {}
+    for key in sim2.keys(): # To ensure order
+        if key in sim1_keys: # If a key is missing, don't count it as a mismatch
+            sim1_val = sim1[key] if key in sim1 else 'not present'
+            sim2_val = sim2[key] if key in sim2 else 'not present'
+            if sim1_val != sim2_val:
+                mismatches[key] = {'sim1': sim1_val, 'sim2': sim2_val}
+
+    if len(mismatches):
+        mismatchmsg = '\nThe following values differ between the two simulations:\n'
+        df = pd.DataFrame.from_dict(mismatches).transpose()
+        diff   = []
+        ratio  = []
+        change = []
+        small_change = 1e-3 # Define a small change, e.g. a rounding error
+        for mdict in mismatches.values():
+            old = mdict['sim1']
+            new = mdict['sim2']
+            if sc.isnumber(new) and sc.isnumber(old) and old>0:
+                this_diff  = new - old
+                this_ratio = new/old
+                abs_ratio  = max(this_ratio, 1.0/this_ratio)
+
+                # Set the character to use
+                if abs_ratio<small_change:
+                    change_char = '≈'
+                elif new > old:
+                    change_char = '↑'
+                elif new < old:
+                    change_char = '↓'
+                else:
+                    errormsg = f'Could not determine relationship between sim1={old} and sim2={new}'
+                    raise ValueError(errormsg)
+
+                # Set how many repeats it should have
+                repeats = 1
+                if abs_ratio >= 1.1:
+                    repeats = 2
+                if abs_ratio >= 2:
+                    repeats = 3
+                if abs_ratio >= 10:
+                    repeats = 4
+
+                this_change = change_char*repeats
+            else:
+                this_diff   = np.nan
+                this_ratio  = np.nan
+                this_change = 'N/A'
+
+            diff.append(this_diff)
+            ratio.append(this_ratio)
+            change.append(this_change)
+
+        df['diff']   = diff
+        df['ratio']  = ratio
+        for col in ['sim1', 'sim2', 'diff', 'ratio']:
+            df[col] = df[col].round(decimals=3)
+        df['change'] = change
+        mismatchmsg += str(df)
+
+    # Raise an error if mismatches were found
+    if mismatchmsg:
+        if die:
+            raise ValueError(mismatchmsg)
+        elif output:
+            return mismatchmsg
+        else:
+            print(mismatchmsg)
+    else:
+        if not output:
+            print('Sims match')
+    return
 
 
 class AlreadyRunError(RuntimeError):
