@@ -28,7 +28,7 @@ def test_singlerun():
     return sim
 
 
-def test_multirun(do_plot=False): # If being run via pytest, turn off
+def test_multirun(do_plot=do_plot): # If being run via pytest, turn off
     sc.heading('Multirun test')
 
     n_days = 60
@@ -55,7 +55,7 @@ def test_multirun(do_plot=False): # If being run via pytest, turn off
     return sims
 
 
-def test_multisim_reduce(do_plot=False): # If being run via pytest, turn off
+def test_multisim_reduce(do_plot=do_plot): # If being run via pytest, turn off
     sc.heading('Combine results test')
 
     n_runs = 3
@@ -78,7 +78,7 @@ def test_multisim_reduce(do_plot=False): # If being run via pytest, turn off
     return msim
 
 
-def test_multisim_combine(do_plot=False): # If being run via pytest, turn off
+def test_multisim_combine(do_plot=do_plot): # If being run via pytest, turn off
     sc.heading('Combine results test')
 
     n_runs = 3
@@ -103,7 +103,7 @@ def test_multisim_combine(do_plot=False): # If being run via pytest, turn off
     return msim
 
 
-def test_simple_scenarios(do_plot=False):
+def test_simple_scenarios(do_plot=do_plot):
     sc.heading('Simple scenarios test')
     basepars = {'pop_size':1000}
 
@@ -127,7 +127,7 @@ def test_simple_scenarios(do_plot=False):
     return scens
 
 
-def test_complex_scenarios(do_plot=False, do_save=False, fig_path=None):
+def test_complex_scenarios(do_plot=do_plot, do_save=False, fig_path=None):
     sc.heading('Test impact of reducing delay time for finding contacts of positives')
 
     n_runs = 3

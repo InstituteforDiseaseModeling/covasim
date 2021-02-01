@@ -165,6 +165,10 @@ def test_misc():
     with pytest.raises(ValueError):
         cv.poisson_test(c1, c2, method='not a method')
 
+    # Test locations
+    for location in [None, 'viet-nam']:
+        cv.data.show_locations(location)
+
     # Tidy up
     remove_files(sim_path, json_path)
 
@@ -172,11 +176,12 @@ def test_misc():
 
 
 def test_people():
-    sc.heading('Testing people (dynamic layers)')
+    sc.heading('Testing people')
 
     # Test dynamic layers
     sim = cv.Sim(pop_size=100, n_days=10, verbose=verbose, dynam_layer={'a':1})
     sim.run()
+    sim.people.plot()
     for person in [25, 79]:
         sim.people.story(person)
 
@@ -196,6 +201,7 @@ def test_plotting():
     # Handle lesser-used plotting options
     sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], interval=5, do_save=True, fig_path=fig_path)
     print('↑ May print a warning about zero values')
+
 
     # Handle Plotly functions
     try:
@@ -380,6 +386,13 @@ def test_sim():
     return
 
 
+def test_settings():
+    sc.heading('Testing settings')
+    cv.options.help()
+    cv.options.set(numba_parallel=False) # Don't actually change the default, but call this method
+    return
+
+
 #%% Run as a script
 if __name__ == '__main__':
 
@@ -395,6 +408,7 @@ if __name__ == '__main__':
     test_requirements()
     test_run()
     test_sim()
+    test_settings()
 
     print('\n'*2)
     sc.toc(T)
