@@ -143,7 +143,7 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale=True, color=None):
+    def __init__(self, name=None, npts=None, scale=True, color=None, max_strains=10):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
@@ -151,7 +151,10 @@ class Result(object):
         self.color = color # Default color
         if npts is None:
             npts = 0
-        self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
+        if 'by_strain' in self.name or 'by strain' in self.name:
+            self.values = np.full((npts, max_strains), 0, dtype=cvd.result_float)
+        else:
+            self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
         self.low    = None
         self.high   = None
         return
@@ -910,6 +913,10 @@ class BasePeople(FlexPretty):
     def count(self, key):
         ''' Count the number of people for a given key '''
         return (self[key]>0).sum()
+
+    def count_by_strain(self, key, strain):
+        ''' Count the number of people for a given key '''
+        return (self[key][:,strain]>0).sum()
 
 
     def count_not(self, key):

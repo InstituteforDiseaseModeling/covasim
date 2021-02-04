@@ -67,8 +67,10 @@ class People(cvb.BasePeople):
         for key in self.meta.states:
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
-            elif key == 'exposed_by_strain' or key == 'infectious_by_strain':
+            elif key == 'exposed_strain' or key == 'infectious_strain':
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+            elif key == 'infectious_by_strain':
+                self[key] = np.full((self.pop_size, self.pars['max_strains']), False, dtype=bool)
             else:
                 self[key] = np.full(self.pop_size, False, dtype=bool)
 
@@ -82,6 +84,10 @@ class People(cvb.BasePeople):
 
         # Store flows to be computed during simulation
         self.flows = {key:0 for key in cvd.new_result_flows}
+        for key in cvd.new_result_flows:
+            if 'by_strain' in key:
+                self.flows[key] = np.full(self.pars['n_strains'], 0, dtype=cvd.default_float)
+
 
         # Although we have called init(), we still need to call initialize()
         self.initialized = False
@@ -154,6 +160,9 @@ class People(cvb.BasePeople):
 
         # Perform updates
         self.flows  = {key:0 for key in cvd.new_result_flows}
+        for key in cvd.new_result_flows:
+            if 'by_strain' in key:
+                self.flows[key] += np.full(self.pars['n_strains'], 0, dtype=cvd.default_float)
         self.flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
         self.flows['new_symptomatic'] += self.check_symptomatic()
         self.flows['new_severe']      += self.check_severe()
@@ -218,7 +227,12 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
-        self.infectious_by_strain[inds] = self.exposed_by_strain[inds]
+        self.infectious_strain[inds] = self.exposed_strain[inds]
+        for strain in range(self.pars['n_strains']):
+            inds_strain = [index for index, value in enumerate(self.infectious_strain) if value == strain]
+            self.infectious_by_strain[inds_strain, strain] = True
+            self.flows['new_infectious_by_strain'][strain] += len(inds_strain)
+
         return len(inds)
 
 
@@ -252,7 +266,7 @@ class People(cvb.BasePeople):
         self.severe[inds]      = False
         self.critical[inds]    = False
         self.recovered[inds]   = True
-        self.infectious_by_strain[inds] = np.nan
+        self.infectious_strain[inds] = np.nan
         return len(inds)
 
 
@@ -367,9 +381,10 @@ class People(cvb.BasePeople):
         # Set states
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
-        self.exposed_by_strain[inds] = strain
+        self.exposed_strain[inds] = strain
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
+        self.flows['new_infections_by_strain'][strain] += len(inds)
 
         # Record transmissions
         for i, target in enumerate(inds):

@@ -286,7 +286,9 @@ class Sim(cvb.BaseSim):
         # Other variables
         self.results['n_alive']        = init_res('Number of people alive', scale=False)
         self.results['prevalence']     = init_res('Prevalence', scale=False)
+        self.results['prevalence_by_strain'] = init_res('Prevalence by strain', scale=False)
         self.results['incidence']      = init_res('Incidence', scale=False)
+        self.results['incidence_by_strain'] = init_res('Incidence by strain', scale=False)
         self.results['r_eff']          = init_res('Effective reproduction number', scale=False)
         self.results['doubling_time']  = init_res('Doubling time', scale=False)
         self.results['test_yield']     = init_res('Testing yield', scale=False)
@@ -385,8 +387,9 @@ class Sim(cvb.BaseSim):
         self.people.initialize() # Fully initialize the people
 
         # Create the seed infections
-        inds = cvu.choose(self['pop_size'], self['pop_infected'])
-        self.people.infect(inds=inds, layer='seed_infection')
+        for strain in range(self['n_strains']):
+            inds = cvu.choose(self['pop_size'], self['pop_infected'])
+            self.people.infect(inds=inds, layer='seed_infection', strain=strain)
         return
 
 
@@ -477,13 +480,12 @@ class Sim(cvb.BaseSim):
         icu_max  = people.count('critical') > self['n_beds_icu']  if self['n_beds_icu']  else False # Check for ICU bed constraint
 
         # Randomly infect some people (imported infections)
-        n_imports = cvu.poisson(self['n_imports']) # Imported cases
-        if n_imports>0:
-            importation_inds = cvu.choose(max_n=len(people), n=n_imports)
-
-            # TODO -- iterate through n_strains, using value as index for beta, etc.
-
-            people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
+        imports = cvu.n_poisson(self['n_imports'], self['n_strains']) # Imported cases
+        # TODO -- calculate imports per strain.
+        for strain, n_imports in enumerate(imports):
+            if n_imports>0:
+                importation_inds = cvu.choose(max_n=len(people), n=n_imports)
+                people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation', strain=strain)
 
         # Apply interventions
         for intervention in self['interventions']:
@@ -521,7 +523,7 @@ class Sim(cvb.BaseSim):
                 rel_sus = people.rel_sus[:,strain]
 
                 inf = people.infectious
-                for person, value in enumerate(people.infectious_by_strain):
+                for person, value in enumerate(people.infectious_strain):
                     if value == strain:
                         inf[person] = True
                     else:
@@ -547,11 +549,19 @@ class Sim(cvb.BaseSim):
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
-            self.results[f'n_{key}'][t] = people.count(key)
+            if 'by_strain' in key or 'by strain' in key:
+                for strain in range(self['n_strains']):
+                    self.results[f'n_{key}'][t][strain] = people.count_by_strain(key, strain)
+            else:
+                self.results[f'n_{key}'][t] = people.count(key)
 
         # Update counts for this time step: flows
         for key,count in people.flows.items():
-            self.results[key][t] += count
+            if 'by_strain' in key or 'by strain' in key:
+                for strain in range(self['n_strains']):
+                    self.results[key][t][strain] += count[strain]
+            else:
+                self.results[key][t] += count
 
         # Apply analyzers -- same syntax as interventions
         for analyzer in self['analyzers']:
@@ -663,12 +673,22 @@ class Sim(cvb.BaseSim):
         # Scale the results
         for reskey in self.result_keys():
             if self.results[reskey].scale: # Scale the result dynamically
-                self.results[reskey].values *= self.rescale_vec
+                if 'by_strain' in reskey:
+                    for strain in range(self['n_strains']):
+                        self.results[reskey].values[:,strain] *= self.rescale_vec
+                else:
+                    self.results[reskey].values *= self.rescale_vec
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:])
+            if 'by_strain' in key:
+                for strain in range(self['n_strains']):
+                    self.results[f'cum_{key}'][:,strain] = np.cumsum(self.results[f'new_{key}'][:,strain])
+            else:
+                self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:])
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
+        for strain in range(self['n_strains']):
+            self.results['cum_infections_by_strain'].values[:, strain] += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Final settings
         self.results_ready = True # Set this first so self.summary() knows to print the results
@@ -957,7 +977,7 @@ class Sim(cvb.BaseSim):
         labelstr = f' "{self.label}"' if self.label else ''
         string = f'Simulation{labelstr} summary:\n'
         for key in self.result_keys():
-            if full or key.startswith('cum_'):
+            if full or key.startswith('cum_') and 'by_strain' not in key:
                 string += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
 
         # Print or return string

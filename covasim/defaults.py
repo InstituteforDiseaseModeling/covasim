@@ -56,7 +56,8 @@ class PeopleMeta(sc.prettyobj):
         'susceptible',
         'exposed',
         'infectious',
-        'exposed_by_strain',
+        'exposed_strain',
+        'infectious_strain',
         'infectious_by_strain',
         'symptomatic',
         'severe',
@@ -93,6 +94,7 @@ result_stocks = {
         'susceptible': 'Number susceptible',
         'exposed':     'Number exposed',
         'infectious':  'Number infectious',
+        'infectious_by_strain': 'Number infectious by strain',
         'symptomatic': 'Number symptomatic',
         'severe':      'Number of severe cases',
         'critical':    'Number of critical cases',
@@ -102,7 +104,9 @@ result_stocks = {
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix
 result_flows = {'infections':  'infections',
+                'infections_by_strain': 'infections_by_strain',
                 'infectious':  'infectious',
+                'infectious_by_strain': 'infectious_by_strain',
                 'tests':       'tests',
                 'diagnoses':   'diagnoses',
                 'recoveries':  'recoveries',
@@ -150,7 +154,9 @@ def get_colors():
     colors = sc.objdict(
         susceptible = '#5e7544',
         infectious  = '#c78f65',
+        infectious_by_strain ='#c78f65',
         infections  = '#c75649',
+        infections_by_strain='#c78f65',
         exposed     = '#c75649', # Duplicate
         tests       = '#aaa8ff',
         diagnoses   = '#8886cc',
@@ -170,16 +176,19 @@ def get_colors():
 # Define the 'overview plots', i.e. the most useful set of plots to explore different aspects of a simulation
 overview_plots = [
             'cum_infections',
+            'cum_infections_by_strain',
             'cum_severe',
             'cum_critical',
             'cum_deaths',
             'cum_diagnoses',
             'new_infections',
+            'new_infections_by_strain',
             'new_severe',
             'new_critical',
             'new_deaths',
             'new_diagnoses',
             'n_infectious',
+            'n_infectious_by_strain',
             'n_severe',
             'n_critical',
             'n_susceptible',
