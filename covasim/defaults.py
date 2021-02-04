@@ -49,6 +49,7 @@ class PeopleMeta(sc.prettyobj):
         'rel_trans',   # Float
         'rel_sus',     # Float
         'time_of_last_inf', # Int
+        # 'immune_factor_by_strain', # Float
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -57,6 +58,7 @@ class PeopleMeta(sc.prettyobj):
         'exposed',
         'infectious',
         'exposed_strain',
+        'exposed_by_strain',
         'infectious_strain',
         'infectious_by_strain',
         'symptomatic',
@@ -93,6 +95,7 @@ class PeopleMeta(sc.prettyobj):
 result_stocks = {
         'susceptible': 'Number susceptible',
         'exposed':     'Number exposed',
+        'exposed_by_strain': 'Number exposed by strain',
         'infectious':  'Number infectious',
         'infectious_by_strain': 'Number infectious by strain',
         'symptomatic': 'Number symptomatic',
@@ -158,6 +161,7 @@ def get_colors():
         infections  = '#c75649',
         infections_by_strain='#c78f65',
         exposed     = '#c75649', # Duplicate
+        exposed_by_strain   ='#c75649',  # Duplicate
         tests       = '#aaa8ff',
         diagnoses   = '#8886cc',
         diagnosed   = '#8886cc', # Duplicate

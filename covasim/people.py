@@ -60,6 +60,8 @@ class People(cvb.BasePeople):
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             elif key == 'rel_trans' or key == 'rel_sus' or key == 'time_of_last_inf':
                 self[key] = np.full((self.pop_size, self.pars['max_strains']), np.nan, dtype=cvd.default_float)
+            elif key == 'immune_factor_by_strain': # everyone starts out with no immunity to either strain.
+                self[key] = np.full((self.pop_size, self.pars['max_strains']), 1, dtype=cvd.default_float)
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
@@ -69,7 +71,7 @@ class People(cvb.BasePeople):
                 self[key] = np.full(self.pop_size, True, dtype=bool)
             elif key == 'exposed_strain' or key == 'infectious_strain':
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
-            elif key == 'infectious_by_strain':
+            elif key == 'infectious_by_strain' or key == 'exposed_by_strain':
                 self[key] = np.full((self.pop_size, self.pars['max_strains']), False, dtype=bool)
             else:
                 self[key] = np.full(self.pop_size, False, dtype=bool)
@@ -282,6 +284,11 @@ class People(cvb.BasePeople):
         self.dead[inds]        = True
         return len(inds)
 
+    # TODO-- add in immunity instead of recovery
+    # def check_immunity(self):
+    #     '''Update immunity by strain based on time since recovery'''
+    #     just_recovered_inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=self.is_exp)
+
 
     def check_diagnosed(self):
         '''
@@ -382,6 +389,7 @@ class People(cvb.BasePeople):
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
         self.exposed_strain[inds] = strain
+        self.exposed_by_strain[inds, strain] = True
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
         self.flows['new_infections_by_strain'][strain] += len(inds)

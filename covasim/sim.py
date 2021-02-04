@@ -487,6 +487,8 @@ class Sim(cvb.BaseSim):
                 importation_inds = cvu.choose(max_n=len(people), n=n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation', strain=strain)
 
+        # TODO -- Randomly introduce new strain
+
         # Apply interventions
         for intervention in self['interventions']:
             if isinstance(intervention, cvi.Intervention):
@@ -672,6 +674,10 @@ class Sim(cvb.BaseSim):
 
         # Scale the results
         for reskey in self.result_keys():
+            if 'by_strain' in reskey:
+                # resize results to include only active strains
+                self.results[reskey].values = np.delete(self.results[reskey],
+                                                        slice(self['n_strains'], self['max_strains'] - 1, 1), 1)
             if self.results[reskey].scale: # Scale the result dynamically
                 if 'by_strain' in reskey:
                     for strain in range(self['n_strains']):
@@ -737,6 +743,11 @@ class Sim(cvb.BaseSim):
         self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
+
+        for strain in range(self['n_strains']):
+            self.results['incidence_by_strain'][:,strain] = res['new_infections_by_strain'][:,strain]/res['n_susceptible'][:] # Calculate the incidence
+            self.results['prevalence_by_strain'][:, strain] = res['n_exposed_by_strain'][:, strain] / res['n_alive'][:]  # Calculate the prevalence
+
         return
 
 
