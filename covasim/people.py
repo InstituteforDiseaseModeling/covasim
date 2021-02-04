@@ -231,9 +231,11 @@ class People(cvb.BasePeople):
         self.infectious[inds] = True
         self.infectious_strain[inds] = self.exposed_strain[inds]
         for strain in range(self.pars['n_strains']):
-            inds_strain = [index for index, value in enumerate(self.infectious_strain) if value == strain]
-            self.infectious_by_strain[inds_strain, strain] = True
-            self.flows['new_infectious_by_strain'][strain] += len(inds_strain)
+            inf_strain = self.infectious_strain == strain
+            inf_strain = inf_strain[inf_strain == True]
+            # inds_strain = [index for index, value in enumerate(self.infectious_strain) if value == strain]
+            # self.infectious_by_strain[inds_strain, strain] = True
+            self.flows['new_infectious_by_strain'][strain] += len(inf_strain)
 
         return len(inds)
 
