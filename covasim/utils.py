@@ -82,6 +82,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
 
 @nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=parallel)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
+    #TODO -- make this specific to strain --  use rel_trans for this -- need to set it to 0 if not infected with strain and otherwise whatever the value is
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
     nonzero_inds    = betas.nonzero()[0] # Find nonzero entries

@@ -58,13 +58,17 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
+            elif key == 'rel_trans' or key == 'rel_sus' or key == 'time_of_last_inf':
+                self[key] = np.full((self.pop_size, self.pars['n_strains']), np.nan, dtype=cvd.default_float)
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
-        # Set health states -- only susceptible is true by default -- booleans
+        # Set health states -- only susceptible is true by default -- booleans except exposed by strain which should return the strain that ind is exposed to
         for key in self.meta.states:
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
+            elif key == 'exposed_by_strain' or key == 'infectious_by_strain':
+                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
             else:
                 self[key] = np.full(self.pop_size, False, dtype=bool)
 
@@ -133,8 +137,9 @@ class People(cvb.BasePeople):
         self.severe_prob[:] = progs['severe_probs'][inds]*progs['comorbidities'][inds] # Severe disease probability is modified by comorbidities
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
         self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
-        self.rel_sus[:]     = progs['sus_ORs'][inds] # Default susceptibilities
-        self.rel_trans[:]   = progs['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, with viral load drawn from a distribution
+        for strain in range(self.pars['n_strains']):
+            self.rel_sus[:, strain] = progs['sus_ORs'][inds] # Default susceptibilities
+            self.rel_trans[:, strain]   = progs['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, with viral load drawn from a distribution
 
         return
 
@@ -212,6 +217,7 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
+        self.infectious_by_strain[inds] = self.exposed_by_strain[inds]
         return len(inds)
 
 
@@ -245,6 +251,7 @@ class People(cvb.BasePeople):
         self.severe[inds]      = False
         self.critical[inds]    = False
         self.recovered[inds]   = True
+        self.infectious_by_strain[inds] = np.nan
         return len(inds)
 
 
@@ -322,7 +329,7 @@ class People(cvb.BasePeople):
         return
 
 
-    def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None):
+    def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None, strain=0):
         '''
         Infect people and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
@@ -359,12 +366,16 @@ class People(cvb.BasePeople):
         # Set states
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
+        self.exposed_by_strain[inds] = strain
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
 
         # Record transmissions
         for i, target in enumerate(inds):
             self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
+
+        # Record time of infection
+        self.time_of_last_inf[inds, strain] = self.t
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)

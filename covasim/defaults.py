@@ -48,6 +48,7 @@ class PeopleMeta(sc.prettyobj):
         'death_prob',  # Float
         'rel_trans',   # Float
         'rel_sus',     # Float
+        'time_of_last_inf', # Int
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -55,6 +56,8 @@ class PeopleMeta(sc.prettyobj):
         'susceptible',
         'exposed',
         'infectious',
+        'exposed_by_strain',
+        'infectious_by_strain',
         'symptomatic',
         'severe',
         'critical',

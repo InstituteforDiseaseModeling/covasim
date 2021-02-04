@@ -115,6 +115,9 @@ class ParsObj(FlexPretty):
                     errormsg = f'Key(s) {mismatches} not found; available keys are {available_keys}'
                     raise sc.KeyNotFoundError(errormsg)
             self.pars.update(pars)
+
+            if 'n_strains' in pars.keys():
+                self.pars['beta'] = np.resize(self.pars['beta'], pars['n_strains'])
         return
 
 

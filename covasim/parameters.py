@@ -48,13 +48,14 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
 
     # Basic disease transmission
-    pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
+    pars['beta']        = np.full(1, 0.016) # Beta per symptomatic contact; absolute value, calibrated
     pars['contacts']    = None  # The number of contacts per layer; set by reset_layer_pars() below
     pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
     pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['beta_dist']   = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
     pars['viral_dist']  = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+    pars['n_strains']   = 1     # The number of strains currently circulating in the population
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
