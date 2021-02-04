@@ -520,8 +520,8 @@ class Sim(cvb.BaseSim):
                 rel_trans = people.rel_trans[:,strain]
                 rel_sus = people.rel_sus[:,strain]
 
-                inf = people.infectious_by_strain
-                for person, value in enumerate(inf):
+                inf = people.infectious
+                for person, value in enumerate(people.infectious_by_strain):
                     if value == strain:
                         inf[person] = True
                     else:

@@ -59,7 +59,7 @@ class People(cvb.BasePeople):
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             elif key == 'rel_trans' or key == 'rel_sus' or key == 'time_of_last_inf':
-                self[key] = np.full((self.pop_size, self.pars['n_strains']), np.nan, dtype=cvd.default_float)
+                self[key] = np.full((self.pop_size, self.pars['max_strains']), np.nan, dtype=cvd.default_float)
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
@@ -138,6 +138,7 @@ class People(cvb.BasePeople):
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
         self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
         for strain in range(self.pars['n_strains']):
+            #TODO -- make this strain specific in inputs
             self.rel_sus[:, strain] = progs['sus_ORs'][inds] # Default susceptibilities
             self.rel_trans[:, strain]   = progs['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, with viral load drawn from a distribution
 

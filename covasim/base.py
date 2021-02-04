@@ -117,7 +117,11 @@ class ParsObj(FlexPretty):
             self.pars.update(pars)
 
             if 'n_strains' in pars.keys():
-                self.pars['beta'] = np.resize(self.pars['beta'], pars['n_strains'])
+                # check that length of beta is same as length of strains (there is a beta for each strain)
+                if 'beta' not in pars.keys():
+                    raise ValueError(f'You supplied strains without betas for each strain')
+                else:
+                    self.pars['beta'] = pars['beta']
         return
 
 
