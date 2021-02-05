@@ -682,14 +682,9 @@ class Sim(cvb.BaseSim):
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            if 'by_strain' in key:
-                for strain in range(self['n_strains']):
-                    self.results[f'cum_{key}'][:,strain] = np.cumsum(self.results[f'new_{key}'][:,strain])
-            else:
-                self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:])
-        self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
-        for strain in range(self['n_strains']):
-            self.results['cum_infections_by_strain'].values[:, strain] += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
+            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:],axis=0)
+        for key in ['cum_infections','cum_infections_by_strain']:
+            self.results[key].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Final settings
         self.results_ready = True # Set this first so self.summary() knows to print the results
