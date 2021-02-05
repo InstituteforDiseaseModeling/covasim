@@ -1116,3 +1116,56 @@ class vaccine(Intervention):
                 self.vaccination_dates[v_ind].append(sim.t)
 
         return
+
+
+#%% Multi-strain interventions
+
+__all__+= ['import_strain']
+
+class import_strain(Intervention):
+    '''
+    Introduce a new variant(s) to the population through an importation at a given time point.
+
+    Args:
+        day (int): the day to apply the interventions
+        n_imports (list of ints): the number of imports of strain(s)
+        beta      (list of floats): per contact transmission of strain(s)
+        rel_sus   (list of floats): relative change in susceptibility of strain(s); 0 = perfect, 1 = no effect
+        rel_trans  (list of floats): relative change in transmission of strain(s); 0 = perfect, 1 = no effect
+        kwargs     (dict): passed to Intervention()
+
+    **Examples**::
+
+        interv = cv.import_strain(days=50, beta=0.3, rel_sus=0.5, rel_symp=0.1)
+    '''
+
+    def __init__(self, day=None, n_imports=None, beta=None, rel_sus=None, rel_trans=None, **kwargs):
+        # Do standard initialization
+        super().__init__(**kwargs)  # Initialize the Intervention object
+        self._store_args()  # Store the input arguments so the intervention can be recreated
+
+        len_imports = len(n_imports)
+        len_betas = len(beta)
+        if len_imports != len_betas:
+            raise ValueError(
+                f'Number of different imports ({len_imports} does not match the number of betas ({len_betas})')
+        else:
+            self.new_strains = len_imports
+
+        self.day = day
+        self.n_imports = n_imports
+        self.beta = beta
+        self.rel_sus = rel_sus
+        self.rel_trans = rel_trans
+        return
+
+    def apply(self, sim):
+        t = sim.t
+        if t == self.day:
+            for strain in range(self.new_strains):
+                sim['beta'].append(self.beta[strain])
+                sim.people['rel_sus'][:,strain+self.new_strains] = self.rel_sus[strain]
+                sim.people['rel_trans'][:,strain+self.new_strains] = self.rel_trans[strain]
+                importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain])
+                sim.people.infect(inds=importation_inds, layer='importation', strain=strain+self.new_strains)
+            sim['n_strains'] += self.new_strains
