@@ -502,49 +502,98 @@ class Sim(cvb.BaseSim):
         people.update_states_post() # Check for state changes after interventions
 
         # TODO -- iterate through n_strains, using value as index for beta, etc.
+        # Compute the probability of transmission
+        beta = cvd.default_float(self['beta'])
+        asymp_factor = cvd.default_float(self['asymp_factor'])
+        frac_time = cvd.default_float(self['viral_dist']['frac_time'])
+        load_ratio = cvd.default_float(self['viral_dist']['load_ratio'])
+        high_cap = cvd.default_float(self['viral_dist']['high_cap'])
+        date_inf = people.date_infectious
+        date_rec = people.date_recovered
+        date_dead = people.date_dead
+        viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
-        for strain in range(self['n_strains']):
-            # Compute the probability of transmission
-            beta = cvd.default_float(self['beta'][strain])
-            asymp_factor = cvd.default_float(self['asymp_factor'])
-            frac_time = cvd.default_float(self['viral_dist']['frac_time'])
-            load_ratio = cvd.default_float(self['viral_dist']['load_ratio'])
-            high_cap = cvd.default_float(self['viral_dist']['high_cap'])
-            date_inf = people.date_infectious
-            date_rec = people.date_recovered
-            date_dead = people.date_dead
-            viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
+        # Initialise an array to store infections by strain on this time step
+        inf_by_strain = np.full((self['pop_size'], self['max_strains']), np.nan, dtype=cvd.default_float)
 
-            for lkey, layer in contacts.items():
-                p1 = layer['p1']
-                p2 = layer['p2']
-                betas = layer['beta']
+        for lkey, layer in contacts.items():
+            p1 = layer['p1']
+            p2 = layer['p2']
+            betas = layer['beta']
 
-                # Compute relative transmission and susceptibility
-                rel_trans = people.rel_trans[:,strain]
-                rel_sus = people.rel_sus[:,strain]
+            # Compute relative transmission and susceptibility
+            rel_trans = people.rel_trans
+            rel_sus = people.rel_sus
 
-                inf = people.infectious
-                inf_by_this_strain = sc.dcp(inf)
-                inf_by_this_strain[cvu.false(people.infectious_strain==strain)] = False
+            inf = people.infectious
+#            inf_by_this_strain[cvu.false(people.infectious_strain==strain)] = False
+            for strain in range(self['n_strains']):
+                inf_by_strain[cvu.true(people.infectious_strain == strain), strain] = True
 
-                #TODO-- write a function that returns an array which is TRUE if infectious_by_strain == strain and otherwise false
-                sus = people.susceptible
-                symp = people.symptomatic
-                diag = people.diagnosed
-                quar = people.quarantined
-                iso_factor = cvd.default_float(self['iso_factor'][lkey])
-                quar_factor = cvd.default_float(self['quar_factor'][lkey])
-                beta_layer = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
-                                                           diag, quar, asymp_factor, iso_factor, quar_factor)
+            sus = people.susceptible
+            symp = people.symptomatic
+            diag = people.diagnosed
+            quar = people.quarantined
+            iso_factor = cvd.default_float(self['iso_factor'][lkey])
+            quar_factor = cvd.default_float(self['quar_factor'][lkey])
+            beta_layer = cvd.default_float(self['beta_layer'][lkey])
+            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_strain, sus, beta_layer, viral_load, symp,
+                                                       diag, quar, asymp_factor, iso_factor, quar_factor)
+            rel_trans = np.float32(rel_trans)
+            rel_sus = np.float32(rel_sus)
 
-                # Calculate actual transmission
-                for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
-                    source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans,
-                                                                      rel_sus)  # Calculate transmission!
-                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
-                                  layer=lkey, strain=strain)  # Actually infect people
+            # Calculate actual transmission
+            for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
+                source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans,
+                                                                  rel_sus)  # Calculate transmission!
+                people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
+                              layer=lkey, strain=strain)  # Actually infect people
+
+        # for strain in range(self['n_strains']):
+        #     # Compute the probability of transmission
+        #     beta = cvd.default_float(self['beta'][strain])
+        #     asymp_factor = cvd.default_float(self['asymp_factor'])
+        #     frac_time = cvd.default_float(self['viral_dist']['frac_time'])
+        #     load_ratio = cvd.default_float(self['viral_dist']['load_ratio'])
+        #     high_cap = cvd.default_float(self['viral_dist']['high_cap'])
+        #     date_inf = people.date_infectious
+        #     date_rec = people.date_recovered
+        #     date_dead = people.date_dead
+        #     viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
+        #
+        #     for lkey, layer in contacts.items():
+        #         p1 = layer['p1']
+        #         p2 = layer['p2']
+        #         betas = layer['beta']
+        #
+        #         # Compute relative transmission and susceptibility
+        #         import traceback;
+        #         traceback.print_exc();
+        #         import pdb;
+        #         pdb.set_trace()
+        #         rel_trans = people.rel_trans[:,strain]
+        #         rel_sus = people.rel_sus[:,strain]
+        #
+        #         inf = people.infectious
+        #         inf_by_this_strain = sc.dcp(inf)
+        #         inf_by_this_strain[cvu.false(people.infectious_strain==strain)] = False
+        #
+        #         sus = people.susceptible
+        #         symp = people.symptomatic
+        #         diag = people.diagnosed
+        #         quar = people.quarantined
+        #         iso_factor = cvd.default_float(self['iso_factor'][lkey])
+        #         quar_factor = cvd.default_float(self['quar_factor'][lkey])
+        #         beta_layer = cvd.default_float(self['beta_layer'][lkey])
+        #         rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
+        #                                                    diag, quar, asymp_factor, iso_factor, quar_factor)
+        #
+        #         # Calculate actual transmission
+        #         for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
+        #             source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans,
+        #                                                               rel_sus)  # Calculate transmission!
+        #             people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
+        #                           layer=lkey, strain=strain)  # Actually infect people
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():

@@ -69,19 +69,19 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True, parallel=parallel)
+#@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True, parallel=parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor): # pragma: no cover
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_iso     = ~diag +  diag * iso_factor # Isolation factor, changes e.g. [0,1] with a factor of 0.2 to [1,0.2]
     f_quar    = ~quar +  quar * quar_factor # Quarantine, changes e.g. [0,1] with a factor of 0.5 to [1,0.5]
-    rel_trans = rel_trans * inf * f_quar * f_asymp * f_iso * beta_layer * viral_load # Recalculate transmissibility
-    rel_sus   = rel_sus   * sus * f_quar # Recalculate susceptibility
+    rel_trans = beta_layer * np.einsum('ij,ij,i,i,i,i->ij', rel_trans, inf, f_quar, f_asymp, f_iso, viral_load) # Recalculate transmissibility
+    rel_sus   = np.einsum('ij,i,i->ij', rel_sus, sus, f_quar) # Recalculate susceptibility
     return rel_trans, rel_sus
 
 
-@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=parallel)
-def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
+@nb.njit(             (nbfloat[:],  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=parallel)
+def compute_infections(beta,        sources,  targets,   layer_betas, rel_trans,  rel_sus):
     #TODO -- make this specific to strain --  use rel_trans for this -- need to set it to 0 if not infected with strain and otherwise whatever the value is
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
