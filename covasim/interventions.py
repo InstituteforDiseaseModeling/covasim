@@ -1136,7 +1136,7 @@ class import_strain(Intervention):
 
     **Examples**::
 
-        interv = cv.import_strain(days=50, beta=0.3, rel_sus=0.5, rel_symp=0.1)
+        interv = cv.import_strain(days=50, beta=0.3, rel_sus=0.5, rel_trans=0.1)
     '''
 
     def __init__(self, day=None, n_imports=None, beta=None, rel_sus=None, rel_trans=None, **kwargs):
@@ -1144,6 +1144,11 @@ class import_strain(Intervention):
         super().__init__(**kwargs)  # Initialize the Intervention object
         self._store_args()  # Store the input arguments so the intervention can be recreated
 
+        # Handle inputs
+        n_imports = sc.promotetolist(n_imports)
+        beta = sc.promotetolist(beta)
+        rel_sus = sc.promotetolist(rel_sus)
+        rel_trans = sc.promotetolist(rel_trans)
         len_imports = len(n_imports)
         len_betas = len(beta)
         if len_imports != len_betas:
@@ -1152,6 +1157,7 @@ class import_strain(Intervention):
         else:
             self.new_strains = len_imports
 
+        # Set attributes
         self.day = day
         self.n_imports = n_imports
         self.beta = beta
