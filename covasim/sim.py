@@ -549,11 +549,11 @@ class Sim(cvb.BaseSim):
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
                 rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, rec, beta_layer, viral_load, symp,
                                                            diag, quar, asymp_factor, iso_factor, quar_factor, immunity_factors)
+                rel_sus = np.float32(rel_sus) # TODO: why doesn't this get returned in this format already?
 
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
-                    source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans,
-                                                                      rel_sus)  # Calculate transmission!
+                    source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
                     people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
                                   layer=lkey, strain=strain)  # Actually infect people
 

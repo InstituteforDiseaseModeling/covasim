@@ -69,7 +69,7 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-#@nb.njit(           (nbfloat[:],       nbint, nbfloat[:], nbfloat,       nbfloat), cache=True, parallel=parallel)
+@nb.njit(           (nbfloat[:],       nbint, nbfloat[:], nbfloat,       nbfloat), cache=True, parallel=parallel)
 def compute_immunity(immunity_factors, t,     date_rec,   init_immunity, decay_rate): # pragma: no cover
     '''
     Calculate immunity factors for time t
@@ -84,12 +84,12 @@ def compute_immunity(immunity_factors, t,     date_rec,   init_immunity, decay_r
         immunity_factors (float[]): immunity factors
     '''
     time_since_rec = t - date_rec # Time since recovery
-    inds = true(time_since_rec>0) # Extract people who have recovered
+    inds = (time_since_rec>0).nonzero()[0] # Extract people who have recovered
     immunity_factors[inds] = init_immunity * np.exp(-decay_rate * time_since_rec[inds]) # Calculate their immunity factors
     return immunity_factors
 
 
-#@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=parallel)
+@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       rec,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor, immunity_factors): # pragma: no cover
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
