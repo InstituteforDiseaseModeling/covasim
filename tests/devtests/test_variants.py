@@ -50,7 +50,7 @@ if __name__ == '__main__':
     sc.tic()
 
     sim1 = test_multistrains(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
-    #sim2 = test_importstrain(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
+    sim2 = test_importstrain(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
 
     sc.toc()
 
