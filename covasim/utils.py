@@ -69,12 +69,13 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=True, parallel=parallel)
-def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor): # pragma: no cover
+#@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbbool[:],  nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat), cache=True, parallel=parallel)
+def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       rec,        beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor, immune_factor): # pragma: no cover
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_iso     = ~diag +  diag * iso_factor # Isolation factor, changes e.g. [0,1] with a factor of 0.2 to [1,0.2]
     f_quar    = ~quar +  quar * quar_factor # Quarantine, changes e.g. [0,1] with a factor of 0.5 to [1,0.5]
+    f_rec     = ~rec  +  rec * immune_factor # Immunity
     rel_trans = beta_layer * rel_trans * inf * f_quar * f_asymp * f_iso * viral_load # Recalculate transmissibility
     rel_sus   = rel_sus * sus * f_quar # Recalculate susceptibility
     return rel_trans, rel_sus

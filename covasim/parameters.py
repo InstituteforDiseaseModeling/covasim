@@ -57,6 +57,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['viral_dist']  = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
     pars['n_strains']   = 1     # The number of strains currently circulating in the population
     pars['max_strains'] = 10    # For allocating memory with numpy arrays
+    pars['immunity']    = dict(form='exponential', par1=180, par2=1.) # Protection from immunity. Options: constant immunity (use a value from 0-1), or a decay function. Currently only expnential decay supported, with par1=half_life, par2=initial immunity
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502

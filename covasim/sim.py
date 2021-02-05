@@ -514,6 +514,9 @@ class Sim(cvb.BaseSim):
             date_dead = people.date_dead
             viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
+            # Compute immunity
+            immunity = cvu.compute_immunity(immunity_factors, date_rec)
+
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
                 p2 = layer['p2']
@@ -527,15 +530,21 @@ class Sim(cvb.BaseSim):
                 inf_by_this_strain = sc.dcp(inf)
                 inf_by_this_strain[cvu.false(people.infectious_strain==strain)] = False
 
-                sus = people.susceptible
+                import traceback;
+                traceback.print_exc();
+                import pdb;
+                pdb.set_trace()
+
+                sus  = people.susceptible
+                rec  = people.recovered # Both susceptible and recovered people can get reinfected
                 symp = people.symptomatic
                 diag = people.diagnosed
                 quar = people.quarantined
                 iso_factor = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
-                                                           diag, quar, asymp_factor, iso_factor, quar_factor)
+                rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, rec, beta_layer, viral_load, symp,
+                                                           diag, quar, asymp_factor, iso_factor, quar_factor, immune_factor)
 
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
