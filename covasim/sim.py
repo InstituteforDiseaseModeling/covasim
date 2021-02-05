@@ -525,11 +525,8 @@ class Sim(cvb.BaseSim):
                 rel_sus = people.rel_sus[:,strain]
 
                 inf = people.infectious
-                for person, value in enumerate(people.infectious_strain):
-                    if value == strain:
-                        inf[person] = True
-                    else:
-                        inf[person] = False
+                inf_by_this_strain = sc.dcp(inf)
+                inf_by_this_strain[cvu.false(people.infectious_strain==strain)] = False
 
                 #TODO-- write a function that returns an array which is TRUE if infectious_by_strain == strain and otherwise false
                 sus = people.susceptible
@@ -539,7 +536,7 @@ class Sim(cvb.BaseSim):
                 iso_factor = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf, sus, beta_layer, viral_load, symp,
+                rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
                                                            diag, quar, asymp_factor, iso_factor, quar_factor)
 
                 # Calculate actual transmission

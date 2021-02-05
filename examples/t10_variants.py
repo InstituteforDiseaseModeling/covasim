@@ -8,16 +8,16 @@ pars = {'n_strains': 2,
 sim = cv.Sim(pars=pars)
 sim.run()
 
-sim.plot_result('cum_infections_by_strain', do_show=True)
-sim.plot_result('incidence_by_strain', label = ['strain1', 'strain2'], do_show=True)
-sim.plot_result('prevalence_by_strain', label = ['strain1', 'strain2'], do_show=True)
+sim.plot_result('cum_infections_by_strain', do_show=False, do_save=True, fig_path='results/sim1_cum_infections_by_strain')
+sim.plot_result('incidence_by_strain', label = ['strain1', 'strain2'], do_show=True, do_save=True, fig_path='results/sim1_incidence_by_strain')
+sim.plot_result('prevalence_by_strain', label = ['strain1', 'strain2'], do_show=True, do_save=True, fig_path='results/sim1_prevalence_by_strain')
 
 ## run sim with newly imported strain that's more transmissible on day 10
 imports = cv.import_strain(day=10, n_imports=[5], beta=[0.05], rel_trans=[1], rel_sus=[1])
 sim2 = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
 sim2.run()
 
-sim2.plot_result('cum_infections_by_strain', do_show=True)
-sim2.plot_result('incidence_by_strain', label = ['strain1', 'strain2'], do_show=True)
-sim2.plot_result('prevalence_by_strain', label = ['strain1', 'strain2'], do_show=True)
+sim2.plot_result('cum_infections_by_strain', do_show=False, do_save=True, fig_path='results/sim2_cum_infections_by_strain')
+sim2.plot_result('incidence_by_strain', label = ['strain1', 'strain2'], do_show=True, do_save=True, fig_path='results/sim2_incidence_by_strain')
+sim2.plot_result('prevalence_by_strain', label = ['strain1', 'strain2'], do_show=True, do_save=True, fig_path='results/sim2_prevalence_by_strain')
 
