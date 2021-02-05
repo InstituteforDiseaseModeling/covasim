@@ -501,21 +501,30 @@ class Sim(cvb.BaseSim):
 
         people.update_states_post() # Check for state changes after interventions
 
-        # TODO -- iterate through n_strains, using value as index for beta, etc.
+        # Compute viral loads
+        frac_time = cvd.default_float(self['viral_dist']['frac_time'])
+        load_ratio = cvd.default_float(self['viral_dist']['load_ratio'])
+        high_cap = cvd.default_float(self['viral_dist']['high_cap'])
+        date_inf = people.date_infectious
+        date_rec = people.date_recovered
+        date_dead = people.date_dead
+        viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
+
+        # Extract additional parameters
+        asymp_factor = cvd.default_float(self['asymp_factor'])
+        init_immunity = cvd.default_float(self['immunity']['init_immunity'])
+        half_life = cvd.default_float(self['immunity']['half_life'])
+        decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+        immunity_factors = np.full(self['pop_size'], 1., dtype=cvd.default_float) # TODO: initialise this somewhere else
+
+        # Compute immunity factors
+        immunity_factors = cvu.compute_immunity(immunity_factors, t, date_rec, init_immunity, decay_rate)
+
+        # Iterate through n_strains to calculate infections
         for strain in range(self['n_strains']):
+
             # Compute the probability of transmission
             beta = cvd.default_float(self['beta'][strain])
-            asymp_factor = cvd.default_float(self['asymp_factor'])
-            frac_time = cvd.default_float(self['viral_dist']['frac_time'])
-            load_ratio = cvd.default_float(self['viral_dist']['load_ratio'])
-            high_cap = cvd.default_float(self['viral_dist']['high_cap'])
-            date_inf = people.date_infectious
-            date_rec = people.date_recovered
-            date_dead = people.date_dead
-            viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
-
-            # Compute immunity
-            immunity = cvu.compute_immunity(immunity_factors, date_rec)
 
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
@@ -530,11 +539,6 @@ class Sim(cvb.BaseSim):
                 inf_by_this_strain = sc.dcp(inf)
                 inf_by_this_strain[cvu.false(people.infectious_strain==strain)] = False
 
-                import traceback;
-                traceback.print_exc();
-                import pdb;
-                pdb.set_trace()
-
                 sus  = people.susceptible
                 rec  = people.recovered # Both susceptible and recovered people can get reinfected
                 symp = people.symptomatic
@@ -544,7 +548,7 @@ class Sim(cvb.BaseSim):
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
                 rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, rec, beta_layer, viral_load, symp,
-                                                           diag, quar, asymp_factor, iso_factor, quar_factor, immune_factor)
+                                                           diag, quar, asymp_factor, iso_factor, quar_factor, immunity_factors)
 
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
