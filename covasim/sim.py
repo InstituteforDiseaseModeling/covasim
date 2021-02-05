@@ -274,21 +274,21 @@ class Sim(cvb.BaseSim):
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], max_strains=self['max_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
-            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], max_strains=self['max_strains']) # Flow variables -- e.g. "Number of new infections"
 
         # Stock variables
         for key,label in cvd.result_stocks.items():
-            self.results[f'n_{key}'] = init_res(label, color=dcols[key])
+            self.results[f'n_{key}'] = init_res(label, color=dcols[key], max_strains=self['max_strains'])
 
         # Other variables
         self.results['n_alive']        = init_res('Number of people alive', scale=False)
         self.results['prevalence']     = init_res('Prevalence', scale=False)
-        self.results['prevalence_by_strain'] = init_res('Prevalence by strain', scale=False)
+        self.results['prevalence_by_strain'] = init_res('Prevalence by strain', scale=False, max_strains=self['max_strains'])
         self.results['incidence']      = init_res('Incidence', scale=False)
-        self.results['incidence_by_strain'] = init_res('Incidence by strain', scale=False)
+        self.results['incidence_by_strain'] = init_res('Incidence by strain', scale=False, max_strains=self['max_strains'])
         self.results['r_eff']          = init_res('Effective reproduction number', scale=False)
         self.results['doubling_time']  = init_res('Doubling time', scale=False)
         self.results['test_yield']     = init_res('Testing yield', scale=False)
@@ -731,10 +731,8 @@ class Sim(cvb.BaseSim):
         self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
-
-        for strain in range(self['n_strains']):
-            self.results['incidence_by_strain'][:,strain] = res['new_infections_by_strain'][:,strain]/res['n_susceptible'][:] # Calculate the incidence
-            self.results['prevalence_by_strain'][:, strain] = res['n_exposed_by_strain'][:, strain] / res['n_alive'][:]  # Calculate the prevalence
+        self.results['incidence_by_strain'][:] = np.einsum('ij,i->ij',res['new_infections_by_strain'][:],1/res['n_susceptible'][:]) # Calculate the incidence
+        self.results['prevalence_by_strain'][:] = np.einsum('ij,i->ij',res['n_exposed_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
 
         return
 

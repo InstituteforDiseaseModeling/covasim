@@ -1155,7 +1155,7 @@ class import_strain(Intervention):
             raise ValueError(
                 f'Number of different imports ({len_imports} does not match the number of betas ({len_betas})')
         else:
-            self.new_strains = len_imports
+            self.new_strains = len_imports # Number of new strains being introduced
 
         # Set attributes
         self.day = day
@@ -1163,15 +1163,23 @@ class import_strain(Intervention):
         self.beta = beta
         self.rel_sus = rel_sus
         self.rel_trans = rel_trans
+
         return
 
     def apply(self, sim):
         t = sim.t
         if t == self.day:
+
+            # Check number of strains
+            prev_strains = sim['n_strains']
+            if prev_strains + self.new_strains > sim['max_strains']:
+                errormsg = f"Number of existing strains ({sim['n_strains']}) plus number of new strains ({self.new_strains}) exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
+                raise ValueError(errormsg)
+
             for strain in range(self.new_strains):
                 sim['beta'].append(self.beta[strain])
-                sim.people['rel_sus'][:,strain+self.new_strains] = self.rel_sus[strain]
-                sim.people['rel_trans'][:,strain+self.new_strains] = self.rel_trans[strain]
-                importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain])
-                sim.people.infect(inds=importation_inds, layer='importation', strain=strain+self.new_strains)
+                sim.people['rel_sus'][:, prev_strains+strain] = self.rel_sus[strain]
+                sim.people['rel_trans'][:, prev_strains+strain] = self.rel_trans[strain]
+                importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain]) # TODO: do we need to check these people aren't infected? Or just consider it unlikely
+                sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains+strain)
             sim['n_strains'] += self.new_strains
