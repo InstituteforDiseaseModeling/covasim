@@ -673,12 +673,10 @@ class Sim(cvb.BaseSim):
         for reskey in self.result_keys():
             if 'by_strain' in reskey:
                 # resize results to include only active strains
-                self.results[reskey].values = np.delete(self.results[reskey],
-                                                        slice(self['n_strains'], self['max_strains'] - 1, 1), 1)
+                self.results[reskey].values = self.results[reskey].values[:, :self['n_strains']]
             if self.results[reskey].scale: # Scale the result dynamically
                 if 'by_strain' in reskey:
-                    for strain in range(self['n_strains']):
-                        self.results[reskey].values[:,strain] *= self.rescale_vec
+                    self.results[reskey].values = np.einsum('ij,i->ij',self.results[reskey].values,self.rescale_vec)
                 else:
                     self.results[reskey].values *= self.rescale_vec
 
