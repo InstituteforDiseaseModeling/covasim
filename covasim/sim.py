@@ -274,21 +274,21 @@ class Sim(cvb.BaseSim):
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], max_strains=self['max_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
-            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], max_strains=self['max_strains']) # Flow variables -- e.g. "Number of new infections"
 
         # Stock variables
         for key,label in cvd.result_stocks.items():
-            self.results[f'n_{key}'] = init_res(label, color=dcols[key])
+            self.results[f'n_{key}'] = init_res(label, color=dcols[key], max_strains=self['max_strains'])
 
         # Other variables
         self.results['n_alive']        = init_res('Number of people alive', scale=False)
         self.results['prevalence']     = init_res('Prevalence', scale=False)
-        self.results['prevalence_by_strain'] = init_res('Prevalence by strain', scale=False)
+        self.results['prevalence_by_strain'] = init_res('Prevalence by strain', scale=False, max_strains=self['max_strains'])
         self.results['incidence']      = init_res('Incidence', scale=False)
-        self.results['incidence_by_strain'] = init_res('Incidence by strain', scale=False)
+        self.results['incidence_by_strain'] = init_res('Incidence by strain', scale=False, max_strains=self['max_strains'])
         self.results['r_eff']          = init_res('Effective reproduction number', scale=False)
         self.results['doubling_time']  = init_res('Doubling time', scale=False)
         self.results['test_yield']     = init_res('Testing yield', scale=False)
@@ -502,7 +502,6 @@ class Sim(cvb.BaseSim):
         people.update_states_post() # Check for state changes after interventions
 
         # TODO -- iterate through n_strains, using value as index for beta, etc.
-
         for strain in range(self['n_strains']):
             # Compute the probability of transmission
             beta = cvd.default_float(self['beta'][strain])
@@ -525,13 +524,9 @@ class Sim(cvb.BaseSim):
                 rel_sus = people.rel_sus[:,strain]
 
                 inf = people.infectious
-                for person, value in enumerate(people.infectious_strain):
-                    if value == strain:
-                        inf[person] = True
-                    else:
-                        inf[person] = False
+                inf_by_this_strain = sc.dcp(inf)
+                inf_by_this_strain[cvu.false(people.infectious_strain==strain)] = False
 
-                #TODO-- write a function that returns an array which is TRUE if infectious_by_strain == strain and otherwise false
                 sus = people.susceptible
                 symp = people.symptomatic
                 diag = people.diagnosed
@@ -539,7 +534,7 @@ class Sim(cvb.BaseSim):
                 iso_factor = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf, sus, beta_layer, viral_load, symp,
+                rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
                                                            diag, quar, asymp_factor, iso_factor, quar_factor)
 
                 # Calculate actual transmission
@@ -676,25 +671,18 @@ class Sim(cvb.BaseSim):
         for reskey in self.result_keys():
             if 'by_strain' in reskey:
                 # resize results to include only active strains
-                self.results[reskey].values = np.delete(self.results[reskey],
-                                                        slice(self['n_strains'], self['max_strains'] - 1, 1), 1)
+                self.results[reskey].values = self.results[reskey].values[:, :self['n_strains']]
             if self.results[reskey].scale: # Scale the result dynamically
                 if 'by_strain' in reskey:
-                    for strain in range(self['n_strains']):
-                        self.results[reskey].values[:,strain] *= self.rescale_vec
+                    self.results[reskey].values = np.einsum('ij,i->ij',self.results[reskey].values,self.rescale_vec)
                 else:
                     self.results[reskey].values *= self.rescale_vec
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            if 'by_strain' in key:
-                for strain in range(self['n_strains']):
-                    self.results[f'cum_{key}'][:,strain] = np.cumsum(self.results[f'new_{key}'][:,strain])
-            else:
-                self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:])
-        self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
-        for strain in range(self['n_strains']):
-            self.results['cum_infections_by_strain'].values[:, strain] += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
+            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:],axis=0)
+        for key in ['cum_infections','cum_infections_by_strain']:
+            self.results[key].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
         # Final settings
         self.results_ready = True # Set this first so self.summary() knows to print the results
@@ -743,10 +731,8 @@ class Sim(cvb.BaseSim):
         self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
-
-        for strain in range(self['n_strains']):
-            self.results['incidence_by_strain'][:,strain] = res['new_infections_by_strain'][:,strain]/res['n_susceptible'][:] # Calculate the incidence
-            self.results['prevalence_by_strain'][:, strain] = res['n_exposed_by_strain'][:, strain] / res['n_alive'][:]  # Calculate the prevalence
+        self.results['incidence_by_strain'][:] = np.einsum('ij,i->ij',res['new_infections_by_strain'][:],1/res['n_susceptible'][:]) # Calculate the incidence
+        self.results['prevalence_by_strain'][:] = np.einsum('ij,i->ij',res['n_exposed_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
 
         return
 

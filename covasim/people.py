@@ -394,7 +394,7 @@ class People(cvb.BasePeople):
         self.exposed_by_strain[inds, strain] = True
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
-        self.flows['new_infections_by_strain'][strain] += len(inds)
+        self.flows['new_infections_by_strain'][strain] += len(inds) # TODO: is this working as it should?
 
         # Record transmissions
         for i, target in enumerate(inds):
