@@ -145,8 +145,8 @@ class People(cvb.BasePeople):
         self.severe_prob[:] = progs['severe_probs'][inds]*progs['comorbidities'][inds] # Severe disease probability is modified by comorbidities
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
         self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
-        for strain in range(self.pars['n_strains']):
-            #TODO -- make this strain specific in inputs
+        for strain in range(self.pars['max_strains']):
+            #TODO -- make this strain specific in inputs if needed?
             self.rel_sus[:, strain] = progs['sus_ORs'][inds] # Default susceptibilities
             self.rel_trans[:, strain]   = progs['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, with viral load drawn from a distribution
 

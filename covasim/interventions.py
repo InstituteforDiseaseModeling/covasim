@@ -1127,28 +1127,30 @@ class import_strain(Intervention):
     Introduce a new variant(s) to the population through an importation at a given time point.
 
     Args:
-        day (int): the day to apply the interventions
+        days (int or list of ints): the day(s) to apply the interventions
         n_imports (list of ints): the number of imports of strain(s)
         beta      (list of floats): per contact transmission of strain(s)
-        rel_sus   (list of floats): relative change in susceptibility of strain(s); 0 = perfect, 1 = no effect
-        rel_trans  (list of floats): relative change in transmission of strain(s); 0 = perfect, 1 = no effect
+        init_immunity   (list of floats): initial immunity against strain(s) once recovered; 1 = perfect, 0 = no immunity
+        half_life  (list of floats): determines decay rate of immunity against strain(s); If half_life is None immunity is constant
         kwargs     (dict): passed to Intervention()
 
     **Examples**::
 
-        interv = cv.import_strain(days=50, beta=0.3, rel_sus=0.5, rel_trans=0.1)
+        interv = cv.import_strain(day=50, beta=0.3, init_immunity=1, half_life=180)
+        interv = cv.import_strain(day=50, beta=[0.3, 0.5], init_immunity=1, half_life=180)
     '''
 
-    def __init__(self, day=None, n_imports=None, beta=None, rel_sus=None, rel_trans=None, **kwargs):
+    def __init__(self, days=None, n_imports=None, beta=None, init_immunity=None, half_life=None, **kwargs):
         # Do standard initialization
         super().__init__(**kwargs)  # Initialize the Intervention object
         self._store_args()  # Store the input arguments so the intervention can be recreated
 
         # Handle inputs
+        days = sc.promotetolist(days)
         n_imports = sc.promotetolist(n_imports)
         beta = sc.promotetolist(beta)
-        rel_sus = sc.promotetolist(rel_sus)
-        rel_trans = sc.promotetolist(rel_trans)
+        init_immunity = sc.promotetolist(init_immunity)
+        half_life = sc.promotetolist(half_life)
         len_imports = len(n_imports)
         len_betas = len(beta)
         if len_imports != len_betas:
@@ -1158,28 +1160,33 @@ class import_strain(Intervention):
             self.new_strains = len_imports # Number of new strains being introduced
 
         # Set attributes
-        self.day = day
+        self.days = days
         self.n_imports = n_imports
         self.beta = beta
-        self.rel_sus = rel_sus
-        self.rel_trans = rel_trans
-
+        self.init_immunity = init_immunity
+        self.half_life = half_life
         return
 
-    def apply(self, sim):
-        t = sim.t
-        if t == self.day:
+    def initialize(self, sim):
+        self.days = process_days(sim, self.days)
+        self.max_strains = sim['max_strains']
+        self.initialized = True
 
+    def apply(self, sim):
+
+        for strain in find_day(self.days, sim.t):
             # Check number of strains
             prev_strains = sim['n_strains']
-            if prev_strains + self.new_strains > sim['max_strains']:
-                errormsg = f"Number of existing strains ({sim['n_strains']}) plus number of new strains ({self.new_strains}) exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
+            if prev_strains + 1 > self.max_strains:
+                errormsg = f"Number of existing strains ({sim['n_strains']}) plus new strain exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
                 raise ValueError(errormsg)
 
-            for strain in range(self.new_strains):
-                sim['beta'].append(self.beta[strain])
-                sim.people['rel_sus'][:, prev_strains+strain] = self.rel_sus[strain]
-                sim.people['rel_trans'][:, prev_strains+strain] = self.rel_trans[strain]
-                importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain]) # TODO: do we need to check these people aren't infected? Or just consider it unlikely
-                sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains+strain)
-            sim['n_strains'] += self.new_strains
+            sim['beta'].append(self.beta[strain])
+            sim['immunity'][prev_strains + strain]['init_immunity'] = self.init_immunity[strain]
+            sim['immunity'][prev_strains + strain]['half_life'] = self.half_life[strain]
+            importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[
+                strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
+            sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains + strain)
+            sim['n_strains'] += 1
+
+        return

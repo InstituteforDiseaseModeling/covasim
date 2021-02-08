@@ -11,8 +11,16 @@ def test_multistrains(do_plot=False, do_show=True, do_save=False, fig_path=None)
 
     sc.heading('Setting up...')
 
-    pars = {'n_strains': 2,
-            'beta': [0.016, 0.035]}
+    immunity = [
+        {'init_immunity':1., 'half_life':180},
+        {'init_immunity':1., 'half_life':50}
+    ]
+
+    pars = {
+        'n_strains': 2,
+            'beta': [0.016, 0.035],
+            'immunity': immunity
+            }
 
     sim = cv.Sim(pars=pars)
     sim.run()
@@ -31,8 +39,8 @@ def test_importstrain(do_plot=False, do_show=True, do_save=False, fig_path=None)
     sc.heading('Setting up...')
 
     # Run sim with several strains initially, then introduce a new strain that's more transmissible on day 10
-    pars = {'n_strains': 10, 'beta': [0.016] * 10, 'max_strains': 11} # Checking here that increasing max_strains works
-    imports = cv.import_strain(day=30, n_imports=20, beta=0.05, rel_trans=1, rel_sus=1)
+    pars = {'n_strains': 3, 'beta': [0.016] * 3} # Checking here that increasing max_strains works
+    imports = cv.import_strain(days=30, n_imports=50, beta=0.5, init_immunity=1, half_life=50)
     sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
     sim.run()
 

@@ -56,7 +56,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['beta_dist']   = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
     pars['viral_dist']  = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
     pars['n_strains']   = 1     # The number of strains currently circulating in the population
-    pars['max_strains'] = 10    # For allocating memory with numpy arrays
+    pars['max_strains'] = 30    # For allocating memory with numpy arrays
     # pars['immunity']    = dict(init_immunity=1., half_life=180) # Protection from immunity. If half_life is None immunity is constant; if it's a number it decays exponentially. TODO: improve this with data, e.g. https://www.nejm.org/doi/full/10.1056/nejmc2025179
     pars['immunity'] = [dict(init_immunity=1., half_life=180) for _ in range(pars['max_strains'])]
 
@@ -105,6 +105,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
+
 
     # If version is specified, load old parameters
     if version is not None:

@@ -512,13 +512,6 @@ class Sim(cvb.BaseSim):
 
         # Extract additional parameters
         asymp_factor = cvd.default_float(self['asymp_factor'])
-        init_immunity = cvd.default_float(self['immunity'][strain]['init_immunity'])
-        half_life = cvd.default_float(self['immunity'][strain]['half_life'])
-        decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
-        # immunity_factors = np.full(self['pop_size'], 1., dtype=cvd.default_float) # TODO: initialise this somewhere else
-
-        # Compute immunity factors
-        # immunity_factors = cvu.compute_immunity(immunity_factors, t, date_rec, init_immunity, decay_rate)
 
         # Iterate through n_strains to calculate infections
         for strain in range(self['n_strains']):
@@ -526,6 +519,9 @@ class Sim(cvb.BaseSim):
             # Compute the probability of transmission
             beta = cvd.default_float(self['beta'][strain])
             # Compute immunity factors
+            init_immunity = cvd.default_float(self['immunity'][strain]['init_immunity'])
+            half_life = cvd.default_float(self['immunity'][strain]['half_life'])
+            decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
             immunity_factors = cvu.compute_immunity(people.immunity_factors[:,strain], t, date_rec, init_immunity, decay_rate)
 
             for lkey, layer in contacts.items():
