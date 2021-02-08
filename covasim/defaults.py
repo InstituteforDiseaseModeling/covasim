@@ -49,6 +49,7 @@ class PeopleMeta(sc.prettyobj):
         'rel_trans',   # Float
         'rel_sus',     # Float
         'time_of_last_inf', # Int
+        'immunity_factors', # Float
         # 'immune_factor_by_strain', # Float
     ]
 
