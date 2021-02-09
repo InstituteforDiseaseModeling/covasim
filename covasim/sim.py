@@ -527,7 +527,7 @@ class Sim(cvb.BaseSim):
 
             # Compute immunity factors
             immune = people.recovered_strain == strain # Whether people have some immunity to this strain from a prior infection with this strain
-            cross_immune = (~np.isnan(people.recovered_strain)) & (people.recovered_strain != strain) # Whether people with some immunity to this strain from a prior infection with another strain
+            cross_immune = (~np.isnan(people.recovered_strain)) & (people.recovered_strain != strain) # Whether people have some immunity to this strain from a prior infection with another strain
             immune_time         = t - date_rec[immune]  # Time since recovery for people who were last infected by this strain
             cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by another strain
             immune_inds = cvd.default_int(cvu.true(immune)) # People with some immunity to this strain from a prior infection with this strain
