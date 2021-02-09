@@ -13,7 +13,7 @@ def test_multistrains(do_plot=False, do_show=True, do_save=False, fig_path=None)
 
     immunity = [
         {'init_immunity':1., 'half_life':180, 'cross_factor':0.5},
-        {'init_immunity':1., 'half_life':50,  'cross_factor':0.5}
+        {'init_immunity':1., 'half_life':50,  'cross_factor':0.9}
     ]
 
     pars = {
