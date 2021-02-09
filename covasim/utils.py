@@ -69,7 +69,7 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(           (nbfloat[:],       nbint, nbfloat[:], nbfloat,       nbfloat), cache=True, parallel=parallel)
+#@nb.njit(           (nbfloat[:],       nbint, nbfloat[:], nbfloat,       nbfloat), cache=True, parallel=parallel)
 def compute_immunity(immunity_factors, t,     date_rec,   init_immunity, decay_rate): # pragma: no cover
     '''
     Calculate immunity factors for time t
@@ -83,6 +83,7 @@ def compute_immunity(immunity_factors, t,     date_rec,   init_immunity, decay_r
     Returns:
         immunity_factors (float[]): immunity factors
     '''
+
     time_since_rec = t - date_rec # Time since recovery
     inds = (time_since_rec>0).nonzero()[0] # Extract people who have recovered
     immunity_factors[inds] = init_immunity * np.exp(-decay_rate * time_since_rec[inds]) # Calculate their immunity factors
