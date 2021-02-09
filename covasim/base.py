@@ -143,7 +143,7 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale=True, color=None, max_strains=10):
+    def __init__(self, name=None, npts=None, scale=True, color=None, max_strains=30):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
@@ -152,7 +152,7 @@ class Result(object):
         if npts is None:
             npts = 0
         if 'by_strain' in self.name or 'by strain' in self.name:
-            self.values = np.full((npts, max_strains), 0, dtype=cvd.result_float)
+            self.values = np.full((max_strains, npts), 0, dtype=cvd.result_float, order='F')
         else:
             self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
         self.low    = None
@@ -916,7 +916,7 @@ class BasePeople(FlexPretty):
 
     def count_by_strain(self, key, strain):
         ''' Count the number of people for a given key '''
-        return (self[key][:,strain]>0).sum()
+        return (self[key][strain,:]>0).sum()
 
 
     def count_not(self, key):
@@ -988,6 +988,9 @@ class BasePeople(FlexPretty):
         expected_len = len(self)
         for key in self.keys():
             actual_len = len(self[key])
+            # check if it's 2d
+            if self[key].ndim > 1:
+                actual_len = len(self[key][0])
             if actual_len != expected_len:
                 if die:
                     errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'

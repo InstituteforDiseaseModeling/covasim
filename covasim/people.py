@@ -54,14 +54,23 @@ class People(cvb.BasePeople):
         self.init_contacts() # Initialize the contacts
         self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
 
+        self.strain_specific_pars = [
+            'rel_trans',
+            'rel_sus',
+            'time_of_last_inf',
+            'immunity_factors',
+            'exposed_by_strain',
+            'infectious_by_strain',
+        ]
+
         # Set person properties -- all floats except for UID
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             elif key == 'rel_trans' or key == 'rel_sus' or key == 'time_of_last_inf':
-                self[key] = np.full((self.pop_size, self.pars['max_strains']), np.nan, dtype=cvd.default_float)
+                self[key] = np.full((self.pars['max_strains'], self.pop_size), np.nan, dtype=cvd.default_float, order='F')
             elif key == 'immunity_factors': # everyone starts out with no immunity to either strain.
-                self[key] = np.full((self.pop_size, self.pars['max_strains']), 0, dtype=cvd.default_float)
+                self[key] = np.full((self.pars['max_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
@@ -72,7 +81,7 @@ class People(cvb.BasePeople):
             elif key == 'exposed_strain' or key == 'infectious_strain':
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
             elif key == 'infectious_by_strain' or key == 'exposed_by_strain':
-                self[key] = np.full((self.pop_size, self.pars['max_strains']), False, dtype=bool)
+                self[key] = np.full((self.pars['max_strains'], self.pop_size), False, dtype=bool, order='F')
             else:
                 self[key] = np.full(self.pop_size, False, dtype=bool)
 
@@ -147,8 +156,8 @@ class People(cvb.BasePeople):
         self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
         for strain in range(self.pars['max_strains']):
             #TODO -- make this strain specific in inputs if needed?
-            self.rel_sus[:, strain] = progs['sus_ORs'][inds] # Default susceptibilities
-            self.rel_trans[:, strain]   = progs['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, with viral load drawn from a distribution
+            self.rel_sus[strain, :] = progs['sus_ORs'][inds] # Default susceptibilities
+            self.rel_trans[strain, :]   = progs['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, with viral load drawn from a distribution
 
         return
 
@@ -230,13 +239,10 @@ class People(cvb.BasePeople):
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
         self.infectious_strain[inds] = self.exposed_strain[inds]
-        for strain in range(self.pars['n_strains']):
-            inf_strain = self.infectious_strain == strain
-            inf_strain = inf_strain[inf_strain == True]
-            # inds_strain = [index for index, value in enumerate(self.infectious_strain) if value == strain]
-            # self.infectious_by_strain[inds_strain, strain] = True
-            self.flows['new_infectious_by_strain'][strain] += len(inf_strain)
-
+        strains, counts = np.unique(self.infectious_strain[~np.isnan(self.infectious_strain)], return_counts=True)
+        if len(strains)>0:
+            for strain, _ in enumerate(strains):
+                self.flows['new_infections_by_strain'][strain] += counts[strain]
         return len(inds)
 
 
@@ -391,7 +397,7 @@ class People(cvb.BasePeople):
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
         self.exposed_strain[inds] = strain
-        self.exposed_by_strain[inds, strain] = True
+        self.exposed_by_strain[strain, inds] = True
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
         self.flows['new_infections_by_strain'][strain] += len(inds)
@@ -401,7 +407,7 @@ class People(cvb.BasePeople):
             self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
 
         # Record time of infection
-        self.time_of_last_inf[inds, strain] = self.t
+        self.time_of_last_inf[strain, inds] = self.t
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)

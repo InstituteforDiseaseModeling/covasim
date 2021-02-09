@@ -39,15 +39,22 @@ def test_importstrain(do_plot=False, do_show=True, do_save=False, fig_path=None)
     sc.heading('Setting up...')
 
     # Run sim with several strains initially, then introduce a new strain that's more transmissible on day 10
-    pars = {'n_strains': 3, 'beta': [0.016] * 3} # Checking here that increasing max_strains works
+    pars = {'n_strains': 3, 'beta': [0.016] * 3}
     imports = cv.import_strain(days=30, n_imports=50, beta=0.5, init_immunity=1, half_life=50)
     sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
     sim.run()
 
+    labels = [
+        'strain1',
+        'strain2',
+        'strain3',
+        'strain4'
+    ]
+
     if do_plot:
-        sim.plot_result('cum_infections_by_strain', do_show=do_show, do_save=do_save, fig_path='results/sim2_cum_infections_by_strain')
-        sim.plot_result('incidence_by_strain', do_show=do_show, do_save=do_save, fig_path='results/sim2_incidence_by_strain')
-        sim.plot_result('prevalence_by_strain', do_show=do_show, do_save=do_save, fig_path='results/sim2_prevalence_by_strain')
+        sim.plot_result('cum_infections_by_strain', label=labels, do_show=do_show, do_save=do_save, fig_path='results/sim2_cum_infections_by_strain')
+        sim.plot_result('incidence_by_strain', label=labels, do_show=do_show, do_save=do_save, fig_path='results/sim2_incidence_by_strain')
+        sim.plot_result('prevalence_by_strain', label=labels, do_show=do_show, do_save=do_save, fig_path='results/sim2_prevalence_by_strain')
 
     return sim
 
@@ -57,8 +64,8 @@ def test_importstrain(do_plot=False, do_show=True, do_save=False, fig_path=None)
 if __name__ == '__main__':
     sc.tic()
 
-    # sim1 = test_multistrains(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
-    sim2 = test_importstrain(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
+    sim1 = test_multistrains(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
+    # sim2 = test_importstrain(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
 
     sc.toc()
 

@@ -522,7 +522,7 @@ class Sim(cvb.BaseSim):
             init_immunity = cvd.default_float(self['immunity'][strain]['init_immunity'])
             half_life = cvd.default_float(self['immunity'][strain]['half_life'])
             decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
-            immunity_factors = cvu.compute_immunity(people.immunity_factors[:,strain], t, date_rec, init_immunity, decay_rate)
+            immunity_factors = cvu.compute_immunity(people.immunity_factors[strain, :], t, date_rec, init_immunity, decay_rate)
 
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
@@ -530,8 +530,8 @@ class Sim(cvb.BaseSim):
                 betas = layer['beta']
 
                 # Compute relative transmission and susceptibility
-                rel_trans = people.rel_trans[:,strain]
-                rel_sus = people.rel_sus[:,strain]
+                rel_trans = people.rel_trans[strain, :]
+                rel_sus = people.rel_sus[strain, :]
 
                 inf = people.infectious
                 inf_by_this_strain = sc.dcp(inf)
@@ -559,7 +559,7 @@ class Sim(cvb.BaseSim):
         for key in cvd.result_stocks.keys():
             if 'by_strain' in key or 'by strain' in key:
                 for strain in range(self['n_strains']):
-                    self.results[f'n_{key}'][t][strain] = people.count_by_strain(key, strain)
+                    self.results[f'n_{key}'][strain][t] = people.count_by_strain(key, strain)
             else:
                 self.results[f'n_{key}'][t] = people.count(key)
 
@@ -567,7 +567,7 @@ class Sim(cvb.BaseSim):
         for key,count in people.flows.items():
             if 'by_strain' in key or 'by strain' in key:
                 for strain in range(self['n_strains']):
-                    self.results[key][t][strain] += count[strain]
+                    self.results[key][strain][t] += count[strain]
             else:
                 self.results[key][t] += count
 
@@ -682,9 +682,10 @@ class Sim(cvb.BaseSim):
         for reskey in self.result_keys():
             if 'by_strain' in reskey:
                 # resize results to include only active strains
-                self.results[reskey].values = self.results[reskey].values[:, :self['n_strains']]
+                self.results[reskey].values = self.results[reskey].values[:self['n_strains'], :]
             if self.results[reskey].scale: # Scale the result dynamically
                 if 'by_strain' in reskey:
+                    self.results[reskey].values = np.rot90(self.results[reskey].values)
                     self.results[reskey].values = np.einsum('ij,i->ij',self.results[reskey].values,self.rescale_vec)
                 else:
                     self.results[reskey].values *= self.rescale_vec
@@ -742,8 +743,8 @@ class Sim(cvb.BaseSim):
         self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
-        self.results['incidence_by_strain'][:] = np.einsum('ij,i->ij',res['new_infections_by_strain'][:],1/res['n_susceptible'][:]) # Calculate the incidence
-        self.results['prevalence_by_strain'][:] = np.einsum('ij,i->ij',res['n_exposed_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
+        self.results['incidence_by_strain'][:] = np.rot90(np.einsum('ij,i->ij',res['new_infections_by_strain'][:],1/res['n_susceptible'][:])) # Calculate the incidence
+        self.results['prevalence_by_strain'][:] = np.rot90(np.einsum('ij,i->ij',res['n_exposed_by_strain'][:], 1/res['n_alive'][:]))  # Calculate the prevalence
 
         return
 
@@ -947,7 +948,11 @@ class Sim(cvb.BaseSim):
 
         summary = sc.objdict()
         for key in self.result_keys():
-            summary[key] = self.results[key][t]
+            if len(self.results[key]) < t:
+                self.results[key].values = np.rot90(self.results[key].values)
+                summary[key] = self.results[key][t]
+            else:
+                summary[key] = self.results[key][t]
 
         # Update the stored state
         if update:
