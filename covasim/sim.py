@@ -525,17 +525,23 @@ class Sim(cvb.BaseSim):
             # Compute the probability of transmission
             beta = cvd.default_float(self['beta'][strain])
 
+            # Compute immunity factors
+            immune = people.recovered_strain == strain # Whether people have some immunity to this strain from a prior infection with this strain
+            cross_immune = (~np.isnan(people.recovered_strain)) & (people.recovered_strain != strain) # Whether people with some immunity to this strain from a prior infection with another strain
+            immune_time         = t - date_rec[immune]  # Time since recovery from this strain
+            cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery from the last strain a person was infected by
+            immune_inds = cvd.default_int(cvu.true(immune)) # People with some immunity to this strain from a prior infection with this strain
+            cross_immune_inds = cvd.default_int(cvu.true(cross_immune_inds)) # People with some immunity to this strain from a prior infection with another strain
+            init_immunity = cvd.default_float(self['immunity'][strain]['init_immunity'])
+            half_life = self['immunity'][strain]['half_life']
+            decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+            decay_rate = cvd.default_float(decay_rate)
+            cross_factor = cvd.default_float(self['immunity'][strain]['cross_factor'])
+            immunity_factors = cvu.compute_immunity(people.immunity_factors[strain, :], immune_time, cross_immune_time, immune_inds, cross_immune_inds, init_immunity, decay_rate, cross_factor)
+
             # Define indices for this strain
             inf_by_this_strain = sc.dcp(inf)
             inf_by_this_strain[cvu.false(people.infectious_strain == strain)] = False
-            date_rec_from_this_strain = sc.dcp(date_rec)
-            date_rec_from_this_strain[cvu.false(people.recovered_strain == strain)] = np.nan
-
-            # Compute immunity factors
-            init_immunity = cvd.default_float(self['immunity'][strain]['init_immunity'])
-            half_life = cvd.default_float(self['immunity'][strain]['half_life'])
-            decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
-            immunity_factors = cvu.compute_immunity(people.immunity_factors[strain, :], t, date_rec_from_this_strain, init_immunity, decay_rate)
 
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
