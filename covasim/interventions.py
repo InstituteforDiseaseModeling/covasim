@@ -1193,7 +1193,7 @@ class import_strain(Intervention):
             )
             importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[
                 strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
-            sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains + strain)
+            sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
             sim['n_strains'] += 1
 
         return
