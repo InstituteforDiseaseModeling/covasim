@@ -69,7 +69,7 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-#@nb.njit(           (nbfloat[:],       nbint, nbfloat[:], nbfloat,       nbfloat), cache=True, parallel=parallel)
+@nb.njit(           (nbfloat[:],       nbint, nbfloat[:], nbfloat,       nbfloat), cache=True, parallel=parallel)
 def compute_immunity(immunity_factors, t,     date_rec,   init_immunity, decay_rate): # pragma: no cover
     '''
     Calculate immunity factors for time t

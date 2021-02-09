@@ -528,13 +528,6 @@ class Sim(cvb.BaseSim):
             # Define indices for this strain
             inf_by_this_strain = sc.dcp(inf)
             inf_by_this_strain[cvu.false(people.infectious_strain == strain)] = False
-
-            if t>15:
-                import traceback;
-                traceback.print_exc();
-                import pdb;
-                pdb.set_trace()
-
             date_rec_from_this_strain = sc.dcp(date_rec)
             date_rec_from_this_strain[cvu.false(people.recovered_strain == strain)] = np.nan
 
