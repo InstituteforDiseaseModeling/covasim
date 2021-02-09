@@ -1,5 +1,7 @@
 import covasim as cv
 import sciris as sc
+import matplotlib
+import matplotlib.pyplot as plt
 
 do_plot   = 1
 do_show   = 1
@@ -10,6 +12,11 @@ def test_multistrains(do_plot=False, do_show=True, do_save=False, fig_path=None)
     sc.heading('Run basic sim with multiple strains')
 
     sc.heading('Setting up...')
+
+    strain_labels = [
+        'Strain 1: beta 0.016',
+        'Strain 2: beta 0.035'
+    ]
 
     immunity = [
         {'init_immunity':1., 'half_life':180, 'cross_factor':0.5},
@@ -26,37 +33,84 @@ def test_multistrains(do_plot=False, do_show=True, do_save=False, fig_path=None)
     sim.run()
 
     if do_plot:
-        sim.plot_result('cum_infections_by_strain', do_show=do_show, do_save=do_save, fig_path='results/sim1_cum_infections_by_strain')
-        sim.plot_result('incidence_by_strain', do_show=do_show, do_save=do_save, fig_path='results/sim1_incidence_by_strain')
-        sim.plot_result('prevalence_by_strain', do_show=do_show, do_save=do_save, fig_path='results/sim1_prevalence_by_strain')
-
+        plot_results(sim, key='incidence_by_strain', title='Multiple strains', labels=strain_labels)
     return sim
 
 
-def test_importstrain(do_plot=False, do_show=True, do_save=False, fig_path=None):
-    sc.heading('Test introducing a new strain partway through a sim')
+def test_importstrain_withcrossimmunity(do_plot=False, do_show=True, do_save=False, fig_path=None):
+    sc.heading('Test introducing a new strain partway through a sim with full cross immunity')
 
     sc.heading('Setting up...')
 
+    strain_labels = [
+        'Strain 1: beta 0.016',
+        'Strain 2: beta 0.05'
+    ]
     # Run sim with several strains initially, then introduce a new strain that's more transmissible on day 10
-    pars = {'n_strains': 3, 'beta': [0.016] * 3}
-    imports = cv.import_strain(days=30, n_imports=50, beta=0.5, init_immunity=1, half_life=50)
+    immunity = [
+        {'init_immunity': 1., 'half_life': 180, 'cross_factor': 1},
+    ]
+    pars = {
+        'n_strains': 1,
+        'beta': [0.016],
+        'immunity': immunity
+    }
+    imports = cv.import_strain(days=10, n_imports=30, beta=0.05, init_immunity=1, half_life=180, cross_factor=1)
     sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
     sim.run()
 
-    labels = [
-        'strain1',
-        'strain2',
-        'strain3',
-        'strain4'
+    if do_plot:
+        plot_results(sim, key='incidence_by_strain', title='Imported strain on day 10 (cross immunity)', labels=strain_labels)
+    return sim
+
+def test_importstrain_nocrossimmunity(do_plot=False, do_show=True, do_save=False, fig_path=None):
+    sc.heading('Test introducing a new strain partway through a sim with cross immunity')
+
+    sc.heading('Setting up...')
+
+    strain_labels = [
+        'Strain 1: beta 0.016',
+        'Strain 2: beta 0.05'
     ]
+    # Run sim with several strains initially, then introduce a new strain that's more transmissible on day 10
+    immunity = [
+        {'init_immunity': 1., 'half_life': 180, 'cross_factor': 0},
+    ]
+    pars = {
+        'n_strains': 1,
+        'beta': [0.016],
+        'immunity': immunity
+    }
+    imports = cv.import_strain(days=10, n_imports=30, beta=0.05, init_immunity=1, half_life=180, cross_factor=0)
+    sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
+    sim.run()
 
     if do_plot:
-        sim.plot_result('cum_infections_by_strain', label=labels, do_show=do_show, do_save=do_save, fig_path='results/sim2_cum_infections_by_strain')
-        sim.plot_result('incidence_by_strain', label=labels, do_show=do_show, do_save=do_save, fig_path='results/sim2_incidence_by_strain')
-        sim.plot_result('prevalence_by_strain', label=labels, do_show=do_show, do_save=do_save, fig_path='results/sim2_prevalence_by_strain')
-
+        plot_results(sim, key='incidence_by_strain', title='Imported strain on day 10 (no cross immunity)', labels=strain_labels)
     return sim
+
+def plot_results(sim, key, title, labels=None):
+
+    results = sim.results
+    results_to_plot = results[key]
+
+    # extract data for plotting
+    x = sim.results['t']
+    y = results_to_plot.values
+
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+
+    ax.set(xlabel='Day of simulation', ylabel=results_to_plot.name, title=title)
+
+    if labels is None:
+        labels = [0]*len(y[0])
+        for strain in range(len(y[0])):
+            labels[strain] = f'Strain {strain +1}'
+    ax.legend(labels)
+    plt.show()
+
+    return
 
 
 
@@ -65,7 +119,8 @@ if __name__ == '__main__':
     sc.tic()
 
     sim1 = test_multistrains(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
-    # sim2 = test_importstrain(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
+    sim2 = test_importstrain_withcrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
+    sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
 
     sc.toc()
 

@@ -1140,7 +1140,7 @@ class import_strain(Intervention):
         interv = cv.import_strain(day=50, beta=[0.3, 0.5], init_immunity=1, half_life=180)
     '''
 
-    def __init__(self, days=None, n_imports=None, beta=None, init_immunity=None, half_life=None, **kwargs):
+    def __init__(self, days=None, n_imports=None, beta=None, init_immunity=None, half_life=None, cross_factor=None, **kwargs):
         # Do standard initialization
         super().__init__(**kwargs)  # Initialize the Intervention object
         self._store_args()  # Store the input arguments so the intervention can be recreated
@@ -1151,6 +1151,7 @@ class import_strain(Intervention):
         beta = sc.promotetolist(beta)
         init_immunity = sc.promotetolist(init_immunity)
         half_life = sc.promotetolist(half_life)
+        cross_factor = sc.promotetolist(cross_factor)
         len_imports = len(n_imports)
         len_betas = len(beta)
         if len_imports != len_betas:
@@ -1165,6 +1166,7 @@ class import_strain(Intervention):
         self.beta = beta
         self.init_immunity = init_immunity
         self.half_life = half_life
+        self.cross_factor = cross_factor
         return
 
     def initialize(self, sim):
@@ -1182,8 +1184,13 @@ class import_strain(Intervention):
                 raise ValueError(errormsg)
 
             sim['beta'].append(self.beta[strain])
-            sim['immunity'][prev_strains + strain]['init_immunity'] = self.init_immunity[strain]
-            sim['immunity'][prev_strains + strain]['half_life'] = self.half_life[strain]
+            sim['immunity'].append(
+                {
+                    'init_immunity': self.init_immunity[strain],
+                    'half_life': self.half_life[strain],
+                    'cross_factor': self.cross_factor[strain]
+                }
+            )
             importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[
                 strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
             sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains + strain)
