@@ -69,8 +69,8 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(           (nbfloat[:],       nbint, nbfloat[:], nbfloat,       nbfloat), cache=True, parallel=parallel)
-def compute_immunity(immunity_factors, t,     date_rec,   init_immunity, decay_rate): # pragma: no cover
+@nb.njit(           (nbfloat[:],       nbfloat[:],  nbfloat[:],        nbint[:],    nbint[:],          nbfloat,       nbfloat,    nbfloat), cache=True, parallel=parallel)
+def compute_immunity(immunity_factors, immune_time, cross_immune_time, immune_inds, cross_immune_inds, init_immunity, decay_rate, cross_factor): # pragma: no cover
     '''
     Calculate immunity factors for time t
 
@@ -83,9 +83,8 @@ def compute_immunity(immunity_factors, t,     date_rec,   init_immunity, decay_r
     Returns:
         immunity_factors (float[]): immunity factors
     '''
-    time_since_rec = t - date_rec # Time since recovery
-    inds = (time_since_rec>0).nonzero()[0] # Extract people who have recovered
-    immunity_factors[inds] = init_immunity * np.exp(-decay_rate * time_since_rec[inds]) # Calculate their immunity factors
+    immunity_factors[immune_inds]       =  init_immunity * np.exp(-decay_rate * immune_time)        # Calculate immunity factors
+    immunity_factors[cross_immune_inds] = (init_immunity * np.exp(-decay_rate * cross_immune_time)) * cross_factor  # Calculate cross-immunity factors
     return immunity_factors
 
 
@@ -560,7 +559,7 @@ def ifalse(arr, inds):
 
 def idefined(arr, inds):
     '''
-    Returns the indices that are true in the array -- name is short for indices[defined]
+    Returns the indices that are defined in the array -- name is short for indices[defined]
 
     Args:
         arr (array): any array, used as a filter

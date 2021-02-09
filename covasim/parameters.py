@@ -58,7 +58,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['n_strains']   = 1     # The number of strains currently circulating in the population
     pars['max_strains'] = 30    # For allocating memory with numpy arrays
     # pars['immunity']    = dict(init_immunity=1., half_life=180) # Protection from immunity. If half_life is None immunity is constant; if it's a number it decays exponentially. TODO: improve this with data, e.g. https://www.nejm.org/doi/full/10.1056/nejmc2025179
-    pars['immunity'] = [dict(init_immunity=1., half_life=180) for _ in range(pars['max_strains'])]
+    pars['immunity'] = [dict(init_immunity=1., half_life=180, cross_factor=0.5) for _ in range(pars['max_strains'])]
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502

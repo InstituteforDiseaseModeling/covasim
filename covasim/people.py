@@ -78,7 +78,7 @@ class People(cvb.BasePeople):
         for key in self.meta.states:
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
-            elif key == 'exposed_strain' or key == 'infectious_strain':
+            elif key in ['exposed_strain','infectious_strain','recovered_strain']:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
             elif key == 'infectious_by_strain' or key == 'exposed_by_strain':
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), False, dtype=bool, order='F')
@@ -276,6 +276,7 @@ class People(cvb.BasePeople):
         self.severe[inds]      = False
         self.critical[inds]    = False
         self.recovered[inds]   = True
+        self.recovered_strain[inds] = self.infectious_strain[inds] # TODO: check that this works
         self.infectious_strain[inds] = np.nan
         return len(inds)
 

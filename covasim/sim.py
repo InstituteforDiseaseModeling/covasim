@@ -510,19 +510,38 @@ class Sim(cvb.BaseSim):
         date_dead = people.date_dead
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
-        # Extract additional parameters
+        # Shorten additional useful parameters and indicators that aren't by strain
         asymp_factor = cvd.default_float(self['asymp_factor'])
+        sus = people.susceptible
+        inf = people.infectious
+        rec = people.recovered  # Both susceptible and recovered people can get reinfected
+        symp = people.symptomatic
+        diag = people.diagnosed
+        quar = people.quarantined
 
         # Iterate through n_strains to calculate infections
         for strain in range(self['n_strains']):
 
             # Compute the probability of transmission
             beta = cvd.default_float(self['beta'][strain])
+
             # Compute immunity factors
+            immune = people.recovered_strain == strain # Whether people have some immunity to this strain from a prior infection with this strain
+            cross_immune = (~np.isnan(people.recovered_strain)) & (people.recovered_strain != strain) # Whether people have some immunity to this strain from a prior infection with another strain
+            immune_time         = t - date_rec[immune]  # Time since recovery for people who were last infected by this strain
+            cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by another strain
+            immune_inds = cvd.default_int(cvu.true(immune)) # People with some immunity to this strain from a prior infection with this strain
+            cross_immune_inds = cvd.default_int(cvu.true(cross_immune)) # People with some immunity to this strain from a prior infection with another strain
             init_immunity = cvd.default_float(self['immunity'][strain]['init_immunity'])
-            half_life = cvd.default_float(self['immunity'][strain]['half_life'])
+            half_life = self['immunity'][strain]['half_life']
             decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
-            immunity_factors = cvu.compute_immunity(people.immunity_factors[strain, :], t, date_rec, init_immunity, decay_rate)
+            decay_rate = cvd.default_float(decay_rate)
+            cross_factor = cvd.default_float(self['immunity'][strain]['cross_factor'])
+            immunity_factors = cvu.compute_immunity(people.immunity_factors[strain, :], immune_time, cross_immune_time, immune_inds, cross_immune_inds, init_immunity, decay_rate, cross_factor)
+
+            # Define indices for this strain
+            inf_by_this_strain = sc.dcp(inf)
+            inf_by_this_strain[cvu.false(people.infectious_strain == strain)] = False
 
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
@@ -533,15 +552,6 @@ class Sim(cvb.BaseSim):
                 rel_trans = people.rel_trans[strain, :]
                 rel_sus = people.rel_sus[strain, :]
 
-                inf = people.infectious
-                inf_by_this_strain = sc.dcp(inf)
-                inf_by_this_strain[cvu.false(people.infectious_strain==strain)] = False
-
-                sus  = people.susceptible
-                rec  = people.recovered # Both susceptible and recovered people can get reinfected
-                symp = people.symptomatic
-                diag = people.diagnosed
-                quar = people.quarantined
                 iso_factor = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])

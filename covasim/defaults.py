@@ -62,6 +62,8 @@ class PeopleMeta(sc.prettyobj):
         'exposed_by_strain',
         'infectious_strain',
         'infectious_by_strain',
+        'recovered_strain',
+        #'recovered_by_strain',
         'symptomatic',
         'severe',
         'critical',
