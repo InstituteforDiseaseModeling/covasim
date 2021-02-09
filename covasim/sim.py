@@ -531,7 +531,7 @@ class Sim(cvb.BaseSim):
             immune_time         = t - date_rec[immune]  # Time since recovery from this strain
             cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery from the last strain a person was infected by
             immune_inds = cvd.default_int(cvu.true(immune)) # People with some immunity to this strain from a prior infection with this strain
-            cross_immune_inds = cvd.default_int(cvu.true(cross_immune_inds)) # People with some immunity to this strain from a prior infection with another strain
+            cross_immune_inds = cvd.default_int(cvu.true(cross_immune)) # People with some immunity to this strain from a prior infection with another strain
             init_immunity = cvd.default_float(self['immunity'][strain]['init_immunity'])
             half_life = self['immunity'][strain]['half_life']
             decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
