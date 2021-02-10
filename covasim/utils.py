@@ -85,7 +85,7 @@ def compute_immunity(immunity_factors, immune_time, cross_immune_time, immune_in
     '''
 
     immunity_factors[immune_inds]       =  init_immunity * np.exp(-decay_rate * immune_time)        # Calculate immunity factors
-    immunity_factors[cross_immune_inds] = (init_immunity * np.exp(-decay_rate * cross_immune_time)) * cross_factor  # Calculate cross-immunity factors
+    immunity_factors[cross_immune_inds] = (init_immunity * np.exp(-decay_rate * cross_immune_time)) * cross_immunity  # Calculate cross-immunity factors
     return immunity_factors
 
 

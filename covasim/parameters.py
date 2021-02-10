@@ -58,10 +58,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
     pars['n_strains']       = 1     # The number of strains currently circulating in the population
     pars['max_strains']     = 30    # For allocating memory with numpy arrays
-    # pars['immunity']    = dict(init_immunity=1., half_life=180) # Protection from immunity. If half_life is None immunity is constant; if it's a number it decays exponentially. TODO: improve this with data, e.g. https://www.nejm.org/doi/full/10.1056/nejmc2025179
-    pars['immunity']        = [dict(init_immunity=1., half_life=180) for _ in range(pars['max_strains'])]
     pars['default_cross_immunity'] = 0.5 # Default cross-immunity protection factor
-    pars['cross_immunity']  = None # Matrix of cross-immunity factors, set by set_cross_immunity() below
+    pars['default_immunity'] = 1. # Default initial immunity
+    pars['default_half_life']= 180 # Default half life
+    pars['immunity'] = None  # Matrix of immunity and cross-immunity factors, set by set_immunity() below
+    pars['half_life'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
@@ -338,3 +339,89 @@ def update_cross_immunity(pars, update_strain=None, immunity_from=None, immunity
         cross_immunity[update_strain, ] # TODO
 
     return cross_immunity
+
+
+def update_immunity(pars, update_strain=None, immunity_from=None, immunity_to=None, init_immunity=None, half_life=None):
+    '''
+    Helper function to set the immunity and half_life matrices.
+    Matrix is of size sim['max_strains']*sim['max_strains'] and takes the form:
+                A       B       ...
+        array([[1.0,   1.0,    ...],
+               [0.4,   1.0,    ...],
+               ...,    ...,    ...])
+    ... meaning that people who've had strand A have perfect protection against strand B, but
+    people who've had strand B have an initial 40% protection against getting strand A.
+    The matrix has nan entries outside of any active strains. The diagonals represent immunity
+    against the same strain, meaning people who've had strand A have perfect protection against
+    strand A, the same for B.
+
+    Args:
+        pars (dict): the parameters dictionary
+        update_strain: the index of the strain to update
+        immunity_from (array): used when adding a new strain; specifies the immunity protection against existing strains from having the new strain
+        immunity_to (array): used when adding a strain; specifies the immunity protection against the new strain from having one of the existing strains
+
+    **Example 1**:
+        # Adding a strain C to the example above. Strain C gives perfect immunity against strain A
+        # and 90% immunity against strain B. People who've had strain A have 50% immunity to strain C,
+        # and people who've had strain B have 70% immunity to strain C
+        cross_immunity = update_cross_immunity(pars, update_strain=2, immunity_from=[1. 0.9], immunity_to=[0.5, 0.7])
+                A       B       C       ...
+        array([[nan,    1.0,    0.5     ...],
+               [0.4,    nan,    0.7     ...],
+               [1.0,    0.9,    nan     ...],
+               ...,     ...,    ...,    ...])
+
+    '''
+    # If initial immunity/cross immunity factors are provided, use those, otherwise use defaults
+
+    # Initialise if not already initialised
+    if pars['immunity'] is None:
+        immunity = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
+        for i in range(pars['n_strains']):
+            pars['half_life'][i] = pars['default_half_life']
+            for j in range(pars['n_strains']):
+                if i != j:
+                    immunity[i, j] = pars['default_cross_immunity']
+                else:
+                    immunity[i, j] = pars['default_immunity']
+
+    else:
+        immunity = pars['immunity']
+
+    # Update immunity for a strain if supplied
+    if update_strain is not None:
+
+        # check that immunity_from, immunity_to and init_immunity are provided and the right length.
+        # Else use default values
+        if immunity_from is None:
+            print('Immunity from pars not provided, using default value')
+            immunity_from = [pars['default_cross_immunity']]*pars['n_strains']
+        if immunity_to is None:
+            print('Immunity to pars not provided, using default value')
+            immunity_to = [pars['default_cross_immunity']]*pars['n_strains']
+        if init_immunity is None:
+            print('Initial immunity pars not provided, using default value')
+            init_immunity = pars['default_immunity']
+        if half_life is None:
+            print('Half life is not provided, using default value')
+            half_life = pars['default_half_life']
+
+        immunity_from   = sc.promotetolist(immunity_from)
+        immunity_to     = sc.promotetolist(immunity_to)
+
+        # create the immunity[update_strain,] and immunity[,update_strain] arrays
+        new_immunity_row = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+        new_immunity_column = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+        for i in range(pars['n_strains']+1):
+            if i != update_strain:
+                new_immunity_row[i] = immunity_from[i]
+                new_immunity_column[i] = immunity_to[i]
+            else:
+                new_immunity_row[i] = new_immunity_column[i] = init_immunity
+                pars['half_life'][i] = half_life
+
+        immunity[update_strain, :] = new_immunity_row
+        immunity[:, update_strain] = new_immunity_column
+
+    return immunity

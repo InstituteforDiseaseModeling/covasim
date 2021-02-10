@@ -1132,6 +1132,8 @@ class import_strain(Intervention):
         beta      (list of floats): per contact transmission of strain(s)
         init_immunity   (list of floats): initial immunity against strain(s) once recovered; 1 = perfect, 0 = no immunity
         half_life  (list of floats): determines decay rate of immunity against strain(s); If half_life is None immunity is constant
+        immunity_to (list of list of floats): cross immunity to existing strains in model
+        immunity_from (list of list of floats): cross immunity from existing strains in model
         kwargs     (dict): passed to Intervention()
 
     **Examples**::
@@ -1139,10 +1141,12 @@ class import_strain(Intervention):
         interv = cv.import_strain(days=50, beta=0.03) # On day 50, import one new strain (one case)
         interv = cv.import_strain(days=[10, 50], beta=0.03) # On day 50, import one new strain (one case)
         interv = cv.import_strain(days=50, beta=[0.03, 0.05]) # On day 50, import two new strains (one case of each)
-        interv = cv.import_strain(days=[10, 20], n_imports=[5, 10], beta=[0.03, 0.05], init_immunity=[1, 1], half_life=[180, 180], cross_factor=[0, 0]) # On day 10, import 5 cases of one new strain, on day 20, import 10 cases of another
+        interv = cv.import_strain(days=[10, 20], n_imports=[5, 10], beta=[0.03, 0.05], init_immunity=[1, 1],
+        half_life=[180, 180], immunity_to=[[0, 0], [0,0]], immunity_from=[[0, 0], [0,0]]) # On day 10, import 5 cases of one new strain, on day 20, import 10 cases of another
     '''
 
-    def __init__(self, days=None, beta=None, n_imports=1, init_immunity=1, half_life=180, cross_factor=0, **kwargs):
+    def __init__(self, days=None, beta=None, n_imports=1, init_immunity=1, half_life=180, immunity_to=0,
+                 immunity_from=0, **kwargs):
         # Do standard initialization
         super().__init__(**kwargs)  # Initialize the Intervention object
         self._store_args()  # Store the input arguments so the intervention can be recreated
@@ -1153,8 +1157,9 @@ class import_strain(Intervention):
         self.n_imports      = sc.promotetolist(n_imports)
         self.init_immunity  = sc.promotetolist(init_immunity)
         self.half_life      = sc.promotetolist(half_life)
-        self.cross_factor   = sc.promotetolist(cross_factor)
-        self.new_strains    = self.check_args(['beta', 'days', 'n_imports', 'init_immunity', 'half_life', 'cross_factor'])
+        self.immunity_to   = sc.promotetolist(immunity_to)
+        self.immunity_from   = sc.promotetolist(immunity_from)
+        self.new_strains    = self.check_args(['beta', 'days', 'n_imports', 'init_immunity', 'half_life'])
         return
 
 
@@ -1195,13 +1200,9 @@ class import_strain(Intervention):
                     raise ValueError(errormsg)
 
                 sim['beta'].append(self.beta[strain])
-                sim['immunity'].append(
-                    {
-                        'init_immunity': self.init_immunity[strain],
-                        'half_life': self.half_life[strain],
-                        'cross_factor': self.cross_factor[strain]
-                    }
-                )
+                cvpar.update_immunity(sim.pars, update_strain=prev_strains, immunity_from=self.immunity_from[strain],
+                                    immunity_to=self.immunity_to[strain], init_immunity=self.init_immunity[strain],
+                                    half_life=self.half_life[strain])
                 importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
                 sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
                 sim['n_strains'] += 1

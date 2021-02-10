@@ -1,40 +1,34 @@
 import covasim as cv
 import sciris as sc
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
 
 do_plot   = 1
-do_show   = 0
-do_save   = 1
+do_show   = 1
+do_save   = 0
 
 
 def test_multistrains(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run basic sim with multiple strains')
+    sc.heading('Run basic sim with an imported strain')
 
     sc.heading('Setting up...')
 
+    immunity_to = 0
+    immunity_from = 0
+    init_immunity = 0
+    n_imports = 20
+    days = 30
+
+    imports = cv.import_strain(days=days, beta=0.035, n_imports=n_imports, immunity_to=immunity_to, immunity_from=immunity_from,
+                               init_immunity=init_immunity)
+
     strain_labels = [
         'Strain 1: beta 0.016',
-        'Strain 2: beta 0.035'
+        f'Strain 2: beta 0.035 on day {days}, {immunity_to}% to A, {immunity_from}% from A'
     ]
 
-    immunity = [
-        {'init_immunity':1., 'half_life':180},
-        {'init_immunity':1., 'half_life':50}
-    ]
-
-    cross_immunity = np.array([[np.nan, 0.5],[0.5, np.nan]])
-
-    pars = {
-        'n_strains': 2,
-        'beta': [0.016, 0.035],
-        'immunity': immunity,
-        'cross_immunity':cross_immunity
-    }
-
-    sim = cv.Sim(pars=pars)
+    sim = cv.Sim(interventions=imports)
     sim.run()
 
     if do_plot:
@@ -56,7 +50,7 @@ def test_importstrain_args():
     }
 
     # All these should run
-    #imports = cv.import_strain(days=50, beta=0.03)
+    imports = cv.import_strain(days=50, beta=0.03)
     #imports = cv.import_strain(days=[10, 50], beta=0.03)
     #imports = cv.import_strain(days=50, beta=[0.03, 0.05])
     #imports = cv.import_strain(days=[10, 20], beta=[0.03, 0.05])

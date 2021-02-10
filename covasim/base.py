@@ -258,8 +258,10 @@ class BaseSim(ParsObj):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
-            if pars['cross_immunity'] is None:
-                pars['cross_immunity'] = cvpar.update_cross_immunity(pars) # Set cross immunity
+            # if pars['cross_immunity'] is None:
+            #     pars['cross_immunity'] = cvpar.update_cross_immunity(pars) # Set cross immunity
+            if create:
+                pars['immunity'] = cvpar.update_immunity(pars)  # Set immunity
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
 
