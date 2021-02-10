@@ -6,6 +6,7 @@ import numpy as np
 import sciris as sc
 from .settings import options as cvo # For setting global options
 from . import misc as cvm
+from . import defaults as cvd
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
@@ -48,17 +49,19 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
 
     # Basic disease transmission
-    pars['beta']        = [0.016] # Beta per symptomatic contact; absolute value, calibrated
-    pars['contacts']    = None  # The number of contacts per layer; set by reset_layer_pars() below
-    pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
-    pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
-    pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta_dist']   = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
-    pars['viral_dist']  = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
-    pars['n_strains']   = 1     # The number of strains currently circulating in the population
-    pars['max_strains'] = 30    # For allocating memory with numpy arrays
+    pars['beta']            = [0.016] # Beta per symptomatic contact; absolute value, calibrated
+    pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
+    pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
+    pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
+    pars['n_imports']       = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
+    pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+    pars['n_strains']       = 1     # The number of strains currently circulating in the population
+    pars['max_strains']     = 30    # For allocating memory with numpy arrays
     # pars['immunity']    = dict(init_immunity=1., half_life=180) # Protection from immunity. If half_life is None immunity is constant; if it's a number it decays exponentially. TODO: improve this with data, e.g. https://www.nejm.org/doi/full/10.1056/nejmc2025179
-    pars['immunity'] = [dict(init_immunity=1., half_life=180, cross_factor=0.5) for _ in range(pars['max_strains'])]
+    pars['immunity']        = [dict(init_immunity=1., half_life=180) for _ in range(pars['max_strains'])]
+    pars['default_cross_immunity'] = 0.5 # Default cross-immunity protection factor
+    pars['cross_immunity']  = None # Matrix of cross-immunity factors, set by set_cross_immunity() below
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
@@ -278,3 +281,60 @@ def absolute_prognoses(prognoses):
     out['crit_probs']   *= out['severe_probs'] # Absolute probability of critical symptoms
     out['death_probs']  *= out['crit_probs']   # Absolute probability of dying
     return out
+
+
+def update_cross_immunity(pars, update_strain=None, immunity_from=None, immunity_to=None):
+    '''
+    Helper function to set the cross-immunity matrix.
+    Matrix is of size sim['max_strains']*sim['max_strains'] and takes the form:
+                A       B       ...
+        array([[nan,    1.0,    ...],
+               [0.4,    nan,    ...],
+               ...,     ...,    ...])
+    ... meaning that people who've had strand A have perfect protection against strand B, but
+    people who've had strand B have an initial 40% protection against getting strand A.
+    The matrix has nan entries outside of any active strains.
+
+    Args:
+        pars (dict): the parameters dictionary
+        update_strain: the index of the strain to update
+        immunity_from (array): used when adding a new strain; specifies the immunity protection against existing strains from having the new strain
+        immunity_to (array): used when adding a strain; specifies the immunity protection against the new strain from having one of the existing strains
+
+    **Example 1**:
+        # Adding a strain C to the example above. Strain C gives perfect immunity against strain A
+        # and 90% immunity against strain B. People who've had strain A have 50% immunity to strain C,
+        # and people who've had strain B have 70% immunity to strain C
+        cross_immunity = update_cross_immunity(pars, update_strain=2, immunity_from=[1. 0.9], immunity_to=[0.5, 0.7])
+                A       B       C       ...
+        array([[nan,    1.0,    0.5     ...],
+               [0.4,    nan,    0.7     ...],
+               [1.0,    0.9,    nan     ...],
+               ...,     ...,    ...,    ...])
+
+    **Example 2**:
+        # Updating the immunity protection factors for strain B
+        cross_immunity = update_cross_immunity(pars, update_strain=1, immunity_from=[0.6 0.8], immunity_to=[0.9, 0.7])
+                A       B       C       ...
+        array([[nan,    0.9,    0.5     ...],
+               [0.6,    nan,    0.8     ...],
+               [1.0,    0.7,    nan     ...],
+               ...,     ...,    ...,    ...])
+
+    Mostly for internal use (? TBC)
+    '''
+
+    # Initialise if not already initialised
+    if pars['cross_immunity'] is None:
+        cross_immunity = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
+        if pars['n_strains'] > 1:
+            for i in range(pars['n_strains']):
+                for j in range(pars['n_strains']):
+                    if i != j: cross_immunity[i, j] = pars['default_cross_immunity']
+
+    # Update immunity for a strain if supplied
+    if update_strain is not None:
+        cross_immunity = sc.dcp(pars['cross_immunity'])
+        cross_immunity[update_strain, ] # TODO
+
+    return cross_immunity

@@ -21,15 +21,18 @@ def test_multistrains(do_plot=False, do_show=True, do_save=False):
     ]
 
     immunity = [
-        {'init_immunity':1., 'half_life':180, 'cross_factor':0.5},
-        {'init_immunity':1., 'half_life':50,  'cross_factor':0.9}
+        {'init_immunity':1., 'half_life':180},
+        {'init_immunity':1., 'half_life':50}
     ]
+
+    cross_immunity = np.array([[np.nan, 0.5],[0.5, np.nan]])
 
     pars = {
         'n_strains': 2,
-            'beta': [0.016, 0.035],
-            'immunity': immunity
-            }
+        'beta': [0.016, 0.035],
+        'immunity': immunity,
+        'cross_immunity':cross_immunity
+    }
 
     sim = cv.Sim(pars=pars)
     sim.run()
@@ -56,7 +59,7 @@ def test_importstrain_args():
     #imports = cv.import_strain(days=50, beta=0.03)
     #imports = cv.import_strain(days=[10, 50], beta=0.03)
     #imports = cv.import_strain(days=50, beta=[0.03, 0.05])
-    imports = cv.import_strain(days=[10, 20], beta=[0.03, 0.05])
+    #imports = cv.import_strain(days=[10, 20], beta=[0.03, 0.05])
     #imports = cv.import_strain(days=50, beta=[0.03, 0.05, 0.06])
     #imports = cv.import_strain(days=[10, 20], n_imports=[5, 10], beta=[0.03, 0.05], init_immunity=[1, 1],
     #                          half_life=[180, 180], cross_factor=[0, 0])
@@ -162,10 +165,10 @@ def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
 if __name__ == '__main__':
     sc.tic()
 
-    # sim1 = test_multistrains(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
+    sim1 = test_multistrains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain_withcrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show, fig_path=None)
-    sim4 = test_importstrain_args()
+    # sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim4 = test_importstrain_args()
 
     sc.toc()
 
