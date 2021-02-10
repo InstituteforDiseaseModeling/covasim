@@ -16,23 +16,34 @@ def test_multistrains(do_plot=False, do_show=True, do_save=False):
 
     immunity_to = 0
     immunity_from = 0
-    init_immunity = 0
-    n_imports = 20
-    days = 30
+    init_immunity = 1
+    half_life = 180
+    n_imports = 100
+    day = 30
 
-    imports = cv.import_strain(days=days, beta=0.035, n_imports=n_imports, immunity_to=immunity_to, immunity_from=immunity_from,
-                               init_immunity=init_immunity)
+    imports = cv.import_strain(days=day, beta=0.05, n_imports=n_imports, immunity_to=immunity_to,
+                               immunity_from=immunity_from, init_immunity=init_immunity, half_life=half_life)
 
     strain_labels = [
         'Strain 1: beta 0.016',
-        f'Strain 2: beta 0.035 on day {days}, {immunity_to}% to A, {immunity_from}% from A'
+        f'Strain 2: beta 0.05 on day {day}, {immunity_to}% to A, {immunity_from}% from A'
     ]
 
-    sim = cv.Sim(interventions=imports)
+    pars = {
+        'n_days': 150,
+        'beta': [0.016],
+        'init_immunity': 1.0,
+        'init_half_life': 180
+    }
+
+    sim = cv.Sim(
+        pars=pars,
+        interventions=imports
+                 )
     sim.run()
 
     if do_plot:
-        plot_results(sim, key='incidence_by_strain', title='Multiple strains', labels=strain_labels, do_show=do_show, do_save=do_save)
+        plot_results(sim, key='incidence_by_strain', title='2 strains, 0 init', labels=strain_labels, do_show=do_show, do_save=do_save)
     return sim
 
 

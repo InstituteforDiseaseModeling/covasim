@@ -545,7 +545,7 @@ class Sim(cvb.BaseSim):
                         cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by the cross strain
                         cross_immune_inds = cvd.default_int(cvu.true(cross_immune)) # People with some immunity to this strain from a prior infection with another strain
                         cross_immunity = cvd.default_float(self['immunity'][cross_strain, strain]) # Immunity protection again this strain from other strains
-                        immunity_factors[cross_immune_inds] = immunity_factors[cross_immune_inds] = cross_immunity * np.exp(-decay_rate * cross_immune_time)  # Calculate cross-immunity factors
+                        immunity_factors[cross_immune_inds] = cross_immunity * np.exp(-decay_rate * cross_immune_time)  # Calculate cross-immunity factors
 
             # Compute protection factors from both immunity and cross immunity
             ##immunity_factors = cvu.compute_immunity(people.immunity_factors[strain, :], immune_time, cross_immune_time, immune_inds, cross_immune_inds, init_immunity, decay_rate, cross_immunity)
@@ -568,7 +568,7 @@ class Sim(cvb.BaseSim):
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
                 rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, rec, beta_layer, viral_load, symp,
                                                            diag, quar, asymp_factor, iso_factor, quar_factor, immunity_factors)
-                rel_sus = np.float32(rel_sus) # TODO: why doesn't this get returned in this format already?
+                # rel_sus = np.float32(rel_sus) # TODO: why doesn't this get returned in this format already?
 
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1

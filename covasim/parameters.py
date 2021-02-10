@@ -61,8 +61,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['default_cross_immunity'] = 0.5 # Default cross-immunity protection factor
     pars['default_immunity'] = 1. # Default initial immunity
     pars['default_half_life']= 180 # Default half life
+    pars['half_life'] = None
+    pars['init_immunity'] = None
     pars['immunity'] = None  # Matrix of immunity and cross-immunity factors, set by set_immunity() below
-    pars['half_life'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+    pars['init_half_life'] = None
 
     # Efficacy of protection measures
     pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
@@ -341,7 +343,8 @@ def update_cross_immunity(pars, update_strain=None, immunity_from=None, immunity
     return cross_immunity
 
 
-def update_immunity(pars, update_strain=None, immunity_from=None, immunity_to=None, init_immunity=None, half_life=None):
+def update_immunity(pars, create, new_pars=None, update_strain=None, immunity_from=None, immunity_to=None,
+                    init_immunity=None, half_life=None):
     '''
     Helper function to set the immunity and half_life matrices.
     Matrix is of size sim['max_strains']*sim['max_strains'] and takes the form:
@@ -374,9 +377,8 @@ def update_immunity(pars, update_strain=None, immunity_from=None, immunity_to=No
 
     '''
     # If initial immunity/cross immunity factors are provided, use those, otherwise use defaults
-
-    # Initialise if not already initialised
-    if pars['immunity'] is None:
+    if create:
+        pars['half_life'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
         immunity = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
         for i in range(pars['n_strains']):
             pars['half_life'][i] = pars['default_half_life']
@@ -385,13 +387,21 @@ def update_immunity(pars, update_strain=None, immunity_from=None, immunity_to=No
                     immunity[i, j] = pars['default_cross_immunity']
                 else:
                     immunity[i, j] = pars['default_immunity']
-
     else:
-        immunity = pars['immunity']
+        if new_pars is not None:
+            immunity = pars['immunity']
+            if 'init_immunity' in new_pars.keys():
+                for i in range(pars['n_strains']):
+                    for j in range(pars['n_strains']):
+                        if i == j:
+                            immunity[i, j] = new_pars['init_immunity']
+
+            if 'init_half_life' in new_pars.keys():
+                pars['half_life'][0] = new_pars['init_half_life']
 
     # Update immunity for a strain if supplied
     if update_strain is not None:
-
+        immunity = pars['immunity']
         # check that immunity_from, immunity_to and init_immunity are provided and the right length.
         # Else use default values
         if immunity_from is None:
