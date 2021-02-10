@@ -69,8 +69,8 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(           (nbfloat[:],       nbfloat[:],  nbfloat[:],        nbint[:],    nbint[:],          nbfloat,       nbfloat,    nbfloat), cache=True, parallel=parallel)
-def compute_immunity(immunity_factors, immune_time, cross_immune_time, immune_inds, cross_immune_inds, init_immunity, decay_rate, cross_factor): # pragma: no cover
+#@nb.njit(           (nbfloat[:],       nbfloat[:],  nbfloat[:],        nbint[:],    nbint[:],          nbfloat,       nbfloat,    nbfloat), cache=True, parallel=parallel)
+def compute_immunity(immunity_factors, immune_time, cross_immune_time, immune_inds, cross_immune_inds, init_immunity, decay_rate, cross_immunity): # pragma: no cover
     '''
     Calculate immunity factors for time t
 
@@ -83,6 +83,7 @@ def compute_immunity(immunity_factors, immune_time, cross_immune_time, immune_in
     Returns:
         immunity_factors (float[]): immunity factors
     '''
+
     immunity_factors[immune_inds]       =  init_immunity * np.exp(-decay_rate * immune_time)        # Calculate immunity factors
     immunity_factors[cross_immune_inds] = (init_immunity * np.exp(-decay_rate * cross_immune_time)) * cross_factor  # Calculate cross-immunity factors
     return immunity_factors
