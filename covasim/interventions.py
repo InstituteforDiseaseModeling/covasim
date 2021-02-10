@@ -1088,7 +1088,7 @@ class vaccine(Intervention):
         ''' Perform vaccination '''
 
         # If this day is found in the list, apply the intervention
-        for ind in find_day(self.days, sim.t):
+        for ind in find_day(self.days, sim.t): # TODO -- investigate this, why does it loop over a variable that isn't subsequently used? Also, comments need updating
 
             # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
             vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal testing probability to everyone
@@ -1127,7 +1127,7 @@ class import_strain(Intervention):
     Introduce a new variant(s) to the population through an importation at a given time point.
 
     Args:
-        days (int or list of ints): the day(s) to apply the interventions
+        days (int or list of ints): days on which new variants are introduced. Note, the interpretation of a list differs from other interventions; see examples below
         n_imports (list of ints): the number of imports of strain(s)
         beta      (list of floats): per contact transmission of strain(s)
         init_immunity   (list of floats): initial immunity against strain(s) once recovered; 1 = perfect, 0 = no immunity
@@ -1136,64 +1136,74 @@ class import_strain(Intervention):
 
     **Examples**::
 
-        interv = cv.import_strain(day=50, beta=0.3, init_immunity=1, half_life=180)
-        interv = cv.import_strain(day=50, beta=[0.3, 0.5], init_immunity=1, half_life=180)
+        interv = cv.import_strain(days=50, beta=0.03) # On day 50, import one new strain (one case)
+        interv = cv.import_strain(days=[10, 50], beta=0.03) # On day 50, import one new strain (one case)
+        interv = cv.import_strain(days=50, beta=[0.03, 0.05]) # On day 50, import two new strains (one case of each)
+        interv = cv.import_strain(days=[10, 20], n_imports=[5, 10], beta=[0.03, 0.05], init_immunity=[1, 1], half_life=[180, 180], cross_factor=[0, 0]) # On day 10, import 5 cases of one new strain, on day 20, import 10 cases of another
     '''
 
-    def __init__(self, days=None, n_imports=None, beta=None, init_immunity=None, half_life=None, cross_factor=None, **kwargs):
+    def __init__(self, days=None, beta=None, n_imports=1, init_immunity=1, half_life=180, cross_factor=0, **kwargs):
         # Do standard initialization
         super().__init__(**kwargs)  # Initialize the Intervention object
         self._store_args()  # Store the input arguments so the intervention can be recreated
 
         # Handle inputs
-        days = sc.promotetolist(days)
-        n_imports = sc.promotetolist(n_imports)
-        beta = sc.promotetolist(beta)
-        init_immunity = sc.promotetolist(init_immunity)
-        half_life = sc.promotetolist(half_life)
-        cross_factor = sc.promotetolist(cross_factor)
-        len_imports = len(n_imports)
-        len_betas = len(beta)
-        if len_imports != len_betas:
-            raise ValueError(
-                f'Number of different imports ({len_imports} does not match the number of betas ({len_betas})')
-        else:
-            self.new_strains = len_imports # Number of new strains being introduced
-
-        # Set attributes
-        self.days = days
-        self.n_imports = n_imports
-        self.beta = beta
-        self.init_immunity = init_immunity
-        self.half_life = half_life
-        self.cross_factor = cross_factor
+        self.beta           = sc.promotetolist(beta)
+        self.days           = sc.promotetolist(days)
+        self.n_imports      = sc.promotetolist(n_imports)
+        self.init_immunity  = sc.promotetolist(init_immunity)
+        self.half_life      = sc.promotetolist(half_life)
+        self.cross_factor   = sc.promotetolist(cross_factor)
+        self.new_strains    = self.check_args(['beta', 'days', 'n_imports', 'init_immunity', 'half_life', 'cross_factor'])
         return
+
+
+    def check_args(self, args):
+        ''' Check the length of supplied arguments'''
+        argvals      = [getattr(self,arg) for arg in args]
+        arglengths   = np.array([len(argval) for argval in argvals]) # Get lengths of all arguments
+        multi_d_args = arglengths[cvu.true(arglengths > 1)].tolist() # Get multidimensional arguments
+        if len(multi_d_args)==0: # Introducing a single new strain, and all arguments have the right length
+            new_strains = 1
+        elif len(multi_d_args)>=1: # Introducing more than one new strain, but with only one property varying
+            if len(multi_d_args)>1 and (multi_d_args.count(multi_d_args[0])!=len(multi_d_args)):  # This raises an error: more than one multi-dim argument and they're not equal length
+                raise ValueError(f'Mismatch in the lengths of arguments supplied.')
+            else:
+                new_strains = multi_d_args[0]
+                for arg,argval in zip(args,argvals):
+                    if len(argval)==1:
+                        setattr(self,arg,[argval[0]]*new_strains)
+        return new_strains
+
 
     def initialize(self, sim):
         self.days = process_days(sim, self.days)
         self.max_strains = sim['max_strains']
         self.initialized = True
 
+
     def apply(self, sim):
 
-        for strain in find_day(self.days, sim.t):
-            # Check number of strains
-            prev_strains = sim['n_strains']
-            if prev_strains + 1 > self.max_strains:
-                errormsg = f"Number of existing strains ({sim['n_strains']}) plus new strain exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
-                raise ValueError(errormsg)
+        # Loop over strains
+        for strain in range(self.new_strains):
 
-            sim['beta'].append(self.beta[strain])
-            sim['immunity'].append(
-                {
-                    'init_immunity': self.init_immunity[strain],
-                    'half_life': self.half_life[strain],
-                    'cross_factor': self.cross_factor[strain]
-                }
-            )
-            importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[
-                strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
-            sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
-            sim['n_strains'] += 1
+            if sim.t == self.days[strain]: # Time to introduce this strain
+                # Check number of strains
+                prev_strains = sim['n_strains']
+                if prev_strains + 1 > self.max_strains:
+                    errormsg = f"Number of existing strains ({sim['n_strains']}) plus new strain exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
+                    raise ValueError(errormsg)
+
+                sim['beta'].append(self.beta[strain])
+                sim['immunity'].append(
+                    {
+                        'init_immunity': self.init_immunity[strain],
+                        'half_life': self.half_life[strain],
+                        'cross_factor': self.cross_factor[strain]
+                    }
+                )
+                importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
+                sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
+                sim['n_strains'] += 1
 
         return
