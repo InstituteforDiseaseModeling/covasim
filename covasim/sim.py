@@ -762,11 +762,12 @@ class Sim(cvb.BaseSim):
         '''
         res = self.results
         self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
-        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
+        # self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
+        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] # Recalculate the number of susceptible people, not agents
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
-        self.results['incidence_by_strain'][:] = np.einsum('ij,i->ij',res['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
-        self.results['prevalence_by_strain'][:] = np.einsum('ij,i->ij',res['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
+        self.results['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
+        self.results['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
         return
 
 

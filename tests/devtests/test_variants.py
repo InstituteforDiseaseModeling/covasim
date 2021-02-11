@@ -33,7 +33,7 @@ def test_multistrains(do_plot=False, do_show=True, do_save=False):
     ]
 
     pars = {
-        'n_days': 150,
+        'n_days': 80,
         'beta': [0.016],
         'init_immunity': 1,
         'init_half_life': 50
@@ -148,7 +148,7 @@ def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
     # extract data for plotting
     x = sim.results['t']
     y = results_to_plot.values
-    y = np.flip(y, 1)
+    y = np.flipud(y)
 
     fig, ax = plt.subplots()
     ax.plot(x, y)
