@@ -58,27 +58,31 @@ class PeopleMeta(sc.prettyobj):
         'susceptible',
         'exposed',
         'infectious',
-        'exposed_strain',
-        'exposed_by_strain',
-        'infectious_strain',
-        'infectious_by_strain',
-        'recovered_strain',
-        #'recovered_by_strain',
         'symptomatic',
         'severe',
         'critical',
         'tested',
         'diagnosed',
-        'recovered',
+        #'recovered',
         'dead',
         'known_contact',
         'quarantined',
+    ]
+
+    strain_states = [
+        'exposed_strain',
+        'exposed_by_strain',
+        'infectious_strain',
+        'infectious_by_strain',
+        'recovered_strain',
+        # 'recovered_by_strain',
     ]
 
     # Set the dates various events took place: these are floats per person -- used in people.py
     dates = [f'date_{state}' for state in states] # Convert each state into a date
     dates.append('date_pos_test') # Store the date when a person tested which will come back positive
     dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
+    dates.append('date_recovered') # Store the date when a person recovers
 
     # Duration of different states: these are floats per person -- used in people.py
     durs = [
@@ -89,38 +93,39 @@ class PeopleMeta(sc.prettyobj):
         'dur_disease',
     ]
 
-    all_states = person + states + dates + durs
+    all_states = person + states + strain_states + dates + durs
 
 
 #%% Define other defaults
 
 # A subset of the above states are used for results
 result_stocks = {
-        'susceptible': 'Number susceptible',
-        'exposed':     'Number exposed',
-        'exposed_by_strain': 'Number exposed by strain',
-        'infectious':  'Number infectious',
+        'susceptible':          'Number susceptible',
+        'exposed':              'Number exposed',
+        'exposed_by_strain':    'Number exposed by strain',
+        'infectious':           'Number infectious',
         'infectious_by_strain': 'Number infectious by strain',
-        'symptomatic': 'Number symptomatic',
-        'severe':      'Number of severe cases',
-        'critical':    'Number of critical cases',
-        'diagnosed':   'Number of confirmed cases',
-        'quarantined': 'Number in quarantine',
+        'symptomatic':          'Number symptomatic',
+        'severe':               'Number of severe cases',
+        'critical':             'Number of critical cases',
+        'diagnosed':            'Number of confirmed cases',
+        'quarantined':          'Number in quarantine',
 }
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix
-result_flows = {'infections':  'infections',
+result_flows = {'infections':           'infections',
+                'reinfections':         'reinfections',
                 'infections_by_strain': 'infections_by_strain',
-                'infectious':  'infectious',
+                'infectious':           'infectious',
                 'infectious_by_strain': 'infectious_by_strain',
-                'tests':       'tests',
-                'diagnoses':   'diagnoses',
-                'recoveries':  'recoveries',
-                'symptomatic': 'symptomatic cases',
-                'severe':      'severe cases',
-                'critical':    'critical cases',
-                'deaths':      'deaths',
-                'quarantined': 'quarantined people',
+                'tests':                'tests',
+                'diagnoses':            'diagnoses',
+                'recoveries':           'recoveries',
+                'symptomatic':          'symptomatic cases',
+                'severe':               'severe cases',
+                'critical':             'critical cases',
+                'deaths':               'deaths',
+                'quarantined':          'quarantined people',
 }
 
 # Define these here as well
@@ -158,24 +163,25 @@ def get_colors():
     NB, includes duplicates since stocks and flows are named differently.
     '''
     colors = sc.objdict(
-        susceptible = '#5e7544',
-        infectious  = '#c78f65',
-        infectious_by_strain ='#c78f65',
-        infections  = '#c75649',
-        infections_by_strain='#c78f65',
-        exposed     = '#c75649', # Duplicate
-        exposed_by_strain   ='#c75649',  # Duplicate
-        tests       = '#aaa8ff',
-        diagnoses   = '#8886cc',
-        diagnosed   = '#8886cc', # Duplicate
-        recoveries  = '#799956',
-        recovered   = '#799956', # Duplicate
-        symptomatic = '#c1ad71',
-        severe      = '#c1981d',
-        quarantined = '#5f1914',
-        critical    = '#b86113',
-        deaths      = '#000000',
-        dead        = '#000000', # Duplicate
+        susceptible             = '#5e7544',
+        infectious              = '#c78f65',
+        infectious_by_strain    = '#c78f65',
+        infections              = '#c75649',
+        reinfections            = '#732e26',
+        infections_by_strain    = '#c78f65',
+        exposed                 = '#c75649', # Duplicate
+        exposed_by_strain       = '#c75649',  # Duplicate
+        tests                   = '#aaa8ff',
+        diagnoses               = '#8886cc',
+        diagnosed               = '#8886cc', # Duplicate
+        recoveries              = '#799956',
+#        recovered   = '#799956', # Duplicate
+        symptomatic             = '#c1ad71',
+        severe                  = '#c1981d',
+        quarantined             = '#5f1914',
+        critical                = '#b86113',
+        deaths                  = '#000000',
+        dead                    = '#000000', # Duplicate
     )
     return colors
 

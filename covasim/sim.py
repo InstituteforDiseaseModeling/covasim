@@ -74,7 +74,10 @@ class Sim(cvb.BaseSim):
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
-        self.update_pars(pars, **kwargs)   # Update the parameters, if provided
+        immunity_pars = dict(max_strains=default_pars['max_strains'], default_half_life=default_pars['default_half_life'],
+                             default_immunity=default_pars['default_immunity'],
+                             default_cross_immunity=default_pars['default_cross_immunity'])
+        self.update_pars(pars, immunity_pars=immunity_pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
             self.load_population(popfile)  # Load the population, if provided
@@ -544,6 +547,7 @@ class Sim(cvb.BaseSim):
                         cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by the cross strain
                         cross_immune_inds = cvd.default_int(cvu.true(cross_immune)) # People with some immunity to this strain from a prior infection with another strain
                         cross_immunity = cvd.default_float(self['immunity'][cross_strain, strain]) # Immunity protection again this strain from other strains
+                        # TODO cross immunity not working?
                         immunity_factors[cross_immune_inds] = cross_immunity * np.exp(-decay_rate * cross_immune_time)  # Calculate cross-immunity factors
 
             # Compute protection factors from both immunity and cross immunity
@@ -705,10 +709,10 @@ class Sim(cvb.BaseSim):
                 self.results[reskey].values = self.results[reskey].values[:self['n_strains'], :]
             if self.results[reskey].scale: # Scale the result dynamically
                 if 'by_strain' in reskey:
-                    self.results[reskey].values = np.rot90(self.results[reskey].values)
-                    self.results[reskey].values = np.einsum('ij,i->ij',self.results[reskey].values,self.rescale_vec)
-                    self.results[reskey].values = np.flipud(self.results[reskey].values)
-                    self.results[reskey].values = np.rot90(self.results[reskey].values)
+                    # self.results[reskey].values = np.rot90(self.results[reskey].values)
+                    self.results[reskey].values = np.einsum('ij,j->ij',self.results[reskey].values,self.rescale_vec)
+                    # self.results[reskey].values = np.flipud(self.results[reskey].values)
+                    # self.results[reskey].values = np.rot90(self.results[reskey].values)
                 else:
                     self.results[reskey].values *= self.rescale_vec
 

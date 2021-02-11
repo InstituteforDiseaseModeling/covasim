@@ -69,12 +69,15 @@ class People(cvb.BasePeople):
         for key in self.meta.states:
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
-            elif key in ['exposed_strain','infectious_strain', 'recovered_strain']:
-                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
-            elif key == 'infectious_by_strain' or key == 'exposed_by_strain':
-                self[key] = np.full((self.pars['max_strains'], self.pop_size), False, dtype=bool, order='F')
             else:
                 self[key] = np.full(self.pop_size, False, dtype=bool)
+
+        # Set strain states, which store info about which strain a person is exposed to
+        for key in self.meta.strain_states:
+            if 'by' in key:
+                self[key] = np.full((self.pars['max_strains'], self.pop_size), False, dtype=bool, order='F')
+            else:
+                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
         # Set dates and durations -- both floats
         for key in self.meta.dates + self.meta.durs:
@@ -170,7 +173,7 @@ class People(cvb.BasePeople):
         self.flows['new_severe']      += self.check_severe()
         self.flows['new_critical']    += self.check_critical()
         self.flows['new_deaths']      += self.check_death()
-        self.flows['new_recoveries']  += self.check_recovery()
+        self.flows['new_recoveries']  += self.check_recovery() # TODO: check logic here
 
         return
 
@@ -341,6 +344,12 @@ class People(cvb.BasePeople):
             else:
                 self[key][inds] = False
 
+        for key in self.meta.strain_states:
+            if 'by' in key:
+                self[key][:, inds] = False
+            else:
+                self[key][inds] = np.nan
+
         for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
@@ -381,7 +390,7 @@ class People(cvb.BasePeople):
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
-        # Set states
+        # Update states, strain info, and flows
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
         self.exposed_strain[inds] = strain
@@ -389,6 +398,8 @@ class People(cvb.BasePeople):
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
         self.flows['new_infections_by_strain'][strain] += len(inds)
+        self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
+        self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery
 
         # Record transmissions
         for i, target in enumerate(inds):

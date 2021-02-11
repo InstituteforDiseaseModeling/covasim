@@ -111,7 +111,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
-
+    pars = initialize_immunity(pars)  # Initialise immunity
 
     # If version is specified, load old parameters
     if version is not None:
@@ -286,67 +286,24 @@ def absolute_prognoses(prognoses):
     return out
 
 
-def update_cross_immunity(pars, update_strain=None, immunity_from=None, immunity_to=None):
+def initialize_immunity(pars):
     '''
-    Helper function to set the cross-immunity matrix.
-    Matrix is of size sim['max_strains']*sim['max_strains'] and takes the form:
-                A       B       ...
-        array([[nan,    1.0,    ...],
-               [0.4,    nan,    ...],
-               ...,     ...,    ...])
-    ... meaning that people who've had strand A have perfect protection against strand B, but
-    people who've had strand B have an initial 40% protection against getting strand A.
-    The matrix has nan entries outside of any active strains.
-
-    Args:
-        pars (dict): the parameters dictionary
-        update_strain: the index of the strain to update
-        immunity_from (array): used when adding a new strain; specifies the immunity protection against existing strains from having the new strain
-        immunity_to (array): used when adding a strain; specifies the immunity protection against the new strain from having one of the existing strains
-
-    **Example 1**:
-        # Adding a strain C to the example above. Strain C gives perfect immunity against strain A
-        # and 90% immunity against strain B. People who've had strain A have 50% immunity to strain C,
-        # and people who've had strain B have 70% immunity to strain C
-        cross_immunity = update_cross_immunity(pars, update_strain=2, immunity_from=[1. 0.9], immunity_to=[0.5, 0.7])
-                A       B       C       ...
-        array([[nan,    1.0,    0.5     ...],
-               [0.4,    nan,    0.7     ...],
-               [1.0,    0.9,    nan     ...],
-               ...,     ...,    ...,    ...])
-
-    **Example 2**:
-        # Updating the immunity protection factors for strain B
-        cross_immunity = update_cross_immunity(pars, update_strain=1, immunity_from=[0.6 0.8], immunity_to=[0.9, 0.7])
-                A       B       C       ...
-        array([[nan,    0.9,    0.5     ...],
-               [0.6,    nan,    0.8     ...],
-               [1.0,    0.7,    nan     ...],
-               ...,     ...,    ...,    ...])
-
-    Mostly for internal use (? TBC)
+    Helper function to initialize the immunity and half_life matrices.
+    Matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
     '''
-
-    # Initialise if not already initialised
-    if pars['cross_immunity'] is None:
-        cross_immunity = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
-        if pars['n_strains'] > 1:
-            for i in range(pars['n_strains']):
-                for j in range(pars['n_strains']):
-                    if i != j: cross_immunity[i, j] = pars['default_cross_immunity']
-
-    # Update immunity for a strain if supplied
-    if update_strain is not None:
-        cross_immunity = sc.dcp(pars['cross_immunity'])
-        cross_immunity[update_strain, ] # TODO
-
-    return cross_immunity
+    # If initial immunity/cross immunity factors are provided, use those, otherwise use defaults
+    pars['half_life'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+    pars['immunity']  = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
+    for i in range(pars['n_strains']):
+        pars['half_life'][i]   = pars['default_half_life']
+        pars['immunity'][i, i] = pars['default_immunity']
+    return pars
 
 
-def update_immunity(pars, create, new_pars=None, update_strain=None, immunity_from=None, immunity_to=None,
+def update_immunity(pars, create=True, update_strain=None, immunity_from=None, immunity_to=None,
                     init_immunity=None, half_life=None):
     '''
-    Helper function to set the immunity and half_life matrices.
+    Helper function to update the immunity and half_life matrices.
     Matrix is of size sim['max_strains']*sim['max_strains'] and takes the form:
                 A       B       ...
         array([[1.0,   1.0,    ...],
@@ -364,40 +321,34 @@ def update_immunity(pars, create, new_pars=None, update_strain=None, immunity_fr
         immunity_from (array): used when adding a new strain; specifies the immunity protection against existing strains from having the new strain
         immunity_to (array): used when adding a strain; specifies the immunity protection against the new strain from having one of the existing strains
 
-    **Example 1**:
+    **Example 1**: #TODO NEEDS UPDATING
         # Adding a strain C to the example above. Strain C gives perfect immunity against strain A
         # and 90% immunity against strain B. People who've had strain A have 50% immunity to strain C,
         # and people who've had strain B have 70% immunity to strain C
         cross_immunity = update_cross_immunity(pars, update_strain=2, immunity_from=[1. 0.9], immunity_to=[0.5, 0.7])
                 A       B       C       ...
-        array([[nan,    1.0,    0.5     ...],
-               [0.4,    nan,    0.7     ...],
-               [1.0,    0.9,    nan     ...],
+        array([[1.0,    1.0,    0.5     ...],
+               [0.4,    1.0,    0.7     ...],
+               [1.0,    0.9,    1.0     ...],
                ...,     ...,    ...,    ...])
 
     '''
-    # If initial immunity/cross immunity factors are provided, use those, otherwise use defaults
     if create:
-        pars['half_life'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-        immunity = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
-        for i in range(pars['n_strains']):
-            pars['half_life'][i] = pars['default_half_life']
-            for j in range(pars['n_strains']):
-                if i != j:
-                    immunity[i, j] = pars['default_cross_immunity']
-                else:
-                    immunity[i, j] = pars['default_immunity']
-    else:
-        if new_pars is not None:
-            immunity = pars['immunity']
-            if 'init_immunity' in new_pars.keys():
-                for i in range(pars['n_strains']):
-                    for j in range(pars['n_strains']):
-                        if i == j:
-                            immunity[i, j] = new_pars['init_immunity']
+        # Cross immunity values are set if there is more than one strain circulating
+        # if 'n_strains' isn't provided, assume it's 1
+        if not pars.get('n_strains'):
+            pars['n_strains'] = 1
+        pars = initialize_immunity(pars)
+        ns = pars['n_strains'] # Shorten
 
-            if 'init_half_life' in new_pars.keys():
-                pars['half_life'][0] = new_pars['init_half_life']
+        # Update own-immunity and half lives, if values have been supplied
+        if pars.get('init_half_life'):  # Values have been supplied for the half lives
+            pars['half_life'][:ns] = pars['init_half_life']
+        pars['immunity'][:ns, :ns] = pars['default_cross_immunity']
+        if pars.get('init_immunity'):  # Values have been supplied for own-immunity
+            np.fill_diagonal(pars['immunity'][:ns,:ns], pars['init_immunity'])
+        else:
+            np.fill_diagonal(pars['immunity'][:ns,:ns], pars['default_immunity'])
 
     # Update immunity for a strain if supplied
     if update_strain is not None:
@@ -433,5 +384,6 @@ def update_immunity(pars, create, new_pars=None, update_strain=None, immunity_fr
 
         immunity[update_strain, :] = new_immunity_row
         immunity[:, update_strain] = new_immunity_column
+        pars['immunity'] = immunity
 
-    return immunity
+    return pars
