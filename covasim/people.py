@@ -54,15 +54,6 @@ class People(cvb.BasePeople):
         self.init_contacts() # Initialize the contacts
         self.infection_log = [] # Record of infections - keys for ['source','target','date','layer']
 
-        self.strain_specific_pars = [
-            'rel_trans',
-            'rel_sus',
-            'time_of_last_inf',
-            'immunity_factors',
-            'exposed_by_strain',
-            'infectious_by_strain',
-        ]
-
         # Set person properties -- all floats except for UID
         for key in self.meta.person:
             if key == 'uid':
@@ -78,7 +69,7 @@ class People(cvb.BasePeople):
         for key in self.meta.states:
             if key == 'susceptible':
                 self[key] = np.full(self.pop_size, True, dtype=bool)
-            elif key in ['exposed_strain','infectious_strain','recovered_strain']:
+            elif key in ['exposed_strain','infectious_strain', 'recovered_strain']:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
             elif key == 'infectious_by_strain' or key == 'exposed_by_strain':
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), False, dtype=bool, order='F')
@@ -239,10 +230,6 @@ class People(cvb.BasePeople):
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
         self.infectious_strain[inds] = self.exposed_strain[inds]
-        strains, counts = np.unique(self.infectious_strain[~np.isnan(self.infectious_strain)], return_counts=True)
-        if len(strains)>0:
-            for strain, _ in enumerate(strains):
-                self.flows['new_infections_by_strain'][strain] += counts[strain]
         return len(inds)
 
 
@@ -269,13 +256,13 @@ class People(cvb.BasePeople):
 
     def check_recovery(self):
         ''' Check for recovery '''
-        inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=self.is_exp)
+        inds = self.check_inds(self.susceptible, self.date_recovered, filter_inds=self.is_exp)
         self.exposed[inds]     = False
         self.infectious[inds]  = False
         self.symptomatic[inds] = False
         self.severe[inds]      = False
         self.critical[inds]    = False
-        self.recovered[inds]   = True
+        self.susceptible[inds]   = True
         self.recovered_strain[inds] = self.infectious_strain[inds] # TODO: check that this works
         self.infectious_strain[inds] = np.nan
         return len(inds)
@@ -289,7 +276,7 @@ class People(cvb.BasePeople):
         self.symptomatic[inds] = False
         self.severe[inds]      = False
         self.critical[inds]    = False
-        self.recovered[inds]   = False
+        self.susceptible[inds]   = False
         self.dead[inds]        = True
         return len(inds)
 
