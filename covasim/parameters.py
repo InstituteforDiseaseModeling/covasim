@@ -300,7 +300,7 @@ def initialise_immunity(pars):
     return pars
 
 
-def update_immunity(pars, create=True, new_pars=None, update_strain=None, immunity_from=None, immunity_to=None,
+def update_immunity(pars, create=True, update_strain=None, immunity_from=None, immunity_to=None,
                     init_immunity=None, half_life=None):
     '''
     Helper function to update the immunity and half_life matrices.

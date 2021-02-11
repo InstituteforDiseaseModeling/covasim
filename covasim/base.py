@@ -116,12 +116,12 @@ class ParsObj(FlexPretty):
                     raise sc.KeyNotFoundError(errormsg)
             self.pars.update(pars)
 
-            if 'n_strains' in pars.keys():
-                # check that length of beta is same as length of strains (there is a beta for each strain)
-                if 'beta' not in pars.keys():
-                    raise ValueError(f'You supplied strains without betas for each strain')
-                else:
-                    self.pars['beta'] = pars['beta']
+            # if 'n_strains' in pars.keys():
+            #     # check that length of beta is same as length of strains (there is a beta for each strain)
+            #     if 'beta' not in pars.keys():
+            #         raise ValueError(f'You supplied strains without betas for each strain')
+            #     else:
+            #         self.pars['beta'] = pars['beta']
         return
 
 
@@ -258,12 +258,8 @@ class BaseSim(ParsObj):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
-            if pars.get('n_strains') and pars['n_strains']>1:
-                pars = sc.mergedicts(pars, immunity_pars)
-                pars = cvpar.update_immunity(pars)  # Update immunity
-            #            else:
-            #                self.pars['immunity'] = cvpar.update_immunity(pars=self.pars, create=set_immunity, new_pars=pars) # update with any provided params
-
+            pars = sc.mergedicts(pars, immunity_pars)
+            pars = cvpar.update_immunity(pars)  # Update immunity with values provided
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
 
