@@ -4,9 +4,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-do_plot   = 1
-do_show   = 1
-do_save   = 0
+do_plot   = 0
+do_show   = 0
+do_save   = 1
+
+
+def test_2strains(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Run basic sim with 2 strains')
+
+    sc.heading('Setting up...')
+
+    pars = {
+        'n_days': 80,
+        'beta': [0.016, 0.035],
+        'n_strains': 2,
+        #'init_immunity': [1, 1],
+        #'init_half_life': [50, 50],
+    }
+
+    sim = cv.Sim(pars=pars)
+    sim.run()
+
+    if do_plot:
+        plot_results(sim, key='incidence_by_strain', title='1 strain, no immunity', labels=strain_labels, do_show=do_show, do_save=do_save)
+    return sim
+
+
 
 
 def test_multistrains(do_plot=False, do_show=True, do_save=False):
@@ -160,6 +183,7 @@ def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
         for strain in range(len(y[0])):
             labels[strain] = f'Strain {strain +1}'
     ax.legend(labels)
+
     if do_show:
         plt.show()
     if do_save:
@@ -173,7 +197,8 @@ def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
 if __name__ == '__main__':
     sc.tic()
 
-    sim1 = test_multistrains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim0 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim1 = test_multistrains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain_withcrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim4 = test_importstrain_args()

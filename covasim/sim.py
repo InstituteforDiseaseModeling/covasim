@@ -544,6 +544,7 @@ class Sim(cvb.BaseSim):
                         cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by the cross strain
                         cross_immune_inds = cvd.default_int(cvu.true(cross_immune)) # People with some immunity to this strain from a prior infection with another strain
                         cross_immunity = cvd.default_float(self['immunity'][cross_strain, strain]) # Immunity protection again this strain from other strains
+                        # TODO cross immunity not working?
                         immunity_factors[cross_immune_inds] = cross_immunity * np.exp(-decay_rate * cross_immune_time)  # Calculate cross-immunity factors
 
             # Compute protection factors from both immunity and cross immunity

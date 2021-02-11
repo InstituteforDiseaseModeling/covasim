@@ -364,15 +364,15 @@ def update_immunity(pars, create, new_pars=None, update_strain=None, immunity_fr
         immunity_from (array): used when adding a new strain; specifies the immunity protection against existing strains from having the new strain
         immunity_to (array): used when adding a strain; specifies the immunity protection against the new strain from having one of the existing strains
 
-    **Example 1**:
+    **Example 1**: #TODO NEEDS UPDATING
         # Adding a strain C to the example above. Strain C gives perfect immunity against strain A
         # and 90% immunity against strain B. People who've had strain A have 50% immunity to strain C,
         # and people who've had strain B have 70% immunity to strain C
         cross_immunity = update_cross_immunity(pars, update_strain=2, immunity_from=[1. 0.9], immunity_to=[0.5, 0.7])
                 A       B       C       ...
-        array([[nan,    1.0,    0.5     ...],
-               [0.4,    nan,    0.7     ...],
-               [1.0,    0.9,    nan     ...],
+        array([[1.0,    1.0,    0.5     ...],
+               [0.4,    1.0,    0.7     ...],
+               [1.0,    0.9,    1.0     ...],
                ...,     ...,    ...,    ...])
 
     '''
