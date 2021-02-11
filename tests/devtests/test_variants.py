@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-do_plot   = 0
+do_plot   = 1
 do_show   = 0
 do_save   = 1
 
@@ -16,23 +16,29 @@ def test_2strains(do_plot=False, do_show=True, do_save=False):
 
     pars = {
         'n_days': 80,
-        'beta': [0.016, 0.035],
+        'beta': [0.015, 0.03],
         'n_strains': 2,
-        #'init_immunity': [1, 1],
-        #'init_half_life': [50, 50],
+        'init_immunity': [0.9, 0.9],
+        'init_half_life': [20, 180], # Rapidly waning immunity from the less infections strain A
     }
 
     sim = cv.Sim(pars=pars)
+    sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
     sim.run()
 
+    strain_labels = [
+        f'Strain A: beta {pars["beta"][0]}, half_life {pars["init_half_life"][0]}',
+        f'Strain B: beta {pars["beta"][1]}, half_life {pars["init_half_life"][1]}',
+    ]
+
     if do_plot:
-        plot_results(sim, key='incidence_by_strain', title='1 strain, no immunity', labels=strain_labels, do_show=do_show, do_save=do_save)
+        sim.plot_result('cum_reinfections', do_show=do_show, do_save=do_save)
+        # TODO: using the following line seems to flip the results???
+        plot_results(sim, key='cum_reinfections', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}', labels=strain_labels, do_show=do_show, do_save=do_save)
     return sim
 
 
-
-
-def test_multistrains(do_plot=False, do_show=True, do_save=False):
+def test_2strains_import(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run basic sim with an imported strain')
 
     sc.heading('Setting up...')
@@ -64,7 +70,7 @@ def test_multistrains(do_plot=False, do_show=True, do_save=False):
 
     sim = cv.Sim(
         pars=pars,
-        # interventions=imports
+        interventions=imports
                  )
     sim.run()
 
@@ -198,7 +204,7 @@ if __name__ == '__main__':
     sc.tic()
 
     sim0 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim1 = test_multistrains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim1 = test_2strains_import(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain_withcrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim4 = test_importstrain_args()

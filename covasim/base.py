@@ -250,7 +250,7 @@ class BaseSim(ParsObj):
         return string
 
 
-    def update_pars(self, pars=None, create=False, **kwargs):
+    def update_pars(self, pars=None, create=False, immunity_pars=None, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
         pars = sc.mergedicts(pars, kwargs)
         if pars:
@@ -258,10 +258,12 @@ class BaseSim(ParsObj):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
-            if create:
-                pars['immunity'] = cvpar.update_immunity(pars=pars, create=create)  # Set immunity
-            else:
-                self.pars['immunity'] = cvpar.update_immunity(pars=self.pars, create=create, new_pars=pars) # update with any provided params
+            if pars.get('n_strains') and pars['n_strains']>1:
+                pars = sc.mergedicts(pars, immunity_pars)
+                pars = cvpar.update_immunity(pars)  # Update immunity
+            #            else:
+            #                self.pars['immunity'] = cvpar.update_immunity(pars=self.pars, create=set_immunity, new_pars=pars) # update with any provided params
+
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
 
