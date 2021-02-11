@@ -111,7 +111,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
-    pars = initialise_immunity(pars) # Initialise immunity
+    pars = initialize_immunity(pars)  # Initialise immunity
 
     # If version is specified, load old parameters
     if version is not None:
@@ -286,10 +286,10 @@ def absolute_prognoses(prognoses):
     return out
 
 
-def initialise_immunity(pars):
+def initialize_immunity(pars):
     '''
-    Helper function to initialise the immunity and half_life matrices.
-    Matrix is of size sim['max_strains']*sim['max_strains'] and is initialised with default values
+    Helper function to initialize the immunity and half_life matrices.
+    Matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
     '''
     # If initial immunity/cross immunity factors are provided, use those, otherwise use defaults
     pars['half_life'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
@@ -335,7 +335,10 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
     '''
     if create:
         # Cross immunity values are set if there is more than one strain circulating
-        pars = initialise_immunity(pars)
+        # if 'n_strains' isn't provided, assume it's 1
+        if not pars.get('n_strains'):
+            pars['n_strains'] = 1
+        pars = initialize_immunity(pars)
         ns = pars['n_strains'] # Shorten
 
         # Update own-immunity and half lives, if values have been supplied
@@ -381,5 +384,6 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
 
         immunity[update_strain, :] = new_immunity_row
         immunity[:, update_strain] = new_immunity_column
+        pars['immunity'] = immunity
 
     return pars

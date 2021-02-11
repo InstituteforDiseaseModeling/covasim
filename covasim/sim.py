@@ -74,10 +74,9 @@ class Sim(cvb.BaseSim):
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
-        if pars.get('n_strains') and pars['n_strains']>1:
-            immunity_pars = dict(max_strains=default_pars['max_strains'], default_half_life=default_pars['default_half_life'], default_immunity=default_pars['default_immunity'], default_cross_immunity=default_pars['default_cross_immunity'])
-        else:
-            immunity_pars = None
+        immunity_pars = dict(max_strains=default_pars['max_strains'], default_half_life=default_pars['default_half_life'],
+                             default_immunity=default_pars['default_immunity'],
+                             default_cross_immunity=default_pars['default_cross_immunity'])
         self.update_pars(pars, immunity_pars=immunity_pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
@@ -710,10 +709,10 @@ class Sim(cvb.BaseSim):
                 self.results[reskey].values = self.results[reskey].values[:self['n_strains'], :]
             if self.results[reskey].scale: # Scale the result dynamically
                 if 'by_strain' in reskey:
-                    self.results[reskey].values = np.rot90(self.results[reskey].values)
-                    self.results[reskey].values = np.einsum('ij,i->ij',self.results[reskey].values,self.rescale_vec)
-                    self.results[reskey].values = np.flipud(self.results[reskey].values)
-                    self.results[reskey].values = np.rot90(self.results[reskey].values)
+                    # self.results[reskey].values = np.rot90(self.results[reskey].values)
+                    self.results[reskey].values = np.einsum('ij,j->ij',self.results[reskey].values,self.rescale_vec)
+                    # self.results[reskey].values = np.flipud(self.results[reskey].values)
+                    # self.results[reskey].values = np.rot90(self.results[reskey].values)
                 else:
                     self.results[reskey].values *= self.rescale_vec
 
