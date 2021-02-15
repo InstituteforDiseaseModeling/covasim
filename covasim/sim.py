@@ -588,6 +588,11 @@ class Sim(cvb.BaseSim):
                 self.results[f'n_{key}'][t] = people.count(key)
 
         # Update counts for this time step: flows
+        if t>
+            import traceback;
+            traceback.print_exc();
+            import pdb;
+            pdb.set_trace()
         for key,count in people.flows.items():
             if 'by_strain' in key or 'by strain' in key:
                 for strain in range(self['n_strains']):

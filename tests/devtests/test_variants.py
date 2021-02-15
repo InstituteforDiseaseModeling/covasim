@@ -5,8 +5,8 @@ import numpy as np
 
 
 do_plot   = 1
-do_show   = 1
-do_save   = 0
+do_show   = 0
+do_save   = 1
 
 
 def test_2strains(do_plot=False, do_show=True, do_save=False):
@@ -79,36 +79,6 @@ def test_2strains_import(do_plot=False, do_show=True, do_save=False):
     if do_plot:
         plot_results(sim, key='incidence_by_strain', title=f'imported 2 strain test, A->B immunity {immunity_to[0]}, B->A immunity {immunity_from[0]}', labels=strain_labels, do_show=do_show, do_save=do_save)
     return sim
-
-
-def test_importB117(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run basic sim with an imported strain similar to B117')
-
-    sc.heading('Setting up...')
-
-    pars = {
-        'n_days': 120,
-        'beta': [0.016],
-    }
-
-    imports = cv.import_strain(days=40, beta=0.025)
-
-    strain_labels = [
-        f'Strain A: beta {pars["beta"][0]}',
-        f'Strain B: beta {betas[0]}, {n_imports[0]} imports on day {day[0]}',
-    ]
-
-    sim = cv.Sim(
-        pars=pars,
-        interventions=imports
-                 )
-    sim.run()
-
-    if do_plot:
-        sim.plot_result('new_infections', do_show=do_show, do_save=do_save)
-        plot_results(sim, key='incidence_by_strain', title=f'imported 2 strain test, A->B immunity {immunity_to[0]}, B->A immunity {immunity_from[0]}', labels=strain_labels, do_show=do_show, do_save=do_save)
-    return sim
-
 
 
 def test_importstrain_args():
@@ -201,6 +171,31 @@ def test_importstrain_nocrossimmunity(do_plot=False, do_show=True, do_save=False
         plot_results(sim, key='incidence_by_strain', title='Imported strains', labels=strain_labels, do_show=do_show, do_save=do_save)
     return sim
 
+
+def test_importB117(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Run basic sim with an imported strain similar to B117')
+
+    sc.heading('Setting up...')
+
+    pars = {
+        'n_days': 120,
+        'beta': [0.016],
+    }
+
+    imports = cv.import_strain(days=40, beta=0.025)
+
+    sim = cv.Sim(
+        pars=pars,
+        interventions=imports
+                 )
+    sim.run()
+
+    if do_plot:
+        sim.plot_result('new_infections', do_show=do_show, do_save=do_save)
+        plot_shares(sim, key='new_infections', title='Shares of new infections by strain', do_show=do_show, do_save=do_save)
+    return sim
+
+
 def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
 
     results = sim.results
@@ -233,23 +228,21 @@ def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
 def plot_shares(sim, key, title, do_show=True, do_save=False, labels=None):
 
     results = sim.results
-    results_to_plot = results[key]
+    n_strains = sim.results['new_infections_by_strain'].values.shape[1] # TODO: this should be stored in the sim somewhere more intuitive!
+
+    import traceback;
+    traceback.print_exc();
+    import pdb;
+    pdb.set_trace()
+    prop_new = {f'Strain{s}': results[key+'_by_strain'].values[1:,s]/results[key].values[1:] for s in range(n_strains)}
 
     # extract data for plotting
-    x = sim.results['t']
-    y = results_to_plot.values
-    y = np.flipud(y)
-
+    x = sim.results['t'][1:]
     fig, ax = plt.subplots()
-    ax.plot(x, y)
-
-    ax.set(xlabel='Day of simulation', ylabel=results_to_plot.name, title=title)
-
-    if labels is None:
-        labels = [0]*len(y[0])
-        for strain in range(len(y[0])):
-            labels[strain] = f'Strain {strain +1}'
-    ax.legend(labels)
+    ax.stackplot(x, prop_new.values(),
+                 labels=prop_new.keys())
+    ax.legend(loc='upper left')
+    ax.set_title(title)
 
     if do_show:
         plt.show()
@@ -264,10 +257,11 @@ if __name__ == '__main__':
     sc.tic()
 
     # sim0 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim1 = test_2strains_import(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim1 = test_2strains_import(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain_withcrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim4 = test_importstrain_args()
+    sim5 = test_importB117(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     sc.toc()
 
