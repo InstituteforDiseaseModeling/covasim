@@ -29,6 +29,12 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     '''
     pars = {}
 
+    # Helper function to initialize parameters that are stored as Par objects
+    def init_par(*args, **kwargs):
+        ''' Initialize a single result object '''
+        output = cvb.Par(*args, **kwargs)
+        return output
+
     # Population parameters
     pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
     pars['pop_infected'] = 20       # Number of initial infections
@@ -91,7 +97,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
     pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
     pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
-
 
     # Efficacy of protection measures
     pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
