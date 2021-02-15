@@ -977,6 +977,7 @@ class Sim(cvb.BaseSim):
             if 'by_strain' in key:
                 summary[key] = self.results[key][:,t]
                 # TODO: the following line rotates the results - do we need this?
+                # TODO: the following line rotates the results - do we need this?
                 #if len(self.results[key]) < t:
                 #    self.results[key].values = np.rot90(self.results[key].values)
             else:
