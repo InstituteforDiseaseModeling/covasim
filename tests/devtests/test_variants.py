@@ -173,8 +173,11 @@ def test_importstrain_nocrossimmunity(do_plot=False, do_show=True, do_save=False
 
 
 def test_importB117(do_plot=False, do_show=True, do_save=False):
+    '''
+    The purpose of this test is to try out plotting the relative shares of infections by strain,
+    and see whether we get something similar to what other investigations of B117 dynamics have found
+    '''
     sc.heading('Run basic sim with an imported strain similar to B117')
-
     sc.heading('Setting up...')
 
     pars = {
@@ -228,16 +231,21 @@ def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
 def plot_shares(sim, key, title, do_show=True, do_save=False, labels=None):
 
     results = sim.results
-    n_strains = sim.results['new_infections_by_strain'].values.shape[1] # TODO: this should be stored in the sim somewhere more intuitive!
-    prop_new = {f'Strain{s}': results[key+'_by_strain'].values[1:,s]/results[key].values[1:] for s in range(n_strains)}
+    n_strains = sim.results['new_infections_by_strain'].values.shape[0] # TODO: this should be stored in the sim somewhere more intuitive!
+    prop_new = {f'Strain {s}': results[key+'_by_strain'].values[s,1:]/results[key].values[1:] for s in range(n_strains)}
+    num_new = {f'Strain {s}': results[key+'_by_strain'].values[s,:] for s in range(n_strains)}
 
     # extract data for plotting
     x = sim.results['t'][1:]
-    fig, ax = plt.subplots()
-    ax.stackplot(x, prop_new.values(),
+    fig, ax = plt.subplots(2,1,sharex=True)
+    ax[0].stackplot(x, prop_new.values(),
                  labels=prop_new.keys())
-    ax.legend(loc='upper left')
-    ax.set_title(title)
+    ax[0].legend(loc='upper left')
+    ax[0].set_title(title)
+    ax[1].stackplot(sim.results['t'], num_new.values(),
+                 labels=num_new.keys())
+    ax[1].legend(loc='upper left')
+    ax[1].set_title(title)
 
     if do_show:
         plt.show()

@@ -722,12 +722,6 @@ class Sim(cvb.BaseSim):
         for key in ['cum_infections','cum_infections_by_strain']:
             self.results[key].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
 
-        import traceback;
-        traceback.print_exc();
-        import pdb;
-        pdb.set_trace()
-
-
         # Final settings
         self.results_ready = True # Set this first so self.summary() knows to print the results
         self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
@@ -980,9 +974,11 @@ class Sim(cvb.BaseSim):
 
         summary = sc.objdict()
         for key in self.result_keys():
-            if len(self.results[key]) < t:
-                self.results[key].values = np.rot90(self.results[key].values)
-                summary[key] = self.results[key][t]
+            if 'by_strain' in key:
+                summary[key] = self.results[key][:,t]
+                # TODO: the following line rotates the results - do we need this?
+                #if len(self.results[key]) < t:
+                #    self.results[key].values = np.rot90(self.results[key].values)
             else:
                 summary[key] = self.results[key][t]
 
