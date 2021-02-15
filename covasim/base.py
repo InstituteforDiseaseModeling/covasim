@@ -201,6 +201,8 @@ class Par(object):
         self.name =  name  # Name of this parameter
         self.val =  sc.promotetoarray(val)  # Value of this parameter
         self.by_strain = by_strain # Whether or not the parameter varies by strain
+        self.by_age = by_age # Whether or not the parameter varies by age
+        self.is_dist = is_dist # Whether or not the parameter is stored as a distribution
         return
 
     def __repr__(self, *args, **kwargs):
@@ -225,7 +227,13 @@ class Par(object):
         return len(self.val)
 
     def add_strain(self, new_val=None):
-        self.val = np.append(self[:], new_val) # TODO: so far this only works for 1D parameters
+        if self.by_age is False and self.is_dist is False: # TODO: refactor
+            self.val = np.append(self[:], new_val) # TODO: so far this only works for 1D parameters
+        elif self.by_age: # TODO: not working yet
+            self.val = np.append(self[:], new_val)
+        elif self.is_dist: # TODO: not working yet
+            self.val = np.array(self[:], new_val)
+
 
 
 def set_metadata(obj):
