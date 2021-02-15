@@ -81,6 +81,36 @@ def test_2strains_import(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
+def test_importB117(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Run basic sim with an imported strain similar to B117')
+
+    sc.heading('Setting up...')
+
+    pars = {
+        'n_days': 120,
+        'beta': [0.016],
+    }
+
+    imports = cv.import_strain(days=40, beta=0.025)
+
+    strain_labels = [
+        f'Strain A: beta {pars["beta"][0]}',
+        f'Strain B: beta {betas[0]}, {n_imports[0]} imports on day {day[0]}',
+    ]
+
+    sim = cv.Sim(
+        pars=pars,
+        interventions=imports
+                 )
+    sim.run()
+
+    if do_plot:
+        sim.plot_result('new_infections', do_show=do_show, do_save=do_save)
+        plot_results(sim, key='incidence_by_strain', title=f'imported 2 strain test, A->B immunity {immunity_to[0]}, B->A immunity {immunity_from[0]}', labels=strain_labels, do_show=do_show, do_save=do_save)
+    return sim
+
+
+
 def test_importstrain_args():
     sc.heading('Test flexibility of arguments for the import strain "intervention"')
 
@@ -199,6 +229,34 @@ def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
 
     return
 
+
+def plot_shares(sim, key, title, do_show=True, do_save=False, labels=None):
+
+    results = sim.results
+    results_to_plot = results[key]
+
+    # extract data for plotting
+    x = sim.results['t']
+    y = results_to_plot.values
+    y = np.flipud(y)
+
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+
+    ax.set(xlabel='Day of simulation', ylabel=results_to_plot.name, title=title)
+
+    if labels is None:
+        labels = [0]*len(y[0])
+        for strain in range(len(y[0])):
+            labels[strain] = f'Strain {strain +1}'
+    ax.legend(labels)
+
+    if do_show:
+        plt.show()
+    if do_save:
+        cv.savefig(f'results/{title}.png')
+
+    return
 
 
 #%% Run as a script
