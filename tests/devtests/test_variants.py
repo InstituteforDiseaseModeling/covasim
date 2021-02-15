@@ -199,6 +199,27 @@ def test_importB117(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
+def test_par_refactor():
+    '''
+    The purpose of this test is to experiment with different representations of the parameter structures
+    Still WIP!
+    '''
+
+    # Simplest case: add a strain to beta
+    p1 = cv.Par(name='beta', val=0.016, by_strain=True)
+    print(p1.val) # Prints all the stored values of beta
+    print(p1[0])  # Can index beta like an array to pull out strain-specific values
+    p1.add_strain(new_val = 0.025)
+
+    # Complex case: add a strain that's differentiated by severity for kids 0-20
+    p2 = cv.Par(name='sus_ORs', val=np.array([0.34, 0.67, 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]), by_strain=True)
+    print(p2.val) # Prints all the stored values for the original strain
+    print(p2[0])  # Can index beta like an array to pull out strain-specific values
+    p2.add_strain(new_val=np.array([1., 1., 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]))
+
+    return p1, p2
+
+
 def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
 
     results = sim.results
@@ -264,7 +285,9 @@ if __name__ == '__main__':
     # sim2 = test_importstrain_withcrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim4 = test_importstrain_args()
-    sim5 = test_importB117(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim5 = test_importB117(do_plot=do_plot, do_save=do_save, do_show=do_show)
+
+    p1, p2 = test_par_refactor()
 
     sc.toc()
 

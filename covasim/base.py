@@ -16,7 +16,7 @@ from . import parameters as cvpar
 from .settings import options as cvo
 
 # Specify all externally visible classes this file defines
-__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
+__all__ = ['ParsObj', 'Result', 'Par', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
 
 
 #%% Define simulation classes
@@ -191,12 +191,15 @@ class Par(object):
     Stores a single parameter -- by default, acts like an array.
     Args:
         name (str): name of this parameter, e.g. beta
+        val: value(s) of the parameter - can take various forms
+        by_age: whether the parameter is differentiated by age
+        is_dist: whether the parameter is a distribution
         by_strain (bool): whether or not the parameter varies by strain
     '''
 
-    def __init__(self, name=None, val=None, by_strain=False):
+    def __init__(self, name=None, val=None, by_age=False, is_dist=False, by_strain=False):
         self.name =  name  # Name of this parameter
-        self.val =  val  # Value of this parameter
+        self.val =  sc.promotetoarray(val)  # Value of this parameter
         self.by_strain = by_strain # Whether or not the parameter varies by strain
         return
 
@@ -220,6 +223,9 @@ class Par(object):
     @property
     def n_strains(self):
         return len(self.val)
+
+    def add_strain(self, new_val=None):
+        self.val = np.append(self[:], new_val) # TODO: so far this only works for 1D parameters
 
 
 def set_metadata(obj):
