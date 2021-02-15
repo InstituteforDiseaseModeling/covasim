@@ -1193,6 +1193,7 @@ class import_strain(Intervention):
         for strain in range(self.new_strains):
 
             if sim.t == self.days[strain]: # Time to introduce this strain
+
                 # Check number of strains
                 prev_strains = sim['n_strains']
                 if prev_strains + 1 > self.max_strains:

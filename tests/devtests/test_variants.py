@@ -182,7 +182,7 @@ def test_importB117(do_plot=False, do_show=True, do_save=False):
         'beta': [0.016],
     }
 
-    imports = cv.import_strain(days=40, beta=0.025)
+    imports = cv.import_strain(days=40, beta=0.025, n_imports=10)
 
     sim = cv.Sim(
         pars=pars,
@@ -229,11 +229,6 @@ def plot_shares(sim, key, title, do_show=True, do_save=False, labels=None):
 
     results = sim.results
     n_strains = sim.results['new_infections_by_strain'].values.shape[1] # TODO: this should be stored in the sim somewhere more intuitive!
-
-    import traceback;
-    traceback.print_exc();
-    import pdb;
-    pdb.set_trace()
     prop_new = {f'Strain{s}': results[key+'_by_strain'].values[1:,s]/results[key].values[1:] for s in range(n_strains)}
 
     # extract data for plotting

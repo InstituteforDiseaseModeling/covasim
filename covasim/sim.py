@@ -588,11 +588,6 @@ class Sim(cvb.BaseSim):
                 self.results[f'n_{key}'][t] = people.count(key)
 
         # Update counts for this time step: flows
-        if t>
-            import traceback;
-            traceback.print_exc();
-            import pdb;
-            pdb.set_trace()
         for key,count in people.flows.items():
             if 'by_strain' in key or 'by strain' in key:
                 for strain in range(self['n_strains']):
@@ -726,6 +721,12 @@ class Sim(cvb.BaseSim):
             self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:],axis=0)
         for key in ['cum_infections','cum_infections_by_strain']:
             self.results[key].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
+
+        import traceback;
+        traceback.print_exc();
+        import pdb;
+        pdb.set_trace()
+
 
         # Final settings
         self.results_ready = True # Set this first so self.summary() knows to print the results
