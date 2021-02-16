@@ -296,13 +296,11 @@ def initialize_immunity(pars):
     pars['half_life']['asymptomatic'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
     pars['half_life']['mild'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
     pars['half_life']['severe'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    pars['half_life']['critical'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
     pars['immunity'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
     for i in range(pars['n_strains']):
         pars['half_life']['asymptomatic'][i] = pars['default_half_life']
         pars['half_life']['mild'][i] = pars['default_half_life']
         pars['half_life']['severe'][i] = pars['default_half_life']
-        pars['half_life']['critical'][i] = pars['default_half_life']
         pars['immunity'][i, i] = pars['default_immunity']
     return pars
 

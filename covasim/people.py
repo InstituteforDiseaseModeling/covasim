@@ -268,7 +268,6 @@ class People(cvb.BasePeople):
         self.susceptible[inds]   = True
         self.recovered_strain[inds] = self.infectious_strain[inds] # TODO: check that this works
         self.infectious_strain[inds] = np.nan
-        self.half_life[inds] = np.nan
         return len(inds)
 
 
