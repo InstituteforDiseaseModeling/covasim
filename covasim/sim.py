@@ -74,10 +74,10 @@ class Sim(cvb.BaseSim):
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
-        immunity_pars = dict(max_strains=default_pars['max_strains'], default_half_life=default_pars['default_half_life'],
-                             default_immunity=default_pars['default_immunity'],
-                             default_cross_immunity=default_pars['default_cross_immunity'])
-        self.update_pars(pars, immunity_pars=immunity_pars, **kwargs)   # Update the parameters, if provided
+        immunity_pars = dict(max_strains=default_pars['max_strains'],
+                             cross_immunity=default_pars['cross_immunity'])
+        strain_pars = {par: default_pars[par] for par in cvd.strain_pars}
+        self.update_pars(pars, immunity_pars=immunity_pars, strain_pars=strain_pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
             self.load_population(popfile)  # Load the population, if provided
@@ -489,7 +489,8 @@ class Sim(cvb.BaseSim):
         for strain, n_imports in enumerate(imports):
             if n_imports>0:
                 importation_inds = cvu.choose(max_n=len(people), n=n_imports)
-                people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation', strain=strain)
+                people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation',
+                              strain=strain)
 
         # TODO -- Randomly introduce new strain
 
@@ -515,7 +516,6 @@ class Sim(cvb.BaseSim):
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         # Shorten additional useful parameters and indicators that aren't by strain
-        asymp_factor = cvd.default_float(self['asymp_factor'])
         sus = people.susceptible
         inf = people.infectious
         symp = people.symptomatic
@@ -525,19 +525,33 @@ class Sim(cvb.BaseSim):
         # Iterate through n_strains to calculate infections
         for strain in range(self['n_strains']):
 
+            # Deal with strain parameters
+            strain_parkeys = ['beta', 'asymp_factor']
+            strain_pars = dict()
+            for key in strain_parkeys:
+                if self['strains'] is not None and key in self['strains'].keys():  # This parameter varies by strain: extract strain-specific value
+                    strain_pars[key] = cvd.default_float(self[key][strain])
+                else:
+                    strain_pars[key] = cvd.default_float(self[key])
+
             # Compute the probability of transmission
-            beta = cvd.default_float(self['beta'][strain])
+            beta = strain_pars['beta']
+            asymp_factor = strain_pars['asymp_factor']
             immunity_factors = people.immunity_factors[strain, :]
 
             # Process immunity parameters and indices
+            # TODO-- make this severity-specific
             immune = people.recovered_strain == strain # Whether people have some immunity to this strain from a prior infection with this strain
             immune_time         = t - date_rec[immune]  # Time since recovery for people who were last infected by this strain
             immune_inds = cvd.default_int(cvu.true(immune)) # People with some immunity to this strain from a prior infection with this strain
             init_immunity = cvd.default_float(self['immunity'][strain, strain])
-            half_life = self['half_life'][strain]
-            decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+            #TODO -- make half life by severity
+            half_life = people.half_life
+            # decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+            decay_rate = np.log(2) / half_life
+            decay_rate[np.isnan(decay_rate)] = 0
             decay_rate = cvd.default_float(decay_rate)
-            immunity_factors[immune_inds] = init_immunity * np.exp(-decay_rate * immune_time)  # Calculate immunity factors
+            immunity_factors = cvu.compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, decay_rate)   # Calculate immunity factors
 
             # Process cross-immunity parameters and indices, if relevant
             if self['n_strains']>1:
@@ -547,11 +561,7 @@ class Sim(cvb.BaseSim):
                         cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by the cross strain
                         cross_immune_inds = cvd.default_int(cvu.true(cross_immune)) # People with some immunity to this strain from a prior infection with another strain
                         cross_immunity = cvd.default_float(self['immunity'][cross_strain, strain]) # Immunity protection again this strain from other strains
-                        # TODO cross immunity not working?
-                        immunity_factors[cross_immune_inds] = cross_immunity * np.exp(-decay_rate * cross_immune_time)  # Calculate cross-immunity factors
-
-            # Compute protection factors from both immunity and cross immunity
-            ##immunity_factors = cvu.compute_immunity(people.immunity_factors[strain, :], immune_time, cross_immune_time, immune_inds, cross_immune_inds, init_immunity, decay_rate, cross_immunity)
+                        immunity_factors = cvu.compute_immunity(immunity_factors, cross_immune_time, cross_immune_inds, cross_immunity, decay_rate)   # Calculate cross_immunity factors
 
             # Define indices for this strain
             inf_by_this_strain = sc.dcp(inf)
@@ -974,9 +984,12 @@ class Sim(cvb.BaseSim):
 
         summary = sc.objdict()
         for key in self.result_keys():
-            if len(self.results[key]) < t:
-                self.results[key].values = np.rot90(self.results[key].values)
-                summary[key] = self.results[key][t]
+            if 'by_strain' in key:
+                summary[key] = self.results[key][:,t]
+                # TODO: the following line rotates the results - do we need this?
+                # TODO: the following line rotates the results - do we need this?
+                #if len(self.results[key]) < t:
+                #    self.results[key].values = np.rot90(self.results[key].values)
             else:
                 summary[key] = self.results[key][t]
 

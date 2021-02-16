@@ -16,7 +16,7 @@ from . import parameters as cvpar
 from .settings import options as cvo
 
 # Specify all externally visible classes this file defines
-__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
+__all__ = ['ParsObj', 'Result', 'Par', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
 
 
 #%% Define simulation classes
@@ -186,6 +186,59 @@ class Result(object):
         return len(self.values)
 
 
+class Par(object):
+    '''
+    NB NOT USED ANYWHERE YET- PLACEHOLDER CLASS IN CASE USEFUL
+    Stores a single parameter -- by default, acts like an array.
+    Args:
+        name (str): name of this parameter, e.g. beta
+        val: value(s) of the parameter - can take various forms
+        by_age: whether the parameter is differentiated by age
+        is_dist: whether the parameter is a distribution
+        by_strain (bool): whether or not the parameter varies by strain
+    '''
+
+    def __init__(self, name=None, val=None, by_age=False, is_dist=False, by_strain=False):
+        self.name =  name  # Name of this parameter
+        self.val = sc.promotetolist(val)  # Value of this parameter
+        self.by_strain = by_strain # Whether or not the parameter varies by strain
+        self.by_age = by_age # Whether or not the parameter varies by age
+        self.is_dist = is_dist # Whether or not the parameter is stored as a distribution
+        return
+
+    def __repr__(self, *args, **kwargs):
+        ''' Use pretty repr, like sc.prettyobj, but displaying full values '''
+        output  = sc.prepr(self, use_repr=False)
+        return output
+
+    def __getitem__(self, *args, **kwargs):
+        ''' To allow e.g. par[2] instead of par.val[5] '''
+        return self.val.__getitem__(*args, **kwargs)
+
+    def __setitem__(self, *args, **kwargs):
+        ''' To allow e.g. par[:] = 1 instead of par.val[:] = 1 '''
+        return self.val.__setitem__(*args, **kwargs)
+
+    def __len__(self):
+        ''' To allow len(par) instead of len(par.val) '''
+        return len(self.val)
+
+    @property
+    def n_strains(self):
+        return len(self.val)
+
+    def add_strain(self, new_val=None):
+        self.val.append(new_val)
+
+    def get(self, strain=0, n=None):
+        if self.by_strain:
+            if not self.is_dist: output = self.val[strain]
+            else:                output = cvu.sample(**self.val[strain], size=n)
+        else:
+            output = self.val
+        return output
+
+
 def set_metadata(obj):
     ''' Set standard metadata for an object '''
     obj.created = sc.now()
@@ -250,7 +303,7 @@ class BaseSim(ParsObj):
         return string
 
 
-    def update_pars(self, pars=None, create=False, immunity_pars=None, **kwargs):
+    def update_pars(self, pars=None, create=False, immunity_pars=None, strain_pars=None, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
         pars = sc.mergedicts(pars, kwargs)
         if pars:
@@ -258,8 +311,10 @@ class BaseSim(ParsObj):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
-            pars = sc.mergedicts(pars, immunity_pars)
-            pars = cvpar.update_immunity(pars)  # Update immunity with values provided
+            if pars.get('strains'):
+                pars['n_strains'] = 1 + len(sc.promotetolist(next(iter(pars['strains'].values()))))
+                pars = sc.mergedicts(immunity_pars, strain_pars, pars)
+                pars = cvpar.update_immunity(pars)  # Update immunity with values provided
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
         return
 

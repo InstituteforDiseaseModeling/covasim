@@ -50,6 +50,7 @@ class PeopleMeta(sc.prettyobj):
         'rel_sus',     # Float
         'time_of_last_inf', # Int
         'immunity_factors', # Float
+        'half_life',   # Float
         # 'immune_factor_by_strain', # Float
     ]
 
@@ -131,6 +132,17 @@ result_flows = {'infections':           'infections',
 # Define these here as well
 new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
+
+# Parameters that can vary by strain
+strain_pars = ['beta',
+               'asymp_factor',
+               'half_life',
+               'init_immunity',
+               'dur',
+               'rel_symp_prob',
+               'rel_severe_prob',
+               'rel_crit_prob',
+               'rel_death_prob']
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([

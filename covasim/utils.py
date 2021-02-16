@@ -69,27 +69,29 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-#@nb.njit(           (nbfloat[:],       nbfloat[:],  nbfloat[:],        nbint[:],    nbint[:],          nbfloat,       nbfloat,    nbfloat), cache=True, parallel=parallel)
-def compute_immunity(immunity_factors, immune_time, cross_immune_time, immune_inds, cross_immune_inds, init_immunity, decay_rate, cross_immunity): # pragma: no cover
+# @nb.njit(           (nbfloat[:],       nbfloat[:],  nbint[:],    nbfloat,       nbfloat[:]), cache=True, parallel=parallel)
+def compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, decay_rate): # pragma: no cover
     '''
     Calculate immunity factors for time t
 
     Args:
-        t: (int) timestep
-        date_rec: (float[]) recovery dates
-        init_immunity: (float) initial immunity protection (1=perfect protection, 0=no protection)
-        decay_rate: (float) decay rate of immunity. If 0, immunity stays constant
+        immunity_factors (array of floats):
+        immune_time:
+        immune_inds:
+        init_immunity:
+        decay_rate:
 
     Returns:
         immunity_factors (float[]): immunity factors
     '''
 
+    decay_rate = decay_rate[immune_inds]
+
     immunity_factors[immune_inds]       =  init_immunity * np.exp(-decay_rate * immune_time)        # Calculate immunity factors
-    immunity_factors[cross_immune_inds] = (init_immunity * np.exp(-decay_rate * cross_immune_time)) * cross_immunity  # Calculate cross-immunity factors
     return immunity_factors
 
 
-# @nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=parallel)
+@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor, immunity_factors): # pragma: no cover
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
