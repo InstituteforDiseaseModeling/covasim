@@ -5,8 +5,8 @@ import numpy as np
 
 
 do_plot   = 1
-do_show   = 0
-do_save   = 1
+do_show   = 1
+do_save   = 0
 
 
 
@@ -278,11 +278,11 @@ if __name__ == '__main__':
     sc.tic()
 
     scens = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #p1, p2, p3 = test_par_refactor()
-    #sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    p1, p2, p3 = test_par_refactor()
+    sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # simX = test_importstrain_args()
 
