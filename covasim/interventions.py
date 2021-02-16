@@ -1145,21 +1145,21 @@ class import_strain(Intervention):
         half_life=[180, 180], immunity_to=[[0, 0], [0,0]], immunity_from=[[0, 0], [0,0]]) # On day 10, import 5 cases of one new strain, on day 20, import 10 cases of another
     '''
 
-    def __init__(self, days=None, beta=None, n_imports=1, init_immunity=1, half_life=180, immunity_to=0,
-                 immunity_from=0, **kwargs):
+    def __init__(self, strain=None, days=None, n_imports=1, immunity_to=None, immunity_from=None, **kwargs):
         # Do standard initialization
         super().__init__(**kwargs)  # Initialize the Intervention object
         self._store_args()  # Store the input arguments so the intervention can be recreated
 
         # Handle inputs
-        self.beta           = sc.promotetolist(beta)
         self.days           = sc.promotetolist(days)
         self.n_imports      = sc.promotetolist(n_imports)
-        self.init_immunity  = sc.promotetolist(init_immunity)
-        self.half_life      = sc.promotetolist(half_life)
-        self.immunity_to   = sc.promotetolist(immunity_to)
-        self.immunity_from   = sc.promotetolist(immunity_from)
-        self.new_strains    = self.check_args(['beta', 'days', 'n_imports', 'init_immunity'])
+        self.immunity_to    = sc.promotetolist(immunity_to) if immunity_to is not None else [None]
+        self.immunity_from  = sc.promotetolist(immunity_from) if immunity_from is not None else [None]
+        self.strain         = {par: sc.promotetolist(val) for par, val in strain.items()}
+        for par, val in self.strain.items(): setattr(self, par, val)
+        if not getattr(self,'init_immunity'):
+            self.init_immunity = None
+        self.new_strains    = self.check_args(['days', 'n_imports']+list(self.strain.keys()))
         return
 
 
@@ -1200,12 +1200,30 @@ class import_strain(Intervention):
                     errormsg = f"Number of existing strains ({sim['n_strains']}) plus new strain exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
                     raise ValueError(errormsg)
 
-                sim['beta'].append(self.beta[strain])
+                # Update strain info
+                if sim['strains'] is None:
+                    sim['strains'] = self.strain
+                    for par, val in sim['strains'].items():
+                        sim[par] = sc.promotetolist(sim[par]) + sc.promotetolist(val)
+                else: # TODO, this could be improved a LOT - surely there's a variant of mergedicts or update that works here
+                    all_strain_keys = list(set([*sim['strains']]+[*self.strain])) # Merged list of all parameters that need to be by strain
+                    for sk in all_strain_keys:
+                        if sk in sim['strains'].keys(): # This was already by strain
+                            if sk in self.strain.keys(): # We add a new value
+                                sim['strains'][sk] = sc.promotetolist(sim['strains'][sk]) + sc.promotetolist(self.strain[sk])
+                                sim[sk] = sc.promotetolist(sim[sk]) + sc.promotetolist(self.strain[sk])
+                            else:
+                                sim['strains'][sk] = sc.promotetolist(sim['strains'][sk])
+                                sim['strains'][sk].append(sim[sk][0])
+                                sim[sk].append(sim[sk][0])
+                        else: # This wasn't previously stored by strain, so now it needs to be added by strain
+                            sim['strains'][sk] = sc.promotetolist(sim[sk]) + sc.promotetolist(self.strain[sk])
+                            sim[sk] = sc.promotetolist(sim[sk]) + sc.promotetolist(sim['strains'][sk])
+
                 cvpar.update_immunity(pars=sim.pars, create=False, update_strain=prev_strains, immunity_from=self.immunity_from[strain],
-                                    immunity_to=self.immunity_to[strain], init_immunity=self.init_immunity[strain],
-                                    half_life=self.half_life[strain])
+                                    immunity_to=self.immunity_to[strain], init_immunity=self.init_immunity[strain])
                 importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
-                sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains, half_life=sim['half_life'])
+                sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
                 sim['n_strains'] += 1
 
         return

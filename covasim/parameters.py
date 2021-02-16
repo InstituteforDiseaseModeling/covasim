@@ -65,19 +65,17 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 
     # Parameters that control settings and defaults for multi-strain runs
-    pars['n_strains']               = 1     # The number of strains currently circulating in the population
-    pars['max_strains']             = 30    # For allocating memory with numpy arrays
-    pars['default_cross_immunity']  = 0.5   # Default cross-immunity protection factor
-    pars['default_immunity']        = 1.    # Default initial immunity
-    pars['default_half_life']       = 180   # Default half life
-    pars['half_life']               = dict()
-    pars['init_immunity']           = None
-    pars['immunity']                = None  # Matrix of immunity and cross-immunity factors, set by set_immunity() below
-    pars['init_half_life']          = None
+    pars['strains']         = None  # Structure for storing strain info
+    pars['n_strains']       = 1  # The number of strains currently circulating in the population
+    pars['max_strains']     = 30    # For allocating memory with numpy arrays
+    pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor
+    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by set_immunity() below
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['beta']            = 0.016 # Beta per symptomatic contact; absolute value, calibrated
-    pars['asymp_factor']    = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
+    pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
+    pars['init_immunity']   = 1.0  # Default initial immunity
+    pars['half_life']       = dict(asymptomatic=180, mild=180, severe=180)
     pars['dur'] = {}
         # Duration parameters: time for disease progression
     pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.6, par2=4.8) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sim duration
@@ -297,20 +295,13 @@ def absolute_prognoses(prognoses):
 
 def initialize_immunity(pars):
     '''
-    Helper function to initialize the immunity and half_life matrices.
+    Helper function to initialize the immunity matrices.
     Matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
     '''
     # If initial immunity/cross immunity factors are provided, use those, otherwise use defaults
-    pars['half_life'] = dict()
-    pars['half_life']['asymptomatic'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    pars['half_life']['mild'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    pars['half_life']['severe'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
     pars['immunity'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
     for i in range(pars['n_strains']):
-        pars['half_life']['asymptomatic'][i] = pars['default_half_life']
-        pars['half_life']['mild'][i] = pars['default_half_life']
-        pars['half_life']['severe'][i] = pars['default_half_life']
-        pars['immunity'][i, i] = pars['default_immunity']
+        pars['immunity'][i, i] = pars['init_immunity']
     return pars
 
 
@@ -356,40 +347,37 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
         pars = initialize_immunity(pars)
         ns = pars['n_strains'] # Shorten
 
-        # Update own-immunity and half lives, if values have been supplied
-        if pars.get('init_half_life'):  # Values have been supplied for the half lives
-            pars['half_life']['asymptomatic'][:ns] = pars['init_half_life']['asymptomatic']
-            pars['half_life']['mild'][:ns] = pars['init_half_life']['mild']
-            pars['half_life']['severe'][:ns] = pars['init_half_life']['severe']
-        pars['immunity'][:ns, :ns] = pars['default_cross_immunity']
+        # Update all strain-specific values
+        for par,val in pars['strains'].items():
+            if pars.get(par):
+                pars[par] = sc.promotetolist(pars[par]) + sc.promotetolist(val)
+
+        # Update own-immunity, if values have been supplied
+        pars['immunity'][:ns, :ns] = pars['cross_immunity']
         if pars.get('init_immunity'):  # Values have been supplied for own-immunity
             np.fill_diagonal(pars['immunity'][:ns,:ns], pars['init_immunity'])
-        else:
-            np.fill_diagonal(pars['immunity'][:ns,:ns], pars['default_immunity'])
 
     # Update immunity for a strain if supplied
     if update_strain is not None:
+
         immunity = pars['immunity']
         # check that immunity_from, immunity_to and init_immunity are provided and the right length.
         # Else use default values
         if immunity_from is None:
             print('Immunity from pars not provided, using default value')
-            immunity_from = [pars['default_cross_immunity']]*pars['n_strains']
+            immunity_from = [pars['cross_immunity']]*pars['n_strains']
         if immunity_to is None:
             print('Immunity to pars not provided, using default value')
-            immunity_to = [pars['default_cross_immunity']]*pars['n_strains']
+            immunity_to = [pars['cross_immunity']]*pars['n_strains']
         if init_immunity is None:
-            print('Initial immunity pars not provided, using default value')
-            init_immunity = pars['default_immunity']
-        if half_life is None:
-            print('Half life is not provided, using default value')
-            half_life = pars['default_half_life']
+            print('Initial immunity not provided, using default value')
+            init_immunity = pars['init_immunity']
 
         immunity_from   = sc.promotetolist(immunity_from)
         immunity_to     = sc.promotetolist(immunity_to)
 
         # create the immunity[update_strain,] and immunity[,update_strain] arrays
-        new_immunity_row = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+        new_immunity_row    = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
         new_immunity_column = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
         for i in range(pars['n_strains']+1):
             if i != update_strain:
@@ -397,12 +385,10 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
                 new_immunity_column[i] = immunity_to[i]
             else:
                 new_immunity_row[i] = new_immunity_column[i] = init_immunity
-                pars['half_life']['asymptomatic'][i] = half_life['asymptomatic']
-                pars['half_life']['mild'][i] = half_life['mild']
-                pars['half_life']['severe'][i] = half_life['severe']
 
         immunity[update_strain, :] = new_immunity_row
         immunity[:, update_strain] = new_immunity_column
+
         pars['immunity'] = immunity
 
     return pars

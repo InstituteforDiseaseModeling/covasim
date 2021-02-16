@@ -11,191 +11,95 @@ do_save   = 1
 
 def test_2strains(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run basic sim with 2 strains')
-
     sc.heading('Setting up...')
 
+    strains = {'beta': 0.025,
+               'rel_severe_prob': 1.3, # 30% more severe across all ages
+               'half_life': dict(asymptomatic=20, mild=80, severe=200),
+               'init_immunity': 0.9
+               }
+
     pars = {
+        'beta': 0.016,
         'n_days': 80,
-        'beta': [0.015, 0.025],
-        'n_strains': 2,
-        'init_immunity': [0.5, 0.5],
-        'init_half_life': dict(asymptomatic=[10, 10], mild=[50, 50], severe=[150, 150]),
+        'strains': strains,
     }
 
     sim = cv.Sim(pars=pars)
     sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
-    sim['immunity'][1,0] = 0.0 # Say that strain B gives perfect immunity to strain A
+    sim['immunity'][1,0] = 0.9 # Say that strain B gives high immunity to strain A
     sim.run()
 
     strain_labels = [
-        f'Strain A: beta {pars["beta"][0]}, half_life {pars["init_half_life"][0]}',
-        f'Strain B: beta {pars["beta"][1]}, half_life {pars["init_half_life"][1]}',
+        f'Strain A: beta {sim["beta"][0]}, half_life {sim["half_life"][0]}',
+        f'Strain B: beta {sim["beta"][1]}, half_life {sim["half_life"][1]}',
     ]
 
     if do_plot:
-        sim.plot_result('new_reinfections', do_show=do_show, do_save=do_save)
-        # TODO: using the following line seems to flip the results???
-        # plot_results(sim, key='cum_reinfections',
-        #              title=f'2 strain test, A->B immunity {sim["immunity"][0, 1]}, B->A immunity {sim["immunity"][1, 0]}',
-        #              labels=strain_labels, do_show=do_show, do_save=do_save)
-        plot_results(sim, key='incidence_by_strain', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}, B->A immunity {sim["immunity"][1,0]}', labels=strain_labels, do_show=do_show, do_save=do_save)
+        sim.plot_result('new_reinfections', do_show=do_show, do_save=do_save, fig_path=f'results/test_2strains.png')
+        plot_results(sim, key='incidence_by_strain', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}, B->A immunity {sim["immunity"][1,0]}', filename='test_2strains2', labels=strain_labels, do_show=do_show, do_save=do_save)
     return sim
 
 
-def test_2strains_import(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run basic sim with an imported strain')
-
+def test_importstrain1(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test introducing a new strain partway through a sim')
     sc.heading('Setting up...')
 
-    immunity_to = [0] # Say that strain A gives no immunity to strain B
-    immunity_from = [.5] # Say that strain B gives perfect immunity to strain A
-    init_immunity = [1]
-    half_life = [dict(asymptomatic=10, mild=50, severe=150)]
-    n_imports = [30]
-    betas = [0.025]
-    day = [10]
+    strain_labels = [
+        'Strain 1: beta 0.016',
+        'Strain 2: beta 0.025'
+    ]
 
-    imports = cv.import_strain(days=day, beta=betas, n_imports=n_imports, immunity_to=immunity_to,
-                               immunity_from=immunity_from, init_immunity=init_immunity, half_life=half_life)
+    imported_strain = {
+        'beta': 0.025,
+        'half_life': dict(asymptomatic=10, mild=50, severe=150),
+        'init_immunity': 0.9
+    }
 
+    imports = cv.import_strain(strain=imported_strain, days=30, n_imports=30)
+    sim = cv.Sim(interventions=imports, label='With imported infections')
+    sim.run()
+
+    if do_plot:
+        plot_results(sim, key='incidence_by_strain', title='Imported strain on day 30 (cross immunity)', filename='test_importstrain1', labels=strain_labels, do_show=do_show, do_save=do_save)
+        plot_shares(sim, key='new_infections', title='Shares of new infections by strain', filename='test_importstrain1_shares', do_show=do_show, do_save=do_save)
+    return sim
+
+
+def test_importstrain2(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test introducing a new strain partway through a sim with 2 strains')
+    sc.heading('Setting up...')
+
+    strain2 = {'beta': 0.025,
+               'rel_severe_prob': 1.3,
+               'half_life': dict(asymptomatic=20, mild=80, severe=200),
+               'init_immunity': 0.9
+               }
     pars = {
         'n_days': 80,
-        'beta': [0.016],
-        'init_immunity': 1,
-        'init_half_life': dict(asymptomatic=[10], mild=[50], severe=[150])
+        'strains': strain2,
+    }
+    strain3 = {
+        'beta': 0.05,
+        'rel_symp_prob': 1.6,
+        'half_life': dict(asymptomatic=10, mild=50, severe=150),
+        'init_immunity': 0.4
     }
 
-    strain_labels = [
-        f'Strain A: beta {pars["beta"][0]}',
-        f'Strain B: beta {betas[0]}, {n_imports[0]} imports on day {day[0]}',
-    ]
-
-    sim = cv.Sim(
-        pars=pars,
-        interventions=imports
-                 )
-    sim.run()
-
-    if do_plot:
-        plot_results(sim, key='incidence_by_strain', title=f'imported 2 strain test, A->B immunity {immunity_to[0]}, B->A immunity {immunity_from[0]}', labels=strain_labels, do_show=do_show, do_save=do_save)
-    return sim
-
-
-def test_importstrain_args():
-    sc.heading('Test flexibility of arguments for the import strain "intervention"')
-
-    # Run sim with a single strain initially, then introduce a new strain that's more transmissible on day 10
-    immunity = [
-        {'init_immunity': 1., 'half_life': 180, 'cross_factor': 1},
-    ]
-    pars = {
-        'n_strains': 1,
-        'beta': [0.016],
-        'immunity': immunity
-    }
-
-    # All these should run
-    imports = cv.import_strain(days=50, beta=0.03)
-    #imports = cv.import_strain(days=[10, 50], beta=0.03)
-    #imports = cv.import_strain(days=50, beta=[0.03, 0.05])
-    #imports = cv.import_strain(days=[10, 20], beta=[0.03, 0.05])
-    #imports = cv.import_strain(days=50, beta=[0.03, 0.05, 0.06])
-    #imports = cv.import_strain(days=[10, 20], n_imports=[5, 10], beta=[0.03, 0.05], init_immunity=[1, 1],
-    #                          half_life=[180, 180], cross_factor=[0, 0])
-    #imports = cv.import_strain(days=[10, 50], beta=0.03, cross_factor=[0.4, 0.6])
-    #imports = cv.import_strain(days=['2020-04-01', '2020-05-01'], beta=0.03)
-
-    # This should fail
-    #imports = cv.import_strain(days=[20, 50], beta=[0.03, 0.05, 0.06])
-
-    sim = cv.Sim(pars=pars, interventions=imports)
-    sim.run()
-
-
-    return sim
-
-
-def test_importstrain_withcrossimmunity(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Test introducing a new strain partway through a sim with full cross immunity')
-
-    sc.heading('Setting up...')
-
-    strain_labels = [
-        'Strain 1: beta 0.016',
-        'Strain 2: beta 0.05'
-    ]
-    # Run sim with several strains initially, then introduce a new strain that's more transmissible on day 10
-    immunity = [
-        {'init_immunity': 1., 'half_life': 180, 'cross_factor': 1},
-    ]
-    pars = {
-        'n_strains': 1,
-        'beta': [0.016],
-        'immunity': immunity
-    }
-    imports = cv.import_strain(days=30, n_imports=30, beta=0.05, init_immunity=1, half_life=180, cross_factor=1)
-    sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
-    sim.run()
-
-    if do_plot:
-        plot_results(sim, key='incidence_by_strain', title='Imported strain on day 30 (cross immunity)', labels=strain_labels, do_show=do_show, do_save=do_save)
-    return sim
-
-def test_importstrain_nocrossimmunity(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Test introducing a new strain partway through a sim with cross immunity')
-
-    sc.heading('Setting up...')
-
-
-    # Run sim with several strains initially, then introduce a new strain that's more transmissible on day 10
-    immunity = [
-        {'init_immunity': 1., 'half_life': 180, 'cross_factor': 0},
-    ]
-    pars = {
-        'n_strains': 1,
-        'beta': [0.016],
-        'immunity': immunity
-    }
-    imports = cv.import_strain(days=[10, 20], n_imports=[10, 20], beta=[0.035, 0.05], init_immunity=[1, 1],
-                               half_life=[180, 180], cross_factor=[0, 0])
+    imports = cv.import_strain(strain=strain3, days=10, n_imports=20)
     sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
     sim.run()
 
     strain_labels = [
         'Strain 1: beta 0.016',
-        'Strain 2: beta 0.035, 10 imported day 10',
-        'Strain 3: beta 0.05, 20 imported day 20'
+        'Strain 2: beta 0.025',
+        'Strain 3: beta 0.05, 20 imported day 10'
     ]
 
     if do_plot:
-        plot_results(sim, key='incidence_by_strain', title='Imported strains', labels=strain_labels, do_show=do_show, do_save=do_save)
-    return sim
-
-
-def test_importB117(do_plot=False, do_show=True, do_save=False):
-    '''
-    The purpose of this test is to try out plotting the relative shares of infections by strain,
-    and see whether we get something similar to what other investigations of B117 dynamics have found
-    '''
-    sc.heading('Run basic sim with an imported strain similar to B117')
-    sc.heading('Setting up...')
-
-    pars = {
-        'n_days': 120,
-        'beta': [0.016],
-    }
-
-    imports = cv.import_strain(days=40, beta=0.025, n_imports=10)
-
-    sim = cv.Sim(
-        pars=pars,
-        interventions=imports
-                 )
-    sim.run()
-
-    if do_plot:
-        sim.plot_result('new_infections', do_show=do_show, do_save=do_save)
-        plot_shares(sim, key='new_infections', title='Shares of new infections by strain', do_show=do_show, do_save=do_save)
+        plot_results(sim, key='incidence_by_strain', title='Imported strains', filename='test_importstrain2', labels=strain_labels, do_show=do_show, do_save=do_save)
+        plot_shares(sim, key='new_infections', title='Shares of new infections by strain',
+                filename='test_importstrain2_shares', do_show=do_show, do_save=do_save)
     return sim
 
 
@@ -229,15 +133,14 @@ def test_par_refactor():
 
 def test_halflife_by_severity(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run basic sim with 2 strains and half life by severity')
-
     sc.heading('Setting up...')
+
+    strains = {'half_life': dict(asymptomatic=100, mild=150, severe=200)}
 
     pars = {
         'n_days': 80,
-        'beta': [0.015, 0.015],
-        'n_strains': 2,
-        'init_immunity': [1, 1],
-        'init_half_life': dict(asymptomatic=[1, 10], mild=[1, 100], severe=[1, 100]),
+        'beta': 0.015,
+        'strains': strains,
     }
 
     sim = cv.Sim(pars=pars)
@@ -246,21 +149,17 @@ def test_halflife_by_severity(do_plot=False, do_show=True, do_save=False):
     sim.run()
 
     strain_labels = [
-        f'Strain A: beta {pars["beta"][0]}, half_life by severity',
-        f'Strain B: beta {pars["beta"][1]}, half_life not by severity',
+        f'Strain A: beta {pars["beta"]}, half_life not by severity',
+        f'Strain B: beta {pars["beta"]}, half_life by severity',
     ]
 
     if do_plot:
-        sim.plot_result('new_reinfections', do_show=do_show, do_save=do_save)
-        # TODO: using the following line seems to flip the results???
-        # plot_results(sim, key='cum_reinfections',
-        #              title=f'2 strain test, A->B immunity {sim["immunity"][0, 1]}, B->A immunity {sim["immunity"][1, 0]}',
-        #              labels=strain_labels, do_show=do_show, do_save=do_save)
-        plot_results(sim, key='incidence_by_strain', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}, B->A immunity {sim["immunity"][1,0]}', labels=strain_labels, do_show=do_show, do_save=do_save)
+        sim.plot_result('new_reinfections', fig_path='results/test_halflife_by_severity.png', do_show=do_show, do_save=do_save)
+        plot_results(sim, key='incidence_by_strain', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}, B->A immunity {sim["immunity"][1,0]}', filename='test_halflife_by_severity', labels=strain_labels, do_show=do_show, do_save=do_save)
     return sim
 
 
-def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
+def plot_results(sim, key, title, filename=None, do_show=True, do_save=False, labels=None):
 
     results = sim.results
     results_to_plot = results[key]
@@ -268,7 +167,7 @@ def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
     # extract data for plotting
     x = sim.results['t']
     y = results_to_plot.values
-    y = np.flipud(y)
+    y = np.transpose(y)
 
     fig, ax = plt.subplots()
     ax.plot(x, y)
@@ -284,12 +183,12 @@ def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
     if do_show:
         plt.show()
     if do_save:
-        cv.savefig(f'results/{title}.png')
+        cv.savefig(f'results/{filename}.png')
 
     return
 
 
-def plot_shares(sim, key, title, do_show=True, do_save=False, labels=None):
+def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, labels=None):
 
     results = sim.results
     n_strains = sim.results['new_infections_by_strain'].values.shape[0] # TODO: this should be stored in the sim somewhere more intuitive!
@@ -311,7 +210,7 @@ def plot_shares(sim, key, title, do_show=True, do_save=False, labels=None):
     if do_show:
         plt.show()
     if do_save:
-        cv.savefig(f'results/{title}.png')
+        cv.savefig(f'results/{filename}.png')
 
     return
 
@@ -320,16 +219,52 @@ def plot_shares(sim, key, title, do_show=True, do_save=False, labels=None):
 if __name__ == '__main__':
     sc.tic()
 
-    # sim0 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim1 = test_2strains_import(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim2 = test_importstrain_withcrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim4 = test_importstrain_args()
-    # sim5 = test_importB117(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
     p1, p2, p3 = test_par_refactor()
-    # sim6 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+
+    # simX = test_importstrain_args()
 
     sc.toc()
 
 
 print('Done.')
+
+
+
+# DEPRECATED
+# def test_importstrain_args():
+#     sc.heading('Test flexibility of arguments for the import strain "intervention"')
+#
+#     # Run sim with a single strain initially, then introduce a new strain that's more transmissible on day 10
+#     immunity = [
+#         {'init_immunity': 1., 'half_life': 180, 'cross_factor': 1},
+#     ]
+#     pars = {
+#         'n_strains': 1,
+#         'beta': [0.016],
+#         'immunity': immunity
+#     }
+#
+#     # All these should run
+#     imports = cv.import_strain(days=50, beta=0.03)
+#     #imports = cv.import_strain(days=[10, 50], beta=0.03)
+#     #imports = cv.import_strain(days=50, beta=[0.03, 0.05])
+#     #imports = cv.import_strain(days=[10, 20], beta=[0.03, 0.05])
+#     #imports = cv.import_strain(days=50, beta=[0.03, 0.05, 0.06])
+#     #imports = cv.import_strain(days=[10, 20], n_imports=[5, 10], beta=[0.03, 0.05], init_immunity=[1, 1],
+#     #                          half_life=[180, 180], cross_factor=[0, 0])
+#     #imports = cv.import_strain(days=[10, 50], beta=0.03, cross_factor=[0.4, 0.6])
+#     #imports = cv.import_strain(days=['2020-04-01', '2020-05-01'], beta=0.03)
+#
+#     # This should fail
+#     #imports = cv.import_strain(days=[20, 50], beta=[0.03, 0.05, 0.06])
+#
+#     sim = cv.Sim(pars=pars, interventions=imports)
+#     sim.run()
+#
+#
+#     return sim
+#

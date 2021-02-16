@@ -74,10 +74,10 @@ class Sim(cvb.BaseSim):
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
-        immunity_pars = dict(max_strains=default_pars['max_strains'], default_half_life=default_pars['default_half_life'],
-                             default_immunity=default_pars['default_immunity'],
-                             default_cross_immunity=default_pars['default_cross_immunity'])
-        self.update_pars(pars, immunity_pars=immunity_pars, **kwargs)   # Update the parameters, if provided
+        immunity_pars = dict(max_strains=default_pars['max_strains'],
+                             cross_immunity=default_pars['cross_immunity'])
+        strain_pars = {par: default_pars[par] for par in cvd.strain_pars}
+        self.update_pars(pars, immunity_pars=immunity_pars, strain_pars=strain_pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
             self.load_population(popfile)  # Load the population, if provided
@@ -393,7 +393,7 @@ class Sim(cvb.BaseSim):
         pop_infected_per_strain = cvd.default_int(self['pop_infected']/self['n_strains'])
         for strain in range(self['n_strains']):
             inds = cvu.choose(self['pop_size'], pop_infected_per_strain)
-            self.people.infect(inds=inds, layer='seed_infection', strain=strain, half_life=self['half_life'])
+            self.people.infect(inds=inds, layer='seed_infection', strain=strain)
         return
 
 
@@ -490,7 +490,7 @@ class Sim(cvb.BaseSim):
             if n_imports>0:
                 importation_inds = cvu.choose(max_n=len(people), n=n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation',
-                              strain=strain, half_life=self['half_life'])
+                              strain=strain)
 
         # TODO -- Randomly introduce new strain
 
@@ -516,7 +516,6 @@ class Sim(cvb.BaseSim):
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         # Shorten additional useful parameters and indicators that aren't by strain
-        asymp_factor = cvd.default_float(self['asymp_factor'])
         sus = people.susceptible
         inf = people.infectious
         symp = people.symptomatic
@@ -526,8 +525,18 @@ class Sim(cvb.BaseSim):
         # Iterate through n_strains to calculate infections
         for strain in range(self['n_strains']):
 
+            # Deal with strain parameters
+            strain_parkeys = ['beta', 'asymp_factor']
+            strain_pars = dict()
+            for key in strain_parkeys:
+                if self['strains'] is not None and key in self['strains'].keys():  # This parameter varies by strain: extract strain-specific value
+                    strain_pars[key] = cvd.default_float(self[key][strain])
+                else:
+                    strain_pars[key] = cvd.default_float(self[key])
+
             # Compute the probability of transmission
-            beta = cvd.default_float(self['beta'][strain])
+            beta = strain_pars['beta']
+            asymp_factor = strain_pars['asymp_factor']
             immunity_factors = people.immunity_factors[strain, :]
 
             # Process immunity parameters and indices
@@ -578,7 +587,7 @@ class Sim(cvb.BaseSim):
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
                     source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
                     people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
-                                  layer=lkey, strain=strain, half_life=self['half_life'])  # Actually infect people
+                                  layer=lkey, strain=strain)  # Actually infect people
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
