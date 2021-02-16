@@ -188,6 +188,7 @@ class Result(object):
 
 class Par(object):
     '''
+    NB NOT USED ANYWHERE YET- PLACEHOLDER CLASS IN CASE USEFUL
     Stores a single parameter -- by default, acts like an array.
     Args:
         name (str): name of this parameter, e.g. beta

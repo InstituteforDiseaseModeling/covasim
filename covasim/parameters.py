@@ -29,12 +29,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     '''
     pars = {}
 
-    # Helper function to initialize parameters that are stored as Par objects
-    def init_par(*args, **kwargs):
-        ''' Initialize a single result object '''
-        output = cvb.Par(*args, **kwargs)
-        return output
-
     # Population parameters
     pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
     pars['pop_infected'] = 20       # Number of initial infections
