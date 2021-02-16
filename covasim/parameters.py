@@ -67,16 +67,16 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Parameters that control settings and defaults for multi-strain runs
     pars['n_strains']               = 1     # The number of strains currently circulating in the population
     pars['max_strains']             = 30    # For allocating memory with numpy arrays
-    pars['default_cross_immunity']  = 0.5 # Default cross-immunity protection factor
-    pars['default_immunity']        = 1. # Default initial immunity
-    pars['default_half_life']       = 180 # Default half life
+    pars['default_cross_immunity']  = 0.5   # Default cross-immunity protection factor
+    pars['default_immunity']        = 1.    # Default initial immunity
+    pars['default_half_life']       = 180   # Default half life
     pars['half_life']               = dict()
     pars['init_immunity']           = None
     pars['immunity']                = None  # Matrix of immunity and cross-immunity factors, set by set_immunity() below
     pars['init_half_life']          = None
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
-    pars['beta']            = [0.016] # Beta per symptomatic contact; absolute value, calibrated
+    pars['beta']            = 0.016 # Beta per symptomatic contact; absolute value, calibrated
     pars['asymp_factor']    = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
     pars['dur'] = {}
         # Duration parameters: time for disease progression

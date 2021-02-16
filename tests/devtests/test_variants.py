@@ -212,12 +212,19 @@ def test_par_refactor():
     p1.add_strain(new_val = 0.025)
 
     # Complex case: add a strain that's differentiated by severity for kids 0-20
-    p2 = cv.Par(name='sus_ORs', val=np.array([0.34, 0.67, 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]), by_strain=True)
+    p2 = cv.Par(name='sus_ORs', val=np.array([0.34, 0.67, 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]), by_strain=True, by_age=True)
     print(p2.val) # Prints all the stored values for the original strain
     print(p2[0])  # Can index beta like an array to pull out strain-specific values
     p2.add_strain(new_val=np.array([1., 1., 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]))
 
-    return p1, p2
+    # Complex case: add a strain that's differentiated by duration of disease
+    p3 = cv.Par(name='dur_asym2rec', val=dict(dist='lognormal_int', par1=8.0,  par2=2.0), by_strain=True, is_dist=True)
+    print(p3.val) # Prints all the stored values for the original strain
+    print(p3[0])  # Can index beta like an array to pull out strain-specific values
+    p3.add_strain(new_val=dict(dist='lognormal_int', par1=12.0,  par2=2.0))
+    p3.get(strain=1, n=6)
+
+    return p1, p2, p3
 
 
 def test_halflife_by_severity(do_plot=False, do_show=True, do_save=False):
@@ -319,8 +326,8 @@ if __name__ == '__main__':
     # sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim4 = test_importstrain_args()
     # sim5 = test_importB117(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    p1, p2 = test_par_refactor()
-    sim6 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    p1, p2, p3 = test_par_refactor()
+    # sim6 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     sc.toc()
 

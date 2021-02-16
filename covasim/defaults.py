@@ -133,6 +133,16 @@ result_flows = {'infections':           'infections',
 new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 
+# Parameters that can vary by strain
+strain_pars = ['beta',
+               'asymp_factor',
+               'dur',
+               'rel_symp_prob',
+               'rel_severe_prob',
+               'rel_crit_prob',
+               'rel_death_prob',
+               'prognoses']
+
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([
             [ 0,  4, 0.0605],
