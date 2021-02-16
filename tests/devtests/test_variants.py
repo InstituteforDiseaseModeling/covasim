@@ -18,13 +18,13 @@ def test_2strains(do_plot=False, do_show=True, do_save=False):
         'n_days': 80,
         'beta': [0.015, 0.025],
         'n_strains': 2,
-        'init_immunity': [1, 1],
-        'init_half_life': [30, 30], # Rapidly waning immunity from the less infections strain A
+        'init_immunity': [0.5, 0.5],
+        'init_half_life': dict(asymptomatic=[10, 10], mild=[50, 50], severe=[150, 150]),
     }
 
     sim = cv.Sim(pars=pars)
     sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
-    sim['immunity'][1,0] = 1.0 # Say that strain B gives perfect immunity to strain A
+    sim['immunity'][1,0] = 0.0 # Say that strain B gives perfect immunity to strain A
     sim.run()
 
     strain_labels = [
@@ -50,7 +50,7 @@ def test_2strains_import(do_plot=False, do_show=True, do_save=False):
     immunity_to = [0] # Say that strain A gives no immunity to strain B
     immunity_from = [.5] # Say that strain B gives perfect immunity to strain A
     init_immunity = [1]
-    half_life = [20]
+    half_life = [dict(asymptomatic=10, mild=50, severe=150)]
     n_imports = [30]
     betas = [0.025]
     day = [10]
@@ -62,7 +62,7 @@ def test_2strains_import(do_plot=False, do_show=True, do_save=False):
         'n_days': 80,
         'beta': [0.016],
         'init_immunity': 1,
-        'init_half_life': 50
+        'init_half_life': dict(asymptomatic=[10], mild=[50], severe=[150])
     }
 
     strain_labels = [

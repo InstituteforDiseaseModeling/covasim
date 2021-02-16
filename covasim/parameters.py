@@ -61,7 +61,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['default_cross_immunity'] = 0.5 # Default cross-immunity protection factor
     pars['default_immunity'] = 1. # Default initial immunity
     pars['default_half_life']= 180 # Default half life
-    pars['half_life'] = None
+    pars['half_life'] = dict()
     pars['init_immunity'] = None
     pars['immunity'] = None  # Matrix of immunity and cross-immunity factors, set by set_immunity() below
     pars['init_half_life'] = None
@@ -292,10 +292,17 @@ def initialize_immunity(pars):
     Matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
     '''
     # If initial immunity/cross immunity factors are provided, use those, otherwise use defaults
-    pars['half_life'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    pars['immunity']  = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
+    pars['half_life'] = dict()
+    pars['half_life']['asymptomatic'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+    pars['half_life']['mild'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+    pars['half_life']['severe'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+    pars['half_life']['critical'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+    pars['immunity'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
     for i in range(pars['n_strains']):
-        pars['half_life'][i]   = pars['default_half_life']
+        pars['half_life']['asymptomatic'][i] = pars['default_half_life']
+        pars['half_life']['mild'][i] = pars['default_half_life']
+        pars['half_life']['severe'][i] = pars['default_half_life']
+        pars['half_life']['critical'][i] = pars['default_half_life']
         pars['immunity'][i, i] = pars['default_immunity']
     return pars
 
@@ -320,6 +327,7 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
         update_strain: the index of the strain to update
         immunity_from (array): used when adding a new strain; specifies the immunity protection against existing strains from having the new strain
         immunity_to (array): used when adding a strain; specifies the immunity protection against the new strain from having one of the existing strains
+        half_life (dicts): dictionary of floats for half life of new strain
 
     **Example 1**: #TODO NEEDS UPDATING
         # Adding a strain C to the example above. Strain C gives perfect immunity against strain A
@@ -343,7 +351,9 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
 
         # Update own-immunity and half lives, if values have been supplied
         if pars.get('init_half_life'):  # Values have been supplied for the half lives
-            pars['half_life'][:ns] = pars['init_half_life']
+            pars['half_life']['asymptomatic'][:ns] = pars['init_half_life']['asymptomatic']
+            pars['half_life']['mild'][:ns] = pars['init_half_life']['mild']
+            pars['half_life']['severe'][:ns] = pars['init_half_life']['severe']
         pars['immunity'][:ns, :ns] = pars['default_cross_immunity']
         if pars.get('init_immunity'):  # Values have been supplied for own-immunity
             np.fill_diagonal(pars['immunity'][:ns,:ns], pars['init_immunity'])
@@ -380,7 +390,9 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
                 new_immunity_column[i] = immunity_to[i]
             else:
                 new_immunity_row[i] = new_immunity_column[i] = init_immunity
-                pars['half_life'][i] = half_life
+                pars['half_life']['asymptomatic'][i] = half_life['asymptomatic']
+                pars['half_life']['mild'][i] = half_life['mild']
+                pars['half_life']['severe'][i] = half_life['severe']
 
         immunity[update_strain, :] = new_immunity_row
         immunity[:, update_strain] = new_immunity_column
