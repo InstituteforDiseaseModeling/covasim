@@ -18,13 +18,13 @@ def test_2strains(do_plot=False, do_show=True, do_save=False):
         'n_days': 80,
         'beta': [0.015, 0.025],
         'n_strains': 2,
-        'init_immunity': [1, 1],
-        'init_half_life': [30, 30], # Rapidly waning immunity from the less infections strain A
+        'init_immunity': [0.5, 0.5],
+        'init_half_life': dict(asymptomatic=[10, 10], mild=[50, 50], severe=[150, 150]),
     }
 
     sim = cv.Sim(pars=pars)
     sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
-    sim['immunity'][1,0] = 1.0 # Say that strain B gives perfect immunity to strain A
+    sim['immunity'][1,0] = 0.0 # Say that strain B gives perfect immunity to strain A
     sim.run()
 
     strain_labels = [
@@ -50,7 +50,7 @@ def test_2strains_import(do_plot=False, do_show=True, do_save=False):
     immunity_to = [0] # Say that strain A gives no immunity to strain B
     immunity_from = [.5] # Say that strain B gives perfect immunity to strain A
     init_immunity = [1]
-    half_life = [20]
+    half_life = [dict(asymptomatic=10, mild=50, severe=150)]
     n_imports = [30]
     betas = [0.025]
     day = [10]
@@ -62,7 +62,7 @@ def test_2strains_import(do_plot=False, do_show=True, do_save=False):
         'n_days': 80,
         'beta': [0.016],
         'init_immunity': 1,
-        'init_half_life': 50
+        'init_half_life': dict(asymptomatic=[10], mild=[50], severe=[150])
     }
 
     strain_labels = [
@@ -220,6 +220,39 @@ def test_par_refactor():
     return p1, p2
 
 
+def test_halflife_by_severity(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Run basic sim with 2 strains and half life by severity')
+
+    sc.heading('Setting up...')
+
+    pars = {
+        'n_days': 80,
+        'beta': [0.015, 0.015],
+        'n_strains': 2,
+        'init_immunity': [1, 1],
+        'init_half_life': dict(asymptomatic=[1, 10], mild=[1, 100], severe=[1, 100]),
+    }
+
+    sim = cv.Sim(pars=pars)
+    sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
+    sim['immunity'][1,0] = 0.0 # Say that strain B gives no immunity to strain A
+    sim.run()
+
+    strain_labels = [
+        f'Strain A: beta {pars["beta"][0]}, half_life by severity',
+        f'Strain B: beta {pars["beta"][1]}, half_life not by severity',
+    ]
+
+    if do_plot:
+        sim.plot_result('new_reinfections', do_show=do_show, do_save=do_save)
+        # TODO: using the following line seems to flip the results???
+        # plot_results(sim, key='cum_reinfections',
+        #              title=f'2 strain test, A->B immunity {sim["immunity"][0, 1]}, B->A immunity {sim["immunity"][1, 0]}',
+        #              labels=strain_labels, do_show=do_show, do_save=do_save)
+        plot_results(sim, key='incidence_by_strain', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}, B->A immunity {sim["immunity"][1,0]}', labels=strain_labels, do_show=do_show, do_save=do_save)
+    return sim
+
+
 def plot_results(sim, key, title, do_show=True, do_save=False, labels=None):
 
     results = sim.results
@@ -286,8 +319,8 @@ if __name__ == '__main__':
     # sim3 = test_importstrain_nocrossimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim4 = test_importstrain_args()
     # sim5 = test_importB117(do_plot=do_plot, do_save=do_save, do_show=do_show)
-
     p1, p2 = test_par_refactor()
+    sim6 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     sc.toc()
 

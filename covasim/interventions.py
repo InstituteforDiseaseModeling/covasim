@@ -1131,7 +1131,7 @@ class import_strain(Intervention):
         n_imports (list of ints): the number of imports of strain(s)
         beta      (list of floats): per contact transmission of strain(s)
         init_immunity   (list of floats): initial immunity against strain(s) once recovered; 1 = perfect, 0 = no immunity
-        half_life  (list of floats): determines decay rate of immunity against strain(s); If half_life is None immunity is constant
+        half_life  (list of dicts): determines decay rate of immunity against strain(s) broken down by severity; If half_life is None immunity is constant
         immunity_to (list of list of floats): cross immunity to existing strains in model
         immunity_from (list of list of floats): cross immunity from existing strains in model
         kwargs     (dict): passed to Intervention()
@@ -1159,7 +1159,7 @@ class import_strain(Intervention):
         self.half_life      = sc.promotetolist(half_life)
         self.immunity_to   = sc.promotetolist(immunity_to)
         self.immunity_from   = sc.promotetolist(immunity_from)
-        self.new_strains    = self.check_args(['beta', 'days', 'n_imports', 'init_immunity', 'half_life'])
+        self.new_strains    = self.check_args(['beta', 'days', 'n_imports', 'init_immunity'])
         return
 
 
@@ -1205,7 +1205,7 @@ class import_strain(Intervention):
                                     immunity_to=self.immunity_to[strain], init_immunity=self.init_immunity[strain],
                                     half_life=self.half_life[strain])
                 importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
-                sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
+                sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains, half_life=sim['half_life'])
                 sim['n_strains'] += 1
 
         return

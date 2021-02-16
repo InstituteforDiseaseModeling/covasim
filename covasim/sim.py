@@ -393,7 +393,7 @@ class Sim(cvb.BaseSim):
         pop_infected_per_strain = cvd.default_int(self['pop_infected']/self['n_strains'])
         for strain in range(self['n_strains']):
             inds = cvu.choose(self['pop_size'], pop_infected_per_strain)
-            self.people.infect(inds=inds, layer='seed_infection', strain=strain)
+            self.people.infect(inds=inds, layer='seed_infection', strain=strain, half_life=self['half_life'])
         return
 
 
@@ -489,7 +489,8 @@ class Sim(cvb.BaseSim):
         for strain, n_imports in enumerate(imports):
             if n_imports>0:
                 importation_inds = cvu.choose(max_n=len(people), n=n_imports)
-                people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation', strain=strain)
+                people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation',
+                              strain=strain, half_life=self['half_life'])
 
         # TODO -- Randomly introduce new strain
 
@@ -530,14 +531,18 @@ class Sim(cvb.BaseSim):
             immunity_factors = people.immunity_factors[strain, :]
 
             # Process immunity parameters and indices
+            # TODO-- make this severity-specific
             immune = people.recovered_strain == strain # Whether people have some immunity to this strain from a prior infection with this strain
             immune_time         = t - date_rec[immune]  # Time since recovery for people who were last infected by this strain
             immune_inds = cvd.default_int(cvu.true(immune)) # People with some immunity to this strain from a prior infection with this strain
             init_immunity = cvd.default_float(self['immunity'][strain, strain])
-            half_life = self['half_life'][strain]
-            decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+            #TODO -- make half life by severity
+            half_life = people.half_life
+            # decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+            decay_rate = np.log(2) / half_life
+            decay_rate[np.isnan(decay_rate)] = 0
             decay_rate = cvd.default_float(decay_rate)
-            immunity_factors[immune_inds] = init_immunity * np.exp(-decay_rate * immune_time)  # Calculate immunity factors
+            immunity_factors = cvu.compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, decay_rate)   # Calculate immunity factors
 
             # Process cross-immunity parameters and indices, if relevant
             if self['n_strains']>1:
@@ -547,11 +552,7 @@ class Sim(cvb.BaseSim):
                         cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by the cross strain
                         cross_immune_inds = cvd.default_int(cvu.true(cross_immune)) # People with some immunity to this strain from a prior infection with another strain
                         cross_immunity = cvd.default_float(self['immunity'][cross_strain, strain]) # Immunity protection again this strain from other strains
-                        # TODO cross immunity not working?
-                        immunity_factors[cross_immune_inds] = cross_immunity * np.exp(-decay_rate * cross_immune_time)  # Calculate cross-immunity factors
-
-            # Compute protection factors from both immunity and cross immunity
-            ##immunity_factors = cvu.compute_immunity(people.immunity_factors[strain, :], immune_time, cross_immune_time, immune_inds, cross_immune_inds, init_immunity, decay_rate, cross_immunity)
+                        immunity_factors = cvu.compute_immunity(immunity_factors, cross_immune_time, cross_immune_inds, cross_immunity, decay_rate)   # Calculate cross_immunity factors
 
             # Define indices for this strain
             inf_by_this_strain = sc.dcp(inf)
@@ -577,7 +578,7 @@ class Sim(cvb.BaseSim):
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
                     source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
                     people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
-                                  layer=lkey, strain=strain)  # Actually infect people
+                                  layer=lkey, strain=strain, half_life=self['half_life'])  # Actually infect people
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
