@@ -5,8 +5,8 @@ import numpy as np
 
 
 do_plot   = 1
-do_show   = 1
-do_save   = 0
+do_show   = 0
+do_save   = 1
 
 
 
@@ -108,14 +108,17 @@ def test_importstrain1(do_plot=False, do_show=True, do_save=False):
         'Strain 2: beta 0.025'
     ]
 
+    pars = {'n_days': 80, 'half_life': dict(asymptomatic=None, mild=None, severe=None),
+            'cross_immunity':1.}
+
     imported_strain = {
         'beta': 0.025,
-        'half_life': dict(asymptomatic=10, mild=50, severe=150),
-        'init_immunity': 0.9
+        'half_life': dict(asymptomatic=None, mild=None, severe=None),
+        'init_immunity': 1.0
     }
 
-    imports = cv.import_strain(strain=imported_strain, days=30, n_imports=30)
-    sim = cv.Sim(interventions=imports, label='With imported infections')
+    imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
+    sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
     sim.run()
 
     if do_plot:
@@ -250,11 +253,11 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 
     results = sim.results
     n_strains = sim.results['new_infections_by_strain'].values.shape[0] # TODO: this should be stored in the sim somewhere more intuitive!
-    prop_new = {f'Strain {s}': results[key+'_by_strain'].values[s,1:]/results[key].values[1:] for s in range(n_strains)}
+    prop_new = {f'Strain {s}': sc.safedivide(results[key+'_by_strain'].values[s,:], results[key].values, 0) for s in range(n_strains)}
     num_new = {f'Strain {s}': results[key+'_by_strain'].values[s,:] for s in range(n_strains)}
 
     # extract data for plotting
-    x = sim.results['t'][1:]
+    x = sim.results['t']
     fig, ax = plt.subplots(2,1,sharex=True)
     ax[0].stackplot(x, prop_new.values(),
                  labels=prop_new.keys())
@@ -277,12 +280,12 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 if __name__ == '__main__':
     sc.tic()
 
-    scens = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #scens = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    p1, p2, p3 = test_par_refactor()
-    sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #p1, p2, p3 = test_par_refactor()
+    #sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # simX = test_importstrain_args()
 
