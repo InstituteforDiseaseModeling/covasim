@@ -99,6 +99,38 @@ def test_2strains(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
+def test_sneakystrain(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Run a sim with 2 strains, one of which has a much longer period before symptoms develop')
+    sc.heading('Setting up...')
+
+    sim = cv.Sim()
+    dur = sc.dcp(sim['dur'])
+    dur['inf2sym'] = {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9} # Let's say this strain takes 10 days before you get symptoms
+    strains = {'dur': dur}
+
+    pars = {
+        'beta': 0.016,
+        'n_days': 80,
+        'strains': strains,
+    }
+
+    cv.test_prob(symp_prob=0.2)
+    sim = cv.Sim(pars=pars)
+    sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
+    sim['immunity'][1,0] = 0.9 # Say that strain B gives high immunity to strain A
+    sim.run()
+
+    strain_labels = [
+        f'Strain A: beta {sim["beta"][0]}, half_life {sim["half_life"][0]}',
+        f'Strain B: beta {sim["beta"][1]}, half_life {sim["half_life"][1]}',
+    ]
+
+    if do_plot:
+        sim.plot_result('new_reinfections', do_show=do_show, do_save=do_save, fig_path=f'results/test_2strains.png')
+        plot_results(sim, key='incidence_by_strain', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}, B->A immunity {sim["immunity"][1,0]}', filename='test_2strains2', labels=strain_labels, do_show=do_show, do_save=do_save)
+    return sim
+
+
 def test_importstrain1(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing a new strain partway through a sim')
     sc.heading('Setting up...')
@@ -281,8 +313,8 @@ if __name__ == '__main__':
     sc.tic()
 
     #scens = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #p1, p2, p3 = test_par_refactor()
     #sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
