@@ -116,7 +116,7 @@ def test_sneakystrain(do_plot=False, do_show=True, do_save=False):
         'n_days': 120,
     }
 
-    n_runs = 3
+    n_runs = 1
     base_sim = cv.Sim(base_pars)
 
     # Define the scenarios

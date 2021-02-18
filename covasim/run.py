@@ -939,22 +939,22 @@ class Scenarios(cvb.ParsObj):
             else:
                 scen_sims = multi_run(scen_sim, **run_args, **kwargs) # This is where the sims actually get run
 
+            # Get number of strains
+            ns = scen_sims[0].results['cum_infections_by_strain'].values.shape[0]
+
             # Process the simulations
             print_heading(f'Processing {scenkey}')
-
             scenraw = {}
             for reskey in reskeys:
                 if 'by_strain' in reskey:
-                    scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
+                    scenraw[reskey] = np.zeros((ns, self.npts, len(scen_sims)))
                 else:
                     scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
-                    try: scenraw[reskey][:,s] = sim.results[reskey].values
-                    except:
-                        import traceback;
-                        traceback.print_exc();
-                        import pdb;
-                        pdb.set_trace()
+                    if 'by_strain' in reskey:
+                        scenraw[reskey][:,:,s] = sim.results[reskey].values
+                    else:
+                        scenraw[reskey][:,s] = sim.results[reskey].values
 
             scenres = sc.objdict()
             scenres.best = {}
