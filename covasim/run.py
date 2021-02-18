@@ -944,9 +944,17 @@ class Scenarios(cvb.ParsObj):
 
             scenraw = {}
             for reskey in reskeys:
-                scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
+                if 'by_strain' in reskey:
+                    scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
+                else:
+                    scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
-                    scenraw[reskey][:,s] = sim.results[reskey].values
+                    try: scenraw[reskey][:,s] = sim.results[reskey].values
+                    except:
+                        import traceback;
+                        traceback.print_exc();
+                        import pdb;
+                        pdb.set_trace()
 
             scenres = sc.objdict()
             scenres.best = {}

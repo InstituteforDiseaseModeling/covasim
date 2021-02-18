@@ -1145,7 +1145,7 @@ class import_strain(Intervention):
         half_life=[180, 180], immunity_to=[[0, 0], [0,0]], immunity_from=[[0, 0], [0,0]]) # On day 10, import 5 cases of one new strain, on day 20, import 10 cases of another
     '''
 
-    def __init__(self, strain=None, days=None, n_imports=1, immunity_to=None, immunity_from=None, **kwargs):
+    def __init__(self, strain=None, days=None, n_imports=1, immunity_to=None, immunity_from=None, init_immunity=None, **kwargs):
         # Do standard initialization
         super().__init__(**kwargs)  # Initialize the Intervention object
         self._store_args()  # Store the input arguments so the intervention can be recreated
@@ -1157,8 +1157,8 @@ class import_strain(Intervention):
         self.immunity_from  = sc.promotetolist(immunity_from) if immunity_from is not None else [None]
         self.strain         = {par: sc.promotetolist(val) for par, val in strain.items()}
         for par, val in self.strain.items(): setattr(self, par, val)
-        if not getattr(self,'init_immunity'):
-            self.init_immunity = None
+        if not hasattr(self,'init_immunity'):
+            self.init_immunity = [None]
         self.new_strains    = self.check_args(['days', 'n_imports']+list(self.strain.keys()))
         return
 

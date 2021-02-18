@@ -106,15 +106,47 @@ def test_sneakystrain(do_plot=False, do_show=True, do_save=False):
     sim = cv.Sim()
     dur = sc.dcp(sim['dur'])
     dur['inf2sym'] = {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9} # Let's say this strain takes 10 days before you get symptoms
-    strains = {'dur': dur}
+    imported_strain = {'dur': dur}
 
-    pars = {
-        'beta': 0.016,
-        'n_days': 80,
-        'strains': strains,
+    imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
+    tp = cv.test_prob(symp_prob=0.2) # Add an efficient testing program
+
+    base_pars = {
+        'beta': 0.015, # Make beta higher than usual so people get infected quickly
+        'n_days': 120,
     }
 
-    cv.test_prob(symp_prob=0.2)
+    n_runs = 3
+    base_sim = cv.Sim(base_pars)
+
+    # Define the scenarios
+    scenarios = {
+        'baseline': {
+          'name':'1 day to symptoms',
+          'pars': {'interventions': [tp]}
+        },
+        'slowsymp': {
+          'name':'10 days to symptoms',
+          'pars': {'interventions': [imports, tp]}
+        }
+    }
+
+    metapars = {'n_runs': n_runs}
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run()
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'Cumulative infections': ['cum_infections'],
+        'New diagnoses': ['new_diagnoses'],
+        'Cumulative diagnoses': ['cum_diagnoses'],
+    })
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_sneakystrain.png', to_plot=to_plot)
+
+    return scens
+
+
     sim = cv.Sim(pars=pars)
     sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
     sim['immunity'][1,0] = 0.9 # Say that strain B gives high immunity to strain A
@@ -313,7 +345,8 @@ if __name__ == '__main__':
     sc.tic()
 
     #scens = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens = test_sneakystrain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #p1, p2, p3 = test_par_refactor()

@@ -864,7 +864,8 @@ class Sim(cvb.BaseSim):
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
             raw_values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
             len_raw = len(raw_values) # Calculate the number of raw values
-            dur_pars = self['dur'][0] # TODO: fix this, need to somehow take all strains into account
+            if sc.checktype(self['dur'], list): dur_pars = self['dur'][0] # TODO: fix this, need to somehow take all strains into account
+            else: dur_pars = self['dur']
             if len_raw >= 3: # Can't smooth arrays shorter than this since the default smoothing kernel has length 3
                 initial_period = dur_pars['exp2inf']['par1'] + dur_pars['asym2rec']['par1'] # Approximate the duration of the seed infections for averaging
                 initial_period = int(min(len_raw, initial_period)) # Ensure we don't have too many points
