@@ -147,21 +147,6 @@ def test_strainduration(do_plot=False, do_show=True, do_save=False):
     return scens
 
 
-    sim = cv.Sim(pars=pars)
-    sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
-    sim['immunity'][1,0] = 0.9 # Say that strain B gives high immunity to strain A
-    sim.run()
-
-    strain_labels = [
-        f'Strain A: beta {sim["beta"][0]}, half_life {sim["half_life"][0]}',
-        f'Strain B: beta {sim["beta"][1]}, half_life {sim["half_life"][1]}',
-    ]
-
-    if do_plot:
-        sim.plot_result('new_reinfections', do_show=do_show, do_save=do_save, fig_path=f'results/test_2strains.png')
-        plot_results(sim, key='incidence_by_strain', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}, B->A immunity {sim["immunity"][1,0]}', filename='test_2strains2', labels=strain_labels, do_show=do_show, do_save=do_save)
-    return sim
-
 
 def test_importstrain1(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing a new strain partway through a sim')
