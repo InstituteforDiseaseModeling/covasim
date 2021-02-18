@@ -830,12 +830,12 @@ class Sim(cvb.BaseSim):
         return self.results['doubling_time'].values
 
 
-    def compute_r_eff(self, method='daily', smoothing=2, window=7):
+    def compute_r_eff(self, method='infectious', smoothing=2, window=7):
         '''
         Effective reproduction number based on number of people each person infected.
 
         Args:
-            method (str): 'instant' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
+            method (str): 'daily' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
             smoothing (int): the number of steps to smooth over for the 'daily' method
             window (int): the size of the window used for 'infectious' and 'outcome' calculations (larger values are more accurate but less precise)
 
@@ -864,8 +864,10 @@ class Sim(cvb.BaseSim):
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
             raw_values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
             len_raw = len(raw_values) # Calculate the number of raw values
+            if sc.checktype(self['dur'], list): dur_pars = self['dur'][0] # TODO: fix this, need to somehow take all strains into account
+            else: dur_pars = self['dur']
             if len_raw >= 3: # Can't smooth arrays shorter than this since the default smoothing kernel has length 3
-                initial_period = self['dur']['exp2inf']['par1'] + self['dur']['asym2rec']['par1'] # Approximate the duration of the seed infections for averaging
+                initial_period = dur_pars['exp2inf']['par1'] + dur_pars['asym2rec']['par1'] # Approximate the duration of the seed infections for averaging
                 initial_period = int(min(len_raw, initial_period)) # Ensure we don't have too many points
                 for ind in range(initial_period): # Loop over each of the initial inds
                     raw_values[ind] = raw_values[ind:initial_period].mean() # Replace these values with their average

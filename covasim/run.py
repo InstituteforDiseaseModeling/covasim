@@ -939,23 +939,32 @@ class Scenarios(cvb.ParsObj):
             else:
                 scen_sims = multi_run(scen_sim, **run_args, **kwargs) # This is where the sims actually get run
 
+            # Get number of strains
+            ns = scen_sims[0].results['cum_infections_by_strain'].values.shape[0]
+
             # Process the simulations
             print_heading(f'Processing {scenkey}')
-
             scenraw = {}
             for reskey in reskeys:
-                scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
+                if 'by_strain' in reskey:
+                    scenraw[reskey] = np.zeros((ns, self.npts, len(scen_sims)))
+                else:
+                    scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
-                    scenraw[reskey][:,s] = sim.results[reskey].values
+                    if 'by_strain' in reskey:
+                        scenraw[reskey][:,:,s] = sim.results[reskey].values
+                    else:
+                        scenraw[reskey][:,s] = sim.results[reskey].values
 
             scenres = sc.objdict()
             scenres.best = {}
             scenres.low = {}
             scenres.high = {}
             for reskey in reskeys:
-                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
-                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
-                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
+                axis = 2 if 'by_strain' in reskey else 1
+                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=axis) # Changed from median to mean for smoother plots
+                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=axis)
+                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=axis)
 
             for reskey in reskeys:
                 self.results[reskey][scenkey]['name'] = scenname
@@ -1002,7 +1011,11 @@ class Scenarios(cvb.ParsObj):
         x = defaultdict(dict)
         for scenkey in self.scenarios.keys():
             for reskey in self.result_keys():
-                val = self.results[reskey][scenkey].best[day]
+                if 'by_strain' in reskey:
+                    val = self.results[reskey][scenkey].best[0, day] # Only prints results for infections by first strain
+                    reskey = reskey+'0' # Add strain number to the summary output
+                else:
+                    val = self.results[reskey][scenkey].best[day]
                 if reskey not in ['r_eff', 'doubling_time']:
                     val = int(val)
                 x[scenkey][reskey] = val
