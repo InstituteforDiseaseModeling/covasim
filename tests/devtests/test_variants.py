@@ -24,29 +24,66 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
     base_sim = cv.Sim(base_pars)
 
     # Define the scenarios
+
     scenarios = {
         'baseline': {
           'name':'No reinfection',
           'pars': {
-              'half_life': dict(asymptomatic=None, mild=None, severe=None), # Constant immunity from reinfection
+              'half_life': {
+                  'sus': dict(asymptomatic=None, mild=None, severe=None), # Constant immunity from reinfection,
+                  'trans': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
+                  'prog': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection     
               }
-          },
+          }
+        },
         'med_halflife': {
-          'name':'Reinfection: slow-waning immunity',
+          'name':'Slow-waning susceptible, transmission and progression immunity',
           'pars': {
-              'half_life': dict(asymptomatic=60, mild=60, severe=60), # immunity from reinfection
+              'half_life': {
+                  'sus': dict(asymptomatic=60, mild=60, severe=60), # Constant immunity from reinfection,
+                  'trans': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection,
+                  'prog': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection     
               }
-          },
+          }
+        },
         'short_halflife': {
-            'name': 'Reinfection: fast-waning immunity',
+            'name': 'Fast-waning susceptible, transmission and progression immunity',
             'pars': {
-                'half_life': dict(asymptomatic=10, mild=10, severe=10),  # Rapidly-decaying immunity from reinfection
+              'half_life': {
+                  'sus': dict(asymptomatic=10, mild=10, severe=10), # Constant immunity from reinfection,
+                  'trans': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
+                  'prog': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection     
+              }
+          }
+        },
+        'short_susceptible_halflife_long_prog': {
+            'name': 'Fast-waning suscptible, slow-waning progression and transmission immunity',
+            'pars': {
+              'half_life': {
+                  'sus': dict(asymptomatic=10, mild=10, severe=10), # Constant immunity from reinfection,
+                  'trans': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection,
+                  'prog': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection     
+              }
+          }
+        },
+        'short_susceptible_trans_long_prog': {
+            'name': 'Fast-waning susceptible and transmission, slow-waning progression immunity',
+            'pars': {
+                'half_life': {
+                    'sus': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
+                    'trans': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
+                    'prog': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection
+                }
             }
         },
-        'severity_halflife': {
-            'name': 'Reinfection: immunity by severity',
+        'short_susceptible_prog_long_trans': {
+            'name': 'Fast-waning susceptible and progression, slow-waning transmission immunity',
             'pars': {
-                'half_life': dict(asymptomatic=10, mild=30, severe=60),  # Rapidly-decaying immunity from reinfection
+                'half_life': {
+                    'sus': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
+                    'trans': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection,
+                    'prog': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection
+                }
             }
         },
     }
@@ -59,7 +96,7 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
         'New infections': ['new_infections'],
         'Cumulative infections': ['cum_infections'],
         'New reinfections': ['new_reinfections'],
-        'Cumulative reinfections': ['cum_reinfections'],
+        # 'Cumulative reinfections': ['cum_reinfections'],
     })
     if do_plot:
         scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_basic_reinfection.png', to_plot=to_plot)
@@ -368,14 +405,14 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 if __name__ == '__main__':
     sc.tic()
 
-    # scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # p1, p2, p3 = test_par_refactor()
     # sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim5 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim5 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # simX = test_importstrain_args()
 

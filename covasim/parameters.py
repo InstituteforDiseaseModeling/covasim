@@ -69,7 +69,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['beta']            = 0.016 # Beta per symptomatic contact; absolute value, calibrated
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
     pars['init_immunity']   = 1.0  # Default initial immunity
-    pars['half_life']       = dict(asymptomatic=180, mild=180, severe=180)
+    pars['half_life']       = {}
+    pars['half_life']['sus'] = dict(asymptomatic=180, mild=180, severe=180)
+    pars['half_life']['trans'] = dict(asymptomatic=180, mild=180, severe=180)
+    pars['half_life']['prog'] = dict(asymptomatic=180, mild=180, severe=180)
+
     pars['dur'] = {}
         # Duration parameters: time for disease progression
     pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.6, par2=4.8) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sim duration
@@ -290,19 +294,26 @@ def absolute_prognoses(prognoses):
 def initialize_immunity(pars):
     '''
     Helper function to initialize the immunity matrices.
-    Matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
+    Susceptibility matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
+    Progression is a matrix of scalars of size sim['max_strains'] initialized with default values
+    Transmission is a matrix of scalars of size sim['max_strains'] initialized with default values
     '''
     # If initial immunity/cross immunity factors are provided, use those, otherwise use defaults
-    pars['immunity'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
+    pars['immunity'] = {}
+    pars['immunity']['sus'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
+    pars['immunity']['prog'] = np.full( pars['max_strains'], np.nan, dtype=cvd.default_float)
+    pars['immunity']['trans'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
     for i in range(pars['n_strains']):
-        pars['immunity'][i, i] = pars['init_immunity']
+        pars['immunity']['sus'][i, i] = pars['init_immunity']
+        pars['immunity']['prog'][i] = pars['init_immunity']
+        pars['immunity']['trans'][i] = pars['init_immunity']
     return pars
 
 
 def update_immunity(pars, create=True, update_strain=None, immunity_from=None, immunity_to=None,
-                    init_immunity=None, half_life=None):
+                    init_immunity=None, prog_immunity=None, trans_immunity=None):
     '''
-    Helper function to update the immunity and half_life matrices.
+    Helper function to update the immunity matrices.
     Matrix is of size sim['max_strains']*sim['max_strains'] and takes the form:
                 A       B       ...
         array([[1.0,   1.0,    ...],
@@ -347,13 +358,14 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
                 pars[par] = sc.promotetolist(pars[par]) + sc.promotetolist(val)
 
         # Update own-immunity, if values have been supplied
-        pars['immunity'][:ns, :ns] = pars['cross_immunity']
+        pars['immunity']['sus'][:ns, :ns] = pars['cross_immunity']
         if pars.get('init_immunity'):  # Values have been supplied for own-immunity
-            np.fill_diagonal(pars['immunity'][:ns,:ns], pars['init_immunity'])
+            np.fill_diagonal(pars['immunity']['sus'][:ns,:ns], pars['init_immunity'])
+            pars['immunity']['prog'][:ns] = pars['init_immunity']
+            pars['immunity']['trans'][:ns] = pars['init_immunity']
 
     # Update immunity for a strain if supplied
     if update_strain is not None:
-
         immunity = pars['immunity']
         # check that immunity_from, immunity_to and init_immunity are provided and the right length.
         # Else use default values
@@ -366,6 +378,12 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
         if init_immunity is None:
             print('Initial immunity not provided, using default value')
             init_immunity = pars['init_immunity']
+        if prog_immunity is None:
+            print('Initial immunity from progression not provided, using default value')
+            prog_immunity = pars['init_immunity']
+        if trans_immunity is None:
+            print('Initial immunity from transmission not provided, using default value')
+            trans_immunity = pars['init_immunity']
 
         immunity_from   = sc.promotetolist(immunity_from)
         immunity_to     = sc.promotetolist(immunity_to)
@@ -380,8 +398,10 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
             else:
                 new_immunity_row[i] = new_immunity_column[i] = init_immunity
 
-        immunity[update_strain, :] = new_immunity_row
-        immunity[:, update_strain] = new_immunity_column
+        immunity['sus'][update_strain, :] = new_immunity_row
+        immunity['sus'][:, update_strain] = new_immunity_column
+        immunity['prog'][update_strain] = prog_immunity
+        immunity['trans'][update_strain] = trans_immunity
 
         pars['immunity'] = immunity
 
