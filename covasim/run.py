@@ -961,9 +961,10 @@ class Scenarios(cvb.ParsObj):
             scenres.low = {}
             scenres.high = {}
             for reskey in reskeys:
-                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
-                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
-                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
+                axis = 2 if 'by_strain' in reskey else 1
+                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=axis) # Changed from median to mean for smoother plots
+                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=axis)
+                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=axis)
 
             for reskey in reskeys:
                 self.results[reskey][scenkey]['name'] = scenname
@@ -1010,7 +1011,11 @@ class Scenarios(cvb.ParsObj):
         x = defaultdict(dict)
         for scenkey in self.scenarios.keys():
             for reskey in self.result_keys():
-                val = self.results[reskey][scenkey].best[day]
+                if 'by_strain' in reskey:
+                    val = self.results[reskey][scenkey].best[0, day] # Only prints results for infections by first strain
+                    reskey = reskey+'0' # Add strain number to the summary output
+                else:
+                    val = self.results[reskey][scenkey].best[day]
                 if reskey not in ['r_eff', 'doubling_time']:
                     val = int(val)
                 x[scenkey][reskey] = val

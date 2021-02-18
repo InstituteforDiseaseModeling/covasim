@@ -99,7 +99,7 @@ def test_2strains(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
-def test_sneakystrain(do_plot=False, do_show=True, do_save=False):
+def test_strainduration(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run a sim with 2 strains, one of which has a much longer period before symptoms develop')
     sc.heading('Setting up...')
 
@@ -142,7 +142,7 @@ def test_sneakystrain(do_plot=False, do_show=True, do_save=False):
         'Cumulative diagnoses': ['cum_diagnoses'],
     })
     if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_sneakystrain.png', to_plot=to_plot)
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_strainduration.png', to_plot=to_plot)
 
     return scens
 
@@ -344,13 +344,13 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 if __name__ == '__main__':
     sc.tic()
 
-    #scens = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    scens = test_sneakystrain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #p1, p2, p3 = test_par_refactor()
-    #sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    p1, p2, p3 = test_par_refactor()
+    sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # simX = test_importstrain_args()
 
