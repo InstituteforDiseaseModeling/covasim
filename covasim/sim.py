@@ -830,12 +830,12 @@ class Sim(cvb.BaseSim):
         return self.results['doubling_time'].values
 
 
-    def compute_r_eff(self, method='daily', smoothing=2, window=7):
+    def compute_r_eff(self, method='infectious', smoothing=2, window=7):
         '''
         Effective reproduction number based on number of people each person infected.
 
         Args:
-            method (str): 'instant' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
+            method (str): 'daily' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
             smoothing (int): the number of steps to smooth over for the 'daily' method
             window (int): the size of the window used for 'infectious' and 'outcome' calculations (larger values are more accurate but less precise)
 
