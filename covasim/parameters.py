@@ -394,7 +394,7 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
         # create the immunity[update_strain,] and immunity[,update_strain] arrays
         new_immunity_row    = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
         new_immunity_column = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-        for i in range(pars['n_strains']+1):
+        for i in range(pars['n_strains']):
             if i != update_strain:
                 new_immunity_row[i] = immunity_from[i]
                 new_immunity_column[i] = immunity_to[i]

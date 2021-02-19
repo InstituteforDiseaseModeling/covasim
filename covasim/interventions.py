@@ -1145,7 +1145,7 @@ class import_strain(Intervention):
         half_life=[180, 180], immunity_to=[[0, 0], [0,0]], immunity_from=[[0, 0], [0,0]]) # On day 10, import 5 cases of one new strain, on day 20, import 10 cases of another
     '''
 
-    def __init__(self, strain=None, days=None, n_imports=1, immunity_to=None, immunity_from=None, init_immunity=None, **kwargs):
+    def __init__(self, strain=None, days=None, n_imports=1, immunity_to=None, immunity_from=None, **kwargs):
         # Do standard initialization
         super().__init__(**kwargs)  # Initialize the Intervention object
         self._store_args()  # Store the input arguments so the intervention can be recreated
@@ -1219,11 +1219,12 @@ class import_strain(Intervention):
                         else: # This wasn't previously stored by strain, so now it needs to be added by strain
                             sim['strains'][sk] = sc.promotetolist(sim[sk]) + sc.promotetolist(self.strain[sk])
                             sim[sk] = sc.promotetolist(sim[sk]) + sc.promotetolist(sim['strains'][sk])
-
+                sim['n_strains'] += 1
                 cvpar.update_immunity(pars=sim.pars, create=False, update_strain=prev_strains, immunity_from=self.immunity_from[strain],
-                                    immunity_to=self.immunity_to[strain], init_immunity=self.init_immunity[strain])
+                                    immunity_to=self.immunity_to[strain], init_immunity=self.init_immunity[strain]['sus'],
+                                      prog_immunity=self.init_immunity[strain]['prog'], trans_immunity=self.init_immunity[strain]['trans'])
                 importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
                 sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
-                sim['n_strains'] += 1
+
 
         return
