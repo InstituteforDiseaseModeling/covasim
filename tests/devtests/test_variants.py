@@ -197,13 +197,16 @@ def test_importstrain1(do_plot=False, do_show=True, do_save=False):
         'Strain 2: beta 0.025'
     ]
 
-    pars = {'n_days': 80, 'half_life': dict(asymptomatic=None, mild=None, severe=None),
+    pars = {'n_days': 80,
+            'half_life': {'sus': dict(asymptomatic=None, mild=None, severe=None),
+                          'trans': dict(asymptomatic=None, mild=None, severe=None),
+                          'prog': dict(asymptomatic=None, mild=None, severe=None),},
             'cross_immunity':1.}
 
     imported_strain = {
         'beta': 0.025,
         'half_life': dict(asymptomatic=20, mild=80, severe=100),
-        'init_immunity': 0.5
+        'init_immunity': {'sus': 0.5, 'trans': 0.5, 'prog': 0.5}
     }
 
     imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
@@ -285,7 +288,9 @@ def test_halflife_by_severity(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run basic sim with 2 strains and half life by severity')
     sc.heading('Setting up...')
 
-    strains = {'half_life': dict(asymptomatic=100, mild=150, severe=200)}
+    strains = {'half_life': {'sus': dict(asymptomatic=100, mild=150, severe=200),
+                             'trans': dict(asymptomatic=100, mild=150, severe=200),
+                             'prog': dict(asymptomatic=100, mild=150, severe=200)}}
 
     pars = {
         'n_days': 80,
@@ -324,8 +329,8 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
 
     imported_strain = {
         'beta': 0.025,
-        'half_life': dict(asymptomatic=20, mild=80, severe=100),
-        'init_immunity': 0.5,
+#        'half_life': dict(asymptomatic=20, mild=80, severe=100),
+#        'init_immunity': 0.5,
         'dur': dict(exp2inf=dict(dist='lognormal_int', par1=6.0,  par2=2.0),
                     inf2sym=dict(dist='lognormal_int', par1=4.0,  par2=2.0),
                     sym2sev=dict(dist='lognormal_int', par1=8.0,  par2=2.0),
@@ -408,15 +413,18 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 if __name__ == '__main__':
     sc.tic()
 
-    # scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
     sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    p1, p2, p3 = test_par_refactor()
+    sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim5 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+
+    # Importing strains is not currently working, so the following tests break
     # sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # p1, p2, p3 = test_par_refactor()
-    # sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim5 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
+    # This next test is deprecated, can be removed
     # simX = test_importstrain_args()
 
     sc.toc()
