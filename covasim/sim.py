@@ -571,11 +571,17 @@ class Sim(cvb.BaseSim):
             # Process cross-immunity parameters and indices, if relevant
             if self['n_strains']>1:
                 for cross_strain in range(self['n_strains']):
+
                     if cross_strain != strain:
                         cross_immune = people.recovered_strain == cross_strain # Whether people have some immunity to this strain from a prior infection with another strain
                         cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by the cross strain
                         cross_immune_inds = cvd.default_int(cvu.true(cross_immune)) # People with some immunity to this strain from a prior infection with another strain
-                        cross_immunity = cvd.default_float(self['immunity']['sus'][cross_strain, strain]) # Immunity protection again this strain from other strains
+                        cross_immunity = {
+                            'sus': cvd.default_float(self['immunity']['sus'][cross_strain, strain]),
+                            'trans': cvd.default_float(self['immunity']['trans'][strain]),
+                            'prog': cvd.default_float(self['immunity']['prog'][strain]),
+                        }
+
                         immunity_factors = cvu.compute_immunity(immunity_factors, cross_immune_time, cross_immune_inds, cross_immunity, decay_rate)   # Calculate cross_immunity factors
 
             people.trans_immunity_factors[strain, :] = immunity_factors['trans']

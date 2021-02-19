@@ -110,8 +110,11 @@ def test_2strains(do_plot=False, do_show=True, do_save=False):
 
     strains = {'beta': 0.025,
                'rel_severe_prob': 1.3, # 30% more severe across all ages
-               'half_life': dict(asymptomatic=20, mild=80, severe=100),
-               'init_immunity': 0.5
+               'half_life': {
+                    'sus': dict(asymptomatic=10, mild=30, severe=50),  # Constant immunity from reinfection,
+                    'trans': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
+                    'prog': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection
+                },
                }
 
     pars = {
@@ -121,8 +124,8 @@ def test_2strains(do_plot=False, do_show=True, do_save=False):
     }
 
     sim = cv.Sim(pars=pars)
-    sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
-    sim['immunity'][1,0] = 0.0 # Say that strain B gives high immunity to strain A
+    #sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
+    #sim['immunity'][1,0] = 0.0 # Say that strain B gives high immunity to strain A
     sim.run()
 
     strain_labels = [
@@ -132,7 +135,7 @@ def test_2strains(do_plot=False, do_show=True, do_save=False):
 
     if do_plot:
         # sim.plot_result('new_reinfections', do_show=do_show, do_save=do_save, fig_path=f'results/test_2strains.png')
-        plot_results(sim, key='incidence_by_strain', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}, B->A immunity {sim["immunity"][1,0]}', filename='test_2strains2', labels=strain_labels, do_show=do_show, do_save=do_save)
+        plot_results(sim, key='incidence_by_strain', title=f'2 strain test', filename='test_2strains2', labels=strain_labels, do_show=do_show, do_save=do_save)
     return sim
 
 
