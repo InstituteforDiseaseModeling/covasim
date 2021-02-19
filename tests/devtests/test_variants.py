@@ -405,9 +405,9 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 if __name__ == '__main__':
     sc.tic()
 
-    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # p1, p2, p3 = test_par_refactor()

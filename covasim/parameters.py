@@ -362,6 +362,7 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
 
         # Update own-immunity, if values have been supplied
         pars['immunity']['sus'][:ns, :ns] = pars['cross_immunity']
+
         if pars.get('init_immunity'):  # Values have been supplied for own-immunity
             np.fill_diagonal(pars['immunity']['sus'][:ns,:ns], pars['init_immunity']['sus'])
             pars['immunity']['prog'][:ns] = pars['init_immunity']['prog']
