@@ -85,9 +85,12 @@ def compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, 
         immunity_factors (float[]): immunity factors
     '''
 
-    decay_rate = decay_rate[immune_inds]
+    immune_type_keys = immunity_factors.keys()
 
-    immunity_factors[immune_inds]       =  init_immunity * np.exp(-decay_rate * immune_time)        # Calculate immunity factors
+    for key in immune_type_keys:
+        this_decay_rate = decay_rate[key][immune_inds]
+        immunity_factors[key][immune_inds] = init_immunity[key] * np.exp(-this_decay_rate * immune_time)
+
     return immunity_factors
 
 

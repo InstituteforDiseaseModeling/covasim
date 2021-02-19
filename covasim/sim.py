@@ -537,31 +537,55 @@ class Sim(cvb.BaseSim):
             # Compute the probability of transmission
             beta = strain_pars['beta']
             asymp_factor = strain_pars['asymp_factor']
-            immunity_factors = people.immunity_factors[strain, :]
-
+            immunity_factors = {
+                'sus': people.sus_immunity_factors[strain, :],
+                'trans': people.trans_immunity_factors[strain, :],
+                'prog': people.prog_immunity_factors[strain, :]
+            }
+            init_immunity = {
+                'sus': cvd.default_float(self['immunity']['sus'][strain, strain]),
+                'trans': cvd.default_float(self['immunity']['trans'][strain]),
+                'prog': cvd.default_float(self['immunity']['prog'][strain]),
+            }
             # Process immunity parameters and indices
-            # TODO-- make this severity-specific
             immune = people.recovered_strain == strain # Whether people have some immunity to this strain from a prior infection with this strain
             immune_time         = t - date_rec[immune]  # Time since recovery for people who were last infected by this strain
             immune_inds = cvd.default_int(cvu.true(immune)) # People with some immunity to this strain from a prior infection with this strain
-            init_immunity = cvd.default_float(self['immunity'][strain, strain])
-            #TODO -- make half life by severity
-            half_life = people.half_life
-            # decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
-            decay_rate = np.log(2) / half_life
-            decay_rate[np.isnan(decay_rate)] = 0
-            decay_rate = cvd.default_float(decay_rate)
+
+            half_life = {
+                'sus': people.sus_half_life,
+                'trans': people.trans_half_life,
+                'prog': people.prog_half_life
+            }
+
+            decay_rate = {}
+
+            for key, val in half_life.items():
+                rate = np.log(2) / val
+                rate[np.isnan(rate)] = 0
+                rate = cvd.default_float(rate)
+                decay_rate[key] = rate
+
             immunity_factors = cvu.compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, decay_rate)   # Calculate immunity factors
 
             # Process cross-immunity parameters and indices, if relevant
             if self['n_strains']>1:
                 for cross_strain in range(self['n_strains']):
+
                     if cross_strain != strain:
                         cross_immune = people.recovered_strain == cross_strain # Whether people have some immunity to this strain from a prior infection with another strain
                         cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by the cross strain
                         cross_immune_inds = cvd.default_int(cvu.true(cross_immune)) # People with some immunity to this strain from a prior infection with another strain
-                        cross_immunity = cvd.default_float(self['immunity'][cross_strain, strain]) # Immunity protection again this strain from other strains
+                        cross_immunity = {
+                            'sus': cvd.default_float(self['immunity']['sus'][cross_strain, strain]),
+                            'trans': cvd.default_float(self['immunity']['trans'][strain]),
+                            'prog': cvd.default_float(self['immunity']['prog'][strain]),
+                        }
+
                         immunity_factors = cvu.compute_immunity(immunity_factors, cross_immune_time, cross_immune_inds, cross_immunity, decay_rate)   # Calculate cross_immunity factors
+
+            people.trans_immunity_factors[strain, :] = immunity_factors['trans']
+            people.prog_immunity_factors[strain, :] = immunity_factors['prog']
 
             # Define indices for this strain
             inf_by_this_strain = sc.dcp(inf)
@@ -580,7 +604,7 @@ class Sim(cvb.BaseSim):
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
                 rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
-                                                           diag, quar, asymp_factor, iso_factor, quar_factor, immunity_factors)
+                                                           diag, quar, asymp_factor, iso_factor, quar_factor, immunity_factors['sus'])
                 rel_sus = np.float32(rel_sus) # TODO: why doesn't this get returned in this format already?
 
                 # Calculate actual transmission
