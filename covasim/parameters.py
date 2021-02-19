@@ -68,7 +68,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['beta']            = 0.016 # Beta per symptomatic contact; absolute value, calibrated
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['init_immunity']   = 1.0  # Default initial immunity
+    pars['init_immunity']   = {}
+    pars['init_immunity']['sus'] = 1.0  # Default initial immunity
+    pars['init_immunity']['trans'] = 0.5  # Default initial immunity
+    pars['init_immunity']['prog'] = 0.5  # Default initial immunity
     pars['half_life']       = {}
     pars['half_life']['sus'] = dict(asymptomatic=180, mild=180, severe=180)
     pars['half_life']['trans'] = dict(asymptomatic=180, mild=180, severe=180)
@@ -304,9 +307,9 @@ def initialize_immunity(pars):
     pars['immunity']['prog'] = np.full( pars['max_strains'], np.nan, dtype=cvd.default_float)
     pars['immunity']['trans'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
     for i in range(pars['n_strains']):
-        pars['immunity']['sus'][i, i] = pars['init_immunity']
-        pars['immunity']['prog'][i] = pars['init_immunity']
-        pars['immunity']['trans'][i] = pars['init_immunity']
+        pars['immunity']['sus'][i, i] = pars['init_immunity']['sus']
+        pars['immunity']['prog'][i] = pars['init_immunity']['prog']
+        pars['immunity']['trans'][i] = pars['init_immunity']['trans']
     return pars
 
 
@@ -360,9 +363,9 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
         # Update own-immunity, if values have been supplied
         pars['immunity']['sus'][:ns, :ns] = pars['cross_immunity']
         if pars.get('init_immunity'):  # Values have been supplied for own-immunity
-            np.fill_diagonal(pars['immunity']['sus'][:ns,:ns], pars['init_immunity'])
-            pars['immunity']['prog'][:ns] = pars['init_immunity']
-            pars['immunity']['trans'][:ns] = pars['init_immunity']
+            np.fill_diagonal(pars['immunity']['sus'][:ns,:ns], pars['init_immunity']['sus'])
+            pars['immunity']['prog'][:ns] = pars['init_immunity']['prog']
+            pars['immunity']['trans'][:ns] = pars['init_immunity']['trans']
 
     # Update immunity for a strain if supplied
     if update_strain is not None:
@@ -377,13 +380,13 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
             immunity_to = [pars['cross_immunity']]*pars['n_strains']
         if init_immunity is None:
             print('Initial immunity not provided, using default value')
-            init_immunity = pars['init_immunity']
+            init_immunity = pars['init_immunity']['sus']
         if prog_immunity is None:
             print('Initial immunity from progression not provided, using default value')
-            prog_immunity = pars['init_immunity']
+            prog_immunity = pars['init_immunity']['prog']
         if trans_immunity is None:
             print('Initial immunity from transmission not provided, using default value')
-            trans_immunity = pars['init_immunity']
+            trans_immunity = pars['init_immunity']['trans']
 
         immunity_from   = sc.promotetolist(immunity_from)
         immunity_to     = sc.promotetolist(immunity_to)

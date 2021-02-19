@@ -36,56 +36,56 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
               }
           }
         },
-        'med_halflife': {
-          'name':'Slow-waning susceptible, transmission and progression immunity',
-          'pars': {
-              'half_life': {
-                  'sus': dict(asymptomatic=60, mild=60, severe=60), # Constant immunity from reinfection,
-                  'trans': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection,
-                  'prog': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection     
-              }
-          }
-        },
-        'short_halflife': {
-            'name': 'Fast-waning susceptible, transmission and progression immunity',
-            'pars': {
-              'half_life': {
-                  'sus': dict(asymptomatic=10, mild=10, severe=10), # Constant immunity from reinfection,
-                  'trans': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
-                  'prog': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection     
-              }
-          }
-        },
+        # 'med_halflife': {
+        #   'name':'Slow-waning susceptible, transmission and progression immunity',
+        #   'pars': {
+        #       'half_life': {
+        #           'sus': dict(asymptomatic=60, mild=60, severe=60), # Constant immunity from reinfection,
+        #           'trans': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection,
+        #           'prog': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection
+        #       }
+        #   }
+        # },
+        # 'short_halflife': {
+        #     'name': 'Fast-waning susceptible, transmission and progression immunity',
+        #     'pars': {
+        #       'half_life': {
+        #           'sus': dict(asymptomatic=10, mild=10, severe=10), # Constant immunity from reinfection,
+        #           'trans': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
+        #           'prog': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection
+        #       }
+        #   }
+        # },
         'short_susceptible_halflife_long_prog': {
-            'name': 'Fast-waning suscptible, slow-waning progression and transmission immunity',
+            'name': 'Fast-waning susceptible, no waning progression and transmission immunity',
             'pars': {
               'half_life': {
-                  'sus': dict(asymptomatic=10, mild=10, severe=10), # Constant immunity from reinfection,
-                  'trans': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection,
-                  'prog': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection     
+                  'sus': dict(asymptomatic=10, mild=30, severe=50), # Constant immunity from reinfection,
+                  'trans': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
+                  'prog': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection
               }
           }
         },
-        'short_susceptible_trans_long_prog': {
-            'name': 'Fast-waning susceptible and transmission, slow-waning progression immunity',
+        'long_half_life': {
+            'name': 'Fast-waning susceptible, no waning progression and transmission immunity',
             'pars': {
                 'half_life': {
-                    'sus': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
-                    'trans': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
-                    'prog': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection
+                    'sus': dict(asymptomatic=10, mild=30, severe=50),  # Constant immunity from reinfection,
+                    'trans': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
+                    'prog': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection
                 }
             }
         },
-        'short_susceptible_prog_long_trans': {
-            'name': 'Fast-waning susceptible and progression, slow-waning transmission immunity',
-            'pars': {
-                'half_life': {
-                    'sus': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
-                    'trans': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection,
-                    'prog': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection
-                }
-            }
-        },
+        # 'short_susceptible_prog_long_trans': {
+        #     'name': 'Fast-waning susceptible and progression, slow-waning transmission immunity',
+        #     'pars': {
+        #         'half_life': {
+        #             'sus': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
+        #             'trans': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection,
+        #             'prog': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection
+        #         }
+        #     }
+        # },
     }
 
     metapars = {'n_runs': n_runs}

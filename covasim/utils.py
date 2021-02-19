@@ -91,7 +91,6 @@ def compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, 
         decay_rate[key] = decay_rate[key][immune_inds]
         immunity_factors[key][immune_inds] = init_immunity[key] * np.exp(-decay_rate[key] * immune_time)
 
-
     return immunity_factors
 
 
