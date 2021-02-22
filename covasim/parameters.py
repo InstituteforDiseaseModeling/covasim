@@ -306,10 +306,13 @@ def initialize_immunity(pars):
     pars['immunity']['sus'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
     pars['immunity']['prog'] = np.full( pars['max_strains'], np.nan, dtype=cvd.default_float)
     pars['immunity']['trans'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
+    for par, val in pars['init_immunity'].items():
+        if not isinstance(val, list):
+            pars['init_immunity'][par] = sc.promotetolist(val)
     for i in range(pars['n_strains']):
-        pars['immunity']['sus'][i, i] = pars['init_immunity']['sus']
-        pars['immunity']['prog'][i] = pars['init_immunity']['prog']
-        pars['immunity']['trans'][i] = pars['init_immunity']['trans']
+        pars['immunity']['sus'][i, i] = pars['init_immunity']['sus'][i]
+        pars['immunity']['prog'][i] = pars['init_immunity']['prog'][i]
+        pars['immunity']['trans'][i] = pars['init_immunity']['trans'][i]
     return pars
 
 
@@ -348,6 +351,15 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
 
     '''
     if create:
+        # Update all strain-specific values
+        for par, val in pars['strains'].items():
+            if par == 'init_immunity':
+                pars[par] = {}
+                for subpar, subval in val.items():
+                    pars[par][subpar] = sc.promotetolist(subval)
+            else:
+                pars[par] = sc.promotetolist(val)
+
         # Cross immunity values are set if there is more than one strain circulating
         # if 'n_strains' isn't provided, assume it's 1
         if not pars.get('n_strains'):
@@ -355,13 +367,9 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
         pars = initialize_immunity(pars)
         ns = pars['n_strains'] # Shorten
 
-        # Update all strain-specific values
-        for par,val in pars['strains'].items():
-            if pars.get(par):
-                pars[par] = sc.promotetolist(pars[par]) + sc.promotetolist(val)
-
         # Update own-immunity, if values have been supplied
-        pars['immunity']['sus'][:ns, :ns] = pars['cross_immunity']
+        if pars.get('cross_immunity'):  # Values have been supplied for cross-immunity
+            pars['immunity']['sus'][:ns, :ns] = pars['cross_immunity']
         if pars.get('init_immunity'):  # Values have been supplied for own-immunity
             np.fill_diagonal(pars['immunity']['sus'][:ns,:ns], pars['init_immunity']['sus'])
             pars['immunity']['prog'][:ns] = pars['init_immunity']['prog']

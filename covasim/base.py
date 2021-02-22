@@ -312,7 +312,10 @@ class BaseSim(ParsObj):
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
             if pars.get('strains'):
-                pars['n_strains'] = 1 + len(sc.promotetolist(next(iter(pars['strains'].values()))))
+                n_strains = len(sc.promotetolist(next(iter(pars['strains'].values()))))
+                print(f'provided information for {n_strains} circulating strains')
+                pars['n_strains'] = n_strains
+                pars['max_strains'] = self.pars['max_strains']
                 pars = sc.mergedicts(immunity_pars, strain_pars, pars)
                 pars = cvpar.update_immunity(pars)  # Update immunity with values provided
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
