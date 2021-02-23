@@ -68,8 +68,8 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
                 'strains': {
                     'half_life': {
                         'sus': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection,
-                        'trans': dict(asymptomatic=160, mild=160, severe=160),  # Constant immunity from reinfection,
-                        'prog': dict(asymptomatic=160, mild=160, severe=160),  # Constant immunity from reinfection
+                        'trans': dict(asymptomatic=100, mild=100, severe=100),  # Constant immunity from reinfection,
+                        'prog': dict(asymptomatic=100, mild=100, severe=100),  # Constant immunity from reinfection
                     },
                     'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
                 }
@@ -224,10 +224,12 @@ def test_importstrain1(do_plot=False, do_show=True, do_save=False):
     ]
 
     pars = {'n_days': 80,
-            'half_life': {'sus': dict(asymptomatic=None, mild=None, severe=None),
-                          'trans': dict(asymptomatic=None, mild=None, severe=None),
-                          'prog': dict(asymptomatic=None, mild=None, severe=None),},
-            # 'cross_immunity':1.
+            'strains': {
+                'half_life': {'sus': dict(asymptomatic=None, mild=None, severe=None),
+                              'trans': dict(asymptomatic=None, mild=None, severe=None),
+                              'prog': dict(asymptomatic=None, mild=None, severe=None), },
+            }
+
             }
 
     imported_strain = {

@@ -68,13 +68,14 @@ class Sim(cvb.BaseSim):
         self._default_ver  = version  # Default version of parameters used
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
-        # Update the parameters
+        # Make default parameters (using values from parameters.py)
         default_pars = cvpar.make_pars(version=version) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
-        immunity_pars = dict(max_strains=default_pars['max_strains'],
+        immunity_pars = dict(immunity=default_pars['immunity'],
+                             max_strains=default_pars['max_strains'],
                              cross_immunity=default_pars['cross_immunity'])
         strain_pars = {par: default_pars[par] for par in cvd.strain_pars}
         self.update_pars(pars, immunity_pars=immunity_pars, strain_pars=strain_pars, **kwargs)   # Update the parameters, if provided
@@ -482,17 +483,15 @@ class Sim(cvb.BaseSim):
         contacts = people.update_contacts() # Compute new contacts
         hosp_max = people.count('severe')   > self['n_beds_hosp'] if self['n_beds_hosp'] else False # Check for acute bed constraint
         icu_max  = people.count('critical') > self['n_beds_icu']  if self['n_beds_icu']  else False # Check for ICU bed constraint
+        ns = self['n_strains']  # Shorten number of strains
 
         # Randomly infect some people (imported infections)
-        imports = cvu.n_poisson(self['n_imports'], self['n_strains']) # Imported cases
-        # TODO -- calculate imports per strain.
+        imports = cvu.n_poisson(self['n_imports'], ns) # Imported cases
         for strain, n_imports in enumerate(imports):
             if n_imports>0:
                 importation_inds = cvu.choose(max_n=len(people), n=n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation',
                               strain=strain)
-
-        # TODO -- Randomly introduce new strain
 
         # Apply interventions
         for intervention in self['interventions']:
@@ -523,7 +522,7 @@ class Sim(cvb.BaseSim):
         quar = people.quarantined
 
         # Iterate through n_strains to calculate infections
-        for strain in range(self['n_strains']):
+        for strain in range(ns):
 
             # Deal with strain parameters
             strain_parkeys = ['beta', 'asymp_factor']
@@ -535,8 +534,8 @@ class Sim(cvb.BaseSim):
                     strain_pars[key] = cvd.default_float(self[key])
 
             # Compute the probability of transmission
-            beta = strain_pars['beta']
-            asymp_factor = strain_pars['asymp_factor']
+            beta = cvd.default_float(strain_pars['beta'])
+            asymp_factor = cvd.default_float(strain_pars['asymp_factor'])
             immunity_factors = {
                 'sus': people.sus_immunity_factors[strain, :],
                 'trans': people.trans_immunity_factors[strain, :],

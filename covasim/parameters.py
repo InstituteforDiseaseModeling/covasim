@@ -119,7 +119,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
-    pars = initialize_immunity(pars)  # Initialise immunity
+    pars = initialize_immunity(pars)  # Initialize immunity
 
     # If version is specified, load old parameters
     if version is not None:
@@ -294,25 +294,31 @@ def absolute_prognoses(prognoses):
     return out
 
 
+def update_strain_pars(pars):
+    ''' Helper function to update parameters that have been set to vary by strain '''
+    # Update all strain-specific values
+    for sp in cvd.strain_pars:
+        if sp in pars['strains'].keys():
+            pars[sp] = sc.promotetolist(pars['strains'][sp])
+            pars['n_strains'] = len(pars[sp])  # This gets overwritten for each parameter, but that's ok
+    return pars
+
 def initialize_immunity(pars):
     '''
-    Helper function to initialize the immunity matrices.
+    Initialize the immunity matrices.
     Susceptibility matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
     Progression is a matrix of scalars of size sim['max_strains'] initialized with default values
     Transmission is a matrix of scalars of size sim['max_strains'] initialized with default values
     '''
-    # If initial immunity/cross immunity factors are provided, use those, otherwise use defaults
+
     pars['immunity'] = {}
     pars['immunity']['sus'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
     pars['immunity']['prog'] = np.full( pars['max_strains'], np.nan, dtype=cvd.default_float)
     pars['immunity']['trans'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
     for par, val in pars['init_immunity'].items():
-        if not isinstance(val, list):
-            pars['init_immunity'][par] = sc.promotetolist(val)
-    for i in range(pars['n_strains']):
-        pars['immunity']['sus'][i, i] = pars['init_immunity']['sus'][i]
-        pars['immunity']['prog'][i] = pars['init_immunity']['prog'][i]
-        pars['immunity']['trans'][i] = pars['init_immunity']['trans'][i]
+        if par == 'sus':    pars['immunity'][par][0,0] = val
+        else:               pars['immunity'][par][0] = val
+
     return pars
 
 
@@ -351,29 +357,27 @@ def update_immunity(pars, create=True, update_strain=None, immunity_from=None, i
 
     '''
     if create:
-        # Update all strain-specific values
-        for par, val in pars['strains'].items():
-            if par == 'init_immunity':
-                pars[par] = {}
-                for subpar, subval in val.items():
-                    pars[par][subpar] = sc.promotetolist(subval)
-            else:
-                pars[par] = sc.promotetolist(val)
-
         # Cross immunity values are set if there is more than one strain circulating
         # if 'n_strains' isn't provided, assume it's 1
         if not pars.get('n_strains'):
             pars['n_strains'] = 1
-        pars = initialize_immunity(pars)
         ns = pars['n_strains'] # Shorten
 
-        # Update own-immunity, if values have been supplied
-        if pars.get('cross_immunity'):  # Values have been supplied for cross-immunity
-            pars['immunity']['sus'][:ns, :ns] = pars['cross_immunity']
-        if pars.get('init_immunity'):  # Values have been supplied for own-immunity
-            np.fill_diagonal(pars['immunity']['sus'][:ns,:ns], pars['init_immunity']['sus'])
-            pars['immunity']['prog'][:ns] = pars['init_immunity']['prog']
-            pars['immunity']['trans'][:ns] = pars['init_immunity']['trans']
+        # Update immunity matrix
+        pars['immunity']['sus'][:ns, :ns] = pars['cross_immunity']
+        if pars['strains'].get('init_immunity'):
+            for ps in cvd.immunity_axes:
+                for strain in range(ns):
+                    if ps == 'sus':
+                        pars['immunity'][ps][strain, strain] = pars['init_immunity'][strain][ps]
+                    else:
+                        pars['immunity'][ps][strain] = pars['init_immunity'][strain][ps]
+        else:
+            for ps in cvd.immunity_axes:
+                if ps == 'sus':
+                    np.fill_diagonal(pars['immunity'][ps][:ns, :ns], pars['init_immunity'][ps])
+                else:
+                    pars['immunity'][ps][:ns] = pars['init_immunity'][ps]
 
     # Update immunity for a strain if supplied
     if update_strain is not None:

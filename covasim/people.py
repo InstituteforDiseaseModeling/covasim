@@ -60,7 +60,7 @@ class People(cvb.BasePeople):
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             elif key == 'rel_trans' or key == 'rel_sus' or key == 'time_of_last_inf':
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), np.nan, dtype=cvd.default_float, order='F')
-            elif key == 'sus_immunity_factors' or key == 'trans_immunity_factors' or key == 'prog_immunity_factors': # everyone starts out with no immunity to either strain.
+            elif key == 'sus_immunity_factors' or key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)

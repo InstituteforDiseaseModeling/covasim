@@ -68,7 +68,6 @@ class PeopleMeta(sc.prettyobj):
         'critical',
         'tested',
         'diagnosed',
-        #'recovered',
         'dead',
         'known_contact',
         'quarantined',
@@ -80,7 +79,6 @@ class PeopleMeta(sc.prettyobj):
         'infectious_strain',
         'infectious_by_strain',
         'recovered_strain',
-        # 'recovered_by_strain',
     ]
 
     # Set the dates various events took place: these are floats per person -- used in people.py
@@ -147,6 +145,8 @@ strain_pars = ['beta',
                'rel_severe_prob',
                'rel_crit_prob',
                'rel_death_prob']
+
+immunity_axes = ['sus', 'trans', 'prog']
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([

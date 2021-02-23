@@ -1158,7 +1158,7 @@ class import_strain(Intervention):
         self.strain         = {par: sc.promotetolist(val) for par, val in strain.items()}
         for par, val in self.strain.items(): setattr(self, par, val)
         if not hasattr(self,'init_immunity'):
-            self.init_immunity = [None]
+            self.init_immunity = [{key:None for key in cvd.immunity_axes}]
         self.new_strains    = self.check_args(['days', 'n_imports']+list(self.strain.keys()))
         return
 

@@ -930,7 +930,12 @@ class Scenarios(cvb.ParsObj):
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
-            scen_sim.update_pars(scenpars)
+            immunity_pars = dict(max_strains=scen_sim['max_strains'],
+                                 cross_immunity=scen_sim['cross_immunity'],
+                                 immunity=scen_sim['immunity'])
+            strain_pars = {par: scen_sim[par] for par in cvd.strain_pars}
+            scen_sim.update_pars(scenpars, immunity_pars=immunity_pars, strain_pars=strain_pars,
+                                 **kwargs)  # Update the parameters, if provided
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:
                 print('Running in debug mode (not parallelized)')
