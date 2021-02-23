@@ -101,7 +101,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     f_iso     = ~diag +  diag * iso_factor # Isolation factor, changes e.g. [0,1] with a factor of 0.2 to [1,0.2]
     f_quar    = ~quar +  quar * quar_factor # Quarantine, changes e.g. [0,1] with a factor of 0.5 to [1,0.5]
     rel_trans = beta_layer * rel_trans * inf * f_quar * f_asymp * f_iso * viral_load # Recalculate transmissibility
-    rel_sus   = rel_sus * sus * f_quar *(1.-immunity_factors) # Recalculate susceptibility
+    rel_sus   = rel_sus * sus * f_quar * (1.-immunity_factors) # Recalculate susceptibility
     return rel_trans, rel_sus
 
 

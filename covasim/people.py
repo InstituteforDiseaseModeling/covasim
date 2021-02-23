@@ -58,9 +58,9 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
-            elif key == 'rel_trans' or key == 'rel_sus' or key == 'time_of_last_inf':
+            elif key == 'rel_trans' or key == 'rel_sus':
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), np.nan, dtype=cvd.default_float, order='F')
-            elif key == 'sus_immunity_factors' or key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
+            elif key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
@@ -414,9 +414,6 @@ class People(cvb.BasePeople):
         # Record transmissions
         for i, target in enumerate(inds):
             self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
-
-        # Record time of infection
-        self.time_of_last_inf[strain, inds] = self.t
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)*(1-self.trans_immunity_factors[strain, inds])

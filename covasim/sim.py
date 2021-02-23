@@ -532,12 +532,12 @@ class Sim(cvb.BaseSim):
                     strain_pars[key] = cvd.default_float(self[key][strain])
                 else:
                     strain_pars[key] = cvd.default_float(self[key])
-
-            # Compute the probability of transmission
             beta = cvd.default_float(strain_pars['beta'])
             asymp_factor = cvd.default_float(strain_pars['asymp_factor'])
+            # Create susceptible immunity factors matrix
+            sus_immunity_factors = np.full(self['pop_size'], 0, dtype=cvd.default_float, order='F')
             immunity_factors = {
-                'sus': people.sus_immunity_factors[strain, :],
+                'sus': sus_immunity_factors,
                 'trans': people.trans_immunity_factors[strain, :],
                 'prog': people.prog_immunity_factors[strain, :]
             }
@@ -546,31 +546,27 @@ class Sim(cvb.BaseSim):
                 'trans': cvd.default_float(self['immunity']['trans'][strain]),
                 'prog': cvd.default_float(self['immunity']['prog'][strain]),
             }
-            # Process immunity parameters and indices
-            immune = people.recovered_strain == strain # Whether people have some immunity to this strain from a prior infection with this strain
-            immune_time         = t - date_rec[immune]  # Time since recovery for people who were last infected by this strain
-            immune_inds = cvd.default_int(cvu.true(immune)) # People with some immunity to this strain from a prior infection with this strain
-
             half_life = {
                 'sus': people.sus_half_life,
                 'trans': people.trans_half_life,
                 'prog': people.prog_half_life
             }
-
             decay_rate = {}
-
             for key, val in half_life.items():
                 rate = np.log(2) / val
                 rate[np.isnan(rate)] = 0
                 rate = cvd.default_float(rate)
                 decay_rate[key] = rate
 
+            # Process immunity parameters and indices
+            immune = people.recovered_strain == strain  # Whether people have some immunity to this strain from a prior infection with this strain
+            immune_time = t - date_rec[immune]  # Time since recovery for people who were last infected by this strain
+            immune_inds = cvd.default_int(cvu.true(immune))  # People with some immunity to this strain from a prior infection with this strain
             immunity_factors = cvu.compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, decay_rate)   # Calculate immunity factors
 
             # Process cross-immunity parameters and indices, if relevant
-            if self['n_strains']>1:
-                for cross_strain in range(self['n_strains']):
-
+            if ns>1:
+                for cross_strain in range(ns):
                     if cross_strain != strain:
                         cross_immune = people.recovered_strain == cross_strain # Whether people have some immunity to this strain from a prior infection with another strain
                         cross_immune_time   = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by the cross strain
