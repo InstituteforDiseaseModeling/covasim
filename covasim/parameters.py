@@ -69,13 +69,13 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['beta']            = 0.016 # Beta per symptomatic contact; absolute value, calibrated
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
     pars['init_immunity']   = {}
-    pars['init_immunity']['sus'] = 1.0  # Default initial immunity
-    pars['init_immunity']['trans'] = 0.5  # Default initial immunity
-    pars['init_immunity']['prog'] = 0.5  # Default initial immunity
-    pars['half_life']       = {}
-    pars['half_life']['sus'] = dict(asymptomatic=180, mild=180, severe=180)
-    pars['half_life']['trans'] = dict(asymptomatic=180, mild=180, severe=180)
-    pars['half_life']['prog'] = dict(asymptomatic=180, mild=180, severe=180)
+    pars['half_life'] = {}
+    for axis in cvd.immunity_axes:
+        if axis == 'sus':
+            pars['init_immunity'][axis] = 1.0  # Default initial immunity
+        else:
+            pars['init_immunity'][axis] = 0.5  # Default initial immunity
+        pars['half_life'][axis] = dict(asymptomatic=180, mild=180, severe=180)
 
     pars['dur'] = {}
         # Duration parameters: time for disease progression
@@ -313,7 +313,7 @@ def initialize_immunity(pars):
 
     pars['immunity'] = {}
     pars['immunity']['sus'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
-    pars['immunity']['prog'] = np.full( pars['max_strains'], np.nan, dtype=cvd.default_float)
+    pars['immunity']['prog'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
     pars['immunity']['trans'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
     for par, val in pars['init_immunity'].items():
         if par == 'sus':    pars['immunity'][par][0,0] = val
