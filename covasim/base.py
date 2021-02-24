@@ -314,7 +314,6 @@ class BaseSim(ParsObj):
             if pars.get('strains'):
                 pars = sc.mergedicts(immunity_pars, strain_pars, pars)
                 pars = cvpar.update_strain_pars(pars)
-                print(f'provided information for {pars["n_strains"]} circulating strains')
                 pars = sc.mergedicts(immunity_pars, strain_pars, pars)
                 pars = cvpar.update_immunity(pars)  # Update immunity with values provided
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj

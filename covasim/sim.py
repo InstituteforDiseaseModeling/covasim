@@ -74,7 +74,8 @@ class Sim(cvb.BaseSim):
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
-        immunity_pars = dict(immunity=default_pars['immunity'],
+        immunity_pars = dict(n_strains=default_pars['n_strains'],
+                             immunity=default_pars['immunity'],
                              max_strains=default_pars['max_strains'],
                              cross_immunity=default_pars['cross_immunity'])
         strain_pars = {par: default_pars[par] for par in cvd.strain_pars}

@@ -930,7 +930,8 @@ class Scenarios(cvb.ParsObj):
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
-            immunity_pars = dict(max_strains=scen_sim['max_strains'],
+            immunity_pars = dict(n_strains=scen_sim['n_strains'],
+                                 max_strains=scen_sim['max_strains'],
                                  cross_immunity=scen_sim['cross_immunity'],
                                  immunity=scen_sim['immunity'])
             strain_pars = {par: scen_sim[par] for par in cvd.strain_pars}

@@ -22,11 +22,15 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
     imported_strain = {
         'beta': 0.2,
         'half_life': {
-            'sus': dict(asymptomatic=55, mild=60, severe=150),  # Constant immunity from reinfection,
-            'trans': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection,
-            'prog': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection
+            'sus': dict(asymptomatic=25, mild=55, severe=155),  # Constant immunity from reinfection,
+            # 'trans': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection,
+            # 'prog': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection
         },
-        'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
+        'init_immunity': {
+            'sus': 1,
+            # 'trans': 1,
+            # 'prog': 1
+        },
     }
 
     imports = cv.import_strain(strain=imported_strain, immunity_to=0.5, immunity_from=0.5, days=50, n_imports=30)
@@ -42,8 +46,19 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
               'strains': {
                   'half_life': {
                       'sus': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
-                      # 'trans': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
-                      # 'prog': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection
+                  },
+                  'init_immunity': {
+                      'sus': 1,
+                  },
+              }
+          }
+        },
+        'med_halflife': {
+          'name':'3 month waning susceptibility',
+          'pars': {
+              'strains': {
+                  'half_life': {
+                      'sus': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection,
                   },
                   'init_immunity': {
                       'sus': 1,
@@ -53,47 +68,37 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
               }
           }
         },
-        # 'med_halflife': {
-        #   'name':'3 month waning susceptible, transmission and progression immunity',
-        #   'pars': {
-        #       'strains': {
-        #           'half_life': {
-        #               'sus': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection,
-        #               'trans': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection,
-        #               'prog': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection
-        #           },
-        #           'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
-        #       }
-        #   }
-        # },
-        # 'short_halflife': {
-        #     'name': '3 month waning susceptible, slow waning transmission and progression immunity',
-        #     'pars': {
-        #         'strains': {
-        #             'half_life': {
-        #                 'sus': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection,
-        #                 'trans': dict(asymptomatic=100, mild=100, severe=100),  # Constant immunity from reinfection,
-        #                 'prog': dict(asymptomatic=100, mild=100, severe=100),  # Constant immunity from reinfection
-        #             },
-        #             'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
-        #         }
-        #
-        #   }
-        # },
-        # 'short_half_life': {
-        #     'name': '3 month waning susceptible, slow progression and transmission immunity, new strain on day 50',
-        #     'pars': {
-        #         'strains': {
-        #             'half_life': {
-        #                 'sus': dict(asymptomatic=55, mild=60, severe=150),  # Constant immunity from reinfection,
-        #                 'trans': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection,
-        #                 'prog': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection
-        #             },
-        #             'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
-        #         },
-        #         'interventions': imports
-        #     }
-        # },
+        'med_halflife_bysev': {
+          'name':'1, 3, 6 month waning susceptibility, by severity',
+          'pars': {
+              'strains': {
+                  'half_life': {
+                      'sus': dict(asymptomatic=25, mild=55, severe=155),  # Constant immunity from reinfection,
+                  },
+                  'init_immunity': {
+                      'sus': 1,
+                      # 'trans': 1,
+                      # 'prog': 1
+                  },
+              }
+          }
+        },
+        'short_half_life': {
+            'name': '1, 3, 6 month waning susceptibility, by severity, more transmissible strain on day 50',
+            'pars': {
+                'strains': {
+                  'half_life': {
+                      'sus': dict(asymptomatic=25, mild=55, severe=155),  # Constant immunity from reinfection,
+                  },
+                  'init_immunity': {
+                      'sus': 1,
+                      # 'trans': 1,
+                      # 'prog': 1
+                  },
+                },
+                'interventions': imports
+            }
+        },
         # 'short_half_life_50init': {
         #     'name': 'Fast-waning susceptible, slow progression and transmission immunity, 50% init',
         #     'pars': {

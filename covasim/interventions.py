@@ -1200,6 +1200,18 @@ class import_strain(Intervention):
                     errormsg = f"Number of existing strains ({sim['n_strains']}) plus new strain exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
                     raise ValueError(errormsg)
 
+                # Validate half_life and init_immunity (make sure there are values for all cvd.immunity_axes
+                for key in cvd.immunity_axes:
+                    if key not in self.init_immunity[strain]:
+                        print(f'initial immunity for imported strain for {key} not provided, using default value')
+                        self.init_immunity[strain][key] = sim['init_immunity'][0][key]
+                    if key not in self.half_life[strain]:
+                        print(f'half life for imported strain for {key} not provided, using default value')
+                        self.half_life[strain][key] = sim['half_life'][0][key]
+
+                self.strain['half_life'][strain] = self.half_life[strain]
+                self.strain['init_immunity'][strain] = self.init_immunity[strain]
+
                 # Update strain info
                 if sim['strains'] is None:
                     sim['strains'] = self.strain
@@ -1221,8 +1233,7 @@ class import_strain(Intervention):
                             sim[sk] = sc.promotetolist(sim[sk]) + sc.promotetolist(sim['strains'][sk])
                 sim['n_strains'] += 1
                 cvpar.update_immunity(pars=sim.pars, create=False, update_strain=prev_strains, immunity_from=self.immunity_from[strain],
-                                    immunity_to=self.immunity_to[strain], init_immunity=self.init_immunity[strain]['sus'],
-                                      prog_immunity=self.init_immunity[strain]['prog'], trans_immunity=self.init_immunity[strain]['trans'])
+                                    immunity_to=self.immunity_to[strain], init_immunity=self.init_immunity[strain])
                 importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
                 sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
 
