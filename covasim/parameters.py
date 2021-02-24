@@ -72,10 +72,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['half_life'] = {}
     for axis in cvd.immunity_axes:
         if axis == 'sus':
-            pars['init_immunity'][axis] = 1.0  # Default initial immunity
+            pars['init_immunity'][axis] = 0.75  # Default initial immunity
+            pars['half_life'][axis] = dict(asymptomatic=180, mild=180, severe=180)
         else:
-            pars['init_immunity'][axis] = 0.5  # Default initial immunity
-        pars['half_life'][axis] = dict(asymptomatic=180, mild=180, severe=180)
+            pars['init_immunity'][axis] = 0.5  # Default -- 50% shorter duration and probability of symptoms
+            pars['half_life'][axis] = dict(asymptomatic=None, mild=None, severe=None)
 
     pars['dur'] = {}
         # Duration parameters: time for disease progression
@@ -299,8 +300,16 @@ def update_strain_pars(pars):
     # Update all strain-specific values
     for sp in cvd.strain_pars:
         if sp in pars['strains'].keys():
-            pars[sp] = sc.promotetolist(pars['strains'][sp])
-            pars['n_strains'] = len(pars[sp])  # This gets overwritten for each parameter, but that's ok
+            if isinstance(pars['strains'][sp], dict):
+                for key in cvd.immunity_axes:
+                    if key in pars['strains'][sp].keys():
+                        pars[sp][key] = sc.promotetolist(pars['strains'][sp][key])
+                    else:
+                        pars[sp][key] = sc.promotetolist(pars[sp][key])
+                    pars['n_strains'] = len(pars[sp][key])
+            else:
+                pars[sp] = sc.promotetolist(pars['strains'][sp])
+                pars['n_strains'] = len(pars[sp])  # This gets overwritten for each parameter, but that's ok
     return pars
 
 def initialize_immunity(pars):
