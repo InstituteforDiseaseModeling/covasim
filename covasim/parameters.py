@@ -304,6 +304,7 @@ def validate_strain_pars(pars, default_strain_pars):
                 for key in cvd.immunity_axes:
                     # check to see if that dictionary item has been provided, use default value
                     if key not in pars[sp][0].keys():
+                        default_strain_pars[sp] = sc.promotetolist(default_strain_pars[sp])
                         pars[sp][0][key] = default_strain_pars[sp][0][key]
             else:
                 pars[sp] = sc.promotetolist(pars[sp])

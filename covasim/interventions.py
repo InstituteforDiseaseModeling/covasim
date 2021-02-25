@@ -1189,12 +1189,12 @@ class import_strain(Intervention):
 
             # Update strain info
             for strain_key in cvd.strain_pars:
-                if hasattr(self, strain_key) is False:
+                if hasattr(self, strain_key):
+                    sim[strain_key].append(getattr(self, strain_key))
+                else:
                     # use default
                     print(f'{strain_key} not provided for this strain, using default value')
                     sim[strain_key].append(sim[strain_key][0])
-                else:
-                    sim[strain_key].append(sc.promotetolist(getattr(self, strain_key)))
 
             sim['n_strains'] += 1
             cvpar.update_immunity(pars=sim.pars, create=False, update_strain=prev_strains,
