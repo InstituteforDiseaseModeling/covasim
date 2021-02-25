@@ -391,10 +391,7 @@ class People(cvb.BasePeople):
         infect_parkeys = ['dur', 'rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob', 'half_life']
         infect_pars = dict()
         for key in infect_parkeys:
-            if self.pars['strains'] is not None and key in self.pars['strains'].keys(): # This parameter varies by strain: extract strain-specific value
-                infect_pars[key] = self.pars[key][strain]
-            else:
-                infect_pars[key] = self.pars[key]
+            infect_pars[key] = self.pars[key][strain]
 
         n_infections = len(inds)
         durpars      = infect_pars['dur']

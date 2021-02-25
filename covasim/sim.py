@@ -74,12 +74,9 @@ class Sim(cvb.BaseSim):
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
-        immunity_pars = dict(n_strains=default_pars['n_strains'],
-                             immunity=default_pars['immunity'],
-                             max_strains=default_pars['max_strains'],
-                             cross_immunity=default_pars['cross_immunity'])
         strain_pars = {par: default_pars[par] for par in cvd.strain_pars}
-        self.update_pars(pars, immunity_pars=immunity_pars, strain_pars=strain_pars, **kwargs)   # Update the parameters, if provided
+        immunity_pars = {par: default_pars[par] for par in cvd.immunity_pars}
+        self.update_pars(pars, strain_pars=strain_pars, immunity_pars=immunity_pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
             self.load_population(popfile)  # Load the population, if provided
@@ -529,10 +526,7 @@ class Sim(cvb.BaseSim):
             strain_parkeys = ['beta', 'asymp_factor']
             strain_pars = dict()
             for key in strain_parkeys:
-                if self['strains'] is not None and key in self['strains'].keys():  # This parameter varies by strain: extract strain-specific value
-                    strain_pars[key] = cvd.default_float(self[key][strain])
-                else:
-                    strain_pars[key] = cvd.default_float(self[key])
+                strain_pars[key] = cvd.default_float(self[key][strain])
             beta = cvd.default_float(strain_pars['beta'])
             asymp_factor = cvd.default_float(strain_pars['asymp_factor'])
             # Create susceptible immunity factors matrix

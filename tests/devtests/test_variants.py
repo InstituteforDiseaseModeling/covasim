@@ -10,7 +10,7 @@ do_save   = 1
 
 
 def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run a basic sim with 1 strain, allowing for reinfection')
+    sc.heading('Run a basic sim with 1 strain, varying reinfection risk')
     sc.heading('Setting up...')
 
     # Define baseline parameters
@@ -19,21 +19,6 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
         'n_days': 240,
     }
 
-    imported_strain = {
-        'beta': 0.2,
-        'half_life': {
-            'sus': dict(asymptomatic=25, mild=55, severe=155),  # Constant immunity from reinfection,
-            # 'trans': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection,
-            # 'prog': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection
-        },
-        'init_immunity': {
-            'sus': 1,
-            # 'trans': 1,
-            # 'prog': 1
-        },
-    }
-
-    imports = cv.import_strain(strain=imported_strain, immunity_to=0.5, immunity_from=0.5, days=50, n_imports=30)
     n_runs = 3
     base_sim = cv.Sim(base_pars)
 
@@ -43,21 +28,18 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
         'baseline': {
           'name':'No reinfection',
           'pars': {
-              'strains': {
-                  'half_life': {
-                      'sus': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
-                  },
-                  'init_immunity': {
-                      'sus': 1,
-                  },
-              }
+              'half_life': {
+                  'sus': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
+              },
+              'init_immunity': {
+                  'sus': 1,
+              },
           }
         },
         'med_halflife': {
           'name':'3 month waning susceptibility',
           'pars': {
-              'strains': {
-                  'half_life': {
+              'half_life': {
                       'sus': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection,
                   },
                   'init_immunity': {
@@ -65,39 +47,20 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
                       # 'trans': 1,
                       # 'prog': 1
                   },
-              }
           }
         },
         'med_halflife_bysev': {
           'name':'1, 3, 6 month waning susceptibility, by severity',
           'pars': {
-              'strains': {
-                  'half_life': {
-                      'sus': dict(asymptomatic=25, mild=55, severe=155),  # Constant immunity from reinfection,
-                  },
-                  'init_immunity': {
-                      'sus': 1,
-                      # 'trans': 1,
-                      # 'prog': 1
-                  },
-              }
+              'half_life': {
+                  'sus': dict(asymptomatic=25, mild=55, severe=155),  # Constant immunity from reinfection,
+              },
+              'init_immunity': {
+                  'sus': 1,
+                  # 'trans': 1,
+                  # 'prog': 1
+              },
           }
-        },
-        'short_half_life': {
-            'name': '1, 3, 6 month waning susceptibility, by severity, more transmissible strain on day 50',
-            'pars': {
-                'strains': {
-                  'half_life': {
-                      'sus': dict(asymptomatic=25, mild=55, severe=155),  # Constant immunity from reinfection,
-                  },
-                  'init_immunity': {
-                      'sus': 1,
-                      # 'trans': 1,
-                      # 'prog': 1
-                  },
-                },
-                'interventions': imports
-            }
         },
         # 'short_half_life_50init': {
         #     'name': 'Fast-waning susceptible, slow progression and transmission immunity, 50% init',
@@ -148,20 +111,35 @@ def test_2strains(do_plot=False, do_show=True, do_save=False):
                'rel_severe_prob': 1.3, # 30% more severe across all ages
                'half_life': {
                     'sus': dict(asymptomatic=10, mild=30, severe=50),  # Constant immunity from reinfection,
-                    'trans': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
-                    'prog': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection
                 },
                }
+
+    imported_strain = {
+        'beta': 0.2,
+        'half_life': {
+            'sus': dict(asymptomatic=25, mild=55, severe=155),  # Constant immunity from reinfection,
+            'trans': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection,
+            'prog': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection
+        },
+    }
+
+    imports = cv.import_strain(strain=imported_strain, immunity_to=0.5, immunity_from=0.5, days=1, n_imports=30)
 
     pars = {
         'beta': 0.016,
         'n_days': 80,
-        'strains': strains,
+        'beta': 0.025,
+        'rel_severe_prob': 1.3,  # 30% more severe across all ages
+        'half_life': {
+            'sus': dict(asymptomatic=10, mild=30, severe=50),  # Constant immunity from reinfection,
+        },
+        'init_immunity': {
+            'sus': 1
+        }
+        # 'strains': strains,
     }
 
-    sim = cv.Sim(pars=pars)
-    #sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
-    #sim['immunity'][1,0] = 0.0 # Say that strain B gives high immunity to strain A
+    sim = cv.Sim(pars=pars, interventions=imports)
     sim.run()
 
     strain_labels = [
@@ -232,20 +210,18 @@ def test_importstrain1(do_plot=False, do_show=True, do_save=False):
         'Strain 2: beta 0.025'
     ]
 
-    pars = {'n_days': 80,
-            'strains': {
-                'half_life': {'sus': dict(asymptomatic=None, mild=None, severe=None),
-                              'trans': dict(asymptomatic=None, mild=None, severe=None),
-                              'prog': dict(asymptomatic=None, mild=None, severe=None), },
-            }
-
-            }
+    pars = {
+        'n_days': 80,
+        'strains': {
+                'half_life': {
+                    'sus': dict(asymptomatic=None, mild=None, severe=None)
+                }
+        }
+    }
 
     imported_strain = {
         'beta': 0.025,
         'half_life': {'sus': dict(asymptomatic=None, mild=None, severe=None),
-                      'trans': dict(asymptomatic=None, mild=None, severe=None),
-                      'prog': dict(asymptomatic=None, mild=None, severe=None),
                       },
         'init_immunity': {'sus': 0.5, 'trans': 0.5, 'prog': 0.5},
     }
@@ -266,7 +242,8 @@ def test_importstrain2(do_plot=False, do_show=True, do_save=False):
 
     strain2 = {'beta': 0.025,
                'rel_severe_prob': 1.3,
-               'half_life': dict(asymptomatic=20, mild=80, severe=200),
+               'half_life': {'sus': dict(asymptomatic=20, mild=80, severe=200)
+                             },
                'init_immunity': 0.9
                }
     pars = {
@@ -276,7 +253,8 @@ def test_importstrain2(do_plot=False, do_show=True, do_save=False):
     strain3 = {
         'beta': 0.05,
         'rel_symp_prob': 1.6,
-        'half_life': dict(asymptomatic=10, mild=50, severe=150),
+        'half_life': {'sus': dict(asymptomatic=10, mild=50, severe=150),
+                      },
         'init_immunity': 0.4
     }
 

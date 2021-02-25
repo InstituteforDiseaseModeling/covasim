@@ -53,7 +53,6 @@ class PeopleMeta(sc.prettyobj):
         'sus_half_life',   # Float
         'trans_half_life',  # Float
         'prog_half_life',  # Float
-        # 'immune_factor_by_strain', # Float
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -133,7 +132,7 @@ result_flows = {'infections':           'infections',
 new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 
-# Parameters that can vary by strain
+# Parameters that can vary by strain (should be in list format)
 strain_pars = ['beta',
                'asymp_factor',
                'half_life',
@@ -142,7 +141,13 @@ strain_pars = ['beta',
                'rel_symp_prob',
                'rel_severe_prob',
                'rel_crit_prob',
-               'rel_death_prob']
+               'rel_death_prob',
+]
+
+immunity_pars = ['n_strains',
+                 'max_strains',
+                 'immunity',
+]
 
 immunity_axes = ['sus', 'trans', 'prog']
 
