@@ -318,13 +318,6 @@ def listify_strain_pars(pars, default_pars):
     return pars
 
 
-def delistify_strain_pars(pars):
-    ''' Helper function to validate parameters that have been set to vary by strain '''
-    for sp in cvd.strain_pars:
-        pars[sp] = pars[sp][0]
-    return pars
-
-
 def initialize_immunity(pars):
     '''
     Initialize the immunity matrices with default values

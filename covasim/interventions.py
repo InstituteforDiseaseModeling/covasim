@@ -1190,7 +1190,10 @@ class import_strain(Intervention):
             # Update strain info
             for strain_key in cvd.strain_pars:
                 if hasattr(self, strain_key):
-                    sim[strain_key].append(getattr(self, strain_key))
+                    newval = getattr(self, strain_key)
+                    if strain_key=='dur': # Validate durations (make sure there are values for all durations)
+                        newval = sc.mergenested(sim[strain_key][0], newval)
+                    sim[strain_key].append(newval)
                 else:
                     # use default
                     print(f'{strain_key} not provided for this strain, using default value')

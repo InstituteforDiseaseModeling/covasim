@@ -207,16 +207,17 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
 
     imported_strain = {
         'beta': 0.025,
-        'dur': dict(exp2inf=dict(dist='lognormal_int', par1=6.0,  par2=2.0),
-                    inf2sym=dict(dist='lognormal_int', par1=4.0,  par2=2.0),
-                    sym2sev=dict(dist='lognormal_int', par1=8.0,  par2=2.0),
-                    sev2crit=dict(dist='lognormal_int', par1=8.0, par2=2.0),
-                    asym2rec=dict(dist='lognormal_int', par1=5.0,  par2=2.0),
-                    mild2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
-                    sev2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
-                    crit2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
-                    crit2die=dict(dist='lognormal_int', par1=12.0,  par2=2.0)),
-
+        'dur': {'exp2inf':dict(dist='lognormal_int', par1=6.0,  par2=2.0)}
+        # 'dur': dict(exp2inf=dict(dist='lognormal_int', par1=6.0,  par2=2.0),
+        #             inf2sym=dict(dist='lognormal_int', par1=4.0,  par2=2.0),
+        #             sym2sev=dict(dist='lognormal_int', par1=8.0,  par2=2.0),
+        #             sev2crit=dict(dist='lognormal_int', par1=8.0, par2=2.0),
+        #             asym2rec=dict(dist='lognormal_int', par1=5.0,  par2=2.0),
+        #             mild2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
+        #             sev2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
+        #             crit2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
+        #             crit2die=dict(dist='lognormal_int', par1=12.0,  par2=2.0)),
+        #
     }
 
     imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
@@ -289,10 +290,10 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 if __name__ == '__main__':
     sc.tic()
 
-    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
 
