@@ -69,27 +69,12 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-# @nb.njit(           (nbfloat[:],       nbfloat[:],  nbint[:],    nbfloat,       nbfloat[:]), cache=True, parallel=parallel)
-def compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, decay_rate): # pragma: no cover
-    '''
-    Calculate immunity factors for time t
-
-    Args:
-        immunity_factors (array of floats):
-        immune_time:
-        immune_inds:
-        init_immunity:
-        decay_rate:
-
-    Returns:
-        immunity_factors (float[]): immunity factors
-    '''
-
-    immune_type_keys = immunity_factors.keys()
-
-    for key in immune_type_keys:
-        this_decay_rate = decay_rate[key][immune_inds]
-        immunity_factors[key][immune_inds] = init_immunity[key] * np.exp(-this_decay_rate * immune_time)
+@nb.njit(           (nbfloat[:],       nbfloat[:],  nbint[:],    nbfloat,       nbfloat[:]), cache=True, parallel=parallel)
+def compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, half_life): # pragma: no cover
+    ''' Calculate immunity factors for time t '''
+    decay_rate = np.log(2) / half_life
+    decay_rate[np.isnan(decay_rate)] = 0
+    immunity_factors[immune_inds] = init_immunity * np.exp(-decay_rate[immune_inds] * immune_time)
 
     return immunity_factors
 
