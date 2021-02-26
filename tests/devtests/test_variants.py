@@ -208,16 +208,6 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
     imported_strain = {
         'beta': 0.025,
         'dur': {'exp2inf':dict(dist='lognormal_int', par1=6.0,  par2=2.0)}
-        # 'dur': dict(exp2inf=dict(dist='lognormal_int', par1=6.0,  par2=2.0),
-        #             inf2sym=dict(dist='lognormal_int', par1=4.0,  par2=2.0),
-        #             sym2sev=dict(dist='lognormal_int', par1=8.0,  par2=2.0),
-        #             sev2crit=dict(dist='lognormal_int', par1=8.0, par2=2.0),
-        #             asym2rec=dict(dist='lognormal_int', par1=5.0,  par2=2.0),
-        #             mild2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
-        #             sev2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
-        #             crit2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
-        #             crit2die=dict(dist='lognormal_int', par1=12.0,  par2=2.0)),
-        #
     }
 
     imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
@@ -227,6 +217,46 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
     if do_plot:
         plot_results(sim, key='incidence_by_strain', title='Imported strain on day 30 (longer duration)', filename='test_importstrain1', labels=strain_labels, do_show=do_show, do_save=do_save)
         plot_shares(sim, key='new_infections', title='Shares of new infections by strain', filename='test_importstrain_longerdur_shares', do_show=do_show, do_save=do_save)
+    return sim
+
+
+def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test introducing 2 new strains partway through a sim, with a change_beta intervention')
+    sc.heading('Setting up...')
+
+    strain2 = {'beta': 0.025,
+               'rel_severe_prob': 1.3,
+               'half_life': {'sus': dict(asymptomatic=20, mild=80, severe=200)},
+               'init_immunity': {k:0.9 for k in cvd.immunity_axes},
+               }
+
+    pars = {'n_days': 80}
+
+    strain3 = {
+        'beta': 0.05,
+        'rel_symp_prob': 1.6,
+        'half_life': {'sus': dict(asymptomatic=10, mild=50, severe=150)},
+        'init_immunity': {k:0.4 for k in cvd.immunity_axes}
+    }
+
+    intervs  = [
+        cv.change_beta(days=[10, 50, 70], changes=[0.8, 0.7, 0.6]),
+        cv.import_strain(strain=strain2, days=40, n_imports=20),
+        cv.import_strain(strain=strain3, days=60, n_imports=20),
+               ]
+    sim = cv.Sim(pars=pars, interventions=intervs, label='With imported infections')
+    sim.run()
+
+    strain_labels = [
+        'Strain 1: beta 0.016',
+        'Strain 2: beta 0.025, 20 imported day 10',
+        'Strain 3: beta 0.05, 20 imported day 30'
+    ]
+
+    if do_plot:
+        plot_results(sim, key='incidence_by_strain', title='Imported strains', filename='test_importstrain2', labels=strain_labels, do_show=do_show, do_save=do_save)
+        plot_shares(sim, key='new_infections', title='Shares of new infections by strain',
+                filename='test_importstrain2_shares', do_show=do_show, do_save=do_save)
     return sim
 
 
@@ -294,7 +324,8 @@ if __name__ == '__main__':
     #scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
 
     # The next tests are deprecated, can be removed
