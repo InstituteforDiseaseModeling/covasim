@@ -930,7 +930,9 @@ class Scenarios(cvb.ParsObj):
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
-            scen_sim.update_pars(scenpars)
+            defaults = {par: scen_sim[par] for par in cvd.strain_pars}
+            defaults['immunity'] = scen_sim['immunity']
+            scen_sim.update_pars(scenpars, defaults=defaults, **kwargs)  # Update the parameters, if provided
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:
                 print('Running in debug mode (not parallelized)')
@@ -1330,18 +1332,18 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
         sim.set_seed()
 
     # If the noise parameter is not found, guess what it should be
-    if noisepar is None:
-        noisepar = 'beta'
-        if noisepar not in sim.pars.keys():
-            raise sc.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
+    # if noisepar is None:
+    #     noisepar = 'beta'
+    #     if noisepar not in sim.pars.keys():
+    #         raise sc.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
 
     # Handle noise -- normally distributed fractional error
-    noiseval = noise*np.random.normal()
-    if noiseval > 0:
-        noisefactor = 1 + noiseval
-    else:
-        noisefactor = 1/(1-noiseval)
-    sim[noisepar] *= noisefactor
+    # noiseval = noise*np.random.normal()
+    # if noiseval > 0:
+    #     noisefactor = 1 + noiseval
+    # else:
+    #     noisefactor = 1/(1-noiseval)
+    # sim[noisepar] *= noisefactor
 
     if verbose>=1:
         verb = 'Running' if do_run else 'Creating'

@@ -69,27 +69,12 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-# @nb.njit(           (nbfloat[:],       nbfloat[:],  nbint[:],    nbfloat,       nbfloat[:]), cache=True, parallel=parallel)
-def compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, decay_rate): # pragma: no cover
-    '''
-    Calculate immunity factors for time t
-
-    Args:
-        immunity_factors (array of floats):
-        immune_time:
-        immune_inds:
-        init_immunity:
-        decay_rate:
-
-    Returns:
-        immunity_factors (float[]): immunity factors
-    '''
-
-    immune_type_keys = immunity_factors.keys()
-
-    for key in immune_type_keys:
-        this_decay_rate = decay_rate[key][immune_inds]
-        immunity_factors[key][immune_inds] = init_immunity[key] * np.exp(-this_decay_rate * immune_time)
+@nb.njit(           (nbfloat[:],       nbfloat[:],  nbint[:],    nbfloat,       nbfloat[:]), cache=True, parallel=parallel)
+def compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, half_life): # pragma: no cover
+    ''' Calculate immunity factors for time t '''
+    decay_rate = np.log(2) / half_life
+    decay_rate[np.isnan(decay_rate)] = 0
+    immunity_factors[immune_inds] = init_immunity * np.exp(-decay_rate[immune_inds] * immune_time)
 
     return immunity_factors
 
@@ -101,7 +86,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     f_iso     = ~diag +  diag * iso_factor # Isolation factor, changes e.g. [0,1] with a factor of 0.2 to [1,0.2]
     f_quar    = ~quar +  quar * quar_factor # Quarantine, changes e.g. [0,1] with a factor of 0.5 to [1,0.5]
     rel_trans = beta_layer * rel_trans * inf * f_quar * f_asymp * f_iso * viral_load # Recalculate transmissibility
-    rel_sus   = rel_sus * sus * f_quar *(1.-immunity_factors) # Recalculate susceptibility
+    rel_sus   = rel_sus * sus * f_quar * (1.-immunity_factors) # Recalculate susceptibility
     return rel_trans, rel_sus
 
 

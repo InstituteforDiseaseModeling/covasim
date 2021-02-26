@@ -48,14 +48,11 @@ class PeopleMeta(sc.prettyobj):
         'death_prob',  # Float
         'rel_trans',   # Float
         'rel_sus',     # Float
-        'time_of_last_inf', # Int
-        'sus_immunity_factors', # Float
         'trans_immunity_factors', # Float
         'prog_immunity_factors', # Float
         'sus_half_life',   # Float
         'trans_half_life',  # Float
         'prog_half_life',  # Float
-        # 'immune_factor_by_strain', # Float
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -68,7 +65,6 @@ class PeopleMeta(sc.prettyobj):
         'critical',
         'tested',
         'diagnosed',
-        #'recovered',
         'dead',
         'known_contact',
         'quarantined',
@@ -80,7 +76,6 @@ class PeopleMeta(sc.prettyobj):
         'infectious_strain',
         'infectious_by_strain',
         'recovered_strain',
-        # 'recovered_by_strain',
     ]
 
     # Set the dates various events took place: these are floats per person -- used in people.py
@@ -137,7 +132,7 @@ result_flows = {'infections':           'infections',
 new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 
-# Parameters that can vary by strain
+# Parameters that can vary by strain (should be in list format)
 strain_pars = ['beta',
                'asymp_factor',
                'half_life',
@@ -146,7 +141,15 @@ strain_pars = ['beta',
                'rel_symp_prob',
                'rel_severe_prob',
                'rel_crit_prob',
-               'rel_death_prob']
+               'rel_death_prob',
+]
+
+immunity_pars = ['n_strains',
+                 'max_strains',
+                 'immunity',
+]
+
+immunity_axes = ['sus', 'trans', 'prog']
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([

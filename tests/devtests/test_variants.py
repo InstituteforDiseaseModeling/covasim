@@ -1,4 +1,5 @@
 import covasim as cv
+import covasim.defaults as cvd
 import sciris as sc
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,7 +11,7 @@ do_save   = 1
 
 
 def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run a basic sim with 1 strain, allowing for reinfection')
+    sc.heading('Run a basic sim with 1 strain, varying reinfection risk')
     sc.heading('Setting up...')
 
     # Define baseline parameters
@@ -19,17 +20,6 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
         'n_days': 240,
     }
 
-    imported_strain = {
-        'beta': 0.2,
-        'half_life': {
-            'sus': dict(asymptomatic=55, mild=60, severe=150),  # Constant immunity from reinfection,
-            'trans': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection,
-            'prog': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection
-        },
-        'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
-    }
-
-    imports = cv.import_strain(strain=imported_strain, immunity_to=0.5, immunity_from=0.5, days=50, n_imports=30)
     n_runs = 3
     base_sim = cv.Sim(base_pars)
 
@@ -39,80 +29,36 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
         'baseline': {
           'name':'No reinfection',
           'pars': {
-              'strains': {
-                  'half_life': {
-                      'sus': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
-                      'trans': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
-                      'prog': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection
-                  },
-                  'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
-              }
+              'half_life': {
+                  'sus': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
+              },
+              'init_immunity': {
+                  'sus': 1,
+              },
           }
         },
         'med_halflife': {
-          'name':'3 month waning susceptible, transmission and progression immunity',
+          'name':'3 month waning susceptibility',
           'pars': {
-              'strains': {
-                  'half_life': {
-                      'sus': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection,
-                      'trans': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection,
-                      'prog': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection
-                  },
-                  'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
-              }
+              'half_life': {
+                      'sus': dict(asymptomatic=55, mild=55, severe=55),
+              },
+              'init_immunity': {
+                  'sus': 1,
+              },
           }
         },
-        'short_halflife': {
-            'name': '3 month waning susceptible, slow waning transmission and progression immunity',
-            'pars': {
-                'strains': {
-                    'half_life': {
-                        'sus': dict(asymptomatic=55, mild=55, severe=55),  # Constant immunity from reinfection,
-                        'trans': dict(asymptomatic=160, mild=160, severe=160),  # Constant immunity from reinfection,
-                        'prog': dict(asymptomatic=160, mild=160, severe=160),  # Constant immunity from reinfection
-                    },
-                    'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
-                }
-
+        'med_halflife_bysev': {
+          'name':'1, 3, 6 month waning susceptibility, by severity',
+          'pars': {
+              'half_life': {
+                  'sus': dict(asymptomatic=25, mild=55, severe=155),
+              },
+              'init_immunity': {
+                  'sus': 1,
+              },
           }
         },
-        'short_half_life': {
-            'name': '3 month waning susceptible, slow progression and transmission immunity, new strain on day 50',
-            'pars': {
-                'strains': {
-                    'half_life': {
-                        'sus': dict(asymptomatic=55, mild=60, severe=150),  # Constant immunity from reinfection,
-                        'trans': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection,
-                        'prog': dict(asymptomatic=55, mild=100, severe=160),  # Constant immunity from reinfection
-                    },
-                    'init_immunity': {'sus': 1, 'trans': 1, 'prog': 1},
-                },
-                'interventions': imports
-            }
-        },
-        # 'short_half_life_50init': {
-        #     'name': 'Fast-waning susceptible, slow progression and transmission immunity, 50% init',
-        #     'pars': {
-        #         'strains': {
-        #             'half_life': {
-        #                 'sus': dict(asymptomatic=10, mild=30, severe=50),  # Constant immunity from reinfection,
-        #                 'trans': dict(asymptomatic=160, mild=160, severe=160),  # Constant immunity from reinfection,
-        #                 'prog': dict(asymptomatic=160, mild=160, severe=160),  # Constant immunity from reinfection
-        #             },
-        #             'init_immunity': {'sus': .5, 'trans': .5, 'prog': .5},
-        #         }
-        #     }
-        # },
-        # 'short_susceptible_prog_long_trans': {
-        #     'name': 'Fast-waning susceptible and progression, slow-waning transmission immunity',
-        #     'pars': {
-        #         'half_life': {
-        #             'sus': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection,
-        #             'trans': dict(asymptomatic=60, mild=60, severe=60),  # Constant immunity from reinfection,
-        #             'prog': dict(asymptomatic=10, mild=10, severe=10),  # Constant immunity from reinfection
-        #         }
-        #     }
-        # },
     }
 
     metapars = {'n_runs': n_runs}
@@ -129,41 +75,6 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
         scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_basic_reinfection.png', to_plot=to_plot)
 
     return scens
-
-
-def test_2strains(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run basic sim with 2 strains')
-    sc.heading('Setting up...')
-
-    strains = {'beta': 0.025,
-               'rel_severe_prob': 1.3, # 30% more severe across all ages
-               'half_life': {
-                    'sus': dict(asymptomatic=10, mild=30, severe=50),  # Constant immunity from reinfection,
-                    'trans': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
-                    'prog': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection
-                },
-               }
-
-    pars = {
-        'beta': 0.016,
-        'n_days': 80,
-        'strains': strains,
-    }
-
-    sim = cv.Sim(pars=pars)
-    #sim['immunity'][0,1] = 0.0 # Say that strain A gives no immunity to strain B
-    #sim['immunity'][1,0] = 0.0 # Say that strain B gives high immunity to strain A
-    sim.run()
-
-    strain_labels = [
-        f'Strain A: beta {sim["beta"][0]}, half_life {sim["half_life"][0]}',
-        f'Strain B: beta {sim["beta"][1]}, half_life {sim["half_life"][1]}',
-    ]
-
-    if do_plot:
-        # sim.plot_result('new_reinfections', do_show=do_show, do_save=do_save, fig_path=f'results/test_2strains.png')
-        plot_results(sim, key='incidence_by_strain', title=f'2 strain test', filename='test_2strains2', labels=strain_labels, do_show=do_show, do_save=do_save)
-    return sim
 
 
 def test_strainduration(do_plot=False, do_show=True, do_save=False):
@@ -214,7 +125,7 @@ def test_strainduration(do_plot=False, do_show=True, do_save=False):
     return scens
 
 
-def test_importstrain1(do_plot=False, do_show=True, do_save=False):
+def test_import1strain(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing a new strain partway through a sim')
     sc.heading('Setting up...')
 
@@ -223,20 +134,15 @@ def test_importstrain1(do_plot=False, do_show=True, do_save=False):
         'Strain 2: beta 0.025'
     ]
 
-    pars = {'n_days': 80,
-            'half_life': {'sus': dict(asymptomatic=None, mild=None, severe=None),
-                          'trans': dict(asymptomatic=None, mild=None, severe=None),
-                          'prog': dict(asymptomatic=None, mild=None, severe=None),},
-            # 'cross_immunity':1.
-            }
+    pars = {
+        'n_days': 80,
+        'half_life': {'sus': dict(asymptomatic=100, mild=None, severe=None)},
+        'init_immunity': {'prog': 0.9}
+    }
 
     imported_strain = {
         'beta': 0.025,
-        'half_life': {'sus': dict(asymptomatic=None, mild=None, severe=None),
-                      'trans': dict(asymptomatic=None, mild=None, severe=None),
-                      'prog': dict(asymptomatic=None, mild=None, severe=None),
-                      },
-        'init_immunity': {'sus': 0.5, 'trans': 0.5, 'prog': 0.5},
+        'init_immunity': {'sus':0.5}
     }
 
     imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
@@ -249,98 +155,40 @@ def test_importstrain1(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
-def test_importstrain2(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Test introducing a new strain partway through a sim with 2 strains')
+def test_import2strains(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test introducing 2 new strains partway through a sim')
     sc.heading('Setting up...')
 
     strain2 = {'beta': 0.025,
                'rel_severe_prob': 1.3,
-               'half_life': dict(asymptomatic=20, mild=80, severe=200),
-               'init_immunity': 0.9
+               'half_life': {'sus': dict(asymptomatic=20, mild=80, severe=200)},
+               'init_immunity': {k:0.9 for k in cvd.immunity_axes},
                }
-    pars = {
-        'n_days': 80,
-        'strains': strain2,
-    }
+    pars = {'n_days': 80}
+
     strain3 = {
         'beta': 0.05,
         'rel_symp_prob': 1.6,
-        'half_life': dict(asymptomatic=10, mild=50, severe=150),
-        'init_immunity': 0.4
+        'half_life': {'sus': dict(asymptomatic=10, mild=50, severe=150)},
+        'init_immunity': {k:0.4 for k in cvd.immunity_axes}
     }
 
-    imports = cv.import_strain(strain=strain3, days=10, n_imports=20)
+    imports = [cv.import_strain(strain=strain2, days=10, n_imports=20),
+               cv.import_strain(strain=strain3, days=30, n_imports=20),
+               ]
     sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
     sim.run()
 
     strain_labels = [
         'Strain 1: beta 0.016',
-        'Strain 2: beta 0.025',
-        'Strain 3: beta 0.05, 20 imported day 10'
+        'Strain 2: beta 0.025, 20 imported day 10',
+        'Strain 3: beta 0.05, 20 imported day 30'
     ]
 
     if do_plot:
         plot_results(sim, key='incidence_by_strain', title='Imported strains', filename='test_importstrain2', labels=strain_labels, do_show=do_show, do_save=do_save)
         plot_shares(sim, key='new_infections', title='Shares of new infections by strain',
                 filename='test_importstrain2_shares', do_show=do_show, do_save=do_save)
-    return sim
-
-
-def test_par_refactor():
-    '''
-    The purpose of this test is to experiment with different representations of the parameter structures
-    Still WIP!
-    '''
-
-    # Simplest case: add a strain to beta
-    p1 = cv.Par(name='beta', val=0.016, by_strain=True)
-    print(p1.val) # Prints all the stored values of beta
-    print(p1[0])  # Can index beta like an array to pull out strain-specific values
-    p1.add_strain(new_val = 0.025)
-
-    # Complex case: add a strain that's differentiated by severity for kids 0-20
-    p2 = cv.Par(name='sus_ORs', val=np.array([0.34, 0.67, 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]), by_strain=True, by_age=True)
-    print(p2.val) # Prints all the stored values for the original strain
-    print(p2[0])  # Can index beta like an array to pull out strain-specific values
-    p2.add_strain(new_val=np.array([1., 1., 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]))
-
-    # Complex case: add a strain that's differentiated by duration of disease
-    p3 = cv.Par(name='dur_asym2rec', val=dict(dist='lognormal_int', par1=8.0,  par2=2.0), by_strain=True, is_dist=True)
-    print(p3.val) # Prints all the stored values for the original strain
-    print(p3[0])  # Can index beta like an array to pull out strain-specific values
-    p3.add_strain(new_val=dict(dist='lognormal_int', par1=12.0,  par2=2.0))
-    p3.get(strain=1, n=6)
-
-    return p1, p2, p3
-
-
-def test_halflife_by_severity(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run basic sim with 2 strains and half life by severity')
-    sc.heading('Setting up...')
-
-    strains = {'half_life': {'sus': dict(asymptomatic=100, mild=150, severe=200),
-                             'trans': dict(asymptomatic=100, mild=150, severe=200),
-                             'prog': dict(asymptomatic=100, mild=150, severe=200)}}
-
-    pars = {
-        'n_days': 80,
-        'beta': 0.015,
-        'strains': strains,
-    }
-
-    sim = cv.Sim(pars=pars)
-    sim['immunity'][0,1] = 1.0 # Say that strain A gives no immunity to strain B
-    sim['immunity'][1,0] = 1.0 # Say that strain B gives no immunity to strain A
-    sim.run()
-
-    strain_labels = [
-        f'Strain A: beta {pars["beta"]}, half_life not by severity',
-        f'Strain B: beta {pars["beta"]}, half_life by severity',
-    ]
-
-    if do_plot:
-        sim.plot_result('new_reinfections', fig_path='results/test_halflife_by_severity.png', do_show=do_show, do_save=do_save)
-        plot_results(sim, key='incidence_by_strain', title=f'2 strain test, A->B immunity {sim["immunity"][0,1]}, B->A immunity {sim["immunity"][1,0]}', filename='test_halflife_by_severity', labels=strain_labels, do_show=do_show, do_save=do_save)
     return sim
 
 
@@ -359,18 +207,7 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
 
     imported_strain = {
         'beta': 0.025,
-#        'half_life': dict(asymptomatic=20, mild=80, severe=100),
-#        'init_immunity': 0.5,
-        'dur': dict(exp2inf=dict(dist='lognormal_int', par1=6.0,  par2=2.0),
-                    inf2sym=dict(dist='lognormal_int', par1=4.0,  par2=2.0),
-                    sym2sev=dict(dist='lognormal_int', par1=8.0,  par2=2.0),
-                    sev2crit=dict(dist='lognormal_int', par1=8.0, par2=2.0),
-                    asym2rec=dict(dist='lognormal_int', par1=5.0,  par2=2.0),
-                    mild2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
-                    sev2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
-                    crit2rec=dict(dist='lognormal_int', par1=12.0,  par2=2.0),
-                    crit2die=dict(dist='lognormal_int', par1=12.0,  par2=2.0)),
-
+        'dur': {'exp2inf':dict(dist='lognormal_int', par1=6.0,  par2=2.0)}
     }
 
     imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
@@ -380,6 +217,46 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
     if do_plot:
         plot_results(sim, key='incidence_by_strain', title='Imported strain on day 30 (longer duration)', filename='test_importstrain1', labels=strain_labels, do_show=do_show, do_save=do_save)
         plot_shares(sim, key='new_infections', title='Shares of new infections by strain', filename='test_importstrain_longerdur_shares', do_show=do_show, do_save=do_save)
+    return sim
+
+
+def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test introducing 2 new strains partway through a sim, with a change_beta intervention')
+    sc.heading('Setting up...')
+
+    strain2 = {'beta': 0.025,
+               'rel_severe_prob': 1.3,
+               'half_life': {'sus': dict(asymptomatic=20, mild=80, severe=200)},
+               'init_immunity': {k:0.9 for k in cvd.immunity_axes},
+               }
+
+    pars = {'n_days': 80}
+
+    strain3 = {
+        'beta': 0.05,
+        'rel_symp_prob': 1.6,
+        'half_life': {'sus': dict(asymptomatic=10, mild=50, severe=150)},
+        'init_immunity': {k:0.4 for k in cvd.immunity_axes}
+    }
+
+    intervs  = [
+        cv.change_beta(days=[10, 50, 70], changes=[0.8, 0.7, 0.6]),
+        cv.import_strain(strain=strain2, days=40, n_imports=20),
+        cv.import_strain(strain=strain3, days=60, n_imports=20),
+               ]
+    sim = cv.Sim(pars=pars, interventions=intervs, label='With imported infections')
+    sim.run()
+
+    strain_labels = [
+        'Strain 1: beta 0.016',
+        'Strain 2: beta 0.025, 20 imported day 10',
+        'Strain 3: beta 0.05, 20 imported day 30'
+    ]
+
+    if do_plot:
+        plot_results(sim, key='incidence_by_strain', title='Imported strains', filename='test_importstrain2', labels=strain_labels, do_show=do_show, do_save=do_save)
+        plot_shares(sim, key='new_infections', title='Shares of new infections by strain',
+                filename='test_importstrain2_shares', do_show=do_show, do_save=do_save)
     return sim
 
 
@@ -443,19 +320,17 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 if __name__ == '__main__':
     sc.tic()
 
-    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # p1, p2, p3 = test_par_refactor()
-    # sim4 = test_halflife_by_severity(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim5 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # Importing strains is not currently working, so the following tests break
-    # sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # This next test is deprecated, can be removed
+    # The next tests are deprecated, can be removed
     # simX = test_importstrain_args()
+    # p1, p2, p3 = test_par_refactor()
 
     sc.toc()
 
@@ -498,3 +373,31 @@ print('Done.')
 #
 #     return sim
 #
+
+# def test_par_refactor():
+#     '''
+#     The purpose of this test is to experiment with different representations of the parameter structures
+#     Still WIP!
+#     '''
+#
+#     # Simplest case: add a strain to beta
+#     p1 = cv.Par(name='beta', val=0.016, by_strain=True)
+#     print(p1.val) # Prints all the stored values of beta
+#     print(p1[0])  # Can index beta like an array to pull out strain-specific values
+#     p1.add_strain(new_val = 0.025)
+#
+#     # Complex case: add a strain that's differentiated by severity for kids 0-20
+#     p2 = cv.Par(name='sus_ORs', val=np.array([0.34, 0.67, 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]), by_strain=True, by_age=True)
+#     print(p2.val) # Prints all the stored values for the original strain
+#     print(p2[0])  # Can index beta like an array to pull out strain-specific values
+#     p2.add_strain(new_val=np.array([1., 1., 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]))
+#
+#     # Complex case: add a strain that's differentiated by duration of disease
+#     p3 = cv.Par(name='dur_asym2rec', val=dict(dist='lognormal_int', par1=8.0,  par2=2.0), by_strain=True, is_dist=True)
+#     print(p3.val) # Prints all the stored values for the original strain
+#     print(p3[0])  # Can index beta like an array to pull out strain-specific values
+#     p3.add_strain(new_val=dict(dist='lognormal_int', par1=12.0,  par2=2.0))
+#     p3.get(strain=1, n=6)
+#
+#     return p1, p2, p3
+

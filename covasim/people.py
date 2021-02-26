@@ -58,9 +58,9 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
-            elif key == 'rel_trans' or key == 'rel_sus' or key == 'time_of_last_inf':
+            elif key == 'rel_trans' or key == 'rel_sus':
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), np.nan, dtype=cvd.default_float, order='F')
-            elif key == 'sus_immunity_factors' or key == 'trans_immunity_factors' or key == 'prog_immunity_factors': # everyone starts out with no immunity to either strain.
+            elif key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
@@ -391,10 +391,7 @@ class People(cvb.BasePeople):
         infect_parkeys = ['dur', 'rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob', 'half_life']
         infect_pars = dict()
         for key in infect_parkeys:
-            if self.pars['strains'] is not None and key in self.pars['strains'].keys(): # This parameter varies by strain: extract strain-specific value
-                infect_pars[key] = self.pars[key][strain]
-            else:
-                infect_pars[key] = self.pars[key]
+            infect_pars[key] = self.pars[key][strain]
 
         n_infections = len(inds)
         durpars      = infect_pars['dur']
@@ -415,11 +412,8 @@ class People(cvb.BasePeople):
         for i, target in enumerate(inds):
             self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
 
-        # Record time of infection
-        self.time_of_last_inf[strain, inds] = self.t
-
         # Calculate how long before this person can infect other people
-        self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)*(1-self.trans_immunity_factors[strain, inds])
+        self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
         self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
 
         # Use prognosis probabilities to determine what happens to them
@@ -483,7 +477,7 @@ class People(cvb.BasePeople):
         self.dur_disease[alive_inds] = self.dur_exp2inf[alive_inds] + self.dur_inf2sym[alive_inds] + self.dur_sym2sev[alive_inds] + self.dur_sev2crit[alive_inds] + dur_crit2rec  # Store how long this person had COVID-19
 
         # CASE 2.2.2.2: Did die
-        dur_crit2die = cvu.sample(**durpars['crit2die'], size=len(dead_inds))*(1-self.trans_immunity_factors[strain, dead_inds])
+        dur_crit2die = cvu.sample(**durpars['crit2die'], size=len(dead_inds))
         self.date_dead[dead_inds] = self.date_critical[dead_inds] + dur_crit2die # Date of death
         self.dur_disease[dead_inds] = self.dur_exp2inf[dead_inds] + self.dur_inf2sym[dead_inds] + self.dur_sym2sev[dead_inds] + self.dur_sev2crit[dead_inds] + dur_crit2die   # Store how long this person had COVID-19
 

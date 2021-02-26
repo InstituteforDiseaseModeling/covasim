@@ -395,8 +395,10 @@ class change_beta(Intervention):
         for lkey in self.layers:
             if lkey is None:
                 self.orig_betas['overall'] = sim['beta']
+                self.testkey = 'overall'
             else:
                 self.orig_betas[lkey] = sim['beta_layer'][lkey]
+                self.testkey = lkey
 
         self.initialized = True
         return
@@ -404,14 +406,23 @@ class change_beta(Intervention):
 
     def apply(self, sim):
 
+        # Extend beta if needed
+        if self.layers[0] is None:
+            if len(sim['beta'])>len(self.orig_betas['overall']):
+                prev_change = sim['beta'][0]/self.orig_betas['overall'][0]
+                self.orig_betas['overall'].append(sim['beta'][-1])
+                sim['beta'][-1] *= prev_change
+
         # If this day is found in the list, apply the intervention
         for ind in find_day(self.days, sim.t):
             for lkey,new_beta in self.orig_betas.items():
-                new_beta = new_beta * self.changes[ind]
                 if lkey == 'overall':
+                    new_beta = [bv * self.changes[ind] for bv in new_beta]
                     sim['beta'] = new_beta
                 else:
+                    new_beta *= self.changes[ind]
                     sim['beta_layer'][lkey] = new_beta
+
 
         return
 
@@ -1124,25 +1135,23 @@ __all__+= ['import_strain']
 
 class import_strain(Intervention):
     '''
-    Introduce a new variant(s) to the population through an importation at a given time point.
+    Introduce a new variant to the population through an importation at a given time point.
 
     Args:
-        days (int or list of ints): days on which new variants are introduced. Note, the interpretation of a list differs from other interventions; see examples below
-        n_imports (list of ints): the number of imports of strain(s)
-        beta      (list of floats): per contact transmission of strain(s)
-        init_immunity   (list of floats): initial immunity against strain(s) once recovered; 1 = perfect, 0 = no immunity
-        half_life  (list of dicts): determines decay rate of immunity against strain(s) broken down by severity; If half_life is None immunity is constant
-        immunity_to (list of list of floats): cross immunity to existing strains in model
-        immunity_from (list of list of floats): cross immunity from existing strains in model
+        days (int): day on which new variant is introduced.
+        n_imports (int): the number of imports of strain
+        beta      (float): per contact transmission of strain
+        init_immunity   (floats): initial immunity against strain once recovered; 1 = perfect, 0 = no immunity
+        half_life  (dicts): determines decay rate of immunity against strain broken down by severity; If half_life is None immunity is constant
+        immunity_to (list of floats): cross immunity to existing strains in model
+        immunity_from (list of floats): cross immunity from existing strains in model
         kwargs     (dict): passed to Intervention()
 
     **Examples**::
 
-        interv = cv.import_strain(days=50, beta=0.03) # On day 50, import one new strain (one case)
-        interv = cv.import_strain(days=[10, 50], beta=0.03) # On day 50, import one new strain (one case)
-        interv = cv.import_strain(days=50, beta=[0.03, 0.05]) # On day 50, import two new strains (one case of each)
-        interv = cv.import_strain(days=[10, 20], n_imports=[5, 10], beta=[0.03, 0.05], init_immunity=[1, 1],
-        half_life=[180, 180], immunity_to=[[0, 0], [0,0]], immunity_from=[[0, 0], [0,0]]) # On day 10, import 5 cases of one new strain, on day 20, import 10 cases of another
+        interv = cv.import_strain(days=50, beta=0.03) # On day 50, import new strain (one case)
+        interv = cv.import_strain(days=[10, 20], n_imports=[5, 10], beta=0.03, init_immunity=1,
+        half_life=180, immunity_to=[0, 0], immunity_from=[0, 0]) # On day 10, import 5 cases of new strain, on day 20, import 10 cases
     '''
 
     def __init__(self, strain=None, days=None, n_imports=1, immunity_to=None, immunity_from=None, **kwargs):
@@ -1151,80 +1160,61 @@ class import_strain(Intervention):
         self._store_args()  # Store the input arguments so the intervention can be recreated
 
         # Handle inputs
-        self.days           = sc.promotetolist(days)
-        self.n_imports      = sc.promotetolist(n_imports)
-        self.immunity_to    = sc.promotetolist(immunity_to) if immunity_to is not None else [None]
-        self.immunity_from  = sc.promotetolist(immunity_from) if immunity_from is not None else [None]
-        self.strain         = {par: sc.promotetolist(val) for par, val in strain.items()}
-        for par, val in self.strain.items(): setattr(self, par, val)
-        if not hasattr(self,'init_immunity'):
-            self.init_immunity = [None]
-        self.new_strains    = self.check_args(['days', 'n_imports']+list(self.strain.keys()))
+        self.days           = days
+        self.n_imports      = n_imports
+        self.immunity_to    = immunity_to
+        self.immunity_from  = immunity_from
+        self.strain         = {par: val for par, val in strain.items()}
+        for par, val in self.strain.items():
+            setattr(self, par, val)
         return
-
-
-    def check_args(self, args):
-        ''' Check the length of supplied arguments'''
-        argvals      = [getattr(self,arg) for arg in args]
-        arglengths   = np.array([len(argval) for argval in argvals]) # Get lengths of all arguments
-        multi_d_args = arglengths[cvu.true(arglengths > 1)].tolist() # Get multidimensional arguments
-        if len(multi_d_args)==0: # Introducing a single new strain, and all arguments have the right length
-            new_strains = 1
-        elif len(multi_d_args)>=1: # Introducing more than one new strain, but with only one property varying
-            if len(multi_d_args)>1 and (multi_d_args.count(multi_d_args[0])!=len(multi_d_args)):  # This raises an error: more than one multi-dim argument and they're not equal length
-                raise ValueError(f'Mismatch in the lengths of arguments supplied.')
-            else:
-                new_strains = multi_d_args[0]
-                for arg,argval in zip(args,argvals):
-                    if len(argval)==1:
-                        setattr(self,arg,[argval[0]]*new_strains)
-        return new_strains
-
 
     def initialize(self, sim):
         self.days = process_days(sim, self.days)
         self.max_strains = sim['max_strains']
+        if not hasattr(self,'init_immunity'):
+            self.init_immunity = None
+        if not hasattr(self, 'half_life'):
+            self.half_life = sim['half_life'][0]
         self.initialized = True
-
 
     def apply(self, sim):
 
-        # Loop over strains
-        for strain in range(self.new_strains):
+        if sim.t == self.days:  # Time to introduce strain
 
-            if sim.t == self.days[strain]: # Time to introduce this strain
+            # Check number of strains
+            prev_strains = sim['n_strains']
+            if prev_strains + 1 > self.max_strains:
+                errormsg = f"Number of existing strains ({sim['n_strains']}) plus new strain exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
+                raise ValueError(errormsg)
 
-                # Check number of strains
-                prev_strains = sim['n_strains']
-                if prev_strains + 1 > self.max_strains:
-                    errormsg = f"Number of existing strains ({sim['n_strains']}) plus new strain exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
-                    raise ValueError(errormsg)
+            # Validate half_life and init_immunity (make sure there are values for all cvd.immunity_axes
+            for key in cvd.immunity_axes:
+                if self.init_immunity is not None:
+                    if key not in self.init_immunity:
+                        print(f'initial immunity for imported strain for {key} not provided, using default value')
+                        self.init_immunity[key] = sim['init_immunity'][0][key]
+                if key not in self.half_life:
+                    print(f'half life for imported strain for {key} not provided, using default value')
+                    self.half_life[key] = sim['half_life'][0][key]
 
-                # Update strain info
-                if sim['strains'] is None:
-                    sim['strains'] = self.strain
-                    for par, val in sim['strains'].items():
-                        sim[par] = sc.promotetolist(sim[par]) + sc.promotetolist(val)
-                else: # TODO, this could be improved a LOT - surely there's a variant of mergedicts or update that works here
-                    all_strain_keys = list(set([*sim['strains']]+[*self.strain])) # Merged list of all parameters that need to be by strain
-                    for sk in all_strain_keys:
-                        if sk in sim['strains'].keys(): # This was already by strain
-                            if sk in self.strain.keys(): # We add a new value
-                                sim['strains'][sk] = sc.promotetolist(sim['strains'][sk]) + sc.promotetolist(self.strain[sk])
-                                sim[sk] = sc.promotetolist(sim[sk]) + sc.promotetolist(self.strain[sk])
-                            else:
-                                sim['strains'][sk] = sc.promotetolist(sim['strains'][sk])
-                                sim['strains'][sk].append(sim[sk][0])
-                                sim[sk].append(sim[sk][0])
-                        else: # This wasn't previously stored by strain, so now it needs to be added by strain
-                            sim['strains'][sk] = sc.promotetolist(sim[sk]) + sc.promotetolist(self.strain[sk])
-                            sim[sk] = sc.promotetolist(sim[sk]) + sc.promotetolist(sim['strains'][sk])
-                sim['n_strains'] += 1
-                cvpar.update_immunity(pars=sim.pars, create=False, update_strain=prev_strains, immunity_from=self.immunity_from[strain],
-                                    immunity_to=self.immunity_to[strain], init_immunity=self.init_immunity[strain]['sus'],
-                                      prog_immunity=self.init_immunity[strain]['prog'], trans_immunity=self.init_immunity[strain]['trans'])
-                importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports[strain])  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
-                sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
+            # Update strain info
+            for strain_key in cvd.strain_pars:
+                if hasattr(self, strain_key):
+                    newval = getattr(self, strain_key)
+                    if strain_key=='dur': # Validate durations (make sure there are values for all durations)
+                        newval = sc.mergenested(sim[strain_key][0], newval)
+                    sim[strain_key].append(newval)
+                else:
+                    # use default
+                    print(f'{strain_key} not provided for this strain, using default value')
+                    sim[strain_key].append(sim[strain_key][0])
 
+            sim['n_strains'] += 1
+            cvpar.update_immunity(pars=sim.pars, update_strain=prev_strains,
+                                  immunity_from=self.immunity_from, immunity_to=self.immunity_to,
+                                  init_immunity=self.init_immunity)
+            importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports)  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
+            sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
 
         return
