@@ -1197,7 +1197,7 @@ class import_strain(Intervention):
                     sim[strain_key].append(sim[strain_key][0])
 
             sim['n_strains'] += 1
-            cvpar.update_immunity(pars=sim.pars, create=False, update_strain=prev_strains,
+            cvpar.update_immunity(pars=sim.pars, update_strain=prev_strains,
                                   immunity_from=self.immunity_from, immunity_to=self.immunity_to,
                                   init_immunity=self.init_immunity)
             importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports)  # TODO: do we need to check these people aren't infected? Or just consider it unlikely

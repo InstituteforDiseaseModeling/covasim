@@ -1,4 +1,5 @@
 import covasim as cv
+import covasim.defaults as cvd
 import sciris as sc
 import matplotlib.pyplot as plt
 import numpy as np
@@ -76,47 +77,6 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
     return scens
 
 
-def test_2strains(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run basic sim with 2 strains')
-    sc.heading('Setting up...')
-
-    imported_strain = {
-        'beta': 0.2,
-        'half_life': {
-            'sus': dict(asymptomatic=25, mild=55, severe=155),
-            'trans': dict(asymptomatic=55, mild=100, severe=160),
-            'prog': dict(asymptomatic=55, mild=100, severe=160),
-        },
-    }
-
-    imports = cv.import_strain(strain=imported_strain, immunity_to=0.5, immunity_from=0.5, days=1, n_imports=30)
-
-    pars = {
-        'beta': 0.016,
-        'n_days': 80,
-        'rel_severe_prob': 1.3,  # 30% more severe across all ages
-        'half_life': {
-            'sus': dict(asymptomatic=10, mild=30, severe=50),
-        },
-        'init_immunity': {
-            'sus': 1
-        }
-    }
-
-    sim = cv.Sim(pars=pars, interventions=imports)
-    sim.run()
-
-    strain_labels = [
-        f'Strain A: beta {pars["beta"]}',
-        f'Strain B: beta {imported_strain["beta"]}',
-    ]
-
-    if do_plot:
-        # sim.plot_result('new_reinfections', do_show=do_show, do_save=do_save, fig_path=f'results/test_2strains.png')
-        plot_results(sim, key='incidence_by_strain', title=f'2 strain test', filename='test_2strains2', labels=strain_labels, do_show=do_show, do_save=do_save)
-    return sim
-
-
 def test_strainduration(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run a sim with 2 strains, one of which has a much longer period before symptoms develop')
     sc.heading('Setting up...')
@@ -165,7 +125,7 @@ def test_strainduration(do_plot=False, do_show=True, do_save=False):
     return scens
 
 
-def test_importstrain1(do_plot=False, do_show=True, do_save=False):
+def test_import1strain(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing a new strain partway through a sim')
     sc.heading('Setting up...')
 
@@ -176,16 +136,13 @@ def test_importstrain1(do_plot=False, do_show=True, do_save=False):
 
     pars = {
         'n_days': 80,
-        'half_life': {
-            'sus': dict(asymptomatic=None, mild=None, severe=None)
-        }
+        'half_life': {'sus': dict(asymptomatic=100, mild=None, severe=None)},
+        'init_immunity': {'prog': 0.9}
     }
 
     imported_strain = {
         'beta': 0.025,
-        'half_life': {'sus': dict(asymptomatic=None, mild=None, severe=None),
-        },
-        'init_immunity': {'sus': 0.5, 'trans': 0.5, 'prog': 0.5},
+        'init_immunity': {'sus':0.5}
     }
 
     imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
@@ -198,25 +155,22 @@ def test_importstrain1(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
-def test_importstrain2(do_plot=False, do_show=True, do_save=False):
+def test_import2strains(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing 2 new strains partway through a sim')
     sc.heading('Setting up...')
 
     strain2 = {'beta': 0.025,
                'rel_severe_prob': 1.3,
-               'half_life': {'sus': dict(asymptomatic=20, mild=80, severe=200)
-                             },
-               'init_immunity': 0.9
+               'half_life': {'sus': dict(asymptomatic=20, mild=80, severe=200)},
+               'init_immunity': {k:0.9 for k in cvd.immunity_axes},
                }
-    pars = {
-        'n_days': 80,
-    }
+    pars = {'n_days': 80}
+
     strain3 = {
         'beta': 0.05,
         'rel_symp_prob': 1.6,
-        'half_life': {'sus': dict(asymptomatic=10, mild=50, severe=150),
-                      },
-        'init_immunity': 0.4
+        'half_life': {'sus': dict(asymptomatic=10, mild=50, severe=150)},
+        'init_immunity': {k:0.4 for k in cvd.immunity_axes}
     }
 
     imports = [cv.import_strain(strain=strain2, days=10, n_imports=20),
@@ -236,34 +190,6 @@ def test_importstrain2(do_plot=False, do_show=True, do_save=False):
         plot_shares(sim, key='new_infections', title='Shares of new infections by strain',
                 filename='test_importstrain2_shares', do_show=do_show, do_save=do_save)
     return sim
-
-
-# def test_par_refactor():
-#     '''
-#     The purpose of this test is to experiment with different representations of the parameter structures
-#     Still WIP!
-#     '''
-#
-#     # Simplest case: add a strain to beta
-#     p1 = cv.Par(name='beta', val=0.016, by_strain=True)
-#     print(p1.val) # Prints all the stored values of beta
-#     print(p1[0])  # Can index beta like an array to pull out strain-specific values
-#     p1.add_strain(new_val = 0.025)
-#
-#     # Complex case: add a strain that's differentiated by severity for kids 0-20
-#     p2 = cv.Par(name='sus_ORs', val=np.array([0.34, 0.67, 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]), by_strain=True, by_age=True)
-#     print(p2.val) # Prints all the stored values for the original strain
-#     print(p2[0])  # Can index beta like an array to pull out strain-specific values
-#     p2.add_strain(new_val=np.array([1., 1., 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]))
-#
-#     # Complex case: add a strain that's differentiated by duration of disease
-#     p3 = cv.Par(name='dur_asym2rec', val=dict(dist='lognormal_int', par1=8.0,  par2=2.0), by_strain=True, is_dist=True)
-#     print(p3.val) # Prints all the stored values for the original strain
-#     print(p3[0])  # Can index beta like an array to pull out strain-specific values
-#     p3.add_strain(new_val=dict(dist='lognormal_int', par1=12.0,  par2=2.0))
-#     p3.get(strain=1, n=6)
-#
-#     return p1, p2, p3
 
 
 def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
@@ -365,16 +291,14 @@ if __name__ == '__main__':
 
     scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
     scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim1 = test_2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # p1, p2, p3 = test_par_refactor()
-    sim5 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # Importing strains is not currently working, so the following tests break
-    # sim2 = test_importstrain1(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim3 = test_importstrain2(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # This next test is deprecated, can be removed
+    # The next tests are deprecated, can be removed
     # simX = test_importstrain_args()
+    # p1, p2, p3 = test_par_refactor()
 
     sc.toc()
 
@@ -417,3 +341,31 @@ print('Done.')
 #
 #     return sim
 #
+
+# def test_par_refactor():
+#     '''
+#     The purpose of this test is to experiment with different representations of the parameter structures
+#     Still WIP!
+#     '''
+#
+#     # Simplest case: add a strain to beta
+#     p1 = cv.Par(name='beta', val=0.016, by_strain=True)
+#     print(p1.val) # Prints all the stored values of beta
+#     print(p1[0])  # Can index beta like an array to pull out strain-specific values
+#     p1.add_strain(new_val = 0.025)
+#
+#     # Complex case: add a strain that's differentiated by severity for kids 0-20
+#     p2 = cv.Par(name='sus_ORs', val=np.array([0.34, 0.67, 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]), by_strain=True, by_age=True)
+#     print(p2.val) # Prints all the stored values for the original strain
+#     print(p2[0])  # Can index beta like an array to pull out strain-specific values
+#     p2.add_strain(new_val=np.array([1., 1., 1., 1., 1., 1., 1.24, 1.47, 1.47, 1.47]))
+#
+#     # Complex case: add a strain that's differentiated by duration of disease
+#     p3 = cv.Par(name='dur_asym2rec', val=dict(dist='lognormal_int', par1=8.0,  par2=2.0), by_strain=True, is_dist=True)
+#     print(p3.val) # Prints all the stored values for the original strain
+#     print(p3[0])  # Can index beta like an array to pull out strain-specific values
+#     p3.add_strain(new_val=dict(dist='lognormal_int', par1=12.0,  par2=2.0))
+#     p3.get(strain=1, n=6)
+#
+#     return p1, p2, p3
+
