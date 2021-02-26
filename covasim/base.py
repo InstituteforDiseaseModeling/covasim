@@ -296,7 +296,7 @@ class BaseSim(ParsObj):
         return string
 
 
-    def update_pars(self, pars=None, create=False, strain_pars=None, immunity_pars=None, **kwargs):
+    def update_pars(self, pars=None, create=False, defaults=None, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
         pars = sc.mergedicts(pars, kwargs)
         if pars:
@@ -304,12 +304,15 @@ class BaseSim(ParsObj):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
-            # check if any of the strain pars is present in pars, and if so update it
-            if strain_pars is not None:
-                pars = cvpar.validate_strain_pars(pars, strain_pars)
-                pars = sc.mergedicts(pars, immunity_pars)
-                pars = cvpar.update_immunity(pars)  # Update immunity with values provided
+
+            if defaults is not None: # Defaults have been provided: we are now doing updates
+                pars = cvpar.listify_strain_pars(pars, defaults)  # Strain pars need to be lists
+                pars = cvpar.update_sub_key_pars(pars, defaults) # Update dict parameters by sub-key
+                if pars.get('init_immunity'):
+                    pars['immunity'] = cvpar.update_init_immunity(defaults['immunity'], pars['init_immunity'][0])  # Update immunity
+
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
+
         return
 
 

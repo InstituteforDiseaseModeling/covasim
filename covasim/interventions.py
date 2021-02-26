@@ -395,8 +395,10 @@ class change_beta(Intervention):
         for lkey in self.layers:
             if lkey is None:
                 self.orig_betas['overall'] = sim['beta']
+                self.testkey = 'overall'
             else:
                 self.orig_betas[lkey] = sim['beta_layer'][lkey]
+                self.testkey = lkey
 
         self.initialized = True
         return
@@ -404,14 +406,23 @@ class change_beta(Intervention):
 
     def apply(self, sim):
 
+        # Extend beta if needed
+        if self.layers[0] is None:
+            if len(sim['beta'])>len(self.orig_betas['overall']):
+                prev_change = sim['beta'][0]/self.orig_betas['overall'][0]
+                self.orig_betas['overall'].append(sim['beta'][-1])
+                sim['beta'][-1] *= prev_change
+
         # If this day is found in the list, apply the intervention
         for ind in find_day(self.days, sim.t):
             for lkey,new_beta in self.orig_betas.items():
-                new_beta = new_beta * self.changes[ind]
                 if lkey == 'overall':
+                    new_beta = [bv * self.changes[ind] for bv in new_beta]
                     sim['beta'] = new_beta
                 else:
+                    new_beta *= self.changes[ind]
                     sim['beta_layer'][lkey] = new_beta
+
 
         return
 
@@ -1194,14 +1205,17 @@ class import_strain(Intervention):
             # Update strain info
             for strain_key in cvd.strain_pars:
                 if hasattr(self, strain_key):
-                    sim[strain_key].append(getattr(self, strain_key))
+                    newval = getattr(self, strain_key)
+                    if strain_key=='dur': # Validate durations (make sure there are values for all durations)
+                        newval = sc.mergenested(sim[strain_key][0], newval)
+                    sim[strain_key].append(newval)
                 else:
                     # use default
                     print(f'{strain_key} not provided for this strain, using default value')
                     sim[strain_key].append(sim[strain_key][0])
 
             sim['n_strains'] += 1
-            cvpar.update_immunity(pars=sim.pars, create=False, update_strain=prev_strains,
+            cvpar.update_immunity(pars=sim.pars, update_strain=prev_strains,
                                   immunity_from=self.immunity_from, immunity_to=self.immunity_to,
                                   init_immunity=self.init_immunity)
             importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports)  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
