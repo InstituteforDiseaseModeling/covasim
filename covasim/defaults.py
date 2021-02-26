@@ -53,6 +53,8 @@ class PeopleMeta(sc.prettyobj):
         'sus_half_life',   # Float
         'trans_half_life',  # Float
         'prog_half_life',  # Float
+        'vaccinations',     # Number of doses given per person
+        'vaccination_dates' # The dates when people are vaccinated
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py

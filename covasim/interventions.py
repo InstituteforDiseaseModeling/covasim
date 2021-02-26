@@ -1115,6 +1115,10 @@ class vaccine(Intervention):
             for v_ind in vacc_inds:
                 self.vaccination_dates[v_ind].append(sim.t)
 
+            # Update vaccine attributes in sim
+            sim.people.vaccinations = self.vaccinations
+            sim.people.vaccination_dates = self.vaccination_dates
+
         return
 
 

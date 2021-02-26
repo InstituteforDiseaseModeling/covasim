@@ -62,6 +62,10 @@ class People(cvb.BasePeople):
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), np.nan, dtype=cvd.default_float, order='F')
             elif key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
+            elif key == 'vaccination_dates':
+                self[key] = [[] for _ in range(self.pop_size)]
+            elif key == 'vaccinations':
+                self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
