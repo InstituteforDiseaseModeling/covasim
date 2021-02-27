@@ -147,13 +147,11 @@ strain_pars = ['beta',
                'rel_death_prob',
 ]
 
-immunity_sources = [
-    'asymptomatic',
-    'mild',
-    'severe',
-    'vaccine'
-]
+# Immunity is broken down according to 3 axes, as listed here
 immunity_axes = ['sus', 'trans', 'prog']
+
+# Immunity protection also varies according to the level of symptoms you had, differentiated by 3 levels:
+prior_symptoms = ['asymptomatic','mild','severe'] # TODO: align these with people.states?? Add vaccination??
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([
