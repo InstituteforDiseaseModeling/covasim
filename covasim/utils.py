@@ -69,15 +69,6 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(           (nbfloat[:],       nbfloat[:],  nbint[:],    nbfloat,       nbfloat[:]), cache=True, parallel=parallel)
-def compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, half_life): # pragma: no cover
-    ''' Calculate immunity factors for time t '''
-    decay_rate = np.log(2) / half_life
-    decay_rate[np.isnan(decay_rate)] = 0
-    immunity_factors[immune_inds] = init_immunity * np.exp(-decay_rate[immune_inds] * immune_time)
-
-    return immunity_factors
-
 
 @nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor, immunity_factors): # pragma: no cover
@@ -122,6 +113,48 @@ def find_contacts(p1, p2, inds): # pragma: no cover
         if p2[i] in inds:
             pairing_partners.add(p1[i])
     return pairing_partners
+
+
+#%% Immunity methods
+__all__ += ['compute_immunity']
+
+def compute_immunity(form, pars, immunity_factors, immune_time, immune_inds):
+    '''
+    Process immunity pars and functional form into a value
+
+    - 'exp_decay'     : exponential decay with initial value par1 and half-life=par2
+    - 'linear'        : linear decay with initial value par1 and per-day decay = par2
+    - others TBC!
+
+    Args:
+        form (str):   the functional form to use
+        args (dict): passed to individual immunity functions
+    '''
+
+    choices = [
+        'exp_decay',
+        'linear',
+        ]
+
+    # Process inputs
+    if form == 'exp_decay':
+        output = exp_decay(immunity_factors, immune_time, immune_inds, pars)
+
+    else:
+        choicestr = '\n'.join(choices)
+        errormsg = f'The selected functional form "{form}" is not implemented; choices are: {choicestr}'
+        raise NotImplementedError(errormsg)
+
+    return output
+
+
+@nb.njit(    (nbfloat[:],   nbfloat[:],  nbint[:],  nbfloat,  nbfloat), cache=True, parallel=parallel)
+def exp_decay(y,            t,           inds,      init_val, half_life): # pragma: no cover
+    ''' Calculate exponential decay '''
+    decay_rate = np.log(2) / half_life
+    decay_rate[np.isnan(decay_rate)] = 0
+    y[inds] = init_val * np.exp(-decay_rate[inds] * t)
+    return y
 
 
 #%% Sampling and seed methods
@@ -206,6 +239,7 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
         raise NotImplementedError(errormsg)
 
     return samples
+
 
 
 def get_pdf(dist=None, par1=None, par2=None):

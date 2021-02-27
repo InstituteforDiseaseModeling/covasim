@@ -137,8 +137,9 @@ cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 # Parameters that can vary by strain (should be in list format)
 strain_pars = ['beta',
                'asymp_factor',
-               'half_life',
-               'init_immunity',
+               'imm_pars',
+              # 'half_life',
+              # 'init_immunity',
                'dur',
                'rel_symp_prob',
                'rel_severe_prob',

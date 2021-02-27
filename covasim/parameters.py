@@ -67,15 +67,19 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['beta']            = 0.016 # Beta per symptomatic contact; absolute value, calibrated
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['init_immunity']   = {}
-    pars['half_life']       = {}
-    for axis in cvd.immunity_axes:
-        if axis == 'sus':
-            pars['init_immunity'][axis] = 1.  # Default initial immunity
-            pars['half_life'][axis] = {k: 180 for k in cvd.immunity_sources} #dict(asymptomatic=180, mild=180, severe=180)
-        else:
-            pars['init_immunity'][axis] = 0.5  # Default -- 50% shorter duration and probability of symptoms
-            pars['half_life'][axis] = {k: 180 for k in cvd.immunity_sources}  #dict(asymptomatic=None, mild=None, severe=None)
+    pars['imm_pars']        = {}
+    for ax in cvd.immunity_axes:
+        pars['imm_pars'][ax] = dict(form='exp_decay', par1=1., par2=180)
+
+#    pars['init_immunity']   = {}
+#    pars['half_life']       = {}
+#    for axis in cvd.immunity_axes:
+#        if axis == 'sus':
+#            pars['init_immunity'][axis] = 1.  # Default initial immunity
+#            pars['half_life'][axis] = {k: 180 for k in cvd.immunity_sources} #dict(asymptomatic=180, mild=180, severe=180)
+#        else:
+#            pars['init_immunity'][axis] = 0.5  # Default -- 50% shorter duration and probability of symptoms
+#            pars['half_life'][axis] = {k: 180 for k in cvd.immunity_sources}  #dict(asymptomatic=None, mild=None, severe=None)
 
     pars['dur'] = {}
         # Duration parameters: time for disease progression
@@ -119,7 +123,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
-    pars = initialize_immunity(pars)  # Initialize immunity
+#    pars = initialize_immunity(pars)  # Initialize immunity
     pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters

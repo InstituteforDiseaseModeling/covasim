@@ -518,7 +518,7 @@ class Sim(cvb.BaseSim):
         quar = people.quarantined
 
         # Initialize temp storage for strain parameters
-        strain_parkeys  = ['beta', 'asymp_factor', 'half_life']
+        strain_parkeys  = ['beta', 'asymp_factor']#, 'half_life']
         strain_pars     = dict()
 
         # Iterate through n_strains to calculate infections
@@ -546,14 +546,18 @@ class Sim(cvb.BaseSim):
 
             # Compute immunity to susceptibility, transmissibility, and progression
             for iax, ax in enumerate(cvd.immunity_axes):
-                half_life = getattr(people,f'{ax}_half_life')
-                init_immunity = self['init_immunity'][strain][ax]
+                import traceback;
+                traceback.print_exc();
+                import pdb;
+                pdb.set_trace()
                 if ax=='sus':
                     immunity_factors[ax] = np.full(len(people), 0, dtype=cvd.default_float, order='F')
                 else:
                     if ax=='trans':     immunity_factors[ax] = people.trans_immunity_factors[strain, :]
                     elif ax=='prog':    immunity_factors[ax] = people.prog_immunity_factors[strain, :]
 
+                half_life = getattr(people,f'{ax}_half_life')
+                init_immunity = self['init_immunity'][strain][ax]
                 immunity_factors[ax] = cvu.compute_immunity(immunity_factors[ax], immune_time, immune_inds, init_immunity, half_life)  # Calculate immunity factors
                 if ns>1:
                     immunity_factors[ax] = cvu.compute_immunity(immunity_factors[ax], cross_immune_time, cross_immune_inds, self['cross_immunity'], half_life)  # Calculate cross_immunity factors
