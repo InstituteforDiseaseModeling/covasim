@@ -262,13 +262,22 @@ class People(cvb.BasePeople):
     def check_recovery(self):
         ''' Check for recovery '''
         inds = self.check_inds(self.susceptible, self.date_recovered, filter_inds=self.is_exp)
+
+        # Before letting them recover, store information about the strain and symptoms they had
+        self.recovered_strain[inds] = self.infectious_strain[inds]
+        mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
+        severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
+        self.prior_symptoms[inds] = 0 # TODO: don't hard code this. It could come from cvd.prior_symptoms
+        self.prior_symptoms[mild_inds] = 1 #
+        self.prior_symptoms[severe_inds] = 2 #
+
+        # Now reset all disease states
         self.exposed[inds]     = False
         self.infectious[inds]  = False
         self.symptomatic[inds] = False
         self.severe[inds]      = False
         self.critical[inds]    = False
         self.susceptible[inds]   = True
-        self.recovered_strain[inds] = self.infectious_strain[inds] # TODO: check that this works
         self.infectious_strain[inds] = np.nan
         return len(inds)
 

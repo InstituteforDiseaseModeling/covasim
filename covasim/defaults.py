@@ -48,11 +48,9 @@ class PeopleMeta(sc.prettyobj):
         'death_prob',  # Float
         'rel_trans',   # Float
         'rel_sus',     # Float
+        'prior_symptoms', # Float
         'trans_immunity_factors', # Float
         'prog_immunity_factors', # Float
-        'sus_half_life',   # Float
-        'trans_half_life',  # Float
-        'prog_half_life',  # Float
         'vaccinations',     # Number of doses given per person
     ]
 
@@ -150,8 +148,13 @@ strain_pars = ['beta',
 # Immunity is broken down according to 3 axes, as listed here
 immunity_axes = ['sus', 'trans', 'prog']
 
-# Immunity protection also varies according to the level of symptoms you had, differentiated by 3 levels:
-prior_symptoms = ['asymptomatic','mild','severe'] # TODO: align these with people.states?? Add vaccination??
+# Immunity protection also varies depending on your infection/vaccination history
+immunity_sources = [
+    'asymptomatic',
+    'mild',
+    'severe',
+#    'vaccine',
+]
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([

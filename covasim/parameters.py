@@ -69,7 +69,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
     pars['imm_pars']        = {}
     for ax in cvd.immunity_axes:
-        pars['imm_pars'][ax] = dict(form='exp_decay', par1=1., par2=180)
+        pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val':1., 'half_life':180})
 
 #    pars['init_immunity']   = {}
 #    pars['half_life']       = {}

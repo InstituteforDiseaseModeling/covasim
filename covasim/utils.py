@@ -118,7 +118,7 @@ def find_contacts(p1, p2, inds): # pragma: no cover
 #%% Immunity methods
 __all__ += ['compute_immunity']
 
-def compute_immunity(form, pars, immunity_factors, immune_time, immune_inds):
+def compute_immunity(immunity_factors, immune_time, immune_inds, form, pars):
     '''
     Process immunity pars and functional form into a value
 
@@ -128,7 +128,7 @@ def compute_immunity(form, pars, immunity_factors, immune_time, immune_inds):
 
     Args:
         form (str):   the functional form to use
-        args (dict): passed to individual immunity functions
+        kwargs (dict): passed to individual immunity functions
     '''
 
     choices = [
@@ -138,7 +138,7 @@ def compute_immunity(form, pars, immunity_factors, immune_time, immune_inds):
 
     # Process inputs
     if form == 'exp_decay':
-        output = exp_decay(immunity_factors, immune_time, immune_inds, pars)
+        output = exp_decay(immunity_factors, immune_time, immune_inds, **pars)
 
     else:
         choicestr = '\n'.join(choices)
@@ -151,9 +151,8 @@ def compute_immunity(form, pars, immunity_factors, immune_time, immune_inds):
 @nb.njit(    (nbfloat[:],   nbfloat[:],  nbint[:],  nbfloat,  nbfloat), cache=True, parallel=parallel)
 def exp_decay(y,            t,           inds,      init_val, half_life): # pragma: no cover
     ''' Calculate exponential decay '''
-    decay_rate = np.log(2) / half_life
-    decay_rate[np.isnan(decay_rate)] = 0
-    y[inds] = init_val * np.exp(-decay_rate[inds] * t)
+    decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+    y[inds] = init_val * np.exp(-decay_rate * t)
     return y
 
 
