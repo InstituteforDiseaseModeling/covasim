@@ -81,11 +81,7 @@ def test_strainduration(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run a sim with 2 strains, one of which has a much longer period before symptoms develop')
     sc.heading('Setting up...')
 
-    sim = cv.Sim()
-    dur = sc.dcp(sim['dur'])
-    dur['inf2sym'] = {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9} # Let's say this strain takes 10 days before you get symptoms
-    imported_strain = {'dur': dur}
-
+    imported_strain = {'dur':{'inf2sym': {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9}}}
     imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
     tp = cv.test_prob(symp_prob=0.2) # Add an efficient testing program
 
@@ -320,13 +316,18 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 if __name__ == '__main__':
     sc.tic()
 
-    #scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # Run simplest possible test
+    if 0:
+        sim = cv.Sim()
+        sim.run()
 
+    # Run more complex tests
+    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # The next tests are deprecated, can be removed
     # simX = test_importstrain_args()

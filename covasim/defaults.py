@@ -54,7 +54,6 @@ class PeopleMeta(sc.prettyobj):
         'trans_half_life',  # Float
         'prog_half_life',  # Float
         'vaccinations',     # Number of doses given per person
-        'vaccination_dates' # The dates when people are vaccinated
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -85,6 +84,7 @@ class PeopleMeta(sc.prettyobj):
     dates.append('date_pos_test') # Store the date when a person tested which will come back positive
     dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
     dates.append('date_recovered') # Store the date when a person recovers
+    dates.append('date_vaccinated') # Store the date when a person is vaccinated
 
     # Duration of different states: these are floats per person -- used in people.py
     durs = [
@@ -146,11 +146,12 @@ strain_pars = ['beta',
                'rel_death_prob',
 ]
 
-immunity_pars = ['n_strains',
-                 'max_strains',
-                 'immunity',
+immunity_sources = [
+    'asymptomatic',
+    'mild',
+    'severe',
+    'vaccine'
 ]
-
 immunity_axes = ['sus', 'trans', 'prog']
 
 # Default age data, based on Seattle 2018 census data -- used in population.py

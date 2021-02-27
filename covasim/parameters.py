@@ -72,10 +72,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     for axis in cvd.immunity_axes:
         if axis == 'sus':
             pars['init_immunity'][axis] = 1.  # Default initial immunity
-            pars['half_life'][axis] = dict(asymptomatic=180, mild=180, severe=180)
+            pars['half_life'][axis] = {k: 180 for k in cvd.immunity_sources} #dict(asymptomatic=180, mild=180, severe=180)
         else:
             pars['init_immunity'][axis] = 0.5  # Default -- 50% shorter duration and probability of symptoms
-            pars['half_life'][axis] = dict(asymptomatic=None, mild=None, severe=None)
+            pars['half_life'][axis] = {k: 180 for k in cvd.immunity_sources}  #dict(asymptomatic=None, mild=None, severe=None)
 
     pars['dur'] = {}
         # Duration parameters: time for disease progression
@@ -120,6 +120,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
     pars = initialize_immunity(pars)  # Initialize immunity
+    pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
     if version is not None:
@@ -308,13 +309,11 @@ def update_sub_key_pars(pars, default_pars):
     return pars
 
 
-def listify_strain_pars(pars, default_pars):
-    ''' Helper function to validate parameters that have been set to vary by strain '''
+def listify_strain_pars(pars):
+    ''' Helper function to turn strain parameters into lists '''
     for sp in cvd.strain_pars:
         if sp in pars.keys():
             pars[sp] = sc.promotetolist(pars[sp])
-        else:
-            pars[sp] = sc.promotetolist(default_pars[sp])
     return pars
 
 

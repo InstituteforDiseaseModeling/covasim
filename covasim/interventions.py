@@ -1086,7 +1086,7 @@ class vaccine(Intervention):
         ''' Fix the dates and store the vaccinations '''
         self.days = process_days(sim, self.days)
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
+        self.date_vaccinated   = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
         self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
         self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
         self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
@@ -1102,7 +1102,7 @@ class vaccine(Intervention):
         for ind in find_day(self.days, sim.t): # TODO -- investigate this, why does it loop over a variable that isn't subsequently used? Also, comments need updating
 
             # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
-            vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal testing probability to everyone
+            vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal vaccination probability to everyone
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
                 vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
