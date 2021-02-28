@@ -70,16 +70,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['imm_pars']        = {}
     for ax in cvd.immunity_axes:
         pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val':1., 'half_life':180})
-
-#    pars['init_immunity']   = {}
-#    pars['half_life']       = {}
-#    for axis in cvd.immunity_axes:
-#        if axis == 'sus':
-#            pars['init_immunity'][axis] = 1.  # Default initial immunity
-#            pars['half_life'][axis] = {k: 180 for k in cvd.immunity_sources} #dict(asymptomatic=180, mild=180, severe=180)
-#        else:
-#            pars['init_immunity'][axis] = 0.5  # Default -- 50% shorter duration and probability of symptoms
-#            pars['half_life'][axis] = {k: 180 for k in cvd.immunity_sources}  #dict(asymptomatic=None, mild=None, severe=None)
+    pars['rel_imm']         = {} # Relative immunity scalings depending on the severity of symptoms
+    pars['rel_imm']['asymptomatic'] = 1.
+    pars['rel_imm']['mild'] = 1.2
+    pars['rel_imm']['severe'] = 1.5
 
     pars['dur'] = {}
         # Duration parameters: time for disease progression
@@ -123,7 +117,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
-#    pars = initialize_immunity(pars)  # Initialize immunity
+    pars['immunity'] = initialize_immunity()  # Initialize immunity
     pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
@@ -321,30 +315,56 @@ def listify_strain_pars(pars):
     return pars
 
 
-def initialize_immunity(pars):
+def initialize_immunity(n_strains=None):
     '''
     Initialize the immunity matrices with default values
     Susceptibility matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
     Progression is a matrix of scalars of size sim['max_strains'] initialized with default values
     Transmission is a matrix of scalars of size sim['max_strains'] initialized with default values
     '''
-    pars['immunity'] = {}
-    pars['immunity']['sus'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
-    pars['immunity']['prog'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    pars['immunity']['trans'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    pars['immunity'] = update_init_immunity(pars['immunity'], pars['init_immunity'])
-    return pars
 
-
-def update_init_immunity(immunity, init_immunity):
-    '''Update immunity matrices with initial immunity values'''
-    for par, val in init_immunity.items():
-        if par == 'sus':    immunity[par][0,0] = val
-        else:               immunity[par][0] = val
+    # Initialize
+    if n_strains is None: n_strains = 1
+    immunity = {}
+    for ax in cvd.immunity_axes:
+        if ax == 'sus':
+            immunity[ax] = np.full((n_strains, n_strains), 1, dtype=cvd.default_float)
+        else:
+            immunity[ax] = np.full(n_strains, 1, dtype=cvd.default_float)
     return immunity
 
 
-def update_immunity(pars, update_strain=None, immunity_from=None, immunity_to=None, init_immunity=None):
+def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immunity_to=None):
+    '''
+    Helper function to update the immunity matrices when a new strain is added.
+    (called by import_strain intervention)
+    '''
+    # Add off-diagonals
+    immunity_from   = sc.promotetolist(immunity_from)
+    immunity_to     = sc.promotetolist(immunity_to)
+
+    immunity = initialize_immunity(n_strains=n_strains)
+    update_strain = n_strains-1
+    for ax in cvd.immunity_axes:
+        if ax=='sus':
+            immunity[ax][:update_strain, :update_strain] = prev_immunity[ax]
+        else:
+            immunity[ax][:update_strain] = prev_immunity[ax]
+
+    # create the immunity[update_strain,] and immunity[,update_strain] arrays
+    new_immunity_row    = np.full(n_strains, 1, dtype=cvd.default_float)
+    new_immunity_column = np.full(n_strains, 1, dtype=cvd.default_float)
+    for i in range(n_strains-1):
+        new_immunity_row[i] = immunity_from[i]
+        new_immunity_column[i] = immunity_to[i]
+
+    immunity['sus'][update_strain, :] = new_immunity_row
+    immunity['sus'][:, update_strain] = new_immunity_column
+
+    return immunity
+
+
+def update_immunity2(pars, update_strain=None, immunity_from=None, immunity_to=None, init_immunity=None):
     '''
     Helper function to update the immunity matrices when a strain strain is added.
     If update_strain is not None, it's used to add a new strain with strain-specific values

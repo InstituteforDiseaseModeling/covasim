@@ -29,12 +29,7 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
         'baseline': {
           'name':'No reinfection',
           'pars': {
-              'half_life': {
-                  'sus': dict(asymptomatic=None, mild=None, severe=None),  # Constant immunity from reinfection,
-              },
-              'init_immunity': {
-                  'sus': 1,
-              },
+              'imm_pars': {'sus': dict(form='exp_decay', pars={'init_val': 1., 'half_life': None})}
           }
         },
         'med_halflife': {
@@ -130,19 +125,13 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
         'Strain 2: beta 0.025'
     ]
 
-    pars = {
-        'n_days': 80,
-        'half_life': {'sus': dict(asymptomatic=100, mild=None, severe=None)},
-        'init_immunity': {'prog': 0.9}
-    }
-
     imported_strain = {
         'beta': 0.025,
-        'init_immunity': {'sus':0.5}
+        'imm_pars': {k: dict(form='exp_decay', pars={'init_val':1., 'half_life':100}) for k in cvd.immunity_axes}
     }
 
-    imports = cv.import_strain(strain=imported_strain, days=10, n_imports=30)
-    sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
+    imports = cv.import_strain(strain=imported_strain, days=1, n_imports=30)
+    sim = cv.Sim(interventions=imports, label='With imported infections')
     sim.run()
 
     if do_plot:
@@ -157,22 +146,17 @@ def test_import2strains(do_plot=False, do_show=True, do_save=False):
 
     strain2 = {'beta': 0.025,
                'rel_severe_prob': 1.3,
-               'half_life': {'sus': dict(asymptomatic=20, mild=80, severe=200)},
-               'init_immunity': {k:0.9 for k in cvd.immunity_axes},
+               'imm_pars': {'sus': dict(form='exp_decay', pars={'init_val': 1., 'half_life': 10})}
                }
-    pars = {'n_days': 80}
-
     strain3 = {
         'beta': 0.05,
         'rel_symp_prob': 1.6,
-        'half_life': {'sus': dict(asymptomatic=10, mild=50, severe=150)},
-        'init_immunity': {k:0.4 for k in cvd.immunity_axes}
     }
 
     imports = [cv.import_strain(strain=strain2, days=10, n_imports=20),
                cv.import_strain(strain=strain3, days=30, n_imports=20),
                ]
-    sim = cv.Sim(pars=pars, interventions=imports, label='With imported infections')
+    sim = cv.Sim(interventions=imports, label='With imported infections')
     sim.run()
 
     strain_labels = [
@@ -222,25 +206,19 @@ def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
 
     strain2 = {'beta': 0.025,
                'rel_severe_prob': 1.3,
-               'half_life': {'sus': dict(asymptomatic=20, mild=80, severe=200)},
-               'init_immunity': {k:0.9 for k in cvd.immunity_axes},
                }
-
-    pars = {'n_days': 80}
 
     strain3 = {
         'beta': 0.05,
         'rel_symp_prob': 1.6,
-        'half_life': {'sus': dict(asymptomatic=10, mild=50, severe=150)},
-        'init_immunity': {k:0.4 for k in cvd.immunity_axes}
     }
 
     intervs  = [
-        cv.change_beta(days=[10, 50, 70], changes=[0.8, 0.7, 0.6]),
-        cv.import_strain(strain=strain2, days=40, n_imports=20),
-        cv.import_strain(strain=strain3, days=60, n_imports=20),
+        cv.change_beta(days=[5, 20, 40], changes=[0.8, 0.7, 0.6]),
+        cv.import_strain(strain=strain2, days=10, n_imports=20),
+        cv.import_strain(strain=strain3, days=30, n_imports=20),
                ]
-    sim = cv.Sim(pars=pars, interventions=intervs, label='With imported infections')
+    sim = cv.Sim(interventions=intervs, label='With imported infections')
     sim.run()
 
     strain_labels = [
@@ -317,17 +295,17 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    if 1:
+    if 0:
         sim = cv.Sim()
         sim.run()
 
     # Run more complex tests
-#    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-#    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 #    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
 #    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
 #    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
 #    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+#    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # The next tests are deprecated, can be removed
     # simX = test_importstrain_args()

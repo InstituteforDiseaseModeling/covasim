@@ -267,9 +267,9 @@ class People(cvb.BasePeople):
         self.recovered_strain[inds] = self.infectious_strain[inds]
         mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
         severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
-        self.prior_symptoms[inds] = 0 # TODO: don't hard code this. It could come from cvd.prior_symptoms
-        self.prior_symptoms[mild_inds] = 1 #
-        self.prior_symptoms[severe_inds] = 2 #
+        self.prior_symptoms[inds] = self.pars['rel_imm']['asymptomatic'] #
+        self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild'] #
+        self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe'] #
 
         # Now reset all disease states
         self.exposed[inds]     = False

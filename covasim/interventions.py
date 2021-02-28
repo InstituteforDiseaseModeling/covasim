@@ -1175,11 +1175,8 @@ class import_strain(Intervention):
 
     def initialize(self, sim):
         self.days = process_days(sim, self.days)
-        self.max_strains = sim['max_strains']
-        if not hasattr(self,'init_immunity'):
-            self.init_immunity = None
-        if not hasattr(self, 'half_life'):
-            self.half_life = sim['half_life'][0]
+        if not hasattr(self, 'imm_pars'):
+            self.imm_pars = sim['imm_pars'][0]
         self.initialized = True
 
     def apply(self, sim):
@@ -1188,19 +1185,12 @@ class import_strain(Intervention):
 
             # Check number of strains
             prev_strains = sim['n_strains']
-            if prev_strains + 1 > self.max_strains:
-                errormsg = f"Number of existing strains ({sim['n_strains']}) plus new strain exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
-                raise ValueError(errormsg)
 
-            # Validate half_life and init_immunity (make sure there are values for all cvd.immunity_axes
+            # Validate immunity pars (make sure there are values for all cvd.immunity_axes
             for key in cvd.immunity_axes:
-                if self.init_immunity is not None:
-                    if key not in self.init_immunity:
-                        print(f'initial immunity for imported strain for {key} not provided, using default value')
-                        self.init_immunity[key] = sim['init_immunity'][0][key]
-                if key not in self.half_life:
-                    print(f'half life for imported strain for {key} not provided, using default value')
-                    self.half_life[key] = sim['half_life'][0][key]
+                if key not in self.imm_pars:
+                    print(f'Immunity pars for imported strain for {key} not provided, using default value')
+                    self.imm_pars[key] = sim['imm_pars'][0][key]
 
             # Update strain info
             for strain_key in cvd.strain_pars:
@@ -1214,10 +1204,16 @@ class import_strain(Intervention):
                     print(f'{strain_key} not provided for this strain, using default value')
                     sim[strain_key].append(sim[strain_key][0])
 
+            # Create defaults for cross-immunity if not provided
+            if self.immunity_to is None:
+                self.immunity_to = [sim['cross_immunity']]*sim['n_strains']
+            if self.immunity_from is None:
+                self.immunity_from = [sim['cross_immunity']]*sim['n_strains']
+
             sim['n_strains'] += 1
-            cvpar.update_immunity(pars=sim.pars, update_strain=prev_strains,
-                                  immunity_from=self.immunity_from, immunity_to=self.immunity_to,
-                                  init_immunity=self.init_immunity)
+
+            # Update the immunity matrix
+            sim['immunity'] = cvpar.update_immunity(prev_immunity=sim['immunity'], n_strains=sim['n_strains'], immunity_to=self.immunity_to, immunity_from=self.immunity_from)
             importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports)  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
             sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
 
