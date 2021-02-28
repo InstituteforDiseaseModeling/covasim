@@ -29,29 +29,22 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
         'baseline': {
           'name':'No reinfection',
           'pars': {
-              'imm_pars': {'sus': dict(form='exp_decay', pars={'init_val': 1., 'half_life': None})}
+              'imm_pars': {k: dict(form='exp_decay', pars={'init_val': 1., 'half_life': None}) for k in cvd.immunity_axes}
           }
         },
         'med_halflife': {
           'name':'3 month waning susceptibility',
           'pars': {
-              'half_life': {
-                      'sus': dict(asymptomatic=55, mild=55, severe=55),
-              },
-              'init_immunity': {
-                  'sus': 1,
-              },
+              'imm_pars': {k: dict(form='exp_decay', pars={'init_val': 1., 'half_life': 90}) for k in
+                               cvd.immunity_axes}
           }
         },
         'med_halflife_bysev': {
-          'name':'1, 3, 6 month waning susceptibility, by severity',
+          'name':'2 month waning susceptibility for symptomatics only',
           'pars': {
-              'half_life': {
-                  'sus': dict(asymptomatic=25, mild=55, severe=155),
-              },
-              'init_immunity': {
-                  'sus': 1,
-              },
+              'rel_imm': {'asymptomatic': 0},
+              'imm_pars': {k: dict(form='exp_decay', pars={'init_val': 1., 'half_life': 60}) for k in
+                               cvd.immunity_axes}
           }
         },
     }
@@ -295,17 +288,17 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    if 0:
+    if 1:
         sim = cv.Sim()
         sim.run()
 
     # Run more complex tests
-#    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-#    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-#    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
-#    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
     scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-#    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # The next tests are deprecated, can be removed
     # simX = test_importstrain_args()

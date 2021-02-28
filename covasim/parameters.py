@@ -71,9 +71,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     for ax in cvd.immunity_axes:
         pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val':1., 'half_life':180})
     pars['rel_imm']         = {} # Relative immunity scalings depending on the severity of symptoms
-    pars['rel_imm']['asymptomatic'] = 1.
-    pars['rel_imm']['mild'] = 1.2
-    pars['rel_imm']['severe'] = 1.5
+    pars['rel_imm']['asymptomatic'] = 0.7
+    pars['rel_imm']['mild'] = 0.9
+    pars['rel_imm']['severe'] = 1.
 
     pars['dur'] = {}
         # Duration parameters: time for disease progression

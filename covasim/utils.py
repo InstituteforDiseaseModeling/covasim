@@ -138,6 +138,7 @@ def compute_immunity(immunity_factors, immune_time, immune_inds, prior_symptoms,
 
     # Process inputs
     if form == 'exp_decay':
+        if pars['half_life'] is None: pars['half_life'] = np.nan
         output = exp_decay(immunity_factors, immune_time, immune_inds, prior_symptoms, scale_factor, **pars)
 
     else:
@@ -151,6 +152,7 @@ def compute_immunity(immunity_factors, immune_time, immune_inds, prior_symptoms,
 #@nb.njit(    (nbfloat[:],   nbfloat[:],  nbint[:],  nbfloat[:],     nbfloat,    nbfloat,    nbfloat), cache=True, parallel=parallel)
 def exp_decay(y,            t,           inds,      prior_symptoms, scale_factor, init_val, half_life): # pragma: no cover
     ''' Calculate exponential decay '''
+
     decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
     y[inds] = scale_factor * prior_symptoms * init_val * np.exp(-decay_rate * t)
     return y
