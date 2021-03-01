@@ -518,7 +518,7 @@ class Sim(cvb.BaseSim):
         quar = people.quarantined
 
         # Initialize temp storage for strain parameters
-        strain_parkeys  = ['beta', 'asymp_factor']#, 'half_life']
+        strain_parkeys  = ['beta', 'asymp_factor']
         strain_pars     = dict()
 
         # Iterate through n_strains to calculate infections

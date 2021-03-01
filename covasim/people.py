@@ -401,14 +401,13 @@ class People(cvb.BasePeople):
             source = source[keep]
 
         # Deal with strain parameters
-        infect_parkeys = ['dur', 'rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']#, 'half_life']
+        infect_parkeys = ['dur', 'rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
         infect_pars = dict()
         for key in infect_parkeys:
             infect_pars[key] = self.pars[key][strain]
 
         n_infections = len(inds)
         durpars      = infect_pars['dur']
-#        halflifepars = infect_pars['half_life']
 
         # Update states, strain info, and flows
         self.susceptible[inds]   = False
@@ -439,9 +438,6 @@ class People(cvb.BasePeople):
         dur_asym2rec = cvu.sample(**durpars['asym2rec'], size=len(asymp_inds))*(1-self.trans_immunity_factors[strain, asymp_inds])
         self.date_recovered[asymp_inds] = self.date_infectious[asymp_inds] + dur_asym2rec  # Date they recover
         self.dur_disease[asymp_inds] = self.dur_exp2inf[asymp_inds] + dur_asym2rec  # Store how long this person had COVID-19
-#        self.sus_half_life[asymp_inds] = halflifepars['sus']['asymptomatic']
-#        self.trans_half_life[asymp_inds] = halflifepars['trans']['asymptomatic']
-#        self.prog_half_life[asymp_inds] = halflifepars['prog']['asymptomatic']
 
         # CASE 2: Symptomatic: can either be mild, severe, or critical
         n_symp_inds = len(symp_inds)
@@ -456,16 +452,10 @@ class People(cvb.BasePeople):
         dur_mild2rec = cvu.sample(**durpars['mild2rec'], size=len(mild_inds))*(1-self.trans_immunity_factors[strain, mild_inds])
         self.date_recovered[mild_inds] = self.date_symptomatic[mild_inds] + dur_mild2rec  # Date they recover
         self.dur_disease[mild_inds] = self.dur_exp2inf[mild_inds] + self.dur_inf2sym[mild_inds] + dur_mild2rec  # Store how long this person had COVID-19
-#        self.sus_half_life[mild_inds] = halflifepars['sus']['mild']
-#        self.trans_half_life[mild_inds] = halflifepars['trans']['mild']
-#        self.prog_half_life[mild_inds] = halflifepars['prog']['mild']
 
         # CASE 2.2: Severe cases: hospitalization required, may become critical
         self.dur_sym2sev[sev_inds] = cvu.sample(**durpars['sym2sev'], size=len(sev_inds))*(1-self.trans_immunity_factors[strain, sev_inds]) # Store how long this person took to develop severe symptoms
         self.date_severe[sev_inds] = self.date_symptomatic[sev_inds] + self.dur_sym2sev[sev_inds]  # Date symptoms become severe
-#        self.sus_half_life[sev_inds] = halflifepars['sus']['severe']
-#        self.trans_half_life[sev_inds] = halflifepars['trans']['severe']
-#        self.prog_half_life[sev_inds] = halflifepars['prog']['severe']
         crit_probs = infect_pars['rel_crit_prob'] * self.crit_prob[sev_inds] * (self.pars['no_hosp_factor'] if hosp_max else 1.) *(1-self.prog_immunity_factors[strain, sev_inds]) # Probability of these people becoming critical - higher if no beds available
         is_crit = cvu.binomial_arr(crit_probs)  # See if they're a critical case
         crit_inds = sev_inds[is_crit]
