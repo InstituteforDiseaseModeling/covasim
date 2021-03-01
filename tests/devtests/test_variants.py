@@ -137,14 +137,8 @@ def test_import2strains(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing 2 new strains partway through a sim')
     sc.heading('Setting up...')
 
-    strain2 = {'beta': 0.025,
-               'rel_severe_prob': 1.3,
-               'imm_pars': {'sus': dict(form='exp_decay', pars={'init_val': 1., 'half_life': 10})}
-               }
-    strain3 = {
-        'beta': 0.05,
-        'rel_symp_prob': 1.6,
-    }
+    strain2 = cv.make_strain('b117')
+    strain3 = cv.make_strain('sa variant')
 
     imports = [cv.import_strain(strain=strain2, days=10, n_imports=20),
                cv.import_strain(strain=strain3, days=30, n_imports=20),
@@ -288,7 +282,7 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    if 1:
+    if 0:
         sim = cv.Sim()
         sim.run()
 

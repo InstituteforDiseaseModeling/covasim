@@ -8,7 +8,7 @@ from .settings import options as cvo # For setting global options
 from . import misc as cvm
 from . import defaults as cvd
 
-__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
+__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'make_strain']
 
 
 def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
@@ -364,41 +364,34 @@ def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immu
     return immunity
 
 
-def update_immunity2(pars, update_strain=None, immunity_from=None, immunity_to=None, init_immunity=None):
-    '''
-    Helper function to update the immunity matrices when a strain strain is added.
-    If update_strain is not None, it's used to add a new strain with strain-specific values
-    (called by import_strain intervention)
-    '''
-    immunity = pars['immunity']
-    if immunity_from is None:
-        print('Immunity from pars not provided, using default value')
-        immunity_from = [pars['cross_immunity']] * pars['n_strains']
-    if immunity_to is None:
-        print('Immunity to pars not provided, using default value')
-        immunity_to = [pars['cross_immunity']] * pars['n_strains']
-    if init_immunity is None:
-        print('Initial immunity not provided, using default value')
-        pars['init_immunity'][update_strain] = pars['init_immunity'][0]
-        init_immunity = pars['init_immunity'][update_strain]
 
-    immunity_from   = sc.promotetolist(immunity_from)
-    immunity_to     = sc.promotetolist(immunity_to)
+#%% Store default strain information
 
-    # create the immunity[update_strain,] and immunity[,update_strain] arrays
-    new_immunity_row    = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    new_immunity_column = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    for i in range(pars['n_strains']):
-        if i != update_strain:
-            new_immunity_row[i] = immunity_from[i]
-            new_immunity_column[i] = immunity_to[i]
-        else:
-            new_immunity_row[i] = new_immunity_column[i] = init_immunity['sus']
+def make_strain(strain=None):
+    ''' Populates a par dict with known information about circulating strains'''
 
-    immunity['sus'][update_strain, :] = new_immunity_row
-    immunity['sus'][:, update_strain] = new_immunity_column
-    immunity['prog'][update_strain] = init_immunity['prog']
-    immunity['trans'][update_strain] = init_immunity['trans']
-    pars['immunity'] = immunity
+    choices = {
+        'b117': ['b117', 'B117', 'B.1.1.7', 'UK', 'uk', 'UK variant', 'uk variant'],
+        'sa': ['SA', 'sa', 'SA variant', 'sa variant'], # TODO: add other aliases
+    }
+
+    # Known parameters on B117
+    if strain in choices['b117']:
+        pars = dict()
+        pars['rel_beta']         = 1.5 # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
+        pars['rel_severe_prob']  = 1.6 # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
+
+    # Known parameters on South African variant
+    elif strain in choices['sa']:
+        pars = dict()
+        pars['imm_pars']         = dict()
+        for ax in cvd.immunity_axes:
+            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 120}) # E484K mutation reduces immunity protection (TODO: link to actual evidence)
+
+    else:
+        choicestr = '\n'.join(choices.values())
+        errormsg = f'The selected variant "{strain}" is not implemented; choices are: {choicestr}'
+        raise NotImplementedError(errormsg)
 
     return pars
+
