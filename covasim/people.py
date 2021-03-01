@@ -58,8 +58,6 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
-            elif key == 'rel_trans' or key == 'rel_sus':
-                self[key] = np.full((self.pars['max_strains'], self.pop_size), np.nan, dtype=cvd.default_float, order='F')
             elif key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
                 self[key] = np.full((self.pars['max_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
             elif key == 'vaccinations':
@@ -150,10 +148,9 @@ class People(cvb.BasePeople):
         self.severe_prob[:] = progs['severe_probs'][inds]*progs['comorbidities'][inds] # Severe disease probability is modified by comorbidities
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
         self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
-        for strain in range(self.pars['max_strains']):
-            #TODO -- make this strain specific in inputs if needed?
-            self.rel_sus[strain, :] = progs['sus_ORs'][inds] # Default susceptibilities
-            self.rel_trans[strain, :]   = progs['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, with viral load drawn from a distribution
+        self.rel_sus[:] = progs['sus_ORs'][inds]  # Default susceptibilities
+        self.rel_trans[:] = progs['trans_ORs'][inds] * cvu.sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
+
 
         return
 
@@ -371,7 +368,7 @@ class People(cvb.BasePeople):
         return
 
 
-    def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None, strain=0, immunity=None):
+    def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None, strain=0):
         '''
         Infect people and determine their eventual outcomes.
             * Every infected person can infect other people, regardless of whether they develop symptoms
@@ -426,26 +423,24 @@ class People(cvb.BasePeople):
         for i, target in enumerate(inds):
             self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
 
-        if layer is not 'seed_infection' and layer is not 'importation':
-            # determine people with immunity from this strain and then calculate immunity to trans/prog
-            date_rec = self.date_recovered
-            immune = self.recovered_strain == strain
-            immune_inds = cvu.true(
-                immune)  # Whether people have some immunity to this strain from a prior infection with this strain
-            immune_time = self.t - date_rec[
-                immune_inds]  # Time since recovery for people who were last infected by this strain
-            prior_symptoms = self.prior_symptoms[immune_inds]
+        # determine people with immunity from this strain and then calculate immunity to trans/prog
+        date_rec = self.date_recovered
+        immune = self.recovered_strain == strain
+        immune_inds = cvu.true(immune)  # Whether people have some immunity to this strain from a prior infection with this strain
+        immune_time = self.t - date_rec[immune_inds]  # Time since recovery for people who were last infected by this strain
+        prior_symptoms = self.prior_symptoms[immune_inds]
 
-            self.trans_immunity_factors[strain, :] = cvu.compute_immunity(self.trans_immunity_factors[strain, :],
+        self.trans_immunity_factors[strain, :] = cvu.compute_immunity(self.trans_immunity_factors[strain, :],
                                                                           immune_time, immune_inds, prior_symptoms,
-                                                                          immunity['immunity']['trans'][strain],
-                                                                          **immunity['imm_pars'][strain][
+                                                                          self.pars['immunity']['trans'][strain],
+                                                                          **self.pars['imm_pars'][strain][
                                                                               'trans'])  # Calculate immunity factors
-            self.prog_immunity_factors[strain, :] = cvu.compute_immunity(self.prog_immunity_factors[strain, :],
+        self.prog_immunity_factors[strain, :] = cvu.compute_immunity(self.prog_immunity_factors[strain, :],
                                                                          immune_time, immune_inds, prior_symptoms,
-                                                                         immunity['immunity']['prog'][strain],
-                                                                         **immunity['imm_pars'][strain][
+                                                                         self.pars['immunity']['prog'][strain],
+                                                                         **self.pars['imm_pars'][strain][
                                                                              'prog'])  # Calculate immunity factors
+
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)

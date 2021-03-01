@@ -524,10 +524,6 @@ class Sim(cvb.BaseSim):
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
 
-            # Create immunity dictionary to give infect()
-            immunity=dict()
-            immunity['immunity'] = self['immunity']
-            immunity['imm_pars'] = self['imm_pars']
             # Deal with strain parameters
             for key in strain_parkeys:
                 strain_pars[key] = self[key][strain]
@@ -541,8 +537,6 @@ class Sim(cvb.BaseSim):
             prior_symptoms      = people.prior_symptoms[immune_inds]
             immunity_scale_factor = np.full(len(immune_inds), self['immunity']['sus'][strain,strain])
 
-
-            # TODO--combine immune and cross-immunity for this operation
             # Process cross-immunity parameters and indices, if relevant
             if ns > 1:
                 for cross_strain in range(ns):
@@ -573,8 +567,8 @@ class Sim(cvb.BaseSim):
                 betas = layer['beta']
 
                 # Compute relative transmission and susceptibility
-                rel_trans = people.rel_trans[strain, :]
-                rel_sus = people.rel_sus[strain, :]
+                rel_trans = people.rel_trans[:]
+                rel_sus = people.rel_sus[:]
 
                 iso_factor = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
@@ -586,7 +580,7 @@ class Sim(cvb.BaseSim):
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
                     source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
-                    people.infect(inds=target_inds, immunity=immunity, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
+                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
                                   layer=lkey, strain=strain)  # Actually infect people
 
         # Update counts for this time step: stocks
