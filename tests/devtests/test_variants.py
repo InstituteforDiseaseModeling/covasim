@@ -288,11 +288,11 @@ if __name__ == '__main__':
 
     # Run more complex tests
     sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # The next tests are deprecated, can be removed
     # simX = test_importstrain_args()

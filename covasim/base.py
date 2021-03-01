@@ -309,9 +309,6 @@ class BaseSim(ParsObj):
             if defaults is not None: # Defaults have been provided: we are now doing updates
                 pars = cvpar.listify_strain_pars(pars)  # Strain pars need to be lists
                 pars = cvpar.update_sub_key_pars(pars, defaults) # Update dict parameters by sub-key
-                if pars.get('init_immunity'):
-                    pars['immunity'] = cvpar.update_init_immunity(defaults['immunity'], pars['init_immunity'][0])  # Update immunity
-
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
 
         return

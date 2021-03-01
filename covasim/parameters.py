@@ -318,9 +318,9 @@ def listify_strain_pars(pars):
 def initialize_immunity(n_strains=None):
     '''
     Initialize the immunity matrices with default values
-    Susceptibility matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
-    Progression is a matrix of scalars of size sim['max_strains'] initialized with default values
-    Transmission is a matrix of scalars of size sim['max_strains'] initialized with default values
+    Susceptibility matrix is of size sim['n_strains']*sim['n_strains'] and is initialized with default values
+    Progression is a matrix of scalars of size sim['n_strains'] initialized with default values
+    Transmission is a matrix of scalars of size sim['n_strains'] initialized with default values
     '''
 
     # Initialize
@@ -372,7 +372,8 @@ def make_strain(strain=None):
 
     choices = {
         'b117': ['b117', 'B117', 'B.1.1.7', 'UK', 'uk', 'UK variant', 'uk variant'],
-        'sa': ['SA', 'sa', 'SA variant', 'sa variant'], # TODO: add other aliases
+        'b1351': ['b1351', 'B1351', 'B.1.351', 'SA', 'sa', 'SA variant', 'sa variant'], # TODO: add other aliases
+        'p1': ['p1', 'P1', 'P.1', 'Brazil', 'Brazil variant', 'brazil variant'],
     }
 
     # Known parameters on B117
@@ -382,11 +383,20 @@ def make_strain(strain=None):
         pars['rel_severe_prob']  = 1.6 # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
 
     # Known parameters on South African variant
-    elif strain in choices['sa']:
+    elif strain in choices['b1351']:
         pars = dict()
         pars['imm_pars']         = dict()
         for ax in cvd.immunity_axes:
             pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 120}) # E484K mutation reduces immunity protection (TODO: link to actual evidence)
+
+    # Known parameters on Brazil variant
+    elif strain in choices['p1']:
+        pars = dict()
+        pars['imm_pars'] = dict()
+        for ax in cvd.immunity_axes:
+            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1.,
+                                                                'half_life': 120})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
+
 
     else:
         choicestr = '\n'.join(choices.values())

@@ -499,7 +499,6 @@ class Sim(cvb.BaseSim):
                 raise ValueError(errormsg)
 
         people.update_states_post() # Check for state changes after interventions
-        ns = self['n_strains']  # Shorten number of strains
 
         # Compute viral loads
         frac_time = cvd.default_float(self['viral_dist']['frac_time'])
@@ -520,10 +519,15 @@ class Sim(cvb.BaseSim):
         # Initialize temp storage for strain parameters
         strain_parkeys  = ['beta', 'asymp_factor']
         strain_pars     = dict()
+        ns = self['n_strains']  # Shorten number of strains
 
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
 
+            # Create immunity dictionary to give infect()
+            immunity=dict()
+            immunity['immunity'] = self['immunity']
+            immunity['imm_pars'] = self['imm_pars']
             # Deal with strain parameters
             for key in strain_parkeys:
                 strain_pars[key] = self[key][strain]
@@ -535,31 +539,29 @@ class Sim(cvb.BaseSim):
             immune_inds         = cvu.true(immune)  # Whether people have some immunity to this strain from a prior infection with this strain
             immune_time         = t - date_rec[immune_inds]  # Time since recovery for people who were last infected by this strain
             prior_symptoms      = people.prior_symptoms[immune_inds]
-            immunity_factors    = dict()
+            immunity_scale_factor = np.full(len(immune_inds), self['immunity']['sus'][strain,strain])
 
+
+            # TODO--combine immune and cross-immunity for this operation
             # Process cross-immunity parameters and indices, if relevant
-            if ns>1:
+            if ns > 1:
                 for cross_strain in range(ns):
                     if cross_strain != strain:
                         cross_immune = people.recovered_strain == cross_strain # Whether people have some immunity to this strain from a prior infection with another strain
-                        cross_immune_time       = t - date_rec[cross_immune]  # Time since recovery for people who were last infected by the cross strain
                         cross_immune_inds       = cvu.true(cross_immune) # People with some immunity to this strain from a prior infection with another strain
+                        cross_immune_inds       = np.setdiff1d(cross_immune_inds, immune_inds) # remove anyone who has own-immunity, that supercedes cross-immunity
+                        cross_immune_time       = t - date_rec[cross_immune_inds]  # Time since recovery for people who were last infected by the cross strain
                         cross_prior_symptoms    = people.prior_symptoms[cross_immune_inds]
+                        cross_immunity          = np.full(len(cross_immune_inds), self['immunity']['sus'][strain, cross_strain])
+                        immunity_scale_factor   = np.concatenate((immunity_scale_factor, cross_immunity))
+                        immune_inds             = np.concatenate((immune_inds, cross_immune_inds))
+                        immune_time             = np.concatenate((immune_time, cross_immune_time))
+                        prior_symptoms          = np.concatenate((prior_symptoms, cross_prior_symptoms))
 
-            # Compute immunity to susceptibility, transmissibility, and progression
-            for ax in cvd.immunity_axes:
-                if ax=='sus':
-                    immunity_factors[ax] = np.full(len(people), 0, dtype=cvd.default_float, order='F')
-                    immunity_factors[ax] = cvu.compute_immunity(immunity_factors[ax], immune_time, immune_inds, prior_symptoms, self['immunity'][ax][strain, strain], **self['imm_pars'][strain][ax])  # Calculate immunity factors
-                    if ns > 1:
-                        immunity_factors[ax] = cvu.compute_immunity(immunity_factors[ax], cross_immune_time, cross_immune_inds, cross_prior_symptoms, self['immunity'][ax][strain, cross_strain], **self['imm_pars'][strain][ax])  # Calculate cross_immunity factors
-                else:
-                    if ax=='trans':     immunity_factors[ax] = people.trans_immunity_factors[strain, :]
-                    elif ax=='prog':    immunity_factors[ax] = people.prog_immunity_factors[strain, :]
-                    immunity_factors[ax] = cvu.compute_immunity(immunity_factors[ax], immune_time, immune_inds, prior_symptoms, self['immunity'][ax][strain], **self['imm_pars'][strain][ax])  # Calculate immunity factors
+            # Compute immunity to susceptibility
 
-            people.trans_immunity_factors[strain, :] = immunity_factors['trans']
-            people.prog_immunity_factors[strain, :] = immunity_factors['prog']
+            immunity_factors = np.full(len(people), 0, dtype=cvd.default_float, order='F')
+            immunity_factors = cvu.compute_immunity(immunity_factors, immune_time, immune_inds, prior_symptoms, immunity_scale_factor, **self['imm_pars'][strain]['sus'])  # Calculate immunity factors
 
             # Define indices for this strain
             inf_by_this_strain = sc.dcp(inf)
@@ -578,13 +580,13 @@ class Sim(cvb.BaseSim):
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
                 rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
-                                                           diag, quar, asymp_factor, iso_factor, quar_factor, immunity_factors['sus'])
+                                                           diag, quar, asymp_factor, iso_factor, quar_factor, immunity_factors)
                 rel_sus = np.float32(rel_sus) # TODO: why doesn't this get returned in this format already?
 
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
                     source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
-                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
+                    people.infect(inds=target_inds, immunity=immunity, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
                                   layer=lkey, strain=strain)  # Actually infect people
 
         # Update counts for this time step: stocks

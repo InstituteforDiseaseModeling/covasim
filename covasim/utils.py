@@ -127,6 +127,8 @@ def compute_immunity(immunity_factors, immune_time, immune_inds, prior_symptoms,
     - others TBC!
 
     Args:
+        scale_factor: reduction in immunity due to cross-immunity, if relevant (1 otherwise) (this is from immunity matrix)
+        prior_symptoms: reduction in immunity based on severity of prior symptoms (by default asymptomatic = 0.7, mild = 0.9, severe = 1.)
         form (str):   the functional form to use
         kwargs (dict): passed to individual immunity functions
     '''
@@ -149,7 +151,7 @@ def compute_immunity(immunity_factors, immune_time, immune_inds, prior_symptoms,
     return output
 
 
-#@nb.njit(    (nbfloat[:],   nbfloat[:],  nbint[:],  nbfloat[:],     nbfloat,    nbfloat,    nbfloat), cache=True, parallel=parallel)
+#@nb.njit(    (nbfloat[:],   nbfloat[:],  nbint[:],  nbfloat[:],     nbfloat[:],    nbfloat,    nbfloat), cache=True, parallel=parallel)
 def exp_decay(y,            t,           inds,      prior_symptoms, scale_factor, init_val, half_life): # pragma: no cover
     ''' Calculate exponential decay '''
 
