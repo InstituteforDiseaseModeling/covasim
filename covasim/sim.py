@@ -521,11 +521,11 @@ class Sim(cvb.BaseSim):
         strain_pars     = dict()
         ns = self['n_strains']  # Shorten number of strains
 
-        # Determine who is currently infected and cannot get another infection
-        inf_inds = cvu.false(sus)
-
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
+
+            # Determine who is currently infected and cannot get another infection
+            inf_inds = cvu.false(sus)
 
             # Deal with strain parameters
             for key in strain_parkeys:
@@ -545,6 +545,7 @@ class Sim(cvb.BaseSim):
                     if cross_strain != strain:
                         cross_immune = people.recovered_strain == cross_strain # Whether people have some immunity to this strain from a prior infection with another strain
                         cross_immune_inds       = cvu.true(cross_immune) # People with some immunity to this strain from a prior infection with another strain
+                        cross_immune_inds       = np.setdiff1d(cross_immune_inds, inf_inds) # remove anyone who is currently exposed
                         cross_immune_inds       = np.setdiff1d(cross_immune_inds, immune_inds) # remove anyone who has own-immunity, that supercedes cross-immunity
                         cross_immunity          = np.full(len(cross_immune_inds), self['immunity']['sus'][strain, cross_strain])
                         immune_inds             = np.concatenate((immune_inds, cross_immune_inds))

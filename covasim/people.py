@@ -407,12 +407,12 @@ class People(cvb.BasePeople):
 
         # determine people with immunity from this strain and then calculate immunity to trans/prog
         date_rec = self.date_recovered
-        immune = self.recovered_strain == strain
-        immune_inds = cvu.true(immune)  # Whether people have some immunity to this strain from a prior infection with this strain
+        immune = self.recovered_strain[inds] == strain
+        immune_inds = cvu.itrue(immune, inds) # Whether people have some immunity to this strain from a prior infection with this strain
         immune_time = cvd.default_int(self.t - date_rec[immune_inds])  # Time since recovery for people who were last infected by this strain
         prior_symptoms = self.prior_symptoms[immune_inds]
 
-        if len(immune_inds):
+        if len(immune_inds)>0:
             self.trans_immunity_factors[strain, immune_inds] = self['pars']['immune_degree'][strain]['trans'][immune_time] * \
                                                      prior_symptoms * self.pars['immunity']['trans'][strain]
             self.prog_immunity_factors[strain, immune_inds] = self['pars']['immune_degree'][strain]['prog'][immune_time] * \
