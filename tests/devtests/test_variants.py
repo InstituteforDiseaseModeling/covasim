@@ -283,9 +283,9 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    if 0:
-        sim = cv.Sim()
-        sim.run()
+    # if 0:
+    #     sim = cv.Sim()
+    #     sim.run()
 
     # Run more complex tests
     sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)

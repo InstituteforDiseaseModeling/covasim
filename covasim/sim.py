@@ -521,6 +521,9 @@ class Sim(cvb.BaseSim):
         strain_pars     = dict()
         ns = self['n_strains']  # Shorten number of strains
 
+        # Determine who is currently infected and cannot get another infection
+        inf_inds = cvu.false(sus)
+
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
 
@@ -533,6 +536,7 @@ class Sim(cvb.BaseSim):
             # Determine people with immunity from a past infection from this strain
             immune              = people.recovered_strain == strain
             immune_inds         = cvu.true(immune)  # Whether people have some immunity to this strain from a prior infection with this strain
+            immune_inds         = np.setdiff1d(immune_inds, inf_inds)
             immunity_scale_factor = np.full(len(immune_inds), self['immunity']['sus'][strain,strain])
 
             # Process cross-immunity parameters and indices, if relevant
