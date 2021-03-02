@@ -13,6 +13,7 @@ from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 from . import parameters as cvpar
+from . import people as cvppl
 from collections import defaultdict
 
 
@@ -1220,6 +1221,10 @@ class import_strain(Intervention):
             # Update the immunity matrix
             sim['immunity'], sim['immune_degree'] = cvpar.update_immunity(prev_immunity=sim['immunity'], n_strains=sim['n_strains'], immunity_to=self.immunity_to, immunity_from=self.immunity_from,
                                                     imm_pars_strain=self.imm_pars, sim_immune_degree=sim['immune_degree'], n_days=sim['n_days'])
+
+            # Update strain-specific people attributes
+
+            cvu.update_strain_attributes(sim.people)
             importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports)  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
             sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
 

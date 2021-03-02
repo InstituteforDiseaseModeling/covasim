@@ -59,7 +59,7 @@ class People(cvb.BasePeople):
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             elif key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
-                self[key] = np.full((self.pars['max_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
+                self[key] = np.full((self.pars['n_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
             elif key == 'vaccinations':
                 self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
             else:
@@ -75,7 +75,7 @@ class People(cvb.BasePeople):
         # Set strain states, which store info about which strain a person is exposed to
         for key in self.meta.strain_states:
             if 'by' in key:
-                self[key] = np.full((self.pars['max_strains'], self.pop_size), False, dtype=bool, order='F')
+                self[key] = np.full((self.pars['n_strains'], self.pop_size), False, dtype=bool, order='F')
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
@@ -91,7 +91,7 @@ class People(cvb.BasePeople):
         self.flows = {key:0 for key in cvd.new_result_flows}
         for key in cvd.new_result_flows:
             if 'by_strain' in key:
-                self.flows[key] = np.full(self.pars['max_strains'], 0, dtype=cvd.default_float)
+                self.flows[key] = np.full(self.pars['n_strains'], 0, dtype=cvd.default_float)
 
 
         # Although we have called init(), we still need to call initialize()
@@ -679,3 +679,4 @@ class People(cvb.BasePeople):
             else:
                 print(f'Nothing happened to {uid} during the simulation.')
         return
+
