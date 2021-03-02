@@ -151,7 +151,6 @@ class People(cvb.BasePeople):
         self.rel_sus[:] = progs['sus_ORs'][inds]  # Default susceptibilities
         self.rel_trans[:] = progs['trans_ORs'][inds] * cvu.sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
 
-
         return
 
 

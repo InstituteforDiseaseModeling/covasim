@@ -133,9 +133,10 @@ new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 
 # Parameters that can vary by strain (should be in list format)
-strain_pars = ['beta',
+strain_pars = ['rel_beta',
                'asymp_factor',
                'imm_pars',
+               'immune_degree',
                'rel_imm',
                'dur',
                'rel_symp_prob',

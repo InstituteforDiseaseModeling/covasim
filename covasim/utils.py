@@ -490,6 +490,22 @@ def choose_w(probs, n, unique=True):
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
 
 
+#%% Waning immunity functions
+
+__all__ += ['expo_decay']
+
+
+def expo_decay(half_life, length):
+    '''
+    Returns an array of length t with values for the immunity at each time step after recovery
+    '''
+
+    decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+    arr = np.ones(length, dtype=cvd.default_float)
+    for t in range(length):
+        arr[t] = np.exp(-decay_rate * t)
+    return arr
+
 
 #%% Simple array operations
 

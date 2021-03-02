@@ -7,6 +7,7 @@ import sciris as sc
 from .settings import options as cvo # For setting global options
 from . import misc as cvm
 from . import defaults as cvd
+from . import utils as cvu
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'make_strain']
 
@@ -57,15 +58,17 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Basic disease transmission parameters
     pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
     pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+    pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
 
     # Parameters that control settings and defaults for multi-strain runs
-    pars['n_strains']       = 1  # The number of strains currently circulating in the population
+    pars['n_strains']       = 1     # The number of strains currently circulating in the population
     pars['max_strains']     = 30    # For allocating memory with numpy arrays
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor
-    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by set_immunity() below
+    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by initialize_immunity() below
+    pars['immune_degree'] = {}      # Dictionary with pre-loaded arrays of exponential decays for calculating immune degree
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
-    pars['beta']            = 0.016 # Beta per symptomatic contact; absolute value, calibrated
+    pars['rel_beta']        = 1.0
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
     pars['imm_pars']        = {}
     for ax in cvd.immunity_axes:
@@ -87,6 +90,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=14.0, par2=2.4) # Duration for people with severe symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=14.0, par2=2.4) # Duration for people with critical symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=6.2,  par2=1.7) # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+
         # Severity parameters: probabilities of symptom progression
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
@@ -118,6 +122,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
     pars['immunity'] = initialize_immunity()  # Initialize immunity
+    pars['immune_degree'] = initialize_immune_degree()
     pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
@@ -334,7 +339,17 @@ def initialize_immunity(n_strains=None):
     return immunity
 
 
-def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immunity_to=None):
+def initialize_immune_degree(pars, defaults):
+    combined_pars = sc.mergedicts(pars, defaults)
+    immune_degree = {}
+    for ax in cvd.immunity_axes:
+        immune_degree[ax] = cvu.expo_decay(combined_pars['imm_pars'][ax]['pars']['half_life'], combined_pars['n_days'])
+    pars['immune_degree'] = immune_degree
+    return pars
+
+
+def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immunity_to=None, imm_pars_strain=None,
+                    sim_immune_degree=None, n_days=None):
     '''
     Helper function to update the immunity matrices when a new strain is added.
     (called by import_strain intervention)
@@ -346,7 +361,7 @@ def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immu
     immunity = initialize_immunity(n_strains=n_strains)
     update_strain = n_strains-1
     for ax in cvd.immunity_axes:
-        if ax=='sus':
+        if ax == 'sus':
             immunity[ax][:update_strain, :update_strain] = prev_immunity[ax]
         else:
             immunity[ax][:update_strain] = prev_immunity[ax]
@@ -361,7 +376,14 @@ def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immu
     immunity['sus'][update_strain, :] = new_immunity_row
     immunity['sus'][:, update_strain] = new_immunity_column
 
-    return immunity
+    immune_degree = sc.promotetolist(sim_immune_degree)
+    immune_degree_new = {}
+    for ax in cvd.immunity_axes:
+        immune_degree_new[ax] = cvu.expo_decay(imm_pars_strain[ax]['pars']['half_life'], n_days)
+
+    immune_degree.append(immune_degree_new)
+
+    return immunity, immune_degree
 
 
 
@@ -394,8 +416,7 @@ def make_strain(strain=None):
         pars = dict()
         pars['imm_pars'] = dict()
         for ax in cvd.immunity_axes:
-            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1.,
-                                                                'half_life': 120})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
+            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 120})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
 
 
     else:

@@ -114,12 +114,12 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
     sc.heading('Setting up...')
 
     strain_labels = [
-        'Strain 1: beta 0.016',
-        'Strain 2: beta 0.025'
+        'Strain 1',
+        'Strain 2: 1.5x more transmissible'
     ]
 
     imported_strain = {
-        'beta': 0.025,
+        'rel_beta': 1.5,
         'imm_pars': {k: dict(form='exp_decay', pars={'init_val':1., 'half_life':100}) for k in cvd.immunity_axes}
     }
 
@@ -147,9 +147,9 @@ def test_import2strains(do_plot=False, do_show=True, do_save=False):
     sim.run()
 
     strain_labels = [
-        'Strain 1: beta 0.016',
-        'Strain 2: beta 0.025, 20 imported day 10',
-        'Strain 3: beta 0.05, 20 imported day 30'
+        'Strain 1: Wild Type',
+        'Strain 2: UK Variant on day 10',
+        'Strain 3: SA Variant on day 30'
     ]
 
     if do_plot:
@@ -173,7 +173,7 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
     }
 
     imported_strain = {
-        'beta': 0.025,
+        'rel_beta': 1.5,
         'dur': {'exp2inf':dict(dist='lognormal_int', par1=6.0,  par2=2.0)}
     }
 
@@ -191,12 +191,12 @@ def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing 2 new strains partway through a sim, with a change_beta intervention')
     sc.heading('Setting up...')
 
-    strain2 = {'beta': 0.025,
+    strain2 = {'rel_beta': 1.5,
                'rel_severe_prob': 1.3,
                }
 
     strain3 = {
-        'beta': 0.05,
+        'rel_beta': 2,
         'rel_symp_prob': 1.6,
     }
 
