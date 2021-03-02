@@ -144,7 +144,7 @@ def pre_compute_immunity(length, form, pars):
         output = exp_decay(length, **pars)
 
     elif form == 'logistic_decay':
-        output = logistic_decay(**pars)
+        output = logistic_decay(length, **pars)
 
     else:
         choicestr = '\n'.join(choices)

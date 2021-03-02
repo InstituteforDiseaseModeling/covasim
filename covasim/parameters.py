@@ -377,19 +377,14 @@ def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immu
     # TODO: figure out how to adapt this next section for generic waning functions.
     # Initial thoughts: perhaps we call compute_immunity here, with compute_immunity
     # modified to calculate immunity for a generic series of timepoints rather than
-    # anything specific. But then we'll need to retain the array of (t, immunity)
-    # so we can do lookups for specific values of t.
+    # anything specific.
+    immune_degree = sc.promotetolist(sim_immune_degree)
+    immune_degree_new = {}
+    for ax in cvd.immunity_axes:
+        immune_degree_new[ax] = cvu.pre_compute_immunity(n_days, **imm_pars_strain[ax])
+    immune_degree.append(immune_degree_new)
 
-#    immune_degree = sc.promotetolist(sim_immune_degree)
-#    immune_degree_new = {}
-#    for ax in cvd.immunity_axes:
-#        immune_degree_new[ax] = cvu.expo_decay(imm_pars_strain[ax]['pars']['half_life'], n_days)
-
-#    immune_degree.append(immune_degree_new)
-
-#    return immunity, immune_degree
-
-    return immunity
+    return immunity, immune_degree
 
 
 #%% Store default strain information

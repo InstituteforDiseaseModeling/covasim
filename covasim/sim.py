@@ -527,14 +527,12 @@ class Sim(cvb.BaseSim):
             # Deal with strain parameters
             for key in strain_parkeys:
                 strain_pars[key] = self[key][strain]
-            beta = cvd.default_float(self['beta'])*cvd.default_float(strain_pars['rel_beta'])
+            beta = cvd.default_float(self['beta'] * strain_pars['rel_beta'])
             asymp_factor = cvd.default_float(strain_pars['asymp_factor'])
 
             # Determine people with immunity from a past infection from this strain
             immune              = people.recovered_strain == strain
             immune_inds         = cvu.true(immune)  # Whether people have some immunity to this strain from a prior infection with this strain
-            immune_time         = cvd.default_int(t - date_rec[immune_inds])  # Time since recovery for people who were last infected by this strain
-            prior_symptoms      = people.prior_symptoms[immune_inds]
             immunity_scale_factor = np.full(len(immune_inds), self['immunity']['sus'][strain,strain])
 
             # Process cross-immunity parameters and indices, if relevant
@@ -544,18 +542,17 @@ class Sim(cvb.BaseSim):
                         cross_immune = people.recovered_strain == cross_strain # Whether people have some immunity to this strain from a prior infection with another strain
                         cross_immune_inds       = cvu.true(cross_immune) # People with some immunity to this strain from a prior infection with another strain
                         cross_immune_inds       = np.setdiff1d(cross_immune_inds, immune_inds) # remove anyone who has own-immunity, that supercedes cross-immunity
-                        cross_immune_time       = cvd.default_int(t - date_rec[cross_immune_inds])  # Time since recovery for people who were last infected by the cross strain
-                        cross_prior_symptoms    = people.prior_symptoms[cross_immune_inds]
                         cross_immunity          = np.full(len(cross_immune_inds), self['immunity']['sus'][strain, cross_strain])
-                        immunity_scale_factor   = np.concatenate((immunity_scale_factor, cross_immunity))
                         immune_inds             = np.concatenate((immune_inds, cross_immune_inds))
-                        immune_time             = np.concatenate((immune_time, cross_immune_time))
-                        prior_symptoms          = np.concatenate((prior_symptoms, cross_prior_symptoms))
+                        immunity_scale_factor   = np.concatenate((immunity_scale_factor, cross_immunity))
+
+            immune_time = cvd.default_int(t - date_rec[immune_inds])  # Time since recovery for people who were last infected by this strain
+            prior_symptoms = people.prior_symptoms[immune_inds]
 
             # Compute immunity to susceptibility
             immunity_factors = np.full(len(people), 0, dtype=cvd.default_float, order='F')
             if len(immune_inds):
-                immunity_factors[immune_inds] = self['immune_degree'][strain]['sus'][immune_time] * prior_symptoms * self.pars['immunity']['sus'][strain, strain]
+                immunity_factors[immune_inds] = self['immune_degree'][strain]['sus'][immune_time] * prior_symptoms * immunity_scale_factor
 
             # Define indices for this strain
             inf_by_this_strain = sc.dcp(inf)
