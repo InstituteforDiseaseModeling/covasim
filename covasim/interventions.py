@@ -394,7 +394,7 @@ class change_beta(Intervention):
         self.orig_betas = {}
         for lkey in self.layers:
             if lkey is None:
-                self.orig_betas['overall'] = sim['beta']
+                self.orig_betas['overall'] = [rb*sim['beta'] for rb in sim['rel_beta']]
                 self.testkey = 'overall'
             else:
                 self.orig_betas[lkey] = sim['beta_layer'][lkey]
@@ -406,9 +406,13 @@ class change_beta(Intervention):
 
     def apply(self, sim):
 
-        # Extend beta if needed
+        # Extend rel_beta if needed
         if self.layers[0] is None:
-            if len(sim['beta'])>len(self.orig_betas['overall']):
+            if len(sim['rel_beta'])>len(self.orig_betas['overall']):
+                import traceback;
+                traceback.print_exc();
+                import pdb;
+                pdb.set_trace()
                 prev_change = sim['beta'][0]/self.orig_betas['overall'][0]
                 self.orig_betas['overall'].append(sim['beta'][-1])
                 sim['beta'][-1] *= prev_change
@@ -1202,6 +1206,7 @@ class import_strain(Intervention):
                 else:
                     # use default
                     print(f'{strain_key} not provided for this strain, using default value')
+
                     sim[strain_key].append(sim[strain_key][0])
 
             # Create defaults for cross-immunity if not provided

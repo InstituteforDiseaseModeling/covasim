@@ -122,7 +122,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
     pars['immunity'] = initialize_immunity()  # Initialize immunity
-    pars['immune_degree'] = initialize_immune_degree()
+    #pars['immune_degree'] = initialize_immune_degree()
     pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
@@ -340,10 +340,13 @@ def initialize_immunity(n_strains=None):
 
 
 def initialize_immune_degree(pars, defaults):
-    combined_pars = sc.mergedicts(pars, defaults)
-    immune_degree = {}
-    for ax in cvd.immunity_axes:
-        immune_degree[ax] = cvu.expo_decay(combined_pars['imm_pars'][ax]['pars']['half_life'], combined_pars['n_days'])
+    combined_pars = sc.mergedicts(defaults, pars)
+    immune_degree = [] # List by strain
+    for s in range(combined_pars['n_strains']):  # Need to loop over strains here
+        ax_dict = {}
+        for ax in cvd.immunity_axes:
+            ax_dict[ax] = cvu.expo_decay(combined_pars['imm_pars'][s][ax]['pars']['half_life'], combined_pars['n_days'])
+        immune_degree.append(ax_dict)
     pars['immune_degree'] = immune_degree
     return pars
 
