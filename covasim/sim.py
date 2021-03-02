@@ -552,7 +552,13 @@ class Sim(cvb.BaseSim):
             # Compute immunity to susceptibility
             immunity_factors = np.full(len(people), 0, dtype=cvd.default_float, order='F')
             if len(immune_inds):
-                immunity_factors[immune_inds] = self['immune_degree'][strain]['sus'][immune_time] * prior_symptoms * immunity_scale_factor
+                try:
+                    immunity_factors[immune_inds] = self['immune_degree'][strain]['sus'][immune_time] * prior_symptoms * immunity_scale_factor
+                except:
+                    import traceback;
+                    traceback.print_exc();
+                    import pdb;
+                    pdb.set_trace()
 
             # Define indices for this strain
             inf_by_this_strain = sc.dcp(inf)
