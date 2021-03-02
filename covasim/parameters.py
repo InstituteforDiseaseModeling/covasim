@@ -65,7 +65,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['max_strains']     = 30    # For allocating memory with numpy arrays
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by initialize_immunity() below
-    pars['immune_degree'] = {}      # Dictionary with pre-loaded arrays of exponential decays for calculating immune degree
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
@@ -122,7 +121,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
     pars['immunity'] = initialize_immunity()  # Initialize immunity
-    #pars['immune_degree'] = initialize_immune_degree()
+    pars['immune_degree'] = initialize_immune_degree(n_days=pars['n_days'], imm_pars=pars['imm_pars'])
     pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
@@ -339,20 +338,16 @@ def initialize_immunity(n_strains=None):
     return immunity
 
 
-def initialize_immune_degree(pars, defaults):
-    combined_pars = sc.mergedicts(defaults, pars)
-    immune_degree = [] # List by strain
-    for s in range(combined_pars['n_strains']):  # Need to loop over strains here
-        ax_dict = {}
-        for ax in cvd.immunity_axes:
-            ax_dict[ax] = cvu.expo_decay(combined_pars['imm_pars'][s][ax]['pars']['half_life'], combined_pars['n_days'])
-        immune_degree.append(ax_dict)
-    pars['immune_degree'] = immune_degree
-    return pars
+def initialize_immune_degree(n_days=None, imm_pars=None):
+    ''' Precompute immunity waning '''
+    immune_degree = {}
+    for ax in cvd.immunity_axes:
+        immune_degree[ax] = cvu.pre_compute_immunity(n_days, **imm_pars[ax])
+    return immune_degree
 
 
-def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immunity_to=None, imm_pars_strain=None,
-                    sim_immune_degree=None, n_days=None):
+def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immunity_to=None,
+                    imm_pars_strain=None, sim_immune_degree=None, n_days=None):
     '''
     Helper function to update the immunity matrices when a new strain is added.
     (called by import_strain intervention)
@@ -379,15 +374,22 @@ def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immu
     immunity['sus'][update_strain, :] = new_immunity_row
     immunity['sus'][:, update_strain] = new_immunity_column
 
-    immune_degree = sc.promotetolist(sim_immune_degree)
-    immune_degree_new = {}
-    for ax in cvd.immunity_axes:
-        immune_degree_new[ax] = cvu.expo_decay(imm_pars_strain[ax]['pars']['half_life'], n_days)
+    # TODO: figure out how to adapt this next section for generic waning functions.
+    # Initial thoughts: perhaps we call compute_immunity here, with compute_immunity
+    # modified to calculate immunity for a generic series of timepoints rather than
+    # anything specific. But then we'll need to retain the array of (t, immunity)
+    # so we can do lookups for specific values of t.
 
-    immune_degree.append(immune_degree_new)
+#    immune_degree = sc.promotetolist(sim_immune_degree)
+#    immune_degree_new = {}
+#    for ax in cvd.immunity_axes:
+#        immune_degree_new[ax] = cvu.expo_decay(imm_pars_strain[ax]['pars']['half_life'], n_days)
 
-    return immunity, immune_degree
+#    immune_degree.append(immune_degree_new)
 
+#    return immunity, immune_degree
+
+    return immunity
 
 
 #%% Store default strain information

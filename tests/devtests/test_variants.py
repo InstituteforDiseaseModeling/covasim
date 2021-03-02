@@ -120,7 +120,8 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
 
     imported_strain = {
         'rel_beta': 1.5,
-        'imm_pars': {k: dict(form='exp_decay', pars={'init_val':1., 'half_life':100}) for k in cvd.immunity_axes}
+#        'imm_pars': {k: dict(form='exp_decay', pars={'init_val':1., 'half_life':100}) for k in cvd.immunity_axes}
+        'imm_pars': {k: dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 10, 'lower_asymp': 0.1, 'decay_rate': -5}) for k in cvd.immunity_axes}
     }
 
     imports = cv.import_strain(strain=imported_strain, days=1, n_imports=30)
@@ -282,14 +283,14 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    if 1:
+    if 0:
         sim = cv.Sim()
         sim.run()
 
     # Run more complex tests
     sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+#    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+#    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # TODO: the next test isn't working, need to check change_beta logic
     # sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)

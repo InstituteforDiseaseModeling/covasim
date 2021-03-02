@@ -116,32 +116,35 @@ def find_contacts(p1, p2, inds): # pragma: no cover
 
 
 #%% Immunity methods
-__all__ += ['compute_immunity']
+__all__ += ['pre_compute_immunity']
 
-def compute_immunity(immunity_factors, immune_time, immune_inds, prior_symptoms, scale_factor, form, pars):
+def pre_compute_immunity(length, form, pars):
     '''
     Process immunity pars and functional form into a value
-
-    - 'exp_decay'     : exponential decay with initial value par1 and half-life=par2
-    - 'linear'        : linear decay with initial value par1 and per-day decay = par2
+    - 'exp_decay'       : exponential decay (TODO fill in details)
+    - 'logistic_decay'  : logistic decay (TODO fill in details)
+    - 'linear'          : linear decay (TODO fill in details)
     - others TBC!
 
     Args:
-        scale_factor: reduction in immunity due to cross-immunity, if relevant (1 otherwise) (this is from immunity matrix)
-        prior_symptoms: reduction in immunity based on severity of prior symptoms (by default asymptomatic = 0.7, mild = 0.9, severe = 1.)
         form (str):   the functional form to use
-        kwargs (dict): passed to individual immunity functions
+        pars (dict): passed to individual immunity functions
+        length (float): length of time to compute immunity
     '''
 
     choices = [
         'exp_decay',
+        'logistic_decay',
         'linear',
         ]
 
     # Process inputs
     if form == 'exp_decay':
         if pars['half_life'] is None: pars['half_life'] = np.nan
-        output = exp_decay(immunity_factors, immune_time, immune_inds, prior_symptoms, scale_factor, **pars)
+        output = exp_decay(length, **pars)
+
+    elif form == 'logistic_decay':
+        output = logistic_decay(**pars)
 
     else:
         choicestr = '\n'.join(choices)
@@ -151,13 +154,74 @@ def compute_immunity(immunity_factors, immune_time, immune_inds, prior_symptoms,
     return output
 
 
-#@nb.njit(    (nbfloat[:],   nbfloat[:],  nbint[:],  nbfloat[:],     nbfloat[:],    nbfloat,    nbfloat), cache=True, parallel=parallel)
-def exp_decay(y,            t,           inds,      prior_symptoms, scale_factor, init_val, half_life): # pragma: no cover
-    ''' Calculate exponential decay '''
-
+def exp_decay(length, init_val, half_life):
+    '''
+    Returns an array of length t with values for the immunity at each time step after recovery
+    '''
     decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
-    y[inds] = scale_factor * prior_symptoms * init_val * np.exp(-decay_rate * t)
-    return y
+    t = np.arange(length, dtype=cvd.default_int)
+    return init_val * np.exp(-decay_rate * t)
+
+
+def logistic_decay(length, init_val, decay_rate, half_val, lower_asymp):
+    ''' Calculate logistic decay '''
+    t = np.arange(length, dtype=cvd.default_int)
+    return (init_val + (lower_asymp-init_val) / (1 + (t/half_val) ** decay_rate)) # TODO: make this robust to /0 errors
+
+
+
+####### PREVIOUS VERSIONS
+# def compute_immunity(immunity_factors, immune_time, immune_inds, prior_symptoms, scale_factor, form, pars):
+#     '''
+#     Process immunity pars and functional form into a value
+#
+#     - 'exp_decay'     : exponential decay with initial value par1 and half-life=par2
+#     - 'linear'        : linear decay with initial value par1 and per-day decay = par2
+#     - others TBC!
+#
+#     Args:
+#         scale_factor: reduction in immunity due to cross-immunity, if relevant (1 otherwise) (this is from immunity matrix)
+#         prior_symptoms: reduction in immunity based on severity of prior symptoms (by default asymptomatic = 0.7, mild = 0.9, severe = 1.)
+#         form (str):   the functional form to use
+#         kwargs (dict): passed to individual immunity functions
+#     '''
+#
+#     choices = [
+#         'exp_decay',
+#         'logistic_decay',
+#         'linear',
+#         ]
+#
+#     # Process inputs
+#     if form == 'exp_decay':
+#         if pars['half_life'] is None: pars['half_life'] = np.nan
+#         output = exp_decay(immunity_factors, immune_time, immune_inds, prior_symptoms, scale_factor, **pars)
+#
+#     elif form == 'logistic_decay':
+#         output = logistic_decay(immunity_factors, immune_time, immune_inds, prior_symptoms, scale_factor, **pars)
+#
+#     else:
+#         choicestr = '\n'.join(choices)
+#         errormsg = f'The selected functional form "{form}" is not implemented; choices are: {choicestr}'
+#         raise NotImplementedError(errormsg)
+#
+#     return output
+#
+#
+# #@nb.njit(    (nbfloat[:],   nbfloat[:],  nbint[:],  nbfloat[:],     nbfloat[:],    nbfloat,    nbfloat), cache=True, parallel=parallel)
+# def exp_decay(y,            t,           inds,      prior_symptoms, scale_factor, init_val, half_life): # pragma: no cover
+#     ''' Calculate exponential decay '''
+#     decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+#     y[inds] = scale_factor * prior_symptoms * init_val * np.exp(-decay_rate * t)
+#     y[inds] = scale_factor * prior_symptoms * init_val * np.exp(-decay_rate * t)
+#     return y
+#
+# #@nb.njit(    (nbfloat[:],   nbfloat[:],  nbint[:],  nbfloat[:],     nbfloat[:],    nbfloat,    nbfloat,    nbfloat,    nbfloat), cache=True, parallel=parallel)
+# def logistic_decay(y,            t,           inds,      prior_symptoms, scale_factor, init_val, decay_rate, half_val, lower_asymp): # pragma: no cover
+#     ''' Calculate logistic decay '''
+#     y[inds] = scale_factor * prior_symptoms * (init_val + (lower_asymp-init_val) / (1 + (t/half_val) ** decay_rate))
+#     return y
+#
 
 
 #%% Sampling and seed methods
@@ -489,22 +553,6 @@ def choose_w(probs, n, unique=True):
         probs = np.ones(n_choices)/n_choices
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
 
-
-#%% Waning immunity functions
-
-__all__ += ['expo_decay']
-
-
-def expo_decay(half_life, length):
-    '''
-    Returns an array of length t with values for the immunity at each time step after recovery
-    '''
-
-    decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
-    arr = np.ones(length, dtype=cvd.default_float)
-    for t in range(length):
-        arr[t] = np.exp(-decay_rate * t)
-    return arr
 
 
 #%% Simple array operations
