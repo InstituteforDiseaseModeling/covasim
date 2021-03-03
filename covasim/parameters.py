@@ -108,6 +108,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['analyzers']     = []   # Custom analysis functions; populated by the user
     pars['strains']       = []   # Additional strains of the virus; populated by the user, see immunity.py
+    pars['vaccines']      = []   # Vaccines that are being used; populated by user
     pars['timelimit']     = None # Time limit for the simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
