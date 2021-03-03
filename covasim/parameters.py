@@ -9,7 +9,7 @@ from . import misc as cvm
 from . import defaults as cvd
 from . import utils as cvu
 
-__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'make_strain']
+__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
 
 def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
@@ -62,9 +62,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Parameters that control settings and defaults for multi-strain runs
     pars['n_strains']       = 1     # The number of strains currently circulating in the population
-    pars['max_strains']     = 30    # For allocating memory with numpy arrays
+    pars['total_strains']   = None  # Set during sim initialization, once strains have been specified and processed
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by initialize_immunity() below
+    pars['immune_degree']   = None
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
@@ -106,6 +107,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Events and interventions
     pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['analyzers']     = []   # Custom analysis functions; populated by the user
+    pars['strains']       = []   # Additional strains of the virus; populated by the user, see immunity.py
     pars['timelimit']     = None # Time limit for the simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
@@ -120,8 +122,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
-    pars['immunity'] = initialize_immunity()  # Initialize immunity
-    pars['immune_degree'] = initialize_immune_degree(n_days=pars['n_days'], imm_pars=pars['imm_pars'])
+#    pars['immunity'] = initialize_immunity()  # Initialize immunity
+#    pars['immune_degree'] = initialize_immune_degree(n_days=pars['n_days'], imm_pars=pars['imm_pars'])
     pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
@@ -318,111 +320,4 @@ def listify_strain_pars(pars):
             pars[sp] = sc.promotetolist(pars[sp])
     return pars
 
-
-def initialize_immunity(n_strains=None):
-    '''
-    Initialize the immunity matrices with default values
-    Susceptibility matrix is of size sim['n_strains']*sim['n_strains'] and is initialized with default values
-    Progression is a matrix of scalars of size sim['n_strains'] initialized with default values
-    Transmission is a matrix of scalars of size sim['n_strains'] initialized with default values
-    '''
-
-    # Initialize
-    if n_strains is None: n_strains = 1
-    immunity = {}
-    for ax in cvd.immunity_axes:
-        if ax == 'sus':
-            immunity[ax] = np.full((n_strains, n_strains), 1, dtype=cvd.default_float)
-        else:
-            immunity[ax] = np.full(n_strains, 1, dtype=cvd.default_float)
-    return immunity
-
-
-def initialize_immune_degree(n_days=None, imm_pars=None):
-    ''' Precompute immunity waning '''
-    immune_degree = {}
-    for ax in cvd.immunity_axes:
-        immune_degree[ax] = cvu.pre_compute_immunity(n_days, **imm_pars[ax])
-    return immune_degree
-
-
-def update_immunity(prev_immunity=None, n_strains=None, immunity_from=None, immunity_to=None,
-                    imm_pars_strain=None, sim_immune_degree=None, n_days=None):
-    '''
-    Helper function to update the immunity matrices when a new strain is added.
-    (called by import_strain intervention)
-    '''
-    # Add off-diagonals
-    immunity_from   = sc.promotetolist(immunity_from)
-    immunity_to     = sc.promotetolist(immunity_to)
-
-    immunity = initialize_immunity(n_strains=n_strains)
-    update_strain = n_strains-1
-    for ax in cvd.immunity_axes:
-        if ax == 'sus':
-            immunity[ax][:update_strain, :update_strain] = prev_immunity[ax]
-        else:
-            immunity[ax][:update_strain] = prev_immunity[ax]
-
-    # create the immunity[update_strain,] and immunity[,update_strain] arrays
-    new_immunity_row    = np.full(n_strains, 1, dtype=cvd.default_float)
-    new_immunity_column = np.full(n_strains, 1, dtype=cvd.default_float)
-    for i in range(n_strains-1):
-        new_immunity_row[i] = immunity_from[i]
-        new_immunity_column[i] = immunity_to[i]
-
-    immunity['sus'][update_strain, :] = new_immunity_row
-    immunity['sus'][:, update_strain] = new_immunity_column
-
-    # TODO: figure out how to adapt this next section for generic waning functions.
-    # Initial thoughts: perhaps we call compute_immunity here, with compute_immunity
-    # modified to calculate immunity for a generic series of timepoints rather than
-    # anything specific.
-    immune_degree = sc.promotetolist(sim_immune_degree)
-    immune_degree_new = {}
-    for ax in cvd.immunity_axes:
-        immune_degree_new[ax] = cvu.pre_compute_immunity(n_days, **imm_pars_strain[ax])
-    immune_degree.append(immune_degree_new)
-
-    return immunity, immune_degree
-
-
-#%% Store default strain information
-
-def make_strain(strain=None):
-    ''' Populates a par dict with known information about circulating strains'''
-
-    choices = {
-        'b117': ['b117', 'B117', 'B.1.1.7', 'UK', 'uk', 'UK variant', 'uk variant'],
-        'b1351': ['b1351', 'B1351', 'B.1.351', 'SA', 'sa', 'SA variant', 'sa variant'], # TODO: add other aliases
-        'p1': ['p1', 'P1', 'P.1', 'Brazil', 'Brazil variant', 'brazil variant'],
-    }
-
-    # Known parameters on B117
-    if strain in choices['b117']:
-        pars = dict()
-        pars['rel_beta']         = 1.5 # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
-        pars['rel_severe_prob']  = 1.6 # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
-
-    # Known parameters on South African variant
-    elif strain in choices['b1351']:
-        pars = dict()
-        pars['imm_pars']         = dict()
-        for ax in cvd.immunity_axes:
-            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 120}) # E484K mutation reduces immunity protection (TODO: link to actual evidence)
-
-    # Known parameters on Brazil variant
-    elif strain in choices['p1']:
-        pars = dict()
-        pars['imm_pars'] = dict()
-        for ax in cvd.immunity_axes:
-            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 120})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
-
-
-    else:
-        choicestr = '\n'.join(choices.values())
-        errormsg = f'The selected variant "{strain}" is not implemented; choices are: {choicestr}'
-        raise NotImplementedError(errormsg)
-
-    return pars
 

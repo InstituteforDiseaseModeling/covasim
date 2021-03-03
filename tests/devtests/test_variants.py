@@ -118,14 +118,13 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
         'Strain 2: 1.5x more transmissible'
     ]
 
-    imported_strain = {
+    strain_pars = {
         'rel_beta': 1.5,
 #        'imm_pars': {k: dict(form='exp_decay', pars={'init_val':1., 'half_life':100}) for k in cvd.immunity_axes}
         'imm_pars': {k: dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 10, 'lower_asymp': 0.1, 'decay_rate': -5}) for k in cvd.immunity_axes}
     }
-
-    imports = cv.import_strain(strain=imported_strain, days=1, n_imports=30)
-    sim = cv.Sim(interventions=imports, label='With imported infections')
+    strain = cv.Strain(strain_pars, days=1)
+    sim = cv.Sim(strains=strain)
     sim.run()
 
     if do_plot:
@@ -283,9 +282,9 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    # if 0:
-    #     sim = cv.Sim()
-    #     sim.run()
+    if 0:
+        sim = cv.Sim()
+        sim.run()
 
     # Run more complex tests
     sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
