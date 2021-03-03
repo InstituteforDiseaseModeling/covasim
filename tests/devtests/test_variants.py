@@ -127,8 +127,13 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
         'rel_beta': 1.5,
         'imm_pars': {k: dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 10, 'lower_asymp': 0.1, 'decay_rate': -5}) for k in cvd.immunity_axes}
     }
+    immunity = {}
+    immunity['sus'] = np.array([[1,0.4],[0.9,1.]])
+    immunity['prog'] = np.array([1,1])
+    immunity['trans'] = np.array([1,1])
+    pars = {'immunity': immunity}
     strain = cv.Strain(strain_pars, days=1)
-    sim = cv.Sim(strains=strain)
+    sim = cv.Sim(pars=pars, strains=strain)
     sim.run()
 
     if do_plot:
@@ -197,7 +202,7 @@ def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
     strain3 = {'rel_beta': 2,
                'rel_symp_prob': 1.6}
 
-    intervs  = cv.change_beta(days=[5, 20, 40], changes=[0.8, 0.7, 0.6]),
+    intervs  = cv.change_beta(days=[5, 20, 40], changes=[0.8, 0.7, 0.6])
     strains  = [cv.Strain(strain=strain2, days=10, n_imports=20),
                 cv.Strain(strain=strain3, days=30, n_imports=20),
                ]
@@ -286,17 +291,9 @@ if __name__ == '__main__':
     sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
     scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
     scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
-
-    # TODO: the next test isn't working, need to check change_beta logic
-#    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
-
-    # TODO: the next two tests aren't working, need to check scenario logic
-
-    # The next tests are deprecated, can be removed
-    # simX = test_importstrain_args()
-    # p1, p2, p3 = test_par_refactor()
 
     sc.toc()
 

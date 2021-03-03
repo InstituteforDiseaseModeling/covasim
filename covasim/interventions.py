@@ -395,11 +395,9 @@ class change_beta(Intervention):
         self.orig_betas = {}
         for lkey in self.layers:
             if lkey is None:
-                self.orig_betas['overall'] = [rb*sim['beta'] for rb in sim['rel_beta']]
-                self.testkey = 'overall'
+                self.orig_betas['overall'] = sim['beta']
             else:
                 self.orig_betas[lkey] = sim['beta_layer'][lkey]
-                self.testkey = lkey
 
         self.initialized = True
         return
@@ -407,25 +405,13 @@ class change_beta(Intervention):
 
     def apply(self, sim):
 
-        # Extend rel_beta if needed
-        if self.layers[0] is None:
-            if len(sim['rel_beta'])>len(self.orig_betas['overall']):
-                import traceback;
-                traceback.print_exc();
-                import pdb;
-                pdb.set_trace()
-                prev_change = sim['beta'][0]/self.orig_betas['overall'][0]
-                self.orig_betas['overall'].append(sim['beta'][-1])
-                sim['beta'][-1] *= prev_change
-
         # If this day is found in the list, apply the intervention
         for ind in find_day(self.days, sim.t):
             for lkey,new_beta in self.orig_betas.items():
+                new_beta = new_beta * self.changes[ind]
                 if lkey == 'overall':
-                    new_beta = [bv * self.changes[ind] for bv in new_beta]
                     sim['beta'] = new_beta
                 else:
-                    new_beta *= self.changes[ind]
                     sim['beta_layer'][lkey] = new_beta
 
 

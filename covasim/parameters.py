@@ -307,13 +307,10 @@ def update_sub_key_pars(pars, default_pars):
                 pars[par] = sc.promotetolist(sc.mergenested(oldval, newval))
         else:
             if isinstance(val, dict):  # Update the dictionary, don't just overwrite it
-                pars[par] = sc.mergenested(default_pars[par], val)
-#                try: pars[par] = sc.mergenested(default_pars[par], val)
-#                except:
-#                    import traceback;
-#                    traceback.print_exc();
-#                    import pdb;
-#                    pdb.set_trace()
+                if isinstance(default_pars[par], dict):
+                    pars[par] = sc.mergenested(default_pars[par], val)
+                else: # If the default isn't a disctionary, just overwrite it (TODO: could make this more robust)
+                    pars[par] = val
     return pars
 
 
