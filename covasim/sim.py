@@ -108,13 +108,13 @@ class Sim(cvb.BaseSim):
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
-        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
-        self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.init_interventions() # Initialize the interventions...
         self.init_analyzers() # ...and the analyzers...
         self.init_strains() # ...and the strains....
         self.init_immunity() # ... and information about immunity/cross-immunity.
-        self.init_results() # Create the results structure - do this after initializing strains
+        self.init_results() # After initializing the strain, create the results structure
+        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
+        self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized   = True
         self.complete      = False

@@ -91,8 +91,7 @@ class People(cvb.BasePeople):
         self.flows = {key:0 for key in cvd.new_result_flows}
         for key in cvd.new_result_flows:
             if 'by_strain' in key:
-                self.flows[key] = np.full(self.pars['n_strains'], 0, dtype=cvd.default_float)
-
+                self.flows[key] = np.full(self.pars['total_strains'], 0, dtype=cvd.default_float)
 
         # Although we have called init(), we still need to call initialize()
         self.initialized = False
@@ -148,8 +147,8 @@ class People(cvb.BasePeople):
         self.severe_prob[:] = progs['severe_probs'][inds]*progs['comorbidities'][inds] # Severe disease probability is modified by comorbidities
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
         self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
-        self.rel_sus[:] = progs['sus_ORs'][inds]  # Default susceptibilities
-        self.rel_trans[:] = progs['trans_ORs'][inds] * cvu.sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
+        self.rel_sus[:]     = progs['sus_ORs'][inds]  # Default susceptibilities
+        self.rel_trans[:]   = progs['trans_ORs'][inds] * cvu.sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
 
         return
 
@@ -165,7 +164,7 @@ class People(cvb.BasePeople):
         self.flows  = {key:0 for key in cvd.new_result_flows}
         for key in cvd.new_result_flows:
             if 'by_strain' in key:
-                self.flows[key] += np.full(self.pars['total_strains'], 0, dtype=cvd.default_float)
+                self.flows[key]        = np.full(self.pars['total_strains'], 0, dtype=cvd.default_float)
         self.flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
         self.flows['new_symptomatic'] += self.check_symptomatic()
         self.flows['new_severe']      += self.check_severe()

@@ -141,11 +141,6 @@ class Strain():
 
         if sim.t == self.days:  # Time to introduce strain
 
-            import traceback;
-            traceback.print_exc();
-            import pdb;
-            pdb.set_trace()
-
             # Check number of strains
             prev_strains = sim['n_strains']
             sim['n_strains'] += 1
