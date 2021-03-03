@@ -64,7 +64,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['n_strains']       = 1     # The number of strains currently circulating in the population
     pars['total_strains']   = None  # Set during sim initialization, once strains have been specified and processed
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor
-    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by initialize_immunity() below
+    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
     pars['immune_degree']   = None
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains

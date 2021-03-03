@@ -68,6 +68,7 @@ class PeopleMeta(sc.prettyobj):
         'dead',
         'known_contact',
         'quarantined',
+        'vaccinated'
     ]
 
     strain_states = [

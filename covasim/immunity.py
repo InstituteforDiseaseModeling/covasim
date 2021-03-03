@@ -158,8 +158,10 @@ class Vaccine():
     '''
         Add a new vaccine to the sim (called by interventions.py vaccinate()
 
+        stores number of doses for vaccine and a dictionary to pass to init_immunity for each dose
+
         Args:
-            vaccine (dict): dictionary of parameters specifying information about the vaccine
+            vaccine (dict or str): dictionary of parameters specifying information about the vaccine or label for loading pre-defined vaccine
             kwargs (dict):
 
         **Example**::
@@ -171,70 +173,66 @@ class Vaccine():
             sim = cv.Sim(interventions=interventions)
         '''
 
-    def __init__(self, vaccine=None, vaccine_label=None, **kwargs):
+    def __init__(self, vaccine=None):
 
-        self.vaccine_immune_degree = None
-        self.vaccine_immunity = None
-        self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine, vaccine_label=vaccine_label)
+        self.vaccine_immune_degree = None # dictionary of pre-loaded decay to by imm_axis and dose
+        self.rel_imm = None # list of length total_strains with relative immunity factor
+        self.doses = None
+        self.imm_pars = None
+        self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
             setattr(self, par, val)
         return
 
-    def parse_vaccine_pars(self, vaccine=None, vaccine_label=None):
+    def parse_vaccine_pars(self, vaccine=None):
         ''' Unpack vaccine information, which may be given in different ways'''
 
-        # Option 1: strains can be chosen from a list of pre-defined strains
+        # Option 1: vaccines can be chosen from a list of pre-defined strains
         if isinstance(vaccine, str):
 
             # List of choices currently available: new ones can be added to the list along with their aliases
             choices = {
-                'default': ['default', 'pre-existing'],
                 'pfizer': ['pfizer', 'Pfizer', 'Pfizer-BionTech'],
                 'moderna': ['moderna', 'Moderna'],
                 'az': ['az', 'AstraZeneca', 'astrazeneca'],
                 'j&j': ['j&j', 'johnson & johnson', 'Johnson & Johnson'],
             }
 
-            # Empty pardict for wild strain
-            if vaccine in choices['default']:
-                vaccine_pars = dict()
-                self.vaccine_label = vaccine
-
+            # (TODO: link to actual evidence)
             # Known parameters on pfizer
-            elif vaccine in choices['pfizer']:
+            if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 120})  # (TODO: link to actual evidence)
-                self.vaccine_label = vaccine
+                    vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 0.5, 'half_life': 30}),
+                                                    dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]
+                vaccine_pars['doses'] = 2
 
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1.,
-                                                                                'half_life': 120})  # (TODO: link to actual evidence)
-                self.vaccine_label = vaccine
+                    vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 0.5, 'half_life': 30}),
+                                                    dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]
+                vaccine_pars['doses'] = 2
 
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1.,
-                                                                                'half_life': 120})  # (TODO: link to actual evidence)
-                self.vaccine_label = vaccine
+                    vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 0.5, 'half_life': 30}),
+                                                    dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]
+                vaccine_pars['doses'] = 2
 
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1.,
-                                                                                'half_life': 120})  # (TODO: link to actual evidence)
-                self.vaccine_label = vaccine
-
+                    vaccine_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 120})
+                vaccine_pars['doses'] = 1
 
             else:
                 choicestr = '\n'.join(choices.values())
@@ -244,7 +242,6 @@ class Vaccine():
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(vaccine, dict):
             vaccine_pars = vaccine
-            self.vaccine_label = vaccine_label
 
         else:
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
@@ -252,53 +249,42 @@ class Vaccine():
 
         return vaccine_pars
 
-    def initialize(self):
-        if not hasattr(self, 'imm_pars'):
-            print('Immunity pars not provided, using defaults')
-            self.imm_pars = {}
-            for ax in cvd.immunity_axes:
-                self.imm_pars[ax] = dict(form='exp_decay', pars={'init_val':1., 'half_life':None})
+    def initialize(self, sim):
+
+        ts = sim['total_strains']
+
+        if self.imm_pars is None:
+            errormsg = f'Did not provide parameters for this vaccine'
+            raise ValueError(errormsg)
+
+        if self.rel_imm is None:
+            errormsg = f'Did not provide rel_imm parameters for this vaccine'
+            raise ValueError(errormsg)
+
+        correct_size = self.rel_imm.shape == ts
+        if not correct_size:
+            errormsg = f'Did not provide relative immunity for each strain'
+            raise ValueError(errormsg)
 
         # Validate immunity pars (make sure there are values for all cvd.immunity_axes)
         for key in cvd.immunity_axes:
             if key not in self.imm_pars:
-                print(f'Immunity pars for vaccine for {key} not provided, using default value')
-                self.imm_pars[key] = dict(form='exp_decay', pars={'init_val':1., 'half_life':None})
-
-        self.initialized = True
-
-    def init_vaccine_immunity(self, sim):
-        ''' Initialize vaccine immunity and pre-loaded immune_degree with all strains that will eventually be in the sim'''
-        ts = sim['total_strains']
-        immunity = {}
-
-        # If immunity values have been provided, process them
-        if not hasattr(self, 'vaccine_immunity'):
-            # Initialize immunity
-            for ax in cvd.immunity_axes:
-                immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
-            self.vaccine_immunity = immunity
-
-        else:
-            if sc.checktype(self.vaccine_immunity['sus'], 'arraylike'):
-                correct_size = self.vaccine_immunity['sus']['sus'].shape == (ts)
-                if not correct_size:
-                    errormsg = f'Wrong dimensions for immunity["sus"]: you provided a matrix sized {self.vaccine_immunity["sus"].shape}, but it should be sized {(ts)}'
-                    raise ValueError(errormsg)
-            else:
-                errormsg = f'Type of immunity["sus"] not understood: you provided {type(self.vaccine_immunity["sus"])}, but it should be an array or dict.'
+                errormsg = f'Immunity pars for vaccine for {key} not provided'
                 raise ValueError(errormsg)
 
+        ''' Initialize immune_degree with all strains that will eventually be in the sim'''
+        doses = self.doses
+
         # Precompute waning
-        immune_degree = []  # Stored as a list by strain
-        for s in range(ts):
+        immune_degree = []  # Stored as a list by dose
+        for dose in range(doses):
             strain_immune_degree = {}
             for ax in cvd.immunity_axes:
-                strain_immune_degree[ax] = pre_compute_waning(sim['n_days'], **self.imm_pars[s][ax])
+                strain_immune_degree[ax] = pre_compute_waning(sim['n_days'], **self.imm_pars[ax][dose])
             immune_degree.append(strain_immune_degree)
         self.vaccine_immune_degree = immune_degree
 
-        return
+
 
 # %% Immunity methods
 __all__ += ['init_immunity', 'pre_compute_waning', 'init_vaccine_immunity']

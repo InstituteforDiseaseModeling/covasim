@@ -1164,7 +1164,9 @@ class vaccinate(Intervention):
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates   = [[] for _ in range(sim.n)] # Store the dates when people are vaccinated
         self.vaccine_ind = len(sim['vaccines'])
-        sim['vaccines'].append(cvi.Vaccine(self.vaccine_pars, self.vaccine_label))
+        vaccine = cvi.Vaccine(self.vaccine_pars, self.vaccine_label)
+        sim['vaccines'].append(vaccine)
+        vaccine.initialize(sim)
         self.initialized = True
         return
 
@@ -1182,12 +1184,11 @@ class vaccinate(Intervention):
                 vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
 
-
             self.vaccinations[vacc_inds] += 1
-            for v_ind in vacc_inds:
-                self.vaccination_dates[v_ind].append(sim.t)
+            self.vaccination_dates[vacc_inds] = sim.t
 
             # Update vaccine attributes in sim
+            sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.vaccine_ind
             sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
             sim.people.vaccination_dates = self.vaccination_dates[vacc_inds]
