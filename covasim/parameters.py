@@ -7,6 +7,7 @@ import sciris as sc
 from .settings import options as cvo # For setting global options
 from . import misc as cvm
 from . import defaults as cvd
+from . import utils as cvu
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
@@ -57,25 +58,25 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Basic disease transmission parameters
     pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
     pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+    pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
 
     # Parameters that control settings and defaults for multi-strain runs
-    pars['n_strains']       = 1  # The number of strains currently circulating in the population
-    pars['max_strains']     = 30    # For allocating memory with numpy arrays
+    pars['n_strains']       = 1     # The number of strains currently circulating in the population
+    pars['total_strains']   = None  # Set during sim initialization, once strains have been specified and processed
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor
-    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by set_immunity() below
+    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by initialize_immunity() below
+    pars['immune_degree']   = None
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
-    pars['beta']            = 0.016 # Beta per symptomatic contact; absolute value, calibrated
+    pars['rel_beta']        = 1.0
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['init_immunity']   = {}
-    pars['half_life']       = {}
-    for axis in cvd.immunity_axes:
-        if axis == 'sus':
-            pars['init_immunity'][axis] = 1.  # Default initial immunity
-            pars['half_life'][axis] = dict(asymptomatic=180, mild=180, severe=180)
-        else:
-            pars['init_immunity'][axis] = 0.5  # Default -- 50% shorter duration and probability of symptoms
-            pars['half_life'][axis] = dict(asymptomatic=None, mild=None, severe=None)
+    pars['imm_pars']        = {}
+    for ax in cvd.immunity_axes:
+        pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val':1., 'half_life':180})
+    pars['rel_imm']         = {} # Relative immunity scalings depending on the severity of symptoms
+    pars['rel_imm']['asymptomatic'] = 0.7
+    pars['rel_imm']['mild'] = 0.9
+    pars['rel_imm']['severe'] = 1.
 
     pars['dur'] = {}
         # Duration parameters: time for disease progression
@@ -89,6 +90,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=14.0, par2=2.4) # Duration for people with severe symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=14.0, par2=2.4) # Duration for people with critical symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=6.2,  par2=1.7) # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
+
         # Severity parameters: probabilities of symptom progression
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
@@ -105,6 +107,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Events and interventions
     pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['analyzers']     = []   # Custom analysis functions; populated by the user
+    pars['strains']       = []   # Additional strains of the virus; populated by the user, see immunity.py
     pars['timelimit']     = None # Time limit for the simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
@@ -119,7 +122,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
-    pars = initialize_immunity(pars)  # Initialize immunity
+    pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
     if version is not None:
@@ -304,78 +307,18 @@ def update_sub_key_pars(pars, default_pars):
                 pars[par] = sc.promotetolist(sc.mergenested(oldval, newval))
         else:
             if isinstance(val, dict):  # Update the dictionary, don't just overwrite it
-                pars[par] = sc.mergenested(default_pars[par], val)
+                if isinstance(default_pars[par], dict):
+                    pars[par] = sc.mergenested(default_pars[par], val)
+                else: # If the default isn't a disctionary, just overwrite it (TODO: could make this more robust)
+                    pars[par] = val
     return pars
 
 
-def listify_strain_pars(pars, default_pars):
-    ''' Helper function to validate parameters that have been set to vary by strain '''
+def listify_strain_pars(pars):
+    ''' Helper function to turn strain parameters into lists '''
     for sp in cvd.strain_pars:
         if sp in pars.keys():
             pars[sp] = sc.promotetolist(pars[sp])
-        else:
-            pars[sp] = sc.promotetolist(default_pars[sp])
     return pars
 
 
-def initialize_immunity(pars):
-    '''
-    Initialize the immunity matrices with default values
-    Susceptibility matrix is of size sim['max_strains']*sim['max_strains'] and is initialized with default values
-    Progression is a matrix of scalars of size sim['max_strains'] initialized with default values
-    Transmission is a matrix of scalars of size sim['max_strains'] initialized with default values
-    '''
-    pars['immunity'] = {}
-    pars['immunity']['sus'] = np.full((pars['max_strains'], pars['max_strains']), np.nan, dtype=cvd.default_float)
-    pars['immunity']['prog'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    pars['immunity']['trans'] = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    pars['immunity'] = update_init_immunity(pars['immunity'], pars['init_immunity'])
-    return pars
-
-
-def update_init_immunity(immunity, init_immunity):
-    '''Update immunity matrices with initial immunity values'''
-    for par, val in init_immunity.items():
-        if par == 'sus':    immunity[par][0,0] = val
-        else:               immunity[par][0] = val
-    return immunity
-
-
-def update_immunity(pars, update_strain=None, immunity_from=None, immunity_to=None, init_immunity=None):
-    '''
-    Helper function to update the immunity matrices when a strain strain is added.
-    If update_strain is not None, it's used to add a new strain with strain-specific values
-    (called by import_strain intervention)
-    '''
-    immunity = pars['immunity']
-    if immunity_from is None:
-        print('Immunity from pars not provided, using default value')
-        immunity_from = [pars['cross_immunity']] * pars['n_strains']
-    if immunity_to is None:
-        print('Immunity to pars not provided, using default value')
-        immunity_to = [pars['cross_immunity']] * pars['n_strains']
-    if init_immunity is None:
-        print('Initial immunity not provided, using default value')
-        pars['init_immunity'][update_strain] = pars['init_immunity'][0]
-        init_immunity = pars['init_immunity'][update_strain]
-
-    immunity_from   = sc.promotetolist(immunity_from)
-    immunity_to     = sc.promotetolist(immunity_to)
-
-    # create the immunity[update_strain,] and immunity[,update_strain] arrays
-    new_immunity_row    = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    new_immunity_column = np.full(pars['max_strains'], np.nan, dtype=cvd.default_float)
-    for i in range(pars['n_strains']):
-        if i != update_strain:
-            new_immunity_row[i] = immunity_from[i]
-            new_immunity_column[i] = immunity_to[i]
-        else:
-            new_immunity_row[i] = new_immunity_column[i] = init_immunity['sus']
-
-    immunity['sus'][update_strain, :] = new_immunity_row
-    immunity['sus'][:, update_strain] = new_immunity_column
-    immunity['prog'][update_strain] = init_immunity['prog']
-    immunity['trans'][update_strain] = init_immunity['trans']
-    pars['immunity'] = immunity
-
-    return pars

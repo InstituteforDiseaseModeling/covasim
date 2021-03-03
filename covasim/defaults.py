@@ -48,11 +48,10 @@ class PeopleMeta(sc.prettyobj):
         'death_prob',  # Float
         'rel_trans',   # Float
         'rel_sus',     # Float
+        'prior_symptoms', # Float
         'trans_immunity_factors', # Float
         'prog_immunity_factors', # Float
-        'sus_half_life',   # Float
-        'trans_half_life',  # Float
-        'prog_half_life',  # Float
+        'vaccinations',     # Number of doses given per person
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -83,6 +82,7 @@ class PeopleMeta(sc.prettyobj):
     dates.append('date_pos_test') # Store the date when a person tested which will come back positive
     dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
     dates.append('date_recovered') # Store the date when a person recovers
+    dates.append('date_vaccinated') # Store the date when a person is vaccinated
 
     # Duration of different states: these are floats per person -- used in people.py
     durs = [
@@ -133,10 +133,11 @@ new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 
 # Parameters that can vary by strain (should be in list format)
-strain_pars = ['beta',
+strain_pars = ['rel_beta',
                'asymp_factor',
-               'half_life',
-               'init_immunity',
+               'imm_pars',
+               'immune_degree',
+               'rel_imm',
                'dur',
                'rel_symp_prob',
                'rel_severe_prob',
@@ -144,12 +145,16 @@ strain_pars = ['beta',
                'rel_death_prob',
 ]
 
-immunity_pars = ['n_strains',
-                 'max_strains',
-                 'immunity',
-]
-
+# Immunity is broken down according to 3 axes, as listed here
 immunity_axes = ['sus', 'trans', 'prog']
+
+# Immunity protection also varies depending on your infection/vaccination history
+immunity_sources = [
+    'asymptomatic',
+    'mild',
+    'severe',
+#    'vaccine',
+]
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([

@@ -13,6 +13,7 @@ from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 from . import parameters as cvpar
+from . import people as cvppl
 from collections import defaultdict
 
 
@@ -395,10 +396,8 @@ class change_beta(Intervention):
         for lkey in self.layers:
             if lkey is None:
                 self.orig_betas['overall'] = sim['beta']
-                self.testkey = 'overall'
             else:
                 self.orig_betas[lkey] = sim['beta_layer'][lkey]
-                self.testkey = lkey
 
         self.initialized = True
         return
@@ -406,21 +405,13 @@ class change_beta(Intervention):
 
     def apply(self, sim):
 
-        # Extend beta if needed
-        if self.layers[0] is None:
-            if len(sim['beta'])>len(self.orig_betas['overall']):
-                prev_change = sim['beta'][0]/self.orig_betas['overall'][0]
-                self.orig_betas['overall'].append(sim['beta'][-1])
-                sim['beta'][-1] *= prev_change
-
         # If this day is found in the list, apply the intervention
         for ind in find_day(self.days, sim.t):
             for lkey,new_beta in self.orig_betas.items():
+                new_beta = new_beta * self.changes[ind]
                 if lkey == 'overall':
-                    new_beta = [bv * self.changes[ind] for bv in new_beta]
                     sim['beta'] = new_beta
                 else:
-                    new_beta *= self.changes[ind]
                     sim['beta_layer'][lkey] = new_beta
 
 
@@ -1086,7 +1077,7 @@ class vaccine(Intervention):
         ''' Fix the dates and store the vaccinations '''
         self.days = process_days(sim, self.days)
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
+        self.date_vaccinated   = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
         self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
         self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
         self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
@@ -1102,7 +1093,7 @@ class vaccine(Intervention):
         for ind in find_day(self.days, sim.t): # TODO -- investigate this, why does it loop over a variable that isn't subsequently used? Also, comments need updating
 
             # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
-            vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal testing probability to everyone
+            vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal vaccination probability to everyone
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
                 vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
@@ -1126,95 +1117,9 @@ class vaccine(Intervention):
             for v_ind in vacc_inds:
                 self.vaccination_dates[v_ind].append(sim.t)
 
-        return
-
-
-#%% Multi-strain interventions
-
-__all__+= ['import_strain']
-
-class import_strain(Intervention):
-    '''
-    Introduce a new variant to the population through an importation at a given time point.
-
-    Args:
-        days (int): day on which new variant is introduced.
-        n_imports (int): the number of imports of strain
-        beta      (float): per contact transmission of strain
-        init_immunity   (floats): initial immunity against strain once recovered; 1 = perfect, 0 = no immunity
-        half_life  (dicts): determines decay rate of immunity against strain broken down by severity; If half_life is None immunity is constant
-        immunity_to (list of floats): cross immunity to existing strains in model
-        immunity_from (list of floats): cross immunity from existing strains in model
-        kwargs     (dict): passed to Intervention()
-
-    **Examples**::
-
-        interv = cv.import_strain(days=50, beta=0.03) # On day 50, import new strain (one case)
-        interv = cv.import_strain(days=[10, 20], n_imports=[5, 10], beta=0.03, init_immunity=1,
-        half_life=180, immunity_to=[0, 0], immunity_from=[0, 0]) # On day 10, import 5 cases of new strain, on day 20, import 10 cases
-    '''
-
-    def __init__(self, strain=None, days=None, n_imports=1, immunity_to=None, immunity_from=None, **kwargs):
-        # Do standard initialization
-        super().__init__(**kwargs)  # Initialize the Intervention object
-        self._store_args()  # Store the input arguments so the intervention can be recreated
-
-        # Handle inputs
-        self.days           = days
-        self.n_imports      = n_imports
-        self.immunity_to    = immunity_to
-        self.immunity_from  = immunity_from
-        self.strain         = {par: val for par, val in strain.items()}
-        for par, val in self.strain.items():
-            setattr(self, par, val)
-        return
-
-    def initialize(self, sim):
-        self.days = process_days(sim, self.days)
-        self.max_strains = sim['max_strains']
-        if not hasattr(self,'init_immunity'):
-            self.init_immunity = None
-        if not hasattr(self, 'half_life'):
-            self.half_life = sim['half_life'][0]
-        self.initialized = True
-
-    def apply(self, sim):
-
-        if sim.t == self.days:  # Time to introduce strain
-
-            # Check number of strains
-            prev_strains = sim['n_strains']
-            if prev_strains + 1 > self.max_strains:
-                errormsg = f"Number of existing strains ({sim['n_strains']}) plus new strain exceeds the maximal allowable ({sim['max_strains']}. Increase pars['max_strains'])."
-                raise ValueError(errormsg)
-
-            # Validate half_life and init_immunity (make sure there are values for all cvd.immunity_axes
-            for key in cvd.immunity_axes:
-                if self.init_immunity is not None:
-                    if key not in self.init_immunity:
-                        print(f'initial immunity for imported strain for {key} not provided, using default value')
-                        self.init_immunity[key] = sim['init_immunity'][0][key]
-                if key not in self.half_life:
-                    print(f'half life for imported strain for {key} not provided, using default value')
-                    self.half_life[key] = sim['half_life'][0][key]
-
-            # Update strain info
-            for strain_key in cvd.strain_pars:
-                if hasattr(self, strain_key):
-                    newval = getattr(self, strain_key)
-                    if strain_key=='dur': # Validate durations (make sure there are values for all durations)
-                        newval = sc.mergenested(sim[strain_key][0], newval)
-                    sim[strain_key].append(newval)
-                else:
-                    # use default
-                    print(f'{strain_key} not provided for this strain, using default value')
-                    sim[strain_key].append(sim[strain_key][0])
-
-            sim['n_strains'] += 1
-            cvpar.update_immunity(pars=sim.pars, update_strain=prev_strains,
-                                  immunity_from=self.immunity_from, immunity_to=self.immunity_to,
-                                  init_immunity=self.init_immunity)
-            importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports)  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
-            sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
+            # Update vaccine attributes in sim
+            sim.people.vaccinations = self.vaccinations
+            sim.people.vaccination_dates = self.vaccination_dates
 
         return
+

@@ -69,15 +69,6 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(           (nbfloat[:],       nbfloat[:],  nbint[:],    nbfloat,       nbfloat[:]), cache=True, parallel=parallel)
-def compute_immunity(immunity_factors, immune_time, immune_inds, init_immunity, half_life): # pragma: no cover
-    ''' Calculate immunity factors for time t '''
-    decay_rate = np.log(2) / half_life
-    decay_rate[np.isnan(decay_rate)] = 0
-    immunity_factors[immune_inds] = init_immunity * np.exp(-decay_rate[immune_inds] * immune_time)
-
-    return immunity_factors
-
 
 @nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor, immunity_factors): # pragma: no cover
@@ -122,6 +113,23 @@ def find_contacts(p1, p2, inds): # pragma: no cover
         if p2[i] in inds:
             pairing_partners.add(p1[i])
     return pairing_partners
+
+
+def update_strain_attributes(people):
+    for key in people.meta.person:
+        if key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
+            people[key] = np.append(people[key], np.full((1, people.pop_size), 0, dtype=cvd.default_float, order='F'), axis=0)
+
+    # Set strain states, which store info about which strain a person is exposed to
+    for key in people.meta.strain_states:
+        if 'by' in key:
+            people[key] = np.append(people[key], np.full((1, people.pop_size), False, dtype=bool, order='F'), axis=0)
+
+    for key in cvd.new_result_flows:
+        if 'by_strain' in key:
+            people.flows[key] = np.append(people.flows[key], np.full(1, 0, dtype=cvd.default_float), axis=0)
+    return
+
 
 
 #%% Sampling and seed methods
@@ -206,6 +214,7 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
         raise NotImplementedError(errormsg)
 
     return samples
+
 
 
 def get_pdf(dist=None, par1=None, par2=None):
