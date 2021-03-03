@@ -59,7 +59,7 @@ class People(cvb.BasePeople):
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             elif key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
-                self[key] = np.full((self.pars['n_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
+                self[key] = np.full((self.pars['total_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
             elif key == 'vaccinations':
                 self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
             else:
@@ -75,7 +75,7 @@ class People(cvb.BasePeople):
         # Set strain states, which store info about which strain a person is exposed to
         for key in self.meta.strain_states:
             if 'by' in key:
-                self[key] = np.full((self.pars['n_strains'], self.pop_size), False, dtype=bool, order='F')
+                self[key] = np.full((self.pars['total_strains'], self.pop_size), False, dtype=bool, order='F')
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
@@ -230,6 +230,9 @@ class People(cvb.BasePeople):
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
         self.infectious_strain[inds] = self.exposed_strain[inds]
+        for strain in range(self.pars['n_strains']):
+            this_strain_inds = cvu.itrue(self.infectious_strain[inds] == strain, inds)
+            self.flows['new_infectious_by_strain'][strain] += len(this_strain_inds)
         return len(inds)
 
 
@@ -290,11 +293,6 @@ class People(cvb.BasePeople):
         self.susceptible[inds]   = False
         self.dead[inds]        = True
         return len(inds)
-
-    # TODO-- add in immunity instead of recovery
-    # def check_immunity(self):
-    #     '''Update immunity by strain based on time since recovery'''
-    #     just_recovered_inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=self.is_exp)
 
 
     def check_diagnosed(self):

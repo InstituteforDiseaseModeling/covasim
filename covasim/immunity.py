@@ -146,7 +146,7 @@ class Strain():
             sim['n_strains'] += 1
 
             # Update strain-specific people attributes
-            cvu.update_strain_attributes(sim.people)
+            # cvu.update_strain_attributes(sim.people) # don't think we need to do this if we just create people arrays with number of total strains in sim
             importation_inds = cvu.choose(max_n=len(sim.people), n=self.n_imports)  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
             sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
 
