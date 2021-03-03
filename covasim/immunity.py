@@ -207,6 +207,7 @@ class Vaccine():
                     vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 0.5, 'half_life': 30}),
                                                     dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]
                 vaccine_pars['doses'] = 2
+                vaccine_pars['label'] = vaccine
 
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
@@ -216,6 +217,7 @@ class Vaccine():
                     vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 0.5, 'half_life': 30}),
                                                     dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]
                 vaccine_pars['doses'] = 2
+                vaccine_pars['label'] = vaccine
 
             # Known parameters on az
             elif vaccine in choices['az']:
@@ -225,6 +227,7 @@ class Vaccine():
                     vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 0.5, 'half_life': 30}),
                                                     dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]
                 vaccine_pars['doses'] = 2
+                vaccine_pars['label'] = vaccine
 
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
@@ -233,6 +236,7 @@ class Vaccine():
                 for ax in cvd.immunity_axes:
                     vaccine_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 120})
                 vaccine_pars['doses'] = 1
+                vaccine_pars['label'] = vaccine
 
             else:
                 choicestr = '\n'.join(choices.values())
@@ -258,10 +262,10 @@ class Vaccine():
             raise ValueError(errormsg)
 
         if self.rel_imm is None:
-            errormsg = f'Did not provide rel_imm parameters for this vaccine'
-            raise ValueError(errormsg)
+            print(f'Did not provide rel_imm parameters for this vaccine, assuming all the same')
+            self.rel_imm = [1]*ts
 
-        correct_size = self.rel_imm.shape == ts
+        correct_size = len(self.rel_imm) == ts
         if not correct_size:
             errormsg = f'Did not provide relative immunity for each strain'
             raise ValueError(errormsg)
@@ -272,7 +276,7 @@ class Vaccine():
                 errormsg = f'Immunity pars for vaccine for {key} not provided'
                 raise ValueError(errormsg)
 
-        ''' Initialize immune_degree with all strains that will eventually be in the sim'''
+        ''' Initialize immune_degree'''
         doses = self.doses
 
         # Precompute waning
@@ -287,7 +291,7 @@ class Vaccine():
 
 
 # %% Immunity methods
-__all__ += ['init_immunity', 'pre_compute_waning', 'init_vaccine_immunity']
+__all__ += ['init_immunity', 'pre_compute_waning']
 
 
 def init_immunity(sim, create=False):

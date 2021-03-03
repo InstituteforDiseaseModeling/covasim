@@ -1137,8 +1137,7 @@ class vaccinate(Intervention):
     Args:
         days (int or array): the day or array of days to apply the interventions
         prob      (float): probability of being vaccinated (i.e., fraction of the population)
-        vaccine_pars (dict): passed to Vaccine()
-        vaccine_label (str): passed to Vaccine()
+        vaccine_pars (dict or label): passed to Vaccine()
         subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
         kwargs     (dict): passed to Intervention()
 
@@ -1146,14 +1145,13 @@ class vaccinate(Intervention):
 
         interv = cv.vaccine(days=50, prob=0.3, )
     '''
-    def __init__(self, days, prob=1.0, vaccine_pars=None, subtarget=None, vaccine_label=None, **kwargs):
+    def __init__(self, days, prob=1.0, vaccine_pars=None, subtarget=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.days      = sc.dcp(days)
-        self.prob      = prob
-        self.vaccine_pars  = vaccine_pars
-        self.vaccine_label = vaccine_label
+        self.prob      = sc.promotetolist(prob)
         self.subtarget = subtarget
+        self.vaccine_pars  = vaccine_pars
         self.vaccine_ind = None
         return
 
@@ -1162,9 +1160,11 @@ class vaccinate(Intervention):
         ''' Fix the dates and store the vaccinations '''
         self.days = process_days(sim, self.days)
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates   = [[] for _ in range(sim.n)] # Store the dates when people are vaccinated
+        self.vaccination_dates   = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
+        if self.subtarget is not None:
+            self.subtarget = sc.promotetolist(self.subtarget)
         self.vaccine_ind = len(sim['vaccines'])
-        vaccine = cvi.Vaccine(self.vaccine_pars, self.vaccine_label)
+        vaccine = cvi.Vaccine(self.vaccine_pars)
         sim['vaccines'].append(vaccine)
         vaccine.initialize(sim)
         self.initialized = True
@@ -1175,12 +1175,12 @@ class vaccinate(Intervention):
         ''' Perform vaccination '''
 
         # If this day is found in the list, apply the intervention
-        for _ in find_day(self.days, sim.t):
+        for day in find_day(self.days, sim.t):
 
-            # Construct the vaccine probabilities piece by piece -- complicated, since need to do it in the right order
-            vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal vaccination probability to everyone
+            # Determine who gets vaccinated today
+            vacc_probs = np.full(sim.n, self.prob[day]) # Begin by assigning equal vaccination probability to everyone
             if self.subtarget is not None:
-                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget[day], sim)
                 vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
 
@@ -1191,6 +1191,7 @@ class vaccinate(Intervention):
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.vaccine_ind
             sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
-            sim.people.vaccination_dates = self.vaccination_dates[vacc_inds]
+            sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
+
 
         return

@@ -108,12 +108,12 @@ class Sim(cvb.BaseSim):
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
-        self.init_interventions() # Initialize the interventions...
-        self.init_analyzers() # ...and the analyzers...
         self.init_strains() # ...and the strains....
         self.init_immunity() # ... and information about immunity/cross-immunity.
         self.init_results() # After initializing the strain, create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
+        self.init_interventions()  # Initialize the interventions...
+        self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized   = True
@@ -562,8 +562,9 @@ class Sim(cvb.BaseSim):
             vacc_inds = cvu.true(vaccinated)
             vacc_inds = np.setdiff1d(vacc_inds, inf_inds)
             if len(vacc_inds):
-                date_vacc = people.vaccination_dates
-                vaccine_scale_factor = np.full(len(vacc_inds), self['vaccines'][vacc_inds.vaccine_source]['rel_imm_by_strain'][strain])
+                date_vacc = people.date_vaccinated
+                # HOW DO I DO THIS WITHOUT A LIST OPERATION
+                vaccine_scale_factor = np.full(len(vacc_inds), self['vaccines'][people.vaccine_source[vacc_inds]]['rel_imm'][strain])
                 doses = people.vaccinations[vacc_inds]
                 vaccine_time = cvd.default_int(t - date_vacc[vacc_inds])
                 vaccine_immunity = self['vaccines'][vacc_inds.vaccine_source]['vaccine_immune_degree'][doses]['sus']
