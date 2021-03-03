@@ -11,6 +11,7 @@ from . import misc as cvm
 from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
+from . import immunity as cvimm
 from . import plotting as cvplt
 from .settings import options as cvo
 
@@ -861,6 +862,8 @@ class Scenarios(cvb.ParsObj):
         self.basepars = sc.mergedicts({}, basepars)
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
+        self.base_sim.init_strains()
+        self.base_sim.init_immunity()
         self.base_sim.init_results()
 
         # Copy quantities from the base sim to the main object
@@ -926,13 +929,16 @@ class Scenarios(cvb.ParsObj):
                 raise ValueError(errormsg)
 
             # Create and run the simulations
-
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
+
             defaults = {par: scen_sim[par] for par in cvd.strain_pars}
-            defaults['immunity'] = scen_sim['immunity']
             scen_sim.update_pars(scenpars, defaults=defaults, **kwargs)  # Update the parameters, if provided
+            if 'strains' in scenpars: # Process strains
+                scen_sim.init_strains()
+                scen_sim.init_immunity(create=True)
+
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:
                 print('Running in debug mode (not parallelized)')

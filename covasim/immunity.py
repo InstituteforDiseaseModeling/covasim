@@ -157,13 +157,23 @@ class Strain():
 #%% Immunity methods
 __all__ += ['init_immunity', 'pre_compute_waning']
 
-def init_immunity(sim):
+def init_immunity(sim, create=False):
     ''' Initialize immunity matrices with all strains that will eventually be in the sim'''
     ts = sim['total_strains']
     immunity = {}
 
     # If immunity values have been provided, process them
-    if sim['immunity'] is not None:
+    if sim['immunity'] is None or create:
+        # Initialize immunity
+        for ax in cvd.immunity_axes:
+            if ax == 'sus':  # Susceptibility matrix is of size sim['n_strains']*sim['n_strains']
+                immunity[ax] = np.full((ts, ts), sim['cross_immunity'], dtype=cvd.default_float) # Default for off-diagnonals
+                np.fill_diagonal(immunity[ax], 1) # Default for own-immunity
+            else:  # Progression and transmission are matrices of scalars of size sim['n_strains']
+                immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
+        sim['immunity'] = immunity
+
+    else:
         if sc.checktype(sim['immunity']['sus'], 'arraylike'):
             correct_size = sim['immunity']['sus'].shape == (ts, ts)
             if not correct_size:
@@ -181,15 +191,6 @@ def init_immunity(sim):
             errormsg = f'Type of immunity["sus"] not understood: you provided {type(sim["immunity"]["sus"])}, but it should be an array or dict.'
             raise ValueError(errormsg)
 
-    else:
-        # Initialize immunity
-        for ax in cvd.immunity_axes:
-            if ax == 'sus':  # Susceptibility matrix is of size sim['n_strains']*sim['n_strains']
-                immunity[ax] = np.full((ts, ts), sim['cross_immunity'], dtype=cvd.default_float) # Default for off-diagnonals
-                np.fill_diagonal(immunity[ax], 1) # Default for own-immunity
-            else:  # Progression and transmission are matrices of scalars of size sim['n_strains']
-                immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
-        sim['immunity'] = immunity
 
     # Precompute waning
     immune_degree = []  # Stored as a list by strain

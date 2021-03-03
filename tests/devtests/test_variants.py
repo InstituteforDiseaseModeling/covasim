@@ -29,27 +29,26 @@ def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
         'baseline': {
             'name':'No reinfection',
             'pars': {
-                'strains': {
-                    'imm_pars': {
-                        k: dict(form='exp_decay', pars={'init_val': 1., 'half_life': None}) for k in cvd.immunity_axes}
+                'strains': [cv.Strain(
+                    strain = {'imm_pars': {k: dict(form='exp_decay', pars={'init_val': 1., 'half_life': None}) for k in cvd.immunity_axes}},
+                    days = 1)]
                 }
-            }
-        },
+            },
         'med_halflife': {
             'name':'3 month waning susceptibility',
             'pars': {
-                'strains': {
-                    'imm_pars': {k: dict(form='exp_decay', pars={'init_val': 1., 'half_life': 90}) for k in cvd.immunity_axes}
-                }
+                'strains': [cv.Strain(
+                    strain = {'imm_pars': {k: dict(form='exp_decay', pars={'init_val': 1., 'half_life': 90}) for k in cvd.immunity_axes}},
+                    days=1)]
             }
         },
         'med_halflife_bysev': {
             'name':'2 month waning susceptibility for symptomatics only',
             'pars': {
-                'strains': {
-                    'rel_imm': {'asymptomatic': 0},
-                    'imm_pars': {k: dict(form='exp_decay', pars={'init_val': 1., 'half_life': 60}) for k in cvd.immunity_axes}
-                }
+                'strains': [cv.Strain(
+                    strain = {'rel_imm': {'asymptomatic': 0, 'mild': 1, 'severe': 1},
+                              'imm_pars': {k: dict(form='exp_decay', pars={'init_val': 1., 'half_life': 60}) for k in cvd.immunity_axes}},
+                    days=1)]
             }
         },
     }
@@ -95,7 +94,7 @@ def test_strainduration(do_plot=False, do_show=True, do_save=False):
         },
         'slowsymp': {
             'name':'10 days to symptoms',
-            'pars': {'strains': strains}
+            'pars': {'strains': [strains]}
         }
     }
 
@@ -287,13 +286,13 @@ if __name__ == '__main__':
     sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # TODO: the next test isn't working, need to check change_beta logic
 #    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # TODO: the next two tests aren't working, need to check scenario logic
-#    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-#    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # The next tests are deprecated, can be removed
     # simX = test_importstrain_args()

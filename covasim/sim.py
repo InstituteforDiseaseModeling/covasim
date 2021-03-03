@@ -454,9 +454,9 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_immunity(self):
+    def init_immunity(self, create=False):
         ''' Initialize immunity matrices and precompute immunity waning for each strain '''
-        cvimm.init_immunity(self)
+        cvimm.init_immunity(self, create=create)
         return
 
 

@@ -308,6 +308,12 @@ def update_sub_key_pars(pars, default_pars):
         else:
             if isinstance(val, dict):  # Update the dictionary, don't just overwrite it
                 pars[par] = sc.mergenested(default_pars[par], val)
+#                try: pars[par] = sc.mergenested(default_pars[par], val)
+#                except:
+#                    import traceback;
+#                    traceback.print_exc();
+#                    import pdb;
+#                    pdb.set_trace()
     return pars
 
 
