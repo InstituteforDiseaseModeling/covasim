@@ -153,33 +153,21 @@ class Strain():
         return
 
 
-#            if self.immunity_to is None:
-#                self.immunity_to = [sim['cross_immunity']]*sim['n_strains']
-#            if self.immunity_from is None:
-#                self.immunity_from = [sim['cross_immunity']]*sim['n_strains']
-
-            # Update the immunity matrix
-#            sim['immunity'], sim['immune_degree'] = self.update_immunity(prev_immunity=sim['immunity'], n_strains=sim['n_strains'], immunity_to=self.immunity_to, immunity_from=self.immunity_from,
-#                                                    imm_pars_strain=self.imm_pars, sim_immune_degree=sim['immune_degree'], n_days=sim['n_days'])
-
-
-
 
 #%% Immunity methods
 __all__ += ['init_immunity', 'pre_compute_waning']
 
 def init_immunity(sim):
     ''' Initialize immunity matrices with all strains that will eventually be in the sim'''
-    ns = sim['n_strains']
     ts = sim['total_strains']
     immunity = {}
 
     # If immunity values have been provided, process them
     if sim['immunity'] is not None:
         if sc.checktype(sim['immunity']['sus'], 'arraylike'):
-            correct_size = sim['immunity']['sus'].shape == (sim['total_strains'], sim['total_strains'])
+            correct_size = sim['immunity']['sus'].shape == (ts, ts)
             if not correct_size:
-                errormsg = f'Wrong dimensions for immunity["sus"]: you provided a matrix sized {sim["immunity"]["sus"].shape}, but it should be sized {(sim["total_strains"], sim["total_strains"])}'
+                errormsg = f'Wrong dimensions for immunity["sus"]: you provided a matrix sized {sim["immunity"]["sus"].shape}, but it should be sized {(ts, ts)}'
                 raise ValueError(errormsg)
         elif sc.checktype(sim['immunity']['sus'], dict):
             # TODO: make it possible to specify this as something like:

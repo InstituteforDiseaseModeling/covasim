@@ -122,8 +122,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
-#    pars['immunity'] = initialize_immunity()  # Initialize immunity
-#    pars['immune_degree'] = initialize_immune_degree(n_days=pars['n_days'], imm_pars=pars['imm_pars'])
     pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters

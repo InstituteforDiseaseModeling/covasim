@@ -567,12 +567,6 @@ class Sim(cvb.BaseSim):
             immune_inds         = np.setdiff1d(immune_inds, inf_inds)
             immunity_scale_factor = np.full(len(immune_inds), self['immunity']['sus'][strain,strain])
 
-            if len(immune_inds):
-                import traceback;
-                traceback.print_exc();
-                import pdb;
-                pdb.set_trace()
-
             # Process cross-immunity parameters and indices, if relevant
             if ns > 1:
                 for cross_strain in range(ns):

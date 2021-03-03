@@ -310,7 +310,6 @@ class BaseSim(ParsObj):
                 pars = cvpar.listify_strain_pars(pars)  # Strain pars need to be lists
                 pars = cvpar.update_sub_key_pars(pars, defaults) # Update dict parameters by sub-key
                 combined_pars = sc.mergedicts(defaults, pars) # Now that subkeys have been updated, can merge the dicts together
-#                pars['immune_degree'] = [cvpar.initialize_immune_degree(n_days=combined_pars['n_days'], imm_pars=combined_pars['imm_pars'][s]) for s in range(combined_pars['n_strains'])] # Precompute immunity waning
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
 
         return
