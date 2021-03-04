@@ -52,6 +52,8 @@ class PeopleMeta(sc.prettyobj):
         'trans_immunity_factors', # Float
         'prog_immunity_factors', # Float
         'vaccinations',     # Number of doses given per person
+
+        'vaccine_source'    # index of vaccine that individual received
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -67,6 +69,7 @@ class PeopleMeta(sc.prettyobj):
         'dead',
         'known_contact',
         'quarantined',
+        'vaccinated'
     ]
 
     strain_states = [

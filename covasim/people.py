@@ -402,14 +402,28 @@ class People(cvb.BasePeople):
         n_infections = len(inds)
         durpars      = infect_pars['dur']
 
-        # determine people with immunity from this strain and then calculate immunity to trans/prog
+        # Determine who is vaccinated and has some immunity from vaccine
+        vaccinated = self.vaccinated
+        vacc_inds = cvu.true(vaccinated)
+        if len(vacc_inds):
+            vaccine_info = self['pars']['vaccine_info']
+            date_vacc = self.date_vaccinated
+            vaccine_source = cvd.default_int(self.vaccine_source[vacc_inds])
+            vaccine_scale_factor = vaccine_info['rel_imm'][vaccine_source, strain]
+            doses = cvd.default_int(self.vaccinations[vacc_inds])
+            vaccine_time = cvd.default_int(self.t - date_vacc[vacc_inds])
+            self.trans_immunity_factors[strain, vacc_inds] = vaccine_scale_factor * vaccine_info['vaccine_immune_degree']['trans'][vaccine_source, doses, vaccine_time]
+            self.prog_immunity_factors[strain, vacc_inds] = vaccine_scale_factor * vaccine_info['vaccine_immune_degree']['prog'][vaccine_source, doses, vaccine_time]
+
+        # determine people with immunity from this strain
         date_rec = self.date_recovered
         immune = self.recovered_strain[inds] == strain
         immune_inds = cvu.itrue(immune, inds) # Whether people have some immunity to this strain from a prior infection with this strain
+        immune_inds = np.setdiff1d(immune_inds, vacc_inds)
         immune_time = cvd.default_int(self.t - date_rec[immune_inds])  # Time since recovery for people who were last infected by this strain
         prior_symptoms = self.prior_symptoms[immune_inds]
 
-        if len(immune_inds)>0:
+        if len(immune_inds):
             self.trans_immunity_factors[strain, immune_inds] = self['pars']['immune_degree'][strain]['trans'][immune_time] * \
                                                      prior_symptoms * self.pars['immunity']['trans'][strain]
             self.prog_immunity_factors[strain, immune_inds] = self['pars']['immune_degree'][strain]['prog'][immune_time] * \

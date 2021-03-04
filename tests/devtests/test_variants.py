@@ -6,8 +6,48 @@ import numpy as np
 
 
 do_plot   = 1
-do_show   = 0
-do_save   = 1
+do_show   = 1
+do_save   = 0
+
+def test_vaccine_1strain(do_plot=True, do_show=True, do_save=False):
+    sc.heading('Run a basic sim with 1 strain, pfizer vaccine')
+
+    sc.heading('Setting up...')
+
+    pfizer = cv.vaccinate(days=10, vaccine_pars='pfizer', prob = 0.5)
+    sim = cv.Sim(interventions=[pfizer])
+    sim.run()
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'Cumulative infections': ['cum_infections'],
+        'New reinfections': ['new_reinfections'],
+        # 'Cumulative reinfections': ['cum_reinfections'],
+    })
+    if do_plot:
+        sim.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_vaccine_1strain.png', to_plot=to_plot)
+    return sim
+
+
+def test_vaccine_2strains(do_plot=True, do_show=True, do_save=False):
+    sc.heading('Run a basic sim with b117 strain on day 10, pfizer vaccine day 20')
+
+    sc.heading('Setting up...')
+
+    b117 = cv.Strain('b117', days=10, n_imports=20)
+    pfizer = cv.vaccinate(days=20, vaccine_pars='pfizer', prob = 0.5)
+    sim = cv.Sim(strains=[b117], interventions=[pfizer])
+    sim.run()
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'Cumulative infections': ['cum_infections'],
+        'New reinfections': ['new_reinfections'],
+        # 'Cumulative reinfections': ['cum_reinfections'],
+    })
+    if do_plot:
+        sim.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_vaccine_2strain.png', to_plot=to_plot)
+    return sim
 
 
 def test_basic_reinfection(do_plot=False, do_show=True, do_save=False):
@@ -276,18 +316,21 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    if 0:
-        sim = cv.Sim()
-        sim.run()
+    # if 0:
+    #     sim = cv.Sim()
+    #     sim.run()
 
     # Run more complex tests
-    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
     #scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
+    # Run Vaccine tests
+    sim5 = test_vaccine_1strain()
+    sim6 = test_vaccine_2strains()
     sc.toc()
 
 

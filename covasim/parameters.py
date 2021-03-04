@@ -64,8 +64,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['n_strains']       = 1     # The number of strains currently circulating in the population
     pars['total_strains']   = None  # Set during sim initialization, once strains have been specified and processed
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor
-    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by initialize_immunity() below
+    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
     pars['immune_degree']   = None
+    pars['vaccine_info']    = None  # Vaccine info in a more easily accessible format
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
@@ -108,6 +109,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['analyzers']     = []   # Custom analysis functions; populated by the user
     pars['strains']       = []   # Additional strains of the virus; populated by the user, see immunity.py
+    pars['vaccines']      = []   # Vaccines that are being used; populated by user
+
     pars['timelimit']     = None # Time limit for the simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
