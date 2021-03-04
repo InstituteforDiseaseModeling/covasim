@@ -14,8 +14,15 @@ def test_vaccine_1strain(do_plot=True, do_show=True, do_save=False):
 
     sc.heading('Setting up...')
 
-    pfizer = cv.vaccinate(days=10, vaccine_pars='pfizer', prob = 0.5)
-    sim = cv.Sim(interventions=[pfizer])
+    sim = cv.Sim()
+    # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
+    sim.vxsubtarg = sc.objdict()
+    sim.vxsubtarg.age = [75, 65, 50, 18]
+    sim.vxsubtarg.prob = [.5, .5, .5, .5]
+    sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
+    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
+    sim['interventions'] += [pfizer]
+    sim.initialize()
     sim.run()
 
     to_plot = sc.objdict({
@@ -34,9 +41,16 @@ def test_vaccine_2strains(do_plot=True, do_show=True, do_save=False):
 
     sc.heading('Setting up...')
 
+    sim = cv.Sim()
+    # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
+    sim.vxsubtarg = sc.objdict()
+    sim.vxsubtarg.age = [75, 65, 50, 18]
+    sim.vxsubtarg.prob = [.5, .5, .5, .5]
+    sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
+    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
     b117 = cv.Strain('b117', days=10, n_imports=20)
-    pfizer = cv.vaccinate(days=20, vaccine_pars='pfizer', prob = 0.5)
-    sim = cv.Sim(strains=[b117], interventions=[pfizer])
+    sim['strains'] = [b117]
+    sim['interventions'] = pfizer
     sim.run()
 
     to_plot = sc.objdict({
@@ -309,6 +323,16 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
         cv.savefig(f'results/{filename}.png')
 
     return
+
+
+def vacc_subtarg(sim):
+    ''' Subtarget by age'''
+    ind = sim.vxsubtarg.days.index(sim.t)
+    age = sim.vxsubtarg.age[ind]
+    prob = sim.vxsubtarg.prob[ind]
+    inds = sc.findinds((sim.people.age>=age) * ~sim.people.vaccinated)
+    vals = prob*np.ones(len(inds))
+    return {'inds':inds, 'vals':vals}
 
 
 #%% Run as a script

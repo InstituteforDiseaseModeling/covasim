@@ -178,6 +178,7 @@ class Vaccine():
         self.vaccine_immune_degree = None # dictionary of pre-loaded decay to by imm_axis and dose
         self.rel_imm = None # list of length total_strains with relative immunity factor
         self.doses = None
+        self.interval = None
         self.imm_pars = None
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
@@ -204,9 +205,10 @@ class Vaccine():
                 vaccine_pars = dict()
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 0.5, 'half_life': 30}),
+                    vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 0.5/22}),
                                                     dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]
                 vaccine_pars['doses'] = 2
+                vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on moderna
@@ -214,9 +216,10 @@ class Vaccine():
                 vaccine_pars = dict()
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 0.5, 'half_life': 30}),
+                    vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 0.5/29}),
                                                     dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]
                 vaccine_pars['doses'] = 2
+                vaccine_pars['interval'] = 29
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on az
@@ -224,9 +227,10 @@ class Vaccine():
                 vaccine_pars = dict()
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 0.5, 'half_life': 30}),
+                    vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 0.5/22}),
                                                     dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]
                 vaccine_pars['doses'] = 2
+                vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on j&j
@@ -234,8 +238,9 @@ class Vaccine():
                 vaccine_pars = dict()
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 120})
+                    vaccine_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})
                 vaccine_pars['doses'] = 1
+                vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine
 
             else:
@@ -356,7 +361,8 @@ def pre_compute_waning(length, form, pars):
     choices = [
         'exp_decay',
         'logistic_decay',
-        'linear',
+        'linear_growth',
+        'linear_decay'
     ]
 
     # Process inputs
@@ -367,6 +373,12 @@ def pre_compute_waning(length, form, pars):
     elif form == 'logistic_decay':
         output = logistic_decay(length, **pars)
 
+    elif form == 'linear_growth':
+        output = linear_growth(length, **pars)
+
+    elif form == 'linear_decay':
+        output = linear_decay(length, **pars)
+
     else:
         choicestr = '\n'.join(choices)
         errormsg = f'The selected functional form "{form}" is not implemented; choices are: {choicestr}'
@@ -375,7 +387,7 @@ def pre_compute_waning(length, form, pars):
     return output
 
 
-# SPecific waning functions are listed here
+# Specific waning and growth functions are listed here
 def exp_decay(length, init_val, half_life):
     '''
     Returns an array of length t with values for the immunity at each time step after recovery
@@ -390,3 +402,16 @@ def logistic_decay(length, init_val, decay_rate, half_val, lower_asymp):
     t = np.arange(length, dtype=cvd.default_int)
     return (init_val + (lower_asymp - init_val) / (
                 1 + (t / half_val) ** decay_rate))  # TODO: make this robust to /0 errors
+
+def linear_decay(length, init_val, slope):
+    ''' Calculate linear decay '''
+    t = np.arange(length, dtype=cvd.default_int)
+    result = init_val - slope*t
+    if result < 0:
+        result = 0
+    return result
+
+def linear_growth(length, slope):
+    ''' Calculate linear growth '''
+    t = np.arange(length, dtype=cvd.default_int)
+    return (slope * t)
