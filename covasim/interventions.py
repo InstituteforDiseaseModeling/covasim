@@ -1155,7 +1155,6 @@ class vaccinate(Intervention):
         self.vaccine_ind = None
         return
 
-
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
         self.days = process_days(sim, self.days)
@@ -1165,8 +1164,8 @@ class vaccinate(Intervention):
             self.subtarget = sc.promotetolist(self.subtarget)
         self.vaccine_ind = len(sim['vaccines'])
         vaccine = cvi.Vaccine(self.vaccine_pars)
-        sim['vaccines'].append(vaccine)
         vaccine.initialize(sim)
+        sim['vaccines'].append(vaccine)
         self.initialized = True
         return
 

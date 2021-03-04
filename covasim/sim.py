@@ -113,6 +113,7 @@ class Sim(cvb.BaseSim):
         self.init_results() # After initializing the strain, create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.init_interventions()  # Initialize the interventions...
+        self.init_vaccines() # Initialize vaccine information
         self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.set_seed() # Reset the random seed again so the random number stream is consistent
@@ -459,6 +460,25 @@ class Sim(cvb.BaseSim):
         cvimm.init_immunity(self, create=create)
         return
 
+    def init_vaccines(self):
+        ''' Check if there are any vaccines in simulation, if so initialize vaccine info param'''
+        if len(self['vaccines']):
+            nv = len(self['vaccines'])
+            ns = self['total_strains']
+            nd = 2
+            days = self['n_days']
+            self['vaccine_info'] = {}
+            self['vaccine_info']['rel_imm'] = np.full((nv, ns), np.nan, dtype=cvd.default_float)
+            self['vaccine_info']['vaccine_immune_degree'] = {}
+            for ax in cvd.immunity_axes:
+                self['vaccine_info']['vaccine_immune_degree'][ax] =np.full((nv, nd, days), np.nan, dtype=cvd.default_float)
+
+            for ind, vacc in enumerate(self['vaccines']):
+                self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
+                for dose in range(vacc.doses):
+                    for ax in cvd.immunity_axes:
+                        self['vaccine_info']['vaccine_immune_degree'][ax][ind, dose, :] = vacc.vaccine_immune_degree[dose][ax]
+        return
 
     def rescale(self):
         ''' Dynamically rescale the population -- used during step() '''
@@ -552,7 +572,7 @@ class Sim(cvb.BaseSim):
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
 
-            immunity_factors = np.full(len(people), 0, dtype=cvd.default_float, order='F')
+            immunity_factors = np.zeros(len(people), dtype=cvd.default_float)
 
             # Determine who is currently infected and cannot get another infection
             inf_inds = cvu.false(sus)
@@ -562,13 +582,14 @@ class Sim(cvb.BaseSim):
             vacc_inds = cvu.true(vaccinated)
             vacc_inds = np.setdiff1d(vacc_inds, inf_inds)
             if len(vacc_inds):
+                vaccine_info = self['vaccine_info']
                 date_vacc = people.date_vaccinated
-                # HOW DO I DO THIS WITHOUT A LIST OPERATION
-                vaccine_scale_factor = np.full(len(vacc_inds), self['vaccines'][people.vaccine_source[vacc_inds]]['rel_imm'][strain])
-                doses = people.vaccinations[vacc_inds]
+                vaccine_source = cvd.default_int(people.vaccine_source[vacc_inds])
+                vaccine_scale_factor = vaccine_info['rel_imm'][vaccine_source, strain]
+                doses = cvd.default_int(people.vaccinations[vacc_inds])
                 vaccine_time = cvd.default_int(t - date_vacc[vacc_inds])
-                vaccine_immunity = self['vaccines'][vacc_inds.vaccine_source]['vaccine_immune_degree'][doses]['sus']
-                immunity_factors[vacc_inds] = vaccine_scale_factor * vaccine_immunity[vaccine_time]
+                vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses, vaccine_time]
+                immunity_factors[vacc_inds] = vaccine_scale_factor * vaccine_immunity
 
             # Deal with strain parameters
             for key in strain_parkeys:

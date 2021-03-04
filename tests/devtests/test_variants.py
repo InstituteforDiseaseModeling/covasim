@@ -14,7 +14,7 @@ def test_vaccine_1strain(do_plot=False, do_show=True, do_save=False):
 
     sc.heading('Setting up...')
 
-    pfizer = cv.vaccinate(days=10, vaccine_pars='pfizer')
+    pfizer = cv.vaccinate(days=10, vaccine_pars='pfizer', prob = 0.15)
     sim = cv.Sim(interventions=[pfizer])
     sim.run()
 
