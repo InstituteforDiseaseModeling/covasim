@@ -1202,7 +1202,6 @@ class vaccinate(Intervention):
             vacc_inds = self.vaccinated[day2-1]
             self.update_vaccine_info(sim, vacc_inds)
 
-
         return
 
     def update_vaccine_info(self, sim, vacc_inds):
