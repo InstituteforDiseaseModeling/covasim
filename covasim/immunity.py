@@ -187,7 +187,7 @@ class Vaccine():
         return
 
     def init_strain_vaccine_info(self):
-
+        # TODO-- populate this with data!
         rel_imm = {}
         rel_imm['known_vaccines'] = ['pfizer', 'moderna', 'az', 'j&j']
         rel_imm['known_strains'] = ['wild', 'b117', 'b1351', 'p1']
@@ -196,17 +196,17 @@ class Vaccine():
             rel_imm[vx]['wild'] = 1
             rel_imm[vx]['b117'] = 1
 
-        rel_imm['pfizer']['b1351'] = 1
-        rel_imm['pfizer']['p1'] = 1
+        rel_imm['pfizer']['b1351'] = .5
+        rel_imm['pfizer']['p1'] = .5
 
-        rel_imm['moderna']['b1351'] = 1
-        rel_imm['moderna']['p1'] = 1
+        rel_imm['moderna']['b1351'] = .5
+        rel_imm['moderna']['p1'] = .5
 
-        rel_imm['az']['b1351'] = 1
-        rel_imm['az']['p1'] = 1
+        rel_imm['az']['b1351'] = .5
+        rel_imm['az']['p1'] = .5
 
-        rel_imm['j&j']['b1351'] = 1
-        rel_imm['j&j']['p1'] = 1
+        rel_imm['j&j']['b1351'] = .5
+        rel_imm['j&j']['p1'] = .5
 
         return rel_imm
 
