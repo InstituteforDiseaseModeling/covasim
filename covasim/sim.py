@@ -588,7 +588,7 @@ class Sim(cvb.BaseSim):
                 vaccine_scale_factor = vaccine_info['rel_imm'][vaccine_source, strain]
                 doses = cvd.default_int(people.vaccinations[vacc_inds])
                 vaccine_time = cvd.default_int(t - date_vacc[vacc_inds])
-                vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses, vaccine_time]
+                vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, vaccine_time]
                 immunity_factors[vacc_inds] = vaccine_scale_factor * vaccine_immunity
 
             # Deal with strain parameters
@@ -780,10 +780,7 @@ class Sim(cvb.BaseSim):
                 self.results[reskey].values = self.results[reskey].values[:self['n_strains'], :]
             if self.results[reskey].scale: # Scale the result dynamically
                 if 'by_strain' in reskey:
-                    # self.results[reskey].values = np.rot90(self.results[reskey].values)
                     self.results[reskey].values = np.einsum('ij,j->ij',self.results[reskey].values,self.rescale_vec)
-                    # self.results[reskey].values = np.flipud(self.results[reskey].values)
-                    # self.results[reskey].values = np.rot90(self.results[reskey].values)
                 else:
                     self.results[reskey].values *= self.rescale_vec
 

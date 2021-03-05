@@ -412,8 +412,8 @@ class People(cvb.BasePeople):
             vaccine_scale_factor = vaccine_info['rel_imm'][vaccine_source, strain]
             doses = cvd.default_int(self.vaccinations[vacc_inds])
             vaccine_time = cvd.default_int(self.t - date_vacc[vacc_inds])
-            self.trans_immunity_factors[strain, vacc_inds] = vaccine_scale_factor * vaccine_info['vaccine_immune_degree']['trans'][vaccine_source, doses, vaccine_time]
-            self.prog_immunity_factors[strain, vacc_inds] = vaccine_scale_factor * vaccine_info['vaccine_immune_degree']['prog'][vaccine_source, doses, vaccine_time]
+            self.trans_immunity_factors[strain, vacc_inds] = vaccine_scale_factor * vaccine_info['vaccine_immune_degree']['trans'][vaccine_source, doses-1, vaccine_time]
+            self.prog_immunity_factors[strain, vacc_inds] = vaccine_scale_factor * vaccine_info['vaccine_immune_degree']['prog'][vaccine_source, doses-1, vaccine_time]
 
         # determine people with immunity from this strain
         date_rec = self.date_recovered

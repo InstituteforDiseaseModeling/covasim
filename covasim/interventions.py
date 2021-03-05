@@ -1149,7 +1149,7 @@ class vaccinate(Intervention):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.days      = sc.dcp(days)
-        self.prob      = sc.promotetolist(prob)
+        self.prob      = prob
         self.subtarget = subtarget
         self.vaccine_pars  = vaccine_pars
         self.vaccine_ind = None
@@ -1157,15 +1157,20 @@ class vaccinate(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
-        self.days = process_days(sim, self.days)
+        self.first_dose_days = process_days(sim, self.days)
+        self.vaccinated = [None]*len(self.first_dose_days) # keep track of inds of people vaccinated on each day
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates   = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
-        if self.subtarget is not None:
-            self.subtarget = sc.promotetolist(self.subtarget)
         self.vaccine_ind = len(sim['vaccines'])
         vaccine = cvi.Vaccine(self.vaccine_pars)
         vaccine.initialize(sim)
         sim['vaccines'].append(vaccine)
+        self.doses = vaccine.doses
+        self.interval = vaccine.interval
+        if self.interval is not None:
+            self.second_dose_days = self.first_dose_days + self.interval
+        else:
+            self.second_dose_days = []
         self.initialized = True
         return
 
@@ -1174,23 +1179,36 @@ class vaccinate(Intervention):
         ''' Perform vaccination '''
 
         # If this day is found in the list, apply the intervention
-        for day in find_day(self.days, sim.t):
+        for day in find_day(self.first_dose_days, sim.t):
 
             # Determine who gets vaccinated today
-            vacc_probs = np.full(sim.n, self.prob[day]) # Begin by assigning equal vaccination probability to everyone
-            if self.subtarget is not None:
-                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget[day], sim)
-                vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
-            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
 
-            self.vaccinations[vacc_inds] += 1
-            self.vaccination_dates[vacc_inds] = sim.t
+            if self.subtarget is not None:
+                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+                vacc_probs = np.zeros(sim.n)# Begin by assigning equal vaccination probability to everyone
+                vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
+            else:
+                vacc_probs = np.full(sim.n, self.prob) # Assign equal vaccination probability to everyone
+            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
+            self.vaccinated[day] = vacc_inds
 
             # Update vaccine attributes in sim
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.vaccine_ind
-            sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
-            sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
+            self.update_vaccine_info(sim, vacc_inds)
 
+        for day2 in find_day(self.second_dose_days, sim.t):
+            # Determine who gets vaccinated today
+            vacc_inds = self.vaccinated[day2-1]
+            self.update_vaccine_info(sim, vacc_inds)
 
+        return
+
+    def update_vaccine_info(self, sim, vacc_inds):
+        self.vaccinations[vacc_inds] += 1
+        self.vaccination_dates[vacc_inds] = sim.t
+
+        # Update vaccine attributes in sim
+        sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
+        sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
         return
