@@ -1186,9 +1186,12 @@ class vaccinate(Intervention):
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
             self.vaccinated[sim.t] = vacc_inds
             if self.interval is not None:
-                self.second_dose_days[sim.t + self.interval] = vacc_inds
+                next_dose_day = sim.t + self.interval
+                if next_dose_day < sim['n_days']:
+                    self.second_dose_days[next_dose_day] = vacc_inds
                 vacc_inds_dose2 = self.second_dose_days[sim.t]
-                vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
+                if vacc_inds_dose2 is not None:
+                    vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
 
             # Update vaccine attributes in sim
             sim.people.vaccinated[vacc_inds] = True

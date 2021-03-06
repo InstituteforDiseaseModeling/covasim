@@ -22,7 +22,7 @@ def test_vaccine_1strain(do_plot=True, do_show=True, do_save=False):
     sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
     pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
     sim['interventions'] += [pfizer]
-    sim.initialize()
+    # sim.initialize()
     sim.run()
 
     to_plot = sc.objdict({
@@ -365,8 +365,8 @@ if __name__ == '__main__':
     #scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # Run Vaccine tests
-    # sim5 = test_vaccine_1strain()
-    sim6 = test_vaccine_2strains()
+    sim5 = test_vaccine_1strain()
+    # sim6 = test_vaccine_2strains()
     sc.toc()
 
 
