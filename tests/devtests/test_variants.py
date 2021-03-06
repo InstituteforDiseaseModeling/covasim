@@ -46,11 +46,11 @@ def test_vaccine_2strains(do_plot=True, do_show=True, do_save=False):
     sim.vxsubtarg = sc.objdict()
     sim.vxsubtarg.age = [75, 65, 50, 18]
     sim.vxsubtarg.prob = [.5, .5, .5, .5]
-    sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
-    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
-    b117 = cv.Strain('b117', days=10, n_imports=20)
-    sim['strains'] = [b117]
-    sim['interventions'] = pfizer
+    sim.vxsubtarg.days = subtarg_days = [20, 80, 120, 180]
+    jnj = cv.vaccinate(days=subtarg_days, vaccine_pars='j&j', subtarget=vacc_subtarg)
+    b1351 = cv.Strain('b1351', days=0, n_imports=20)
+    sim['strains'] = [b1351]
+    sim['interventions'] = jnj
     sim.run()
 
     to_plot = sc.objdict({
@@ -327,13 +327,25 @@ def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, lab
 
 def vacc_subtarg(sim):
     ''' Subtarget by age'''
-    ind = sim.vxsubtarg.days.index(sim.t)
+
+    # Want to adjust this so that it retrieves the first ind that is = or < sim.t
+    ind = get_ind_of_min_value(sim.vxsubtarg.days, sim.t)
     age = sim.vxsubtarg.age[ind]
     prob = sim.vxsubtarg.prob[ind]
     inds = sc.findinds((sim.people.age>=age) * ~sim.people.vaccinated)
     vals = prob*np.ones(len(inds))
     return {'inds':inds, 'vals':vals}
 
+def get_ind_of_min_value(list, time):
+    ind = None
+    for place, t in enumerate(list):
+        if time >= t:
+            ind = place
+
+    if ind is None:
+        errormsg = f'{time} is not within the list of times'
+        raise ValueError(errormsg)
+    return ind
 
 #%% Run as a script
 if __name__ == '__main__':

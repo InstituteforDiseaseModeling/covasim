@@ -587,6 +587,12 @@ class Sim(cvb.BaseSim):
                 vaccine_source = cvd.default_int(people.vaccine_source[vacc_inds])
                 vaccine_scale_factor = vaccine_info['rel_imm'][vaccine_source, strain]
                 doses = cvd.default_int(people.vaccinations[vacc_inds])
+
+                # pull out inds who have a prior infection
+                prior_inf = cvu.false(np.isnan(date_rec))
+                prior_inf_vacc = np.intersect1d(prior_inf, vacc_inds)
+                prior_inf_vacc = np.where(vacc_inds == prior_inf_vacc)[0]
+                doses[prior_inf_vacc] = 2
                 vaccine_time = cvd.default_int(t - date_vacc[vacc_inds])
                 vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, vaccine_time]
                 immunity_factors[vacc_inds] = vaccine_scale_factor * vaccine_immunity

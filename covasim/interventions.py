@@ -1157,8 +1157,9 @@ class vaccinate(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
-        self.first_dose_days = process_days(sim, self.days)
-        self.vaccinated = [None]*len(self.first_dose_days) # keep track of inds of people vaccinated on each day
+        self.first_dose_eligible = process_days(sim, self.days) # days that group becomes eligible
+        self.second_dose_days = [None] * (sim['n_days']+1)  # inds who get second dose (if relevant)
+        self.vaccinated = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates   = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
         self.vaccine_ind = len(sim['vaccines'])
@@ -1167,10 +1168,6 @@ class vaccinate(Intervention):
         sim['vaccines'].append(vaccine)
         self.doses = vaccine.doses
         self.interval = vaccine.interval
-        if self.interval is not None:
-            self.second_dose_days = self.first_dose_days + self.interval
-        else:
-            self.second_dose_days = []
         self.initialized = True
         return
 
@@ -1178,28 +1175,24 @@ class vaccinate(Intervention):
     def apply(self, sim):
         ''' Perform vaccination '''
 
-        # If this day is found in the list, apply the intervention
-        for day in find_day(self.first_dose_days, sim.t):
-
-            # Determine who gets vaccinated today
-
+        if sim.t >= min(self.first_dose_eligible):
+            # Determine who gets first dose of vaccine today
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-                vacc_probs = np.zeros(sim.n)# Begin by assigning equal vaccination probability to everyone
-                vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
+                vacc_probs = np.zeros(sim.n)  # Begin by assigning equal vaccination probability to everyone
+                vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
             else:
-                vacc_probs = np.full(sim.n, self.prob) # Assign equal vaccination probability to everyone
-            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
-            self.vaccinated[day] = vacc_inds
+                vacc_probs = np.full(sim.n, self.prob)  # Assign equal vaccination probability to everyone
+            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
+            self.vaccinated[sim.t] = vacc_inds
+            if self.interval is not None:
+                self.second_dose_days[sim.t + self.interval] = vacc_inds
+                vacc_inds_dose2 = self.second_dose_days[sim.t]
+                vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
 
             # Update vaccine attributes in sim
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.vaccine_ind
-            self.update_vaccine_info(sim, vacc_inds)
-
-        for day2 in find_day(self.second_dose_days, sim.t):
-            # Determine who gets vaccinated today
-            vacc_inds = self.vaccinated[day2-1]
             self.update_vaccine_info(sim, vacc_inds)
 
         return
