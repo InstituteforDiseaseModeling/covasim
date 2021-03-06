@@ -271,9 +271,9 @@ class Vaccine():
                     if ax == 'sus':
                         vaccine_pars['imm_pars'][ax] = [dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 30,
                                                                                       'lower_asymp': 0.3, 'decay_rate': -5,
-                                                                                         'delay': 30})]
+                                                                                         'delay': 30})]*2
                     else:
-                        vaccine_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})
+                        vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]*2
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine
@@ -297,7 +297,7 @@ class Vaccine():
 
         ts = sim['total_strains']
         circulating_strains = ['wild'] # assume wild is circulating
-        for strain in ts:
+        for strain in range(ts-1):
             circulating_strains.append(sim['strains'][strain].strain_label)
 
         if self.imm_pars is None:
@@ -454,7 +454,7 @@ def logistic_decay(length, init_val, decay_rate, half_val, lower_asymp, delay=No
         growth = linear_growth(delay, init_val / delay)
         decay = (init_val + (lower_asymp - init_val) / (
                 1 + (t / half_val) ** decay_rate))
-        result = np.concatenate(growth, decay, axis=None)
+        result = np.concatenate((growth, decay), axis=None)
     else:
         t = np.arange(length, dtype=cvd.default_int)
         result = (init_val + (lower_asymp - init_val) / (
