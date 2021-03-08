@@ -14,16 +14,39 @@ def test_vaccine_1strain(do_plot=True, do_show=True, do_save=False):
 
     sc.heading('Setting up...')
 
-    sim = cv.Sim()
+    # Define baseline parameters
+    base_pars = {
+        'n_days': 200,
+    }
+
+    n_runs = 3
+    base_sim = cv.Sim(base_pars)
+
     # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
-    sim.vxsubtarg = sc.objdict()
-    sim.vxsubtarg.age = [75, 65, 50, 18]
-    sim.vxsubtarg.prob = [.5, .5, .5, .5]
-    sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
+    base_sim.vxsubtarg = sc.objdict()
+    base_sim.vxsubtarg.age = [75, 65, 50, 18]
+    base_sim.vxsubtarg.prob = [.5, .5, .5, .5]
+    base_sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
     pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
-    sim['interventions'] += [pfizer]
-    # sim.initialize()
-    sim.run()
+
+    # Define the scenarios
+
+    scenarios = {
+        'baseline': {
+            'name': 'No Vaccine',
+            'pars': {}
+        },
+        'pfizer': {
+            'name': 'Pfizer starting on day 20',
+            'pars': {
+                'interventions': [pfizer],
+            }
+        },
+    }
+
+    metapars = {'n_runs': n_runs}
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run()
 
     to_plot = sc.objdict({
         'New infections': ['new_infections'],
@@ -32,8 +55,9 @@ def test_vaccine_1strain(do_plot=True, do_show=True, do_save=False):
         # 'Cumulative reinfections': ['cum_reinfections'],
     })
     if do_plot:
-        sim.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_vaccine_1strain.png', to_plot=to_plot)
-    return sim
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_basic_reinfection.png', to_plot=to_plot)
+
+    return scens
 
 
 def test_vaccine_2strains(do_plot=True, do_show=True, do_save=False):
@@ -365,6 +389,7 @@ if __name__ == '__main__':
     #scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # Run Vaccine tests
+    # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     sim5 = test_vaccine_1strain()
     # sim6 = test_vaccine_2strains()
     sc.toc()

@@ -230,8 +230,8 @@ class Vaccine():
                 vaccine_pars = dict()
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 0.5/22}),
-                                                    dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 30,
+                    vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 1/22}),
+                                                    dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 50,
                                                                                       'lower_asymp': 0.3, 'decay_rate': -5})]
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
@@ -243,7 +243,7 @@ class Vaccine():
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
                     vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 0.5/29}),
-                                                    dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 30,
+                                                    dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 50,
                                                                                       'lower_asymp': 0.3,
                                                                                       'decay_rate': -5})]
                 vaccine_pars['doses'] = 2
@@ -256,7 +256,7 @@ class Vaccine():
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
                     vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 0.5/22}),
-                                                    dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 30,
+                                                    dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 50,
                                                                                       'lower_asymp': 0.3,
                                                                                       'decay_rate': -5})]
                 vaccine_pars['doses'] = 2
@@ -269,7 +269,7 @@ class Vaccine():
                 vaccine_pars['imm_pars'] = {}
                 for ax in cvd.immunity_axes:
                     if ax == 'sus':
-                        vaccine_pars['imm_pars'][ax] = [dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 30,
+                        vaccine_pars['imm_pars'][ax] = [dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 50,
                                                                                       'lower_asymp': 0.3, 'decay_rate': -5,
                                                                                          'delay': 30})]*2
                     else:

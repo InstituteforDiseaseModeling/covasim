@@ -580,19 +580,22 @@ class Sim(cvb.BaseSim):
             # Determine who is vaccinated and has some immunity from vaccine
             vaccinated = people.vaccinated
             vacc_inds = cvu.true(vaccinated)
-            vacc_inds = np.setdiff1d(vacc_inds, inf_inds)
+            vacc_inds = np.setdiff1d(vacc_inds, inf_inds) # Take out anyone currently infected
             if len(vacc_inds):
                 vaccine_info = self['vaccine_info']
                 date_vacc = people.date_vaccinated
                 vaccine_source = cvd.default_int(people.vaccine_source[vacc_inds])
                 vaccine_scale_factor = vaccine_info['rel_imm'][vaccine_source, strain]
-                doses = cvd.default_int(people.vaccinations[vacc_inds])
+                doses_all = cvd.default_int(people.vaccinations)
+
+                # doses = cvd.default_int(people.vaccinations[vacc_inds])
 
                 # pull out inds who have a prior infection
                 prior_inf = cvu.false(np.isnan(date_rec))
                 prior_inf_vacc = np.intersect1d(prior_inf, vacc_inds)
-                prior_inf_vacc = np.where(vacc_inds == prior_inf_vacc)[0]
-                doses[prior_inf_vacc] = 2
+                # prior_inf_vacc = np.where(vacc_inds == prior_inf_vacc)[0]
+                doses_all[prior_inf_vacc] = 2
+                doses = doses_all[vacc_inds]
                 vaccine_time = cvd.default_int(t - date_vacc[vacc_inds])
                 vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, vaccine_time]
                 immunity_factors[vacc_inds] = vaccine_scale_factor * vaccine_immunity
