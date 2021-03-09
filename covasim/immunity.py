@@ -362,6 +362,7 @@ def init_immunity(sim, create=False):
 
     else:
         # if we know all the circulating strains, then update, otherwise use defaults
+        known_strains = ['wild', 'b117', 'b1351', 'p1']
         cross_immunity = create_cross_immunity(circulating_strains)
         if sc.checktype(sim['immunity']['sus'], 'arraylike'):
             correct_size = sim['immunity']['sus'].shape == (ts, ts)
@@ -371,7 +372,7 @@ def init_immunity(sim, create=False):
             for i in range(ts):
                 for j in range(ts):
                     if i != j:
-                        if circulating_strains[i] != None and circulating_strains[j] != None:
+                        if circulating_strains[i] in known_strains and circulating_strains[j] in known_strains:
                             sim['immunity']['sus'][j][i] = cross_immunity[circulating_strains[j]][
                                 circulating_strains[i]]
 
