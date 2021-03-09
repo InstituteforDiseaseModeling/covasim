@@ -426,9 +426,9 @@ if __name__ == '__main__':
     #scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # Run Vaccine tests
-    # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim5 = test_vaccine_1strain()
-    sim6 = test_vaccine_2strains()
+    # sim6 = test_vaccine_2strains()
     sc.toc()
 
 

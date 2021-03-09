@@ -307,7 +307,14 @@ def update_sub_key_pars(pars, default_pars):
             newval = val[0]
             oldval = sc.promotetolist(default_pars[par])[0] # Might be a list or not!
             if isinstance(newval, dict):  # Update the dictionary, don't just overwrite it
-                pars[par] = sc.promotetolist(sc.mergenested(oldval, newval))
+                if par == 'imm_pars':
+                    for type, valoftype in newval.items():
+                        if valoftype['form'] == oldval[type]['form']:
+                            pars[par][0][type] = sc.mergenested(oldval[type], valoftype)
+                        else:
+                            pars[par][0][type] = valoftype
+                else:
+                    pars[par] = sc.promotetolist(sc.mergenested(oldval, newval))
         else:
             if isinstance(val, dict):  # Update the dictionary, don't just overwrite it
                 if isinstance(default_pars[par], dict):

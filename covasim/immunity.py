@@ -61,7 +61,7 @@ class Strain():
                 'b117': ['b117', 'B117', 'B.1.1.7', 'UK', 'uk', 'UK variant', 'uk variant'],
                 'b1351': ['b1351', 'B1351', 'B.1.351', 'SA', 'sa', 'SA variant', 'sa variant'],
                 # TODO: add other aliases
-                'p1': ['p1', 'P1', 'P.1', 'Brazil', 'Brazil variant', 'brazil variant'],
+                'p1': ['p1', 'P1', 'P.1', 'B.1.1.248', 'b11248', 'Brazil', 'Brazil variant', 'brazil variant'],
             }
 
             # Empty pardict for wild strain
@@ -143,8 +143,8 @@ class Strain():
 
             # Update strain-specific people attributes
             # cvu.update_strain_attributes(sim.people) # don't think we need to do this if we just create people arrays with number of total strains in sim
-            importation_inds = cvu.choose(max_n=len(sim.people),
-                                          n=self.n_imports)  # TODO: do we need to check these people aren't infected? Or just consider it unlikely
+            susceptible_inds = cvu.true(sim.people.susceptible)
+            importation_inds = np.random.choice(susceptible_inds, self.n_imports)
             sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
 
         return
@@ -371,7 +371,9 @@ def init_immunity(sim, create=False):
             for i in range(ts):
                 for j in range(ts):
                     if i != j:
-                        sim['immunity']['sus'][j][i] = cross_immunity[circulating_strains[j]][circulating_strains[i]]
+                        if circulating_strains[i] != None and circulating_strains[j] != None:
+                            sim['immunity']['sus'][j][i] = cross_immunity[circulating_strains[j]][
+                                circulating_strains[i]]
 
         elif sc.checktype(sim['immunity']['sus'], dict):
             # TODO: make it possible to specify this as something like:

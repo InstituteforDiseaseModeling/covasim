@@ -527,7 +527,8 @@ class Sim(cvb.BaseSim):
         imports = cvu.n_poisson(self['n_imports'], self['n_strains']) # Imported cases
         for strain, n_imports in enumerate(imports):
             if n_imports>0:
-                importation_inds = cvu.choose(max_n=len(people), n=n_imports)
+                susceptible_inds = cvu.true(people.susceptible)
+                importation_inds = np.random.choice(susceptible_inds, n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation',
                               strain=strain)
 
