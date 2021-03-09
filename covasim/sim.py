@@ -611,6 +611,8 @@ class Sim(cvb.BaseSim):
             immune_inds         = cvu.true(immune)  # Whether people have some immunity to this strain from a prior infection with this strain
             immune_inds         = np.setdiff1d(immune_inds, inf_inds)
             immune_inds         = np.setdiff1d(immune_inds, vacc_inds)
+
+            # Pull out own immunity
             immunity_scale_factor = np.full(len(immune_inds), self['immunity']['sus'][strain,strain])
 
             # Process cross-immunity parameters and indices, if relevant

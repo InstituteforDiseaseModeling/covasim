@@ -83,8 +83,7 @@ class Strain():
                 strain_pars = dict()
                 strain_pars['imm_pars'] = dict()
                 for ax in cvd.immunity_axes:
-                    strain_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1.,
-                                                                               'half_life': 120})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
+                    strain_pars['imm_pars'][ax] = dict(form='logistic_decay', pars={'init_val': .8, 'half_val': 30, 'lower_asymp': 0.2, 'decay_rate': -5})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
                 self.strain_label = strain
 
             # Known parameters on Brazil variant
@@ -92,8 +91,7 @@ class Strain():
                 strain_pars = dict()
                 strain_pars['imm_pars'] = dict()
                 for ax in cvd.immunity_axes:
-                    strain_pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1.,
-                                                                               'half_life': 120})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
+                    strain_pars['imm_pars'][ax] = dict(form='logistic_decay', pars={'init_val': .8, 'half_val': 30, 'lower_asymp': 0.2, 'decay_rate': -5})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
                 self.strain_label = strain
 
             else:
@@ -347,6 +345,11 @@ def init_immunity(sim, create=False):
     ts = sim['total_strains']
     immunity = {}
 
+    # Pull out all of the circulating strains for cross-immunity
+    circulating_strains = ['wild']
+    for strain in sim['strains']:
+        circulating_strains.append(strain.strain_label)
+
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
         # Initialize immunity
@@ -360,11 +363,18 @@ def init_immunity(sim, create=False):
         sim['immunity'] = immunity
 
     else:
+        # if we know all the circulating strains, then update, otherwise use defaults
+        cross_immunity = create_cross_immunity(circulating_strains)
         if sc.checktype(sim['immunity']['sus'], 'arraylike'):
             correct_size = sim['immunity']['sus'].shape == (ts, ts)
             if not correct_size:
                 errormsg = f'Wrong dimensions for immunity["sus"]: you provided a matrix sized {sim["immunity"]["sus"].shape}, but it should be sized {(ts, ts)}'
                 raise ValueError(errormsg)
+            for i in range(ts):
+                for j in range(ts):
+                    if i != j:
+                        sim['immunity']['sus'][j][i] = cross_immunity[circulating_strains[j]][circulating_strains[i]]
+
         elif sc.checktype(sim['immunity']['sus'], dict):
             # TODO: make it possible to specify this as something like:
             # imm = {'b117': {'wild': 0.4, 'p1': 0.3},
@@ -446,6 +456,7 @@ def exp_decay(length, init_val, half_life, delay=None):
         result = init_val * np.exp(-decay_rate * t)
     return result
 
+
 def logistic_decay(length, init_val, decay_rate, half_val, lower_asymp, delay=None):
     ''' Calculate logistic decay '''
 
@@ -461,6 +472,7 @@ def logistic_decay(length, init_val, decay_rate, half_val, lower_asymp, delay=No
                 1 + (t / half_val) ** decay_rate))
     return result  # TODO: make this robust to /0 errors
 
+
 def linear_decay(length, init_val, slope):
     ''' Calculate linear decay '''
     t = np.arange(length, dtype=cvd.default_int)
@@ -469,7 +481,42 @@ def linear_decay(length, init_val, slope):
         result = 0
     return result
 
+
 def linear_growth(length, slope):
     ''' Calculate linear growth '''
     t = np.arange(length, dtype=cvd.default_int)
     return (slope * t)
+
+
+def create_cross_immunity(circulating_strains):
+    known_strains = ['wild', 'b117', 'b1351', 'p1']
+    known_cross_immunity = dict()
+    known_cross_immunity['wild'] = {} # cross-immunity to wild
+    known_cross_immunity['wild']['b117'] = .5
+    known_cross_immunity['wild']['b1351'] = .5
+    known_cross_immunity['wild']['p1'] = .5
+    known_cross_immunity['b117'] = {} # cross-immunity to b117
+    known_cross_immunity['b117']['wild'] = 1
+    known_cross_immunity['b117']['b1351'] = 1
+    known_cross_immunity['b117']['p1'] = 1
+    known_cross_immunity['b1351'] = {} # cross-immunity to b1351
+    known_cross_immunity['b1351']['wild'] = 0.1
+    known_cross_immunity['b1351']['b117'] = 0.1
+    known_cross_immunity['b1351']['p1'] = 0.1
+    known_cross_immunity['p1'] = {} # cross-immunity to p1
+    known_cross_immunity['p1']['wild'] = 0.2
+    known_cross_immunity['p1']['b117'] = 0.2
+    known_cross_immunity['p1']['b1351'] = 0.2
+
+    cross_immunity = {}
+    cs = len(circulating_strains)
+    for i in range(cs):
+        cross_immunity[circulating_strains[i]] = {}
+        for j in range(cs):
+            if circulating_strains[j] in known_strains:
+                if i != j:
+                    if circulating_strains[i] in known_strains:
+                        cross_immunity[circulating_strains[i]][circulating_strains[j]] = \
+                            known_cross_immunity[circulating_strains[i]][circulating_strains[j]]
+
+    return cross_immunity
