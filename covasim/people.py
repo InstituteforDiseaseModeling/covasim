@@ -272,13 +272,14 @@ class People(cvb.BasePeople):
             self.prior_symptoms[severe_inds] = self.pars['rel_imm'][strain]['severe'] #
 
         # Now reset all disease states
-        self.exposed[inds]     = False
-        self.infectious[inds]  = False
-        self.symptomatic[inds] = False
-        self.severe[inds]      = False
-        self.critical[inds]    = False
-        self.susceptible[inds]   = True
-        self.infectious_strain[inds] = np.nan
+        self.exposed[inds]          = False
+        self.infectious[inds]       = False
+        self.symptomatic[inds]      = False
+        self.severe[inds]           = False
+        self.critical[inds]         = False
+        self.susceptible[inds]      = True
+        self.infectious_strain[inds]= np.nan
+        self.exposed_strain[inds]   = np.nan
         return len(inds)
 
 
