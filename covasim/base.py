@@ -671,8 +671,10 @@ class BaseSim(ParsObj):
 
         else: # Standard usage case
             position = 0 if first else -1 # Choose either the first or last element
-            if label is None:
-                label = position # Get the last element
+            if label is None: # Get all interventions if no label is supplied, e.g. sim.get_interventions()
+                label = np.arange(n_ia)
+            if isinstance(label, np.ndarray): # Allow arrays to be provided
+                label = label.tolist()
             labels = sc.promotetolist(label)
 
             # Calculate the matches
@@ -692,15 +694,15 @@ class BaseSim(ParsObj):
                             matches.append(ia_obj)
                             match_inds.append(ind)
                 else: # pragma: no cover
-                    errormsg = f'Could not interpret label type "{type(label)}": should be str, int, or {which} class'
+                    errormsg = f'Could not interpret label type "{type(label)}": should be str, int, list, or {which} class'
                     raise TypeError(errormsg)
 
             # Parse the output options
             if as_inds:
                 output = match_inds
-            elif as_list:
+            elif as_list: # Used by get_interventions()
                 output = matches
-            else: # Normal case, return actual interventions
+            else:
                 if len(matches) == 0: # pragma: no cover
                     if die:
                         errormsg = f'No {which} matching "{label}" were found'
@@ -708,7 +710,7 @@ class BaseSim(ParsObj):
                     else:
                         output = None
                 else:
-                    output = matches[position] # Return either the first or last match
+                    output = matches[position] # Return either the first or last match (usually), used by get_intervention()
 
             return output
 
