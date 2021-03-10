@@ -246,7 +246,11 @@ class MultiSim(cvb.FlexPretty):
             raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
             for s,sim in enumerate(self.sims):
                 vals = sim.results[reskey].values
-                if vals.size != reduced_sim.npts:
+                if 'by_strain' in reskey:
+                    length = vals.shape[1]
+                else:
+                    length = len(vals)
+                if length != reduced_sim.npts:
                     errormsg = f'Cannot reduce sims with inconsistent numbers of days: {reduced_sim.npts} vs. {len(vals)}'
                     raise ValueError(errormsg)
                 raw[reskey][:,s] = vals
