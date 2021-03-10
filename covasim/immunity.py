@@ -57,7 +57,7 @@ class Strain():
 
             # List of choices currently available: new ones can be added to the list along with their aliases
             choices = {
-                'default': ['default', 'wild', 'pre-existing'],
+                'wild': ['default', 'wild', 'pre-existing'],
                 'b117': ['b117', 'B117', 'B.1.1.7', 'UK', 'uk', 'UK variant', 'uk variant'],
                 'b1351': ['b1351', 'B1351', 'B.1.351', 'SA', 'sa', 'SA variant', 'sa variant'],
                 # TODO: add other aliases
@@ -65,7 +65,7 @@ class Strain():
             }
 
             # Empty pardict for wild strain
-            if strain in choices['default']:
+            if strain in choices['wild']:
                 strain_pars = dict()
                 self.strain_label = strain
 
@@ -142,7 +142,7 @@ class Strain():
             sim['n_strains'] += 1
 
             # Update strain-specific people attributes
-            # cvu.update_strain_attributes(sim.people) # don't think we need to do this if we just create people arrays with number of total strains in sim
+            cvu.update_strain_attributes(sim.people) # don't think we need to do this if we just create people arrays with number of total strains in sim
             susceptible_inds = cvu.true(sim.people.susceptible)
             importation_inds = np.random.choice(susceptible_inds, self.n_imports)
             sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)

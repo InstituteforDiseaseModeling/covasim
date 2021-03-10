@@ -9,6 +9,22 @@ do_plot   = 1
 do_show   = 1
 do_save   = 0
 
+def test_synthpops():
+    sim = cv.Sim(pop_size=5000, pop_type='synthpops')
+    sim.popdict = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF': 'f'})
+    sim.reset_layer_pars()
+
+    # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
+    sim.vxsubtarg = sc.objdict()
+    sim.vxsubtarg.age = [75, 65, 50, 18]
+    sim.vxsubtarg.prob = [.05, .05, .05, .05]
+    sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
+    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
+    sim['interventions'] += [pfizer]
+
+    sim.run()
+    return sim
+
 def test_vaccine_1strain(do_plot=True, do_show=True, do_save=False):
     sc.heading('Run a basic sim with 1 strain, pfizer vaccine')
 
@@ -417,18 +433,19 @@ if __name__ == '__main__':
         sim = cv.Sim()
         sim.run()
 
+    sim0 = test_synthpops()
+
     # Run more complex tests
-    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # Run Vaccine tests
-    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim5 = test_vaccine_1strain()
-    sim6 = test_vaccine_2strains()
+    # sim5 = test_vaccine_1strain()
+    # sim6 = test_vaccine_2strains()
     sc.toc()
 
 
