@@ -23,7 +23,7 @@ if cvo.precision == 32:
     default_int   = np.int32
     nbfloat       = nb.float32
     nbint         = nb.int32
-elif cvo.precision == 64:
+elif cvo.precision == 64: # pragma: no cover
     default_float = np.float64
     default_int   = np.int64
     nbfloat       = nb.float64
@@ -215,7 +215,7 @@ def get_sim_plots(which='default'):
         })
     elif which == 'overview':
         plots = sc.dcp(overview_plots)
-    else:
+    else: # pragma: no cover
         errormsg = f'The choice which="{which}" is not supported'
         raise ValueError(errormsg)
     return plots
@@ -237,7 +237,7 @@ def get_scen_plots(which='default'):
         })
     elif which == 'overview':
         plots = sc.dcp(overview_plots)
-    else:
+    else: # pragma: no cover
         errormsg = f'The choice which="{which}" is not supported'
         raise ValueError(errormsg)
     return plots

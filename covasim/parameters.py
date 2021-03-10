@@ -238,7 +238,7 @@ def get_prognoses(by_age=True, version=None):
     expected_len = len(prognoses['age_cutoffs'])
     for key,val in prognoses.items():
         this_len = len(prognoses[key])
-        if this_len != expected_len:
+        if this_len != expected_len: # pragma: no cover
             errormsg = f'Lengths mismatch in prognoses: {expected_len} age bins specified, but key "{key}" has {this_len} entries'
             raise ValueError(errormsg)
 

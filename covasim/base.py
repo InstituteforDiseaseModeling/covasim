@@ -233,7 +233,7 @@ class BaseSim(ParsObj):
             string   = f'Sim({labelstr}; {start} to {end}; pop: {pop_size:n} {pop_type}; epi: {results})'
 
         # ...but if anything goes wrong, return the default with a warning
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             string = sc.objectid(self)
             string += f'Warning, sim appears to be malformed:\n{str(E)}'
 
@@ -279,7 +279,7 @@ class BaseSim(ParsObj):
         ''' Count the number of people -- if it fails, assume none '''
         try: # By default, the length of the people dict
             return len(self.people)
-        except: # If it's None or missing
+        except:  # pragma: no cover # If it's None or missing
             return 0
 
     @property
@@ -287,7 +287,7 @@ class BaseSim(ParsObj):
         ''' Get the total population size, i.e. the number of agents times the scale factor -- if it fails, assume none '''
         try:
             return self['pop_size']*self['pop_scale']
-        except: # If it's None or missing
+        except:  # pragma: no cover # If it's None or missing
             return 0
 
     @property
@@ -295,7 +295,7 @@ class BaseSim(ParsObj):
         ''' Count the number of time points '''
         try:
             return int(self['n_days'] + 1)
-        except:
+        except: # pragma: no cover
             return 0
 
     @property
@@ -303,7 +303,7 @@ class BaseSim(ParsObj):
         ''' Create a time vector '''
         try:
             return np.arange(self.npts)
-        except:
+        except: # pragma: no cover
             return np.array([])
 
     @property
@@ -318,7 +318,7 @@ class BaseSim(ParsObj):
         '''
         try:
             return self['start_day'] + self.tvec * dt.timedelta(days=1)
-        except:
+        except: # pragma: no cover
             return np.array([])
 
 
@@ -420,7 +420,7 @@ class BaseSim(ParsObj):
 
         '''
 
-        if not self.results_ready:
+        if not self.results_ready: # pragma: no cover
             errormsg = 'Please run the sim before exporting the results'
             raise RuntimeError(errormsg)
 
@@ -511,7 +511,7 @@ class BaseSim(ParsObj):
                 d['parameters'] = pardict
             elif key == 'summary':
                 d['summary'] = dict(sc.dcp(self.summary))
-            else:
+            else: # pragma: no cover
                 try:
                     d[key] = sc.sanitizejson(getattr(self, key))
                 except Exception as E:
@@ -644,7 +644,7 @@ class BaseSim(ParsObj):
             sim = cv.Sim.load('my-simulation.sim')
         '''
         sim = cvm.load(filename, *args, **kwargs)
-        if not isinstance(sim, BaseSim):
+        if not isinstance(sim, BaseSim): # pragma: no cover
             errormsg = f'Cannot load object of {type(sim)} as a Sim object'
             raise TypeError(errormsg)
         return sim
@@ -654,7 +654,7 @@ class BaseSim(ParsObj):
         ''' Helper method for get_interventions() and get_analyzers(); see get_interventions() docstring '''
 
         # Handle inputs
-        if which not in ['interventions', 'analyzers']:
+        if which not in ['interventions', 'analyzers']: # pragma: no cover
             errormsg = f'This method is only defined for interventions and analyzers, not "{which}"'
             raise ValueError(errormsg)
 
@@ -691,7 +691,7 @@ class BaseSim(ParsObj):
                         elif isinstance(label, type) and isinstance(ia_obj, label):
                             matches.append(ia_obj)
                             match_inds.append(ind)
-                else:
+                else: # pragma: no cover
                     errormsg = f'Could not interpret label type "{type(label)}": should be str, int, or {which} class'
                     raise TypeError(errormsg)
 
@@ -701,7 +701,7 @@ class BaseSim(ParsObj):
             elif as_list:
                 output = matches
             else: # Normal case, return actual interventions
-                if len(matches) == 0:
+                if len(matches) == 0: # pragma: no cover
                     if die:
                         errormsg = f'No {which} matching "{label}" were found'
                         raise ValueError(errormsg)
@@ -798,14 +798,14 @@ class BasePeople(FlexPretty):
 
         try:
             return self.__dict__[key]
-        except:
+        except: # pragma: no cover
             errormsg = f'Key "{key}" is not a valid attribute of people'
             raise AttributeError(errormsg)
 
 
     def __setitem__(self, key, value):
         ''' Ditto '''
-        if self._lock and key not in self.__dict__:
+        if self._lock and key not in self.__dict__: # pragma: no cover
             errormsg = f'Key "{key}" is not a valid attribute of people'
             raise AttributeError(errormsg)
         self.__dict__[key] = value
@@ -847,7 +847,7 @@ class BasePeople(FlexPretty):
         try:
             layerstr = ', '.join([str(k) for k in self.layer_keys()])
             string   = f'People(n={len(self):0n}; layers: {layerstr})'
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             string = sc.objectid(self)
             string += f'Warning, multisim appears to be malformed:\n{str(E)}'
         return string
@@ -862,7 +862,7 @@ class BasePeople(FlexPretty):
         ''' Ensure sizes and dtypes match '''
         current = self[key]
         value = np.array(value, dtype=self._dtypes[key]) # Ensure it's the right type
-        if die and len(value) != len(current):
+        if die and len(value) != len(current): # pragma: no cover
             errormsg = f'Length of new array does not match current ({len(value)} vs. {len(current)})'
             raise IndexError(errormsg)
         self[key] = value
@@ -951,7 +951,7 @@ class BasePeople(FlexPretty):
         except: # If not fully initialized
             try:
                 keys = list(self.pars['beta_layer'].keys())
-            except: # If not even partially initialized
+            except:  # pragma: no cover # If not even partially initialized
                 keys = []
         return keys
 
@@ -974,7 +974,7 @@ class BasePeople(FlexPretty):
         expected_len = len(self)
         for key in self.keys():
             actual_len = len(self[key])
-            if actual_len != expected_len:
+            if actual_len != expected_len: # pragma: no cover
                 if die:
                     errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
                     raise IndexError(errormsg)
@@ -1092,7 +1092,7 @@ class BasePeople(FlexPretty):
             new_contacts[lkey] = pd.DataFrame.from_dict(contacts)
         elif isinstance(contacts, list): # Assume it's a list of contacts by person, not an edgelist
             new_contacts = self.make_edgelist(contacts) # Assume contains key info
-        else:
+        else: # pragma: no cover
             errormsg = f'Cannot understand contacts of type {type(contacts)}; expecting dataframe, array, or dict'
             raise TypeError(errormsg)
 
@@ -1234,7 +1234,7 @@ class Contacts(FlexDict):
         for key in self.keys():
             try:
                 output += len(self[key])
-            except:
+            except: # pragma: no cover
                 pass
         return output
 
@@ -1296,7 +1296,7 @@ class Layer(FlexDict):
     def __len__(self):
         try:
             return len(self[self.basekey])
-        except:
+        except: # pragma: no cover
             return 0
 
 
@@ -1424,7 +1424,7 @@ class Layer(FlexDict):
         # Check types
         if not isinstance(inds, np.ndarray):
             inds = sc.promotetoarray(inds)
-        if inds.dtype != np.int64: # This is int64 since indices often come from cv.true(), which returns int64
+        if inds.dtype != np.int64:  # pragma: no cover # This is int64 since indices often come from cv.true(), which returns int64
             inds = np.array(inds, dtype=np.int64)
 
         # Find the contacts

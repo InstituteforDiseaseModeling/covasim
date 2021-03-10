@@ -53,8 +53,11 @@ def set_default_options():
     optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
     options.precision = int(os.getenv('COVASIM_PRECISION', 32))
 
-    optdesc.numba_parallel = 'Set Numba multithreading -- about 20% faster, but simulations become nondeterministic'
-    options.numba_parallel = bool(int(os.getenv('COVASIM_NUMBA_PARALLEL', 0)))
+    optdesc.numba_parallel = 'Set Numba multithreading -- 0=no, 1=partial, 2=full; full multithreading is ~20% faster, but results become nondeterministic'
+    options.numba_parallel = int(os.getenv('COVASIM_NUMBA_PARALLEL', 0))
+
+    optdesc.numba_cache = 'Set Numba caching -- saves on compilation time, but harder to update'
+    options.numba_cache = bool(int(os.getenv('COVASIM_NUMBA_CACHE', 1)))
 
     return options, optdesc
 
@@ -65,7 +68,7 @@ orig_options = sc.dcp(options) # Make a copy for referring back to later
 
 # Specify which keys require a reload
 matplotlib_keys = ['font_size', 'font_family', 'dpi', 'backend']
-numba_keys = ['precision', 'numba_parallel']
+numba_keys = ['precision', 'numba_parallel', 'numba_cache']
 
 
 def set_option(key=None, value=None, **kwargs):
@@ -90,7 +93,8 @@ def set_option(key=None, value=None, **kwargs):
         - backend:        which Matplotlib backend to use
         - interactive:    convenience method to set show, close, and backend
         - precision:      the arithmetic to use in calculations
-        - numba_parallel: whether to parallelize Numba
+        - numba_parallel: whether to parallelize Numba functions
+        - numba_cache:    whether to cache (precompile) Numba functions
 
     **Examples**::
 
@@ -207,7 +211,7 @@ def handle_show(do_show):
 def reload_numba():
     '''
     Apply changes to Numba functions -- reloading modules is necessary for
-    changes to propagate. Not necessary if cv.options.set() is used.
+    changes to propagate. Not necessary to call directly if cv.options.set() is used.
 
     **Example**::
 
@@ -223,6 +227,7 @@ def reload_numba():
     importlib.reload(cv.defaults)
     importlib.reload(cv.utils)
     importlib.reload(cv)
+    print('Reload complete. Note: for some changes you may also need to delete the __pycache__ folder.')
     return
 
 
