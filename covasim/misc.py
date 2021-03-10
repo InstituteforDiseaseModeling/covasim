@@ -730,7 +730,7 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         return pvalue#, stat
 
 
-def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=False, as_scalar='none', eps=1e-9, skestimator=None, **kwargs):
+def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=False, as_scalar='none', eps=1e-9, skestimator=None, estimator=None, **kwargs):
     '''
     Calculate the goodness of fit. By default use normalized absolute error, but
     highly customizable. For example, mean squared error is equivalent to
@@ -745,7 +745,8 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         as_scalar   (str):   return as a scalar instead of a time series: choices are sum, mean, median
         eps         (float): to avoid divide-by-zero
         skestimator (str):   if provided, use this scikit-learn estimator instead
-        kwargs      (dict):  passed to the scikit-learn estimator
+        estimator   (func):  if provided, use this custom estimator instead
+        kwargs      (dict):  passed to the scikit-learn or custom estimator
 
     Returns:
         gofs (arr): array of goodness-of-fit values, or a single value if as_scalar is True
@@ -766,7 +767,7 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
     actual    = np.array(sc.dcp(actual), dtype=float)
     predicted = np.array(sc.dcp(predicted), dtype=float)
 
-    # Custom estimator is supplied: use that
+    # Scikit-learn estimator is supplied: use that
     if skestimator is not None: # pragma: no cover
         try:
             import sklearn.metrics as sm
@@ -776,6 +777,15 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         except AttributeError:
             raise AttributeError(f'Estimator {skestimator} is not available; see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter for options')
         gof = sklearn_gof(actual, predicted, **kwargs)
+        return gof
+
+    # Custom estimator is supplied: use that
+    if estimator is not None: # pragma: no cover
+        try:
+            gof = estimator(actual, predicted, **kwargs)
+        except Exception as E:
+            errormsg = f'Custom estimator "{estimator}" must be a callable function that accepts actual and predicted arrays, plus optional kwargs'
+            raise RuntimeError(errormsg) from E
         return gof
 
     # Default case: calculate it manually
