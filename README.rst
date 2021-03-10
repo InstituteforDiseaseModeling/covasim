@@ -58,12 +58,10 @@ If you have written a paper or report using Covasim, we'd love to know about it!
 Requirements
 ============
 
-Python >=3.6 (64-bit). (Note: Python 2 is not supported.)
+Python 3.7 or 3.8 (64-bit). (Note: Python 2.7 and Python 3.9 are not supported.)
 
-We also recommend, but do not require, using Python virtual environments. For
-more information, see documentation for venv_ or Anaconda_.
+We also recommend, but do not require, installing Covasim in a virtual environment. For more information, see documentation for e.g. Anaconda_.
 
-.. _venv: https://docs.python.org/3/tutorial/venv.html
 .. _Anaconda: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
 
 
