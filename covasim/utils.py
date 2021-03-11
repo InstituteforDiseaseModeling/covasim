@@ -391,7 +391,7 @@ def n_neg_binomial(rate, dispersion, n, step=1): # Numba not used due to incompa
     return samples
 
 
-@nb.njit((nbint, nbint), cache=cache) # This hugely increases performance
+@nb.njit((nbint, nbint), cache=cache) # Numba hugely increases performance
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replacement.
@@ -407,7 +407,7 @@ def choose(max_n, n):
     return np.random.choice(max_n, n, replace=False)
 
 
-@nb.njit((nbint, nbint), cache=cache) # This hugely increases performance
+@nb.njit((nbint, nbint), cache=cache) # Numba hugely increases performance
 def choose_r(max_n, n):
     '''
     Choose a subset of items (e.g., people), with replacement.
@@ -423,7 +423,7 @@ def choose_r(max_n, n):
     return np.random.choice(max_n, n, replace=True)
 
 
-def choose_w(probs, n, unique=True):
+def choose_w(probs, n, unique=True): # No performance gain from Numba
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
 
