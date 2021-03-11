@@ -53,7 +53,7 @@ def set_default_options():
     optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
     options.precision = int(os.getenv('COVASIM_PRECISION', 32))
 
-    optdesc.numba_parallel = 'Set Numba multithreading -- 0=no, 1=partial, 2=full; full multithreading is ~20% faster, but results become nondeterministic'
+    optdesc.numba_parallel = 'Set Numba multithreading -- 0=no, 1=safe, 2=full; full multithreading is ~20% faster, but results become nondeterministic'
     options.numba_parallel = int(os.getenv('COVASIM_NUMBA_PARALLEL', 0))
 
     optdesc.numba_cache = 'Set Numba caching -- saves on compilation time, but harder to update'
@@ -227,7 +227,7 @@ def reload_numba():
     importlib.reload(cv.defaults)
     importlib.reload(cv.utils)
     importlib.reload(cv)
-    print('Reload complete. Note: for some changes you may also need to delete the __pycache__ folder.')
+    print("Reload complete. Note: for some options to take effect, you may also need to delete Covasim's __pycache__ folder.")
     return
 
 

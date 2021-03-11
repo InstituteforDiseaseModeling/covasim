@@ -780,7 +780,7 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         return gof
 
     # Custom estimator is supplied: use that
-    if estimator is not None: # pragma: no cover
+    if estimator is not None:
         try:
             gof = estimator(actual, predicted, **kwargs)
         except Exception as E:
