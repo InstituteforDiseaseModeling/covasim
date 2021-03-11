@@ -570,11 +570,11 @@ class Sim(cvb.BaseSim):
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
             verbose (float): level of detail to print, e.g. -1 = one-line output, 0 = no output, 0.1 = print every 10th day, 1 = print every day
-            output (bool): whether to return the results dictionary as output
-            kwargs (dict): passed to sim.plot()
+            output (bool/str): whether to return the results dictionary as output, or the sim object if output='sim'
+            kwargs (dict): passed to sim.plot() if do_plot is True
 
         Returns:
-            results (dict): the results object (also modifies in-place)
+            None if output=False, the results object (also modifies in-place) if output=True, or the sim object if output='sim'
         '''
 
         # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
@@ -633,7 +633,14 @@ class Sim(cvb.BaseSim):
             sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
             if do_plot: # Optionally plot
                 self.plot(**kwargs)
-            if output:
+            else:
+                if len(kwargs): # pragma: no cover
+                    keys = '", "'.join(list(kwargs.keys()))
+                    errormsg = f'Kwargs "{keys}" were not processed since plotting is not enabled; this is treated as an error'
+                    raise RuntimeError(errormsg)
+            if output == 'sim':
+                return self
+            elif output:
                 return self.results
             else:
                 return

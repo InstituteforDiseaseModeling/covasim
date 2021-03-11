@@ -13,7 +13,6 @@ from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
 from . import parameters as cvpar
-from .settings import options as cvo
 
 # Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
@@ -23,17 +22,14 @@ __all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', '
 
 class FlexPretty(sc.prettyobj):
     '''
-    A class that by default changes the display type depending on the current level
-    of verbosity.
+    A class that supports multiple different display options: namely obj.brief()
+    for a one-line description and obj.disp() for a full description.
     '''
 
     def __repr__(self):
-        ''' Set display options based on current level of verbosity '''
+        ''' Use brief repr by default '''
         try:
-            if cvo['verbose']:
-                string = self._disp()
-            else:
-                string = self._brief()
+            string = self._brief()
         except Exception as E:
             string = sc.objectid(self)
             string += f'Warning, something went wrong printing object:\n{str(E)}'
@@ -235,7 +231,7 @@ class BaseSim(ParsObj):
         # ...but if anything goes wrong, return the default with a warning
         except Exception as E: # pragma: no cover
             string = sc.objectid(self)
-            string += f'Warning, sim appears to be malformed:\n{str(E)}'
+            string += f'Warning, sim appears to be malformed; use sim.disp() for details:\n{str(E)}'
 
         return string
 
