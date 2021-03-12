@@ -18,12 +18,13 @@ class protect_elderly(cv.Intervention):
         return
 
     def initialize(self, sim):
-        self.start_day  = sim.day(self.start_day)
-        self.end_day    = sim.day(self.end_day)
-        self.days       = [self.start_day, self.end_day]
-        self.elderly    = sim.people.age > self.age_cutoff # Find the elderly people here
-        self.exposed    = np.zeros(sim.npts) # Initialize results
-        self.tvec       = sim.tvec # Copy the time vector into this intervention
+        self.start_day   = sim.day(self.start_day)
+        self.end_day     = sim.day(self.end_day)
+        self.days        = [self.start_day, self.end_day]
+        self.elderly     = sim.people.age > self.age_cutoff # Find the elderly people here
+        self.exposed     = np.zeros(sim.npts) # Initialize results
+        self.tvec        = sim.tvec # Copy the time vector into this intervention
+        self.initialized = True
         return
 
     def apply(self, sim):
@@ -48,24 +49,26 @@ class protect_elderly(cv.Intervention):
         return
 
 
-# Define and run the baseline simulation
-pars = dict(
-    pop_size = 50e3,
-    pop_infected = 100,
-    n_days = 90,
-    verbose = 0,
-)
-orig_sim = cv.Sim(pars, label='Default')
+if __name__ == '__main__':
 
-# Define the intervention and the scenario sim
-protect = protect_elderly(start_day='2020-04-01', end_day='2020-05-01', rel_sus=0.1) # Create intervention
-sim = cv.Sim(pars, interventions=protect, label='Protect the elderly')
+    # Define and run the baseline simulation
+    pars = dict(
+        pop_size = 50e3,
+        pop_infected = 100,
+        n_days = 90,
+        verbose = 0,
+    )
+    orig_sim = cv.Sim(pars, label='Default')
 
-# Run and plot
-msim = cv.MultiSim([orig_sim, sim])
-msim.run()
-msim.plot()
+    # Define the intervention and the scenario sim
+    protect = protect_elderly(start_day='2020-04-01', end_day='2020-05-01', rel_sus=0.1) # Create intervention
+    sim = cv.Sim(pars, interventions=protect, label='Protect the elderly')
 
-# Plot intervention
-protect = msim.sims[1].get_intervention(protect_elderly) # Find intervention by type
-protect.plot()
+    # Run and plot
+    msim = cv.MultiSim([orig_sim, sim])
+    msim.run()
+    msim.plot()
+
+    # Plot intervention
+    protect = msim.sims[1].get_intervention(protect_elderly) # Find intervention by type
+    protect.plot()
