@@ -58,7 +58,7 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
-            elif key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
+            elif 'imm' in key:  # everyone starts out with no immunity
                 self[key] = np.full((self.pars['n_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
             elif key == 'vaccinations':
                 self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
@@ -293,7 +293,88 @@ class People(cvb.BasePeople):
         self.critical[inds]    = False
         self.susceptible[inds]   = False
         self.dead[inds]        = True
+        self.infectious_strain[inds]= np.nan
+        self.exposed_strain[inds]   = np.nan
+        self.recovered_strain[inds] = np.nan
         return len(inds)
+
+
+    def check_immunity(self, strain):
+        '''
+        Calculate people's immunity on this timestep from prior infections + vaccination
+        There are two fundamental sources of immunity:
+               (1) prior exposure: degree of protection depends on strain, prior symptoms, and time since recovery
+               (2) vaccination: degree of protection depends on strain, vaccine, and time since vaccination
+        '''
+        is_sus        = cvu.true(self.susceptible)     # Currently susceptible
+        is_exp        = cvu.false(self.susceptible)    # Currently exposed
+        is_inf        = cvu.true(self.infectious)      # Currently infectious
+        was_inf       = cvu.true(self.t>=self.date_recovered) # Had a previous exposure, now recovered
+        was_inf_same  = cvu.true((self.recovered_strain == strain) & (self.t>=self.date_recovered)) # Had a previous exposure to the same strain, now recovered
+        was_inf_diff  = np.setdiff1d(was_inf, was_inf_same) # Had a previous exposure to a different strain, now recovered
+        is_reinf      = np.intersect1d(cvu.defined(self.recovered_strain), cvu.false(self.t>=self.date_recovered)) # Had a previous exposure, now reinfected
+        is_vacc       = cvu.true(self.vaccinated) # Vaccinated
+        date_rec      = self.date_recovered # Date recovered
+
+        # If vaccines are present, extract relevant information about them
+        vacc_present    = len(is_vacc)
+        if vacc_present:
+            date_vacc   = self.date_vaccinated
+            vacc_info   = self.pars['vaccine_info']
+
+        ### PART 1:
+        #   Immunity to infection for susceptibles
+        is_sus_vacc         = np.intersect1d(is_sus, is_vacc) # Susceptible and vaccinated
+        is_sus_was_inf_same = np.intersect1d(is_sus, was_inf_same) # Susceptible and being challenged by the same strain
+        is_sus_was_inf_diff = np.intersect1d(is_sus, was_inf_diff) # Susceptible and being challenged by a different strain
+
+        if len(is_sus_vacc): # Immunity for susceptibles who've been vaccinated
+            vaccine_source  = cvd.default_int(self.vaccine_source[is_sus_vacc])
+            vaccine_scale   = vacc_info['rel_imm'][vaccine_source, strain]
+            doses           = cvd.default_int(self.vaccinations[is_sus_vacc])
+            time_since_vacc = cvd.default_int(self.t - date_vacc[is_sus_vacc])
+            try: self.sus_imm[strain, is_sus_vacc] = vaccine_scale * vacc_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, time_since_vacc]
+            except:
+                import traceback;
+                traceback.print_exc();
+                import pdb;
+                pdb.set_trace()
+
+        if len(is_sus_was_inf_same): # Immunity for susceptibles with prior exposure to this strain
+            prior_symptoms  = self.prior_symptoms[is_sus_was_inf_same]
+            time_since_rec  = cvd.default_int(self.t - date_rec[is_sus_was_inf_same])
+            self.sus_imm[strain, is_sus_was_inf_same] = self['pars']['immune_degree'][strain]['sus'][time_since_rec] * \
+                                                     prior_symptoms * self.pars['immunity']['sus'][strain, strain]
+
+        if len(is_sus_was_inf_diff): # Cross-immunity for susceptibles with prior exposure to a different strain
+            for cross_strain in range(self.pars['n_strains']):
+                if cross_strain != strain:
+                    cross_immune = people.recovered_strain == cross_strain  # Whether people have some immunity to this strain from a prior infection with another strain
+                    cross_immune_inds = cvu.true(cross_immune)  # People with some immunity to this strain from a prior infection with another strain
+                    cross_immunity = np.full(len(cross_immune_inds), self['immunity']['sus'][strain, cross_strain])
+                    immune_inds = np.concatenate((immune_inds, cross_immune_inds))
+                    immunity_scale_factor = np.concatenate((immunity_scale_factor, cross_immunity))
+
+        ### PART 2:
+        #   Immunity to disease for currently-infected people
+        is_inf_vacc     = np.intersect1d(is_inf, is_vacc)
+
+        if len(is_inf_vacc): # Immunity for infected people who've been vaccinated
+            vaccine_source  = cvd.default_int(self.vaccine_source[is_inf_vacc])
+            doses           = cvd.default_int(self.vaccinations[is_inf_vacc])
+            time_since_vacc = cvd.default_int(self.t - date_vacc[is_inf_vacc])
+            self.trans_imm[strain, is_inf_vacc] = vacc_info['vaccine_immune_degree']['trans'][vaccine_source, doses-1, time_since_vacc]
+            self.prog_imm[strain, is_inf_vacc] = vacc_info['vaccine_immune_degree']['prog'][vaccine_source, doses-1, time_since_vacc]
+
+        if len(is_reinf): # Immunity for reinfected people
+            prior_symptoms  = self.prior_symptoms[is_reinf]
+            time_since_rec  = cvd.default_int(self.t - date_rec[is_reinf])
+            self.trans_imm[strain, is_reinf] = self['pars']['immune_degree'][strain]['trans'][time_since_rec] * \
+                                                     prior_symptoms * self.pars['immunity']['trans'][strain]
+            self.prog_imm[strain, is_reinf] = self['pars']['immune_degree'][strain]['prog'][time_since_rec] * \
+                                                     prior_symptoms * self.pars['immunity']['prog'][strain]
+
+        return
 
 
     def check_diagnosed(self):
@@ -407,33 +488,6 @@ class People(cvb.BasePeople):
         n_infections = len(inds)
         durpars      = infect_pars['dur']
 
-        # Determine who is vaccinated and has some immunity from vaccine
-        vaccinated = self.vaccinated
-        vacc_inds = cvu.true(vaccinated)
-        if len(vacc_inds):
-            vaccine_info = self['pars']['vaccine_info']
-            date_vacc = self.date_vaccinated
-            vaccine_source = cvd.default_int(self.vaccine_source[vacc_inds])
-            vaccine_scale_factor = vaccine_info['rel_imm'][vaccine_source, strain]
-            doses = cvd.default_int(self.vaccinations[vacc_inds])
-            vaccine_time = cvd.default_int(self.t - date_vacc[vacc_inds])
-            self.trans_immunity_factors[strain, vacc_inds] = vaccine_scale_factor * vaccine_info['vaccine_immune_degree']['trans'][vaccine_source, doses-1, vaccine_time]
-            self.prog_immunity_factors[strain, vacc_inds] = vaccine_scale_factor * vaccine_info['vaccine_immune_degree']['prog'][vaccine_source, doses-1, vaccine_time]
-
-        # determine people with immunity from this strain
-        date_rec = self.date_recovered
-        immune = self.recovered_strain[inds] == strain
-        immune_inds = cvu.itrue(immune, inds) # Whether people have some immunity to this strain from a prior infection with this strain
-        immune_inds = np.setdiff1d(immune_inds, vacc_inds)
-        immune_time = cvd.default_int(self.t - date_rec[immune_inds])  # Time since recovery for people who were last infected by this strain
-        prior_symptoms = self.prior_symptoms[immune_inds]
-
-        if len(immune_inds):
-            self.trans_immunity_factors[strain, immune_inds] = self['pars']['immune_degree'][strain]['trans'][immune_time] * \
-                                                     prior_symptoms * self.pars['immunity']['trans'][strain]
-            self.prog_immunity_factors[strain, immune_inds] = self['pars']['immune_degree'][strain]['prog'][immune_time] * \
-                                                     prior_symptoms * self.pars['immunity']['prog'][strain]
-
         # Update states, strain info, and flows
         self.susceptible[inds]   = False
         self.exposed[inds]       = True
@@ -443,7 +497,13 @@ class People(cvb.BasePeople):
         self.flows['new_infections'] += len(inds)
         self.flows['new_infections_by_strain'][strain] += len(inds)
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
-        self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery
+#        if self.flows['new_reinfections']>0:
+#            import traceback;
+#            traceback.print_exc();
+#            import pdb;
+#            pdb.set_trace()
+#        self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery
+#        self.recovered_strain[inds] = np.nan # Reset the strain they recovered from
 
         # Record transmissions
         for i, target in enumerate(inds):
@@ -454,53 +514,53 @@ class People(cvb.BasePeople):
         self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
 
         # Use prognosis probabilities to determine what happens to them
-        symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.prog_immunity_factors[strain, inds]) # Calculate their actual probability of being symptomatic
+        symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.prog_imm[strain, inds]) # Calculate their actual probability of being symptomatic
         is_symp = cvu.binomial_arr(symp_probs) # Determine if they develop symptoms
         symp_inds = inds[is_symp]
         asymp_inds = inds[~is_symp] # Asymptomatic
 
         # CASE 1: Asymptomatic: may infect others, but have no symptoms and do not die
-        dur_asym2rec = cvu.sample(**durpars['asym2rec'], size=len(asymp_inds))*(1-self.trans_immunity_factors[strain, asymp_inds])
+        dur_asym2rec = cvu.sample(**durpars['asym2rec'], size=len(asymp_inds))*(1-self.trans_imm[strain, asymp_inds])
         self.date_recovered[asymp_inds] = self.date_infectious[asymp_inds] + dur_asym2rec  # Date they recover
         self.dur_disease[asymp_inds] = self.dur_exp2inf[asymp_inds] + dur_asym2rec  # Store how long this person had COVID-19
 
         # CASE 2: Symptomatic: can either be mild, severe, or critical
         n_symp_inds = len(symp_inds)
-        self.dur_inf2sym[symp_inds] = cvu.sample(**durpars['inf2sym'], size=n_symp_inds)*(1-self.trans_immunity_factors[strain, symp_inds]) # Store how long this person took to develop symptoms
+        self.dur_inf2sym[symp_inds] = cvu.sample(**durpars['inf2sym'], size=n_symp_inds)*(1-self.trans_imm[strain, symp_inds]) # Store how long this person took to develop symptoms
         self.date_symptomatic[symp_inds] = self.date_infectious[symp_inds] + self.dur_inf2sym[symp_inds] # Date they become symptomatic
-        sev_probs = infect_pars['rel_severe_prob'] * self.severe_prob[symp_inds]*(1-self.prog_immunity_factors[strain, symp_inds]) # Probability of these people being severe
+        sev_probs = infect_pars['rel_severe_prob'] * self.severe_prob[symp_inds]*(1-self.prog_imm[strain, symp_inds]) # Probability of these people being severe
         is_sev = cvu.binomial_arr(sev_probs) # See if they're a severe or mild case
         sev_inds = symp_inds[is_sev]
         mild_inds = symp_inds[~is_sev] # Not severe
 
         # CASE 2.1: Mild symptoms, no hospitalization required and no probability of death
-        dur_mild2rec = cvu.sample(**durpars['mild2rec'], size=len(mild_inds))*(1-self.trans_immunity_factors[strain, mild_inds])
+        dur_mild2rec = cvu.sample(**durpars['mild2rec'], size=len(mild_inds))*(1-self.trans_imm[strain, mild_inds])
         self.date_recovered[mild_inds] = self.date_symptomatic[mild_inds] + dur_mild2rec  # Date they recover
         self.dur_disease[mild_inds] = self.dur_exp2inf[mild_inds] + self.dur_inf2sym[mild_inds] + dur_mild2rec  # Store how long this person had COVID-19
 
         # CASE 2.2: Severe cases: hospitalization required, may become critical
-        self.dur_sym2sev[sev_inds] = cvu.sample(**durpars['sym2sev'], size=len(sev_inds))*(1-self.trans_immunity_factors[strain, sev_inds]) # Store how long this person took to develop severe symptoms
+        self.dur_sym2sev[sev_inds] = cvu.sample(**durpars['sym2sev'], size=len(sev_inds))*(1-self.trans_imm[strain, sev_inds]) # Store how long this person took to develop severe symptoms
         self.date_severe[sev_inds] = self.date_symptomatic[sev_inds] + self.dur_sym2sev[sev_inds]  # Date symptoms become severe
-        crit_probs = infect_pars['rel_crit_prob'] * self.crit_prob[sev_inds] * (self.pars['no_hosp_factor'] if hosp_max else 1.) *(1-self.prog_immunity_factors[strain, sev_inds]) # Probability of these people becoming critical - higher if no beds available
+        crit_probs = infect_pars['rel_crit_prob'] * self.crit_prob[sev_inds] * (self.pars['no_hosp_factor'] if hosp_max else 1.) *(1-self.prog_imm[strain, sev_inds]) # Probability of these people becoming critical - higher if no beds available
         is_crit = cvu.binomial_arr(crit_probs)  # See if they're a critical case
         crit_inds = sev_inds[is_crit]
         non_crit_inds = sev_inds[~is_crit]
 
         # CASE 2.2.1 Not critical - they will recover
-        dur_sev2rec = cvu.sample(**durpars['sev2rec'], size=len(non_crit_inds))*(1-self.trans_immunity_factors[strain, non_crit_inds])
+        dur_sev2rec = cvu.sample(**durpars['sev2rec'], size=len(non_crit_inds))*(1-self.trans_imm[strain, non_crit_inds])
         self.date_recovered[non_crit_inds] = self.date_severe[non_crit_inds] + dur_sev2rec  # Date they recover
         self.dur_disease[non_crit_inds] = self.dur_exp2inf[non_crit_inds] + self.dur_inf2sym[non_crit_inds] + self.dur_sym2sev[non_crit_inds] + dur_sev2rec  # Store how long this person had COVID-19
 
         # CASE 2.2.2: Critical cases: ICU required, may die
-        self.dur_sev2crit[crit_inds] = cvu.sample(**durpars['sev2crit'], size=len(crit_inds))*(1-self.trans_immunity_factors[strain, crit_inds])
+        self.dur_sev2crit[crit_inds] = cvu.sample(**durpars['sev2crit'], size=len(crit_inds))*(1-self.trans_imm[strain, crit_inds])
         self.date_critical[crit_inds] = self.date_severe[crit_inds] + self.dur_sev2crit[crit_inds]  # Date they become critical
-        death_probs = infect_pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['no_icu_factor'] if icu_max else 1.)*(1-self.prog_immunity_factors[strain, crit_inds]) # Probability they'll die
+        death_probs = infect_pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['no_icu_factor'] if icu_max else 1.)*(1-self.prog_imm[strain, crit_inds]) # Probability they'll die
         is_dead = cvu.binomial_arr(death_probs)  # Death outcome
         dead_inds = crit_inds[is_dead]
         alive_inds = crit_inds[~is_dead]
 
         # CASE 2.2.2.1: Did not die
-        dur_crit2rec = cvu.sample(**durpars['crit2rec'], size=len(alive_inds))*(1-self.trans_immunity_factors[strain, alive_inds])
+        dur_crit2rec = cvu.sample(**durpars['crit2rec'], size=len(alive_inds))*(1-self.trans_imm[strain, alive_inds])
         self.date_recovered[alive_inds] = self.date_critical[alive_inds] + dur_crit2rec # Date they recover
         self.dur_disease[alive_inds] = self.dur_exp2inf[alive_inds] + self.dur_inf2sym[alive_inds] + self.dur_sym2sev[alive_inds] + self.dur_sev2crit[alive_inds] + dur_crit2rec  # Store how long this person had COVID-19
 
