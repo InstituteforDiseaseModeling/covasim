@@ -1177,21 +1177,26 @@ class vaccinate(Intervention):
 
         if sim.t >= min(self.first_dose_eligible):
             # Determine who gets first dose of vaccine today
+            vacc_probs = np.zeros(sim.n)
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-                vacc_probs = np.zeros(sim.n)  # Begin by assigning equal vaccination probability to everyone
                 vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
             else:
-                vacc_probs = np.full(sim.n, self.prob)  # Assign equal vaccination probability to everyone
+                for _ in find_day(self.first_dose_eligible, sim.t):
+                    unvacc_inds = sc.findinds(~sim.people.vaccinated)
+                    vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
-            self.vaccinated[sim.t] = vacc_inds
-            if self.interval is not None:
-                next_dose_day = sim.t + self.interval
-                if next_dose_day < sim['n_days']:
-                    self.second_dose_days[next_dose_day] = vacc_inds
-                vacc_inds_dose2 = self.second_dose_days[sim.t]
-                if vacc_inds_dose2 is not None:
-                    vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
+
+            if len(vacc_inds):
+                self.vaccinated[sim.t] = vacc_inds
+                if self.interval is not None:
+                    next_dose_day = sim.t + self.interval
+                    if next_dose_day < sim['n_days']:
+                        self.second_dose_days[next_dose_day] = vacc_inds
+
+            vacc_inds_dose2 = self.second_dose_days[sim.t]
+            if vacc_inds_dose2 is not None:
+                vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
 
             # Update vaccine attributes in sim
             sim.people.vaccinated[vacc_inds] = True

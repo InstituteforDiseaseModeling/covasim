@@ -573,10 +573,6 @@ class Sim(cvb.BaseSim):
         symp = people.symptomatic
         diag = people.diagnosed
         quar = people.quarantined
-        vaccinated = people.vaccinated
-        vacc_inds = cvu.true(vaccinated)
-        date_vacc = people.date_vaccinated
-        vaccine_info = self['vaccine_info']
 
         # Initialize temp storage for strain parameters
         strain_parkeys  = ['rel_beta', 'asymp_factor']
@@ -586,63 +582,15 @@ class Sim(cvb.BaseSim):
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
 
-            immunity_factors = np.zeros(len(people), dtype=cvd.default_float)
 
-            # Determine who is currently exposed and cannot get another infection
-            inf_inds = cvu.false(sus)
-
-            # Determine who is vaccinated and has some immunity from vaccine
-            vacc_inds = np.setdiff1d(vacc_inds, inf_inds) # Take out anyone currently infected
-            if len(vacc_inds):
-                vaccine_source = cvd.default_int(people.vaccine_source[vacc_inds])
-                vaccine_scale_factor = vaccine_info['rel_imm'][vaccine_source, strain]
-                doses_all = np.copy(cvd.default_int(people.vaccinations))
-
-                # doses = cvd.default_int(people.vaccinations[vacc_inds])
-
-                # pull out inds who have a prior infection
-                prior_inf = cvu.false(np.isnan(date_rec))
-                prior_inf_vacc = np.intersect1d(prior_inf, vacc_inds)
-                doses_all[prior_inf_vacc] = vaccine_info['doses']
-                doses = doses_all[vacc_inds]
-                vaccine_time = cvd.default_int(t - date_vacc[vacc_inds])
-                vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, vaccine_time]
-                immunity_factors[vacc_inds] = vaccine_scale_factor * vaccine_immunity
+            # Check immunity
+            people.check_immunity(strain, sus=True)
 
             # Deal with strain parameters
             for key in strain_parkeys:
                 strain_pars[key] = self[key][strain]
             beta = cvd.default_float(self['beta'] * strain_pars['rel_beta'])
             asymp_factor = cvd.default_float(strain_pars['asymp_factor'])
-
-            # Determine people with immunity from a past infection from this strain
-            immune              = people.recovered_strain == strain
-            immune_inds         = cvu.true(immune)  # Whether people have some immunity to this strain from a prior infection with this strain
-            immune_inds         = np.setdiff1d(immune_inds, inf_inds)
-            immune_inds         = np.setdiff1d(immune_inds, vacc_inds)
-
-            # Pull out own immunity
-            immunity_scale_factor = np.full(len(immune_inds), self['immunity']['sus'][strain,strain])
-
-            # Process cross-immunity parameters and indices, if relevant
-            if ns > 1:
-                for cross_strain in range(ns):
-                    if cross_strain != strain:
-                        cross_immune = people.recovered_strain == cross_strain # Whether people have some immunity to this strain from a prior infection with another strain
-                        cross_immune_inds       = cvu.true(cross_immune) # People with some immunity to this strain from a prior infection with another strain
-                        cross_immune_inds       = np.setdiff1d(cross_immune_inds, inf_inds) # remove anyone who is currently exposed
-                        cross_immune_inds       = np.setdiff1d(cross_immune_inds, immune_inds) # remove anyone who has own-immunity, that supercedes cross-immunity
-                        cross_immune_inds = np.setdiff1d(cross_immune_inds, vacc_inds)
-                        cross_immunity          = np.full(len(cross_immune_inds), self['immunity']['sus'][strain, cross_strain])
-                        immune_inds             = np.concatenate((immune_inds, cross_immune_inds))
-                        immunity_scale_factor   = np.concatenate((immunity_scale_factor, cross_immunity))
-
-            immune_time = cvd.default_int(t - date_rec[immune_inds])  # Time since recovery for people who were last infected by this strain
-            prior_symptoms = people.prior_symptoms[immune_inds]
-
-            # Compute immunity to susceptibility
-            if len(immune_inds):
-                immunity_factors[immune_inds] = self['immune_degree'][strain]['sus'][immune_time] * prior_symptoms * immunity_scale_factor
 
             # Define indices for this strain
             inf_by_this_strain = sc.dcp(inf)
@@ -656,12 +604,13 @@ class Sim(cvb.BaseSim):
                 # Compute relative transmission and susceptibility
                 rel_trans = people.rel_trans[:]
                 rel_sus = people.rel_sus[:]
+                sus_imm = people.sus_imm[strain,:]
 
                 iso_factor = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
                 rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
-                                                           diag, quar, asymp_factor, iso_factor, quar_factor, immunity_factors)
+                                                           diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
                 rel_sus = np.float32(rel_sus) # TODO: why doesn't this get returned in this format already?
 
                 # Calculate actual transmission

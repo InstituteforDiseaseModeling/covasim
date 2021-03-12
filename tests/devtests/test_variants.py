@@ -9,6 +9,7 @@ do_plot   = 1
 do_show   = 1
 do_save   = 0
 
+
 def test_synthpops():
     sim = cv.Sim(pop_size=5000, pop_type='synthpops')
     sim.popdict = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF': 'f'})
@@ -24,6 +25,7 @@ def test_synthpops():
 
     sim.run()
     return sim
+
 
 def test_vaccine_1strain(do_plot=True, do_show=True, do_save=False):
     sc.heading('Run a basic sim with 1 strain, pfizer vaccine')
@@ -218,8 +220,8 @@ def test_import2strains(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing 2 new strains partway through a sim')
     sc.heading('Setting up...')
 
-    b117 = cv.Strain('b117', days=10, n_imports=20)
-    p1 = cv.Strain('sa variant', days=30, n_imports=20)
+    b117 = cv.Strain('b117', days=1, n_imports=20)
+    p1 = cv.Strain('sa variant', days=2, n_imports=20)
     sim = cv.Sim(strains=[b117, p1], label='With imported infections')
     sim.run()
 
@@ -379,18 +381,22 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    if 1:
-        sim = cv.Sim()
-        sim.run()
+    # if 1:
+    #     sim = cv.Sim()
+    #     sim.run()
 
-    sim0 = test_synthpops()
+    # sim0 = test_synthpops()
+
+    # basic test for vaccine
+    pfizer = cv.vaccinate(days=[20], vaccine_pars='pfizer')
+    sim = cv.Sim(interventions=[pfizer])
+    sim.run()
 
     # Run more complex tests
     # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # Run Vaccine tests

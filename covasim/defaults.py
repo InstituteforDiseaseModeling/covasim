@@ -39,18 +39,19 @@ class PeopleMeta(sc.prettyobj):
 
     # Set the properties of a person
     person = [
-        'uid',         # Int
-        'age',         # Float
-        'sex',         # Float
-        'symp_prob',   # Float
-        'severe_prob', # Float
-        'crit_prob',   # Float
-        'death_prob',  # Float
-        'rel_trans',   # Float
-        'rel_sus',     # Float
-        'prior_symptoms', # Float
-        'trans_immunity_factors', # Float
-        'prog_immunity_factors', # Float
+        'uid',              # Int
+        'age',              # Float
+        'sex',              # Float
+        'symp_prob',        # Float
+        'severe_prob',      # Float
+        'crit_prob',        # Float
+        'death_prob',       # Float
+        'rel_trans',        # Float
+        'rel_sus',          # Float
+        'prior_symptoms',   # Float
+        'sus_imm',          # Float
+        'trans_imm',        # Float
+        'prog_imm',         # Float
         'vaccinations',     # Number of doses given per person
         'vaccine_source'    # index of vaccine that individual received
     ]
