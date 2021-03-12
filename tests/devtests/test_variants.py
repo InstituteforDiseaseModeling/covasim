@@ -218,8 +218,8 @@ def test_import2strains(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing 2 new strains partway through a sim')
     sc.heading('Setting up...')
 
-    b117 = cv.Strain('b117', days=10, n_imports=20)
-    p1 = cv.Strain('sa variant', days=30, n_imports=20)
+    b117 = cv.Strain('b117', days=1, n_imports=20)
+    p1 = cv.Strain('sa variant', days=2, n_imports=20)
     sim = cv.Sim(strains=[b117, p1], label='With imported infections')
     sim.run()
 
@@ -383,11 +383,11 @@ if __name__ == '__main__':
         sim = cv.Sim()
         sim.run()
 
-    sim0 = test_synthpops()
+    # sim0 = test_synthpops()
 
     # Run more complex tests
     # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # scens1 = test_basic_reinfection(do_plot=do_plot, do_save=do_save, do_show=do_show)

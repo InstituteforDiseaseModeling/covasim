@@ -480,6 +480,7 @@ class Sim(cvb.BaseSim):
 
             for ind, vacc in enumerate(self['vaccines']):
                 self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
+                self['vaccine_info']['doses'] = vacc.doses
                 for dose in range(vacc.doses):
                     for ax in cvd.immunity_axes:
                         self['vaccine_info']['vaccine_immune_degree'][ax][ind, dose, :] = vacc.vaccine_immune_degree[dose][ax]

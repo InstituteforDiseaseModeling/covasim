@@ -122,7 +122,7 @@ def find_contacts(p1, p2, inds): # pragma: no cover
 
 def update_strain_attributes(people):
     for key in people.meta.person:
-        if key == 'trans_immunity_factors' or key == 'prog_immunity_factors':  # everyone starts out with no immunity to either strain.
+        if 'imm' in key:  # everyone starts out with no immunity to either strain.
             people[key] = np.append(people[key], np.full((1, people.pop_size), 0, dtype=cvd.default_float, order='F'), axis=0)
 
     # Set strain states, which store info about which strain a person is exposed to
