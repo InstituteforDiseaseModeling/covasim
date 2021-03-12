@@ -53,8 +53,8 @@ def set_default_options():
     optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
     options.precision = int(os.getenv('COVASIM_PRECISION', 32))
 
-    optdesc.numba_parallel = 'Set Numba multithreading -- 0=no, 1=safe, 2=full; full multithreading is ~20% faster, but results become nondeterministic'
-    options.numba_parallel = int(os.getenv('COVASIM_NUMBA_PARALLEL', 0))
+    optdesc.numba_parallel = 'Set Numba multithreading -- none, safe, full; full multithreading is ~20% faster, but results become nondeterministic'
+    options.numba_parallel = str(os.getenv('COVASIM_NUMBA_PARALLEL', 'none'))
 
     optdesc.numba_cache = 'Set Numba caching -- saves on compilation time, but harder to update'
     options.numba_cache = bool(int(os.getenv('COVASIM_NUMBA_CACHE', 1)))

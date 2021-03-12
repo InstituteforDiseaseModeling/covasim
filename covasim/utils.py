@@ -21,12 +21,14 @@ nbint   = cvd.nbint
 nbfloat = cvd.nbfloat
 
 # Specify whether to allow parallel Numba calculation -- 10% faster for safe and 20% faster for random, but the random number stream becomes nondeterministic for the latter
-safe_parallel = cvo.numba_parallel >= 1
-rand_parallel = cvo.numba_parallel == 2
-if cvo.numba_parallel not in [0,1,2]:
-    errormsg = f'Numba parallel must be 0, 1, or 2, not {cvo.numba_parallel}'
+safe_opts = [1, '1', 'safe']
+full_opts = [2, '2', 'full']
+safe_parallel = cvo.numba_parallel in safe_opts + full_opts
+rand_parallel = cvo.numba_parallel in full_opts
+if cvo.numba_parallel not in [0, 1, 2, '0', '1', '2', 'none', 'safe', 'full']:
+    errormsg = f'Numba parallel must be "none", "safe", or "full", not "{cvo.numba_parallel}"'
     raise ValueError(errormsg)
-cache = cvo.numba_cache
+cache = cvo.numba_cache # Turning this off can help switching parallelization options
 
 
 #%% The core Covasim functions -- compute the infections
