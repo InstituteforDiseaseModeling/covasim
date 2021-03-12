@@ -5,6 +5,7 @@ Execute analysis tools in order to broadly cover basic functionality of analysis
 import numpy as np
 import sciris as sc
 import covasim as cv
+import pytest
 
 
 #%% General settings
@@ -45,6 +46,7 @@ def test_age_hist():
     sim.run()
 
     # Checks to see that compute windows returns correct number of results
+    sim.make_age_histogram() # Show post-hoc example
     agehist = sim.get_analyzer()
     agehist.compute_windows()
     agehist.get() # Not used, but check get
@@ -89,6 +91,21 @@ def test_fit():
     fit2 = sim2.compute_fit(custom=custom_inputs)
 
     assert fit1.mismatch != fit2.mismatch, "Differences between fit and data remains unchanged after changing sim seed"
+
+    # Test custom analyzers
+    actual = np.array([1,2,4])
+    predicted = np.array([1,2,3])
+
+    def simple(actual, predicted, scale=2):
+        return np.sum(abs(actual - predicted))*scale
+
+    gof1 = cv.compute_gof(actual, predicted, normalize=False, as_scalar='sum')
+    gof2 = cv.compute_gof(actual, predicted, estimator=simple, scale=1.0)
+    assert gof1 == gof2
+    with pytest.raises(Exception):
+        cv.compute_gof(actual, predicted, skestimator='not an estimator')
+    with pytest.raises(Exception):
+        cv.compute_gof(actual, predicted, estimator='not an estimator')
 
     if do_plot:
         fit1.plot()

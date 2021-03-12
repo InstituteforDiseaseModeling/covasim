@@ -9,8 +9,8 @@ start=$SECONDS
 export NBSPHINX_EXECUTE=$1
 
 echo 'Building docs...'
-make clean
-make html
+make clean # Delete
+make html # Actually make
 duration=$(( SECONDS - start ))
 
 echo 'Cleaning up tutorial files...'

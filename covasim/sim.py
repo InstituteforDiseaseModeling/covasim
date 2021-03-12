@@ -129,7 +129,7 @@ class Sim(cvb.BaseSim):
         '''
         try:
             keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
-        except:
+        except: # pragma: no cover
             keys = []
         return keys
 
@@ -178,7 +178,7 @@ class Sim(cvb.BaseSim):
         # Handle mismatches with the population
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
-            if pop_keys != set(layer_keys):
+            if pop_keys != set(layer_keys): # pragma: no cover
                 errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
                 raise sc.KeyNotFoundError(errormsg)
 
@@ -229,7 +229,7 @@ class Sim(cvb.BaseSim):
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
         choice = self['pop_type']
-        if choice and choice not in popdata_choices:
+        if choice and choice not in popdata_choices: # pragma: no cover
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
@@ -248,7 +248,7 @@ class Sim(cvb.BaseSim):
         # Handle verbose
         if self['verbose'] == 'brief':
             self['verbose'] = -1
-        if not sc.isnumber(self['verbose']):
+        if not sc.isnumber(self['verbose']): # pragma: no cover
             errormsg = f'Verbose argument should be either "brief", -1, or a float, not {type(self["verbose"])} "{self["verbose"]}"'
             raise ValueError(errormsg)
 
@@ -274,7 +274,7 @@ class Sim(cvb.BaseSim):
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
             self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
@@ -284,13 +284,15 @@ class Sim(cvb.BaseSim):
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
 
         # Other variables
-        self.results['n_alive']        = init_res('Number of people alive', scale=False)
-        self.results['prevalence']     = init_res('Prevalence', scale=False)
-        self.results['incidence']      = init_res('Incidence', scale=False)
-        self.results['r_eff']          = init_res('Effective reproduction number', scale=False)
-        self.results['doubling_time']  = init_res('Doubling time', scale=False)
-        self.results['test_yield']     = init_res('Testing yield', scale=False)
-        self.results['rel_test_yield'] = init_res('Relative testing yield', scale=False)
+        self.results['n_alive']         = init_res('Number alive',                   scale=False, color=dcols.susceptible)
+        self.results['n_preinfectious'] = init_res('Number preinfectious',           scale=False, color=dcols.exposed)
+        self.results['n_removed']       = init_res('Number removed',                 scale=False, color=dcols.recovered)
+        self.results['prevalence']      = init_res('Prevalence',                     scale=False, color=dcols.exposed)
+        self.results['incidence']       = init_res('Incidence',                      scale=False, color=dcols.infections)
+        self.results['r_eff']           = init_res('Effective reproduction number',  scale=False, color=dcols.default)
+        self.results['doubling_time']   = init_res('Doubling time',                  scale=False, color=dcols.default)
+        self.results['test_yield']      = init_res('Testing yield',                  scale=False, color=dcols.tests)
+        self.results['rel_test_yield']  = init_res('Relative testing yield',         scale=False, color=dcols.tests)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -344,7 +346,7 @@ class Sim(cvb.BaseSim):
                 self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
                 n_actual    = len(self.people)
                 layer_keys  = self.people.layer_keys()
-            else:
+            else: # pragma: no cover
                 errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'
                 raise ValueError(errormsg)
 
@@ -376,7 +378,10 @@ class Sim(cvb.BaseSim):
         if verbose is None:
             verbose = self['verbose']
         if verbose>0:
-            print(f'Initializing sim with {self["pop_size"]:0n} people for {self["n_days"]} days')
+            resetstr= ''
+            if self.people:
+                resetstr = ' (resetting people)' if reset else ' (warning: not resetting sim.people)'
+            print(f'Initializing sim{resetstr} with {self["pop_size"]:0n} people for {self["n_days"]} days')
         if load_pop and self.popdict is None:
             self.load_population(popfile=popfile)
 
@@ -410,7 +415,7 @@ class Sim(cvb.BaseSim):
             elif isinstance(intervention, (cvi.test_num, cvi.test_prob)):
                 test_ind = np.fmax(test_ind, i) # Find the latest-scheduled testing intervention
 
-        if not np.isnan(trace_ind):
+        if not np.isnan(trace_ind): # pragma: no cover
             warningmsg = ''
             if np.isnan(test_ind):
                 warningmsg = 'Note: you have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
@@ -483,13 +488,16 @@ class Sim(cvb.BaseSim):
             people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
 
         # Apply interventions
-        for intervention in self['interventions']:
+        for i,intervention in enumerate(self['interventions']):
             if isinstance(intervention, cvi.Intervention):
+                if not intervention.initialized: # pragma: no cover
+                    errormsg = f'Intervention {i} (label={intervention.label}, {type(intervention)}) has not been initialized'
+                    raise RuntimeError(errormsg)
                 intervention.apply(self) # If it's an intervention, call the apply() method
             elif callable(intervention):
                 intervention(self) # If it's a function, call it directly
-            else:
-                errormsg = f'Intervention {intervention} is neither callable nor an Intervention object'
+            else: # pragma: no cover
+                errormsg = f'Intervention {i} ({intervention}) is neither callable nor an Intervention object'
                 raise ValueError(errormsg)
 
         people.update_states_post() # Check for state changes after interventions
@@ -537,13 +545,16 @@ class Sim(cvb.BaseSim):
             self.results[key][t] += count
 
         # Apply analyzers -- same syntax as interventions
-        for analyzer in self['analyzers']:
+        for i,analyzer in enumerate(self['analyzers']):
             if isinstance(analyzer, cva.Analyzer):
+                if not analyzer.initialized: # pragma: no cover
+                    errormsg = f'Analyzer {i} (label={analyzer.label}, {type(analyzer)}) has not been initialized'
+                    raise RuntimeError(errormsg)
                 analyzer.apply(self) # If it's an intervention, call the apply() method
             elif callable(analyzer):
                 analyzer(self) # If it's a function, call it directly
-            else:
-                errormsg = f'Analyzer {analyzer} is neither callable nor an Analyzer object'
+            else: # pragma: no cover
+                errormsg = f'Analyzer {i} ({analyzer}) is neither callable nor an Analyzer object'
                 raise ValueError(errormsg)
 
         # Tidy up
@@ -554,7 +565,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, output=False, **kwargs):
+    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None):
         '''
         Run the simulation.
 
@@ -564,11 +575,9 @@ class Sim(cvb.BaseSim):
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
             verbose (float): level of detail to print, e.g. -1 = one-line output, 0 = no output, 0.1 = print every 10th day, 1 = print every day
-            output (bool): whether to return the results dictionary as output
-            kwargs (dict): passed to sim.plot()
 
         Returns:
-            results (dict): the results object (also modifies in-place)
+            A pointer to the sim object (with results modified in-place)
         '''
 
         # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
@@ -625,14 +634,7 @@ class Sim(cvb.BaseSim):
         if self.complete:
             self.finalize(verbose=verbose, restore_pars=restore_pars)
             sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
-            if do_plot: # Optionally plot
-                self.plot(**kwargs)
-            if output:
-                return self.results
-            else:
-                return
-        else:
-            return # If not complete, return nothing
+        return self
 
 
     def finalize(self, verbose=None, restore_pars=True):
@@ -641,7 +643,7 @@ class Sim(cvb.BaseSim):
         if self.results_ready:
             # Because the results are rescaled in-place, finalizing the sim cannot be run more than once or
             # otherwise the scale factor will be applied multiple times
-            raise Exception('Simulation has already been finalized')
+            raise AlreadyRunError('Simulation has already been finalized')
 
         # Scale the results
         for reskey in self.result_keys():
@@ -680,7 +682,7 @@ class Sim(cvb.BaseSim):
 
     def compute_results(self, verbose=None):
         ''' Perform final calculations on the results '''
-        self.compute_prev_inci()
+        self.compute_states()
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
@@ -688,18 +690,21 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def compute_prev_inci(self):
+    def compute_states(self):
         '''
-        Compute prevalence and incidence. Prevalence is the current number of infected
-        people divided by the number of people who are alive. Incidence is the number
-        of new infections per day divided by the susceptible population. Also calculate
-        the number of people alive, and recalculate susceptibles to handle scaling.
+        Compute prevalence, incidence, and other states. Prevalence is the current
+        number of infected people divided by the number of people who are alive.
+        Incidence is the number of new infections per day divided by the susceptible
+        population. Also calculates the number of people alive, the number preinfectious,
+        the number removed, and recalculates susceptibles to handle scaling.
         '''
         res = self.results
-        self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
-        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
-        self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
-        self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
+        self.results['n_alive'][:]         = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
+        self.results['n_susceptible'][:]   = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
+        self.results['n_preinfectious'][:] = res['n_exposed'][:] - res['n_infectious'][:] # Calculate the number not yet infectious: exposed minus infectious
+        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
+        self.results['prevalence'][:]      = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
+        self.results['incidence'][:]       = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         return
 
 
@@ -835,7 +840,7 @@ class Sim(cvb.BaseSim):
             values = np.divide(num, den, out=np.full(self.npts, np.nan), where=den > 0)
 
         # Method not recognized
-        else:
+        else: # pragma: no cover
             errormsg = f'Method must be "daily", "infectious", or "outcome", not "{method}"'
             raise ValueError(errormsg)
 
@@ -1018,7 +1023,7 @@ class Sim(cvb.BaseSim):
             return
 
 
-    def make_age_histogram(self, output=True, *args, **kwargs):
+    def make_age_histogram(self, *args, output=True, **kwargs):
         '''
         Calculate the age histograms of infections, deaths, diagnoses, etc. See
         cv.age_histogram() for more information. This can be used alternatively
@@ -1041,12 +1046,12 @@ class Sim(cvb.BaseSim):
         agehist = cva.age_histogram(sim=self, *args, **kwargs)
         if output:
             return agehist
-        else:
+        else: # pragma: no cover
             self.results.agehist = agehist
             return
 
 
-    def make_transtree(self, output=True, *args, **kwargs):
+    def make_transtree(self, *args, output=True, **kwargs):
         '''
         Create a TransTree (transmission tree) object, for analyzing the pattern
         of transmissions in the simulation. See cv.TransTree() for more information.
@@ -1065,7 +1070,7 @@ class Sim(cvb.BaseSim):
         tt = cva.TransTree(self, *args, **kwargs)
         if output:
             return tt
-        else:
+        else: # pragma: no cover
             self.results.transtree = tt
             return
 
@@ -1129,7 +1134,7 @@ class Sim(cvb.BaseSim):
         return fig
 
 
-def diff_sims(sim1, sim2, output=False, die=False):
+def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
     '''
     Compute the difference of the summaries of two simulations, and print any
     values which differ.
@@ -1137,6 +1142,7 @@ def diff_sims(sim1, sim2, output=False, die=False):
     Args:
         sim1 (sim/dict): either a simulation object or the sim.summary dictionary
         sim2 (sim/dict): ditto
+        skip_key_diffs (bool): whether to skip keys that don't match between sims
         output (bool): whether to return the output as a string (otherwise print)
         die (bool): whether to raise an exception if the sims don't match
         require_run (bool): require that the simulations have been run
@@ -1155,23 +1161,25 @@ def diff_sims(sim1, sim2, output=False, die=False):
     if isinstance(sim2, Sim):
         sim2 = sim2.compute_summary(update=False, output=True, require_run=True)
     for sim in [sim1, sim2]:
-        if not isinstance(sim, dict):
+        if not isinstance(sim, dict): # pragma: no cover
             errormsg = f'Cannot compare object of type {type(sim)}, must be a sim or a sim.summary dict'
             raise TypeError(errormsg)
 
     # Compare keys
-    mismatchmsg = ''
+    keymatchmsg = ''
     sim1_keys = set(sim1.keys())
     sim2_keys = set(sim2.keys())
-    if sim1_keys != sim2_keys:
-        mismatchmsg = "Keys don't match!\n"
+    if sim1_keys != sim2_keys and not skip_key_diffs: # pragma: no cover
+        keymatchmsg = "Keys don't match!\n"
         missing = list(sim1_keys - sim2_keys)
         extra   = list(sim2_keys - sim1_keys)
         if missing:
-            mismatchmsg += f'  Missing sim1 keys: {missing}\n'
+            keymatchmsg += f'  Missing sim1 keys: {missing}\n'
         if extra:
-            mismatchmsg += f'  Extra sim2 keys: {extra}\n'
+            keymatchmsg += f'  Extra sim2 keys: {extra}\n'
 
+    # Compare values
+    valmatchmsg = ''
     mismatches = {}
     for key in sim2.keys(): # To ensure order
         if key in sim1_keys: # If a key is missing, don't count it as a mismatch
@@ -1182,7 +1190,7 @@ def diff_sims(sim1, sim2, output=False, die=False):
                 mismatches[key] = {'sim1': sim1_val, 'sim2': sim2_val}
 
     if len(mismatches):
-        mismatchmsg = '\nThe following values differ between the two simulations:\n'
+        valmatchmsg = '\nThe following values differ between the two simulations:\n'
         df = pd.DataFrame.from_dict(mismatches).transpose()
         diff   = []
         ratio  = []
@@ -1218,7 +1226,7 @@ def diff_sims(sim1, sim2, output=False, die=False):
                     repeats = 4
 
                 this_change = change_char*repeats
-            else:
+            else: # pragma: no cover
                 this_diff   = np.nan
                 this_ratio  = np.nan
                 this_change = 'N/A'
@@ -1232,10 +1240,11 @@ def diff_sims(sim1, sim2, output=False, die=False):
         for col in ['sim1', 'sim2', 'diff', 'ratio']:
             df[col] = df[col].round(decimals=3)
         df['change'] = change
-        mismatchmsg += str(df)
+        valmatchmsg += str(df)
 
     # Raise an error if mismatches were found
-    if mismatchmsg:
+    mismatchmsg = keymatchmsg + valmatchmsg
+    if mismatchmsg: # pragma: no cover
         if die:
             raise ValueError(mismatchmsg)
         elif output:

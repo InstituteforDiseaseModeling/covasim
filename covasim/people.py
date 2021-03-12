@@ -325,10 +325,14 @@ class People(cvb.BasePeople):
     def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None):
         '''
         Infect people and determine their eventual outcomes.
+
             * Every infected person can infect other people, regardless of whether they develop symptoms
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
             * Critical cases either recover or die
+            
+        Method also deduplicates input arrays in case one agent is infected many times 
+        and stores who infected whom in infection_log list.
 
         Args:
             inds     (array): array of people to infect

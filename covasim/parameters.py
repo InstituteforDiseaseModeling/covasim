@@ -64,7 +64,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
-    pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.6, par2=4.8) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sim duration
+    pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.6, par2=4.8) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sym duration
     pars['dur']['inf2sym']  = dict(dist='lognormal_int', par1=1.0, par2=0.9) # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538
     pars['dur']['sym2sev']  = dict(dist='lognormal_int', par1=6.6, par2=4.9) # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538
     pars['dur']['sev2crit'] = dict(dist='lognormal_int', par1=3.0, par2=7.4) # Duration from severe symptoms to requiring ICU; see Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044
@@ -238,7 +238,7 @@ def get_prognoses(by_age=True, version=None):
     expected_len = len(prognoses['age_cutoffs'])
     for key,val in prognoses.items():
         this_len = len(prognoses[key])
-        if this_len != expected_len:
+        if this_len != expected_len: # pragma: no cover
             errormsg = f'Lengths mismatch in prognoses: {expected_len} age bins specified, but key "{key}" has {this_len} entries'
             raise ValueError(errormsg)
 

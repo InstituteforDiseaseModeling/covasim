@@ -42,7 +42,7 @@ def find_day(arr, t=None, which='first'):
         inds = [all_inds[0]]
     elif which == 'last':
         inds = [all_inds[-1]]
-    else:
+    else: # pragma: no cover
         errormsg = f'Argument "which" must be "first", "last", or "all", not "{which}"'
         raise ValueError(errormsg)
     return inds
@@ -250,14 +250,14 @@ class dynamic_pars(Intervention):
         subkeys = ['days', 'vals']
         for parkey in pars.keys():
             for subkey in subkeys:
-                if subkey not in pars[parkey].keys():
+                if subkey not in pars[parkey].keys(): # pragma: no cover
                     errormsg = f'Parameter {parkey} is missing subkey {subkey}'
                     raise sc.KeyNotFoundError(errormsg)
                 if sc.isnumber(pars[parkey][subkey]): # Allow scalar values or dicts, but leave everything else unchanged
                     pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
             len_days = len(pars[parkey]['days'])
             len_vals = len(pars[parkey]['vals'])
-            if len_days != len_vals:
+            if len_days != len_vals: # pragma: no cover
                 raise ValueError(f'Length of days ({len_days}) does not match length of values ({len_vals}) for parameter {parkey}')
         self.pars = pars
         return
@@ -350,7 +350,7 @@ def process_changes(sim, changes, days):
     Ensure lists of changes are in consistent format. Used by change_beta and clip_edges.
     '''
     changes = sc.promotetoarray(changes)
-    if len(days) != len(changes):
+    if len(days) != len(changes): # pragma: no cover
         errormsg = f'Number of days supplied ({len(days)}) does not match number of changes ({len(changes)})'
         raise ValueError(errormsg)
     return changes
@@ -491,7 +491,7 @@ class clip_edges(Intervention):
                         inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
                         to_move = i_layer.pop_inds(inds)
                         s_layer.append(to_move)
-                else:
+                else: # pragma: no cover
                     print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
 
         # Ensure the edges get deleted at the end
@@ -527,7 +527,7 @@ def process_daily_data(daily_data, sim, start_day, as_int=False):
         if daily_data == 'data':
             daily_data = sim.data['new_tests'] # Use default name
         else:
-            try:
+            try: # pragma: no cover
                 daily_data = sim.data[daily_data]
             except Exception as E:
                 errormsg = f'Tried to load testing data from sim.data["{daily_data}"], but that failed: {str(E)}.\nPlease ensure data are loaded into the sim and the column exists.'
@@ -563,7 +563,7 @@ def get_subtargets(subtarget, sim):
     if callable(subtarget):
         subtarget = subtarget(sim)
 
-    if 'inds' not in subtarget:
+    if 'inds' not in subtarget: # pragma: no cover
         errormsg = f'The subtarget dict must have keys "inds" and "vals", but you supplied {subtarget}'
         raise ValueError(errormsg)
 
@@ -579,7 +579,7 @@ def get_subtargets(subtarget, sim):
     else:
         subtarget_vals = subtarget['vals'] # The indices are supplied directly
     if sc.isiterable(subtarget_vals):
-        if len(subtarget_vals) != len(subtarget_inds):
+        if len(subtarget_vals) != len(subtarget_inds): # pragma: no cover
             errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'
             raise ValueError(errormsg)
 
@@ -611,7 +611,7 @@ def get_quar_inds(quar_policy, sim):
         quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
     elif callable(quar_policy):
         quar_test_inds = quar_policy(sim)
-    else:
+    else: # pragma: no cover
         errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be a string (start, end, both, daily), int, list, array, set, tuple, or function'
         raise ValueError(errormsg)
     return quar_test_inds

@@ -50,11 +50,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',  # Add a link to the Python source code for classes, functions etc.
-    'plantweb.directive',
     'nbsphinx',
 ]
-
-plantuml = 'plantweb'
 
 autodoc_default_options = {
     'member-order': 'bysource',
