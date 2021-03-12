@@ -52,7 +52,6 @@ class PeopleMeta(sc.prettyobj):
         'trans_immunity_factors', # Float
         'prog_immunity_factors', # Float
         'vaccinations',     # Number of doses given per person
-
         'vaccine_source'    # index of vaccine that individual received
     ]
 

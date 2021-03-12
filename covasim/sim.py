@@ -289,17 +289,17 @@ class Sim(cvb.BaseSim):
             self.results[f'n_{key}'] = init_res(label, color=dcols[key], max_strains=self['total_strains'])
 
         # Other variables
-        self.results['n_alive']        = init_res('Number of people alive', scale=False)
-        self.results['n_preinfectious'] = init_res('Number preinfectious',           scale=False, color=dcols.exposed)
-        self.results['n_removed']       = init_res('Number removed',                 scale=False, color=dcols.recovered)
-        self.results['prevalence']     = init_res('Prevalence', scale=False)
-        self.results['prevalence_by_strain'] = init_res('Prevalence by strain', scale=False, max_strains=self['total_strains'])
-        self.results['incidence']      = init_res('Incidence', scale=False)
-        self.results['incidence_by_strain'] = init_res('Incidence by strain', scale=False, max_strains=self['total_strains'])
-        self.results['r_eff']          = init_res('Effective reproduction number', scale=False)
-        self.results['doubling_time']  = init_res('Doubling time', scale=False)
-        self.results['test_yield']     = init_res('Testing yield', scale=False)
-        self.results['rel_test_yield'] = init_res('Relative testing yield', scale=False)
+        self.results['n_alive']                 = init_res('Number of people alive', scale=False)
+        self.results['n_preinfectious']         = init_res('Number preinfectious', scale=False, color=dcols.exposed)
+        #self.results['n_removed']               = init_res('Number removed', scale=False, color=dcols.recovered)
+        self.results['prevalence']              = init_res('Prevalence', scale=False)
+        self.results['prevalence_by_strain']    = init_res('Prevalence by strain', scale=False, max_strains=self['total_strains'])
+        self.results['incidence']               = init_res('Incidence', scale=False)
+        self.results['incidence_by_strain']     = init_res('Incidence by strain', scale=False, max_strains=self['total_strains'])
+        self.results['r_eff']                   = init_res('Effective reproduction number', scale=False)
+        self.results['doubling_time']           = init_res('Doubling time', scale=False)
+        self.results['test_yield']              = init_res('Testing yield', scale=False)
+        self.results['rel_test_yield']          = init_res('Relative testing yield', scale=False)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -574,6 +574,8 @@ class Sim(cvb.BaseSim):
         quar = people.quarantined
         vaccinated = people.vaccinated
         vacc_inds = cvu.true(vaccinated)
+        date_vacc = people.date_vaccinated
+        vaccine_info = self['vaccine_info']
 
         # Initialize temp storage for strain parameters
         strain_parkeys  = ['rel_beta', 'asymp_factor']
@@ -585,14 +587,12 @@ class Sim(cvb.BaseSim):
 
             immunity_factors = np.zeros(len(people), dtype=cvd.default_float)
 
-            # Determine who is currently infected and cannot get another infection
+            # Determine who is currently exposed and cannot get another infection
             inf_inds = cvu.false(sus)
 
             # Determine who is vaccinated and has some immunity from vaccine
             vacc_inds = np.setdiff1d(vacc_inds, inf_inds) # Take out anyone currently infected
             if len(vacc_inds):
-                vaccine_info = self['vaccine_info']
-                date_vacc = people.date_vaccinated
                 vaccine_source = cvd.default_int(people.vaccine_source[vacc_inds])
                 vaccine_scale_factor = vaccine_info['rel_imm'][vaccine_source, strain]
                 doses_all = np.copy(cvd.default_int(people.vaccinations))
@@ -606,15 +606,7 @@ class Sim(cvb.BaseSim):
                 # doses_all[prior_inf_vacc] = 2
                 doses = doses_all[vacc_inds]
                 vaccine_time = cvd.default_int(t - date_vacc[vacc_inds])
-
-                try:
-                    vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, vaccine_time]
-                except:
-                    import traceback;
-                    traceback.print_exc();
-                    import pdb;
-                    pdb.set_trace()
-
+                vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, vaccine_time]
                 immunity_factors[vacc_inds] = vaccine_scale_factor * vaccine_immunity
 
             # Deal with strain parameters
@@ -859,7 +851,7 @@ class Sim(cvb.BaseSim):
         self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
         self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] # Recalculate the number of susceptible people, not agents
         self.results['n_preinfectious'][:] = res['n_exposed'][:] - res['n_infectious'][:] # Calculate the number not yet infectious: exposed minus infectious
-        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
+#        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         self.results['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
