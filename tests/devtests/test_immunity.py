@@ -65,7 +65,8 @@ def test_reinfection(do_plot=False, do_show=True, do_save=False):
         'n_days': 120,
         'rel_imm': {k:1 for k in cvd.immunity_sources}
     }
-    sim = cv.Sim(pars=pars)
+    pfizer = cv.vaccinate(days=20, vaccine_pars='pfizer')
+    sim = cv.Sim(pars=pars, interventions=pfizer)
     sim.run()
 
     to_plot = sc.objdict({
