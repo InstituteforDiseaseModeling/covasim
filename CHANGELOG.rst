@@ -29,8 +29,11 @@ Latest versions (2.0.x)
 Version 2.0.3 (2021-03-11)
 --------------------------
 - Previously, the way a sim was printed (e.g. ``print(sim)``) depended on what the global ``verbose`` parameter was set to (e.g. ``cv.options.set(verbose=0.1)``), which used ``sim.brief()`` if verbosity was 0, or ``sim.disp()`` otherwise. This has been changed to always use the ``sim.brief()`` representation regardless of verbosity. To restore the previous behavior, use ``sim.disp()`` instead of ``print(sim)``.
-- ``sim.get_interventions()`` and ``sim.get_analyzers()`` have been changed to return all interventions/analyzers if no arguments are supplied. Previously, they would return only the last intervention. To restore the previous behavior, call ``sim.get_intervention()`` or ``sim.get_analyzer()`` instead.
 - ``sim.run()`` now returns a pointer to the sim object rather than either nothing (the current default) or the ``sim.results`` object. This means you can now do e.g. ``sim.run().plot()`` or ``sim.run().results`` rather than ``sim.run(do_plot=True)`` or ``sim.run(output=True)``.
+- ``sim.get_interventions()`` and ``sim.get_analyzers()`` have been changed to return all interventions/analyzers if no arguments are supplied. Previously, they would return only the last intervention. To restore the previous behavior, call ``sim.get_intervention()`` or ``sim.get_analyzer()`` instead.
+- Two new results have been added, ``n_preinfectious`` and ``n_removed``, corresponding to the E and R compartments of the SEIR model, respectively.
+- A new shortcut plotting option has been introduced, ``sim.plot(to_plot='seir')``.
+- Plotting colors have been revised.
 - *Regression information*: Calls to ``sim.run(do_plot=True, **kwargs)`` should be changed to ``sim.run().plot(**kwargs)``. Calls to ``sim.get_interventions()``/``sim.get_analyzers()`` (with no arguments) should be changed to ``sim.get_intervention()``/``sim.get_analyzer()``. Calls to ``results = sim.run(output=True)`` should be replaced with ``results = sim.run().results``.
 - *GitHub info*: PR `788 <https://github.com/amath-idm/covasim/pull/788>`__
 
