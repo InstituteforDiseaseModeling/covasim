@@ -29,7 +29,6 @@ for i,k,colors in d.enumitems():
     pl.title(k)
     n = len(colors)
     y = n-np.arange(n)
-    # pl.axes([0.25,0.05,0.6,0.9])
     pl.barh(y, width=1, color=colors.values())
     pl.gca().set_yticks(y)
     pl.gca().set_yticklabels(colors.keys())

@@ -123,7 +123,6 @@ def set_option(key=None, value=None, **kwargs):
             kwargs['backend'] = orig_options['backend']
         else:
             kwargs['show'] = False
-            kwargs['close'] = True
             kwargs['backend'] = 'agg'
 
     # Reset options
