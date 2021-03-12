@@ -33,7 +33,7 @@ Version 2.0.3 (2021-03-11)
 - ``sim.get_interventions()`` and ``sim.get_analyzers()`` have been changed to return all interventions/analyzers if no arguments are supplied. Previously, they would return only the last intervention. To restore the previous behavior, call ``sim.get_intervention()`` or ``sim.get_analyzer()`` instead.
 - Two new results have been added, ``n_preinfectious`` and ``n_removed``, corresponding to the E and R compartments of the SEIR model, respectively.
 - A new shortcut plotting option has been introduced, ``sim.plot(to_plot='seir')``.
-- Plotting colors have been revised.
+- Plotting colors have been revised to have greater contrast.
 - *Regression information*: Calls to ``sim.run(do_plot=True, **kwargs)`` should be changed to ``sim.run().plot(**kwargs)``. Calls to ``sim.get_interventions()``/``sim.get_analyzers()`` (with no arguments) should be changed to ``sim.get_intervention()``/``sim.get_analyzer()``. Calls to ``results = sim.run(output=True)`` should be replaced with ``results = sim.run().results``.
 - *GitHub info*: PR `788 <https://github.com/amath-idm/covasim/pull/788>`__
 
