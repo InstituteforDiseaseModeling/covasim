@@ -168,29 +168,10 @@ class People(cvb.BasePeople):
 
     def update_contacts(self):
         ''' Refresh dynamic contacts, e.g. community '''
-
         # Figure out if anything needs to be done -- e.g. {'h':False, 'c':True}
-        dynam_keys = [lkey for lkey,is_dynam in self.pars['dynam_layer'].items() if is_dynam]
-
-        # Loop over dynamic keys
-        for lkey in dynam_keys:
-            # Remove existing contacts
-            self.contacts.pop(lkey)
-
-            # Choose how many contacts to make
-            pop_size   = len(self)
-            n_contacts = self.pars['contacts'][lkey]
-            n_new = int(n_contacts*pop_size/2) # Since these get looped over in both directions later
-
-            # Create the contacts
-            new_contacts = {} # Initialize
-            new_contacts['p1']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
-            new_contacts['p2']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
-            new_contacts['beta'] = np.ones(n_new, dtype=cvd.default_float)
-
-            # Add to contacts
-            self.add_contacts(new_contacts, lkey=lkey)
-            self.contacts[lkey].validate()
+        for lkey, is_dynam in self.pars['dynam_layer'].items():
+            if is_dynam:
+                self.contacts[lkey].update(self)
 
         return self.contacts
 
