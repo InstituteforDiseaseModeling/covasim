@@ -480,6 +480,7 @@ class Sim(cvb.BaseSim):
 
             for ind, vacc in enumerate(self['vaccines']):
                 self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
+                self['vaccine_info']['doses'] = vacc.doses
                 for dose in range(vacc.doses):
                     for ax in cvd.immunity_axes:
                         self['vaccine_info']['vaccine_immune_degree'][ax][ind, dose, :] = vacc.vaccine_immune_degree[dose][ax]
@@ -602,8 +603,7 @@ class Sim(cvb.BaseSim):
                 # pull out inds who have a prior infection
                 prior_inf = cvu.false(np.isnan(date_rec))
                 prior_inf_vacc = np.intersect1d(prior_inf, vacc_inds)
-                # prior_inf_vacc = np.where(vacc_inds == prior_inf_vacc)[0]
-                # doses_all[prior_inf_vacc] = 2
+                doses_all[prior_inf_vacc] = vaccine_info['doses']
                 doses = doses_all[vacc_inds]
                 vaccine_time = cvd.default_int(t - date_vacc[vacc_inds])
                 vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, vaccine_time]
