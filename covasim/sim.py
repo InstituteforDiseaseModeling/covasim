@@ -129,7 +129,7 @@ class Sim(cvb.BaseSim):
         '''
         try:
             keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
-        except:
+        except: # pragma: no cover
             keys = []
         return keys
 
@@ -178,7 +178,7 @@ class Sim(cvb.BaseSim):
         # Handle mismatches with the population
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
-            if pop_keys != set(layer_keys):
+            if pop_keys != set(layer_keys): # pragma: no cover
                 errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
                 raise sc.KeyNotFoundError(errormsg)
 
@@ -229,7 +229,7 @@ class Sim(cvb.BaseSim):
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
         choice = self['pop_type']
-        if choice and choice not in popdata_choices:
+        if choice and choice not in popdata_choices: # pragma: no cover
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
@@ -248,7 +248,7 @@ class Sim(cvb.BaseSim):
         # Handle verbose
         if self['verbose'] == 'brief':
             self['verbose'] = -1
-        if not sc.isnumber(self['verbose']):
+        if not sc.isnumber(self['verbose']): # pragma: no cover
             errormsg = f'Verbose argument should be either "brief", -1, or a float, not {type(self["verbose"])} "{self["verbose"]}"'
             raise ValueError(errormsg)
 
@@ -346,7 +346,7 @@ class Sim(cvb.BaseSim):
                 self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
                 n_actual    = len(self.people)
                 layer_keys  = self.people.layer_keys()
-            else:
+            else: # pragma: no cover
                 errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'
                 raise ValueError(errormsg)
 
@@ -415,7 +415,7 @@ class Sim(cvb.BaseSim):
             elif isinstance(intervention, (cvi.test_num, cvi.test_prob)):
                 test_ind = np.fmax(test_ind, i) # Find the latest-scheduled testing intervention
 
-        if not np.isnan(trace_ind):
+        if not np.isnan(trace_ind): # pragma: no cover
             warningmsg = ''
             if np.isnan(test_ind):
                 warningmsg = 'Note: you have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
@@ -496,7 +496,7 @@ class Sim(cvb.BaseSim):
                 intervention.apply(self) # If it's an intervention, call the apply() method
             elif callable(intervention):
                 intervention(self) # If it's a function, call it directly
-            else:
+            else: # pragma: no cover
                 errormsg = f'Intervention {i} ({intervention}) is neither callable nor an Intervention object'
                 raise ValueError(errormsg)
 
@@ -553,7 +553,7 @@ class Sim(cvb.BaseSim):
                 analyzer.apply(self) # If it's an intervention, call the apply() method
             elif callable(analyzer):
                 analyzer(self) # If it's a function, call it directly
-            else:
+            else: # pragma: no cover
                 errormsg = f'Analyzer {i} ({analyzer}) is neither callable nor an Analyzer object'
                 raise ValueError(errormsg)
 
@@ -643,7 +643,7 @@ class Sim(cvb.BaseSim):
         if self.results_ready:
             # Because the results are rescaled in-place, finalizing the sim cannot be run more than once or
             # otherwise the scale factor will be applied multiple times
-            raise Exception('Simulation has already been finalized')
+            raise AlreadyRunError('Simulation has already been finalized')
 
         # Scale the results
         for reskey in self.result_keys():
@@ -840,7 +840,7 @@ class Sim(cvb.BaseSim):
             values = np.divide(num, den, out=np.full(self.npts, np.nan), where=den > 0)
 
         # Method not recognized
-        else:
+        else: # pragma: no cover
             errormsg = f'Method must be "daily", "infectious", or "outcome", not "{method}"'
             raise ValueError(errormsg)
 
@@ -1023,7 +1023,7 @@ class Sim(cvb.BaseSim):
             return
 
 
-    def make_age_histogram(self, output=True, *args, **kwargs):
+    def make_age_histogram(self, *args, output=True, **kwargs):
         '''
         Calculate the age histograms of infections, deaths, diagnoses, etc. See
         cv.age_histogram() for more information. This can be used alternatively
@@ -1046,12 +1046,12 @@ class Sim(cvb.BaseSim):
         agehist = cva.age_histogram(sim=self, *args, **kwargs)
         if output:
             return agehist
-        else:
+        else: # pragma: no cover
             self.results.agehist = agehist
             return
 
 
-    def make_transtree(self, output=True, *args, **kwargs):
+    def make_transtree(self, *args, output=True, **kwargs):
         '''
         Create a TransTree (transmission tree) object, for analyzing the pattern
         of transmissions in the simulation. See cv.TransTree() for more information.
@@ -1070,7 +1070,7 @@ class Sim(cvb.BaseSim):
         tt = cva.TransTree(self, *args, **kwargs)
         if output:
             return tt
-        else:
+        else: # pragma: no cover
             self.results.transtree = tt
             return
 
@@ -1161,7 +1161,7 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
     if isinstance(sim2, Sim):
         sim2 = sim2.compute_summary(update=False, output=True, require_run=True)
     for sim in [sim1, sim2]:
-        if not isinstance(sim, dict):
+        if not isinstance(sim, dict): # pragma: no cover
             errormsg = f'Cannot compare object of type {type(sim)}, must be a sim or a sim.summary dict'
             raise TypeError(errormsg)
 
@@ -1169,7 +1169,7 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
     keymatchmsg = ''
     sim1_keys = set(sim1.keys())
     sim2_keys = set(sim2.keys())
-    if sim1_keys != sim2_keys and not skip_key_diffs:
+    if sim1_keys != sim2_keys and not skip_key_diffs: # pragma: no cover
         keymatchmsg = "Keys don't match!\n"
         missing = list(sim1_keys - sim2_keys)
         extra   = list(sim2_keys - sim1_keys)
@@ -1178,6 +1178,8 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
         if extra:
             keymatchmsg += f'  Extra sim2 keys: {extra}\n'
 
+    # Compare values
+    valmatchmsg = ''
     mismatches = {}
     for key in sim2.keys(): # To ensure order
         if key in sim1_keys: # If a key is missing, don't count it as a mismatch
@@ -1224,7 +1226,7 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
                     repeats = 4
 
                 this_change = change_char*repeats
-            else:
+            else: # pragma: no cover
                 this_diff   = np.nan
                 this_ratio  = np.nan
                 this_change = 'N/A'
@@ -1242,7 +1244,7 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
 
     # Raise an error if mismatches were found
     mismatchmsg = keymatchmsg + valmatchmsg
-    if mismatchmsg:
+    if mismatchmsg: # pragma: no cover
         if die:
             raise ValueError(mismatchmsg)
         elif output:

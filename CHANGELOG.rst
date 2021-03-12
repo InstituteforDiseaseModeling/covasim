@@ -38,7 +38,7 @@ Version 2.0.3 (2021-03-11)
 - The ``numba_parallel`` option has been updated to include a "safe" option, which parallelizes as much as it can without disrupting the random number stream. For large sims (>100,000 people), this increases performance by about 10%. The previous ``numba_parallel=True`` option now corresponds to ``numba_parallel='full'``, which is about 20% faster but means results are non-reproducible. Note that for sims smaller than 100,000 people, Numba parallelization has almost no effect on performance.
 - A new option has been added, ``numba_cache``, which controls whether or not Numba functions are cached. They are by default to save compilation time, but if you change Numba options (especially ``numba_parallel``), with caching you may also need to delete the ``__pycache__`` folder for changes to take effect.
 - A frozen list of ``pip`` requirements, as well as test requirements, has been added to the ``tests`` folder.
-- The testing suite has been revamped, with defensive code skipped, bringing code coverage to 88%.
+- The testing suite has been revamped, with defensive code skipped, bringing code coverage to 90%.
 - *Regression information*: Calls to ``sim.run(do_plot=True, **kwargs)`` should be changed to ``sim.run().plot(**kwargs)``. Calls to ``sim.get_interventions()``/``sim.get_analyzers()`` (with no arguments) should be changed to ``sim.get_intervention()``/``sim.get_analyzer()``. Calls to ``results = sim.run(output=True)`` should be replaced with ``results = sim.run().results``.
 - *GitHub info*: PR `788 <https://github.com/amath-idm/covasim/pull/788>`__
 

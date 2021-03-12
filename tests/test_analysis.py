@@ -46,6 +46,7 @@ def test_age_hist():
     sim.run()
 
     # Checks to see that compute windows returns correct number of results
+    sim.make_age_histogram() # Show post-hoc example
     agehist = sim.get_analyzer()
     agehist.compute_windows()
     agehist.get() # Not used, but check get
