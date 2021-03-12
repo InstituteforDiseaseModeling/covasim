@@ -582,6 +582,7 @@ class Sim(cvb.BaseSim):
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
 
+
             # Check immunity
             people.check_immunity(strain, sus=True)
 

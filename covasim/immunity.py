@@ -17,7 +17,7 @@ __all__ = []
 
 # %% Define strain class
 
-__all__ += ['Strain']
+__all__ += ['Strain', 'Vaccine']
 
 
 class Strain():
@@ -321,7 +321,8 @@ class Vaccine():
                 raise ValueError(errormsg)
 
         ''' Initialize immune_degree'''
-        doses = self.doses
+        # doses = self.doses
+        doses = 2
 
         # Precompute waning
         immune_degree = []  # Stored as a list by dose
