@@ -144,24 +144,24 @@ def get_colors():
 
     NB, includes duplicates since stocks and flows are named differently.
     '''
-    colors = sc.objdict(
-        susceptible = '#5e7544',
-        infectious  = '#c78f65',
-        infections  = '#c75649',
-        exposed     = '#c75649', # Duplicate
-        tests       = '#aaa8ff',
-        diagnoses   = '#8886cc',
-        diagnosed   = '#8886cc', # Duplicate
-        recoveries  = '#799956',
-        recovered   = '#799956', # Duplicate
-        symptomatic = '#c1ad71',
-        severe      = '#c1981d',
-        quarantined = '#5f1914',
-        critical    = '#b86113',
-        deaths      = '#000000',
-        dead        = '#000000', # Duplicate
-    )
-    return colors
+    c = sc.objdict()
+    c.susceptible   = '#4d771e'
+    c.exposed       = '#c78f65'
+    c.infectious    = '#e45226'
+    c.infections    = '#b62413'
+    c.tests         = '#aaa8ff'
+    c.diagnoses     = '#5f5cd2'
+    c.diagnosed     = c.diagnoses
+    c.quarantined   = '#5c399c'
+    c.recoveries    = '#9e1149'
+    c.recovered     = c.recoveries
+    c.symptomatic   = '#c1ad71'
+    c.severe        = '#c1981d'
+    c.critical      = '#b86113'
+    c.deaths        = '#000000'
+    c.dead          = c.deaths
+    c.default       = '#000000'
+    return c
 
 
 # Define the 'overview plots', i.e. the most useful set of plots to explore different aspects of a simulation
@@ -215,6 +215,15 @@ def get_sim_plots(which='default'):
         })
     elif which == 'overview':
         plots = sc.dcp(overview_plots)
+    elif which == 'seir':
+        plots = sc.odict({
+                'SEIR states': [
+                    'n_susceptible',
+                    'n_preinfectious',
+                    'n_infectious',
+                    'n_removed',
+                ],
+        })
     else: # pragma: no cover
         errormsg = f'The choice which="{which}" is not supported'
         raise ValueError(errormsg)

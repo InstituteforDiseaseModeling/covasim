@@ -274,7 +274,7 @@ class Sim(cvb.BaseSim):
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
             self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
@@ -284,13 +284,15 @@ class Sim(cvb.BaseSim):
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
 
         # Other variables
-        self.results['n_alive']        = init_res('Number of people alive', scale=False)
-        self.results['prevalence']     = init_res('Prevalence', scale=False)
-        self.results['incidence']      = init_res('Incidence', scale=False)
-        self.results['r_eff']          = init_res('Effective reproduction number', scale=False)
-        self.results['doubling_time']  = init_res('Doubling time', scale=False)
-        self.results['test_yield']     = init_res('Testing yield', scale=False)
-        self.results['rel_test_yield'] = init_res('Relative testing yield', scale=False)
+        self.results['n_alive']         = init_res('Number alive',                   scale=False, color=dcols.susceptible)
+        self.results['n_preinfectious'] = init_res('Number preinfectious',           scale=False, color=dcols.exposed)
+        self.results['n_removed']       = init_res('Number removed',                 scale=False, color=dcols.recovered)
+        self.results['prevalence']      = init_res('Prevalence',                     scale=False, color=dcols.exposed)
+        self.results['incidence']       = init_res('Incidence',                      scale=False, color=dcols.infections)
+        self.results['r_eff']           = init_res('Effective reproduction number',  scale=False, color=dcols.default)
+        self.results['doubling_time']   = init_res('Doubling time',                  scale=False, color=dcols.default)
+        self.results['test_yield']      = init_res('Testing yield',                  scale=False, color=dcols.tests)
+        self.results['rel_test_yield']  = init_res('Relative testing yield',         scale=False, color=dcols.tests)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -376,7 +378,10 @@ class Sim(cvb.BaseSim):
         if verbose is None:
             verbose = self['verbose']
         if verbose>0:
-            print(f'Initializing sim with {self["pop_size"]:0n} people for {self["n_days"]} days')
+            resetstr= ''
+            if self.people:
+                resetstr = ' (resetting people)' if reset else ' (warning: not resetting sim.people)'
+            print(f'Initializing sim{resetstr} with {self["pop_size"]:0n} people for {self["n_days"]} days')
         if load_pop and self.popdict is None:
             self.load_population(popfile=popfile)
 
@@ -560,7 +565,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, output=False, **kwargs):
+    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None):
         '''
         Run the simulation.
 
@@ -570,11 +575,9 @@ class Sim(cvb.BaseSim):
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
             verbose (float): level of detail to print, e.g. -1 = one-line output, 0 = no output, 0.1 = print every 10th day, 1 = print every day
-            output (bool/str): whether to return the results dictionary as output, or the sim object if output='sim'
-            kwargs (dict): passed to sim.plot() if do_plot is True
 
         Returns:
-            None if output=False, the results object (also modifies in-place) if output=True, or the sim object if output='sim'
+            A pointer to the sim object (with results modified in-place)
         '''
 
         # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
@@ -631,21 +634,7 @@ class Sim(cvb.BaseSim):
         if self.complete:
             self.finalize(verbose=verbose, restore_pars=restore_pars)
             sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
-            if do_plot: # Optionally plot
-                self.plot(**kwargs)
-            else:
-                if len(kwargs): # pragma: no cover
-                    keys = '", "'.join(list(kwargs.keys()))
-                    errormsg = f'Kwargs "{keys}" were not processed since plotting is not enabled; this is treated as an error'
-                    raise RuntimeError(errormsg)
-            if output == 'sim':
-                return self
-            elif output:
-                return self.results
-            else:
-                return
-        else:
-            return # If not complete, return nothing
+        return self
 
 
     def finalize(self, verbose=None, restore_pars=True):
@@ -693,7 +682,7 @@ class Sim(cvb.BaseSim):
 
     def compute_results(self, verbose=None):
         ''' Perform final calculations on the results '''
-        self.compute_prev_inci()
+        self.compute_states()
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
@@ -701,18 +690,20 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def compute_prev_inci(self):
+    def compute_states(self):
         '''
-        Compute prevalence and incidence. Prevalence is the current number of infected
+        Compute prevalence, incidence, and other states. Prevalence is the current number of infected
         people divided by the number of people who are alive. Incidence is the number
         of new infections per day divided by the susceptible population. Also calculate
         the number of people alive, and recalculate susceptibles to handle scaling.
         '''
         res = self.results
-        self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
-        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
-        self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
-        self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
+        self.results['n_alive'][:]         = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
+        self.results['n_susceptible'][:]   = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
+        self.results['n_preinfectious'][:] = res['n_exposed'][:] - res['n_infectious'][:] # Calculate the number not yet infectious
+        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number not yet infectious
+        self.results['prevalence'][:]      = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
+        self.results['incidence'][:]       = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         return
 
 
