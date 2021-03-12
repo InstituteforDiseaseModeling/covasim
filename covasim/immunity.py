@@ -321,8 +321,7 @@ class Vaccine():
                 raise ValueError(errormsg)
 
         ''' Initialize immune_degree'''
-        # doses = self.doses
-        doses = 2
+        doses = self.doses
 
         # Precompute waning
         immune_degree = []  # Stored as a list by dose
