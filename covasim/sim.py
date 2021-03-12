@@ -1134,7 +1134,7 @@ class Sim(cvb.BaseSim):
         return fig
 
 
-def diff_sims(sim1, sim2, output=False, die=False):
+def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
     '''
     Compute the difference of the summaries of two simulations, and print any
     values which differ.
@@ -1142,6 +1142,7 @@ def diff_sims(sim1, sim2, output=False, die=False):
     Args:
         sim1 (sim/dict): either a simulation object or the sim.summary dictionary
         sim2 (sim/dict): ditto
+        skip_key_diffs (bool): whether to skip keys that don't match between sims
         output (bool): whether to return the output as a string (otherwise print)
         die (bool): whether to raise an exception if the sims don't match
         require_run (bool): require that the simulations have been run
@@ -1165,17 +1166,17 @@ def diff_sims(sim1, sim2, output=False, die=False):
             raise TypeError(errormsg)
 
     # Compare keys
-    mismatchmsg = ''
+    keymatchmsg = ''
     sim1_keys = set(sim1.keys())
     sim2_keys = set(sim2.keys())
-    if sim1_keys != sim2_keys:
-        mismatchmsg = "Keys don't match!\n"
+    if sim1_keys != sim2_keys and not skip_key_diffs:
+        keymatchmsg = "Keys don't match!\n"
         missing = list(sim1_keys - sim2_keys)
         extra   = list(sim2_keys - sim1_keys)
         if missing:
-            mismatchmsg += f'  Missing sim1 keys: {missing}\n'
+            keymatchmsg += f'  Missing sim1 keys: {missing}\n'
         if extra:
-            mismatchmsg += f'  Extra sim2 keys: {extra}\n'
+            keymatchmsg += f'  Extra sim2 keys: {extra}\n'
 
     mismatches = {}
     for key in sim2.keys(): # To ensure order
@@ -1187,7 +1188,7 @@ def diff_sims(sim1, sim2, output=False, die=False):
                 mismatches[key] = {'sim1': sim1_val, 'sim2': sim2_val}
 
     if len(mismatches):
-        mismatchmsg = '\nThe following values differ between the two simulations:\n'
+        valmatchmsg = '\nThe following values differ between the two simulations:\n'
         df = pd.DataFrame.from_dict(mismatches).transpose()
         diff   = []
         ratio  = []
@@ -1237,9 +1238,10 @@ def diff_sims(sim1, sim2, output=False, die=False):
         for col in ['sim1', 'sim2', 'diff', 'ratio']:
             df[col] = df[col].round(decimals=3)
         df['change'] = change
-        mismatchmsg += str(df)
+        valmatchmsg += str(df)
 
     # Raise an error if mismatches were found
+    mismatchmsg = keymatchmsg + valmatchmsg
     if mismatchmsg:
         if die:
             raise ValueError(mismatchmsg)

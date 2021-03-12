@@ -2,7 +2,6 @@
 [run]
 branch = True
 source = covasim
-omit = *census*
 
 [report]
 # Regexes for lines to exclude from consideration
