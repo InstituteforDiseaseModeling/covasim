@@ -62,7 +62,7 @@ def validate_recorded_dates(sim, requested_dates, recorded_dates, die=True):
     '''
     requested_dates = sorted(list(requested_dates))
     recorded_dates = sorted(list(recorded_dates))
-    if recorded_dates != requested_dates:
+    if recorded_dates != requested_dates: # pragma: no cover
         errormsg = f'The dates {requested_dates} were requested but only {recorded_dates} were recorded: please check the dates fall between {sim.date(sim["start_day"])} and {sim.date(sim["start_day"])} and the sim was actually run'
         if die:
             raise RuntimeError(errormsg)
@@ -114,7 +114,7 @@ class snapshot(Analyzer):
         self.days, self.dates = cvi.process_days(sim, self.days, return_dates=True) # Ensure days are in the right format
         max_snapshot_day = self.days[-1]
         max_sim_day = sim.day(sim['end_day'])
-        if max_snapshot_day > max_sim_day:
+        if max_snapshot_day > max_sim_day: # pragma: no cover
             errormsg = f'Cannot create snapshot for {self.dates[-1]} (day {max_snapshot_day}) because the simulation ends on {self.end_day} (day {max_sim_day})'
             raise ValueError(errormsg)
         self.initialized = True
@@ -141,7 +141,7 @@ class snapshot(Analyzer):
         date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.snapshots:
             snapshot = self.snapshots[date]
-        else:
+        else: # pragma: no cover
             dates = ', '.join(list(self.snapshots.keys()))
             errormsg = f'Could not find snapshot date {date} (day {day}): choices are {dates}'
             raise sc.KeyNotFoundError(errormsg)
@@ -194,7 +194,7 @@ class age_histogram(Analyzer):
 
     def from_sim(self, sim):
         ''' Create an age histogram from an already run sim '''
-        if self.days is not None:
+        if self.days is not None: # pragma: no cover
             errormsg = 'If a simulation is being analyzed post-run, no day can be supplied: only the last day of the simulation is available'
             raise ValueError(errormsg)
         self.initialize(sim)
@@ -212,7 +212,7 @@ class age_histogram(Analyzer):
         self.days, self.dates = cvi.process_days(sim, self.days, return_dates=True) # Ensure days are in the right format
         max_hist_day = self.days[-1]
         max_sim_day = sim.day(self.end_day)
-        if max_hist_day > max_sim_day:
+        if max_hist_day > max_sim_day: # pragma: no cover
             errormsg = f'Cannot create histogram for {self.dates[-1]} (day {max_hist_day}) because the simulation ends on {self.end_day} (day {max_sim_day})'
             raise ValueError(errormsg)
 
@@ -267,7 +267,7 @@ class age_histogram(Analyzer):
         date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.hists:
             hists = self.hists[date]
-        else:
+        else: # pragma: no cover
             dates = ', '.join(list(self.hists.keys()))
             errormsg = f'Could not find histogram date {date} (day {day}): choices are {dates}'
             raise sc.KeyNotFoundError(errormsg)
@@ -326,7 +326,7 @@ class age_histogram(Analyzer):
             histsdict = self.window_hists
         else:
             histsdict = self.hists
-        if not len(histsdict):
+        if not len(histsdict): # pragma: no cover
             errormsg = f'Cannot plot since no histograms were recorded (schuled days: {self.days})'
             raise ValueError(errormsg)
 
@@ -708,13 +708,13 @@ class Fit(sc.prettyobj):
         self.gof_kwargs = kwargs
 
         # Copy data
-        if sim.data is None:
+        if sim.data is None: # pragma: no cover
             errormsg = 'Model fit cannot be calculated until data are loaded'
             raise RuntimeError(errormsg)
         self.data = sim.data
 
         # Copy sim results
-        if not sim.results_ready:
+        if not sim.results_ready: # pragma: no cover
             errormsg = 'Model fit cannot be calculated until results are run'
             raise RuntimeError(errormsg)
         self.sim_results = sc.objdict()
@@ -761,11 +761,11 @@ class Fit(sc.prettyobj):
             sim_keys = self.sim_results.keys()
             intersection = list(set(sim_keys).intersection(data_cols)) # Find keys in both the sim and data
             self.keys = [key for key in sim_keys if key in intersection and key.startswith('cum_')] # Only keep cumulative keys
-            if not len(self.keys):
+            if not len(self.keys): # pragma: no cover
                 errormsg = f'No matches found between simulation result keys ({sim_keys}) and data columns ({data_cols})'
                 raise sc.KeyNotFoundError(errormsg)
         mismatches = [key for key in self.keys if key not in data_cols]
-        if len(mismatches):
+        if len(mismatches): # pragma: no cover
             mismatchstr = ', '.join(mismatches)
             errormsg = f'The following requested key(s) were not found in the data: {mismatchstr}'
             raise sc.KeyNotFoundError(errormsg)
@@ -811,10 +811,10 @@ class Fit(sc.prettyobj):
             c_sim  = custom['sim']
             try:
                 assert len(c_data) == len(c_sim)
-            except:
+            except: # pragma: no cover
                 errormsg = f'Custom data and sim must be arrays, and be of the same length: data = {c_data}, sim = {c_sim} could not be processed'
                 raise ValueError(errormsg)
-            if key in self.pair:
+            if key in self.pair: # pragma: no cover
                 errormsg = f'You cannot use a custom key "{key}" that matches one of the existing keys: {self.pair.keys()}'
                 raise ValueError(errormsg)
 
@@ -863,7 +863,7 @@ class Fit(sc.prettyobj):
                         pass
                     elif len_wt == len_sim: # Most typical case: it's the length of the simulation, must trim
                         weight = weight[self.inds.sim[key]] # Trim to matching indices
-                    else:
+                    else: # pragma: no cover
                         errormsg = f'Could not map weight array of length {len_wt} onto simulation of length {len_sim} or data-model matches of length {len_match}'
                         raise ValueError(errormsg)
             else:
@@ -1071,7 +1071,7 @@ class TransTree(sc.prettyobj):
         '''
         try:
             return len(self.infection_log)
-        except:
+        except: # pragma: no cover
             return 0
 
 
@@ -1222,7 +1222,7 @@ class TransTree(sc.prettyobj):
                 if i is None or np.isnan(node['date_exposed']) or (recovered_only and node['date_recovered']>self.n_days):
                     continue
                 n_infected.append(self.graph.out_degree(i))
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             errormsg = f'Unable to compute r0 ({str(E)}): you may need to reinitialize the transmission tree with to_networkx=True'
             raise RuntimeError(errormsg)
         return np.mean(n_infected)

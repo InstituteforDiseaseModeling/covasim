@@ -13,7 +13,6 @@ from . import utils as cvu
 from . import misc as cvm
 from . import defaults as cvd
 from . import parameters as cvpar
-from .settings import options as cvo
 
 # Specify all externally visible classes this file defines
 __all__ = ['ParsObj', 'Result', 'Par', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
@@ -23,17 +22,14 @@ __all__ = ['ParsObj', 'Result', 'Par', 'BaseSim', 'BasePeople', 'Person', 'FlexD
 
 class FlexPretty(sc.prettyobj):
     '''
-    A class that by default changes the display type depending on the current level
-    of verbosity.
+    A class that supports multiple different display options: namely obj.brief()
+    for a one-line description and obj.disp() for a full description.
     '''
 
     def __repr__(self):
-        ''' Set display options based on current level of verbosity '''
+        ''' Use brief repr by default '''
         try:
-            if cvo['verbose']:
-                string = self._disp()
-            else:
-                string = self._brief()
+            string = self._brief()
         except Exception as E:
             string = sc.objectid(self)
             string += f'Warning, something went wrong printing object:\n{str(E)}'
@@ -140,7 +136,7 @@ class Result(object):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
-            color = '#000000'
+            color = cvd.get_colors()['default']
         self.color = color # Default color
         if npts is None:
             npts = 0
@@ -289,9 +285,9 @@ class BaseSim(ParsObj):
             string   = f'Sim({labelstr}; {start} to {end}; pop: {pop_size:n} {pop_type}; epi: {results})'
 
         # ...but if anything goes wrong, return the default with a warning
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             string = sc.objectid(self)
-            string += f'Warning, sim appears to be malformed:\n{str(E)}'
+            string += f'Warning, sim appears to be malformed; use sim.disp() for details:\n{str(E)}'
 
         return string
 
@@ -342,7 +338,7 @@ class BaseSim(ParsObj):
         ''' Count the number of people -- if it fails, assume none '''
         try: # By default, the length of the people dict
             return len(self.people)
-        except: # If it's None or missing
+        except:  # pragma: no cover # If it's None or missing
             return 0
 
     @property
@@ -350,7 +346,7 @@ class BaseSim(ParsObj):
         ''' Get the total population size, i.e. the number of agents times the scale factor -- if it fails, assume none '''
         try:
             return self['pop_size']*self['pop_scale']
-        except: # If it's None or missing
+        except:  # pragma: no cover # If it's None or missing
             return 0
 
     @property
@@ -358,7 +354,7 @@ class BaseSim(ParsObj):
         ''' Count the number of time points '''
         try:
             return int(self['n_days'] + 1)
-        except:
+        except: # pragma: no cover
             return 0
 
     @property
@@ -366,7 +362,7 @@ class BaseSim(ParsObj):
         ''' Create a time vector '''
         try:
             return np.arange(self.npts)
-        except:
+        except: # pragma: no cover
             return np.array([])
 
     @property
@@ -381,7 +377,7 @@ class BaseSim(ParsObj):
         '''
         try:
             return self['start_day'] + self.tvec * dt.timedelta(days=1)
-        except:
+        except: # pragma: no cover
             return np.array([])
 
 
@@ -483,7 +479,7 @@ class BaseSim(ParsObj):
 
         '''
 
-        if not self.results_ready:
+        if not self.results_ready: # pragma: no cover
             errormsg = 'Please run the sim before exporting the results'
             raise RuntimeError(errormsg)
 
@@ -574,7 +570,7 @@ class BaseSim(ParsObj):
                 d['parameters'] = pardict
             elif key == 'summary':
                 d['summary'] = dict(sc.dcp(self.summary))
-            else:
+            else: # pragma: no cover
                 try:
                     d[key] = sc.sanitizejson(getattr(self, key))
                 except Exception as E:
@@ -707,7 +703,7 @@ class BaseSim(ParsObj):
             sim = cv.Sim.load('my-simulation.sim')
         '''
         sim = cvm.load(filename, *args, **kwargs)
-        if not isinstance(sim, BaseSim):
+        if not isinstance(sim, BaseSim): # pragma: no cover
             errormsg = f'Cannot load object of {type(sim)} as a Sim object'
             raise TypeError(errormsg)
         return sim
@@ -717,7 +713,7 @@ class BaseSim(ParsObj):
         ''' Helper method for get_interventions() and get_analyzers(); see get_interventions() docstring '''
 
         # Handle inputs
-        if which not in ['interventions', 'analyzers']:
+        if which not in ['interventions', 'analyzers']: # pragma: no cover
             errormsg = f'This method is only defined for interventions and analyzers, not "{which}"'
             raise ValueError(errormsg)
 
@@ -734,8 +730,10 @@ class BaseSim(ParsObj):
 
         else: # Standard usage case
             position = 0 if first else -1 # Choose either the first or last element
-            if label is None:
-                label = position # Get the last element
+            if label is None: # Get all interventions if no label is supplied, e.g. sim.get_interventions()
+                label = np.arange(n_ia)
+            if isinstance(label, np.ndarray): # Allow arrays to be provided
+                label = label.tolist()
             labels = sc.promotetolist(label)
 
             # Calculate the matches
@@ -754,24 +752,24 @@ class BaseSim(ParsObj):
                         elif isinstance(label, type) and isinstance(ia_obj, label):
                             matches.append(ia_obj)
                             match_inds.append(ind)
-                else:
-                    errormsg = f'Could not interpret label type "{type(label)}": should be str, int, or {which} class'
+                else: # pragma: no cover
+                    errormsg = f'Could not interpret label type "{type(label)}": should be str, int, list, or {which} class'
                     raise TypeError(errormsg)
 
             # Parse the output options
             if as_inds:
                 output = match_inds
-            elif as_list:
+            elif as_list: # Used by get_interventions()
                 output = matches
-            else: # Normal case, return actual interventions
-                if len(matches) == 0:
+            else:
+                if len(matches) == 0: # pragma: no cover
                     if die:
                         errormsg = f'No {which} matching "{label}" were found'
                         raise ValueError(errormsg)
                     else:
                         output = None
                 else:
-                    output = matches[position] # Return either the first or last match
+                    output = matches[position] # Return either the first or last match (usually), used by get_intervention()
 
             return output
 
@@ -861,14 +859,14 @@ class BasePeople(FlexPretty):
 
         try:
             return self.__dict__[key]
-        except:
+        except: # pragma: no cover
             errormsg = f'Key "{key}" is not a valid attribute of people'
             raise AttributeError(errormsg)
 
 
     def __setitem__(self, key, value):
         ''' Ditto '''
-        if self._lock and key not in self.__dict__:
+        if self._lock and key not in self.__dict__: # pragma: no cover
             errormsg = f'Key "{key}" is not a valid attribute of people'
             raise AttributeError(errormsg)
         self.__dict__[key] = value
@@ -910,7 +908,7 @@ class BasePeople(FlexPretty):
         try:
             layerstr = ', '.join([str(k) for k in self.layer_keys()])
             string   = f'People(n={len(self):0n}; layers: {layerstr})'
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             string = sc.objectid(self)
             string += f'Warning, multisim appears to be malformed:\n{str(E)}'
         return string
@@ -925,7 +923,7 @@ class BasePeople(FlexPretty):
         ''' Ensure sizes and dtypes match '''
         current = self[key]
         value = np.array(value, dtype=self._dtypes[key]) # Ensure it's the right type
-        if die and len(value) != len(current):
+        if die and len(value) != len(current): # pragma: no cover
             errormsg = f'Length of new array does not match current ({len(value)} vs. {len(current)})'
             raise IndexError(errormsg)
         self[key] = value
@@ -1018,7 +1016,7 @@ class BasePeople(FlexPretty):
         except: # If not fully initialized
             try:
                 keys = list(self.pars['beta_layer'].keys())
-            except: # If not even partially initialized
+            except:  # pragma: no cover # If not even partially initialized
                 keys = []
         return keys
 
@@ -1044,7 +1042,7 @@ class BasePeople(FlexPretty):
             # check if it's 2d
             if self[key].ndim > 1:
                 actual_len = len(self[key][0])
-            if actual_len != expected_len:
+            if actual_len != expected_len: # pragma: no cover
                 if die:
                     errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
                     raise IndexError(errormsg)
@@ -1162,7 +1160,7 @@ class BasePeople(FlexPretty):
             new_contacts[lkey] = pd.DataFrame.from_dict(contacts)
         elif isinstance(contacts, list): # Assume it's a list of contacts by person, not an edgelist
             new_contacts = self.make_edgelist(contacts) # Assume contains key info
-        else:
+        else: # pragma: no cover
             errormsg = f'Cannot understand contacts of type {type(contacts)}; expecting dataframe, array, or dict'
             raise TypeError(errormsg)
 
@@ -1304,7 +1302,7 @@ class Contacts(FlexDict):
         for key in self.keys():
             try:
                 output += len(self[key])
-            except:
+            except: # pragma: no cover
                 pass
         return output
 
@@ -1366,7 +1364,7 @@ class Layer(FlexDict):
     def __len__(self):
         try:
             return len(self[self.basekey])
-        except:
+        except: # pragma: no cover
             return 0
 
 
@@ -1494,7 +1492,7 @@ class Layer(FlexDict):
         # Check types
         if not isinstance(inds, np.ndarray):
             inds = sc.promotetoarray(inds)
-        if inds.dtype != np.int64: # This is int64 since indices often come from cv.true(), which returns int64
+        if inds.dtype != np.int64:  # pragma: no cover # This is int64 since indices often come from cv.true(), which returns int64
             inds = np.array(inds, dtype=np.int64)
 
         # Find the contacts

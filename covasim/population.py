@@ -50,7 +50,7 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
 
     # Check which type of population to produce
     if pop_type == 'synthpops':
-        if not cvreq.check_synthpops():
+        if not cvreq.check_synthpops(): # pragma: no cover
             errormsg = f'You have requested "{pop_type}" population, but synthpops is not available; please use random, clustered, or hybrid'
             if die:
                 raise ValueError(errormsg)
@@ -59,7 +59,7 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
                 pop_type = 'random'
 
         location = sim['location']
-        if location:
+        if location: # pragma: no cover
             print(f'Warning: not setting ages or contacts for "{location}" since synthpops contacts are pre-generated')
 
     # Actually create the population
@@ -74,10 +74,10 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
             popdict = make_randpop(sim, microstructure=pop_type, **kwargs)
         elif pop_type == 'synthpops':
             popdict = make_synthpop(sim, **kwargs)
-        elif pop_type is None:
+        elif pop_type is None: # pragma: no cover
             errormsg = 'You have set pop_type=None. This is fine, but you must ensure sim.popdict exists before calling make_people().'
             raise ValueError(errormsg)
-        else:
+        else: # pragma: no cover
             errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
             raise ValueError(errormsg)
 
@@ -92,7 +92,7 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
     sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
 
     if save_pop:
-        if popfile is None:
+        if popfile is None: # pragma: no cover
             errormsg = 'Please specify a file to save to using the popfile kwarg'
             raise FileNotFoundError(errormsg)
         else:
@@ -173,7 +173,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, sim['contacts'])
     elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'])
     elif microstructure == 'hybrid':    contacts, layer_keys, _ = make_hybrid_contacts(pop_size, ages, sim['contacts'])
-    else:
+    else: # pragma: no cover
         errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
         raise NotImplementedError(errormsg)
 
@@ -338,8 +338,8 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
     '''
     try:
         import synthpops as sp # Optional import
-    except ModuleNotFoundError as E:
-        errormsg = f'Please install the optional SynthPops module first, e.g. pip install synthpops' # Also caught in make_people()
+    except ModuleNotFoundError as E: # pragma: no cover
+        errormsg = 'Please install the optional SynthPops module first, e.g. pip install synthpops' # Also caught in make_people()
         raise ModuleNotFoundError(errormsg) from E
 
     # Handle layer mapping
@@ -348,7 +348,7 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
 
     # Handle other input arguments
     if population is None:
-        if sim is None:
+        if sim is None: # pragma: no cover
             errormsg = 'Either a simulation or a population must be supplied'
             raise ValueError(errormsg)
         pop_size = sim['pop_size']
@@ -357,7 +357,7 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
     if community_contacts is None:
         if sim is not None:
             community_contacts = sim['contacts']['c']
-        else:
+        else: # pragma: no cover
             errormsg = 'If a simulation is not supplied, the number of community contacts must be specified'
             raise ValueError(errormsg)
 
@@ -379,7 +379,7 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
         for spkey in uid_contacts.keys():
             try:
                 lkey = layer_mapping[spkey] # Map the SynthPops key into a Covasim layer key
-            except KeyError:
+            except KeyError: # pragma: no cover
                 errormsg = f'Could not find key "{spkey}" in layer mapping "{layer_mapping}"'
                 raise sc.KeyNotFoundError(errormsg)
             int_contacts[lkey] = []

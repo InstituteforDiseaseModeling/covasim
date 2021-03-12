@@ -393,6 +393,9 @@ def test_sim():
     sim['interventions'] = {'which': 'change_beta', 'pars': {'days': 10, 'changes': 0.5}}
     sim.validate_pars()
 
+    # Check conversion to absolute parameters
+    cv.parameters.absolute_prognoses(sim['prognoses'])
+
     # Test intervention functions and results analyses
     cv.Sim(pop_size=100, verbose=0, interventions=lambda sim: (sim.t==20 and (sim.__setitem__('beta', 0) or print(f'Applying lambda intervention to set beta=0 on day {sim.t}')))).run() # ...This is not the recommended way of defining interventions.
 

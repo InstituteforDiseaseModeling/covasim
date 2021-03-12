@@ -44,12 +44,12 @@ def test_regression():
     sim2 = make_sim()
 
     # Check that they match
-    cv.diff_sims(sim1, sim2, die=True)
+    cv.diff_sims(sim1, sim2, skip_key_diffs=True, die=True)
 
     # Confirm that non-matching sims don't match
     sim3 = make_sim(beta=0.02123)
     with pytest.raises(ValueError):
-        cv.diff_sims(sim1, sim3, die=True)
+        cv.diff_sims(sim1, sim3, skip_key_diffs=True, die=True)
 
     return sim1, sim2
 

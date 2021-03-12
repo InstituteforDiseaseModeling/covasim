@@ -54,14 +54,14 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
             raise NotImplementedError(errormsg)
     elif isinstance(datafile, pd.DataFrame):
         raw_data = datafile
-    else:
+    else: # pragma: no cover
         errormsg = f'Could not interpret data {type(datafile)}: must be a string or a dataframe'
         raise TypeError(errormsg)
 
     # Confirm data integrity and simplify
     if columns is not None:
         for col in columns:
-            if col not in raw_data.columns:
+            if col not in raw_data.columns: # pragma: no cover
                 errormsg = f'Column "{col}" is missing from the loaded data'
                 raise ValueError(errormsg)
         data = raw_data[columns]
@@ -189,7 +189,7 @@ def migrate(obj, update=True, verbose=True, die=False):
 
             # Rename intervention attribute
             tps = sim.get_interventions(cvi.test_prob)
-            for tp in tps:
+            for tp in tps: # pragma: no cover
                 try:
                     tp.sensitivity = tp.test_sensitivity
                     del tp.test_sensitivity
@@ -197,7 +197,7 @@ def migrate(obj, update=True, verbose=True, die=False):
                     pass
 
     # Migrations for People
-    elif isinstance(obj, cvb.BasePeople):
+    elif isinstance(obj, cvb.BasePeople): # pragma: no cover
         ppl = obj
         if not hasattr(ppl, 'version'): # For people prior to 2.0
             if verbose: print(f'Migrating people from version <2.0 to version {cvv.__version__}')
@@ -229,7 +229,7 @@ def migrate(obj, update=True, verbose=True, die=False):
         errormsg = f'Object {obj} of type {type(obj)} is not understood and cannot be migrated: must be a sim, multisim, scenario, or people object'
         if die:
             raise TypeError(errormsg)
-        elif verbose:
+        elif verbose: # pragma: no cover
             print(errormsg)
             return
 
@@ -264,7 +264,7 @@ def savefig(filename=None, comments=None, **kwargs):
     dpi = kwargs.pop('dpi', 150)
     metadata = kwargs.pop('metadata', {})
 
-    if filename is None:
+    if filename is None: # pragma: no cover
         now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
         filename = f'covasim_{now}.png'
 
@@ -458,7 +458,7 @@ def get_version_pars(version, verbose=True):
         if version in verlist:
             match = ver
             break
-    if match is None:
+    if match is None: # pragma: no cover
         options = '\n'.join(sum(match_map.values(), []))
         errormsg = f'Could not find version "{version}" among options:\n{options}'
         raise ValueError(errormsg)
@@ -490,7 +490,7 @@ def get_png_metadata(filename, output=False):
     '''
     try:
         import PIL
-    except ImportError as E:
+    except ImportError as E: # pragma: no cover
         errormsg = f'Pillow import failed ({str(E)}), please install first (pip install pillow)'
         raise ImportError(errormsg) from E
     im = PIL.Image.open(filename)
@@ -528,7 +528,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
 
     # Validate inputs: series
     if series is None or isinstance(series, str):
-        if not sim.results_ready:
+        if not sim.results_ready: # pragma: no cover
             raise Exception("Results not ready, cannot calculate doubling time")
         else:
             if series is None or series not in sim.result_keys():
@@ -576,7 +576,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
         if not exp_approx:
             try:
                 import statsmodels.api as sm
-            except ModuleNotFoundError as E:
+            except ModuleNotFoundError as E: # pragma: no cover
                 errormsg = f'Could not import statsmodels ({E}), falling back to exponential approximation'
                 print(errormsg)
                 exp_approx = True
@@ -586,7 +586,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
                 if r > 1:
                     doubling_time = int_length * np.log(2) / np.log(r)
                     doubling_time = min(doubling_time, max_doubling_time)  # Otherwise, it's unbounded
-            else:
+            else: # pragma: no cover
                 raise ValueError("Can't calculate doubling time with exponential approximation when initial value is zero.")
         else:
 
@@ -601,9 +601,9 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
                         doubling_time = 1.0 / doubling_rate
                     else:
                         doubling_time = max_doubling_time
-                else:
+                else: # pragma: no cover
                     raise ValueError(f"Can't calculate doubling time for series {series[start_day:end_day]}. Check whether series is growing.")
-            else:
+            else: # pragma: no cover
                 raise ValueError(f"Can't calculate doubling time for series {series[start_day:end_day]}. Check whether series is growing.")
 
     return doubling_time
@@ -691,9 +691,9 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
             pvalue = sps.norm.sf(zstat)
         elif alternative in ['smaller', 's']:
             pvalue = sps.norm.cdf(zstat)
-        else:
-            raise ValueError(f'invalid alternative "{alternative}"')
-        return pvalue# zstat
+        else: # pragma: no cover
+            raise ValueError(f'Invalid alternative "{alternative}"')
+        return pvalue
 
     # shortcut names
     y1, n1, y2, n2 = count1, exposure1, count2, exposure2
@@ -730,7 +730,7 @@ def poisson_test(count1, count2, exposure1=1, exposure2=1, ratio_null=1,
         return pvalue#, stat
 
 
-def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=False, as_scalar='none', eps=1e-9, skestimator=None, **kwargs):
+def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=False, as_scalar='none', eps=1e-9, skestimator=None, estimator=None, **kwargs):
     '''
     Calculate the goodness of fit. By default use normalized absolute error, but
     highly customizable. For example, mean squared error is equivalent to
@@ -745,7 +745,8 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         as_scalar   (str):   return as a scalar instead of a time series: choices are sum, mean, median
         eps         (float): to avoid divide-by-zero
         skestimator (str):   if provided, use this scikit-learn estimator instead
-        kwargs      (dict):  passed to the scikit-learn estimator
+        estimator   (func):  if provided, use this custom estimator instead
+        kwargs      (dict):  passed to the scikit-learn or custom estimator
 
     Returns:
         gofs (arr): array of goodness-of-fit values, or a single value if as_scalar is True
@@ -766,8 +767,8 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
     actual    = np.array(sc.dcp(actual), dtype=float)
     predicted = np.array(sc.dcp(predicted), dtype=float)
 
-    # Custom estimator is supplied: use that
-    if skestimator is not None:
+    # Scikit-learn estimator is supplied: use that
+    if skestimator is not None: # pragma: no cover
         try:
             import sklearn.metrics as sm
             sklearn_gof = getattr(sm, skestimator) # Shortcut to e.g. sklearn.metrics.max_error
@@ -776,6 +777,15 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         except AttributeError:
             raise AttributeError(f'Estimator {skestimator} is not available; see https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter for options')
         gof = sklearn_gof(actual, predicted, **kwargs)
+        return gof
+
+    # Custom estimator is supplied: use that
+    if estimator is not None:
+        try:
+            gof = estimator(actual, predicted, **kwargs)
+        except Exception as E:
+            errormsg = f'Custom estimator "{estimator}" must be a callable function that accepts actual and predicted arrays, plus optional kwargs'
+            raise RuntimeError(errormsg) from E
         return gof
 
     # Default case: calculate it manually

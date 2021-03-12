@@ -20,13 +20,20 @@ nbbool  = nb.bool_
 nbint   = cvd.nbint
 nbfloat = cvd.nbfloat
 
-# Specify whether to allow parallel Numba calculation -- about 20% faster, but the random number stream becomes nondeterministic
-parallel = cvo.numba_parallel
+# Specify whether to allow parallel Numba calculation -- 10% faster for safe and 20% faster for random, but the random number stream becomes nondeterministic for the latter
+safe_opts = [1, '1', 'safe']
+full_opts = [2, '2', 'full']
+safe_parallel = cvo.numba_parallel in safe_opts + full_opts
+rand_parallel = cvo.numba_parallel in full_opts
+if cvo.numba_parallel not in [0, 1, 2, '0', '1', '2', 'none', 'safe', 'full']:
+    errormsg = f'Numba parallel must be "none", "safe", or "full", not "{cvo.numba_parallel}"'
+    raise ValueError(errormsg)
+cache = cvo.numba_cache # Turning this off can help switching parallelization options
 
 
 #%% The core Covasim functions -- compute the infections
 
-@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat,   nbfloat,    nbfloat), cache=True, parallel=parallel)
+@nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat,   nbfloat,    nbfloat), cache=cache, parallel=safe_parallel)
 def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time, load_ratio, high_cap): # pragma: no cover
     '''
     Calculate relative transmissibility for time t. Includes time varying
@@ -69,8 +76,7 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-
-@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=parallel)
+@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=safe_parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor, immunity_factors): # pragma: no cover
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
@@ -81,9 +87,8 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     return rel_trans, rel_sus
 
 
-@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=parallel)
+@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=True, parallel=rand_parallel)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus):
-    #TODO -- make this specific to strain --  use rel_trans for this -- need to set it to 0 if not infected with strain and otherwise whatever the value is
     ''' The heaviest step of the model -- figure out who gets infected on this timestep '''
     betas           = beta * layer_betas  * rel_trans[sources] * rel_sus[targets] # Calculate the raw transmission probabilities
     nonzero_inds    = betas.nonzero()[0] # Find nonzero entries
@@ -96,7 +101,7 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     return source_inds, target_inds
 
 
-@nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=True)
+@nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=cache)
 def find_contacts(p1, p2, inds): # pragma: no cover
     """
     Numba for Layer.find_contacts()
@@ -257,7 +262,7 @@ def set_seed(seed=None):
         seed (int): the random seed
     '''
 
-    @nb.njit((nbint,), cache=True)
+    @nb.njit((nbint,), cache=cache)
     def set_seed_numba(seed):
         return np.random.seed(seed)
 
@@ -354,7 +359,7 @@ def n_multinomial(probs, n): # No speed gain from Numba
     return np.searchsorted(np.cumsum(probs), np.random.random(n))
 
 
-@nb.njit((nbfloat,), cache=True) # This hugely increases performance
+@nb.njit((nbfloat,), cache=cache, parallel=rand_parallel) # Numba hugely increases performance
 def poisson(rate):
     '''
     A Poisson trial.
@@ -369,7 +374,7 @@ def poisson(rate):
     return np.random.poisson(rate, 1)[0]
 
 
-@nb.njit((nbfloat, nbint), cache=True) # Numba hugely increases performance
+@nb.njit((nbfloat, nbint), cache=cache, parallel=rand_parallel) # Numba hugely increases performance
 def n_poisson(rate, n):
     '''
     An array of Poisson trials.
@@ -406,7 +411,7 @@ def n_neg_binomial(rate, dispersion, n, step=1): # Numba not used due to incompa
     return samples
 
 
-@nb.njit((nbint, nbint), cache=True) # This hugely increases performance
+@nb.njit((nbint, nbint), cache=cache) # Numba hugely increases performance
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replacement.
@@ -422,7 +427,7 @@ def choose(max_n, n):
     return np.random.choice(max_n, n, replace=False)
 
 
-@nb.njit((nbint, nbint), cache=True) # This hugely increases performance
+@nb.njit((nbint, nbint), cache=cache) # Numba hugely increases performance
 def choose_r(max_n, n):
     '''
     Choose a subset of items (e.g., people), with replacement.
@@ -438,7 +443,7 @@ def choose_r(max_n, n):
     return np.random.choice(max_n, n, replace=True)
 
 
-def choose_w(probs, n, unique=True):
+def choose_w(probs, n, unique=True): # No performance gain from Numba
     '''
     Choose n items (e.g. people), each with a probability from the distribution probs.
 
