@@ -333,12 +333,7 @@ class People(cvb.BasePeople):
             vaccine_scale   = vacc_info['rel_imm'][vaccine_source, strain]
             doses           = cvd.default_int(self.vaccinations[is_sus_vacc])
             time_since_vacc = cvd.default_int(self.t - date_vacc[is_sus_vacc])
-            try: self.sus_imm[strain, is_sus_vacc] = vaccine_scale * vacc_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, time_since_vacc]
-            except:
-                import traceback;
-                traceback.print_exc();
-                import pdb;
-                pdb.set_trace()
+            self.sus_imm[strain, is_sus_vacc] = vaccine_scale * vacc_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, time_since_vacc]
 
         if len(is_sus_was_inf_same): # Immunity for susceptibles with prior exposure to this strain
             prior_symptoms  = self.prior_symptoms[is_sus_was_inf_same]
@@ -497,13 +492,7 @@ class People(cvb.BasePeople):
         self.flows['new_infections'] += len(inds)
         self.flows['new_infections_by_strain'][strain] += len(inds)
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
-#        if self.flows['new_reinfections']>0:
-#            import traceback;
-#            traceback.print_exc();
-#            import pdb;
-#            pdb.set_trace()
-#        self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery
-#        self.recovered_strain[inds] = np.nan # Reset the strain they recovered from
+        self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery
 
         # Record transmissions
         for i, target in enumerate(inds):
