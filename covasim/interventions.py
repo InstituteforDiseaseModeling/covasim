@@ -1202,7 +1202,6 @@ class vaccinate(Intervention):
 
     def update_vaccine_info(self, sim, vacc_inds):
         self.vaccinations[vacc_inds] += 1
-        # self.vaccinations[vacc_inds] = 2  # TEMP!!!!
         self.vaccination_dates[vacc_inds] = sim.t
 
         # Update vaccine attributes in sim

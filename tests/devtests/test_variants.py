@@ -9,6 +9,7 @@ do_plot   = 1
 do_show   = 1
 do_save   = 0
 
+
 def test_synthpops():
     sim = cv.Sim(pop_size=5000, pop_type='synthpops')
     sim.popdict = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF': 'f'})
@@ -24,6 +25,7 @@ def test_synthpops():
 
     sim.run()
     return sim
+
 
 def test_vaccine_1strain(do_plot=True, do_show=True, do_save=False):
     sc.heading('Run a basic sim with 1 strain, pfizer vaccine')
