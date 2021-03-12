@@ -692,16 +692,17 @@ class Sim(cvb.BaseSim):
 
     def compute_states(self):
         '''
-        Compute prevalence, incidence, and other states. Prevalence is the current number of infected
-        people divided by the number of people who are alive. Incidence is the number
-        of new infections per day divided by the susceptible population. Also calculate
-        the number of people alive, and recalculate susceptibles to handle scaling.
+        Compute prevalence, incidence, and other states. Prevalence is the current
+        number of infected people divided by the number of people who are alive.
+        Incidence is the number of new infections per day divided by the susceptible
+        population. Also calculates the number of people alive, the number preinfectious,
+        the number removed, and recalculates susceptibles to handle scaling.
         '''
         res = self.results
         self.results['n_alive'][:]         = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
         self.results['n_susceptible'][:]   = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
-        self.results['n_preinfectious'][:] = res['n_exposed'][:] - res['n_infectious'][:] # Calculate the number not yet infectious
-        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number not yet infectious
+        self.results['n_preinfectious'][:] = res['n_exposed'][:] - res['n_infectious'][:] # Calculate the number not yet infectious: exposed minus infectious
+        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
         self.results['prevalence'][:]      = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]       = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         return
