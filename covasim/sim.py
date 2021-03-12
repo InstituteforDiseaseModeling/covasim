@@ -564,6 +564,8 @@ class Sim(cvb.BaseSim):
         symp = people.symptomatic
         diag = people.diagnosed
         quar = people.quarantined
+        vaccinated = people.vaccinated
+        vacc_inds = cvu.true(vaccinated)
 
         # Initialize temp storage for strain parameters
         strain_parkeys  = ['rel_beta', 'asymp_factor']
@@ -579,8 +581,6 @@ class Sim(cvb.BaseSim):
             inf_inds = cvu.false(sus)
 
             # Determine who is vaccinated and has some immunity from vaccine
-            vaccinated = people.vaccinated
-            vacc_inds = cvu.true(vaccinated)
             vacc_inds = np.setdiff1d(vacc_inds, inf_inds) # Take out anyone currently infected
             if len(vacc_inds):
                 vaccine_info = self['vaccine_info']
@@ -598,7 +598,15 @@ class Sim(cvb.BaseSim):
                 # doses_all[prior_inf_vacc] = 2
                 doses = doses_all[vacc_inds]
                 vaccine_time = cvd.default_int(t - date_vacc[vacc_inds])
-                vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, vaccine_time]
+
+                try:
+                    vaccine_immunity = vaccine_info['vaccine_immune_degree']['sus'][vaccine_source, doses-1, vaccine_time]
+                except:
+                    import traceback;
+                    traceback.print_exc();
+                    import pdb;
+                    pdb.set_trace()
+
                 immunity_factors[vacc_inds] = vaccine_scale_factor * vaccine_immunity
 
             # Deal with strain parameters
