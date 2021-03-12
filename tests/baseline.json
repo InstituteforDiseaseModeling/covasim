@@ -29,6 +29,8 @@
     "n_diagnosed": 3385.0,
     "n_quarantined": 4279.0,
     "n_alive": 19978.0,
+    "n_preinfectious": 198.0,
+    "n_removed": 7600.0,
     "prevalence": 0.06372009210131144,
     "incidence": 0.001437943740451155,
     "r_eff": 0.13863684353019246,

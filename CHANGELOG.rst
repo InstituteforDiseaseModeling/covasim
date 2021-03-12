@@ -26,6 +26,23 @@ Latest versions (2.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 2.0.3 (2021-03-11)
+--------------------------
+- Previously, the way a sim was printed (e.g. ``print(sim)``) depended on what the global ``verbose`` parameter was set to (e.g. ``cv.options.set(verbose=0.1)``), which used ``sim.brief()`` if verbosity was 0, or ``sim.disp()`` otherwise. This has been changed to always use the ``sim.brief()`` representation regardless of verbosity. To restore the previous behavior, use ``sim.disp()`` instead of ``print(sim)``.
+- ``sim.run()`` now returns a pointer to the sim object rather than either nothing (the current default) or the ``sim.results`` object. This means you can now do e.g. ``sim.run().plot()`` or ``sim.run().results`` rather than ``sim.run(do_plot=True)`` or ``sim.run(output=True)``.
+- ``sim.get_interventions()`` and ``sim.get_analyzers()`` have been changed to return all interventions/analyzers if no arguments are supplied. Previously, they would return only the last intervention. To restore the previous behavior, call ``sim.get_intervention()`` or ``sim.get_analyzer()`` instead.
+- The ``Fit`` object (and ``cv.compute_gof()``) have been updated to allow a custom goodness-of-fit estimator to be supplied.
+- Two new results have been added, ``n_preinfectious`` and ``n_removed``, corresponding to the E and R compartments of the SEIR model, respectively.
+- A new shortcut plotting option has been introduced, ``sim.plot(to_plot='seir')``.
+- Plotting colors have been revised to have greater contrast.
+- The ``numba_parallel`` option has been updated to include a "safe" option, which parallelizes as much as it can without disrupting the random number stream. For large sims (>100,000 people), this increases performance by about 10%. The previous ``numba_parallel=True`` option now corresponds to ``numba_parallel='full'``, which is about 20% faster but means results are non-reproducible. Note that for sims smaller than 100,000 people, Numba parallelization has almost no effect on performance.
+- A new option has been added, ``numba_cache``, which controls whether or not Numba functions are cached. They are by default to save compilation time, but if you change Numba options (especially ``numba_parallel``), with caching you may also need to delete the ``__pycache__`` folder for changes to take effect.
+- A frozen list of ``pip`` requirements, as well as test requirements, has been added to the ``tests`` folder.
+- The testing suite has been revamped, with defensive code skipped, bringing code coverage to 90%.
+- *Regression information*: Calls to ``sim.run(do_plot=True, **kwargs)`` should be changed to ``sim.run().plot(**kwargs)``. Calls to ``sim.get_interventions()``/``sim.get_analyzers()`` (with no arguments) should be changed to ``sim.get_intervention()``/``sim.get_analyzer()``. Calls to ``results = sim.run(output=True)`` should be replaced with ``results = sim.run().results``.
+- *GitHub info*: PR `788 <https://github.com/amath-idm/covasim/pull/788>`__
+
+
 Version 2.0.2 (2021-02-01)
 --------------------------
 - Added a new option to easily turn on/off interactive plotting: e.g., simply set ``cv.options.set(interactive=False)`` to turn off interactive plotting. This meta-option sets the other options ``show``, ``close``, and ``backend``.

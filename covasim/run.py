@@ -785,7 +785,8 @@ class MultiSim(cvb.FlexPretty):
         '''
         try:
             labelstr = f'"{self.label}"; ' if self.label else ''
-            string   = f'MultiSim({labelstr}n_sims: {len(self.sims)}; base: {self.base_sim.brief(output=True)})'
+            n_sims = 0 if not self.sims else len(self.sims)
+            string   = f'MultiSim({labelstr}n_sims: {n_sims}; base: {self.base_sim.brief(output=True)})'
         except Exception as E:
             string = sc.objectid(self)
             string += f'Warning, multisim appears to be malformed:\n{str(E)}'
@@ -1274,7 +1275,8 @@ class Scenarios(cvb.ParsObj):
         '''
         try:
             labelstr = f'"{self.label}"; ' if self.label else ''
-            string   = f'Scenarios({labelstr}n_scenarios: {len(self.sims)}; base: {self.base_sim.brief(output=True)})'
+            n_scenarios = 0 if not self.scenarios else len(self.scenarios)
+            string   = f'Scenarios({labelstr}n_scenarios: {n_scenarios}; base: {self.base_sim.brief(output=True)})'
         except Exception as E:
             string = sc.objectid(self)
             string += f'Warning, scenarios appear to be malformed:\n{str(E)}'

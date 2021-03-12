@@ -45,7 +45,7 @@ Efficacy of protection measures
 
 Time for disease progression
 ----------------------------
-* ``exp2inf``  = Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sim duration
+* ``exp2inf``  = Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sym duration
 * ``inf2sym``  = Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538
 * ``sym2sev``  = Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538Duration from severe symptoms to requiring ICU; see Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044Duration from severe symptoms to requiring ICU
 
