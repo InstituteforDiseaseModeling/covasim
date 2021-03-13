@@ -248,6 +248,7 @@ class MultiSim(cvb.FlexPretty):
                 vals = sim.results[reskey].values
                 if 'by_strain' in reskey:
                     length = vals.shape[1]
+                    vals = sim.results[reskey].values[0,:]
                 else:
                     length = len(vals)
                 if length != reduced_sim.npts:

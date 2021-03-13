@@ -73,15 +73,18 @@ class Strain():
             elif strain in choices['b117']:
                 strain_pars = dict()
                 strain_pars['rel_beta'] = 1.5  # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
-                strain_pars['rel_severe_prob'] = 1.6  # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
+                strain_pars['rel_severe_prob'] = 1.8  # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
                 self.strain_label = strain
 
             # Known parameters on South African variant
             elif strain in choices['b1351']:
                 strain_pars = dict()
+                strain_pars['rel_beta'] = 1.3
+                strain_pars['rel_severe_prob'] = 1.3
+                strain_pars['rel_death_prob'] = 1.3
                 strain_pars['imm_pars'] = dict()
                 for ax in cvd.immunity_axes:
-                    strain_pars['imm_pars'][ax] = dict(form='logistic_decay', pars={'init_val': .8, 'half_val': 30, 'lower_asymp': 0.2, 'decay_rate': -5})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
+                    strain_pars['imm_pars'][ax] = dict(form='logistic_decay', pars={'init_val': .8, 'half_val': 30, 'lower_asymp': 0.3, 'decay_rate': -5})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
                 self.strain_label = strain
 
             # Known parameters on Brazil variant
