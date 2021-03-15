@@ -376,6 +376,26 @@ def get_ind_of_min_value(list, time):
     return ind
 
 
+def test_msim():
+    # basic test for vaccine
+    b117 = cv.Strain('b117', days=0)
+    sim = cv.Sim(strains=[b117])
+    msim = cv.MultiSim(sim, n_runs=2)
+    msim.run()
+    msim.reduce()
+
+    to_plot = sc.objdict({
+
+        'Total infections': ['cum_infections'],
+        'New infections per day': ['new_infections'],
+        'New Re-infections per day': ['new_reinfections'],
+        'New infections by strain': ['new_infections_by_strain']
+    })
+
+    msim.plot(to_plot=to_plot, do_save=0, do_show=1, legend_args={'loc': 'upper left'}, axis_args={'hspace': 0.4}, interval=35)
+
+    return msim
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
@@ -387,13 +407,8 @@ if __name__ == '__main__':
 
     # sim0 = test_synthpops()
 
-    # basic test for vaccine
-    b117 = cv.Strain('b117', days=0)
-    sim = cv.Sim(strains= [b117])
-    msim = cv.MultiSim(sim, n_runs=2)
-    msim.run()
-    msim.reduce()
 
+    sim0 = test_msim()
 
     # Run more complex tests
     # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
