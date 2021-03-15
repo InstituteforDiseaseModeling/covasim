@@ -388,9 +388,12 @@ if __name__ == '__main__':
     # sim0 = test_synthpops()
 
     # basic test for vaccine
-    pfizer = cv.vaccinate(days=[20], vaccine_pars='pfizer')
-    sim = cv.Sim(interventions=[pfizer])
-    sim.run()
+    b117 = cv.Strain('b117', days=0)
+    sim = cv.Sim(strains= [b117])
+    msim = cv.MultiSim(sim, n_runs=2)
+    msim.run()
+    msim.reduce()
+
 
     # Run more complex tests
     # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)

@@ -243,30 +243,32 @@ class MultiSim(cvb.FlexPretty):
         raw = {}
         reskeys = reduced_sim.result_keys()
         for reskey in reskeys:
-            raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
+            if 'by_strain' in reskey:
+                raw[reskey] = np.zeros((reduced_sim['total_strains'], reduced_sim.npts, len(self.sims)))
+            else:
+                raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
             for s,sim in enumerate(self.sims):
                 vals = sim.results[reskey].values
                 if 'by_strain' in reskey:
-                    length = vals.shape[1]
-                    vals = sim.results[reskey].values[0,:]
+                    raw[reskey][:, :, s] = vals
                 else:
-                    length = len(vals)
-                if length != reduced_sim.npts:
-                    errormsg = f'Cannot reduce sims with inconsistent numbers of days: {reduced_sim.npts} vs. {len(vals)}'
-                    raise ValueError(errormsg)
-                raw[reskey][:,s] = vals
+                    raw[reskey][:, s] = vals
 
         for reskey in reskeys:
-            if use_mean:
-                r_mean = np.mean(raw[reskey], axis=1)
-                r_std = np.std(raw[reskey], axis=1)
-                reduced_sim.results[reskey].values[:] = r_mean
-                reduced_sim.results[reskey].low       = r_mean - bounds*r_std
-                reduced_sim.results[reskey].high      = r_mean + bounds*r_std
+            if 'by_strain' in reskey:
+                axis=2
             else:
-                reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1)
-                reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
-                reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
+                axis=1
+            if use_mean:
+                r_mean = np.mean(raw[reskey], axis=axis)
+                r_std = np.std(raw[reskey], axis=axis)
+                reduced_sim.results[reskey].values[:] = r_mean
+                reduced_sim.results[reskey].low = r_mean - bounds * r_std
+                reduced_sim.results[reskey].high = r_mean + bounds * r_std
+            else:
+                reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=axis)
+                reduced_sim.results[reskey].low = np.quantile(raw[reskey], q=quantiles['low'], axis=axis)
+                reduced_sim.results[reskey].high = np.quantile(raw[reskey], q=quantiles['high'], axis=axis)
 
         # Compute and store final results
         reduced_sim.compute_summary()

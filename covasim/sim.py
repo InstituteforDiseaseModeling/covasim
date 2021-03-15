@@ -584,7 +584,7 @@ class Sim(cvb.BaseSim):
 
 
             # Check immunity
-            people.check_immunity(strain, sus=True)
+            cvimm.check_immunity(people, strain, sus=True)
 
             # Deal with strain parameters
             for key in strain_parkeys:
