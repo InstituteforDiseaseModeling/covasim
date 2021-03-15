@@ -276,17 +276,18 @@ class Sim(cvb.BaseSim):
             return output
 
         dcols = cvd.get_colors() # Get default colors
+        strain_cols = cvd.get_strain_colors()
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], max_strains=self['total_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
-            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], max_strains=self['total_strains']) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains']) # Flow variables -- e.g. "Number of new infections"
 
         # Stock variables
         for key,label in cvd.result_stocks.items():
-            self.results[f'n_{key}'] = init_res(label, color=dcols[key], max_strains=self['total_strains'])
+            self.results[f'n_{key}'] = init_res(label, color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains'])
 
         # Other variables
         self.results['n_alive']                 = init_res('Number of people alive', scale=False)

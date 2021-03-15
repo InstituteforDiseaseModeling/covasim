@@ -213,6 +213,17 @@ def get_colors():
     return c
 
 
+def get_strain_colors():
+    '''
+       Specify plot colors -- used in sim.py.
+
+       NB, includes duplicates since stocks and flows are named differently.
+       '''
+    colors = ['#4d771e', '#c78f65', '#c75649', '#e45226', '#e45226', '#b62413', '#732e26', '#b62413']
+    return colors
+
+
+
 # Define the 'overview plots', i.e. the most useful set of plots to explore different aspects of a simulation
 overview_plots = [
             'cum_infections',
