@@ -79,9 +79,9 @@ class Strain():
             # Known parameters on South African variant
             elif strain in choices['b1351']:
                 strain_pars = dict()
-                strain_pars['rel_beta'] = 1.3
-                strain_pars['rel_severe_prob'] = 1.3
-                strain_pars['rel_death_prob'] = 1.3
+                strain_pars['rel_beta'] = 1.4
+                strain_pars['rel_severe_prob'] = 1.4
+                strain_pars['rel_death_prob'] = 1.4
                 strain_pars['imm_pars'] = dict()
                 for ax in cvd.immunity_axes:
                     strain_pars['imm_pars'][ax] = dict(form='logistic_decay', pars={'init_val': .8, 'half_val': 30, 'lower_asymp': 0.3, 'decay_rate': -5})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
@@ -338,7 +338,7 @@ class Vaccine():
 
 
 # %% Immunity methods
-__all__ += ['init_immunity', 'pre_compute_waning']
+__all__ += ['init_immunity', 'pre_compute_waning', 'check_immunity']
 
 
 def init_immunity(sim, create=False):
@@ -442,6 +442,94 @@ def pre_compute_waning(length, form, pars):
         raise NotImplementedError(errormsg)
 
     return output
+
+
+def check_immunity(people, strain, sus=True, inds=None):
+    '''
+            Calculate people's immunity on this timestep from prior infections + vaccination
+            There are two fundamental sources of immunity:
+                   (1) prior exposure: degree of protection depends on strain, prior symptoms, and time since recovery
+                   (2) vaccination: degree of protection depends on strain, vaccine, and time since vaccination
+
+            Gets called from sim before computing trans_sus, sus=True, inds=None
+            Gets called from people.infect() to calculate prog/trans, sus=False, inds= inds of people being infected
+            '''
+    was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
+    is_vacc = cvu.true(people.vaccinated)  # Vaccinated
+    date_rec = people.date_recovered  # Date recovered
+    immune_degree = people.pars['immune_degree'][strain]
+    immunity = people.pars['immunity']
+
+    # If vaccines are present, extract relevant information about them
+    vacc_present = len(is_vacc)
+    if vacc_present:
+        date_vacc = people.date_vaccinated
+        vacc_info = people.pars['vaccine_info']
+        vacc_degree = vacc_info['vaccine_immune_degree']
+        doses_all = cvd.default_int(people.vaccinations)
+
+    if sus:
+        ### PART 1:
+        #   Immunity to infection for susceptible individuals
+        is_sus = cvu.true(people.susceptible)  # Currently susceptible
+        was_inf_same = cvu.true((people.recovered_strain == strain) & (
+                    people.t >= people.date_recovered))  # Had a previous exposure to the same strain, now recovered
+        was_inf_diff = np.setdiff1d(was_inf,
+                                    was_inf_same)  # Had a previous exposure to a different strain, now recovered
+        is_sus_vacc = np.intersect1d(is_sus, is_vacc)  # Susceptible and vaccinated
+        is_sus_was_inf_same = np.intersect1d(is_sus,
+                                             was_inf_same)  # Susceptible and being challenged by the same strain
+        is_sus_was_inf_diff = np.intersect1d(is_sus,
+                                             was_inf_diff)  # Susceptible and being challenged by a different strain
+        is_sus_vacc_was_inf = np.intersect1d(is_sus_vacc, was_inf)
+
+        if len(is_sus_vacc):
+            doses_all[is_sus_vacc_was_inf] = vacc_info['doses']  # Immunity for susceptibles who've been vaccinated
+            vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc])
+            vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
+            doses = doses_all[is_sus_vacc]
+            time_since_vacc = cvd.default_int(people.t - date_vacc[is_sus_vacc])
+            people.sus_imm[strain, is_sus_vacc] = vaccine_scale * vacc_degree['sus'][
+                vaccine_source, doses - 1, time_since_vacc]
+
+        if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this strain
+            prior_symptoms = people.prior_symptoms[is_sus_was_inf_same]
+            time_since_rec = cvd.default_int(people.t - date_rec[is_sus_was_inf_same])
+            people.sus_imm[strain, is_sus_was_inf_same] = immune_degree['sus'][time_since_rec] * prior_symptoms * \
+                                                        immunity['sus'][strain, strain]
+
+        if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different strain
+            prior_strains = people.recovered_strain[is_sus_was_inf_diff]
+            prior_strains_unique = np.unique(prior_strains)
+            for unique_strain in prior_strains_unique:
+                unique_inds = is_sus_was_inf_diff[cvu.true(prior_strains == unique_strain)]
+                prior_symptoms = people.prior_symptoms[unique_inds]
+                time_since_rec = cvd.default_int(people.t - date_rec[unique_inds])
+                people.sus_imm[strain, unique_inds] = immune_degree['sus'][time_since_rec] * prior_symptoms * \
+                                                    immunity['sus'][strain, cvd.default_int(unique_strain)]
+
+    else:
+        ### PART 2:
+        #   Immunity to disease for currently-infected people
+        is_inf_vacc = np.intersect1d(inds, is_vacc)
+        was_inf = np.intersect1d(inds, was_inf)
+
+        if len(is_inf_vacc):  # Immunity for infected people who've been vaccinated
+            vaccine_source = cvd.default_int(people.vaccine_source[is_inf_vacc])
+            doses = cvd.default_int(people.vaccinations[is_inf_vacc])
+            time_since_vacc = cvd.default_int(people.t - date_vacc[is_inf_vacc])
+            people.trans_imm[strain, is_inf_vacc] = vacc_degree['trans'][vaccine_source, doses - 1, time_since_vacc]
+            people.prog_imm[strain, is_inf_vacc] = vacc_degree['prog'][vaccine_source, doses - 1, time_since_vacc]
+
+        if len(was_inf):  # Immunity for reinfected people
+            prior_symptoms = people.prior_symptoms[was_inf]
+            time_since_rec = cvd.default_int(people.t - date_rec[was_inf])
+            people.trans_imm[strain, was_inf] = immune_degree['trans'][time_since_rec] * \
+                                              prior_symptoms * immunity['trans'][strain]
+            people.prog_imm[strain, was_inf] = immune_degree['prog'][time_since_rec] * \
+                                             prior_symptoms * immunity['prog'][strain]
+
+    return
 
 
 # Specific waning and growth functions are listed here

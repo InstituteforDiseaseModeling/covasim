@@ -276,17 +276,18 @@ class Sim(cvb.BaseSim):
             return output
 
         dcols = cvd.get_colors() # Get default colors
+        strain_cols = cvd.get_strain_colors()
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], max_strains=self['total_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
-            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], max_strains=self['total_strains']) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains']) # Flow variables -- e.g. "Number of new infections"
 
         # Stock variables
         for key,label in cvd.result_stocks.items():
-            self.results[f'n_{key}'] = init_res(label, color=dcols[key], max_strains=self['total_strains'])
+            self.results[f'n_{key}'] = init_res(label, color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains'])
 
         # Other variables
         self.results['n_alive']                 = init_res('Number of people alive', scale=False)
@@ -300,6 +301,7 @@ class Sim(cvb.BaseSim):
         self.results['doubling_time']           = init_res('Doubling time', scale=False)
         self.results['test_yield']              = init_res('Testing yield', scale=False)
         self.results['rel_test_yield']          = init_res('Relative testing yield', scale=False)
+        self.results['share_vaccinated']        = init_res('Share Vaccinated', scale=False)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -584,7 +586,7 @@ class Sim(cvb.BaseSim):
 
 
             # Check immunity
-            people.check_immunity(strain, sus=True)
+            cvimm.check_immunity(people, strain, sus=True)
 
             # Deal with strain parameters
             for key in strain_parkeys:
@@ -805,6 +807,7 @@ class Sim(cvb.BaseSim):
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         self.results['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
         self.results['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
+        self.results['share_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the share vaccinated
         return
 
 

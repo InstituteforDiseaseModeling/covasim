@@ -132,12 +132,14 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale=True, color=None, max_strains=30):
+    def __init__(self, name=None, npts=None, scale=True, color=None, strain_color=None, max_strains=30):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
             color = cvd.get_colors()['default']
+            strain_color = cvd.get_strain_colors()
         self.color = color # Default color
+        self.strain_color = strain_color
         if npts is None:
             npts = 0
         if 'by_strain' in self.name or 'by strain' in self.name:

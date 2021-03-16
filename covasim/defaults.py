@@ -113,6 +113,7 @@ result_stocks = {
         'critical':             'Number of critical cases',
         'diagnosed':            'Number of confirmed cases',
         'quarantined':          'Number in quarantine',
+        'vaccinated':           'Number of people vaccinated'
 }
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix
@@ -129,6 +130,8 @@ result_flows = {'infections':           'infections',
                 'critical':             'critical cases',
                 'deaths':               'deaths',
                 'quarantined':          'quarantined people',
+                'vaccinations':         'vaccinations',
+                'vaccinated':           'vaccinated people'
 }
 
 # Define these here as well
@@ -202,6 +205,8 @@ def get_colors():
     c.diagnoses             = '#5f5cd2'
     c.diagnosed             = c.diagnoses
     c.quarantined           = '#5c399c'
+    c.vaccinations          = '#5c399c'
+    c.vaccinated            = '#5c399c'
     c.recoveries            = '#9e1149'
 #    c.recovered             = c.recoveries
     c.symptomatic           = '#c1ad71'
@@ -211,6 +216,17 @@ def get_colors():
     c.dead                  = c.deaths
     c.default               = '#000000'
     return c
+
+
+def get_strain_colors():
+    '''
+       Specify plot colors -- used in sim.py.
+
+       NB, includes duplicates since stocks and flows are named differently.
+       '''
+    colors = ['#4d771e', '#c78f65', '#c75649', '#e45226', '#e45226', '#b62413', '#732e26', '#b62413']
+    return colors
+
 
 
 # Define the 'overview plots', i.e. the most useful set of plots to explore different aspects of a simulation
@@ -236,6 +252,10 @@ overview_plots = [
             'n_symptomatic',
             'new_quarantined',
             'n_quarantined',
+            'new_vaccinations',
+            'new_vaccinated',
+            'cum_vaccinated',
+            'cum_vaccinations',
             'test_yield',
             'r_eff',
             ]
