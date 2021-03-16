@@ -301,6 +301,7 @@ class Sim(cvb.BaseSim):
         self.results['doubling_time']           = init_res('Doubling time', scale=False)
         self.results['test_yield']              = init_res('Testing yield', scale=False)
         self.results['rel_test_yield']          = init_res('Relative testing yield', scale=False)
+        self.results['share_vaccinated']        = init_res('Share Vaccinated', scale=False)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -806,6 +807,7 @@ class Sim(cvb.BaseSim):
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
         self.results['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
         self.results['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
+        self.results['share_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the share vaccinated
         return
 
 

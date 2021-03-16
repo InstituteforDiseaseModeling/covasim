@@ -79,9 +79,9 @@ class Strain():
             # Known parameters on South African variant
             elif strain in choices['b1351']:
                 strain_pars = dict()
-                strain_pars['rel_beta'] = 1.3
-                strain_pars['rel_severe_prob'] = 1.3
-                strain_pars['rel_death_prob'] = 1.3
+                strain_pars['rel_beta'] = 1.4
+                strain_pars['rel_severe_prob'] = 1.4
+                strain_pars['rel_death_prob'] = 1.4
                 strain_pars['imm_pars'] = dict()
                 for ax in cvd.immunity_axes:
                     strain_pars['imm_pars'][ax] = dict(form='logistic_decay', pars={'init_val': .8, 'half_val': 30, 'lower_asymp': 0.3, 'decay_rate': -5})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
