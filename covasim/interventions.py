@@ -1215,4 +1215,5 @@ class vaccinate(Intervention):
         # Update vaccine attributes in sim
         sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
         sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
+        cvi.compute_nab(sim.people, vacc_inds, prior_inf=False)
         return

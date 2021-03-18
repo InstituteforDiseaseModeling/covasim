@@ -472,20 +472,17 @@ class Sim(cvb.BaseSim):
         if len(self['vaccines']):
             nv = len(self['vaccines'])
             ns = self['total_strains']
-            nd = 2
-            days = self['n_days']
+
             self['vaccine_info'] = {}
             self['vaccine_info']['rel_imm'] = np.full((nv, ns), np.nan, dtype=cvd.default_float)
-            self['vaccine_info']['vaccine_immune_degree'] = {}
-            for ax in cvd.immunity_axes:
-                self['vaccine_info']['vaccine_immune_degree'][ax] =np.full((nv, nd, days), np.nan, dtype=cvd.default_float)
+            self['vaccine_info']['NAb_pars'] = []
 
             for ind, vacc in enumerate(self['vaccines']):
                 self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
                 self['vaccine_info']['doses'] = vacc.doses
+                self['vaccine_info']['NAb_decay'] = vacc.NAb_decay
                 for dose in range(vacc.doses):
-                    for ax in cvd.immunity_axes:
-                        self['vaccine_info']['vaccine_immune_degree'][ax][ind, dose, :] = vacc.vaccine_immune_degree[dose][ax]
+                    self['vaccine_info']['NAb_pars'].append(vacc.NAb_pars[dose])
         return
 
     def rescale(self):

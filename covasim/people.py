@@ -266,8 +266,8 @@ class People(cvb.BasePeople):
 
         # Before letting them recover, store information about the strain they had and pre-compute NAbs array
         self.recovered_strain[inds] = self.infectious_strain[inds]
-        for strain in range(self.pars['n_strains']):
-            cvi.compute_nab(self, inds, strain)
+        if len(inds):
+            cvi.compute_nab(self, inds, prior_inf=True)
 
         # Now reset all disease states
         self.exposed[inds]          = False

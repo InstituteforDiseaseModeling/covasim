@@ -72,9 +72,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['rel_beta']        = 1.0
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
     pars['NAb_pars']        = {}   # Parameters for NAbs distribution for natural infection
-    pars['NAb_pars']['asymptomatic'] = dict(form='normal', pars={'mean': .5, 'sd': 2})
-    pars['NAb_pars']['mild'] = dict(form='normal', pars={'mean': .8, 'sd': 2})
-    pars['NAb_pars']['severe'] = dict(form='normal', pars={'mean': 1, 'sd': 2})
+    pars['NAb_pars']['asymptomatic'] = dict(dist='lognormal', par1= .5, par2= 2)
+    pars['NAb_pars']['mild'] = dict(dist='lognormal', par1=.8, par2= 2)
+    pars['NAb_pars']['severe'] = dict(dist='lognormal', par1= 1, par2= 2)
 
     pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1/180, 'length': 250},
                              form2='exp_decay', pars2={'rate': 1/100})
