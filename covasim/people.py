@@ -60,7 +60,7 @@ class People(cvb.BasePeople):
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             elif 'imm' in key:  # everyone starts out with no immunity
-                self[key] = np.full((self.pars['n_strains'], self.pop_size), 0, dtype=cvd.default_float, order='F')
+                self[key] = np.full((self.pars['n_strains'], self.pop_size), 0, dtype=cvd.default_float)
             elif key == 'vaccinations':
                 self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
             else:
@@ -76,7 +76,7 @@ class People(cvb.BasePeople):
         # Set strain states, which store info about which strain a person is exposed to
         for key in self.meta.strain_states:
             if 'by' in key:
-                self[key] = np.full((self.pars['n_strains'], self.pop_size), False, dtype=bool, order='F')
+                self[key] = np.full((self.pars['n_strains'], self.pop_size), False, dtype=bool)
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
@@ -263,14 +263,18 @@ class People(cvb.BasePeople):
         inds = self.check_inds(self.susceptible, self.date_recovered, filter_inds=self.is_exp)
 
         # Before letting them recover, store information about the strain and symptoms they had
+        # Set their initial NAb level based on symptoms
         self.recovered_strain[inds] = self.infectious_strain[inds]
         for strain in range(self.pars['n_strains']):
             this_strain_inds = cvu.itrue(self.recovered_strain[inds] == strain, inds)
             mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=this_strain_inds)
             severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=this_strain_inds)
-            self.prior_symptoms[this_strain_inds] = self.pars['rel_imm'][strain]['asymptomatic'] #
-            self.prior_symptoms[mild_inds] = self.pars['rel_imm'][strain]['mild'] #
-            self.prior_symptoms[severe_inds] = self.pars['rel_imm'][strain]['severe'] #
+            # self.prior_symptoms[this_strain_inds] = self.pars['rel_imm']['asymptomatic'] #
+            # self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild'] #
+            # self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe'] #
+            self.initial_nab_titre[this_strain_inds] = self.pars['rel_imm']['asymptomatic']  #
+            self.initial_nab_titre[mild_inds] = self.pars['rel_imm']['mild']  #
+            self.initial_nab_titre[severe_inds] = self.pars['rel_imm']['severe']  #
 
         # Now reset all disease states
         self.exposed[inds]          = False

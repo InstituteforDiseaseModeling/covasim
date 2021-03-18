@@ -65,7 +65,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['total_strains']   = None  # Set during sim initialization, once strains have been specified and processed
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
-    pars['immune_degree']   = None
+    pars['immune_degree']   = None  # Pre-loaded array mapping from NAb titre to efficacy, set in Immunity.py (based on Fig 1A of https://www.medrxiv.org/content/10.1101/2021.03.09.21252641v1.full.pdf)
     pars['vaccine_info']    = None  # Vaccine info in a more easily accessible format
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
@@ -73,10 +73,13 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
     pars['imm_pars']        = {}
     for ax in cvd.immunity_axes:
-        pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': None})
+        if ax == 'sus':
+            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': None})
+        else:
+            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 0.8, 'half_life': None})
     pars['rel_imm']         = {} # Relative immunity scalings depending on the severity of symptoms
-    pars['rel_imm']['asymptomatic'] = 0.98
-    pars['rel_imm']['mild'] = 0.99
+    pars['rel_imm']['asymptomatic'] = 0.50
+    pars['rel_imm']['mild'] = 0.95
     pars['rel_imm']['severe'] = 1.
 
     pars['dur'] = {}

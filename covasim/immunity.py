@@ -444,6 +444,21 @@ def pre_compute_waning(length, form, pars):
     return output
 
 
+def nab_to_efficacy(nab):
+
+    efficacy = nab
+    return efficacy
+
+
+def compute_nab(init_nab_titre, time_since_rec):
+    if time_since_rec < 250:
+        current_nab = init_nab_titre - ((1/180)*time_since_rec)
+    else:
+
+        current_nab = init_nab_titre - (25/18) - np.exp(-time_since_rec/100)
+    return current_nab
+
+
 def check_immunity(people, strain, sus=True, inds=None):
     '''
             Calculate people's immunity on this timestep from prior infections + vaccination
@@ -457,7 +472,7 @@ def check_immunity(people, strain, sus=True, inds=None):
     was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
     is_vacc = cvu.true(people.vaccinated)  # Vaccinated
     date_rec = people.date_recovered  # Date recovered
-    immune_degree = people.pars['immune_degree'][strain]
+    immune_degree = people.pars['immune_degree']
     immunity = people.pars['immunity']
 
     # If vaccines are present, extract relevant information about them
@@ -493,20 +508,23 @@ def check_immunity(people, strain, sus=True, inds=None):
                 vaccine_source, doses - 1, time_since_vacc]
 
         if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this strain
-            prior_symptoms = people.prior_symptoms[is_sus_was_inf_same]
+            init_nab_titre = people.init_nab_titre[is_sus_was_inf_same]
             time_since_rec = cvd.default_int(people.t - date_rec[is_sus_was_inf_same])
-            people.sus_imm[strain, is_sus_was_inf_same] = immune_degree['sus'][time_since_rec] * prior_symptoms * \
-                                                        immunity['sus'][strain, strain]
+            current_nab_titre = compute_nab(init_nab_titre, time_since_rec)
+            people.current_nab_titre[is_sus_was_inf_same] = current_nab_titre
+            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_nab_titre)
 
         if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different strain
             prior_strains = people.recovered_strain[is_sus_was_inf_diff]
             prior_strains_unique = np.unique(prior_strains)
             for unique_strain in prior_strains_unique:
                 unique_inds = is_sus_was_inf_diff[cvu.true(prior_strains == unique_strain)]
-                prior_symptoms = people.prior_symptoms[unique_inds]
+                init_nab_titre = people.init_nab_titre[unique_inds]
                 time_since_rec = cvd.default_int(people.t - date_rec[unique_inds])
-                people.sus_imm[strain, unique_inds] = immune_degree['sus'][time_since_rec] * prior_symptoms * \
-                                                    immunity['sus'][strain, cvd.default_int(unique_strain)]
+                current_nab_titre = compute_nab(init_nab_titre, time_since_rec)
+                people.current_nab_titre[unique_inds] = current_nab_titre
+                current_nab_titre *= immunity['sus'][strain, cvd.default_int(unique_strain)]
+                people.sus_imm[strain, unique_inds] = immune_degree['sus'][current_nab_titre]
 
     else:
         ### PART 2:
