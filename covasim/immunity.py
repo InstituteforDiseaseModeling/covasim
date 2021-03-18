@@ -216,8 +216,8 @@ class Vaccine():
             # Known parameters on pfizer
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(form='normal', pars={'mean': 2, 'sd': 2}),
-                                            dict(form='normal', pars={'mean': 8, 'sd': 2})]
+                vaccine_pars['NAb_pars'] = [dict(dist='normal', par1=2, par2= 2),
+                                            dict(dist='normal', par1=8, par2= 2)]
                 vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1/180, 'length': 250},
                                                  form2='exp_decay', pars2={'rate': 1/100})
                 vaccine_pars['doses'] = 2
@@ -227,8 +227,8 @@ class Vaccine():
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(form='normal', pars={'mean': 2, 'sd': 2}),
-                                            dict(form='normal', pars={'mean': 8, 'sd': 2})]
+                vaccine_pars['NAb_pars'] = [dict(dist='normal', par1=2, par2= 2),
+                                            dict(dist='normal', par1=8, par2= 2)]
                 vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1 / 180, 'length': 250},
                                                  form2='exp_decay', pars2={'rate': 1 / 100})
                 vaccine_pars['doses'] = 2
@@ -238,8 +238,8 @@ class Vaccine():
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(form='normal', pars={'mean': 2, 'sd': 2}),
-                                            dict(form='normal', pars={'mean': 8, 'sd': 2})]
+                vaccine_pars['NAb_pars'] = [dict(dist='normal', par1=2, par2= 2),
+                                            dict(dist='normal', par1=8, par2= 2)]
                 vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1 / 180, 'length': 250},
                                                  form2='exp_decay', pars2={'rate': 1 / 100})
                 vaccine_pars['doses'] = 2
@@ -249,8 +249,8 @@ class Vaccine():
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(form='normal', pars={'mean': 2, 'sd': 2}),
-                                            dict(form='normal', pars={'mean': 8, 'sd': 2})]
+                vaccine_pars['NAb_pars'] = [dict(dist='normal', par1=2, par2= 2),
+                                            dict(dist='normal', par1=8, par2= 2)]
                 vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1 / 180, 'length': 250},
                                                  form2='exp_decay', pars2={'rate': 1 / 100})
                 vaccine_pars['doses'] = 1
@@ -408,6 +408,7 @@ def compute_nab(people, inds, prior_inf=True):
         # NAbs is coming from a natural infection
         mild_inds = people.check_inds(people.susceptible, people.date_symptomatic, filter_inds=inds)
         severe_inds = people.check_inds(people.susceptible, people.date_severe, filter_inds=inds)
+        mild_inds = np.setdiff1d(mild_inds, severe_inds)
         asymp_inds = np.setdiff1d(inds, mild_inds)
         asymp_inds = np.setdiff1d(asymp_inds, severe_inds)
 
@@ -423,18 +424,18 @@ def compute_nab(people, inds, prior_inf=True):
         # NAbs coming from a vaccine
 
         # Does anyone have a prior infection (want to increase their init_nab level)
-        was_inf = cvu.true(people.t >= people.date_recovered[inds])
+        was_inf = cvu.itrue(people.t >= people.date_recovered[inds], inds)
 
         # Figure out how many doses everyone has
-        one_dose_inds = people.vaccinations[inds] == 1
-        two_dose_inds = people.vaccinations[inds] == 2
+        one_dose_inds = cvu.itrue(people.vaccinations[inds] == 1, inds)
+        two_dose_inds = cvu.itrue(people.vaccinations[inds] == 2, inds)
 
         NAb_pars = people.pars['vaccine_info']['NAb_pars']
         NAb_decay = people.pars['vaccine_info']['NAb_decay']
 
         init_NAb_one_dose = cvu.sample(**NAb_pars[0], size=len(one_dose_inds))
         init_NAb_two_dose = cvu.sample(**NAb_pars[1], size=len(two_dose_inds))
-        init_NAbs = np.concatenate(init_NAb_one_dose, init_NAb_two_dose)
+        init_NAbs = np.concatenate((init_NAb_one_dose, init_NAb_two_dose))
 
     NAb_arrays = people.NAb[:,inds]
 
@@ -444,9 +445,9 @@ def compute_nab(people, inds, prior_inf=True):
     length = NAb_decay['pars1']['length']
 
     if days_left > length:
-        t1 = np.arange(days_left, dtype=cvd.default_int)[:,np.newaxis] + np.ones((days_left, len(init_NAbs)))
+        t1 = np.arange(length, dtype=cvd.default_int)[:,np.newaxis] + np.ones((length, len(init_NAbs)))
         t1 = init_NAbs - (NAb_decay['pars1']['rate']*t1)
-        t2 = np.arange(length, n_days, dtype=cvd.default_int)[:,np.newaxis] + np.ones((length, len(init_NAbs)))
+        t2 = np.arange(days_left - length, dtype=cvd.default_int)[:,np.newaxis] + np.ones((days_left - length, len(init_NAbs)))
         t2 = init_NAbs - (NAb_decay['pars1']['rate']*length) - np.exp(-t2*NAb_decay['pars2']['rate'])
         result = np.concatenate((t1, t2), axis=0)
 
@@ -502,7 +503,7 @@ def check_immunity(people, strain, sus=True, inds=None):
 
         if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different strain
             prior_strains = people.recovered_strain[is_sus_was_inf_diff]
-            prior_strains_unique = np.unique(prior_strains)
+            prior_strains_unique = cvd.default_int(np.unique(prior_strains))
             for unique_strain in prior_strains_unique:
                 unique_inds = is_sus_was_inf_diff[cvu.true(prior_strains == unique_strain)]
                 current_NAbs = people.NAb[people.t, unique_inds]

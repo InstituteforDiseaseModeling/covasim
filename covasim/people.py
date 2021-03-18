@@ -265,7 +265,7 @@ class People(cvb.BasePeople):
         inds = self.check_inds(self.susceptible, self.date_recovered, filter_inds=self.is_exp)
 
         # Before letting them recover, store information about the strain they had and pre-compute NAbs array
-        self.recovered_strain[inds] = self.infectious_strain[inds]
+        self.recovered_strain[inds] = self.exposed_strain[inds]
         if len(inds):
             cvi.compute_nab(self, inds, prior_inf=True)
 
