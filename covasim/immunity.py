@@ -82,17 +82,13 @@ class Strain():
                 strain_pars['rel_beta'] = 1.4
                 strain_pars['rel_severe_prob'] = 1.4
                 strain_pars['rel_death_prob'] = 1.4
-                strain_pars['imm_pars'] = dict()
-                for ax in cvd.immunity_axes:
-                    strain_pars['imm_pars'][ax] = dict(form='logistic_decay', pars={'init_val': .8, 'half_val': 30, 'lower_asymp': 0.3, 'decay_rate': -5})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
+                strain_pars['rel_imm'] = 0.5
                 self.strain_label = strain
 
             # Known parameters on Brazil variant
             elif strain in choices['p1']:
                 strain_pars = dict()
-                strain_pars['imm_pars'] = dict()
-                for ax in cvd.immunity_axes:
-                    strain_pars['imm_pars'][ax] = dict(form='logistic_decay', pars={'init_val': .8, 'half_val': 30, 'lower_asymp': 0.2, 'decay_rate': -5})  # E484K mutation reduces immunity protection (TODO: link to actual evidence)
+                strain_pars['rel_imm'] = 0.5
                 self.strain_label = strain
 
             else:
@@ -112,27 +108,20 @@ class Strain():
         return strain_pars
 
     def initialize(self, sim):
-        if not hasattr(self, 'imm_pars'):
-            self.imm_pars = sim['imm_pars'][0]
-
-        # Validate immunity pars (make sure there are values for all cvd.immunity_axes)
-        for key in cvd.immunity_axes:
-            if key not in self.imm_pars:
-                print(f'Immunity pars for imported strain for {key} not provided, using default value')
-                self.imm_pars[key] = sim['imm_pars'][0][key]
+        if not hasattr(self, 'rel_imm'):
+            self.rel_imm = 1
 
         # Update strain info
         for strain_key in cvd.strain_pars:
-            if strain_key != 'immune_degree':
-                if hasattr(self, strain_key):
-                    newval = getattr(self, strain_key)
-                    if strain_key == 'dur':  # Validate durations (make sure there are values for all durations)
-                        newval = sc.mergenested(sim[strain_key][0], newval)
-                    sim[strain_key].append(newval)
-                else:
-                    # use default
-                    print(f'{strain_key} not provided for this strain, using default value')
-                    sim[strain_key].append(sim[strain_key][0])
+            if hasattr(self, strain_key):
+                newval = getattr(self, strain_key)
+                if strain_key == 'dur':  # Validate durations (make sure there are values for all durations)
+                    newval = sc.mergenested(sim[strain_key][0], newval)
+                sim[strain_key].append(newval)
+            else:
+                # use default
+                print(f'{strain_key} not provided for this strain, using default value')
+                sim[strain_key].append(sim[strain_key][0])
 
         self.initialized = True
 
@@ -178,7 +167,8 @@ class Vaccine():
         self.rel_imm = None # list of length total_strains with relative immunity factor
         self.doses = None
         self.interval = None
-        self.imm_pars = None
+        self.NAb_pars = None
+        self.NAb_decay = None
         self.vaccine_strain_info = self.init_strain_vaccine_info()
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
@@ -227,11 +217,10 @@ class Vaccine():
             # Known parameters on pfizer
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
-                vaccine_pars['imm_pars'] = {}
-                for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 1/22}),
-                                                    dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 50,
-                                                                                      'lower_asymp': 0.3, 'decay_rate': -5})]
+                vaccine_pars['NAb_pars'] = [dict(form='normal', pars={'mean': 2, 'sd': 2}),
+                                            dict(form='normal', pars={'mean': 8, 'sd': 2})]
+                vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1/180, 'length': 250},
+                                                 form2='exp_decay', pars2={'rate': 1/100})
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -239,40 +228,30 @@ class Vaccine():
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
-                vaccine_pars['imm_pars'] = {}
-                for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 0.5/29}),
-                                                    dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 50,
-                                                                                      'lower_asymp': 0.3,
-                                                                                      'decay_rate': -5})]
-                vaccine_pars['doses'] = 2
+                vaccine_pars['NAb_pars'] = [dict(form='normal', pars={'mean': 2, 'sd': 2}),
+                                            dict(form='normal', pars={'mean': 8, 'sd': 2})]
+                vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1 / 180, 'length': 250},
+                                                 form2='exp_decay', pars2={'rate': 1 / 100})                vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
-                vaccine_pars['imm_pars'] = {}
-                for ax in cvd.immunity_axes:
-                    vaccine_pars['imm_pars'][ax] = [dict(form='linear_growth', pars={'slope': 0.5/22}),
-                                                    dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 50,
-                                                                                      'lower_asymp': 0.3,
-                                                                                      'decay_rate': -5})]
-                vaccine_pars['doses'] = 2
+                vaccine_pars['NAb_pars'] = [dict(form='normal', pars={'mean': 2, 'sd': 2}),
+                                            dict(form='normal', pars={'mean': 8, 'sd': 2})]
+                vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1 / 180, 'length': 250},
+                                                 form2='exp_decay', pars2={'rate': 1 / 100})                vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
-                vaccine_pars['imm_pars'] = {}
-                for ax in cvd.immunity_axes:
-                    if ax == 'sus':
-                        vaccine_pars['imm_pars'][ax] = [dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 50,
-                                                                                      'lower_asymp': 0.3, 'decay_rate': -5,
-                                                                                         'delay': 30})]*2
-                    else:
-                        vaccine_pars['imm_pars'][ax] = [dict(form='exp_decay', pars={'init_val': 1., 'half_life': 180})]*2
+                vaccine_pars['NAb_pars'] = [dict(form='normal', pars={'mean': 2, 'sd': 2}),
+                                            dict(form='normal', pars={'mean': 8, 'sd': 2})]
+                vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1 / 180, 'length': 250},
+                                                 form2='exp_decay', pars2={'rate': 1 / 100})
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine
@@ -299,7 +278,7 @@ class Vaccine():
         for strain in range(ts-1):
             circulating_strains.append(sim['strains'][strain].strain_label)
 
-        if self.imm_pars is None:
+        if self.NAb_pars is None or self.NAb_decay is None:
             errormsg = f'Did not provide parameters for this vaccine'
             raise ValueError(errormsg)
 
@@ -317,24 +296,7 @@ class Vaccine():
             errormsg = f'Did not provide relative immunity for each strain'
             raise ValueError(errormsg)
 
-        # Validate immunity pars (make sure there are values for all cvd.immunity_axes)
-        for key in cvd.immunity_axes:
-            if key not in self.imm_pars:
-                errormsg = f'Immunity pars for vaccine for {key} not provided'
-                raise ValueError(errormsg)
-
-        ''' Initialize immune_degree'''
-        doses = self.doses
-
-        # Precompute waning
-        immune_degree = []  # Stored as a list by dose
-        for dose in range(doses):
-            strain_immune_degree = {}
-            for ax in cvd.immunity_axes:
-                strain_immune_degree[ax] = pre_compute_waning(sim['n_days'], **self.imm_pars[ax][dose])
-            immune_degree.append(strain_immune_degree)
-        self.vaccine_immune_degree = immune_degree
-
+        return
 
 
 # %% Immunity methods
@@ -391,15 +353,6 @@ def init_immunity(sim, create=False):
             errormsg = f'Type of immunity["sus"] not understood: you provided {type(sim["immunity"]["sus"])}, but it should be an array or dict.'
             raise ValueError(errormsg)
 
-    # Precompute waning
-    immune_degree = []  # Stored as a list by strain
-    for s in range(ts):
-        strain_immune_degree = {}
-        for ax in cvd.immunity_axes:
-            strain_immune_degree[ax] = pre_compute_waning(sim['n_days'], **sim['imm_pars'][s][ax])
-        immune_degree.append(strain_immune_degree)
-    sim['immune_degree'] = immune_degree
-
 
 def pre_compute_waning(length, form, pars):
     '''
@@ -445,18 +398,62 @@ def pre_compute_waning(length, form, pars):
 
 
 def nab_to_efficacy(nab):
-
+    # put in here nab to efficacy mapping (logistic regression from fig 1a)
     efficacy = nab
     return efficacy
 
 
-def compute_nab(init_nab_titre, time_since_rec):
-    if time_since_rec < 250:
-        current_nab = init_nab_titre - ((1/180)*time_since_rec)
-    else:
+def compute_nab(people, inds, strain=None):
+    if strain is not None:
+        # NAbs is coming from a natural infection
+        this_strain_inds = cvu.itrue(people.recovered_strain[inds] == strain, inds)
+        mild_inds = people.check_inds(people.susceptible, people.date_symptomatic, filter_inds=this_strain_inds)
+        severe_inds = people.check_inds(people.susceptible, people.date_severe, filter_inds=this_strain_inds)
+        asymp_inds = np.setdiff1d(this_strain_inds, mild_inds)
+        asymp_inds = np.setdiff1d(asymp_inds, severe_inds)
 
-        current_nab = init_nab_titre - (25/18) - np.exp(-time_since_rec/100)
-    return current_nab
+        NAb_pars = people.pars['NAb_pars']
+        NAb_decay = people.pars['NAb_decay']
+
+        init_NAb_asymp = cvu.sample(**NAb_pars['asymptomatic'], size=len(asymp_inds))
+        init_NAb_mild = cvu.sample(**NAb_pars['mild'], size=len(mild_inds))
+        init_NAb_severe = cvu.sample(**NAb_pars['severe'], size=len(severe_inds))
+        init_NAbs = np.concatenate(init_NAb_asymp, init_NAb_mild, init_NAb_severe)
+    else:
+        # NAbs coming from a vaccine
+        # Figure out how many doses everyone has
+        one_dose_inds = people.vaccinations[inds] == 1
+        two_dose_inds = people.vaccinations[inds] == 2
+
+        NAb_pars = people.pars['vaccine_info']['NAb_pars']
+        NAb_decay = people.pars['vaccine_info']['NAb_decay']
+
+        init_NAb_one_dose = cvu.sample(**NAb_pars[0], size=len(one_dose_inds))
+        init_NAb_two_dose = cvu.sample(**NAb_pars[1], size=len(two_dose_inds))
+        init_NAbs = np.concatenate(init_NAb_one_dose, init_NAb_two_dose)
+
+
+    NAb_arrays = people.NAb[inds]
+
+    day = people.t # timestep we are on
+    n_days = people.pars['n_days']
+    days_left = n_days - day # how many days left in sim
+    length = NAb_decay['pars1']['length']
+
+    if days_left > length:
+        t1 = np.arange(length, dtype=cvd.default_int)
+        t1 = init_NAbs - (NAb_decay['pars1']['rate']*t1)
+        t2 = np.arange(length, n_days, dtype=cvd.default_int)
+        t2 = init_NAbs - (NAb_decay['pars1']['rate']*length) - np.exp(-t2*NAb_decay['pars2']['rate'])
+        result = np.concatenate((t1, t2), axis=0)
+
+    else:
+        t1 = np.arange(days_left, dtype=cvd.default_int)
+        result = init_NAbs - (NAb_decay['pars1']['rate']*t1)
+
+    NAb_arrays[day:, ] = result
+
+    return
 
 
 def check_immunity(people, strain, sus=True, inds=None):
@@ -499,32 +496,25 @@ def check_immunity(people, strain, sus=True, inds=None):
         is_sus_vacc_was_inf = np.intersect1d(is_sus_vacc, was_inf)
 
         if len(is_sus_vacc):
-            doses_all[is_sus_vacc_was_inf] = vacc_info['doses']  # Immunity for susceptibles who've been vaccinated
             vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc])
             vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
-            doses = doses_all[is_sus_vacc]
             time_since_vacc = cvd.default_int(people.t - date_vacc[is_sus_vacc])
-            people.sus_imm[strain, is_sus_vacc] = vaccine_scale * vacc_degree['sus'][
-                vaccine_source, doses - 1, time_since_vacc]
+            current_NAbs = people.NAb[time_since_vacc, is_sus_vacc]
+            people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_NAbs) * vaccine_scale
 
         if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this strain
-            init_nab_titre = people.init_nab_titre[is_sus_was_inf_same]
             time_since_rec = cvd.default_int(people.t - date_rec[is_sus_was_inf_same])
-            current_nab_titre = compute_nab(init_nab_titre, time_since_rec)
-            people.current_nab_titre[is_sus_was_inf_same] = current_nab_titre
-            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_nab_titre)
+            current_NAbs = people.NAb[time_since_rec, is_sus_was_inf_same]
+            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_NAbs)*immunity[strain, strain]
 
         if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different strain
             prior_strains = people.recovered_strain[is_sus_was_inf_diff]
             prior_strains_unique = np.unique(prior_strains)
             for unique_strain in prior_strains_unique:
                 unique_inds = is_sus_was_inf_diff[cvu.true(prior_strains == unique_strain)]
-                init_nab_titre = people.init_nab_titre[unique_inds]
                 time_since_rec = cvd.default_int(people.t - date_rec[unique_inds])
-                current_nab_titre = compute_nab(init_nab_titre, time_since_rec)
-                people.current_nab_titre[unique_inds] = current_nab_titre
-                current_nab_titre *= immunity['sus'][strain, cvd.default_int(unique_strain)]
-                people.sus_imm[strain, unique_inds] = immune_degree['sus'][current_nab_titre]
+                current_NAbs = people.NAb[time_since_rec, unique_inds]
+                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_NAbs) * immunity[strain, unique_strain]
 
     else:
         ### PART 2:

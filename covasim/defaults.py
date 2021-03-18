@@ -54,8 +54,7 @@ class PeopleMeta(sc.prettyobj):
         'prog_imm',         # Float
         'vaccinations',     # Number of doses given per person
         'vaccine_source',   # index of vaccine that individual received
-        'current_nab_titre', # Current neutralization titre relative to convalescent plasma
-        'init_nab_titre'     # Initial neutralization titre relative to convalescent plasma
+        'NAb',              # Current neutralization titre relative to convalescent plasma
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py

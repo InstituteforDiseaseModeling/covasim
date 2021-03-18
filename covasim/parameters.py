@@ -71,16 +71,13 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['imm_pars']        = {}
-    for ax in cvd.immunity_axes:
-        if ax == 'sus':
-            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 1., 'half_life': None})
-        else:
-            pars['imm_pars'][ax] = dict(form='exp_decay', pars={'init_val': 0.8, 'half_life': None})
-    pars['rel_imm']         = {} # Relative immunity scalings depending on the severity of symptoms
-    pars['rel_imm']['asymptomatic'] = 0.50
-    pars['rel_imm']['mild'] = 0.95
-    pars['rel_imm']['severe'] = 1.
+    pars['NAb_pars']        = {}   # Parameters for NAbs distribution for natural infection
+    pars['NAb_pars']['asymptomatic'] = dict(form='normal', pars={'mean': .5, 'sd': 2})
+    pars['NAb_pars']['mild'] = dict(form='normal', pars={'mean': .8, 'sd': 2})
+    pars['NAb_pars']['severe'] = dict(form='normal', pars={'mean': 1, 'sd': 2})
+
+    pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1/180, 'length': 250},
+                             form2='exp_decay', pars2={'rate': 1/100})
 
     pars['dur'] = {}
         # Duration parameters: time for disease progression
