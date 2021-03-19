@@ -1147,7 +1147,7 @@ class BasePeople(FlexPretty):
 
         # Turn into a dataframe
         for lkey in lkeys:
-            new_layer = Layer()
+            new_layer = Layer() # TKA
             for ckey,value in new_contacts[lkey].items():
                 new_layer[ckey] = np.array(value, dtype=new_layer.meta[ckey])
             new_contacts[lkey] = new_layer
@@ -1218,7 +1218,7 @@ class Contacts(FlexDict):
     def __init__(self, layer_keys=None):
         if layer_keys is not None:
             for key in layer_keys:
-                self[key] = Layer()
+                self[key] = Layer() # TKA
         return
 
     def __repr__(self):
@@ -1275,7 +1275,41 @@ class Contacts(FlexDict):
 
 
 class Layer(FlexDict):
-    ''' A small class holding a single layer of contacts '''
+    '''
+    A small class holding a single layer of contact edges (connections) between people.
+
+    The input is typically three arrays: person 1 of the connection, person 2 of
+    the connection, and the weight of the connection. Connections are undirected;
+    each person is both a source and sink.
+
+    This class is usually not invoked directly by the user, but instead is called
+    as part of the population creation.
+
+    Args:
+        p1 (array): an array of N connections, representing people on one side of the connection
+        p2 (array): an array of people on the other side of the connection
+        beta (array): an array of weights for each connection
+        kwargs (dict): other keys copied directly into the layer
+
+    Note that all arguments must be arrays of the same length, although not all
+    have to be supplied at the time of creation (they must all be the same at the
+    time of initialization, though, or else validation will fail).
+
+    **Examples**::
+
+        # Generate an average of 10 contacts for 1000 people
+        n = 10_000
+        n_people = 1000
+        p1 = np.random.randint(n_people, size=n)
+        p2 = np.random.randint(n_people, size=n)
+        beta = np.ones(n)
+        layer = cv.Layer(p1=p1, p2=p2, beta=beta)
+
+        # Convert one layer to another with an extra column
+        index = np.arange(n)
+        self_conn = p1 == p2
+        layer2 = cv.Layer(**layer, index=index, self_conn=self_conn)
+    '''
 
     def __init__(self, **kwargs):
         self.meta = {
@@ -1291,7 +1325,7 @@ class Layer(FlexDict):
 
         # Set data, if provided
         for key,value in kwargs.items():
-            self[key] = np.array(value, dtype=self.meta[key])
+            self[key] = np.array(value, dtype=self.meta.get(key))
 
         return
 
@@ -1305,8 +1339,9 @@ class Layer(FlexDict):
 
     def __repr__(self):
         ''' Convert to a dataframe for printing '''
+        label = self.__class__.__name__
         keys_str = ', '.join(self.keys())
-        output = f'Layer({keys_str})\n'
+        output = f'{label}({keys_str})\n' # e.g. Layer(p1, p2, beta)
         output += self.to_df().__repr__()
         return output
 
@@ -1439,40 +1474,31 @@ class Layer(FlexDict):
         return contact_inds
 
 
-    def update(self, people):
-        '''Regenerate contacts
-
-        This method gets called if the layer appears in ``sim.pars['dynam_lkeys']``. The Layer implements
-        the update procedure so that derived classes can customize the update e.g. implementing
-        over-dispersion/other distributions, random clusters, etc.
-
-        This method also takes in the ``people`` object so that the update can depend on person attributes
-        that may change over time (e.g. changing contacts for people that are severe/critical).
+    def update(self, people, frac=1.0):
         '''
-        pass
+        Regenerate contacts on each timestep.
 
+        This method gets called if the layer appears in ``sim.pars['dynam_lkeys']``.
+        The Layer implements the update procedure so that derived classes can customize
+        the update e.g. implementing over-dispersion/other distributions, random
+        clusters, etc.
 
-def RandomLayer(Layer):
-    '''
-    Randomly sampled layer
+        Typically, this method also takes in the ``people`` object so that the
+        update can depend on person attributes that may change over time (e.g.
+        changing contacts for people that are severe/critical).
 
-    Args:
-        Layer:
-
-    Returns:
-
-    '''
-    def __init__(self, n_contacts):
-        self.n_contacts = n_contacts
-
-    def update(self, people):
+        Args:
+            frac (float): the fraction of contacts to update on each timestep
+        '''
         # Choose how many contacts to make
-        pop_size   = len(people)
-        n_new = int(self.n_contacts*pop_size/2) # Since these get looped over in both directions later
+        pop_size   = len(people) # Total number of people
+        n_contacts = len(self) # Total number of contacts
+        n_new = int(np.round(n_contacts*frac)) # Since these get looped over in both directions later
+        inds = cvu.choose(n_contacts, n_new)
 
-        # Create the contacts
-        new_contacts = {} # Initialize
-        self['p1']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
-        self['p2']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
-        self['beta'] = np.ones(n_new, dtype=cvd.default_float)
+        # Create the contacts, not skipping self-connections
+        self['p1'][inds]   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
+        self['p2'][inds]   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
+        self['beta'][inds] = np.ones(n_new, dtype=cvd.default_float)
+        return
 
