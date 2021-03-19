@@ -1105,7 +1105,12 @@ class BasePeople(FlexPretty):
 
             # Create the layer if it doesn't yet exist
             if lkey not in self.contacts:
-                self.contacts[lkey] = Layer()
+                if self.pars['dynam_layer'].get(lkey, False):
+                    # Equivalent to previous functionality, but might be better if make_randpop() returned Layer objects instead of just dicts, that
+                    # way the population creation function could have control over both the contacts and the update algorithm
+                    self.contacts[lkey] = RandomLayer()
+                else:
+                    self.contacts[lkey] = Layer()
 
             # Actually include them, and update properties if supplied
             for col in self.contacts[lkey].keys(): # Loop over the supplied columns
@@ -1432,3 +1437,42 @@ class Layer(FlexDict):
             contact_inds.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
 
         return contact_inds
+
+
+    def update(self, people):
+        '''Regenerate contacts
+
+        This method gets called if the layer appears in ``sim.pars['dynam_lkeys']``. The Layer implements
+        the update procedure so that derived classes can customize the update e.g. implementing
+        over-dispersion/other distributions, random clusters, etc.
+
+        This method also takes in the ``people`` object so that the update can depend on person attributes
+        that may change over time (e.g. changing contacts for people that are severe/critical).
+        '''
+        pass
+
+
+def RandomLayer(Layer):
+    '''
+    Randomly sampled layer
+
+    Args:
+        Layer:
+
+    Returns:
+
+    '''
+    def __init__(self, n_contacts):
+        self.n_contacts = n_contacts
+
+    def update(self, people):
+        # Choose how many contacts to make
+        pop_size   = len(people)
+        n_new = int(self.n_contacts*pop_size/2) # Since these get looped over in both directions later
+
+        # Create the contacts
+        new_contacts = {} # Initialize
+        self['p1']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
+        self['p2']   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
+        self['beta'] = np.ones(n_new, dtype=cvd.default_float)
+
