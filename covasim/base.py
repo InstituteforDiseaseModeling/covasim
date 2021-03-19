@@ -1147,7 +1147,7 @@ class BasePeople(FlexPretty):
 
         # Turn into a dataframe
         for lkey in lkeys:
-            new_layer = Layer() # TKA
+            new_layer = Layer()
             for ckey,value in new_contacts[lkey].items():
                 new_layer[ckey] = np.array(value, dtype=new_layer.meta[ckey])
             new_contacts[lkey] = new_layer
@@ -1218,7 +1218,7 @@ class Contacts(FlexDict):
     def __init__(self, layer_keys=None):
         if layer_keys is not None:
             for key in layer_keys:
-                self[key] = Layer() # TKA
+                self[key] = Layer()
         return
 
     def __repr__(self):

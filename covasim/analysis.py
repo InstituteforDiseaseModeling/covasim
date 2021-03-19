@@ -353,7 +353,8 @@ class age_histogram(Analyzer):
 
 class daily_age_stats(Analyzer):
     '''
-    Calculate daily counts by age, saving for each day of the simulation.
+    Calculate daily counts by age, saving for each day of the simulation. Can
+    plot either time series by age or a histogram over all time.
 
     Args:
         states  (list): which states of people to record (default: ['diagnoses', 'deaths', 'tests', 'severe'])
@@ -362,9 +363,12 @@ class daily_age_stats(Analyzer):
 
     **Examples**::
 
-        sim = cv.Sim(analyzers=cv.daily_age_analyzer())
+        sim = cv.Sim(analyzers=cv.daily_age_stats())
+        sim = cv.Sim(pars, analyzers=daily_age)
         sim.run()
-        agehist = sim['analyzers'][0].make_df()
+        daily_age = sim.get_analyzer()
+        daily_age.plot()
+        daily_age.plot(total=True)
 
     '''
 

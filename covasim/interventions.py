@@ -101,10 +101,10 @@ class Intervention:
         return
 
 
-    def __repr__(self):
-        ''' Return a JSON-friendly output if possible, else revert to pretty repr '''
+    def __repr__(self, jsonify=False):
+        ''' Return a JSON-friendly output if possible, else revert to short repr '''
 
-        if self.input_args:
+        if self.__class__.__name__ in __all__ or jsonify:
             try:
                 json = self.to_json()
                 which = json['which']
@@ -112,7 +112,7 @@ class Intervention:
                 parstr = ', '.join([f'{k}={v}' for k,v in pars.items()])
                 output = f"cv.{which}({parstr})"
             except Exception as E:
-                output = type(self) + f' ({str(E)})' # If that fails, print why
+                output = type(self) + f' (error: {str(E)})' # If that fails, print why
             return output
         else:
             return f'{self.__module__}.{self.__class__.__name__}()'
