@@ -102,16 +102,20 @@ class Intervention:
 
     def __repr__(self):
         ''' Return a JSON-friendly output if possible, else revert to pretty repr '''
-        try:
-            json = self.to_json()
-            which = json['which']
-            pars = json['pars']
-            parstr = ', '.join([f'{k}={v}' for k,v in pars.items()])
-            output = f"cv.{which}({parstr})"
-        except Exception as E:
-            output = type(self) + f' ({str(E)})' # If that fails, print why
-        return output
 
+        if hasattr(self, 'input_args'):
+            try:
+                json = self.to_json()
+                which = json['which']
+                pars = json['pars']
+                parstr = ', '.join([f'{k}={v}' for k,v in pars.items()])
+                output = f"cv.{which}({parstr})"
+            except Exception as E:
+                output = type(self) + f' ({str(E)})' # If that fails, print why
+            return output
+        else:
+            return f'{self.__module__}.{self.__class__.__name__}()'
+        
 
     def disp(self):
         ''' Print a detailed representation of the intervention '''
