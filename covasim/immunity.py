@@ -167,7 +167,6 @@ class Vaccine():
         self.doses = None
         self.interval = None
         self.NAb_pars = None
-        self.NAb_decay = None
         self.vaccine_strain_info = self.init_strain_vaccine_info()
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
@@ -216,10 +215,8 @@ class Vaccine():
             # Known parameters on pfizer
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(dist='normal', par1=2, par2= 2),
-                                            dict(dist='normal', par1=8, par2= 2)]
-                vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1/180, 'length': 250},
-                                                 form2='exp_decay', pars2={'rate': 1/100})
+                vaccine_pars['NAb_pars'] = [dict(dist='lognormal', par1=2, par2= 2),
+                                            dict(dist='lognormal', par1=8, par2= 2)]
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -227,10 +224,8 @@ class Vaccine():
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(dist='normal', par1=2, par2= 2),
-                                            dict(dist='normal', par1=8, par2= 2)]
-                vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1 / 180, 'length': 250},
-                                                 form2='exp_decay', pars2={'rate': 1 / 100})
+                vaccine_pars['NAb_pars'] = [dict(dist='lognormal', par1=2, par2= 2),
+                                            dict(dist='lognormal', par1=8, par2= 2)]
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
                 vaccine_pars['label'] = vaccine
@@ -238,10 +233,8 @@ class Vaccine():
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(dist='normal', par1=2, par2= 2),
-                                            dict(dist='normal', par1=8, par2= 2)]
-                vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1 / 180, 'length': 250},
-                                                 form2='exp_decay', pars2={'rate': 1 / 100})
+                vaccine_pars['NAb_pars'] = [dict(dist='lognormal', par1=2, par2= 2),
+                                            dict(dist='lognormal', par1=8, par2= 2)]
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -249,10 +242,8 @@ class Vaccine():
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(dist='normal', par1=2, par2= 2),
-                                            dict(dist='normal', par1=8, par2= 2)]
-                vaccine_pars['NAb_decay'] = dict(form1='log-linear', pars1={'rate': 1 / 180, 'length': 250},
-                                                 form2='exp_decay', pars2={'rate': 1 / 100})
+                vaccine_pars['NAb_pars'] = [dict(dist='lognormal', par1=2, par2= 2),
+                                            dict(dist='lognormal', par1=8, par2= 2)]
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine
@@ -279,7 +270,7 @@ class Vaccine():
         for strain in range(ts-1):
             circulating_strains.append(sim['strains'][strain].strain_label)
 
-        if self.NAb_pars is None or self.NAb_decay is None:
+        if self.NAb_pars is None :
             errormsg = f'Did not provide parameters for this vaccine'
             raise ValueError(errormsg)
 
@@ -404,6 +395,8 @@ def nab_to_efficacy(nab, ax):
 
 
 def compute_nab(people, inds, prior_inf=True):
+    NAb_decay = people.pars['NAb_decay']
+
     if prior_inf:
         # NAbs is coming from a natural infection
         mild_inds = people.check_inds(people.susceptible, people.date_symptomatic, filter_inds=inds)
@@ -413,7 +406,7 @@ def compute_nab(people, inds, prior_inf=True):
         asymp_inds = np.setdiff1d(asymp_inds, severe_inds)
 
         NAb_pars = people.pars['NAb_pars']
-        NAb_decay = people.pars['NAb_decay']
+
 
         init_NAb_asymp = cvu.sample(**NAb_pars['asymptomatic'], size=len(asymp_inds))
         init_NAb_mild = cvu.sample(**NAb_pars['mild'], size=len(mild_inds))
@@ -431,7 +424,6 @@ def compute_nab(people, inds, prior_inf=True):
         two_dose_inds = cvu.itrue(people.vaccinations[inds] == 2, inds)
 
         NAb_pars = people.pars['vaccine_info']['NAb_pars']
-        NAb_decay = people.pars['vaccine_info']['NAb_decay']
 
         init_NAb_one_dose = cvu.sample(**NAb_pars[0], size=len(one_dose_inds))
         init_NAb_two_dose = cvu.sample(**NAb_pars[1], size=len(two_dose_inds))

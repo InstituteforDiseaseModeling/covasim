@@ -480,7 +480,6 @@ class Sim(cvb.BaseSim):
             for ind, vacc in enumerate(self['vaccines']):
                 self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
                 self['vaccine_info']['doses'] = vacc.doses
-                self['vaccine_info']['NAb_decay'] = vacc.NAb_decay
                 for dose in range(vacc.doses):
                     self['vaccine_info']['NAb_pars'].append(vacc.NAb_pars[dose])
         return
