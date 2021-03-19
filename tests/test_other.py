@@ -126,7 +126,7 @@ def test_basepeople():
     beta = np.ones(n)
     layer = cv.Layer(p1=p1, p2=p2, beta=beta)
 
-    # Convert one layer to another with an extra column
+    # Convert one layer to another with extra columns
     index = np.arange(n)
     self_conn = p1 == p2
     layer2 = cv.Layer(**layer, index=index, self_conn=self_conn)
