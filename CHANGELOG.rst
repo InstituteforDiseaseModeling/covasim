@@ -15,15 +15,27 @@ Future release plans
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Improved handling of vaccination, including more detailed targeting options, waning immunity, etc.
-- Mechanistic handling of different strains
 - Additional flexibility in plotting options (e.g. date ranges, per-plot DPI)
 - Expanded tutorials (health care workers, vaccination, calibration, exercises, etc.)
+- Improved handling of vaccination, including more detailed targeting options, waning immunity, etc.
+- Mechanistic handling of different strains
+- Multi-region and geospatial support
+- Economics and costing analysis
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
 Latest versions (2.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Version 2.0.4 (2021-03-19)
+--------------------------
+- Added a new analyzer, ``cv.daily_age_stats()``, which will compute statistics by age for each day of the simulation (compared to ``cv.age_histogram()``, which only looks at particular points in time).
+- Added a new function, ``cv.date_formatter()``, which may be useful in quickly formatting axes using dates.
+- Removed the need for ``self._store_args()`` in interventions; now custom interventions only need to implement ``super().__init__(**kwargs)`` rather than both.
+- Changed how custom interventions print out by default (a short representation rather than the jsonified version used by built-in interventions).
+- Added an ``update()`` method to ``Layer``, to allow greater flexibility for dynamic updating.
+- *GitHub info*: PR `854 <https://github.com/amath-idm/covasim/pull/854>`__
 
 
 Version 2.0.3 (2021-03-11)

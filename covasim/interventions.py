@@ -91,6 +91,7 @@ class Intervention:
         line_args (dict): arguments passed to pl.axvline() when plotting
     '''
     def __init__(self, label=None, show_label=True, do_plot=None, line_args=None):
+        self._store_args() # Store the input arguments so the intervention can be recreated
         self.label = label # e.g. "Close schools"
         self.show_label = show_label # Show the label by default
         self.do_plot = do_plot if do_plot is not None else True # Plot the intervention, including if None
@@ -100,37 +101,42 @@ class Intervention:
         return
 
 
-    def __repr__(self):
-        ''' Return a JSON-friendly output if possible, else revert to pretty repr '''
-        try:
-            json = self.to_json()
-            which = json['which']
-            pars = json['pars']
-            parstr = ', '.join([f'{k}={v}' for k,v in pars.items()])
-            output = f"cv.{which}({parstr})"
-        except Exception as E:
-            output = type(self) + f' ({str(E)})' # If that fails, print why
-        return output
+    def __repr__(self, jsonify=False):
+        ''' Return a JSON-friendly output if possible, else revert to short repr '''
+
+        if self.__class__.__name__ in __all__ or jsonify:
+            try:
+                json = self.to_json()
+                which = json['which']
+                pars = json['pars']
+                parstr = ', '.join([f'{k}={v}' for k,v in pars.items()])
+                output = f"cv.{which}({parstr})"
+            except Exception as E:
+                output = type(self) + f' (error: {str(E)})' # If that fails, print why
+            return output
+        else:
+            return f'{self.__module__}.{self.__class__.__name__}()'
 
 
     def disp(self):
         ''' Print a detailed representation of the intervention '''
-        return print(sc.prepr(self))
+        return sc.pr(self)
 
 
     def _store_args(self):
         ''' Store the user-supplied arguments for later use in to_json '''
         f0 = inspect.currentframe() # This "frame", i.e. Intervention.__init__()
         f1 = inspect.getouterframes(f0) # The list of outer frames
-        parent = f1[1].frame # The parent frame, e.g. change_beta.__init__()
+        parent = f1[2].frame # The parent frame, e.g. change_beta.__init__()
         _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
-        self.input_args = {}
-        for key,value in values.items():
-            if key == 'kwargs': # Store additional kwargs directly
-                for k2,v2 in value.items():
-                    self.input_args[k2] = v2 # These are already a dict
-            elif key not in ['self', '__class__']: # Everything else, but skip these
-                self.input_args[key] = value
+        if values:
+            self.input_args = {}
+            for key,value in values.items():
+                if key == 'kwargs': # Store additional kwargs directly
+                    for k2,v2 in value.items():
+                        self.input_args[k2] = v2 # These are already a dict
+                elif key not in ['self', '__class__']: # Everything else, but skip these
+                    self.input_args[key] = value
         return
 
 
@@ -244,7 +250,6 @@ class dynamic_pars(Intervention):
 
         # Do standard initialization
         super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
 
         # Handle the rest of the initialization
         subkeys = ['days', 'vals']
@@ -296,7 +301,6 @@ class sequence(Intervention):
 
     def __init__(self, days, interventions, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
         assert len(days) == len(interventions)
         self.days = days
         self.interventions = interventions
@@ -378,7 +382,6 @@ class change_beta(Intervention):
 
     def __init__(self, days, changes, layers=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
         self.days       = sc.dcp(days)
         self.changes    = sc.dcp(changes)
         self.layers     = sc.dcp(layers)
@@ -445,7 +448,6 @@ class clip_edges(Intervention):
 
     def __init__(self, days, changes, layers=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
         self.days     = sc.dcp(days)
         self.changes  = sc.dcp(changes)
         self.layers   = sc.dcp(layers)
@@ -652,7 +654,6 @@ class test_num(Intervention):
                  ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
                  start_day=0, end_day=None, swab_delay=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
         self.daily_tests = daily_tests # Should be a list of length matching time
         self.symp_test   = symp_test   # Set probability of testing symptomatics
         self.quar_test   = quar_test # Probability of testing people in quarantine
@@ -783,7 +784,6 @@ class test_prob(Intervention):
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, quar_policy=None, subtarget=None, ili_prev=None,
                  sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
         self.symp_quar_prob   = symp_quar_prob  if  symp_quar_prob is not None else  symp_prob
@@ -898,7 +898,6 @@ class contact_tracing(Intervention):
     '''
     def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, quar_period=None,  **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
         self.trace_probs = trace_probs
         self.trace_time  = trace_time
         self.start_day   = start_day
@@ -1057,7 +1056,6 @@ class vaccine(Intervention):
     '''
     def __init__(self, days, prob=1.0, rel_sus=0.0, rel_symp=0.0, subtarget=None, cumulative=False, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
         self.days      = sc.dcp(days)
         self.prob      = prob
         self.rel_sus   = rel_sus

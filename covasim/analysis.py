@@ -11,9 +11,10 @@ from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
 from . import settings as cvset
+from . import plotting as cvpl
 
 
-__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_stats', 'Fit', 'TransTree']
+__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_stats', 'daily_stats', 'Fit', 'TransTree']
 
 
 class Analyzer(sc.prettyobj):
@@ -151,10 +152,7 @@ class snapshot(Analyzer):
 
 class age_histogram(Analyzer):
     '''
-    Analyzer that takes a "snapshot" of the sim.people array at specified points
-    in time, and saves them to itself. To retrieve them, you can either access
-    the dictionary directly, or use the get() method. You can also apply this
-    analyzer directly to a sim object.
+    Calculate statistics across age bins, including histogram plotting functionality.
 
     Args:
         days    (list): list of ints/strings/date objects, the days on which to calculate the histograms (default: last day)
@@ -169,9 +167,10 @@ class age_histogram(Analyzer):
 
         sim = cv.Sim(analyzers=cv.age_histogram())
         sim.run()
-        agehist = sim.get_analyzer()
 
-        agehist = cv.age_histogram(sim=sim)
+        agehist = sim.get_analyzer()
+        agehist = cv.age_histogram(sim=sim) # Alternate method
+        agehist.plot()
     '''
 
     def __init__(self, days=None, states=None, edges=None, datafile=None, sim=None, die=True, **kwargs):
@@ -223,7 +222,7 @@ class age_histogram(Analyzer):
 
         # Handle states
         if self.states is None:
-            self.states = ['exposed', 'dead', 'tested', 'diagnosed']
+            self.states = ['exposed', 'severe', 'dead', 'tested', 'diagnosed']
         self.states = sc.promotetolist(self.states)
         for s,state in enumerate(self.states):
             self.states[s] = state.replace('date_', '') # Allow keys starting with date_ as input, but strip it off here
@@ -337,19 +336,176 @@ class age_histogram(Analyzer):
             bins = hists['bins']
             barwidth = width*(bins[1] - bins[0]) # Assume uniform width
             for s,state in enumerate(self.states):
-                pl.subplot(n_rows, n_cols, s+1)
-                pl.bar(bins, hists[state], width=barwidth, facecolor=color, label=f'Number {state}')
+                ax = pl.subplot(n_rows, n_cols, s+1)
+                ax.bar(bins, hists[state], width=barwidth, facecolor=color, label=f'Number {state}')
                 if self.data and state in self.data:
                     data = self.data[state]
-                    pl.bar(bins+d_args.offset, data, width=barwidth*d_args.width, facecolor=d_args.color, label='Data')
-                pl.xlabel('Age')
-                pl.ylabel('Count')
-                pl.xticks(ticks=bins)
-                pl.legend()
+                    ax.bar(bins+d_args.offset, data, width=barwidth*d_args.width, facecolor=d_args.color, label='Data')
+                ax.set_xlabel('Age')
+                ax.set_ylabel('Count')
+                ax.set_xticks(ticks=bins)
+                ax.legend()
                 preposition = 'from' if windows else 'by'
-                pl.title(f'Number of people {state} {preposition} {date}')
+                ax.set_title(f'Number of people {state} {preposition} {date}')
 
         return figs
+
+
+class daily_age_stats(Analyzer):
+    '''
+    Calculate daily counts by age, saving for each day of the simulation. Can
+    plot either time series by age or a histogram over all time.
+
+    Args:
+        states  (list): which states of people to record (default: ['diagnoses', 'deaths', 'tests', 'severe'])
+        edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
+        kwargs  (dict): passed to Analyzer()
+
+    **Examples**::
+
+        sim = cv.Sim(analyzers=cv.daily_age_stats())
+        sim = cv.Sim(pars, analyzers=daily_age)
+        sim.run()
+        daily_age = sim.get_analyzer()
+        daily_age.plot()
+        daily_age.plot(total=True)
+
+    '''
+
+    def __init__(self, states=None, edges=None, **kwargs):
+        super().__init__(**kwargs)
+        self.edges = edges
+        self.bins = None  # Age bins, calculated from edges
+        self.states = states
+        self.results = sc.odict()
+        self.start_day = None
+        self.df = None
+        self.total_df = None
+        return
+
+
+    def initialize(self, sim):
+
+        if self.states is None:
+            self.states = ['exposed', 'severe', 'dead', 'tested', 'diagnosed']
+
+        # Handle edges and age bins
+        if self.edges is None:  # Default age bins
+            self.edges = np.linspace(0, 100, 11)
+        self.bins = self.edges[:-1]  # Don't include the last edge in the bins
+
+        self.start_day = sim['start_day']
+        self.initialized = True
+        return
+
+
+    def apply(self, sim):
+        df_entry = {}
+        for state in self.states:
+            inds = sc.findinds(sim.people[f'date_{state}'], sim.t)
+            b, _ = np.histogram(sim.people.age[inds], self.edges)
+            df_entry.update({state: b * sim.rescale_vec[sim.t]})
+        df_entry.update({'day':sim.t, 'age': self.bins})
+        self.results.update({sim.date(sim.t): df_entry})
+
+
+    def to_df(self):
+        '''Create dataframe totals for each day'''
+        mapper = {f'{k}': f'new_{k}' for k in self.states}
+        df = pd.DataFrame()
+        for date, k in self.results.items():
+            df_ = pd.DataFrame(k)
+            df_['date'] = date
+            df_.rename(mapper, inplace=True, axis=1)
+            df = pd.concat((df, df_))
+        cols = list(df.columns.values)
+        cols = [cols[-1]] + [cols[-2]] + cols[:-2]
+        self.df = df[cols]
+        return self.df
+
+
+    def to_total_df(self):
+        ''' Create dataframe totals across days '''
+        if self.df is None:
+            self.to_df()
+        cols = list(self.df.columns)
+        cum_cols = [c for c in cols if c.split('_')[0] == 'new']
+        mapper = {f'new_{c.split("_")[1]}': f'cum_{c.split("_")[1]}' for c in cum_cols}
+        df_dict = {'age': []}
+        df_dict.update({c: [] for c in mapper.values()})
+        for age, group in self.df.groupby('age'):
+            cum_vals = group.sum()
+            df_dict['age'].append(age)
+            for k, v in mapper.items():
+                df_dict[v].append(cum_vals[k])
+        df = pd.DataFrame(df_dict)
+        if ('cum_diagnoses' in df.columns) and ('cum_tests' in df.columns):
+            df['yield'] = df['cum_diagnoses'] / df['cum_tests']
+        self.total_df = df
+        return df
+
+
+    def plot(self, total=False, do_show=None, fig_args=None, axis_args=None, plot_args=None, dateformat='%b-%d', width=0.8, color='#F8A493', data_args=None):
+        '''
+        Plot the results.
+
+        Args:
+            total     (bool):  whether to plot the total histograms rather than time series
+            do_show   (bool):  whether to show the plot
+            fig_args  (dict):  passed to pl.figure()
+            axis_args (dict):  passed to pl.subplots_adjust()
+            plot_args (dict):  passed to pl.plot()
+            dateformat (str):  the format to use for the x-axes (only used for time series)
+            width    (float): width of bars (only used for histograms)
+            color  (hex/rgb): the color of the bars (only used for histograms)
+        '''
+        if self.df is None:
+            self.to_df()
+        if self.total_df is None:
+            self.to_total_df()
+
+        fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
+        axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
+        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
+
+        nplots = len(self.states)
+        nrows, ncols = sc.get_rows_cols(nplots)
+        fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
+        pl.subplots_adjust(**axis_args)
+
+        for count,state in enumerate(self.states):
+            row,col = np.unravel_index(count, (nrows,ncols))
+            ax = axs[row,col]
+            ax.set_title(state.title())
+            ages = self.df.age.unique()
+
+            # Plot time series
+            if not total:
+                colors = sc.vectocolor(len(ages))
+                has_data = False
+                for a,age in enumerate(ages):
+                    label = f'Age {age}'
+                    df = self.df[self.df.age==age]
+                    ax.plot(df.day, df[f'new_{state}'], c=colors[a], label=label)
+                    has_data = has_data or len(df)
+                if has_data:
+                    ax.legend()
+                    ax.set_xlabel('Day')
+                    ax.set_ylabel('Count')
+                    cvpl.date_formatter(start_day=self.start_day, dateformat=dateformat, ax=ax)
+
+            # Plot total histograms
+            else:
+                df = self.total_df
+                barwidth = width*(df.age[1] - df.age[0]) # Assume uniform width
+                ax.bar(df.age, df[f'cum_{state}'], width=barwidth, facecolor=color)
+                ax.set_xlabel('Age')
+                ax.set_ylabel('Count')
+                ax.set_xticks(ticks=df.age)
+
+        cvset.handle_show(do_show) # Whether or not to call pl.show()
+
+        return fig
 
 
 class daily_stats(Analyzer):
@@ -883,8 +1039,7 @@ class Fit(sc.prettyobj):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None,
-             plot_args=None, do_show=None, fig=None):
+    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, do_show=None, fig=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -1015,7 +1170,9 @@ class TransTree(sc.prettyobj):
 
         # Check that rescaling is not on
         if sim['rescale'] and sim['pop_scale']>1:
-            warningmsg = 'Warning: transmission tree results are unreliable when dynamic rescaling is on, since agents are reused! Please rerun with rescale=False and pop_scale=1 for reliable results.'
+            warningmsg = 'Warning: transmission tree results are unreliable when' \
+                         'dynamic rescaling is on, since agents are reused! Please '\
+                         'rerun with rescale=False and pop_scale=1 for reliable results.'
             print(warningmsg)
 
         # Include the basic line list
