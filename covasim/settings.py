@@ -188,9 +188,9 @@ def set_matplotlib_global(key, value):
     ''' Set a global option for Matplotlib -- not for users '''
     import pylab as pl
     if value: # Don't try to reset any of these to a None value
-        if   key == 'font_size':   pl.rc('font', size=value)
-        elif key == 'font_family': pl.rc('font', family=value)
-        elif key == 'dpi':         pl.rc('figure', dpi=value)
+        if   key == 'font_size':   pl.rcParams['font.size']   = value
+        elif key == 'font_family': pl.rcParams['font.family'] = value
+        elif key == 'dpi':         pl.rcParams['figure.dpi']  = value
         elif key == 'backend':     pl.switch_backend(value)
         else: raise sc.KeyNotFoundError(f'Key {key} not found')
     return
