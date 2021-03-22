@@ -95,7 +95,7 @@ class Intervention:
         self.label = label # e.g. "Close schools"
         self.show_label = show_label # Show the label by default
         self.do_plot = do_plot if do_plot is not None else True # Plot the intervention, including if None
-        self.line_args = sc.mergedicts(dict(linestyle='--', c=[0,0,0]), line_args) # Do not set alpha by default due to the issue of overlapping interventions
+        self.line_args = sc.mergedicts(dict(linestyle='--', c='#aaa', lw=1.0), line_args) # Do not set alpha by default due to the issue of overlapping interventions
         self.days = [] # The start and end days of the intervention
         self.initialized = False # Whether or not it has been initialized
         return
