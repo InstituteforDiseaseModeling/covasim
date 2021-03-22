@@ -49,9 +49,9 @@ class PeopleMeta(sc.prettyobj):
         'rel_trans',        # Float
         'rel_sus',          # Float
         'prior_symptoms',   # Float
-        'sus_imm',          # Float
-        'trans_imm',        # Float
-        'prog_imm',         # Float
+#        'sus_imm',          # Float
+#        'trans_imm',        # Float
+#        'prog_imm',         # Float
         'vaccinations',     # Number of doses given per person
         'vaccine_source',   # index of vaccine that individual received
         'NAb',              # Current neutralization titre relative to convalescent plasma
@@ -152,12 +152,11 @@ strain_pars = ['rel_beta',
 # Immunity is broken down according to 3 axes, as listed here
 immunity_axes = ['sus', 'trans', 'prog']
 
-# Immunity protection also varies depending on your infection/vaccination history
+# Immunity protection also varies depending on your infection history
 immunity_sources = [
     'asymptomatic',
     'mild',
     'severe',
-#    'vaccine',
 ]
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
@@ -206,7 +205,6 @@ def get_colors():
     c.vaccinations          = '#5c399c'
     c.vaccinated            = '#5c399c'
     c.recoveries            = '#9e1149'
-#    c.recovered             = c.recoveries
     c.symptomatic           = '#c1ad71'
     c.severe                = '#c1981d'
     c.critical              = '#b86113'

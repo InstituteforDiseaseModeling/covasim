@@ -408,10 +408,10 @@ if __name__ == '__main__':
     # sim0 = test_synthpops()
 
 
-    sim0 = test_msim()
+    # sim0 = test_msim()
 
     # Run more complex tests
-    # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
