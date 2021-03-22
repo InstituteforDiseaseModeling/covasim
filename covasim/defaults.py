@@ -50,8 +50,8 @@ class PeopleMeta(sc.prettyobj):
         'rel_sus',          # Float
         'prior_symptoms',   # Float
         'sus_imm',          # Float
-        'trans_imm',        # Float
-        'prog_imm',         # Float
+        'symp_imm',        # Float
+        'sev_imm',         # Float
         'vaccinations',     # Number of doses given per person
         'vaccine_source',   # index of vaccine that individual received
         'NAb',              # Current neutralization titre relative to convalescent plasma
@@ -150,7 +150,7 @@ strain_pars = ['rel_beta',
 ]
 
 # Immunity is broken down according to 3 axes, as listed here
-immunity_axes = ['sus', 'trans', 'prog']
+immunity_axes = ['sus', 'symp', 'sev']
 
 # Immunity protection also varies depending on your infection/vaccination history
 immunity_sources = [
