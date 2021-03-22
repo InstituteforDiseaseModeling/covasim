@@ -172,7 +172,7 @@ class MultiSim(cvb.FlexPretty):
         elif combine:
             self.combine()
 
-        return
+        return self
 
 
     def shrink(self, **kwargs):
@@ -972,7 +972,7 @@ class Scenarios(cvb.ParsObj):
         # Save details about the run
         self._kept_people = keep_people
 
-        return
+        return self
 
 
     def compare(self, t=None, output=False):
