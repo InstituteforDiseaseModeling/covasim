@@ -1346,15 +1346,19 @@ class TransTree(sc.prettyobj):
             ttlist.append(tdict)
 
         df = pd.DataFrame(ttlist).rename(columns={'date': 'Day'})
-        df = df.loc[df['layer'] != 'seed_infection']
 
-        df['Stage'] = 'Symptomatic'
-        df.loc[df['s_asymp'], 'Stage'] = 'Asymptomatic'
-        df.loc[df['s_presymp'], 'Stage'] = 'Presymptomatic'
+        if len(df): # Don't proceed if there were no infections
+            df = df.loc[df['layer'] != 'seed_infection']
 
-        df['Severity'] = 'Mild'
-        df.loc[df['s_sev'], 'Severity'] = 'Severe'
-        df.loc[df['s_crit'], 'Severity'] = 'Critical'
+            df['Stage'] = 'Symptomatic'
+            df.loc[df['s_asymp'], 'Stage'] = 'Asymptomatic'
+            df.loc[df['s_presymp'], 'Stage'] = 'Presymptomatic'
+
+            df['Severity'] = 'Mild'
+            df.loc[df['s_sev'], 'Severity'] = 'Severe'
+            df.loc[df['s_crit'], 'Severity'] = 'Critical'
+        else:
+            print('Warning: transmission tree is empty since there were no infections.')
 
         self.df = df
 
