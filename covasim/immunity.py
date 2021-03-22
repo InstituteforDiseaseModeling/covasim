@@ -216,7 +216,6 @@ class Vaccine():
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
                 vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2= 2)
-                vaccine_pars['NAb_per_dose'] = [1, 4]
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -225,7 +224,6 @@ class Vaccine():
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
                 vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
-                vaccine_pars['NAb_per_dose'] = [1, 4]
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
                 vaccine_pars['label'] = vaccine
@@ -234,7 +232,6 @@ class Vaccine():
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
                 vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
-                vaccine_pars['NAb_per_dose'] = [1, 4]
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -243,7 +240,6 @@ class Vaccine():
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
                 vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
-                vaccine_pars['NAb_per_dose'] = [1]
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine

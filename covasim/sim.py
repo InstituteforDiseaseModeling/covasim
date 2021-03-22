@@ -480,7 +480,6 @@ class Sim(cvb.BaseSim):
                 self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
                 self['vaccine_info']['doses'] = vacc.doses
                 self['vaccine_info']['NAb_pars'] = vacc.NAb_pars
-                self['vaccine_info']['NAb_per_dose'] = vacc.NAb_per_dose
         return
 
     def rescale(self):
