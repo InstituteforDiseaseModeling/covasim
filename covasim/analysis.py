@@ -1411,6 +1411,7 @@ class TransTree(sc.prettyobj):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
+            ax.set_ylabel('Count')
 
         to_plot = dict(
             layer    = 'Layer',
