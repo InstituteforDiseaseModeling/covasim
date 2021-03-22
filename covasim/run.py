@@ -809,6 +809,16 @@ class MultiSim(cvb.FlexPretty):
             return string
 
 
+    def to_json(self, *args, **kwargs):
+        ''' Shortcut for base_sim.to_json() '''
+        return self.base_sim.to_json(*args, **kwargs)
+
+
+    def to_excel(self, *args, **kwargs):
+        ''' Shortcut for base_sim.to_excel() '''
+        return self.base_sim.to_excel(*args, **kwargs)
+
+
 class Scenarios(cvb.ParsObj):
     '''
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
