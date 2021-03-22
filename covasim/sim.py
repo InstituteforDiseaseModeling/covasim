@@ -475,13 +475,12 @@ class Sim(cvb.BaseSim):
 
             self['vaccine_info'] = {}
             self['vaccine_info']['rel_imm'] = np.full((nv, ns), np.nan, dtype=cvd.default_float)
-            self['vaccine_info']['NAb_pars'] = []
 
             for ind, vacc in enumerate(self['vaccines']):
                 self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
                 self['vaccine_info']['doses'] = vacc.doses
-                for dose in range(vacc.doses):
-                    self['vaccine_info']['NAb_pars'].append(vacc.NAb_pars[dose])
+                self['vaccine_info']['NAb_pars'] = vacc.NAb_pars
+                self['vaccine_info']['NAb_per_dose'] = vacc.NAb_per_dose
         return
 
     def rescale(self):

@@ -52,6 +52,7 @@ class PeopleMeta(sc.prettyobj):
         'sus_imm',          # Float
         'symp_imm',        # Float
         'sev_imm',         # Float
+        'prior_symptoms',   # Float
         'vaccinations',     # Number of doses given per person
         'vaccine_source',   # index of vaccine that individual received
         'NAb',              # Current neutralization titre relative to convalescent plasma
