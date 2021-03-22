@@ -31,6 +31,8 @@ class Analyzer(sc.prettyobj):
     '''
 
     def __init__(self, label=None):
+        if label is None:
+            label = self.__class__.__name__ # Use the class name if no label is supplied
         self.label = label # e.g. "Record ages"
         self.initialized = False
         return
@@ -54,6 +56,38 @@ class Analyzer(sc.prettyobj):
             sim: the Sim instance
         '''
         raise NotImplementedError
+
+
+    def to_json(self):
+        '''
+        Return JSON-compatible representation
+
+        Custom classes can't be directly represented in JSON. This method is a
+        one-way export to produce a JSON-compatible representation of the
+        intervention. This method will attempt to JSONify each attribute of the
+        intervention, skipping any that fail.
+
+        Returns:
+            JSON-serializable representation
+        '''
+        # Set the name
+        json = {}
+        json['analyzer_name'] = self.label if hasattr(self, 'label') else None
+        json['analyzer_class'] = self.__class__.__name__
+
+        # Loop over the attributes and try to process
+        attrs = self.__dict__.keys()
+        for attr in attrs:
+            try:
+                data = getattr(self, attr)
+                try:
+                    attjson = sc.jsonify(data)
+                    json[attr] = attjson
+                except Exception as E:
+                    json[attr] = f'Could not jsonify "{attr}" ({type(data)}): "{str(E)}"'
+            except Exception as E2:
+                json[attr] = f'Could not jsonify "{attr}": "{str(E2)}"'
+        return json
 
 
 def validate_recorded_dates(sim, requested_dates, recorded_dates, die=True):
@@ -824,7 +858,7 @@ class daily_stats(Analyzer):
 
 
 
-class Fit(sc.prettyobj):
+class Fit(Analyzer):
     '''
     A class for calculating the fit between the model and the data. Note the
     following terminology is used here:
@@ -847,13 +881,14 @@ class Fit(sc.prettyobj):
 
     **Example**::
 
-        sim = cv.Sim()
+        sim = cv.Sim(datafile='my-data-file.csv')
         sim.run()
         fit = sim.compute_fit()
         fit.plot()
     '''
 
     def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, **kwargs):
+        super().__init__(**kwargs) # Initialize the Analyzer object
 
         # Handle inputs
         self.weights    = weights
@@ -1141,7 +1176,7 @@ class Fit(sc.prettyobj):
         return fig
 
 
-class TransTree(sc.prettyobj):
+class TransTree(Analyzer):
     '''
     A class for holding a transmission tree. There are several different representations
     of the transmission tree: "infection_log" is copied from the people object and is the
@@ -1152,9 +1187,17 @@ class TransTree(sc.prettyobj):
     Args:
         sim (Sim): the sim object
         to_networkx (bool): whether to convert the graph to a NetworkX object
+
+    **Example**::
+
+        sim = cv.Sim()
+        sim.run()
+        tt = sim.make_transtree()
+        tt.plot_histograms()
     '''
 
-    def __init__(self, sim, to_networkx=False):
+    def __init__(self, sim, to_networkx=False, **kwargs):
+        super().__init__(**kwargs) # Initialize the Analyzer object
 
         # Pull out each of the attributes relevant to transmission
         attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}

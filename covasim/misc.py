@@ -7,6 +7,7 @@ import pandas as pd
 import pylab as pl
 import sciris as sc
 import scipy.stats as sps
+from pathlib import Path
 from . import version as cvv
 
 
@@ -41,6 +42,8 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
     '''
 
     # Load data
+    if isinstance(datafile, Path): # Convert to a string
+        datafile = str(datafile)
     if isinstance(datafile, str):
         df_lower = datafile.lower()
         if df_lower.endswith('csv'):
