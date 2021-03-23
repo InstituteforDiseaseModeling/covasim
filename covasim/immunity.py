@@ -412,7 +412,7 @@ def compute_nab(people, inds, prior_inf=True):
     prior_NAb_inds = inds[cvu.true(NAb_arrays > 0)]
     no_prior_NAb_inds = inds[cvu.true(NAb_arrays == 0)]
 
-    prior_NAb = people.NAb[prior_NAb_inds]
+    prior_NAb = people.NAb[day, prior_NAb_inds]
     NAb_boost = people.pars['NAb_boost']
 
     if prior_inf:
@@ -446,7 +446,7 @@ def compute_nab(people, inds, prior_inf=True):
             people.NAb[day, prior_NAb_inds] = init_NAb
 
     n_days = people.pars['n_days']
-    days_left = n_days - day # how many days left in sim
+    days_left = n_days - day+1 # how many days left in sim
     length = NAb_decay['pars1']['length']
     init_NAbs = people.NAb[day, inds]
 

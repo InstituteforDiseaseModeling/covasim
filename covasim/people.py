@@ -62,7 +62,7 @@ class People(cvb.BasePeople):
             elif 'imm' in key:  # everyone starts out with no immunity
                 self[key] = np.full((self.pars['n_strains'], self.pop_size), 0, dtype=cvd.default_float)
             elif 'NAb' in key:  # everyone starts out with no NAb
-                self[key] = np.full((self.pars['n_days'], self.pop_size), 0, dtype=cvd.default_float)
+                self[key] = np.full(((self.pars['n_days']+1), self.pop_size), 0, dtype=cvd.default_float)
             elif key == 'vaccinations':
                 self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
             else:
