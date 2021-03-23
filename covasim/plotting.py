@@ -272,15 +272,20 @@ def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
     return mpl_formatter
 
 
-def reset_ticks(ax, sim, date_args):
+def reset_ticks(ax, sim=None, date_args=None, start_day=None):
     ''' Set the tick marks, using dates by default '''
+
+    # Handle options
+    date_args = sc.objdict(date_args) # Ensure it's not a regular dict
+    if start_day is None and sim is not None:
+        start_day = sim['start_day']
 
     # Handle start and end days
     xmin,xmax = ax.get_xlim()
     if date_args.start_day:
-        xmin = float(sim.day(date_args.start_day)) # Keep original type (float)
+        xmin = float(sc.day(date_args.start_day), start_day=start_day) # Keep original type (float)
     if date_args.end_day:
-        xmax = float(sim.day(date_args.end_day))
+        xmax = float(sc.day(date_args.end_day), start_day=start_day)
     ax.set_xlim([xmin, xmax])
 
     # Set the x-axis intervals
@@ -290,7 +295,7 @@ def reset_ticks(ax, sim, date_args):
     # Set xticks as dates
     if date_args.as_dates:
 
-        ax.xaxis.set_major_formatter(date_formatter(start_day=sim['start_day'], dateformat=date_args.dateformat))
+        date_formatter(start_day=start_day, dateformat=date_args.dateformat, ax=ax)
         if not date_args.interval:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 

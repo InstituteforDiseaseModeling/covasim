@@ -1074,7 +1074,7 @@ class Fit(Analyzer):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, do_show=None, fig=None):
+    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, date_args=None, do_show=None, fig=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -1086,6 +1086,7 @@ class Fit(Analyzer):
             fig_args  (dict):  passed to pl.figure()
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
+            date_args (dict):  passed to cv.plotting.reset_ticks() (handle date format, rotation, etc.)
             do_show   (bool):  whether to show the plot
             fig       (fig):   if supplied, use this figure to plot in
 
@@ -1096,6 +1097,7 @@ class Fit(Analyzer):
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
+        date_args = sc.mergedicts(sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start_day=None, end_day=None), date_args)
 
         if keys is None:
             keys = self.keys + self.custom_keys
@@ -1116,7 +1118,7 @@ class Fit(Analyzer):
         for k,key in enumerate(keys):
             if key in self.keys: # It's a time series, plot with days and dates
                 days      = self.inds.sim[key] # The "days" axis (or not, for custom keys)
-                daylabel  = 'Day'
+                daylabel  = 'Date'
             else: #It's custom, we don't know what it is
                 days      = np.arange(len(self.losses[key])) # Just use indices
                 daylabel  = 'Index'
@@ -1146,30 +1148,35 @@ class Fit(Analyzer):
                         ax.set_xlabel('Date')
                         ax.set_ylabel(ylabel)
                         ax.set_title(title)
+                        cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
                         ax.legend()
 
-            pl.subplot(n_rows, n_keys, k+1*n_keys+1)
-            pl.plot(days, self.pair[key].data, c='k', label='Data', **plot_args)
-            pl.plot(days, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
-            pl.title(key)
+            ts_ax = pl.subplot(n_rows, n_keys, k+1*n_keys+1)
+            ts_ax.plot(days, self.pair[key].data, c='k', label='Data', **plot_args)
+            ts_ax.plot(days, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
+            ts_ax.set_title(key)
             if k == 0:
-                pl.ylabel('Time series (counts)')
-                pl.legend()
+                ts_ax.set_ylabel('Time series (counts)')
+                ts_ax.legend()
 
-            pl.subplot(n_rows, n_keys, k+2*n_keys+1)
-            pl.bar(days, self.diffs[key], width=width, color=colors[k], label='Difference')
-            pl.axhline(0, c='k')
+            diff_ax = pl.subplot(n_rows, n_keys, k+2*n_keys+1)
+            diff_ax.bar(days, self.diffs[key], width=width, color=colors[k], label='Difference')
+            diff_ax.axhline(0, c='k')
             if k == 0:
-                pl.ylabel('Differences (counts)')
-                pl.legend()
+                diff_ax.set_ylabel('Differences (counts)')
+                diff_ax.legend()
 
             loss_ax = pl.subplot(n_rows, n_keys, k+3*n_keys+1, sharey=loss_ax)
-            pl.bar(days, self.losses[key], width=width, color=colors[k], label='Losses')
-            pl.xlabel(daylabel)
-            pl.title(f'Total loss: {self.losses[key].sum():0.3f}')
+            loss_ax.bar(days, self.losses[key], width=width, color=colors[k], label='Losses')
+            loss_ax.set_xlabel(daylabel)
+            loss_ax.set_title(f'Total loss: {self.losses[key].sum():0.3f}')
             if k == 0:
-                pl.ylabel('Losses')
-                pl.legend()
+                loss_ax.set_ylabel('Losses')
+                loss_ax.legend()
+
+            if daylabel == 'Date':
+                for ax in [ts_ax, diff_ax, loss_ax]:
+                    cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
 
         cvset.handle_show(do_show) # Whether or not to call pl.show()
 
