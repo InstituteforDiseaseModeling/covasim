@@ -228,7 +228,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     return
 
 
-def date_formatter(start_day=None, dateformat=None, ax=None):
+def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
     '''
     Create an automatic date formatter based on a number of days and a start day.
 
@@ -240,12 +240,14 @@ def date_formatter(start_day=None, dateformat=None, ax=None):
         start_day (str/date): the start day, either as a string or date object
         dateformat (str): the date format
         ax (axes): if supplied, automatically set the x-axis formatter for this axis
+        sim (Sim): if supplied, get the start day from this
 
-    **Example**::
+    **Examples**::
 
-        formatter = date_formatter(start_day='2020-04-04', dateformat='%Y-%m-%d')
+        cv.date_formatter(sim=sim, ax=ax) # Automatically configure the axis with default options
+
+        formatter = cv.date_formatter(start_day='2020-04-04', dateformat='%Y-%m-%d') # Manually configure
         ax.xaxis.set_major_formatter(formatter)
-
     '''
 
     # Set the default -- "Mar-01"
@@ -253,13 +255,15 @@ def date_formatter(start_day=None, dateformat=None, ax=None):
         dateformat = '%b-%d'
 
     # Convert to a date object
+    if start_day is None and sim is not None:
+        start_day = sim['start_day']
     start_day = sc.date(start_day)
 
     @ticker.FuncFormatter
     def mpl_formatter(x, pos):
-        if sc.isnumber(x):
+        if sc.isnumber(x): # If the axis doesn't have date units
             return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
-        else:
+        else: # If the axis does
             return x.strftime(dateformat)
 
     if ax is not None:

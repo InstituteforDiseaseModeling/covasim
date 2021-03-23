@@ -1190,9 +1190,10 @@ class TransTree(Analyzer):
 
     **Example**::
 
-        sim = cv.Sim()
+        sim = cv.Sim().run()
         sim.run()
         tt = sim.make_transtree()
+        tt.plot()
         tt.plot_histograms()
     '''
 
@@ -1458,6 +1459,7 @@ class TransTree(Analyzer):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
+            cvpl.date_formatter(start_day=self.sim_start, ax=ax)
             ax.set_ylabel('Count')
 
         to_plot = dict(
