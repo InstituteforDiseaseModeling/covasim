@@ -10,182 +10,6 @@ do_show   = 1
 do_save   = 0
 
 
-def test_synthpops():
-    sim = cv.Sim(pop_size=5000, pop_type='synthpops')
-    sim.popdict = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF': 'f'})
-    sim.reset_layer_pars()
-
-    # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
-    sim.vxsubtarg = sc.objdict()
-    sim.vxsubtarg.age = [75, 65, 50, 18]
-    sim.vxsubtarg.prob = [.05, .05, .05, .05]
-    sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
-    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
-    sim['interventions'] += [pfizer]
-
-    sim.run()
-    return sim
-
-
-def test_vaccine_1strain(do_plot=True, do_show=True, do_save=False):
-    sc.heading('Run a basic sim with 1 strain, pfizer vaccine')
-
-    sc.heading('Setting up...')
-
-    # Define baseline parameters
-    base_pars = {
-        'n_days': 200,
-    }
-
-    n_runs = 3
-    base_sim = cv.Sim(base_pars)
-
-    # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
-    base_sim.vxsubtarg = sc.objdict()
-    base_sim.vxsubtarg.age = [75, 65, 50, 18]
-    base_sim.vxsubtarg.prob = [.05, .05, .05, .05]
-    base_sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
-    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
-
-    # Define the scenarios
-
-    scenarios = {
-        'baseline': {
-            'name': 'No Vaccine',
-            'pars': {}
-        },
-        'pfizer': {
-            'name': 'Pfizer starting on day 20',
-            'pars': {
-                'interventions': [pfizer],
-            }
-        },
-    }
-
-    metapars = {'n_runs': n_runs}
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run()
-
-    to_plot = sc.objdict({
-        'New infections': ['new_infections'],
-        'Cumulative infections': ['cum_infections'],
-        'New reinfections': ['new_reinfections'],
-        # 'Cumulative reinfections': ['cum_reinfections'],
-    })
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_basic_vaccination.png', to_plot=to_plot)
-
-    return scens
-
-
-def test_vaccine_2strains(do_plot=True, do_show=True, do_save=False):
-    sc.heading('Run a basic sim with b117 strain on day 10, pfizer vaccine day 20')
-
-    sc.heading('Setting up...')
-
-    # Define baseline parameters
-    base_pars = {
-        'n_days': 250,
-    }
-
-    n_runs = 3
-    base_sim = cv.Sim(base_pars)
-
-    # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
-    base_sim.vxsubtarg = sc.objdict()
-    base_sim.vxsubtarg.age = [75, 65, 50, 18]
-    base_sim.vxsubtarg.prob = [.01, .01, .01, .01]
-    base_sim.vxsubtarg.days = subtarg_days = [60, 150, 200, 220]
-    jnj = cv.vaccinate(days=subtarg_days, vaccine_pars='j&j', subtarget=vacc_subtarg)
-    b1351 = cv.Strain('b1351', days=10, n_imports=20)
-    p1 = cv.Strain('p1', days=100, n_imports=100)
-
-    # Define the scenarios
-
-    scenarios = {
-        'baseline': {
-            'name': 'B1351 on day 10, No Vaccine',
-            'pars': {
-                'strains': [b1351]
-            }
-        },
-        'b1351': {
-            'name': 'B1351 on day 10, J&J starting on day 60',
-            'pars': {
-                'interventions': [jnj],
-                'strains': [b1351],
-            }
-        },
-        'p1': {
-            'name': 'B1351 on day 10, J&J starting on day 60, p1 on day 100',
-            'pars': {
-                'interventions': [jnj],
-                'strains': [b1351, p1],
-            }
-        },
-    }
-
-    metapars = {'n_runs': n_runs}
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run()
-
-    to_plot = sc.objdict({
-        'New infections': ['new_infections'],
-        'Cumulative infections': ['cum_infections'],
-        'New reinfections': ['new_reinfections'],
-        # 'Cumulative reinfections': ['cum_reinfections'],
-    })
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_vaccine_b1351.png', to_plot=to_plot)
-
-    return scens
-
-
-def test_strainduration(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run a sim with 2 strains, one of which has a much longer period before symptoms develop')
-    sc.heading('Setting up...')
-
-    strain_pars = {'dur':{'inf2sym': {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9}}}
-    strains = cv.Strain(strain=strain_pars, strain_label='10 days til symptoms', days=10, n_imports=30)
-    tp = cv.test_prob(symp_prob=0.2) # Add an efficient testing program
-
-    base_pars = {
-        'beta': 0.015, # Make beta higher than usual so people get infected quickly
-        'n_days': 120,
-        'interventions': tp
-    }
-
-    n_runs = 1
-    base_sim = cv.Sim(base_pars)
-
-    # Define the scenarios
-    scenarios = {
-        'baseline': {
-            'name':'1 day to symptoms',
-            'pars': {}
-        },
-        'slowsymp': {
-            'name':'10 days to symptoms',
-            'pars': {'strains': [strains]}
-        }
-    }
-
-    metapars = {'n_runs': n_runs}
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run()
-
-    to_plot = sc.objdict({
-        'New infections': ['new_infections'],
-        'Cumulative infections': ['cum_infections'],
-        'New diagnoses': ['new_diagnoses'],
-        'Cumulative diagnoses': ['cum_diagnoses'],
-    })
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_strainduration.png', to_plot=to_plot)
-
-    return scens
-
-
 def test_import1strain(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing a new strain partway through a sim')
     sc.heading('Setting up...')
@@ -197,14 +21,9 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
 
     strain_pars = {
         'rel_beta': 1.5,
-        'imm_pars': {k: dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 10, 'lower_asymp': 0.1, 'decay_rate': -5}) for k in cvd.immunity_axes}
     }
-    immunity = {}
-    immunity['sus'] = np.array([[1,0.4],[0.9,1.]])
-    immunity['prog'] = np.array([1,1])
-    immunity['trans'] = np.array([1,1])
     pars = {
-        'immunity': immunity
+        'beta': 0.01
     }
     strain = cv.Strain(strain_pars, days=1, n_imports=20)
     sim = cv.Sim(pars=pars, strains=strain)
@@ -296,6 +115,238 @@ def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
+
+#%% Vaccination tests
+
+def test_vaccine_1strain(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test vaccination with a single strain')
+    sc.heading('Setting up...')
+
+    pars = {
+        'beta': 0.015,
+        'n_days': 120,
+    }
+
+    pfizer = cv.vaccinate(days=[20], vaccine_pars='pfizer')
+    sim = cv.Sim(
+        pars=pars,
+        interventions=pfizer
+    )
+    sim.run()
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'Cumulative infections': ['cum_infections'],
+        'New reinfections': ['new_reinfections'],
+    })
+    if do_plot:
+        sim.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_reinfection.png', to_plot=to_plot)
+
+    return sim
+
+
+def test_synthpops():
+    sim = cv.Sim(pop_size=5000, pop_type='synthpops')
+    sim.popdict = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF': 'f'})
+    sim.reset_layer_pars()
+
+    # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
+    sim.vxsubtarg = sc.objdict()
+    sim.vxsubtarg.age = [75, 65, 50, 18]
+    sim.vxsubtarg.prob = [.05, .05, .05, .05]
+    sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
+    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
+    sim['interventions'] += [pfizer]
+
+    sim.run()
+    return sim
+
+
+
+#%% Multisim and scenario tests
+
+def test_vaccine_1strain_scen(do_plot=True, do_show=True, do_save=False):
+    sc.heading('Run a basic sim with 1 strain, pfizer vaccine')
+
+    sc.heading('Setting up...')
+
+    # Define baseline parameters
+    base_pars = {
+        'n_days': 200,
+    }
+
+    n_runs = 3
+    base_sim = cv.Sim(base_pars)
+
+    # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
+    base_sim.vxsubtarg = sc.objdict()
+    base_sim.vxsubtarg.age = [75, 65, 50, 18]
+    base_sim.vxsubtarg.prob = [.05, .05, .05, .05]
+    base_sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
+    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
+
+    # Define the scenarios
+
+    scenarios = {
+        'baseline': {
+            'name': 'No Vaccine',
+            'pars': {}
+        },
+        'pfizer': {
+            'name': 'Pfizer starting on day 20',
+            'pars': {
+                'interventions': [pfizer],
+            }
+        },
+    }
+
+    metapars = {'n_runs': n_runs}
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run()
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'Cumulative infections': ['cum_infections'],
+        'New reinfections': ['new_reinfections'],
+        # 'Cumulative reinfections': ['cum_reinfections'],
+    })
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_basic_vaccination.png', to_plot=to_plot)
+
+    return scens
+
+
+def test_vaccine_2strains_scen(do_plot=True, do_show=True, do_save=False):
+    sc.heading('Run a basic sim with b117 strain on day 10, pfizer vaccine day 20')
+
+    sc.heading('Setting up...')
+
+    # Define baseline parameters
+    base_pars = {
+        'n_days': 250,
+    }
+
+    n_runs = 3
+    base_sim = cv.Sim(base_pars)
+
+    # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80
+    base_sim.vxsubtarg = sc.objdict()
+    base_sim.vxsubtarg.age = [75, 65, 50, 18]
+    base_sim.vxsubtarg.prob = [.01, .01, .01, .01]
+    base_sim.vxsubtarg.days = subtarg_days = [60, 150, 200, 220]
+    jnj = cv.vaccinate(days=subtarg_days, vaccine_pars='j&j', subtarget=vacc_subtarg)
+    b1351 = cv.Strain('b1351', days=10, n_imports=20)
+    p1 = cv.Strain('p1', days=100, n_imports=100)
+
+    # Define the scenarios
+
+    scenarios = {
+        'baseline': {
+            'name': 'B1351 on day 10, No Vaccine',
+            'pars': {
+                'strains': [b1351]
+            }
+        },
+        'b1351': {
+            'name': 'B1351 on day 10, J&J starting on day 60',
+            'pars': {
+                'interventions': [jnj],
+                'strains': [b1351],
+            }
+        },
+        'p1': {
+            'name': 'B1351 on day 10, J&J starting on day 60, p1 on day 100',
+            'pars': {
+                'interventions': [jnj],
+                'strains': [b1351, p1],
+            }
+        },
+    }
+
+    metapars = {'n_runs': n_runs}
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run()
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'Cumulative infections': ['cum_infections'],
+        'New reinfections': ['new_reinfections'],
+        # 'Cumulative reinfections': ['cum_reinfections'],
+    })
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_vaccine_b1351.png', to_plot=to_plot)
+
+    return scens
+
+
+def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Run a sim with 2 strains, one of which has a much longer period before symptoms develop')
+    sc.heading('Setting up...')
+
+    strain_pars = {'dur':{'inf2sym': {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9}}}
+    strains = cv.Strain(strain=strain_pars, strain_label='10 days til symptoms', days=10, n_imports=30)
+    tp = cv.test_prob(symp_prob=0.2) # Add an efficient testing program
+
+    base_pars = {
+        'beta': 0.015, # Make beta higher than usual so people get infected quickly
+        'n_days': 120,
+        'interventions': tp
+    }
+
+    n_runs = 1
+    base_sim = cv.Sim(base_pars)
+
+    # Define the scenarios
+    scenarios = {
+        'baseline': {
+            'name':'1 day to symptoms',
+            'pars': {}
+        },
+        'slowsymp': {
+            'name':'10 days to symptoms',
+            'pars': {'strains': [strains]}
+        }
+    }
+
+    metapars = {'n_runs': n_runs}
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run()
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'Cumulative infections': ['cum_infections'],
+        'New diagnoses': ['new_diagnoses'],
+        'Cumulative diagnoses': ['cum_diagnoses'],
+    })
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_strainduration.png', to_plot=to_plot)
+
+    return scens
+
+
+def test_msim():
+    # basic test for vaccine
+    b117 = cv.Strain('b117', days=0)
+    sim = cv.Sim(strains=[b117])
+    msim = cv.MultiSim(sim, n_runs=2)
+    msim.run()
+    msim.reduce()
+
+    to_plot = sc.objdict({
+
+        'Total infections': ['cum_infections'],
+        'New infections per day': ['new_infections'],
+        'New Re-infections per day': ['new_reinfections'],
+        'New infections by strain': ['new_infections_by_strain']
+    })
+
+    msim.plot(to_plot=to_plot, do_save=0, do_show=1, legend_args={'loc': 'upper left'}, axis_args={'hspace': 0.4}, interval=35)
+
+    return msim
+
+
+#%% Plotting and utilities
+
 def plot_results(sim, key, title, filename=None, do_show=True, do_save=False, labels=None):
 
     results = sim.results
@@ -376,50 +427,31 @@ def get_ind_of_min_value(list, time):
     return ind
 
 
-def test_msim():
-    # basic test for vaccine
-    b117 = cv.Strain('b117', days=0)
-    sim = cv.Sim(strains=[b117])
-    msim = cv.MultiSim(sim, n_runs=2)
-    msim.run()
-    msim.reduce()
-
-    to_plot = sc.objdict({
-
-        'Total infections': ['cum_infections'],
-        'New infections per day': ['new_infections'],
-        'New Re-infections per day': ['new_reinfections'],
-        'New infections by strain': ['new_infections_by_strain']
-    })
-
-    msim.plot(to_plot=to_plot, do_save=0, do_show=1, legend_args={'loc': 'upper left'}, axis_args={'hspace': 0.4}, interval=35)
-
-    return msim
-
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    # if 1:
-    #     sim = cv.Sim()
-    #     sim.run()
+    if 0:
+         sim = cv.Sim()
+         sim.run()
 
-    # sim0 = test_synthpops()
-
-
-    sim0 = test_msim()
-
-    # Run more complex tests
-    # sim1 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim2 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim3 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim4 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # scens2 = test_strainduration(do_plot=do_plot, do_save=do_save, do_show=do_show)
-
-    # Run Vaccine tests
+    # Run more complex single-sim tests
+    sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #
+    # # Run Vaccine tests
+    # sim4 = test_synthpops()
     # sim5 = test_vaccine_1strain()
-    # sim6 = test_vaccine_2strains()
+    #
+    # # Run multisim and scenario tests
+    # scens0 = test_vaccine_1strain_scen()
+    # scens1 = test_vaccine_2strains_scen()
+    # scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # msim0 = test_msim()
+
     sc.toc()
 
 

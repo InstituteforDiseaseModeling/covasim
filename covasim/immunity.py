@@ -166,7 +166,7 @@ class Vaccine():
         self.rel_imm = None # list of length total_strains with relative immunity factor
         self.doses = None
         self.interval = None
-        self.NAb_pars = None
+        self.NAb_init = None
         self.vaccine_strain_info = self.init_strain_vaccine_info()
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
@@ -215,7 +215,7 @@ class Vaccine():
             # Known parameters on pfizer
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2= 2)
+                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2= 2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -223,7 +223,7 @@ class Vaccine():
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
                 vaccine_pars['label'] = vaccine
@@ -231,7 +231,7 @@ class Vaccine():
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -239,7 +239,7 @@ class Vaccine():
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine
@@ -266,7 +266,7 @@ class Vaccine():
         for strain in range(ts-1):
             circulating_strains.append(sim['strains'][strain].strain_label)
 
-        if self.NAb_pars is None :
+        if self.NAb_init is None :
             errormsg = f'Did not provide parameters for this vaccine'
             raise ValueError(errormsg)
 
@@ -287,8 +287,96 @@ class Vaccine():
         return
 
 
+
+# %% NAb methods
+__all__ += ['compute_nab', 'nab_to_efficacy']
+
+def compute_nab(people, inds, prior_inf=True):
+    '''
+    Draws an initial NAb level for individuals and pre-computes NAb waning over time.
+    Can come from a natural infection or vaccination and depends on if there is prior immunity:
+    1) a natural infection. If individual has no existing NAb, draw from lognormal distribution
+    depending upon symptoms. If individual has existing NAb, multiply booster impact
+    2) Vaccination. If individual has no existing NAb, draw from lognormal distribution
+    depending upon vaccine source. If individual has existing NAb, multiply booster impact
+    '''
+
+    day = people.t  # timestep we are on
+    NAb_arrays = people.NAb[day, inds]
+
+    prior_NAb_inds = cvu.itrue(NAb_arrays > 0, inds) # Find people with prior NAbs
+    no_prior_NAb_inds = cvu.itrue(NAb_arrays == 0, inds) # Find people without prior NAbs
+
+    prior_NAb = people.NAb[day, prior_NAb_inds] # Array of NAb levels on this timestep for people with some NAbs
+    NAb_boost = people.pars['NAb_boost'] # Boosting factor
+
+    # PART A: compute the initial NAb level (depends on prior infection/vaccination history)
+    if prior_inf:
+
+        # 1) No prior NAb: draw NAb from a distribution and compute
+        if len(no_prior_NAb_inds):
+            init_NAb = cvu.sample(**people.pars['NAb_init'], size=len(no_prior_NAb_inds))
+            prior_symp = people.prior_symptoms[no_prior_NAb_inds]
+            no_prior_NAb = init_NAb * prior_symp
+            people.NAb[day, no_prior_NAb_inds] = no_prior_NAb
+
+        # 2) Prior NAb: multiply existing NAb by boost factor
+        if len(prior_NAb_inds):
+            init_NAb = prior_NAb * NAb_boost
+            people.NAb[day, prior_NAb_inds] = init_NAb
+
+    else:
+        # NAbs coming from a vaccine
+
+        # 1) No prior NAb: draw NAb from a distribution and compute
+        if len(no_prior_NAb_inds):
+            init_NAb = cvu.sample(**people.pars['vaccine_info']['NAb_init'], size=len(no_prior_NAb_inds))
+            people.NAb[day, no_prior_NAb_inds] = init_NAb
+
+        # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
+        if len(prior_NAb_inds):
+            init_NAb = prior_NAb * NAb_boost
+            people.NAb[day, prior_NAb_inds] = init_NAb
+
+
+    # PART B: compute NAb levels over time using waning functions
+    NAb_decay = people.pars['NAb_decay']
+    n_days = people.pars['n_days']
+    days_left = n_days - day+1 # how many days left in sim
+    NAb_waning = pre_compute_waning(length=days_left, form=NAb_decay['form'], pars=NAb_decay['pars'])
+    people.NAb[day:, inds] = np.add.outer(NAb_waning, people.NAb[day, inds])
+
+    return
+
+
+def nab_to_efficacy(nab, ax):
+    '''
+    Convert NAb levels to immunity protection factors, using the functional form
+    given in this paper: https://doi.org/10.1101/2021.03.09.21252641
+    Inputs:
+        nab (arr): an array of NAb levels
+        ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
+    Returns:
+        an array the same size as nab, containing the immunity protection factors for the specified axis
+     '''
+
+    choices = {'sus': -0.4, 'symp': 0, 'sev': 0.4}
+    if ax not in choices.keys():
+        errormsg = f'Choice provided not in list of choices'
+        raise ValueError(errormsg)
+
+    # Temporary parameter values, pending confirmation
+    n_50 = 0.2
+    slope = 2
+
+    # put in here nab to efficacy mapping (logistic regression from fig 1a from https://doi.org/10.1101/2021.03.09.21252641)
+    efficacy = 1/(1+np.exp(-slope*(nab - n_50 + choices[ax]))) # from logistic regression computed in R using data from Khoury et al
+    return efficacy
+
+
+
 # %% Immunity methods
-__all__ += ['init_immunity', 'pre_compute_waning', 'check_immunity']
+__all__ += ['init_immunity', 'check_immunity']
 
 
 def init_immunity(sim, create=False):
@@ -334,136 +422,6 @@ def init_immunity(sim, create=False):
         else:
             errormsg = f'Type of immunity["sus"] not understood: you provided {type(sim["immunity"]["sus"])}, but it should be an array or dict.'
             raise ValueError(errormsg)
-
-
-def pre_compute_waning(length, form, pars):
-    '''
-    Process immunity pars and functional form into a value
-    - 'exp_decay'       : exponential decay (TODO fill in details)
-    - 'logistic_decay'  : logistic decay (TODO fill in details)
-    - 'linear'          : linear decay (TODO fill in details)
-    - others TBC!
-
-    Args:
-        form (str):   the functional form to use
-        pars (dict): passed to individual immunity functions
-        length (float): length of time to compute immunity
-    '''
-
-    choices = [
-        'exp_decay',
-        'logistic_decay',
-        'linear_growth',
-        'linear_decay'
-    ]
-
-    # Process inputs
-    if form == 'exp_decay':
-        if pars['half_life'] is None: pars['half_life'] = np.nan
-        output = exp_decay(length, **pars)
-
-    elif form == 'logistic_decay':
-        output = logistic_decay(length, **pars)
-
-    elif form == 'linear_growth':
-        output = linear_growth(length, **pars)
-
-    elif form == 'linear_decay':
-        output = linear_decay(length, **pars)
-
-    else:
-        choicestr = '\n'.join(choices)
-        errormsg = f'The selected functional form "{form}" is not implemented; choices are: {choicestr}'
-        raise NotImplementedError(errormsg)
-
-    return output
-
-
-def nab_to_efficacy(nab, ax):
-    choices = {'sus': -0.4, 'symp': 0, 'sev': 0.4}
-    if ax not in choices.keys():
-        errormsg = f'Choice provided not in list of choices'
-        raise ValueError(errormsg)
-
-    n_50 = 0.2
-    slope = 2
-
-    # put in here nab to efficacy mapping (logistic regression from fig 1a)
-    efficacy = 1/(1+np.exp(-slope*(nab - n_50 + choices[ax]))) # from logistic regression computed in R using data from Khoury et al
-
-
-    return efficacy
-
-
-def compute_nab(people, inds, prior_inf=True):
-    '''
-    Draws an initial NAb level for individuals and pre-computes NAb waning over time.
-    Can come from a natural infection or vaccination and depends on if there is prior immunity:
-    1) a natural infection. If individual has no existing NAb, draw from lognormal distribution
-    depending upon symptoms. If individual has existing NAb, multiply booster impact
-    2) Vaccination. If individual has no existing NAb, draw from lognormal distribution
-    depending upon vaccine source. If individual has existing NAb, multiply booster impact
-    '''
-
-    NAb_decay = people.pars['NAb_decay']
-    day = people.t  # timestep we are on
-    NAb_arrays = people.NAb[day, inds]
-
-    prior_NAb_inds = inds[cvu.true(NAb_arrays > 0)]
-    no_prior_NAb_inds = inds[cvu.true(NAb_arrays == 0)]
-
-    prior_NAb = people.NAb[day, prior_NAb_inds]
-    NAb_boost = people.pars['NAb_boost']
-
-    if prior_inf:
-        NAb_pars = people.pars['NAb_pars']
-
-        # 1) No prior NAb: draw NAb from a distribution and compute
-        if len(no_prior_NAb_inds):
-            init_NAb = cvu.sample(**NAb_pars, size=len(no_prior_NAb_inds))
-            prior_symp = people.prior_symptoms[no_prior_NAb_inds]
-            no_prior_NAb = init_NAb * prior_symp
-            people.NAb[day, no_prior_NAb_inds] = no_prior_NAb
-
-        # 2) Prior NAb: multiply existing NAb by boost factor
-        if len(prior_NAb_inds):
-            init_NAb = prior_NAb * NAb_boost
-            people.NAb[day, prior_NAb_inds] = init_NAb
-
-    else:
-        # NAbs coming from a vaccine
-
-        NAb_pars = people.pars['vaccine_info']['NAb_pars']
-
-        # 1) No prior NAb: draw NAb from a distribution and compute
-        if len(no_prior_NAb_inds):
-            init_NAb = cvu.sample(**NAb_pars, size=len(no_prior_NAb_inds))
-            people.NAb[day, no_prior_NAb_inds] = init_NAb
-
-        # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
-        if len(prior_NAb_inds):
-            init_NAb = prior_NAb * NAb_boost
-            people.NAb[day, prior_NAb_inds] = init_NAb
-
-    n_days = people.pars['n_days']
-    days_left = n_days - day+1 # how many days left in sim
-    length = NAb_decay['pars1']['length']
-    init_NAbs = people.NAb[day, inds]
-
-    if days_left > length:
-        t1 = np.arange(length, dtype=cvd.default_int)[:,np.newaxis] + np.ones((length, len(init_NAbs)))
-        t1_result = init_NAbs - (NAb_decay['pars1']['rate']*t1)
-        t2 = np.arange(days_left - length, dtype=cvd.default_int)[:,np.newaxis] + np.ones((days_left - length, len(init_NAbs)))
-        t2_result = init_NAbs - (NAb_decay['pars1']['rate']*length) - np.exp(-t2*NAb_decay['pars2']['rate'])
-        result = np.concatenate((t1_result, t2_result), axis=0)
-
-    else:
-        t1 = np.arange(days_left, dtype=cvd.default_int)[:,np.newaxis] + np.ones((days_left, len(init_NAbs)))
-        result = init_NAbs - (NAb_decay['pars1']['rate']*t1)
-
-    people.NAb[day:, inds] = result
-
-    return
 
 
 def check_immunity(people, strain, sus=True, inds=None):
@@ -529,13 +487,85 @@ def check_immunity(people, strain, sus=True, inds=None):
 
         if len(was_inf):  # Immunity for reinfected people
             current_NAbs = people.NAb[people.t, was_inf]
-            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['symp'][strain], 'symp')
+            try: people.symp_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['symp'][strain], 'symp')
+            except:
+                import traceback;
+                traceback.print_exc();
+                import pdb;
+                pdb.set_trace()
             people.sev_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['sev'][strain], 'sev')
 
     return
 
 
-# Specific waning and growth functions are listed here
+
+# %% Methods for computing waning
+__all__ += ['pre_compute_waning']
+
+def pre_compute_waning(length, form='log_linear_exp_decay', pars=None):
+    '''
+    Process functional form and parameters into values
+    - 'log_linear_exp_decay': log-linear decay followed by exponential decay. The default choice, taken from https://doi.org/10.1101/2021.03.09.21252641
+    - 'exp_decay'       : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
+    - 'logistic_decay'  : logistic decay (TODO fill in details)
+    - 'linear'          : linear decay (TODO fill in details)
+    - others TBC!
+
+    Args:
+        length (float): length of array to return, i.e., for how long waning is calculated
+        form (str):   the functional form to use
+        pars (dict): passed to individual immunity functions
+    Returns:
+        array of length 'length' of values
+    '''
+
+    choices = [
+        'log_linear_exp_decay', # Default if no form is provided
+        'exp_decay',
+        'logistic_decay',
+        'linear_growth',
+        'linear_decay'
+    ]
+
+    # Process inputs
+    if form is None or form == 'log_linear_exp_decay':
+        output = log_linear_exp_decay(length, **pars)
+
+    elif form == 'exp_decay':
+        if pars['half_life'] is None: pars['half_life'] = np.nan
+        output = exp_decay(length, **pars)
+
+    elif form == 'logistic_decay':
+        output = logistic_decay(length, **pars)
+
+    elif form == 'linear_growth':
+        output = linear_growth(length, **pars)
+
+    elif form == 'linear_decay':
+        output = linear_decay(length, **pars)
+
+    else:
+        choicestr = '\n'.join(choices)
+        errormsg = f'The selected functional form "{form}" is not implemented; choices are: {choicestr}'
+        raise NotImplementedError(errormsg)
+
+    return output
+
+
+def log_linear_exp_decay(length, ll_rate, ll_length, exp_rate):
+    '''
+    Returns an array of length 'length' with containing the evaluated function at each point
+    '''
+
+    ll_part     = lambda t, ll_rate: -ll_rate*t
+    exp_part    = lambda t, init_val, exp_rate: init_val - np.exp(-t*exp_rate)
+    t = np.arange(length, dtype=cvd.default_int)
+    y1 = ll_part(cvu.true(t<ll_length), ll_rate)
+    y2 = exp_part(cvu.true(t>ll_length), y1[-1], exp_rate)
+    y  = np.concatenate([y1,y2])
+    return y
+
+
 def exp_decay(length, init_val, half_life, delay=None):
     '''
     Returns an array of length t with values for the immunity at each time step after recovery
