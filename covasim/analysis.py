@@ -1252,7 +1252,7 @@ class TransTree(Analyzer):
             print(warningmsg)
 
         # Include the basic line list
-        self.infection_log = sc.dcp(people.infection_log)
+        self.infection_log = people.infection_log
 
         # Parse into sources and targets
         self.sources = [None for i in range(self.pop_size)]
@@ -1362,6 +1362,8 @@ class TransTree(Analyzer):
     def make_detailed(self, people, reset=False):
         ''' Construct a detailed transmission tree, with additional information for each person '''
 
+        # Convert to a dataframe and initialize
+        df = pd.DataFrame(self.infection_log)
         detailed = [None]*self.pop_size
 
         for transdict in self.infection_log:
@@ -1401,8 +1403,7 @@ class TransTree(Analyzer):
 
         self.detailed = detailed
 
-        # Also re-parse the infection log and convert to a dataframe
-
+        # Also re-parse the transmission log and convert to a dataframe
         ttlist = []
         for source_ind, target_ind in self.transmissions:
             ddict = self.detailed[target_ind]
