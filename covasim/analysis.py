@@ -1152,6 +1152,12 @@ class TransTree(sc.prettyobj):
     Args:
         sim (Sim): the sim object
         to_networkx (bool): whether to convert the graph to a NetworkX object
+
+    **Example**::
+
+        sim = cv.Sim().run()
+        tt = sim.make_transtree()
+        tt.plot()
     '''
 
     def __init__(self, sim, to_networkx=False):
@@ -1411,6 +1417,7 @@ class TransTree(sc.prettyobj):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
+            cvpl.date_formatter(start_day=self.sim_start, ax=ax)
 
         to_plot = dict(
             layer    = 'Layer',
