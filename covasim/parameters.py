@@ -65,8 +65,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['total_strains']   = None  # Set during sim initialization, once strains have been specified and processed
 
     # Parameters used to calculate immunity
-    pars['NAb_init']                = dict(dist='lognormal', par1= 0.5, par2= 1)  # Parameters for the distribution of the initial level of NAbs following natural infection
-    pars['NAb_decay']               = dict(form='log_linear_exp_decay', pars={'ll_rate': 1/180, 'll_length': 250, 'exp_rate': 1/100}) # Parameters describing the kinetics of decay of NAbs over time
+    pars['NAb_init']                = dict(dist='normal', par1= 0, par2= 2)  # Parameters for the distribution of the initial level of log2(NAb) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['NAb_decay']               = dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250, 'decay_decay_rate': 0.001}) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
     pars['NAb_boost']               = 3 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
     pars['cross_immunity']          = 0.5   # Default cross-immunity protection factor that applies across different strains
     pars['rel_imm']                 = {} # Relative immunity from natural infection varies by symptoms
