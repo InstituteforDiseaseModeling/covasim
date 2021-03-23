@@ -63,23 +63,22 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Parameters that control settings and defaults for multi-strain runs
     pars['n_strains']       = 1     # The number of strains currently circulating in the population
     pars['total_strains']   = None  # Set during sim initialization, once strains have been specified and processed
-    pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor
-    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
-    pars['immune_degree']   = None  # Pre-loaded array mapping from NAb titre to efficacy, set in Immunity.py (based on Fig 1A of https://www.medrxiv.org/content/10.1101/2021.03.09.21252641v1.full.pdf)
-    pars['vaccine_info']    = None  # Vaccine info in a more easily accessible format
+
+    # Parameters used to calculate immunity
+    pars['NAb_init']                = dict(dist='lognormal', par1= 0.5, par2= 1)  # Parameters for the distribution of the initial level of NAbs following natural infection
+    pars['NAb_decay']               = dict(form='log_linear_exp_decay', pars={'ll_rate': 1/180, 'll_length': 250, 'exp_rate': 1/100}) # Parameters describing the kinetics of decay of NAbs over time
+    pars['NAb_boost']               = 3 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
+    pars['cross_immunity']          = 0.5   # Default cross-immunity protection factor that applies across different strains
+    pars['rel_imm']                 = {} # Relative immunity from natural infection varies by symptoms
+    pars['rel_imm']['asymptomatic'] = 0.5
+    pars['rel_imm']['mild']         = 0.85
+    pars['rel_imm']['severe']       = 1
+    pars['immunity']                = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
+    pars['vaccine_info']            = None  # Vaccine info in a more easily accessible format
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['NAb_init']        = dict(dist='lognormal', par1= 0.5, par2= 1)  # Parameters for the distribution of the initial level of NAbs following natural infection
-    pars['NAb_decay']       = dict(form='log_linear_exp_decay', pars={'ll_rate': 1/180, 'll_length': 250, 'exp_rate': 1/100}) # Parameters describing the kinetics of decay of NAbs over time
-    pars['NAb_boost']       = 3 # Multiplicative factor applied to a person's NAb levels if they get reinfected
-
-    pars['rel_imm'] = {}
-    pars['rel_imm']['asymptomatic'] = 0.5
-    pars['rel_imm']['mild']         = 0.85
-    pars['rel_imm']['severe']       = 1
-
     pars['dur'] = {}
         # Duration parameters: time for disease progression
     pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.6, par2=4.8) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, subtracting inf2sym duration
@@ -92,7 +91,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=14.0, par2=2.4) # Duration for people with severe symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=14.0, par2=2.4) # Duration for people with critical symptoms to recover, 22.6 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
     pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=6.2,  par2=1.7) # Duration from critical symptoms to death, 17.8 days total; see Verity et al., https://www.medrxiv.org/content/10.1101/2020.03.09.20033357v1.full.pdf
-
         # Severity parameters: probabilities of symptom progression
     pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
     pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
