@@ -215,8 +215,7 @@ class Vaccine():
             # Known parameters on pfizer
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(dist='lognormal', par1=2, par2= 2),
-                                            dict(dist='lognormal', par1=8, par2= 2)]
+                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2= 2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -224,8 +223,7 @@ class Vaccine():
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(dist='lognormal', par1=2, par2= 2),
-                                            dict(dist='lognormal', par1=8, par2= 2)]
+                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
                 vaccine_pars['label'] = vaccine
@@ -233,8 +231,7 @@ class Vaccine():
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(dist='lognormal', par1=2, par2= 2),
-                                            dict(dist='lognormal', par1=8, par2= 2)]
+                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -242,8 +239,7 @@ class Vaccine():
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = [dict(dist='lognormal', par1=2, par2= 2),
-                                            dict(dist='lognormal', par1=8, par2= 2)]
+                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine
@@ -384,71 +380,88 @@ def pre_compute_waning(length, form, pars):
 
 
 def nab_to_efficacy(nab, ax):
-    choices = ['sus', 'prog', 'trans']
-    if ax not in choices:
+    choices = {'sus': -0.4, 'symp': 0, 'sev': 0.4}
+    if ax not in choices.keys():
         errormsg = f'Choice provided not in list of choices'
         raise ValueError(errormsg)
 
+    n_50 = 0.2
+    slope = 2
+
     # put in here nab to efficacy mapping (logistic regression from fig 1a)
-    efficacy = nab
+    efficacy = 1/(1+np.exp(-slope*(nab - n_50 + choices[ax]))) # from logistic regression computed in R using data from Khoury et al
+
+
     return efficacy
 
 
 def compute_nab(people, inds, prior_inf=True):
+    '''
+    Draws an initial NAb level for individuals and pre-computes NAb waning over time.
+    Can come from a natural infection or vaccination and depends on if there is prior immunity:
+    1) a natural infection. If individual has no existing NAb, draw from lognormal distribution
+    depending upon symptoms. If individual has existing NAb, multiply booster impact
+    2) Vaccination. If individual has no existing NAb, draw from lognormal distribution
+    depending upon vaccine source. If individual has existing NAb, multiply booster impact
+    '''
+
     NAb_decay = people.pars['NAb_decay']
+    day = people.t  # timestep we are on
+    NAb_arrays = people.NAb[day, inds]
+
+    prior_NAb_inds = inds[cvu.true(NAb_arrays > 0)]
+    no_prior_NAb_inds = inds[cvu.true(NAb_arrays == 0)]
+
+    prior_NAb = people.NAb[day, prior_NAb_inds]
+    NAb_boost = people.pars['NAb_boost']
 
     if prior_inf:
-        # NAbs is coming from a natural infection
-        mild_inds = people.check_inds(people.susceptible, people.date_symptomatic, filter_inds=inds)
-        severe_inds = people.check_inds(people.susceptible, people.date_severe, filter_inds=inds)
-        mild_inds = np.setdiff1d(mild_inds, severe_inds)
-        asymp_inds = np.setdiff1d(inds, mild_inds)
-        asymp_inds = np.setdiff1d(asymp_inds, severe_inds)
-
         NAb_pars = people.pars['NAb_pars']
 
+        # 1) No prior NAb: draw NAb from a distribution and compute
+        if len(no_prior_NAb_inds):
+            init_NAb = cvu.sample(**NAb_pars, size=len(no_prior_NAb_inds))
+            prior_symp = people.prior_symptoms[no_prior_NAb_inds]
+            no_prior_NAb = init_NAb * prior_symp
+            people.NAb[day, no_prior_NAb_inds] = no_prior_NAb
 
-        init_NAb_asymp = cvu.sample(**NAb_pars['asymptomatic'], size=len(asymp_inds))
-        init_NAb_mild = cvu.sample(**NAb_pars['mild'], size=len(mild_inds))
-        init_NAb_severe = cvu.sample(**NAb_pars['severe'], size=len(severe_inds))
-        init_NAbs = np.concatenate((init_NAb_asymp, init_NAb_mild, init_NAb_severe))
+        # 2) Prior NAb: multiply existing NAb by boost factor
+        if len(prior_NAb_inds):
+            init_NAb = prior_NAb * NAb_boost
+            people.NAb[day, prior_NAb_inds] = init_NAb
 
     else:
         # NAbs coming from a vaccine
 
-        # Does anyone have a prior infection (want to increase their init_nab level)
-        was_inf = cvu.itrue(people.t >= people.date_recovered[inds], inds)
-
-        # Figure out how many doses everyone has
-        one_dose_inds = cvu.itrue(people.vaccinations[inds] == 1, inds)
-        two_dose_inds = cvu.itrue(people.vaccinations[inds] == 2, inds)
-
         NAb_pars = people.pars['vaccine_info']['NAb_pars']
 
-        init_NAb_one_dose = cvu.sample(**NAb_pars[0], size=len(one_dose_inds))
-        init_NAb_two_dose = cvu.sample(**NAb_pars[1], size=len(two_dose_inds))
-        init_NAbs = np.concatenate((init_NAb_one_dose, init_NAb_two_dose))
+        # 1) No prior NAb: draw NAb from a distribution and compute
+        if len(no_prior_NAb_inds):
+            init_NAb = cvu.sample(**NAb_pars, size=len(no_prior_NAb_inds))
+            people.NAb[day, no_prior_NAb_inds] = init_NAb
 
-    NAb_arrays = people.NAb[:,inds]
+        # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
+        if len(prior_NAb_inds):
+            init_NAb = prior_NAb * NAb_boost
+            people.NAb[day, prior_NAb_inds] = init_NAb
 
-    day = people.t # timestep we are on
     n_days = people.pars['n_days']
-    days_left = n_days - day # how many days left in sim
+    days_left = n_days - day+1 # how many days left in sim
     length = NAb_decay['pars1']['length']
+    init_NAbs = people.NAb[day, inds]
 
     if days_left > length:
         t1 = np.arange(length, dtype=cvd.default_int)[:,np.newaxis] + np.ones((length, len(init_NAbs)))
-        t1 = init_NAbs - (NAb_decay['pars1']['rate']*t1)
+        t1_result = init_NAbs - (NAb_decay['pars1']['rate']*t1)
         t2 = np.arange(days_left - length, dtype=cvd.default_int)[:,np.newaxis] + np.ones((days_left - length, len(init_NAbs)))
-        t2 = init_NAbs - (NAb_decay['pars1']['rate']*length) - np.exp(-t2*NAb_decay['pars2']['rate'])
-        result = np.concatenate((t1, t2), axis=0)
+        t2_result = init_NAbs - (NAb_decay['pars1']['rate']*length) - np.exp(-t2*NAb_decay['pars2']['rate'])
+        result = np.concatenate((t1_result, t2_result), axis=0)
 
     else:
         t1 = np.arange(days_left, dtype=cvd.default_int)[:,np.newaxis] + np.ones((days_left, len(init_NAbs)))
         result = init_NAbs - (NAb_decay['pars1']['rate']*t1)
 
-    NAb_arrays[day:, ] = result
-    people.NAb[:, inds] = NAb_arrays
+    people.NAb[day:, inds] = result
 
     return
 
@@ -487,7 +500,7 @@ def check_immunity(people, strain, sus=True, inds=None):
             vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc])
             vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
             current_NAbs = people.NAb[people.t, is_sus_vacc]
-            people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale)
+            people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale, 'sus')
 
         if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this strain
             current_NAbs = people.NAb[people.t, is_sus_was_inf_same]
@@ -511,13 +524,13 @@ def check_immunity(people, strain, sus=True, inds=None):
             vaccine_source = cvd.default_int(people.vaccine_source[is_inf_vacc])
             vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
             current_NAbs = people.NAb[people.t, is_inf_vacc]
-            people.trans_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['trans'][strain], 'trans')
-            people.prog_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['prog'][strain], 'prog')
+            people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['symp'][strain], 'symp')
+            people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['sev'][strain], 'sev')
 
         if len(was_inf):  # Immunity for reinfected people
             current_NAbs = people.NAb[people.t, was_inf]
-            people.trans_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['trans'][strain], 'trans')
-            people.prog_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['prog'][strain], 'prog')
+            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['symp'][strain], 'symp')
+            people.sev_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['sev'][strain], 'sev')
 
     return
 
