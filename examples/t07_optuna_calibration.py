@@ -7,11 +7,13 @@ import sciris as sc
 import covasim as cv
 import optuna as op
 
-# Create a (mutable) dictionary for global values
+# Create a (mutable) dictionary for global settings
 g = sc.objdict()
 g.name      = 'my-example-calibration'
 g.db_name   = f'{g.name}.db'
 g.storage   = f'sqlite:///{g.db_name}'
+g.n_workers = 4 # Define how many workers to run in parallel
+g.n_trials = 25 # Define the number of trials, i.e. sim runs, per worker
 
 
 def run_sim(pars, label=None, return_sim=False):
@@ -46,13 +48,13 @@ def run_trial(trial):
 def worker():
     ''' Run a single worker '''
     study = op.load_study(storage=g.storage, study_name=g.name)
-    output = study.optimize(run_trial, n_trials=n_trials)
+    output = study.optimize(run_trial, n_trials=g.n_trials)
     return output
 
 
 def run_workers():
     ''' Run multiple workers in parallel '''
-    output = sc.parallelize(worker, n_workers)
+    output = sc.parallelize(worker, g.n_workers)
     return output
 
 
@@ -66,10 +68,6 @@ def make_study():
 
 
 if __name__ == '__main__':
-
-    # Settings
-    n_workers = 4 # Define how many workers to run in parallel
-    n_trials = 25 # Define the number of trials, i.e. sim runs, per worker
 
     # Run the optimization
     t0 = sc.tic()
