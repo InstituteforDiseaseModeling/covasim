@@ -166,7 +166,7 @@ class Vaccine():
         self.rel_imm = None # list of length total_strains with relative immunity factor
         self.doses = None
         self.interval = None
-        self.NAb_pars = None
+        self.NAb_init = None
         self.vaccine_strain_info = self.init_strain_vaccine_info()
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
@@ -215,7 +215,7 @@ class Vaccine():
             # Known parameters on pfizer
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2= 2)
+                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2= 2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -223,7 +223,7 @@ class Vaccine():
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
                 vaccine_pars['label'] = vaccine
@@ -231,7 +231,7 @@ class Vaccine():
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -239,7 +239,7 @@ class Vaccine():
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_pars'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine
@@ -266,7 +266,7 @@ class Vaccine():
         for strain in range(ts-1):
             circulating_strains.append(sim['strains'][strain].strain_label)
 
-        if self.NAb_pars is None :
+        if self.NAb_init is None :
             errormsg = f'Did not provide parameters for this vaccine'
             raise ValueError(errormsg)
 

@@ -56,33 +56,6 @@ def test_reinfection_scens(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
-def test_reinfection(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run a basic sim with 1 strain and no reinfections')
-    sc.heading('Setting up...')
-
-    pars = {
-        'beta': 0.015,
-        'n_days': 120,
-#        'rel_imm': dict(asymptomatic=0.7, mild=0.8, severe=1.)
-    }
-
-    pfizer = cv.vaccinate(days=[20], vaccine_pars='pfizer')
-    sim = cv.Sim(
-        pars=pars,
-        interventions=pfizer
-    )
-    sim.run()
-
-    to_plot = sc.objdict({
-        'New infections': ['new_infections'],
-        'Cumulative infections': ['cum_infections'],
-        'New reinfections': ['new_reinfections'],
-    })
-    if do_plot:
-        sim.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_reinfection.png', to_plot=to_plot)
-
-    return sim
-
 
 
 #%% Run as a script
@@ -95,7 +68,6 @@ if __name__ == '__main__':
         sim.run()
 
     # Run more complex tests
-    sim1 = test_reinfection(**plot_args)
     #scens1 = test_reinfection_scens(**plot_args)
 
     sc.toc()
