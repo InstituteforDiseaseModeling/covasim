@@ -160,11 +160,11 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    snapshot  = test_snapshot()
-    agehist   = test_age_hist()
-    daily_age = test_daily_age()
-    daily     = test_daily_stats()
-    fit       = test_fit()
+    # snapshot  = test_snapshot()
+    # agehist   = test_age_hist()
+    # daily_age = test_daily_age()
+    # daily     = test_daily_stats()
+    # fit       = test_fit()
     transtree = test_transtree()
 
     print('\n'*2)

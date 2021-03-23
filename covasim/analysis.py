@@ -1273,8 +1273,9 @@ class TransTree(Analyzer):
                 self.source_dates[target] = date # Each target has at most one source
                 self.target_dates[source].append(date) # Each source can have multiple targets
 
-        # Count the number of targets each person has
-        self.n_targets = self.count_targets()
+        # Count the number of targets each person has, and the list of transmissions
+        self.count_targets()
+        self.count_transmissions()
 
         # Include the detailed transmission tree as well, as a list and as a dataframe
         self.make_detailed(people)
@@ -1311,20 +1312,6 @@ class TransTree(Analyzer):
             return 0
 
 
-    @property
-    def transmissions(self):
-        """
-        Iterable over edges corresponding to transmission events
-
-        This excludes edges corresponding to seeded infections without a source
-        """
-        output = []
-        for d in self.infection_log:
-            if d['source'] is not None:
-                output.append([d['source'], d['target']])
-        return output
-
-
     def day(self, day=None, which=None):
         ''' Convenience function for converting an input to an integer day '''
         if day is not None:
@@ -1359,7 +1346,30 @@ class TransTree(Analyzer):
                     n_targets[i] = len(self.targets[i])
         n_target_inds = sc.findinds(~np.isnan(n_targets))
         n_targets = n_targets[n_target_inds]
+        self.n_targets = n_targets
         return n_targets
+
+
+    def count_transmissions(self):
+        """
+        Iterable over edges corresponding to transmission events
+
+        This excludes edges corresponding to seeded infections without a source
+        """
+        source_inds = []
+        target_inds = []
+        transmissions = []
+        for d in self.infection_log:
+            if d['source'] is not None:
+                src = d['source']
+                trg = d['target']
+                source_inds.append(src)
+                target_inds.append(trg)
+                transmissions.append([src, trg])
+        self.transmissions = transmissions
+        self.source_inds = source_inds
+        self.target_inds = target_inds
+        return transmissions
 
 
     def make_detailed(self, people, reset=False):
@@ -1411,27 +1421,56 @@ class TransTree(Analyzer):
             ddf.loc[v_trg, src+attr] = people[attr][v_src]
 
         # Replace nan with false
-        def fillna(cols):
+        def fillna(nadf, cols):
             cols = sc.promotetolist(cols)
             filldict = {k:False for k in cols}
-            ddf.fillna(value=filldict, inplace=True)
+            nadf.fillna(value=filldict, inplace=True)
             return
 
         # Pull out valid indices for source and target
         ddf.loc[v_trg, src+'is_quarantined'] = (ddf.loc[v_trg, src+'date_quarantined'] <= vinfdates) & ~(ddf.loc[v_trg, src+'date_quarantined'] <= vinfdates)
-        fillna(src+'is_quarantined')
+        fillna(ddf, src+'is_quarantined')
         for is_attr,date_attr in zip(is_attrs, date_attrs):
             ddf.loc[v_trg, src+is_attr] = (ddf.loc[v_trg, src+date_attr] <= vinfdates)
-            fillna(src+is_attr)
+            fillna(ddf, src+is_attr)
 
         # Populate remaining properties
         ddf.loc[v_trg, src+'is_asymp'] = np.isnan(ddf.loc[v_trg, src+'date_symptomatic'])
         ddf.loc[v_trg, src+'is_presymp'] = ~ddf.loc[v_trg, src+'is_asymp'] & ~ddf.loc[v_trg, src+'is_symptomatic']
         ddf.loc[trg_inds, trg+'is_quarantined'] = (ddf.loc[trg_inds, trg+'date_quarantined'] <= ainfdates) & ~(ddf.loc[trg_inds, trg+'date_end_quarantine'] <= ainfdates)
-        fillna(trg+'is_quarantined')
+        fillna(ddf, trg+'is_quarantined')
 
         # Store
         self.detailed = ddf
+
+        # Also re-parse the log and convert to a simpler dataframe
+        targets = np.array(self.target_inds)
+        df = pd.DataFrame(index=np.arange(len(targets)))
+        infdates = ddf.loc[targets, 'date'].values
+        df.loc[:, 'date']      = infdates
+        df.loc[:, 'layer']     = ddf.loc[targets, 'layer'].values
+        df.loc[:, 's_asymp']   = np.isnan(ddf.loc[targets, 'src_date_symptomatic'].values)
+        df.loc[:, 's_presymp'] = ~(df.loc[:, 's_asymp'].values) & (infdates < ddf.loc[targets, 'src_date_symptomatic'].values)
+        fillna(df, 's_presymp')
+        df.loc[:, 's_sev']     = ddf.loc[targets,  'src_date_severe'].values      < infdates
+        df.loc[:, 's_crit']    = ddf.loc[targets,  'src_date_critical'].values    < infdates
+        df.loc[:, 's_diag']    = ddf.loc[targets,  'src_date_diagnosed'].values   < infdates
+        df.loc[:, 's_quar']    = (ddf.loc[targets, 'src_date_quarantined'].values < infdates) & ~(ddf.loc[targets, 'src_date_end_quarantine'].values <= infdates)
+        df.loc[:, 't_quar']    = (ddf.loc[targets, 'trg_date_quarantined'].values < infdates) & ~(ddf.loc[targets, 'trg_date_end_quarantine'].values <= infdates)
+        fillna(df, ['s_sev', 's_crit', 's_diag', 's_quar', 't_quar'])
+
+        df = df.rename(columns={'date': 'Day'}) # For use in plotting
+        df = df.loc[df['layer'] != 'seed_infection']
+
+        df['Stage'] = 'Symptomatic'
+        df.loc[df['s_asymp'], 'Stage'] = 'Asymptomatic'
+        df.loc[df['s_presymp'], 'Stage'] = 'Presymptomatic'
+
+        df['Severity'] = 'Mild'
+        df.loc[df['s_sev'], 'Severity'] = 'Severe'
+        df.loc[df['s_crit'], 'Severity'] = 'Critical'
+
+        self.df = df
 
         return
 
@@ -1563,7 +1602,8 @@ class TransTree(Analyzer):
                 source_ind = ddict['source'] # Index of the person who infected the target
 
                 target_date = ddict['date']
-                if source_ind is not None:  # Seed infections and importations won't have a source
+                if ~np.isnan(source_ind):  # Seed infections and importations won't have a source
+                    source_ind = int(source_ind)
                     source_date = detailed[source_ind]['date']
                 else:
                     source_ind = 0
