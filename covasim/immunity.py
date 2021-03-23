@@ -344,7 +344,7 @@ def compute_nab(people, inds, prior_inf=True):
     n_days = people.pars['n_days']
     days_left = n_days - day+1 # how many days left in sim
     NAb_waning = pre_compute_waning(length=days_left, form=NAb_decay['form'], pars=NAb_decay['pars'])
-    people.NAb[day:, inds] = np.add.outer(NAb_waning, people.NAb[day, inds])
+    people.NAb[day:, inds] = np.multiply.outer(NAb_waning,2**people.NAb[day, inds])
 
     return
 
@@ -502,10 +502,10 @@ def check_immunity(people, strain, sus=True, inds=None):
 # %% Methods for computing waning
 __all__ += ['pre_compute_waning']
 
-def pre_compute_waning(length, form='log_linear_exp_decay', pars=None):
+def pre_compute_waning(length, form='nab_decay', pars=None):
     '''
     Process functional form and parameters into values
-    - 'log_linear_exp_decay': log-linear decay followed by exponential decay. The default choice, taken from https://doi.org/10.1101/2021.03.09.21252641
+    - 'nab_decay'       : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
     - 'exp_decay'       : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
     - 'logistic_decay'  : logistic decay (TODO fill in details)
     - 'linear'          : linear decay (TODO fill in details)
@@ -520,7 +520,7 @@ def pre_compute_waning(length, form='log_linear_exp_decay', pars=None):
     '''
 
     choices = [
-        'log_linear_exp_decay', # Default if no form is provided
+        'nab_decay', # Default if no form is provided
         'exp_decay',
         'logistic_decay',
         'linear_growth',
@@ -528,8 +528,8 @@ def pre_compute_waning(length, form='log_linear_exp_decay', pars=None):
     ]
 
     # Process inputs
-    if form is None or form == 'log_linear_exp_decay':
-        output = log_linear_exp_decay(length, **pars)
+    if form is None or form == 'nab_decay':
+        output = nab_decay(length, **pars)
 
     elif form == 'exp_decay':
         if pars['half_life'] is None: pars['half_life'] = np.nan
@@ -552,17 +552,19 @@ def pre_compute_waning(length, form='log_linear_exp_decay', pars=None):
     return output
 
 
-def log_linear_exp_decay(length, ll_rate, ll_length, exp_rate):
+def nab_decay(length, init_decay_rate, init_decay_time, decay_decay_rate):
     '''
-    Returns an array of length 'length' with containing the evaluated function at each point
+    Returns an array of length 'length' containing the evaluated function NAb decay
+    function at each point
+    Uses exponential decay, with the rate of exponential decay also set to exponentilly decay (!) after 250 days
     '''
 
-    ll_part     = lambda t, ll_rate: -ll_rate*t
-    exp_part    = lambda t, init_val, exp_rate: init_val - np.exp(-t*exp_rate)
-    t = np.arange(length, dtype=cvd.default_int)
-    y1 = ll_part(cvu.true(t<ll_length), ll_rate)
-    y2 = exp_part(cvu.true(t>ll_length), y1[-1], exp_rate)
-    y  = np.concatenate([y1,y2])
+    f1  = lambda t, init_decay_rate: np.exp(-t*init_decay_rate)
+    f2  = lambda t, init_decay_rate, init_decay_time, decay_decay_rate: np.exp(-t*(init_decay_rate*np.exp(-(t-init_decay_time)*decay_decay_rate)))
+    t   = np.arange(length, dtype=cvd.default_int)
+    y1  = f1(cvu.true(t<init_decay_time), init_decay_rate)
+    y2  = f2(cvu.true(t>init_decay_time), init_decay_rate, init_decay_time, decay_decay_rate)
+    y   = np.concatenate([y1,y2])
     return y
 
 
