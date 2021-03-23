@@ -22,19 +22,21 @@ __all__ = ['date_formatter', 'plot_sim', 'plot_scens', 'plot_result', 'plot_comp
 #%% Plotting helper functions
 
 
-def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None, mpl_args=None, **kwargs):
+def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None,
+                legend_args=None, date_args=None, show_args=None, mpl_args=None, **kwargs):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
 
     # Set defaults
     defaults = sc.objdict()
-    defaults.fig     = dict(figsize=(10, 8))
-    defaults.plot    = dict(lw=1.5, alpha= 0.7)
-    defaults.scatter = dict(s=20, marker='s', alpha=0.7, zorder=0)
-    defaults.axis    = dict(left=0.10, bottom=0.08, right=0.95, top=0.95, wspace=0.30, hspace=0.30)
-    defaults.fill    = dict(alpha=0.2)
-    defaults.legend  = dict(loc='best', frameon=False)
-    defaults.show    = dict(data=True, ticks=True, interventions=True, legend=True)
-    defaults.mpl     = dict(dpi=None, fontsize=None, fontfamily=None) # Use Covasim global defaults
+    defaults.fig     = sc.objdict(figsize=(10, 8))
+    defaults.plot    = sc.objdict(lw=1.5, alpha= 0.7)
+    defaults.scatter = sc.objdict(s=20, marker='s', alpha=0.7, zorder=0)
+    defaults.axis    = sc.objdict(left=0.10, bottom=0.08, right=0.95, top=0.95, wspace=0.30, hspace=0.30)
+    defaults.fill    = sc.objdict(alpha=0.2)
+    defaults.legend  = sc.objdict(loc='best', frameon=False)
+    defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start_day=None, end_day=None)
+    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True)
+    defaults.mpl     = sc.objdict(dpi=None, fontsize=None, fontfamily=None) # Use Covasim global defaults
 
     # Handle directly supplied kwargs
     for dkey,default in defaults.items():
@@ -51,6 +53,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     args.axis    = sc.mergedicts(defaults.axis,    axis_args)
     args.fill    = sc.mergedicts(defaults.fill,    fill_args)
     args.legend  = sc.mergedicts(defaults.legend,  legend_args)
+    args.date    = sc.mergedicts(defaults.date,    fill_args)
     args.show    = sc.mergedicts(defaults.show,    show_args)
     args.mpl     = sc.mergedicts(defaults.mpl,     mpl_args)
 
@@ -255,7 +258,7 @@ def date_formatter(start_day=None, dateformat=None, ax=None):
     @ticker.FuncFormatter
     def mpl_formatter(x, pos):
         if sc.isnumber(x):
-            return (start_day + dt.timedelta(days=x)).strftime(dateformat)
+            return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
         else:
             return x.strftime(dateformat)
 
@@ -265,21 +268,31 @@ def date_formatter(start_day=None, dateformat=None, ax=None):
     return mpl_formatter
 
 
-
-def reset_ticks(ax, sim, interval, as_dates, dateformat):
+def reset_ticks(ax, sim, date_args):
     ''' Set the tick marks, using dates by default '''
 
+    # Handle start and end days
+    xmin,xmax = ax.get_xlim()
+    if date_args.start_day:
+        xmin = float(sim.day(date_args.start_day)) # Keep original type (float)
+    if date_args.end_day:
+        xmax = float(sim.day(date_args.end_day))
+    ax.set_xlim([xmin, xmax])
+
     # Set the x-axis intervals
-    if interval:
-        xmin,xmax = ax.get_xlim()
-        ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+    if date_args.interval:
+        ax.set_xticks(pl.arange(xmin, xmax+1, date_args.interval))
 
     # Set xticks as dates
-    if as_dates:
+    if date_args.as_dates:
 
-        ax.xaxis.set_major_formatter(date_formatter(start_day=sim['start_day'], dateformat=dateformat))
-        if not interval:
+        ax.xaxis.set_major_formatter(date_formatter(start_day=sim['start_day'], dateformat=date_args.dateformat))
+        if not date_args.interval:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+    # Handle rotation
+    if date_args.rotation:
+        ax.tick_params(axis='x', labelrotation=date_args.rotation)
 
     return
 
@@ -331,14 +344,15 @@ def set_line_options(input_args, reskey, resnum, default):
 #%% Core plotting functions
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
+         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
+         show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
          fig=None, ax=None, **kwargs):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args, **kwargs)
+    args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
+                       legend_args=legend_args, show_args=show_args, date_args=date_args, mpl_args=mpl_args, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
@@ -356,7 +370,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
             if args.show['data']:
                 plot_data(sim, ax, reskey, args.scatter, color=color) # Plot the data
             if args.show['ticks']:
-                reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['interventions']:
             plot_interventions(sim, ax) # Plot the interventions
         if args.show['legend']:
@@ -366,14 +380,14 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
 
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
-         setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
-         fig=None, ax=None, **kwargs):
+         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
+         show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True, setylim=True,
+         log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False, fig=None, ax=None, **kwargs):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, **kwargs)
+    args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
+                   legend_args=legend_args, show_args=show_args, date_args=date_args, mpl_args=mpl_args, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
@@ -396,7 +410,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
                 if args.show['interventions']:
                     plot_interventions(sim, ax) # Plot the interventions
                 if args.show['ticks']:
-                    reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                    reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['legend']:
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
@@ -404,16 +418,16 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
-                interval=None, color=None, label=None, do_show=None, do_save=False,
-                fig_path=None, fig=None, ax=None, **kwargs):
+                date_args=None, mpl_args=None, grid=False, commaticks=True, setylim=True, color=None, label=None,
+                do_show=None, do_save=False, fig_path=None, fig=None, ax=None, **kwargs):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
     sep_figs = False # Only one figure
     fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args, **kwargs)
+    args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args,
+                       date_args=date_args, mpl_args=mpl_args, **kwargs)
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Gather results
@@ -438,20 +452,19 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
-    reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+    reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
-def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
-                interval=None, color=None, label=None, fig=None, **kwargs):
+def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, mpl_args=None, grid=False,
+                 commaticks=True, setylim=True, color=None, label=None, fig=None, **kwargs):
     ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
 
     # Handle inputs
     fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args, **kwargs)
+    args = handle_args(fig_args=fig_args, axis_args=axis_args, mpl_args=mpl_args, **kwargs)
     fig, figs = create_figs(args, sep_figs=False, fig=fig)
 
     # Map from results into different categories
