@@ -197,14 +197,9 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
 
     strain_pars = {
         'rel_beta': 1.5,
-        'imm_pars': {k: dict(form='logistic_decay', pars={'init_val': 1., 'half_val': 10, 'lower_asymp': 0.1, 'decay_rate': -5}) for k in cvd.immunity_axes}
     }
-    immunity = {}
-    immunity['sus'] = np.array([[1,0.4],[0.9,1.]])
-    immunity['prog'] = np.array([1,1])
-    immunity['trans'] = np.array([1,1])
     pars = {
-        'immunity': immunity
+        'beta': 0.01
     }
     strain = cv.Strain(strain_pars, days=1, n_imports=20)
     sim = cv.Sim(pars=pars, strains=strain)
@@ -401,9 +396,9 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    # if 1:
-    #     sim = cv.Sim()
-    #     sim.run()
+    if 0:
+         sim = cv.Sim()
+         sim.run()
 
     # sim0 = test_synthpops()
 

@@ -71,10 +71,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['NAb_pars']        = dict(dist='lognormal', par1= 0.5, par2= 1)  # Parameters for NAbs distribution for natural infection
-    pars['NAb_decay']       = dict(form1='log-linear', pars1={'rate': 1/180, 'length': 250},
-                                   form2='exp_decay', pars2={'rate': 1/100})
-    pars['NAb_boost']       = 3
+    pars['NAb_init']        = dict(dist='lognormal', par1= 0.5, par2= 1)  # Parameters for the distribution of the initial level of NAbs following natural infection
+    pars['NAb_decay']       = dict(form='log_linear_exp_decay', pars={'ll_rate': 1/180, 'll_length': 250, 'exp_rate': 1/100}) # Parameters describing the kinetics of decay of NAbs over time
+    pars['NAb_boost']       = 3 # Multiplicative factor applied to a person's NAb levels if they get reinfected
 
     pars['rel_imm'] = {}
     pars['rel_imm']['asymptomatic'] = 0.5
