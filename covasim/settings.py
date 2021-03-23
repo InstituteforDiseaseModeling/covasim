@@ -146,6 +146,16 @@ def set_option(key=None, value=None, **kwargs):
     return
 
 
+def get_default(key=None):
+    ''' Helper function to get the original default options '''
+    return orig_options[key]
+
+
+def get_option(key=None):
+    ''' Helper function to get the current value of an option '''
+    return options[key]
+
+
 def get_help(output=False):
     '''
     Print information about options.
@@ -232,4 +242,5 @@ def reload_numba():
 
 # Add these here to be more accessible to the user
 options.set = set_option
+options.get_default = get_default
 options.help = get_help

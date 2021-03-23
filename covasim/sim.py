@@ -1088,6 +1088,7 @@ class Sim(cvb.BaseSim):
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
+            mpl_args     (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, fontsize, and fontfamily
             show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
             as_dates     (bool): Whether to plot the x-axis as dates or time points
             dateformat   (str):  Date string format, e.g. '%B %d'
@@ -1104,6 +1105,7 @@ class Sim(cvb.BaseSim):
             sep_figs     (bool): Whether to show separate figures for different results instead of subplots
             fig          (fig):  Handle of existing figure to plot into
             ax           (axes): Axes instance to plot into
+            kwargs       (dict): Parsed among figure, plot, scatter, and other settings (will raise an error if not recognized)
 
         Returns:
             fig: Figure handle
@@ -1126,8 +1128,12 @@ class Sim(cvb.BaseSim):
         Args:
             key (str): the key of the result to plot
 
-        **Examples**::
+        Returns:
+            fig: Figure handle
 
+        **Example**::
+
+            sim = cv.Sim().run()
             sim.plot_result('r_eff')
         '''
         fig = cvplt.plot_result(sim=self, key=key, *args, **kwargs)

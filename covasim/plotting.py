@@ -22,24 +22,61 @@ __all__ = ['date_formatter', 'plot_sim', 'plot_scens', 'plot_result', 'plot_comp
 #%% Plotting helper functions
 
 
-def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None):
+def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None, mpl_args=None, **kwargs):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
+
+    # Set defaults
+    defaults = sc.objdict()
+    defaults.fig     = dict(figsize=(10, 8))
+    defaults.plot    = dict(lw=1.5, alpha= 0.7)
+    defaults.scatter = dict(s=20, marker='s', alpha=0.7, zorder=0)
+    defaults.axis    = dict(left=0.10, bottom=0.08, right=0.95, top=0.95, wspace=0.30, hspace=0.30)
+    defaults.fill    = dict(alpha=0.2)
+    defaults.legend  = dict(loc='best', frameon=False)
+    defaults.show    = dict(data=True, ticks=True, interventions=True, legend=True)
+    defaults.mpl     = dict(dpi=None, fontsize=None, fontfamily=None) # Use Covasim global defaults
+
+    # Handle directly supplied kwargs
+    for dkey,default in defaults.items():
+        keys = list(kwargs.keys())
+        for kw in keys:
+            if kw in default.keys():
+                default[kw] = kwargs.pop(kw)
+
+    # Merge arguments together
     args = sc.objdict()
-    args.fig     = sc.mergedicts({'figsize': (10, 8)}, fig_args)
-    args.plot    = sc.mergedicts({'lw': 1.5, 'alpha': 0.7}, plot_args)
-    args.scatter = sc.mergedicts({'s':20, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
-    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.08, 'right': 0.95, 'top': 0.95, 'wspace': 0.30, 'hspace': 0.30}, axis_args)
-    args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
-    args.legend  = sc.mergedicts({'loc': 'best', 'frameon':False}, legend_args)
-    args.show    = sc.mergedicts({'data':True, 'interventions':True, 'legend':True, }, show_args)
+    args.fig     = sc.mergedicts(defaults.fig,     fig_args)
+    args.plot    = sc.mergedicts(defaults.plot,    plot_args)
+    args.scatter = sc.mergedicts(defaults.scatter, scatter_args)
+    args.axis    = sc.mergedicts(defaults.axis,    axis_args)
+    args.fill    = sc.mergedicts(defaults.fill,    fill_args)
+    args.legend  = sc.mergedicts(defaults.legend,  legend_args)
+    args.show    = sc.mergedicts(defaults.show,    show_args)
+    args.mpl     = sc.mergedicts(defaults.mpl,     mpl_args)
+
+    # If unused keyword arguments remain, raise an error
+    if len(kwargs):
+        notfound = sc.strjoin(kwargs.keys())
+        valid = sc.strjoin(sorted(set([k for d in defaults.values() for k in d.keys()]))) # Remove duplicates and order
+        errormsg = f'The following keywords could not be processed:\n{notfound}\n\n'
+        errormsg += f'Valid keywords are:\n{valid}\n\n'
+        errormsg += 'For more precise plotting control, use fig_args, plot_args, etc.'
+        raise sc.KeyNotFoundError(errormsg)
 
     # Handle what to show
-    show_keys = ['data', 'ticks', 'interventions', 'legend']
+    show_keys = defaults.show.keys()
     args.show = {k:True for k in show_keys}
     if show_args in [True, False]: # Handle all on or all off
         args.show = {k:show_args for k in show_keys}
     else:
         args.show = sc.mergedicts(args.show, show_args)
+
+    # Handle global Matplotlib arguments
+    args.mpl_orig = sc.objdict()
+    for key,value in args.mpl.items():
+        if value is not None:
+            args.mpl_orig[key] = cvset.options.get(key)
+            cvset.options.set(key, value)
 
     return args
 
@@ -247,7 +284,7 @@ def reset_ticks(ax, sim, interval, as_dates, dateformat):
     return
 
 
-def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
+def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
     ''' Handle saving, figure showing, and what value to return '''
 
     # Handle saving
@@ -258,13 +295,16 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
 
     # Show the figure, or close it
     do_show = cvset.handle_show(do_show)
-
     if cvset.options.close and not do_show:
         if sep_figs:
             for fig in figs:
                 pl.close(fig)
         else:
             pl.close(fig)
+
+    # Reset Matplotlib defaults
+    for key,value in args.mpl_orig.items():
+        cvset.options.set(key, value)
 
     # Return the figure or figures
     if sep_figs:
@@ -294,11 +334,11 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
          as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
-         fig=None, ax=None):
+         fig=None, ax=None, **kwargs):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
@@ -322,18 +362,18 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
         if args.show['legend']:
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
          as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
-         fig=None, ax=None):
+         fig=None, ax=None, **kwargs):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
@@ -360,20 +400,20 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
         if args.show['legend']:
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
                 interval=None, color=None, label=None, do_show=None, do_save=False,
-                fig_path=None, fig=None, ax=None):
+                fig_path=None, fig=None, ax=None, **kwargs):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
     sep_figs = False # Only one figure
     fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args, **kwargs)
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Gather results
@@ -400,18 +440,18 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
     reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
 def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
-                interval=None, color=None, label=None, fig=None):
+                interval=None, color=None, label=None, fig=None, **kwargs):
     ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
 
     # Handle inputs
     fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args)
+    args = handle_args(fig_args, plot_args, scatter_args, axis_args, **kwargs)
     fig, figs = create_figs(args, sep_figs=False, fig=fig)
 
     # Map from results into different categories
