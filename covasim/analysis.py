@@ -1227,6 +1227,9 @@ class TransTree(Analyzer):
         tt = sim.make_transtree()
         tt.plot()
         tt.plot_histograms()
+
+    New in version 2.0.5: ``tt.detailed`` is a dataframe rather than a list of dictionaries;
+    for the latter, use ``tt.detailed.to_dict('records')``.
     '''
 
     def __init__(self, sim, to_networkx=False, **kwargs):
@@ -1251,8 +1254,8 @@ class TransTree(Analyzer):
                          'rerun with rescale=False and pop_scale=1 for reliable results.'
             print(warningmsg)
 
-        # Include the basic line list
-        self.infection_log = sc.dcp(people.infection_log)
+        # Include the basic line list -- copying directly is slow, so we'll make a copy later
+        self.infection_log = people.infection_log
 
         # Parse into sources and targets
         self.sources = [None for i in range(self.pop_size)]
@@ -1362,81 +1365,73 @@ class TransTree(Analyzer):
     def make_detailed(self, people, reset=False):
         ''' Construct a detailed transmission tree, with additional information for each person '''
 
-        # Convert to a dataframe and initialize
-        df = pd.DataFrame(self.infection_log)
-        detailed = [None]*self.pop_size
+        # Convert infection log to a dataframe and initialize
+        inf_df = sc.dcp(pd.DataFrame(self.infection_log))
 
-        for ddict in self.infection_log:
+        # Initialization
+        n_people = len(people)
+        src = 'src_'
+        trg = 'trg_'
+        attrs = ['age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_severe', 'date_critical', 'date_known_contact']
+        quar_attrs = ['date_quarantined', 'date_end_quarantine']
+        date_attrs = [attr for attr in attrs if attr.startswith('date_')]
+        is_attrs = [attr.replace('date_', 'is_') for attr in date_attrs]
+        ddf = pd.DataFrame(index=np.arange(n_people))
 
-            # Pull out key quantities
-            source = ddict['source']
-            target = ddict['target']
-            ddict['s'] = {} # Source properties
-            ddict['t'] = {} # Target properties
+        # Handle indices
+        trg_inds    = np.array(inf_df['target'].values, dtype=np.int64)
+        src_inds    = np.array(inf_df['source'].values)
+        date_vals   = np.array(inf_df['date'].values)
+        layer_vals  = np.array(inf_df['layer'].values)
+        src_arr     = np.nan*np.zeros(n_people)
+        trg_arr     = np.nan*np.zeros(n_people)
+        infdate_arr = np.nan*np.zeros(n_people)
 
-            # If the source is available (e.g. not a seed infection), loop over both it and the target
-            if source is not None:
-                stdict = {'s':source, 't':target}
-            else:
-                stdict = {'t':target}
+        # Map onto arrays
+        src_arr[trg_inds]     = src_inds
+        trg_arr[trg_inds]     = trg_inds
+        infdate_arr[trg_inds] = date_vals
 
-            # Pull out each of the attributes relevant to transmission
-            attrs = ['age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_end_quarantine', 'date_severe', 'date_critical', 'date_known_contact']
-            for st,stind in stdict.items():
-                for attr in attrs:
-                    ddict[st][attr] = people[attr][stind]
-            if source is not None:
-                for attr in attrs:
-                    if attr.startswith('date_'):
-                        is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
-                        if attr == 'date_quarantined': # This has an end date specified
-                            ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] and not (ddict['s']['date_end_quarantine'] <= ddict['date'])
-                        elif attr != 'date_end_quarantine': # This is not a state
-                            ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
+        # Further index wrangling
+        ts_inds   = sc.findinds(~np.isnan(trg_arr) * ~np.isnan(src_arr)) # Valid target-source indices
+        v_src     = np.array(src_arr[ts_inds], dtype=np.int64) # Valid source indices
+        v_trg     = np.array(trg_arr[ts_inds], dtype=np.int64) # Valid target indices
+        vinfdates = infdate_arr[v_trg] # Valid target-source pair infection dates
+        ainfdates = infdate_arr[trg_inds] # All infection dates
 
-                ddict['s']['is_asymp']   = np.isnan(people.date_symptomatic[source])
-                ddict['s']['is_presymp'] = ~ddict['s']['is_asymp'] and ~ddict['s']['is_symptomatic'] # Not asymptomatic and not currently symptomatic
-            ddict['t']['is_quarantined'] = ddict['t']['date_quarantined'] <= ddict['date'] and not (ddict['t']['date_end_quarantine'] <= ddict['date']) # This is the only target date that it makes sense to define since it can happen before infection
+        # Populate main columns
+        ddf.loc[v_trg,    'source'] = v_src
+        ddf.loc[trg_inds, 'target'] = trg_inds
+        ddf.loc[trg_inds, 'date']   = ainfdates
+        ddf.loc[trg_inds, 'layer']  = layer_vals
 
-            detailed[target] = ddict
+        # Populate from people
+        for attr in attrs+quar_attrs:
+            ddf.loc[:, trg+attr] = people[attr][:]
+            ddf.loc[v_trg, src+attr] = people[attr][v_src]
 
-        self.detailed = detailed
+        # Replace nan with false
+        def fillna(cols):
+            cols = sc.promotetolist(cols)
+            filldict = {k:False for k in cols}
+            ddf.fillna(value=filldict, inplace=True)
+            return
 
-        # Also re-parse the transmission log and convert to a dataframe
-        ttlist = []
-        for source_ind, target_ind in self.transmissions:
-            ddict = self.detailed[target_ind]
-            source = ddict['s']
-            target = ddict['t']
+        # Pull out valid indices for source and target
+        ddf.loc[v_trg, src+'is_quarantined'] = (ddf.loc[v_trg, src+'date_quarantined'] <= vinfdates) & ~(ddf.loc[v_trg, src+'date_quarantined'] <= vinfdates)
+        fillna(src+'is_quarantined')
+        for is_attr,date_attr in zip(is_attrs, date_attrs):
+            ddf.loc[v_trg, src+is_attr] = (ddf.loc[v_trg, src+date_attr] <= vinfdates)
+            fillna(src+is_attr)
 
-            tdict = {}
-            tdict['date']      =  ddict['date']
-            tdict['layer']     =  ddict['layer']
-            tdict['s_asymp']   = np.isnan(source['date_symptomatic']) # True if they *never* became symptomatic
-            tdict['s_presymp'] =  ~tdict['s_asymp'] and tdict['date']<source['date_symptomatic'] # True if they became symptomatic after the transmission date
-            tdict['s_sev']     = source['date_severe'] < tdict['date']
-            tdict['s_crit']    = source['date_critical'] < tdict['date']
-            tdict['s_diag']    = source['date_diagnosed'] < tdict['date']
-            tdict['s_quar']    = source['date_quarantined'] <= tdict['date'] and not (source['date_end_quarantine'] <= tdict['date'])
-            tdict['t_quar']    = target['date_quarantined'] <= tdict['date'] and not (target['date_end_quarantine'] <= tdict['date'])
-            ttlist.append(tdict)
+        # Populate remaining properties
+        ddf.loc[v_trg, src+'is_asymp'] = np.isnan(ddf.loc[v_trg, src+'date_symptomatic'])
+        ddf.loc[v_trg, src+'is_presymp'] = ~ddf.loc[v_trg, src+'is_asymp'] & ~ddf.loc[v_trg, src+'is_symptomatic']
+        ddf.loc[trg_inds, trg+'is_quarantined'] = (ddf.loc[trg_inds, trg+'date_quarantined'] <= ainfdates) & ~(ddf.loc[trg_inds, trg+'date_end_quarantine'] <= ainfdates)
+        fillna(trg+'is_quarantined')
 
-        df = pd.DataFrame(ttlist).rename(columns={'date': 'Day'})
-
-        if len(df): # Don't proceed if there were no infections
-            df = df.loc[df['layer'] != 'seed_infection']
-
-            df['Stage'] = 'Symptomatic'
-            df.loc[df['s_asymp'], 'Stage'] = 'Asymptomatic'
-            df.loc[df['s_presymp'], 'Stage'] = 'Presymptomatic'
-
-            df['Severity'] = 'Mild'
-            df.loc[df['s_sev'], 'Severity'] = 'Severe'
-            df.loc[df['s_crit'], 'Severity'] = 'Critical'
-        else:
-            print('Warning: transmission tree is empty since there were no infections.')
-
-        self.df = df
+        # Store
+        self.detailed = ddf
 
         return
 
@@ -1554,13 +1549,13 @@ class TransTree(Analyzer):
         quars = [list() for i in range(n)]
 
         # Construct each frame of the animation
-        for ddict in self.detailed:  # Loop over every person
+        detailed = self.detailed.to_dict('records') # Convert to the old style
+        for ddict in detailed:  # Loop over every person
             if ddict is None:
                 continue # Skip the 'None' node corresponding to seeded infections
 
             frame = {}
             tdq = {}  # Short for "tested, diagnosed, or quarantined"
-            target = ddict['t']
             target_ind = ddict['target']
 
             if not np.isnan(ddict['date']): # If this person was infected
@@ -1569,7 +1564,7 @@ class TransTree(Analyzer):
 
                 target_date = ddict['date']
                 if source_ind is not None:  # Seed infections and importations won't have a source
-                    source_date = self.detailed[source_ind]['date']
+                    source_date = detailed[source_ind]['date']
                 else:
                     source_ind = 0
                     source_date = 0
@@ -1585,9 +1580,9 @@ class TransTree(Analyzer):
                 tdq['t'] = target_ind
                 tdq['d'] = target_date
                 tdq['c'] = colors[int(target_ind)]
-                date_t = target['date_tested']
-                date_d = target['date_diagnosed']
-                date_q = target['date_known_contact']
+                date_t = ddict['trg_date_tested']
+                date_d = ddict['trg_date_diagnosed']
+                date_q = ddict['trg_date_known_contact']
                 if ~np.isnan(date_t) and date_t < n:
                     tests[int(date_t)].append(tdq)
                 if ~np.isnan(date_d) and date_d < n:
