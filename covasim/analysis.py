@@ -1252,7 +1252,7 @@ class TransTree(Analyzer):
             print(warningmsg)
 
         # Include the basic line list
-        self.infection_log = people.infection_log
+        self.infection_log = sc.dcp(people.infection_log)
 
         # Parse into sources and targets
         self.sources = [None for i in range(self.pop_size)]
@@ -1366,10 +1366,9 @@ class TransTree(Analyzer):
         df = pd.DataFrame(self.infection_log)
         detailed = [None]*self.pop_size
 
-        for transdict in self.infection_log:
+        for ddict in self.infection_log:
 
             # Pull out key quantities
-            ddict  = sc.dcp(transdict) # For "detailed dictionary"
             source = ddict['source']
             target = ddict['target']
             ddict['s'] = {} # Source properties
