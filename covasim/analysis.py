@@ -877,6 +877,7 @@ class Fit(Analyzer):
         custom (dict): a custom dictionary of additional data to fit; format is e.g. {'my_output':{'data':[1,2,3], 'sim':[1,2,4], 'weights':2.0}}
         compute (bool): whether to compute the mismatch immediately
         verbose (bool): detail to print
+        die (bool): whether to raise an exception if no data are supplied
         kwargs (dict): passed to cv.compute_gof() -- see this function for more detail on goodness-of-fit calculation options
 
     **Example**::
@@ -887,7 +888,7 @@ class Fit(Analyzer):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, **kwargs):
+    def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, die=True, **kwargs):
         super().__init__(**kwargs) # Initialize the Analyzer object
 
         # Handle inputs
@@ -897,17 +898,25 @@ class Fit(Analyzer):
         self.weights    = sc.mergedicts({'cum_deaths':10, 'cum_diagnoses':5}, weights)
         self.keys       = keys
         self.gof_kwargs = kwargs
+        self.die        = die
 
         # Copy data
         if sim.data is None: # pragma: no cover
             errormsg = 'Model fit cannot be calculated until data are loaded'
-            raise RuntimeError(errormsg)
+            if self.die:
+                raise RuntimeError(errormsg)
+            else:
+                print('Warning: ', errormsg)
+                sim.data = pd.DataFrame() # Use an empty dataframe
         self.data = sim.data
 
         # Copy sim results
         if not sim.results_ready: # pragma: no cover
             errormsg = 'Model fit cannot be calculated until results are run'
-            raise RuntimeError(errormsg)
+            if self.die:
+                raise RuntimeError(errormsg)
+            else:
+                print('Warning: ', errormsg)
         self.sim_results = sc.objdict()
         for key in sim.result_keys() + ['t', 'date']:
             self.sim_results[key] = sim.results[key]
@@ -949,17 +958,23 @@ class Fit(Analyzer):
 
         data_cols = self.data.columns
         if self.keys is None:
-            sim_keys = self.sim_results.keys()
+            sim_keys = [k for k in self.sim_results.keys() if k.startswith('cum_')] # Default sim keys, only keep cumulative keys if no keys are supplied
             intersection = list(set(sim_keys).intersection(data_cols)) # Find keys in both the sim and data
-            self.keys = [key for key in sim_keys if key in intersection and key.startswith('cum_')] # Only keep cumulative keys
+            self.keys = [key for key in sim_keys if key in intersection] # Maintain key order
             if not len(self.keys): # pragma: no cover
-                errormsg = f'No matches found between simulation result keys ({sim_keys}) and data columns ({data_cols})'
-                raise sc.KeyNotFoundError(errormsg)
+                errormsg = f'No matches found between simulation result keys:\n{sc.strjoin(sim_keys)}\n\nand data columns:\n{sc.strjoin(data_cols)}'
+                if self.die:
+                    raise sc.KeyNotFoundError(errormsg)
+                else:
+                    print('Warning: ', errormsg)
         mismatches = [key for key in self.keys if key not in data_cols]
         if len(mismatches): # pragma: no cover
             mismatchstr = ', '.join(mismatches)
             errormsg = f'The following requested key(s) were not found in the data: {mismatchstr}'
-            raise sc.KeyNotFoundError(errormsg)
+            if self.die:
+                raise sc.KeyNotFoundError(errormsg)
+            else:
+                print('Warning: ', errormsg)
 
         for key in self.keys: # For keys present in both the results and in the data
             self.inds.sim[key]  = []
@@ -977,6 +992,7 @@ class Fit(Analyzer):
             self.inds.data[key] = np.array(self.inds.data[key])
 
         # Convert into paired points
+        matches = 0 # Count how many data points match
         for key in self.keys:
             self.pair[key] = sc.objdict()
             sim_inds = self.inds.sim[key]
@@ -985,12 +1001,14 @@ class Fit(Analyzer):
             self.pair[key].sim  = np.zeros(n_inds)
             self.pair[key].data = np.zeros(n_inds)
             for i in range(n_inds):
+                matches += 1
                 self.pair[key].sim[i]  = self.sim_results[key].values[sim_inds[i]]
                 self.pair[key].data[i] = self.data[key].values[data_inds[i]]
 
         # Process custom inputs
         self.custom_keys = list(self.custom.keys())
         for key in self.custom.keys():
+            matches += 1 # If any of these exist, count it as  amatch
 
             # Initialize and do error checking
             custom = self.custom[key]
@@ -1018,6 +1036,13 @@ class Fit(Analyzer):
             wt = custom.get('weight', 1.0) # Attempt to retrieve key 'weight', or use the default if not provided
             wt = custom.get('weights', wt) # ...but also try "weights"
             self.weights[key] = wt # Set the weight
+
+        if matches == 0:
+            errormsg = 'No paired data points were found between the supplied data and the simulation; please check the dates for each'
+            if self.die:
+                raise ValueError(errormsg)
+            else:
+                print('Warning: ', errormsg)
 
         return
 

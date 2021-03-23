@@ -26,7 +26,7 @@ date_range = sc.daterange
 __all__ += ['load_data', 'load', 'save', 'migrate', 'savefig']
 
 
-def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, **kwargs):
+def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, start_day=None, **kwargs):
     '''
     Load data for comparing to the model output, either from file or from a dataframe.
 
@@ -35,6 +35,7 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
         columns (list): list of column names (otherwise, load all)
         calculate (bool): whether to calculate cumulative values from daily counts
         check_date (bool): whether to check that a 'date' column is present
+        start_day (date): if the 'date' column is provided as integer number of days, consider them relative to this
         kwargs (dict): passed to pd.read_excel()
 
     Returns:
@@ -88,7 +89,10 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
             errormsg = f'Required column "date" not found; columns are {data.columns}'
             raise ValueError(errormsg)
         else:
-            data['date'] = pd.to_datetime(data['date']).dt.date
+            if data['date'].dtype == np.int64: # If it's integers, treat it as days from the start day
+                data['date'] = sc.date(data['date'].values, start_date=start_day)
+            else: # Otherwise, use Pandas to convert it
+                data['date'] = pd.to_datetime(data['date']).dt.date
         data.set_index('date', inplace=True, drop=False) # Don't drop so sim.data['date'] can still be accessed
 
     return data
