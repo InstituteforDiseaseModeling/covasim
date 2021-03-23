@@ -7,6 +7,12 @@ import sciris as sc
 import covasim as cv
 import optuna as op
 
+# Create a (mutable) dictionary for global values
+g = sc.objdict()
+g.name      = 'my-example-calibration'
+g.db_name   = f'{g.name}.db'
+g.storage   = f'sqlite:///{g.db_name}'
+
 
 def run_sim(pars, label=None, return_sim=False):
     ''' Create and run a simulation '''
@@ -39,7 +45,7 @@ def run_trial(trial):
 
 def worker():
     ''' Run a single worker '''
-    study = op.load_study(storage=storage, study_name=name)
+    study = op.load_study(storage=g.storage, study_name=g.name)
     output = study.optimize(run_trial, n_trials=n_trials)
     return output
 
@@ -52,10 +58,10 @@ def run_workers():
 
 def make_study():
     ''' Make a study, deleting one if it already exists '''
-    if os.path.exists(db_name):
-        os.remove(db_name)
-        print(f'Removed existing calibration {db_name}')
-    output = op.create_study(storage=storage, study_name=name)
+    if os.path.exists(g.db_name):
+        os.remove(g.db_name)
+        print(f'Removed existing calibration {g.db_name}')
+    output = op.create_study(storage=g.storage, study_name=g.name)
     return output
 
 
@@ -64,15 +70,12 @@ if __name__ == '__main__':
     # Settings
     n_workers = 4 # Define how many workers to run in parallel
     n_trials = 25 # Define the number of trials, i.e. sim runs, per worker
-    name      = 'my-example-calibration'
-    db_name   = f'{name}.db'
-    storage   = f'sqlite:///{db_name}'
 
     # Run the optimization
     t0 = sc.tic()
     make_study()
     run_workers()
-    study = op.load_study(storage=storage, study_name=name)
+    study = op.load_study(storage=g.storage, study_name=g.name)
     best_pars = study.best_params
     T = sc.toc(t0, output=True)
     print(f'Output: {best_pars}, time: {T}')
