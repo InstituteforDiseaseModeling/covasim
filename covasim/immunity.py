@@ -380,14 +380,17 @@ def pre_compute_waning(length, form, pars):
 
 
 def nab_to_efficacy(nab, ax):
-    choices = ['sus', 'symp', 'sev']
-    if ax not in choices:
+    choices = {'sus': -0.4, 'symp': 0, 'sev': 0.4}
+    if ax not in choices.keys():
         errormsg = f'Choice provided not in list of choices'
         raise ValueError(errormsg)
 
+    n_50 = 0.2
+    slope = 2
+
     # put in here nab to efficacy mapping (logistic regression from fig 1a)
-    # create one of these for each axis of immunity
-    efficacy = np.exp(0.913*nab-0.25)/(1+np.exp(0.913*nab-0.25)) # from logistic regression computed in R using data from Khoury et al
+    efficacy = 1/(1+np.exp(-slope*(nab - n_50 + choices[ax]))) # from logistic regression computed in R using data from Khoury et al
+
 
     return efficacy
 
@@ -395,10 +398,11 @@ def nab_to_efficacy(nab, ax):
 def compute_nab(people, inds, prior_inf=True):
     '''
     Draws an initial NAb level for individuals and pre-computes NAb waning over time.
-    Can come from a natural infection or vaccination and depends on if their is prior immunity:
+    Can come from a natural infection or vaccination and depends on if there is prior immunity:
     1) a natural infection. If individual has no existing NAb, draw from lognormal distribution
-    depending upon symptoms. If individual has existing NAb, multiply/booster impact
-    2) Vaccination. Draw from vaccine-source distribution.
+    depending upon symptoms. If individual has existing NAb, multiply booster impact
+    2) Vaccination. If individual has no existing NAb, draw from lognormal distribution
+    depending upon vaccine source. If individual has existing NAb, multiply booster impact
     '''
 
     NAb_decay = people.pars['NAb_decay']
