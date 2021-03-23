@@ -27,7 +27,7 @@ def run_sim(pars, label=None, return_sim=False):
         interventions  = cv.test_num(daily_tests='data'),
         verbose        = 0,
     )
-    sim = cv.Sim(pars=pars, datafile='/home/cliffk/idm/covasim/docs/tutorials/example_data.csv', label=label)
+    sim = cv.Sim(pars=pars, datafile='example_data.csv', label=label)
     sim.run()
     fit = sim.compute_fit()
     if return_sim:
