@@ -215,7 +215,7 @@ class Vaccine():
             # Known parameters on pfizer
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2= 2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -223,7 +223,7 @@ class Vaccine():
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
                 vaccine_pars['label'] = vaccine
@@ -231,7 +231,7 @@ class Vaccine():
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -239,7 +239,7 @@ class Vaccine():
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine
@@ -315,7 +315,7 @@ def init_nab(people, inds, prior_inf=True):
         if len(no_prior_NAb_inds):
             init_NAb = cvu.sample(**people.pars['NAb_init'], size=len(no_prior_NAb_inds))
             prior_symp = people.prior_symptoms[no_prior_NAb_inds]
-            no_prior_NAb = init_NAb * prior_symp
+            no_prior_NAb = (2**init_NAb) * prior_symp
             people.init_NAb[no_prior_NAb_inds] = no_prior_NAb
 
         # 2) Prior NAb: multiply existing NAb by boost factor
@@ -329,7 +329,7 @@ def init_nab(people, inds, prior_inf=True):
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_NAb_inds):
             init_NAb = cvu.sample(**people.pars['vaccine_info']['NAb_init'], size=len(no_prior_NAb_inds))
-            people.init_NAb[no_prior_NAb_inds] = init_NAb
+            people.init_NAb[no_prior_NAb_inds] = 2**init_NAb
 
         # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
         if len(prior_NAb_inds):
@@ -354,7 +354,7 @@ def check_nab(t, people, inds=None):
     t_since_boost[both_inds] = t-np.maximum(people.date_recovered[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
 
     # Set current NAbs
-    people.NAb[inds] = people.pars['NAb_kin'][t_since_boost] * 2**people.init_NAb[inds]
+    people.NAb[inds] = people.pars['NAb_kin'][t_since_boost] * people.init_NAb[inds]
 
     return
 
