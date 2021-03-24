@@ -1228,7 +1228,7 @@ class TransTree(Analyzer):
         tt.plot()
         tt.plot_histograms()
 
-    New in version 2.0.5: ``tt.detailed`` is a dataframe rather than a list of dictionaries;
+    New in version 2.1.0: ``tt.detailed`` is a dataframe rather than a list of dictionaries;
     for the latter, use ``tt.detailed.to_dict('records')``.
     '''
 
