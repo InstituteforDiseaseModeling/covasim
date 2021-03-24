@@ -159,7 +159,17 @@ def migrate_lognormal(pars, revert=False, verbose=True):
     Small helper function to automatically migrate the standard deviation of lognormal
     distributions to match pre-v2.1.0 runs (where it was treated as the variance instead).
     To undo the migration, run with revert=True.
+
+    Args:
+        pars (dict): the parameters dictionary; or, alternatively, the sim object the parameters will be taken from
+        revert (bool): whether to reverse the update rather than make it
+        verbose (bool): whether to print out the old and new values
     '''
+    # Handle different input types
+    from . import base as cvb
+    if isinstance(pars, cvb.BaseSim):
+        pars = pars.pars # It's actually a sim, not a pars object
+
     # Convert each value to the square root, since squared in the new version
     for key,dur in pars['dur'].items():
         if 'lognormal' in dur['dist']:

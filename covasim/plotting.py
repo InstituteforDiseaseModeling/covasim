@@ -283,9 +283,9 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
     # Handle start and end days
     xmin,xmax = ax.get_xlim()
     if date_args.start_day:
-        xmin = float(sc.day(date_args.start_day), start_day=start_day) # Keep original type (float)
+        xmin = float(sc.day(date_args.start_day, start_day=start_day)) # Keep original type (float)
     if date_args.end_day:
-        xmax = float(sc.day(date_args.end_day), start_day=start_day)
+        xmax = float(sc.day(date_args.end_day, start_day=start_day))
     ax.set_xlim([xmin, xmax])
 
     # Set the x-axis intervals

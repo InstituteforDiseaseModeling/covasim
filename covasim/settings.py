@@ -151,11 +151,6 @@ def get_default(key=None):
     return orig_options[key]
 
 
-def get_option(key=None):
-    ''' Helper function to get the current value of an option '''
-    return options[key]
-
-
 def get_help(output=False):
     '''
     Print information about options.
