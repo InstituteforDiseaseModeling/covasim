@@ -1127,7 +1127,7 @@ class Sim(cvb.BaseSim):
             sim.run()
             sim.plot()
 
-        New in version 2.0.5: argument passing, date_args, and mpl_args
+        New in version 2.1.0: argument passing, date_args, and mpl_args
         '''
         fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig

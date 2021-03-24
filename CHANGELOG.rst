@@ -9,25 +9,27 @@ All notable changes to the codebase are documented in this file. Changes that ma
    :depth: 1
 
 
-~~~~~~~~~~~~~~~~~~~~
-Future release plans
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+Coming soon
+~~~~~~~~~~~
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Additional flexibility in plotting options (e.g. date ranges, per-plot DPI)
+- Mechanistic handling of different strains, and improved handling of vaccination, including more detailed targeting options, waning immunity, etc.. This will be Covasim 3.0, which is slated for release early April.
 - Expanded tutorials (health care workers, vaccination, calibration, exercises, etc.)
-- Improved handling of vaccination, including more detailed targeting options, waning immunity, etc.
-- Mechanistic handling of different strains
 - Multi-region and geospatial support
 - Economics and costing analysis
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (2.0.x)
+Latest versions (2.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-sim.plot(dpi=150, rotation=45, start_day='2020-03-01', end_day=55, interval=7)
+Version 2.1.0 (2021-03-23)
+--------------------------
+- ``sim.plot(dpi=150, rotation=45, start_day='2020-03-01', end_day=55, interval=7)``
+- *Regression information*: 
+- *GitHub info*: PR `859 <https://github.com/amath-idm/covasim/pull/859>`__
 
 
 

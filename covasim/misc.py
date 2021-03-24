@@ -98,7 +98,7 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
     return data
 
 
-def load(*args, do_migrate=True, **kwargs):
+def load(*args, do_migrate=True, update=True, verbose=True, **kwargs):
     '''
     Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
     cv.Scenarios.load().
@@ -106,6 +106,8 @@ def load(*args, do_migrate=True, **kwargs):
     Args:
         filename (str): file to load
         do_migrate (bool): whether to migrate if loading an old object
+        update (bool): whether to modify the object to reflect the new version
+        verbose (bool): whether to print migration information
         args (list): passed to sc.loadobj()
         kwargs (dict): passed to sc.loadobj()
 
@@ -125,7 +127,7 @@ def load(*args, do_migrate=True, **kwargs):
         if cmp != 0:
             print(f'Note: you have Covasim v{v_curr}, but are loading an object from v{v_obj}')
             if do_migrate:
-                obj = migrate(obj, v_obj, v_curr)
+                obj = migrate(obj, update=update, verbose=verbose)
     return obj
 
 
@@ -152,6 +154,33 @@ def save(*args, **kwargs):
     return filepath
 
 
+def migrate_lognormal(pars, revert=False, verbose=True):
+    '''
+    Small helper function to automatically migrate the standard deviation of lognormal
+    distributions to match pre-v2.1.0 runs (where it was treated as the variance instead).
+    To undo the migration, run with revert=True.
+    '''
+    # Convert each value to the square root, since squared in the new version
+    for key,dur in pars['dur'].items():
+        if 'lognormal' in dur['dist']:
+            old = dur['par2']
+            if revert:
+                new = old**2
+            else:
+                new = np.sqrt(old)
+            dur['par2'] = new
+            if verbose > 1:
+                print(f'  Updating {key} std from {old:0.2f} to {new:0.2f}')
+
+    # Store whether migration has occurred so we don't accidentally do it twice
+    if not revert:
+        pars['migrated_lognormal'] = True
+    else:
+        pars.pop('migrated_lognormal', None)
+
+    return
+
+
 def migrate(obj, update=True, verbose=True, die=False):
     '''
     Define migrations allowing compatibility between different versions of saved
@@ -174,6 +203,7 @@ def migrate(obj, update=True, verbose=True, die=False):
         sims = cv.load('my-list-of-sims.obj')
         sims = [cv.migrate(sim) for sim in sims]
     '''
+    # Import here to avoid recursion
     from . import base as cvb
     from . import run as cvr
     from . import interventions as cvi
@@ -202,6 +232,13 @@ def migrate(obj, update=True, verbose=True, die=False):
                     del tp.test_sensitivity
                 except:
                     pass
+
+        # Migration from <2.1.0 to 2.1.0
+        if sc.compareversions(sim.version, '2.1.0') == -1: # Migrate from <2.0 to 2.0
+            if verbose:
+                print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
+                print('Note: updating lognormal stds to restore previous behavior; see v2.1.0 changelog for details')
+            migrate_lognormal(sim.pars, verbose=verbose)
 
     # Migrations for People
     elif isinstance(obj, cvb.BasePeople): # pragma: no cover
