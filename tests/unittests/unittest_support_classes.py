@@ -138,7 +138,7 @@ class TProps:
 DurKeys = TProps.ParKeys.ProgKeys.DurKeys
 
 
-class CovaSimTest(unittest.TestCase):
+class CovaTest(unittest.TestCase):
     def setUp(self):
         self.is_debugging = False
 
@@ -466,7 +466,7 @@ class CovaSimTest(unittest.TestCase):
     pass
 
 
-class TestSupportTests(CovaSimTest):
+class TestSupportTests(CovaTest):
     def test_run_vanilla_simulation(self):
         """
         Runs an uninteresting but predictable

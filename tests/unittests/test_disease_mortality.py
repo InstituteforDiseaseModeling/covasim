@@ -5,7 +5,7 @@ Tests of simulation parameters from
 
 import covasim as cv
 import unittest
-from unittest_support_classes import CovaSimTest, TProps
+from unittest_support_classes import CovaTest, TProps
 
 DProgKeys = TProps.ParKeys.ProgKeys
 TransKeys = TProps.ParKeys.TransKeys
@@ -13,7 +13,7 @@ TSimKeys  = TProps.ParKeys.SimKeys
 ResKeys   = TProps.ResKeys
 
 
-class DiseaseMortalityTests(CovaSimTest):
+class DiseaseMortalityTests(CovaTest):
     def setUp(self):
         super().setUp()
         pass

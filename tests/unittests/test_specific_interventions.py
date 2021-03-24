@@ -1,4 +1,4 @@
-from unittest_support_classes import CovaSimTest
+from unittest_support_classes import CovaTest
 from unittest_support_classes import TProps
 from math import sqrt
 import json
@@ -11,7 +11,7 @@ AGENT_COUNT = 1000
 
 ResultsKeys = TProps.ResKeys
 SimKeys = TProps.ParKeys.SimKeys
-class InterventionTests(CovaSimTest):
+class InterventionTests(CovaTest):
     def setUp(self):
         super().setUp()
         pass

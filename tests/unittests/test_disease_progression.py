@@ -4,13 +4,13 @@ Tests of simulation parameters from
 """
 import unittest
 
-from unittest_support_classes import CovaSimTest, TProps
+from unittest_support_classes import CovaTest, TProps
 
 ResKeys = TProps.ResKeys
 ParamKeys = TProps.ParKeys
 
 
-class DiseaseProgressionTests(CovaSimTest):
+class DiseaseProgressionTests(CovaTest):
     def setUp(self):
         super().setUp()
         pass

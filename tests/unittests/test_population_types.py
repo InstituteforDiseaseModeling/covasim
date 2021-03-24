@@ -1,9 +1,9 @@
-from unittest_support_classes import CovaSimTest, TProps
+from unittest_support_classes import CovaTest, TProps
 
 TPKeys = TProps.ParKeys.SimKeys
 
 
-class PopulationTypeTests(CovaSimTest):
+class PopulationTypeTests(CovaTest):
     def setUp(self):
         super().setUp()
         pass

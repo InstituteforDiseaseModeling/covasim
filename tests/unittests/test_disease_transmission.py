@@ -3,12 +3,12 @@ Tests of simulation parameters from
 ../../covasim/README.md
 """
 
-from unittest_support_classes import CovaSimTest, TProps
+from unittest_support_classes import CovaTest, TProps
 
 TKeys = TProps.ParKeys.TransKeys
 Hightrans = TProps.SpecialSims.Hightransmission
 
-class DiseaseTransmissionTests(CovaSimTest):
+class DiseaseTransmissionTests(CovaTest):
     """
     Tests of the parameters involved in transmission
     pre requisites simulation parameter tests
