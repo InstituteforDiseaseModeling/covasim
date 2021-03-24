@@ -167,6 +167,7 @@ class Vaccine():
         self.doses = None
         self.interval = None
         self.NAb_init = None
+        self.NAb_boost = None
         self.vaccine_strain_info = self.init_strain_vaccine_info()
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
@@ -218,6 +219,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
+                vaccine_pars['NAb_boost'] = 3
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on moderna
@@ -226,6 +228,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
+                vaccine_pars['NAb_boost'] = 3
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on az
@@ -234,6 +237,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
+                vaccine_pars['NAb_boost'] = 3
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on j&j
@@ -242,6 +246,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
+                vaccine_pars['NAb_boost'] = 3
                 vaccine_pars['label'] = vaccine
 
             else:
@@ -306,11 +311,11 @@ def init_nab(people, inds, prior_inf=True):
     no_prior_NAb_inds = np.setdiff1d(inds, prior_NAb_inds) # Find people without prior NAbs
 
     prior_NAb = people.NAb[prior_NAb_inds] # Array of NAb levels on this timestep for people with some NAbs
-    NAb_boost = people.pars['NAb_boost'] # Boosting factor
+
 
     # NAbs from infection
     if prior_inf:
-
+        NAb_boost = people.pars['NAb_boost']  # Boosting factor for natural infection
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_NAb_inds):
             init_NAb = cvu.sample(**people.pars['NAb_init'], size=len(no_prior_NAb_inds))
@@ -325,7 +330,7 @@ def init_nab(people, inds, prior_inf=True):
 
     # NAbs from a vaccine
     else:
-
+        NAb_boost = people.pars['vaccine_info']['NAb_boost']  # Boosting factor for vaccination
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_NAb_inds):
             init_NAb = cvu.sample(**people.pars['vaccine_info']['NAb_init'], size=len(no_prior_NAb_inds))
@@ -409,6 +414,14 @@ def init_immunity(sim, create=False):
                 np.fill_diagonal(immunity[ax], 1)  # Default for own-immunity
             else:  # Progression and transmission are matrices of scalars of size sim['n_strains']
                 immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
+
+        known_strains = ['wild', 'b117', 'b1351', 'p1']
+        cross_immunity = create_cross_immunity(circulating_strains)
+        for i in range(ts):
+            for j in range(ts):
+                if i != j:
+                    if circulating_strains[i] in known_strains and circulating_strains[j] in known_strains:
+                        immunity['sus'][j][i] = cross_immunity[circulating_strains[j]][circulating_strains[i]]
         sim['immunity'] = immunity
 
     else:

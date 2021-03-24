@@ -68,7 +68,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['NAb_init']                = dict(dist='normal', par1= 0, par2= 2)  # Parameters for the distribution of the initial level of log2(NAb) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
     pars['NAb_decay']               = dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250, 'decay_decay_rate': 0.001}) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
     pars['NAb_kin']                 = None # Constructed during sim initialization using the NAb_decay parameters
-    pars['NAb_boost']               = 3 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
+    pars['NAb_boost']               = 2 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
     pars['cross_immunity']          = 0.5   # Default cross-immunity protection factor that applies across different strains
     pars['rel_imm']                 = {} # Relative immunity from natural infection varies by symptoms
     pars['rel_imm']['asymptomatic'] = 0.5
@@ -316,11 +316,7 @@ def update_sub_key_pars(pars, default_pars):
                 else:
                     pars[par] = sc.promotetolist(sc.mergenested(oldval, newval))
         else:
-            if isinstance(val, dict):  # Update the dictionary, don't just overwrite it
-                if isinstance(default_pars[par], dict):
-                    pars[par] = sc.mergenested(default_pars[par], val)
-                else: # If the default isn't a disctionary, just overwrite it (TODO: could make this more robust)
-                    pars[par] = val
+            pars[par] = val
     return pars
 
 
