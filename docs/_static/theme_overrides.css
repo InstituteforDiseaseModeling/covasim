@@ -21,7 +21,7 @@ h1 {
     margin-bottom: 1.0em;
 }
 
-h2 {
+h2, .toc-backref {
     font-size: 125%;
     color: #0055af !important;
     margin-bottom: 1.0em;
