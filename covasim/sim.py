@@ -463,7 +463,7 @@ class Sim(cvb.BaseSim):
 
 
     def init_immunity(self, create=False):
-        ''' Initialize immunity matrices and precompute immunity waning for each strain '''
+        ''' Initialize immunity matrices and precompute NAb waning for each strain '''
         cvimm.init_immunity(self, create=create)
         return
 
@@ -575,9 +575,12 @@ class Sim(cvb.BaseSim):
         strain_pars     = dict()
         ns = self['n_strains']  # Shorten number of strains
 
+        # Check NAbs. Take intersection with recovered peopl so we don't compute NAbs for anyone currently infected
+        has_nabs = np.intersect1d(cvu.defined(people.init_NAb), cvu.defined(people.date_recovered))
+        if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
+
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
-
 
             # Check immunity
             cvimm.check_immunity(people, strain, sus=True)

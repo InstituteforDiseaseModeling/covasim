@@ -6,8 +6,8 @@ import numpy as np
 
 
 do_plot   = 1
-do_show   = 1
-do_save   = 0
+do_show   = 0
+do_save   = 1
 
 
 def test_import1strain(do_plot=False, do_show=True, do_save=False):
@@ -431,21 +431,21 @@ def get_ind_of_min_value(list, time):
 if __name__ == '__main__':
     sc.tic()
 
-    # Run simplest possible test
-    if 0:
-         sim = cv.Sim()
-         sim.run()
-
-    # Run more complex single-sim tests
+    # # Run simplest possible test
+    # if 1:
+    #      sim = cv.Sim()
+    #      sim.run()
+    #
+    # # Run more complex single-sim tests
     sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #
-    # # Run Vaccine tests
+
+    # Run Vaccine tests
     # sim4 = test_synthpops()
     # sim5 = test_vaccine_1strain()
-    #
+
     # # Run multisim and scenario tests
     # scens0 = test_vaccine_1strain_scen()
     # scens1 = test_vaccine_2strains_scen()
