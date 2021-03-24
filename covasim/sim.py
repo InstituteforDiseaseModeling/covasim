@@ -88,7 +88,7 @@ class Sim(cvb.BaseSim):
             verbose = self['verbose']
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvm.load_data(datafile=datafile, columns=datacols, verbose=verbose, **kwargs)
+            self.data = cvm.load_data(datafile=datafile, columns=datacols, verbose=verbose, start_day=self['start_day'], **kwargs)
 
         return
 
@@ -1088,7 +1088,9 @@ class Sim(cvb.BaseSim):
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
+            date_args    (dict): Control how the x-axis (dates) are shown (see below for explanation)
             show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
+            mpl_args     (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, fontsize, and fontfamily
             as_dates     (bool): Whether to plot the x-axis as dates or time points
             dateformat   (str):  Date string format, e.g. '%B %d'
             interval     (int):  Interval between tick marks
@@ -1104,6 +1106,17 @@ class Sim(cvb.BaseSim):
             sep_figs     (bool): Whether to show separate figures for different results instead of subplots
             fig          (fig):  Handle of existing figure to plot into
             ax           (axes): Axes instance to plot into
+            kwargs       (dict): Parsed among figure, plot, scatter, date, and other settings (will raise an error if not recognized)
+
+        The optional dictionary "date_args" allows several settings for controlling
+        how the x-axis of plots are shown, if this axis is dates. These options are:
+
+            - ``as_dates``:   whether to format them as dates (else, format them as days since the start)
+            - ``dateformat``: string format for the date (default %b-%d, e.g. Apr-04)
+            - ``interval``:   the number of days between tick marks
+            - ``rotation``:   whether to rotate labels
+            - ``start_day``:  the first day to plot
+            - ``end_day``:    the last day to plot
 
         Returns:
             fig: Figure handle
@@ -1113,6 +1126,8 @@ class Sim(cvb.BaseSim):
             sim = cv.Sim()
             sim.run()
             sim.plot()
+
+        New in version 2.1.0: argument passing, date_args, and mpl_args
         '''
         fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig
@@ -1126,8 +1141,12 @@ class Sim(cvb.BaseSim):
         Args:
             key (str): the key of the result to plot
 
-        **Examples**::
+        Returns:
+            fig: Figure handle
 
+        **Example**::
+
+            sim = cv.Sim().run()
             sim.plot_result('r_eff')
         '''
         fig = cvplt.plot_result(sim=self, key=key, *args, **kwargs)

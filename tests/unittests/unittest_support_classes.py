@@ -15,9 +15,9 @@ import numpy as np
 from covasim import Sim, parameters, change_beta, test_prob, contact_tracing, sequence
 
 
-class TestProperties:
-    class ParameterKeys:
-        class SimulationKeys:
+class TProps:
+    class ParKeys:
+        class SimKeys:
             number_agents = 'pop_size'
             number_contacts = 'contacts'
             population_scaling_factor = 'pop_scale'
@@ -34,7 +34,7 @@ class TestProperties:
             # stopping_function = 'stop_func'
             pass
 
-        class TransmissionKeys:
+        class TransKeys:
             beta = 'beta'
             asymptomatic_fraction = 'asym_prop'
             asymptomatic_transmission_multiplier = 'asym_factor'
@@ -45,12 +45,12 @@ class TestProperties:
             contacts_population_specific = 'contacts_pop'
             pass
 
-        class ProgressionKeys:
+        class ProgKeys:
             durations = "dur"
             param_1 = "par1"
             param_2 = "par2"
 
-            class DurationKeys:
+            class DurKeys:
                 exposed_to_infectious = 'exp2inf'
                 infectious_to_symptomatic = 'inf2sym'
                 infectious_asymptomatic_to_recovered = 'asym2rec'
@@ -63,9 +63,9 @@ class TestProperties:
                 critical_to_death = 'crit2die'
                 pass
 
-            class ProbabilityKeys:
+            class ProbKeys:
                 progression_by_age = 'prog_by_age'
-                class RelativeProbKeys:
+                class RelProbKeys:
                     inf_to_symptomatic_probability = 'rel_symp_prob'
                     sym_to_severe_probability = 'rel_severe_prob'
                     sev_to_critical_probability = 'rel_crit_prob'
@@ -86,7 +86,7 @@ class TestProperties:
             pass
         pass
 
-    class SpecializedSimulations:
+    class SpecialSims:
         class Microsim:
             n = 10
             pop_infected = 1
@@ -111,7 +111,7 @@ class TestProperties:
             # timetodie_std = 2
         pass
 
-    class ResultsDataKeys:
+    class ResKeys:
         deaths_cumulative = 'cum_deaths'
         deaths_daily = 'new_deaths'
         diagnoses_cumulative = 'cum_diagnoses'
@@ -135,10 +135,10 @@ class TestProperties:
     pass
 
 
-DurationKeys = TestProperties.ParameterKeys.ProgressionKeys.DurationKeys
+DurKeys = TProps.ParKeys.ProgKeys.DurKeys
 
 
-class CovaSimTest(unittest.TestCase):
+class CovaTest(unittest.TestCase):
     def setUp(self):
         self.is_debugging = False
 
@@ -159,7 +159,7 @@ class CovaSimTest(unittest.TestCase):
         pass
 
     # region configuration methods
-    def set_simulation_parameters(self, params_dict=None):
+    def set_sim_pars(self, params_dict=None):
         """
         Overrides all of the default sim parameters
         with the ones in the dictionary
@@ -181,16 +181,16 @@ class CovaSimTest(unittest.TestCase):
         Allows for testing prognoses probability as absolute rather than relative.
         NOTE: You can only call this once per test or you will overwrite your stuff.
         """
-        ProbKeys = TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys
-        RelativeProbabilityKeys = ProbKeys.RelativeProbKeys
+        ProbKeys = TProps.ParKeys.ProgKeys.ProbKeys
+        RelProbKeys = ProbKeys.RelProbKeys
         supported_probabilities = [
-            RelativeProbabilityKeys.inf_to_symptomatic_probability,
-            RelativeProbabilityKeys.sym_to_severe_probability,
-            RelativeProbabilityKeys.sev_to_critical_probability,
-            RelativeProbabilityKeys.crt_to_death_probability
+            RelProbKeys.inf_to_symptomatic_probability,
+            RelProbKeys.sym_to_severe_probability,
+            RelProbKeys.sev_to_critical_probability,
+            RelProbKeys.crt_to_death_probability
         ]
         if not self.simulation_parameters:
-            self.set_simulation_parameters()
+            self.set_sim_pars()
             pass
 
         if not self.simulation_prognoses:
@@ -200,13 +200,13 @@ class CovaSimTest(unittest.TestCase):
         for k in params_dict:
             prognosis_in_question = None
             expected_prob = params_dict[k]
-            if k == RelativeProbabilityKeys.inf_to_symptomatic_probability:
+            if k == RelProbKeys.inf_to_symptomatic_probability:
                 prognosis_in_question = PrognosisKeys.symptomatic_probabilities
-            elif k == RelativeProbabilityKeys.sym_to_severe_probability:
+            elif k == RelProbKeys.sym_to_severe_probability:
                 prognosis_in_question = PrognosisKeys.severe_probabilities
-            elif k == RelativeProbabilityKeys.sev_to_critical_probability:
+            elif k == RelProbKeys.sev_to_critical_probability:
                 prognosis_in_question = PrognosisKeys.critical_probabilities
-            elif k == RelativeProbabilityKeys.crt_to_death_probability:
+            elif k == RelProbKeys.crt_to_death_probability:
                 prognosis_in_question = PrognosisKeys.death_probs
             else:
                 raise KeyError(f"Key {k} not found in {supported_probabilities}.")
@@ -218,7 +218,7 @@ class CovaSimTest(unittest.TestCase):
     def set_duration_distribution_parameters(self, duration_in_question,
                                              par1, par2):
         if not self.simulation_parameters:
-            self.set_simulation_parameters()
+            self.set_sim_pars()
             pass
         duration_node = self.simulation_parameters["dur"]
         duration_node[duration_in_question] = {
@@ -229,12 +229,12 @@ class CovaSimTest(unittest.TestCase):
         params_dict = {
             "dur": duration_node
         }
-        self.set_simulation_parameters(params_dict=params_dict)
+        self.set_sim_pars(params_dict=params_dict)
 
 
     def run_sim(self, params_dict=None, write_results_json=False, population_type=None):
         if not self.simulation_parameters or params_dict: # If we need one, or have one here
-            self.set_simulation_parameters(params_dict=params_dict)
+            self.set_sim_pars(params_dict=params_dict)
             pass
 
         self.simulation_parameters['interventions'] = self.interventions
@@ -243,7 +243,7 @@ class CovaSimTest(unittest.TestCase):
                        datafile=None)
         if not self.simulation_prognoses:
             self.simulation_prognoses = parameters.get_prognoses(
-                self.simulation_parameters[TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.progression_by_age]
+                self.simulation_parameters[TProps.ParKeys.ProgKeys.ProbKeys.progression_by_age]
             )
             pass
 
@@ -263,7 +263,7 @@ class CovaSimTest(unittest.TestCase):
         result_data = self.simulation_result["results"][channel]
         return result_data
 
-    def get_day_zero_channel_value(self, channel=TestProperties.ResultsDataKeys.susceptible_at_timestep):
+    def get_day_zero_channel_value(self, channel=TProps.ResKeys.susceptible_at_timestep):
         """
 
         Args:
@@ -329,26 +329,26 @@ class CovaSimTest(unittest.TestCase):
 
     # region specialized simulation methods
     def set_microsim(self):
-        Simkeys = TestProperties.ParameterKeys.SimulationKeys
-        Micro = TestProperties.SpecializedSimulations.Microsim
+        Simkeys = TProps.ParKeys.SimKeys
+        Micro = TProps.SpecialSims.Microsim
         microsim_parameters = {
             Simkeys.number_agents : Micro.n,
             Simkeys.initial_infected_count: Micro.pop_infected,
             Simkeys.number_simulated_days: Micro.n_days
         }
-        self.set_simulation_parameters(microsim_parameters)
+        self.set_sim_pars(microsim_parameters)
         pass
 
     def set_everyone_infected(self, agent_count=1000):
-        Simkeys = TestProperties.ParameterKeys.SimulationKeys
+        Simkeys = TProps.ParKeys.SimKeys
         everyone_infected = {
             Simkeys.number_agents: agent_count,
             Simkeys.initial_infected_count: agent_count
         }
-        self.set_simulation_parameters(params_dict=everyone_infected)
+        self.set_sim_pars(params_dict=everyone_infected)
         pass
 
-    DurationKeys = TestProperties.ParameterKeys.ProgressionKeys.DurationKeys
+    DurKeys = TProps.ParKeys.ProgKeys.DurKeys
 
     def set_everyone_infectious_same_day(self, num_agents, days_to_infectious=1, num_days=60):
         """
@@ -359,18 +359,18 @@ class CovaSimTest(unittest.TestCase):
         """
         self.set_everyone_infected(agent_count=num_agents)
         prob_dict = {
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 0
+            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.inf_to_symptomatic_probability: 0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         test_config = {
-            TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: num_days
+            TProps.ParKeys.SimKeys.number_simulated_days: num_days
         }
         self.set_duration_distribution_parameters(
-            duration_in_question=DurationKeys.exposed_to_infectious,
+            duration_in_question=DurKeys.exposed_to_infectious,
             par1=days_to_infectious,
             par2=0
         )
-        self.set_simulation_parameters(params_dict=test_config)
+        self.set_sim_pars(params_dict=test_config)
         pass
 
     def set_everyone_symptomatic(self, num_agents, constant_delay:int=None):
@@ -383,13 +383,13 @@ class CovaSimTest(unittest.TestCase):
         self.set_everyone_infectious_same_day(num_agents=num_agents,
                                               days_to_infectious=0)
         prob_dict = {
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 1.0,
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.sym_to_severe_probability: 0
+            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.inf_to_symptomatic_probability: 1.0,
+            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.sym_to_severe_probability: 0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
             self.set_duration_distribution_parameters(
-                duration_in_question=DurationKeys.infectious_to_symptomatic,
+                duration_in_question=DurKeys.infectious_to_symptomatic,
                 par1=constant_delay,
                 par2=0
             )
@@ -401,7 +401,7 @@ class CovaSimTest(unittest.TestCase):
         Args:
             num_agents: Number of agents to simulate
         """
-        ProbKeys = TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys
+        ProbKeys = TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys
         self.set_everyone_infectious_same_day(num_agents=num_agents)
         prob_dict = {
             ProbKeys.inf_to_symptomatic_probability: 1,
@@ -415,13 +415,13 @@ class CovaSimTest(unittest.TestCase):
     def set_everyone_severe(self, num_agents, constant_delay:int=None):
         self.set_everyone_symptomatic(num_agents=num_agents, constant_delay=constant_delay)
         prob_dict = {
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.sym_to_severe_probability: 1.0,
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.sev_to_critical_probability: 0.0
+            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.sym_to_severe_probability: 1.0,
+            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.sev_to_critical_probability: 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
             self.set_duration_distribution_parameters(
-                duration_in_question=DurationKeys.symptomatic_to_severe,
+                duration_in_question=DurKeys.symptomatic_to_severe,
                 par1=constant_delay,
                 par2=0
             )
@@ -433,13 +433,13 @@ class CovaSimTest(unittest.TestCase):
         """
         self.set_everyone_severe(num_agents=num_agents, constant_delay=constant_delay)
         prob_dict = {
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.sev_to_critical_probability: 1.0,
-            TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.crt_to_death_probability: 0.0
+            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.sev_to_critical_probability: 1.0,
+            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.crt_to_death_probability: 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
             self.set_duration_distribution_parameters(
-                duration_in_question=DurationKeys.severe_to_critical,
+                duration_in_question=DurKeys.severe_to_critical,
                 par1=constant_delay,
                 par2=0
             )
@@ -450,25 +450,23 @@ class CovaSimTest(unittest.TestCase):
         """
         Creates a small population with lots of transmission
         """
-        Simkeys = TestProperties.ParameterKeys.SimulationKeys
-        Transkeys = TestProperties.ParameterKeys.TransmissionKeys
-        Hightrans = TestProperties.SpecializedSimulations.Hightransmission
+        Simkeys = TProps.ParKeys.SimKeys
+        Transkeys = TProps.ParKeys.TransKeys
+        Hightrans = TProps.SpecialSims.Hightransmission
         hightrans_parameters = {
             Simkeys.number_agents : Hightrans.n,
             Simkeys.initial_infected_count: Hightrans.pop_infected,
             Simkeys.number_simulated_days: Hightrans.n_days,
             Transkeys.beta : Hightrans.beta
         }
-        self.set_simulation_parameters(hightrans_parameters)
+        self.set_sim_pars(hightrans_parameters)
         pass
 
     # endregion
     pass
 
 
-
-
-class TestSupportTests(CovaSimTest):
+class TestSupportTests(CovaTest):
     def test_run_vanilla_simulation(self):
         """
         Runs an uninteresting but predictable
@@ -489,7 +487,7 @@ class TestSupportTests(CovaSimTest):
         total_agents = 500
         self.set_everyone_infected(agent_count=total_agents)
         self.run_sim()
-        exposed_channel = TestProperties.ResultsDataKeys.exposed_at_timestep
+        exposed_channel = TProps.ResKeys.exposed_at_timestep
         day_0_exposed = self.get_day_zero_channel_value(exposed_channel)
         self.assertEqual(day_0_exposed, total_agents)
         pass
@@ -508,7 +506,7 @@ class TestSupportTests(CovaSimTest):
         self.assertIsNotNone(self.sim)
         self.assertIsNotNone(self.simulation_parameters)
         exposed_today_channel = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.exposed_at_timestep
+            TProps.ResKeys.exposed_at_timestep
         )
         prev_exposed = exposed_today_channel[0]
         for t in range(1, 10):
@@ -520,10 +518,10 @@ class TestSupportTests(CovaSimTest):
             prev_exposed = today_exposed
             pass
         infections_channel = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infections_at_timestep
+            TProps.ResKeys.infections_at_timestep
         )
         self.assertGreaterEqual(sum(infections_channel), 150,
-                                msg=f"Should have at least 150 infections")
+                                msg="Should have at least 150 infections")
         pass
     pass
 

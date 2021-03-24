@@ -1,5 +1,5 @@
-from unittest_support_classes import CovaSimTest
-from unittest_support_classes import TestProperties
+from unittest_support_classes import CovaTest
+from unittest_support_classes import TProps
 from math import sqrt
 import json
 import numpy as np
@@ -9,9 +9,9 @@ import unittest
 AGENT_COUNT = 1000
 
 
-ResultsKeys = TestProperties.ResultsDataKeys
-SimKeys = TestProperties.ParameterKeys.SimulationKeys
-class InterventionTests(CovaSimTest):
+ResultsKeys = TProps.ResKeys
+SimKeys = TProps.ParKeys.SimKeys
+class InterventionTests(CovaTest):
     def setUp(self):
         super().setUp()
         pass
@@ -26,7 +26,7 @@ class InterventionTests(CovaSimTest):
             SimKeys.number_agents: AGENT_COUNT,
             SimKeys.number_simulated_days: 60
         }
-        self.set_simulation_parameters(params_dict=params)
+        self.set_sim_pars(params_dict=params)
         day_of_change = 30
         change_days = [day_of_change]
         change_multipliers = [0.0]
@@ -57,7 +57,7 @@ class InterventionTests(CovaSimTest):
             SimKeys.number_agents: AGENT_COUNT,
             SimKeys.number_simulated_days: 60
         }
-        self.set_simulation_parameters(params_dict=params)
+        self.set_sim_pars(params_dict=params)
         # Do a 0.0 intervention / 1.0 intervention on different days
         days =        [ 30,  32,  40,  42,  50]
         multipliers = [0.0, 1.0, 0.0, 1.0, 0.0]
@@ -105,7 +105,7 @@ class InterventionTests(CovaSimTest):
             SimKeys.number_agents: AGENT_COUNT,
             SimKeys.number_simulated_days: 40
         }
-        self.set_simulation_parameters(params_dict=params)
+        self.set_sim_pars(params_dict=params)
         day_of_change = 20
         change_days = [day_of_change]
         change_multipliers = [1.0, 0.8, 0.6, 0.4, 0.2]
@@ -162,7 +162,7 @@ class InterventionTests(CovaSimTest):
             }
             if len(seed_list) > 1:
                 self.expected_result_filename = f"DEBUG_{self.id()}_{seed}.json"
-            self.set_simulation_parameters(params_dict=params)
+            self.set_sim_pars(params_dict=params)
             day_of_change = 25
             change_multipliers = [0.0]
             layer_keys = ['c','h','s','w']
@@ -231,7 +231,7 @@ class InterventionTests(CovaSimTest):
                 SimKeys.number_simulated_days: 60,
                 SimKeys.initial_infected_count: initial_infected
             }
-            self.set_simulation_parameters(params_dict=params)
+            self.set_sim_pars(params_dict=params)
             if len(seed_list) > 1:
                 self.expected_result_filename = f"DEBUG_{self.id()}_{seed}.json"
             day_of_change = 25
@@ -291,7 +291,7 @@ class InterventionTests(CovaSimTest):
             }
             if len(seed_list) > 1:
                 self.expected_result_filename = f"DEBUG_{self.id()}_{seed}.json"
-            self.set_simulation_parameters(params_dict=params)
+            self.set_sim_pars(params_dict=params)
             day_of_change = 25
             change_multipliers = [0.0]
             layer_keys = ['c','s','w','h']
@@ -418,7 +418,7 @@ class InterventionTests(CovaSimTest):
             SimKeys.number_agents: AGENT_COUNT,
             SimKeys.number_simulated_days: 60
         }
-        self.set_simulation_parameters(params_dict=params)
+        self.set_sim_pars(params_dict=params)
 
         asymptomatic_probability_of_test = 1.0
         test_sensitivity = 1.0
@@ -455,7 +455,7 @@ class InterventionTests(CovaSimTest):
             SimKeys.number_agents: AGENT_COUNT,
             SimKeys.number_simulated_days: 60
         }
-        self.set_simulation_parameters(params_dict=params)
+        self.set_sim_pars(params_dict=params)
 
         symptomatic_probability_of_test = 1.0
         test_sensitivity = 1.0
@@ -489,7 +489,7 @@ class InterventionTests(CovaSimTest):
             SimKeys.number_agents: AGENT_COUNT,
             SimKeys.number_simulated_days: 60
         }
-        self.set_simulation_parameters(params_dict=params)
+        self.set_sim_pars(params_dict=params)
 
         asymptomatic_probability_of_test = 1.0
         symptomatic_probability_of_test = 1.0
@@ -526,7 +526,7 @@ class InterventionTests(CovaSimTest):
                 SimKeys.number_agents: AGENT_COUNT,
                 SimKeys.number_simulated_days: 31
             }
-            self.set_simulation_parameters(params_dict=params)
+            self.set_sim_pars(params_dict=params)
 
             symptomatic_probability_of_test = 1.0
             test_sensitivities = [0.9, 0.7, 0.6, 0.2]
@@ -608,7 +608,7 @@ class InterventionTests(CovaSimTest):
             SimKeys.number_agents: AGENT_COUNT,
             SimKeys.number_simulated_days: 31
         }
-        self.set_simulation_parameters(params_dict=params)
+        self.set_sim_pars(params_dict=params)
 
         symptomatic_probabilities_of_test = [0.9, 0.7, 0.6, 0.2]
         test_sensitivity = 1.0
@@ -659,7 +659,7 @@ class InterventionTests(CovaSimTest):
             SimKeys.number_agents: AGENT_COUNT,
             SimKeys.number_simulated_days: 55
         }
-        self.set_simulation_parameters(params_dict=params)
+        self.set_sim_pars(params_dict=params)
 
         intervention_list = []
 
@@ -723,7 +723,7 @@ class InterventionTests(CovaSimTest):
             'quar_period': 10,
             SimKeys.initial_infected_count: initial_infected
         }
-        self.set_simulation_parameters(params_dict=params)
+        self.set_sim_pars(params_dict=params)
         sequence_days = [30, 40]
         sequence_interventions = []
 

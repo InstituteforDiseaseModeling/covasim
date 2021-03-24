@@ -172,7 +172,7 @@ class MultiSim(cvb.FlexPretty):
         elif combine:
             self.combine()
 
-        return
+        return self
 
 
     def shrink(self, **kwargs):
@@ -425,6 +425,9 @@ class MultiSim(cvb.FlexPretty):
             show_args    (dict) : passed to sim.plot()
             kwargs       (dict) : passed to sim.plot()
 
+        Returns:
+            fig: Figure handle
+
         **Examples**::
 
             sim = cv.Sim()
@@ -522,7 +525,7 @@ class MultiSim(cvb.FlexPretty):
 
 
     def plot_result(self, key, colors=None, labels=None, *args, **kwargs):
-        ''' Convenience method for plotting -- arguments passed to Sim.plot_result() '''
+        ''' Convenience method for plotting -- arguments passed to sim.plot_result() '''
         if self.which in ['combined', 'reduced']:
             fig = self.base_sim.plot_result(key, *args, **kwargs)
         else:
@@ -544,7 +547,7 @@ class MultiSim(cvb.FlexPretty):
     def plot_compare(self, t=-1, sim_inds=None, log_scale=True, **kwargs):
         '''
         Plot a comparison between sims, using bars to show different values for
-        each result.
+        each result. For an explanation of other available arguments, see Sim.plot().
 
         Args:
             t         (int)  : index of results, passed to compare()
@@ -553,7 +556,7 @@ class MultiSim(cvb.FlexPretty):
             kwargs    (dict) : standard plotting arguments, see Sim.plot() for explanation
 
         Returns:
-            fig (figure): the figure handle
+            fig: Figure handle
         '''
         df = self.compare(t=t, sim_inds=sim_inds, output=True)
         cvplt.plot_compare(df, log_scale=log_scale, **kwargs)
@@ -567,7 +570,7 @@ class MultiSim(cvb.FlexPretty):
         Args:
             filename    (str)  : the name or path of the file to save to; if None, uses default
             keep_people (bool) : whether or not to store the population in the Sim objects (NB, very large)
-            kwargs      (dict) : passed to makefilepath()
+            kwargs      (dict) : passed to ``sc.makefilepath()``
 
         Returns:
             scenfile (str): the validated absolute path to the saved file
@@ -809,6 +812,16 @@ class MultiSim(cvb.FlexPretty):
             return string
 
 
+    def to_json(self, *args, **kwargs):
+        ''' Shortcut for base_sim.to_json() '''
+        return self.base_sim.to_json(*args, **kwargs)
+
+
+    def to_excel(self, *args, **kwargs):
+        ''' Shortcut for base_sim.to_excel() '''
+        return self.base_sim.to_excel(*args, **kwargs)
+
+
 class Scenarios(cvb.ParsObj):
     '''
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
@@ -972,7 +985,7 @@ class Scenarios(cvb.ParsObj):
         # Save details about the run
         self._kept_people = keep_people
 
-        return
+        return self
 
 
     def compare(self, t=None, output=False):
@@ -1018,33 +1031,8 @@ class Scenarios(cvb.ParsObj):
 
     def plot(self, *args, **kwargs):
         '''
-        Plot the results of a scenario.
-
-        Args:
-            to_plot      (dict): Dict of results to plot; see get_scen_plots() for structure
-            do_save      (bool): Whether or not to save the figure
-            fig_path     (str):  Path to save the figure
-            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
-            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            fill_args    (dict): Dictionary of kwargs to be passed to pl.fill_between()
-            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
-            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
-            as_dates     (bool): Whether to plot the x-axis as dates or time points
-            dateformat   (str):  Date string format, e.g. '%B %d'
-            interval     (int):  Interval between tick marks
-            n_cols       (int):  Number of columns of subpanels to use for subplot
-            font_size    (int):  Size of the font
-            font_family  (str):  Font face
-            grid         (bool): Whether or not to plot gridlines
-            commaticks   (bool): Plot y-axis with commas rather than scientific notation
-            setylim      (bool): Reset the y limit to start at 0
-            log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
-            do_show      (bool): Whether or not to show the figure
-            colors       (dict): Custom color for each scenario, must be a dictionary with one entry per scenario key
-            sep_figs     (bool): Whether to show separate figures for different results instead of subplots
-            fig          (fig):  Existing figure to plot into
+        Plot the results of a scenario. For an explanation of available arguments,
+        see Sim.plot().
 
         Returns:
             fig: Figure handle

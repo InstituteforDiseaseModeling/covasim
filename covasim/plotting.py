@@ -22,24 +22,64 @@ __all__ = ['date_formatter', 'plot_sim', 'plot_scens', 'plot_result', 'plot_comp
 #%% Plotting helper functions
 
 
-def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None):
+def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None,
+                legend_args=None, date_args=None, show_args=None, mpl_args=None, **kwargs):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
+
+    # Set defaults
+    defaults = sc.objdict()
+    defaults.fig     = sc.objdict(figsize=(10, 8))
+    defaults.plot    = sc.objdict(lw=1.5, alpha= 0.7)
+    defaults.scatter = sc.objdict(s=20, marker='s', alpha=0.7, zorder=0)
+    defaults.axis    = sc.objdict(left=0.10, bottom=0.08, right=0.95, top=0.95, wspace=0.30, hspace=0.30)
+    defaults.fill    = sc.objdict(alpha=0.2)
+    defaults.legend  = sc.objdict(loc='best', frameon=False)
+    defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start_day=None, end_day=None)
+    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True)
+    defaults.mpl     = sc.objdict(dpi=None, fontsize=None, fontfamily=None) # Use Covasim global defaults
+
+    # Handle directly supplied kwargs
+    for dkey,default in defaults.items():
+        keys = list(kwargs.keys())
+        for kw in keys:
+            if kw in default.keys():
+                default[kw] = kwargs.pop(kw)
+
+    # Merge arguments together
     args = sc.objdict()
-    args.fig     = sc.mergedicts({'figsize': (10, 8)}, fig_args)
-    args.plot    = sc.mergedicts({'lw': 1.5, 'alpha': 0.7}, plot_args)
-    args.scatter = sc.mergedicts({'s':20, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
-    args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.08, 'right': 0.95, 'top': 0.95, 'wspace': 0.30, 'hspace': 0.30}, axis_args)
-    args.fill    = sc.mergedicts({'alpha': 0.2}, fill_args)
-    args.legend  = sc.mergedicts({'loc': 'best', 'frameon':False}, legend_args)
-    args.show    = sc.mergedicts({'data':True, 'interventions':True, 'legend':True, }, show_args)
+    args.fig     = sc.mergedicts(defaults.fig,     fig_args)
+    args.plot    = sc.mergedicts(defaults.plot,    plot_args)
+    args.scatter = sc.mergedicts(defaults.scatter, scatter_args)
+    args.axis    = sc.mergedicts(defaults.axis,    axis_args)
+    args.fill    = sc.mergedicts(defaults.fill,    fill_args)
+    args.legend  = sc.mergedicts(defaults.legend,  legend_args)
+    args.date    = sc.mergedicts(defaults.date,    fill_args)
+    args.show    = sc.mergedicts(defaults.show,    show_args)
+    args.mpl     = sc.mergedicts(defaults.mpl,     mpl_args)
+
+    # If unused keyword arguments remain, raise an error
+    if len(kwargs):
+        notfound = sc.strjoin(kwargs.keys())
+        valid = sc.strjoin(sorted(set([k for d in defaults.values() for k in d.keys()]))) # Remove duplicates and order
+        errormsg = f'The following keywords could not be processed:\n{notfound}\n\n'
+        errormsg += f'Valid keywords are:\n{valid}\n\n'
+        errormsg += 'For more precise plotting control, use fig_args, plot_args, etc.'
+        raise sc.KeyNotFoundError(errormsg)
 
     # Handle what to show
-    show_keys = ['data', 'ticks', 'interventions', 'legend']
+    show_keys = defaults.show.keys()
     args.show = {k:True for k in show_keys}
     if show_args in [True, False]: # Handle all on or all off
         args.show = {k:show_args for k in show_keys}
     else:
         args.show = sc.mergedicts(args.show, show_args)
+
+    # Handle global Matplotlib arguments
+    args.mpl_orig = sc.objdict()
+    for key,value in args.mpl.items():
+        if value is not None:
+            args.mpl_orig[key] = cvset.options.get(key)
+            cvset.options.set(key, value)
 
     return args
 
@@ -188,7 +228,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     return
 
 
-def date_formatter(start_day=None, dateformat=None, ax=None):
+def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
     '''
     Create an automatic date formatter based on a number of days and a start day.
 
@@ -200,12 +240,14 @@ def date_formatter(start_day=None, dateformat=None, ax=None):
         start_day (str/date): the start day, either as a string or date object
         dateformat (str): the date format
         ax (axes): if supplied, automatically set the x-axis formatter for this axis
+        sim (Sim): if supplied, get the start day from this
 
-    **Example**::
+    **Examples**::
 
-        formatter = date_formatter(start_day='2020-04-04', dateformat='%Y-%m-%d')
+        cv.date_formatter(sim=sim, ax=ax) # Automatically configure the axis with default options
+
+        formatter = cv.date_formatter(start_day='2020-04-04', dateformat='%Y-%m-%d') # Manually configure
         ax.xaxis.set_major_formatter(formatter)
-
     '''
 
     # Set the default -- "Mar-01"
@@ -213,13 +255,15 @@ def date_formatter(start_day=None, dateformat=None, ax=None):
         dateformat = '%b-%d'
 
     # Convert to a date object
+    if start_day is None and sim is not None:
+        start_day = sim['start_day']
     start_day = sc.date(start_day)
 
     @ticker.FuncFormatter
     def mpl_formatter(x, pos):
-        if sc.isnumber(x):
-            return (start_day + dt.timedelta(days=x)).strftime(dateformat)
-        else:
+        if sc.isnumber(x): # If the axis doesn't have date units
+            return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
+        else: # If the axis does
             return x.strftime(dateformat)
 
     if ax is not None:
@@ -228,26 +272,41 @@ def date_formatter(start_day=None, dateformat=None, ax=None):
     return mpl_formatter
 
 
-
-def reset_ticks(ax, sim, interval, as_dates, dateformat):
+def reset_ticks(ax, sim=None, date_args=None, start_day=None):
     ''' Set the tick marks, using dates by default '''
 
+    # Handle options
+    date_args = sc.objdict(date_args) # Ensure it's not a regular dict
+    if start_day is None and sim is not None:
+        start_day = sim['start_day']
+
+    # Handle start and end days
+    xmin,xmax = ax.get_xlim()
+    if date_args.start_day:
+        xmin = float(sc.day(date_args.start_day, start_day=start_day)) # Keep original type (float)
+    if date_args.end_day:
+        xmax = float(sc.day(date_args.end_day, start_day=start_day))
+    ax.set_xlim([xmin, xmax])
+
     # Set the x-axis intervals
-    if interval:
-        xmin,xmax = ax.get_xlim()
-        ax.set_xticks(pl.arange(xmin, xmax+1, interval))
+    if date_args.interval:
+        ax.set_xticks(pl.arange(xmin, xmax+1, date_args.interval))
 
     # Set xticks as dates
-    if as_dates:
+    if date_args.as_dates:
 
-        ax.xaxis.set_major_formatter(date_formatter(start_day=sim['start_day'], dateformat=dateformat))
-        if not interval:
+        date_formatter(start_day=start_day, dateformat=date_args.dateformat, ax=ax)
+        if not date_args.interval:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+    # Handle rotation
+    if date_args.rotation:
+        ax.tick_params(axis='x', labelrotation=date_args.rotation)
 
     return
 
 
-def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
+def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
     ''' Handle saving, figure showing, and what value to return '''
 
     # Handle saving
@@ -258,13 +317,16 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show):
 
     # Show the figure, or close it
     do_show = cvset.handle_show(do_show)
-
     if cvset.options.close and not do_show:
         if sep_figs:
             for fig in figs:
                 pl.close(fig)
         else:
             pl.close(fig)
+
+    # Reset Matplotlib defaults
+    for key,value in args.mpl_orig.items():
+        cvset.options.set(key, value)
 
     # Return the figure or figures
     if sep_figs:
@@ -291,14 +353,15 @@ def set_line_options(input_args, reskey, resnum, default):
 #%% Core plotting functions
 
 def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
+         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
+         show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
-         fig=None, ax=None):
+         fig=None, ax=None, **kwargs):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args, show_args)
+    args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
+                       legend_args=legend_args, show_args=show_args, date_args=date_args, mpl_args=mpl_args, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
@@ -316,24 +379,24 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
             if args.show['data']:
                 plot_data(sim, ax, reskey, args.scatter, color=color) # Plot the data
             if args.show['ticks']:
-                reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['interventions']:
             plot_interventions(sim, ax) # Plot the interventions
         if args.show['legend']:
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
 def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
-         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None,
-         as_dates=True, dateformat=None, interval=None, n_cols=None, grid=False, commaticks=True,
-         setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
-         fig=None, ax=None):
+         scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
+         show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True, setylim=True,
+         log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False, fig=None, ax=None, **kwargs):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args, fill_args, legend_args)
+    args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
+                   legend_args=legend_args, show_args=show_args, date_args=date_args, mpl_args=mpl_args, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
@@ -356,24 +419,24 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
                 if args.show['interventions']:
                     plot_interventions(sim, ax) # Plot the interventions
                 if args.show['ticks']:
-                    reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                    reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['legend']:
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
 def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
-                interval=None, color=None, label=None, do_show=None, do_save=False,
-                fig_path=None, fig=None, ax=None):
+                date_args=None, mpl_args=None, grid=False, commaticks=True, setylim=True, color=None, label=None,
+                do_show=None, do_save=False, fig_path=None, fig=None, ax=None, **kwargs):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
     # Handle inputs
     sep_figs = False # Only one figure
     fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args)
+    args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args,
+                       date_args=date_args, mpl_args=mpl_args, **kwargs)
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Gather results
@@ -398,20 +461,19 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
     plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
     title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
-    reset_ticks(ax, sim, interval, as_dates, dateformat) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+    reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
-def plot_compare(df, log_scale=True, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                grid=False, commaticks=True, setylim=True, as_dates=True, dateformat=None,
-                interval=None, color=None, label=None, fig=None):
+def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, mpl_args=None, grid=False,
+                 commaticks=True, setylim=True, color=None, label=None, fig=None, **kwargs):
     ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
 
     # Handle inputs
     fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
-    args = handle_args(fig_args, plot_args, scatter_args, axis_args)
+    args = handle_args(fig_args=fig_args, axis_args=axis_args, mpl_args=mpl_args, **kwargs)
     fig, figs = create_figs(args, sep_figs=False, fig=fig)
 
     # Map from results into different categories

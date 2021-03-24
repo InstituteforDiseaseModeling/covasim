@@ -3,12 +3,12 @@ Tests of simulation parameters from
 ../../covasim/README.md
 """
 
-from unittest_support_classes import CovaSimTest, TestProperties
+from unittest_support_classes import CovaTest, TProps
 
-TKeys = TestProperties.ParameterKeys.TransmissionKeys
-Hightrans = TestProperties.SpecializedSimulations.Hightransmission
+TKeys = TProps.ParKeys.TransKeys
+Hightrans = TProps.SpecialSims.Hightransmission
 
-class DiseaseTransmissionTests(CovaSimTest):
+class DiseaseTransmissionTests(CovaTest):
     """
     Tests of the parameters involved in transmission
     pre requisites simulation parameter tests
@@ -33,7 +33,7 @@ class DiseaseTransmissionTests(CovaSimTest):
         }
         self.run_sim(beta_zero)
         exposed_today_channel = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.exposed_at_timestep
+            TProps.ResKeys.exposed_at_timestep
         )
         prev_exposed = exposed_today_channel[0]
         self.assertEqual(prev_exposed, Hightrans.pop_infected,
@@ -47,7 +47,7 @@ class DiseaseTransmissionTests(CovaSimTest):
             pass
 
         infections_channel = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infections_at_timestep
+            TProps.ResKeys.infections_at_timestep
         )
         for t in range(len(infections_channel)):
             today_infectious = infections_channel[t]
