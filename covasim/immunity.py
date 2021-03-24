@@ -343,12 +343,7 @@ def check_nab(t, people, inds=None):
     ''' Determines current NAbs based on date since recovered/vaccinated.'''
 
     # Indices of people who've had some NAb event
-    try: rec_inds = cvu.defined(people.date_recovered[inds])
-    except:
-        import traceback;
-        traceback.print_exc();
-        import pdb;
-        pdb.set_trace()
+    rec_inds = cvu.defined(people.date_recovered[inds])
     vac_inds = cvu.defined(people.date_vaccinated[inds])
     both_inds = np.intersect1d(rec_inds, vac_inds)
 
