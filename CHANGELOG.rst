@@ -33,7 +33,7 @@ This is the last release before the Covasim 3.0 launch (vaccines and variants).
 
 Highlights
 ^^^^^^^^^^
-- **Updated lognormal distributions**: Lognormal distributions had been inadvertently using the variance instead of the standard deviation as the second parameter, resulting in too small variance. This has been fixed. This has a small but nonzero impact on the results (e.g., the time to peak infections is about 5-10% sooner now).
+- **Updated lognormal distributions**: Lognormal distributions had been inadvertently using the variance instead of the standard deviation as the second parameter, resulting in too small variance. This has been fixed. This has a small but nonzero impact on the results (e.g. with default parameters, the time to peak infections is about 5-10% sooner now).
 - **Expanded plotting features**: You now have much more flexibility with passing arguments to ``sim.plot()`` and other plotting functions, such as to temporarily set global Matplotlib options (such as DPI), modify axis styles and limits, etc. For example, you can now do things like this: ``cv.Sim().run().plot(dpi=150, rotation=30, start_day='2020-03-01', end_day=55, interval=7)``.
 - **Improved analyzers**: Transmission trees can be computed 20 times faster, Fit objects are more forgiving for data problems, and analyzers can now be exported to JSON.
 
@@ -69,8 +69,8 @@ Documentation and testing
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
-- To restore previous behavior on a simulation (i.e. using variance instead of standard deviation for lognormal distributions), call ``cv.misc.migrate_lognormal(sim)``. This is done automatically when loading a saved sim from disk. To undo a migration, type ``cv.misc.migrate_lognormal(sim, revert=True)``. In practice, this loops over the duration parameters and replaces ``par2`` with its square root. If you have used lognormal distributions elsewhere, you will need to update them manually.
-- Code that was designed to parse transmission trees will likely need to be revised. The object ``tt.detailed`` is now a dataframe; calling ``tt.detailed.to_dict('records')`` will bring it very close to what it used to be, with the exception that for a given row, ``'t'`` and ``'s'`` used to be nested dictionaries, whereas now they are prefixes. For example, whereas before the "is quarantined" state of the source of the 45th infection would have been ``tt.detailed[45]['s']['is_quarantined']``, it is now ``tt.detailed.iloc[45]['src_is_quarantined']``.
+- To restore previous behavior for a simulation (i.e. using variance instead of standard deviation for lognormal distributions), call ``cv.misc.migrate_lognormal(sim)``. This is done automatically when loading a saved sim from disk. To undo a migration, type ``cv.misc.migrate_lognormal(sim, revert=True)``. What this function does is loop over the duration parameters and replace ``par2`` with its square root. If you have used lognormal distributions elsewhere, you will need to update them manually.
+- Code that was designed to parse transmission trees will likely need to be revised. The object ``tt.detailed`` is now a dataframe; calling ``tt.detailed.to_dict('records')`` will bring it very close to what it used to be, with the exception that for a given row, ``'t'`` and ``'s'`` used to be nested dictionaries, whereas now they are prefixes. For example, whereas before the 45th person's source's "is quarantined" state would have been ``tt.detailed[45]['s']['is_quarantined']``, it is now ``tt.detailed.iloc[45]['src_is_quarantined']``.
 - *GitHub info*: PR `859 <https://github.com/amath-idm/covasim/pull/859>`__
 
 
