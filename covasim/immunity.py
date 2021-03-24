@@ -215,7 +215,7 @@ class Vaccine():
             # Known parameters on pfizer
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2= 2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -223,7 +223,7 @@ class Vaccine():
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
                 vaccine_pars['label'] = vaccine
@@ -231,7 +231,7 @@ class Vaccine():
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['label'] = vaccine
@@ -239,7 +239,7 @@ class Vaccine():
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='lognormal', par1=2, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['label'] = vaccine
@@ -354,7 +354,7 @@ def check_nab(t, people, inds=None):
     t_since_boost[both_inds] = t-np.maximum(people.date_recovered[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
 
     # Set current NAbs
-    people.NAb[inds] = people.pars['NAb_kin'][t_since_boost] * 2**people.init_NAb[inds]
+    people.NAb[inds] = people.pars['NAb_kin'][t_since_boost] * people.init_NAb[inds]
 
     return
 
