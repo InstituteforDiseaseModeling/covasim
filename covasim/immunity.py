@@ -293,11 +293,11 @@ __all__ += ['init_nab', 'check_nab', 'nab_to_efficacy']
 
 def init_nab(people, inds, prior_inf=True):
     '''
-    Draws an initial NAb level for individuals and pre-computes NAb waning over time.
+    Draws an initial NAb level for individuals.
     Can come from a natural infection or vaccination and depends on if there is prior immunity:
-    1) a natural infection. If individual has no existing NAb, draw from lognormal distribution
+    1) a natural infection. If individual has no existing NAb, draw from distribution
     depending upon symptoms. If individual has existing NAb, multiply booster impact
-    2) Vaccination. If individual has no existing NAb, draw from lognormal distribution
+    2) Vaccination. If individual has no existing NAb, draw from distribution
     depending upon vaccine source. If individual has existing NAb, multiply booster impact
     '''
 
