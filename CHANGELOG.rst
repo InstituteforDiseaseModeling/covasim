@@ -24,10 +24,12 @@ These are the major improvements we are currently working on. If there is a spec
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (2.0.x)
+Latest versions (2.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-sim.plot(dpi=150, rotation=45, start_day='2020-03-01', end_day=55, interval=7)
+Version 2.1.0 (2021-03-23)
+--------------------------
+- ``sim.plot(dpi=150, rotation=45, start_day='2020-03-01', end_day=55, interval=7)``
 
 
 

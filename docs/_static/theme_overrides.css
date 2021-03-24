@@ -21,6 +21,7 @@ h1 {
     margin-bottom: 1.0em;
 }
 
+/* CK: added toc-backref since otherwise overrides this */
 h2, .toc-backref {
     font-size: 125%;
     color: #0055af !important;

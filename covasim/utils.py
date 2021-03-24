@@ -189,8 +189,8 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     elif dist == 'neg_binomial':  samples = n_neg_binomial(rate=par1, dispersion=par2, n=size, **kwargs) # Use custom version below
     elif dist in ['lognormal', 'lognormal_int']:
         if par1>0:
-            mean  = np.log(par1**2 / np.sqrt(par2 + par1**2)) # Computes the mean of the underlying normal distribution
-            sigma = np.sqrt(np.log(par2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
+            mean  = np.log(par1**2 / np.sqrt(par2**2 + par1**2)) # Computes the mean of the underlying normal distribution
+            sigma = np.sqrt(np.log(par2**2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
             samples = np.random.lognormal(mean=mean, sigma=sigma, size=size, **kwargs)
         else:
             samples = np.zeros(size)
