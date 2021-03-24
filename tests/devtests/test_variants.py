@@ -3,6 +3,8 @@ import covasim.defaults as cvd
 import sciris as sc
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 
 
 do_plot   = 1
@@ -26,12 +28,13 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
         'beta': 0.01
     }
     strain = cv.Strain(strain_pars, days=1, n_imports=20)
-    sim = cv.Sim(pars=pars, strains=strain)
+    sim = cv.Sim(pars=pars, strains=strain, analyzers=cv.snapshot(30, 60))
     sim.run()
 
     if do_plot:
         plot_results(sim, key='incidence_by_strain', title='Imported strain on day 30 (cross immunity)', filename='test_importstrain1', labels=strain_labels, do_show=do_show, do_save=do_save)
         plot_shares(sim, key='new_infections', title='Shares of new infections by strain', filename='test_importstrain1_shares', do_show=do_show, do_save=do_save)
+
     return sim
 
 
