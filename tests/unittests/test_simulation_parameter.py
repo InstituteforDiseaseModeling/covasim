@@ -4,10 +4,10 @@ Tests of simulation parameters from
 """
 import unittest
 
-from unittest_support_classes import CovaSimTest, TestProperties
+from unittest_support_classes import CovaSimTest, TProps
 
-TPKeys = TestProperties.ParameterKeys.SimulationKeys
-ResKeys = TestProperties.ResultsDataKeys
+TParKeys = TProps.ParKeys.SimKeys
+ResKeys = TProps.ResKeys
 
 class SimulationParameterTests(CovaSimTest):
     def setUp(self):
@@ -25,32 +25,32 @@ class SimulationParameterTests(CovaSimTest):
 
         Depends on run default simulation
         """
-        TPKeys = TestProperties.ParameterKeys.SimulationKeys
+        TParKeys = TProps.ParKeys.SimKeys
         pop_2_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: 2,
-            TPKeys.number_contacts: {'a': 1},
-            TPKeys.initial_infected_count: 0
+            TParKeys.population_scaling_factor: 1,
+            TParKeys.number_simulated_days: 1,
+            TParKeys.number_agents: 2,
+            TParKeys.number_contacts: {'a': 1},
+            TParKeys.initial_infected_count: 0
         }
         pop_10_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: 10,
-            TPKeys.number_contacts: {'a': 4},
-            TPKeys.initial_infected_count: 0
+            TParKeys.population_scaling_factor: 1,
+            TParKeys.number_simulated_days: 1,
+            TParKeys.number_agents: 10,
+            TParKeys.number_contacts: {'a': 4},
+            TParKeys.initial_infected_count: 0
         }
         pop_123_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: 123,
-            TPKeys.initial_infected_count: 0
+            TParKeys.population_scaling_factor: 1,
+            TParKeys.number_simulated_days: 1,
+            TParKeys.number_agents: 123,
+            TParKeys.initial_infected_count: 0
         }
         pop_1234_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: 1234,
-            TPKeys.initial_infected_count: 0
+            TParKeys.population_scaling_factor: 1,
+            TParKeys.number_simulated_days: 1,
+            TParKeys.number_agents: 1234,
+            TParKeys.initial_infected_count: 0
         }
         self.run_sim(pop_2_one_day)
         pop_2_pop = self.get_day_zero_channel_value()
@@ -61,10 +61,10 @@ class SimulationParameterTests(CovaSimTest):
         self.run_sim(pop_1234_one_day)
         pop_1234_pop = self.get_day_zero_channel_value()
 
-        self.assertEqual(pop_2_pop, pop_2_one_day[TPKeys.number_agents])
-        self.assertEqual(pop_10_pop, pop_10_one_day[TPKeys.number_agents])
-        self.assertEqual(pop_123_pop, pop_123_one_day[TPKeys.number_agents])
-        self.assertEqual(pop_1234_pop, pop_1234_one_day[TPKeys.number_agents])
+        self.assertEqual(pop_2_pop, pop_2_one_day[TParKeys.number_agents])
+        self.assertEqual(pop_10_pop, pop_10_one_day[TParKeys.number_agents])
+        self.assertEqual(pop_123_pop, pop_123_one_day[TParKeys.number_agents])
+        self.assertEqual(pop_1234_pop, pop_1234_one_day[TParKeys.number_agents])
 
         pass
 
@@ -73,10 +73,10 @@ class SimulationParameterTests(CovaSimTest):
         Intent is to test zero, negative, and excessively large pop sizes
         """
         pop_neg_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1,
-            TPKeys.number_agents: -10,
-            TPKeys.initial_infected_count: 0
+            TParKeys.population_scaling_factor: 1,
+            TParKeys.number_simulated_days: 1,
+            TParKeys.number_agents: -10,
+            TParKeys.initial_infected_count: 0
         }
         with self.assertRaises(ValueError) as context:
             self.run_sim(pop_neg_one_day)
@@ -84,10 +84,10 @@ class SimulationParameterTests(CovaSimTest):
         self.assertIn("negative", error_message)
 
         pop_zero_one_day = {
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 100,
-            TPKeys.number_agents: 0,
-            TPKeys.initial_infected_count: 0
+            TParKeys.population_scaling_factor: 1,
+            TParKeys.number_simulated_days: 100,
+            TParKeys.number_agents: 0,
+            TParKeys.initial_infected_count: 0
         }
         self.run_sim(pop_zero_one_day)
         self.assertEqual(self.simulation_result['results'][ResKeys.susceptible_at_timestep][-1], 0)
@@ -103,21 +103,21 @@ class SimulationParameterTests(CovaSimTest):
         Depends on population_size
         """
         scale_1_one_day = {
-            TPKeys.number_agents: 100,
-            TPKeys.population_scaling_factor: 1,
-            TPKeys.number_simulated_days: 1
+            TParKeys.number_agents: 100,
+            TParKeys.population_scaling_factor: 1,
+            TParKeys.number_simulated_days: 1
         }
         scale_2_one_day = {
-            TPKeys.number_agents: 100,
-            TPKeys.population_scaling_factor: 2,
-            TPKeys.population_rescaling: False,
-            TPKeys.number_simulated_days: 1
+            TParKeys.number_agents: 100,
+            TParKeys.population_scaling_factor: 2,
+            TParKeys.population_rescaling: False,
+            TParKeys.number_simulated_days: 1
         }
         scale_10_one_day = {
-            TPKeys.number_agents: 100,
-            TPKeys.population_scaling_factor: 10,
-            TPKeys.population_rescaling: False,
-            TPKeys.number_simulated_days: 1
+            TParKeys.number_agents: 100,
+            TParKeys.population_scaling_factor: 10,
+            TParKeys.population_rescaling: False,
+            TParKeys.number_simulated_days: 1
         }
         self.run_sim(scale_1_one_day)
         scale_1_pop = self.get_day_zero_channel_value()
@@ -140,10 +140,10 @@ class SimulationParameterTests(CovaSimTest):
         """
         self.set_smallpop_hightransmission()
         seed_1_params = {
-            TPKeys.random_seed: 1
+            TParKeys.random_seed: 1
         }
         seed_2_params = {
-            TPKeys.random_seed: 2
+            TParKeys.random_seed: 2
         }
         self.run_sim(seed_1_params)
         infectious_seed_1_v1 = self.get_full_result_channel(
