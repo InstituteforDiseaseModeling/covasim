@@ -354,7 +354,12 @@ def check_nab(t, people, inds=None):
     t_since_boost[both_inds] = t-np.maximum(people.date_recovered[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
 
     # Set current NAbs
-    people.NAb[inds] = people.pars['NAb_kin'][t_since_boost] * people.init_NAb[inds]
+    try: people.NAb[inds] = people.pars['NAb_kin'][t_since_boost] * people.init_NAb[inds]
+    except:
+        import traceback;
+        traceback.print_exc();
+        import pdb;
+        pdb.set_trace()
 
     return
 
