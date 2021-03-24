@@ -1393,7 +1393,7 @@ class TransTree(Analyzer):
         quar_attrs = ['date_quarantined', 'date_end_quarantine']
         date_attrs = [attr for attr in attrs if attr.startswith('date_')]
         is_attrs = [attr.replace('date_', 'is_') for attr in date_attrs]
-        dd_arr = lambda: np.nan*np.zeros(n_people)
+        dd_arr = lambda: np.nan*np.zeros(n_people) # Create an empty array of the right size
         dd = sc.odict(defaultdict=dd_arr) # Data dictionary, to be converted to a dataframe later
 
         # Handle indices
@@ -1402,69 +1402,56 @@ class TransTree(Analyzer):
         date_arr = dd_arr()
 
         # Map onto arrays
-        t_inds = np.array(inflog['target'], dtype=np.int64)
-        src_arr[t_inds]  = inflog['source']
-        trg_arr[t_inds]  = t_inds
-        date_arr[t_inds] = inflog['date']
+        ti = np.array(inflog['target'], dtype=np.int64) # "Target indices", short since used so much
+        src_arr[ti]  = inflog['source']
+        trg_arr[ti]  = ti
+        date_arr[ti] = inflog['date']
 
         # Further index wrangling
         vts_inds  = sc.findinds(np.isfinite(trg_arr) * np.isfinite(src_arr)) # Valid target-source indices
         vs_inds   = np.array(src_arr[vts_inds], dtype=np.int64) # Valid source indices
-        vt_inds   = np.array(trg_arr[vts_inds], dtype=np.int64) # Valid target indices
-        vinfdates = date_arr[vt_inds] # Valid target-source pair infection dates
-        ainfdates = date_arr[t_inds] # All infection dates
+        vi        = np.array(trg_arr[vts_inds], dtype=np.int64) # Valid target indices, short since used so much
+        vinfdates = date_arr[vi] # Valid target-source pair infection dates
+        tinfdates = date_arr[ti] # All target infection dates
 
         # Populate main columns
-        dd['source'][vt_inds] = vs_inds
-        dd['target'][t_inds] = t_inds
-        dd['date'][t_inds]   = ainfdates
-        dd['layer'][t_inds]  = inflog['layer']
+        dd['source'][vi] = vs_inds
+        dd['target'][ti] = ti
+        dd['date'][ti]   = tinfdates
+        dd['layer']      = np.array(dd['layer'], dtype=object)
+        dd['layer'][ti]  = inflog['layer']
 
         # Populate from people
         for attr in attrs+quar_attrs:
             dd[trg+attr] = people[attr][:]
-            dd[src+attr][vt_inds] = people[attr][vs_inds]
-
-        # Replace nan with false
-        def fillna(arrdict, cols, value=False):
-            cols = sc.promotetolist(cols)
-            for col in cols:
-                arrdict[col][np.isnan(arrdict[col])] = value
-            return
+            dd[src+attr][vi] = people[attr][vs_inds]
 
         # Pull out valid indices for source and target
-        ddf.loc[v_trg, src+'is_quarantined'] = (ddf.loc[v_trg, src+'date_quarantined'] <= vinfdates) & ~(ddf.loc[v_trg, src+'date_quarantined'] <= vinfdates)
-        fillna(ddf, src+'is_quarantined')
+        lnot = np.logical_not # Shorten since used heavily
+        dd[src+'is_quarantined'][vi] = (dd[src+'date_quarantined'][vi] <= vinfdates) & lnot(dd[src+'date_quarantined'][vi] <= vinfdates)
         for is_attr,date_attr in zip(is_attrs, date_attrs):
-            ddf.loc[v_trg, src+is_attr] = (ddf.loc[v_trg, src+date_attr] <= vinfdates)
-            fillna(ddf, src+is_attr)
+            dd[src+is_attr][vi] = np.array(dd[src+date_attr][vi] <= vinfdates, dtype=bool)
 
         # Populate remaining properties
-        ddf.loc[v_trg, src+'is_asymp'] = np.isnan(ddf.loc[v_trg, src+'date_symptomatic'])
-        ddf.loc[v_trg, src+'is_presymp'] = ~ddf.loc[v_trg, src+'is_asymp'] & ~ddf.loc[v_trg, src+'is_symptomatic']
-        ddf.loc[trg_inds, trg+'is_quarantined'] = (ddf.loc[trg_inds, trg+'date_quarantined'] <= ainfdates) & ~(ddf.loc[trg_inds, trg+'date_end_quarantine'] <= ainfdates)
-        fillna(ddf, trg+'is_quarantined')
-
-        # Store
-        self.detailed = pd.DataFrame(dd)
+        dd[src+'is_asymp'][vi] = np.isnan(dd[src+'date_symptomatic'][vi])
+        dd[src+'is_presymp'][vi] = lnot(dd[src+'is_asymp'][vi]) & lnot(dd[src+'is_symptomatic'][vi])
+        dd[trg+'is_quarantined'][ti] = (dd[trg+'date_quarantined'][ti] <= tinfdates) & lnot(dd[trg+'date_end_quarantine'][ti] <= tinfdates)
 
         # Also re-parse the log and convert to a simpler dataframe
         targets = np.array(self.target_inds)
-        df = pd.DataFrame(index=np.arange(len(targets)))
-        ddft = ddf.loc[targets].reset_index() # Pull out only target values DO ABOVE TOO
-        infdates = ddf.loc[targets, 'date'].values
-        df.loc[:, 'date']      = infdates
-        df.loc[:, 'layer']     = ddf.loc[targets, 'layer'].values
-        df.loc[:, 's_asymp']   = np.isnan(ddf.loc[targets, 'src_date_symptomatic'].values)
-        df.loc[:, 's_presymp'] = ~(df.loc[:, 's_asymp'].values) & (infdates < ddf.loc[targets, 'src_date_symptomatic'].values)
-        fillna(df, 's_presymp')
-        df.loc[:, 's_sev']     = ddf.loc[targets,  'src_date_severe'].values      < infdates
-        df.loc[:, 's_crit']    = ddf.loc[targets,  'src_date_critical'].values    < infdates
-        df.loc[:, 's_diag']    = ddf.loc[targets,  'src_date_diagnosed'].values   < infdates
-        df.loc[:, 's_quar']    = (ddf.loc[targets, 'src_date_quarantined'].values < infdates) & ~(ddf.loc[targets, 'src_date_end_quarantine'].values <= infdates)
-        df.loc[:, 't_quar']    = (ddf.loc[targets, 'trg_date_quarantined'].values < infdates) & ~(ddf.loc[targets, 'trg_date_end_quarantine'].values <= infdates)
-        fillna(df, ['s_sev', 's_crit', 's_diag', 's_quar', 't_quar'])
+        dtr = dict()
+        infdates = dd['date'][targets]
+        dtr['date']      = infdates
+        dtr['layer']     = dd['layer'][targets]
+        dtr['s_asymp']   = np.isnan(dd['src_date_symptomatic'][targets])
+        dtr['s_presymp'] = ~(dtr['s_asymp'][:]) & (infdates < dd['src_date_symptomatic'][targets])
+        dtr['s_sev']     = dd['src_date_severe'][targets]       < infdates
+        dtr['s_crit']    = dd['src_date_critical'][targets]     < infdates
+        dtr['s_diag']    = dd['src_date_diagnosed'][targets]    < infdates
+        dtr['s_quar']    = (dd['src_date_quarantined'][targets] < infdates) & lnot(dd['src_date_end_quarantine'][targets] <= infdates)
+        dtr['t_quar']    = (dd['trg_date_quarantined'][targets] < infdates) & lnot(dd['trg_date_end_quarantine'][targets] <= infdates)
 
+        df = pd.DataFrame(dtr)
         df = df.rename(columns={'date': 'Day'}) # For use in plotting
         df = df.loc[df['layer'] != 'seed_infection']
 
@@ -1476,6 +1463,8 @@ class TransTree(Analyzer):
         df.loc[df['s_sev'], 'Severity'] = 'Severe'
         df.loc[df['s_crit'], 'Severity'] = 'Critical'
 
+        # Store
+        self.detailed = pd.DataFrame(dd)
         self.df = df
 
         return

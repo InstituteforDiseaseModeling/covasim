@@ -88,7 +88,7 @@ fillna(trg+'is_quarantined')
 sc.toc()
 
 
-sc.heading('Old implementation (dicts)...')
+sc.heading('Original implementation (dicts)...')
 
 sc.tic()
 
@@ -130,30 +130,36 @@ for transdict in sim.people.infection_log:
 
 sc.toc()
 
+
 sc.heading('Validation...')
 
 sc.tic()
 
 for i in range(len(detailed)):
-    sc.percentcomplete(step=i, maxsteps=len(detailed), stepsize=10)
+    sc.percentcomplete(step=i, maxsteps=len(detailed)-1, stepsize=5)
     d_entry = detailed[i]
     df_entry = ddf.iloc[i].to_dict()
+    tt_entry = tt.detailed.iloc[i].to_dict()
     if d_entry is None: # If in the dict it's None, it should be nan in the dataframe
-        assert np.isnan(df_entry['target'])
+        for entry in [df_entry, tt_entry]:
+            assert np.isnan(entry['target'])
     else:
-        dkeys = list(d_entry.keys())
+        dkeys  = list(d_entry.keys())
         dfkeys = list(df_entry.keys())
+        ttkeys = list(tt_entry.keys())
+        assert dfkeys == ttkeys
         assert all([dk in dfkeys for dk in dkeys]) # The dataframe can have extra keys, but not the dict
         for k in dkeys:
             v_d = d_entry[k]
             v_df = df_entry[k]
+            v_tt = tt_entry[k]
             try:
-                assert np.isclose(v_d, v_df, equal_nan=True) # If it's numeric, check they're close
+                assert np.isclose(v_d, v_df, v_tt, equal_nan=True) # If it's numeric, check they're close
             except TypeError:
                 if v_d is None:
-                    assert np.isnan(v_df) # If in the dict it's None, it should be nan in the dataframe
+                    assert all(np.isnan([v_df, v_tt])) # If in the dict it's None, it should be nan in the dataframe
                 else:
-                    assert v_d == v_df # In all other cases, it should be an exact match
+                    assert v_d == v_df == v_tt # In all other cases, it should be an exact match
 
 print('\nValidation passed.')
 
