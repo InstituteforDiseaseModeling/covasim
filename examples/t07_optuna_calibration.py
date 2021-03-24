@@ -20,6 +20,7 @@ def run_sim(pars, label=None, return_sim=False):
     ''' Create and run a simulation '''
     print(f'Running sim for beta={pars["beta"]}, rel_death_prob={pars["rel_death_prob"]}')
     pars = dict(
+        pop_size       = 10_000,
         start_day      = '2020-02-01',
         end_day        = '2020-04-11',
         beta           = pars["beta"],
