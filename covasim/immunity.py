@@ -315,7 +315,7 @@ def init_nab(people, inds, prior_inf=True):
         if len(no_prior_NAb_inds):
             init_NAb = cvu.sample(**people.pars['NAb_init'], size=len(no_prior_NAb_inds))
             prior_symp = people.prior_symptoms[no_prior_NAb_inds]
-            no_prior_NAb = init_NAb * prior_symp
+            no_prior_NAb = (2**init_NAb) * prior_symp
             people.init_NAb[no_prior_NAb_inds] = no_prior_NAb
 
         # 2) Prior NAb: multiply existing NAb by boost factor
@@ -329,7 +329,7 @@ def init_nab(people, inds, prior_inf=True):
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_NAb_inds):
             init_NAb = cvu.sample(**people.pars['vaccine_info']['NAb_init'], size=len(no_prior_NAb_inds))
-            people.init_NAb[no_prior_NAb_inds] = init_NAb
+            people.init_NAb[no_prior_NAb_inds] = 2**init_NAb
 
         # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
         if len(prior_NAb_inds):
