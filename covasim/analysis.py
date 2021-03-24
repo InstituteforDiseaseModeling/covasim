@@ -1344,7 +1344,7 @@ class TransTree(Analyzer):
             if self.sources[i] is not None:
                 if self.source_dates[i] >= start_day and self.source_dates[i] <= end_day:
                     n_targets[i] = len(self.targets[i])
-        n_target_inds = sc.findinds(~np.isnan(n_targets))
+        n_target_inds = sc.findinds(np.isfinite(n_targets))
         n_targets = n_targets[n_target_inds]
         self.n_targets = n_targets
         return n_targets
@@ -1375,8 +1375,15 @@ class TransTree(Analyzer):
     def make_detailed(self, people, reset=False):
         ''' Construct a detailed transmission tree, with additional information for each person '''
 
-        # Convert infection log to a dataframe and initialize
-        inf_df = sc.dcp(pd.DataFrame(self.infection_log))
+        def df_to_arrdict(df):
+            ''' Convert a dataframe to a dictionary of arrays '''
+            arrdict = dict()
+            for col in df.columns:
+                arrdict[col] = df[col].values
+            return arrdict
+
+        # Convert infection log to a dataframe and from there to a dict of arrays
+        inflog = df_to_arrdict(sc.dcp(pd.DataFrame(self.infection_log)))
 
         # Initialization
         n_people = len(people)
@@ -1386,45 +1393,43 @@ class TransTree(Analyzer):
         quar_attrs = ['date_quarantined', 'date_end_quarantine']
         date_attrs = [attr for attr in attrs if attr.startswith('date_')]
         is_attrs = [attr.replace('date_', 'is_') for attr in date_attrs]
-        ddf = pd.DataFrame(index=np.arange(n_people))
+        dd_arr = lambda: np.nan*np.zeros(n_people)
+        dd = sc.odict(defaultdict=dd_arr) # Data dictionary, to be converted to a dataframe later
 
         # Handle indices
-        trg_inds    = np.array(inf_df['target'].values, dtype=np.int64)
-        src_inds    = np.array(inf_df['source'].values)
-        date_vals   = np.array(inf_df['date'].values)
-        layer_vals  = np.array(inf_df['layer'].values)
-        src_arr     = np.nan*np.zeros(n_people)
-        trg_arr     = np.nan*np.zeros(n_people)
-        infdate_arr = np.nan*np.zeros(n_people)
+        src_arr  = dd_arr()
+        trg_arr  = dd_arr()
+        date_arr = dd_arr()
 
         # Map onto arrays
-        src_arr[trg_inds]     = src_inds
-        trg_arr[trg_inds]     = trg_inds
-        infdate_arr[trg_inds] = date_vals
+        t_inds = np.array(inflog['target'], dtype=np.int64)
+        src_arr[t_inds]  = inflog['source']
+        trg_arr[t_inds]  = t_inds
+        date_arr[t_inds] = inflog['date']
 
         # Further index wrangling
-        ts_inds   = sc.findinds(~np.isnan(trg_arr) * ~np.isnan(src_arr)) # Valid target-source indices
-        v_src     = np.array(src_arr[ts_inds], dtype=np.int64) # Valid source indices
-        v_trg     = np.array(trg_arr[ts_inds], dtype=np.int64) # Valid target indices
-        vinfdates = infdate_arr[v_trg] # Valid target-source pair infection dates
-        ainfdates = infdate_arr[trg_inds] # All infection dates
+        vts_inds  = sc.findinds(np.isfinite(trg_arr) * np.isfinite(src_arr)) # Valid target-source indices
+        vs_inds   = np.array(src_arr[vts_inds], dtype=np.int64) # Valid source indices
+        vt_inds   = np.array(trg_arr[vts_inds], dtype=np.int64) # Valid target indices
+        vinfdates = date_arr[vt_inds] # Valid target-source pair infection dates
+        ainfdates = date_arr[t_inds] # All infection dates
 
         # Populate main columns
-        ddf.loc[v_trg,    'source'] = v_src
-        ddf.loc[trg_inds, 'target'] = trg_inds
-        ddf.loc[trg_inds, 'date']   = ainfdates
-        ddf.loc[trg_inds, 'layer']  = layer_vals
+        dd['source'][vt_inds] = vs_inds
+        dd['target'][t_inds] = t_inds
+        dd['date'][t_inds]   = ainfdates
+        dd['layer'][t_inds]  = inflog['layer']
 
         # Populate from people
         for attr in attrs+quar_attrs:
-            ddf.loc[:, trg+attr] = people[attr][:]
-            ddf.loc[v_trg, src+attr] = people[attr][v_src]
+            dd[trg+attr] = people[attr][:]
+            dd[src+attr][vt_inds] = people[attr][vs_inds]
 
         # Replace nan with false
-        def fillna(nadf, cols):
+        def fillna(arrdict, cols, value=False):
             cols = sc.promotetolist(cols)
-            filldict = {k:False for k in cols}
-            nadf.fillna(value=filldict, inplace=True)
+            for col in cols:
+                arrdict[col][np.isnan(arrdict[col])] = value
             return
 
         # Pull out valid indices for source and target
@@ -1441,11 +1446,12 @@ class TransTree(Analyzer):
         fillna(ddf, trg+'is_quarantined')
 
         # Store
-        self.detailed = ddf
+        self.detailed = pd.DataFrame(dd)
 
         # Also re-parse the log and convert to a simpler dataframe
         targets = np.array(self.target_inds)
         df = pd.DataFrame(index=np.arange(len(targets)))
+        ddft = ddf.loc[targets].reset_index() # Pull out only target values DO ABOVE TOO
         infdates = ddf.loc[targets, 'date'].values
         df.loc[:, 'date']      = infdates
         df.loc[:, 'layer']     = ddf.loc[targets, 'layer'].values
@@ -1597,12 +1603,12 @@ class TransTree(Analyzer):
             tdq = {}  # Short for "tested, diagnosed, or quarantined"
             target_ind = ddict['target']
 
-            if not np.isnan(ddict['date']): # If this person was infected
+            if np.isfinite(ddict['date']): # If this person was infected
 
                 source_ind = ddict['source'] # Index of the person who infected the target
 
                 target_date = ddict['date']
-                if ~np.isnan(source_ind):  # Seed infections and importations won't have a source
+                if np.isfinite(source_ind):  # Seed infections and importations won't have a source
                     source_ind = int(source_ind)
                     source_date = detailed[source_ind]['date']
                 else:
@@ -1623,11 +1629,11 @@ class TransTree(Analyzer):
                 date_t = ddict['trg_date_tested']
                 date_d = ddict['trg_date_diagnosed']
                 date_q = ddict['trg_date_known_contact']
-                if ~np.isnan(date_t) and date_t < n:
+                if np.isfinite(date_t) and date_t < n:
                     tests[int(date_t)].append(tdq)
-                if ~np.isnan(date_d) and date_d < n:
+                if np.isfinite(date_d) and date_d < n:
                     diags[int(date_d)].append(tdq)
-                if ~np.isnan(date_q) and date_q < n:
+                if np.isfinite(date_q) and date_q < n:
                     quars[int(date_q)].append(tdq)
 
             else:

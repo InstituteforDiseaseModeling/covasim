@@ -546,7 +546,7 @@ def ifalse(arr, inds):
 
 def idefined(arr, inds):
     '''
-    Returns the indices that are true in the array -- name is short for indices[defined]
+    Returns the indices that are defined in the array -- name is short for indices[defined]
 
     Args:
         arr (array): any array, used as a filter
