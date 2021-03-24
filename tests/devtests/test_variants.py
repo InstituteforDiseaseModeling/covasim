@@ -3,11 +3,13 @@ import covasim.defaults as cvd
 import sciris as sc
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 
 
 do_plot   = 1
-do_show   = 1
-do_save   = 0
+do_show   = 0
+do_save   = 1
 
 
 def test_import1strain(do_plot=False, do_show=True, do_save=False):
@@ -26,12 +28,13 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
         'beta': 0.01
     }
     strain = cv.Strain(strain_pars, days=1, n_imports=20)
-    sim = cv.Sim(pars=pars, strains=strain)
+    sim = cv.Sim(pars=pars, strains=strain, analyzers=cv.snapshot(30, 60))
     sim.run()
 
     if do_plot:
         plot_results(sim, key='incidence_by_strain', title='Imported strain on day 30 (cross immunity)', filename='test_importstrain1', labels=strain_labels, do_show=do_show, do_save=do_save)
         plot_shares(sim, key='new_infections', title='Shares of new infections by strain', filename='test_importstrain1_shares', do_show=do_show, do_save=do_save)
+
     return sim
 
 
@@ -431,21 +434,21 @@ def get_ind_of_min_value(list, time):
 if __name__ == '__main__':
     sc.tic()
 
-    # Run simplest possible test
-    if 0:
-         sim = cv.Sim()
-         sim.run()
-
-    # Run more complex single-sim tests
+    # # Run simplest possible test
+    # if 1:
+    #      sim = cv.Sim()
+    #      sim.run()
+    #
+    # # Run more complex single-sim tests
     sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    #
-    # # Run Vaccine tests
+
+    # Run Vaccine tests
     # sim4 = test_synthpops()
     # sim5 = test_vaccine_1strain()
-    #
+
     # # Run multisim and scenario tests
     # scens0 = test_vaccine_1strain_scen()
     # scens1 = test_vaccine_2strains_scen()

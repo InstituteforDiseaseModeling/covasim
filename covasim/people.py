@@ -61,8 +61,6 @@ class People(cvb.BasePeople):
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             elif 'imm' in key:  # everyone starts out with no immunity
                 self[key] = np.full((self.pars['n_strains'], self.pop_size), 0, dtype=cvd.default_float)
-            elif 'NAb' in key:  # everyone starts out with no NAb
-                self[key] = np.full(((self.pars['n_days']+1), self.pop_size), 0, dtype=cvd.default_float)
             elif key == 'vaccinations':
                 self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
             else:
@@ -272,7 +270,7 @@ class People(cvb.BasePeople):
         self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild']  #
         self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']  #
         if len(inds):
-            cvi.compute_nab(self, inds, prior_inf=True)
+            cvi.init_nab(self, inds, prior_inf=True)
 
         # Now reset all disease states
         self.exposed[inds]          = False
