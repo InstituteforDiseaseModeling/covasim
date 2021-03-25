@@ -182,13 +182,14 @@ class Vaccine():
         for vx in rel_imm['known_vaccines']:
             rel_imm[vx] = {}
             rel_imm[vx]['wild'] = 1
-            rel_imm[vx]['b117'] = 1
 
-        rel_imm['pfizer']['b1351'] = .5
-        rel_imm['pfizer']['p1'] = .5
+        rel_imm['pfizer']['b117'] = 1/2
+        rel_imm['pfizer']['b1351'] = 1/6.7
+        rel_imm['pfizer']['p1'] = 1/6.5
 
-        rel_imm['moderna']['b1351'] = .5
-        rel_imm['moderna']['p1'] = .5
+        rel_imm['moderna']['b117'] = 1/1.8
+        rel_imm['moderna']['b1351'] = 1/4.5
+        rel_imm['moderna']['p1'] = 1/8.6
 
         rel_imm['az']['b1351'] = .5
         rel_imm['az']['p1'] = .5
