@@ -1,5 +1,5 @@
 import covasim as cv
-from unittest_support_classes import CovaSimTest
+from unittest_support_classes import CovaTest
 
 
 class SimKeys:
@@ -46,7 +46,7 @@ def BaseSim():
     return base_sim
 
 
-class ExperimentalDiseaseMortalityTests(CovaSimTest):
+class ExperimentalDiseaseMortalityTests(CovaTest):
     ''' Define the actual tests '''
 
     def test_zero_deaths(self):

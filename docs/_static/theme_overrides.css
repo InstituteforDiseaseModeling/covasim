@@ -17,6 +17,13 @@ h1, h2, .rst-content .toctree-wrapper p.caption, h3, h4, h5, h6, legend {
     margin-bottom: 0.5em;
 }
 
+/* CK: added toc-backref since otherwise overrides this */
+.toc-backref, .rst-content {
+    font-size: inherit !important;
+    color: inherit !important;
+    margin-bottom: inherit !important;
+}
+
 h1 {
     margin-bottom: 1.0em;
 }
@@ -26,6 +33,7 @@ h2 {
     color: #0055af !important;
     margin-bottom: 1.0em;
 }
+
 
 h3 {
     font-size: 115%;
@@ -45,9 +53,19 @@ div.document span.search-highlight {
     margin-bottom: 10px;
 }
 
+/* CK: alternating table row colors */
 .rst-content table.docutils:not(.field-list) tr:nth-child(2n-1) td, .wy-table-backed, .wy-table-odd td, .wy-table-striped tr:nth-child(2n-1) td {
     background-color: #acf;
 }
 tr.row-even {
     background-color: #def;
+}
+
+/* CK: Change the color of code blocks */
+.highlight  { background: #D9F0FF; }
+
+/* CK: Change the color of inline code */
+code.literal {
+    color: #e01e5a !important;
+    background-color: #f6f6f6 !important;
 }

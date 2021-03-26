@@ -15,7 +15,7 @@ from . import defaults as cvd
 from . import parameters as cvpar
 
 # Specify all externally visible classes this file defines
-__all__ = ['ParsObj', 'Result', 'Par', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
+__all__ = ['ParsObj', 'Result', 'BaseSim', 'BasePeople', 'Person', 'FlexDict', 'Contacts', 'Layer']
 
 
 #%% Define simulation classes
@@ -69,7 +69,6 @@ class ParsObj(FlexPretty):
         self.update_pars(pars, create=True)
         return
 
-
     def __getitem__(self, key):
         ''' Allow sim['par_name'] instead of sim.pars['par_name'] '''
         try:
@@ -78,7 +77,6 @@ class ParsObj(FlexPretty):
             all_keys = '\n'.join(list(self.pars.keys()))
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
-
 
     def __setitem__(self, key, value):
         ''' Ditto '''
@@ -90,11 +88,9 @@ class ParsObj(FlexPretty):
             raise sc.KeyNotFoundError(errormsg)
         return
 
-
     def update_pars(self, pars=None, create=False):
         '''
         Update internal dict with new pars.
-
         Args:
             pars (dict): the parameters to update (if None, do nothing)
             create (bool): if create is False, then raise a KeyNotFoundError if the key does not already exist
@@ -175,59 +171,6 @@ class Result(object):
     @property
     def npts(self):
         return len(self.values)
-
-
-class Par(object):
-    '''
-    NB NOT USED ANYWHERE YET- PLACEHOLDER CLASS IN CASE USEFUL
-    Stores a single parameter -- by default, acts like an array.
-    Args:
-        name (str): name of this parameter, e.g. beta
-        val: value(s) of the parameter - can take various forms
-        by_age: whether the parameter is differentiated by age
-        is_dist: whether the parameter is a distribution
-        by_strain (bool): whether or not the parameter varies by strain
-    '''
-
-    def __init__(self, name=None, val=None, by_age=False, is_dist=False, by_strain=False):
-        self.name =  name  # Name of this parameter
-        self.val = sc.promotetolist(val)  # Value of this parameter
-        self.by_strain = by_strain # Whether or not the parameter varies by strain
-        self.by_age = by_age # Whether or not the parameter varies by age
-        self.is_dist = is_dist # Whether or not the parameter is stored as a distribution
-        return
-
-    def __repr__(self, *args, **kwargs):
-        ''' Use pretty repr, like sc.prettyobj, but displaying full values '''
-        output  = sc.prepr(self, use_repr=False)
-        return output
-
-    def __getitem__(self, *args, **kwargs):
-        ''' To allow e.g. par[2] instead of par.val[5] '''
-        return self.val.__getitem__(*args, **kwargs)
-
-    def __setitem__(self, *args, **kwargs):
-        ''' To allow e.g. par[:] = 1 instead of par.val[:] = 1 '''
-        return self.val.__setitem__(*args, **kwargs)
-
-    def __len__(self):
-        ''' To allow len(par) instead of len(par.val) '''
-        return len(self.val)
-
-    @property
-    def n_strains(self):
-        return len(self.val)
-
-    def add_strain(self, new_val=None):
-        self.val.append(new_val)
-
-    def get(self, strain=0, n=None):
-        if self.by_strain:
-            if not self.is_dist: output = self.val[strain]
-            else:                output = cvu.sample(**self.val[strain], size=n)
-        else:
-            output = self.val
-        return output
 
 
 def set_metadata(obj):
@@ -493,6 +436,10 @@ class BaseSim(ParsObj):
         for key,res in self.results.items():
             if isinstance(res, Result):
                 resdict[key] = res.values
+                if res.low is not None:
+                    resdict[key+'_low'] = res.low
+                if res.high is not None:
+                    resdict[key+'_high'] = res.high
             elif for_json:
                 if key == 'date':
                     resdict[key] = [str(d) for d in res] # Convert dates to strings
@@ -1177,7 +1124,12 @@ class BasePeople(FlexPretty):
 
             # Create the layer if it doesn't yet exist
             if lkey not in self.contacts:
-                self.contacts[lkey] = Layer()
+                if self.pars['dynam_layer'].get(lkey, False):
+                    # Equivalent to previous functionality, but might be better if make_randpop() returned Layer objects instead of just dicts, that
+                    # way the population creation function could have control over both the contacts and the update algorithm
+                    self.contacts[lkey] = RandomLayer()
+                else:
+                    self.contacts[lkey] = Layer()
 
             # Actually include them, and update properties if supplied
             for col in self.contacts[lkey].keys(): # Loop over the supplied columns
@@ -1342,7 +1294,41 @@ class Contacts(FlexDict):
 
 
 class Layer(FlexDict):
-    ''' A small class holding a single layer of contacts '''
+    '''
+    A small class holding a single layer of contact edges (connections) between people.
+
+    The input is typically three arrays: person 1 of the connection, person 2 of
+    the connection, and the weight of the connection. Connections are undirected;
+    each person is both a source and sink.
+
+    This class is usually not invoked directly by the user, but instead is called
+    as part of the population creation.
+
+    Args:
+        p1 (array): an array of N connections, representing people on one side of the connection
+        p2 (array): an array of people on the other side of the connection
+        beta (array): an array of weights for each connection
+        kwargs (dict): other keys copied directly into the layer
+
+    Note that all arguments must be arrays of the same length, although not all
+    have to be supplied at the time of creation (they must all be the same at the
+    time of initialization, though, or else validation will fail).
+
+    **Examples**::
+
+        # Generate an average of 10 contacts for 1000 people
+        n = 10_000
+        n_people = 1000
+        p1 = np.random.randint(n_people, size=n)
+        p2 = np.random.randint(n_people, size=n)
+        beta = np.ones(n)
+        layer = cv.Layer(p1=p1, p2=p2, beta=beta)
+
+        # Convert one layer to another with an extra column
+        index = np.arange(n)
+        self_conn = p1 == p2
+        layer2 = cv.Layer(**layer, index=index, self_conn=self_conn)
+    '''
 
     def __init__(self, **kwargs):
         self.meta = {
@@ -1358,7 +1344,7 @@ class Layer(FlexDict):
 
         # Set data, if provided
         for key,value in kwargs.items():
-            self[key] = np.array(value, dtype=self.meta[key])
+            self[key] = np.array(value, dtype=self.meta.get(key))
 
         return
 
@@ -1372,8 +1358,9 @@ class Layer(FlexDict):
 
     def __repr__(self):
         ''' Convert to a dataframe for printing '''
+        label = self.__class__.__name__
         keys_str = ', '.join(self.keys())
-        output = f'Layer({keys_str})\n'
+        output = f'{label}({keys_str})\n' # e.g. Layer(p1, p2, beta)
         output += self.to_df().__repr__()
         return output
 
@@ -1504,3 +1491,33 @@ class Layer(FlexDict):
             contact_inds.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
 
         return contact_inds
+
+
+    def update(self, people, frac=1.0):
+        '''
+        Regenerate contacts on each timestep.
+
+        This method gets called if the layer appears in ``sim.pars['dynam_lkeys']``.
+        The Layer implements the update procedure so that derived classes can customize
+        the update e.g. implementing over-dispersion/other distributions, random
+        clusters, etc.
+
+        Typically, this method also takes in the ``people`` object so that the
+        update can depend on person attributes that may change over time (e.g.
+        changing contacts for people that are severe/critical).
+
+        Args:
+            frac (float): the fraction of contacts to update on each timestep
+        '''
+        # Choose how many contacts to make
+        pop_size   = len(people) # Total number of people
+        n_contacts = len(self) # Total number of contacts
+        n_new = int(np.round(n_contacts*frac)) # Since these get looped over in both directions later
+        inds = cvu.choose(n_contacts, n_new)
+
+        # Create the contacts, not skipping self-connections
+        self['p1'][inds]   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
+        self['p2'][inds]   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
+        self['beta'][inds] = np.ones(n_new, dtype=cvd.default_float)
+        return
+

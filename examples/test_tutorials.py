@@ -13,7 +13,7 @@ def test_all_tutorials():
     # Get and run tests
     filenames = sc.getfilelist(tex.examples_dir, pattern='t*.py', nopath=True)
     for filename in filenames:
-        if filename[1] in '0123456789': # Should have format e.g. t5_foo.py, not test_foo.py
+        if filename[1] in '0123456789': # Should have format e.g. t05_foo.py, not test_foo.py
             sc.heading(f'Running {filename}...')
             try:
                 tex.run_example(filename)

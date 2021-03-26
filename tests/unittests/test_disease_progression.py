@@ -4,13 +4,13 @@ Tests of simulation parameters from
 """
 import unittest
 
-from unittest_support_classes import CovaSimTest, TestProperties
+from unittest_support_classes import CovaTest, TProps
 
-ResKeys = TestProperties.ResultsDataKeys
-ParamKeys = TestProperties.ParameterKeys
+ResKeys = TProps.ResKeys
+ParamKeys = TProps.ParKeys
 
 
-class DiseaseProgressionTests(CovaSimTest):
+class DiseaseProgressionTests(CovaTest):
     def setUp(self):
         super().setUp()
         pass
@@ -33,16 +33,16 @@ class DiseaseProgressionTests(CovaSimTest):
         std_dev = 0
         for exposed_delay in exposed_delays:
             self.set_duration_distribution_parameters(
-                duration_in_question=ParamKeys.ProgressionKeys.DurationKeys.exposed_to_infectious,
+                duration_in_question=ParamKeys.ProgKeys.DurKeys.exposed_to_infectious,
                 par1=exposed_delay,
                 par2=std_dev
             )
             prob_dict = {
-                TestProperties.ParameterKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 0
+                TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.inf_to_symptomatic_probability: 0
             }
             self.set_simulation_prognosis_probability(prob_dict)
             serial_delay = {
-                TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: sim_dur
+                TProps.ParKeys.SimKeys.number_simulated_days: sim_dur
             }
             self.run_sim(serial_delay)
             infectious_channel = self.get_full_result_channel(
@@ -76,7 +76,7 @@ class DiseaseProgressionTests(CovaSimTest):
         self.set_everyone_infectious_same_day(num_agents=total_agents,
                                               days_to_infectious=exposed_delay)
         prob_dict = {
-            ParamKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.inf_to_symptomatic_probability: 0.0
+            ParamKeys.ProgKeys.ProbKeys.RelProbKeys.inf_to_symptomatic_probability: 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         infectious_durations = [1, 2, 5, 10, 20] # Keep values in order
@@ -84,13 +84,13 @@ class DiseaseProgressionTests(CovaSimTest):
         for TEST_dur in infectious_durations:
             recovery_day = exposed_delay + TEST_dur
             self.set_duration_distribution_parameters(
-                duration_in_question=ParamKeys.ProgressionKeys.DurationKeys.infectious_asymptomatic_to_recovered,
+                duration_in_question=ParamKeys.ProgKeys.DurKeys.infectious_asymptomatic_to_recovered,
                 par1=TEST_dur,
                 par2=infectious_duration_stddev
             )
             self.run_sim()
             recoveries_channel = self.get_full_result_channel(
-                TestProperties.ResultsDataKeys.recovered_at_timestep
+                TProps.ResKeys.recovered_at_timestep
             )
             recoveries_on_recovery_day = recoveries_channel[recovery_day]
             if self.is_debugging:
@@ -107,7 +107,7 @@ class DiseaseProgressionTests(CovaSimTest):
         total_agents = 500
         self.set_everyone_critical(num_agents=500, constant_delay=0)
         prob_dict = {
-            ParamKeys.ProgressionKeys.ProbabilityKeys.RelativeProbKeys.crt_to_death_probability: 1.0
+            ParamKeys.ProgKeys.ProbKeys.RelProbKeys.crt_to_death_probability: 1.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
 
@@ -116,13 +116,13 @@ class DiseaseProgressionTests(CovaSimTest):
 
         for TEST_dur in time_to_die_durations:
             self.set_duration_distribution_parameters(
-                duration_in_question=ParamKeys.ProgressionKeys.DurationKeys.critical_to_death,
+                duration_in_question=ParamKeys.ProgKeys.DurKeys.critical_to_death,
                 par1=TEST_dur,
                 par2=time_to_die_stddev
             )
             self.run_sim()
             deaths_today_channel = self.get_full_result_channel(
-                TestProperties.ResultsDataKeys.deaths_daily
+                TProps.ResKeys.deaths_daily
             )
             for t in range(len(deaths_today_channel)):
                 curr_deaths = deaths_today_channel[t]

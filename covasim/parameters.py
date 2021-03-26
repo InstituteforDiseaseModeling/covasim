@@ -53,7 +53,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
     pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
-    pars['n_imports']       = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
 
     # Basic disease transmission parameters
     pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
@@ -133,6 +132,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
         for key in pars.keys(): # Only loop over keys that have been populated
             if key in version_pars: # Only replace keys that exist in the old version
                 pars[key] = version_pars[key]
+
+        # Handle code change migration
+        if sc.compareversions(version, '2.1.0') == -1 and 'migrate_lognormal' not in pars:
+            cvm.migrate_lognormal(pars, verbose=pars['verbose'])
 
     return pars
 

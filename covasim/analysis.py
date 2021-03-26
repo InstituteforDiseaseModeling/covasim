@@ -11,9 +11,10 @@ from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
 from . import settings as cvset
+from . import plotting as cvpl
 
 
-__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_stats', 'Fit', 'TransTree']
+__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_stats', 'daily_stats', 'Fit', 'TransTree']
 
 
 class Analyzer(sc.prettyobj):
@@ -30,6 +31,8 @@ class Analyzer(sc.prettyobj):
     '''
 
     def __init__(self, label=None):
+        if label is None:
+            label = self.__class__.__name__ # Use the class name if no label is supplied
         self.label = label # e.g. "Record ages"
         self.initialized = False
         return
@@ -53,6 +56,38 @@ class Analyzer(sc.prettyobj):
             sim: the Sim instance
         '''
         raise NotImplementedError
+
+
+    def to_json(self):
+        '''
+        Return JSON-compatible representation
+
+        Custom classes can't be directly represented in JSON. This method is a
+        one-way export to produce a JSON-compatible representation of the
+        intervention. This method will attempt to JSONify each attribute of the
+        intervention, skipping any that fail.
+
+        Returns:
+            JSON-serializable representation
+        '''
+        # Set the name
+        json = {}
+        json['analyzer_name'] = self.label if hasattr(self, 'label') else None
+        json['analyzer_class'] = self.__class__.__name__
+
+        # Loop over the attributes and try to process
+        attrs = self.__dict__.keys()
+        for attr in attrs:
+            try:
+                data = getattr(self, attr)
+                try:
+                    attjson = sc.jsonify(data)
+                    json[attr] = attjson
+                except Exception as E:
+                    json[attr] = f'Could not jsonify "{attr}" ({type(data)}): "{str(E)}"'
+            except Exception as E2:
+                json[attr] = f'Could not jsonify "{attr}": "{str(E2)}"'
+        return json
 
 
 def validate_recorded_dates(sim, requested_dates, recorded_dates, die=True):
@@ -151,10 +186,7 @@ class snapshot(Analyzer):
 
 class age_histogram(Analyzer):
     '''
-    Analyzer that takes a "snapshot" of the sim.people array at specified points
-    in time, and saves them to itself. To retrieve them, you can either access
-    the dictionary directly, or use the get() method. You can also apply this
-    analyzer directly to a sim object.
+    Calculate statistics across age bins, including histogram plotting functionality.
 
     Args:
         days    (list): list of ints/strings/date objects, the days on which to calculate the histograms (default: last day)
@@ -169,9 +201,10 @@ class age_histogram(Analyzer):
 
         sim = cv.Sim(analyzers=cv.age_histogram())
         sim.run()
-        agehist = sim.get_analyzer()
 
-        agehist = cv.age_histogram(sim=sim)
+        agehist = sim.get_analyzer()
+        agehist = cv.age_histogram(sim=sim) # Alternate method
+        agehist.plot()
     '''
 
     def __init__(self, days=None, states=None, edges=None, datafile=None, sim=None, die=True, **kwargs):
@@ -223,7 +256,7 @@ class age_histogram(Analyzer):
 
         # Handle states
         if self.states is None:
-            self.states = ['exposed', 'dead', 'tested', 'diagnosed']
+            self.states = ['exposed', 'severe', 'dead', 'tested', 'diagnosed']
         self.states = sc.promotetolist(self.states)
         for s,state in enumerate(self.states):
             self.states[s] = state.replace('date_', '') # Allow keys starting with date_ as input, but strip it off here
@@ -337,19 +370,176 @@ class age_histogram(Analyzer):
             bins = hists['bins']
             barwidth = width*(bins[1] - bins[0]) # Assume uniform width
             for s,state in enumerate(self.states):
-                pl.subplot(n_rows, n_cols, s+1)
-                pl.bar(bins, hists[state], width=barwidth, facecolor=color, label=f'Number {state}')
+                ax = pl.subplot(n_rows, n_cols, s+1)
+                ax.bar(bins, hists[state], width=barwidth, facecolor=color, label=f'Number {state}')
                 if self.data and state in self.data:
                     data = self.data[state]
-                    pl.bar(bins+d_args.offset, data, width=barwidth*d_args.width, facecolor=d_args.color, label='Data')
-                pl.xlabel('Age')
-                pl.ylabel('Count')
-                pl.xticks(ticks=bins)
-                pl.legend()
+                    ax.bar(bins+d_args.offset, data, width=barwidth*d_args.width, facecolor=d_args.color, label='Data')
+                ax.set_xlabel('Age')
+                ax.set_ylabel('Count')
+                ax.set_xticks(ticks=bins)
+                ax.legend()
                 preposition = 'from' if windows else 'by'
-                pl.title(f'Number of people {state} {preposition} {date}')
+                ax.set_title(f'Number of people {state} {preposition} {date}')
 
         return figs
+
+
+class daily_age_stats(Analyzer):
+    '''
+    Calculate daily counts by age, saving for each day of the simulation. Can
+    plot either time series by age or a histogram over all time.
+
+    Args:
+        states  (list): which states of people to record (default: ['diagnoses', 'deaths', 'tests', 'severe'])
+        edges   (list): edges of age bins to use (default: 10 year bins from 0 to 100)
+        kwargs  (dict): passed to Analyzer()
+
+    **Examples**::
+
+        sim = cv.Sim(analyzers=cv.daily_age_stats())
+        sim = cv.Sim(pars, analyzers=daily_age)
+        sim.run()
+        daily_age = sim.get_analyzer()
+        daily_age.plot()
+        daily_age.plot(total=True)
+
+    '''
+
+    def __init__(self, states=None, edges=None, **kwargs):
+        super().__init__(**kwargs)
+        self.edges = edges
+        self.bins = None  # Age bins, calculated from edges
+        self.states = states
+        self.results = sc.odict()
+        self.start_day = None
+        self.df = None
+        self.total_df = None
+        return
+
+
+    def initialize(self, sim):
+
+        if self.states is None:
+            self.states = ['exposed', 'severe', 'dead', 'tested', 'diagnosed']
+
+        # Handle edges and age bins
+        if self.edges is None:  # Default age bins
+            self.edges = np.linspace(0, 100, 11)
+        self.bins = self.edges[:-1]  # Don't include the last edge in the bins
+
+        self.start_day = sim['start_day']
+        self.initialized = True
+        return
+
+
+    def apply(self, sim):
+        df_entry = {}
+        for state in self.states:
+            inds = sc.findinds(sim.people[f'date_{state}'], sim.t)
+            b, _ = np.histogram(sim.people.age[inds], self.edges)
+            df_entry.update({state: b * sim.rescale_vec[sim.t]})
+        df_entry.update({'day':sim.t, 'age': self.bins})
+        self.results.update({sim.date(sim.t): df_entry})
+
+
+    def to_df(self):
+        '''Create dataframe totals for each day'''
+        mapper = {f'{k}': f'new_{k}' for k in self.states}
+        df = pd.DataFrame()
+        for date, k in self.results.items():
+            df_ = pd.DataFrame(k)
+            df_['date'] = date
+            df_.rename(mapper, inplace=True, axis=1)
+            df = pd.concat((df, df_))
+        cols = list(df.columns.values)
+        cols = [cols[-1]] + [cols[-2]] + cols[:-2]
+        self.df = df[cols]
+        return self.df
+
+
+    def to_total_df(self):
+        ''' Create dataframe totals across days '''
+        if self.df is None:
+            self.to_df()
+        cols = list(self.df.columns)
+        cum_cols = [c for c in cols if c.split('_')[0] == 'new']
+        mapper = {f'new_{c.split("_")[1]}': f'cum_{c.split("_")[1]}' for c in cum_cols}
+        df_dict = {'age': []}
+        df_dict.update({c: [] for c in mapper.values()})
+        for age, group in self.df.groupby('age'):
+            cum_vals = group.sum()
+            df_dict['age'].append(age)
+            for k, v in mapper.items():
+                df_dict[v].append(cum_vals[k])
+        df = pd.DataFrame(df_dict)
+        if ('cum_diagnoses' in df.columns) and ('cum_tests' in df.columns):
+            df['yield'] = df['cum_diagnoses'] / df['cum_tests']
+        self.total_df = df
+        return df
+
+
+    def plot(self, total=False, do_show=None, fig_args=None, axis_args=None, plot_args=None, dateformat='%b-%d', width=0.8, color='#F8A493', data_args=None):
+        '''
+        Plot the results.
+
+        Args:
+            total     (bool):  whether to plot the total histograms rather than time series
+            do_show   (bool):  whether to show the plot
+            fig_args  (dict):  passed to pl.figure()
+            axis_args (dict):  passed to pl.subplots_adjust()
+            plot_args (dict):  passed to pl.plot()
+            dateformat (str):  the format to use for the x-axes (only used for time series)
+            width    (float): width of bars (only used for histograms)
+            color  (hex/rgb): the color of the bars (only used for histograms)
+        '''
+        if self.df is None:
+            self.to_df()
+        if self.total_df is None:
+            self.to_total_df()
+
+        fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
+        axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
+        plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
+
+        nplots = len(self.states)
+        nrows, ncols = sc.get_rows_cols(nplots)
+        fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
+        pl.subplots_adjust(**axis_args)
+
+        for count,state in enumerate(self.states):
+            row,col = np.unravel_index(count, (nrows,ncols))
+            ax = axs[row,col]
+            ax.set_title(state.title())
+            ages = self.df.age.unique()
+
+            # Plot time series
+            if not total:
+                colors = sc.vectocolor(len(ages))
+                has_data = False
+                for a,age in enumerate(ages):
+                    label = f'Age {age}'
+                    df = self.df[self.df.age==age]
+                    ax.plot(df.day, df[f'new_{state}'], c=colors[a], label=label)
+                    has_data = has_data or len(df)
+                if has_data:
+                    ax.legend()
+                    ax.set_xlabel('Day')
+                    ax.set_ylabel('Count')
+                    cvpl.date_formatter(start_day=self.start_day, dateformat=dateformat, ax=ax)
+
+            # Plot total histograms
+            else:
+                df = self.total_df
+                barwidth = width*(df.age[1] - df.age[0]) # Assume uniform width
+                ax.bar(df.age, df[f'cum_{state}'], width=barwidth, facecolor=color)
+                ax.set_xlabel('Age')
+                ax.set_ylabel('Count')
+                ax.set_xticks(ticks=df.age)
+
+        cvset.handle_show(do_show) # Whether or not to call pl.show()
+
+        return fig
 
 
 class daily_stats(Analyzer):
@@ -668,7 +858,7 @@ class daily_stats(Analyzer):
 
 
 
-class Fit(sc.prettyobj):
+class Fit(Analyzer):
     '''
     A class for calculating the fit between the model and the data. Note the
     following terminology is used here:
@@ -687,17 +877,19 @@ class Fit(sc.prettyobj):
         custom (dict): a custom dictionary of additional data to fit; format is e.g. {'my_output':{'data':[1,2,3], 'sim':[1,2,4], 'weights':2.0}}
         compute (bool): whether to compute the mismatch immediately
         verbose (bool): detail to print
+        die (bool): whether to raise an exception if no data are supplied
         kwargs (dict): passed to cv.compute_gof() -- see this function for more detail on goodness-of-fit calculation options
 
     **Example**::
 
-        sim = cv.Sim()
+        sim = cv.Sim(datafile='my-data-file.csv')
         sim.run()
         fit = sim.compute_fit()
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, **kwargs):
+    def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, die=True, **kwargs):
+        super().__init__(**kwargs) # Initialize the Analyzer object
 
         # Handle inputs
         self.weights    = weights
@@ -706,17 +898,25 @@ class Fit(sc.prettyobj):
         self.weights    = sc.mergedicts({'cum_deaths':10, 'cum_diagnoses':5}, weights)
         self.keys       = keys
         self.gof_kwargs = kwargs
+        self.die        = die
 
         # Copy data
         if sim.data is None: # pragma: no cover
             errormsg = 'Model fit cannot be calculated until data are loaded'
-            raise RuntimeError(errormsg)
+            if self.die:
+                raise RuntimeError(errormsg)
+            else:
+                print('Warning: ', errormsg)
+                sim.data = pd.DataFrame() # Use an empty dataframe
         self.data = sim.data
 
         # Copy sim results
         if not sim.results_ready: # pragma: no cover
             errormsg = 'Model fit cannot be calculated until results are run'
-            raise RuntimeError(errormsg)
+            if self.die:
+                raise RuntimeError(errormsg)
+            else:
+                print('Warning: ', errormsg)
         self.sim_results = sc.objdict()
         for key in sim.result_keys() + ['t', 'date']:
             self.sim_results[key] = sim.results[key]
@@ -758,17 +958,23 @@ class Fit(sc.prettyobj):
 
         data_cols = self.data.columns
         if self.keys is None:
-            sim_keys = self.sim_results.keys()
+            sim_keys = [k for k in self.sim_results.keys() if k.startswith('cum_')] # Default sim keys, only keep cumulative keys if no keys are supplied
             intersection = list(set(sim_keys).intersection(data_cols)) # Find keys in both the sim and data
-            self.keys = [key for key in sim_keys if key in intersection and key.startswith('cum_')] # Only keep cumulative keys
+            self.keys = [key for key in sim_keys if key in intersection] # Maintain key order
             if not len(self.keys): # pragma: no cover
-                errormsg = f'No matches found between simulation result keys ({sim_keys}) and data columns ({data_cols})'
-                raise sc.KeyNotFoundError(errormsg)
+                errormsg = f'No matches found between simulation result keys:\n{sc.strjoin(sim_keys)}\n\nand data columns:\n{sc.strjoin(data_cols)}'
+                if self.die:
+                    raise sc.KeyNotFoundError(errormsg)
+                else:
+                    print('Warning: ', errormsg)
         mismatches = [key for key in self.keys if key not in data_cols]
         if len(mismatches): # pragma: no cover
             mismatchstr = ', '.join(mismatches)
             errormsg = f'The following requested key(s) were not found in the data: {mismatchstr}'
-            raise sc.KeyNotFoundError(errormsg)
+            if self.die:
+                raise sc.KeyNotFoundError(errormsg)
+            else:
+                print('Warning: ', errormsg)
 
         for key in self.keys: # For keys present in both the results and in the data
             self.inds.sim[key]  = []
@@ -786,6 +992,7 @@ class Fit(sc.prettyobj):
             self.inds.data[key] = np.array(self.inds.data[key])
 
         # Convert into paired points
+        matches = 0 # Count how many data points match
         for key in self.keys:
             self.pair[key] = sc.objdict()
             sim_inds = self.inds.sim[key]
@@ -794,12 +1001,14 @@ class Fit(sc.prettyobj):
             self.pair[key].sim  = np.zeros(n_inds)
             self.pair[key].data = np.zeros(n_inds)
             for i in range(n_inds):
+                matches += 1
                 self.pair[key].sim[i]  = self.sim_results[key].values[sim_inds[i]]
                 self.pair[key].data[i] = self.data[key].values[data_inds[i]]
 
         # Process custom inputs
         self.custom_keys = list(self.custom.keys())
         for key in self.custom.keys():
+            matches += 1 # If any of these exist, count it as  amatch
 
             # Initialize and do error checking
             custom = self.custom[key]
@@ -827,6 +1036,13 @@ class Fit(sc.prettyobj):
             wt = custom.get('weight', 1.0) # Attempt to retrieve key 'weight', or use the default if not provided
             wt = custom.get('weights', wt) # ...but also try "weights"
             self.weights[key] = wt # Set the weight
+
+        if matches == 0:
+            errormsg = 'No paired data points were found between the supplied data and the simulation; please check the dates for each'
+            if self.die:
+                raise ValueError(errormsg)
+            else:
+                print('Warning: ', errormsg)
 
         return
 
@@ -883,8 +1099,7 @@ class Fit(sc.prettyobj):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None,
-             plot_args=None, do_show=None, fig=None):
+    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, date_args=None, do_show=None, fig=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -896,6 +1111,7 @@ class Fit(sc.prettyobj):
             fig_args  (dict):  passed to pl.figure()
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
+            date_args (dict):  passed to cv.plotting.reset_ticks() (handle date format, rotation, etc.)
             do_show   (bool):  whether to show the plot
             fig       (fig):   if supplied, use this figure to plot in
 
@@ -906,6 +1122,7 @@ class Fit(sc.prettyobj):
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
+        date_args = sc.mergedicts(sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start_day=None, end_day=None), date_args)
 
         if keys is None:
             keys = self.keys + self.custom_keys
@@ -926,7 +1143,7 @@ class Fit(sc.prettyobj):
         for k,key in enumerate(keys):
             if key in self.keys: # It's a time series, plot with days and dates
                 days      = self.inds.sim[key] # The "days" axis (or not, for custom keys)
-                daylabel  = 'Day'
+                daylabel  = 'Date'
             else: #It's custom, we don't know what it is
                 days      = np.arange(len(self.losses[key])) # Just use indices
                 daylabel  = 'Index'
@@ -956,37 +1173,42 @@ class Fit(sc.prettyobj):
                         ax.set_xlabel('Date')
                         ax.set_ylabel(ylabel)
                         ax.set_title(title)
+                        cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
                         ax.legend()
 
-            pl.subplot(n_rows, n_keys, k+1*n_keys+1)
-            pl.plot(days, self.pair[key].data, c='k', label='Data', **plot_args)
-            pl.plot(days, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
-            pl.title(key)
+            ts_ax = pl.subplot(n_rows, n_keys, k+1*n_keys+1)
+            ts_ax.plot(days, self.pair[key].data, c='k', label='Data', **plot_args)
+            ts_ax.plot(days, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
+            ts_ax.set_title(key)
             if k == 0:
-                pl.ylabel('Time series (counts)')
-                pl.legend()
+                ts_ax.set_ylabel('Time series (counts)')
+                ts_ax.legend()
 
-            pl.subplot(n_rows, n_keys, k+2*n_keys+1)
-            pl.bar(days, self.diffs[key], width=width, color=colors[k], label='Difference')
-            pl.axhline(0, c='k')
+            diff_ax = pl.subplot(n_rows, n_keys, k+2*n_keys+1)
+            diff_ax.bar(days, self.diffs[key], width=width, color=colors[k], label='Difference')
+            diff_ax.axhline(0, c='k')
             if k == 0:
-                pl.ylabel('Differences (counts)')
-                pl.legend()
+                diff_ax.set_ylabel('Differences (counts)')
+                diff_ax.legend()
 
             loss_ax = pl.subplot(n_rows, n_keys, k+3*n_keys+1, sharey=loss_ax)
-            pl.bar(days, self.losses[key], width=width, color=colors[k], label='Losses')
-            pl.xlabel(daylabel)
-            pl.title(f'Total loss: {self.losses[key].sum():0.3f}')
+            loss_ax.bar(days, self.losses[key], width=width, color=colors[k], label='Losses')
+            loss_ax.set_xlabel(daylabel)
+            loss_ax.set_title(f'Total loss: {self.losses[key].sum():0.3f}')
             if k == 0:
-                pl.ylabel('Losses')
-                pl.legend()
+                loss_ax.set_ylabel('Losses')
+                loss_ax.legend()
+
+            if daylabel == 'Date':
+                for ax in [ts_ax, diff_ax, loss_ax]:
+                    cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
 
         cvset.handle_show(do_show) # Whether or not to call pl.show()
 
         return fig
 
 
-class TransTree(sc.prettyobj):
+class TransTree(Analyzer):
     '''
     A class for holding a transmission tree. There are several different representations
     of the transmission tree: "infection_log" is copied from the people object and is the
@@ -997,9 +1219,21 @@ class TransTree(sc.prettyobj):
     Args:
         sim (Sim): the sim object
         to_networkx (bool): whether to convert the graph to a NetworkX object
+
+    **Example**::
+
+        sim = cv.Sim().run()
+        sim.run()
+        tt = sim.make_transtree()
+        tt.plot()
+        tt.plot_histograms()
+
+    New in version 2.1.0: ``tt.detailed`` is a dataframe rather than a list of dictionaries;
+    for the latter, use ``tt.detailed.to_dict('records')``.
     '''
 
-    def __init__(self, sim, to_networkx=False):
+    def __init__(self, sim, to_networkx=False, **kwargs):
+        super().__init__(**kwargs) # Initialize the Analyzer object
 
         # Pull out each of the attributes relevant to transmission
         attrs = {'age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_severe', 'date_critical', 'date_known_contact', 'date_recovered'}
@@ -1015,11 +1249,13 @@ class TransTree(sc.prettyobj):
 
         # Check that rescaling is not on
         if sim['rescale'] and sim['pop_scale']>1:
-            warningmsg = 'Warning: transmission tree results are unreliable when dynamic rescaling is on, since agents are reused! Please rerun with rescale=False and pop_scale=1 for reliable results.'
+            warningmsg = 'Warning: transmission tree results are unreliable when' \
+                         'dynamic rescaling is on, since agents are reused! Please '\
+                         'rerun with rescale=False and pop_scale=1 for reliable results.'
             print(warningmsg)
 
-        # Include the basic line list
-        self.infection_log = sc.dcp(people.infection_log)
+        # Include the basic line list -- copying directly is slow, so we'll make a copy later
+        self.infection_log = people.infection_log
 
         # Parse into sources and targets
         self.sources = [None for i in range(self.pop_size)]
@@ -1037,8 +1273,9 @@ class TransTree(sc.prettyobj):
                 self.source_dates[target] = date # Each target has at most one source
                 self.target_dates[source].append(date) # Each source can have multiple targets
 
-        # Count the number of targets each person has
-        self.n_targets = self.count_targets()
+        # Count the number of targets each person has, and the list of transmissions
+        self.count_targets()
+        self.count_transmissions()
 
         # Include the detailed transmission tree as well, as a list and as a dataframe
         self.make_detailed(people)
@@ -1075,20 +1312,6 @@ class TransTree(sc.prettyobj):
             return 0
 
 
-    @property
-    def transmissions(self):
-        """
-        Iterable over edges corresponding to transmission events
-
-        This excludes edges corresponding to seeded infections without a source
-        """
-        output = []
-        for d in self.infection_log:
-            if d['source'] is not None:
-                output.append([d['source'], d['target']])
-        return output
-
-
     def day(self, day=None, which=None):
         ''' Convenience function for converting an input to an integer day '''
         if day is not None:
@@ -1121,74 +1344,115 @@ class TransTree(sc.prettyobj):
             if self.sources[i] is not None:
                 if self.source_dates[i] >= start_day and self.source_dates[i] <= end_day:
                     n_targets[i] = len(self.targets[i])
-        n_target_inds = sc.findinds(~np.isnan(n_targets))
+        n_target_inds = sc.findinds(np.isfinite(n_targets))
         n_targets = n_targets[n_target_inds]
+        self.n_targets = n_targets
         return n_targets
+
+
+    def count_transmissions(self):
+        """
+        Iterable over edges corresponding to transmission events
+
+        This excludes edges corresponding to seeded infections without a source
+        """
+        source_inds = []
+        target_inds = []
+        transmissions = []
+        for d in self.infection_log:
+            if d['source'] is not None:
+                src = d['source']
+                trg = d['target']
+                source_inds.append(src)
+                target_inds.append(trg)
+                transmissions.append([src, trg])
+        self.transmissions = transmissions
+        self.source_inds = source_inds
+        self.target_inds = target_inds
+        return transmissions
 
 
     def make_detailed(self, people, reset=False):
         ''' Construct a detailed transmission tree, with additional information for each person '''
 
-        detailed = [None]*self.pop_size
+        def df_to_arrdict(df):
+            ''' Convert a dataframe to a dictionary of arrays '''
+            arrdict = dict()
+            for col in df.columns:
+                arrdict[col] = df[col].values
+            return arrdict
 
-        for transdict in self.infection_log:
+        # Convert infection log to a dataframe and from there to a dict of arrays
+        inflog = df_to_arrdict(sc.dcp(pd.DataFrame(self.infection_log)))
 
-            # Pull out key quantities
-            ddict  = sc.dcp(transdict) # For "detailed dictionary"
-            source = ddict['source']
-            target = ddict['target']
-            ddict['s'] = {} # Source properties
-            ddict['t'] = {} # Target properties
+        # Initialization
+        n_people = len(people)
+        src = 'src_'
+        trg = 'trg_'
+        attrs = ['age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_severe', 'date_critical', 'date_known_contact']
+        quar_attrs = ['date_quarantined', 'date_end_quarantine']
+        date_attrs = [attr for attr in attrs if attr.startswith('date_')]
+        is_attrs = [attr.replace('date_', 'is_') for attr in date_attrs]
+        dd_arr = lambda: np.nan*np.zeros(n_people) # Create an empty array of the right size
+        dd = sc.odict(defaultdict=dd_arr) # Data dictionary, to be converted to a dataframe later
 
-            # If the source is available (e.g. not a seed infection), loop over both it and the target
-            if source is not None:
-                stdict = {'s':source, 't':target}
-            else:
-                stdict = {'t':target}
+        # Handle indices
+        src_arr  = dd_arr()
+        trg_arr  = dd_arr()
+        date_arr = dd_arr()
 
-            # Pull out each of the attributes relevant to transmission
-            attrs = ['age', 'date_exposed', 'date_symptomatic', 'date_tested', 'date_diagnosed', 'date_quarantined', 'date_end_quarantine', 'date_severe', 'date_critical', 'date_known_contact']
-            for st,stind in stdict.items():
-                for attr in attrs:
-                    ddict[st][attr] = people[attr][stind]
-            if source is not None:
-                for attr in attrs:
-                    if attr.startswith('date_'):
-                        is_attr = attr.replace('date_', 'is_') # Convert date to a boolean, e.g. date_diagnosed -> is_diagnosed
-                        if attr == 'date_quarantined': # This has an end date specified
-                            ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] and not (ddict['s']['date_end_quarantine'] <= ddict['date'])
-                        elif attr != 'date_end_quarantine': # This is not a state
-                            ddict['s'][is_attr] = ddict['s'][attr] <= ddict['date'] # These don't make sense for people just infected (targets), only sources
+        # Map onto arrays
+        ti = np.array(inflog['target'], dtype=np.int64) # "Target indices", short since used so much
+        src_arr[ti]  = inflog['source']
+        trg_arr[ti]  = ti
+        date_arr[ti] = inflog['date']
 
-                ddict['s']['is_asymp']   = np.isnan(people.date_symptomatic[source])
-                ddict['s']['is_presymp'] = ~ddict['s']['is_asymp'] and ~ddict['s']['is_symptomatic'] # Not asymptomatic and not currently symptomatic
-            ddict['t']['is_quarantined'] = ddict['t']['date_quarantined'] <= ddict['date'] and not (ddict['t']['date_end_quarantine'] <= ddict['date']) # This is the only target date that it makes sense to define since it can happen before infection
+        # Further index wrangling
+        vts_inds  = sc.findinds(np.isfinite(trg_arr) * np.isfinite(src_arr)) # Valid target-source indices
+        vs_inds   = np.array(src_arr[vts_inds], dtype=np.int64) # Valid source indices
+        vi        = np.array(trg_arr[vts_inds], dtype=np.int64) # Valid target indices, short since used so much
+        vinfdates = date_arr[vi] # Valid target-source pair infection dates
+        tinfdates = date_arr[ti] # All target infection dates
 
-            detailed[target] = ddict
+        # Populate main columns
+        dd['source'][vi] = vs_inds
+        dd['target'][ti] = ti
+        dd['date'][ti]   = tinfdates
+        dd['layer']      = np.array(dd['layer'], dtype=object)
+        dd['layer'][ti]  = inflog['layer']
 
-        self.detailed = detailed
+        # Populate from people
+        for attr in attrs+quar_attrs:
+            dd[trg+attr] = people[attr][:]
+            dd[src+attr][vi] = people[attr][vs_inds]
 
-        # Also re-parse the infection log and convert to a dataframe
+        # Pull out valid indices for source and target
+        lnot = np.logical_not # Shorten since used heavily
+        dd[src+'is_quarantined'][vi] = (dd[src+'date_quarantined'][vi] <= vinfdates) & lnot(dd[src+'date_quarantined'][vi] <= vinfdates)
+        for is_attr,date_attr in zip(is_attrs, date_attrs):
+            dd[src+is_attr][vi] = np.array(dd[src+date_attr][vi] <= vinfdates, dtype=bool)
 
-        ttlist = []
-        for source_ind, target_ind in self.transmissions:
-            ddict = self.detailed[target_ind]
-            source = ddict['s']
-            target = ddict['t']
+        # Populate remaining properties
+        dd[src+'is_asymp'][vi] = np.isnan(dd[src+'date_symptomatic'][vi])
+        dd[src+'is_presymp'][vi] = lnot(dd[src+'is_asymp'][vi]) & lnot(dd[src+'is_symptomatic'][vi])
+        dd[trg+'is_quarantined'][ti] = (dd[trg+'date_quarantined'][ti] <= tinfdates) & lnot(dd[trg+'date_end_quarantine'][ti] <= tinfdates)
 
-            tdict = {}
-            tdict['date']      =  ddict['date']
-            tdict['layer']     =  ddict['layer']
-            tdict['s_asymp']   = np.isnan(source['date_symptomatic']) # True if they *never* became symptomatic
-            tdict['s_presymp'] =  ~tdict['s_asymp'] and tdict['date']<source['date_symptomatic'] # True if they became symptomatic after the transmission date
-            tdict['s_sev']     = source['date_severe'] < tdict['date']
-            tdict['s_crit']    = source['date_critical'] < tdict['date']
-            tdict['s_diag']    = source['date_diagnosed'] < tdict['date']
-            tdict['s_quar']    = source['date_quarantined'] <= tdict['date'] and not (source['date_end_quarantine'] <= tdict['date'])
-            tdict['t_quar']    = target['date_quarantined'] <= tdict['date'] and not (target['date_end_quarantine'] <= tdict['date'])
-            ttlist.append(tdict)
+        # Also re-parse the log and convert to a simpler dataframe
+        targets = np.array(self.target_inds)
+        dtr = dict()
+        infdates = dd['date'][targets]
+        dtr['date']      = infdates
+        dtr['layer']     = dd['layer'][targets]
+        dtr['s_asymp']   = np.isnan(dd['src_date_symptomatic'][targets])
+        dtr['s_presymp'] = ~(dtr['s_asymp'][:]) & (infdates < dd['src_date_symptomatic'][targets])
+        dtr['s_sev']     = dd['src_date_severe'][targets]       < infdates
+        dtr['s_crit']    = dd['src_date_critical'][targets]     < infdates
+        dtr['s_diag']    = dd['src_date_diagnosed'][targets]    < infdates
+        dtr['s_quar']    = (dd['src_date_quarantined'][targets] < infdates) & lnot(dd['src_date_end_quarantine'][targets] <= infdates)
+        dtr['t_quar']    = (dd['trg_date_quarantined'][targets] < infdates) & lnot(dd['trg_date_end_quarantine'][targets] <= infdates)
 
-        df = pd.DataFrame(ttlist).rename(columns={'date': 'Day'})
+        df = pd.DataFrame(dtr)
+        df = df.rename(columns={'date': 'Day'}) # For use in plotting
         df = df.loc[df['layer'] != 'seed_infection']
 
         df['Stage'] = 'Symptomatic'
@@ -1199,6 +1463,8 @@ class TransTree(sc.prettyobj):
         df.loc[df['s_sev'], 'Severity'] = 'Severe'
         df.loc[df['s_crit'], 'Severity'] = 'Critical'
 
+        # Store
+        self.detailed = pd.DataFrame(dd)
         self.df = df
 
         return
@@ -1254,6 +1520,8 @@ class TransTree(sc.prettyobj):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
+            cvpl.date_formatter(start_day=self.sim_start, ax=ax)
+            ax.set_ylabel('Count')
 
         to_plot = dict(
             layer    = 'Layer',
@@ -1315,22 +1583,23 @@ class TransTree(sc.prettyobj):
         quars = [list() for i in range(n)]
 
         # Construct each frame of the animation
-        for ddict in self.detailed:  # Loop over every person
+        detailed = self.detailed.to_dict('records') # Convert to the old style
+        for ddict in detailed:  # Loop over every person
             if ddict is None:
                 continue # Skip the 'None' node corresponding to seeded infections
 
             frame = {}
             tdq = {}  # Short for "tested, diagnosed, or quarantined"
-            target = ddict['t']
             target_ind = ddict['target']
 
-            if not np.isnan(ddict['date']): # If this person was infected
+            if np.isfinite(ddict['date']): # If this person was infected
 
                 source_ind = ddict['source'] # Index of the person who infected the target
 
                 target_date = ddict['date']
-                if source_ind is not None:  # Seed infections and importations won't have a source
-                    source_date = self.detailed[source_ind]['date']
+                if np.isfinite(source_ind):  # Seed infections and importations won't have a source
+                    source_ind = int(source_ind)
+                    source_date = detailed[source_ind]['date']
                 else:
                     source_ind = 0
                     source_date = 0
@@ -1346,14 +1615,14 @@ class TransTree(sc.prettyobj):
                 tdq['t'] = target_ind
                 tdq['d'] = target_date
                 tdq['c'] = colors[int(target_ind)]
-                date_t = target['date_tested']
-                date_d = target['date_diagnosed']
-                date_q = target['date_known_contact']
-                if ~np.isnan(date_t) and date_t < n:
+                date_t = ddict['trg_date_tested']
+                date_d = ddict['trg_date_diagnosed']
+                date_q = ddict['trg_date_known_contact']
+                if np.isfinite(date_t) and date_t < n:
                     tests[int(date_t)].append(tdq)
-                if ~np.isnan(date_d) and date_d < n:
+                if np.isfinite(date_d) and date_d < n:
                     diags[int(date_d)].append(tdq)
-                if ~np.isnan(date_q) and date_q < n:
+                if np.isfinite(date_q) and date_q < n:
                     quars[int(date_q)].append(tdq)
 
             else:

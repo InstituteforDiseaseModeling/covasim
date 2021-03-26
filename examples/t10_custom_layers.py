@@ -28,6 +28,7 @@ sim.initialize() # Reinitialize
 sim.label = f'Transport layer with {n_contacts_per_person} contacts/person'
 
 # Run and compare
-msim = cv.MultiSim([orig_sim, sim])
-msim.run()
-msim.plot()
+if __name__ == '__main__':
+    msim = cv.MultiSim([orig_sim, sim])
+    msim.run()
+    msim.plot()
