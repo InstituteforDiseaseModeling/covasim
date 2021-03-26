@@ -228,7 +228,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     return
 
 
-def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
+def date_formatter(start_day=None, dateformat=None, interval=None, ax=None, sim=None):
     '''
     Create an automatic date formatter based on a number of days and a start day.
 
@@ -238,7 +238,8 @@ def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
 
     Args:
         start_day (str/date): the start day, either as a string or date object
-        dateformat (str): the date format
+        dateformat (str): the date format (default '%b-%d')
+        interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
         ax (axes): if supplied, automatically set the x-axis formatter for this axis
         sim (Sim): if supplied, get the start day from this
 
@@ -268,6 +269,9 @@ def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
 
     if ax is not None:
         ax.xaxis.set_major_formatter(mpl_formatter)
+        if interval: # Set the x-axis intervals
+            xmin,xmax = ax.get_xlim()
+            ax.set_xticks(np.arange(xmin, xmax+1, interval))
 
     return mpl_formatter
 
@@ -290,7 +294,7 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
 
     # Set the x-axis intervals
     if date_args.interval:
-        ax.set_xticks(pl.arange(xmin, xmax+1, date_args.interval))
+        ax.set_xticks(np.arange(xmin, xmax+1, date_args.interval))
 
     # Set xticks as dates
     if date_args.as_dates:
