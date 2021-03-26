@@ -448,7 +448,7 @@ if __name__ == '__main__':
     # # Run Vaccine tests
     # sim4 = test_synthpops()
     # sim5 = test_vaccine_1strain()
-    #
+
     # # Run multisim and scenario tests
     # scens0 = test_vaccine_1strain_scen()
     # scens1 = test_vaccine_2strains_scen()
