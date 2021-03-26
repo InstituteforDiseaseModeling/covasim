@@ -1099,11 +1099,7 @@ class Fit(Analyzer):
         return self.mismatch
 
 
-<<<<<<< HEAD
-    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, do_show=None, fig=None):
-=======
     def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, date_args=None, do_show=None, fig=None):
->>>>>>> master
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
