@@ -15,15 +15,69 @@ Future release plans
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Improved handling of vaccination, including more detailed targeting options, waning immunity, etc.
-- Mechanistic handling of different strains
 - Additional flexibility in plotting options (e.g. date ranges, per-plot DPI)
 - Expanded tutorials (health care workers, vaccination, calibration, exercises, etc.)
+- Improved handling of vaccination, including more detailed targeting options, waning immunity, etc.
+- Mechanistic handling of different strains
+- Multi-region and geospatial support
+- Economics and costing analysis
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (2.0.x)
+Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+Version 3.0.0 (2021-XX-XX)
+--------------------------
+This version contains a number of major updates. 
+
+Highlights
+^^^^^^^^^^
+- **Model structure**: The model now follows an "SEIS"-type structure, instead of the previous "SEIR" structure. This means that after recovering from an infection, agents return to the "susceptible" compartment. Each agent in the simulation has properties ``sus_imm``, ``trans_imm`` and ``prog_imm``, which respectively determine their immunity to acquiring an infection, transmitting an infection, or developing a more severe case of COVID-19. All these immunity levels are initially zero. They can be boosted by either natural infection or vaccination, and thereafter they can wane over time or remain permanently elevated. 
+- **Multi-strain modeling**: Model functionality has been extended to allow for modeling of multiple different co-circulating strains with different properties. This means you can now do e.g. ``b117 = cv.Strain('b117', days=1, n_imports=20)`` followed by ``sim = cv.Sim(strains=b117)`` to import strain B117. Further examples are contained in ``devtests/test_variants.py``.
+- **New methods for vaccine modeling**: A new ``vaccinate`` intervention has been added, which allows more flexible modeling of vaccinations. Vaccines, like natural infections, are assumed to boost agents' immunity.
+
+State changes
+^^^^^^^^^^^^^
+- The ``recovered`` state has been removed.
+
+Parameter changes
+^^^^^^^^^^^^^^^^^
+- A subset of existing parameters have been made strain-specific, meaning that they are allowed to differ by strain. These include: ``rel_beta``, which specifies the relative transmissibility of a new strain compared to the wild strain; ``asymp_factor``, all of the ``dur`` parameters, ``rel_symp_prob``, ``rel_severe_prob``, ``rel_crit_prob``, and the newly-added immunity parameters ``imm_pars`` (see next point). The list of parameters that can vary by strain is specified in ``covasim/defaults.py``. 
+- Two new parameters have been added to hold information about the strains in the simulation:
+   - The parameter ``n_strains`` is an integer, updated on each time-step, that specifies how many strains are in circulation at that time-step.
+   - The parameter ``total_strains`` is an integer that specifies how many strains will be in ciruclation at some point during the course of the simulation. 
+- Five new parameters have been added to characterize agents' immunity levels:
+   - The parameter ``imm_pars`` is a dictionary with keys ``sus``, ``trans`` and ``prog``, for describing how a person's immunity to acquiring an infection, transmitting an infection, or developing a more severe case of COVID-19 evolves over time. Each of these is also a dictionary, with keys ``form`` and ``pars`` for specifying the functional form of immunity decay (e.g. ``exp_decay``) and the associated parameters (e.g. ``init_val`` and ``half_life``). By default, infection with SARS-CoV-2 is assumed to grant lasting perfect immunity to reinfection with the same strain (``dict(form='exp_decay', pars={'init_val': 1., 'half_life': None})``). Immunity levels can alternatively be set to wane over time by changing the functional form of the ``imm_pars`` immunity functions.
+   - The parameter ``immune_degree`` is a dictionary with keys ``sus``, ``trans`` and ``prog`` as above. The values of this dictionary are pre-computed evaluations of the immunity functions described above over time.  
+   - The parameter ``cross_immunity``. By default, infection with one strain of SARS-CoV-2 is assumed to grant 50% immunity to infection with a different strain. This default assumption of 50% cross-immunity can be modified via this parameter (which will then apply to all strains in the simulation), or it can be modified on a per-strain basis using the ``immunity`` parameter described below.
+   - The parameter ``immunity`` is a matrix of size ``total_strains`` by ``total_strains``. Row ``i`` specifies the immunity levels that people who have been infected with strain ``i`` have to other strains. The entries of this matrix are then multiplied by the time-dependent immunity levels contained in the ``immune_degree`` parameter to determine a person's immunity at each time-step. By default, this will be ``[[1]]`` for a single-strain simulation and ``[[1, 0.5],[0.5, 1]]`` a 2-strain simulation.
+   - The parameter ``rel_imm`` is a dictionary with keys ``asymptomatic``, ``mild`` and ``severe``. These contain scalars specifying the relative immunity levels for someone who had an asymptomatic, mild, or severe infection. By default, values of 0.98, 0.99, and 1.0 are used.
+- The parameter ``strains`` contains information about any circulating strains that have been specified as additional to the default strain, and the parameter ``vaccines`` contains information about any vaccines in use. These are initialized as ``None`` and then populated by the user. 
+
+New functions, methods and classes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- The newly-added file ``immunity.py`` contains functions, methods, and classes related to calculating immunity. This includes the ``Strain`` class, the ``Vaccine`` class. 
+- A new ``vaccinate`` intervention has been added. Compared to the previous ``vaccine`` intervention, this new intervention allows vaccination to boost agents' immunity against infection, transmission, and progression.
+
+Changes to results
+^^^^^^^^^^^^^^^^^^
+- ``results[n_recovered]``, ``results[cum_recovered]`` and ``results[new_recovered]`` have all been removed, since the ``recovered`` state has been removed. However, ``results[recoveries]`` still exists, and stores information about how many people cleared their infection at each time-step.
+- New results have been added to store information by strain: ``cum_infections_by_strain``, ``cum_infectious_by_strain``, ``new_reinfections``, ``new_infections_by_strain``, ``new_infectious_by_strain``, ``prevalence_by_strain``, ``incidence_by_strain``.  
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 2.0.x (2.0.0 – 2.0.4)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Version 2.0.4 (2021-03-19)
+--------------------------
+- Added a new analyzer, ``cv.daily_age_stats()``, which will compute statistics by age for each day of the simulation (compared to ``cv.age_histogram()``, which only looks at particular points in time).
+- Added a new function, ``cv.date_formatter()``, which may be useful in quickly formatting axes using dates.
+- Removed the need for ``self._store_args()`` in interventions; now custom interventions only need to implement ``super().__init__(**kwargs)`` rather than both.
+- Changed how custom interventions print out by default (a short representation rather than the jsonified version used by built-in interventions).
+- Added an ``update()`` method to ``Layer``, to allow greater flexibility for dynamic updating.
+- *GitHub info*: PR `854 <https://github.com/amath-idm/covasim/pull/854>`__
 
 
 Version 2.0.3 (2021-03-11)

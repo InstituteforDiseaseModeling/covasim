@@ -58,7 +58,24 @@ def test_age_hist():
         plots = agehist.plot(windows=True)
         assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
 
+    # Check daily age histogram
+    daily_age = cv.daily_age_stats()
+    sim = cv.Sim(pars, analyzers=daily_age)
+    sim.run()
+
+
     return agehist
+
+
+def test_daily_age():
+    sc.heading('Testing daily age analyzer')
+    sim = cv.Sim(pars, analyzers=cv.daily_age_stats())
+    sim.run()
+    daily_age = sim.get_analyzer()
+    if do_plot:
+        daily_age.plot()
+        daily_age.plot(total=True)
+    return daily_age
 
 
 def test_daily_stats():
@@ -145,6 +162,7 @@ if __name__ == '__main__':
 
     snapshot  = test_snapshot()
     agehist   = test_age_hist()
+    daily_age = test_daily_age()
     daily     = test_daily_stats()
     fit       = test_fit()
     transtree = test_transtree()

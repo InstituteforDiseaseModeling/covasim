@@ -6,6 +6,7 @@ corner cases or otherwise not part of major workflows.
 #%% Imports and settings
 import os
 import pytest
+import numpy as np
 import sciris as sc
 import covasim as cv
 
@@ -29,7 +30,7 @@ def remove_files(*args):
 #%% Define the tests
 
 def test_base():
-    sc.heading('Testing base.py...')
+    sc.heading('Testing base.py sim...')
 
     json_path = 'base_tests.json'
     sim_path  = 'base_tests.sim'
@@ -66,6 +67,19 @@ def test_base():
     for keep_people in [True, False]:
         sim.save(filename=sim_path, keep_people=keep_people)
     cv.Sim.load(sim_path)
+
+    # Tidy up
+    remove_files(json_path, sim_path)
+
+    return
+
+
+def test_basepeople():
+    sc.heading('Testing base.py people and contacts...')
+
+    # Create a small sim for later use
+    sim = cv.Sim(pop_size=100, verbose=verbose)
+    sim.initialize()
 
     # BasePeople methods
     ppl = sim.people
@@ -104,8 +118,33 @@ def test_base():
     df = hospitals_layer.to_df()
     hospitals_layer.from_df(df)
 
-    # Tidy up
-    remove_files(json_path, sim_path)
+    # Generate an average of 10 contacts for 1000 people
+    n = 10_000
+    n_people = 1000
+    p1 = np.random.randint(n_people, size=n)
+    p2 = np.random.randint(n_people, size=n)
+    beta = np.ones(n)
+    layer = cv.Layer(p1=p1, p2=p2, beta=beta)
+
+    # Convert one layer to another with extra columns
+    index = np.arange(n)
+    self_conn = p1 == p2
+    layer2 = cv.Layer(**layer, index=index, self_conn=self_conn)
+    assert len(layer2) == n
+    assert len(layer2.keys()) == 5
+
+    # Test dynamic layers, plotting, and stories
+    pars = dict(pop_size=1000, n_days=50, verbose=verbose, pop_type='hybrid')
+    s1 = cv.Sim(pars, dynam_layer={'c':1})
+    s1.run()
+    s1.people.plot()
+    for person in [25, 79]:
+        sim.people.story(person)
+
+    # Run without dynamic layers and assert that the results are different
+    s2 = cv.Sim(pars, dynam_layer={'c':0})
+    s2.run()
+    assert cv.diff_sims(s1, s2, output=True)
 
     return
 
@@ -194,19 +233,6 @@ def test_misc():
 
     # Tidy up
     remove_files(sim_path, json_path, fig_path, gitinfo_path)
-
-    return
-
-
-def test_people():
-    sc.heading('Testing people')
-
-    # Test dynamic layers
-    sim = cv.Sim(pop_size=100, n_days=10, verbose=verbose, dynam_layer={'a':1})
-    sim.run()
-    sim.people.plot()
-    for person in [25, 79]:
-        sim.people.story(person)
 
     return
 
@@ -427,8 +453,8 @@ if __name__ == '__main__':
     T = sc.tic()
 
     test_base()
+    test_basepeople()
     test_misc()
-    test_people()
     test_plotting()
     test_population()
     test_requirements()

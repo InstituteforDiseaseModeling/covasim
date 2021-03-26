@@ -10,7 +10,6 @@ class protect_elderly(cv.Intervention):
 
     def __init__(self, start_day=None, end_day=None, age_cutoff=70, rel_sus=0.0, *args, **kwargs):
         super().__init__(**kwargs) # This line must be included
-        self._store_args() # So must this one
         self.start_day   = start_day
         self.end_day     = end_day
         self.age_cutoff  = age_cutoff
