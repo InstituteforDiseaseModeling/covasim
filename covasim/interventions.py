@@ -92,11 +92,8 @@ class Intervention:
         line_args (dict): arguments passed to pl.axvline() when plotting
     '''
     def __init__(self, label=None, show_label=True, do_plot=None, line_args=None):
-<<<<<<< HEAD
-=======
         if label is None:
             label = self.__class__.__name__ # Use the class name if no label is supplied
->>>>>>> master
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.label = label # e.g. "Close schools"
         self.show_label = show_label # Show the label by default
