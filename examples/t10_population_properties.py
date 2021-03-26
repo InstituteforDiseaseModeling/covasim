@@ -27,6 +27,7 @@ sim.initialize() # Initialize to create the people array
 sim.people.prime = np.array([sc.isprime(i) for i in range(len(sim.people))]) # Define whom to target
 
 # Run and plot
-msim = cv.MultiSim([orig_sim, sim])
-msim.run()
-msim.plot()
+if __name__ == '__main__':
+    msim = cv.MultiSim([orig_sim, sim])
+    msim.run()
+    msim.plot()

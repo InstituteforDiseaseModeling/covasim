@@ -9,16 +9,13 @@ All notable changes to the codebase are documented in this file. Changes that ma
    :depth: 1
 
 
-~~~~~~~~~~~~~~~~~~~~
-Future release plans
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+Coming soon
+~~~~~~~~~~~
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Additional flexibility in plotting options (e.g. date ranges, per-plot DPI)
 - Expanded tutorials (health care workers, vaccination, calibration, exercises, etc.)
-- Improved handling of vaccination, including more detailed targeting options, waning immunity, etc.
-- Mechanistic handling of different strains
 - Multi-region and geospatial support
 - Economics and costing analysis
 
@@ -27,7 +24,7 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Version 3.0.0 (2021-XX-XX)
+Version 3.0.0 (2021-04-XX)
 --------------------------
 This version contains a number of major updates. 
 
@@ -43,13 +40,16 @@ State changes
 
 Parameter changes
 ^^^^^^^^^^^^^^^^^
+- The parameter ``n_imports`` has been removed, as importations are now handled by the ``strains`` functionality.
 - A subset of existing parameters have been made strain-specific, meaning that they are allowed to differ by strain. These include: ``rel_beta``, which specifies the relative transmissibility of a new strain compared to the wild strain; ``asymp_factor``, all of the ``dur`` parameters, ``rel_symp_prob``, ``rel_severe_prob``, ``rel_crit_prob``, and the newly-added immunity parameters ``imm_pars`` (see next point). The list of parameters that can vary by strain is specified in ``covasim/defaults.py``. 
 - Two new parameters have been added to hold information about the strains in the simulation:
    - The parameter ``n_strains`` is an integer, updated on each time-step, that specifies how many strains are in circulation at that time-step.
    - The parameter ``total_strains`` is an integer that specifies how many strains will be in ciruclation at some point during the course of the simulation. 
-- Five new parameters have been added to characterize agents' immunity levels:
-   - The parameter ``imm_pars`` is a dictionary with keys ``sus``, ``trans`` and ``prog``, for describing how a person's immunity to acquiring an infection, transmitting an infection, or developing a more severe case of COVID-19 evolves over time. Each of these is also a dictionary, with keys ``form`` and ``pars`` for specifying the functional form of immunity decay (e.g. ``exp_decay``) and the associated parameters (e.g. ``init_val`` and ``half_life``). By default, infection with SARS-CoV-2 is assumed to grant lasting perfect immunity to reinfection with the same strain (``dict(form='exp_decay', pars={'init_val': 1., 'half_life': None})``). Immunity levels can alternatively be set to wane over time by changing the functional form of the ``imm_pars`` immunity functions.
-   - The parameter ``immune_degree`` is a dictionary with keys ``sus``, ``trans`` and ``prog`` as above. The values of this dictionary are pre-computed evaluations of the immunity functions described above over time.  
+- Seven new parameters have been added to characterize agents' immunity levels:
+   - The parameter ``NAb_init`` specifies a distribution for the level of neutralizing antibodies that agents have following an infection. These values are on log2 scale, and by default they follow a normal distribution.
+   - The parameter ``NAb_decay`` is a dictionary specifying the kinetics of decay for neutralizing antibodies over time.
+   - The parameter ``NAb_kin``  is constructed during sim initialization, and contains pre-computed evaluations of the NAb decay functions described above over time. 
+   - The parameter ``NAb_boost`` is a multiplicative factor applied to a person's NAb levels if they get reinfected.
    - The parameter ``cross_immunity``. By default, infection with one strain of SARS-CoV-2 is assumed to grant 50% immunity to infection with a different strain. This default assumption of 50% cross-immunity can be modified via this parameter (which will then apply to all strains in the simulation), or it can be modified on a per-strain basis using the ``immunity`` parameter described below.
    - The parameter ``immunity`` is a matrix of size ``total_strains`` by ``total_strains``. Row ``i`` specifies the immunity levels that people who have been infected with strain ``i`` have to other strains. The entries of this matrix are then multiplied by the time-dependent immunity levels contained in the ``immune_degree`` parameter to determine a person's immunity at each time-step. By default, this will be ``[[1]]`` for a single-strain simulation and ``[[1, 0.5],[0.5, 1]]`` a 2-strain simulation.
    - The parameter ``rel_imm`` is a dictionary with keys ``asymptomatic``, ``mild`` and ``severe``. These contain scalars specifying the relative immunity levels for someone who had an asymptomatic, mild, or severe infection. By default, values of 0.98, 0.99, and 1.0 are used.
@@ -64,6 +64,63 @@ Changes to results
 ^^^^^^^^^^^^^^^^^^
 - ``results[n_recovered]``, ``results[cum_recovered]`` and ``results[new_recovered]`` have all been removed, since the ``recovered`` state has been removed. However, ``results[recoveries]`` still exists, and stores information about how many people cleared their infection at each time-step.
 - New results have been added to store information by strain: ``cum_infections_by_strain``, ``cum_infectious_by_strain``, ``new_reinfections``, ``new_infections_by_strain``, ``new_infectious_by_strain``, ``prevalence_by_strain``, ``incidence_by_strain``.  
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Version 2.1.0 (2021-03-23)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Highlights
+^^^^^^^^^^
+- **Updated lognormal distributions**: Lognormal distributions had been inadvertently using the variance instead of the standard deviation as the second parameter, resulting in too small variance. This has been fixed. This has a small but nonzero impact on the results (e.g. with default parameters, the time to peak infections is about 5-10% sooner now).
+- **Expanded plotting features**: You now have much more flexibility with passing arguments to ``sim.plot()`` and other plotting functions, such as to temporarily set global Matplotlib options (such as DPI), modify axis styles and limits, etc. For example, you can now do things like this: ``cv.Sim().run().plot(dpi=150, rotation=30, start_day='2020-03-01', end_day=55, interval=7)``.
+- **Improved analyzers**: Transmission trees can be computed 20 times faster, Fit objects are more forgiving for data problems, and analyzers can now be exported to JSON.
+
+Bugfixes
+^^^^^^^^
+- Previously, the lognormal distributions were unintentionally using the variance of the distribution, instead of the standard deviation, as the second parameter. This makes a small difference to the results (slightly higher transmission due to the increased variance). Old simulations that are loaded will automatically have their parameters updated so they give the same results; however, new simulations will now give slightly different results than they did previously. (Thanks to Ace Thompson for identifying this.)
+- If a results object has low and high values, these are now exported to JSON (and also to Excel).
+- MultiSim and Scenarios ``run.()`` methods now return themselves, as Sim does. This means that just as you can do ``sim.run().plot()``, you can also now do ``msim.run().plot()``.
+
+Plotting and options
+^^^^^^^^^^^^^^^^^^^^
+- Standard plots now accept keyword arguments that will be passed around to all available subfunctions. For example, if you specify ``dpi=150``, Covasim knows that this is a Matplotlib setting and will configure it accordingly; likewise things like ``bottom`` (only for axes), ``frameon`` (only for legends), etc. If you pass an ambiguous keyword (e.g. ``alpha``, which is used for line and scatter plots), it will only be used for the *first* one.
+- There is a new keyword argument, ``date_args``, that will format the x-axis: options include ``dateformat`` (e.g. ``%Y-%m-%d``), ``rotation`` (to avoid label collisions), and ``start_day`` and ``end_day``.
+- Default plotting styles have updated, including less intrusive lines for interventions.
+
+Other changes
+^^^^^^^^^^^^^
+- MultiSims now have ``to_json()`` and ``to_excel()`` methods, which are shortcuts for calling these methods on the base sim.
+- If no label is supplied to an analyzer or intervention, it will use its class name (e.g. the default label for ``cv.change_beta`` is ``'change_beta'``).
+- Analyzers now have a ``to_json()`` method.
+- The ``cv.Fit`` and ``cv.TransTree`` classes now derive from ``Analyzer``, giving them some new methods and attributes.
+- ``cv.sim.compute_fit()`` has a new keyword argument, ``die``, that will print warnings rather than raise exceptions if no matching data is found. Exceptions are now caught and helpful error messages are provided (e.g., if dates don't match).
+- The algorithm for ``cv.TransTree`` has been rewritten, and now runs 20x as fast. The detailed transmission tree, in ``tt.detailed``, is now a pandas dataframe rather than a list of dictionaries. To restore something close to the previous version, use ``tt.detailed.to_dict('records')``.
+- A data file with an integer rather than date "date" index can now be loaded; these will be counted relative to the simulation's start day.
+- ``cv.load()`` has two new keyword arguments, ``update`` and ``verbose``, than are passed to ``cv.migrate()``.
+- ``cv.options`` has new a ``get_default()`` method which returns the value of that parameter when Covasim was first loaded.
+
+Documentation and testing
+^^^^^^^^^^^^^^^^^^^^^^^^^
+- An extra tutorial has been added on "Deployment", covering how to use it with `Dask <https://dask.org/>`__ and for using Covasim with interactive notebooks and websites. 
+- Tutorials 7 and 10 have been updated so they work on Windows machines.
+- Additional unit tests have been written to check the statistical properties of the sampling algorithms.
+
+Regression information
+^^^^^^^^^^^^^^^^^^^^^^
+- To restore previous behavior for a simulation (i.e. using variance instead of standard deviation for lognormal distributions), call ``cv.misc.migrate_lognormal(sim)``. This is done automatically when loading a saved sim from disk. To undo a migration, type ``cv.misc.migrate_lognormal(sim, revert=True)``. What this function does is loop over the duration parameters and replace ``par2`` with its square root. If you have used lognormal distributions elsewhere, you will need to update them manually.
+- Code that was designed to parse transmission trees will likely need to be revised. The object ``tt.detailed`` is now a dataframe; calling ``tt.detailed.to_dict('records')`` will bring it very close to what it used to be, with the exception that for a given row, ``'t'`` and ``'s'`` used to be nested dictionaries, whereas now they are prefixes. For example, whereas before the 45th person's source's "is quarantined" state would have been ``tt.detailed[45]['s']['is_quarantined']``, it is now ``tt.detailed.iloc[45]['src_is_quarantined']``.
+- *GitHub info*: PR `859 <https://github.com/amath-idm/covasim/pull/859>`__
+
+
+Version 2.0.4 (2021-03-19)
+--------------------------
+- Added a new analyzer, ``cv.daily_age_stats()``, which will compute statistics by age for each day of the simulation (compared to ``cv.age_histogram()``, which only looks at particular points in time).
+- Added a new function, ``cv.date_formatter()``, which may be useful in quickly formatting axes using dates.
+- Removed the need for ``self._store_args()`` in interventions; now custom interventions only need to implement ``super().__init__(**kwargs)`` rather than both.
+- Changed how custom interventions print out by default (a short representation rather than the jsonified version used by built-in interventions).
+- Added an ``update()`` method to ``Layer``, to allow greater flexibility for dynamic updating.
+- *GitHub info*: PR `854 <https://github.com/amath-idm/covasim/pull/854>`__
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -462,6 +462,10 @@ class BaseSim(ParsObj):
         for key,res in self.results.items():
             if isinstance(res, Result):
                 resdict[key] = res.values
+                if res.low is not None:
+                    resdict[key+'_low'] = res.low
+                if res.high is not None:
+                    resdict[key+'_high'] = res.high
             elif for_json:
                 if key == 'date':
                     resdict[key] = [str(d) for d in res] # Convert dates to strings

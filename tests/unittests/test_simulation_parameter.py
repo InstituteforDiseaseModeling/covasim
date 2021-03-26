@@ -4,12 +4,12 @@ Tests of simulation parameters from
 """
 import unittest
 
-from unittest_support_classes import CovaSimTest, TestProperties
+from unittest_support_classes import CovaTest, TProps
 
-TPKeys = TestProperties.ParameterKeys.SimulationKeys
-ResKeys = TestProperties.ResultsDataKeys
+TPKeys = TProps.ParKeys.SimKeys
+ResKeys = TProps.ResKeys
 
-class SimulationParameterTests(CovaSimTest):
+class SimulationParameterTests(CovaTest):
     def setUp(self):
         super().setUp()
         pass
@@ -25,7 +25,7 @@ class SimulationParameterTests(CovaSimTest):
 
         Depends on run default simulation
         """
-        TPKeys = TestProperties.ParameterKeys.SimulationKeys
+        TPKeys = TProps.ParKeys.SimKeys
         pop_2_one_day = {
             TPKeys.population_scaling_factor: 1,
             TPKeys.number_simulated_days: 1,

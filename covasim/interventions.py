@@ -92,11 +92,16 @@ class Intervention:
         line_args (dict): arguments passed to pl.axvline() when plotting
     '''
     def __init__(self, label=None, show_label=True, do_plot=None, line_args=None):
+<<<<<<< HEAD
+=======
+        if label is None:
+            label = self.__class__.__name__ # Use the class name if no label is supplied
+>>>>>>> master
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.label = label # e.g. "Close schools"
         self.show_label = show_label # Show the label by default
         self.do_plot = do_plot if do_plot is not None else True # Plot the intervention, including if None
-        self.line_args = sc.mergedicts(dict(linestyle='--', c=[0,0,0]), line_args) # Do not set alpha by default due to the issue of overlapping interventions
+        self.line_args = sc.mergedicts(dict(linestyle='--', c='#aaa', lw=1.0), line_args) # Do not set alpha by default due to the issue of overlapping interventions
         self.days = [] # The start and end days of the intervention
         self.initialized = False # Whether or not it has been initialized
         return

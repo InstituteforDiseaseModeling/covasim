@@ -133,6 +133,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
             if key in version_pars: # Only replace keys that exist in the old version
                 pars[key] = version_pars[key]
 
+        # Handle code change migration
+        if sc.compareversions(version, '2.1.0') == -1 and 'migrate_lognormal' not in pars:
+            cvm.migrate_lognormal(pars, verbose=pars['verbose'])
+
     return pars
 
 

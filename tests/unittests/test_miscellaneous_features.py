@@ -4,11 +4,11 @@
 
 import unittest
 import pandas as pd
-from unittest_support_classes import CovaSimTest
+from unittest_support_classes import CovaTest
 from covasim import Sim, parameters
 import os
 
-class MiscellaneousFeatureTests(CovaSimTest):
+class MiscellaneousFeatureTests(CovaTest):
     def setUp(self):
         super().setUp()
         self.sim = Sim()

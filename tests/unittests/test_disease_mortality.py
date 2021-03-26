@@ -3,15 +3,17 @@ Tests of simulation parameters from
 ../../covasim/README.md
 """
 
-from unittest_support_classes import CovaSimTest, TestProperties
+import covasim as cv
+import unittest
+from unittest_support_classes import CovaTest, TProps
 
-DProgKeys = TestProperties.ParameterKeys.ProgressionKeys
-TransKeys = TestProperties.ParameterKeys.TransmissionKeys
-TSimKeys = TestProperties.ParameterKeys.SimulationKeys
-ResKeys = TestProperties.ResultsDataKeys
+DProgKeys = TProps.ParKeys.ProgKeys
+TransKeys = TProps.ParKeys.TransKeys
+TSimKeys  = TProps.ParKeys.SimKeys
+ResKeys   = TProps.ResKeys
 
 
-class DiseaseMortalityTests(CovaSimTest):
+class DiseaseMortalityTests(CovaTest):
     def setUp(self):
         super().setUp()
         pass
@@ -25,33 +27,13 @@ class DiseaseMortalityTests(CovaSimTest):
         Infect lots of people with cfr one and short time to die
         duration. Verify that everyone dies, no recoveries.
         """
-        total_agents = 500
-        self.set_everyone_is_going_to_die(num_agents=total_agents)
-        self.run_sim()
-        recoveries_at_timestep_channel = self.get_full_result_channel(
-            ResKeys.recovered_at_timestep
-        )
-        recoveries_cumulative_channel = self.get_full_result_channel(
-            ResKeys.recovered_cumulative
-        )
-        recovery_channels = [
-            recoveries_at_timestep_channel,
-            recoveries_cumulative_channel
-        ]
-        for c in recovery_channels:
-            for t in range(len(c)):
-                self.assertEqual(0, c[t],
-                                 msg=f"There should be no recoveries"
-                                     f" with death_prob 1.0. Channel {c} had "
-                                     f" bad data at t: {t}")
-                pass
-            pass
-        cumulative_deaths = self.get_day_final_channel_value(
-            ResKeys.deaths_cumulative
-        )
-        self.assertEqual(cumulative_deaths, total_agents,
-                         msg="Everyone should die")
-        pass
+        pop_size = 200
+        n_days = 90
+        sim = cv.Sim(pop_size=pop_size, pop_infected=pop_size, n_days=n_days)
+        for key in ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']:
+            sim[key] = 1e6
+        sim.run()
+        assert sim.summary.cum_deaths == pop_size
 
     def test_default_death_prob_zero(self):
         """
@@ -62,7 +44,7 @@ class DiseaseMortalityTests(CovaSimTest):
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
         prob_dict = {
-            DProgKeys.ProbabilityKeys.RelativeProbKeys.crt_to_death_probability: 0.0
+            DProgKeys.ProbKeys.RelProbKeys.crt_to_death_probability: 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         self.run_sim()
@@ -102,22 +84,14 @@ class DiseaseMortalityTests(CovaSimTest):
         death_probs = [0.01, 0.05, 0.10, 0.15]
         old_cumulative_deaths = 0
         for death_prob in death_probs:
-            prob_dict = {
-                DProgKeys.ProbabilityKeys.RelativeProbKeys.crt_to_death_probability: death_prob
-            }
+            prob_dict = {DProgKeys.ProbKeys.RelProbKeys.crt_to_death_probability: death_prob}
             self.set_simulation_prognosis_probability(prob_dict)
             self.run_sim()
-            deaths_at_timestep_channel = self.get_full_result_channel(
-                ResKeys.deaths_daily
-            )
-            recoveries_at_timestep_channel = self.get_full_result_channel(
-                ResKeys.recovered_at_timestep
-            )
-            cumulative_deaths = self.get_day_final_channel_value(
-                ResKeys.deaths_cumulative
-            )
-            self.assertGreaterEqual(cumulative_deaths, old_cumulative_deaths,
-                                    msg="Should be more deaths with higer ratio")
+            cumulative_deaths = self.get_day_final_channel_value(ResKeys.deaths_cumulative)
+            self.assertGreaterEqual(cumulative_deaths, old_cumulative_deaths, msg="Should be more deaths with higer ratio")
             old_cumulative_deaths = cumulative_deaths
         pass
 
+# Run unit tests if called as a script
+if __name__ == '__main__':
+    unittest.main()
