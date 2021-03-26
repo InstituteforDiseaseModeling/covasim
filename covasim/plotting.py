@@ -228,11 +228,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     return
 
 
-<<<<<<< HEAD
-def date_formatter(start_day=None, dateformat=None, ax=None):
-=======
 def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
->>>>>>> master
     '''
     Create an automatic date formatter based on a number of days and a start day.
 
@@ -244,14 +240,6 @@ def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
         start_day (str/date): the start day, either as a string or date object
         dateformat (str): the date format
         ax (axes): if supplied, automatically set the x-axis formatter for this axis
-<<<<<<< HEAD
-
-    **Example**::
-
-        formatter = date_formatter(start_day='2020-04-04', dateformat='%Y-%m-%d')
-        ax.xaxis.set_major_formatter(formatter)
-
-=======
         sim (Sim): if supplied, get the start day from this
 
     **Examples**::
@@ -260,7 +248,7 @@ def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
 
         formatter = cv.date_formatter(start_day='2020-04-04', dateformat='%Y-%m-%d') # Manually configure
         ax.xaxis.set_major_formatter(formatter)
->>>>>>> master
+
     '''
 
     # Set the default -- "Mar-01"
@@ -268,24 +256,15 @@ def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
         dateformat = '%b-%d'
 
     # Convert to a date object
-<<<<<<< HEAD
-=======
     if start_day is None and sim is not None:
         start_day = sim['start_day']
->>>>>>> master
     start_day = sc.date(start_day)
 
     @ticker.FuncFormatter
     def mpl_formatter(x, pos):
-<<<<<<< HEAD
-        if sc.isnumber(x):
-            return (start_day + dt.timedelta(days=x)).strftime(dateformat)
-        else:
-=======
         if sc.isnumber(x): # If the axis doesn't have date units
             return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
         else: # If the axis does
->>>>>>> master
             return x.strftime(dateformat)
 
     if ax is not None:
@@ -294,12 +273,6 @@ def date_formatter(start_day=None, dateformat=None, ax=None, sim=None):
     return mpl_formatter
 
 
-<<<<<<< HEAD
-
-def reset_ticks(ax, sim, interval, as_dates, dateformat):
-    ''' Set the tick marks, using dates by default '''
-
-=======
 def reset_ticks(ax, sim=None, date_args=None, start_day=None):
     ''' Set the tick marks, using dates by default '''
 
@@ -316,23 +289,15 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
         xmax = float(sc.day(date_args.end_day, start_day=start_day))
     ax.set_xlim([xmin, xmax])
 
->>>>>>> master
     # Set the x-axis intervals
     if date_args.interval:
         ax.set_xticks(pl.arange(xmin, xmax+1, date_args.interval))
 
     # Set xticks as dates
-<<<<<<< HEAD
-    if as_dates:
-
-        ax.xaxis.set_major_formatter(date_formatter(start_day=sim['start_day'], dateformat=dateformat))
-        if not interval:
-=======
     if date_args.as_dates:
 
         date_formatter(start_day=start_day, dateformat=date_args.dateformat, ax=ax)
         if not date_args.interval:
->>>>>>> master
             ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
     # Handle rotation
@@ -428,12 +393,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
             if args.show['data']:
                 plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
             if args.show['ticks']:
-<<<<<<< HEAD
-                reset_ticks(ax, sim, interval, as_dates,
-                            dateformat)  # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-=======
                 reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
->>>>>>> master
         if args.show['interventions']:
             plot_interventions(sim, ax) # Plot the interventions
         if args.show['legend']:
