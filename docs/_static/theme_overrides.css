@@ -17,16 +17,23 @@ h1, h2, .rst-content .toctree-wrapper p.caption, h3, h4, h5, h6, legend {
     margin-bottom: 0.5em;
 }
 
+/* CK: added toc-backref since otherwise overrides this */
+.toc-backref, .rst-content {
+    font-size: inherit !important;
+    color: inherit !important;
+    margin-bottom: inherit !important;
+}
+
 h1 {
     margin-bottom: 1.0em;
 }
 
-/* CK: added toc-backref since otherwise overrides this */
-h2, .toc-backref {
+h2 {
     font-size: 125%;
     color: #0055af !important;
     margin-bottom: 1.0em;
 }
+
 
 h3 {
     font-size: 115%;
