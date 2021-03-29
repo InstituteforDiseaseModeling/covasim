@@ -654,7 +654,7 @@ class test_num(Intervention):
 
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, quar_policy=None, subtarget=None,
                  ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
-                 start_day=0, end_day=None, swab_delay=None, **kwargs):
+                 start_day=0, end_day=None, swab_delay=None, specificity = 1.0, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.daily_tests = daily_tests # Should be a list of length matching time
         self.symp_test   = symp_test   # Set probability of testing symptomatics
@@ -668,6 +668,7 @@ class test_num(Intervention):
         self.start_day   = start_day
         self.end_day     = end_day
         self.pdf         = cvu.get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
+        self.test_specificity = specificity
         return
 
 
@@ -752,7 +753,7 @@ class test_num(Intervention):
         # Now choose who gets tested and test them
         n_tests = min(n_tests, (test_probs!=0).sum()) # Don't try to test more people than have nonzero testing probability
         test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True) # Choose who actually tests
-        sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
+        sim.people.test_specificity(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay, test_specificity = self.test_specificity)
 
         return test_inds
 
@@ -784,7 +785,7 @@ class test_prob(Intervention):
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
     '''
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, quar_policy=None, subtarget=None, ili_prev=None,
-                 sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, **kwargs):
+                 sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, specificity = 1.0, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.symp_prob        = symp_prob
         self.asymp_prob       = asymp_prob
@@ -799,6 +800,7 @@ class test_prob(Intervention):
         self.start_day        = start_day
         self.end_day          = end_day
         self.pdf              = cvu.get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
+        self.test_specificity = specificity
         return
 
 
@@ -866,7 +868,7 @@ class test_prob(Intervention):
         test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
 
         # Actually test people
-        sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
+        sim.people.test_specificity(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay, test_specificity = self.test_specificity) # Actually test people
         sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
         return test_inds

@@ -94,6 +94,8 @@ class People(cvb.BasePeople):
                 self[key] = value
 
         self._pending_quarantine = defaultdict(list)  # Internal cache to record people that need to be quarantined on each timestep {t:(person, quarantine_end_day)}
+
+        self._pending_isolation = defaultdict(list)
         return
 
 
@@ -159,7 +161,7 @@ class People(cvb.BasePeople):
 
     def update_states_post(self):
         ''' Perform post-timestep updates '''
-        self.flows['new_diagnoses']   += self.check_diagnosed()
+        self.flows['new_diagnoses']   += self.check_diag()
         self.flows['new_quarantined'] += self.check_quar()
         del self.is_exp  # Tidy up
 
@@ -265,6 +267,25 @@ class People(cvb.BasePeople):
         return len(test_pos_inds)
 
 
+    def check_diag(self):
+        ''' Update diagnosis state, same way as quarantine '''
+
+        n_diagnosed = 0
+        for ind, end_day in self._pending_isolation[self.t]:
+            if self.diagnosed[ind]:
+                self.date_end_diagnosis[ind] = max(self.date_end_diagnosis[ind], end_day)
+            elif not self.dead[ind]:
+                self.diagnosed[ind] = True
+                self.date_end_diagnosis[ind] = end_day
+                self.quarantined[ind] = False
+                self.date_end_quarantine[ind] = self.t
+                n_diagnosed += 1
+
+
+        end_inds = self.check_inds(~self.diagnosed, self.date_end_diagnosis, filter_inds=None)
+        self.diagnosed[end_inds] = False
+        return n_diagnosed
+
     def check_quar(self):
         ''' Update quarantine state '''
 
@@ -272,6 +293,7 @@ class People(cvb.BasePeople):
         for ind,end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
                 self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
+                self.date_quarantined[ind] = self.t
             elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
@@ -311,8 +333,8 @@ class People(cvb.BasePeople):
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
             * Critical cases either recover or die
-            
-        Method also deduplicates input arrays in case one agent is infected many times 
+
+        Method also deduplicates input arrays in case one agent is infected many times
         and stores who infected whom in infection_log list.
 
         Args:
@@ -445,6 +467,50 @@ class People(cvb.BasePeople):
         return
 
 
+    def test_specificity(self, inds, test_sensitivity=1.0, loss_prob=0.0, test_delay=0, test_specificity = 1.0):
+        '''
+        Method to test people with false positives. Typically not to be called by the user directly;
+        see the test_num() and test_prob() interventions.
+
+        Args:
+            inds: indices of who to test
+            test_sensitivity (float): probability of a true positive
+            loss_prob (float): probability of loss to follow-up
+            test_delay (int): number of days before test results are ready
+        '''
+
+        inds = np.unique(inds)
+        self.tested[inds] = True
+        self.date_tested[inds] = self.t # Only keep the last time they tested
+
+        is_infectious = cvu.itruei(self.infectious, inds)
+        pos_test      = cvu.n_binomial(test_sensitivity, len(is_infectious))
+        is_inf_pos    = is_infectious[pos_test]
+
+        is_well = cvu.ifalsei(self.infectious, inds)
+        pos_test = cvu.n_binomial(1-test_specificity, len(is_well))
+        is_well_pos = is_well[pos_test]
+
+
+        all_positives = np.unique(np.concatenate([is_inf_pos,is_well_pos]))
+        not_lost      = cvu.n_binomial(1.0-loss_prob, len(all_positives))
+        final_inds    = all_positives[not_lost]
+
+        # Store the date the person will be diagnosed, as well as the date they took the test which will come back positive
+        self.date_diagnosed[final_inds] = self.t + test_delay
+        self.date_pos_test[final_inds] = self.t
+
+        self.schedule_isolation(final_inds, start_date = self.t + test_delay)
+        return
+
+
+    def schedule_isolation(self, inds, start_date = None, period = None):
+        start_date = self.t if start_date is None else int(start_date)
+        period = self.pars['iso_period'] if period is None else int(period)
+        for ind in inds:
+            self._pending_isolation[start_date].append((ind, start_date + period))
+        return
+
     def schedule_quarantine(self, inds, start_date=None, period=None):
         '''
         Schedule a quarantine. Typically not called by the user directly except
@@ -571,6 +637,7 @@ class People(cvb.BasePeople):
             'date_severe'         : 'developed severe symptoms and needed hospitalization',
             'date_symptomatic'    : 'became symptomatic',
             'date_tested'         : 'was tested for COVID',
+            'date_end_diagnosis'  : 'date when a positive test becomes invalid',
             }
 
             for attribute, message in dates.items():

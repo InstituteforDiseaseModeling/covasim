@@ -70,7 +70,7 @@ class PeopleMeta(sc.prettyobj):
     dates = [f'date_{state}' for state in states] # Convert each state into a date
     dates.append('date_pos_test') # Store the date when a person tested which will come back positive
     dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
-
+    dates.append('date_end_diagnosis') # Store the date when someone comes out of isolation
     # Duration of different states: these are floats per person -- used in people.py
     durs = [
         'dur_exp2inf',
@@ -250,4 +250,3 @@ def get_scen_plots(which='default'):
         errormsg = f'The choice which="{which}" is not supported'
         raise ValueError(errormsg)
     return plots
-
