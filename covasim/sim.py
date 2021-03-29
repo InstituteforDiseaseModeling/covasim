@@ -75,7 +75,7 @@ class Sim(cvb.BaseSim):
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
-        self.update_pars(pars, **kwargs)   # Update the parameters, if provided
+        self.update_pars(pars, defaults=default_pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
             self.load_population(popfile)  # Load the population, if provided
@@ -302,6 +302,8 @@ class Sim(cvb.BaseSim):
         self.results['test_yield']              = init_res('Testing yield', scale=False)
         self.results['rel_test_yield']          = init_res('Relative testing yield', scale=False)
         self.results['share_vaccinated']        = init_res('Share Vaccinated', scale=False)
+        self.results['pop_nabs']                = init_res('Population average NAb levels', scale=False, color=dcols.pop_nabs)
+        self.results['pop_protection']          = init_res('Population average immunity protection', scale=False, color=dcols.pop_protection)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -626,6 +628,10 @@ class Sim(cvb.BaseSim):
                     self.results[key][strain][t] += count[strain]
             else:
                 self.results[key][t] += count
+
+        # Update NAb and immunity for this time step
+        self.results['pop_nabs'][t] = np.sum(people.NAb[cvu.defined(people.NAb)])/len(people)
+        self.results['pop_protection'][t] = np.nanmean(people.sus_imm)
 
         # Apply analyzers -- same syntax as interventions
         for i,analyzer in enumerate(self['analyzers']):

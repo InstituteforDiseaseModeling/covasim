@@ -313,7 +313,6 @@ def init_nab(people, inds, prior_inf=True):
 
     prior_NAb = people.NAb[prior_NAb_inds] # Array of NAb levels on this timestep for people with some NAbs
 
-
     # NAbs from infection
     if prior_inf:
         NAb_boost = people.pars['NAb_boost']  # Boosting factor for natural infection
