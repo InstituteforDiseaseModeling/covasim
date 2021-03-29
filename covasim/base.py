@@ -1059,20 +1059,20 @@ class BasePeople(FlexPretty):
 
     def to_graph(self): # pragma: no cover
         '''
-        Convert all people to a networkx DiGraph, including all properties of
+        Convert all people to a networkx MultiDiGraph, including all properties of
         the people (nodes) and contacts (edges).
 
         **Example**::
 
             import networkx as nx
-            sim = cv.Sim(pop_size=50, pop_type='hybrid').run()
+            sim = cv.Sim(pop_size=50, pop_type='hybrid', contacts=dict(h=3, s=10, w=10, c=5)).run()
             G = sim.people.to_graph()
             nodes = G.nodes(data=True)
-            edges = G.edges()
+            edges = G.edges(keys=True)
             node_colors = [n['age'] for i,n in nodes]
             layer_map = dict(h='#37b', s='#e11', w='#4a4', c='#a49')
-            edge_colors = [layer_map[G[u][v]['layer']] for u,v in edges]
-            edge_weights = [G[u][v]['beta'] for u,v in edges]
+            edge_colors = [layer_map[G[i][j][k]['layer']] for i,j,k in edges]
+            edge_weights = [G[i][j][k]['beta']*5 for i,j,k in edges]
             nx.draw(G, node_color=node_colors, edge_color=edge_colors, width=edge_weights, alpha=0.5)
         '''
         import networkx as nx
@@ -1084,8 +1084,8 @@ class BasePeople(FlexPretty):
             nx.set_node_attributes(G, data, name=key)
 
         # Include global layer weights
-        for u,v in G.edges():
-            edge = G[u][v]
+        for u,v,k in G.edges(keys=True):
+            edge = G[u][v][k]
             edge['beta'] *= self.pars['beta_layer'][edge['layer']]
 
         return G
@@ -1309,7 +1309,7 @@ class Contacts(FlexDict):
 
     def to_graph(self): # pragma: no cover
         '''
-        Convert all layers to a networkx DiGraph
+        Convert all layers to a networkx MultiDiGraph
 
         **Example**::
 
@@ -1319,10 +1319,10 @@ class Contacts(FlexDict):
             nx.draw(G)
         '''
         import networkx as nx
-        H = nx.DiGraph()
+        H = nx.MultiDiGraph()
         for lkey,layer in self.items():
             G = layer.to_graph()
-            H = nx.compose(H, G)
+            H = nx.compose(H, nx.MultiDiGraph(G))
         return H
 
 
