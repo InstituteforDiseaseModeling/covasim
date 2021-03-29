@@ -170,33 +170,38 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
         the mean.
     '''
 
+    # Some of these have aliases, but these are the "official" names
     choices = [
         'uniform',
         'normal',
-        'lognormal',
         'normal_pos',
         'normal_int',
+        'lognormal',
         'lognormal_int',
         'poisson',
         'neg_binomial',
-        ]
+    ]
+
+    # Ensure it's an integer
+    if size is not None:
+        size = int(size)
 
     # Compute distribution parameters and draw samples
     # NB, if adding a new distribution, also add to choices above
-    if   dist == 'uniform':       samples = np.random.uniform(low=par1, high=par2, size=size, **kwargs)
-    elif dist == 'normal':        samples = np.random.normal(loc=par1, scale=par2, size=size, **kwargs)
-    elif dist == 'normal_pos':    samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs))
-    elif dist == 'normal_int':    samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs)))
-    elif dist == 'poisson':       samples = n_poisson(rate=par1, n=size, **kwargs) # Use Numba version below for speed
-    elif dist == 'neg_binomial':  samples = n_neg_binomial(rate=par1, dispersion=par2, n=size, **kwargs) # Use custom version below
-    elif dist in ['lognormal', 'lognormal_int']:
+    if   dist in ['unif', 'uniform']: samples = np.random.uniform(low=par1, high=par2, size=size, **kwargs)
+    elif dist in ['norm', 'normal']:  samples = np.random.normal(loc=par1, scale=par2, size=size, **kwargs)
+    elif dist == 'normal_pos':        samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs))
+    elif dist == 'normal_int':        samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs)))
+    elif dist == 'poisson':           samples = n_poisson(rate=par1, n=size, **kwargs) # Use Numba version below for speed
+    elif dist == 'neg_binomial':      samples = n_neg_binomial(rate=par1, dispersion=par2, n=size, **kwargs) # Use custom version below
+    elif dist in ['lognorm', 'lognormal', 'lognorm_int', 'lognormal_int']:
         if par1>0:
             mean  = np.log(par1**2 / np.sqrt(par2**2 + par1**2)) # Computes the mean of the underlying normal distribution
             sigma = np.sqrt(np.log(par2**2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
             samples = np.random.lognormal(mean=mean, sigma=sigma, size=size, **kwargs)
         else:
             samples = np.zeros(size)
-        if dist == 'lognormal_int':
+        if '_int' in dist:
             samples = np.round(samples)
     else:
         choicestr = '\n'.join(choices)
