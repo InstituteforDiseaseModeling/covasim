@@ -572,12 +572,6 @@ class Sim(cvb.BaseSim):
         has_nabs = np.setdiff1d(cvu.defined(people.init_NAb),cvu.false(sus))
         if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
 
-        if t == 20:
-            import traceback;
-            traceback.print_exc();
-            import pdb;
-            pdb.set_trace()
-
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
 
