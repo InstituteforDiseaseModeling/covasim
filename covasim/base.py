@@ -1293,6 +1293,27 @@ class Contacts(FlexDict):
         return
 
 
+    def to_graph(self): # pragma: no cover
+        '''
+        Convert all layers to a networkx DiGraph
+
+        **Example**::
+
+            import networkx as nx
+            sim = cv.Sim(pop_size=100, pop_type='hybrid').run()
+            G = sim.people.contacts.to_graph()
+            nx.draw(G)
+        '''
+        import networkx as nx
+        H = nx.Graph()
+        for lkey,layer in self.items():
+            G = layer.to_graph()
+            nx.set_edge_attributes(G, lkey, name='layer')
+            H = nx.compose(H, G)
+        return H
+
+
+
 class Layer(FlexDict):
     '''
     A small class holding a single layer of contact edges (connections) between people.
@@ -1308,6 +1329,7 @@ class Layer(FlexDict):
         p1 (array): an array of N connections, representing people on one side of the connection
         p2 (array): an array of people on the other side of the connection
         beta (array): an array of weights for each connection
+        label (str): the name of the layer
         kwargs (dict): other keys copied directly into the layer
 
     Note that all arguments must be arrays of the same length, although not all
@@ -1330,13 +1352,14 @@ class Layer(FlexDict):
         layer2 = cv.Layer(**layer, index=index, self_conn=self_conn)
     '''
 
-    def __init__(self, **kwargs):
+    def __init__(self, label=None, **kwargs):
         self.meta = {
             'p1':    cvd.default_int,   # Person 1
             'p2':    cvd.default_int,   # Person 2
             'beta':  cvd.default_float, # Default transmissibility for this contact type
         }
         self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
+        self.label = label
 
         # Initialize the keys of the layers
         for key,dtype in self.meta.items():
@@ -1450,6 +1473,24 @@ class Layer(FlexDict):
         for key in self.meta_keys():
             self[key] = df[key].to_numpy()
         return self
+
+
+    def to_graph(self): # pragma: no cover
+        '''
+        Convert to a networkx DiGraph
+
+        **Example**::
+
+            import networkx as nx
+            sim = cv.Sim(pop_size=20, pop_type='hybrid').run()
+            G = sim.people.contacts['h'].to_graph()
+            nx.draw(G)
+        '''
+        import networkx as nx
+        G = nx.DiGraph()
+        G.add_weighted_edges_from(zip(self['p1'], self['p2'], self['beta']), 'beta')
+        nx.set_edge_attributes(G, self.label, name='layer')
+        return G
 
 
     def find_contacts(self, inds, as_array=True):
