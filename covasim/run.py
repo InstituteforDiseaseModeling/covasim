@@ -954,12 +954,13 @@ class Scenarios(cvb.ParsObj):
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
 
-            defaults = {par: scen_sim[par] for par in cvd.strain_pars}
-            scen_sim.update_pars(scenpars, defaults=defaults, **kwargs)  # Update the parameters, if provided
+#            defaults = {par: scen_sim[par] for par in cvd.strain_pars}
+#            scen_sim.update_pars(scenpars, defaults=defaults, **kwargs)  # Update the parameters, if provided
+            scen_sim.update_pars(scenpars, **kwargs)  # Update the parameters, if provided
             if 'strains' in scenpars: # Process strains
                 scen_sim.init_strains()
                 scen_sim.init_immunity(create=True)
-            if 'imm_pars' in scenpars: # Process strains
+            if 'imm_pars' in scenpars: # Process immunity
                 scen_sim.init_immunity(create=True)
 
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)

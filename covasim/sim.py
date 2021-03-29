@@ -75,7 +75,7 @@ class Sim(cvb.BaseSim):
 
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
-        self.update_pars(pars, defaults=default_pars, **kwargs)   # Update the parameters, if provided
+        self.update_pars(pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
             self.load_population(popfile)  # Load the population, if provided
@@ -280,23 +280,23 @@ class Sim(cvb.BaseSim):
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], strain_color=strain_cols, total_strains=self['total_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
-            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains']) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], strain_color=strain_cols, total_strains=self['total_strains']) # Flow variables -- e.g. "Number of new infections"
 
         # Stock variables
         for key,label in cvd.result_stocks.items():
-            self.results[f'n_{key}'] = init_res(label, color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains'])
+            self.results[f'n_{key}'] = init_res(label, color=dcols[key], strain_color=strain_cols, total_strains=self['total_strains'])
 
         # Other variables
         self.results['n_alive']                 = init_res('Number of people alive', scale=False)
         self.results['n_preinfectious']         = init_res('Number preinfectious', scale=False, color=dcols.exposed)
         #self.results['n_removed']               = init_res('Number removed', scale=False, color=dcols.recovered)
         self.results['prevalence']              = init_res('Prevalence', scale=False)
-        self.results['prevalence_by_strain']    = init_res('Prevalence by strain', scale=False, max_strains=self['total_strains'])
+        self.results['prevalence_by_strain']    = init_res('Prevalence by strain', scale=False, total_strains=self['total_strains'])
         self.results['incidence']               = init_res('Incidence', scale=False)
-        self.results['incidence_by_strain']     = init_res('Incidence by strain', scale=False, max_strains=self['total_strains'])
+        self.results['incidence_by_strain']     = init_res('Incidence by strain', scale=False, total_strains=self['total_strains'])
         self.results['r_eff']                   = init_res('Effective reproduction number', scale=False)
         self.results['doubling_time']           = init_res('Doubling time', scale=False)
         self.results['test_yield']              = init_res('Testing yield', scale=False)
@@ -571,6 +571,12 @@ class Sim(cvb.BaseSim):
         # Check NAbs. Take set difference so we don't compute NAbs for anyone currently infected
         has_nabs = np.setdiff1d(cvu.defined(people.init_NAb),cvu.false(sus))
         if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
+
+        if t == 20:
+            import traceback;
+            traceback.print_exc();
+            import pdb;
+            pdb.set_trace()
 
         # Iterate through n_strains to calculate infections
         for strain in range(ns):

@@ -69,6 +69,7 @@ class ParsObj(FlexPretty):
         self.update_pars(pars, create=True)
         return
 
+
     def __getitem__(self, key):
         ''' Allow sim['par_name'] instead of sim.pars['par_name'] '''
         try:
@@ -77,6 +78,7 @@ class ParsObj(FlexPretty):
             all_keys = '\n'.join(list(self.pars.keys()))
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
+
 
     def __setitem__(self, key, value):
         ''' Ditto '''
@@ -87,6 +89,7 @@ class ParsObj(FlexPretty):
             errormsg = f'Key "{key}" not found; available keys:\n{all_keys}'
             raise sc.KeyNotFoundError(errormsg)
         return
+
 
     def update_pars(self, pars=None, create=False):
         '''
@@ -128,7 +131,7 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale=True, color=None, strain_color=None, max_strains=30):
+    def __init__(self, name=None, npts=None, scale=True, color=None, strain_color=None, total_strains=1):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
@@ -139,7 +142,7 @@ class Result(object):
         if npts is None:
             npts = 0
         if 'by_strain' in self.name or 'by strain' in self.name:
-            self.values = np.full((max_strains, npts), 0, dtype=cvd.result_float, order='F')
+            self.values = np.full((total_strains, npts), 0, dtype=cvd.result_float, order='F')
         else:
             self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
         self.low    = None
@@ -237,7 +240,7 @@ class BaseSim(ParsObj):
         return string
 
 
-    def update_pars(self, pars=None, create=False, defaults=None, **kwargs):
+    def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
         pars = sc.mergedicts(pars, kwargs)
 
@@ -246,11 +249,6 @@ class BaseSim(ParsObj):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
-
-            if defaults is not None: # Defaults have been provided: we are now doing updates
-                pars = cvpar.listify_strain_pars(pars)  # Strain pars need to be lists
-                pars = cvpar.update_sub_key_pars(pars, defaults) # Update dict parameters by sub-key
-                combined_pars = sc.mergedicts(defaults, pars) # Now that subkeys have been updated, can merge the dicts together
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
 
         return
