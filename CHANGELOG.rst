@@ -25,11 +25,21 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (2.x)
 ~~~~~~~~~~~~~~~~~~~~~
 
-
-Version 2.1.0 (2021-03-23)
+Version 2.1.1 (2021-03-29)
 --------------------------
 
 This is the last release before the Covasim 3.0 launch (vaccines and variants).
+
+- **Duration updates**: All duration parameters have been updated from the literature. While most are similar to what they were before, there are some differences: in particular, durations of severe and critical disease (either to recovery or death) have increased; for example, duration from symptom onset to death has increased from 15.8±3.8 days to 18.8±7.2 days. 
+- Contact layers now have a new method, ``to_graph()``, that will return a ``networkx`` graph (requires ``networkx`` to be installed, of course). For example, ``nx.draw(cv.Sim(pop_size=100).run().people.contacts.to_graph())`` will draw all connections between 100 default people.
+- A bug was fixed with ``cv.TransTree.animate`` failing in some cases.
+
+
+In the previous version, a bug was discovered
+
+
+Version 2.1.0 (2021-03-23)
+--------------------------
 
 Highlights
 ^^^^^^^^^^
