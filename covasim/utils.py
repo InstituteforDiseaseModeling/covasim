@@ -90,8 +90,8 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
 @nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=cache, parallel=rand_parallel)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus): # pragma: no cover
     ''' The heaviest step of the model -- figure out who gets infected on this timestep. Cannot be parallelized since random numbers are used '''
-    source_trans    = rel_trans[sources]
-    inf_inds        = source_trans.nonzero()[0] # Find nonzero entries
+    source_trans    = rel_trans[sources] # Pull out the transmissibility of the sources (0 for non-infectious people)
+    inf_inds        = source_trans.nonzero()[0] # Remove noninfectious people
     betas           = beta * layer_betas[inf_inds] * source_trans[inf_inds] * rel_sus[targets[inf_inds]] # Calculate the raw transmission probabilities
     nonzero_inds    = betas.nonzero()[0] # Find nonzero entries
     nonzero_betas   = betas[nonzero_inds] # Remove zero entries from beta

@@ -1585,7 +1585,7 @@ class TransTree(Analyzer):
         # Construct each frame of the animation
         detailed = self.detailed.to_dict('records') # Convert to the old style
         for ddict in detailed:  # Loop over every person
-            if ddict is None:
+            if np.isnan(ddict['source']):
                 continue # Skip the 'None' node corresponding to seeded infections
 
             frame = {}
