@@ -21,10 +21,10 @@ jobs:
       - name: Install Covasim
         run: python setup.py develop
       - name: Install tests
-        run: pip install -r tests/requirements_test.txt
+        run: pip install pytest
       - name: Run integration tests
         working-directory: ./tests
-        run: pytest test_*.py --cov-config=.coveragerc --cov=../covasim --workers auto --durations=0
+        run: pytest test_*.py --durations=0
       - name: Run unit tests
         working-directory: ./tests/unittests
-        run: pytest test_*.py --cov=../covasim --workers auto --durations=0
+        run: pytest test_*.py --durations=0
