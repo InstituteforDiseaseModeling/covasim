@@ -120,7 +120,7 @@ class Sim(cvb.BaseSim):
         self.initialized   = True
         self.complete      = False
         self.results_ready = False
-        return
+        return self
 
 
     def layer_keys(self):

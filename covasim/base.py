@@ -1075,6 +1075,41 @@ class BasePeople(FlexPretty):
         return
 
 
+    def to_graph(self): # pragma: no cover
+        '''
+        Convert all people to a networkx MultiDiGraph, including all properties of
+        the people (nodes) and contacts (edges).
+
+        **Example**::
+
+            import covasim as cv
+            import networkx as nx
+            sim = cv.Sim(pop_size=50, pop_type='hybrid', contacts=dict(h=3, s=10, w=10, c=5)).run()
+            G = sim.people.to_graph()
+            nodes = G.nodes(data=True)
+            edges = G.edges(keys=True)
+            node_colors = [n['age'] for i,n in nodes]
+            layer_map = dict(h='#37b', s='#e11', w='#4a4', c='#a49')
+            edge_colors = [layer_map[G[i][j][k]['layer']] for i,j,k in edges]
+            edge_weights = [G[i][j][k]['beta']*5 for i,j,k in edges]
+            nx.draw(G, node_color=node_colors, edge_color=edge_colors, width=edge_weights, alpha=0.5)
+        '''
+        import networkx as nx
+
+        # Copy data from people into graph
+        G = self.contacts.to_graph()
+        for key in self.keys():
+            data = {k:v for k,v in enumerate(self[key])}
+            nx.set_node_attributes(G, data, name=key)
+
+        # Include global layer weights
+        for u,v,k in G.edges(keys=True):
+            edge = G[u][v][k]
+            edge['beta'] *= self.pars['beta_layer'][edge['layer']]
+
+        return G
+
+
     def init_contacts(self, reset=False):
         ''' Initialize the contacts dataframe with the correct columns and data types '''
 
@@ -1127,12 +1162,7 @@ class BasePeople(FlexPretty):
 
             # Create the layer if it doesn't yet exist
             if lkey not in self.contacts:
-                if self.pars['dynam_layer'].get(lkey, False):
-                    # Equivalent to previous functionality, but might be better if make_randpop() returned Layer objects instead of just dicts, that
-                    # way the population creation function could have control over both the contacts and the update algorithm
-                    self.contacts[lkey] = RandomLayer()
-                else:
-                    self.contacts[lkey] = Layer()
+                self.contacts[lkey] = Layer(label=lkey)
 
             # Actually include them, and update properties if supplied
             for col in self.contacts[lkey].keys(): # Loop over the supplied columns
@@ -1169,7 +1199,7 @@ class BasePeople(FlexPretty):
 
         # Turn into a dataframe
         for lkey in lkeys:
-            new_layer = Layer()
+            new_layer = Layer(label=lkey)
             for ckey,value in new_contacts[lkey].items():
                 new_layer[ckey] = np.array(value, dtype=new_layer.meta[ckey])
             new_contacts[lkey] = new_layer
@@ -1239,8 +1269,8 @@ class Contacts(FlexDict):
     '''
     def __init__(self, layer_keys=None):
         if layer_keys is not None:
-            for key in layer_keys:
-                self[key] = Layer()
+            for lkey in layer_keys:
+                self[lkey] = Layer(label=lkey)
         return
 
     def __repr__(self):
@@ -1271,7 +1301,7 @@ class Contacts(FlexDict):
 
         **Example**::
 
-            hospitals_layer = cv.Layer()
+            hospitals_layer = cv.Layer(label='hosp')
             sim.people.contacts.add_layer(hospitals=hospitals_layer)
         '''
         for lkey,layer in kwargs.items():
@@ -1298,21 +1328,20 @@ class Contacts(FlexDict):
 
     def to_graph(self): # pragma: no cover
         '''
-        Convert all layers to a networkx DiGraph
+        Convert all layers to a networkx MultiDiGraph
 
         **Example**::
 
             import networkx as nx
-            sim = cv.Sim(pop_size=100, pop_type='hybrid').run()
+            sim = cv.Sim(pop_size=50, pop_type='hybrid').run()
             G = sim.people.contacts.to_graph()
             nx.draw(G)
         '''
         import networkx as nx
-        H = nx.Graph()
+        H = nx.MultiDiGraph()
         for lkey,layer in self.items():
             G = layer.to_graph()
-            nx.set_edge_attributes(G, lkey, name='layer')
-            H = nx.compose(H, G)
+            H = nx.compose(H, nx.MultiDiGraph(G))
         return H
 
 
@@ -1332,12 +1361,12 @@ class Layer(FlexDict):
         p1 (array): an array of N connections, representing people on one side of the connection
         p2 (array): an array of people on the other side of the connection
         beta (array): an array of weights for each connection
-        label (str): the name of the layer
+        label (str): the name of the layer (optional)
         kwargs (dict): other keys copied directly into the layer
 
-    Note that all arguments must be arrays of the same length, although not all
-    have to be supplied at the time of creation (they must all be the same at the
-    time of initialization, though, or else validation will fail).
+    Note that all arguments (except for label) must be arrays of the same length,
+    although not all have to be supplied at the time of creation (they must all
+    be the same at the time of initialization, though, or else validation will fail).
 
     **Examples**::
 
@@ -1347,12 +1376,12 @@ class Layer(FlexDict):
         p1 = np.random.randint(n_people, size=n)
         p2 = np.random.randint(n_people, size=n)
         beta = np.ones(n)
-        layer = cv.Layer(p1=p1, p2=p2, beta=beta)
+        layer = cv.Layer(p1=p1, p2=p2, beta=beta, label='rand')
 
-        # Convert one layer to another with an extra column
+        # Convert one layer to another with extra columns
         index = np.arange(n)
         self_conn = p1 == p2
-        layer2 = cv.Layer(**layer, index=index, self_conn=self_conn)
+        layer2 = cv.Layer(**layer, index=index, self_conn=self_conn, label=layer.label)
     '''
 
     def __init__(self, label=None, **kwargs):
@@ -1384,9 +1413,10 @@ class Layer(FlexDict):
 
     def __repr__(self):
         ''' Convert to a dataframe for printing '''
-        label = self.__class__.__name__
+        namestr = self.__class__.__name__
+        labelstr = f'"{self.label}"' if self.label else '<no label>'
         keys_str = ', '.join(self.keys())
-        output = f'{label}({keys_str})\n' # e.g. Layer(p1, p2, beta)
+        output = f'{namestr}({labelstr}, {keys_str})\n' # e.g. Layer("h", p1, p2, beta)
         output += self.to_df().__repr__()
         return output
 
@@ -1471,9 +1501,11 @@ class Layer(FlexDict):
         return df
 
 
-    def from_df(self, df):
+    def from_df(self, df, keys=None):
         ''' Convert from a dataframe '''
-        for key in self.meta_keys():
+        if keys is None:
+            keys = self.meta_keys()
+        for key in keys:
             self[key] = df[key].to_numpy()
         return self
 
@@ -1490,8 +1522,9 @@ class Layer(FlexDict):
             nx.draw(G)
         '''
         import networkx as nx
+        data = [np.array(self[k], dtype=dtype).tolist() for k,dtype in [('p1', int), ('p2', int), ('beta', float)]]
         G = nx.DiGraph()
-        G.add_weighted_edges_from(zip(self['p1'], self['p2'], self['beta']), 'beta')
+        G.add_weighted_edges_from(zip(*data), weight='beta')
         nx.set_edge_attributes(G, self.label, name='layer')
         return G
 
