@@ -263,27 +263,32 @@ def date_formatter(start_day=None, dateformat=None, interval=None, start=None, e
     # Convert to a date object
     if start_day is None and sim is not None:
         start_day = sim['start_day']
+    if start_day is None:
+        errormsg = 'If not supplying a start day, you must supply a sim object'
+        raise ValueError(errormsg)
     start_day = sc.date(start_day)
 
     @ticker.FuncFormatter
     def mpl_formatter(x, pos):
-        if sc.isnumber(x): # If the axis doesn't have date units
-            print()
-            return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
-        else: # If the axis does
-            return x.strftime(dateformat)
+        return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
 
+    # Set initial tick marks (intervals and limits)
     if ax is not None:
-        ax.xaxis.set_major_formatter(mpl_formatter)
+
+        # Handle limits
         xmin, xmax = ax.get_xlim()
-        print('hi, ', xmin, xmax)
-        if interval: # Set the x-axis intervals
-            ax.set_xticks(np.arange(xmin, xmax+1, interval))
         if start:
             xmin = sc.day(start, start_day=start_day)
         if end:
             xmax = sc.day(end, start_day=start_day)
         ax.set_xlim((xmin, xmax))
+
+        # Set the x-axis intervals
+        if interval:
+            ax.set_xticks(np.arange(xmin, xmax+1, interval))
+
+        # Set the formatter
+        ax.xaxis.set_major_formatter(mpl_formatter)
 
     return mpl_formatter
 
