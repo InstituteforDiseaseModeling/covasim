@@ -68,6 +68,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['NAb_decay']               = dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250, 'decay_decay_rate': 0.001}) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
     pars['NAb_kin']                 = None # Constructed during sim initialization using the NAb_decay parameters
     pars['NAb_boost']               = 2 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
+    pars['NAb_eff']                 = {'slope': 2, 'n_50': 0.2, 'factors': {'sus': -0.01, 'symp': 0, 'sev': 0.01}} # Parameters to map NAbs to efficacy
     pars['cross_immunity']          = 0.5   # Default cross-immunity protection factor that applies across different strains
     pars['rel_imm']                 = {} # Relative immunity from natural infection varies by symptoms
     pars['rel_imm']['asymptomatic'] = 0.5
