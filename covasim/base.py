@@ -1437,6 +1437,14 @@ class Layer(FlexDict):
         return self
 
 
+    def to_graph(self):
+        ''' Convert to a networkx DiGraph'''
+        import networkx as nx
+        G = nx.DiGraph()
+        G.add_weighted_edges_from(zip(self['p1'],self['p2'],self['beta']), 'beta')
+        return G
+
+
     def find_contacts(self, inds, as_array=True):
         """
         Find all contacts of the specified people
