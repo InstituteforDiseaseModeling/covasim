@@ -10,7 +10,7 @@ import numpy as np
 import pylab as pl
 import sciris as sc
 import datetime as dt
-import matplotlib as mpl
+import matplotlib.ticker as ticker
 from . import misc as cvm
 from . import defaults as cvd
 from . import settings as cvset
@@ -228,7 +228,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     return
 
 
-def date_formatter(start_day=None, dateformat=None, interval=None, start=None, end=None, is_numeric=True, ax=None, sim=None):
+def date_formatter(start_day=None, dateformat=None, interval=None, start=None, end=None, ax=None, sim=None):
     '''
     Create an automatic date formatter based on a number of days and a start day.
 
@@ -242,7 +242,6 @@ def date_formatter(start_day=None, dateformat=None, interval=None, start=None, e
         interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
         start (str/int): if supplied, the lower limit of the axis
         end (str/int): if supplied, the upper limit of the axis
-        is_numeric (bool): whether the x-axis was originally plotted with numeric units (set to False if dates were supplied)
         ax (axes): if supplied, automatically set the x-axis formatter for this axis
         sim (Sim): if supplied, get the start day from this
 
@@ -262,25 +261,17 @@ def date_formatter(start_day=None, dateformat=None, interval=None, start=None, e
         dateformat = '%b-%d'
 
     # Convert to a date object
-    if start_day is not None:
-        start_day = sc.date(start_day)
-    else:
-        if sim is not None:
-            start_day = sim['start_day']
-        elif ax is not None and not is_numeric:
-            xmin, xmax = ax.get_xlim()
-            start_day = mpl.dates.num2date(xmin)
-        else:
-            errormsg = 'If not supplying a start day or sim, the axis must already use dates and you must set is_numeric=False'
-            raise ValueError(errormsg)
+    if start_day is None and sim is not None:
+        start_day = sim['start_day']
+    start_day = sc.date(start_day)
 
-    @mpl.ticker.FuncFormatter
+    @ticker.FuncFormatter
     def mpl_formatter(x, pos):
-        if is_numeric: # If the axis doesn't have date units
-            print('sdfoiufd', x, pos)
+        if sc.isnumber(x): # If the axis doesn't have date units
+            print()
             return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
         else: # If the axis does
-            return mpl.dates.num2date(x).strftime(dateformat)
+            return x.strftime(dateformat)
 
     if ax is not None:
         ax.xaxis.set_major_formatter(mpl_formatter)
