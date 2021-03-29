@@ -87,7 +87,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     return rel_trans, rel_sus
 
 
-@nb.njit(             (nbfloat,  nbint[:],  nbint[:],   nbfloat[:],  nbfloat[:], nbfloat[:]), cache=cache, parallel=rand_parallel)
+@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=cache, parallel=rand_parallel)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus): # pragma: no cover
     '''
     Compute who infects whom

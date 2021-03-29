@@ -1064,6 +1064,7 @@ class BasePeople(FlexPretty):
 
         **Example**::
 
+            import covasim as cv
             import networkx as nx
             sim = cv.Sim(pop_size=50, pop_type='hybrid', contacts=dict(h=3, s=10, w=10, c=5)).run()
             G = sim.people.to_graph()
