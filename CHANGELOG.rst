@@ -15,7 +15,7 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Mechanistic handling of different strains, and improved handling of vaccination, including more detailed targeting options, waning immunity, etc.. This will be Covasim 3.0, which is slated for release early April.
+- Mechanistic handling of different strains, and improved handling of vaccination, including more detailed targeting options, waning immunity, etc. This will be Covasim 3.0, which is slated for release early April.
 - Expanded tutorials (health care workers, vaccination, calibration, exercises, etc.)
 - Multi-region and geospatial support
 - Economics and costing analysis
@@ -25,11 +25,31 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (2.x)
 ~~~~~~~~~~~~~~~~~~~~~
 
-
-Version 2.1.0 (2021-03-23)
+Version 2.1.1 (2021-03-29)
 --------------------------
 
 This is the last release before the Covasim 3.0 launch (vaccines and variants).
+
+- **Duration updates:** All duration parameters have been updated from the literature. While most are similar to what they were before, there are some differences: in particular, durations of severe and critical disease (either to recovery or death) have increased; for example, duration from symptom onset to death has increased from 15.8±3.8 days to 18.8±7.2 days. 
+- **Performance updates:** The innermost loop of Covasim, ``cv.compute_infections()``, has been refactored to make more efficient use of array indexing. The observed difference will depend on the nature of the simulation (e.g., network type, interventions), but runs may be up to 1.5x faster now.
+- **Graphs:** People, contacts, and contacts layers now have a new method, ``to_graph()``, that will return a ``networkx`` graph (requires ``networkx`` to be installed, of course). For example, ``nx.draw(cv.Sim(pop_size=100).run().people.to_graph())`` will draw all connections between 100 default people. See ``cv.Sim.people.to_graph()`` for full documentation.
+- A bug was fixed with ``cv.TransTree.animate()`` failing in some cases.
+- ``cv.date_formatter()`` now takes ``interval``, ``start``, and ``end`` arguments.
+- Temporarily pinned ``line_profiler`` to version 3.1 due to `this issue <https://github.com/pyutils/line_profiler/issues/49>`__.
+- *Regression information*: Parameters can be restored by using the ``version`` argument when creating a sim. Specifically, the parameters for the following distributions (all lognormal) have been changed as follows::
+
+    exp2inf:  μ =  4.6 →  4.5, σ = 4.8 → 1.5
+    inf2sym:  μ =  1.0 →  1.1, σ = 0.9 → 0.9
+    sev2crit: μ =  3.0 →  1.5, σ = 7.4 → 2.0
+    sev2rec:  μ = 14.0 → 18.1, σ = 2.4 → 6.3
+    crit2rec: μ = 14.0 → 18.1, σ = 2.4 → 6.3
+    crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8
+
+- *GitHub info*: PR `887 <https://github.com/amath-idm/covasim/pull/887>`__
+
+
+Version 2.1.0 (2021-03-23)
+--------------------------
 
 Highlights
 ^^^^^^^^^^

@@ -20,11 +20,11 @@ jobs:
           architecture: x64
       - name: Install Covasim
         run: python setup.py develop
+      - name: Install tests
+        run: pip install pytest
       - name: Run integration tests
         working-directory: ./tests
-        run: |
-          pip install pytest
-          pytest test*.py --durations=0 # Run actual tests
+        run: pytest test_*.py --durations=0
       - name: Run unit tests
         working-directory: ./tests/unittests
-        run: pytest test*.py --durations=0 # Run actual tests
+        run: pytest test_*.py --durations=0
