@@ -45,12 +45,12 @@
   "dur": {
     "exp2inf": {
       "dist": "lognormal_int",
-      "par1": 4.6,
-      "par2": 4.8
+      "par1": 4.5,
+      "par2": 1.5
     },
     "inf2sym": {
       "dist": "lognormal_int",
-      "par1": 1.0,
+      "par1": 1.1,
       "par2": 0.9
     },
     "sym2sev": {
@@ -60,8 +60,8 @@
     },
     "sev2crit": {
       "dist": "lognormal_int",
-      "par1": 3.0,
-      "par2": 7.4
+      "par1": 1.5,
+      "par2": 2.0
     },
     "asym2rec": {
       "dist": "lognormal_int",
@@ -75,18 +75,18 @@
     },
     "sev2rec": {
       "dist": "lognormal_int",
-      "par1": 14.0,
-      "par2": 2.4
+      "par1": 18.1,
+      "par2": 6.3
     },
     "crit2rec": {
       "dist": "lognormal_int",
-      "par1": 14.0,
-      "par2": 2.4
+      "par1": 18.1,
+      "par2": 6.3
     },
     "crit2die": {
       "dist": "lognormal_int",
-      "par1": 6.2,
-      "par2": 1.7
+      "par1": 10.7,
+      "par2": 4.8
     }
   },
   "rel_symp_prob": 1.0,

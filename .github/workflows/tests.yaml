@@ -19,7 +19,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
       - name: Install Covasim
-        run: python setup.py develop
+        run: |
+          pip install line_profiler==3.1
+          python setup.py develop
       - name: Run integration tests
         working-directory: ./tests
         run: |
