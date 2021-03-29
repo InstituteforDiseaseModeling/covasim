@@ -34,14 +34,14 @@ This is the last release before the Covasim 3.0 launch (vaccines and variants).
 - **Performance updates**: The innermost loop, ``cv.compute_infections()``, has been refactored to make more efficient use of array indexing. The speed increase will depend on the nature of the simulation (e.g., network type, interventions), but may be up to 1.5x faster.
 - Contacts layers now have a new method, ``to_graph()``, that will return a ``networkx`` graph (requires ``networkx`` to be installed, of course). For example, ``nx.draw(cv.Sim(pop_size=100).run().people.contacts.to_graph())`` will draw all connections between 100 default people.
 - A bug was fixed with ``cv.TransTree.animate`` failing in some cases.
-- *Regression information*: Parameters can be restored by using the ``version`` argument when creating a sim. Manually, the parameters have been changed as follows::
+- *Regression information*: Parameters can be restored by using the ``version`` argument when creating a sim. Specifically, the parameters for the following distributions (all lognormal) have been changed as follows::
 
-    exp2inf:  par1 =  4.6 →  4.5, par2 = 4.8 → 1.5
-    inf2sym:  par1 =  1.0 →  1.1, par2 = 0.9 → 0.9
-    sev2crit: par1 =  3.0 →  1.5, par2 = 7.4 → 2.0
-    sev2rec:  par1 = 14.0 → 18.1, par2 = 2.4 → 6.3
-    crit2rec: par1 = 14.0 → 18.1, par2 = 2.4 → 6.3
-    crit2die: par1 =  6.2 → 10.7, par2 = 1.7 → 4.8
+    exp2inf:  μ =  4.6 →  4.5, σ = 4.8 → 1.5
+    inf2sym:  μ =  1.0 →  1.1, σ = 0.9 → 0.9
+    sev2crit: μ =  3.0 →  1.5, σ = 7.4 → 2.0
+    sev2rec:  μ = 14.0 → 18.1, σ = 2.4 → 6.3
+    crit2rec: μ = 14.0 → 18.1, σ = 2.4 → 6.3
+    crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8
 
 - *GitHub info*: PR `887 <https://github.com/amath-idm/covasim/pull/887>`__
 
