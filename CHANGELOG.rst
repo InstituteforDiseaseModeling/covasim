@@ -35,6 +35,7 @@ This is the last release before the Covasim 3.0 launch (vaccines and variants).
 - **Graphs:** People, contacts, and contacts layers now have a new method, ``to_graph()``, that will return a ``networkx`` graph (requires ``networkx`` to be installed, of course). For example, ``nx.draw(cv.Sim(pop_size=100).run().people.to_graph())`` will draw all connections between 100 default people. See ``cv.Sim.people.to_graph()`` for full documentation.
 - A bug was fixed with ``cv.TransTree.animate()`` failing in some cases.
 - ``cv.date_formatter()`` now takes ``interval``, ``start``, and ``end`` arguments.
+- Temporarily pinned ``line_profiler`` to version 3.1 due to `this issue <https://github.com/pyutils/line_profiler/issues/49>`__.
 - *Regression information*: Parameters can be restored by using the ``version`` argument when creating a sim. Specifically, the parameters for the following distributions (all lognormal) have been changed as follows::
 
     exp2inf:  μ =  4.6 →  4.5, σ = 4.8 → 1.5
