@@ -110,39 +110,6 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     return source_inds, target_inds
 
 
-# @nb.njit(             (nbfloat,  nbint[:],  nbint[:],   nbfloat[:],  nbfloat[:], nbfloat[:]), cache=cache, parallel=rand_parallel)
-# def compute_infections(beta,     rsources,  rtargets,   layer_betas, rel_trans,  rel_sus): # pragma: no cover
-#     '''
-#     Compute who infects whom
-
-#     The heaviest step of the model, taking about 50% of the total time -- figure
-#     out who gets infected on this timestep. Cannot be easily parallelized since
-#     random numbers are used.
-#     '''
-#     slist = np.empty(0, dtype=nbint)
-#     tlist = np.empty(0, dtype=nbint)
-#     for sources,targets in [[rsources,rtargets], [rtargets,rsources]]:
-
-#         source_trans     = rel_trans[sources] # Pull out the transmissibility of the sources (0 for non-infectious people)
-#         inf_inds         = source_trans.nonzero()[0] # Infectious indices -- remove noninfectious people
-#         betas            = beta * layer_betas[inf_inds] * source_trans[inf_inds] * rel_sus[targets[inf_inds]] # Calculate the raw transmission probabilities
-#         nonzero_inds     = betas.nonzero()[0] # Find nonzero entries
-#         nonzero_inf_inds = inf_inds[nonzero_inds] # Map onto original indices
-#         nonzero_betas    = betas[nonzero_inds] # Remove zero entries from beta
-#         nonzero_sources  = sources[nonzero_inf_inds] # Remove zero entries from the sources
-#         nonzero_targets  = targets[nonzero_inf_inds] # Remove zero entries from the targets
-#         transmissions    = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
-#         source_inds      = nonzero_sources[transmissions]
-#         target_inds      = nonzero_targets[transmissions] # Filter the targets on the actual infections
-#         slist = np.concatenate((slist, source_inds), axis=0)
-#         tlist = np.concatenate((tlist, target_inds), axis=0)
-#         # tlist.append(target_inds)
-#     # source_inds = np.concatenate(tuple(slist), axis=0)
-#     # target_inds = np.concatenate(tuple(tlist), axis=0)
-#     # print(len(inf_inds), len(nonzero_inds), len(source_inds), len(target_inds))
-#     return slist,tlist #source_inds, target_inds
-
-
 @nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=cache)
 def find_contacts(p1, p2, inds): # pragma: no cover
     """
