@@ -304,6 +304,8 @@ class Sim(cvb.BaseSim):
         self.results['share_vaccinated']        = init_res('Share Vaccinated', scale=False)
         self.results['pop_nabs']                = init_res('Population average NAb levels', scale=False, color=dcols.pop_nabs)
         self.results['pop_protection']          = init_res('Population average immunity protection', scale=False, color=dcols.pop_protection)
+        self.results['pop_symp_protection']     = init_res('Population average symptomatic immunity protection', scale=False,
+                                                  color=dcols.pop_symp_protection)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -632,6 +634,7 @@ class Sim(cvb.BaseSim):
         # Update NAb and immunity for this time step
         self.results['pop_nabs'][t] = np.sum(people.NAb[cvu.defined(people.NAb)])/len(people)
         self.results['pop_protection'][t] = np.nanmean(people.sus_imm)
+        self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 
         # Apply analyzers -- same syntax as interventions
         for i,analyzer in enumerate(self['analyzers']):

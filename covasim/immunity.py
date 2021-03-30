@@ -381,7 +381,7 @@ def nab_to_efficacy(nab, ax, slope, n_50, factors):
         raise ValueError(errormsg)
 
     # put in here nab to efficacy mapping (logistic regression from fig 1a from https://doi.org/10.1101/2021.03.09.21252641)
-    efficacy = 1/(1+np.exp(-slope*(nab - n_50 + factors[ax]))) # from logistic regression computed in R using data from Khoury et al
+    efficacy = 1/(1+np.exp(-slope*(np.log10(nab) - np.log10(n_50) - np.log10(factors[ax])))) # from logistic regression computed in R using data from Khoury et al
     return efficacy
 
 

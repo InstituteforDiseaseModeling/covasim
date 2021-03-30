@@ -220,6 +220,7 @@ def get_colors():
     c.default               = '#000000'
     c.pop_nabs              = '#32733d'
     c.pop_protection        = '#9e1149'
+    c.pop_symp_protection   = '#b86113'
     return c
 
 
