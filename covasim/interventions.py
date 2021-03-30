@@ -149,6 +149,7 @@ class Intervention:
         that can't be done until after the sim is created.
         '''
         self.initialized = True
+        self.finalized = False
         return
 
     def finalize(self, sim):
@@ -158,6 +159,8 @@ class Intervention:
         This method is run once as part of `sim.finalize()` enabling the intervention to perform any
         final operations after the simulation is complete (e.g. rescaling)
         '''
+        if self.finalized:
+            raise Exception('Already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
         self.finalized = True
         return
 

@@ -35,6 +35,7 @@ class Analyzer(sc.prettyobj):
             label = self.__class__.__name__ # Use the class name if no label is supplied
         self.label = label # e.g. "Record ages"
         self.initialized = False
+        self.finalized = False
         return
 
 
@@ -43,6 +44,7 @@ class Analyzer(sc.prettyobj):
         Initialize the analyzer, e.g. convert date strings to integers.
         '''
         self.initialized = True
+        self.initialized = False
         return
 
     def finalize(self, sim):
@@ -52,6 +54,8 @@ class Analyzer(sc.prettyobj):
         This method is run once as part of `sim.finalize()` enabling the analyzer to perform any
         final operations after the simulation is complete (e.g. rescaling)
         '''
+        if self.finalized:
+            raise Exception('Already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
         self.finalized = True
         return
 
