@@ -170,10 +170,9 @@ class snapshot(Analyzer):
             date = self.dates[ind]
             self.snapshots[date] = sc.dcp(sim.people) # Take snapshot!
 
-        # On the final timestep, check that everything matches
-        if sim.t == sim.tvec[-1]:
-            validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.snapshots.keys(), die=self.die)
-
+    def finalize(self, sim):
+        super().finalize(sim)
+        validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.snapshots.keys(), die=self.die)
         return
 
 
@@ -294,10 +293,9 @@ class age_histogram(Analyzer):
                 inds = sim.people.defined(f'date_{state}') # Pull out people for which this state is defined
                 self.hists[date][state] = np.histogram(age[inds], bins=self.edges)[0]*scale # Actually count the people
 
-        # On the final timestep, check that everything matches
-        if sim.t == sim.tvec[-1]:
-            validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.hists.keys(), die=self.die)
-
+    def finalize(self, sim):
+        super().finalize(sim)
+        validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.hists.keys(), die=self.die)
         return
 
 
