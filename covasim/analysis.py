@@ -55,7 +55,7 @@ class Analyzer(sc.prettyobj):
         final operations after the simulation is complete (e.g. rescaling)
         '''
         if self.finalized:
-            raise Exception('Already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
+            raise Exception('Analyzer already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
         self.finalized = True
         return
 
