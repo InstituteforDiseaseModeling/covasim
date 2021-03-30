@@ -71,8 +71,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['NAb_eff']                 = {'slope': 2, 'n_50': 0.2, 'factors': {'sus': -0.01, 'symp': 0, 'sev': 0.01}} # Parameters to map NAbs to efficacy
     pars['cross_immunity']          = 0.5   # Default cross-immunity protection factor that applies across different strains
     pars['rel_imm']                 = {} # Relative immunity from natural infection varies by symptoms
-    pars['rel_imm']['asymptomatic'] = 0.5
-    pars['rel_imm']['mild']         = 0.85
+    pars['rel_imm']['asymptomatic'] = 0.7
+    pars['rel_imm']['mild']         = 0.9
     pars['rel_imm']['severe']       = 1
     pars['immunity']                = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
     pars['vaccine_info']            = None  # Vaccine info in a more easily accessible format
