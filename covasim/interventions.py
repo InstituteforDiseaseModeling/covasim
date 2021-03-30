@@ -100,6 +100,7 @@ class Intervention:
         self.line_args = sc.mergedicts(dict(linestyle='--', c='#aaa', lw=1.0), line_args) # Do not set alpha by default due to the issue of overlapping interventions
         self.days = [] # The start and end days of the intervention
         self.initialized = False # Whether or not it has been initialized
+        self.finalized = False # Whether or not it has been initialized
         return
 
 
@@ -148,6 +149,16 @@ class Intervention:
         that can't be done until after the sim is created.
         '''
         self.initialized = True
+        return
+
+    def finalize(self, sim):
+        '''
+        Finalize intervention
+
+        This method is run once as part of `sim.finalize()` enabling the intervention to perform any
+        final operations after the simulation is complete (e.g. rescaling)
+        '''
+        self.finalized = True
         return
 
 

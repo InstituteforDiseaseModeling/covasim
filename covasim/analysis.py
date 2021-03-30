@@ -45,6 +45,15 @@ class Analyzer(sc.prettyobj):
         self.initialized = True
         return
 
+    def finalize(self, sim):
+        '''
+        Finalize analyzer
+
+        This method is run once as part of `sim.finalize()` enabling the analyzer to perform any
+        final operations after the simulation is complete (e.g. rescaling)
+        '''
+        self.finalized = True
+        return
 
     def apply(self, sim):
         '''
