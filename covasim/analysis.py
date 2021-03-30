@@ -44,7 +44,7 @@ class Analyzer(sc.prettyobj):
         Initialize the analyzer, e.g. convert date strings to integers.
         '''
         self.initialized = True
-        self.initialized = False
+        self.finalized = False
         return
 
     def finalize(self, sim):
