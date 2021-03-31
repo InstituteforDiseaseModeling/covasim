@@ -24,7 +24,7 @@ jobs:
         run: pip install pytest
       - name: Run integration tests
         working-directory: ./tests
-        run: pytest test_*.py --durations=0
+        run: pytest -v test_*.py --durations=0
       - name: Run unit tests
         working-directory: ./tests/unittests
-        run: pytest test_*.py --durations=0
+        run: pytest -v test_*.py --durations=0
