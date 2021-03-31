@@ -49,7 +49,7 @@ setup(
     classifiers=CLASSIFIERS,
     packages=find_packages(),
     include_package_data=True,
-    install_requires=requirements
+    install_requires=requirements,
     extras_require={
         'full':  [
             'plotly',
