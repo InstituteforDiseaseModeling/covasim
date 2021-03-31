@@ -21,20 +21,27 @@ from collections import defaultdict
 __all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence']
 
 
-def find_day(arr, t=None, which='first'):
+def find_day(arr, t=None, interv=None, sim=None, which='first'):
     '''
     Helper function to find if the current simulation time matches any day in the
     intervention. Although usually never more than one index is returned, it is
     returned as a list for the sake of easy iteration.
 
     Args:
-        arr (list): list of days in the intervention, or else a boolean array
+        arr (list/function): list of days in the intervention, or a boolean array; or a function that returns these
         t (int): current simulation time (can be None if a boolean array is used)
         which (str): what to return: 'first', 'last', or 'all' indices
+        interv (intervention): the intervention object (usually self); only used if arr is callable
+        sim (sim): the simulation object; only used if arr is callable
 
     Returns:
         inds (list): list of matching days; length zero or one unless which is 'all'
+
+    New in version 2.1.2: arr can be a function with arguments interv and sim.
     '''
+    if callable(arr):
+        arr = arr(interv, sim)
+        arr = sc.promotetoarray(arr)
     all_inds = sc.findinds(arr=arr, val=t)
     if len(all_inds) == 0 or which == 'all':
         inds = all_inds
@@ -47,6 +54,139 @@ def find_day(arr, t=None, which='first'):
         raise ValueError(errormsg)
     return inds
 
+
+def preprocess_day(day, sim):
+    '''
+    Preprocess a day: leave it as-is if it's a function, or try to convert it to
+    an integer if it's anything else.
+    '''
+    if callable(day): # If it's callable, leave it as-is
+        return day
+    else:
+        day = sim.day(day) # Otherwise, convert it to an int
+    return day
+
+
+def get_day(day, interv=None, sim=None):
+    '''
+    Return the day if it's an integer, or call it if it's a function.
+    '''
+    if callable(day):
+        return day(interv, sim) # If it's callable, call it
+    else:
+        return day # Otherwise, leave it as-is
+
+
+def process_days(sim, days, return_dates=False):
+    '''
+    Ensure lists of days are in consistent format. Used by change_beta, clip_edges,
+    and some analyzers. If day is 'end' or -1, use the final day of the simulation.
+    Optionally return dates as well as days. If days is callable, leave unchanged.
+    '''
+    if callable(days):
+        return days
+    if sc.isstring(days) or not sc.isiterable(days):
+        days = sc.promotetolist(days)
+    for d,day in enumerate(days):
+        if day in ['end', -1]:
+            day = sim['end_day']
+        days[d] = preprocess_day(day, sim) # Ensure it's an integer and not a string or something
+    days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+    if return_dates:
+        dates = [sim.date(day) for day in days] # Store as date strings
+        return days, dates
+    else:
+        return days
+
+
+def process_changes(sim, changes, days):
+    '''
+    Ensure lists of changes are in consistent format. Used by change_beta and clip_edges.
+    '''
+    changes = sc.promotetoarray(changes)
+    if sc.isiterable(days) and len(days) != len(changes): # pragma: no cover
+        errormsg = f'Number of days supplied ({len(days)}) does not match number of changes ({len(changes)})'
+        raise ValueError(errormsg)
+    return changes
+
+
+def process_daily_data(daily_data, sim, start_day, as_int=False):
+    '''
+    This function performs one of three things: if the daily test data are supplied as
+    a number, then it converts it to an array of the right length. If the daily
+    data are supplied as a Pandas series or dataframe with a date index, then it
+    reindexes it to match the start date of the simulation. If the daily data are
+    supplied as a string, then it will convert it to a column and try to read from
+    that. Otherwise, it does nothing.
+
+    Args:
+        daily_data (str, number, dataframe, or series): the data to convert to standardized format
+        sim (Sim): the simulation object
+        start_day (date): the start day of the simulation, in already-converted datetime.date format
+        as_int (bool): whether to convert to an integer
+    '''
+    # Handle string arguments
+    if sc.isstring(daily_data):
+        if daily_data == 'data':
+            daily_data = sim.data['new_tests'] # Use default name
+        else:
+            try: # pragma: no cover
+                daily_data = sim.data[daily_data]
+            except Exception as E:
+                errormsg = f'Tried to load testing data from sim.data["{daily_data}"], but that failed: {str(E)}.\nPlease ensure data are loaded into the sim and the column exists.'
+                raise ValueError(errormsg) from E
+
+    # Handle other arguments
+    if sc.isnumber(daily_data):  # If a number, convert to an array
+        if as_int: daily_data = int(daily_data) # Make it an integer
+        daily_data = np.array([daily_data] * sim.npts)
+    elif isinstance(daily_data, (pd.Series, pd.DataFrame)):
+        start_date = sim['start_day'] + dt.timedelta(days=start_day)
+        end_date = daily_data.index[-1]
+        dateindex = pd.date_range(start_date, end_date)
+        daily_data = daily_data.reindex(dateindex, fill_value=0).to_numpy()
+
+    return daily_data
+
+
+def get_subtargets(subtarget, sim):
+    '''
+    A small helper function to see if subtargeting is a list of indices to use,
+    or a function that needs to be called. If a function, it must take a single
+    argument, a sim object, and return a list of indices. Also validates the values.
+    Currently designed for use with testing interventions, but could be generalized
+    to other interventions. Not typically called directly by the user.
+
+    Args:
+        subtarget (dict): dict with keys 'inds' and 'vals'; see test_num() for examples of a valid subtarget dictionary
+        sim (Sim): the simulation object
+    '''
+
+    # Validation
+    if callable(subtarget):
+        subtarget = subtarget(sim)
+
+    if 'inds' not in subtarget: # pragma: no cover
+        errormsg = f'The subtarget dict must have keys "inds" and "vals", but you supplied {subtarget}'
+        raise ValueError(errormsg)
+
+    # Handle the two options of type
+    if callable(subtarget['inds']): # A function has been provided
+        subtarget_inds = subtarget['inds'](sim) # Call the function to get the indices
+    else:
+        subtarget_inds = subtarget['inds'] # The indices are supplied directly
+
+    # Validate the values
+    if callable(subtarget['vals']): # A function has been provided
+        subtarget_vals = subtarget['vals'](sim) # Call the function to get the indices
+    else:
+        subtarget_vals = subtarget['vals'] # The indices are supplied directly
+    if sc.isiterable(subtarget_vals):
+        if len(subtarget_vals) != len(subtarget_inds): # pragma: no cover
+            errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'
+            raise ValueError(errormsg)
+
+    return subtarget_inds, subtarget_vals
 
 def InterventionDict(which, pars):
     '''
@@ -198,13 +338,14 @@ class Intervention:
         if self.do_plot or self.do_plot is None:
             if ax is None:
                 ax = pl.gca()
-            for day in self.days:
-                if day is not None:
-                    if self.show_label: # Choose whether to include the label in the legend
-                        label = self.label
-                    else:
-                        label = None
-                    ax.axvline(day, label=label, **line_args)
+            if sc.isiterable(self.days):
+                for day in self.days:
+                    if day is not None:
+                        if self.show_label: # Choose whether to include the label in the legend
+                            label = self.label
+                        else:
+                            label = None
+                        ax.axvline(day, label=label, **line_args)
         return
 
 
@@ -274,10 +415,13 @@ class dynamic_pars(Intervention):
                     raise sc.KeyNotFoundError(errormsg)
                 if sc.isnumber(pars[parkey][subkey]): # Allow scalar values or dicts, but leave everything else unchanged
                     pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
-            len_days = len(pars[parkey]['days'])
-            len_vals = len(pars[parkey]['vals'])
-            if len_days != len_vals: # pragma: no cover
-                raise ValueError(f'Length of days ({len_days}) does not match length of values ({len_vals}) for parameter {parkey}')
+            days = pars[parkey]['days']
+            vals = pars[parkey]['vals']
+            if sc.isiterable(days):
+                len_days = len(days)
+                len_vals = len(vals)
+                if len_days != len_vals: # pragma: no cover
+                    raise ValueError(f'Length of days ({len_days}) does not match length of values ({len_vals}) for parameter {parkey}')
         self.pars = pars
         return
 
@@ -286,7 +430,7 @@ class dynamic_pars(Intervention):
         ''' Loop over the parameters, and then loop over the days, applying them if any are found '''
         t = sim.t
         for parkey,parval in self.pars.items():
-            for ind in find_day(parval['days'], t):
+            for ind in find_day(parval['days'], t, interv=self, sim=sim):
                 self.days.append(t)
                 val = parval['vals'][ind]
                 if isinstance(val, dict):
@@ -311,6 +455,8 @@ class sequence(Intervention):
                     cv.test_num(n_tests=[100]*npts),
                     cv.test_prob(symptomatic_prob=0.2, asymptomatic_prob=0.002),
                 ])
+
+    Note: callable days are not supported.
     '''
 
     def __init__(self, days, interventions, **kwargs):
@@ -324,7 +470,7 @@ class sequence(Intervention):
     def initialize(self, sim):
         ''' Fix the dates '''
         super().initialize(sim)
-        self.days = [sim.day(day) for day in self.days]
+        self.days = [preprocess_day(day, sim) for day in self.days]
         self.days_arr = np.array(self.days + [sim.npts])
         for intervention in self.interventions:
             intervention.initialize(sim)
@@ -341,37 +487,6 @@ class sequence(Intervention):
 #%% Beta interventions
 
 __all__+= ['change_beta', 'clip_edges']
-
-
-def process_days(sim, days, return_dates=False):
-    '''
-    Ensure lists of days are in consistent format. Used by change_beta, clip_edges,
-    and some analyzers. If day is 'end' or -1, use the final day of the simulation.
-    Optionally return dates as well as days.
-    '''
-    if sc.isstring(days) or not sc.isiterable(days):
-        days = sc.promotetolist(days)
-    for d,day in enumerate(days):
-        if day in ['end', -1]:
-            day = sim['end_day']
-        days[d] = sim.day(day) # Ensure it's an integer and not a string or something
-    days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
-    if return_dates:
-        dates = [sim.date(day) for day in days] # Store as date strings
-        return days, dates
-    else:
-        return days
-
-
-def process_changes(sim, changes, days):
-    '''
-    Ensure lists of changes are in consistent format. Used by change_beta and clip_edges.
-    '''
-    changes = sc.promotetoarray(changes)
-    if len(days) != len(changes): # pragma: no cover
-        errormsg = f'Number of days supplied ({len(days)}) does not match number of changes ({len(changes)})'
-        raise ValueError(errormsg)
-    return changes
 
 
 class change_beta(Intervention):
@@ -422,7 +537,7 @@ class change_beta(Intervention):
     def apply(self, sim):
 
         # If this day is found in the list, apply the intervention
-        for ind in find_day(self.days, sim.t):
+        for ind in find_day(self.days, sim.t, interv=self, sim=sim):
             for lkey,new_beta in self.orig_betas.items():
                 new_beta = new_beta * self.changes[ind]
                 if lkey == 'overall':
@@ -484,7 +599,7 @@ class clip_edges(Intervention):
     def apply(self, sim):
 
         # If this day is found in the list, apply the intervention
-        for ind in find_day(self.days, sim.t):
+        for ind in find_day(self.days, sim.t, interv=self, sim=sim):
 
             # Do the contact moving
             for lkey in self.layers:
@@ -521,85 +636,6 @@ class clip_edges(Intervention):
 #%% Testing interventions
 
 __all__+= ['test_num', 'test_prob', 'contact_tracing']
-
-
-def process_daily_data(daily_data, sim, start_day, as_int=False):
-    '''
-    This function performs one of three things: if the daily test data are supplied as
-    a number, then it converts it to an array of the right length. If the daily
-    data are supplied as a Pandas series or dataframe with a date index, then it
-    reindexes it to match the start date of the simulation. If the daily data are
-    supplied as a string, then it will convert it to a column and try to read from
-    that. Otherwise, it does nothing.
-
-    Args:
-        daily_data (str, number, dataframe, or series): the data to convert to standardized format
-        sim (Sim): the simulation object
-        start_day (date): the start day of the simulation, in already-converted datetime.date format
-        as_int (bool): whether to convert to an integer
-    '''
-    # Handle string arguments
-    if sc.isstring(daily_data):
-        if daily_data == 'data':
-            daily_data = sim.data['new_tests'] # Use default name
-        else:
-            try: # pragma: no cover
-                daily_data = sim.data[daily_data]
-            except Exception as E:
-                errormsg = f'Tried to load testing data from sim.data["{daily_data}"], but that failed: {str(E)}.\nPlease ensure data are loaded into the sim and the column exists.'
-                raise ValueError(errormsg) from E
-
-    # Handle other arguments
-    if sc.isnumber(daily_data):  # If a number, convert to an array
-        if as_int: daily_data = int(daily_data) # Make it an integer
-        daily_data = np.array([daily_data] * sim.npts)
-    elif isinstance(daily_data, (pd.Series, pd.DataFrame)):
-        start_date = sim['start_day'] + dt.timedelta(days=start_day)
-        end_date = daily_data.index[-1]
-        dateindex = pd.date_range(start_date, end_date)
-        daily_data = daily_data.reindex(dateindex, fill_value=0).to_numpy()
-
-    return daily_data
-
-
-def get_subtargets(subtarget, sim):
-    '''
-    A small helper function to see if subtargeting is a list of indices to use,
-    or a function that needs to be called. If a function, it must take a single
-    argument, a sim object, and return a list of indices. Also validates the values.
-    Currently designed for use with testing interventions, but could be generalized
-    to other interventions. Not typically called directly by the user.
-
-    Args:
-        subtarget (dict): dict with keys 'inds' and 'vals'; see test_num() for examples of a valid subtarget dictionary
-        sim (Sim): the simulation object
-    '''
-
-    # Validation
-    if callable(subtarget):
-        subtarget = subtarget(sim)
-
-    if 'inds' not in subtarget: # pragma: no cover
-        errormsg = f'The subtarget dict must have keys "inds" and "vals", but you supplied {subtarget}'
-        raise ValueError(errormsg)
-
-    # Handle the two options of type
-    if callable(subtarget['inds']): # A function has been provided
-        subtarget_inds = subtarget['inds'](sim) # Call the function to get the indices
-    else:
-        subtarget_inds = subtarget['inds'] # The indices are supplied directly
-
-    # Validate the values
-    if callable(subtarget['vals']): # A function has been provided
-        subtarget_vals = subtarget['vals'](sim) # Call the function to get the indices
-    else:
-        subtarget_vals = subtarget['vals'] # The indices are supplied directly
-    if sc.isiterable(subtarget_vals):
-        if len(subtarget_vals) != len(subtarget_inds): # pragma: no cover
-            errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'
-            raise ValueError(errormsg)
-
-    return subtarget_inds, subtarget_vals
 
 
 def get_quar_inds(quar_policy, sim):
@@ -689,8 +725,8 @@ class test_num(Intervention):
         # Handle days
         super().initialize(sim)
 
-        self.start_day   = sim.day(self.start_day)
-        self.end_day     = sim.day(self.end_day)
+        self.start_day   = preprocess_day(self.start_day, sim)
+        self.end_day     = preprocess_day(self.end_day,   sim)
         self.days        = [self.start_day, self.end_day]
 
         # Process daily data
@@ -703,13 +739,15 @@ class test_num(Intervention):
     def apply(self, sim):
 
         t = sim.t
-        if t < self.start_day:
+        start_day = get_day(self.start_day, self, sim)
+        end_day   = get_day(self.end_day,   self, sim)
+        if t < start_day:
             return
-        elif self.end_day is not None and t > self.end_day:
+        elif end_day is not None and t > end_day:
             return
 
         # Check that there are still tests
-        rel_t = t - self.start_day
+        rel_t = t - start_day
         if rel_t < len(self.daily_tests):
             n_tests = sc.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests
             if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
@@ -817,8 +855,8 @@ class test_prob(Intervention):
     def initialize(self, sim):
         ''' Fix the dates '''
         super().initialize(sim)
-        self.start_day = sim.day(self.start_day)
-        self.end_day   = sim.day(self.end_day)
+        self.start_day = preprocess_day(self.start_day, sim)
+        self.end_day   = preprocess_day(self.end_day,   sim)
         self.days      = [self.start_day, self.end_day]
         self.ili_prev  = process_daily_data(self.ili_prev, sim, self.start_day)
         return
@@ -826,10 +864,13 @@ class test_prob(Intervention):
 
     def apply(self, sim):
         ''' Perform testing '''
+
         t = sim.t
-        if t < self.start_day:
+        start_day = get_day(self.start_day, self, sim)
+        end_day   = get_day(self.end_day,   self, sim)
+        if t < start_day:
             return
-        elif self.end_day is not None and t > self.end_day:
+        elif end_day is not None and t > end_day:
             return
 
         # Find probablity for symptomatics to be tested
@@ -849,7 +890,7 @@ class test_prob(Intervention):
         pop_size = sim['pop_size']
         ili_inds = []
         if self.ili_prev is not None:
-            rel_t = t - self.start_day
+            rel_t = t - start_day
             if rel_t < len(self.ili_prev):
                 n_ili = int(self.ili_prev[rel_t] * pop_size)  # Number with ILI symptoms on this day
                 ili_inds = cvu.choose(pop_size, n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
@@ -924,8 +965,8 @@ class contact_tracing(Intervention):
     def initialize(self, sim):
         ''' Process the dates and dictionaries '''
         super().initialize(sim)
-        self.start_day = sim.day(self.start_day)
-        self.end_day   = sim.day(self.end_day)
+        self.start_day = preprocess_day(self.start_day, sim)
+        self.end_day   = preprocess_day(self.end_day,   sim)
         self.days      = [self.start_day, self.end_day]
         if self.trace_probs is None:
             self.trace_probs = 1.0
@@ -954,9 +995,11 @@ class contact_tracing(Intervention):
         - Notify those contacts that they have been exposed and need to take some action
         '''
         t = sim.t
-        if t < self.start_day:
+        start_day = get_day(self.start_day, self, sim)
+        end_day   = get_day(self.end_day,   self, sim)
+        if t < start_day:
             return
-        elif self.end_day is not None and t > self.end_day:
+        elif end_day is not None and t > end_day:
             return
 
         trace_inds = self.select_cases(sim)
@@ -1100,7 +1143,7 @@ class vaccine(Intervention):
         ''' Perform vaccination '''
 
         # If this day is found in the list, apply the intervention
-        for ind in find_day(self.days, sim.t):
+        for ind in find_day(self.days, sim.t, interv=self, sim=sim):
 
             # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
             vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal testing probability to everyone
