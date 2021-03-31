@@ -89,8 +89,10 @@ class Strain():
             elif strain in choices['p1']:
                 strain_pars = dict()
                 strain_pars['rel_beta'] = 1.4
-                strain_pars['rel_severe_prob'] = 1.4
-                strain_pars['rel_death_prob'] = 1.4
+                strain_pars['rel_severe_prob'] = 1.7
+                strain_pars['rel_death_prob'] = 2.5
+                strain_pars['dur'] = dict()
+                strain_pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=3, par2=2)
                 strain_pars['rel_imm'] = 0.5
                 self.strain_label = strain
 
@@ -368,7 +370,7 @@ def check_nab(t, people, inds=None):
     return
 
 
-def nab_to_efficacy(nab, ax, slope, n_50, factors):
+def nab_to_efficacy(nab, ax, slope, n_50):
     '''
     Convert NAb levels to immunity protection factors, using the functional form
     given in this paper: https://doi.org/10.1101/2021.03.09.21252641
@@ -383,8 +385,10 @@ def nab_to_efficacy(nab, ax, slope, n_50, factors):
         errormsg = f'Choice provided not in list of choices'
         raise ValueError(errormsg)
 
+    n_50 = n_50[ax]
     # put in here nab to efficacy mapping (logistic regression from fig 1a from https://doi.org/10.1101/2021.03.09.21252641)
-    efficacy = 1/(1+np.exp(-slope*(np.log10(nab) - np.log10(n_50) - np.log10(factors[ax])))) # from logistic regression computed in R using data from Khoury et al
+    efficacy = 1/(1+np.exp(-slope*(np.log10(nab) - np.log10(n_50)))) # from logistic regression in Khoury et al
+    # efficacy = 1/(1+np.exp(-(slope*np.log10(2))*(nab - np.log2(n_50)))) # from logistic regression in Khoury et al
     return efficacy
 
 
