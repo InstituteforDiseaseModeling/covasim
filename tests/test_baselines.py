@@ -6,7 +6,7 @@ import numpy as np
 import sciris as sc
 import covasim as cv
 
-do_plot = 1
+do_plot = 0
 do_save = 0
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')

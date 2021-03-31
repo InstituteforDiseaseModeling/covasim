@@ -345,6 +345,9 @@ class People(cvb.BasePeople):
         for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
+        self['init_NAb'][inds] = np.nan
+        self['NAb'][inds] = np.nan
+
         return
 
 
@@ -356,8 +359,8 @@ class People(cvb.BasePeople):
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
             * Critical cases either recover or die
-            
-        Method also deduplicates input arrays in case one agent is infected many times 
+
+        Method also deduplicates input arrays in case one agent is infected many times
         and stores who infected whom in infection_log list.
 
         Args:

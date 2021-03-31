@@ -27,7 +27,7 @@ else:
 
 # Rename "covasim package" to "API reference"
 filename = 'modules.rst' # This must match the Makefile
-with open(filename) as f: # Read exitsting file
+with open(filename) as f: # Read existing file
     lines = f.readlines()
 lines[0] = "API reference\n" # Blast away the existing heading and replace with this
 lines[1] = "=============\n" # Ensure the heading is the right length

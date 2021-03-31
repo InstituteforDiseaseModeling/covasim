@@ -120,7 +120,7 @@ class Sim(cvb.BaseSim):
         self.initialized   = True
         self.complete      = False
         self.results_ready = False
-        return
+        return self
 
 
     def layer_keys(self):
@@ -280,28 +280,32 @@ class Sim(cvb.BaseSim):
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], strain_color=strain_cols, total_strains=self['total_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
-            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains']) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], strain_color=strain_cols, total_strains=self['total_strains']) # Flow variables -- e.g. "Number of new infections"
 
         # Stock variables
         for key,label in cvd.result_stocks.items():
-            self.results[f'n_{key}'] = init_res(label, color=dcols[key], strain_color=strain_cols, max_strains=self['total_strains'])
+            self.results[f'n_{key}'] = init_res(label, color=dcols[key], strain_color=strain_cols, total_strains=self['total_strains'])
 
         # Other variables
         self.results['n_alive']                 = init_res('Number of people alive', scale=False)
         self.results['n_preinfectious']         = init_res('Number preinfectious', scale=False, color=dcols.exposed)
         #self.results['n_removed']               = init_res('Number removed', scale=False, color=dcols.recovered)
         self.results['prevalence']              = init_res('Prevalence', scale=False)
-        self.results['prevalence_by_strain']    = init_res('Prevalence by strain', scale=False, max_strains=self['total_strains'])
+        self.results['prevalence_by_strain']    = init_res('Prevalence by strain', scale=False, total_strains=self['total_strains'])
         self.results['incidence']               = init_res('Incidence', scale=False)
-        self.results['incidence_by_strain']     = init_res('Incidence by strain', scale=False, max_strains=self['total_strains'])
+        self.results['incidence_by_strain']     = init_res('Incidence by strain', scale=False, total_strains=self['total_strains'])
         self.results['r_eff']                   = init_res('Effective reproduction number', scale=False)
         self.results['doubling_time']           = init_res('Doubling time', scale=False)
         self.results['test_yield']              = init_res('Testing yield', scale=False)
         self.results['rel_test_yield']          = init_res('Relative testing yield', scale=False)
         self.results['share_vaccinated']        = init_res('Share Vaccinated', scale=False)
+        self.results['pop_nabs']                = init_res('Population average NAb levels', scale=False, color=dcols.pop_nabs)
+        self.results['pop_protection']          = init_res('Population average immunity protection', scale=False, color=dcols.pop_protection)
+        self.results['pop_symp_protection']     = init_res('Population average symptomatic immunity protection', scale=False,
+                                                  color=dcols.pop_symp_protection)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -626,6 +630,11 @@ class Sim(cvb.BaseSim):
                     self.results[key][strain][t] += count[strain]
             else:
                 self.results[key][t] += count
+
+        # Update NAb and immunity for this time step
+        self.results['pop_nabs'][t] = np.sum(people.NAb[cvu.defined(people.NAb)])/len(people)
+        self.results['pop_protection'][t] = np.nanmean(people.sus_imm)
+        self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 
         # Apply analyzers -- same syntax as interventions
         for i,analyzer in enumerate(self['analyzers']):

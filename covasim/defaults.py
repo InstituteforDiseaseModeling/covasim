@@ -116,7 +116,7 @@ result_stocks = {
         'critical':             'Number of critical cases',
         'diagnosed':            'Number of confirmed cases',
         'quarantined':          'Number in quarantine',
-        'vaccinated':           'Number of people vaccinated'
+        'vaccinated':           'Number of people vaccinated',
 }
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix
@@ -135,6 +135,11 @@ result_flows = {'infections':           'infections',
                 'quarantined':          'quarantined people',
                 'vaccinations':         'vaccinations',
                 'vaccinated':           'vaccinated people'
+}
+
+result_imm = {
+    'pop_nabs': 'Population average NAbs',
+    'pop_protection': 'Population average protective immunity'
 }
 
 # Define these here as well
@@ -213,6 +218,9 @@ def get_colors():
     c.deaths                = '#000000'
     c.dead                  = c.deaths
     c.default               = '#000000'
+    c.pop_nabs              = '#32733d'
+    c.pop_protection        = '#9e1149'
+    c.pop_symp_protection   = '#b86113'
     return c
 
 

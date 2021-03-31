@@ -959,7 +959,7 @@ class Scenarios(cvb.ParsObj):
             if 'strains' in scenpars: # Process strains
                 scen_sim.init_strains()
                 scen_sim.init_immunity(create=True)
-            if 'imm_pars' in scenpars: # Process strains
+            if 'imm_pars' in scenpars: # Process immunity
                 scen_sim.init_immunity(create=True)
 
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)

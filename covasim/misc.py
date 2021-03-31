@@ -487,7 +487,7 @@ def get_version_pars(version, verbose=True):
         Dictionary of parameters from that version
     '''
 
-    # Define mappings for available sets of parameters -- from the changelog
+    # Define mappings for available sets of parameters -- note that this must be manually updated from the changelog
     match_map = {
         '0.30.4': ['0.30.4'],
         '0.31.0': ['0.31.0'],
@@ -500,10 +500,9 @@ def get_version_pars(version, verbose=True):
         '1.2.0': [f'1.2.{i}' for i in range(4)],
         '1.3.0': [f'1.3.{i}' for i in range(6)],
         '1.4.0': [f'1.4.{i}' for i in range(9)],
-        '1.5.0': [f'1.5.{i}' for i in range(4)],
-        '1.6.0': [f'1.6.{i}' for i in range(2)],
-        '1.7.0': [f'1.7.{i}' for i in range(7)],
-        '2.0.0': [f'2.0.{i}' for i in range(3)],
+        '1.5.0': [f'1.5.{i}' for i in range(4)] + [f'1.6.{i}' for i in range(2)] + [f'1.7.{i}' for i in range(7)],
+        '2.0.0': [f'2.0.{i}' for i in range(5)] + ['2.1.0'],
+        '2.1.1': ['2.1.1'],
     }
 
     # Find and check the match

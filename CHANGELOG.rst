@@ -66,9 +66,33 @@ Changes to results
 - New results have been added to store information by strain: ``cum_infections_by_strain``, ``cum_infectious_by_strain``, ``new_reinfections``, ``new_infections_by_strain``, ``new_infectious_by_strain``, ``prevalence_by_strain``, ``incidence_by_strain``.  
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 2.1.x (2.1.0 – 2.1.1)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Version 2.1.1 (2021-03-29)
+--------------------------
+
+- **Duration updates:** All duration parameters have been updated from the literature. While most are similar to what they were before, there are some differences: in particular, durations of severe and critical disease (either to recovery or death) have increased; for example, duration from symptom onset to death has increased from 15.8±3.8 days to 18.8±7.2 days. 
+- **Performance updates:** The innermost loop of Covasim, ``cv.compute_infections()``, has been refactored to make more efficient use of array indexing. The observed difference will depend on the nature of the simulation (e.g., network type, interventions), but runs may be up to 1.5x faster now.
+- **Graphs:** People, contacts, and contacts layers now have a new method, ``to_graph()``, that will return a ``networkx`` graph (requires ``networkx`` to be installed, of course). For example, ``nx.draw(cv.Sim(pop_size=100).run().people.to_graph())`` will draw all connections between 100 default people. See ``cv.Sim.people.to_graph()`` for full documentation.
+- A bug was fixed with ``cv.TransTree.animate()`` failing in some cases.
+- ``cv.date_formatter()`` now takes ``interval``, ``start``, and ``end`` arguments.
+- *Regression information*: Parameters can be restored by using the ``version`` argument when creating a sim. Specifically, the parameters for the following distributions (all lognormal) have been changed as follows::
+
+    exp2inf:  μ =  4.6 →  4.5, σ = 4.8 → 1.5
+    inf2sym:  μ =  1.0 →  1.1, σ = 0.9 → 0.9
+    sev2crit: μ =  3.0 →  1.5, σ = 7.4 → 2.0
+    sev2rec:  μ = 14.0 → 18.1, σ = 2.4 → 6.3
+    crit2rec: μ = 14.0 → 18.1, σ = 2.4 → 6.3
+    crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8
+
+- *GitHub info*: PR `887 <https://github.com/amath-idm/covasim/pull/887>`__
+
+
 Version 2.1.0 (2021-03-23)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 Highlights
 ^^^^^^^^^^
