@@ -89,11 +89,11 @@ If you would rather download the source code rather than using the ``pip`` packa
 
     *   For normal installation (recommended)::
 
-          python setup.py develop
+          pip install -e .
 
     *   To install Covasim and optional dependencies (be aware this may fail since it relies on nonstandard packages)::
 
-          python setup.py develop full
+          pip install -e .[full]
 
     The module should then be importable via ``import covasim as cv``.
 
