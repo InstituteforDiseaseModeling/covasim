@@ -426,6 +426,10 @@ class Sim(cvb.BaseSim):
 
         return
 
+    def finalize_interventions(self):
+        for intervention in self['interventions']:
+            if isinstance(intervention, cvi.Intervention):
+                intervention.finalize(self)
 
     def init_analyzers(self):
         ''' Initialize the analyzers '''
@@ -437,6 +441,10 @@ class Sim(cvb.BaseSim):
                 analyzer.initialize(self)
         return
 
+    def finalize_analyzers(self):
+        for analyzer in self['analyzers']:
+            if isinstance(analyzer, cva.Analyzer):
+                analyzer.finalize(self)
 
     def rescale(self):
         ''' Dynamically rescale the population -- used during step() '''
@@ -654,6 +662,10 @@ class Sim(cvb.BaseSim):
         for key in cvd.result_flows.keys():
             self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:])
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
+
+        # Finalize interventions and analyzers
+        self.finalize_interventions()
+        self.finalize_analyzers()
 
         # Final settings
         self.results_ready = True # Set this first so self.summary() knows to print the results

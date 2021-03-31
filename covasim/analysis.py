@@ -35,6 +35,7 @@ class Analyzer(sc.prettyobj):
             label = self.__class__.__name__ # Use the class name if no label is supplied
         self.label = label # e.g. "Record ages"
         self.initialized = False
+        self.finalized = False
         return
 
 
@@ -43,8 +44,20 @@ class Analyzer(sc.prettyobj):
         Initialize the analyzer, e.g. convert date strings to integers.
         '''
         self.initialized = True
+        self.finalized = False
         return
 
+    def finalize(self, sim):
+        '''
+        Finalize analyzer
+
+        This method is run once as part of `sim.finalize()` enabling the analyzer to perform any
+        final operations after the simulation is complete (e.g. rescaling)
+        '''
+        if self.finalized:
+            raise Exception('Analyzer already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
+        self.finalized = True
+        return
 
     def apply(self, sim):
         '''
@@ -161,10 +174,9 @@ class snapshot(Analyzer):
             date = self.dates[ind]
             self.snapshots[date] = sc.dcp(sim.people) # Take snapshot!
 
-        # On the final timestep, check that everything matches
-        if sim.t == sim.tvec[-1]:
-            validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.snapshots.keys(), die=self.die)
-
+    def finalize(self, sim):
+        super().finalize(sim)
+        validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.snapshots.keys(), die=self.die)
         return
 
 
@@ -285,10 +297,9 @@ class age_histogram(Analyzer):
                 inds = sim.people.defined(f'date_{state}') # Pull out people for which this state is defined
                 self.hists[date][state] = np.histogram(age[inds], bins=self.edges)[0]*scale # Actually count the people
 
-        # On the final timestep, check that everything matches
-        if sim.t == sim.tvec[-1]:
-            validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.hists.keys(), die=self.die)
-
+    def finalize(self, sim):
+        super().finalize(sim)
+        validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.hists.keys(), die=self.die)
         return
 
 

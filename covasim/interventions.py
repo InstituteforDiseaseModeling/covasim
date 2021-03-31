@@ -98,6 +98,7 @@ class Intervention:
         self.line_args = sc.mergedicts(dict(linestyle='--', c='#aaa', lw=1.0), line_args) # Do not set alpha by default due to the issue of overlapping interventions
         self.days = [] # The start and end days of the intervention
         self.initialized = False # Whether or not it has been initialized
+        self.finalized = False # Whether or not it has been initialized
         return
 
 
@@ -146,6 +147,19 @@ class Intervention:
         that can't be done until after the sim is created.
         '''
         self.initialized = True
+        self.finalized = False
+        return
+
+    def finalize(self, sim):
+        '''
+        Finalize intervention
+
+        This method is run once as part of `sim.finalize()` enabling the intervention to perform any
+        final operations after the simulation is complete (e.g. rescaling)
+        '''
+        if self.finalized:
+            raise Exception('Intervention already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
+        self.finalized = True
         return
 
 
@@ -309,11 +323,11 @@ class sequence(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
+        super().initialize(sim)
         self.days = [sim.day(day) for day in self.days]
         self.days_arr = np.array(self.days + [sim.npts])
         for intervention in self.interventions:
             intervention.initialize(sim)
-        self.initialized = True
         return
 
 
@@ -391,6 +405,7 @@ class change_beta(Intervention):
 
     def initialize(self, sim):
         ''' Fix days and store beta '''
+        super().initialize(sim)
         self.days    = process_days(sim, self.days)
         self.changes = process_changes(sim, self.changes, self.days)
         self.layers  = sc.promotetolist(self.layers, keepnone=True)
@@ -401,7 +416,6 @@ class change_beta(Intervention):
             else:
                 self.orig_betas[lkey] = sim['beta_layer'][lkey]
 
-        self.initialized = True
         return
 
 
@@ -456,6 +470,7 @@ class clip_edges(Intervention):
 
 
     def initialize(self, sim):
+        super().initialize(sim)
         self.days    = process_days(sim, self.days)
         self.changes = process_changes(sim, self.changes, self.days)
         if self.layers is None:
@@ -463,7 +478,6 @@ class clip_edges(Intervention):
         else:
             self.layers = sc.promotetolist(self.layers)
         self.contacts = cvb.Contacts(layer_keys=self.layers)
-        self.initialized = True
         return
 
 
@@ -673,6 +687,8 @@ class test_num(Intervention):
         ''' Fix the dates and number of tests '''
 
         # Handle days
+        super().initialize(sim)
+
         self.start_day   = sim.day(self.start_day)
         self.end_day     = sim.day(self.end_day)
         self.days        = [self.start_day, self.end_day]
@@ -680,8 +696,6 @@ class test_num(Intervention):
         # Process daily data
         self.daily_tests = process_daily_data(self.daily_tests, sim, self.start_day)
         self.ili_prev    = process_daily_data(self.ili_prev,    sim, self.start_day)
-
-        self.initialized = True
 
         return
 
@@ -802,11 +816,11 @@ class test_prob(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
+        super().initialize(sim)
         self.start_day = sim.day(self.start_day)
         self.end_day   = sim.day(self.end_day)
         self.days      = [self.start_day, self.end_day]
         self.ili_prev  = process_daily_data(self.ili_prev, sim, self.start_day)
-        self.initialized = True
         return
 
 
@@ -909,6 +923,7 @@ class contact_tracing(Intervention):
 
     def initialize(self, sim):
         ''' Process the dates and dictionaries '''
+        super().initialize(sim)
         self.start_day = sim.day(self.start_day)
         self.end_day   = sim.day(self.end_day)
         self.days      = [self.start_day, self.end_day]
@@ -924,7 +939,6 @@ class contact_tracing(Intervention):
         if sc.isnumber(self.trace_time):
             val = self.trace_time
             self.trace_time = {k:val for k in sim.people.layer_keys()}
-        self.initialized = True
         return
 
 
@@ -1071,6 +1085,7 @@ class vaccine(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
+        super().initialize(sim)
         self.days = process_days(sim, self.days)
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
@@ -1078,7 +1093,6 @@ class vaccine(Intervention):
         self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
         self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
         self.mod_symp_prob     = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
-        self.initialized = True
         return
 
 
