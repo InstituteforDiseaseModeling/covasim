@@ -91,8 +91,6 @@ class Intervention:
         line_args (dict): arguments passed to pl.axvline() when plotting
     '''
     def __init__(self, label=None, show_label=True, do_plot=None, line_args=None):
-        if label is None:
-            label = self.__class__.__name__ # Use the class name if no label is supplied
         self._store_args() # Store the input arguments so the intervention can be recreated
         self.label = label # e.g. "Close schools"
         self.show_label = show_label # Show the label by default
@@ -445,7 +443,7 @@ class clip_edges(Intervention):
     **Examples**::
 
         interv = cv.clip_edges(25, 0.3) # On day 25, reduce overall contacts by 70% to 0.3
-        interv = cv.clip_edges([14, 28], [0.7, 1], layers='w') # On day 14, remove 30% of school contacts, and on day 28, restore them
+        interv = cv.clip_edges([14, 28], [0.7, 1], layers='s') # On day 14, remove 30% of school contacts, and on day 28, restore them
     '''
 
     def __init__(self, days, changes, layers=None, **kwargs):
