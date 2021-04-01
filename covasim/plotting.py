@@ -394,11 +394,11 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
             res_t = sim.results['t']
             if 'by_strain' in reskey:
                 for strain in range(sim['total_strains']):
-                    color = res.strain_color[strain]  # Choose the color
-                    if strain ==0:
+                    color = cvd.get_strain_colors()[strain]  # Choose the color
+                    if strain == 0:
                         label = 'wild type'
                     else:
-                        label =sim['strains'][strain-1].strain_label
+                        label = sim['strains'][strain-1].strain_label
                     if res.low is not None and res.high is not None:
                         ax.fill_between(res_t, res.low[strain,:], res.high[strain,:], color=color,
                                         **args.fill)  # Create the uncertainty bound

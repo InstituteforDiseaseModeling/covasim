@@ -276,36 +276,44 @@ class Sim(cvb.BaseSim):
             return output
 
         dcols = cvd.get_colors() # Get default colors
-        strain_cols = cvd.get_strain_colors()
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], strain_color=strain_cols, total_strains=self['total_strains'])  # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key])  # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
-            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], strain_color=strain_cols, total_strains=self['total_strains']) # Flow variables -- e.g. "Number of new infections"
+            self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
 
         # Stock variables
         for key,label in cvd.result_stocks.items():
-            self.results[f'n_{key}'] = init_res(label, color=dcols[key], strain_color=strain_cols, total_strains=self['total_strains'])
+            self.results[f'n_{key}'] = init_res(label, color=dcols[key])
 
         # Other variables
-        self.results['n_alive']                 = init_res('Number of people alive', scale=False)
-        self.results['n_preinfectious']         = init_res('Number preinfectious', scale=False, color=dcols.exposed)
-        #self.results['n_removed']               = init_res('Number removed', scale=False, color=dcols.recovered)
-        self.results['prevalence']              = init_res('Prevalence', scale=False)
-        self.results['prevalence_by_strain']    = init_res('Prevalence by strain', scale=False, total_strains=self['total_strains'])
-        self.results['incidence']               = init_res('Incidence', scale=False)
-        self.results['incidence_by_strain']     = init_res('Incidence by strain', scale=False, total_strains=self['total_strains'])
-        self.results['r_eff']                   = init_res('Effective reproduction number', scale=False)
-        self.results['doubling_time']           = init_res('Doubling time', scale=False)
-        self.results['test_yield']              = init_res('Testing yield', scale=False)
-        self.results['rel_test_yield']          = init_res('Relative testing yield', scale=False)
-        self.results['share_vaccinated']        = init_res('Share Vaccinated', scale=False)
-        self.results['pop_nabs']                = init_res('Population average NAb levels', scale=False, color=dcols.pop_nabs)
-        self.results['pop_protection']          = init_res('Population average immunity protection', scale=False, color=dcols.pop_protection)
-        self.results['pop_symp_protection']     = init_res('Population average symptomatic immunity protection', scale=False,
-                                                  color=dcols.pop_symp_protection)
+        self.results['n_alive']             = init_res('Number of people alive', scale=False)
+        self.results['n_preinfectious']     = init_res('Number preinfectious', scale=False, color=dcols.exposed)
+        # self.results['n_removed']           = init_res('Number removed', scale=False, color=dcols.recovered)
+        self.results['prevalence']          = init_res('Prevalence', scale=False)
+        self.results['incidence']           = init_res('Incidence', scale=False)
+        self.results['r_eff']               = init_res('Effective reproduction number', scale=False)
+        self.results['doubling_time']       = init_res('Doubling time', scale=False)
+        self.results['test_yield']          = init_res('Testing yield', scale=False)
+        self.results['rel_test_yield']      = init_res('Relative testing yield', scale=False)
+        self.results['share_vaccinated']    = init_res('Proportion vaccinated', scale=False)
+        self.results['pop_nabs']            = init_res('Population NAb levels', scale=False, color=dcols.pop_nabs)
+        self.results['pop_protection']      = init_res('Population immunity protection', scale=False, color=dcols.pop_protection)
+        self.results['pop_symp_protection'] = init_res('Population symptomatic protection', scale=False, color=dcols.pop_symp_protection)
+
+        # Handle strains
+        ns = self['total_strains']
+        self.results['strain'] = {}
+        self.results['strain']['prevalence_by_strain'] = init_res('Prevalence by strain', scale=False, n_strains=ns)
+        self.results['strain']['incidence_by_strain']  = init_res('Incidence by strain', scale=False, n_strains=ns)
+        for key,label in cvd.result_flows_by_strain.items():
+            self.results['strain'][f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], n_strains=ns)  # Cumulative variables -- e.g. "Cumulative infections"
+        for key,label in cvd.result_flows_by_strain.items():
+            self.results['strain'][f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], n_strains=ns) # Flow variables -- e.g. "Number of new infections"
+        for key,label in cvd.result_stocks_by_strain.items():
+            self.results['strain'][f'n_{key}'] = init_res(label, color=dcols[key], n_strains=ns)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -628,21 +636,20 @@ class Sim(cvb.BaseSim):
         for key in cvd.result_stocks.keys():
             if 'by_strain' in key or 'by strain' in key:
                 for strain in range(ns):
-                    self.results[f'n_{key}'][strain][t] = people.count_by_strain(key, strain)
+                    self.results['strain'][f'n_{key}'][strain][t] = people.count_by_strain(key, strain)
             else:
                 self.results[f'n_{key}'][t] = people.count(key)
 
         # Update counts for this time step: flows
         for key,count in people.flows.items():
-            if 'by_strain' in key or 'by strain' in key:
-                for strain in range(ns):
-                    self.results[key][strain][t] += count[strain]
-            else:
-                self.results[key][t] += count
+            self.results[key][t] += count
+        for key,count in people.flows_strain.items():
+            for strain in range(ns):
+                self.results['strain'][key][strain][t] += count[strain]
 
         # Update NAb and immunity for this time step
-        self.results['pop_nabs'][t] = np.sum(people.NAb[cvu.defined(people.NAb)])/len(people)
-        self.results['pop_protection'][t] = np.nanmean(people.sus_imm)
+        self.results['pop_nabs'][t]            = np.sum(people.NAb[cvu.defined(people.NAb)])/len(people)
+        self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
         self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 
         # Apply analyzers -- same syntax as interventions
@@ -760,8 +767,8 @@ class Sim(cvb.BaseSim):
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
             self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:],axis=0)
-        for key in ['cum_infections','cum_infections_by_strain']:
-            self.results[key].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
+        self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
+        self.results['strain']['cum_infections_by_strain'].values += self['pop_infected']*self.rescale_vec[0]
 
         # Finalize interventions and analyzers
         self.finalize_interventions()
@@ -817,8 +824,8 @@ class Sim(cvb.BaseSim):
 #        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
-        self.results['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
-        self.results['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
+        self.results['strain']['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
+        self.results['strain']['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
         self.results['share_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the share vaccinated
         return
 

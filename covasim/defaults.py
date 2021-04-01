@@ -106,35 +106,42 @@ class PeopleMeta(sc.prettyobj):
 
 # A subset of the above states are used for results
 result_stocks = {
-        'susceptible':          'Number susceptible',
-        'exposed':              'Number exposed',
-        'exposed_by_strain':    'Number exposed by strain',
-        'infectious':           'Number infectious',
-        'infectious_by_strain': 'Number infectious by strain',
-        'symptomatic':          'Number symptomatic',
-        'severe':               'Number of severe cases',
-        'critical':             'Number of critical cases',
-        'diagnosed':            'Number of confirmed cases',
-        'quarantined':          'Number in quarantine',
-        'vaccinated':           'Number of people vaccinated',
+    'susceptible': 'Number susceptible',
+    'exposed':     'Number exposed',
+    'infectious':  'Number infectious',
+    'symptomatic': 'Number symptomatic',
+    'severe':      'Number of severe cases',
+    'critical':    'Number of critical cases',
+    'diagnosed':   'Number of confirmed cases',
+    'quarantined': 'Number in quarantine',
+    'vaccinated':  'Number of people vaccinated',
+}
+
+result_stocks_by_strain = {
+    'exposed_by_strain':    'Number exposed by strain',
+    'infectious_by_strain': 'Number infectious by strain',
 }
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix
-result_flows = {'infections':           'infections',
-                'reinfections':         'reinfections',
-                'infections_by_strain': 'infections_by_strain',
-                'infectious':           'infectious',
-                'infectious_by_strain': 'infectious_by_strain',
-                'tests':                'tests',
-                'diagnoses':            'diagnoses',
-                'recoveries':           'recoveries',
-                'symptomatic':          'symptomatic cases',
-                'severe':               'severe cases',
-                'critical':             'critical cases',
-                'deaths':               'deaths',
-                'quarantined':          'quarantined people',
-                'vaccinations':         'vaccinations',
-                'vaccinated':           'vaccinated people'
+result_flows = {
+    'infections':   'infections',
+    'reinfections': 'reinfections',
+    'infectious':   'infectious',
+    'tests':        'tests',
+    'diagnoses':    'diagnoses',
+    'recoveries':   'recoveries',
+    'symptomatic':  'symptomatic cases',
+    'severe':       'severe cases',
+    'critical':     'critical cases',
+    'deaths':       'deaths',
+    'quarantined':  'quarantined people',
+    'vaccinations': 'vaccinations',
+    'vaccinated':   'vaccinated people'
+}
+
+result_flows_by_strain = {
+    'infections_by_strain': 'infections_by_strain',
+    'infectious_by_strain': 'infectious_by_strain',
 }
 
 result_imm = {
@@ -145,6 +152,8 @@ result_imm = {
 # Define these here as well
 new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
+new_result_flows_by_strain = [f'new_{key}' for key in result_flows_by_strain.keys()]
+cum_result_flows_by_strain = [f'cum_{key}' for key in result_flows_by_strain.keys()]
 
 # Parameters that can vary by strain (should be in list format)
 strain_pars = ['rel_beta',

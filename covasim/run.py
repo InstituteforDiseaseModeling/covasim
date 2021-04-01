@@ -971,7 +971,7 @@ class Scenarios(cvb.ParsObj):
                 scen_sims = multi_run(scen_sim, **run_args, **kwargs) # This is where the sims actually get run
 
             # Get number of strains
-            ns = scen_sims[0].results['cum_infections_by_strain'].values.shape[0]
+            ns = scen_sims[0].results['strain']['cum_infections_by_strain'].values.shape[0]
 
             # Process the simulations
             print_heading(f'Processing {scenkey}')

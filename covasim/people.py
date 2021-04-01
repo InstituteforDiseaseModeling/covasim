@@ -94,9 +94,9 @@ class People(cvb.BasePeople):
 
         # Store flows to be computed during simulation
         self.flows = {key:0 for key in cvd.new_result_flows}
-        for key in cvd.new_result_flows:
-            if 'by_strain' in key:
-                self.flows[key] = np.full(self.pars['n_strains'], 0, dtype=cvd.default_float)
+        self.flows_strain = {}
+        for key in cvd.new_result_flows_by_strain:
+            self.flows_strain[key] = np.full(self.pars['total_strains'], 0, dtype=cvd.default_float)
 
         # Although we have called init(), we still need to call initialize()
         self.initialized = False
@@ -167,9 +167,9 @@ class People(cvb.BasePeople):
 
         # Perform updates
         self.flows  = {key:0 for key in cvd.new_result_flows}
-        for key in cvd.new_result_flows:
-            if 'by_strain' in key:
-                self.flows[key]        = np.full(self.pars['total_strains'], 0, dtype=cvd.default_float)
+        self.flows_strain = {}
+        for key in cvd.new_result_flows_by_strain:
+            self.flows_strain[key] = np.full(self.pars['total_strains'], 0, dtype=cvd.default_float)
         self.flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
         self.flows['new_symptomatic'] += self.check_symptomatic()
         self.flows['new_severe']      += self.check_severe()
@@ -218,7 +218,7 @@ class People(cvb.BasePeople):
         self.infectious_strain[inds] = self.exposed_strain[inds]
         for strain in range(self.pars['n_strains']):
             this_strain_inds = cvu.itrue(self.infectious_strain[inds] == strain, inds)
-            self.flows['new_infectious_by_strain'][strain] += len(this_strain_inds)
+            self.flows_strain['new_infectious_by_strain'][strain] += len(this_strain_inds)
         return len(inds)
 
 
@@ -409,7 +409,7 @@ class People(cvb.BasePeople):
         self.exposed_by_strain[strain, inds] = True
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
-        self.flows['new_infections_by_strain'][strain] += len(inds)
+        self.flows_strain['new_infections_by_strain'][strain] += len(inds)
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
         self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery
 

@@ -122,6 +122,7 @@ class Result(object):
         npts (int): if values is None, precreate it to be of this length
         scale (bool): whether or not the value scales by population scale factor
         color (str/arr): default color for plotting (hex or RGB notation)
+        n_strains (int): the number of strains the result is for (0 for results not by strain)
 
     **Example**::
 
@@ -131,18 +132,16 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale=True, color=None, strain_color=None, total_strains=1):
+    def __init__(self, name=None, npts=None, scale=True, color=None, n_strains=0):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
             color = cvd.get_colors()['default']
-            strain_color = cvd.get_strain_colors()
         self.color = color # Default color
-        self.strain_color = strain_color
         if npts is None:
             npts = 0
-        if 'by_strain' in self.name or 'by strain' in self.name:
-            self.values = np.full((total_strains, npts), 0, dtype=cvd.result_float, order='F')
+        if n_strains>0:
+            self.values = np.full((n_strains, npts), 0, dtype=cvd.result_float, order='F')
         else:
             self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
         self.low    = None
