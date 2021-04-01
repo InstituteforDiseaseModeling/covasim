@@ -131,12 +131,12 @@ This example illustrates the three different ways to simulation a population of 
 
     import covasim as cv
 
-    s1 = cv.Sim(pop_size=100e3, pop_infected=100, pop_scale=1, rescale=True, label='Full population')
-    s2 = cv.Sim(pop_size=20e3,  pop_infected=100, pop_scale=5, rescale=True, label='Dynamic rescaling')
-    s3 = cv.Sim(pop_size=20e3,  pop_infected=20,  pop_scale=5, rescale=False, label='Static rescaling')
+    s1 = cv.Sim(n_days=120, pop_size=200e3, pop_infected=50, pop_scale=1,  rescale=True,  label='Full population')
+    s2 = cv.Sim(n_days=120, pop_size=20e3,  pop_infected=50, pop_scale=10, rescale=True,  label='Dynamic rescaling')
+    s3 = cv.Sim(n_days=120, pop_size=20e3,  pop_infected=5,  pop_scale=10, rescale=False, label='Static rescaling')
 
     msim = cv.MultiSim([s1, s2, s3])
-    msim.run()
+    msim.run(verbose=-1)
     msim.plot()
 
 Note that using the full population and using dynamic rescaling give virtually identical results, whereas static scaling gives slightly different results.

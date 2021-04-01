@@ -25,10 +25,20 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (2.x)
 ~~~~~~~~~~~~~~~~~~~~~
 
-Version 2.1.1 (2021-03-29)
+Version 2.1.2 (2021-03-31)
 --------------------------
 
-This is the last release before the Covasim 3.0 launch (vaccines and variants).
+This is (probably) the last release before the Covasim 3.0 launch (vaccines and variants).
+
+- Interventions and analyzers now accept a function as an argument to ``days`` or e.g. ``start_day``. For example, instead of defining ``start_day=30``, you can define a function (with the intervention and the sim object as arguments) that calculates and returns a start day. This allows interventions to be dynamically triggered based on the state of the sim. See [Tutorial 5](https://docs.idmod.org/projects/covasim/en/latest/tutorials/t05.html) for a new section on how to use this feature.
+- Added a ``finalize()`` method to interventions and analyzers, to replace the ``if sim.t == sim.npts-1:`` blocks in ``apply()`` that had been being used to finalize.
+- Changed setup instructions from ``python setup.py develop`` to ``pip install -e .``, and unpinned ``line_profiler``.
+- *Regression information*: If you have any scripts/workflows that have been using ``python setup.py develop``, please update them to ``pip install -e .``. Likewise, ``python setup.py develop`` is now ``pip install -e .[full]``.
+- *GitHub info*: PR `897 <https://github.com/amath-idm/covasim/pull/897>`__
+
+
+Version 2.1.1 (2021-03-29)
+--------------------------
 
 - **Duration updates:** All duration parameters have been updated from the literature. While most are similar to what they were before, there are some differences: in particular, durations of severe and critical disease (either to recovery or death) have increased; for example, duration from symptom onset to death has increased from 15.8±3.8 days to 18.8±7.2 days. 
 - **Performance updates:** The innermost loop of Covasim, ``cv.compute_infections()``, has been refactored to make more efficient use of array indexing. The observed difference will depend on the nature of the simulation (e.g., network type, interventions), but runs may be up to 1.5x faster now.

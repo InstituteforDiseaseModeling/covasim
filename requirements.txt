@@ -1,9 +1,8 @@
 numpy
 numba
+pandas
 scipy
 statsmodels
 matplotlib
-pandas
 xlrd==1.2.0
-line_profiler==3.1
 sciris>=1.0.0

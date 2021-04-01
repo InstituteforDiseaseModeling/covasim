@@ -1,8 +1,8 @@
 '''
 Covasim installation. Requirements are listed in requirements.txt. There are two
 options:
-    python setup.py develop      # standard install, does not include optional libraries
-    python setup.py develop full # full install, including optional libraries (NB: these libraries are not available publicly yet)
+    pip install -e .       # Standard install, does not include optional libraries
+    pip install -e .[full] # Full install, including optional libraries
 '''
 
 import os
@@ -13,18 +13,6 @@ from setuptools import setup, find_packages
 # Load requirements from txt file
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
-
-if 'full' in sys.argv:
-    print('Performing full installation, including optional dependencies')
-    sys.argv.remove('full')
-    full_reqs = [
-        'plotly',
-        'fire',
-        'optuna',
-        'synthpops',
-        'parestlib',
-    ]
-    requirements.extend(full_reqs)
 
 # Get version
 cwd = os.path.abspath(os.path.dirname(__file__))
@@ -43,6 +31,7 @@ CLASSIFIERS = [
     "Programming Language :: Python",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
 ]
 
@@ -55,11 +44,20 @@ setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     url='http://covasim.org',
-    keywords=["Covid-19", "coronavirus", "SARS-CoV-2", "stochastic", "agent-based model", "interventions", "epidemiology"],
+    keywords=["COVID", "COVID-19", "coronavirus", "SARS-CoV-2", "stochastic", "agent-based model", "interventions", "epidemiology"],
     platforms=["OS Independent"],
     classifiers=CLASSIFIERS,
     packages=find_packages(),
     include_package_data=True,
-    install_requires=requirements
+    install_requires=requirements,
+    extras_require={
+        'full':  [
+            'plotly',
+            'fire',
+            'optuna',
+            'synthpops',
+            'parestlib',
+        ],
+    }
 )
 

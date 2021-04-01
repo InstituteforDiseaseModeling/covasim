@@ -1,4 +1,6 @@
-''' Demonstrate dynamic parameters '''
+'''
+Demonstrate dynamic parameters
+'''
 
 import covasim as cv
 

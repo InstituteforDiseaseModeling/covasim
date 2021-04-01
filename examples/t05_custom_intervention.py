@@ -17,13 +17,13 @@ class protect_elderly(cv.Intervention):
         return
 
     def initialize(self, sim):
-        self.start_day   = sim.day(self.start_day)
+        super().initialize() # NB: This line must also be included
+        self.start_day   = sim.day(self.start_day) # Convert string or dateobject dates into an integer number of days
         self.end_day     = sim.day(self.end_day)
         self.days        = [self.start_day, self.end_day]
         self.elderly     = sim.people.age > self.age_cutoff # Find the elderly people here
         self.exposed     = np.zeros(sim.npts) # Initialize results
         self.tvec        = sim.tvec # Copy the time vector into this intervention
-        self.initialized = True
         return
 
     def apply(self, sim):

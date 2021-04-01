@@ -23,6 +23,10 @@ class People(cvb.BasePeople):
     parameters dictionary will get passed instead since it will be needed before
     the People object is initialized.
 
+    Note that this class handles the mechanics of updating the actual people, while
+    BasePeople takes care of housekeeping (saving, loading, exporting, etc.). Please
+    see the BasePeople class for additional methods.
+
     Args:
         pars (dict): the sim parameters, e.g. sim.pars -- alternatively, if a number, interpreted as pop_size
         strict (bool): whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set
@@ -311,8 +315,8 @@ class People(cvb.BasePeople):
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
             * Critical cases either recover or die
-            
-        Method also deduplicates input arrays in case one agent is infected many times 
+
+        Method also deduplicates input arrays in case one agent is infected many times
         and stores who infected whom in infection_log list.
 
         Args:

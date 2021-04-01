@@ -8,4 +8,3 @@ nbsphinx
 pandoc
 pypandoc
 optuna
-numba==0.48
