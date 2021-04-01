@@ -41,7 +41,7 @@ class Strain():
 
         # Handle inputs
         self.days = days
-        self.n_imports = n_imports
+        self.n_imports = cvd.default_int(n_imports)
 
         # Strains can be defined in different ways: process these here
         self.strain_pars = self.parse_strain_pars(strain=strain, strain_label=strain_label)
