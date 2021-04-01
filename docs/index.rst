@@ -14,10 +14,10 @@ Full contents
 
    overview
    tutorials
+   faq
    whatsnew
    parameters
    data
-   faq
    glossary
    contributing
    modules

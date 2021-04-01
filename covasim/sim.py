@@ -25,7 +25,7 @@ class Sim(cvb.BaseSim):
     The Sim class handles the running of the simulation: the creation of the
     population and the dynamics of the epidemic. This class handles the mechanics
     of the actual simulation, while BaseSim takes care of housekeeping (saving,
-    loading, exporting, etc.).
+    loading, exporting, etc.). Please see the BaseSim class for additional methods.
 
     Args:
         pars     (dict):   parameters to modify from their default values

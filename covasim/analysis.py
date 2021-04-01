@@ -39,7 +39,7 @@ class Analyzer(sc.prettyobj):
         return
 
 
-    def initialize(self, sim):
+    def initialize(self, sim=None):
         '''
         Initialize the analyzer, e.g. convert date strings to integers.
         '''
@@ -47,7 +47,8 @@ class Analyzer(sc.prettyobj):
         self.finalized = False
         return
 
-    def finalize(self, sim):
+
+    def finalize(self, sim=None):
         '''
         Finalize analyzer
 
@@ -58,6 +59,7 @@ class Analyzer(sc.prettyobj):
             raise Exception('Analyzer already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
         self.finalized = True
         return
+
 
     def apply(self, sim):
         '''
@@ -175,7 +177,7 @@ class snapshot(Analyzer):
             self.snapshots[date] = sc.dcp(sim.people) # Take snapshot!
 
     def finalize(self, sim):
-        super().finalize(sim)
+        super().finalize()
         validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.snapshots.keys(), die=self.die)
         return
 
@@ -298,7 +300,7 @@ class age_histogram(Analyzer):
                 self.hists[date][state] = np.histogram(age[inds], bins=self.edges)[0]*scale # Actually count the people
 
     def finalize(self, sim):
-        super().finalize(sim)
+        super().finalize()
         validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.hists.keys(), die=self.die)
         return
 

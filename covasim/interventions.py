@@ -281,7 +281,7 @@ class Intervention:
         return
 
 
-    def initialize(self, sim):
+    def initialize(self, sim=None):
         '''
         Initialize intervention -- this is used to make modifications to the intervention
         that can't be done until after the sim is created.
@@ -290,7 +290,8 @@ class Intervention:
         self.finalized = False
         return
 
-    def finalize(self, sim):
+
+    def finalize(self, sim=None):
         '''
         Finalize intervention
 
@@ -298,7 +299,7 @@ class Intervention:
         final operations after the simulation is complete (e.g. rescaling)
         '''
         if self.finalized:
-            raise Exception('Intervention already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
+            raise RuntimeError('Intervention already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
         self.finalized = True
         return
 
@@ -340,7 +341,7 @@ class Intervention:
                 ax = pl.gca()
             if sc.isiterable(self.days):
                 for day in self.days:
-                    if day is not None:
+                    if sc.isnumber(day):
                         if self.show_label: # Choose whether to include the label in the legend
                             label = self.label
                         else:
@@ -455,13 +456,12 @@ class sequence(Intervention):
                     cv.test_num(n_tests=[100]*npts),
                     cv.test_prob(symptomatic_prob=0.2, asymptomatic_prob=0.002),
                 ])
-
-    Note: callable days are not supported.
     '''
 
     def __init__(self, days, interventions, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-        assert len(days) == len(interventions)
+        if sc.isiterable(days):
+            assert len(days) == len(interventions)
         self.days = days
         self.interventions = interventions
         return
@@ -469,19 +469,26 @@ class sequence(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
-        super().initialize(sim)
-        self.days = [preprocess_day(day, sim) for day in self.days]
-        self.days_arr = np.array(self.days + [sim.npts])
+        super().initialize()
+        self.days = process_days(sim, self.days)
+        if isinstance(self.days, list): # Normal use case
+            self.days_arr = np.array(self.days + [sim.npts])
+        else: # If a function is supplied
+            self.days_arr = self.days
         for intervention in self.interventions:
             intervention.initialize(sim)
         return
 
 
     def apply(self, sim):
-        inds = find_day(self.days_arr <= sim.t, which='last')
+        ''' Find the matching day, and see which intervention to activate '''
+        if isinstance(self.days_arr, list): # Normal use case
+            days_arr = np.array([get_day(d, interv=self, sim=sim) for d in self.days_arr]) <= sim.t
+        else:
+            days_arr = self.days
+        inds = find_day(days_arr, interv=self, sim=sim, which='last')
         if len(inds):
             return self.interventions[inds[0]].apply(sim)
-
 
 
 #%% Beta interventions
@@ -520,7 +527,7 @@ class change_beta(Intervention):
 
     def initialize(self, sim):
         ''' Fix days and store beta '''
-        super().initialize(sim)
+        super().initialize()
         self.days    = process_days(sim, self.days)
         self.changes = process_changes(sim, self.changes, self.days)
         self.layers  = sc.promotetolist(self.layers, keepnone=True)
@@ -585,7 +592,7 @@ class clip_edges(Intervention):
 
 
     def initialize(self, sim):
-        super().initialize(sim)
+        super().initialize()
         self.days    = process_days(sim, self.days)
         self.changes = process_changes(sim, self.changes, self.days)
         if self.layers is None:
@@ -624,11 +631,14 @@ class clip_edges(Intervention):
                         s_layer.append(to_move)
                 else: # pragma: no cover
                     print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
+        return
 
-        # Ensure the edges get deleted at the end
+
+    def finalize(self, sim):
+        ''' Ensure the edges get deleted at the end '''
+        super().finalize()
         if sim.t == sim.tvec[-1]:
             self.contacts = None # Reset to save memory
-
         return
 
 
@@ -723,7 +733,7 @@ class test_num(Intervention):
         ''' Fix the dates and number of tests '''
 
         # Handle days
-        super().initialize(sim)
+        super().initialize()
 
         self.start_day   = preprocess_day(self.start_day, sim)
         self.end_day     = preprocess_day(self.end_day,   sim)
@@ -854,7 +864,7 @@ class test_prob(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates '''
-        super().initialize(sim)
+        super().initialize()
         self.start_day = preprocess_day(self.start_day, sim)
         self.end_day   = preprocess_day(self.end_day,   sim)
         self.days      = [self.start_day, self.end_day]
@@ -964,7 +974,7 @@ class contact_tracing(Intervention):
 
     def initialize(self, sim):
         ''' Process the dates and dictionaries '''
-        super().initialize(sim)
+        super().initialize()
         self.start_day = preprocess_day(self.start_day, sim)
         self.end_day   = preprocess_day(self.end_day,   sim)
         self.days      = [self.start_day, self.end_day]
@@ -1128,7 +1138,7 @@ class vaccine(Intervention):
 
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
-        super().initialize(sim)
+        super().initialize()
         self.days = process_days(sim, self.days)
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
