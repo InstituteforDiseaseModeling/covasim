@@ -6,6 +6,7 @@ Demonstrate all interventions, taken from intervention docstrings
 
 import os
 import sciris as sc
+import numpy as np
 import pylab as pl
 import covasim as cv
 import pytest
@@ -22,9 +23,9 @@ def test_all_interventions():
     pars = sc.objdict(
         pop_size     = 1e3,
         pop_infected = 10,
-        pop_type     = 'hybrid',
         n_days       = 90,
     )
+    hpars = sc.mergedicts(pars, {'pop_type':'hybrid'}) # Some, but not all, tests require layers
 
 
     #%% Define the interventions
@@ -65,8 +66,12 @@ def test_all_interventions():
     i7b = cv.contact_tracing(start_day=20, trace_probs=dict(h=0.9, s=0.7, w=0.7, c=0.3), trace_time=dict(h=0, s=1, w=1, c=3))
 
 
-    # 8. Combination
-    i8a = cv.clip_edges(days=18, changes=0.0, layers='s') # Close schools
+    # 8. Combination, with dynamically set days
+    def check_inf(interv, sim, thresh=10, close_day=18):
+        days = close_day if sim.people.infectious.sum()>thresh else np.nan
+        return days
+
+    i8a = cv.clip_edges(days=check_inf, changes=0.0, layers='s') # Close schools
     i8b = cv.clip_edges(days=[20, 32, 45], changes=[0.7, 0.3, 0.9], layers=['w', 'c']) # Reduce work and community
     i8c = cv.test_prob(start_day=38, symp_prob=0.01, asymp_prob=0.0, symp_quar_prob=1.0, asymp_quar_prob=1.0, test_delay=2) # Start testing for TTQ
     i8d = cv.contact_tracing(start_day=40, trace_probs=dict(h=0.9, s=0.7, w=0.7, c=0.3), trace_time=dict(h=0, s=1, w=1, c=3)) # Start tracing for TTQ
@@ -77,17 +82,17 @@ def test_all_interventions():
 
     #%% Create the simulations
     sims = sc.objdict()
-    sims.dynamic      = cv.Sim(pars=pars, interventions=[i1a, i1b])
-    sims.sequence     = cv.Sim(pars=pars, interventions=i2)
-    sims.change_beta1 = cv.Sim(pars=pars, interventions=i3a)
-    sims.clip_edges1  = cv.Sim(pars=pars, interventions=i4a) # Roughly equivalent to change_beta1
-    sims.change_beta2 = cv.Sim(pars=pars, interventions=i3b)
-    sims.clip_edges2  = cv.Sim(pars=pars, interventions=i4b) # Roughly equivalent to change_beta2
-    sims.test_num     = cv.Sim(pars=pars, interventions=i5)
-    sims.test_prob    = cv.Sim(pars=pars, interventions=i6)
-    sims.tracing      = cv.Sim(pars=pars, interventions=[i7a, i7b])
-    sims.combo        = cv.Sim(pars=pars, interventions=[i8a, i8b, i8c, i8d])
-    sims.vaccine      = cv.Sim(pars=pars, interventions=[i9a, i9b])
+    sims.dynamic      = cv.Sim(pars=pars,  interventions=[i1a, i1b])
+    sims.sequence     = cv.Sim(pars=pars,  interventions=i2)
+    sims.change_beta1 = cv.Sim(pars=hpars, interventions=i3a)
+    sims.clip_edges1  = cv.Sim(pars=hpars, interventions=i4a) # Roughly equivalent to change_beta1
+    sims.change_beta2 = cv.Sim(pars=pars,  interventions=i3b)
+    sims.clip_edges2  = cv.Sim(pars=pars,  interventions=i4b) # Roughly equivalent to change_beta2
+    sims.test_num     = cv.Sim(pars=pars,  interventions=i5)
+    sims.test_prob    = cv.Sim(pars=pars,  interventions=i6)
+    sims.tracing      = cv.Sim(pars=hpars, interventions=[i7a, i7b])
+    sims.combo        = cv.Sim(pars=hpars, interventions=[i8a, i8b, i8c, i8d])
+    sims.vaccine      = cv.Sim(pars=pars,  interventions=[i9a, i9b])
 
     # Run the simualations
     for key,sim in sims.items():

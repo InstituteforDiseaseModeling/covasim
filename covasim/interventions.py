@@ -225,15 +225,16 @@ class Intervention:
     To retrieve a particular intervention from a sim, use sim.get_intervention().
 
     Args:
-        label (str): a label for the intervention (used for plotting, and for ease of identification)
-        show_label (bool): whether or not to include the label, if provided, in the legend
-        do_plot (bool): whether or not to plot the intervention
-        line_args (dict): arguments passed to pl.axvline() when plotting
+        label       (str): a label for the intervention (used for plotting, and for ease of identification)
+        show_label (bool): whether or not to include the label in the legend
+        do_plot    (bool): whether or not to plot the intervention
+        line_args  (dict): arguments passed to pl.axvline() when plotting
     '''
-    def __init__(self, label=None, show_label=True, do_plot=None, line_args=None):
+    def __init__(self, label=None, show_label=False, do_plot=None, line_args=None):
         self._store_args() # Store the input arguments so the intervention can be recreated
+        if label is None: label = self.__class__.__name__ # Use the class name if no label is supplied
         self.label = label # e.g. "Close schools"
-        self.show_label = show_label # Show the label by default
+        self.show_label = show_label # Do not show the label by default
         self.do_plot = do_plot if do_plot is not None else True # Plot the intervention, including if None
         self.line_args = sc.mergedicts(dict(linestyle='--', c='#aaa', lw=1.0), line_args) # Do not set alpha by default due to the issue of overlapping interventions
         self.days = [] # The start and end days of the intervention
@@ -327,6 +328,12 @@ class Intervention:
         This can be used to do things like add vertical lines on days when
         interventions take place. Can be disabled by setting self.do_plot=False.
 
+        Note 1: you can modify the plotting style via the ``line_args`` argument when
+        creating the intervention.
+
+        Note 2: By default, the intervention is plotted at the days stored in self.days.
+        However, if there is a self.plot_days attribute, this will be used instead.
+
         Args:
             sim: the Sim instance
             ax: the axis instance
@@ -339,11 +346,17 @@ class Intervention:
         if self.do_plot or self.do_plot is None:
             if ax is None:
                 ax = pl.gca()
-            if sc.isiterable(self.days):
-                for day in self.days:
+            if hasattr(self, 'plot_days'):
+                days = self.plot_days
+            else:
+                days = self.days
+            if sc.isiterable(days):
+                label_shown = False # Don't show the label more than once
+                for day in days:
                     if sc.isnumber(day):
-                        if self.show_label: # Choose whether to include the label in the legend
+                        if self.show_label and not label_shown: # Choose whether to include the label in the legend
                             label = self.label
+                            label_shown = True
                         else:
                             label = None
                         ax.axvline(day, label=label, **line_args)
