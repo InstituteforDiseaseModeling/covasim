@@ -28,8 +28,6 @@ Latest versions (2.x)
 Version 2.1.2 (2021-03-31)
 --------------------------
 
-This is (probably) the last release before the Covasim 3.0 launch (vaccines and variants).
-
 - Interventions and analyzers now accept a function as an argument to ``days`` or e.g. ``start_day``. For example, instead of defining ``start_day=30``, you can define a function (with the intervention and the sim object as arguments) that calculates and returns a start day. This allows interventions to be dynamically triggered based on the state of the sim. See [Tutorial 5](https://docs.idmod.org/projects/covasim/en/latest/tutorials/t05.html) for a new section on how to use this feature.
 - Added a ``finalize()`` method to interventions and analyzers, to replace the ``if sim.t == sim.npts-1:`` blocks in ``apply()`` that had been being used to finalize.
 - Changed setup instructions from ``python setup.py develop`` to ``pip install -e .``, and unpinned ``line_profiler``.
