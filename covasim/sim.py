@@ -577,7 +577,7 @@ class Sim(cvb.BaseSim):
         quar = people.quarantined
 
         # Initialize temp storage for strain parameters
-        strain_parkeys  = ['rel_beta', 'asymp_factor']
+        strain_keys  = ['rel_beta', 'asymp_factor']
         strain_pars     = dict()
         ns = self['n_strains']  # Shorten number of strains
 
@@ -592,8 +592,8 @@ class Sim(cvb.BaseSim):
             cvimm.check_immunity(people, strain, sus=True)
 
             # Deal with strain parameters
-            for key in strain_parkeys:
-                strain_pars[key] = self[key][strain]
+            for key in strain_keys:
+                strain_pars[key] = self['strain_pars'][key][strain]
             beta = cvd.default_float(self['beta'] * strain_pars['rel_beta'])
             asymp_factor = cvd.default_float(strain_pars['asymp_factor'])
 

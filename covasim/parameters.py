@@ -7,7 +7,6 @@ import sciris as sc
 from .settings import options as cvo # For setting global options
 from . import misc as cvm
 from . import defaults as cvd
-from . import utils as cvu
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
@@ -128,6 +127,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
+    pars['strain_pars'] = {} # Populated just below
     pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
@@ -331,7 +331,7 @@ def listify_strain_pars(pars):
     ''' Helper function to turn strain parameters into lists '''
     for sp in cvd.strain_pars:
         if sp in pars.keys():
-            pars[sp] = sc.promotetolist(pars[sp])
+            pars['strain_pars'][sp] = sc.promotetolist(pars[sp])
     return pars
 
 

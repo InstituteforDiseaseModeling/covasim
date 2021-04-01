@@ -373,6 +373,7 @@ class People(cvb.BasePeople):
             icu_max  (bool):  whether or not there is an ICU bed available for this person
             source   (array): source indices of the people who transmitted this infection (None if an importation or seed infection)
             layer    (str):   contact layer this infection was transmitted on
+            strain   (int):   the strain people are being infected by
 
         Returns:
             count (int): number of people infected
@@ -396,7 +397,7 @@ class People(cvb.BasePeople):
         infect_parkeys = ['dur', 'rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
         infect_pars = dict()
         for key in infect_parkeys:
-            infect_pars[key] = self.pars[key][strain]
+            infect_pars[key] = self.pars['strain_pars'][key][strain]
 
         n_infections = len(inds)
         durpars      = infect_pars['dur']

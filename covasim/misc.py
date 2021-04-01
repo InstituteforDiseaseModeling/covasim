@@ -503,6 +503,7 @@ def get_version_pars(version, verbose=True):
         '1.5.0': [f'1.5.{i}' for i in range(4)] + [f'1.6.{i}' for i in range(2)] + [f'1.7.{i}' for i in range(7)],
         '2.0.0': [f'2.0.{i}' for i in range(5)] + ['2.1.0'],
         '2.1.1': [f'2.1.{i}' for i in range(1,3)],
+        '3.0.0': ['3.0.0'],
     }
 
     # Find and check the match
