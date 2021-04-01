@@ -176,6 +176,7 @@ class snapshot(Analyzer):
             date = self.dates[ind]
             self.snapshots[date] = sc.dcp(sim.people) # Take snapshot!
 
+
     def finalize(self, sim):
         super().finalize()
         validate_recorded_dates(sim, requested_dates=self.dates, recorded_dates=self.snapshots.keys(), die=self.die)
@@ -298,6 +299,7 @@ class age_histogram(Analyzer):
             for state in self.states: # Loop over each state
                 inds = sim.people.defined(f'date_{state}') # Pull out people for which this state is defined
                 self.hists[date][state] = np.histogram(age[inds], bins=self.edges)[0]*scale # Actually count the people
+
 
     def finalize(self, sim):
         super().finalize()
