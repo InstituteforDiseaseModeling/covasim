@@ -839,7 +839,9 @@ class BasePeople(FlexPretty):
         ''' Combine two people arrays '''
         newpeople = sc.dcp(self)
         for key in self.keys():
+            print(key, len(newpeople[key]))
             newpeople.set(key, np.concatenate([newpeople[key], people2[key]]), die=False) # Allow size mismatch
+            print(key, len(newpeople[key]))
 
         # Validate
         newpeople.pop_size += people2.pop_size

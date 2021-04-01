@@ -596,7 +596,7 @@ class daily_stats(Analyzer):
         else:
             self.days = sim.day(self.days)
 
-        self.keys =  ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'known_contact', 'quarantined', 'diagnosed', 'recovered', 'dead']
+        self.keys =  ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'known_contact', 'quarantined', 'diagnosed', 'dead'] # Extra: 'recovered'
         self.basekeys = ['stocks', 'trans', 'source', 'test', 'quar'] # Categories of things to plot
         self.extrakeys = ['layer_counts', 'extra']
         self.initialized = True

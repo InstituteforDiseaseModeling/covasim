@@ -86,7 +86,7 @@ def test_reproducibility():
     assert r1 == r2
 
     # If you run a sim and save it, you should be able to re-run it on load
-    s3 = cv.Sim(pars, n_imports=1)
+    s3 = cv.Sim(pars, pop_infected=44)
     s3.run()
     s3.save(fn)
     s4 = cv.load(fn)

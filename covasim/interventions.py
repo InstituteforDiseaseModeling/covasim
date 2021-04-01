@@ -1192,11 +1192,11 @@ class vaccine(Intervention):
             self.mod_symp_prob[vacc_inds] *= rel_symp_eff
             self.vaccinations[vacc_inds] += 1
             for v_ind in vacc_inds:
-                self.vaccination_dates[v_ind].append(sim.t)
+                self.date_vaccinated[v_ind].append(sim.t)
 
             # Update vaccine attributes in sim
             sim.people.vaccinations = self.vaccinations
-            sim.people.vaccination_dates = self.vaccination_dates
+            sim.people.vaccination_dates = self.date_vaccinated
 
         return
 
