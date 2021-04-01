@@ -11,6 +11,7 @@ from . import misc as cvm
 from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
+from . import immunity as cvimm
 from . import plotting as cvplt
 from .settings import options as cvo
 
@@ -242,25 +243,32 @@ class MultiSim(cvb.FlexPretty):
         raw = {}
         reskeys = reduced_sim.result_keys()
         for reskey in reskeys:
-            raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
+            if 'by_strain' in reskey:
+                raw[reskey] = np.zeros((reduced_sim['total_strains'], reduced_sim.npts, len(self.sims)))
+            else:
+                raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
             for s,sim in enumerate(self.sims):
                 vals = sim.results[reskey].values
-                if len(vals) != reduced_sim.npts:
-                    errormsg = f'Cannot reduce sims with inconsistent numbers of days: {reduced_sim.npts} vs. {len(vals)}'
-                    raise ValueError(errormsg)
-                raw[reskey][:,s] = vals
+                if 'by_strain' in reskey:
+                    raw[reskey][:, :, s] = vals
+                else:
+                    raw[reskey][:, s] = vals
 
         for reskey in reskeys:
-            if use_mean:
-                r_mean = np.mean(raw[reskey], axis=1)
-                r_std = np.std(raw[reskey], axis=1)
-                reduced_sim.results[reskey].values[:] = r_mean
-                reduced_sim.results[reskey].low       = r_mean - bounds*r_std
-                reduced_sim.results[reskey].high      = r_mean + bounds*r_std
+            if 'by_strain' in reskey:
+                axis=2
             else:
-                reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1)
-                reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
-                reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
+                axis=1
+            if use_mean:
+                r_mean = np.mean(raw[reskey], axis=axis)
+                r_std = np.std(raw[reskey], axis=axis)
+                reduced_sim.results[reskey].values[:] = r_mean
+                reduced_sim.results[reskey].low = r_mean - bounds * r_std
+                reduced_sim.results[reskey].high = r_mean + bounds * r_std
+            else:
+                reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=axis)
+                reduced_sim.results[reskey].low = np.quantile(raw[reskey], q=quantiles['low'], axis=axis)
+                reduced_sim.results[reskey].high = np.quantile(raw[reskey], q=quantiles['high'], axis=axis)
 
         # Compute and store final results
         reduced_sim.compute_summary()
@@ -875,6 +883,8 @@ class Scenarios(cvb.ParsObj):
         self.basepars = sc.mergedicts({}, basepars)
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
+        self.base_sim.init_strains()
+        self.base_sim.init_immunity()
         self.base_sim.init_results()
 
         # Copy quantities from the base sim to the main object
@@ -940,11 +950,18 @@ class Scenarios(cvb.ParsObj):
                 raise ValueError(errormsg)
 
             # Create and run the simulations
-
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
-            scen_sim.update_pars(scenpars)
+
+            defaults = {par: scen_sim[par] for par in cvd.strain_pars}
+            scen_sim.update_pars(scenpars, defaults=defaults, **kwargs)  # Update the parameters, if provided
+            if 'strains' in scenpars: # Process strains
+                scen_sim.init_strains()
+                scen_sim.init_immunity(create=True)
+            if 'imm_pars' in scenpars: # Process immunity
+                scen_sim.init_immunity(create=True)
+
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:
                 print('Running in debug mode (not parallelized)')
@@ -953,23 +970,32 @@ class Scenarios(cvb.ParsObj):
             else:
                 scen_sims = multi_run(scen_sim, **run_args, **kwargs) # This is where the sims actually get run
 
+            # Get number of strains
+            ns = scen_sims[0].results['cum_infections_by_strain'].values.shape[0]
+
             # Process the simulations
             print_heading(f'Processing {scenkey}')
-
             scenraw = {}
             for reskey in reskeys:
-                scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
+                if 'by_strain' in reskey:
+                    scenraw[reskey] = np.zeros((ns, self.npts, len(scen_sims)))
+                else:
+                    scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
-                    scenraw[reskey][:,s] = sim.results[reskey].values
+                    if 'by_strain' in reskey:
+                        scenraw[reskey][:,:,s] = sim.results[reskey].values
+                    else:
+                        scenraw[reskey][:,s] = sim.results[reskey].values
 
             scenres = sc.objdict()
             scenres.best = {}
             scenres.low = {}
             scenres.high = {}
             for reskey in reskeys:
-                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
-                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
-                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
+                axis = 2 if 'by_strain' in reskey else 1
+                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=axis) # Changed from median to mean for smoother plots
+                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=axis)
+                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=axis)
 
             for reskey in reskeys:
                 self.results[reskey][scenkey]['name'] = scenname
@@ -1016,7 +1042,11 @@ class Scenarios(cvb.ParsObj):
         x = defaultdict(dict)
         for scenkey in self.scenarios.keys():
             for reskey in self.result_keys():
-                val = self.results[reskey][scenkey].best[day]
+                if 'by_strain' in reskey:
+                    val = self.results[reskey][scenkey].best[0, day] # Only prints results for infections by first strain
+                    reskey = reskey+'0' # Add strain number to the summary output
+                else:
+                    val = self.results[reskey][scenkey].best[day]
                 if reskey not in ['r_eff', 'doubling_time']:
                     val = int(val)
                 x[scenkey][reskey] = val
@@ -1307,22 +1337,22 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
         sim.set_seed()
 
     # If the noise parameter is not found, guess what it should be
-    if noisepar is None:
-        noisepar = 'beta'
-        if noisepar not in sim.pars.keys():
-            raise sc.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
+    # if noisepar is None:
+    #     noisepar = 'beta'
+    #     if noisepar not in sim.pars.keys():
+    #         raise sc.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
 
     # Handle noise -- normally distributed fractional error
-    noiseval = noise*np.random.normal()
-    if noiseval > 0:
-        noisefactor = 1 + noiseval
-    else:
-        noisefactor = 1/(1-noiseval)
-    sim[noisepar] *= noisefactor
+    # noiseval = noise*np.random.normal()
+    # if noiseval > 0:
+    #     noisefactor = 1 + noiseval
+    # else:
+    #     noisefactor = 1/(1-noiseval)
+    # sim[noisepar] *= noisefactor
 
-    if verbose>=1:
-        verb = 'Running' if do_run else 'Creating'
-        print(f'{verb} a simulation using seed={sim["rand_seed"]} and noise={noiseval}')
+    # if verbose>=1:
+    #     verb = 'Running' if do_run else 'Creating'
+    #     print(f'{verb} a simulation using seed={sim["rand_seed"]} and noise={noiseval}')
 
     # Handle additional arguments
     for key,val in sim_args.items():

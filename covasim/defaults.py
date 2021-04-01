@@ -39,15 +39,24 @@ class PeopleMeta(sc.prettyobj):
 
     # Set the properties of a person
     person = [
-        'uid',         # Int
-        'age',         # Float
-        'sex',         # Float
-        'symp_prob',   # Float
-        'severe_prob', # Float
-        'crit_prob',   # Float
-        'death_prob',  # Float
-        'rel_trans',   # Float
-        'rel_sus',     # Float
+        'uid',              # Int
+        'age',              # Float
+        'sex',              # Float
+        'symp_prob',        # Float
+        'severe_prob',      # Float
+        'crit_prob',        # Float
+        'death_prob',       # Float
+        'rel_trans',        # Float
+        'rel_sus',          # Float
+        'prior_symptoms',   # Float
+        'sus_imm',          # Float
+        'symp_imm',        # Float
+        'sev_imm',         # Float
+        'prior_symptoms',   # Float
+        'vaccinations',     # Number of doses given per person
+        'vaccine_source',   # index of vaccine that individual received
+        'init_NAb',         # Initial neutralization titre relative to convalescent plasma
+        'NAb',              # Current neutralization titre relative to convalescent plasma
     ]
 
     # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -60,16 +69,26 @@ class PeopleMeta(sc.prettyobj):
         'critical',
         'tested',
         'diagnosed',
-        'recovered',
         'dead',
         'known_contact',
         'quarantined',
+        'vaccinated'
+    ]
+
+    strain_states = [
+        'exposed_strain',
+        'exposed_by_strain',
+        'infectious_strain',
+        'infectious_by_strain',
+        'recovered_strain',
     ]
 
     # Set the dates various events took place: these are floats per person -- used in people.py
     dates = [f'date_{state}' for state in states] # Convert each state into a date
     dates.append('date_pos_test') # Store the date when a person tested which will come back positive
     dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
+    dates.append('date_recovered') # Store the date when a person recovers
+    dates.append('date_vaccinated') # Store the date when a person is vaccinated
 
     # Duration of different states: these are floats per person -- used in people.py
     durs = [
@@ -80,39 +99,72 @@ class PeopleMeta(sc.prettyobj):
         'dur_disease',
     ]
 
-    all_states = person + states + dates + durs
+    all_states = person + states + strain_states + dates + durs
 
 
 #%% Define other defaults
 
 # A subset of the above states are used for results
 result_stocks = {
-        'susceptible': 'Number susceptible',
-        'exposed':     'Number exposed',
-        'infectious':  'Number infectious',
-        'symptomatic': 'Number symptomatic',
-        'severe':      'Number of severe cases',
-        'critical':    'Number of critical cases',
-        'diagnosed':   'Number of confirmed cases',
-        'quarantined': 'Number in quarantine',
+        'susceptible':          'Number susceptible',
+        'exposed':              'Number exposed',
+        'exposed_by_strain':    'Number exposed by strain',
+        'infectious':           'Number infectious',
+        'infectious_by_strain': 'Number infectious by strain',
+        'symptomatic':          'Number symptomatic',
+        'severe':               'Number of severe cases',
+        'critical':             'Number of critical cases',
+        'diagnosed':            'Number of confirmed cases',
+        'quarantined':          'Number in quarantine',
+        'vaccinated':           'Number of people vaccinated',
 }
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix
-result_flows = {'infections':  'infections',
-                'infectious':  'infectious',
-                'tests':       'tests',
-                'diagnoses':   'diagnoses',
-                'recoveries':  'recoveries',
-                'symptomatic': 'symptomatic cases',
-                'severe':      'severe cases',
-                'critical':    'critical cases',
-                'deaths':      'deaths',
-                'quarantined': 'quarantined people',
+result_flows = {'infections':           'infections',
+                'reinfections':         'reinfections',
+                'infections_by_strain': 'infections_by_strain',
+                'infectious':           'infectious',
+                'infectious_by_strain': 'infectious_by_strain',
+                'tests':                'tests',
+                'diagnoses':            'diagnoses',
+                'recoveries':           'recoveries',
+                'symptomatic':          'symptomatic cases',
+                'severe':               'severe cases',
+                'critical':             'critical cases',
+                'deaths':               'deaths',
+                'quarantined':          'quarantined people',
+                'vaccinations':         'vaccinations',
+                'vaccinated':           'vaccinated people'
+}
+
+result_imm = {
+    'pop_nabs': 'Population average NAbs',
+    'pop_protection': 'Population average protective immunity'
 }
 
 # Define these here as well
 new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
+
+# Parameters that can vary by strain (should be in list format)
+strain_pars = ['rel_beta',
+               'asymp_factor',
+               'dur',
+               'rel_symp_prob',
+               'rel_severe_prob',
+               'rel_crit_prob',
+               'rel_death_prob',
+]
+
+# Immunity is broken down according to 3 axes, as listed here
+immunity_axes = ['sus', 'symp', 'sev']
+
+# Immunity protection also varies depending on your infection history
+immunity_sources = [
+    'asymptomatic',
+    'mild',
+    'severe',
+]
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([
@@ -145,38 +197,60 @@ def get_colors():
     NB, includes duplicates since stocks and flows are named differently.
     '''
     c = sc.objdict()
-    c.susceptible   = '#4d771e'
-    c.exposed       = '#c78f65'
-    c.infectious    = '#e45226'
-    c.infections    = '#b62413'
-    c.tests         = '#aaa8ff'
-    c.diagnoses     = '#5f5cd2'
-    c.diagnosed     = c.diagnoses
-    c.quarantined   = '#5c399c'
-    c.recoveries    = '#9e1149'
-    c.recovered     = c.recoveries
-    c.symptomatic   = '#c1ad71'
-    c.severe        = '#c1981d'
-    c.critical      = '#b86113'
-    c.deaths        = '#000000'
-    c.dead          = c.deaths
-    c.default       = '#000000'
+    c.susceptible           = '#4d771e'
+    c.exposed               = '#c78f65'
+    c.exposed_by_strain     = '#c75649',
+    c.infectious            = '#e45226'
+    c.infectious_by_strain  = '#e45226'
+    c.infections            = '#b62413'
+    c.reinfections          = '#732e26'
+    c.infections_by_strain  = '#b62413'
+    c.tests                 = '#aaa8ff'
+    c.diagnoses             = '#5f5cd2'
+    c.diagnosed             = c.diagnoses
+    c.quarantined           = '#5c399c'
+    c.vaccinations          = '#5c399c'
+    c.vaccinated            = '#5c399c'
+    c.recoveries            = '#9e1149'
+    c.symptomatic           = '#c1ad71'
+    c.severe                = '#c1981d'
+    c.critical              = '#b86113'
+    c.deaths                = '#000000'
+    c.dead                  = c.deaths
+    c.default               = '#000000'
+    c.pop_nabs              = '#32733d'
+    c.pop_protection        = '#9e1149'
+    c.pop_symp_protection   = '#b86113'
     return c
+
+
+def get_strain_colors():
+    '''
+       Specify plot colors -- used in sim.py.
+
+       NB, includes duplicates since stocks and flows are named differently.
+       '''
+    colors = ['#4d771e', '#c78f65', '#c75649', '#e45226', '#e45226', '#b62413', '#732e26', '#b62413']
+    return colors
+
 
 
 # Define the 'overview plots', i.e. the most useful set of plots to explore different aspects of a simulation
 overview_plots = [
             'cum_infections',
+            'cum_infections_by_strain',
             'cum_severe',
             'cum_critical',
             'cum_deaths',
             'cum_diagnoses',
             'new_infections',
+            'new_infections_by_strain',
             'new_severe',
             'new_critical',
             'new_deaths',
             'new_diagnoses',
             'n_infectious',
+            'n_infectious_by_strain',
             'n_severe',
             'n_critical',
             'n_susceptible',
@@ -184,6 +258,10 @@ overview_plots = [
             'n_symptomatic',
             'new_quarantined',
             'n_quarantined',
+            'new_vaccinations',
+            'new_vaccinated',
+            'cum_vaccinated',
+            'cum_vaccinations',
             'test_yield',
             'r_eff',
             ]

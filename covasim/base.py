@@ -94,7 +94,6 @@ class ParsObj(FlexPretty):
     def update_pars(self, pars=None, create=False):
         '''
         Update internal dict with new pars.
-
         Args:
             pars (dict): the parameters to update (if None, do nothing)
             create (bool): if create is False, then raise a KeyNotFoundError if the key does not already exist
@@ -132,15 +131,20 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale=True, color=None):
+    def __init__(self, name=None, npts=None, scale=True, color=None, strain_color=None, total_strains=1):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
             color = cvd.get_colors()['default']
+            strain_color = cvd.get_strain_colors()
         self.color = color # Default color
+        self.strain_color = strain_color
         if npts is None:
             npts = 0
-        self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
+        if 'by_strain' in self.name or 'by strain' in self.name:
+            self.values = np.full((total_strains, npts), 0, dtype=cvd.result_float, order='F')
+        else:
+            self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
         self.low    = None
         self.high   = None
         return
@@ -236,15 +240,22 @@ class BaseSim(ParsObj):
         return string
 
 
-    def update_pars(self, pars=None, create=False, **kwargs):
+    def update_pars(self, pars=None, create=False, defaults=None, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
         pars = sc.mergedicts(pars, kwargs)
+
         if pars:
             if pars.get('pop_type'):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
+
+            if defaults is not None: # Defaults have been provided: we are now doing updates
+                pars = cvpar.listify_strain_pars(pars)  # Strain pars need to be lists
+                pars = cvpar.update_sub_key_pars(pars, defaults) # Update dict parameters by sub-key
+                combined_pars = sc.mergedicts(defaults, pars) # Now that subkeys have been updated, can merge the dicts together
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
+
         return
 
 
@@ -906,6 +917,10 @@ class BasePeople(FlexPretty):
         ''' Count the number of people for a given key '''
         return (self[key]>0).sum()
 
+    def count_by_strain(self, key, strain):
+        ''' Count the number of people for a given key '''
+        return (self[key][strain,:]>0).sum()
+
 
     def count_not(self, key):
         ''' Count the number of people who do not have a property for a given key '''
@@ -976,6 +991,9 @@ class BasePeople(FlexPretty):
         expected_len = len(self)
         for key in self.keys():
             actual_len = len(self[key])
+            # check if it's 2d
+            if self[key].ndim > 1:
+                actual_len = len(self[key][0])
             if actual_len != expected_len: # pragma: no cover
                 if die:
                     errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'

@@ -6,6 +6,8 @@ import numpy as np
 import sciris as sc
 from .settings import options as cvo # For setting global options
 from . import misc as cvm
+from . import defaults as cvd
+from . import utils as cvu
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
 
@@ -47,23 +49,40 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
     pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
 
-    # Basic disease transmission
-    pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
-    pars['contacts']    = None  # The number of contacts per layer; set by reset_layer_pars() below
-    pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
-    pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
-    pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta_dist']   = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
-    pars['viral_dist']  = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+    # Network parameters, generally initialized after the population has been constructed
+    pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
+    pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
+    pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
 
-    # Efficacy of protection measures
-    pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
-    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
-    pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
+    # Basic disease transmission parameters
+    pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
+    pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+    pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
+
+    # Parameters that control settings and defaults for multi-strain runs
+    pars['n_strains']       = 1     # The number of strains currently circulating in the population
+    pars['total_strains']   = None  # Set during sim initialization, once strains have been specified and processed
+
+    # Parameters used to calculate immunity
+    pars['NAb_init']                = dict(dist='normal', par1= 0, par2= 2)  # Parameters for the distribution of the initial level of log2(NAb) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['NAb_decay']               = dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250, 'decay_decay_rate': 0.001}) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['NAb_kin']                 = None # Constructed during sim initialization using the NAb_decay parameters
+    pars['NAb_boost']               = 2 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
+    pars['NAb_eff']                 = {'slope': 3.43297265, 'n_50': {'sus': 0.5, 'symp': 0.19869944, 'sev': 0.031}} # Parameters to map NAbs to efficacy
+    pars['cross_immunity']          = 0.5   # Default cross-immunity protection factor that applies across different strains
+    pars['rel_imm']                 = {} # Relative immunity from natural infection varies by symptoms
+    pars['rel_imm']['asymptomatic'] = 0.7
+    pars['rel_imm']['mild']         = 0.9
+    pars['rel_imm']['severe']       = 1
+    pars['immunity']                = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
+    pars['vaccine_info']            = None  # Vaccine info in a more easily accessible format
+
+    # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
+    pars['rel_beta']        = 1.0
+    pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
+    pars['dur'] = {}
 
     # Duration parameters: time for disease progression
-    pars['dur'] = {}
     pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.5, par2=1.5) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, appendix table S2, subtracting inf2sym duration
     pars['dur']['inf2sym']  = dict(dist='lognormal_int', par1=1.1, par2=0.9) # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 5.6 day incubation period - 4.5 day exp2inf from Lauer et al.
     pars['dur']['sym2sev']  = dict(dist='lognormal_int', par1=6.6, par2=4.9) # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 6.6 day onset to hospital admission (deceased); see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, 7 days (Table 1)
@@ -84,9 +103,17 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
     pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
 
+    # Efficacy of protection measures
+    pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
+    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
+    pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
+
     # Events and interventions
     pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['analyzers']     = []   # Custom analysis functions; populated by the user
+    pars['strains']       = []   # Additional strains of the virus; populated by the user, see immunity.py
+    pars['vaccines']      = []   # Vaccines that are being used; populated by user
+
     pars['timelimit']     = None # Time limit for the simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
@@ -101,6 +128,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
+    pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
     if version is not None:
@@ -277,3 +305,33 @@ def absolute_prognoses(prognoses):
     out['crit_probs']   *= out['severe_probs'] # Absolute probability of critical symptoms
     out['death_probs']  *= out['crit_probs']   # Absolute probability of dying
     return out
+
+
+def update_sub_key_pars(pars, default_pars):
+    ''' Helper function to update sub-keys of dict parameters '''
+    for par,val in pars.items():
+        if par in cvd.strain_pars: # It will be stored as a list
+            newval = val[0]
+            oldval = sc.promotetolist(default_pars[par])[0] # Might be a list or not!
+            if isinstance(newval, dict):  # Update the dictionary, don't just overwrite it
+                if par == 'imm_pars':
+                    for type, valoftype in newval.items():
+                        if valoftype['form'] == oldval[type]['form']:
+                            pars[par][0][type] = sc.mergenested(oldval[type], valoftype)
+                        else:
+                            pars[par][0][type] = valoftype
+                else:
+                    pars[par] = sc.promotetolist(sc.mergenested(oldval, newval))
+        else:
+            pars[par] = val
+    return pars
+
+
+def listify_strain_pars(pars):
+    ''' Helper function to turn strain parameters into lists '''
+    for sp in cvd.strain_pars:
+        if sp in pars.keys():
+            pars[sp] = sc.promotetolist(pars[sp])
+    return pars
+
+

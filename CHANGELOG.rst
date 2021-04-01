@@ -15,15 +15,62 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Mechanistic handling of different strains, and improved handling of vaccination, including more detailed targeting options, waning immunity, etc. This will be Covasim 3.0, which is slated for release early April.
 - Expanded tutorials (health care workers, vaccination, calibration, exercises, etc.)
 - Multi-region and geospatial support
 - Economics and costing analysis
 
 
-~~~~~~~~~~~~~~~~~~~~~
-Latest versions (2.x)
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+Latest versions (3.0.x)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Version 3.0.0 (2021-04-XX)
+--------------------------
+This version contains a number of major updates. 
+
+Highlights
+^^^^^^^^^^
+- **Model structure**: The model now follows an "SEIS"-type structure, instead of the previous "SEIR" structure. This means that after recovering from an infection, agents return to the "susceptible" compartment. Each agent in the simulation has properties ``sus_imm``, ``trans_imm`` and ``prog_imm``, which respectively determine their immunity to acquiring an infection, transmitting an infection, or developing a more severe case of COVID-19. All these immunity levels are initially zero. They can be boosted by either natural infection or vaccination, and thereafter they can wane over time or remain permanently elevated. 
+- **Multi-strain modeling**: Model functionality has been extended to allow for modeling of multiple different co-circulating strains with different properties. This means you can now do e.g. ``b117 = cv.Strain('b117', days=1, n_imports=20)`` followed by ``sim = cv.Sim(strains=b117)`` to import strain B117. Further examples are contained in ``devtests/test_variants.py``.
+- **New methods for vaccine modeling**: A new ``vaccinate`` intervention has been added, which allows more flexible modeling of vaccinations. Vaccines, like natural infections, are assumed to boost agents' immunity.
+
+State changes
+^^^^^^^^^^^^^
+- The ``recovered`` state has been removed.
+
+Parameter changes
+^^^^^^^^^^^^^^^^^
+- The parameter ``n_imports`` has been removed, as importations are now handled by the ``strains`` functionality.
+- A subset of existing parameters have been made strain-specific, meaning that they are allowed to differ by strain. These include: ``rel_beta``, which specifies the relative transmissibility of a new strain compared to the wild strain; ``asymp_factor``, all of the ``dur`` parameters, ``rel_symp_prob``, ``rel_severe_prob``, ``rel_crit_prob``, and the newly-added immunity parameters ``imm_pars`` (see next point). The list of parameters that can vary by strain is specified in ``covasim/defaults.py``. 
+- Two new parameters have been added to hold information about the strains in the simulation:
+   - The parameter ``n_strains`` is an integer, updated on each time-step, that specifies how many strains are in circulation at that time-step.
+   - The parameter ``total_strains`` is an integer that specifies how many strains will be in ciruclation at some point during the course of the simulation. 
+- Seven new parameters have been added to characterize agents' immunity levels:
+   - The parameter ``NAb_init`` specifies a distribution for the level of neutralizing antibodies that agents have following an infection. These values are on log2 scale, and by default they follow a normal distribution.
+   - The parameter ``NAb_decay`` is a dictionary specifying the kinetics of decay for neutralizing antibodies over time.
+   - The parameter ``NAb_kin``  is constructed during sim initialization, and contains pre-computed evaluations of the NAb decay functions described above over time. 
+   - The parameter ``NAb_boost`` is a multiplicative factor applied to a person's NAb levels if they get reinfected.
+   - The parameter ``cross_immunity``. By default, infection with one strain of SARS-CoV-2 is assumed to grant 50% immunity to infection with a different strain. This default assumption of 50% cross-immunity can be modified via this parameter (which will then apply to all strains in the simulation), or it can be modified on a per-strain basis using the ``immunity`` parameter described below.
+   - The parameter ``immunity`` is a matrix of size ``total_strains`` by ``total_strains``. Row ``i`` specifies the immunity levels that people who have been infected with strain ``i`` have to other strains. The entries of this matrix are then multiplied by the time-dependent immunity levels contained in the ``immune_degree`` parameter to determine a person's immunity at each time-step. By default, this will be ``[[1]]`` for a single-strain simulation and ``[[1, 0.5],[0.5, 1]]`` a 2-strain simulation.
+   - The parameter ``rel_imm`` is a dictionary with keys ``asymptomatic``, ``mild`` and ``severe``. These contain scalars specifying the relative immunity levels for someone who had an asymptomatic, mild, or severe infection. By default, values of 0.98, 0.99, and 1.0 are used.
+- The parameter ``strains`` contains information about any circulating strains that have been specified as additional to the default strain, and the parameter ``vaccines`` contains information about any vaccines in use. These are initialized as ``None`` and then populated by the user. 
+
+New functions, methods and classes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- The newly-added file ``immunity.py`` contains functions, methods, and classes related to calculating immunity. This includes the ``Strain`` class, the ``Vaccine`` class. 
+- A new ``vaccinate`` intervention has been added. Compared to the previous ``vaccine`` intervention, this new intervention allows vaccination to boost agents' immunity against infection, transmission, and progression.
+
+Changes to results
+^^^^^^^^^^^^^^^^^^
+- ``results[n_recovered]``, ``results[cum_recovered]`` and ``results[new_recovered]`` have all been removed, since the ``recovered`` state has been removed. However, ``results[recoveries]`` still exists, and stores information about how many people cleared their infection at each time-step.
+- New results have been added to store information by strain: ``cum_infections_by_strain``, ``cum_infectious_by_strain``, ``new_reinfections``, ``new_infections_by_strain``, ``new_infectious_by_strain``, ``prevalence_by_strain``, ``incidence_by_strain``.  
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 2.x (2.0.0 – 2.1.2)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 Version 2.1.2 (2021-03-31)
 --------------------------
