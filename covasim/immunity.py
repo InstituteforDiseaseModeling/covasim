@@ -89,6 +89,9 @@ class Strain():
             elif strain in choices['p1']:
                 strain_pars = dict()
                 strain_pars['rel_imm'] = 0.5
+                strain_pars['rel_beta'] = 1.4
+                strain_pars['rel_severe_prob'] = 1.4
+                strain_pars['rel_death_prob'] = 2
                 self.strain_label = strain
 
             else:
