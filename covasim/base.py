@@ -840,8 +840,15 @@ class BasePeople(FlexPretty):
         newpeople = sc.dcp(self)
         for key in self.keys():
             print(key, len(newpeople[key]))
-            newpeople.set(key, np.concatenate([newpeople[key], people2[key]]), die=False) # Allow size mismatch
-            print(key, len(newpeople[key]))
+            npval = newpeople[key]
+            p2val = people2[key]
+            if npval.ndim == 1:
+                newpeople.set(key, np.concatenate([npval, p2val], axis=0), die=False) # Allow size mismatch
+            elif npval.ndim == 2:
+                print('Does not work, sorry')
+                newpeople.set(key, np.concatenate([npval, p2val], axis=1), die=False)
+                errormsg = f'Not sure how to combine arrays of {npval.ndim} dimensions for {key}'
+                raise NotImplementedError(errormsg)
 
         # Validate
         newpeople.pop_size += people2.pop_size
