@@ -200,7 +200,7 @@ def test_choose_w():
 
 def test_doubling_time():
 
-    sim = cv.Sim()
+    sim = cv.Sim(pop_size=1000)
     sim.run(verbose=0)
 
     d = sc.objdict()
