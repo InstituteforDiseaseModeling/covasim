@@ -129,22 +129,6 @@ def find_contacts(p1, p2, inds): # pragma: no cover
     return pairing_partners
 
 
-def update_strain_attributes(people):
-    for key in people.meta.person:
-        if 'imm' in key:  # everyone starts out with no immunity to either strain.
-            people[key] = np.append(people[key], np.full((1, people.pop_size), 0, dtype=cvd.default_float, order='F'), axis=0)
-
-    # Set strain states, which store info about which strain a person is exposed to
-    for key in people.meta.strain_states:
-        if 'by' in key:
-            people[key] = np.append(people[key], np.full((1, people.pop_size), False, dtype=bool, order='F'), axis=0)
-
-    for key in cvd.new_result_flows:
-        if 'by_strain' in key:
-            people.flows[key] = np.append(people.flows[key], np.full(1, 0, dtype=cvd.default_float), axis=0)
-    return
-
-
 
 #%% Sampling and seed methods
 

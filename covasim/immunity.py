@@ -3,21 +3,14 @@ Defines classes and methods for calculating immunity
 '''
 
 import numpy as np
-import pylab as pl
 import sciris as sc
-import datetime as dt
 from . import utils as cvu
 from . import defaults as cvd
-from . import base as cvb
-from . import parameters as cvpar
-from . import people as cvppl
-from collections import defaultdict
 
-__all__ = []
 
 # %% Define strain class
 
-__all__ += ['Strain', 'Vaccine']
+__all__ = ['Strain', 'Vaccine']
 
 
 class Strain():
@@ -381,7 +374,7 @@ def nab_to_efficacy(nab, ax):
 
     choices = {'sus': -0.4, 'symp': 0, 'sev': 0.4}
     if ax not in choices.keys():
-        errormsg = f'Choice provided not in list of choices'
+        errormsg = f'Choice {ax} not provided in list of choices'
         raise ValueError(errormsg)
 
     # Temporary parameter values, pending confirmation
@@ -396,6 +389,24 @@ def nab_to_efficacy(nab, ax):
 
 # %% Immunity methods
 __all__ += ['init_immunity', 'check_immunity']
+
+
+def update_strain_attributes(people):
+    for key in people.meta.person:
+        if 'imm' in key:  # everyone starts out with no immunity to either strain. # TODO: refactor
+            rows,cols = people[key].shape
+            people[key].resize(rows+1, cols, refcheck=False)
+
+    # Set strain states, which store info about which strain a person is exposed to
+    for key in people.meta.strain_states:
+        if 'by' in key: # TODO: refactor
+            rows,cols = people[key].shape
+            people[key].resize(rows+1, cols, refcheck=False)
+
+    for key in cvd.new_result_flows_by_strain:
+        rows, = people[key].shape
+        people.flows_strain[key].reshape(rows+1, refcheck=False)
+    return
 
 
 def init_immunity(sim, create=False):

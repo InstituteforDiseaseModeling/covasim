@@ -140,10 +140,13 @@ class Result(object):
         self.color = color # Default color
         if npts is None:
             npts = 0
+        npts = int(npts)
+
         if n_strains>0:
-            self.values = np.full((n_strains, npts), 0, dtype=cvd.result_float, order='F')
+            self.values = np.zeros((n_strains, npts), dtype=cvd.result_float)
         else:
-            self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
+            self.values = np.zeros(npts, dtype=cvd.result_float)
+
         self.low    = None
         self.high   = None
         return
@@ -838,15 +841,15 @@ class BasePeople(FlexPretty):
     def __add__(self, people2):
         ''' Combine two people arrays '''
         newpeople = sc.dcp(self)
-        for key in self.keys():
-            print(key, len(newpeople[key]))
+        keys = list(self.keys())
+        for key in keys:
             npval = newpeople[key]
             p2val = people2[key]
             if npval.ndim == 1:
                 newpeople.set(key, np.concatenate([npval, p2val], axis=0), die=False) # Allow size mismatch
             elif npval.ndim == 2:
-                print('Does not work, sorry')
                 newpeople.set(key, np.concatenate([npval, p2val], axis=1), die=False)
+            else:
                 errormsg = f'Not sure how to combine arrays of {npval.ndim} dimensions for {key}'
                 raise NotImplementedError(errormsg)
 

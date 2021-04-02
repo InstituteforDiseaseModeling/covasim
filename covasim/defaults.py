@@ -37,69 +37,85 @@ else:
 class PeopleMeta(sc.prettyobj):
     ''' For storing all the keys relating to a person and people '''
 
-    # Set the properties of a person
-    person = [
-        'uid',              # Int
-        'age',              # Float
-        'sex',              # Float
-        'symp_prob',        # Float
-        'severe_prob',      # Float
-        'crit_prob',        # Float
-        'death_prob',       # Float
-        'rel_trans',        # Float
-        'rel_sus',          # Float
-        'prior_symptoms',   # Float
-        'sus_imm',          # Float
-        'symp_imm',        # Float
-        'sev_imm',         # Float
-        'prior_symptoms',   # Float
-        'vaccinations',     # Number of doses given per person
-        'vaccine_source',   # index of vaccine that individual received
-        'init_NAb',         # Initial neutralization titre relative to convalescent plasma
-        'NAb',              # Current neutralization titre relative to convalescent plasma
-    ]
+    def __init__(self):
 
-    # Set the states that a person can be in: these are all booleans per person -- used in people.py
-    states = [
-        'susceptible',
-        'exposed',
-        'infectious',
-        'symptomatic',
-        'severe',
-        'critical',
-        'tested',
-        'diagnosed',
-        'dead',
-        'known_contact',
-        'quarantined',
-        'vaccinated'
-    ]
+        # Set the properties of a person
+        self.person = [
+            'uid',              # Int
+            'age',              # Float
+            'sex',              # Float
+            'symp_prob',        # Float
+            'severe_prob',      # Float
+            'crit_prob',        # Float
+            'death_prob',       # Float
+            'rel_trans',        # Float
+            'rel_sus',          # Float
+            'sus_imm',          # Float
+            'symp_imm',         # Float
+            'sev_imm',          # Float
+            'prior_symptoms',   # Float
+            'vaccinations',     # Number of doses given per person
+            'vaccine_source',   # index of vaccine that individual received
+            'init_NAb',         # Initial neutralization titre relative to convalescent plasma
+            'NAb',              # Current neutralization titre relative to convalescent plasma
+        ]
 
-    strain_states = [
-        'exposed_strain',
-        'exposed_by_strain',
-        'infectious_strain',
-        'infectious_by_strain',
-        'recovered_strain',
-    ]
+        # Set the states that a person can be in: these are all booleans per person -- used in people.py
+        self.states = [
+            'susceptible',
+            'exposed',
+            'infectious',
+            'symptomatic',
+            'severe',
+            'critical',
+            'tested',
+            'diagnosed',
+            'dead',
+            'known_contact',
+            'quarantined',
+            'vaccinated'
+        ]
 
-    # Set the dates various events took place: these are floats per person -- used in people.py
-    dates = [f'date_{state}' for state in states] # Convert each state into a date
-    dates.append('date_pos_test') # Store the date when a person tested which will come back positive
-    dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
-    dates.append('date_recovered') # Store the date when a person recovers
-    dates.append('date_vaccinated') # Store the date when a person is vaccinated
+        self.strain_states = [
+            'exposed_strain',
+            'exposed_by_strain',
+            'infectious_strain',
+            'infectious_by_strain',
+            'recovered_strain',
+        ]
 
-    # Duration of different states: these are floats per person -- used in people.py
-    durs = [
-        'dur_exp2inf',
-        'dur_inf2sym',
-        'dur_sym2sev',
-        'dur_sev2crit',
-        'dur_disease',
-    ]
+        # Set the dates various events took place: these are floats per person -- used in people.py
+        self.dates = [f'date_{state}' for state in self.states] # Convert each state into a date
+        self.dates.append('date_pos_test') # Store the date when a person tested which will come back positive
+        self.dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
+        self.dates.append('date_recovered') # Store the date when a person recovers
+        # self.dates.append('date_vaccinated') # Store the date when a person is vaccinated
 
-    all_states = person + states + strain_states + dates + durs
+        # Duration of different states: these are floats per person -- used in people.py
+        self.durs = [
+            'dur_exp2inf',
+            'dur_inf2sym',
+            'dur_sym2sev',
+            'dur_sev2crit',
+            'dur_disease',
+        ]
+
+        self.all_states = self.person + self.states + self.strain_states + self.dates + self.durs
+
+        # Validate
+        self.state_types = ['person', 'states', 'strain_states', 'dates', 'durs', 'all_states']
+        for state_type in self.state_types:
+            states = getattr(self, state_type)
+            n_states        = len(states)
+            n_unique_states = len(set(states))
+            if n_states != n_unique_states:
+                errormsg = f'In {state_type}, only {n_unique_states} of {n_states} state names are unique'
+                raise ValueError(errormsg)
+
+        return
+
+
+
 
 
 #%% Define other defaults
