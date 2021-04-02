@@ -549,6 +549,13 @@ class Sim(cvb.BaseSim):
         hosp_max = people.count('severe')   > self['n_beds_hosp'] if self['n_beds_hosp'] else False # Check for acute bed constraint
         icu_max  = people.count('critical') > self['n_beds_icu']  if self['n_beds_icu']  else False # Check for ICU bed constraint
 
+        # Randomly infect some people (imported infections)
+        if self['n_imports']:
+            n_imports = cvu.poisson(self['n_imports']/self.rescale_vec[self.t]) # Imported cases
+            if n_imports>0:
+                importation_inds = cvu.choose(max_n=len(people), n=n_imports)
+                people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
+
         # Add strains
         for strain in self['strains']:
             if isinstance(strain, cvimm.Strain):

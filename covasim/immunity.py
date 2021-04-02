@@ -24,6 +24,7 @@ class Strain():
         kwargs (dict):
 
     **Example**::
+
         b117    = cv.Strain('b117', days=10) # Make strain B117 active from day 10
         p1      = cv.Strain('p1', days=15) # Make strain P1 active from day 15
         my_var  = cv.Strain(strain={'rel_beta': 2.5}, strain_label='My strain', days=20) # Make a custom strain active from day 20
@@ -140,22 +141,23 @@ class Strain():
 
 class Vaccine():
     '''
-        Add a new vaccine to the sim (called by interventions.py vaccinate()
+    Add a new vaccine to the sim (called by interventions.py vaccinate()
 
-        stores number of doses for vaccine and a dictionary to pass to init_immunity for each dose
+    stores number of doses for vaccine and a dictionary to pass to init_immunity for each dose
 
-        Args:
-            vaccine (dict or str): dictionary of parameters specifying information about the vaccine or label for loading pre-defined vaccine
-            kwargs (dict):
+    Args:
+        vaccine (dict or str): dictionary of parameters specifying information about the vaccine or label for loading pre-defined vaccine
+        kwargs (dict):
 
-        **Example**::
-            moderna    = cv.Vaccine('moderna') # Create Moderna vaccine
-            pfizer     = cv.Vaccine('pfizer) # Create Pfizer vaccine
-            j&j        = cv.Vaccine('j&j') # Create J&J vaccine
-            az         = cv.Vaccine('az) # Create AstraZeneca vaccine
-            interventions += [cv.vaccinate(vaccines=[moderna, pfizer, j&j, az], days=[1, 10, 10, 30])] # Add them all to the sim
-            sim = cv.Sim(interventions=interventions)
-        '''
+    **Example**::
+
+        moderna    = cv.Vaccine('moderna') # Create Moderna vaccine
+        pfizer     = cv.Vaccine('pfizer) # Create Pfizer vaccine
+        j&j        = cv.Vaccine('j&j') # Create J&J vaccine
+        az         = cv.Vaccine('az) # Create AstraZeneca vaccine
+        interventions += [cv.vaccinate(vaccines=[moderna, pfizer, j&j, az], days=[1, 10, 10, 30])] # Add them all to the sim
+        sim = cv.Sim(interventions=interventions)
+    '''
 
     def __init__(self, vaccine=None):
 
@@ -365,9 +367,11 @@ def nab_to_efficacy(nab, ax):
     '''
     Convert NAb levels to immunity protection factors, using the functional form
     given in this paper: https://doi.org/10.1101/2021.03.09.21252641
-    Inputs:
+
+    Args:
         nab (arr): an array of NAb levels
         ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
+
     Returns:
         an array the same size as nab, containing the immunity protection factors for the specified axis
      '''
@@ -474,14 +478,16 @@ def init_immunity(sim, create=False):
 
 def check_immunity(people, strain, sus=True, inds=None):
     '''
-            Calculate people's immunity on this timestep from prior infections + vaccination
-            There are two fundamental sources of immunity:
-                   (1) prior exposure: degree of protection depends on strain, prior symptoms, and time since recovery
-                   (2) vaccination: degree of protection depends on strain, vaccine, and time since vaccination
+    Calculate people's immunity on this timestep from prior infections + vaccination
 
-            Gets called from sim before computing trans_sus, sus=True, inds=None
-            Gets called from people.infect() to calculate prog/trans, sus=False, inds= inds of people being infected
-            '''
+    There are two fundamental sources of immunity:
+
+           (1) prior exposure: degree of protection depends on strain, prior symptoms, and time since recovery
+           (2) vaccination: degree of protection depends on strain, vaccine, and time since vaccination
+
+    Gets called from sim before computing trans_sus, sus=True, inds=None
+    Gets called from people.infect() to calculate prog/trans, sus=False, inds= inds of people being infected
+    '''
     was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
     is_vacc = cvu.true(people.vaccinated)  # Vaccinated
     date_rec = people.date_recovered  # Date recovered
@@ -547,17 +553,19 @@ __all__ += ['pre_compute_waning']
 
 def pre_compute_waning(length, form='nab_decay', pars=None):
     '''
-    Process functional form and parameters into values
-    - 'nab_decay'       : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
-    - 'exp_decay'       : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
-    - 'logistic_decay'  : logistic decay (TODO fill in details)
-    - 'linear'          : linear decay (TODO fill in details)
-    - others TBC!
+    Process functional form and parameters into values:
+
+        - 'nab_decay'       : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
+        - 'exp_decay'       : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
+        - 'logistic_decay'  : logistic decay (TODO fill in details)
+        - 'linear'          : linear decay (TODO fill in details)
+        - others TBC!
 
     Args:
         length (float): length of array to return, i.e., for how long waning is calculated
         form (str):   the functional form to use
         pars (dict): passed to individual immunity functions
+
     Returns:
         array of length 'length' of values
     '''
