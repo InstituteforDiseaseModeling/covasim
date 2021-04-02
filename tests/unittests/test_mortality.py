@@ -45,7 +45,7 @@ class DiseaseMortalityTests(CovaTest):
             'new_deaths'
         )
         deaths_cumulative_channel = self.get_full_result_channel(
-            'new_deaths'
+            'cum_deaths'
         )
         death_channels = [
             deaths_at_timestep_channel,
@@ -60,7 +60,7 @@ class DiseaseMortalityTests(CovaTest):
                 pass
             pass
         cumulative_recoveries = self.get_day_final_channel_value(
-            ResKeys.recovered_cumulative
+            'cum_recovered'
         )
         self.assertGreaterEqual(cumulative_recoveries, 200,
                                 msg="Should be lots of recoveries")
@@ -77,10 +77,10 @@ class DiseaseMortalityTests(CovaTest):
         death_probs = [0.01, 0.05, 0.10, 0.15]
         old_cumulative_deaths = 0
         for death_prob in death_probs:
-            prob_dict = {D'rel_death_prob': death_prob}
+            prob_dict = {'rel_death_prob': death_prob}
             self.set_sim_prog_prob(prob_dict)
             self.run_sim()
-            cumulative_deaths = self.get_day_final_channel_value('new_deaths')
+            cumulative_deaths = self.get_day_final_channel_value('cum_deaths')
             self.assertGreaterEqual(cumulative_deaths, old_cumulative_deaths, msg="Should be more deaths with higer ratio")
             old_cumulative_deaths = cumulative_deaths
         pass
