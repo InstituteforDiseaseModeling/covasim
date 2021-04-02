@@ -29,7 +29,7 @@ class DiseaseTransmissionTests(CovaTest):
         """
         self.set_smallpop_hightransmission()
         beta_zero = {
-            TKeys.beta: 0
+            'beta': 0
         }
         self.run_sim(beta_zero)
         exposed_today_channel = self.get_full_result_channel(
