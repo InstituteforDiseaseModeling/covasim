@@ -64,18 +64,18 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Parameters used to calculate immunity
     pars['use_immunity']            = False # Whether to use dynamically calculated immunity
-    # pars['NAb_init']                = dict(dist='normal', par1= 0, par2= 2)  # Parameters for the distribution of the initial level of log2(NAb) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    # pars['NAb_decay']               = dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250, 'decay_decay_rate': 0.001}) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
-    # pars['NAb_kin']                 = None # Constructed during sim initialization using the NAb_decay parameters
-    # pars['NAb_boost']               = 2 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
-    # pars['NAb_eff']                 = {'slope': 3.433, 'n_50': {'sus': 0.5, 'symp': 0.1987, 'sev': 0.031}} # Parameters to map NAbs to efficacy
-    # pars['cross_immunity']          = 0.5   # Default cross-immunity protection factor that applies across different strains
-    # pars['rel_imm']                 = {} # Relative immunity from natural infection varies by symptoms
-    # pars['rel_imm']['asymptomatic'] = 0.7
-    # pars['rel_imm']['mild']         = 0.9
-    # pars['rel_imm']['severe']       = 1
-    # pars['immunity']                = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
-    # pars['vaccine_info']            = None  # Vaccine info in a more easily accessible format
+    pars['NAb_init']                = dict(dist='normal', par1= 0, par2= 2)  # Parameters for the distribution of the initial level of log2(NAb) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['NAb_decay']               = dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250, 'decay_decay_rate': 0.001}) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['NAb_kin']                 = None # Constructed during sim initialization using the NAb_decay parameters
+    pars['NAb_boost']               = 2 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
+    pars['NAb_eff']                 = {'slope': 3.433, 'n_50': {'sus': 0.5, 'symp': 0.1987, 'sev': 0.031}} # Parameters to map NAbs to efficacy
+    pars['cross_immunity']          = 0.5   # Default cross-immunity protection factor that applies across different strains
+    pars['rel_imm']                 = {} # Relative immunity from natural infection varies by symptoms
+    pars['rel_imm']['asymptomatic'] = 0.7
+    pars['rel_imm']['mild']         = 0.9
+    pars['rel_imm']['severe']       = 1
+    pars['immunity']                = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
+    pars['vaccine_info']            = None  # Vaccine info in a more easily accessible format
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
