@@ -217,8 +217,8 @@ class People(cvb.BasePeople):
         self.infectious[inds] = True
         self.infectious_strain[inds] = self.exposed_strain[inds]
         for strain in range(self.pars['n_strains']):
-            this_strain_inds = cvu.itrue(self.infectious_strain[inds] == strain, inds)
-            self.flows_strain['new_infectious_by_strain'][strain] += len(this_strain_inds)
+            n_this_strain_inds = (self.infectious_strain[inds] == strain).sum()
+            self.flows_strain['new_infectious_by_strain'][strain] += n_this_strain_inds
         return len(inds)
 
 
@@ -247,25 +247,31 @@ class People(cvb.BasePeople):
         ''' Check for recovery '''
         inds = self.check_inds(self.susceptible, self.date_recovered, filter_inds=self.is_exp)
 
-        # Before letting them recover, store information about the strain they had, store symptoms and pre-compute NAbs array
-        self.recovered_strain[inds] = self.exposed_strain[inds]
-        mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
-        severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
-        self.prior_symptoms[inds] = self.pars['rel_imm']['asymptomatic']  #
-        self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild']  #
-        self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']  #
-        if len(inds):
-            cvi.init_nab(self, inds, prior_inf=True)
-
         # Now reset all disease states
         self.exposed[inds]          = False
         self.infectious[inds]       = False
         self.symptomatic[inds]      = False
         self.severe[inds]           = False
         self.critical[inds]         = False
-        self.susceptible[inds]      = True
-        self.infectious_strain[inds]= np.nan
-        self.exposed_strain[inds]   = np.nan
+        self.recovered[inds]        = True
+
+        # Handle immunity aspects
+        if self.pars['use_immunity']:
+
+            # Before letting them recover, store information about the strain they had, store symptoms and pre-compute NAbs array
+            self.recovered_strain[inds] = self.exposed_strain[inds]
+            mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
+            severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
+
+            # Reset additional states
+            self.susceptible[inds]      = True
+            self.infectious_strain[inds] = np.nan
+            self.exposed_strain[inds]    = np.nan
+            self.prior_symptoms[inds] = self.pars['rel_imm']['asymptomatic']  #
+            self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild']  #
+            self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']  #
+            if len(inds):
+                cvi.init_nab(self, inds, prior_inf=True)
         return len(inds)
 
 
@@ -652,7 +658,7 @@ class People(cvb.BasePeople):
                     if lkey:
                         events.append((infection['date'], f'was infected with COVID by {infection["source"]} via the {llabel} layer'))
                     else:
-                        events.append((infection['date'], f'was infected with COVID as a seed infection'))
+                        events.append((infection['date'], 'was infected with COVID as a seed infection'))
 
                 if infection['source'] == uid:
                     x = len([a for a in self.infection_log if a['source'] == infection['target']])
