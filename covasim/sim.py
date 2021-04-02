@@ -29,16 +29,16 @@ class Sim(cvb.BaseSim):
     loading, exporting, etc.). Please see the BaseSim class for additional methods.
 
     Args:
-        pars     (dict):   parameters to modify from their default values
-        datafile (str/df): filename of (Excel, CSV) data file to load, or a pandas dataframe of the data
-        datacols (list):   list of column names of the data to load
-        label    (str):    the name of the simulation (useful to distinguish in batch runs)
-        simfile  (str):    the filename for this simulation, if it's saved (default: creation date)
-        popfile  (str):    the filename to load/save the population for this simulation
-        load_pop (bool):   whether to load the population from the named file
-        save_pop (bool):   whether to save the population to the named file
-        version  (str):    if supplied, use default parameters from this version of Covasim instead of the latest
-        kwargs   (dict):   passed to make_pars()
+        pars         (dict):   parameters to modify from their default values
+        datafile     (str/df): filename of (Excel, CSV) data file to load, or a pandas dataframe of the data
+        datacols     (list):   list of column names of the data to load
+        label        (str):    the name of the simulation (useful to distinguish in batch runs)
+        simfile      (str):    the filename for this simulation, if it's saved (default: creation date)
+        popfile      (str):    the filename to load/save the population for this simulation
+        load_pop     (bool):   whether to load the population from the named file
+        save_pop     (bool):   whether to save the population to the named file
+        version      (str):    if supplied, use default parameters from this version of Covasim instead of the latest
+        kwargs       (dict):   passed to make_pars()
 
     **Examples**::
 
