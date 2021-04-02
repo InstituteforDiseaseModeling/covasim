@@ -94,6 +94,7 @@ class ParsObj(FlexPretty):
     def update_pars(self, pars=None, create=False):
         '''
         Update internal dict with new pars.
+
         Args:
             pars (dict): the parameters to update (if None, do nothing)
             create (bool): if create is False, then raise a KeyNotFoundError if the key does not already exist
@@ -255,7 +256,7 @@ class BaseSim(ParsObj):
             if defaults is not None: # Defaults have been provided: we are now doing updates
                 pars = cvpar.listify_strain_pars(pars)  # Strain pars need to be lists
                 pars = cvpar.update_sub_key_pars(pars, defaults) # Update dict parameters by sub-key
-                combined_pars = sc.mergedicts(defaults, pars) # Now that subkeys have been updated, can merge the dicts together
+                pars = sc.mergedicts(defaults, pars) # Now that subkeys have been updated, can merge the dicts together
             super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
 
         return

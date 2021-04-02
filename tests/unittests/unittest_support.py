@@ -305,7 +305,6 @@ class CovaTest(unittest.TestCase):
         pass
 
     def set_everyone_infected(self, agent_count=1000):
-        Simkeys = TProps.ParKeys.SimKeys
         everyone_infected = {
             'pop_size': agent_count,
             'pop_infected': agent_count
