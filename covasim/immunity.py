@@ -41,7 +41,7 @@ class Strain():
 
         # Handle inputs
         self.days = days
-        self.n_imports = n_imports
+        self.n_imports = cvd.default_int(n_imports)
 
         # Strains can be defined in different ways: process these here
         self.strain_pars = self.parse_strain_pars(strain=strain, strain_label=strain_label)
@@ -88,12 +88,10 @@ class Strain():
             # Known parameters on Brazil variant
             elif strain in choices['p1']:
                 strain_pars = dict()
-                strain_pars['rel_beta'] = 1.4
-                strain_pars['rel_severe_prob'] = 1.7
-                strain_pars['rel_death_prob'] = 2.5
-                strain_pars['dur'] = dict()
-                strain_pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=3, par2=2)
                 strain_pars['rel_imm'] = 0.5
+                strain_pars['rel_beta'] = 1.4
+                strain_pars['rel_severe_prob'] = 1.4
+                strain_pars['rel_death_prob'] = 2
                 self.strain_label = strain
 
             else:
@@ -317,7 +315,7 @@ def init_nab(people, inds, prior_inf=True):
     no_prior_NAb_inds = np.setdiff1d(inds, prior_NAb_inds) # Find people without prior NAbs
 
     prior_NAb = people.NAb[prior_NAb_inds] # Array of NAb levels on this timestep for people with some NAbs
-    peak_NAb = people.init_NAb[prior_NAb_inds]
+
 
     # NAbs from infection
     if prior_inf:
@@ -331,7 +329,7 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_NAb_inds):
-            init_NAb = peak_NAb * NAb_boost
+            init_NAb = prior_NAb * NAb_boost
             people.init_NAb[prior_NAb_inds] = init_NAb
 
     # NAbs from a vaccine
@@ -344,7 +342,7 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
         if len(prior_NAb_inds):
-            init_NAb = peak_NAb * NAb_boost
+            init_NAb = prior_NAb * NAb_boost
             people.NAb[prior_NAb_inds] = init_NAb
 
     return
@@ -370,7 +368,7 @@ def check_nab(t, people, inds=None):
     return
 
 
-def nab_to_efficacy(nab, ax, slope, n_50):
+def nab_to_efficacy(nab, ax):
     '''
     Convert NAb levels to immunity protection factors, using the functional form
     given in this paper: https://doi.org/10.1101/2021.03.09.21252641
@@ -381,14 +379,17 @@ def nab_to_efficacy(nab, ax, slope, n_50):
         an array the same size as nab, containing the immunity protection factors for the specified axis
      '''
 
-    if ax not in ['sus', 'symp', 'sev']:
+    choices = {'sus': -0.4, 'symp': 0, 'sev': 0.4}
+    if ax not in choices.keys():
         errormsg = f'Choice provided not in list of choices'
         raise ValueError(errormsg)
 
-    n_50 = n_50[ax]
+    # Temporary parameter values, pending confirmation
+    n_50 = 0.2
+    slope = 2
+
     # put in here nab to efficacy mapping (logistic regression from fig 1a from https://doi.org/10.1101/2021.03.09.21252641)
-    efficacy = 1/(1+np.exp(-slope*(np.log10(nab) - np.log10(n_50)))) # from logistic regression in Khoury et al
-    # efficacy = 1/(1+np.exp(-(slope*np.log10(2))*(nab - np.log2(n_50)))) # from logistic regression in Khoury et al
+    efficacy = 1/(1+np.exp(-slope*(nab - n_50 + choices[ax]))) # from logistic regression computed in R using data from Khoury et al
     return efficacy
 
 
@@ -469,7 +470,6 @@ def check_immunity(people, strain, sus=True, inds=None):
     is_vacc = cvu.true(people.vaccinated)  # Vaccinated
     date_rec = people.date_recovered  # Date recovered
     immunity = people.pars['immunity'] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
-    nab_eff_pars = people.pars['NAb_eff']
 
     # If vaccines are present, extract relevant information about them
     vacc_present = len(is_vacc)
@@ -490,11 +490,11 @@ def check_immunity(people, strain, sus=True, inds=None):
             vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc])
             vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
             current_NAbs = people.NAb[is_sus_vacc]
-            people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale, 'sus', **nab_eff_pars)
+            people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale, 'sus')
 
         if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this strain
             current_NAbs = people.NAb[is_sus_was_inf_same]
-            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, strain], 'sus', **nab_eff_pars)
+            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, strain], 'sus')
 
         if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different strain
             prior_strains = people.recovered_strain[is_sus_was_inf_diff]
@@ -502,7 +502,7 @@ def check_immunity(people, strain, sus=True, inds=None):
             for unique_strain in prior_strains_unique:
                 unique_inds = is_sus_was_inf_diff[cvu.true(prior_strains == unique_strain)]
                 current_NAbs = people.NAb[unique_inds]
-                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, unique_strain], 'sus', **nab_eff_pars)
+                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, unique_strain], 'sus')
 
     else:
         ### PART 2:
@@ -514,13 +514,13 @@ def check_immunity(people, strain, sus=True, inds=None):
             vaccine_source = cvd.default_int(people.vaccine_source[is_inf_vacc])
             vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
             current_NAbs = people.NAb[is_inf_vacc]
-            people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['symp'][strain], 'symp', **nab_eff_pars)
-            people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['sev'][strain], 'sev', **nab_eff_pars)
+            people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['symp'][strain], 'symp')
+            people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['sev'][strain], 'sev')
 
         if len(was_inf):  # Immunity for reinfected people
             current_NAbs = people.NAb[was_inf]
-            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['symp'][strain], 'symp', **nab_eff_pars)
-            people.sev_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['sev'][strain], 'sev', **nab_eff_pars)
+            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['symp'][strain], 'symp')
+            people.sev_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['sev'][strain], 'sev')
 
     return
 
@@ -581,9 +581,9 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
 
 def nab_decay(length, init_decay_rate, init_decay_time, decay_decay_rate):
     '''
-    Returns an array of length 'length' containing the evaluated NAb decay
+    Returns an array of length 'length' containing the evaluated function NAb decay
     function at each point
-    Uses exponential decay, with the rate of exponential decay also set to exponentilly decay (!) after init_decay_time days
+    Uses exponential decay, with the rate of exponential decay also set to exponentilly decay (!) after 250 days
     '''
 
     f1  = lambda t, init_decay_rate: np.exp(-t*init_decay_rate)
