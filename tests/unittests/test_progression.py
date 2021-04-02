@@ -45,23 +45,23 @@ class DiseaseProgressionTests(CovaTest):
                 'n_days': sim_dur
             }
             self.run_sim(serial_delay)
-            infectious_channel = self.get_full_result_channel(
+            infectious_ch = self.get_full_result_ch(
                 ResKeys.infectious_at_timestep
             )
-            agents_on_infectious_day = infectious_channel[exposed_delay]
+            agents_on_infectious_day = infectious_ch[exposed_delay]
             if self.is_debugging:
                 print(f"Delay: {exposed_delay}")
                 print(f"Agents turned: {agents_on_infectious_day}")
-                print(f"Infectious channel {infectious_channel}")
+                print(f"Infectious channel {infectious_ch}")
                 pass
-            for t in range(len(infectious_channel)):
-                current_infectious = infectious_channel[t]
+            for t in range(len(infectious_ch)):
+                current_infectious = infectious_ch[t]
                 if t < exposed_delay:
                     self.assertEqual(current_infectious, 0,
                                      msg=f"All {total_agents} should turn infectious at t: {exposed_delay}"
                                          f" instead got {current_infectious} at t: {t}")
                 elif t == exposed_delay:
-                    self.assertEqual(infectious_channel[exposed_delay], total_agents,
+                    self.assertEqual(infectious_ch[exposed_delay], total_agents,
                                      msg=f"With stddev 0, all {total_agents} agents should turn infectious "
                                          f"on day {exposed_delay}, instead got {agents_on_infectious_day}. ")
         pass
@@ -89,15 +89,15 @@ class DiseaseProgressionTests(CovaTest):
                 par2=infectious_duration_stddev
             )
             self.run_sim()
-            recoveries_channel = self.get_full_result_channel(
+            recoveries_ch = self.get_full_result_ch(
                 TProps.ResKeys.recovered_at_timestep
             )
-            recoveries_on_recovery_day = recoveries_channel[recovery_day]
+            recoveries_on_recovery_day = recoveries_ch[recovery_day]
             if self.is_debugging:
                 print(f"Delay: {recovery_day}")
                 print(f"Agents turned: {recoveries_on_recovery_day}")
-                print(f"Recoveries channel {recoveries_channel}")
-            self.assertEqual(recoveries_channel[recovery_day], total_agents,
+                print(f"Recoveries channel {recoveries_ch}")
+            self.assertEqual(recoveries_ch[recovery_day], total_agents,
                              msg=f"With stddev 0, all {total_agents} agents should turn infectious "
                                  f"on day {recovery_day}, instead got {recoveries_on_recovery_day}. ")
 
@@ -121,11 +121,11 @@ class DiseaseProgressionTests(CovaTest):
                 par2=time_to_die_stddev
             )
             self.run_sim()
-            deaths_today_channel = self.get_full_result_channel(
+            deaths_today_ch = self.get_full_result_ch(
                 TProps.'new_deaths'
             )
-            for t in range(len(deaths_today_channel)):
-                curr_deaths = deaths_today_channel[t]
+            for t in range(len(deaths_today_ch)):
+                curr_deaths = deaths_today_ch[t]
                 if t < TEST_dur:
                     self.assertEqual(curr_deaths, 0,
                                      msg=f"With std 0, all {total_agents} agents should die on "

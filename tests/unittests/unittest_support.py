@@ -224,11 +224,11 @@ class CovaTest(unittest.TestCase):
     # endregion
 
     # region simulation results support
-    def get_full_result_channel(self, channel):
+    def get_full_result_ch(self, channel):
         result_data = self.simulation_result["results"][channel]
         return result_data
 
-    def get_day_zero_channel_value(self, channel='n_susceptible'):
+    def get_day_zero_ch_value(self, channel='n_susceptible'):
         """
 
         Args:
@@ -237,11 +237,11 @@ class CovaTest(unittest.TestCase):
         Returns: day zero value for channel
 
         """
-        result_data = self.get_full_result_channel(channel=channel)
+        result_data = self.get_full_result_ch(channel=channel)
         return result_data[0]
 
-    def get_day_final_channel_value(self, channel):
-        channel = self.get_full_result_channel(channel=channel)
+    def get_day_final_ch_value(self, channel):
+        channel = self.get_full_result_ch(channel=channel)
         return channel[-1]
     # endregion
 
@@ -448,8 +448,8 @@ class TestSupportTests(CovaTest):
         total_agents = 500
         self.set_everyone_infected(agent_count=total_agents)
         self.run_sim()
-        exposed_channel = TProps.ResKeys.exposed_at_timestep
-        day_0_exposed = self.get_day_zero_channel_value(exposed_channel)
+        exposed_ch = TProps.ResKeys.exposed_at_timestep
+        day_0_exposed = self.get_day_zero_ch_value(exposed_ch)
         self.assertEqual(day_0_exposed, total_agents)
         pass
 
@@ -466,22 +466,22 @@ class TestSupportTests(CovaTest):
 
         self.assertIsNotNone(self.sim)
         self.assertIsNotNone(self.sim_pars)
-        exposed_today_channel = self.get_full_result_channel(
+        exposed_today_ch = self.get_full_result_ch(
             TProps.ResKeys.exposed_at_timestep
         )
-        prev_exposed = exposed_today_channel[0]
+        prev_exposed = exposed_today_ch[0]
         for t in range(1, 10):
-            today_exposed = exposed_today_channel[t]
+            today_exposed = exposed_today_ch[t]
             self.assertGreaterEqual(today_exposed, prev_exposed,
                                     msg=f"The first 10 days should have increasing"
                                         f" exposure counts. At time {t}: {today_exposed} at"
                                         f" {t-1}: {prev_exposed}.")
             prev_exposed = today_exposed
             pass
-        infections_channel = self.get_full_result_channel(
+        infections_ch = self.get_full_result_ch(
             TProps.ResKeys.infections_at_timestep
         )
-        self.assertGreaterEqual(sum(infections_channel), 150,
+        self.assertGreaterEqual(sum(infections_ch), 150,
                                 msg="Should have at least 150 infections")
         pass
     pass

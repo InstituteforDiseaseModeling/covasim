@@ -41,21 +41,21 @@ class DiseaseMortalityTests(CovaTest):
         prob_dict = {'rel_death_prob': 0.0}
         self.set_sim_prog_prob(prob_dict)
         self.run_sim()
-        deaths_at_timestep_channel = self.get_full_result_channel(
+        deaths_at_timestep_ch = self.get_full_result_ch(
             'new_deaths'
         )
-        deaths_cumulative_channel = self.get_full_result_channel(
+        deaths_cumulative_ch = self.get_full_result_ch(
             'cum_deaths'
         )
-        death_channels = [
-            deaths_at_timestep_channel,
-            deaths_cumulative_channel
+        death_chs = [
+            deaths_at_timestep_ch,
+            deaths_cumulative_ch
         ]
-        for c in death_channels:
+        for c in death_chs:
             for t in range(len(c)):
                 self.assertEqual(c[t], 0, msg=f"There should be no deaths with critical to death probability 0.0. Channel {c} had bad data at t: {t}")
 
-        cumulative_recoveries = self.get_day_final_channel_value('cum_recovered')
+        cumulative_recoveries = self.get_day_final_ch_value('cum_recovered')
         self.assertGreaterEqual(cumulative_recoveries, 200, sg="Should be lots of recoveries")
         pass
 
@@ -73,7 +73,7 @@ class DiseaseMortalityTests(CovaTest):
             prob_dict = {'rel_death_prob': death_prob}
             self.set_sim_prog_prob(prob_dict)
             self.run_sim()
-            cum_deaths = self.get_day_final_channel_value('cum_deaths')
+            cum_deaths = self.get_day_final_ch_value('cum_deaths')
             self.assertGreaterEqual(cum_deaths, old_cum_deaths, msg="Should be more deaths with higer ratio")
             old_cum_deaths = cum_deaths
 

@@ -53,13 +53,13 @@ class SimulationParameterTests(CovaTest):
             TPKeys.initial_infected_count: 0
         }
         self.run_sim(pop_2_one_day)
-        pop_2_pop = self.get_day_zero_channel_value()
+        pop_2_pop = self.get_day_zero_ch_value()
         self.run_sim(pop_10_one_day)
-        pop_10_pop = self.get_day_zero_channel_value()
+        pop_10_pop = self.get_day_zero_ch_value()
         self.run_sim(pop_123_one_day)
-        pop_123_pop = self.get_day_zero_channel_value()
+        pop_123_pop = self.get_day_zero_ch_value()
         self.run_sim(pop_1234_one_day)
-        pop_1234_pop = self.get_day_zero_channel_value()
+        pop_1234_pop = self.get_day_zero_ch_value()
 
         self.assertEqual(pop_2_pop, pop_2_one_day[TPKeys.number_agents])
         self.assertEqual(pop_10_pop, pop_10_one_day[TPKeys.number_agents])
@@ -120,11 +120,11 @@ class SimulationParameterTests(CovaTest):
             TPKeys.number_simulated_days: 1
         }
         self.run_sim(scale_1_one_day)
-        scale_1_pop = self.get_day_zero_channel_value()
+        scale_1_pop = self.get_day_zero_ch_value()
         self.run_sim(scale_2_one_day)
-        scale_2_pop = self.get_day_zero_channel_value()
+        scale_2_pop = self.get_day_zero_ch_value()
         self.run_sim(scale_10_one_day)
-        scale_10_pop = self.get_day_zero_channel_value()
+        scale_10_pop = self.get_day_zero_ch_value()
         self.assertEqual(scale_2_pop, 2 * scale_1_pop)
         self.assertEqual(scale_10_pop, 10 * scale_1_pop)
         pass
@@ -146,17 +146,17 @@ class SimulationParameterTests(CovaTest):
             TPKeys.random_seed: 2
         }
         self.run_sim(seed_1_params)
-        infectious_seed_1_v1 = self.get_full_result_channel(
+        infectious_seed_1_v1 = self.get_full_result_ch(
             ResKeys.infectious_at_timestep
         )
-        exposures_seed_1_v1 = self.get_full_result_channel(
+        exposures_seed_1_v1 = self.get_full_result_ch(
             ResKeys.exposed_at_timestep
         )
         self.run_sim(seed_1_params)
-        infectious_seed_1_v2 = self.get_full_result_channel(
+        infectious_seed_1_v2 = self.get_full_result_ch(
             ResKeys.infectious_at_timestep
         )
-        exposures_seed_1_v2 = self.get_full_result_channel(
+        exposures_seed_1_v2 = self.get_full_result_ch(
             ResKeys.exposed_at_timestep
         )
         self.assertEqual(infectious_seed_1_v1, infectious_seed_1_v2,
@@ -166,10 +166,10 @@ class SimulationParameterTests(CovaTest):
                          msg=f"With random seed the same, these channels should"
                              f"be identical.")
         self.run_sim(seed_2_params)
-        infectious_seed_2 = self.get_full_result_channel(
+        infectious_seed_2 = self.get_full_result_ch(
             ResKeys.infectious_at_timestep
         )
-        exposures_seed_2 = self.get_full_result_channel(
+        exposures_seed_2 = self.get_full_result_ch(
             ResKeys.exposed_at_timestep
         )
         self.assertNotEqual(infectious_seed_1_v1, infectious_seed_2,
