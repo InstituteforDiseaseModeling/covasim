@@ -1,6 +1,7 @@
 {
   "summary": {
     "cum_infections": 9829.0,
+    "cum_reinfections": 0.0,
     "cum_infectious": 9688.0,
     "cum_tests": 10783.0,
     "cum_diagnoses": 3867.0,
@@ -10,7 +11,10 @@
     "cum_critical": 129.0,
     "cum_deaths": 30.0,
     "cum_quarantined": 4092.0,
+    "cum_vaccinations": 0.0,
+    "cum_vaccinated": 0.0,
     "new_infections": 14.0,
+    "new_reinfections": 0.0,
     "new_infectious": 47.0,
     "new_tests": 195.0,
     "new_diagnoses": 45.0,
@@ -20,6 +24,8 @@
     "new_critical": 2.0,
     "new_deaths": 3.0,
     "new_quarantined": 153.0,
+    "new_vaccinations": 0.0,
+    "new_vaccinated": 0.0,
     "n_susceptible": 10171.0,
     "n_exposed": 1248.0,
     "n_infectious": 1107.0,
@@ -28,6 +34,7 @@
     "n_critical": 64.0,
     "n_diagnosed": 3867.0,
     "n_quarantined": 3938.0,
+    "n_vaccinated": 0.0,
     "n_alive": 19970.0,
     "n_preinfectious": 141.0,
     "n_removed": 8581.0,
@@ -36,6 +43,10 @@
     "r_eff": 0.12219744828926875,
     "doubling_time": 30.0,
     "test_yield": 0.23076923076923078,
-    "rel_test_yield": 3.356889722743382
+    "rel_test_yield": 3.356889722743382,
+    "share_vaccinated": 0.0,
+    "pop_nabs": 0.0,
+    "pop_protection": 0.0,
+    "pop_symp_protection": 0.0
   }
 }
