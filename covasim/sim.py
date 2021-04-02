@@ -583,9 +583,15 @@ class Sim(cvb.BaseSim):
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         # Initialize temp storage for strain parameters
-        strain_keys  = ['rel_beta', 'asymp_factor']
-        strain_pars     = dict()
         ns = self['n_strains']  # Shorten number of strains
+
+        # Shorten additional useful parameters and indicators that aren't by strain
+        sus = people.susceptible
+        symp = people.symptomatic
+        diag = people.diagnosed
+        quar = people.quarantined
+        prel_trans = people.rel_trans
+        prel_sus = people.rel_sus
 
         # Check NAbs. Take set difference so we don't compute NAbs for anyone currently infected
         if self['use_immunity']:
@@ -602,10 +608,8 @@ class Sim(cvb.BaseSim):
                 cvimm.check_immunity(people, strain, sus=True)
 
             # Deal with strain parameters
-            for key in strain_keys:
-                strain_pars[key] = self['strain_pars'][key][strain]
-            beta = cvd.default_float(self['beta'] * strain_pars['rel_beta'])
-            asymp_factor = cvd.default_float(strain_pars['asymp_factor'])
+            beta = cvd.default_float(self['beta'] * self['strain_pars']['rel_beta'][strain])
+            asymp_factor = cvd.default_float(self['strain_pars']['asymp_factor'][strain])
 
             # Define indices for this strain
             # inf_by_this_strain = np.zeros(len(inf), dtype=bool)
@@ -619,20 +623,12 @@ class Sim(cvb.BaseSim):
                 print('hi!', np.mean(betas))
 
                 # Compute relative transmission and susceptibility
-                # Shorten additional useful parameters and indicators that aren't by strain
-                sus = people.susceptible
-                symp = people.symptomatic
-                diag = people.diagnosed
-                quar = people.quarantined
                 inf_by_this_strain = people.infectious * (people.infectious_strain == strain)#people.infectious
-                rel_trans = people.rel_trans[:]
-                rel_sus = people.rel_sus[:]
                 sus_imm = people.sus_imm[strain,:]
-
                 iso_factor = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
+                rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
                                                            diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
 
                 # Calculate actual transmission
