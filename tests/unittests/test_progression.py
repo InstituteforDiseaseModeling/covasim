@@ -76,7 +76,7 @@ class DiseaseProgressionTests(CovaTest):
         self.set_everyone_infectious_same_day(num_agents=total_agents,
                                               days_to_infectious=exposed_delay)
         prob_dict = {
-            ParamKeys.ProgKeys.ProbKeys.RelProbKeys.inf_to_symptomatic_probability: 0.0
+            ParamKeys.'rel_symp_prob': 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         infectious_durations = [1, 2, 5, 10, 20] # Keep values in order
@@ -107,7 +107,7 @@ class DiseaseProgressionTests(CovaTest):
         total_agents = 500
         self.set_everyone_critical(num_agents=500, constant_delay=0)
         prob_dict = {
-            ParamKeys.ProgKeys.ProbKeys.RelProbKeys.crt_to_death_probability: 1.0
+            ParamKeys.'rel_death_prob': 1.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
 

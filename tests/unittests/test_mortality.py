@@ -44,7 +44,7 @@ class DiseaseMortalityTests(CovaTest):
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
         prob_dict = {
-            DProgKeys.ProbKeys.RelProbKeys.crt_to_death_probability: 0.0
+            D'rel_death_prob': 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         self.run_sim()
@@ -84,7 +84,7 @@ class DiseaseMortalityTests(CovaTest):
         death_probs = [0.01, 0.05, 0.10, 0.15]
         old_cumulative_deaths = 0
         for death_prob in death_probs:
-            prob_dict = {DProgKeys.ProbKeys.RelProbKeys.crt_to_death_probability: death_prob}
+            prob_dict = {D'rel_death_prob': death_prob}
             self.set_simulation_prognosis_probability(prob_dict)
             self.run_sim()
             cumulative_deaths = self.get_day_final_channel_value(ResKeys.deaths_cumulative)
