@@ -9,13 +9,6 @@ from unittest_support import CovaTest
 
 
 class DiseaseMortalityTests(CovaTest):
-    def setUp(self):
-        super().setUp()
-        pass
-
-    def tearDown(self):
-        super().tearDown()
-        pass
 
     def test_default_death_prob_one(self):
         """
@@ -41,22 +34,14 @@ class DiseaseMortalityTests(CovaTest):
         prob_dict = {'rel_death_prob': 0.0}
         self.set_sim_prog_prob(prob_dict)
         self.run_sim()
-        deaths_at_timestep_ch = self.get_full_result_ch(
-            'new_deaths'
-        )
-        deaths_cumulative_ch = self.get_full_result_ch(
-            'cum_deaths'
-        )
-        death_chs = [
-            deaths_at_timestep_ch,
-            deaths_cumulative_ch
-        ]
+        deaths_at_timestep_ch = self.get_full_result_ch('new_deaths')
+        deaths_cumulative_ch = self.get_full_result_ch('cum_deaths')
+        death_chs = [deaths_at_timestep_ch,deaths_cumulative_ch]
         for c in death_chs:
             for t in range(len(c)):
                 self.assertEqual(c[t], 0, msg=f"There should be no deaths with critical to death probability 0.0. Channel {c} had bad data at t: {t}")
-
-        cumulative_recoveries = self.get_day_final_ch_value('cum_recovered')
-        self.assertGreaterEqual(cumulative_recoveries, 200, sg="Should be lots of recoveries")
+        cumulative_recoveries = self.get_day_final_ch_value('cum_recoveries')
+        self.assertGreaterEqual(cumulative_recoveries, 200, msg="Should be lots of recoveries")
         pass
 
     def test_default_death_prob_scaling(self):
