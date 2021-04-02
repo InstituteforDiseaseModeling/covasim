@@ -128,8 +128,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     reset_layer_pars(pars)
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
-    pars['strain_pars'] = {} # Populated just below
-    pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     # If version is specified, load old parameters
     if version is not None:
@@ -141,6 +139,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
         # Handle code change migration
         if sc.compareversions(version, '2.1.0') == -1 and 'migrate_lognormal' not in pars:
             cvm.migrate_lognormal(pars, verbose=pars['verbose'])
+
+    # Handle strain pars
+    if 'strain_pars' not in pars:
+        pars['strain_pars'] = {} # Populated just below
+        pars = listify_strain_pars(pars)  # Turn strain parameters into lists
 
     return pars
 

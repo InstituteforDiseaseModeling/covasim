@@ -238,6 +238,7 @@ def get_colors():
     c.vaccinations          = '#5c399c'
     c.vaccinated            = '#5c399c'
     c.recoveries            = '#9e1149'
+    c.recovered             = c.recoveries
     c.symptomatic           = '#c1ad71'
     c.severe                = '#c1981d'
     c.critical              = '#b86113'

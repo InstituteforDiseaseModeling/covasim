@@ -191,6 +191,20 @@ def migrate_lognormal(pars, revert=False, verbose=True):
     return
 
 
+def migrate_strains(pars, verbose=True):
+    '''
+    Small helper function to add necessary strain parameters.
+    '''
+    from . import parameters as cvp
+    pars['use_immunity'] = False
+    pars['n_strains'] = 1
+    pars['total_strains'] = 1
+    pars['strains'] = []
+    pars['strain_pars'] = {}
+    pars = cvp.listify_strain_pars(pars)
+    return
+
+
 def migrate(obj, update=True, verbose=True, die=False):
     '''
     Define migrations allowing compatibility between different versions of saved
@@ -244,11 +258,18 @@ def migrate(obj, update=True, verbose=True, die=False):
                     pass
 
         # Migration from <2.1.0 to 2.1.0
-        if sc.compareversions(sim.version, '2.1.0') == -1: # Migrate from <2.0 to 2.0
+        if sc.compareversions(sim.version, '2.1.0') == -1:
             if verbose:
                 print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
                 print('Note: updating lognormal stds to restore previous behavior; see v2.1.0 changelog for details')
             migrate_lognormal(sim.pars, verbose=verbose)
+
+        # Migration from <3.0.0 to 3.0.0
+        if sc.compareversions(sim.version, '3.0.0') == -1:
+            if verbose:
+                print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
+                print('Adding strain parameters')
+            migrate_strains(sim.pars, verbose=verbose)
 
     # Migrations for People
     elif isinstance(obj, cvb.BasePeople): # pragma: no cover

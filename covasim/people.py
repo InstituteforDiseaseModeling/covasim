@@ -386,8 +386,7 @@ class People(cvb.BasePeople):
         '''
 
         # Remove duplicates
-        unique = np.unique(inds, return_index=True)[1]
-        inds = inds[unique]
+        inds, unique = np.unique(inds, return_index=True)
         if source is not None:
             source = source[unique]
 

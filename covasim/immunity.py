@@ -411,6 +411,11 @@ def update_strain_attributes(people):
 
 def init_immunity(sim, create=False):
     ''' Initialize immunity matrices with all strains that will eventually be in the sim'''
+
+    # Don't use this function if immunity is turned off
+    if not sim['use_immunity']:
+        return
+
     ts = sim['total_strains']
     immunity = {}
 

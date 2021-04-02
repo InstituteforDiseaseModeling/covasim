@@ -290,9 +290,9 @@ class Sim(cvb.BaseSim):
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
 
         # Other variables
-        self.results['n_alive']             = init_res('Number of people alive', scale=False)
+        self.results['n_alive']             = init_res('Number alive', scale=False)
         self.results['n_preinfectious']     = init_res('Number preinfectious', scale=False, color=dcols.exposed)
-        # self.results['n_removed']           = init_res('Number removed', scale=False, color=dcols.recovered)
+        self.results['n_removed']           = init_res('Number removed', scale=False, color=dcols.recovered)
         self.results['prevalence']          = init_res('Prevalence', scale=False)
         self.results['incidence']           = init_res('Incidence', scale=False)
         self.results['r_eff']               = init_res('Effective reproduction number', scale=False)
@@ -809,11 +809,12 @@ class Sim(cvb.BaseSim):
         '''
         res = self.results
         self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
-        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] # Recalculate the number of susceptible people, not agents
+        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
         self.results['n_preinfectious'][:] = res['n_exposed'][:] - res['n_infectious'][:] # Calculate the number not yet infectious: exposed minus infectious
-#        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
+        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
+
         self.results['strain']['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
         self.results['strain']['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
         self.results['share_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the share vaccinated
@@ -865,7 +866,7 @@ class Sim(cvb.BaseSim):
         return self.results['doubling_time'].values
 
 
-    def compute_r_eff(self, method='infectious', smoothing=2, window=7):
+    def compute_r_eff(self, method='daily', smoothing=2, window=7):
         '''
         Effective reproduction number based on number of people each person infected.
 
