@@ -36,7 +36,7 @@ class PopulationTypeTests(CovaTest):
             self.assertGreater(these_results['cum_infections'][-1],
                                these_results['cum_infections'][0],
                                msg=f"Should see infections increase. Pop type {k} didn't do that.")
-            self.assertGreater(these_results[TProps.ResKeys.symptomatic_cumulative][-1],
-                               these_results[TProps.ResKeys.symptomatic_cumulative][0],
+            self.assertGreater(these_results['cum_symptomatic'][-1],
+                               these_results['cum_symptomatic'][0],
                                msg=f"Should see symptomatic counts increase. Pop type {k} didn't do that.")
 

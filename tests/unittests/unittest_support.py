@@ -17,33 +17,6 @@ from covasim import Sim, parameters, change_beta, test_prob, contact_tracing, se
 
 class TProps:
     class ParKeys:
-        class SimKeys:
-            number_agents = 'pop_size'
-            number_contacts = 'contacts'
-            population_scaling_factor = 'pop_scale'
-            population_rescaling = 'rescale'
-            population_type = 'pop_type'
-            initial_infected_count = 'pop_infected'
-            start_day = 'start_day'
-            number_simulated_days = 'n_days'
-            random_seed = 'rand_seed'
-            verbose = 'verbose'
-            enable_synthpops = 'usepopdata'
-            time_limit = 'timelimit'
-            quarantine_effectiveness = 'quar_factor'
-            # stopping_function = 'stop_func'
-            pass
-
-        class TransKeys:
-            beta = 'beta'
-            asymptomatic_fraction = 'asym_prop'
-            asymptomatic_transmission_multiplier = 'asym_factor'
-            diagnosis_transmission_factor = 'iso_factor'
-            contact_transmission_factor = 'cont_factor'
-            contacts_per_agent = 'contacts'
-            beta_population_specific = 'beta_pop'
-            contacts_population_specific = 'contacts_pop'
-            pass
 
         class ProgKeys:
             durations = "dur"
