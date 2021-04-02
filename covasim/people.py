@@ -391,7 +391,8 @@ class People(cvb.BasePeople):
         if source is not None:
             source = source[keep]
 
-        cvi.check_immunity(self, strain, sus=False, inds=inds)
+        if self.pars['use_immunity']:
+            cvi.check_immunity(self, strain, sus=False, inds=inds)
 
         # Deal with strain parameters
         infect_parkeys = ['dur', 'rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']

@@ -108,8 +108,9 @@ class Sim(cvb.BaseSim):
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
-        self.init_strains() # ...and the strains....
-        self.init_immunity() # ... and information about immunity/cross-immunity.
+        if self['use_immunity']:
+            self.init_strains() # ...and the strains....
+            self.init_immunity() # ... and information about immunity/cross-immunity.
         self.init_results() # After initializing the strain, create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.init_interventions()  # Initialize the interventions...
@@ -590,14 +591,16 @@ class Sim(cvb.BaseSim):
         ns = self['n_strains']  # Shorten number of strains
 
         # Check NAbs. Take set difference so we don't compute NAbs for anyone currently infected
-        has_nabs = np.setdiff1d(cvu.defined(people.init_NAb),cvu.false(sus))
-        if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
+        if self['use_immunity']:
+            has_nabs = np.setdiff1d(cvu.defined(people.init_NAb),cvu.false(sus))
+            if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
 
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
 
             # Check immunity
-            cvimm.check_immunity(people, strain, sus=True)
+            if self['use_immunity']:
+                cvimm.check_immunity(people, strain, sus=True)
 
             # Deal with strain parameters
             for key in strain_keys:
