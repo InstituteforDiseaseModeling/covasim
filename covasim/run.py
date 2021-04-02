@@ -954,8 +954,7 @@ class Scenarios(cvb.ParsObj):
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
 
-            defaults = {par: scen_sim[par] for par in cvd.strain_pars}
-            scen_sim.update_pars(scenpars, defaults=defaults, **kwargs)  # Update the parameters, if provided
+            scen_sim.update_pars(scenpars, **kwargs)  # Update the parameters, if provided
             if 'strains' in scenpars: # Process strains
                 scen_sim.init_strains()
                 scen_sim.init_immunity(create=True)
@@ -1337,22 +1336,22 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
         sim.set_seed()
 
     # If the noise parameter is not found, guess what it should be
-    # if noisepar is None:
-    #     noisepar = 'beta'
-    #     if noisepar not in sim.pars.keys():
-    #         raise sc.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
+    if noisepar is None:
+        noisepar = 'beta'
+        if noisepar not in sim.pars.keys():
+            raise sc.KeyNotFoundError(f'Noise parameter {noisepar} was not found in sim parameters')
 
     # Handle noise -- normally distributed fractional error
-    # noiseval = noise*np.random.normal()
-    # if noiseval > 0:
-    #     noisefactor = 1 + noiseval
-    # else:
-    #     noisefactor = 1/(1-noiseval)
-    # sim[noisepar] *= noisefactor
+    noiseval = noise*np.random.normal()
+    if noiseval > 0:
+        noisefactor = 1 + noiseval
+    else:
+        noisefactor = 1/(1-noiseval)
+    sim[noisepar] *= noisefactor
 
-    # if verbose>=1:
-    #     verb = 'Running' if do_run else 'Creating'
-    #     print(f'{verb} a simulation using seed={sim["rand_seed"]} and noise={noiseval}')
+    if verbose>=1:
+        verb = 'Running' if do_run else 'Creating'
+        print(f'{verb} a simulation using seed={sim["rand_seed"]} and noise={noiseval}')
 
     # Handle additional arguments
     for key,val in sim_args.items():
