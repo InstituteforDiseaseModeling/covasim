@@ -33,8 +33,8 @@ class PopulationTypeTests(CovaTest):
 
             self.assertEqual(day_0_susceptible + day_0_exposed, short_sample[TPKeys.number_agents],
                              msg=f"Day 0 population should be as specified in params. Poptype {k} was different.")
-            self.assertGreater(these_results[TProps.ResKeys.infections_cumulative][-1],
-                               these_results[TProps.ResKeys.infections_cumulative][0],
+            self.assertGreater(these_results['cum_infections'][-1],
+                               these_results['cum_infections'][0],
                                msg=f"Should see infections increase. Pop type {k} didn't do that.")
             self.assertGreater(these_results[TProps.ResKeys.symptomatic_cumulative][-1],
                                these_results[TProps.ResKeys.symptomatic_cumulative][0],
