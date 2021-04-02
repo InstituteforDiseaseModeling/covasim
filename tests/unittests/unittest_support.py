@@ -363,7 +363,7 @@ class CovaTest(unittest.TestCase):
         }
         self.set_simulation_prognosis_probability(prob_dict)
         test_config = {
-            TProps.ParKeys.SimKeys.number_simulated_days: num_days
+            'n_days': num_days
         }
         self.set_duration_distribution_parameters(
             duration_in_question=DurKeys.exposed_to_infectious,

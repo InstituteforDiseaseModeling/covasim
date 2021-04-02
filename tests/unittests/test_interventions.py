@@ -23,8 +23,8 @@ class InterventionTests(CovaTest):
     # region change beta
     def test_brutal_change_beta_intervention(self):
         params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 60
+            'pop_size': AGENT_COUNT,
+            'n_days': 60
         }
         self.set_sim_pars(params_dict=params)
         day_of_change = 30
@@ -54,8 +54,8 @@ class InterventionTests(CovaTest):
 
     def test_change_beta_days(self):
         params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 60
+            'pop_size': AGENT_COUNT,
+            'n_days': 60
         }
         self.set_sim_pars(params_dict=params)
         # Do a 0.0 intervention / 1.0 intervention on different days
@@ -102,8 +102,8 @@ class InterventionTests(CovaTest):
 
     def test_change_beta_multipliers(self):
         params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 40
+            'pop_size': AGENT_COUNT,
+            'n_days': 40
         }
         self.set_sim_pars(params_dict=params)
         day_of_change = 20
@@ -155,10 +155,10 @@ class InterventionTests(CovaTest):
         seed_list = range(0)
         for seed in seed_list:
             params = {
-                SimKeys.random_seed: seed,
-                SimKeys.number_agents: AGENT_COUNT,
-                SimKeys.number_simulated_days: 60,
-                SimKeys.initial_infected_count: initial_infected
+                'rand_seed': seed,
+                'pop_size': AGENT_COUNT,
+                'n_days': 60,
+                'pop_infected': initial_infected
             }
             if len(seed_list) > 1:
                 self.expected_result_filename = f"DEBUG_{self.id()}_{seed}.json"
@@ -226,10 +226,10 @@ class InterventionTests(CovaTest):
         seed_list = range(0)
         for seed in seed_list:
             params = {
-                SimKeys.random_seed: seed,
-                SimKeys.number_agents: AGENT_COUNT,
-                SimKeys.number_simulated_days: 60,
-                SimKeys.initial_infected_count: initial_infected
+                'rand_seed': seed,
+                'pop_size': AGENT_COUNT,
+                'n_days': 60,
+                'pop_infected': initial_infected
             }
             self.set_sim_pars(params_dict=params)
             if len(seed_list) > 1:
@@ -284,10 +284,10 @@ class InterventionTests(CovaTest):
         seed_list = range(0)
         for seed in seed_list:
             params = {
-                SimKeys.random_seed: seed,
-                SimKeys.number_agents: AGENT_COUNT,
-                SimKeys.number_simulated_days: 60,
-                SimKeys.initial_infected_count: initial_infected
+                'rand_seed': seed,
+                'pop_size': AGENT_COUNT,
+                'n_days': 60,
+                'pop_infected': initial_infected
             }
             if len(seed_list) > 1:
                 self.expected_result_filename = f"DEBUG_{self.id()}_{seed}.json"
@@ -415,8 +415,8 @@ class InterventionTests(CovaTest):
         self.is_debugging = False
         agent_count = AGENT_COUNT
         params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 60
+            'pop_size': AGENT_COUNT,
+            'n_days': 60
         }
         self.set_sim_pars(params_dict=params)
 
@@ -452,8 +452,8 @@ class InterventionTests(CovaTest):
     def test_test_prob_perfect_symptomatic(self):
         self.is_debugging = False
         params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 60
+            'pop_size': AGENT_COUNT,
+            'n_days': 60
         }
         self.set_sim_pars(params_dict=params)
 
@@ -486,8 +486,8 @@ class InterventionTests(CovaTest):
         self.is_debugging = False
         agent_count = AGENT_COUNT
         params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 60
+            'pop_size': AGENT_COUNT,
+            'n_days': 60
         }
         self.set_sim_pars(params_dict=params)
 
@@ -522,9 +522,9 @@ class InterventionTests(CovaTest):
         error_seeds = {}
         for seed in seed_list:
             params = {
-                SimKeys.random_seed: seed,
-                SimKeys.number_agents: AGENT_COUNT,
-                SimKeys.number_simulated_days: 31
+                'rand_seed': seed,
+                'pop_size': AGENT_COUNT,
+                'n_days': 31
             }
             self.set_sim_pars(params_dict=params)
 
@@ -605,8 +605,8 @@ class InterventionTests(CovaTest):
 
     def test_test_prob_symptomatic_prob_of_test(self):
         params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 31
+            'pop_size': AGENT_COUNT,
+            'n_days': 31
         }
         self.set_sim_pars(params_dict=params)
 
@@ -656,8 +656,8 @@ class InterventionTests(CovaTest):
     # region contact tracing
     def test_brutal_contact_tracing(self):
         params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 55
+            'pop_size': AGENT_COUNT,
+            'n_days': 55
         }
         self.set_sim_pars(params_dict=params)
 
@@ -717,11 +717,11 @@ class InterventionTests(CovaTest):
         self.is_debugging = False
         initial_infected = 10
         params = {
-            SimKeys.number_agents: AGENT_COUNT,
-            SimKeys.number_simulated_days: 60,
-            SimKeys.quarantine_effectiveness: {'c':0.0, 'h':0.0, 'w':0.0, 's':0.0},
+            'pop_size': AGENT_COUNT,
+            'n_days': 60,
+            'quar_factor': {'c':0.0, 'h':0.0, 'w':0.0, 's':0.0},
             'quar_period': 10,
-            SimKeys.initial_infected_count: initial_infected
+            'pop_infected': initial_infected
         }
         self.set_sim_pars(params_dict=params)
         sequence_days = [30, 40]

@@ -42,7 +42,7 @@ class DiseaseProgressionTests(CovaTest):
             }
             self.set_simulation_prognosis_probability(prob_dict)
             serial_delay = {
-                TProps.ParKeys.SimKeys.number_simulated_days: sim_dur
+                'n_days': sim_dur
             }
             self.run_sim(serial_delay)
             infectious_channel = self.get_full_result_channel(
