@@ -311,26 +311,6 @@ def absolute_prognoses(prognoses):
     return out
 
 
-def update_sub_key_pars(pars, default_pars):
-    ''' Helper function to update sub-keys of dict parameters '''
-    for par,val in pars.items():
-        if par in cvd.strain_pars: # It will be stored as a list
-            newval = val[0]
-            oldval = sc.promotetolist(default_pars[par])[0] # Might be a list or not!
-            if isinstance(newval, dict):  # Update the dictionary, don't just overwrite it
-                if par == 'imm_pars':
-                    for type, valoftype in newval.items():
-                        if valoftype['form'] == oldval[type]['form']:
-                            pars[par][0][type] = sc.mergenested(oldval[type], valoftype)
-                        else:
-                            pars[par][0][type] = valoftype
-                else:
-                    pars[par] = sc.promotetolist(sc.mergenested(oldval, newval))
-        else:
-            pars[par] = val
-    return pars
-
-
 def listify_strain_pars(pars):
     ''' Helper function to turn strain parameters into lists '''
     for sp in cvd.strain_pars:
