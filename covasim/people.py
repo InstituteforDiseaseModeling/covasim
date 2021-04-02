@@ -245,7 +245,7 @@ class People(cvb.BasePeople):
 
     def check_recovery(self):
         ''' Check for recovery '''
-        inds = self.check_inds(self.susceptible, self.date_recovered, filter_inds=self.is_exp)
+        inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=self.is_exp) # TODO TEMP!!!!
 
         # Now reset all disease states
         self.exposed[inds]          = False
@@ -283,7 +283,7 @@ class People(cvb.BasePeople):
         self.symptomatic[inds] = False
         self.severe[inds]      = False
         self.critical[inds]    = False
-        self.susceptible[inds]   = False
+        self.recovered[inds]   = False
         self.dead[inds]        = True
         self.infectious_strain[inds]= np.nan
         self.exposed_strain[inds]   = np.nan
@@ -321,7 +321,7 @@ class People(cvb.BasePeople):
         for ind,end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
                 self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-            elif not (self.dead[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here
+            elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here # elif not (self.dead[ind] or self.diagnosed[ind]):
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
                 self.date_end_quarantine[ind] = end_day
@@ -418,7 +418,7 @@ class People(cvb.BasePeople):
         self.flows['new_infections'] += len(inds)
         self.flows_strain['new_infections_by_strain'][strain] += len(inds)
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
-        self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery
+        #self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery # TODO CK
 
         # Record transmissions
         for i, target in enumerate(inds):
@@ -430,6 +430,7 @@ class People(cvb.BasePeople):
 
         # Use prognosis probabilities to determine what happens to them
         symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.symp_imm[strain, inds]) # Calculate their actual probability of being symptomatic
+        # print(self.symp_imm[strain, inds])
         is_symp = cvu.binomial_arr(symp_probs) # Determine if they develop symptoms
         symp_inds = inds[is_symp]
         asymp_inds = inds[~is_symp] # Asymptomatic
@@ -444,6 +445,7 @@ class People(cvb.BasePeople):
         self.dur_inf2sym[symp_inds] = cvu.sample(**durpars['inf2sym'], size=n_symp_inds) # Store how long this person took to develop symptoms
         self.date_symptomatic[symp_inds] = self.date_infectious[symp_inds] + self.dur_inf2sym[symp_inds] # Date they become symptomatic
         sev_probs = infect_pars['rel_severe_prob'] * self.severe_prob[symp_inds]*(1-self.sev_imm[strain, symp_inds]) # Probability of these people being severe
+        # print(self.sev_imm[strain, inds])
         is_sev = cvu.binomial_arr(sev_probs) # See if they're a severe or mild case
         sev_inds = symp_inds[is_sev]
         mild_inds = symp_inds[~is_sev] # Not severe

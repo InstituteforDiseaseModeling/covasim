@@ -1055,7 +1055,15 @@ class BasePeople(FlexPretty):
         ''' Method to create person from the people '''
         p = Person()
         for key in self.meta.all_states:
-            setattr(p, key, self[key][ind])
+            data = self[key]
+            if data.ndim == 1:
+                val = data[ind]
+            elif data.ndim == 2:
+                val = data[:,ind]
+            else:
+                errormsg = f'Cannot extract data from {key}: unexpected dimensionality ({data.ndim})'
+                raise ValueError(errormsg)
+            setattr(p, key, val)
 
         contacts = {}
         for lkey, layer in self.contacts.items():

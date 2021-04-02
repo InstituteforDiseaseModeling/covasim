@@ -87,7 +87,7 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     return rel_trans, rel_sus
 
 
-@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=cache, parallel=rand_parallel)
+# @nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=cache, parallel=rand_parallel)
 def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus): # pragma: no cover
     '''
     Compute who infects whom
@@ -107,6 +107,8 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     transmissions    = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
     source_inds      = nonzero_sources[transmissions]
     target_inds      = nonzero_targets[transmissions] # Filter the targets on the actual infections
+    print(np.random.random())
+    print(target_inds)
     return source_inds, target_inds
 
 
