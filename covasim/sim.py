@@ -609,8 +609,9 @@ class Sim(cvb.BaseSim):
             asymp_factor = cvd.default_float(strain_pars['asymp_factor'])
 
             # Define indices for this strain
-            inf_by_this_strain = sc.dcp(inf)
-            inf_by_this_strain[cvu.false(people.infectious_strain == strain)] = False
+            # inf_by_this_strain = np.zeros(len(inf), dtype=bool)
+            # inf_by_this_strain[cvu.true(people.infectious_strain == strain)] = True
+            inf_by_this_strain = people.infectious_strain == strain
 
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
@@ -627,7 +628,6 @@ class Sim(cvb.BaseSim):
                 beta_layer = cvd.default_float(self['beta_layer'][lkey])
                 rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
                                                            diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
-                rel_sus = np.float32(rel_sus) # TODO: why doesn't this get returned in this format already?
 
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
