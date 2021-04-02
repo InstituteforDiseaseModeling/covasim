@@ -5,7 +5,7 @@ Tests of simulation parameters from
 
 import covasim as cv
 import unittest
-from unittest_support import CovaTest, TProps
+from unittest_support import CovaTest
 
 
 class DiseaseMortalityTests(CovaTest):
@@ -53,17 +53,10 @@ class DiseaseMortalityTests(CovaTest):
         ]
         for c in death_channels:
             for t in range(len(c)):
-                self.assertEqual(c[t], 0,
-                                 msg=f"There should be no deaths"
-                                     f" with critical to death probability 0.0. Channel {c} had"
-                                     f" bad data at t: {t}")
-                pass
-            pass
-        cumulative_recoveries = self.get_day_final_channel_value(
-            'cum_recovered'
-        )
-        self.assertGreaterEqual(cumulative_recoveries, 200,
-                                msg="Should be lots of recoveries")
+                self.assertEqual(c[t], 0, msg=f"There should be no deaths with critical to death probability 0.0. Channel {c} had bad data at t: {t}")
+
+        cumulative_recoveries = self.get_day_final_channel_value('cum_recovered')
+        self.assertGreaterEqual(cumulative_recoveries, 200, sg="Should be lots of recoveries")
         pass
 
     def test_default_death_prob_scaling(self):
@@ -83,7 +76,6 @@ class DiseaseMortalityTests(CovaTest):
             cumulative_deaths = self.get_day_final_channel_value('cum_deaths')
             self.assertGreaterEqual(cumulative_deaths, old_cumulative_deaths, msg="Should be more deaths with higer ratio")
             old_cumulative_deaths = cumulative_deaths
-        pass
 
 # Run unit tests if called as a script
 if __name__ == '__main__':

@@ -228,7 +228,7 @@ class CovaTest(unittest.TestCase):
         result_data = self.simulation_result["results"][channel]
         return result_data
 
-    def get_day_zero_channel_value(self, channel=TProps.ResKeys.susceptible_at_timestep):
+    def get_day_zero_channel_value(self, channel='n_susceptible'):
         """
 
         Args:
@@ -313,8 +313,6 @@ class CovaTest(unittest.TestCase):
         self.set_sim_pars(params_dict=everyone_infected)
         pass
 
-    DurKeys = TProps.ParKeys.ProgKeys.DurKeys
-
     def set_everyone_infectious_same_day(self, num_agents, days_to_infectious=1, num_days=60):
         """
         Args:
@@ -369,10 +367,10 @@ class CovaTest(unittest.TestCase):
         ProbKeys = TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys
         self.set_everyone_infectious_same_day(num_agents=num_agents)
         prob_dict = {
-            ProbKeys.inf_to_symptomatic_probability: 1,
-            ProbKeys.sym_to_severe_probability: 1,
-            ProbKeys.sev_to_critical_probability: 1,
-            ProbKeys.crt_to_death_probability: 1
+            'rel_symp_prob': 1,
+            'rel_severe_prob': 1,
+            'rel_crit_prob': 1,
+            'rel_death_prob': 1
         }
         self.set_sim_prog_prob(prob_dict)
         pass
