@@ -68,14 +68,14 @@ class DiseaseMortalityTests(CovaTest):
         total_agents = 500
         self.everyone_dies(num_agents=total_agents)
         death_probs = [0.01, 0.05, 0.10, 0.15]
-        old_cumulative_deaths = 0
+        old_cum_deaths = 0
         for death_prob in death_probs:
             prob_dict = {'rel_death_prob': death_prob}
             self.set_sim_prog_prob(prob_dict)
             self.run_sim()
-            cumulative_deaths = self.get_day_final_channel_value('cum_deaths')
-            self.assertGreaterEqual(cumulative_deaths, old_cumulative_deaths, msg="Should be more deaths with higer ratio")
-            old_cumulative_deaths = cumulative_deaths
+            cum_deaths = self.get_day_final_channel_value('cum_deaths')
+            self.assertGreaterEqual(cum_deaths, old_cum_deaths, msg="Should be more deaths with higer ratio")
+            old_cum_deaths = cum_deaths
 
 # Run unit tests if called as a script
 if __name__ == '__main__':
