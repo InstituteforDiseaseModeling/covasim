@@ -4,7 +4,7 @@ Tests of simulation parameters from
 """
 import unittest
 
-from unittest_support_classes import CovaTest, TProps
+from unittest_support import CovaTest, TProps
 
 TPKeys = TProps.ParKeys.SimKeys
 ResKeys = TProps.ResKeys

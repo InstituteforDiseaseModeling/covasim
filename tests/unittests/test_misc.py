@@ -4,7 +4,7 @@
 
 import unittest
 import pandas as pd
-from unittest_support_classes import CovaTest
+from unittest_support import CovaTest
 from covasim import Sim, parameters
 import os
 

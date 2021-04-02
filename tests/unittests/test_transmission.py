@@ -3,7 +3,7 @@ Tests of simulation parameters from
 ../../covasim/README.md
 """
 
-from unittest_support_classes import CovaTest, TProps
+from unittest_support import CovaTest, TProps
 
 TKeys = TProps.ParKeys.TransKeys
 Hightrans = TProps.SpecialSims.Hightransmission

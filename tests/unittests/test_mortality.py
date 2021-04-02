@@ -5,7 +5,7 @@ Tests of simulation parameters from
 
 import covasim as cv
 import unittest
-from unittest_support_classes import CovaTest, TProps
+from unittest_support import CovaTest, TProps
 
 DProgKeys = TProps.ParKeys.ProgKeys
 TransKeys = TProps.ParKeys.TransKeys

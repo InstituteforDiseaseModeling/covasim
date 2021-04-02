@@ -1,5 +1,5 @@
-from unittest_support_classes import CovaTest
-from unittest_support_classes import TProps
+from unittest_support import CovaTest
+from unittest_support import TProps
 from math import sqrt
 import json
 import numpy as np
