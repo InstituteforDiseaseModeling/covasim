@@ -79,4 +79,5 @@ class DiseaseMortalityTests(CovaTest):
 
 # Run unit tests if called as a script
 if __name__ == '__main__':
+    unittest.TestCase.run = lambda self,*args,**kw: unittest.TestCase.debug(self)
     unittest.main()

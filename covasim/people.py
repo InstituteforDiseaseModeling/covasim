@@ -401,9 +401,12 @@ class People(cvb.BasePeople):
 
         # Deal with strain parameters
         infect_parkeys = ['dur', 'rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
-        infect_pars = dict()
-        for key in infect_parkeys:
-            infect_pars[key] = self.pars['strain_pars'][key][strain]
+        if not strain: # Use defaults for wild type
+            infect_pars = self.pars
+        else:
+            infect_pars = dict()
+            for key in infect_parkeys:
+                infect_pars[key] = self.pars['strain_pars'][key][strain]
 
         n_infections = len(inds)
         durpars      = infect_pars['dur']

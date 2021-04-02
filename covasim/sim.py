@@ -600,8 +600,13 @@ class Sim(cvb.BaseSim):
                 cvimm.check_immunity(people, strain, sus=True)
 
             # Deal with strain parameters
-            beta = cvd.default_float(self['beta'] * self['strain_pars']['rel_beta'][strain])
-            asymp_factor = cvd.default_float(self['strain_pars']['asymp_factor'][strain])
+            if not strain:
+                rel_beta = self['rel_beta']
+                asymp_factor = self['asymp_factor']
+            else:
+                rel_beta = self['strain_pars']['rel_beta'][strain]
+                asymp_factor = cvd.default_float(self['strain_pars']['asymp_factor'][strain])
+            beta = cvd.default_float(self['beta'] * rel_beta)
 
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
