@@ -332,7 +332,7 @@ class CovaTest(unittest.TestCase):
         """
         self.set_everyone_infected(agent_count=num_agents)
         prob_dict = {
-            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.inf_to_symptomatic_probability: 0
+            'rel_symp_prob': 0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         test_config = {
@@ -356,8 +356,8 @@ class CovaTest(unittest.TestCase):
         self.set_everyone_infectious_same_day(num_agents=num_agents,
                                               days_to_infectious=0)
         prob_dict = {
-            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.inf_to_symptomatic_probability: 1.0,
-            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.sym_to_severe_probability: 0
+            'rel_symp_prob': 1.0,
+            'rel_severe_prob': 0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
@@ -388,8 +388,8 @@ class CovaTest(unittest.TestCase):
     def set_everyone_severe(self, num_agents, constant_delay:int=None):
         self.set_everyone_symptomatic(num_agents=num_agents, constant_delay=constant_delay)
         prob_dict = {
-            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.sym_to_severe_probability: 1.0,
-            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.sev_to_critical_probability: 0.0
+            'rel_severe_prob': 1.0,
+            'rel_crit_prob': 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:
@@ -406,8 +406,8 @@ class CovaTest(unittest.TestCase):
         """
         self.set_everyone_severe(num_agents=num_agents, constant_delay=constant_delay)
         prob_dict = {
-            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.sev_to_critical_probability: 1.0,
-            TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.crt_to_death_probability: 0.0
+            'rel_crit_prob': 1.0,
+            'rel_death_prob': 0.0
         }
         self.set_simulation_prognosis_probability(prob_dict)
         if constant_delay is not None:

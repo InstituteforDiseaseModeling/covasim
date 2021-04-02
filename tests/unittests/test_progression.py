@@ -38,7 +38,7 @@ class DiseaseProgressionTests(CovaTest):
                 par2=std_dev
             )
             prob_dict = {
-                TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys.inf_to_symptomatic_probability: 0
+                'rel_symp_prob': 0
             }
             self.set_simulation_prognosis_probability(prob_dict)
             serial_delay = {
