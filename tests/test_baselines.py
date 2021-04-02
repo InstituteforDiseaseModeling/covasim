@@ -186,9 +186,9 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    # json = test_benchmark(do_save=do_save) # Run this first so benchmarking is available even if results are different
+    json = test_benchmark(do_save=do_save) # Run this first so benchmarking is available even if results are different
     new  = test_baseline()
-    # make_sim(do_plot=do_plot)
+    make_sim(do_plot=do_plot)
 
     print('\n'*2)
     sc.toc(T)
