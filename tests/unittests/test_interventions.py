@@ -4,7 +4,7 @@ import covasim as cv
 from unittest_support import CovaTest
 import unittest
 
-AGENT_COUNT = 500
+AGENT_COUNT = 1000
 
 class InterventionTests(CovaTest):
 
@@ -207,7 +207,7 @@ class InterventionTests(CovaTest):
         for d in pre_test_days:
             self.assertEqual(new_tests[d], 0, msg=f"Should be no testing before day {start_day}. Got some at {d}")
             self.assertEqual(new_diagnoses[d], 0, msg=f"Should be no diagnoses before day {start_day}. Got some at {d}")
-        if self.is_debugging:
+        if 1:#self.is_debugging:
             print("DEBUGGING")
             print(f"Start day is {start_day}")
             print(f"new tests before, on, and after start day: {new_tests[start_day-1:start_day+2]}")
@@ -251,17 +251,11 @@ class InterventionTests(CovaTest):
                                         test_delay=test_delay,
                                         start_day=start_day)
         self.run_sim()
-        symptomatic_count_ch = self.get_full_result_ch(
-            'cum_symptomatic'
-        )
-        infectious_count_ch = self.get_full_result_ch(
-            'cum_infectious'
-        )
+        symptomatic_count_ch = self.get_full_result_ch('n_symptomatic')
+        infectious_count_ch = self.get_full_result_ch('n_infectious')
         population_ch = [agent_count] * len(symptomatic_count_ch)
-        asymptomatic_infectious_count_ch = list(np.subtract(np.array(infectious_count_ch),
-                                                      np.array(symptomatic_count_ch)))
-        asymptomatic_population_count_ch = list(np.subtract(np.array(population_ch),
-                                                                 np.array(symptomatic_count_ch)))
+        asymptomatic_infectious_count_ch = list(np.subtract(np.array(infectious_count_ch), np.array(symptomatic_count_ch)))
+        asymptomatic_population_count_ch = list(np.subtract(np.array(population_ch), np.array(symptomatic_count_ch)))
 
         self.verify_perfect_test_prob(start_day=start_day,
                                       test_delay=test_delay,
@@ -288,7 +282,7 @@ class InterventionTests(CovaTest):
                                         test_delay=test_delay,
                                         start_day=start_day)
         self.run_sim()
-        symptomatic_count_ch = self.get_full_result_ch('cum_symptomatic')
+        symptomatic_count_ch = self.get_full_result_ch('n_symptomatic')
         symptomatic_new_ch = self.get_full_result_ch('new_symptomatic')
         self.verify_perfect_test_prob(start_day=start_day,
                                       test_delay=test_delay,
@@ -319,9 +313,7 @@ class InterventionTests(CovaTest):
                                         test_delay=test_delay,
                                         start_day=start_day)
         self.run_sim()
-        infectious_count_ch = self.get_full_result_ch(
-            'cum_infectious'
-        )
+        infectious_count_ch = self.get_full_result_ch('n_infectious')
         population_ch = [agent_count] * len(infectious_count_ch)
 
         self.verify_perfect_test_prob(start_day=start_day,
@@ -427,12 +419,8 @@ class InterventionTests(CovaTest):
                                             test_delay=test_delay,
                                             start_day=start_day)
             self.run_sim()
-            first_day_tests = self.get_full_result_ch(
-                channel='new_tests'
-            )[start_day]
-            target_count = self.get_full_result_ch(
-                'new_symptomatic'
-            )[start_day]
+            first_day_tests = self.get_full_result_ch(channel='new_tests')[start_day]
+            target_count = self.get_full_result_ch('n_symptomatic')[start_day]
             ideal_test_count = target_count * s_p_o_t
             standard_deviation = np.sqrt(s_p_o_t * (1 - s_p_o_t) * target_count)
             # 99.7% confidence interval
