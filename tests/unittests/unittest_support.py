@@ -148,7 +148,7 @@ class CovaTest(unittest.TestCase):
             self.sim_pars.update(params_dict)
         pass
 
-    def set_simulation_prognosis_probability(self, params_dict):
+    def set_sim_prog_prob(self, params_dict):
         """
         Allows for testing prognoses probability as absolute rather than relative.
         NOTE: You can only call this once per test or you will overwrite your stuff.
@@ -326,7 +326,7 @@ class CovaTest(unittest.TestCase):
         prob_dict = {
             'rel_symp_prob': 0
         }
-        self.set_simulation_prognosis_probability(prob_dict)
+        self.set_sim_prog_prob(prob_dict)
         test_config = {
             'n_days': num_days
         }
@@ -351,7 +351,7 @@ class CovaTest(unittest.TestCase):
             'rel_symp_prob': 1.0,
             'rel_severe_prob': 0
         }
-        self.set_simulation_prognosis_probability(prob_dict)
+        self.set_sim_prog_prob(prob_dict)
         if constant_delay is not None:
             self.set_duration_distribution_parameters(
                 duration_in_question='inf2sym',
@@ -374,7 +374,7 @@ class CovaTest(unittest.TestCase):
             ProbKeys.sev_to_critical_probability: 1,
             ProbKeys.crt_to_death_probability: 1
         }
-        self.set_simulation_prognosis_probability(prob_dict)
+        self.set_sim_prog_prob(prob_dict)
         pass
 
     def set_everyone_severe(self, num_agents, constant_delay:int=None):
@@ -383,7 +383,7 @@ class CovaTest(unittest.TestCase):
             'rel_severe_prob': 1.0,
             'rel_crit_prob': 0.0
         }
-        self.set_simulation_prognosis_probability(prob_dict)
+        self.set_sim_prog_prob(prob_dict)
         if constant_delay is not None:
             self.set_duration_distribution_parameters(
                 duration_in_question='sym2sev',
@@ -401,7 +401,7 @@ class CovaTest(unittest.TestCase):
             'rel_crit_prob': 1.0,
             'rel_death_prob': 0.0
         }
-        self.set_simulation_prognosis_probability(prob_dict)
+        self.set_sim_prog_prob(prob_dict)
         if constant_delay is not None:
             self.set_duration_distribution_parameters(
                 duration_in_question='sev2crit',

@@ -40,7 +40,7 @@ class DiseaseProgressionTests(CovaTest):
             prob_dict = {
                 'rel_symp_prob': 0
             }
-            self.set_simulation_prognosis_probability(prob_dict)
+            self.set_sim_prog_prob(prob_dict)
             serial_delay = {
                 'n_days': sim_dur
             }
@@ -78,7 +78,7 @@ class DiseaseProgressionTests(CovaTest):
         prob_dict = {
             ParamKeys.'rel_symp_prob': 0.0
         }
-        self.set_simulation_prognosis_probability(prob_dict)
+        self.set_sim_prog_prob(prob_dict)
         infectious_durations = [1, 2, 5, 10, 20] # Keep values in order
         infectious_duration_stddev = 0
         for TEST_dur in infectious_durations:
@@ -109,7 +109,7 @@ class DiseaseProgressionTests(CovaTest):
         prob_dict = {
             ParamKeys.'rel_death_prob': 1.0
         }
-        self.set_simulation_prognosis_probability(prob_dict)
+        self.set_sim_prog_prob(prob_dict)
 
         time_to_die_durations = [1, 2, 5, 10, 20]
         time_to_die_stddev = 0

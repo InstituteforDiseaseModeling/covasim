@@ -39,7 +39,7 @@ class DiseaseMortalityTests(CovaTest):
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
         prob_dict = {'rel_death_prob': 0.0}
-        self.set_simulation_prognosis_probability(prob_dict)
+        self.set_sim_prog_prob(prob_dict)
         self.run_sim()
         deaths_at_timestep_channel = self.get_full_result_channel(
             'new_deaths'
@@ -78,7 +78,7 @@ class DiseaseMortalityTests(CovaTest):
         old_cumulative_deaths = 0
         for death_prob in death_probs:
             prob_dict = {D'rel_death_prob': death_prob}
-            self.set_simulation_prognosis_probability(prob_dict)
+            self.set_sim_prog_prob(prob_dict)
             self.run_sim()
             cumulative_deaths = self.get_day_final_channel_value('new_deaths')
             self.assertGreaterEqual(cumulative_deaths, old_cumulative_deaths, msg="Should be more deaths with higer ratio")
