@@ -76,14 +76,17 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=safe_parallel)
+# @nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=True, parallel=safe_parallel)
 def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor, immunity_factors): # pragma: no cover
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_iso     = ~diag +  diag * iso_factor # Isolation factor, changes e.g. [0,1] with a factor of 0.2 to [1,0.2]
     f_quar    = ~quar +  quar * quar_factor # Quarantine, changes e.g. [0,1] with a factor of 0.5 to [1,0.5]
-    rel_trans = beta_layer * rel_trans * inf * f_quar * f_asymp * f_iso * viral_load # Recalculate transmissibility
+    rel_trans = rel_trans * inf * f_quar * f_asymp * f_iso * beta_layer * viral_load # Recalculate transmissibility
     rel_sus   = rel_sus * sus * f_quar * (1-immunity_factors) # Recalculate susceptibility
+    # print('kochia', len(rel_sus), rel_sus.mean())
+    # print('odfiud', len(rel_trans), rel_trans.mean())
+    # print(rel_trans.tolist())
     return rel_trans, rel_sus
 
 
@@ -96,6 +99,9 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     out who gets infected on this timestep. Cannot be easily parallelized since
     random numbers are used.
     '''
+    # print('ci1', np.random.random())
+    # for i,val in enumerate([beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus]):
+    #     print('var', i, np.mean(val))
     source_trans     = rel_trans[sources] # Pull out the transmissibility of the sources (0 for non-infectious people)
     inf_inds         = source_trans.nonzero()[0] # Infectious indices -- remove noninfectious people
     betas            = beta * layer_betas[inf_inds] * source_trans[inf_inds] * rel_sus[targets[inf_inds]] # Calculate the raw transmission probabilities
@@ -107,8 +113,8 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     transmissions    = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
     source_inds      = nonzero_sources[transmissions]
     target_inds      = nonzero_targets[transmissions] # Filter the targets on the actual infections
-    print(np.random.random())
-    print(target_inds)
+    # print('ci2', np.random.random())
+    # print(target_inds)
     return source_inds, target_inds
 
 
