@@ -297,8 +297,8 @@ class CovaTest(unittest.TestCase):
         Simkeys = TProps.ParKeys.SimKeys
         Micro = TProps.SpecialSims.Microsim
         microsim_parameters = {
-            Simkeys.number_agents : Micro.n,
-            Simkeys.initial_infected_count: Micro.pop_infected,
+            'pop_size' : Micro.n,
+            'pop_infected': Micro.pop_infected,
             Simkeys.number_simulated_days: Micro.n_days
         }
         self.set_sim_pars(microsim_parameters)
@@ -307,8 +307,8 @@ class CovaTest(unittest.TestCase):
     def set_everyone_infected(self, agent_count=1000):
         Simkeys = TProps.ParKeys.SimKeys
         everyone_infected = {
-            Simkeys.number_agents: agent_count,
-            Simkeys.initial_infected_count: agent_count
+            'pop_size': agent_count,
+            'pop_infected': agent_count
         }
         self.set_sim_pars(params_dict=everyone_infected)
         pass
@@ -364,7 +364,6 @@ class CovaTest(unittest.TestCase):
         Args:
             num_agents: Number of agents to simulate
         """
-        ProbKeys = TProps.ParKeys.ProgKeys.ProbKeys.RelProbKeys
         self.set_everyone_infectious_same_day(num_agents=num_agents)
         prob_dict = {
             'rel_symp_prob': 1,
@@ -417,8 +416,8 @@ class CovaTest(unittest.TestCase):
         Transkeys = TProps.ParKeys.TransKeys
         Hightrans = TProps.SpecialSims.Hightransmission
         hightrans_parameters = {
-            Simkeys.number_agents : Hightrans.n,
-            Simkeys.initial_infected_count: Hightrans.pop_infected,
+            'pop_size' : Hightrans.n,
+            'pop_infected': Hightrans.pop_infected,
             Simkeys.number_simulated_days: Hightrans.n_days,
             Transkeys.beta : Hightrans.beta
         }
