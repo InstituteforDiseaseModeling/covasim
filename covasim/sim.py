@@ -624,7 +624,7 @@ class Sim(cvb.BaseSim):
                 symp = people.symptomatic
                 diag = people.diagnosed
                 quar = people.quarantined
-                inf_by_this_strain = people.infectious
+                inf_by_this_strain = people.infectious * (people.infectious_strain == strain)#people.infectious
                 rel_trans = people.rel_trans[:]
                 rel_sus = people.rel_sus[:]
                 sus_imm = people.sus_imm[strain,:]
