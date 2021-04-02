@@ -535,8 +535,6 @@ class Sim(cvb.BaseSim):
         rather than calling sim.step() directly.
         '''
 
-        print('s1', np.random.random())
-
         # Set the time and if we have reached the end of the simulation, then do nothing
         if self.complete:
             raise AlreadyRunError('Simulation already complete (call sim.initialize() to re-run)')
@@ -571,8 +569,6 @@ class Sim(cvb.BaseSim):
 
         people.update_states_post() # Check for state changes after interventions
 
-        print('s2', np.random.random())
-
         # Compute viral loads
         frac_time = cvd.default_float(self['viral_dist']['frac_time'])
         load_ratio = cvd.default_float(self['viral_dist']['load_ratio'])
@@ -582,10 +578,8 @@ class Sim(cvb.BaseSim):
         date_dead = people.date_dead
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
-        # Initialize temp storage for strain parameters
+        # Shorten useful parameters
         ns = self['n_strains']  # Shorten number of strains
-
-        # Shorten additional useful parameters and indicators that aren't by strain
         sus = people.susceptible
         symp = people.symptomatic
         diag = people.diagnosed
@@ -598,8 +592,6 @@ class Sim(cvb.BaseSim):
             has_nabs = np.setdiff1d(cvu.defined(people.init_NAb),cvu.false(sus))
             if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
 
-        print('s3', np.random.random())
-
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
 
@@ -611,16 +603,10 @@ class Sim(cvb.BaseSim):
             beta = cvd.default_float(self['beta'] * self['strain_pars']['rel_beta'][strain])
             asymp_factor = cvd.default_float(self['strain_pars']['asymp_factor'][strain])
 
-            # Define indices for this strain
-            # inf_by_this_strain = np.zeros(len(inf), dtype=bool)
-            # inf_by_this_strain[cvu.true(people.infectious_strain == strain)] = True
-            # inf_by_this_strain = people.infectious * (people.infectious_strain == strain)
-
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
                 p2 = layer['p2']
                 betas = layer['beta']
-                print('hi!', np.mean(betas))
 
                 # Compute relative transmission and susceptibility
                 inf_by_this_strain = people.infectious * (people.infectious_strain == strain)#people.infectious
@@ -637,15 +623,12 @@ class Sim(cvb.BaseSim):
                     people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
                                   layer=lkey, strain=strain)  # Actually infect people
 
-        print('s4', np.random.random())
-
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
-            if 'by_strain' in key or 'by strain' in key:
-                for strain in range(ns):
-                    self.results['strain'][f'n_{key}'][strain][t] = people.count_by_strain(key, strain)
-            else:
-                self.results[f'n_{key}'][t] = people.count(key)
+            self.results[f'n_{key}'][t] = people.count(key)
+        for key in cvd.result_stocks_by_strain.keys():
+            for strain in range(ns):
+                self.results['strain'][f'n_{key}'][strain][t] = people.count_by_strain(key, strain)
 
         # Update counts for this time step: flows
         for key,count in people.flows.items():
@@ -658,8 +641,6 @@ class Sim(cvb.BaseSim):
         self.results['pop_nabs'][t]            = np.sum(people.NAb[cvu.defined(people.NAb)])/len(people)
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
         self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
-
-        print('s5', np.random.random())
 
         # Apply analyzers -- same syntax as interventions
         for i,analyzer in enumerate(self['analyzers']):

@@ -486,7 +486,7 @@ class People(cvb.BasePeople):
         self.date_dead[dead_inds] = self.date_critical[dead_inds] + dur_crit2die # Date of death
         self.dur_disease[dead_inds] = self.dur_exp2inf[dead_inds] + self.dur_inf2sym[dead_inds] + self.dur_sym2sev[dead_inds] + self.dur_sev2crit[dead_inds] + dur_crit2die   # Store how long this person had COVID-19
 
-        print('moshi', np.random.random())
+        # print('moshi', np.random.random())
 
         return n_infections # For incrementing counters
 
