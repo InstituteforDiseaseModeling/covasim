@@ -360,7 +360,7 @@ class CovaTest(unittest.TestCase):
             )
         pass
 
-    def set_everyone_is_going_to_die(self, num_agents):
+    def everyone_dies(self, num_agents):
         """
         Cause all agents in the simulation to begin infected and die.
         Args:
