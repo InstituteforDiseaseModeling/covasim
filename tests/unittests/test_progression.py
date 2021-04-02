@@ -122,7 +122,7 @@ class DiseaseProgressionTests(CovaTest):
             )
             self.run_sim()
             deaths_today_channel = self.get_full_result_channel(
-                TProps.ResKeys.deaths_daily
+                TProps.'new_deaths'
             )
             for t in range(len(deaths_today_channel)):
                 curr_deaths = deaths_today_channel[t]

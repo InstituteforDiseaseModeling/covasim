@@ -7,11 +7,6 @@ import covasim as cv
 import unittest
 from unittest_support import CovaTest, TProps
 
-DProgKeys = TProps.ParKeys.ProgKeys
-TransKeys = TProps.ParKeys.TransKeys
-TSimKeys  = TProps.ParKeys.SimKeys
-ResKeys   = TProps.ResKeys
-
 
 class DiseaseMortalityTests(CovaTest):
     def setUp(self):
@@ -43,16 +38,14 @@ class DiseaseMortalityTests(CovaTest):
         """
         total_agents = 500
         self.set_everyone_is_going_to_die(num_agents=total_agents)
-        prob_dict = {
-            D'rel_death_prob': 0.0
-        }
+        prob_dict = {'rel_death_prob': 0.0}
         self.set_simulation_prognosis_probability(prob_dict)
         self.run_sim()
         deaths_at_timestep_channel = self.get_full_result_channel(
-            ResKeys.deaths_daily
+            'new_deaths'
         )
         deaths_cumulative_channel = self.get_full_result_channel(
-            ResKeys.deaths_cumulative
+            'new_deaths'
         )
         death_channels = [
             deaths_at_timestep_channel,
@@ -87,7 +80,7 @@ class DiseaseMortalityTests(CovaTest):
             prob_dict = {D'rel_death_prob': death_prob}
             self.set_simulation_prognosis_probability(prob_dict)
             self.run_sim()
-            cumulative_deaths = self.get_day_final_channel_value(ResKeys.deaths_cumulative)
+            cumulative_deaths = self.get_day_final_channel_value('new_deaths')
             self.assertGreaterEqual(cumulative_deaths, old_cumulative_deaths, msg="Should be more deaths with higer ratio")
             old_cumulative_deaths = cumulative_deaths
         pass
