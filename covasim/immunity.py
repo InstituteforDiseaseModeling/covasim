@@ -82,7 +82,7 @@ class Strain():
                 strain_pars['rel_beta'] = 1.4
                 strain_pars['rel_severe_prob'] = 1.4
                 strain_pars['rel_death_prob'] = 1.4
-                strain_pars['rel_imm'] = 0.5
+                strain_pars['rel_imm'] = 0.25
                 self.strain_label = strain
 
             # Known parameters on Brazil variant
@@ -171,9 +171,7 @@ class Vaccine():
         self.interval = None
         self.NAb_init = None
         self.NAb_boost = None
-        self.NAb_eff = {'sus': {'slope': 2, 'n_50': 0.4},
-                                       'symp': {'threshold': 1.2, 'lower': 0.2, 'upper': 0.1},
-                                       'sev': {'threshold': 1.2, 'lower': 0.9, 'upper': 0.52}} # Parameters to map NAbs to efficacy
+        self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.5}} # Parameters to map NAbs to efficacy
         self.vaccine_strain_info = self.init_strain_vaccine_info()
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
@@ -413,8 +411,10 @@ def init_immunity(sim, create=False):
 
     # Pull out all of the circulating strains for cross-immunity
     circulating_strains = ['wild']
+    rel_imms =  dict()
     for strain in sim['strains']:
         circulating_strains.append(strain.strain_label)
+        rel_imms[strain.strain_label] = strain.rel_imm
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
@@ -428,7 +428,7 @@ def init_immunity(sim, create=False):
                 immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
 
         known_strains = ['wild', 'b117', 'b1351', 'p1']
-        cross_immunity = create_cross_immunity(circulating_strains)
+        cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
         for i in range(ts):
             for j in range(ts):
                 if i != j:
@@ -439,7 +439,7 @@ def init_immunity(sim, create=False):
     else:
         # if we know all the circulating strains, then update, otherwise use defaults
         known_strains = ['wild', 'b117', 'b1351', 'p1']
-        cross_immunity = create_cross_immunity(circulating_strains)
+        cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
         if sc.checktype(sim['immunity']['sus'], 'arraylike'):
             correct_size = sim['immunity']['sus'].shape == (ts, ts)
             if not correct_size:
@@ -653,7 +653,7 @@ def linear_growth(length, slope):
     return (slope * t)
 
 
-def create_cross_immunity(circulating_strains):
+def create_cross_immunity(circulating_strains, rel_imms):
     known_strains = ['wild', 'b117', 'b1351', 'p1']
     known_cross_immunity = dict()
     known_cross_immunity['wild'] = {} # cross-immunity to wild
@@ -661,15 +661,15 @@ def create_cross_immunity(circulating_strains):
     known_cross_immunity['wild']['b1351'] = .5
     known_cross_immunity['wild']['p1'] = .5
     known_cross_immunity['b117'] = {} # cross-immunity to b117
-    known_cross_immunity['b117']['wild'] = 1
+    known_cross_immunity['b117']['wild'] = rel_imms['b117'] if 'b117' in circulating_strains else 1
     known_cross_immunity['b117']['b1351'] = 1
     known_cross_immunity['b117']['p1'] = 1
     known_cross_immunity['b1351'] = {} # cross-immunity to b1351
-    known_cross_immunity['b1351']['wild'] = 0.1
+    known_cross_immunity['b1351']['wild'] = rel_imms['b1351'] if 'b1351' in circulating_strains else 0.1
     known_cross_immunity['b1351']['b117'] = 0.1
     known_cross_immunity['b1351']['p1'] = 0.1
     known_cross_immunity['p1'] = {} # cross-immunity to p1
-    known_cross_immunity['p1']['wild'] = 0.2
+    known_cross_immunity['p1']['wild'] = rel_imms['p1'] if 'p1' in circulating_strains else 0.2
     known_cross_immunity['p1']['b117'] = 0.2
     known_cross_immunity['p1']['b1351'] = 0.2
 
