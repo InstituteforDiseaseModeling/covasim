@@ -171,7 +171,7 @@ class Vaccine():
         self.interval = None
         self.NAb_init = None
         self.NAb_boost = None
-        self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.5}} # Parameters to map NAbs to efficacy
+        self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
         self.vaccine_strain_info = self.init_strain_vaccine_info()
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
@@ -479,7 +479,6 @@ def check_immunity(people, strain, sus=True, inds=None):
     date_rec = people.date_recovered  # Date recovered
     immunity = people.pars['immunity'] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
     nab_eff_pars = people.pars['NAb_eff']
-
 
     # If vaccines are present, extract relevant information about them
     vacc_present = len(is_vacc)
