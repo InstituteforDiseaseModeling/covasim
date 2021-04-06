@@ -316,7 +316,7 @@ def init_nab(people, inds, prior_inf=True):
     no_prior_NAb_inds = np.setdiff1d(inds, prior_NAb_inds) # Find people without prior NAbs
 
     prior_NAb = people.NAb[prior_NAb_inds] # Array of NAb levels on this timestep for people with some NAbs
-
+    peak_NAb = people.init_NAb[prior_NAb_inds]
 
     # NAbs from infection
     if prior_inf:
@@ -330,7 +330,7 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_NAb_inds):
-            init_NAb = prior_NAb * NAb_boost
+            init_NAb = peak_NAb * NAb_boost
             people.init_NAb[prior_NAb_inds] = init_NAb
 
     # NAbs from a vaccine
@@ -343,7 +343,7 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
         if len(prior_NAb_inds):
-            init_NAb = prior_NAb * NAb_boost
+            init_NAb = peak_NAb * NAb_boost
             people.NAb[prior_NAb_inds] = init_NAb
 
     return
