@@ -33,7 +33,8 @@ class Strain():
     **Example**::
         b117    = cv.Strain('b117', days=10) # Make strain B117 active from day 10
         p1      = cv.Strain('p1', days=15) # Make strain P1 active from day 15
-        my_var  = cv.Strain(strain={'rel_beta': 2.5}, strain_label='My strain', days=20) # Make a custom strain active from day 20
+        # Make a custom strain active from day 20
+        my_var  = cv.Strain(strain={'rel_beta': 2.5}, strain_label='My strain', days=20)
         sim     = cv.Sim(strains=[b117, p1, my_var]) # Add them all to the sim
     '''
 
@@ -60,7 +61,6 @@ class Strain():
                 'wild': ['default', 'wild', 'pre-existing'],
                 'b117': ['b117', 'B117', 'B.1.1.7', 'UK', 'uk', 'UK variant', 'uk variant'],
                 'b1351': ['b1351', 'B1351', 'B.1.351', 'SA', 'sa', 'SA variant', 'sa variant'],
-                # TODO: add other aliases
                 'p1': ['p1', 'P1', 'P.1', 'B.1.1.248', 'b11248', 'Brazil', 'Brazil variant', 'brazil variant'],
             }
 
@@ -390,12 +390,7 @@ def nab_to_efficacy(nab, ax, function_args):
         n_50 = args['n_50']
         efficacy = 1 / (1 + np.exp(-slope * (np.log10(nab) - np.log10(n_50))))  # from logistic regression computed in R using data from Khoury et al
     else:
-        threshold = np.full(len(nab), fill_value=args['threshold'])
-        lower = args['lower']
-        upper = args['upper']
-        efficacy = nab>threshold
-        efficacy = np.where(efficacy == False, upper, efficacy)
-        efficacy = np.where(efficacy == True, lower, efficacy)
+        efficacy = np.full(len(nab), fill_value=args)
     return efficacy
 
 
@@ -657,13 +652,13 @@ def create_cross_immunity(circulating_strains, rel_imms):
     known_strains = ['wild', 'b117', 'b1351', 'p1']
     known_cross_immunity = dict()
     known_cross_immunity['wild'] = {} # cross-immunity to wild
-    known_cross_immunity['wild']['b117'] = .5
-    known_cross_immunity['wild']['b1351'] = .5
-    known_cross_immunity['wild']['p1'] = .5
+    known_cross_immunity['wild']['b117'] = 0.5
+    known_cross_immunity['wild']['b1351'] = 0.5
+    known_cross_immunity['wild']['p1'] = 0.5
     known_cross_immunity['b117'] = {} # cross-immunity to b117
-    known_cross_immunity['b117']['wild'] = rel_imms['b117'] if 'b117' in circulating_strains else 1
-    known_cross_immunity['b117']['b1351'] = 1
-    known_cross_immunity['b117']['p1'] = 1
+    known_cross_immunity['b117']['wild'] = rel_imms['b117'] if 'b117' in circulating_strains else 0.8
+    known_cross_immunity['b117']['b1351'] = 0.8
+    known_cross_immunity['b117']['p1'] = 0.8
     known_cross_immunity['b1351'] = {} # cross-immunity to b1351
     known_cross_immunity['b1351']['wild'] = rel_imms['b1351'] if 'b1351' in circulating_strains else 0.1
     known_cross_immunity['b1351']['b117'] = 0.1
