@@ -193,8 +193,8 @@ class Vaccine():
         rel_imm['az']['b1351'] = .5
         rel_imm['az']['p1'] = .5
 
-        rel_imm['j&j']['b1351'] = .5
-        rel_imm['j&j']['p1'] = .5
+        rel_imm['j&j']['b1351'] = 1/6.7
+        rel_imm['j&j']['p1'] = 1/8.6
 
         return rel_imm
 
@@ -219,7 +219,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
-                vaccine_pars['NAb_boost'] = 3
+                vaccine_pars['NAb_boost'] = 2
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on moderna
@@ -228,7 +228,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
-                vaccine_pars['NAb_boost'] = 3
+                vaccine_pars['NAb_boost'] = 2
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on az
@@ -237,7 +237,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
-                vaccine_pars['NAb_boost'] = 3
+                vaccine_pars['NAb_boost'] = 2
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on j&j
@@ -246,7 +246,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
-                vaccine_pars['NAb_boost'] = 3
+                vaccine_pars['NAb_boost'] = 2
                 vaccine_pars['label'] = vaccine
 
             else:
@@ -339,7 +339,7 @@ def init_nab(people, inds, prior_inf=True):
         # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
         if len(prior_NAb_inds):
             init_NAb = peak_NAb * NAb_boost
-            people.NAb[prior_NAb_inds] = init_NAb
+            people.init_NAb[prior_NAb_inds] = init_NAb
 
     return
 
@@ -685,15 +685,15 @@ def create_cross_immunity(circulating_strains, rel_imms):
     known_cross_immunity['wild']['b1351'] = 0.5
     known_cross_immunity['wild']['p1'] = 0.5
     known_cross_immunity['b117'] = {} # cross-immunity to b117
-    known_cross_immunity['b117']['wild'] = rel_imms['b117'] if 'b117' in circulating_strains else 0.8
+    known_cross_immunity['b117']['wild'] = rel_imms['b117'] if 'b117' in circulating_strains else .5
     known_cross_immunity['b117']['b1351'] = 0.8
     known_cross_immunity['b117']['p1'] = 0.8
     known_cross_immunity['b1351'] = {} # cross-immunity to b1351
-    known_cross_immunity['b1351']['wild'] = rel_imms['b1351'] if 'b1351' in circulating_strains else 0.1
+    known_cross_immunity['b1351']['wild'] = rel_imms['b1351'] if 'b1351' in circulating_strains else 0.066
     known_cross_immunity['b1351']['b117'] = 0.1
     known_cross_immunity['b1351']['p1'] = 0.1
     known_cross_immunity['p1'] = {} # cross-immunity to p1
-    known_cross_immunity['p1']['wild'] = rel_imms['p1'] if 'p1' in circulating_strains else 0.2
+    known_cross_immunity['p1']['wild'] = rel_imms['p1'] if 'p1' in circulating_strains else 0.17
     known_cross_immunity['p1']['b117'] = 0.2
     known_cross_immunity['p1']['b1351'] = 0.2
 
