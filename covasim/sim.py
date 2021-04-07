@@ -503,6 +503,7 @@ class Sim(cvb.BaseSim):
                 self['vaccine_info']['doses'] = vacc.doses
                 self['vaccine_info']['NAb_init'] = vacc.NAb_init
                 self['vaccine_info']['NAb_boost'] = vacc.NAb_boost
+                self['vaccine_info']['NAb_eff'] = vacc.NAb_eff
 
         return
 

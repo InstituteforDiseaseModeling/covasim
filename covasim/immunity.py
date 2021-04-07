@@ -27,7 +27,8 @@ class Strain():
 
         b117    = cv.Strain('b117', days=10) # Make strain B117 active from day 10
         p1      = cv.Strain('p1', days=15) # Make strain P1 active from day 15
-        my_var  = cv.Strain(strain={'rel_beta': 2.5}, strain_label='My strain', days=20) # Make a custom strain active from day 20
+        # Make a custom strain active from day 20
+        my_var  = cv.Strain(strain={'rel_beta': 2.5}, strain_label='My strain', days=20)
         sim     = cv.Sim(strains=[b117, p1, my_var]) # Add them all to the sim
     '''
 
@@ -54,7 +55,6 @@ class Strain():
                 'wild': ['default', 'wild', 'pre-existing'],
                 'b117': ['b117', 'B117', 'B.1.1.7', 'UK', 'uk', 'UK variant', 'uk variant'],
                 'b1351': ['b1351', 'B1351', 'B.1.351', 'SA', 'sa', 'SA variant', 'sa variant'],
-                # TODO: add other aliases
                 'p1': ['p1', 'P1', 'P.1', 'B.1.1.248', 'b11248', 'Brazil', 'Brazil variant', 'brazil variant'],
             }
 
@@ -76,7 +76,7 @@ class Strain():
                 strain_pars['rel_beta'] = 1.4
                 strain_pars['rel_severe_prob'] = 1.4
                 strain_pars['rel_death_prob'] = 1.4
-                strain_pars['rel_imm'] = 0.5
+                strain_pars['rel_imm'] = 0.25
                 self.strain_label = strain
 
             # Known parameters on Brazil variant
@@ -166,6 +166,7 @@ class Vaccine():
         self.interval = None
         self.NAb_init = None
         self.NAb_boost = None
+        self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
         self.vaccine_strain_info = self.init_strain_vaccine_info()
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
@@ -310,7 +311,7 @@ def init_nab(people, inds, prior_inf=True):
     no_prior_NAb_inds = np.setdiff1d(inds, prior_NAb_inds) # Find people without prior NAbs
 
     prior_NAb = people.NAb[prior_NAb_inds] # Array of NAb levels on this timestep for people with some NAbs
-
+    peak_NAb = people.init_NAb[prior_NAb_inds]
 
     # NAbs from infection
     if prior_inf:
@@ -324,7 +325,7 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_NAb_inds):
-            init_NAb = prior_NAb * NAb_boost
+            init_NAb = peak_NAb * NAb_boost
             people.init_NAb[prior_NAb_inds] = init_NAb
 
     # NAbs from a vaccine
@@ -337,7 +338,7 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
         if len(prior_NAb_inds):
-            init_NAb = prior_NAb * NAb_boost
+            init_NAb = peak_NAb * NAb_boost
             people.NAb[prior_NAb_inds] = init_NAb
 
     return
@@ -363,7 +364,7 @@ def check_nab(t, people, inds=None):
     return
 
 
-def nab_to_efficacy(nab, ax):
+def nab_to_efficacy(nab, ax, function_args):
     '''
     Convert NAb levels to immunity protection factors, using the functional form
     given in this paper: https://doi.org/10.1101/2021.03.09.21252641
@@ -376,17 +377,17 @@ def nab_to_efficacy(nab, ax):
         an array the same size as nab, containing the immunity protection factors for the specified axis
      '''
 
-    choices = {'sus': -0.4, 'symp': 0, 'sev': 0.4}
-    if ax not in choices.keys():
-        errormsg = f'Choice {ax} not provided in list of choices'
+    if ax not in ['sus', 'symp', 'sev']:
+        errormsg = f'Choice {ax} not in list of choices'
         raise ValueError(errormsg)
+    args = function_args[ax]
 
-    # Temporary parameter values, pending confirmation
-    n_50 = 0.2
-    slope = 2
-
-    # put in here nab to efficacy mapping (logistic regression from fig 1a from https://doi.org/10.1101/2021.03.09.21252641)
-    efficacy = 1/(1+np.exp(-slope*(nab - n_50 + choices[ax]))) # from logistic regression computed in R using data from Khoury et al
+    if ax == 'sus':
+        slope = args['slope']
+        n_50 = args['n_50']
+        efficacy = 1 / (1 + np.exp(-slope * (np.log10(nab) - np.log10(n_50))))  # from logistic regression computed in R using data from Khoury et al
+    else:
+        efficacy = np.full(len(nab), fill_value=args)
     return efficacy
 
 
@@ -425,8 +426,10 @@ def init_immunity(sim, create=False):
 
     # Pull out all of the circulating strains for cross-immunity
     circulating_strains = ['wild']
+    rel_imms =  dict()
     for strain in sim['strains']:
         circulating_strains.append(strain.strain_label)
+        rel_imms[strain.strain_label] = strain.rel_imm
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
@@ -440,7 +443,7 @@ def init_immunity(sim, create=False):
                 immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
 
         known_strains = ['wild', 'b117', 'b1351', 'p1']
-        cross_immunity = create_cross_immunity(circulating_strains)
+        cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
         for i in range(ts):
             for j in range(ts):
                 if i != j:
@@ -451,7 +454,7 @@ def init_immunity(sim, create=False):
     else:
         # if we know all the circulating strains, then update, otherwise use defaults
         known_strains = ['wild', 'b117', 'b1351', 'p1']
-        cross_immunity = create_cross_immunity(circulating_strains)
+        cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
         if sc.checktype(sim['immunity']['sus'], 'arraylike'):
             correct_size = sim['immunity']['sus'].shape == (ts, ts)
             if not correct_size:
@@ -492,11 +495,13 @@ def check_immunity(people, strain, sus=True, inds=None):
     is_vacc = cvu.true(people.vaccinated)  # Vaccinated
     date_rec = people.date_recovered  # Date recovered
     immunity = people.pars['immunity'] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
+    nab_eff_pars = people.pars['NAb_eff']
 
     # If vaccines are present, extract relevant information about them
     vacc_present = len(is_vacc)
     if vacc_present:
         vacc_info = people.pars['vaccine_info']
+        vx_nab_eff_pars = vacc_info['NAb_eff']
 
     if sus:
         ### PART 1:
@@ -505,6 +510,7 @@ def check_immunity(people, strain, sus=True, inds=None):
         was_inf_same = cvu.true((people.recovered_strain == strain) & (people.t >= date_rec))  # Had a previous exposure to the same strain, now recovered
         was_inf_diff = np.setdiff1d(was_inf, was_inf_same)  # Had a previous exposure to a different strain, now recovered
         is_sus_vacc = np.intersect1d(is_sus, is_vacc)  # Susceptible and vaccinated
+        is_sus_vacc = np.setdiff1d(is_sus_vacc, was_inf)  # Susceptible, vaccinated without prior infection
         is_sus_was_inf_same = np.intersect1d(is_sus, was_inf_same)  # Susceptible and being challenged by the same strain
         is_sus_was_inf_diff = np.intersect1d(is_sus, was_inf_diff)  # Susceptible and being challenged by a different strain
 
@@ -512,11 +518,11 @@ def check_immunity(people, strain, sus=True, inds=None):
             vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc])
             vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
             current_NAbs = people.NAb[is_sus_vacc]
-            people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale, 'sus')
+            people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale, 'sus', vx_nab_eff_pars)
 
         if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this strain
             current_NAbs = people.NAb[is_sus_was_inf_same]
-            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, strain], 'sus')
+            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, strain], 'sus', nab_eff_pars)
 
         if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different strain
             prior_strains = people.recovered_strain[is_sus_was_inf_diff]
@@ -524,7 +530,7 @@ def check_immunity(people, strain, sus=True, inds=None):
             for unique_strain in prior_strains_unique:
                 unique_inds = is_sus_was_inf_diff[cvu.true(prior_strains == unique_strain)]
                 current_NAbs = people.NAb[unique_inds]
-                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, unique_strain], 'sus')
+                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, unique_strain], 'sus', nab_eff_pars)
 
     else:
         ### PART 2:
@@ -536,13 +542,13 @@ def check_immunity(people, strain, sus=True, inds=None):
             vaccine_source = cvd.default_int(people.vaccine_source[is_inf_vacc])
             vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
             current_NAbs = people.NAb[is_inf_vacc]
-            people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['symp'][strain], 'symp')
-            people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['sev'][strain], 'sev')
+            people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['symp'][strain], 'symp', nab_eff_pars)
+            people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['sev'][strain], 'sev', nab_eff_pars)
 
         if len(was_inf):  # Immunity for reinfected people
             current_NAbs = people.NAb[was_inf]
-            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['symp'][strain], 'symp')
-            people.sev_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['sev'][strain], 'sev')
+            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['symp'][strain], 'symp', nab_eff_pars)
+            people.sev_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['sev'][strain], 'sev', nab_eff_pars)
 
     return
 
@@ -666,23 +672,23 @@ def linear_growth(length, slope):
     return (slope * t)
 
 
-def create_cross_immunity(circulating_strains):
+def create_cross_immunity(circulating_strains, rel_imms):
     known_strains = ['wild', 'b117', 'b1351', 'p1']
     known_cross_immunity = dict()
     known_cross_immunity['wild'] = {} # cross-immunity to wild
-    known_cross_immunity['wild']['b117'] = .5
-    known_cross_immunity['wild']['b1351'] = .5
-    known_cross_immunity['wild']['p1'] = .5
+    known_cross_immunity['wild']['b117'] = 0.5
+    known_cross_immunity['wild']['b1351'] = 0.5
+    known_cross_immunity['wild']['p1'] = 0.5
     known_cross_immunity['b117'] = {} # cross-immunity to b117
-    known_cross_immunity['b117']['wild'] = 1
-    known_cross_immunity['b117']['b1351'] = 1
-    known_cross_immunity['b117']['p1'] = 1
+    known_cross_immunity['b117']['wild'] = rel_imms['b117'] if 'b117' in circulating_strains else 0.8
+    known_cross_immunity['b117']['b1351'] = 0.8
+    known_cross_immunity['b117']['p1'] = 0.8
     known_cross_immunity['b1351'] = {} # cross-immunity to b1351
-    known_cross_immunity['b1351']['wild'] = 0.1
+    known_cross_immunity['b1351']['wild'] = rel_imms['b1351'] if 'b1351' in circulating_strains else 0.1
     known_cross_immunity['b1351']['b117'] = 0.1
     known_cross_immunity['b1351']['p1'] = 0.1
     known_cross_immunity['p1'] = {} # cross-immunity to p1
-    known_cross_immunity['p1']['wild'] = 0.2
+    known_cross_immunity['p1']['wild'] = rel_imms['p1'] if 'p1' in circulating_strains else 0.2
     known_cross_immunity['p1']['b117'] = 0.2
     known_cross_immunity['p1']['b1351'] = 0.2
 
