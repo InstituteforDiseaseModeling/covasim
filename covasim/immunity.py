@@ -418,7 +418,7 @@ def init_immunity(sim, create=False):
     ''' Initialize immunity matrices with all strains that will eventually be in the sim'''
 
     # Don't use this function if immunity is turned off
-    if not sim['use_immunity']:
+    if not sim['use_waning']:
         return
 
     ts = sim['total_strains']
@@ -513,12 +513,6 @@ def check_immunity(people, strain, sus=True, inds=None):
         is_sus_vacc = np.setdiff1d(is_sus_vacc, was_inf)  # Susceptible, vaccinated without prior infection
         is_sus_was_inf_same = np.intersect1d(is_sus, was_inf_same)  # Susceptible and being challenged by the same strain
         is_sus_was_inf_diff = np.intersect1d(is_sus, was_inf_diff)  # Susceptible and being challenged by a different strain
-
-        # if people.t==50:
-        #     import traceback;
-        #     traceback.print_exc();
-        #     import pdb;
-        #     pdb.set_trace()
 
         if len(is_sus_vacc):
             vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc])

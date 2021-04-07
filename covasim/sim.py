@@ -108,7 +108,7 @@ class Sim(cvb.BaseSim):
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
-        if self['use_immunity']:
+        if self['use_waning']:
             self.init_strains() # ...and the strains....
             self.init_immunity() # ... and information about immunity/cross-immunity.
         self.init_results() # After initializing the strain, create the results structure
@@ -596,13 +596,7 @@ class Sim(cvb.BaseSim):
         prel_sus = people.rel_sus
 
         # Check NAbs. Take set difference so we don't compute NAbs for anyone currently infected
-        if self['use_immunity']:
-            # if t==109:
-            #     import traceback;
-            #     traceback.print_exc();
-            #     import pdb;
-            #     pdb.set_trace()
-#           has_nabs = np.setdiff1d(cvu.defined(people.init_NAb), cvu.false(sus))
+        if self['use_waning']:
             has_nabs = np.setdiff1d(cvu.defined(people.init_NAb), cvu.false(people.exposed))
             if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
 
@@ -610,7 +604,7 @@ class Sim(cvb.BaseSim):
         for strain in range(ns):
 
             # Check immunity
-            if self['use_immunity']:
+            if self['use_waning']:
                 cvimm.check_immunity(people, strain, sus=True)
 
             # Deal with strain parameters

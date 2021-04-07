@@ -256,7 +256,7 @@ class People(cvb.BasePeople):
         self.recovered[inds]        = True
 
         # Handle immunity aspects
-        if self.pars['use_immunity']:
+        if self.pars['use_waning']:
 
             # Before letting them recover, store information about the strain they had, store symptoms and pre-compute NAbs array
             self.recovered_strain[inds] = self.exposed_strain[inds]
@@ -396,7 +396,7 @@ class People(cvb.BasePeople):
         if source is not None:
             source = source[keep]
 
-        if self.pars['use_immunity']:
+        if self.pars['use_waning']:
             cvi.check_immunity(self, strain, sus=False, inds=inds)
 
         # Deal with strain parameters

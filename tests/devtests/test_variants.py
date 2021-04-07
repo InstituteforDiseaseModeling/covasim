@@ -517,25 +517,25 @@ if __name__ == '__main__':
     # Run simplest possible test
     if 1:
          sim = cv.Sim().run().plot()
-         sim = cv.Sim(use_immunity=True).run().plot()
+         sim = cv.Sim(use_waning=True).run().plot()
 
-    # Run more complex single-sim tests
+    # Run more complex single-sim tests: TODO, NOT WORKING CURRENTLY
     # sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # Run Vaccine tests
+    # Run Vaccine tests: TODO, NOT WORKING CURRENTLY
     # sim4 = test_synthpops()
     # sim5 = test_vaccine_1strain()
 
-    # # # Run multisim and scenario tests
+    # # # Run multisim and scenario tests: TODO, NOT WORKING CURRENTLY
     # scens0 = test_vaccine_1strain_scen()
     # scens1 = test_vaccine_2strains_scen()
     # scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # msim0 = test_msim()
 
-    # Run immunity tests
+    # Run immunity tests: TODO, NOT WORKING CURRENTLY
     # sim_immunity0 = test_varyingimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     sc.toc()
