@@ -64,7 +64,7 @@ class People(cvb.BasePeople):
             if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
             elif 'imm' in key:  # everyone starts out with no immunity
-                self[key] = np.full((self.pars['n_strains'], self.pop_size), 0, dtype=cvd.default_float)
+                self[key] = np.full((self.pars['total_strains'], self.pop_size), 0, dtype=cvd.default_float)
             elif key == 'vaccinations':
                 self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
             else:
@@ -80,7 +80,7 @@ class People(cvb.BasePeople):
         # Set strain states, which store info about which strain a person is exposed to
         for key in self.meta.strain_states:
             if 'by' in key:
-                self[key] = np.full((self.pars['n_strains'], self.pop_size), False, dtype=bool)
+                self[key] = np.full((self.pars['total_strains'], self.pop_size), False, dtype=bool)
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
@@ -432,7 +432,6 @@ class People(cvb.BasePeople):
 
         # Use prognosis probabilities to determine what happens to them
         symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.symp_imm[strain, inds]) # Calculate their actual probability of being symptomatic
-        # print(self.symp_imm[strain, inds])
         is_symp = cvu.binomial_arr(symp_probs) # Determine if they develop symptoms
         symp_inds = inds[is_symp]
         asymp_inds = inds[~is_symp] # Asymptomatic

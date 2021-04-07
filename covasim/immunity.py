@@ -105,20 +105,20 @@ class Strain():
         return strain_pars
 
     def initialize(self, sim):
-#        if not hasattr(self, 'rel_imm'):
-#            self.rel_imm = 1
+        if not hasattr(self, 'rel_imm'):
+            self.rel_imm = 1
 
         # Update strain info
         for strain_key in cvd.strain_pars:
             if hasattr(self, strain_key):
                 newval = getattr(self, strain_key)
                 if strain_key == 'dur':  # Validate durations (make sure there are values for all durations)
-                    newval = sc.mergenested(sim[strain_key][0], newval)
-                sim[strain_key].append(newval)
+                    newval = sc.mergenested(sim['strain_pars'][strain_key][0], newval)
+                sim['strain_pars'][strain_key].append(newval)
             else:
                 # use default
                 print(f'{strain_key} not provided for this strain, using default value')
-                sim[strain_key].append(sim[strain_key][0])
+                sim['strain_pars'][strain_key].append(sim['strain_pars'][strain_key][0])
 
         self.initialized = True
 
