@@ -515,7 +515,7 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    if 0:
+    if 1:
          sim = cv.Sim()
          sim.run()
 
