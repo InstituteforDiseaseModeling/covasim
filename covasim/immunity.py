@@ -530,12 +530,7 @@ def check_immunity(people, strain, sus=True, inds=None):
             for unique_strain in prior_strains_unique:
                 unique_inds = is_sus_was_inf_diff[cvu.true(prior_strains == unique_strain)]
                 current_NAbs = people.NAb[unique_inds]
-                try: people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, unique_strain], 'sus', nab_eff_pars)
-                except:
-                    import traceback;
-                    traceback.print_exc();
-                    import pdb;
-                    pdb.set_trace()
+                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, unique_strain], 'sus', nab_eff_pars)
 
     else:
         ### PART 2:

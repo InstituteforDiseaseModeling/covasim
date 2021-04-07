@@ -515,12 +515,12 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    if 1:
+    if 0:
          sim = cv.Sim().run().plot()
          sim = cv.Sim(use_waning=True).run().plot()
 
     # Run more complex single-sim tests: TODO, NOT WORKING CURRENTLY
-    # sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
     # sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
