@@ -108,7 +108,7 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
         'beta': 0.01
     }
     strain = cv.Strain(strain_pars, days=1, n_imports=20)
-    sim = cv.Sim(pars=pars, strains=strain, analyzers=cv.snapshot(30, 60))
+    sim = cv.Sim(use_immunity=True, pars=pars, strains=strain, analyzers=cv.snapshot(30, 60))
     sim.run()
 
     if do_plot:
@@ -516,8 +516,8 @@ if __name__ == '__main__':
 
     # Run simplest possible test
     if 1:
-         sim = cv.Sim()
-         sim.run()
+         sim = cv.Sim().run().plot()
+         sim = cv.Sim(use_immunity=True).run().plot()
 
     # Run more complex single-sim tests
     # sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
@@ -536,7 +536,7 @@ if __name__ == '__main__':
     # msim0 = test_msim()
 
     # Run immunity tests
-    sim_immunity0 = test_varyingimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim_immunity0 = test_varyingimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     sc.toc()
 

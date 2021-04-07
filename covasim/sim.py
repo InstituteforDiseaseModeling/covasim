@@ -597,7 +597,13 @@ class Sim(cvb.BaseSim):
 
         # Check NAbs. Take set difference so we don't compute NAbs for anyone currently infected
         if self['use_immunity']:
-            has_nabs = np.setdiff1d(cvu.defined(people.init_NAb),cvu.false(sus))
+            # if t==109:
+            #     import traceback;
+            #     traceback.print_exc();
+            #     import pdb;
+            #     pdb.set_trace()
+#           has_nabs = np.setdiff1d(cvu.defined(people.init_NAb), cvu.false(sus))
+            has_nabs = np.setdiff1d(cvu.defined(people.init_NAb), cvu.false(people.exposed))
             if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
 
         # Iterate through n_strains to calculate infections

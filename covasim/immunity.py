@@ -105,8 +105,8 @@ class Strain():
         return strain_pars
 
     def initialize(self, sim):
-        if not hasattr(self, 'rel_imm'):
-            self.rel_imm = 1
+#        if not hasattr(self, 'rel_imm'):
+#            self.rel_imm = 1
 
         # Update strain info
         for strain_key in cvd.strain_pars:
@@ -131,7 +131,7 @@ class Strain():
             sim['n_strains'] += 1
 
             # Update strain-specific people attributes
-            cvu.update_strain_attributes(sim.people) # don't think we need to do this if we just create people arrays with number of total strains in sim
+            #cvu.update_strain_attributes(sim.people) # don't think we need to do this if we just create people arrays with number of total strains in sim
             susceptible_inds = cvu.true(sim.people.susceptible)
             importation_inds = np.random.choice(susceptible_inds, self.n_imports)
             sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
@@ -513,6 +513,12 @@ def check_immunity(people, strain, sus=True, inds=None):
         is_sus_vacc = np.setdiff1d(is_sus_vacc, was_inf)  # Susceptible, vaccinated without prior infection
         is_sus_was_inf_same = np.intersect1d(is_sus, was_inf_same)  # Susceptible and being challenged by the same strain
         is_sus_was_inf_diff = np.intersect1d(is_sus, was_inf_diff)  # Susceptible and being challenged by a different strain
+
+        # if people.t==50:
+        #     import traceback;
+        #     traceback.print_exc();
+        #     import pdb;
+        #     pdb.set_trace()
 
         if len(is_sus_vacc):
             vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc])
