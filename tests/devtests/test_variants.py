@@ -8,7 +8,7 @@ import seaborn as sns
 
 
 do_plot   = 1
-do_show   = 1
+do_show   = 0
 do_save   = 1
 
 
@@ -394,6 +394,50 @@ def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
     return scens
 
 
+def test_waning_vs_not(do_plot=True, do_show=True, do_save=False):
+
+    # Define baseline parameters
+    base_pars = {
+        'pop_size': 100e3,
+        'pop_scale': 50,
+        'n_days': 150,
+        'use_waning': False,
+    }
+
+    n_runs = 3
+    base_sim = cv.Sim(pars=base_pars)
+
+    # Define the scenarios
+    scenarios = {
+        'no_waning': {
+            'name': 'No waning',
+            'pars': {
+            }
+        },
+        'waning': {
+            'name': 'Waning',
+            'pars': {
+                'use_waning': True,
+            }
+        },
+    }
+
+    metapars = {'n_runs': n_runs}
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run()
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'New reinfections': ['new_reinfections'],
+        'Cumulative infections': ['cum_infections'],
+        'Cumulative reinfections': ['cum_reinfections'],
+    })
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_waning_vs_not.png', to_plot=to_plot)
+
+    return scens
+
+
 def test_msim():
     # basic test for vaccine
     b117 = cv.Strain('b117', days=0)
@@ -499,29 +543,32 @@ def get_ind_of_min_value(list, time):
 if __name__ == '__main__':
     sc.tic()
 
-    # Run simplest possible test
-    if 1:
-         sim = cv.Sim().run().plot()
-         sim = cv.Sim(use_waning=True).run().plot()
+    # # Run simplest possible test
+    # if 1:
+    #      sim = cv.Sim().run().plot()
+    #      sim = cv.Sim(use_waning=True).run().plot()
+    #
+    # # Run more complex single-sim tests
+    # sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    #
+    # # Run Vaccine tests
+    # sim4 = test_synthpops()
+    # sim5 = test_vaccine_1strain()
+    #
+    # # Run multisim and scenario tests
+    # #scens0 = test_vaccine_1strain_scen() #TODO, NOT WORKING CURRENTLY
+    # #scens1 = test_vaccine_2strains_scen() #TODO, NOT WORKING CURRENTLY
+    # scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # msim0 = test_msim()
+    #
+    # # Run immunity tests
+    # sim_immunity0 = test_varyingimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # Run more complex single-sim tests
-    sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
-
-    # Run Vaccine tests
-    sim4 = test_synthpops()
-    sim5 = test_vaccine_1strain()
-
-    # Run multisim and scenario tests
-    #scens0 = test_vaccine_1strain_scen() #TODO, NOT WORKING CURRENTLY
-    #scens1 = test_vaccine_2strains_scen() #TODO, NOT WORKING CURRENTLY
-    scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    msim0 = test_msim()
-
-    # Run immunity tests
-    sim_immunity0 = test_varyingimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # Run test to compare sims with and without waning
+    scens3 = test_waning_vs_not(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     sc.toc()
 
