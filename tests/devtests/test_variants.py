@@ -546,7 +546,7 @@ if __name__ == '__main__':
     # # Run simplest possible test
     # if 1:
     #      sim = cv.Sim().run().plot()
-    #      sim = cv.Sim(use_waning=True).run().plot()
+    #      sim = cv.Sim(n_days=300, use_waning=True).run().plot()
     #
     # # Run more complex single-sim tests
     # sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
@@ -568,7 +568,7 @@ if __name__ == '__main__':
     # sim_immunity0 = test_varyingimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     # Run test to compare sims with and without waning
-    scens3 = test_waning_vs_not(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # scens3 = test_waning_vs_not(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
     sc.toc()
 
