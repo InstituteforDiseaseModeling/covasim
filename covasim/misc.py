@@ -196,7 +196,7 @@ def migrate_strains(pars, verbose=True):
     Small helper function to add necessary strain parameters.
     '''
     from . import parameters as cvp
-    pars['use_immunity'] = False
+    pars['use_waning'] = True
     pars['n_strains'] = 1
     pars['total_strains'] = 1
     pars['strains'] = []
