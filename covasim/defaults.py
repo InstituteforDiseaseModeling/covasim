@@ -50,9 +50,9 @@ class PeopleMeta(sc.prettyobj):
             'death_prob',       # Float
             'rel_trans',        # Float
             'rel_sus',          # Float
-            'sus_imm',          # Float
-            'symp_imm',         # Float
-            'sev_imm',          # Float
+            'sus_imm',          # Float, by strain
+            'symp_imm',         # Float, by strain
+            'sev_imm',          # Float, by strain
             'prior_symptoms',   # Float
             'vaccinations',     # Number of doses given per person
             'vaccine_source',   # index of vaccine that individual received

@@ -146,6 +146,9 @@ def test_basepeople():
     s2.run()
     assert cv.diff_sims(s1, s2, output=True)
 
+    # Create a bare People object
+    ppl = cv.People(100)
+
     return
 
 

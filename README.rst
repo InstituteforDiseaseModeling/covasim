@@ -40,11 +40,11 @@ Covasim has been used for analyses in over a dozen countries, both to inform pol
 
 4. **Lessons learned from Vietnam's COVID-19 response: the role of adaptive behaviour change and testing in epidemic control**. Pham QD, Stuart RM, Nguyen TV, Luong QC, Tran DQ, Phan LT, Dang TQ, Tran DN, Mistry D, Klein DJ, Abeysuriya RG, Oron AP, Kerr CC (in press; accepted 2021-02-25). *Lancet Global Health*; doi: https://doi.org/10.1101/2020.12.18.20248454.
 
-5. **The role of masks, testing and contact tracing in preventing COVID-19 resurgences: a case study from New South Wales, Australia**. Stuart RM, Abeysuriya RG, Kerr CC, Mistry D, Klein DJ, Gray R, Hellard M, Scott N (under review; posted 2020-09-03). *medRxiv* 2020.09.02.20186742; doi: https://doi.org/10.1101/2020.09.02.20186742.
+5. **The potential contribution of face coverings to the control of SARS-CoV-2 transmission in schools and broader society in the UK: a modelling study**. Panovska-Griffiths J, Kerr CC, Waites W, Stuart RM, Mistry D, Foster D, Klein DJ, Viner R, Bonnell C (in press; accepted 2021-04-08). *Nature Scientific Reports* doi: https://doi.org/10.1101/2020.09.28.20202937.
 
-6. **Schools are not islands: Balancing COVID-19 risk and educational benefits using structural and temporal countermeasures**. Cohen JA, Mistry D, Kerr CC, Klein DJ (under review; posted 2020-09-10). *medRxiv* 2020.09.08.20190942; doi: https://doi.org/10.1101/2020.09.08.20190942.
+6. **The role of masks, testing and contact tracing in preventing COVID-19 resurgences: a case study from New South Wales, Australia**. Stuart RM, Abeysuriya RG, Kerr CC, Mistry D, Klein DJ, Gray R, Hellard M, Scott N (under review; posted 2020-09-03). *medRxiv* 2020.09.02.20186742; doi: https://doi.org/10.1101/2020.09.02.20186742.
 
-7. **The potential contribution of face coverings to the control of SARS-CoV-2 transmission in schools and broader society in the UK: a modelling study**. Panovska-Griffiths J, Kerr CC, Waites W, Stuart RM, Mistry D, Foster D, Klein DJ, Viner R, Bonnell C (under review; posted 2020-10-08). *medRxiv* 2020.09.28.20202937; doi: https://doi.org/10.1101/2020.09.28.20202937.
+7. **Schools are not islands: Balancing COVID-19 risk and educational benefits using structural and temporal countermeasures**. Cohen JA, Mistry D, Kerr CC, Klein DJ (under review; posted 2020-09-10). *medRxiv* 2020.09.08.20190942; doi: https://doi.org/10.1101/2020.09.08.20190942.
 
 8. **COVID-19 reopening strategies at the county level in the face of uncertainty: Multiple Models for Outbreak Decision Support**. Shea K, Borchering RK, Probert WJM, et al. (under review; posted 2020-11-05). *medRxiv* 2020.11.03.20225409; doi: https://doi.org/10.1101/2020.11.03.20225409.
 
