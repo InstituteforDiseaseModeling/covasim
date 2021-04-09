@@ -195,13 +195,10 @@ def migrate_strains(pars, verbose=True):
     '''
     Small helper function to add necessary strain parameters.
     '''
-    from . import parameters as cvp
-    pars['use_waning'] = True
+    pars['use_waning'] = False
     pars['n_strains'] = 1
     pars['total_strains'] = 1
     pars['strains'] = []
-    pars['strain_pars'] = {}
-    pars = cvp.listify_strain_pars(pars)
     return
 
 
