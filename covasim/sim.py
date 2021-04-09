@@ -18,7 +18,7 @@ from . import immunity as cvimm
 from . import analysis as cva
 
 # Almost everything in this file is contained in the Sim class
-__all__ = ['Sim', 'diff_sims', 'AlreadyRunError']
+__all__ = ['Sim', 'diff_sims', 'demo', 'AlreadyRunError']
 
 
 class Sim(cvb.BaseSim):
@@ -1409,6 +1409,76 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
         if not output:
             print('Sims match')
     return
+
+
+def demo(preset=None, overview=False, scens=None, run_args=None, plot_args=None, **kwargs):
+    '''
+    Shortcut for ``cv.Sim().run().plot()``.
+
+    Args:
+        preset (str): use a preset run configuration; currently the only option is "full"
+        overview (bool): whether to show the overview plot (all results)
+        scens (dict): dictionary of scenarios to run as a multisim, if preset='full'
+        kwargs (dict): passed to Sim()
+        run_args (dict): passed to sim.run()
+        plot_args (dict): passed to sim.plot()
+
+    **Examples**::
+
+        cv.demo() # Simplest example
+        cv.demo('full') # Full example
+        cv.demo('full', overview=True) # Plot all results
+        cv.demo(beta=0.020, run_args={'verbose':0}, plot_args={'to_plot':'overview'}) # Pass in custom values
+    '''
+    from . import interventions as cvi
+    from . import run as cvr
+
+    run_args = sc.mergedicts(run_args)
+    plot_args = sc.mergedicts(plot_args)
+    if overview:
+        plot_args = sc.mergedicts(plot_args, {'to_plot':'overview'})
+
+    if not preset:
+        sim = Sim(**kwargs)
+        sim.run(**run_args)
+        sim.plot(**plot_args)
+        return sim
+
+    elif preset == 'full':
+
+            # Define interventions
+            cb = cvi.change_beta(days=40, changes=0.5)
+            tp = cvi.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)
+            ct = cvi.contact_tracing(trace_probs=0.3, start_day=50)
+
+            # Define the parameters
+            pars = dict(
+                pop_size      = 20e3,         # Population size
+                pop_infected  = 100,          # Number of initial infections -- use more for increased robustness
+                pop_type      = 'hybrid',     # Population to use -- "hybrid" is random with household, school,and work structure
+                n_days        = 60,           # Number of days to simulate
+                verbose       = 0,            # Don't print details of the run
+                rand_seed     = 2,            # Set a non-default seed
+                interventions = [cb, tp, ct], # Include the most common interventions
+            )
+            pars = sc.mergedicts(pars, kwargs)
+            if scens is None:
+                scens = ('beta', {'Low beta':0.012, 'Medium beta':0.016, 'High beta':0.020})
+            scenpar = scens[0]
+            scenval = scens[1]
+
+            # Run the simulations
+            sims = [Sim(pars, **{scenpar:val}, label=label) for label,val in scenval.items()]
+            msim = cvr.MultiSim(sims)
+            msim.run(**run_args)
+            msim.plot(**plot_args)
+            msim.median()
+            msim.plot(**plot_args)
+            return msim
+
+    else:
+        errormsg = f'Could not understand preset argument "{preset}"; must be None or "full"'
+        raise NotImplementedError(errormsg)
 
 
 class AlreadyRunError(RuntimeError):
