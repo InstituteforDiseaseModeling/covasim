@@ -23,7 +23,7 @@ date_range = sc.daterange
 
 #%% Loading/saving functions
 
-__all__ += ['load_data', 'load', 'save', 'migrate', 'savefig']
+__all__ += ['load_data', 'load', 'save', 'savefig']
 
 
 def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, start_day=None, **kwargs):
@@ -153,6 +153,60 @@ def save(*args, **kwargs):
     filepath = sc.saveobj(*args, **kwargs)
     return filepath
 
+
+def savefig(filename=None, comments=None, **kwargs):
+    '''
+    Wrapper for Matplotlib's savefig() function which automatically stores Covasim
+    metadata in the figure. By default, saves (git) information from both the Covasim
+    version and the calling function. Additional comments can be added to the saved
+    file as well. These can be retrieved via cv.get_png_metadata(). Metadata can
+    also be stored for SVG and PDF formats, but cannot be automatically retrieved.
+
+    Args:
+        filename (str): name of the file to save to (default, timestamp)
+        comments (str): additional metadata to save to the figure
+        kwargs (dict): passed to savefig()
+
+    **Example**::
+
+        cv.Sim().run(do_plot=True)
+        filename = cv.savefig()
+    '''
+
+    # Handle inputs
+    dpi = kwargs.pop('dpi', 150)
+    metadata = kwargs.pop('metadata', {})
+
+    if filename is None: # pragma: no cover
+        now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
+        filename = f'covasim_{now}.png'
+
+    metadata = {}
+    metadata['Covasim version'] = cvv.__version__
+    gitinfo = git_info()
+    for key,value in gitinfo['covasim'].items():
+        metadata[f'Covasim {key}'] = value
+    for key,value in gitinfo['called_by'].items():
+        metadata[f'Covasim caller {key}'] = value
+    metadata['Covasim current time'] = sc.getdate()
+    metadata['Covasim calling file'] = sc.getcaller()
+    if comments:
+        metadata['Covasim comments'] = comments
+
+    # Handle different formats
+    lcfn = filename.lower() # Lowercase filename
+    if lcfn.endswith('pdf') or lcfn.endswith('svg'):
+        metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+
+    # Save the figure
+    pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
+    return filename
+
+
+
+#%% Migration functions
+
+__all__ += ['migrate']
 
 def migrate_lognormal(pars, revert=False, verbose=True):
     '''
@@ -313,53 +367,7 @@ def migrate(obj, update=True, verbose=True, die=False):
     return obj
 
 
-def savefig(filename=None, comments=None, **kwargs):
-    '''
-    Wrapper for Matplotlib's savefig() function which automatically stores Covasim
-    metadata in the figure. By default, saves (git) information from both the Covasim
-    version and the calling function. Additional comments can be added to the saved
-    file as well. These can be retrieved via cv.get_png_metadata(). Metadata can
-    also be stored for SVG and PDF formats, but cannot be automatically retrieved.
 
-    Args:
-        filename (str): name of the file to save to (default, timestamp)
-        comments (str): additional metadata to save to the figure
-        kwargs (dict): passed to savefig()
-
-    **Example**::
-
-        cv.Sim().run(do_plot=True)
-        filename = cv.savefig()
-    '''
-
-    # Handle inputs
-    dpi = kwargs.pop('dpi', 150)
-    metadata = kwargs.pop('metadata', {})
-
-    if filename is None: # pragma: no cover
-        now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
-        filename = f'covasim_{now}.png'
-
-    metadata = {}
-    metadata['Covasim version'] = cvv.__version__
-    gitinfo = git_info()
-    for key,value in gitinfo['covasim'].items():
-        metadata[f'Covasim {key}'] = value
-    for key,value in gitinfo['called_by'].items():
-        metadata[f'Covasim caller {key}'] = value
-    metadata['Covasim current time'] = sc.getdate()
-    metadata['Covasim calling file'] = sc.getcaller()
-    if comments:
-        metadata['Covasim comments'] = comments
-
-    # Handle different formats
-    lcfn = filename.lower() # Lowercase filename
-    if lcfn.endswith('pdf') or lcfn.endswith('svg'):
-        metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
-
-    # Save the figure
-    pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
-    return filename
 
 
 
