@@ -130,8 +130,8 @@ class People(cvb.BasePeople):
         '''
 
         pars = self.pars # Shorten
-        if 'prognoses' not in pars:
-            errormsg = 'This people object does not have the required parameters ("prognoses"). Create a sim (or parameters), then do e.g. people.set_pars(sim.pars).'
+        if 'prognoses' not in pars or 'rand_seed' not in pars:
+            errormsg = 'This people object does not have the required parameters ("prognoses" and "rand_seed"). Create a sim (or parameters), then do e.g. people.set_pars(sim.pars).'
             raise sc.KeyNotFoundError(errormsg)
 
         def find_cutoff(age_cutoffs, age):
