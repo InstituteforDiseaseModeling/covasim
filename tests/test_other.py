@@ -148,6 +148,8 @@ def test_basepeople():
 
     # Create a bare People object
     ppl = cv.People(100)
+    with pytest.raises(sc.KeyNotFoundError): # Need additional parameters
+        ppl.initialize()
 
     return
 
