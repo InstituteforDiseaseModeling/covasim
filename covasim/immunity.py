@@ -195,8 +195,9 @@ class Vaccine():
         rel_imm['moderna']['b1351'] = 1/4.5
         rel_imm['moderna']['p1'] = 1/8.6
 
-        rel_imm['az']['b1351'] = .5
-        rel_imm['az']['p1'] = .5
+        rel_imm['az']['b117'] = 1/2.3
+        rel_imm['az']['b1351'] = 1/9
+        rel_imm['az']['p1'] = 1/2.9
 
         rel_imm['j&j']['b1351'] = 1/6.7
         rel_imm['j&j']['p1'] = 1/8.6
@@ -221,7 +222,7 @@ class Vaccine():
             # Known parameters on pfizer
             if vaccine in choices['pfizer']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=2, par2= 2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['NAb_boost'] = 2
@@ -230,7 +231,7 @@ class Vaccine():
             # Known parameters on moderna
             elif vaccine in choices['moderna']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=2, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
                 vaccine_pars['NAb_boost'] = 2
@@ -239,7 +240,7 @@ class Vaccine():
             # Known parameters on az
             elif vaccine in choices['az']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=-1, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
                 vaccine_pars['NAb_boost'] = 2
@@ -248,7 +249,7 @@ class Vaccine():
             # Known parameters on j&j
             elif vaccine in choices['j&j']:
                 vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
+                vaccine_pars['NAb_init'] = dict(dist='normal', par1=-1, par2=2)
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
                 vaccine_pars['NAb_boost'] = 2
