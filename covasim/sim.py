@@ -478,6 +478,8 @@ class Sim(cvb.BaseSim):
         for strain in self['strains']:
             if isinstance(strain, cvimm.Strain):
                 strain.initialize(self)
+            else:
+                raise Exception('Wrong type') # TODO: refactor
 
         # Calculate the total number of strains that will be active at some point in the sim
         self['total_strains'] = self['n_strains'] + len(self['strains'])

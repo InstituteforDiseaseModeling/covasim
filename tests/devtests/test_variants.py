@@ -256,8 +256,6 @@ def test_vaccine_1strain_scen(do_plot=True, do_show=True, do_save=False):
 def test_vaccine_2strains_scen(do_plot=True, do_show=True, do_save=False):
     sc.heading('Run a basic sim with b117 strain on day 10, pfizer vaccine day 20')
 
-    sc.heading('Setting up...')
-
     # Define baseline parameters
     n_runs = 3
     base_sim = cv.Sim(use_waning=True, pars=base_pars)
@@ -314,7 +312,6 @@ def test_vaccine_2strains_scen(do_plot=True, do_show=True, do_save=False):
 
 def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run a sim with 2 strains, one of which has a much longer period before symptoms develop')
-    sc.heading('Setting up...')
 
     strain_pars = {'dur':{'inf2sym': {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9}}}
     strains = cv.Strain(strain=strain_pars, label='10 days til symptoms', days=10, n_imports=30)
@@ -357,6 +354,7 @@ def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
 
 
 def test_waning_vs_not(do_plot=True, do_show=True, do_save=False):
+    sc.heading('Testing waning...')
 
     # Define baseline parameters
     pars = sc.mergedicts(base_pars, {
@@ -401,6 +399,8 @@ def test_waning_vs_not(do_plot=True, do_show=True, do_save=False):
 
 
 def test_msim():
+    sc.heading('Testing multisim...')
+
     # basic test for vaccine
     b117 = cv.Strain('b117', days=0)
     sim = cv.Sim(use_waning=True, strains=[b117], **base_pars)
@@ -520,8 +520,8 @@ if __name__ == '__main__':
     sim5 = test_vaccine_1strain()
 
     # Run multisim and scenario tests
-    #scens0 = test_vaccine_1strain_scen() #TODO, NOT WORKING CURRENTLY
-    #scens1 = test_vaccine_2strains_scen() #TODO, NOT WORKING CURRENTLY
+    scens0 = test_vaccine_1strain_scen() #TODO, NOT WORKING CURRENTLY
+    scens1 = test_vaccine_2strains_scen() #TODO, NOT WORKING CURRENTLY
     scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)
     msim0 = test_msim()
 
