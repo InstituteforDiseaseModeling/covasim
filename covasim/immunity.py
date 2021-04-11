@@ -354,11 +354,9 @@ def init_nab(people, inds, prior_inf=True):
 
     return
 
-#
+
 def check_nab(t, people, inds=None):
     ''' Determines current NAbs based on date since recovered/vaccinated.'''
-
-    # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     # Indices of people who've had some NAb event
     rec_inds = cvu.defined(people.date_recovered[inds])
@@ -684,7 +682,7 @@ def linear_growth(length, slope):
     return (slope * t)
 
 
-def create_cross_immunity(circulating_strains, rel_imms):
+def create_cross_immunity(circulating_strains, rel_imms): # TODO: refactor
     known_strains = ['wild', 'b117', 'b1351', 'p1']
     known_cross_immunity = dict()
     known_cross_immunity['wild'] = {} # cross-immunity to wild

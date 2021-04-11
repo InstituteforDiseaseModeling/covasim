@@ -7,13 +7,14 @@ Tests for immune waning, strains, and vaccine intervention.
 import sciris as sc
 import covasim as cv
 import numpy as np
+import pandas as pd
 
-do_plot = 1
+do_plot = 0
 do_save = 0
 cv.options.set(interactive=False) # Assume not running interactively
 
 base_pars = dict(
-    pop_size = 10e3,
+    pop_size = 1e3,
     verbose = -1,
 )
 
@@ -33,6 +34,64 @@ def test_waning(do_plot=False):
         msim.plot('overview-strain', rotation=30)
         sc.maximize()
     return msim
+
+
+def test_states():
+    sc.heading('Testing states')
+
+    # Load state diagram
+    rawdf = pd.read_excel('state_diagram.xlsx', nrows=13)
+    rawdf = rawdf.set_index('From ↓ to →')
+
+    # Create and run simulation
+    for use_waning in [True]:
+
+        # Different states are possible with or without waning: resolve discrepancies
+        df = sc.dcp(rawdf)
+        if use_waning:
+            df = df.replace(-0.5, 0)
+            df = df.replace(-0.1, 1)
+        else:
+            df = df.replace(-0.5, -1)
+            df = df.replace(-0.1, -1)
+
+        pars = dict(
+            pop_size = 1e3,
+            pop_infected = 20,
+            n_days = 70,
+            use_waning = use_waning,
+            verbose = 0,
+            interventions = [
+                cv.test_prob(symp_prob=0.4, asymp_prob=0.01),
+                cv.contact_tracing(trace_probs=0.1),
+            ]
+        )
+        sim = cv.Sim(pars).run()
+        ppl = sim.people
+
+        # Check states
+        states = df.columns.values.tolist()
+        for s1 in states:
+            for s2 in states:
+                if s1 != s2:
+                    relation = df.loc[s1, s2] # e.g. df.loc['susceptible', 'exposed']
+                    print(f'Checking {s1:13s} → {s2:13s} = {relation:4n} ... ', end='')
+                    inds     = cv.true(ppl[s1])
+                    n_inds   = len(inds)
+                    vals2    = ppl[s2][inds]
+                    is_true  = cv.true(vals2)
+                    is_false = cv.false(vals2)
+                    n_true   = len(is_true)
+                    n_false  = len(is_false)
+                    if relation == 1:
+                        errormsg = f'Being {s1}=True implies {s2}=True, but only {n_true}/{n_inds} people are'
+                        assert n_true == n_inds, errormsg
+                    elif relation == -1:
+                        errormsg = f'Being {s1}=True implies {s2}=False, but only {n_false}/{n_inds} people are'
+                        assert n_false == n_inds, errormsg
+                    print(f'ok: {n_true}/{n_inds}')
+
+    return
 
 
 
@@ -457,7 +516,8 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    msim1 = test_waning(do_plot=do_plot)
+    # msim1 = test_waning(do_plot=do_plot)
+    sim1  = test_states()
 
     sc.toc(T)
     print('Done.')

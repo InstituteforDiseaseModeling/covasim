@@ -62,8 +62,10 @@ class People(cvb.BasePeople):
 
         # Set person properties -- all floats except for UID
         for key in self.meta.person:
-            if key in ['uid', 'vaccinations']:
+            if key in ['uid']:
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
+            elif key in ['vaccinations']:
+                self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
             elif key in ['sus_imm', 'symp_imm', 'sev_imm']:  # everyone starts out with no immunity
                 self[key] = np.full((self.total_strains, self.pop_size), 0, dtype=cvd.default_float)
             else:
@@ -267,9 +269,9 @@ class People(cvb.BasePeople):
             self.susceptible[inds]      = True
             self.infectious_strain[inds] = np.nan
             self.exposed_strain[inds]    = np.nan
-            self.prior_symptoms[inds] = self.pars['rel_imm']['asymptomatic']  #
-            self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild']  #
-            self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']  #
+            self.prior_symptoms[inds] = self.pars['rel_imm']['asymptomatic']
+            self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild']
+            self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']
             if len(inds):
                 cvi.init_nab(self, inds, prior_inf=True)
         return len(inds)
@@ -278,16 +280,19 @@ class People(cvb.BasePeople):
     def check_death(self):
         ''' Check whether or not this person died on this timestep  '''
         inds = self.check_inds(self.dead, self.date_dead, filter_inds=self.is_exp)
-        self.exposed[inds]     = False
-        self.infectious[inds]  = False
-        self.symptomatic[inds] = False
-        self.severe[inds]      = False
-        self.critical[inds]    = False
-        self.recovered[inds]   = False
-        self.dead[inds]        = True
-        self.infectious_strain[inds]= np.nan
-        self.exposed_strain[inds]   = np.nan
-        self.recovered_strain[inds] = np.nan
+        self.susceptible[inds]   = False
+        self.exposed[inds]       = False
+        self.infectious[inds]    = False
+        self.symptomatic[inds]   = False
+        self.severe[inds]        = False
+        self.critical[inds]      = False
+        self.known_contact[inds] = False
+        self.quarantined[inds]   = False
+        self.recovered[inds]     = False
+        self.dead[inds]          = True
+        self.infectious_strain[inds] = np.nan
+        self.exposed_strain[inds]    = np.nan
+        self.recovered_strain[inds]  = np.nan
         return len(inds)
 
 
@@ -410,16 +415,17 @@ class People(cvb.BasePeople):
         durpars      = self.pars['dur']
 
         # Update states, strain info, and flows
-        self.susceptible[inds]   = False
-        self.exposed[inds]       = True
+        self.susceptible[inds]    = False
+        self.recovered[inds]      = False
+        self.exposed[inds]        = True
+        self.date_exposed[inds]   = self.t
         self.exposed_strain[inds] = strain
         self.exposed_by_strain[strain, inds] = True
-        self.date_exposed[inds]  = self.t
-        self.flows['new_infections'] += len(inds)
+        self.flows['new_infections']   += len(inds)
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
         self.flows_strain['new_infections_by_strain'][strain] += len(inds)
         print('HI DEBUG', self.t, len(inds), len(cvu.defined(self.date_recovered[inds])))
-        #self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery # TODO CK
+        # self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery # TODO CK
 
         # Record transmissions
         for i, target in enumerate(inds):
@@ -485,6 +491,7 @@ class People(cvb.BasePeople):
         dur_crit2die = cvu.sample(**durpars['crit2die'], size=len(dead_inds))
         self.date_dead[dead_inds] = self.date_critical[dead_inds] + dur_crit2die # Date of death
         self.dur_disease[dead_inds] = self.dur_exp2inf[dead_inds] + self.dur_inf2sym[dead_inds] + self.dur_sym2sev[dead_inds] + self.dur_sev2crit[dead_inds] + dur_crit2die   # Store how long this person had COVID-19
+        self.date_recovered[dead_inds] = np.nan # If they did die, remove them from recovered
 
         return n_infections # For incrementing counters
 

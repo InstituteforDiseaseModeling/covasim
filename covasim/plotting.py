@@ -377,7 +377,7 @@ def set_line_options(input_args, reskey, resnum, default):
 
 #%% Core plotting functions
 
-def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
          show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
@@ -427,7 +427,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
-def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
+def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
          show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True, setylim=True,
          log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False, fig=None, ax=None, **kwargs):
@@ -481,7 +481,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
-def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
+def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 date_args=None, mpl_args=None, grid=False, commaticks=True, setylim=True, color=None, label=None,
                 do_show=None, do_save=False, fig_path=None, fig=None, ax=None, **kwargs):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
