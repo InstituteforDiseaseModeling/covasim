@@ -352,7 +352,7 @@ class People(cvb.BasePeople):
                 self[key][inds] = False
 
         for key in self.meta.strain_states:
-            if 'by' in key:
+            if 'by' in key: # TODO: refactor
                 self[key][:, inds] = False
             else:
                 self[key][inds] = np.nan
@@ -424,7 +424,7 @@ class People(cvb.BasePeople):
         self.flows['new_infections']   += len(inds)
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
         self.flows_strain['new_infections_by_strain'][strain] += len(inds)
-        print('HI DEBUG', self.t, len(inds), len(cvu.defined(self.date_recovered[inds])))
+        # print('HI DEBUG', self.t, len(inds), len(cvu.defined(self.date_recovered[inds])))
         # self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery # TODO CK
 
         # Record transmissions

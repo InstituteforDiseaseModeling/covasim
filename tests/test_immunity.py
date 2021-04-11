@@ -37,14 +37,13 @@ def test_waning(do_plot=False):
 
 
 def test_states():
-    sc.heading('Testing states')
-
     # Load state diagram
     rawdf = pd.read_excel('state_diagram.xlsx', nrows=13)
     rawdf = rawdf.set_index('From ↓ to →')
 
     # Create and run simulation
     for use_waning in [True]:
+        sc.heading(f'Testing state consistency with waning = {use_waning}')
 
         # Different states are possible with or without waning: resolve discrepancies
         df = sc.dcp(rawdf)
@@ -56,9 +55,9 @@ def test_states():
             df = df.replace(-0.1, -1)
 
         pars = dict(
-            pop_size = 1e3,
+            pop_size = 10e3,
             pop_infected = 20,
-            n_days = 70,
+            n_days = 120,
             use_waning = use_waning,
             verbose = 0,
             interventions = [
@@ -70,12 +69,13 @@ def test_states():
         ppl = sim.people
 
         # Check states
+        errs = []
         states = df.columns.values.tolist()
         for s1 in states:
             for s2 in states:
                 if s1 != s2:
                     relation = df.loc[s1, s2] # e.g. df.loc['susceptible', 'exposed']
-                    print(f'Checking {s1:13s} → {s2:13s} = {relation:4n} ... ', end='')
+                    print(f'Checking {s1:13s} → {s2:13s} = {relation:2n} ... ', end='')
                     inds     = cv.true(ppl[s1])
                     n_inds   = len(inds)
                     vals2    = ppl[s2][inds]
@@ -83,13 +83,18 @@ def test_states():
                     is_false = cv.false(vals2)
                     n_true   = len(is_true)
                     n_false  = len(is_false)
-                    if relation == 1:
+                    if relation == 1 and n_true != n_inds:
                         errormsg = f'Being {s1}=True implies {s2}=True, but only {n_true}/{n_inds} people are'
-                        assert n_true == n_inds, errormsg
-                    elif relation == -1:
+                        errs.append(errormsg)
+                        print(f'× {n_true}/{n_inds} error!')
+                    elif relation == -1 and n_false != n_inds:
                         errormsg = f'Being {s1}=True implies {s2}=False, but only {n_false}/{n_inds} people are'
-                        assert n_false == n_inds, errormsg
-                    print(f'ok: {n_true}/{n_inds}')
+                        errs.append(errormsg)
+                        print(f'× {n_true}/{n_inds} error!')
+                    else:
+                        print(f'✓ {n_true}/{n_inds}')
+        if len(errs):
+            raise RuntimeError('\n'+sc.newlinejoin(errs))
 
     return
 
