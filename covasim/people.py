@@ -11,7 +11,7 @@ from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 from . import plotting as cvplt
-from test_sensitivity_curves import GetTestSensitivityCurve
+from .test_sensitivity_curves import GetTestSensitivityCurve
 
 
 __all__ = ['People']
@@ -456,7 +456,7 @@ class People(cvb.BasePeople):
         self.date_tested[inds] = self.t # Only keep the last time they tested
         is_infectious = cvu.itruei(self.infectious, inds)
         self.infec_time       = cvd.default_int(self.t - self.date_infectious[is_infectious])
-        
+
         result = []
         if test_type is 'pcr':
             for i in np.unique(self.infec_time):
