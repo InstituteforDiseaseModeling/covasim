@@ -69,7 +69,7 @@ class People(cvb.BasePeople):
 
         # Set health states -- only susceptible is true by default -- booleans except exposed by strain which should return the strain that ind is exposed to
         for key in self.meta.states:
-            val = (key == 'susceptible') # Default value is True for susceptible, false otherwise
+            val = (key in ['susceptible', 'naive']) # Default value is True for susceptible and naive, false otherwise
             self[key] = np.full(self.pop_size, val, dtype=bool)
 
         # Set strain states, which store info about which strain a person is exposed to
@@ -182,6 +182,7 @@ class People(cvb.BasePeople):
 
         return
 
+
     def update_states_post(self):
         ''' Perform post-timestep updates '''
         self.flows['new_diagnoses']   += self.check_diagnosed()
@@ -246,9 +247,19 @@ class People(cvb.BasePeople):
         return len(inds)
 
 
-    def check_recovery(self):
-        ''' Check for recovery '''
-        inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=self.is_exp) # TODO TEMP!!!!
+    def check_recovery(self, inds=None, filter_inds='is_exp'):
+        '''
+        Check for recovery.
+
+        More complex than other functions to allow for recovery to be manually imposed
+        for a specified set of indices.
+        '''
+
+        # Handle more flexible options for setting indices
+        if filter_inds == 'is_exp':
+            filter_inds = self.is_exp
+        if inds is None:
+            inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=filter_inds)
 
         # Now reset all disease states
         self.exposed[inds]          = False
@@ -260,7 +271,6 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
-            # print(f'DEBUG: {self.t} {len(inds)}')
 
             # Before letting them recover, store information about the strain they had, store symptoms and pre-compute NAbs array
             self.recovered_strain[inds] = self.exposed_strain[inds]
@@ -343,12 +353,12 @@ class People(cvb.BasePeople):
 
     #%% Methods to make events occur (infection and diagnosis)
 
-    def make_susceptible(self, inds):
+    def make_naive(self, inds):
         '''
-        Make a set of people susceptible. This is used during dynamic resampling.
+        Make a set of people naive. This is used during dynamic resampling.
         '''
         for key in self.meta.states:
-            if key == 'susceptible':
+            if key in ['susceptible', 'naive']:
                 self[key][inds] = True
             else:
                 self[key][inds] = False
@@ -372,6 +382,27 @@ class People(cvb.BasePeople):
             self[key][inds] = np.nan
 
         return
+
+
+    def make_nonnaive(self, inds, set_recovered=False, date_recovered=0):
+        '''
+        Make a set of people non-naive.
+
+        This can be done either by setting only susceptible and naive states,
+        or else by setting them as if they have been infected and recovered.
+        '''
+        self.make_naive(inds) # First make them naive and reset all other states
+
+        # Make them non-naive
+        for key in ['susceptible', 'naive']:
+            self[key][inds] = False
+
+        if set_recovered:
+            self.date_recovered[inds] = date_recovered # Reset date recovered
+            self.check_recovered(inds=inds, filter_inds=None) # Set recovered
+
+        return
+
 
 
     def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None, strain=0):
@@ -424,6 +455,7 @@ class People(cvb.BasePeople):
 
         # Update states, strain info, and flows
         self.susceptible[inds]    = False
+        self.naive[inds]          = False
         self.recovered[inds]      = False
         self.diagnosed[inds]      = False
         self.exposed[inds]        = True

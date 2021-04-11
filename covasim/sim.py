@@ -291,6 +291,7 @@ class Sim(cvb.BaseSim):
 
         # Other variables
         self.results['n_alive']             = init_res('Number alive', scale=False)
+        self.results['n_naive']             = init_res('Number never infected', scale=False)
         self.results['n_preinfectious']     = init_res('Number preinfectious', scale=False, color=dcols.exposed)
         self.results['n_removed']           = init_res('Number removed', scale=False, color=dcols.recovered)
         self.results['prevalence']          = init_res('Prevalence', scale=False)
@@ -299,7 +300,7 @@ class Sim(cvb.BaseSim):
         self.results['doubling_time']       = init_res('Doubling time', scale=False)
         self.results['test_yield']          = init_res('Testing yield', scale=False)
         self.results['rel_test_yield']      = init_res('Relative testing yield', scale=False)
-        self.results['share_vaccinated']    = init_res('Proportion vaccinated', scale=False)
+        self.results['frac_vaccinated']     = init_res('Proportion vaccinated', scale=False)
         self.results['pop_nabs']            = init_res('Population NAb levels', scale=False, color=dcols.pop_nabs)
         self.results['pop_protection']      = init_res('Population immunity protection', scale=False, color=dcols.pop_protection)
         self.results['pop_symp_protection'] = init_res('Population symptomatic protection', scale=False, color=dcols.pop_symp_protection)
@@ -450,10 +451,12 @@ class Sim(cvb.BaseSim):
 
         return
 
+
     def finalize_interventions(self):
         for intervention in self['interventions']:
             if isinstance(intervention, cvi.Intervention):
                 intervention.finalize(self)
+
 
     def init_analyzers(self):
         ''' Initialize the analyzers '''
@@ -465,10 +468,12 @@ class Sim(cvb.BaseSim):
                 analyzer.initialize(self)
         return
 
+
     def finalize_analyzers(self):
         for analyzer in self['analyzers']:
             if isinstance(analyzer, cva.Analyzer):
                 analyzer.finalize(self)
+
 
     def init_strains(self):
         ''' Initialize the strains '''
@@ -487,6 +492,7 @@ class Sim(cvb.BaseSim):
         ''' Initialize immunity matrices and precompute NAb waning for each strain '''
         cvimm.init_immunity(self, create=create)
         return
+
 
     def init_vaccines(self): # TODO: refactor
         ''' Check if there are any vaccines in simulation, if so initialize vaccine info param'''
@@ -512,29 +518,27 @@ class Sim(cvb.BaseSim):
 
         return
 
+
     def rescale(self):
         ''' Dynamically rescale the population -- used during step() '''
         if self['rescale']:
             pop_scale = self['pop_scale']
             current_scale = self.rescale_vec[self.t]
             if current_scale < pop_scale: # We have room to rescale
-                if not self['use_waning']:
-                    not_sus_inds = self.people.false('susceptible') # Find everyone not susceptible
-                else:
-                    not_sus_inds = sc.cat(*[cvu.true(self.people[k]) for k in ['exposed', 'recovered', 'dead']]) # Find everyone not susceptible
-                n_not_sus = len(not_sus_inds) # Number of people who are not susceptible
+                not_naive_inds = self.people.false('naive') # Find everyone not naive
+                n_not_naive = len(not_naive_inds) # Number of people who are not naive
                 n_people = len(self.people) # Number of people overall
-                current_ratio = n_not_sus/n_people # Current proportion not susceptible
+                current_ratio = n_not_naive/n_people # Current proportion not naive
                 threshold = self['rescale_threshold'] # Threshold to trigger rescaling
                 if current_ratio > threshold: # Check if we've reached point when we want to rescale
                     max_ratio = pop_scale/current_scale # We don't want to exceed the total population size
                     proposed_ratio = max(current_ratio/threshold, self['rescale_factor']) # The proposed ratio to rescale: the rescale factor, unless we've exceeded it
                     scaling_ratio = min(proposed_ratio, max_ratio) # We don't want to scale by more than the maximum ratio
                     self.rescale_vec[self.t:] *= scaling_ratio # Update the rescaling factor from here on
-                    n = int(round(n_not_sus*(1.0-1.0/scaling_ratio))) # For example, rescaling by 2 gives n = 0.5*not_sus_inds
-                    choices = cvu.choose(max_n=n_not_sus, n=n) # Choose who to make susceptible again
-                    new_sus_inds = not_sus_inds[choices] # Convert these back into indices for people
-                    self.people.make_susceptible(new_sus_inds) # Make people susceptible again
+                    n = int(round(n_not_naive*(1.0-1.0/scaling_ratio))) # For example, rescaling by 2 gives n = 0.5*not_naive_inds
+                    choices = cvu.choose(max_n=n_not_naive, n=n) # Choose who to make naive again
+                    new_naive_inds = not_naive_inds[choices] # Convert these back into indices for people
+                    self.people.make_naive(new_naive_inds) # Make people naive again
         return
 
 
@@ -827,16 +831,17 @@ class Sim(cvb.BaseSim):
         '''
         res = self.results
         count_recov = 1-self['use_waning'] # If waning is on, don't count recovered people as removed
-        self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
-        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - count_recov*res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
+        self.results['n_alive'][:]         = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
+        self.results['n_naive'][:]         = self.scaled_pop_size - res['cum_deaths'][:] - res['n_recovered'][:] - res['n_exposed'][:] # Number of people naive
+        self.results['n_susceptible'][:]   = res['n_alive'][:] - res['n_exposed'][:] - count_recov*res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
         self.results['n_preinfectious'][:] = res['n_exposed'][:] - res['n_infectious'][:] # Calculate the number not yet infectious: exposed minus infectious
         self.results['n_removed'][:]       = count_recov*res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
-        self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
-        self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
+        self.results['prevalence'][:]      = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
+        self.results['incidence'][:]       = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
 
         self.results['strain']['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
         self.results['strain']['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
-        self.results['share_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the share vaccinated
+        self.results['frac_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the share vaccinated
         return
 
 

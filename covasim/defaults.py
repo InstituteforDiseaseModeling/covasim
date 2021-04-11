@@ -55,6 +55,7 @@ class PeopleMeta(sc.prettyobj):
         # Set the states that a person can be in: these are all booleans per person -- used in people.py
         self.states = [
             'susceptible',
+            'naive',
             'exposed',
             'infectious',
             'symptomatic',
@@ -143,6 +144,8 @@ result_stocks = {
     'symptomatic': 'Number symptomatic',
     'severe':      'Number of severe cases',
     'critical':    'Number of critical cases',
+    'recovered':   'Number recovered',
+    'dead':        'Number dead',
     'diagnosed':   'Number of confirmed cases',
     'quarantined': 'Number in quarantine',
     'vaccinated':  'Number of people vaccinated',
@@ -158,13 +161,13 @@ result_flows = {
     'infections':   'infections',
     'reinfections': 'reinfections',
     'infectious':   'infectious',
-    'tests':        'tests',
-    'diagnoses':    'diagnoses',
-    'recoveries':   'recoveries',
     'symptomatic':  'symptomatic cases',
     'severe':       'severe cases',
     'critical':     'critical cases',
+    'recoveries':   'recoveries',
     'deaths':       'deaths',
+    'tests':        'tests',
+    'diagnoses':    'diagnoses',
     'quarantined':  'quarantined people',
     'vaccinations': 'vaccinations',
     'vaccinated':   'vaccinated people'
