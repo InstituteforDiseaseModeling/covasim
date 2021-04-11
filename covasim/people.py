@@ -440,8 +440,8 @@ class People(cvb.BasePeople):
 
         return n_infections # For incrementing counters
     
-    def newTest(self, inds, loss_prob=0.0, test_delay=0,test_type=pcr): 
-         '''
+    def newTest(self, inds, loss_prob=0.0, test_delay=0,test_type='pcr'): 
+        '''
         Method to test people. Typically not to be called by the user directly;
         see the test_num() and test_prob() interventions.
 
@@ -458,7 +458,7 @@ class People(cvb.BasePeople):
         self.infec_time       = cvd.default_int(self.t - self.date_infectious[is_infectious])
         
         result = []
-        if test_type=pcr:
+        if test_type is 'pcr':
             for i in np.unique(self.infec_time):
                 result.append(cvu.n_binomial(self.pcr(i),sum(self.infec_time == i)))
         else:
