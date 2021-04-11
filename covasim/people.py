@@ -248,6 +248,9 @@ class People(cvb.BasePeople):
         ''' Check for recovery '''
         inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=self.is_exp) # TODO TEMP!!!!
 
+        if 7723 in inds:
+            print('yes on ', self.t)
+
         # Now reset all disease states
         self.exposed[inds]          = False
         self.infectious[inds]       = False
@@ -258,7 +261,7 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
-            print(f'DEBUG: {self.t} {len(inds)}')
+            # print(f'DEBUG: {self.t} {len(inds)}')
 
             # Before letting them recover, store information about the strain they had, store symptoms and pre-compute NAbs array
             self.recovered_strain[inds] = self.exposed_strain[inds]
@@ -417,8 +420,8 @@ class People(cvb.BasePeople):
         # Update states, strain info, and flows
         self.susceptible[inds]    = False
         self.recovered[inds]      = False
+        self.diagnosed[inds]      = False
         self.exposed[inds]        = True
-        self.date_exposed[inds]   = self.t
         self.exposed_strain[inds] = strain
         self.exposed_by_strain[strain, inds] = True
         self.flows['new_infections']   += len(inds)
@@ -433,7 +436,12 @@ class People(cvb.BasePeople):
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
+        self.date_exposed[inds]   = self.t
         self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
+
+        # Reset all other dates
+        for key in ['date_symptomatic', 'date_severe', 'date_critical', 'date_diagnosed', 'date_recovered']:
+            self[key][inds] = np.nan
 
         # Use prognosis probabilities to determine what happens to them
         symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.symp_imm[strain, inds]) # Calculate their actual probability of being symptomatic
@@ -641,18 +649,18 @@ class People(cvb.BasePeople):
             events = []
 
             dates = {
-            'date_critical'       : 'became critically ill and needed ICU care',
-            'date_dead'           : 'died ☹',
-            'date_diagnosed'      : 'was diagnosed with COVID',
-            'date_end_quarantine' : 'ended quarantine',
-            'date_infectious'     : 'became infectious',
-            'date_known_contact'  : 'was notified they may have been exposed to COVID',
-            'date_pos_test'       : 'recieved their positive test result',
-            'date_quarantined'    : 'entered quarantine',
-            'date_recovered'      : 'recovered',
-            'date_severe'         : 'developed severe symptoms and needed hospitalization',
-            'date_symptomatic'    : 'became symptomatic',
-            'date_tested'         : 'was tested for COVID',
+                'date_critical'       : 'became critically ill and needed ICU care',
+                'date_dead'           : 'died ☹',
+                'date_diagnosed'      : 'was diagnosed with COVID',
+                'date_end_quarantine' : 'ended quarantine',
+                'date_infectious'     : 'became infectious',
+                'date_known_contact'  : 'was notified they may have been exposed to COVID',
+                'date_pos_test'       : 'recieved their positive test result',
+                'date_quarantined'    : 'entered quarantine',
+                'date_recovered'      : 'recovered',
+                'date_severe'         : 'developed severe symptoms and needed hospitalization',
+                'date_symptomatic'    : 'became symptomatic',
+                'date_tested'         : 'was tested for COVID',
             }
 
             for attribute, message in dates.items():

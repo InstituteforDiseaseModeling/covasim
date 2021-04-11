@@ -42,7 +42,7 @@ def test_states():
     rawdf = rawdf.set_index('From ↓ to →')
 
     # Create and run simulation
-    for use_waning in [True]:
+    for use_waning in [False, True]:
         sc.heading(f'Testing state consistency with waning = {use_waning}')
 
         # Different states are possible with or without waning: resolve discrepancies
@@ -55,9 +55,9 @@ def test_states():
             df = df.replace(-0.1, -1)
 
         pars = dict(
-            pop_size = 10e3,
+            pop_size = 1e3,
             pop_infected = 20,
-            n_days = 120,
+            n_days = 70,
             use_waning = use_waning,
             verbose = 0,
             interventions = [
@@ -69,7 +69,7 @@ def test_states():
         ppl = sim.people
 
         # Check states
-        errs = []
+        errormsg = ''
         states = df.columns.values.tolist()
         for s1 in states:
             for s2 in states:
@@ -85,16 +85,14 @@ def test_states():
                     n_false  = len(is_false)
                     if relation == 1 and n_true != n_inds:
                         errormsg = f'Being {s1}=True implies {s2}=True, but only {n_true}/{n_inds} people are'
-                        errs.append(errormsg)
                         print(f'× {n_true}/{n_inds} error!')
                     elif relation == -1 and n_false != n_inds:
                         errormsg = f'Being {s1}=True implies {s2}=False, but only {n_false}/{n_inds} people are'
-                        errs.append(errormsg)
                         print(f'× {n_true}/{n_inds} error!')
                     else:
                         print(f'✓ {n_true}/{n_inds}')
-        if len(errs):
-            raise RuntimeError('\n'+sc.newlinejoin(errs))
+                    if errormsg:
+                        raise RuntimeError(errormsg)
 
     return
 
