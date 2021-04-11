@@ -12,31 +12,31 @@ import pylab as pl
 import covasim as cv
 import pytest
 
-verbose = 0
-do_plot = 1 # Whether to plot when run interactively
+verbose = -1
+do_plot = 0 # Whether to plot when run interactively
 cv.options.set(interactive=False) # Assume not running interactively
 csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 
 
-def test_all_interventions():
+def test_all_interventions(do_plot=False):
     ''' Test all interventions supported by Covasim '''
     sc.heading('Testing default interventions')
 
+    # Default parameters, using the random layer
     pars = sc.objdict(
         pop_size     = 1e3,
         pop_infected = 10,
         n_days       = 90,
+        verbose      = verbose,
     )
     hpars = sc.mergedicts(pars, {'pop_type':'hybrid'}) # Some, but not all, tests require layers
-    rsim = cv.Sim(pars).initialize()
-    hsim = cv.Sim(hpars).initialize()
+    rsim = cv.Sim(pars)
+    hsim = cv.Sim(hpars)
 
     def make_sim(which='r', interventions=None):
         ''' Helper function to avoid having to recreate the sim each time '''
-        if which == 'r':
-            sim = sc.dcp(rsim)
-        elif which == 'h':
-            sim = sc.dcp(hsim)
+        if   which == 'r': sim = sc.dcp(rsim)
+        elif which == 'h': sim = sc.dcp(hsim)
         sim['interventions'] = interventions
         sim.initialize()
         return sim
@@ -111,7 +111,7 @@ def test_all_interventions():
     # Run the simualations
     for key,sim in sims.items():
         sim.label = key
-        sim.run(verbose=verbose)
+        sim.run()
 
     # Test intervention retrieval methods
     sim = sims.combo
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    test_all_interventions()
+    test_all_interventions(do_plot=do_plot)
     test_data_interventions()
 
     sc.toc(T)
