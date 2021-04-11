@@ -1,6 +1,5 @@
 import covasim as cv
 import sciris as sc
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -187,7 +186,7 @@ def test_vaccine_1strain(do_plot=False, do_show=True, do_save=False):
         'New reinfections': ['new_reinfections'],
     })
     if do_plot:
-        sim.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_reinfection.png', to_plot=to_plot)
+        sim.plot(do_save=do_save, do_show=do_show, fig_path='results/test_reinfection.png', to_plot=to_plot)
 
     return sim
 

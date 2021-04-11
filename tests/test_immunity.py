@@ -9,7 +9,7 @@ import covasim as cv
 import numpy as np
 import pandas as pd
 
-do_plot = 0
+do_plot = 1
 do_save = 0
 cv.options.set(interactive=False) # Assume not running interactively
 
@@ -519,7 +519,7 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    # msim1 = test_waning(do_plot=do_plot)
+    msim1 = test_waning(do_plot=do_plot)
     sim1  = test_states()
 
     sc.toc(T)

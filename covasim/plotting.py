@@ -397,12 +397,14 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
             res_t = sim.results['t']
             if 'strain' in sim.results and reskey in sim.results['strain']:
                 res = sim.results['strain'][reskey]
-                for strain in range(sim['total_strains']):
-                    color = cvd.get_strain_colors()[strain]  # Choose the color
+                ns = sim['total_strains']
+                colors = sc.gridcolors(ns)
+                for strain in range(ns):
+                    color = colors[strain]  # Choose the color
                     if strain == 0:
                         label = 'wild type'
                     else:
-                        label = sim['strains'][strain-1].strain_label
+                        label = sim['strains'][strain-1].label
                     if res.low is not None and res.high is not None:
                         ax.fill_between(res_t, res.low[strain,:], res.high[strain,:], color=color,
                                         **args.fill)  # Create the uncertainty bound
@@ -455,7 +457,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
                         if strain == 0:
                             label = 'wild type'
                         else:
-                            label = sim['strains'][strain - 1].strain_label
+                            label = sim['strains'][strain - 1].label
                         ax.fill_between(scens.tvec, scendata.low[strain,:], scendata.high[strain,:], color=color,
                                         **args.fill)  # Create the uncertainty bound
                         ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot)  # Plot the actual line
