@@ -531,7 +531,7 @@ class People(cvb.BasePeople):
         Args:
             inds (int): indices of who to quarantine, specified by check_quar()
             start_date (int): day to begin quarantine (defaults to the current day, `sim.t`)
-            period (int): quarantine duration (defaults to `pars['quar_period']`)
+            period (int): quarantine duration (defaults to ``pars['quar_period']``)
         '''
 
         start_date = self.t if start_date is None else int(start_date)

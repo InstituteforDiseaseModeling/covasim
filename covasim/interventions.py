@@ -966,7 +966,7 @@ class contact_tracing(Intervention):
         start_day   (int):        intervention start day (default: 0, i.e. the start of the simulation)
         end_day     (int):        intervention end day (default: no end)
         presumptive (bool):       whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis (default: no)
-        quar_period (int):        number of days to quarantine when notified as a known contact. Default value is pars['quar_period']
+        quar_period (int):        number of days to quarantine when notified as a known contact. Default value is ``pars['quar_period']``
         kwargs      (dict):       passed to Intervention()
 
     **Example**::
@@ -982,7 +982,7 @@ class contact_tracing(Intervention):
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
-        self.quar_period = quar_period  #: If quar_period is None, it will be drawn from sim.pars at initialization
+        self.quar_period = quar_period # If quar_period is None, it will be drawn from sim.pars at initialization
         return
 
 

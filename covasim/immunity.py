@@ -452,7 +452,7 @@ def init_immunity(sim, create=False):
             else:  # Progression and transmission are matrices of scalars of size sim['n_strains']
                 immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
 
-        known_strains = ['wild', 'b117', 'b1351', 'p1']
+        known_strains = ['wild', 'b117', 'b1351', 'p1'] # TODO: only appear once
         cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
         for i in range(ts):
             for j in range(ts):
